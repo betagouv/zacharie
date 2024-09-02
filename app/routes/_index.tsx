@@ -1,11 +1,11 @@
-import type { MetaFunction } from "@remix-run/node";
+// import type { MetaFunction } from "@remix-run/node";
 
-export const meta: MetaFunction = () => {
-  return [
-    { title: "New Remix SPA" },
-    { name: "description", content: "Welcome to Remix (SPA Mode)!" },
-  ];
-};
+// export const meta: MetaFunction = () => {
+//   return [
+//     { title: "New Remix SPA" },
+//     { name: "description", content: "Welcome to Remix (SPA Mode)!" },
+//   ];
+// };
 
 export default function Index() {
   return (
@@ -17,8 +17,7 @@ export default function Index() {
             className="text-blue-700 underline visited:text-purple-900"
             target="_blank"
             href="https://remix.run/guides/spa-mode"
-            rel="noreferrer"
-          >
+            rel="noreferrer">
             SPA Mode Guide
           </a>
         </li>
@@ -27,8 +26,7 @@ export default function Index() {
             className="text-blue-700 underline visited:text-purple-900"
             target="_blank"
             href="https://remix.run/docs"
-            rel="noreferrer"
-          >
+            rel="noreferrer">
             Remix Docs
           </a>
         </li>

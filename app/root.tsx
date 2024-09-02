@@ -1,8 +1,25 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
 import { useNetworkConnectivity, usePWAManager } from "@remix-pwa/client";
 import { useSWEffect, sendSkipWaitingMessage } from "@remix-pwa/sw";
+import { MetaFunction } from "@remix-run/node";
 
 import "./tailwind.css";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Zacharie" },
+    {
+      name: "og:title",
+      content:
+        "Zacharie | Garantir une meilleure qualité sanitaires des viandes de gibier sauvage mises sur le marché",
+    },
+    {
+      name: "description",
+      content:
+        "Garantir une meilleure qualité sanitaires des viandes de gibier sauvage mises sur le marché",
+    },
+  ];
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (

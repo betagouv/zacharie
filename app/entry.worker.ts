@@ -44,7 +44,7 @@ export const defaultFetchHandler: DefaultFetchHandler = async ({ context }) => {
   return fetch(request);
 };
 
-const version = "v1";
+const version = "v2";
 
 // HTML cache
 const documentCache = new EnhancedCache("document-cache", {

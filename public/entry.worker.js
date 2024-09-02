@@ -4852,7 +4852,7 @@ const defaultFetchHandler = async ({ context }) => {
   }
   return fetch(request);
 };
-const version = "v1";
+const version = "v2";
 const documentCache = new EnhancedCache("document-cache", {
   version,
   strategy: "CacheFirst",
@@ -4928,6 +4928,7 @@ const route1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   default: worker_runtime_default
 }, Symbol.toStringTag, { value: "Module" }));
 const assets = [
+  "/entry.worker.js",
   "/favicon.ico"
 ];
 const routes = {
