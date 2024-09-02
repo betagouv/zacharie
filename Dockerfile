@@ -4,11 +4,14 @@ FROM node:20
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy package.json, yarn.lock, and .yarnrc.yml
-COPY package.json yarn.lock .yarnrc.yml ./
-
-# Install Yarn 4
+# Install Yarn 4 globally
 RUN corepack enable && corepack prepare yarn@stable --activate
+
+# Copy package.json and yarn.lock
+COPY package.json yarn.lock ./
+
+# Copy .yarnrc.yml if it exists
+COPY .yarnrc.yml* ./
 
 # Install dependencies
 RUN yarn install
