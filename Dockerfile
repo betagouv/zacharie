@@ -4,11 +4,14 @@ FROM node:20
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy package.json and yarn.lock
-COPY package.json yarn.lock ./
+# Copy package.json, yarn.lock, and .yarnrc.yml
+COPY package.json yarn.lock .yarnrc.yml ./
+
+# Install Yarn 4
+RUN corepack enable && corepack prepare yarn@stable --activate
 
 # Install dependencies
-RUN yarn install --frozen-lockfile
+RUN yarn install
 
 # Copy the rest of the application code
 COPY . .
