@@ -1,6 +1,6 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
 import { useNetworkConnectivity, usePWAManager } from "@remix-pwa/client";
-import { useSWEffect, sendSkipWaitingMessage } from "@remix-pwa/sw";
+import { ManifestLink, useSWEffect, sendSkipWaitingMessage } from "@remix-pwa/sw";
 import { MetaFunction } from "@remix-run/node";
 
 import "./tailwind.css";
@@ -28,6 +28,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
+        <ManifestLink manifestUrl="/manifest.json" />
         <Links />
       </head>
       <body>

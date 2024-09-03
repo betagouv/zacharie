@@ -6,7 +6,7 @@ import { remixPWA } from "@remix-pwa/dev";
 export default defineConfig({
   plugins: [
     remix({
-      ssr: false,
+      // ssr: false, // SPA MODE
       future: {
         v3_fetcherPersist: true,
         v3_relativeSplatPath: true,

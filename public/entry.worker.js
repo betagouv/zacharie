@@ -4855,14 +4855,14 @@ const defaultFetchHandler = async ({ context }) => {
 const version = "v2";
 const documentCache = new EnhancedCache("document-cache", {
   version,
-  strategy: "CacheFirst",
+  strategy: "NetworkFirst",
   strategyOptions: {
     maxEntries: 64
   }
 });
 const assetCache = new EnhancedCache("asset-cache", {
   version,
-  strategy: "CacheFirst",
+  strategy: "NetworkFirst",
   strategyOptions: {
     maxAgeSeconds: 60 * 60 * 24 * 90,
     // 90 days
@@ -4929,7 +4929,8 @@ const route1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
 }, Symbol.toStringTag, { value: "Module" }));
 const assets = [
   "/entry.worker.js",
-  "/favicon.ico"
+  "/favicon.ico",
+  "/manifest.json"
 ];
 const routes = {
   "root": {

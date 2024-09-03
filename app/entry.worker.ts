@@ -49,7 +49,7 @@ const version = "v2";
 // HTML cache
 const documentCache = new EnhancedCache("document-cache", {
   version,
-  strategy: "CacheFirst",
+  strategy: "NetworkFirst",
   strategyOptions: {
     maxEntries: 64,
   },
@@ -58,7 +58,7 @@ const documentCache = new EnhancedCache("document-cache", {
 // CSS, JS, and other assets cache
 const assetCache = new EnhancedCache("asset-cache", {
   version,
-  strategy: "CacheFirst",
+  strategy: "NetworkFirst",
   strategyOptions: {
     maxAgeSeconds: 60 * 60 * 24 * 90, // 90 days
     maxEntries: 100,
