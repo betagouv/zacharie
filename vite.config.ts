@@ -9,19 +9,23 @@ export default defineConfig({
     noExternal: ["@codegouvfr/react-dsfr"],
   },
 
-  plugins: [remix({
-    future: {
-      v3_fetcherPersist: true,
-      v3_relativeSplatPath: true,
-      v3_throwAbortReason: true,
-    },
-  }), tsconfigPaths(), remixPWA(), sentryVitePlugin({
-    org: "betagouv",
-    project: "zacharie-remix",
-    url: "https://sentry.incubateur.net/"
-  })],
-
+  plugins: [
+    remix({
+      future: {
+        v3_fetcherPersist: true,
+        v3_relativeSplatPath: true,
+        v3_throwAbortReason: true,
+      },
+    }),
+    tsconfigPaths(),
+    sentryVitePlugin({
+      org: "betagouv",
+      project: "zacharie-remix",
+      url: "https://sentry.incubateur.net/",
+    }),
+    remixPWA(),
+  ],
   build: {
-    sourcemap: true
-  }
+    sourcemap: true,
+  },
 });
