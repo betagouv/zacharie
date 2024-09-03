@@ -48,6 +48,9 @@ module.exports = {
           typescript: {},
         },
       },
+      rules: {
+        "react/no-unescaped-entities": "off",
+      },
     },
 
     // Typescript
