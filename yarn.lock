@@ -1620,6 +1620,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/crypto-js@npm:^4":
+  version: 4.2.2
+  resolution: "@types/crypto-js@npm:4.2.2"
+  checksum: 10c0/760a2078f36f2a3a1089ef367b0d13229876adcf4bcd6e8824d00d9e9bfad8118dc7e6a3cc66322b083535e12be3a29044ccdc9603bfb12519ff61551a3322c6
+  languageName: node
+  linkType: hard
+
 "@types/debug@npm:^4.0.0":
   version: 4.1.12
   resolution: "@types/debug@npm:4.1.12"
@@ -2881,6 +2888,13 @@ __metadata:
     shebang-command: "npm:^2.0.0"
     which: "npm:^2.0.1"
   checksum: 10c0/5738c312387081c98d69c98e105b6327b069197f864a60593245d64c8089c8a0a744e16349281210d56835bb9274130d825a78b2ad6853ca13cfbeffc0c31750
+  languageName: node
+  linkType: hard
+
+"crypto-js@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "crypto-js@npm:4.2.0"
+  checksum: 10c0/8fbdf9d56f47aea0794ab87b0eb9833baf80b01a7c5c1b0edc7faf25f662fb69ab18dc2199e2afcac54670ff0cd9607a9045a3f7a80336cccd18d77a55b9fdf0
   languageName: node
   linkType: hard
 
@@ -7494,6 +7508,47 @@ __metadata:
   languageName: node
   linkType: hard
 
+"remix-utils@npm:^7.6.0":
+  version: 7.6.0
+  resolution: "remix-utils@npm:7.6.0"
+  dependencies:
+    type-fest: "npm:^4.3.3"
+  peerDependencies:
+    "@remix-run/cloudflare": ^2.0.0
+    "@remix-run/deno": ^2.0.0
+    "@remix-run/node": ^2.0.0
+    "@remix-run/react": ^2.0.0
+    "@remix-run/router": ^1.7.2
+    crypto-js: ^4.1.1
+    intl-parse-accept-language: ^1.0.0
+    is-ip: ^5.0.1
+    react: ^18.0.0
+    zod: ^3.22.4
+  peerDependenciesMeta:
+    "@remix-run/cloudflare":
+      optional: true
+    "@remix-run/deno":
+      optional: true
+    "@remix-run/node":
+      optional: true
+    "@remix-run/react":
+      optional: true
+    "@remix-run/router":
+      optional: true
+    crypto-js:
+      optional: true
+    intl-parse-accept-language:
+      optional: true
+    is-ip:
+      optional: true
+    react:
+      optional: true
+    zod:
+      optional: true
+  checksum: 10c0/f1533cc596f53384c53e8b15a4f937d7ba3f55e793c9df2949a8a986fb41c28b03fbb2c1962baa9371401c7011b6d563385885d33bd4cbb66d9c1ecf5dbeb594
+  languageName: node
+  linkType: hard
+
 "require-like@npm:>= 0.1.1":
   version: 0.1.2
   resolution: "require-like@npm:0.1.2"
@@ -8514,6 +8569,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"type-fest@npm:^4.3.3":
+  version: 4.26.0
+  resolution: "type-fest@npm:4.26.0"
+  checksum: 10c0/3819b65fedd4655ed90703dad9e14248fb61f0a232dce8385e59771bdeaeca08195fe0683d892d62fcd84c0f3bb18bd4b0c3c2ba29023187d267868e75c53076
+  languageName: node
+  linkType: hard
+
 "type-is@npm:~1.6.18":
   version: 1.6.18
   resolution: "type-is@npm:1.6.18"
@@ -9163,6 +9225,7 @@ __metadata:
     "@remix-run/node": "npm:^2.11.2"
     "@remix-run/react": "npm:^2.11.2"
     "@types/compression": "npm:^1.7.5"
+    "@types/crypto-js": "npm:^4"
     "@types/express": "npm:^4.17.20"
     "@types/morgan": "npm:^1.9.9"
     "@types/react": "npm:^18.2.20"
@@ -9172,6 +9235,7 @@ __metadata:
     autoprefixer: "npm:^10.4.19"
     compression: "npm:^1.7.4"
     cross-env: "npm:^7.0.3"
+    crypto-js: "npm:^4.2.0"
     eslint: "npm:^8.38.0"
     eslint-import-resolver-typescript: "npm:^3.6.1"
     eslint-plugin-import: "npm:^2.28.1"
@@ -9184,6 +9248,7 @@ __metadata:
     postcss: "npm:^8.4.38"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
+    remix-utils: "npm:^7.6.0"
     tailwindcss: "npm:^3.4.4"
     typescript: "npm:^5.1.6"
     vite: "npm:^5.1.0"
