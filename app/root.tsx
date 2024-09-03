@@ -1,7 +1,7 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "@remix-run/react";
 import { useNetworkConnectivity, usePWAManager } from "@remix-pwa/client";
 import { ManifestLink, useSWEffect, sendSkipWaitingMessage } from "@remix-pwa/sw";
-import { MetaFunction } from "@remix-run/node";
+import { LoaderFunction, MetaFunction } from "@remix-run/node";
 
 import "./tailwind.css";
 
@@ -21,7 +21,17 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+export function loader(): ReturnType<LoaderFunction> {
+  return {
+    ENV: JSON.stringify({
+      TEST: process.env.TEST,
+      NODE_ENV: process.env.NODE_ENV,
+    }),
+  };
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { ENV } = useLoaderData<typeof loader>();
   return (
     <html lang="en">
       <head>
@@ -36,6 +46,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
+        <script
+          suppressHydrationWarning
+          type="text/javascript"
+          dangerouslySetInnerHTML={{
+            __html: `window.ENV=${ENV};`,
+          }}
+        />
       </body>
     </html>
   );
