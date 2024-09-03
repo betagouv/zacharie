@@ -1,3 +1,4 @@
+import './instrumentation.server.mjs';
 import { createRequestHandler } from "@remix-run/express";
 import compression from "compression";
 import express from "express";

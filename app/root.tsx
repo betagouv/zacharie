@@ -1,4 +1,13 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "@remix-run/react";
+import { captureRemixErrorBoundaryError } from "@sentry/remix";
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+  useRouteError,
+} from "@remix-run/react";
 import { useNetworkConnectivity, usePWAManager } from "@remix-pwa/client";
 import { ManifestLink, useSWEffect, sendSkipWaitingMessage } from "@remix-pwa/sw";
 import { LoaderFunction, MetaFunction } from "@remix-run/node";
@@ -137,6 +146,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     </html>
   );
 }
+
+export const ErrorBoundary = () => {
+  const error = useRouteError();
+  captureRemixErrorBoundaryError(error);
+  return <div>Something went wrong</div>;
+};
 
 export default function App() {
   const { ENV, honeypotInputProps } = useLoaderData<typeof loader>();
