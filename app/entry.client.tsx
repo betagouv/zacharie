@@ -7,6 +7,20 @@
 import { RemixBrowser } from "@remix-run/react";
 import { startTransition, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
+import { startReactDsfr } from "@codegouvfr/react-dsfr/spa";
+import { Link } from "react-router-dom";
+
+startReactDsfr({
+  Link,
+  // defaultColorScheme: "system",
+  defaultColorScheme: "light",
+});
+
+declare module "@codegouvfr/react-dsfr/spa" {
+  interface RegisterLink {
+    Link: typeof Link;
+  }
+}
 
 startTransition(() => {
   hydrateRoot(

@@ -4,9 +4,11 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { remixPWA } from "@remix-pwa/dev";
 
 export default defineConfig({
+  // ssr: {
+  //   noExternal: ["@codegouvfr/react-dsfr"],
+  // },
   plugins: [
     remix({
-      // ssr: false, // SPA MODE
       future: {
         v3_fetcherPersist: true,
         v3_relativeSplatPath: true,

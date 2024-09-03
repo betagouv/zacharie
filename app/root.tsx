@@ -2,6 +2,7 @@ import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "
 import { useNetworkConnectivity, usePWAManager } from "@remix-pwa/client";
 import { ManifestLink, useSWEffect, sendSkipWaitingMessage } from "@remix-pwa/sw";
 import { LoaderFunction, MetaFunction } from "@remix-run/node";
+import { Header } from "@codegouvfr/react-dsfr/Header";
 
 import "./tailwind.css";
 
@@ -24,7 +25,6 @@ export const meta: MetaFunction = () => {
 export function loader(): ReturnType<LoaderFunction> {
   return {
     ENV: JSON.stringify({
-      TEST: process.env.TEST,
       NODE_ENV: process.env.NODE_ENV,
     }),
   };
@@ -37,12 +37,73 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+          rel="apple-touch-icon"
+          href="./node_modules/@codegouvfr/react-dsfr/favicon/apple-touch-icon.png"
+        />
+        <link
+          rel="icon"
+          href="./node_modules/@codegouvfr/react-dsfr/favicon/favicon.svg"
+          type="image/svg+xml"
+        />
+        <link
+          rel="shortcut icon"
+          href="./node_modules/@codegouvfr/react-dsfr/favicon/favicon.ico"
+          type="image/x-icon"
+        />
+        <link
+          rel="manifest"
+          href="./node_modules/@codegouvfr/react-dsfr/favicon/manifest.webmanifest"
+          crossOrigin="use-credentials"
+        />
+
+        <link rel="stylesheet" href="./node_modules/@codegouvfr/react-dsfr/main.css" />
+
         <Meta />
         {/* https://remix-pwa.run/docs/main/web-manifest#registering-the-web-manifest */}
         <ManifestLink />
         <Links />
       </head>
       <body>
+        <Header
+          brandTop={
+            <>
+              INTITULE
+              <br />
+              OFFICIEL
+            </>
+          }
+          homeLinkProps={{
+            href: "/",
+            title: "Accueil - Nom de l’entité (ministère, secrétariat d‘état, gouvernement)",
+          }}
+          id="fr-header-header-with-quick-access-items"
+          quickAccessItems={[
+            {
+              iconId: "fr-icon-add-circle-line",
+              linkProps: {
+                href: "#",
+              },
+              text: "Créer un espace",
+            },
+            {
+              iconId: "fr-icon-mail-fill",
+              linkProps: {
+                href: "mailto:contact@code.gouv.fr",
+              },
+              text: "Contact us",
+            },
+            {
+              buttonProps: {
+                onClick: function noRefCheck() {},
+              },
+              iconId: "ri-account-box-line",
+              text: "Se connecter",
+            },
+          ]}
+          serviceTagline="baseline - précisions sur l'organisation"
+          serviceTitle="Nom du site / service"
+        />
         {children}
         <ScrollRestoration />
         <Scripts />

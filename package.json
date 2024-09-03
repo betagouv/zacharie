@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "build": "remix vite:build",
-    "dev": "node ./server.js",
+    "dev": "react-dsfr update-icons && node ./server.js",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-    "start": "cross-env NODE_ENV=production node ./server.js",
+    "start": "react-dsfr update-icons && cross-env NODE_ENV=production node ./server.js",
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@codegouvfr/react-dsfr": "^1.11.5",
     "@remix-pwa/client": "^3.0.6",
     "@remix-pwa/sw": "^3.0.9",
     "@remix-pwa/worker-runtime": "^2.1.4",

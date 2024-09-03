@@ -372,6 +372,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@codegouvfr/react-dsfr@npm:^1.11.5":
+  version: 1.11.5
+  resolution: "@codegouvfr/react-dsfr@npm:1.11.5"
+  dependencies:
+    tsafe: "npm:^1.7.2"
+    yargs-parser: "npm:^21.1.1"
+  bin:
+    copy-dsfr-to-public: bin/copy-dsfr-to-public.js
+    only-include-used-icons: bin/only-include-used-icons.js
+    react-dsfr: bin/react-dsfr.js
+  checksum: 10c0/4a18904adbb3c9844be586032f69e34be854fdf3961d0c78213b2a1ed298e27c3eee7b1db4833e6745ebc76d3c868447503f4daae4e17ee18ef525d908997f2e
+  languageName: node
+  linkType: hard
+
 "@emotion/hash@npm:^0.9.0":
   version: 0.9.2
   resolution: "@emotion/hash@npm:0.9.2"
@@ -8433,6 +8447,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tsafe@npm:^1.7.2":
+  version: 1.7.2
+  resolution: "tsafe@npm:1.7.2"
+  checksum: 10c0/b7113b331a9aea5e0ac779573dc6b104581f29bda72814e3c5df6657f4732671cc63c059f6c15be18e9e570c77fbed12c3ae1157a10eb21606521fae197fddec
+  languageName: node
+  linkType: hard
+
 "tsconfck@npm:^3.0.3":
   version: 3.1.3
   resolution: "tsconfck@npm:3.1.3"
@@ -9114,6 +9135,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"yargs-parser@npm:^21.1.1":
+  version: 21.1.1
+  resolution: "yargs-parser@npm:21.1.1"
+  checksum: 10c0/f84b5e48169479d2f402239c59f084cfd1c3acc197a05c59b98bab067452e6b3ea46d4dd8ba2985ba7b3d32a343d77df0debd6b343e5dae3da2aab2cdf5886b2
+  languageName: node
+  linkType: hard
+
 "yocto-queue@npm:^0.1.0":
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
@@ -9125,6 +9153,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "zacharie-express@workspace:."
   dependencies:
+    "@codegouvfr/react-dsfr": "npm:^1.11.5"
     "@remix-pwa/client": "npm:^3.0.6"
     "@remix-pwa/dev": "npm:^3.1.0"
     "@remix-pwa/sw": "npm:^3.0.9"
