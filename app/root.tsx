@@ -6,15 +6,16 @@ import { Header } from "@codegouvfr/react-dsfr/Header";
 import { Footer } from "@codegouvfr/react-dsfr/Footer";
 import {
   ConsentBannerAndConsentManagement,
-  FooterConsentManagementItem,
-  FooterPersonalDataPolicyItem,
+  // FooterConsentManagementItem,
+  // FooterPersonalDataPolicyItem,
 } from "~/components/consentManagement";
 
 import "./tailwind.css";
+import "@codegouvfr/react-dsfr/main.css";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Zacharie" },
+    { title: "Zacharie | Ministère de l'Agriculture" },
     {
       name: "og:title",
       content:
@@ -37,7 +38,6 @@ export function loader(): ReturnType<LoaderFunction> {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { ENV } = useLoaderData<typeof loader>();
   return (
     <html lang="en">
       <head>
@@ -135,19 +135,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
         <ScrollRestoration />
         <Scripts />
-        <script
-          suppressHydrationWarning
-          type="text/javascript"
-          dangerouslySetInnerHTML={{
-            __html: `window.ENV=${ENV};`,
-          }}
-        />
       </body>
     </html>
   );
 }
 
 export default function App() {
+  const { ENV } = useLoaderData<typeof loader>();
   useSWEffect();
   useNetworkConnectivity({
     onOnline: () => {
@@ -175,6 +169,13 @@ export default function App() {
         </div>
       )}
       <Outlet />
+      <script
+        suppressHydrationWarning
+        type="text/javascript"
+        dangerouslySetInnerHTML={{
+          __html: `window.ENV=${ENV};`,
+        }}
+      />
     </>
   );
 }
