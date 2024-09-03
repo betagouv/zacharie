@@ -28,7 +28,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
-        <ManifestLink manifestUrl="/manifest.json" />
+        {/* https://remix-pwa.run/docs/main/web-manifest#registering-the-web-manifest */}
+        <ManifestLink />
         <Links />
       </head>
       <body>
@@ -72,6 +73,6 @@ export default function App() {
   );
 }
 
-export function HydrateFallback() {
-  return <p>Chargement...</p>;
-}
+// export function HydrateFallback() {
+//   return <p>Chargement...</p>;
+// }

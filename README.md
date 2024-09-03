@@ -15,7 +15,7 @@ On a donc choisi
 Ce paragraphe est juste un historique pour se souvenir, pas une doc à utiliser
 
 - [`yarn set version stable`](https://yarnpkg.com/getting-started/install#updating-yarn) pour avoir la dernière version de yarn (v4)
-- [`npx create-remix@latest --template remix-run/remix/templates/spa`](https://remix.run/docs/en/main/guides/spa-mode#usage) parce qu'on pense que le côté SPA est plus adapté à notre usage offline
+- [`npx create-remix@latest --template remix-run/remix/templates/express`](https://github.com/remix-run/remix/blob/main/templates/express/README.md) parce qu'on aime bien les API express
 - `touch yarn.lock` pour utiliser yarn en package manager
 - [`touch .yarnrc.yml`](https://stackoverflow.com/a/78719394/5225096) pour utiliser les node_modules (sinon ça utilise un pnp.cjs moins conventionnel), avec le contenu que vous pouvez aller voir dans le fichier
 - puis `yarn` pour installer
