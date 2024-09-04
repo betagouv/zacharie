@@ -55,10 +55,10 @@ export async function action({ request }: ActionFunctionArgs) {
     user = await prisma.user.create({ data: { email } });
   }
   const hashedPassword = await hashPassword(passwordUser);
-  const existingPassword = await prisma.password.findFirst({ where: { userId: user.id } });
+  const existingPassword = await prisma.password.findFirst({ where: { user_id: user.id } });
   if (!existingPassword) {
     await prisma.password.create({
-      data: { userId: user.id, password: hashedPassword },
+      data: { user_id: user.id, password: hashedPassword },
     });
   } else {
     const isOk = await comparePassword(passwordUser, existingPassword.password);

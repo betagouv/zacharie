@@ -29,17 +29,17 @@ export const getUserFromCookie = async (
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
-  if (user && !user.deletedAt) {
+  if (user && !user.deleted_at) {
     Sentry.setUser({
       id: userId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
+      firstName: user.prenom,
+      lastName: user.nom_de_famille,
+      email: user.email ?? "",
     });
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        lastSeenAt: new Date(),
+        last_seen_at: new Date(),
       },
     });
     if (successRedirect) throw redirect(successRedirect);
@@ -94,7 +94,7 @@ export const createUserSession = async (request: Request, user: User, failureRed
   session.set("userEmail", user.email);
   await prisma.user.update({
     where: { id: user.id },
-    data: { lastLoginAt: new Date() },
+    data: { last_login_at: new Date() },
   });
   if (!failureRedirect) return await commitSession(session);
   throw redirect(failureRedirect, {
