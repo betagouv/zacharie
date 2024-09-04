@@ -1,3 +1,11 @@
+import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { getUserFromCookie } from "~/services/auth.server";
+
+export function loader({ request }: LoaderFunctionArgs) {
+  const user = getUserFromCookie(request);
+  return json({ user });
+}
+
 export default function TableauDeBord() {
   return (
     <section className="fr-container min-h-[50vh] flex flex-col justify-center my-auto">

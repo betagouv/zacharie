@@ -1,20 +1,15 @@
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { ActionFunctionArgs } from "@remix-run/node";
-import { Form, json, Link, redirect, useActionData, useSearchParams } from "@remix-run/react";
+import { ActionFunctionArgs, json } from "@remix-run/node";
+import { Form, Link, redirect, useActionData, useSearchParams } from "@remix-run/react";
 import { SpamError } from "remix-utils/honeypot/server";
 import { honeypot } from "~/services/honeypot.server";
 import { capture } from "~/services/capture";
 import { prisma } from "~/db/prisma.server";
 import { comparePassword, hashPassword } from "~/services/crypto.server";
-import Button from "@codegouvfr/react-dsfr/Button";
+import { Button } from "@codegouvfr/react-dsfr/Button";
+import { createUserSession } from "~/services/auth.server";
 
 type ConnexionType = "creation-de-compte" | "compte-existant";
-type Error =
-  | "Veuillez renseigner votre email"
-  | "Veuillez renseigner votre mot de passe"
-  | "L'URL de connexion est incorrecte"
-  | "L'email est incorrect, ou vous n'avez pas encore de compte"
-  | "Le mot de passe est incorrect";
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -75,7 +70,7 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     }
   }
-  return redirect("/tableau-de-bord");
+  return createUserSession(request, user, "/tableau-de-bord");
 }
 
 export default function Connexion() {

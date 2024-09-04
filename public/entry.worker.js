@@ -5045,7 +5045,7 @@ const routes = {
     path: "tableau-de-bord",
     index: void 0,
     caseSensitive: void 0,
-    hasLoader: false,
+    hasLoader: true,
     hasAction: false,
     hasWorkerLoader: false,
     hasWorkerAction: false,
