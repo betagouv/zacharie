@@ -58,36 +58,39 @@ model User {
 
 model Password {
   // cascade delete
-  id         String   @id @default(uuid())
-  user_id    String   @unique
+  id         String    @id @default(uuid())
+  user_id    String    @unique
   password   String
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
-  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  deleted_at DateTime?
+  User       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
 }
 
 model UserRelations {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   owner_id   String
   related_id String
   relation   String // related role, or whatever
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
-  User       User     @relation("owner", fields: [owner_id], references: [id], onDelete: Cascade)
-  Related    User     @relation("related", fields: [related_id], references: [id], onDelete: Cascade)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  deleted_at DateTime?
+  User       User      @relation("owner", fields: [owner_id], references: [id], onDelete: Cascade)
+  Related    User      @relation("related", fields: [related_id], references: [id], onDelete: Cascade)
 
   @@index([owner_id, relation])
 }
 
 model Logs {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   user_id    String
   action     String // login, logout, password_change, user_update, user_create, user_delete, fei_created, etc
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
-  User       User?    @relation(fields: [user_id], references: [id])
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  deleted_at DateTime?
+  User       User?     @relation(fields: [user_id], references: [id])
 
   @@index([user_id, action])
 }
@@ -106,6 +109,7 @@ model Fei {
   created_by                                              String
   created_at                                              DateTime   @default(now())
   updated_at                                              DateTime   @default(now()) @updatedAt
+  deleted_at                                              DateTime?
   Carcasse                                                Carcasse[]
   CreatedBy                                               User       @relation("CreatedBy", fields: [created_by], references: [id])
   DetenteurActuel                                         User?      @relation("DetenteurActuel", fields: [detenteur_actuel_id], references: [id])
@@ -135,6 +139,7 @@ model SuiviFei {
   fei_commentaire                    String?
   created_at                         DateTime  @default(now())
   updated_at                         DateTime  @default(now()) @updatedAt
+  deleted_at                         DateTime?
   FeiOwner                           User      @relation("Owner", fields: [fei_user_id], references: [id])
   TransferedToUser                   User?     @relation("TransferedToUser", fields: [fei_transfered_to], references: [id])
   Fei                                Fei       @relation(fields: [fei_id], references: [id], onDelete: Cascade)
@@ -150,6 +155,7 @@ model Carcasse {
   heure_evisceration DateTime        @db.Time
   created_at         DateTime        @default(now())
   updated_at         DateTime        @default(now()) @updatedAt
+  deleted_at         DateTime?
   Fei                Fei             @relation(fields: [fei_id], references: [id], onDelete: Cascade)
   SuiviCarcasse      SuiviCarcasse[]
 
@@ -183,6 +189,7 @@ model SuiviCarcasse {
   carcasse_commentaire                    String?
   created_at                              DateTime  @default(now())
   updated_at                              DateTime  @default(now()) @updatedAt
+  deleted_at                              DateTime?
   User                                    User      @relation(fields: [carcasse_user_id], references: [id])
   Carcasse                                Carcasse  @relation(fields: [carcasse_id], references: [id], onDelete: Cascade)
 
