@@ -7,30 +7,187 @@ datasource db {
   url      = env("POSTGRESQL_ADDON_URI")
 }
 
-model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  firstName    String?
-  lastName     String?
-  otp          String?
-  otpCreatedAt DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @default(now()) @updatedAt
-  lastLoginAt  DateTime?
-  lastSeenAt   DateTime?
-  deletedAt    DateTime?
-  Password     Password?
+// Tous les rôles possibles pour un utilisateur au contact de la venaison (gibier)
+enum UserRoles {
+  ADMIN
+  EXAMINATEUR_INITIAL
+  DETENTEUR_INITIAL // un chasseur, une association de chasse, une structure professionnelle de chasse qui se charge d'indiquer le destinataire final du gibier
+  EXPLOITANT_CENTRE_COLLECTE // Exploitant de Centre de Collecte de Gibier où sont entreposées les venaisons à la fin de la chasse
+  COLLECTEUR_PRO // Transporteur de Gibier
+  //Destinataires finaux du gibier
+  COMMERCE_DE_DETAIL // Commerce de détail
+  REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
+  CONSOMMATEUR_FINAL // Je chasse pour ma consommation personnelle
+  BOUCHER
+  RESTAURATEUR
+  ETG // Etablissement de Traitement du Gibier
+  SVI // Service Vétérinaire d'Inspection
+}
 
-  @@index([email, firstName, lastName])
+model User {
+  id                     String          @id @default(uuid())
+  email                  String?         @unique // email is optional, we can have users without email like the Collecteur Pro
+  telephone              String?
+  prenom                 String?
+  nom_de_famille         String?
+  raison_sociale         String?
+  numero_cfei            String? // Chasseur Formé à l'Examen Initial (de la form CFEI-DEP-YY-001)
+  numero_centre_collecte String? // pour les EXPLOITANT_CENTRE_COLLECTE et COLLECTEUR_PRO qui ont un entrepôt de gibier
+  address_ligne_1        String?
+  address_ligne_2        String?
+  code_postal            String?
+  ville                  String?
+  roles                  String[]
+  created_at             DateTime        @default(now())
+  updated_at             DateTime        @default(now()) @updatedAt
+  last_login_at          DateTime?
+  last_seen_at           DateTime?
+  deleted_at             DateTime?
+  Password               Password?
+  UserRelationsOwner     UserRelations[] @relation("owner")
+  UserRelationsRelated   UserRelations[] @relation("related")
+  FeiCurrentUser         Fei[]           @relation("DetenteurActuel")
+  FeiCreatedBy           Fei[]           @relation("CreatedBy")
+  FeiOwner               SuiviFei[]      @relation("Owner")
+  FeiTransferedToUser    SuiviFei[]      @relation("TransferedToUser")
+  Logs                   Logs[]
+  SuiviCarcasse          SuiviCarcasse[]
+
+  @@index([email, prenom, nom_de_famille])
 }
 
 model Password {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  User      User     @relation(fields: [userId], references: [id])
+  // cascade delete
 
-  @@index([userId])
+  id         String   @id @default(uuid())
+  user_id    String   @unique
+  password   String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model UserRelations {
+  id         String   @id @default(uuid())
+  owner_id   String
+  related_id String
+  relation   String // related role, or whatever
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  User       User     @relation("owner", fields: [owner_id], references: [id], onDelete: Cascade)
+  Related    User     @relation("related", fields: [related_id], references: [id], onDelete: Cascade)
+
+  @@index([owner_id, relation])
+}
+
+model Logs {
+  id         String   @id @default(uuid())
+  user_id    String
+  action     String // login, logout, password_change, user_update, user_create, user_delete, fei_created, etc
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  User       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+
+  @@index([user_id])
+}
+
+// Fiche d'Examen Initial
+model Fei {
+  id                                                      Int        @id @default(autoincrement())
+  detenteur_actuel_id                                     String? // the user who is currently responsible for this FEI
+  numero                                                  String?
+  date_mise_a_mort                                        DateTime?  @db.Date
+  commune_mise_a_mort                                     String?
+  approbation_mise_sur_le_marche_examinateur_initial      Boolean?
+  date_approbation_mise_sur_le_marche_examinateur_initial DateTime?
+  date_depot_centre_collecte                              DateTime?
+  date_validation_svi                                     DateTime?
+  created_by                                              String
+  created_at                                              DateTime   @default(now())
+  updated_at                                              DateTime   @default(now()) @updatedAt
+  Carcasse                                                Carcasse[]
+  CreatedBy                                               User       @relation("CreatedBy", fields: [created_by], references: [id])
+  DetenteurActuel                                         User?      @relation("DetenteurActuel", fields: [detenteur_actuel_id], references: [id])
+  SuiviFei                                                SuiviFei[]
+}
+
+model SuiviFei {
+  id                                 String   @id @default(uuid())
+  fei_id                             Int
+  fei_user_id                        String
+  fei_user_role                      String
+  fei_user_email                     String? // cached
+  fei_user_telephone                 String? // cached
+  fei_user_prenom                    String? // cached
+  fei_user_nom_de_famille            String? // cached
+  fei_user_raison_sociale            String? // cached
+  fei_user_numero_cfei               String? // cached
+  fei_user_numero_centre_collecte    String? // cached
+  fei_user_address_ligne_1           String? // cached
+  fei_user_address_ligne_2           String? // cached
+  fei_user_code_postal               String? // cached
+  fei_user_ville                     String? // cached
+  fei_transfered_to                  String? // the next user who is currently responsible for this FEI
+  fei_approbation_mise_sur_le_marche Boolean?
+  fei_commentaire                    String?
+  created_at                         DateTime @default(now())
+  updated_at                         DateTime @default(now()) @updatedAt
+  FeiOwner                           User     @relation("Owner", fields: [fei_user_id], references: [id])
+  TransferedToUser                   User?    @relation("TransferedToUser", fields: [fei_transfered_to], references: [id])
+  Fei                                Fei      @relation(fields: [fei_id], references: [id])
+
+  @@index([fei_id])
+  @@index([fei_user_id])
+  @@index([fei_transfered_to])
+}
+
+model Carcasse {
+  id                 String          @id @default(uuid())
+  fei_id             Int
+  numero_bracelet    String          @unique
+  heure_mise_a_mort  DateTime        @db.Time
+  heure_evisceration DateTime        @db.Time
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @default(now()) @updatedAt
+  Fei                Fei             @relation(fields: [fei_id], references: [id], onDelete: Cascade)
+  SuiviCarcasse      SuiviCarcasse[]
+
+  @@index([fei_id])
+}
+
+model SuiviCarcasse {
+  id                                      String    @id @default(uuid())
+  carcasse_id                             String
+  carcasse_user_id                        String
+  carcasse_user_role                      String
+  carcasse_user_email                     String? // cached
+  carcasse_user_telephone                 String? // cached
+  carcasse_user_prenom                    String? // cached
+  carcasse_user_nom_de_famille            String? // cached
+  carcasse_user_raison_sociale            String? // cached
+  carcasse_user_numero_cfei               String? // cached
+  carcasse_user_numero_centre_collecte    String? // cached
+  carcasse_user_address_ligne_1           String? // cached
+  carcasse_user_address_ligne_2           String? // cached
+  carcasse_user_code_postal               String? // cached
+  carcasse_user_ville                     String? // cached
+  carcasse_prise_en_charge                Boolean?
+  carcasse_date_prise_en_charge           DateTime?
+  carcasse_motif_refus                    String?
+  carcasse_approbation_mise_sur_le_marche Boolean?
+  carcasse_sans_anomalie                  Boolean?
+  anomalies_carcasse                      String[]
+  abats_sans_anomalie                     Boolean?
+  anomalies_abats                         String[]
+  carcasse_commentaire                    String?
+  created_at                              DateTime  @default(now())
+  updated_at                              DateTime  @default(now()) @updatedAt
+  User                                    User      @relation(fields: [carcasse_user_id], references: [id])
+  Carcasse                                Carcasse  @relation(fields: [carcasse_id], references: [id])
+
+  @@index([carcasse_id])
+  @@index([carcasse_user_id])
 }
