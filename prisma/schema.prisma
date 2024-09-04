@@ -32,6 +32,7 @@ model User {
   nom_de_famille         String?
   raison_sociale         String?
   numero_cfei            String? // Chasseur Formé à l'Examen Initial (de la form CFEI-DEP-YY-001)
+  numero_frei            String? // Formateur Référent Examen Initial (de la form DEP-FREI-YY-001)
   numero_centre_collecte String? // pour les EXPLOITANT_CENTRE_COLLECTE et COLLECTEUR_PRO qui ont un entrepôt de gibier
   address_ligne_1        String?
   address_ligne_2        String?
