@@ -37,7 +37,7 @@ model User {
   address_ligne_2        String?
   code_postal            String?
   ville                  String?
-  roles                  String[]
+  roles                  UserRoles[]
   created_at             DateTime        @default(now())
   updated_at             DateTime        @default(now()) @updatedAt
   last_login_at          DateTime?
@@ -48,17 +48,16 @@ model User {
   UserRelationsRelated   UserRelations[] @relation("related")
   FeiCurrentUser         Fei[]           @relation("DetenteurActuel")
   FeiCreatedBy           Fei[]           @relation("CreatedBy")
-  FeiOwner               SuiviFei[]      @relation("Owner")
+  SuiviFeiOwner          SuiviFei[]      @relation("Owner")
   FeiTransferedToUser    SuiviFei[]      @relation("TransferedToUser")
   Logs                   Logs[]
   SuiviCarcasse          SuiviCarcasse[]
 
-  @@index([email, prenom, nom_de_famille])
+  @@index([email, prenom, nom_de_famille, roles])
 }
 
 model Password {
   // cascade delete
-
   id         String   @id @default(uuid())
   user_id    String   @unique
   password   String
@@ -88,19 +87,18 @@ model Logs {
   action     String // login, logout, password_change, user_update, user_create, user_delete, fei_created, etc
   created_at DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
-  User       User?    @relation(fields: [userId], references: [id])
-  userId     String?
+  User       User?    @relation(fields: [user_id], references: [id])
 
-  @@index([user_id])
+  @@index([user_id, action])
 }
 
 // Fiche d'Examen Initial
 model Fei {
   id                                                      Int        @id @default(autoincrement())
   detenteur_actuel_id                                     String? // the user who is currently responsible for this FEI
-  numero                                                  String?
-  date_mise_a_mort                                        DateTime?  @db.Date
-  commune_mise_a_mort                                     String?
+  numero                                                  String     @unique
+  date_mise_a_mort                                        DateTime   @db.Date
+  commune_mise_a_mort                                     String
   approbation_mise_sur_le_marche_examinateur_initial      Boolean?
   date_approbation_mise_sur_le_marche_examinateur_initial DateTime?
   date_depot_centre_collecte                              DateTime?
@@ -112,13 +110,15 @@ model Fei {
   CreatedBy                                               User       @relation("CreatedBy", fields: [created_by], references: [id])
   DetenteurActuel                                         User?      @relation("DetenteurActuel", fields: [detenteur_actuel_id], references: [id])
   SuiviFei                                                SuiviFei[]
+
+  @@index([detenteur_actuel_id, numero, date_mise_a_mort])
 }
 
 model SuiviFei {
-  id                                 String   @id @default(uuid())
+  id                                 String    @id @default(uuid())
   fei_id                             Int
   fei_user_id                        String
-  fei_user_role                      String
+  fei_user_role                      UserRoles
   fei_user_email                     String? // cached
   fei_user_telephone                 String? // cached
   fei_user_prenom                    String? // cached
@@ -133,15 +133,13 @@ model SuiviFei {
   fei_transfered_to                  String? // the next user who is currently responsible for this FEI
   fei_approbation_mise_sur_le_marche Boolean?
   fei_commentaire                    String?
-  created_at                         DateTime @default(now())
-  updated_at                         DateTime @default(now()) @updatedAt
-  FeiOwner                           User     @relation("Owner", fields: [fei_user_id], references: [id])
-  TransferedToUser                   User?    @relation("TransferedToUser", fields: [fei_transfered_to], references: [id])
-  Fei                                Fei      @relation(fields: [fei_id], references: [id])
+  created_at                         DateTime  @default(now())
+  updated_at                         DateTime  @default(now()) @updatedAt
+  FeiOwner                           User      @relation("Owner", fields: [fei_user_id], references: [id])
+  TransferedToUser                   User?     @relation("TransferedToUser", fields: [fei_transfered_to], references: [id])
+  Fei                                Fei       @relation(fields: [fei_id], references: [id], onDelete: Cascade)
 
-  @@index([fei_id])
-  @@index([fei_user_id])
-  @@index([fei_transfered_to])
+  @@index([fei_id, fei_user_id, fei_user_role])
 }
 
 model Carcasse {
@@ -155,14 +153,14 @@ model Carcasse {
   Fei                Fei             @relation(fields: [fei_id], references: [id], onDelete: Cascade)
   SuiviCarcasse      SuiviCarcasse[]
 
-  @@index([fei_id])
+  @@index([fei_id, numero_bracelet])
 }
 
 model SuiviCarcasse {
   id                                      String    @id @default(uuid())
   carcasse_id                             String
   carcasse_user_id                        String
-  carcasse_user_role                      String
+  carcasse_user_role                      UserRoles
   carcasse_user_email                     String? // cached
   carcasse_user_telephone                 String? // cached
   carcasse_user_prenom                    String? // cached
@@ -186,8 +184,7 @@ model SuiviCarcasse {
   created_at                              DateTime  @default(now())
   updated_at                              DateTime  @default(now()) @updatedAt
   User                                    User      @relation(fields: [carcasse_user_id], references: [id])
-  Carcasse                                Carcasse  @relation(fields: [carcasse_id], references: [id])
+  Carcasse                                Carcasse  @relation(fields: [carcasse_id], references: [id], onDelete: Cascade)
 
-  @@index([carcasse_id])
-  @@index([carcasse_user_id])
+  @@index([carcasse_id, carcasse_user_id, carcasse_user_role])
 }
