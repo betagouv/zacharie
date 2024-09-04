@@ -19,7 +19,11 @@ export const { getSession, commitSession, destroySession } = createCookieSession
 
 export const getUserFromCookie = async (
   request: Request,
-  { failureRedirect = "/", successRedirect = null, optional = false } = {}
+  {
+    failureRedirect = "/connexion?type=compte-existant",
+    successRedirect = null,
+    optional = false,
+  } = {}
 ) => {
   const userId = await getUserIdFromCookie(request, { optional: true });
   if (!userId) {

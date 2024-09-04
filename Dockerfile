@@ -13,8 +13,10 @@ COPY package.json yarn.lock ./
 # Copy .yarnrc.yml if it exists
 COPY .yarnrc.yml* ./
 
-# Install dependencies with increased network timeout
-RUN yarn install --network-timeout 100000
+# Copy Prisma schema
+COPY prisma ./prisma
+
+RUN YARN_ENABLE_GLOBAL_CACHE=false YARN_ENABLE_MIRROR=false YARN_ENABLE_INLINE_BUILDS=true yarn install
 
 # Copy the rest of the application code
 COPY . .

@@ -2,10 +2,7 @@ import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request, {
-    optional: false,
-    failureRedirect: "/connexion?type=compte-existant",
-  });
+  const user = await getUserFromCookie(request);
   console.log(user);
   return json({ user });
 }
