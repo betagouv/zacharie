@@ -1,6 +1,7 @@
+import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Footer } from "@codegouvfr/react-dsfr/Footer";
 import { Header } from "@codegouvfr/react-dsfr/Header";
-import { Outlet, useSubmit } from "@remix-run/react";
+import { Outlet } from "@remix-run/react";
 // import type { MetaFunction } from "@remix-run/node";
 
 // export const meta: MetaFunction = () => {
@@ -10,13 +11,7 @@ import { Outlet, useSubmit } from "@remix-run/react";
 //   ];
 // };
 
-export default function TableauDeBordIndex() {
-  const submit = useSubmit();
-
-  const handleLogout = () => {
-    submit(null, { method: "post", action: "/actions/logout" });
-  };
-
+export default function Index() {
   return (
     <>
       <Header
@@ -32,16 +27,25 @@ export default function TableauDeBordIndex() {
           title: "Zacharie - Ministère de l'Agriculture",
         }}
         id="fr-header-header-with-quick-access-items"
-        navigation={[
+        quickAccessItems={[
           {
             linkProps: {
-              onClick: handleLogout,
-              type: "submit",
+              to: "/connexion?type=compte-existant",
               href: "#",
             },
-            text: "Se déconnecter",
+            iconId: "ri-account-box-line",
+            text: "Se connecter",
           },
           {
+            linkProps: {
+              to: "/connexion?type=creation-de-compte",
+              href: "#",
+            },
+            iconId: "fr-icon-add-circle-line",
+            text: "Créer un espace",
+          },
+          {
+            iconId: "fr-icon-mail-fill",
             linkProps: {
               href: "mailto:contact@code.gouv.fr",
             },
