@@ -11,8 +11,9 @@
     "prisma-create-migration": "NODE_ENV=development npx prisma migrate dev --name",
     "prisma-deploy": "NODE_ENV=production npx prisma migrate deploy",
     "prisma-reset-db": "rm -rf prisma/migrations && npx prisma migrate reset --force && npm run prisma-setup",
-    "start": "react-dsfr update-icons && cross-env NODE_ENV=production node ./server.js",
-    "typecheck": "tsc"
+    "start": "npx prisma migrate deploy && react-dsfr update-icons && cross-env NODE_ENV=production node ./server.js",
+    "typecheck": "tsc",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@codegouvfr/react-dsfr": "^1.11.5",
