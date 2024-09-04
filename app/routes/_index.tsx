@@ -15,10 +15,18 @@ export default function Index() {
         <h1 className="fr-h1">La Fiche d'Examen Initial SIMPLIFIÉE</h1>
         <Button
           linkProps={{
-            to: "connexion",
+            to: "connexion?type=compte-existant",
           }}
-          iconId="ri-account-box-line">
-          Se connecter / Créer un espace
+          iconId="ri-account-box-line"
+          className="mb-6">
+          Se connecter
+        </Button>
+        <Button
+          linkProps={{
+            to: "connexion?type=creation-de-compte",
+          }}
+          iconId="fr-icon-add-circle-line">
+          Créer un espace
         </Button>
       </div>
     </section>

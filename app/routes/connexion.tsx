@@ -1,45 +1,88 @@
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { ActionFunctionArgs } from "@remix-run/node";
-import { Form, json, redirect } from "@remix-run/react";
+import { Form, json, Link, redirect, useActionData, useSearchParams } from "@remix-run/react";
 import { SpamError } from "remix-utils/honeypot/server";
-import { sendEmail } from "~/services/sendEmail";
 import { honeypot } from "~/services/honeypot.server";
+import { capture } from "~/services/capture";
+import { prisma } from "~/db/prisma.server";
+import { comparePassword, hashPassword } from "~/services/crypto.server";
+import Button from "@codegouvfr/react-dsfr/Button";
+
+type ConnexionType = "creation-de-compte" | "compte-existant";
+type Error =
+  | "Veuillez renseigner votre email"
+  | "Veuillez renseigner votre mot de passe"
+  | "L'URL de connexion est incorrecte"
+  | "L'email est incorrect, ou vous n'avez pas encore de compte"
+  | "Le mot de passe est incorrect";
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
-  const email = formData.get("email");
+  const email = formData.get("email-utilisateur") as string;
+  const passwordUser = formData.get("password-utilisateur") as string;
+  const connexionType = formData.get("connexion-type") as ConnexionType;
   if (!email) {
-    return json({ error: "Email is required" }, { status: 400 });
+    return json({ ok: false, error: "Veuillez renseigner votre email" });
+  }
+  if (!passwordUser) {
+    return json({ ok: false, error: "Veuillez renseigner votre mot de passe" });
+  }
+  if (!connexionType) {
+    return json({ ok: false, error: "L'URL de connexion est incorrecte" });
   }
   try {
     honeypot.check(formData);
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
     if (error instanceof SpamError) {
       // handle spam requests here
-      console.error("Spam detected", error);
-      throw redirect("/");
+      capture(error, { extra: { email, message: "Spam detected" } });
     } else {
-      console.error("Unknown error", error);
+      capture(error, { extra: { email, message: "Unknown error" } });
     }
     throw redirect("/");
     // handle any other possible error here, e.g. re-throw since nothing else
     // should be thrown
   }
-  // let user = await prisma.user.findUnique({ where: { email } });
-  // if (!user) user = await prisma.user.create({ data: { email } });
-  // const otp = Math.random().toString(36).substring(2, 8).toLocaleUpperCase();
-  // await prisma.user.update({ where: { email }, data: { otp, otpCreatedAt: new Date() } });
-  // const magicLinkEmail = createMagicLinkEmail(user, otp);
-  // if (process.env.NODE_ENV === "development") {
-  //   console.log("code unique ", otp);
-  //   // await sendEmail(magicLinkEmail);
-  // } else {
-  //   await sendEmail(magicLinkEmail);
-  // }
-  // throw redirect(loginRedirectLink);
+  let user = await prisma.user.findUnique({ where: { email } });
+  if (user) {
+    if (connexionType === "creation-de-compte") {
+      return json({ ok: false, error: "Un compte existe déjà avec cet email" });
+    }
+  }
+  if (!user) {
+    if (connexionType === "compte-existant") {
+      return json({
+        ok: false,
+        error: "L'email est incorrect, ou vous n'avez pas encore de compte",
+      });
+    }
+    user = await prisma.user.create({ data: { email } });
+  }
+  const hashedPassword = await hashPassword(passwordUser);
+  const existingPassword = await prisma.password.findFirst({ where: { userId: user.id } });
+  if (!existingPassword) {
+    await prisma.password.create({
+      data: { userId: user.id, password: hashedPassword },
+    });
+  } else {
+    const isOk = await comparePassword(passwordUser, existingPassword.password);
+    if (!isOk) {
+      if (connexionType === "compte-existant") {
+        return json({ ok: false, error: "Le mot de passe est incorrect" });
+      } else {
+        return json({ ok: false, error: "Un compte existe déjà avec cet email" });
+      }
+    }
+  }
+  return redirect("/tableau-de-bord");
 }
 
 export default function Connexion() {
+  const data = useActionData<typeof action>();
+  const [searchParams] = useSearchParams();
+  const connexionType = searchParams.get("type") as ConnexionType;
+
   return (
     <div className="fr-container fr-container--fluid fr-mb-10v" id="root-container">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center ">
@@ -76,26 +119,68 @@ export default function Connexion() {
                 id="login-1760-fieldset"
                 aria-labelledby="login-1760-fieldset-legend login-1760-fieldset-messages">
                 <legend className="fr-fieldset__legend" id="login-1760-fieldset-legend">
-                  <h2 className="fr-h3">Me connecter</h2>
+                  <h2 className="fr-h3">
+                    {connexionType === "creation-de-compte" ? (
+                      <>Créer mon compte</>
+                    ) : (
+                      <>Me connecter</>
+                    )}
+                  </h2>
                 </legend>
               </fieldset>
+              <input type="hidden" name="connexion-type" value={connexionType} />
               <Input
-                hintText="Un code vous sera envoyé pour vous connecter"
+                hintText="Renseignez votre email ci-dessous"
                 label="Mon email"
-                state="default"
+                state={data?.error.includes("email") ? "error" : "default"}
+                stateRelatedMessage={data?.error.includes("email") ? data.error : ""}
                 nativeInputProps={{
                   name: "email-utilisateur",
                   type: "email",
                   placeholder: "votre@email.com",
                 }}
               />
+              <Input
+                hintText="Veuillez entrer votre mot de passe"
+                label="Mon mot de passe"
+                state={data?.error.includes("mot de passe") ? "error" : "default"}
+                stateRelatedMessage={data?.error.includes("mot de passe") ? data.error : ""}
+                nativeInputProps={{
+                  name: "password-utilisateur",
+                  type: "password",
+                  minLength: 12,
+                  placeholder: "votre mot de passe",
+                }}
+              />
               <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left">
-                <li>
-                  <button className="fr-btn" type="submit">
-                    Recevoir le code de connexion
-                  </button>
+                <li className="flex justify-start w-auto">
+                  <Button type="submit">
+                    {connexionType === "creation-de-compte" ? (
+                      <>Créer mon compte</>
+                    ) : (
+                      <>Me connecter</>
+                    )}
+                  </Button>
                 </li>
               </ul>
+              <hr />
+              <p className="text-xs">
+                {connexionType === "creation-de-compte" ? (
+                  <>
+                    Vous avez déjà un compte ? <br />
+                    <Link to="/connexion?type=compte-existant">
+                      Cliquez ici pour vous connecter
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    Vous n'avez pas encore de compte ? <br />
+                    <Link to="/connexion?type=creation-de-compte">
+                      Cliquez ici pour en créer un
+                    </Link>
+                  </>
+                )}
+              </p>
             </Form>
           </div>
         </div>

@@ -95,18 +95,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
           quickAccessItems={[
             {
               linkProps: {
-                to: "connexion",
+                to: "/connexion?type=compte-existant",
+                href: "#",
               },
               iconId: "ri-account-box-line",
-              text: "Se connecter / Créer un espace",
+              text: "Se connecter",
             },
-            // {
-            //   iconId: "fr-icon-add-circle-line",
-            //   linkProps: {
-            //     href: "#",
-            //   },
-            //   text: "Créer un espace",
-            // },
+            {
+              linkProps: {
+                to: "/connexion?type=creation-de-compte",
+                href: "#",
+              },
+              iconId: "fr-icon-add-circle-line",
+              text: "Créer un espace",
+            },
             {
               iconId: "fr-icon-mail-fill",
               linkProps: {
@@ -150,7 +152,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export const ErrorBoundary = () => {
   const error = useRouteError();
   captureRemixErrorBoundaryError(error);
-  return <div>Something went wrong</div>;
+  console.log("error", error);
+  return (
+    <section className="fr-container min-h-[50vh] flex flex-col justify-center my-auto">
+      <div className="fr-grid-row fr-grid-row--gutters fr-py-6w flex flex-col justify-center my-auto">
+        <h1 className="fr-h1">Une erreur est survenue...</h1>
+      </div>
+    </section>
+  );
 };
 
 export default function App() {
