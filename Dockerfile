@@ -13,8 +13,8 @@ COPY package.json yarn.lock ./
 # Copy .yarnrc.yml if it exists
 COPY .yarnrc.yml* ./
 
-# Install dependencies
-RUN yarn install
+# Install dependencies with increased network timeout
+RUN yarn install --network-timeout 100000
 
 # Copy the rest of the application code
 COPY . .
