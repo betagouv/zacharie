@@ -15,46 +15,73 @@ enum UserRoles {
   EXPLOITANT_CENTRE_COLLECTE // Exploitant de Centre de Collecte de Gibier où sont entreposées les venaisons à la fin de la chasse
   COLLECTEUR_PRO // Transporteur de Gibier
   //Destinataires finaux du gibier
-  COMMERCE_DE_DETAIL // Commerce de détail
-  REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
-  CONSOMMATEUR_FINAL // Je chasse pour ma consommation personnelle
-  BOUCHER
-  RESTAURATEUR
   ETG // Etablissement de Traitement du Gibier
   SVI // Service Vétérinaire d'Inspection
+  // COMMERCE_DE_DETAIL // Commerce de détail
+  // REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
+  // CONSOMMATEUR_FINAL // Je chasse pour ma consommation personnelle
+  // BOUCHER
+  // RESTAURATEUR
 }
 
 model User {
-  id                     String          @id @default(uuid())
-  email                  String?         @unique // email is optional, we can have users without email like the Collecteur Pro
-  telephone              String?
-  prenom                 String?
-  nom_de_famille         String?
-  raison_sociale         String?
-  numero_cfei            String? // Chasseur Formé à l'Examen Initial (de la form CFEI-DEP-YY-001)
-  numero_frei            String? // Formateur Référent Examen Initial (de la form DEP-FREI-YY-001)
-  numero_centre_collecte String? // pour les EXPLOITANT_CENTRE_COLLECTE et COLLECTEUR_PRO qui ont un entrepôt de gibier
-  address_ligne_1        String?
-  address_ligne_2        String?
-  code_postal            String?
-  ville                  String?
-  roles                  UserRoles[]
-  created_at             DateTime        @default(now())
-  updated_at             DateTime        @default(now()) @updatedAt
-  last_login_at          DateTime?
-  last_seen_at           DateTime?
-  deleted_at             DateTime?
-  Password               Password?
-  UserRelationsOwner     UserRelations[] @relation("owner")
-  UserRelationsRelated   UserRelations[] @relation("related")
-  FeiCurrentUser         Fei[]           @relation("DetenteurActuel")
-  FeiCreatedBy           Fei[]           @relation("CreatedBy")
-  SuiviFeiOwner          SuiviFei[]      @relation("Owner")
-  FeiTransferedToUser    SuiviFei[]      @relation("TransferedToUser")
-  Logs                   Logs[]
-  SuiviCarcasse          SuiviCarcasse[]
+  id                   String            @id @default(uuid())
+  email                String?           @unique // email is optional, we can have users without email like the Collecteur Pro
+  telephone            String?
+  prenom               String?
+  nom_de_famille       String?
+  numero_cfei          String? // Chasseur Formé à l'Examen Initial (de la form CFEI-DEP-YY-001)
+  numero_frei          String? // Formateur Référent Examen Initial (de la form DEP-FREI-YY-001)
+  addresse_ligne_1     String?
+  addresse_ligne_2     String?
+  code_postal          String?
+  ville                String?
+  roles                UserRoles[]
+  created_at           DateTime          @default(now())
+  updated_at           DateTime          @default(now()) @updatedAt
+  last_login_at        DateTime?
+  last_seen_at         DateTime?
+  deleted_at           DateTime?
+  Password             Password?
+  UserRelationsOwner   UserRelations[]   @relation("owner")
+  UserRelationsRelated UserRelations[]   @relation("related")
+  FeiCurrentUser       Fei[]             @relation("DetenteurActuel")
+  FeiCreatedBy         Fei[]             @relation("CreatedBy")
+  SuiviFeiOwner        SuiviFei[]        @relation("Owner")
+  FeiTransferedToUser  SuiviFei[]        @relation("TransferedToUser")
+  Logs                 Logs[]
+  SuiviCarcasse        SuiviCarcasse[]
+  EntityRelations      EntityRelations[] @relation("owner")
 
   @@index([email, prenom, nom_de_famille, roles])
+}
+
+enum EntityRoles {
+  COLLECTEUR_PRO
+  EXPLOITANT_CENTRE_COLLECTE
+  ETG
+  SVI
+  // COMMERCE_DE_DETAIL
+  // REPAS_DE_CHASSE_OU_ASSOCIATIF
+  // BOUCHER
+  // RESTAURATEUR
+}
+
+model Entity {
+  id              String            @id @default(uuid())
+  // NO EMAIL: an entity needs AT LEAST one user
+  name            String?
+  address_ligne_1 String?
+  address_ligne_2 String?
+  code_postal     String?
+  ville           String?
+  siret           String?
+  numero_ddecpp   String?
+  roles           EntityRoles[]
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @default(now()) @updatedAt
+  deleted_at      DateTime?
+  EntityRelations EntityRelations[] @relation("related")
 }
 
 model Password {
@@ -82,6 +109,21 @@ model UserRelations {
   Related    User      @relation("related", fields: [related_id], references: [id], onDelete: Cascade)
 
   @@index([owner_id, relation])
+}
+
+model EntityRelations {
+  id         String    @id @default(uuid())
+  owner_id   String
+  entity_id  String
+  relation   String // related role, or whatever
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  deleted_at DateTime?
+  User       User      @relation("owner", fields: [owner_id], references: [id], onDelete: Cascade)
+  Related    Entity    @relation("related", fields: [entity_id], references: [id], onDelete: Cascade)
+
+  @@index([owner_id, relation])
+  @@index([entity_id, relation])
 }
 
 model Logs {

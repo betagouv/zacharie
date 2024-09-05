@@ -32,6 +32,7 @@ export default function TableauDeBordIndex() {
           title: "Zacharie - Ministère de l'Agriculture",
         }}
         id="fr-header-header-with-quick-access-items"
+        className="[&_p.fr-header\_\_service-tagline]:hidden md:[&_p.fr-header\_\_service-tagline]:block"
         navigation={[
           {
             linkProps: {
@@ -52,7 +53,7 @@ export default function TableauDeBordIndex() {
         serviceTitle="Zacharie"
       />
       <Outlet />
-      <Footer
+      {/* <Footer
         accessibility="fully compliant"
         contentDescription={`
         Zacharie c’est un service à destination des chasseurs et des acteurs de la filière de valorisation des viandes de gibier sauvage (collecteurs, ETG, SVI). Elle permet aux chasseurs de créer des fiches d’examen initial en un format numérique unique, partagé, modifiable et traçable par tous les acteurs.\u000A\u000A
@@ -72,7 +73,7 @@ export default function TableauDeBordIndex() {
         //     <FooterPersonalDataPolicyItem />,
         //     <FooterConsentManagementItem />
         // ]}
-      />
+      /> */}
     </>
   );
 }

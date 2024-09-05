@@ -23,16 +23,22 @@ export const getUserFromCookie = async (
     failureRedirect = "/connexion?type=compte-existant",
     successRedirect = null,
     optional = false,
+    debug = false,
   } = {}
 ) => {
   const userId = await getUserIdFromCookie(request, { optional: true });
+  if (debug) console.log("get userid from cookie", userId);
   if (!userId) {
+    if (debug) console.log("no user id");
+    if (debug) console.log("optional", optional);
     if (optional) return null;
+    if (debug) console.log("throw redirect", failureRedirect);
     throw redirect(failureRedirect);
   }
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
+  if (debug) console.log("user", !!user);
   if (user && !user.deleted_at) {
     Sentry.setUser({
       id: userId,
@@ -46,11 +52,20 @@ export const getUserFromCookie = async (
         last_seen_at: new Date(),
       },
     });
+    if (debug) console.log("user not deleted", user);
+    if (debug) console.log("successRedirect", successRedirect);
     if (successRedirect) throw redirect(successRedirect);
+    if (debug) console.log("return user", user);
     return user;
   }
+  if (debug) console.log("user deleted", user);
   if (optional) return null;
-  throw redirect(failureRedirect);
+  const session = await getSession(request.headers.get("Cookie"));
+  throw redirect(failureRedirect, {
+    headers: {
+      "Set-Cookie": await destroySession(session),
+    },
+  });
 };
 
 export const getUserIdFromCookie = async (

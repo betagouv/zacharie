@@ -74,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <Meta />
         {/* https://remix-pwa.run/docs/main/web-manifest#registering-the-web-manifest */}
-        <ManifestLink />
+        {/* <ManifestLink /> */}
         <Links />
       </head>
       <body>

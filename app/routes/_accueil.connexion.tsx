@@ -1,5 +1,5 @@
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { ActionFunctionArgs, json } from "@remix-run/node";
+import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import { Form, Link, redirect, useActionData, useSearchParams } from "@remix-run/react";
 import { SpamError } from "remix-utils/honeypot/server";
 import { honeypot } from "~/services/honeypot.server";
@@ -7,7 +7,7 @@ import { capture } from "~/services/capture";
 import { prisma } from "~/db/prisma.server";
 import { comparePassword, hashPassword } from "~/services/crypto.server";
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { createUserSession } from "~/services/auth.server";
+import { createUserSession, getUserIdFromCookie } from "~/services/auth.server";
 
 type ConnexionType = "creation-de-compte" | "compte-existant";
 
@@ -71,6 +71,15 @@ export async function action({ request }: ActionFunctionArgs) {
     }
   }
   return createUserSession(request, user, "/tableau-de-bord");
+}
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const userId = await getUserIdFromCookie(request, { optional: true });
+  console.log("userId", userId);
+  if (userId) {
+    throw redirect("/tableau-de-bord");
+  }
+  return null;
 }
 
 export default function Connexion() {
