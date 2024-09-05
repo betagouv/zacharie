@@ -42,6 +42,8 @@ model User {
   last_login_at        DateTime?
   last_seen_at         DateTime?
   deleted_at           DateTime?
+  onboarded_at         DateTime?
+  prefilled            Boolean           @default(false)
   Password             Password?
   UserRelationsOwner   UserRelations[]   @relation("owner")
   UserRelationsRelated UserRelations[]   @relation("related")
@@ -81,6 +83,8 @@ model Entity {
   created_at      DateTime          @default(now())
   updated_at      DateTime          @default(now()) @updatedAt
   deleted_at      DateTime?
+  onboarded_at    DateTime?
+  prefilled       Boolean           @default(false)
   EntityRelations EntityRelations[] @relation("related")
 }
 

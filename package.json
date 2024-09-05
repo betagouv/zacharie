@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "remix vite:build",
-    "dev": "react-dsfr update-icons && node ./server.js",
+    "dev": "yarn prisma-deploy && react-dsfr update-icons && node ./server.js",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "prisma-setup": "prisma generate && prisma migrate deploy",
     "prisma-create-migration": "NODE_ENV=development npx prisma migrate dev --name",
@@ -67,5 +67,9 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "packageManager": "yarn@4.4.1"
+  "packageManager": "yarn@4.4.1",
+  "prettier": {
+    "semi": true,
+    "printWidth": 120
+  }
 }

@@ -4,6 +4,9 @@ export default {
   content: ["./app/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      borderColor: {
+        DEFAULT: "#000",
+      },
       colors: {
         "action-high-blue-france": {
           DEFAULT: "var(--text-action-high-blue-france)",
