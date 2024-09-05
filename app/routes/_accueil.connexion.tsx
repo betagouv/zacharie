@@ -1,6 +1,6 @@
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { Form, Link, redirect, useActionData, useSearchParams } from "@remix-run/react";
+import { type ActionFunctionArgs, redirect, json, type LoaderFunctionArgs } from "@remix-run/node";
+import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { SpamError } from "remix-utils/honeypot/server";
 import { honeypot } from "~/services/honeypot.server";
 import { capture } from "~/services/capture";
@@ -8,6 +8,7 @@ import { prisma } from "~/db/prisma.server";
 import { comparePassword, hashPassword } from "~/services/crypto.server";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { createUserSession, getUserIdFromCookie } from "~/services/auth.server";
+import { getUserOnboardingRoute } from "~/utils/user-onboarded.server";
 
 type ConnexionType = "creation-de-compte" | "compte-existant";
 
@@ -70,7 +71,7 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     }
   }
-  return createUserSession(request, user, "/tableau-de-bord");
+  return createUserSession(request, user, getUserOnboardingRoute(user) ?? "/tableau-de-bord");
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -88,36 +89,11 @@ export default function Connexion() {
   const connexionType = searchParams.get("type") as ConnexionType;
 
   return (
-    <div className="fr-container fr-container--fluid fr-mb-10v" id="root-container">
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center ">
-        <div className="fr-grid-row fr-m-4w w-full">
-          <div className="fr-col-md-6">
-            <h1 className="fr-mb-1v text-action-high-blue-france">Connectez-vous</h1>
-            <p className="fr-text--bold fr-text--bold text-action-high-blue-france">
-              et retrouvez vos Fiches d'Examen Initial (FEI)
-            </p>
-            <ul className="list-none">
-              <li>
-                <span className="mr-4 text-action-high-blue-france">✔</span>Examinateur{" "}
-                <strong>pour créer la FEI</strong>
-              </li>
-              <li>
-                <span className="mr-4 text-action-high-blue-france">✔</span>Premier détenteur{" "}
-                <strong>pour suivre la FEI</strong>
-              </li>
-              <li>
-                <span className="mr-4 text-action-high-blue-france">✔</span>Collecteur,
-                Transporteur, ETG <strong> pour la traçabilité</strong>
-              </li>
-              <li>
-                <span className="mr-4 text-action-high-blue-france">✔</span>Fonctionne
-                <strong> en zone blanche</strong>
-              </li>
-            </ul>
-            <img src="/connexion.svg" alt="" width="300" />
-          </div>
-          <div className="fr-col-md-6">
-            <Form id="login_form" method="POST" className=" bg-alt-blue-france p-16">
+    <main role="main" id="content">
+      <div className="fr-container fr-container--fluid fr-my-md-14v">
+        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+          <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
+            <Form id="login_form" method="POST" className="fr-background-alt--blue-france fr-p-16v">
               <fieldset
                 className="fr-fieldset"
                 id="login-1760-fieldset"
@@ -189,6 +165,6 @@ export default function Connexion() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

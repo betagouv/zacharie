@@ -1,14 +1,13 @@
-import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { redirect, useLoaderData } from "@remix-run/react";
+import { redirect, json, type LoaderFunctionArgs } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
+import { getUserOnboardingRoute } from "~/utils/user-onboarded.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
-  console.log("user in tableau de bord", user?.id);
-  if (!user?.roles?.length) {
-    console.log("redirecting to onboarding");
-    throw redirect("/tableau-de-bord/onboarding-etape-1");
-  }
+  if (!user) throw redirect("/connexion?type=compte-existant");
+  const onboardingRoute = getUserOnboardingRoute(user);
+  if (onboardingRoute) throw redirect(onboardingRoute);
   return json({ user });
 }
 

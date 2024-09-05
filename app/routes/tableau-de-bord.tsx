@@ -1,14 +1,5 @@
-import { Footer } from "@codegouvfr/react-dsfr/Footer";
 import { Header } from "@codegouvfr/react-dsfr/Header";
 import { Outlet, useSubmit } from "@remix-run/react";
-// import type { MetaFunction } from "@remix-run/node";
-
-// export const meta: MetaFunction = () => {
-//   return [
-//     { title: "New Remix App" },
-//     { name: "description", content: "Welcome to Remix!" },
-//   ];
-// };
 
 export default function TableauDeBordIndex() {
   const submit = useSubmit();

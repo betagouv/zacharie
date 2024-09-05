@@ -1,17 +1,21 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { redirect, useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { UserRoles } from "@prisma/client";
+import { getUserOnboardingRoute } from "~/utils/user-onboarded.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
+  if (!user) throw redirect("/connexion?type=compte-existant");
   if (!user?.roles?.length) {
     return json({ user });
   }
-  console.log(user);
+  const onboardingRoute = getUserOnboardingRoute(user);
+  if (onboardingRoute) throw redirect(onboardingRoute);
+  return redirect("/tableau-de-bord");
 }
 
 export default function TableauDeBord() {

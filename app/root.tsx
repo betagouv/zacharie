@@ -17,7 +17,12 @@ import { honeypot } from "~/services/honeypot.server";
 import { HoneypotProvider } from "remix-utils/honeypot/react";
 
 import "./tailwind.css";
-import "@codegouvfr/react-dsfr/main.css";
+import dsfrCss from "@codegouvfr/react-dsfr/main.css?url";
+import dsfrColorCss from "@codegouvfr/react-dsfr/dsfr/utility/colors/colors.min.css?url";
+import dsfrWebManifest from "@codegouvfr/react-dsfr/favicon/manifest.webmanifest?url";
+import dsfrFavicon from "@codegouvfr/react-dsfr/favicon/favicon.ico?url";
+import dsfrFaviconSvg from "@codegouvfr/react-dsfr/favicon/favicon.svg?url";
+import dsfrAppleTouchIcon from "@codegouvfr/react-dsfr/favicon/apple-touch-icon.png?url";
 
 export const meta: MetaFunction = () => {
   return [
@@ -50,27 +55,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-          rel="apple-touch-icon"
-          href="./node_modules/@codegouvfr/react-dsfr/favicon/apple-touch-icon.png"
-        />
-        <link
-          rel="icon"
-          href="./node_modules/@codegouvfr/react-dsfr/favicon/favicon.svg"
-          type="image/svg+xml"
-        />
-        <link
-          rel="shortcut icon"
-          href="./node_modules/@codegouvfr/react-dsfr/favicon/favicon.ico"
-          type="image/x-icon"
-        />
-        <link
-          rel="manifest"
-          href="./node_modules/@codegouvfr/react-dsfr/favicon/manifest.webmanifest"
-          crossOrigin="use-credentials"
-        />
-
-        <link rel="stylesheet" href="./node_modules/@codegouvfr/react-dsfr/main.css" />
+        <link rel="apple-touch-icon" href={dsfrAppleTouchIcon} />
+        <link rel="icon" href={dsfrFaviconSvg} type="image/svg+xml" />
+        <link rel="shortcut icon" href={dsfrFavicon} type="image/x-icon" />
+        <link rel="manifest" href={dsfrWebManifest} crossOrigin="use-credentials" />
+        <link rel="stylesheet" href={dsfrCss} />
+        <link rel="stylesheet" href={dsfrColorCss} />
 
         <Meta />
         {/* https://remix-pwa.run/docs/main/web-manifest#registering-the-web-manifest */}
