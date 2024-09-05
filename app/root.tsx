@@ -1,5 +1,6 @@
 import { captureRemixErrorBoundaryError } from "@sentry/remix";
 import {
+  isRouteErrorResponse,
   Links,
   Meta,
   Outlet,
@@ -11,8 +12,6 @@ import {
 import { useNetworkConnectivity, usePWAManager } from "@remix-pwa/client";
 import { ManifestLink, useSWEffect, sendSkipWaitingMessage } from "@remix-pwa/sw";
 import { LoaderFunction, MetaFunction } from "@remix-run/node";
-import { Header } from "@codegouvfr/react-dsfr/Header";
-import { Footer } from "@codegouvfr/react-dsfr/Footer";
 import { honeypot } from "~/services/honeypot.server";
 import { HoneypotProvider } from "remix-utils/honeypot/react";
 
@@ -23,6 +22,9 @@ import dsfrWebManifest from "@codegouvfr/react-dsfr/favicon/manifest.webmanifest
 import dsfrFavicon from "@codegouvfr/react-dsfr/favicon/favicon.ico?url";
 import dsfrFaviconSvg from "@codegouvfr/react-dsfr/favicon/favicon.svg?url";
 import dsfrAppleTouchIcon from "@codegouvfr/react-dsfr/favicon/apple-touch-icon.png?url";
+import RootDisplay from "./components/RootDisplay";
+import NotFound from "./routes/404";
+import UnexpectedError from "./components/UnexpectedError";
 
 export const meta: MetaFunction = () => {
   return [
@@ -64,7 +66,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <Meta />
         {/* https://remix-pwa.run/docs/main/web-manifest#registering-the-web-manifest */}
-        {/* <ManifestLink /> */}
+        <ManifestLink />
         <Links />
       </head>
       <body>
@@ -77,16 +79,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export const ErrorBoundary = () => {
-  const error = useRouteError();
+  // https://stackoverflow.com/a/76449254/5225096
+  const error = useRouteError() as Error;
   captureRemixErrorBoundaryError(error);
   console.log("error", error);
-  return (
-    <section className="fr-container min-h-[50vh] flex flex-col justify-center my-auto">
-      <div className="fr-grid-row fr-grid-row--gutters fr-py-6w flex flex-col justify-center my-auto">
-        <h1 className="fr-h1">Une erreur est survenue...</h1>
-      </div>
-    </section>
-  );
+  if (!isRouteErrorResponse(error)) return null;
+  return <RootDisplay>{error.status === 404 ? <NotFound /> : <UnexpectedError />}</RootDisplay>;
 };
 
 export default function App() {

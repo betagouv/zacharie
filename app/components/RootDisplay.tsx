@@ -1,13 +1,7 @@
+import { Footer } from "@codegouvfr/react-dsfr/Footer";
 import { Header } from "@codegouvfr/react-dsfr/Header";
-import { Outlet, useSubmit } from "@remix-run/react";
 
-export default function TableauDeBordIndex() {
-  const submit = useSubmit();
-
-  const handleLogout = () => {
-    submit(null, { method: "post", action: "/actions/logout" });
-  };
-
+export default function RootDisplay({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Header
@@ -23,19 +17,27 @@ export default function TableauDeBordIndex() {
           title: "Zacharie - Ministère de l'Agriculture",
         }}
         id="fr-header-header-with-quick-access-items"
-        className="[&_p.fr-header\_\_service-tagline]:hidden md:[&_p.fr-header\_\_service-tagline]:block"
-        navigation={[
+        quickAccessItems={[
           {
             linkProps: {
-              onClick: handleLogout,
-              type: "submit",
+              to: "/connexion?type=compte-existant",
               href: "#",
             },
-            text: "Se déconnecter",
+            iconId: "ri-account-box-line",
+            text: "Se connecter",
           },
           {
             linkProps: {
-              href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de mon tableau de bord à Zacharie`,
+              to: "/connexion?type=creation-de-compte",
+              href: "#",
+            },
+            iconId: "fr-icon-add-circle-line",
+            text: "Créer un espace",
+          },
+          {
+            iconId: "fr-icon-mail-fill",
+            linkProps: {
+              href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de Zacharie`,
             },
             text: "Contactez-nous",
           },
@@ -43,8 +45,8 @@ export default function TableauDeBordIndex() {
         serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
         serviceTitle="Zacharie"
       />
-      <Outlet />
-      {/* <Footer
+      {children}
+      <Footer
         accessibility="fully compliant"
         contentDescription={`
         Zacharie c’est un service à destination des chasseurs et des acteurs de la filière de valorisation des viandes de gibier sauvage (collecteurs, ETG, SVI). Elle permet aux chasseurs de créer des fiches d’examen initial en un format numérique unique, partagé, modifiable et traçable par tous les acteurs.\u000A\u000A
@@ -64,7 +66,7 @@ export default function TableauDeBordIndex() {
         //     <FooterPersonalDataPolicyItem />,
         //     <FooterConsentManagementItem />
         // ]}
-      /> */}
+      />
     </>
   );
 }

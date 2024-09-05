@@ -47,7 +47,7 @@ export default function Index() {
           {
             iconId: "fr-icon-mail-fill",
             linkProps: {
-              href: "mailto:contact@code.gouv.fr",
+              href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de ma connexion à Zacharie`,
             },
             text: "Contactez-nous",
           },
