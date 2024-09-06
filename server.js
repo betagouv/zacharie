@@ -3,6 +3,10 @@ import { createRequestHandler } from "@remix-run/express";
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
+import userRouter from "./api/controllers/user";
+// import configurePassport from "./api/utils/passport";
+import { getUserFromCookie } from "./app/services/auth.server";
 
 const viteDevServer =
   process.env.NODE_ENV === "production"
@@ -21,25 +25,55 @@ const remixHandler = createRequestHandler({
 
 const app = express();
 
-app.use(compression());
+app.use(cookieParser());
 
-// http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
+// Add this line to log all requests
+app.use((req, res, next) => {
+  console.log(`Request received: ${req.method} ${req.url}`);
+  next();
+});
+
+// configurePassport(app);
+
+// Add this to log when Passport initialization happens
+console.log("Passport initialized");
+
+app.use(compression());
+app.use(express.json());
+
 app.disable("x-powered-by");
 
-// handle asset requests
 if (viteDevServer) {
   app.use(viteDevServer.middlewares);
 } else {
-  // Vite fingerprints its assets so we can cache forever.
   app.use("/assets", express.static("build/client/assets", { immutable: true, maxAge: "1y" }));
 }
 
-// Everything else (like favicon.ico) is cached for an hour. You may want to be
-// more aggressive with this caching.
 app.use(express.static("build/client", { maxAge: "1h" }));
 
 app.use(morgan("tiny"));
 
+// API routes
+// Add logging middleware for the /api/user route
+app.use(
+  "/api/user",
+  async (req, res, next) => {
+    console.log("Entering /api/user route");
+    try {
+      const user = await getUserFromCookie(req, { optional: false });
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      req.user = user;
+      console.log("Authentication passed");
+      next();
+    } catch (error) {
+      console.error("Error during authentication:", error);
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+  },
+  userRouter
+);
 // handle SSR requests
 app.all("*", remixHandler);
 

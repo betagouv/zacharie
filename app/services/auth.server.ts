@@ -5,6 +5,8 @@ import type { User } from "@prisma/client";
 
 const sessionExpirationTime = 1000 * 60 * 60 * 24 * 365; // 10 years
 
+console.log("process.env.SECRET auth", process.env.SECRET);
+
 export const { getSession, commitSession, destroySession } = createCookieSessionStorage({
   cookie: {
     name: `Zacharie_session`,
@@ -19,12 +21,7 @@ export const { getSession, commitSession, destroySession } = createCookieSession
 
 export const getUserFromCookie = async (
   request: Request,
-  {
-    failureRedirect = "/connexion?type=compte-existant",
-    successRedirect = null,
-    optional = false,
-    debug = false,
-  } = {}
+  { failureRedirect = "/connexion?type=compte-existant", successRedirect = null, optional = false, debug = false } = {}
 ) => {
   const userId = await getUserIdFromCookie(request, { optional: true });
   if (debug) console.log("get userid from cookie", userId);
@@ -68,10 +65,7 @@ export const getUserFromCookie = async (
   });
 };
 
-export const getUserIdFromCookie = async (
-  request: Request,
-  { failureRedirect = "/", optional = false } = {}
-) => {
+export const getUserIdFromCookie = async (request: Request, { failureRedirect = "/", optional = false } = {}) => {
   const session = await getSession(request.headers.get("Cookie"));
   if (!session) {
     if (optional) return null;
@@ -86,10 +80,7 @@ export const getUserIdFromCookie = async (
   return userId;
 };
 
-export const getUserEmailFromCookie = async (
-  request: Request,
-  { failureRedirect = "/", optional = false } = {}
-) => {
+export const getUserEmailFromCookie = async (request: Request, { failureRedirect = "/", optional = false } = {}) => {
   const session = await getSession(request.headers.get("Cookie"));
   if (!session) {
     if (optional) return null;
@@ -104,8 +95,7 @@ export const getUserEmailFromCookie = async (
   return userEmail;
 };
 
-export const getUnauthentifiedUserFromCookie = (request: Request) =>
-  getUserFromCookie(request, { optional: true });
+export const getUnauthentifiedUserFromCookie = (request: Request) => getUserFromCookie(request, { optional: true });
 
 export const createUserSession = async (request: Request, user: User, failureRedirect: string) => {
   const session = await getSession(request.headers.get("Cookie"));

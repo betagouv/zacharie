@@ -1,56 +1,62 @@
+import type express from "express";
 import { Router } from "express";
+import passport from "passport";
 import { User, UserRoles } from "@prisma/client";
-import { prisma } from "../../app/db/prisma.server";
-import { getUserFromCookie } from "../../app/services/auth.server";
+import { prisma } from "~/db/prisma.server";
+import type { RequestWithUser } from "../types/request";
+import { catchErrors } from "../utils/errors";
+import multer from "multer";
 
 const router = Router();
+const upload = multer();
 
-async function updateOrCreateUser(req, res) {
-  const user = await getUserFromCookie(req);
-  if (!user) {
-    return res.status(401).json({ ok: false, data: null, error: "Unauthorized" });
-  }
+router.get("/", (req, res) => {
+  return res.status(200).json({ ok: true, data: null, error: null });
+});
 
-  const isAdmin = user.roles.includes(UserRoles.ADMIN);
-  const userId = req.params.user_id;
-
-  if (!userId) {
-    // only admins can create new users this way
-    if (!isAdmin) {
-      return res.status(401).json({ ok: false, data: null, error: "Unauthorized" });
+router.post(
+  "/:user_id",
+  passport.authenticate("jwt", { session: false }),
+  upload.none(),
+  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+    console.log("inside controller", req.user);
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ ok: false, data: null, error: "Unauthorized" });
+      return;
     }
-  }
-  if (userId !== user.id && !isAdmin) {
-    return res.status(401).json({ ok: false, data: null, error: "Unauthorized" });
-  }
 
-  const nextUser: Partial<User> = {};
-  const fields = [
-    "nom_de_famille",
-    "prenom",
-    "telephone",
-    "email",
-    "addresse_ligne_1",
-    "addresse_ligne_2",
-    "code_postal",
-    "ville",
-    "roles",
-    "numero_cfei",
-    "numero_frei",
-  ];
+    const isAdmin = user.roles.includes(UserRoles.ADMIN);
+    const userId = req.params.user_id;
 
-  fields.forEach((field) => {
-    if (field in req.body) {
-      if (field === "roles") {
-        nextUser[field] = req.body[field] as UserRoles[];
-      } else {
-        nextUser[field] = req.body[field] as string;
+    if (!userId) {
+      // only admins can create new users this way
+      if (!isAdmin) {
+        res.status(401).json({ ok: false, data: null, error: "Unauthorized" });
+        return;
       }
     }
-  });
+    if (userId !== user.id && !isAdmin) {
+      res.status(401).json({ ok: false, data: null, error: "Unauthorized" });
+      return;
+    }
 
-  let savedUser: User | null = null;
-  try {
+    const nextUser: Partial<User> = {};
+
+    if ("nom_de_famille" in req.body) nextUser.nom_de_famille = req.body.nom_de_famille as string;
+    if ("prenom" in req.body) nextUser.prenom = req.body.prenom as string;
+    if ("telephone" in req.body) nextUser.telephone = req.body.telephone as string;
+    if ("email" in req.body) nextUser.email = req.body.email as string;
+    if ("addresse_ligne_1" in req.body) nextUser.addresse_ligne_1 = req.body.addresse_ligne_1 as string;
+    if ("addresse_ligne_2" in req.body) nextUser.addresse_ligne_2 = req.body.addresse_ligne_2 as string;
+    if ("code_postal" in req.body) nextUser.code_postal = req.body.code_postal as string;
+    if ("ville" in req.body) nextUser.ville = req.body.ville as string;
+    if ("roles" in req.body) nextUser.roles = req.body.roles as UserRoles[];
+    if ("numero_cfei" in req.body) nextUser.numero_cfei = req.body.numero_cfei as string;
+    if ("numero_frei" in req.body) nextUser.numero_frei = req.body.numero_frei as string;
+
+    let savedUser: User | null = null;
+
     if (!userId) {
       savedUser = await prisma.user.create({
         data: nextUser,
@@ -63,12 +69,8 @@ async function updateOrCreateUser(req, res) {
     }
 
     res.json({ ok: true, data: savedUser, error: null });
-  } catch (error) {
-    console.error("Error updating/creating user:", error);
-    res.status(500).json({ ok: false, data: null, error: "Internal Server Error" });
-  }
-}
-
-router.post("/:user_id?", updateOrCreateUser);
+    return;
+  })
+);
 
 export default router;

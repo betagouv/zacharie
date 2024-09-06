@@ -81,15 +81,31 @@ export default function TableauDeBord() {
   const userFetcher = useFetcher({ key: "onboarding-etape-2-user-data" });
   const handleUserFormBlur = useCallback(
     (event: React.FocusEvent<HTMLFormElement>) => {
-      event.preventDefault(); // Prevent default form submission
+      event.preventDefault();
       const formData = new FormData(event.currentTarget);
-      userFetcher.submit(formData, {
+
+      // Convert FormData to a plain object
+      const data = Object.fromEntries(formData.entries());
+
+      // Use fetch instead of userFetcher
+      fetch(`/api/user/${user.id}`, {
         method: "POST",
-        action: `/action/user/${user.id}`,
-        preventScrollReset: true, // Prevent scroll reset on submission
-      });
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Success:", data);
+          // Handle successful response here
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          // Handle errors here
+        });
     },
-    [userFetcher, user.id]
+    [user.id]
   );
 
   const entitiesFetcher = useFetcher({ key: "onboarding-etape-2-entities-data" });
@@ -97,13 +113,13 @@ export default function TableauDeBord() {
     (event: React.FocusEvent<HTMLFormElement>) => {
       event.preventDefault(); // Prevent default form submission
       const formData = new FormData(event.currentTarget);
-      userFetcher.submit(formData, {
+      entitiesFetcher.submit(formData, {
         method: "POST",
-        action: `/action/user-entities/${user.id}`,
+        action: `/api/user-entities/${user.id}`,
         preventScrollReset: true, // Prevent scroll reset on submission
       });
     },
-    [userFetcher, user.id]
+    [entitiesFetcher, user.id]
   );
 
   const [identityExpanded, setIdentityExpanded] = useState(!identityDone);
@@ -122,13 +138,7 @@ export default function TableauDeBord() {
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10">
             <div className="fr-background-alt--blue-france p-4 md:p-16 pb-32 md:pb-0">
-              <userFetcher.Form
-                id="user_data_form"
-                method="POST"
-                action={`/action/user/${user.id}`}
-                onBlur={handleUserFormBlur}
-                preventScrollReset
-              >
+              <form id="user_data_form" method="POST" onBlur={handleUserFormBlur}>
                 <Stepper currentStep={2} nextTitle="Vos partenaires" stepCount={3} title="Vos informations" />
                 <Accordion
                   titleAs="h2"
@@ -260,11 +270,10 @@ export default function TableauDeBord() {
                     </div>
                   </Accordion>
                 )}
-              </userFetcher.Form>
+              </form>
               <entitiesFetcher.Form
                 id="user_entities_form"
                 method="POST"
-                action={`/action/user-entities/${user.id}`}
                 onBlur={handleEntitiesFormBlur}
                 preventScrollReset
               >
@@ -279,7 +288,7 @@ export default function TableauDeBord() {
                     }
                   >
                     <div className="fr-fieldset__element">
-                      <Select
+                      {/* <Select
                         label="Ajouter un Centre de Collecte"
                         hint="Sélectionnez un Centre de Collecte"
                         nativeSelectProps={{
@@ -302,7 +311,7 @@ export default function TableauDeBord() {
                               </option>
                             );
                           })}
-                      </Select>
+                      </Select> */}
                     </div>
                   </Accordion>
                 )}
