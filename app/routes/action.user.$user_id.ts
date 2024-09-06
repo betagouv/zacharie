@@ -22,6 +22,7 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has("roles")) nextUser.roles = formData.getAll("roles") as UserRoles[];
   if (formData.has("numero_cfei")) nextUser.numero_cfei = formData.get("numero_cfei") as string;
   if (formData.has("numero_frei")) nextUser.numero_frei = formData.get("numero_frei") as string;
+  if (formData.has("onboarded_finished")) nextUser.onboarded_at = new Date();
 
   let savedUser: User | null = null;
   const userId = params.user_id;

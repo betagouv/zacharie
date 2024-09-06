@@ -1,4 +1,4 @@
-import { User, Entity } from "@prisma/client";
+import { User, Entity, RelationType } from "@prisma/client";
 import { type ActionFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { authorizeUserOrAdmin } from "~/utils/authorizeUserOrAdmin";
@@ -15,12 +15,13 @@ export async function action(args: ActionFunctionArgs) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
-  console.log("formData", formData.get("_action"), formData.get("owner_id"), formData.get("entity_id"));
-
   if (formData.get("_action") === "create") {
+    if (!formData.has("relation")) return json({ ok: false, data: null, error: "Missing relation" }, { status: 400 });
+
     const nextEntityRelation = {
       owner_id: formData.get("owner_id") as User["id"],
       entity_id: formData.get("entity_id") as Entity["id"],
+      relation: formData.get("relation") as RelationType,
     };
 
     const existingEntityRelation = await prisma.entityRelations.findFirst({

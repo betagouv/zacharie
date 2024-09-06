@@ -101,30 +101,35 @@ model Password {
   @@index([user_id])
 }
 
+enum RelationType {
+  WORKING_FOR // a user working for the entity
+  WORKING_WITH // a user working with the entity
+}
+
 model UserRelations {
-  id         String    @id @default(uuid())
+  id         String       @id @default(uuid())
   owner_id   String
   related_id String
-  relation   String? // related role, or whatever
-  created_at DateTime  @default(now())
-  updated_at DateTime  @default(now()) @updatedAt
+  relation   RelationType
+  created_at DateTime     @default(now())
+  updated_at DateTime     @default(now()) @updatedAt
   deleted_at DateTime?
-  User       User      @relation("owner", fields: [owner_id], references: [id], onDelete: Cascade)
-  Related    User      @relation("related", fields: [related_id], references: [id], onDelete: Cascade)
+  User       User         @relation("owner", fields: [owner_id], references: [id], onDelete: Cascade)
+  Related    User         @relation("related", fields: [related_id], references: [id], onDelete: Cascade)
 
   @@index([owner_id, relation])
 }
 
 model EntityRelations {
-  id         String    @id @default(uuid())
+  id         String       @id @default(uuid())
   owner_id   String
   entity_id  String
-  relation   String? // related role, or whatever
-  created_at DateTime  @default(now())
-  updated_at DateTime  @default(now()) @updatedAt
+  relation   RelationType
+  created_at DateTime     @default(now())
+  updated_at DateTime     @default(now()) @updatedAt
   deleted_at DateTime?
-  User       User      @relation("owner", fields: [owner_id], references: [id], onDelete: Cascade)
-  Related    Entity    @relation("related", fields: [entity_id], references: [id], onDelete: Cascade)
+  User       User         @relation("owner", fields: [owner_id], references: [id], onDelete: Cascade)
+  Related    Entity       @relation("related", fields: [entity_id], references: [id], onDelete: Cascade)
 
   @@index([owner_id, relation])
   @@index([entity_id, relation])

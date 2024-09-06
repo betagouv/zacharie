@@ -9,7 +9,7 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
-import { EntityTypes, UserRoles, type Entity } from "@prisma/client";
+import { EntityTypes, RelationType, UserRoles, type Entity } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -19,6 +19,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const userEntitiesRelations = await prisma.entityRelations.findMany({
     where: {
       owner_id: user.id,
+      relation: RelationType.WORKING_FOR,
     },
   });
 
@@ -114,7 +115,6 @@ export default function TableauDeBord() {
 
   return (
     <main role="main" id="content">
-      <input type="hidden" name="_redirect" value="/tableau-de-bord/onboarding-etape-3" />
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10">
@@ -298,24 +298,26 @@ export default function TableauDeBord() {
                   entityType={EntityTypes.SVI}
                 />
               )}
-              <div className="mt-6 ml-6">
+              <div className="mt-6 ml-6 mb-16">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>
               </div>
-              <div className="fixed md:relative md:mt-16 bottom-0 left-0 w-full p-6 bg-white md:bg-transparent drop-shadow-xl z-50">
+              <div className="fixed md:relative bottom-0 left-0 w-full p-6 bg-white md:bg-transparent drop-shadow-xl z-50">
                 <ButtonsGroup
                   buttons={[
                     {
                       children: "Continuer",
                       linkProps: {
                         to: "/tableau-de-bord/onboarding-etape-3",
+                        href: "#",
                       },
                     },
                     {
                       children: "Précédent",
                       linkProps: {
                         to: "/tableau-de-bord/onboarding-etape-1",
+                        href: "#",
                       },
                       priority: "secondary",
                     },
@@ -410,6 +412,7 @@ function AccordionEntreprise({
       >
         <input type="hidden" name="owner_id" value={user.id} />
         <input type="hidden" name="_action" value="create" />
+        <input type="hidden" name="relation" value={RelationType.WORKING_FOR} />
         <Select
           label={addLabel}
           hint={selectLabel}

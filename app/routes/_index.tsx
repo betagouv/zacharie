@@ -18,16 +18,20 @@ export default function Index() {
           <Button
             linkProps={{
               to: "connexion?type=compte-existant",
+              href: "#",
             }}
             iconId="ri-account-box-line"
-            className="mb-6">
+            className="mb-6"
+          >
             Se connecter
           </Button>
           <Button
             linkProps={{
               to: "connexion?type=creation-de-compte",
+              href: "#",
             }}
-            iconId="fr-icon-add-circle-line">
+            iconId="fr-icon-add-circle-line"
+          >
             Créer un espace
           </Button>
         </div>
