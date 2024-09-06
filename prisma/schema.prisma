@@ -105,7 +105,7 @@ model UserRelations {
   id         String    @id @default(uuid())
   owner_id   String
   related_id String
-  relation   String // related role, or whatever
+  relation   String? // related role, or whatever
   created_at DateTime  @default(now())
   updated_at DateTime  @default(now()) @updatedAt
   deleted_at DateTime?
@@ -119,7 +119,7 @@ model EntityRelations {
   id         String    @id @default(uuid())
   owner_id   String
   entity_id  String
-  relation   String // related role, or whatever
+  relation   String? // related role, or whatever
   created_at DateTime  @default(now())
   updated_at DateTime  @default(now()) @updatedAt
   deleted_at DateTime?

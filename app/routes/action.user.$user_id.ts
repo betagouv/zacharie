@@ -1,22 +1,12 @@
 import { User, UserRoles } from "@prisma/client";
 import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
-import { getUserFromCookie } from "~/services/auth.server";
+import { authorizeUserOrAdmin } from "~/utils/authorizeUserOrAdmin";
 
-export async function action({ request, params }: ActionFunctionArgs) {
-  const user = await getUserFromCookie(request);
-  if (!user) throw redirect("/connexion?type=compte-existant");
-
-  const isAdmin = user.roles.includes(UserRoles.ADMIN);
-  const userId = params.user_id;
-
-  if (!userId) {
-    // only admins can create new users this way
-    if (!isAdmin) return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
-  }
-  if (userId !== user.id && !isAdmin) {
-    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
-  }
+export async function action(args: ActionFunctionArgs) {
+  const { user, error } = await authorizeUserOrAdmin(args);
+  if (!user) return json({ ok: false, data: null, error }, { status: 401 });
+  const { request, params } = args;
 
   const formData = await request.formData();
   const nextUser: Partial<User> = {};
@@ -34,11 +24,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (formData.has("numero_frei")) nextUser.numero_frei = formData.get("numero_frei") as string;
 
   let savedUser: User | null = null;
+  const userId = params.user_id;
   if (!userId) {
+    // admin creation
     savedUser = await prisma.user.create({
       data: nextUser,
     });
   } else {
+    // user update / self-update
     savedUser = await prisma.user.update({
       where: { id: userId },
       data: nextUser,
