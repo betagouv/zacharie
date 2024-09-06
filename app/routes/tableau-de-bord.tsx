@@ -1,8 +1,9 @@
 import { Header } from "@codegouvfr/react-dsfr/Header";
-import { Outlet, useSubmit } from "@remix-run/react";
+import { Outlet, useLocation, useSubmit } from "@remix-run/react";
 
 export default function TableauDeBordIndex() {
   const submit = useSubmit();
+  const location = useLocation();
 
   const handleLogout = () => {
     submit(null, { method: "post", action: "/actions/logout" });
@@ -23,8 +24,38 @@ export default function TableauDeBordIndex() {
           title: "Zacharie - Ministère de l'Agriculture",
         }}
         id="fr-header-header-with-quick-access-items"
-        className="[&_p.fr-header\_\_service-tagline]:hidden md:[&_p.fr-header\_\_service-tagline]:block"
+        // check mobile responsive header classes at tailwind.css
         navigation={[
+          {
+            text: "Mon profil",
+            isActive: location.pathname.startsWith("/tableau-de-bord/mon-profil"),
+            menuLinks: [
+              {
+                text: "Mes roles",
+                isActive: location.pathname === "/tableau-de-bord/mon-profil/mes-roles",
+                linkProps: {
+                  to: "/tableau-de-bord/mon-profil/mes-roles",
+                  href: "#",
+                },
+              },
+              {
+                text: "Mes informations",
+                isActive: location.pathname === "/tableau-de-bord/mon-profil/mes-informations",
+                linkProps: {
+                  href: "#",
+                  to: "/tableau-de-bord/mon-profil/mes-informations",
+                },
+              },
+              {
+                text: "Mes partenaires",
+                isActive: location.pathname === "/tableau-de-bord/mon-profil/mes-partenaires",
+                linkProps: {
+                  href: "#",
+                  to: "/tableau-de-bord/mon-profil/mes-partenaires",
+                },
+              },
+            ],
+          },
           {
             linkProps: {
               onClick: handleLogout,

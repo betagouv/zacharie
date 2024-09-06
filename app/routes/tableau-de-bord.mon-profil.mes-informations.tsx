@@ -309,14 +309,14 @@ export default function TableauDeBord() {
                     {
                       children: "Continuer",
                       linkProps: {
-                        to: "/tableau-de-bord/onboarding-etape-3",
+                        to: "/tableau-de-bord/mon-profil/mes-partenaires",
                         href: "#",
                       },
                     },
                     {
                       children: "Précédent",
                       linkProps: {
-                        to: "/tableau-de-bord/onboarding-etape-1",
+                        to: "/tableau-de-bord/mon-profil/mes-roles",
                         href: "#",
                       },
                       priority: "secondary",

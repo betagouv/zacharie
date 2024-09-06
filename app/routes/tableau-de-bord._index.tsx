@@ -1,5 +1,5 @@
 import { redirect, json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+// import { useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { getUserOnboardingRoute } from "~/utils/user-onboarded.server";
 
@@ -12,8 +12,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function TableauDeBord() {
-  const { user } = useLoaderData<typeof loader>();
-
   return (
     <section className="fr-container min-h-[50vh] flex flex-col justify-center my-auto">
       <div className="fr-grid-row fr-grid-row--gutters fr-py-6w flex flex-col justify-center my-auto">

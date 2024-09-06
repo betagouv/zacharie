@@ -1,5 +1,5 @@
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData, useSubmit } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
@@ -130,7 +130,7 @@ export default function TableauDeBord() {
                     {
                       children: "Précédent",
                       linkProps: {
-                        to: "/tableau-de-bord/onboarding-etape-2",
+                        to: "/tableau-de-bord/mon-profil/mes-informations",
                         href: "#",
                       },
                       priority: "secondary",
