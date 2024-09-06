@@ -58,7 +58,7 @@ model User {
   @@index([email, prenom, nom_de_famille, roles])
 }
 
-enum EntityRoles {
+enum EntityTypes {
   COLLECTEUR_PRO
   EXPLOITANT_CENTRE_COLLECTE
   ETG
@@ -72,14 +72,14 @@ enum EntityRoles {
 model Entity {
   id              String            @id @default(uuid())
   // NO EMAIL: an entity needs AT LEAST one user
-  name            String?
+  raison_sociale  String?
   address_ligne_1 String?
   address_ligne_2 String?
   code_postal     String?
   ville           String?
   siret           String?
   numero_ddecpp   String?
-  roles           EntityRoles[]
+  type            EntityTypes
   created_at      DateTime          @default(now())
   updated_at      DateTime          @default(now()) @updatedAt
   deleted_at      DateTime?

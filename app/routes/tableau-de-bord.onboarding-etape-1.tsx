@@ -19,12 +19,12 @@ export default function TableauDeBord() {
 
   return (
     <main role="main" id="content">
-      <fetcher.Form id="login_form" method="POST" action={`/action/user/${user.id}`}>
+      <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>
         <input type="hidden" name="_redirect" value="/tableau-de-bord/onboarding-etape-2" />
         <div className="fr-container fr-container--fluid fr-my-md-14v">
           <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
             <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
-              <div className="fr-background-alt--blue-france p-16 pb-32 md:pb-0">
+              <div className="fr-background-alt--blue-france p-4 md:p-16 pb-32 md:pb-0">
                 <Stepper currentStep={1} nextTitle="Vos informations personnelles" stepCount={3} title="Vos rôles" />
                 <h1 className="fr-h2 fr-mb-2w">Renseignez vos rôles</h1>
                 <CallOut iconId="ri-information-line" title="Un seul compte pour toutes vos casquettes">
@@ -97,7 +97,7 @@ export default function TableauDeBord() {
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>
-                <div className="fixed md:relative md:mt-16 bottom-0 left-0 w-full p-6 bg-white md:bg-transparent drop-shadow-xl">
+                <div className="fixed md:relative md:mt-16 bottom-0 left-0 w-full p-6 bg-white md:bg-transparent drop-shadow-xl z-50">
                   <ButtonsGroup
                     buttons={[
                       {
