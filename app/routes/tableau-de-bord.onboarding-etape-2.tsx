@@ -9,41 +9,58 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
-import { EntityTypes, UserRoles } from "@prisma/client";
+import { EntityTypes, UserRoles, type Entity } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) throw redirect("/connexion?type=compte-existant");
-  const userEntities = await prisma.entityRelations.findMany({
+  const allEntities = await prisma.entity.findMany();
+  const userEntitiesRelations = await prisma.entityRelations.findMany({
     where: {
       owner_id: user.id,
     },
-    select: {
-      Related: true,
-    },
   });
-  const centresCollectes = user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE)
-    ? userEntities.filter((entity) => entity.Related.type === EntityTypes.EXPLOITANT_CENTRE_COLLECTE)
+
+  const allEntitiesIds: Record<Entity["id"], Entity> = {};
+  const allEntitiesByTypeAndId: Record<EntityTypes, Record<Entity["id"], Entity>> = Object.values(EntityTypes).reduce(
+    (acc, type) => {
+      acc[type] = {};
+      return acc;
+    },
+    {} as Record<EntityTypes, Record<Entity["id"], Entity>>
+  );
+  for (const entity of allEntities) {
+    allEntitiesIds[entity.id] = entity;
+    allEntitiesByTypeAndId[entity.type][entity.id] = entity;
+  }
+  const userAllEntitiesIds: Record<string, Entity> = {};
+  const userEntitiesByTypeAndId: Record<EntityTypes, Record<Entity["id"], Entity>> = Object.values(EntityTypes).reduce(
+    (acc, type) => {
+      acc[type] = {};
+      return acc;
+    },
+    {} as Record<EntityTypes, Record<Entity["id"], Entity>>
+  );
+  for (const relation of userEntitiesRelations) {
+    userAllEntitiesIds[relation.entity_id] = allEntitiesIds[relation.entity_id];
+    userEntitiesByTypeAndId[allEntitiesIds[relation.entity_id].type][relation.entity_id] =
+      allEntitiesIds[relation.entity_id];
+  }
+
+  const userCentresCollectes = user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE)
+    ? Object.values(userEntitiesByTypeAndId[EntityTypes.EXPLOITANT_CENTRE_COLLECTE])
     : [];
-  const collecteursPro = user.roles.includes(UserRoles.COLLECTEUR_PRO)
-    ? userEntities.filter((entity) => entity.Related.type === EntityTypes.COLLECTEUR_PRO)
+  const userCollecteursPro = user.roles.includes(UserRoles.COLLECTEUR_PRO)
+    ? Object.values(userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO])
     : [];
-  const etgs = user.roles.includes(UserRoles.ETG)
-    ? userEntities.filter((entity) => entity.Related.type === EntityTypes.ETG)
-    : [];
-  const svis = user.roles.includes(UserRoles.SVI)
-    ? userEntities.filter((entity) => entity.Related.type === EntityTypes.SVI)
-    : [];
-  const allEntities = await prisma.entity.findMany();
+  const userEtgs = user.roles.includes(UserRoles.ETG) ? Object.values(userEntitiesByTypeAndId[EntityTypes.ETG]) : [];
+  const userSvis = user.roles.includes(UserRoles.SVI) ? Object.values(userEntitiesByTypeAndId[EntityTypes.SVI]) : [];
 
   return json({
     user,
-    centresCollectes,
-    collecteursPro,
-    etgs,
-    svis,
-    allEntities,
+    allEntitiesByTypeAndId,
+    userEntitiesByTypeAndId,
     identityDone:
       !!user.nom_de_famille &&
       !!user.prenom &&
@@ -53,31 +70,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
       !!user.ville,
     examinateurDone: !!user.numero_cfei || !!user.numero_frei,
     centresCollectesDone: user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE)
-      ? centresCollectes.length > 0
+      ? userCentresCollectes.length > 0
       : true,
-    collecteursProDone: user.roles.includes(UserRoles.COLLECTEUR_PRO) ? collecteursPro.length > 0 : true,
-    etgsDone: user.roles.includes(UserRoles.ETG) ? etgs.length > 0 : true,
-    svisDone: user.roles.includes(UserRoles.SVI) ? svis.length > 0 : true,
+    collecteursProDone: user.roles.includes(UserRoles.COLLECTEUR_PRO) ? userCollecteursPro.length > 0 : true,
+    etgsDone: user.roles.includes(UserRoles.ETG) ? userEtgs.length > 0 : true,
+    svisDone: user.roles.includes(UserRoles.SVI) ? userSvis.length > 0 : true,
   });
 }
 
 export default function TableauDeBord() {
   const {
     user,
-    // user data
-    centresCollectes,
-    // collecteursPro,
-    // etgs,
-    // svis,
     // for accordions
     identityDone,
     examinateurDone,
     centresCollectesDone,
-    // collecteursProDone,
-    // etgsDone,
-    // svisDone,
-    // for selectors
-    allEntities,
+    collecteursProDone,
+    etgsDone,
+    svisDone,
   } = useLoaderData<typeof loader>();
 
   const userFetcher = useFetcher({ key: "onboarding-etape-2-user-data" });
@@ -92,18 +102,6 @@ export default function TableauDeBord() {
     },
     [userFetcher, user.id]
   );
-
-  const userEntityFetcher = useFetcher({ key: "onboarding-etape-2-entities-data" });
-  const handleEntitiesFormChange = useCallback((event: React.FormEvent<HTMLFormElement>) => {
-    // Remove the preventDefault() call to allow the form to submit normally
-    const formData = new FormData(event.currentTarget);
-    console.log("FormData entries:");
-    for (const [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
-    // Remove the manual submission using userEntityFetcher
-    // The form will submit naturally
-  }, []);
 
   const [identityExpanded, setIdentityExpanded] = useState(!identityDone);
   useEffect(() => {
@@ -261,81 +259,44 @@ export default function TableauDeBord() {
                 )}
               </userFetcher.Form>
               {user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE) && (
-                <Accordion
-                  titleAs="h2"
-                  defaultExpanded={centresCollectesDone}
-                  label={
-                    <div className="inline-flex items-center justify-between md:justify-start w-full">
-                      Vous êtes un Exploitant de Centre de Collecte <CompletedTag done={centresCollectesDone} />
-                    </div>
-                  }
-                >
-                  {centresCollectes.map((entity) => {
-                    return (
-                      <Notice
-                        key={entity.Related.id}
-                        className="fr-fieldset__element [&_p.fr-notice\_\_title]:before:hidden fr-text-default--grey"
-                        isClosable
-                        onClose={() => {
-                          userEntityFetcher.submit(
-                            {
-                              owner_id: user.id,
-                              entity_id: entity.Related.id,
-                              _action: "delete",
-                            },
-                            {
-                              method: "POST",
-                              action: `/action/user-entity/${user.id}`,
-                              preventScrollReset: true,
-                            }
-                          );
-                        }}
-                        title={
-                          <>
-                            {entity.Related.raison_sociale}
-                            <br />
-                            {entity.Related.code_postal} {entity.Related.ville}
-                          </>
-                        }
-                      />
-                    );
-                  })}
-                  <userEntityFetcher.Form
-                    id="user_centre_collecte_form"
-                    className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
-                    method="POST"
-                    action={`/action/user-entity/${user.id}`}
-                    onSubmit={handleEntitiesFormChange}
-                    preventScrollReset
-                  >
-                    <input type="hidden" name="owner_id" value={user.id} />
-                    <input type="hidden" name="_action" value="create" />
-                    <Select
-                      label="Ajouter un Centre de Collecte"
-                      hint="Sélectionnez un Centre de Collecte"
-                      className="!mb-0 grow"
-                      nativeSelectProps={{
-                        name: "entity_id",
-                      }}
-                    >
-                      <option value="">Selectionnez un centre de collecte</option>
-                      {allEntities
-                        .filter((entity) => {
-                          if (entity.type !== EntityTypes.EXPLOITANT_CENTRE_COLLECTE) return false;
-                          if (centresCollectes.find((ec) => ec.Related.id === entity.id)) return false;
-                          return true;
-                        })
-                        .map((entity) => {
-                          return (
-                            <option key={entity.id} value={entity.id}>
-                              {entity.raison_sociale} - {entity.code_postal} {entity.ville}
-                            </option>
-                          );
-                        })}
-                    </Select>
-                    <Button type="submit">Ajouter</Button>
-                  </userEntityFetcher.Form>
-                </Accordion>
+                <AccordionEntreprise
+                  fetcherKey="onboarding-etape-2-centre-collecte-data"
+                  accordionLabel="Vous êtes un Exploitant de Centre de Collecte"
+                  addLabel="Ajouter un Centre de Collecte"
+                  selectLabel="Sélectionnez un Centre de Collecte"
+                  done={centresCollectesDone}
+                  entityType={EntityTypes.EXPLOITANT_CENTRE_COLLECTE}
+                />
+              )}
+              {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
+                <AccordionEntreprise
+                  fetcherKey="onboarding-etape-2-collecteur-pro-data"
+                  accordionLabel="Vous êtes un Collecteur Professionnel"
+                  addLabel="Ajouter un Collecteur Professionnel"
+                  selectLabel="Sélectionnez un Collecteur Professionnel"
+                  done={collecteursProDone}
+                  entityType={EntityTypes.COLLECTEUR_PRO}
+                />
+              )}
+              {user.roles.includes(UserRoles.ETG) && (
+                <AccordionEntreprise
+                  fetcherKey="onboarding-etape-2-etg-data"
+                  accordionLabel="Vous êtes un Établissement de Transformation des Gibiers (ETG)"
+                  addLabel="Ajouter un ETG"
+                  selectLabel="Sélectionnez un ETG"
+                  done={etgsDone}
+                  entityType={EntityTypes.ETG}
+                />
+              )}
+              {user.roles.includes(UserRoles.SVI) && (
+                <AccordionEntreprise
+                  fetcherKey="onboarding-etape-2-svi-data"
+                  accordionLabel="Vous êtes un Service Vétérinaire d'Inspection (SVI)"
+                  addLabel="Ajouter un SVI"
+                  selectLabel="Sélectionnez un SVI"
+                  done={svisDone}
+                  entityType={EntityTypes.SVI}
+                />
               )}
               <div className="mt-6 ml-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
@@ -366,6 +327,107 @@ export default function TableauDeBord() {
         </div>
       </div>
     </main>
+  );
+}
+
+interface AccordionEntrepriseProps {
+  done: boolean;
+  entityType: EntityTypes;
+  addLabel: string;
+  selectLabel: string;
+  accordionLabel: string;
+  fetcherKey: string;
+}
+
+function AccordionEntreprise({
+  done,
+  entityType,
+  addLabel,
+  selectLabel,
+  accordionLabel,
+  fetcherKey,
+}: AccordionEntrepriseProps) {
+  const { user, allEntitiesByTypeAndId, userEntitiesByTypeAndId } = useLoaderData<typeof loader>();
+
+  const userEntityFetcher = useFetcher({ key: fetcherKey });
+  const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
+  const remainingEntities = Object.values(allEntitiesByTypeAndId[entityType]).filter(
+    (entity) => !userEntitiesByTypeAndId[entityType][entity.id]
+  );
+
+  return (
+    <Accordion
+      titleAs="h2"
+      defaultExpanded={!done}
+      label={
+        <div className="inline-flex items-center justify-between md:justify-start w-full">
+          {accordionLabel} <CompletedTag done={done} />
+        </div>
+      }
+    >
+      {userEntities
+        .filter((entity) => entity.type === entityType)
+        .map((entity) => {
+          return (
+            <Notice
+              key={entity.id}
+              className="fr-fieldset__element [&_p.fr-notice\_\_title]:before:hidden fr-text-default--grey"
+              isClosable
+              onClose={() => {
+                userEntityFetcher.submit(
+                  {
+                    owner_id: user.id,
+                    entity_id: entity.id,
+                    _action: "delete",
+                  },
+                  {
+                    method: "POST",
+                    action: `/action/user-entity/${user.id}`,
+                    preventScrollReset: true,
+                  }
+                );
+              }}
+              title={
+                <>
+                  {entity.raison_sociale}
+                  <br />
+                  {entity.code_postal} {entity.ville}
+                </>
+              }
+            />
+          );
+        })}
+      <userEntityFetcher.Form
+        id="user_centre_collecte_form"
+        className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
+        method="POST"
+        action={`/action/user-entity/${user.id}`}
+        preventScrollReset
+      >
+        <input type="hidden" name="owner_id" value={user.id} />
+        <input type="hidden" name="_action" value="create" />
+        <Select
+          label={addLabel}
+          hint={selectLabel}
+          className="!mb-0 grow"
+          nativeSelectProps={{
+            name: "entity_id",
+          }}
+        >
+          <option value="">{selectLabel}</option>
+          {remainingEntities.map((entity) => {
+            return (
+              <option key={entity.id} value={entity.id}>
+                {entity.raison_sociale} - {entity.code_postal} {entity.ville}
+              </option>
+            );
+          })}
+        </Select>
+        <Button type="submit" disabled={!remainingEntities.length}>
+          Ajouter
+        </Button>
+      </userEntityFetcher.Form>
+    </Accordion>
   );
 }
 
