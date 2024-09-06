@@ -220,7 +220,7 @@ export default function TableauDeBord() {
                     />
                   </div>
                 </Accordion>
-                {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
+                {user.roles.includes("EXAMINATEUR_INITIAL") && (
                   <Accordion
                     titleAs="h2"
                     expanded={examinateurExpanded}
@@ -258,44 +258,44 @@ export default function TableauDeBord() {
                   </Accordion>
                 )}
               </userFetcher.Form>
-              {user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE) && (
+              {user.roles.includes("EXPLOITANT_CENTRE_COLLECTE") && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-centre-collecte-data"
                   accordionLabel="Vous êtes un Exploitant de Centre de Collecte"
                   addLabel="Ajouter un Centre de Collecte"
                   selectLabel="Sélectionnez un Centre de Collecte"
                   done={centresCollectesDone}
-                  entityType={EntityTypes.EXPLOITANT_CENTRE_COLLECTE}
+                  entityType={"EXPLOITANT_CENTRE_COLLECTE"}
                 />
               )}
-              {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
+              {user.roles.includes("COLLECTEUR_PRO") && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-collecteur-pro-data"
                   accordionLabel="Vous êtes un Collecteur Professionnel"
                   addLabel="Ajouter un Collecteur Professionnel"
                   selectLabel="Sélectionnez un Collecteur Professionnel"
                   done={collecteursProDone}
-                  entityType={EntityTypes.COLLECTEUR_PRO}
+                  entityType={"COLLECTEUR_PRO"}
                 />
               )}
-              {user.roles.includes(UserRoles.ETG) && (
+              {user.roles.includes("ETG") && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-etg-data"
                   accordionLabel="Vous êtes un Établissement de Transformation des Gibiers (ETG)"
                   addLabel="Ajouter un ETG"
                   selectLabel="Sélectionnez un ETG"
                   done={etgsDone}
-                  entityType={EntityTypes.ETG}
+                  entityType={"ETG"}
                 />
               )}
-              {user.roles.includes(UserRoles.SVI) && (
+              {user.roles.includes("SVI") && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-svi-data"
                   accordionLabel="Vous êtes un Service Vétérinaire d'Inspection (SVI)"
                   addLabel="Ajouter un SVI"
                   selectLabel="Sélectionnez un SVI"
                   done={svisDone}
-                  entityType={EntityTypes.SVI}
+                  entityType={"SVI"}
                 />
               )}
               <div className="mt-6 ml-6 mb-16">
@@ -412,7 +412,7 @@ function AccordionEntreprise({
       >
         <input type="hidden" name="owner_id" value={user.id} />
         <input type="hidden" name="_action" value="create" />
-        <input type="hidden" name="relation" value={RelationType.WORKING_FOR} />
+        <input type="hidden" name="relation" value={"WORKING_FOR"} />
         <Select
           label={addLabel}
           hint={selectLabel}
