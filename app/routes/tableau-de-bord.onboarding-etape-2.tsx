@@ -132,8 +132,8 @@ export default function TableauDeBord() {
                   expanded={identityExpanded}
                   onExpandedChange={setIdentityExpanded}
                   label={
-                    <div className="inline-flex items-center justify-between md:justify-start w-full">
-                      <span>Votre identité</span> <CompletedTag done={identityDone} />
+                    <div className="inline-flex items-center justify-start w-full">
+                      <CompletedTag done={identityDone} /> <span>Votre identité</span>
                     </div>
                   }
                 >
@@ -226,8 +226,8 @@ export default function TableauDeBord() {
                     expanded={examinateurExpanded}
                     onExpandedChange={setExaminateurExpanded}
                     label={
-                      <div className="inline-flex items-center justify-between md:justify-start w-full">
-                        Vous êtes un Examinateur Initial Certifié <CompletedTag done={examinateurDone} />
+                      <div className="inline-flex items-center justify-start w-full">
+                        <CompletedTag done={examinateurDone} /> Vous êtes un Examinateur Initial Certifié
                       </div>
                     }
                   >
@@ -360,8 +360,8 @@ function AccordionEntreprise({
       titleAs="h2"
       defaultExpanded={!done}
       label={
-        <div className="inline-flex items-center justify-between md:justify-start w-full">
-          {accordionLabel} <CompletedTag done={done} />
+        <div className="inline-flex items-center justify-start w-full">
+          <CompletedTag done={done} /> {accordionLabel}
         </div>
       }
     >
@@ -369,32 +369,36 @@ function AccordionEntreprise({
         .filter((entity) => entity.type === entityType)
         .map((entity) => {
           return (
-            <Notice
-              key={entity.id}
-              className="fr-fieldset__element [&_p.fr-notice\_\_title]:before:hidden fr-text-default--grey"
-              isClosable
-              onClose={() => {
-                userEntityFetcher.submit(
-                  {
-                    owner_id: user.id,
-                    entity_id: entity.id,
-                    _action: "delete",
-                  },
-                  {
-                    method: "POST",
-                    action: `/action/user-entity/${user.id}`,
-                    preventScrollReset: true,
-                  }
-                );
-              }}
-              title={
-                <>
-                  {entity.raison_sociale}
-                  <br />
-                  {entity.code_postal} {entity.ville}
-                </>
-              }
-            />
+            <div key={entity.id} className="fr-fieldset__element">
+              <Notice
+                className="fr-fieldset__element [&_p.fr-notice\_\_title]:before:hidden fr-text-default--grey fr-background-contrast--grey"
+                style={{
+                  boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
+                }}
+                isClosable
+                onClose={() => {
+                  userEntityFetcher.submit(
+                    {
+                      owner_id: user.id,
+                      entity_id: entity.id,
+                      _action: "delete",
+                    },
+                    {
+                      method: "POST",
+                      action: `/action/user-entity/${user.id}`,
+                      preventScrollReset: true,
+                    }
+                  );
+                }}
+                title={
+                  <>
+                    {entity.raison_sociale}
+                    <br />
+                    {entity.code_postal} {entity.ville}
+                  </>
+                }
+              />
+            </div>
           );
         })}
       <userEntityFetcher.Form
@@ -434,13 +438,13 @@ function AccordionEntreprise({
 function CompletedTag({ done }: { done: boolean }) {
   if (done) {
     return (
-      <span className="ml-6 px-3 fr-background-contrast--grey fr-text-default--grey inline-flex text-xs py-1 rounded-full">
+      <span className="mr-6 px-3 fr-background-contrast--grey fr-text-default--grey inline-flex text-xs py-1 rounded-full">
         ✅
       </span>
     );
   }
   return (
-    <span className="shrink-0 ml-6 px-3 fr-background-contrast--grey fr-text-default--grey inline-flex text-xs py-1 rounded-full">
+    <span className="shrink-0 mr-6 px-3 fr-background-contrast--grey fr-text-default--grey inline-flex text-xs py-1 rounded-full">
       À compléter
     </span>
   );
