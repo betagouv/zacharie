@@ -12,10 +12,10 @@ import { startReactDsfr } from "@codegouvfr/react-dsfr/spa";
 
 Sentry.init({
   dsn: "https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175",
-  tracesSampleRate: 1,
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1,
-
+  tracesSampleRate: 0.01,
+  replaysSessionSampleRate: 0.01,
+  replaysOnErrorSampleRate: 0.01,
+  enabled: false,
   integrations: [
     Sentry.browserTracingIntegration({
       useEffect,

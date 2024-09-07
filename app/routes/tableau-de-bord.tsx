@@ -1,9 +1,13 @@
 import { Header } from "@codegouvfr/react-dsfr/Header";
-import { Outlet, useLocation, useSubmit } from "@remix-run/react";
+import { UserRoles } from "@prisma/client";
+import { Outlet, useLocation, useMatches, useSubmit } from "@remix-run/react";
+import { useUser } from "~/utils/useUser";
 
 export default function TableauDeBordIndex() {
   const submit = useSubmit();
   const location = useLocation();
+  const user = useUser();
+  console.log("user", user);
 
   const handleLogout = () => {
     submit(null, { method: "post", action: "/actions/logout" });
@@ -57,19 +61,39 @@ export default function TableauDeBordIndex() {
             ],
           },
           {
+            text: "Se déconnecter",
             linkProps: {
               onClick: handleLogout,
               type: "submit",
               href: "#",
             },
-            text: "Se déconnecter",
           },
           {
+            text: "Contactez-nous",
             linkProps: {
               href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de mon tableau de bord à Zacharie`,
             },
-            text: "Contactez-nous",
           },
+          ...(user?.roles.includes(UserRoles.ADMIN)
+            ? [
+                {
+                  text: "Ajouter des utilisateurs",
+                  isActive: location.pathname === "/tableau-de-bord/ajouter-utilisateur",
+                  linkProps: {
+                    href: "#",
+                    to: "/tableau-de-bord/ajouter-utilisateur",
+                  },
+                },
+                {
+                  text: "Ajouter des entités (SVI, ETG, etc.)",
+                  isActive: location.pathname === "/tableau-de-bord/ajouter-entites",
+                  linkProps: {
+                    href: "#",
+                    to: "/tableau-de-bord/ajouter-entites",
+                  },
+                },
+              ]
+            : []),
         ]}
         serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
         serviceTitle="Zacharie"
