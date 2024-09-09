@@ -5,7 +5,6 @@ import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
@@ -114,220 +113,218 @@ export default function TableauDeBord() {
   }, [examinateurDone]);
 
   return (
-    <main role="main" id="content">
-      <div className="fr-container fr-container--fluid fr-my-md-14v">
-        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-          <div className="fr-col-12 fr-col-md-10">
-            <div className="fr-background-alt--blue-france p-4 md:p-16 pb-32 md:pb-0">
-              <userFetcher.Form
-                id="user_data_form"
-                method="POST"
-                action={`/action/user/${user.id}`}
-                onBlur={handleUserFormBlur}
-                preventScrollReset
+    <div className="fr-container fr-container--fluid fr-my-md-14v">
+      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+        <div className="fr-col-12 fr-col-md-10">
+          <div className="fr-background-alt--blue-france p-4 md:p-16 pb-32 md:pb-0">
+            <userFetcher.Form
+              id="user_data_form"
+              method="POST"
+              action={`/action/user/${user.id}`}
+              onBlur={handleUserFormBlur}
+              preventScrollReset
+            >
+              <Accordion
+                titleAs="h2"
+                expanded={identityExpanded}
+                onExpandedChange={setIdentityExpanded}
+                label={
+                  <div className="inline-flex items-center justify-start w-full">
+                    <CompletedTag done={identityDone} /> <span>Votre identité</span>
+                  </div>
+                }
               >
+                <div className="fr-fieldset__element">
+                  <Input
+                    label="Nom"
+                    nativeInputProps={{
+                      id: "nom_de_famille",
+                      name: "nom_de_famille",
+                      autoComplete: "family-name",
+                      defaultValue: user.nom_de_famille ?? "",
+                    }}
+                  />
+                </div>
+                <div className="fr-fieldset__element">
+                  <Input
+                    label="Prénom"
+                    nativeInputProps={{
+                      id: "prenom",
+                      name: "prenom",
+                      autoComplete: "given-name",
+                      defaultValue: user.prenom ?? "",
+                    }}
+                  />
+                </div>
+                <div className="fr-fieldset__element">
+                  <Input
+                    label="Téléphone"
+                    hintText="Format attendu : 01 22 33 44 55"
+                    nativeInputProps={{
+                      id: "telephone",
+                      name: "telephone",
+                      autoComplete: "tel",
+                      defaultValue: user.telephone ?? "",
+                    }}
+                  />
+                </div>
+                <div className="fr-fieldset__element">
+                  <Input
+                    label="Adresse"
+                    hintText="Indication : numéro et voie"
+                    nativeInputProps={{
+                      id: "addresse_ligne_1",
+                      name: "addresse_ligne_1",
+                      autoComplete: "address-line1",
+                      defaultValue: user.addresse_ligne_1 ?? "",
+                    }}
+                  />
+                </div>
+                <div className="fr-fieldset__element">
+                  <Input
+                    label="Complément d'adresse (optionnel)"
+                    hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                    nativeInputProps={{
+                      id: "addresse_ligne_2",
+                      name: "addresse_ligne_2",
+                      autoComplete: "address-line2",
+                      defaultValue: user.addresse_ligne_2 ?? "",
+                    }}
+                  />
+                </div>
+                <div className="fr-fieldset__element fr-fieldset__element--inline fr-fieldset__element--postal flex">
+                  <Input
+                    label="Code postal"
+                    hintText="Format attendu : 5 chiffres"
+                    nativeInputProps={{
+                      id: "code_postal",
+                      name: "code_postal",
+                      autoComplete: "postal-code",
+                      defaultValue: user.code_postal ?? "",
+                    }}
+                  />
+                </div>
+                <div className="fr-fieldset__element fr-fieldset__element--inline@md fr-fieldset__element--inline-grow">
+                  <Input
+                    label="Ville ou commune"
+                    hintText="Exemple : Montpellier"
+                    nativeInputProps={{
+                      id: "ville",
+                      name: "ville",
+                      autoComplete: "address-level2",
+                      defaultValue: user.ville ?? "",
+                    }}
+                  />
+                </div>
+              </Accordion>
+              {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
                 <Accordion
                   titleAs="h2"
-                  expanded={identityExpanded}
-                  onExpandedChange={setIdentityExpanded}
+                  expanded={examinateurExpanded}
+                  onExpandedChange={setExaminateurExpanded}
                   label={
                     <div className="inline-flex items-center justify-start w-full">
-                      <CompletedTag done={identityDone} /> <span>Votre identité</span>
+                      <CompletedTag done={examinateurDone} /> Vous êtes un Examinateur Initial Certifié
                     </div>
                   }
                 >
                   <div className="fr-fieldset__element">
                     <Input
-                      label="Nom"
+                      label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
+                      hintText="De la forme CFEI-DEP-AA-123"
                       nativeInputProps={{
-                        id: "nom_de_famille",
-                        name: "nom_de_famille",
-                        autoComplete: "family-name",
-                        defaultValue: user.nom_de_famille ?? "",
+                        id: "numero_cfei",
+                        name: "numero_cfei",
+                        autoComplete: "off",
+                        defaultValue: user.numero_cfei ?? "",
                       }}
                     />
                   </div>
                   <div className="fr-fieldset__element">
                     <Input
-                      label="Prénom"
+                      label="Numéro d'attestation de Formateur Référent Examen Initial"
+                      hintText="De la forme DEP-FREI-YY-001"
                       nativeInputProps={{
-                        id: "prenom",
-                        name: "prenom",
-                        autoComplete: "given-name",
-                        defaultValue: user.prenom ?? "",
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Téléphone"
-                      hintText="Format attendu : 01 22 33 44 55"
-                      nativeInputProps={{
-                        id: "telephone",
-                        name: "telephone",
-                        autoComplete: "tel",
-                        defaultValue: user.telephone ?? "",
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Adresse"
-                      hintText="Indication : numéro et voie"
-                      nativeInputProps={{
-                        id: "addresse_ligne_1",
-                        name: "addresse_ligne_1",
-                        autoComplete: "address-line1",
-                        defaultValue: user.addresse_ligne_1 ?? "",
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Complément d'adresse (optionnel)"
-                      hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                      nativeInputProps={{
-                        id: "addresse_ligne_2",
-                        name: "addresse_ligne_2",
-                        autoComplete: "address-line2",
-                        defaultValue: user.addresse_ligne_2 ?? "",
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element fr-fieldset__element--inline fr-fieldset__element--postal flex">
-                    <Input
-                      label="Code postal"
-                      hintText="Format attendu : 5 chiffres"
-                      nativeInputProps={{
-                        id: "code_postal",
-                        name: "code_postal",
-                        autoComplete: "postal-code",
-                        defaultValue: user.code_postal ?? "",
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element fr-fieldset__element--inline@md fr-fieldset__element--inline-grow">
-                    <Input
-                      label="Ville ou commune"
-                      hintText="Exemple : Montpellier"
-                      nativeInputProps={{
-                        id: "ville",
-                        name: "ville",
-                        autoComplete: "address-level2",
-                        defaultValue: user.ville ?? "",
+                        id: "numero_frei",
+                        name: "numero_frei",
+                        autoComplete: "off",
+                        defaultValue: user.numero_frei ?? "",
                       }}
                     />
                   </div>
                 </Accordion>
-                {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
-                  <Accordion
-                    titleAs="h2"
-                    expanded={examinateurExpanded}
-                    onExpandedChange={setExaminateurExpanded}
-                    label={
-                      <div className="inline-flex items-center justify-start w-full">
-                        <CompletedTag done={examinateurDone} /> Vous êtes un Examinateur Initial Certifié
-                      </div>
-                    }
-                  >
-                    <div className="fr-fieldset__element">
-                      <Input
-                        label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                        hintText="De la forme CFEI-DEP-AA-123"
-                        nativeInputProps={{
-                          id: "numero_cfei",
-                          name: "numero_cfei",
-                          autoComplete: "off",
-                          defaultValue: user.numero_cfei ?? "",
-                        }}
-                      />
-                    </div>
-                    <div className="fr-fieldset__element">
-                      <Input
-                        label="Numéro d'attestation de Formateur Référent Examen Initial"
-                        hintText="De la forme DEP-FREI-YY-001"
-                        nativeInputProps={{
-                          id: "numero_frei",
-                          name: "numero_frei",
-                          autoComplete: "off",
-                          defaultValue: user.numero_frei ?? "",
-                        }}
-                      />
-                    </div>
-                  </Accordion>
-                )}
-              </userFetcher.Form>
-              {user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE) && (
-                <AccordionEntreprise
-                  fetcherKey="onboarding-etape-2-centre-collecte-data"
-                  accordionLabel="Vous êtes un Exploitant de Centre de Collecte"
-                  addLabel="Ajouter un Centre de Collecte"
-                  selectLabel="Sélectionnez un Centre de Collecte"
-                  done={centresCollectesDone}
-                  entityType={EntityTypes.EXPLOITANT_CENTRE_COLLECTE}
-                />
               )}
-              {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
-                <AccordionEntreprise
-                  fetcherKey="onboarding-etape-2-collecteur-pro-data"
-                  accordionLabel="Vous êtes un Collecteur Professionnel"
-                  addLabel="Ajouter un Collecteur Professionnel"
-                  selectLabel="Sélectionnez un Collecteur Professionnel"
-                  done={collecteursProDone}
-                  entityType={EntityTypes.COLLECTEUR_PRO}
-                />
-              )}
-              {user.roles.includes(UserRoles.ETG) && (
-                <AccordionEntreprise
-                  fetcherKey="onboarding-etape-2-etg-data"
-                  accordionLabel="Vous êtes un Établissement de Transformation des Gibiers (ETG)"
-                  addLabel="Ajouter un ETG"
-                  selectLabel="Sélectionnez un ETG"
-                  done={etgsDone}
-                  entityType={EntityTypes.ETG}
-                />
-              )}
-              {user.roles.includes(UserRoles.SVI) && (
-                <AccordionEntreprise
-                  fetcherKey="onboarding-etape-2-svi-data"
-                  accordionLabel="Vous êtes un Service Vétérinaire d'Inspection (SVI)"
-                  addLabel="Ajouter un SVI"
-                  selectLabel="Sélectionnez un SVI"
-                  done={svisDone}
-                  entityType={EntityTypes.SVI}
-                />
-              )}
-              <div className="mt-6 ml-6 mb-16">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                  Haut de page
-                </a>
-              </div>
-              <div className="fixed md:relative bottom-0 left-0 w-full p-6 bg-white md:bg-transparent drop-shadow-xl z-50">
-                <ButtonsGroup
-                  buttons={[
-                    {
-                      children: "Continuer",
-                      linkProps: {
-                        to: "/tableau-de-bord/mon-profil/mes-partenaires",
-                        href: "#",
-                      },
+            </userFetcher.Form>
+            {user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE) && (
+              <AccordionEntreprise
+                fetcherKey="onboarding-etape-2-centre-collecte-data"
+                accordionLabel="Vous êtes un Exploitant de Centre de Collecte"
+                addLabel="Ajouter un Centre de Collecte"
+                selectLabel="Sélectionnez un Centre de Collecte"
+                done={centresCollectesDone}
+                entityType={EntityTypes.EXPLOITANT_CENTRE_COLLECTE}
+              />
+            )}
+            {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
+              <AccordionEntreprise
+                fetcherKey="onboarding-etape-2-collecteur-pro-data"
+                accordionLabel="Vous êtes un Collecteur Professionnel"
+                addLabel="Ajouter un Collecteur Professionnel"
+                selectLabel="Sélectionnez un Collecteur Professionnel"
+                done={collecteursProDone}
+                entityType={EntityTypes.COLLECTEUR_PRO}
+              />
+            )}
+            {user.roles.includes(UserRoles.ETG) && (
+              <AccordionEntreprise
+                fetcherKey="onboarding-etape-2-etg-data"
+                accordionLabel="Vous êtes un Établissement de Transformation des Gibiers (ETG)"
+                addLabel="Ajouter un ETG"
+                selectLabel="Sélectionnez un ETG"
+                done={etgsDone}
+                entityType={EntityTypes.ETG}
+              />
+            )}
+            {user.roles.includes(UserRoles.SVI) && (
+              <AccordionEntreprise
+                fetcherKey="onboarding-etape-2-svi-data"
+                accordionLabel="Vous êtes un Service Vétérinaire d'Inspection (SVI)"
+                addLabel="Ajouter un SVI"
+                selectLabel="Sélectionnez un SVI"
+                done={svisDone}
+                entityType={EntityTypes.SVI}
+              />
+            )}
+            <div className="mt-6 ml-6 mb-16">
+              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                Haut de page
+              </a>
+            </div>
+            <div className="fixed md:relative bottom-0 left-0 w-full p-6 bg-white md:bg-transparent shadow-xl z-50">
+              <ButtonsGroup
+                buttons={[
+                  {
+                    children: "Continuer",
+                    linkProps: {
+                      to: "/tableau-de-bord/mon-profil/mes-partenaires",
+                      href: "#",
                     },
-                    {
-                      children: "Précédent",
-                      linkProps: {
-                        to: "/tableau-de-bord/mon-profil/mes-roles",
-                        href: "#",
-                      },
-                      priority: "secondary",
+                  },
+                  {
+                    children: "Précédent",
+                    linkProps: {
+                      to: "/tableau-de-bord/mon-profil/mes-roles",
+                      href: "#",
                     },
-                  ]}
-                />
-              </div>
+                    priority: "secondary",
+                  },
+                ]}
+              />
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 

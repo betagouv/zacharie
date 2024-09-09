@@ -1,9 +1,6 @@
-import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Footer } from "@codegouvfr/react-dsfr/Footer";
 import { Header } from "@codegouvfr/react-dsfr/Header";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { Outlet, useLoaderData } from "@remix-run/react";
-import { getUserIdFromCookie } from "~/services/auth.server";
+import { Outlet } from "@remix-run/react";
 // import type { MetaFunction } from "@remix-run/node";
 
 // export const meta: MetaFunction = () => {
@@ -14,8 +11,6 @@ import { getUserIdFromCookie } from "~/services/auth.server";
 // };
 
 export default function Index() {
-  const { isLoggedIn } = useLoaderData<typeof loader>();
-  console.log("isLoggedIn", isLoggedIn);
   return (
     <>
       <Header
@@ -32,23 +27,14 @@ export default function Index() {
         }}
         id="fr-header-header-with-quick-access-items"
         quickAccessItems={[
-          isLoggedIn
-            ? {
-                linkProps: {
-                  to: "/tableau-de-bord",
-                  href: "#",
-                },
-                iconId: "ri-account-box-line",
-                text: "Accéder à mon espace",
-              }
-            : {
-                linkProps: {
-                  to: "/connexion?type=compte-existant",
-                  href: "#",
-                },
-                iconId: "ri-account-box-line",
-                text: "Se connecter",
-              },
+          {
+            linkProps: {
+              to: "/connexion?type=compte-existant",
+              href: "#",
+            },
+            iconId: "ri-account-box-line",
+            text: "Se connecter",
+          },
           {
             linkProps: {
               to: "/connexion?type=creation-de-compte",

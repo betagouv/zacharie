@@ -5,6 +5,7 @@ import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
+import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
@@ -49,33 +50,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       allEntitiesIds[relation.entity_id];
   }
 
-  const userCentresCollectes = user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE)
-    ? Object.values(userEntitiesByTypeAndId[EntityTypes.EXPLOITANT_CENTRE_COLLECTE])
-    : [];
-  const userCollecteursPro = user.roles.includes(UserRoles.COLLECTEUR_PRO)
-    ? Object.values(userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO])
-    : [];
-  const userEtgs = user.roles.includes(UserRoles.ETG) ? Object.values(userEntitiesByTypeAndId[EntityTypes.ETG]) : [];
-  const userSvis = user.roles.includes(UserRoles.SVI) ? Object.values(userEntitiesByTypeAndId[EntityTypes.SVI]) : [];
-
   return json({
     user,
-    allEntitiesByTypeAndId,
     userEntitiesByTypeAndId,
-    identityDone:
-      !!user.nom_de_famille &&
-      !!user.prenom &&
-      !!user.telephone &&
-      !!user.addresse_ligne_1 &&
-      !!user.code_postal &&
-      !!user.ville,
-    examinateurDone: !!user.numero_cfei || !!user.numero_frei,
-    centresCollectesDone: user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE)
-      ? userCentresCollectes.length > 0
-      : true,
-    collecteursProDone: user.roles.includes(UserRoles.COLLECTEUR_PRO) ? userCollecteursPro.length > 0 : true,
-    etgsDone: user.roles.includes(UserRoles.ETG) ? userEtgs.length > 0 : true,
-    svisDone: user.roles.includes(UserRoles.SVI) ? userSvis.length > 0 : true,
   });
 }
 
@@ -118,7 +95,10 @@ export default function TableauDeBord() {
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <Stepper currentStep={2} nextTitle="Vos partenaires" stepCount={4} title="Vos informations" />
-          <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations</h1>
+          <h1 className="fr-h2 fr-mb-2w">Nouvelle FEI</h1>
+          <CallOut title="📮 N'oubliez-pas d'assigner la FEI une fois remplie !" className="bg-white">
+            Zacharie se chargera de notifier les personnes concernées.
+          </CallOut>
           <div className="bg-white mb-6 md:shadow">
             <div className="p-4 md:p-8 pb-32 md:pb-0">
               <p className="fr-text--regular mb-4">Renseignez les informations de chacun de vos rôles</p>
@@ -351,13 +331,10 @@ function AccordionEntreprise({
   accordionLabel,
   fetcherKey,
 }: AccordionEntrepriseProps) {
-  const { user, allEntitiesByTypeAndId, userEntitiesByTypeAndId } = useLoaderData<typeof loader>();
+  const { user, userEntitiesByTypeAndId } = useLoaderData<typeof loader>();
 
   const userEntityFetcher = useFetcher({ key: fetcherKey });
   const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
-  const remainingEntities = Object.values(allEntitiesByTypeAndId[entityType]).filter(
-    (entity) => !userEntitiesByTypeAndId[entityType][entity.id]
-  );
 
   return (
     <Accordion
@@ -424,7 +401,7 @@ function AccordionEntreprise({
           }}
         >
           <option value="">{selectLabel}</option>
-          {remainingEntities.map((entity) => {
+          {userEntities.map((entity) => {
             return (
               <option key={entity.id} value={entity.id}>
                 {entity.raison_sociale} - {entity.code_postal} {entity.ville}
@@ -432,7 +409,7 @@ function AccordionEntreprise({
             );
           })}
         </Select>
-        <Button type="submit" disabled={!remainingEntities.length}>
+        <Button type="submit" disabled={!userEntities.length}>
           Ajouter
         </Button>
       </userEntityFetcher.Form>

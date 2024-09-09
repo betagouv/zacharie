@@ -33,21 +33,21 @@ export default function TableauDeBord() {
   }, []);
 
   return (
-    <main role="main" id="content">
-      <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>
-        <input type="hidden" name="_redirect" value="/tableau-de-bord/" />
-        <div className="fr-container fr-container--fluid fr-my-md-14v">
-          <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-            <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
-              <div className="fr-background-alt--blue-france p-4 md:p-16 pb-32 md:pb-0">
-                <Stepper currentStep={4} stepCount={4} title="Vos notifications" />
-                <h1 className="fr-h2 fr-mb-2w">Activez les notifications</h1>
-                <CallOut iconId="ri-bell-line" title="Soyez notifié d'une FEI qui vous est attribuée">
-                  Vous pouvez être notifié par mail ou par une notification sur votre smartphone dès qu'une Fiche
-                  d'Examen Initial (FEI) vous est attribuée.
-                </CallOut>
+    <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>
+      <input type="hidden" name="_redirect" value="/tableau-de-bord/" />
+      <div className="fr-container fr-container--fluid fr-my-md-14v">
+        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+          <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+            <Stepper currentStep={4} stepCount={4} title="Vos notifications" />
+            <h1 className="fr-h2 fr-mb-2w">Activez les notifications</h1>
+            <CallOut title="🔔 Soyez notifié d'une FEI qui vous est attribuée" className="bg-white">
+              Vous pouvez être notifié par mail ou par une notification sur votre smartphone dès qu'une Fiche d'Examen
+              Initial (FEI) vous est attribuée.
+            </CallOut>
+            <div className="bg-white mb-6 md:shadow">
+              <div className="p-4 md:p-8 pb-32 md:pb-0">
                 <Checkbox
-                  legend="Sélectionnez tous les rôles qui vous correspondent"
+                  legend="Sélectionnez tous les types de notifications que vous souhaitez recevoir"
                   options={[
                     {
                       label: "Notification Push",
@@ -75,7 +75,7 @@ export default function TableauDeBord() {
                               );
                             },
                             (error) => {
-                              logger.error("Error subscribing user to push notifications!", error);
+                              console.error("Error subscribing user to push notifications!", error);
                             }
                           );
                         },
@@ -91,34 +91,36 @@ export default function TableauDeBord() {
                     },
                   ]}
                 />
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                  Haut de page
-                </a>
-                <div className="fixed md:relative md:mt-16 bottom-0 left-0 w-full p-6 bg-white md:bg-transparent drop-shadow-xl z-50">
-                  <ButtonsGroup
-                    buttons={[
-                      {
-                        children: "Continuer",
-                        nativeButtonProps: {
-                          type: "submit",
-                        },
-                      },
-                      {
-                        children: "Précédent",
-                        linkProps: {
-                          to: "/tableau-de-bord/mon-profil/mes-informations",
-                          href: "#",
-                        },
-                        priority: "secondary",
-                      },
-                    ]}
-                  />
+                <div className="mt-6 ml-6 mb-16">
+                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                    Haut de page
+                  </a>
                 </div>
+              </div>
+              <div className="fixed md:relative md:mt-16 bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white">
+                <ButtonsGroup
+                  buttons={[
+                    {
+                      children: "Continuer",
+                      nativeButtonProps: {
+                        type: "submit",
+                      },
+                    },
+                    {
+                      children: "Précédent",
+                      linkProps: {
+                        to: "/tableau-de-bord/mon-profil/mes-partenaires",
+                        href: "#",
+                      },
+                      priority: "secondary",
+                    },
+                  ]}
+                />
               </div>
             </div>
           </div>
         </div>
-      </fetcher.Form>
-    </main>
+      </div>
+    </fetcher.Form>
   );
 }

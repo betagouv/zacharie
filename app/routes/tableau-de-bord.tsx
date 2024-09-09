@@ -1,6 +1,6 @@
 import { Header } from "@codegouvfr/react-dsfr/Header";
 import { UserRoles } from "@prisma/client";
-import { Outlet, useLocation, useMatches, useSubmit } from "@remix-run/react";
+import { Outlet, useLocation, useSubmit } from "@remix-run/react";
 import { useUser } from "~/utils/useUser";
 
 export default function TableauDeBordIndex() {
@@ -30,6 +30,28 @@ export default function TableauDeBordIndex() {
         id="fr-header-header-with-quick-access-items"
         // check mobile responsive header classes at tailwind.css
         navigation={[
+          {
+            text: "Mes FEI",
+            isActive: location.pathname === "/tableau-de-bord" || location.pathname.startsWith("/tableau-de-bord/fei"),
+            menuLinks: [
+              {
+                text: "Nouvelle FEI",
+                isActive: location.pathname === "/tableau-de-bord/fei",
+                linkProps: {
+                  to: "/tableau-de-bord/fei",
+                  href: "#",
+                },
+              },
+              {
+                text: "Mes FEI assignées",
+                isActive: location.pathname === "/tableau-de-bord",
+                linkProps: {
+                  href: "#",
+                  to: "/tableau-de-bord",
+                },
+              },
+            ],
+          },
           {
             text: "Mon profil",
             isActive: location.pathname.startsWith("/tableau-de-bord/mon-profil"),
@@ -112,7 +134,9 @@ export default function TableauDeBordIndex() {
         serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
         serviceTitle="Zacharie"
       />
-      <Outlet />
+      <main role="main" id="content" className="fr-background-alt--blue-france relative overflow-auto min-h-[75vh]">
+        <Outlet />
+      </main>
       {/* <Footer
         accessibility="fully compliant"
         contentDescription={`

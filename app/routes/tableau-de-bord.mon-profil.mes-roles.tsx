@@ -18,21 +18,21 @@ export default function TableauDeBord() {
   const fetcher = useFetcher({ key: "onboarding-etape-1" });
 
   return (
-    <main role="main" id="content">
-      <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>
-        <input type="hidden" name="_redirect" value="/tableau-de-bord/mon-profil/mes-informations" />
-        <input type="hidden" name="onboarding_finished" value="true" />
-        <div className="fr-container fr-container--fluid fr-my-md-14v">
-          <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-            <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
-              <div className="fr-background-alt--blue-france p-4 md:p-16 pb-32 md:pb-0">
-                <Stepper currentStep={1} nextTitle="Vos informations personnelles" stepCount={4} title="Vos rôles" />
-                <h1 className="fr-h2 fr-mb-2w">Renseignez vos rôles</h1>
-                <CallOut iconId="ri-information-line" title="Un seul compte pour toutes vos casquettes">
-                  Les acteurs de la chasse sont nombreux : examinateur, centre de collecte, etc. et parfois vous
-                  combinez plusieurs rôles. <br />
-                  Zacharie vous permet de jongler entre tous très facilement. Quels sont vos rôles ?
-                </CallOut>
+    <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>
+      <input type="hidden" name="_redirect" value="/tableau-de-bord/mon-profil/mes-informations" />
+      <input type="hidden" name="onboarding_finished" value="true" />
+      <div className="fr-container fr-container--fluid fr-my-md-14v">
+        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+          <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+            <Stepper currentStep={1} nextTitle="Vos informations personnelles" stepCount={4} title="Vos rôles" />
+            <h1 className="fr-h2 fr-mb-2w">Renseignez vos rôles</h1>
+            <CallOut title="☝️ Un seul compte pour toutes vos casquettes" className="bg-white">
+              Les acteurs de la chasse sont nombreux : examinateur, centre de collecte, etc. et parfois vous combinez
+              plusieurs rôles. <br />
+              Zacharie vous permet de jongler entre tous très facilement. Quels sont vos rôles ?
+            </CallOut>
+            <div className="bg-white mb-6 md:shadow">
+              <div className="p-4 md:p-8 pb-32 md:pb-0">
                 <Checkbox
                   legend="Sélectionnez tous les rôles qui vous correspondent"
                   options={[
@@ -98,23 +98,23 @@ export default function TableauDeBord() {
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>
-                <div className="fixed md:relative md:mt-16 bottom-0 left-0 w-full p-6 bg-white md:bg-transparent drop-shadow-xl z-50">
-                  <ButtonsGroup
-                    buttons={[
-                      {
-                        children: "Continuer",
-                        nativeButtonProps: {
-                          type: "submit",
-                        },
+              </div>
+              <div className="fixed md:relative md:mt-16 bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white">
+                <ButtonsGroup
+                  buttons={[
+                    {
+                      children: "Continuer",
+                      nativeButtonProps: {
+                        type: "submit",
                       },
-                    ]}
-                  />
-                </div>
+                    },
+                  ]}
+                />
               </div>
             </div>
           </div>
         </div>
-      </fetcher.Form>
-    </main>
+      </div>
+    </fetcher.Form>
   );
 }

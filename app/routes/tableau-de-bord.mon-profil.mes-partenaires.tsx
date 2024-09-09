@@ -58,17 +58,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function TableauDeBord() {
   return (
-    <main role="main" id="content">
-      <div className="fr-container fr-container--fluid fr-my-md-14v">
-        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-          <div className="fr-col-12 fr-col-md-10">
-            <div className="fr-background-alt--blue-france p-4 md:p-16 pb-32 md:pb-0">
-              <Stepper currentStep={3} stepCount={4} title="Vos partenaires" nextTitle="Vos notifications" />
-              <h1 className="fr-h2 fr-mb-2w">Renseignez vos partenaires</h1>
-              <CallOut iconId="ri-mouse-line" title="Envoyez les FEI en un clic">
-                Avec qui travaillez-vous ? <br />
-                On pourra ainsi vous préremplir lorsqu'il s'agira de transmettre une FEI.
-              </CallOut>
+    <div className="fr-container fr-container--fluid fr-my-md-14v">
+      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+          <Stepper currentStep={3} stepCount={4} title="Vos partenaires" nextTitle="Vos notifications" />
+          <h1 className="fr-h2 fr-mb-2w">Renseignez vos partenaires</h1>
+          <CallOut title="🖱️ Envoyez les FEI en un clic" className="bg-white">
+            Avec qui travaillez-vous ? <br />
+            On pourra ainsi vous préremplir lorsqu'il s'agira de transmettre une FEI.
+          </CallOut>
+          <div className="bg-white mb-6 md:shadow">
+            <div className="p-4 md:p-8 pb-32 md:pb-0">
+              <p className="fr-text--regular mb-4">Sélectionez vos différents partenaires</p>
               <AccordionEntreprise
                 fetcherKey="onboarding-etape-2-centre-collecte-data"
                 accordionLabel="Vos Exploitants de Centre de Collecte"
@@ -102,32 +103,32 @@ export default function TableauDeBord() {
                   Haut de page
                 </a>
               </div>
-              <div className="fixed md:relative bottom-0 left-0 w-full p-6 bg-white md:bg-transparent drop-shadow-xl z-50">
-                <ButtonsGroup
-                  buttons={[
-                    {
-                      children: "Continuer",
-                      linkProps: {
-                        to: "/tableau-de-bord/mon-profil/mes-notifications",
-                        href: "#",
-                      },
+            </div>
+            <div className="fixed md:relative md:mt-16 bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white">
+              <ButtonsGroup
+                buttons={[
+                  {
+                    children: "Continuer",
+                    linkProps: {
+                      to: "/tableau-de-bord/mon-profil/mes-notifications",
+                      href: "#",
                     },
-                    {
-                      children: "Précédent",
-                      linkProps: {
-                        to: "/tableau-de-bord/mon-profil/mes-informations",
-                        href: "#",
-                      },
-                      priority: "secondary",
+                  },
+                  {
+                    children: "Précédent",
+                    linkProps: {
+                      to: "/tableau-de-bord/mon-profil/mes-informations",
+                      href: "#",
                     },
-                  ]}
-                />
-              </div>
+                    priority: "secondary",
+                  },
+                ]}
+              />
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -171,7 +172,7 @@ function AccordionEntreprise({
           return (
             <div key={entity.id} className="fr-fieldset__element">
               <Notice
-                className="fr-fieldset__element [&_p.fr-notice\_\_title]:before:hidden fr-text-default--grey fr-background-contrast--grey"
+                className="fr-fieldset__element [&_p.fr-notice__title]:before:hidden fr-text-default--grey fr-background-contrast--grey"
                 style={{
                   boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
                 }}
@@ -239,11 +240,7 @@ function AccordionEntreprise({
 function NumberTag({ number }: { number: number }) {
   if (number) {
     return (
-      <Tag
-        // iconId="fr-icon-checkbox-circle-line"
-        pressed
-        className="shrink-0 fr-background-action-high--blue-france fr-text-inverted--blue-france"
-      >
+      <Tag pressed className="shrink-0 fr-background-action-high--blue-france fr-text-inverted--blue-france">
         {number}
       </Tag>
     );
