@@ -53,10 +53,10 @@ declare global {
 export function loader(): ReturnType<LoaderFunction> {
   return {
     honeypotInputProps: honeypot.getInputProps(),
-    ENV: {
+    ENV: JSON.stringify({
       NODE_ENV: process.env.NODE_ENV,
       VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY as string,
-    } satisfies WindowEnv,
+    } satisfies WindowEnv),
   };
 }
 

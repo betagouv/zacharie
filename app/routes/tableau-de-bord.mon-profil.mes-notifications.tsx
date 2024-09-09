@@ -7,6 +7,7 @@ import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { UserNotifications } from "@prisma/client";
+import { useEffect } from "react";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
@@ -25,6 +26,11 @@ export default function TableauDeBord() {
     isSubscribed &&
     !!pushSubscription &&
     user.web_push_tokens.includes(JSON.stringify(pushSubscription));
+
+  useEffect(() => {
+    console.log(window.ENV);
+    console.log(window.ENV?.VAPID_PUBLIC_KEY);
+  }, []);
 
   return (
     <main role="main" id="content">
