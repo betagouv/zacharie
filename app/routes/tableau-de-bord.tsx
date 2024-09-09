@@ -58,6 +58,14 @@ export default function TableauDeBordIndex() {
                   to: "/tableau-de-bord/mon-profil/mes-partenaires",
                 },
               },
+              {
+                text: "Mes notifications",
+                isActive: location.pathname === "/tableau-de-bord/mon-profil/mes-notifications",
+                linkProps: {
+                  href: "#",
+                  to: "/tableau-de-bord/mon-profil/mes-notifications",
+                },
+              },
             ],
           },
           {
@@ -77,20 +85,26 @@ export default function TableauDeBordIndex() {
           ...(user?.roles.includes(UserRoles.ADMIN)
             ? [
                 {
-                  text: "Ajouter des utilisateurs",
-                  isActive: location.pathname === "/tableau-de-bord/ajouter-utilisateur",
-                  linkProps: {
-                    href: "#",
-                    to: "/tableau-de-bord/ajouter-utilisateur",
-                  },
-                },
-                {
-                  text: "Ajouter des entités (SVI, ETG, etc.)",
-                  isActive: location.pathname === "/tableau-de-bord/ajouter-entites",
-                  linkProps: {
-                    href: "#",
-                    to: "/tableau-de-bord/ajouter-entites",
-                  },
+                  text: "Admin",
+                  isActive: location.pathname.startsWith("/tableau-de-bord/admin"),
+                  menuLinks: [
+                    {
+                      text: "Ajouter des utilisateurs",
+                      isActive: location.pathname === "/tableau-de-bord/ajouter-utilisateur",
+                      linkProps: {
+                        href: "#",
+                        to: "/tableau-de-bord/ajouter-utilisateur",
+                      },
+                    },
+                    {
+                      text: "Ajouter des entités (SVI, ETG, etc.)",
+                      isActive: location.pathname === "/tableau-de-bord/ajouter-entites",
+                      linkProps: {
+                        href: "#",
+                        to: "/tableau-de-bord/ajouter-entites",
+                      },
+                    },
+                  ],
                 },
               ]
             : []),

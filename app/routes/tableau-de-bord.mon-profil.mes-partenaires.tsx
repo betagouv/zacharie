@@ -57,16 +57,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function TableauDeBord() {
-  const { user } = useLoaderData<typeof loader>();
-  const onboardedFetcher = useFetcher({ key: "user-onboarded" });
-
   return (
     <main role="main" id="content">
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10">
             <div className="fr-background-alt--blue-france p-4 md:p-16 pb-32 md:pb-0">
-              <Stepper currentStep={3} stepCount={3} title="Vos partenaires" />
+              <Stepper currentStep={3} stepCount={4} title="Vos partenaires" nextTitle="Vos notifications" />
               <h1 className="fr-h2 fr-mb-2w">Renseignez vos partenaires</h1>
               <CallOut iconId="ri-mouse-line" title="Envoyez les FEI en un clic">
                 Avec qui travaillez-vous ? <br />
@@ -111,20 +108,8 @@ export default function TableauDeBord() {
                     {
                       children: "Continuer",
                       linkProps: {
-                        to: "/tableau-de-bord",
+                        to: "/tableau-de-bord/mon-profil/mes-notifications",
                         href: "#",
-                        onClick: () => {
-                          onboardedFetcher.submit(
-                            {
-                              onboarded_finished: true,
-                            },
-                            {
-                              method: "POST",
-                              action: `/action/user/${user.id}`,
-                              preventScrollReset: true,
-                            }
-                          );
-                        },
                       },
                     },
                     {

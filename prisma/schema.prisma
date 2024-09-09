@@ -24,9 +24,15 @@ enum UserRoles {
   // RESTAURATEUR
 }
 
+enum UserNotifications {
+  EMAIL
+  SMS
+  PUSH
+}
+
 model User {
-  id                   String            @id @default(uuid())
-  email                String?           @unique // email is optional, we can have users without email like the Collecteur Pro
+  id                   String              @id @default(uuid())
+  email                String?             @unique // email is optional, we can have users without email like the Collecteur Pro
   telephone            String?
   prenom               String?
   nom_de_famille       String?
@@ -37,23 +43,26 @@ model User {
   code_postal          String?
   ville                String?
   roles                UserRoles[]
-  created_at           DateTime          @default(now())
-  updated_at           DateTime          @default(now()) @updatedAt
+  created_at           DateTime            @default(now())
+  updated_at           DateTime            @default(now()) @updatedAt
   last_login_at        DateTime?
   last_seen_at         DateTime?
   deleted_at           DateTime?
   onboarded_at         DateTime?
-  prefilled            Boolean           @default(false)
+  notifications        UserNotifications[]
+  web_push_tokens      String[]
+  prefilled            Boolean             @default(false)
   Password             Password?
-  UserRelationsOwner   UserRelations[]   @relation("owner")
-  UserRelationsRelated UserRelations[]   @relation("related")
-  FeiCurrentUser       Fei[]             @relation("DetenteurActuel")
-  FeiCreatedBy         Fei[]             @relation("CreatedBy")
-  SuiviFeiOwner        SuiviFei[]        @relation("Owner")
-  FeiTransferedToUser  SuiviFei[]        @relation("TransferedToUser")
+  UserRelationsOwner   UserRelations[]     @relation("owner")
+  UserRelationsRelated UserRelations[]     @relation("related")
+  FeiCurrentUser       Fei[]               @relation("DetenteurActuel")
+  FeiCreatedBy         Fei[]               @relation("CreatedBy")
+  SuiviFeiOwner        SuiviFei[]          @relation("Owner")
+  FeiTransferedToUser  SuiviFei[]          @relation("TransferedToUser")
   Logs                 Logs[]
   SuiviCarcasse        SuiviCarcasse[]
-  EntityRelations      EntityRelations[] @relation("owner")
+  EntityRelations      EntityRelations[]   @relation("owner")
+  NotificationLog      NotificationLog[]
 
   @@index([email, prenom, nom_de_famille, roles])
 }
@@ -246,4 +255,20 @@ model SuiviCarcasse {
   Carcasse                                Carcasse  @relation(fields: [carcasse_id], references: [id], onDelete: Cascade)
 
   @@index([carcasse_id, carcasse_user_id, carcasse_user_role])
+}
+
+model NotificationLog {
+  id             String            @id @default(uuid())
+  type           UserNotifications
+  email          String?
+  web_push_token String?
+  user_id        String
+  action         String
+  payload        String
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @default(now()) @updatedAt
+  deleted_at     DateTime?
+  User           User?             @relation(fields: [user_id], references: [id])
+
+  @@index([user_id, action])
 }

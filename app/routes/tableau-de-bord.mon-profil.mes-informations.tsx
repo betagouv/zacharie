@@ -126,7 +126,7 @@ export default function TableauDeBord() {
                 onBlur={handleUserFormBlur}
                 preventScrollReset
               >
-                <Stepper currentStep={2} nextTitle="Vos partenaires" stepCount={3} title="Vos informations" />
+                <Stepper currentStep={2} nextTitle="Vos partenaires" stepCount={4} title="Vos informations" />
                 <Accordion
                   titleAs="h2"
                   expanded={identityExpanded}

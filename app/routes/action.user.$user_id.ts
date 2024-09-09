@@ -1,4 +1,4 @@
-import { User, UserRoles } from "@prisma/client";
+import { User, UserNotifications, UserRoles } from "@prisma/client";
 import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { authorizeUserOrAdmin } from "~/utils/authorizeUserOrAdmin";
@@ -20,9 +20,17 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has("code_postal")) nextUser.code_postal = formData.get("code_postal") as string;
   if (formData.has("ville")) nextUser.ville = formData.get("ville") as string;
   if (formData.has("roles")) nextUser.roles = formData.getAll("roles") as UserRoles[];
+  if (formData.has("notifications")) nextUser.notifications = formData.getAll("notifications") as UserNotifications[];
+  if (formData.has("web_push_token")) {
+    const web_push_token = formData.get("web_push_token") as string;
+    const existingSubscriptions = user.web_push_tokens || [];
+    if (!existingSubscriptions.includes(web_push_token)) {
+      nextUser.web_push_tokens = [...existingSubscriptions, web_push_token];
+    }
+  }
   if (formData.has("numero_cfei")) nextUser.numero_cfei = formData.get("numero_cfei") as string;
   if (formData.has("numero_frei")) nextUser.numero_frei = formData.get("numero_frei") as string;
-  if (formData.has("onboarded_finished")) nextUser.onboarded_at = new Date();
+  if (formData.has("onboarding_finished")) nextUser.onboarded_at = new Date();
 
   let savedUser: User | null = null;
   const userId = params.user_id;

@@ -31,23 +31,32 @@ export const meta: MetaFunction = () => {
     { title: "Zacharie | Ministère de l'Agriculture" },
     {
       name: "og:title",
-      content:
-        "Zacharie | Garantir une meilleure qualité sanitaires des viandes de gibier sauvage mises sur le marché",
+      content: "Zacharie | Garantir une meilleure qualité sanitaires des viandes de gibier sauvage mises sur le marché",
     },
     {
       name: "description",
-      content:
-        "Garantir une meilleure qualité sanitaires des viandes de gibier sauvage mises sur le marché",
+      content: "Garantir une meilleure qualité sanitaires des viandes de gibier sauvage mises sur le marché",
     },
   ];
 };
+interface WindowEnv {
+  NODE_ENV: string;
+  VAPID_PUBLIC_KEY: string;
+}
+// Augment the global Window interface
+declare global {
+  interface Window {
+    ENV: WindowEnv;
+  }
+}
 
 export function loader(): ReturnType<LoaderFunction> {
   return {
     honeypotInputProps: honeypot.getInputProps(),
-    ENV: JSON.stringify({
+    ENV: {
       NODE_ENV: process.env.NODE_ENV,
-    }),
+      VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY as string,
+    } satisfies WindowEnv,
   };
 }
 
@@ -110,7 +119,8 @@ export default function App() {
             onClick={() => {
               sendSkipWaitingMessage(swUpdate.newWorker!);
               window.location.reload();
-            }}>
+            }}
+          >
             Mettre à jour
           </button>
         </div>
