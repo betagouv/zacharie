@@ -5255,11 +5255,11 @@ const routes = {
     hasWorkerAction: false,
     module: route5
   },
-  "routes/tableau-de-bord.mon-profil._index": {
-    id: "routes/tableau-de-bord.mon-profil._index",
+  "routes/tableau-de-bord.fei-edit.($fei_id)": {
+    id: "routes/tableau-de-bord.fei-edit.($fei_id)",
     parentId: "routes/tableau-de-bord",
-    path: "mon-profil",
-    index: true,
+    path: "fei-edit/:fei_id?",
+    index: void 0,
     caseSensitive: void 0,
     hasLoader: true,
     hasAction: false,
@@ -5267,11 +5267,11 @@ const routes = {
     hasWorkerAction: false,
     module: route6
   },
-  "routes/tableau-de-bord.fei.($fei_id)": {
-    id: "routes/tableau-de-bord.fei.($fei_id)",
+  "routes/tableau-de-bord.mon-profil._index": {
+    id: "routes/tableau-de-bord.mon-profil._index",
     parentId: "routes/tableau-de-bord",
-    path: "fei/:fei_id?",
-    index: void 0,
+    path: "mon-profil",
+    index: true,
     caseSensitive: void 0,
     hasLoader: true,
     hasAction: false,

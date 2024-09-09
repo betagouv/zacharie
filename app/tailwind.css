@@ -28,3 +28,8 @@
     forced-color-adjust: none;
   }
 }
+
+/* fix h3 in callout */
+.fr-callout h3 {
+  margin: var(--title-spacing);
+}

@@ -78,7 +78,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 }
 
-export default function TableauDeBord() {
+export default function AjouterUtilisateur() {
   const {
     user,
     // for accordions

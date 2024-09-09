@@ -79,7 +79,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 }
 
-export default function TableauDeBord() {
+export default function MesInformations() {
   const {
     user,
     // for accordions

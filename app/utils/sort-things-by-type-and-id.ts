@@ -1,0 +1,84 @@
+import { EntityTypes, EntityRelations, UserRelations, UserRoles, type Entity, type User } from "@prisma/client";
+
+type EntitiesById = Record<Entity["id"], Entity>;
+type EntitiesByTypeAndId = Record<EntityTypes, EntitiesById>;
+
+export function sortEntitiesByTypeAndId(entities: Array<Entity>): [EntitiesById, EntitiesByTypeAndId] {
+  const allEntitiesIds: EntitiesById = {};
+  const allEntitiesByTypeAndId: EntitiesByTypeAndId = Object.values(EntityTypes).reduce((acc, type) => {
+    acc[type] = {};
+    return acc;
+  }, {} as EntitiesByTypeAndId);
+
+  for (const entity of entities) {
+    allEntitiesIds[entity.id] = entity;
+    allEntitiesByTypeAndId[entity.type][entity.id] = entity;
+  }
+
+  return [allEntitiesIds, allEntitiesByTypeAndId];
+}
+
+export function sortEntitiesRelationsByTypeAndId(
+  entities: Array<EntityRelations>,
+  entitiesById: EntitiesById
+): EntitiesByTypeAndId {
+  const entitiesByTypeAndId: EntitiesByTypeAndId = Object.values(EntityTypes).reduce((acc, type) => {
+    acc[type] = {};
+    return acc;
+  }, {} as EntitiesByTypeAndId);
+  for (const entityRelation of entities) {
+    const entity = entitiesById[entityRelation.entity_id];
+    if (entity) {
+      if (!entitiesByTypeAndId[entity.type][entity.id]) {
+        entitiesByTypeAndId[entity.type][entity.id] = entity;
+      }
+    }
+  }
+  return entitiesByTypeAndId;
+}
+
+type PartialUser = Pick<User, "id" | "roles" | "prenom" | "nom_de_famille" | "code_postal" | "ville">;
+type UsersById = Record<User["id"], PartialUser>;
+export type AllowedRoles = typeof UserRoles.DETENTEUR_INITIAL | typeof UserRoles.EXAMINATEUR_INITIAL;
+type UsersByRoleAndId = {
+  [K in AllowedRoles]: UsersById;
+};
+
+export function sortUsersByRoleAndId(users: Array<PartialUser>): [UsersById, UsersByRoleAndId] {
+  const allUsersIds: UsersById = {};
+  const allUsersByRoleAndId: UsersByRoleAndId = {
+    [UserRoles.DETENTEUR_INITIAL]: {},
+    [UserRoles.EXAMINATEUR_INITIAL]: {},
+  };
+
+  for (const user of users) {
+    allUsersIds[user.id] = user;
+    if (user.roles.includes(UserRoles.DETENTEUR_INITIAL)) {
+      allUsersByRoleAndId[UserRoles.DETENTEUR_INITIAL][user.id] = user;
+    }
+    if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      allUsersByRoleAndId[UserRoles.EXAMINATEUR_INITIAL][user.id] = user;
+    }
+  }
+
+  return [allUsersIds, allUsersByRoleAndId];
+}
+
+export function sortUsersRelationsByRoleAndId(users: Array<UserRelations>, usersById: UsersById): UsersByRoleAndId {
+  const usersByRoleAndId: UsersByRoleAndId = {
+    [UserRoles.DETENTEUR_INITIAL]: {},
+    [UserRoles.EXAMINATEUR_INITIAL]: {},
+  };
+  for (const userRelation of users) {
+    const user = usersById[userRelation.related_id];
+    if (user) {
+      if (user.roles.includes(UserRoles.DETENTEUR_INITIAL)) {
+        usersByRoleAndId[UserRoles.DETENTEUR_INITIAL][user.id] = user;
+      }
+      if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+        usersByRoleAndId[UserRoles.EXAMINATEUR_INITIAL][user.id] = user;
+      }
+    }
+  }
+  return usersByRoleAndId;
+}

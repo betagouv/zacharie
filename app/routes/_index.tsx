@@ -1,5 +1,5 @@
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { json } from "@remix-run/node";
+import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import RootDisplay from "~/components/RootDisplay";
 import { getUserIdFromCookie } from "~/services/auth.server";
@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 }
 
-export default function Index() {
+export default function LandingPage() {
   const { isLoggedIn } = useLoaderData<typeof loader>();
   return (
     <RootDisplay>

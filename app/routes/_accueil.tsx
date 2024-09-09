@@ -10,7 +10,7 @@ import { Outlet } from "@remix-run/react";
 //   ];
 // };
 
-export default function Index() {
+export default function AccueilLayout() {
   return (
     <>
       <Header

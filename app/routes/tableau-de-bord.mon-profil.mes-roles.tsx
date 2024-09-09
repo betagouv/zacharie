@@ -13,7 +13,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return json({ user });
 }
 
-export default function TableauDeBord() {
+export default function MesRoles() {
   const { user } = useLoaderData<typeof loader>();
   const fetcher = useFetcher({ key: "onboarding-etape-1" });
 

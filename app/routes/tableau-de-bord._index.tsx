@@ -15,7 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return json({ user });
 }
 
-export default function TableauDeBord() {
+export default function TableauDeBordIndex() {
   const { user } = useLoaderData<typeof loader>();
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -36,7 +36,7 @@ export default function TableauDeBord() {
                       {
                         children: "Nouvelle FEI",
                         linkProps: {
-                          href: "/tableau-de-bord/fei",
+                          href: "/tableau-de-bord/fei-edit",
                         },
                       },
                     ]}

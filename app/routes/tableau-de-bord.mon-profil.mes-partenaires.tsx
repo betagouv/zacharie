@@ -9,8 +9,15 @@ import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
-import { EntityTypes, RelationType, type Entity } from "@prisma/client";
+import { EntityTypes, RelationType, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
+import {
+  sortEntitiesByTypeAndId,
+  sortEntitiesRelationsByTypeAndId,
+  sortUsersByRoleAndId,
+  sortUsersRelationsByRoleAndId,
+  type AllowedRoles,
+} from "~/utils/sort-things-by-type-and-id";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
@@ -22,41 +29,47 @@ export async function loader({ request }: LoaderFunctionArgs) {
       relation: RelationType.WORKING_WITH,
     },
   });
+  const userRelationsWithOtherUsers = await prisma.userRelations.findMany({
+    where: {
+      owner_id: user.id,
+      relation: RelationType.WORKING_WITH,
+    },
+  });
+  const allUsers = await prisma.user.findMany({
+    where: {
+      roles: {
+        hasSome: [UserRoles.DETENTEUR_INITIAL, UserRoles.EXAMINATEUR_INITIAL],
+      },
+      id: {
+        not: user.id,
+      },
+    },
+    select: {
+      prenom: true,
+      nom_de_famille: true,
+      id: true,
+      code_postal: true,
+      ville: true,
+      roles: true,
+    },
+  });
 
-  const allEntitiesIds: Record<Entity["id"], Entity> = {};
-  const allEntitiesByTypeAndId: Record<EntityTypes, Record<Entity["id"], Entity>> = Object.values(EntityTypes).reduce(
-    (acc, type) => {
-      acc[type] = {};
-      return acc;
-    },
-    {} as Record<EntityTypes, Record<Entity["id"], Entity>>
-  );
-  for (const entity of allEntities) {
-    allEntitiesIds[entity.id] = entity;
-    allEntitiesByTypeAndId[entity.type][entity.id] = entity;
-  }
-  const userAllEntitiesIds: Record<string, Entity> = {};
-  const userEntitiesByTypeAndId: Record<EntityTypes, Record<Entity["id"], Entity>> = Object.values(EntityTypes).reduce(
-    (acc, type) => {
-      acc[type] = {};
-      return acc;
-    },
-    {} as Record<EntityTypes, Record<Entity["id"], Entity>>
-  );
-  for (const relation of userEntitiesRelations) {
-    userAllEntitiesIds[relation.entity_id] = allEntitiesIds[relation.entity_id];
-    userEntitiesByTypeAndId[allEntitiesIds[relation.entity_id].type][relation.entity_id] =
-      allEntitiesIds[relation.entity_id];
-  }
+  const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
+  const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(userEntitiesRelations, allEntitiesIds);
+
+  const [allUsersIds, allUsersByRole] = sortUsersByRoleAndId(allUsers);
+  const userRelatedUsersByRoleAndId = sortUsersRelationsByRoleAndId(userRelationsWithOtherUsers, allUsersIds);
 
   return json({
     user,
+    allUsersByRole,
+    userRelatedUsersByRoleAndId,
     allEntitiesByTypeAndId,
     userEntitiesByTypeAndId,
   });
 }
 
-export default function TableauDeBord() {
+export default function MesPartenaires() {
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -70,29 +83,43 @@ export default function TableauDeBord() {
           <div className="bg-white mb-6 md:shadow">
             <div className="p-4 md:p-8 pb-32 md:pb-0">
               <p className="fr-text--regular mb-4">Sélectionez vos différents partenaires</p>
+              <AccordionUser
+                fetcherKey="mes-partenaires-detenteur-initial-data"
+                accordionLabel="Vos Détenteurs Initiaux"
+                addLabel="Ajouter un Détenteur Initial"
+                selectLabel="Sélectionnez un Détenteur Initial"
+                userType={UserRoles.DETENTEUR_INITIAL}
+              />
+              <AccordionUser
+                fetcherKey="mes-partenaires-examinateur-initial-data"
+                accordionLabel="Vos Examinateurs Initiaux"
+                addLabel="Ajouter un Examinateur Initial"
+                selectLabel="Sélectionnez un Examinateur Initial"
+                userType={UserRoles.EXAMINATEUR_INITIAL}
+              />
               <AccordionEntreprise
-                fetcherKey="onboarding-etape-2-centre-collecte-data"
+                fetcherKey="mes-partenaires-centre-collecte-data"
                 accordionLabel="Vos Exploitants de Centre de Collecte"
                 addLabel="Ajouter un Centre de Collecte"
                 selectLabel="Sélectionnez un Centre de Collecte"
                 entityType={EntityTypes.EXPLOITANT_CENTRE_COLLECTE}
               />
               <AccordionEntreprise
-                fetcherKey="onboarding-etape-2-collecteur-pro-data"
+                fetcherKey="mes-partenaires-collecteur-pro-data"
                 accordionLabel="Vos Collecteurs Professionnel"
                 addLabel="Ajouter un Collecteur Professionnel"
                 selectLabel="Sélectionnez un Collecteur Professionnel"
                 entityType={EntityTypes.COLLECTEUR_PRO}
               />
               <AccordionEntreprise
-                fetcherKey="onboarding-etape-2-etg-data"
+                fetcherKey="mes-partenaires-etg-data"
                 accordionLabel="Vos Établissements de Transformation des Gibiers (ETG)"
                 addLabel="Ajouter un ETG"
                 selectLabel="Sélectionnez un ETG"
                 entityType={EntityTypes.ETG}
               />
               <AccordionEntreprise
-                fetcherKey="onboarding-etape-2-svi-data"
+                fetcherKey="mes-partenaires-svi-data"
                 accordionLabel="Vos Services Vétérinaire d'Inspection (SVI)"
                 addLabel="Ajouter un SVI"
                 selectLabel="Sélectionnez un SVI"
@@ -203,7 +230,7 @@ function AccordionEntreprise({
           );
         })}
       <userEntityFetcher.Form
-        id="user_centre_collecte_form"
+        id={fetcherKey}
         className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
         method="POST"
         action={`/action/user-entity/${user.id}`}
@@ -233,6 +260,103 @@ function AccordionEntreprise({
           Ajouter
         </Button>
       </userEntityFetcher.Form>
+    </Accordion>
+  );
+}
+
+interface AccordionUserProps {
+  userType: AllowedRoles;
+  addLabel: string;
+  selectLabel: string;
+  accordionLabel: string;
+  fetcherKey: string;
+}
+
+function AccordionUser({ userType, addLabel, selectLabel, accordionLabel, fetcherKey }: AccordionUserProps) {
+  const { user, allUsersByRole, userRelatedUsersByRoleAndId } = useLoaderData<typeof loader>();
+
+  const userRelationsFetcher = useFetcher({ key: fetcherKey });
+  const usersRelatedUsers = Object.values(userRelatedUsersByRoleAndId[userType]);
+  const remainingUsers = Object.values(allUsersByRole[userType]).filter(
+    (entity) => !userRelatedUsersByRoleAndId[userType][entity.id]
+  );
+
+  return (
+    <Accordion
+      titleAs="h2"
+      defaultExpanded={!usersRelatedUsers.length}
+      label={
+        <div className="inline-flex items-center justify-between md:justify-start w-full gap-4">
+          {accordionLabel}
+          <NumberTag number={usersRelatedUsers.length} />
+        </div>
+      }
+    >
+      {usersRelatedUsers.map((relatedUser) => {
+        return (
+          <div key={relatedUser.id} className="fr-fieldset__element">
+            <Notice
+              className="fr-fieldset__element [&_p.fr-notice__title]:before:hidden fr-text-default--grey fr-background-contrast--grey"
+              style={{
+                boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
+              }}
+              isClosable
+              onClose={() => {
+                userRelationsFetcher.submit(
+                  {
+                    owner_id: user.id,
+                    related_id: relatedUser.id,
+                    _action: "delete",
+                  },
+                  {
+                    method: "POST",
+                    action: `/action/user-relation/${user.id}`,
+                    preventScrollReset: true,
+                  }
+                );
+              }}
+              title={
+                <>
+                  {relatedUser.prenom} {relatedUser.nom_de_famille}
+                  <br />
+                  {relatedUser.code_postal} {relatedUser.ville}
+                </>
+              }
+            />
+          </div>
+        );
+      })}
+      <userRelationsFetcher.Form
+        id={fetcherKey}
+        className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
+        method="POST"
+        action={`/action/user-entity/${user.id}`}
+        preventScrollReset
+      >
+        <input type="hidden" name="owner_id" value={user.id} />
+        <input type="hidden" name="_action" value="create" />
+        <input type="hidden" name="relation" value={RelationType.WORKING_WITH} />
+        <Select
+          label={addLabel}
+          hint={selectLabel}
+          className="!mb-0 grow"
+          nativeSelectProps={{
+            name: "related_id",
+          }}
+        >
+          <option value="">{selectLabel}</option>
+          {remainingUsers.map((relatedUser) => {
+            return (
+              <option key={relatedUser.id} value={relatedUser.id}>
+                {relatedUser.prenom} {relatedUser.nom_de_famille} - {relatedUser.code_postal} {relatedUser.ville}
+              </option>
+            );
+          })}
+        </Select>
+        <Button type="submit" disabled={!remainingUsers.length}>
+          Ajouter
+        </Button>
+      </userRelationsFetcher.Form>
     </Accordion>
   );
 }

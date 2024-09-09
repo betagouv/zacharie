@@ -3,7 +3,7 @@ import { UserRoles } from "@prisma/client";
 import { Outlet, useLocation, useSubmit } from "@remix-run/react";
 import { useUser } from "~/utils/useUser";
 
-export default function TableauDeBordIndex() {
+export default function TableauDeBordLayout() {
   const submit = useSubmit();
   const location = useLocation();
   const user = useUser();
@@ -36,7 +36,7 @@ export default function TableauDeBordIndex() {
             menuLinks: [
               {
                 text: "Nouvelle FEI",
-                isActive: location.pathname === "/tableau-de-bord/fei",
+                isActive: location.pathname === "/tableau-de-bord/fei-edit",
                 linkProps: {
                   to: "/tableau-de-bord/fei",
                   href: "#",

@@ -15,7 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return json({ user });
 }
 
-export default function TableauDeBord() {
+export default function MesNotifications() {
   const { user } = useLoaderData<typeof loader>();
   const fetcher = useFetcher({ key: "onboarding-notifications" });
   const tokenFetcher = useFetcher({ key: "notifications-token" });

@@ -56,8 +56,8 @@ model User {
   UserRelationsOwner   UserRelations[]     @relation("owner")
   UserRelationsRelated UserRelations[]     @relation("related")
   FeiCurrentUser       Fei[]               @relation("DetenteurActuel")
-  FeiCreatedBy         Fei[]               @relation("CreatedBy")
-  SuiviFeiOwner        SuiviFei[]          @relation("Owner")
+  FeiCreatedBy         Fei[]               @relation("FeiCreatedBy")
+  FeiSuiviPar          SuiviFei[]          @relation("SuiviFeiPar")
   FeiTransferedToUser  SuiviFei[]          @relation("TransferedToUser")
   Logs                 Logs[]
   SuiviCarcasse        SuiviCarcasse[]
@@ -161,7 +161,7 @@ model Fei {
   id                                                      Int        @id @default(autoincrement())
   detenteur_actuel_id                                     String? // the user who is currently responsible for this FEI
   numero                                                  String     @unique
-  date_mise_a_mort                                        DateTime   @db.Date
+  date_mise_a_mort                                        DateTime   @db.Date // et éviscération
   commune_mise_a_mort                                     String
   approbation_mise_sur_le_marche_examinateur_initial      Boolean?
   date_approbation_mise_sur_le_marche_examinateur_initial DateTime?
@@ -172,7 +172,7 @@ model Fei {
   updated_at                                              DateTime   @default(now()) @updatedAt
   deleted_at                                              DateTime?
   Carcasse                                                Carcasse[]
-  CreatedBy                                               User       @relation("CreatedBy", fields: [created_by], references: [id])
+  FeiCreatedBy                                            User       @relation("FeiCreatedBy", fields: [created_by], references: [id])
   DetenteurActuel                                         User?      @relation("DetenteurActuel", fields: [detenteur_actuel_id], references: [id])
   SuiviFei                                                SuiviFei[]
 
@@ -180,32 +180,32 @@ model Fei {
 }
 
 model SuiviFei {
-  id                                 String    @id @default(uuid())
-  fei_id                             Int
-  fei_user_id                        String
-  fei_user_role                      UserRoles
-  fei_user_email                     String? // cached
-  fei_user_telephone                 String? // cached
-  fei_user_prenom                    String? // cached
-  fei_user_nom_de_famille            String? // cached
-  fei_user_raison_sociale            String? // cached
-  fei_user_numero_cfei               String? // cached
-  fei_user_numero_centre_collecte    String? // cached
-  fei_user_address_ligne_1           String? // cached
-  fei_user_address_ligne_2           String? // cached
-  fei_user_code_postal               String? // cached
-  fei_user_ville                     String? // cached
-  fei_transfered_to                  String? // the next user who is currently responsible for this FEI
-  fei_approbation_mise_sur_le_marche Boolean?
-  fei_commentaire                    String?
-  created_at                         DateTime  @default(now())
-  updated_at                         DateTime  @default(now()) @updatedAt
-  deleted_at                         DateTime?
-  FeiOwner                           User      @relation("Owner", fields: [fei_user_id], references: [id])
-  TransferedToUser                   User?     @relation("TransferedToUser", fields: [fei_transfered_to], references: [id])
-  Fei                                Fei       @relation(fields: [fei_id], references: [id], onDelete: Cascade)
+  id                                    String    @id @default(uuid())
+  fei_id                                Int
+  suivi_par_user_id                     String
+  suivi_par_user_role                   UserRoles
+  suivi_par_user_email                  String? // cached
+  suivi_par_user_telephone              String? // cached
+  suivi_par_user_prenom                 String? // cached
+  suivi_par_user_nom_de_famille         String? // cached
+  suivi_par_user_raison_sociale         String? // cached
+  suivi_par_user_numero_cfei            String? // cached
+  suivi_par_user_numero_centre_collecte String? // cached
+  suivi_par_user_address_ligne_1        String? // cached
+  suivi_par_user_address_ligne_2        String? // cached
+  suivi_par_user_code_postal            String? // cached
+  suivi_par_user_ville                  String? // cached
+  fei_transfered_to                     String? // the next user who is currently responsible for this FEI
+  fei_approbation_mise_sur_le_marche    Boolean?
+  fei_commentaire                       String?
+  created_at                            DateTime  @default(now())
+  updated_at                            DateTime  @default(now()) @updatedAt
+  deleted_at                            DateTime?
+  SuiviFeiPar                           User      @relation("SuiviFeiPar", fields: [suivi_par_user_id], references: [id])
+  TransferedToUser                      User?     @relation("TransferedToUser", fields: [fei_transfered_to], references: [id])
+  Fei                                   Fei       @relation(fields: [fei_id], references: [id], onDelete: Cascade)
 
-  @@index([fei_id, fei_user_id, fei_user_role])
+  @@index([fei_id, suivi_par_user_id, suivi_par_user_role])
 }
 
 model Carcasse {
@@ -224,37 +224,37 @@ model Carcasse {
 }
 
 model SuiviCarcasse {
-  id                                      String    @id @default(uuid())
-  carcasse_id                             String
-  carcasse_user_id                        String
-  carcasse_user_role                      UserRoles
-  carcasse_user_email                     String? // cached
-  carcasse_user_telephone                 String? // cached
-  carcasse_user_prenom                    String? // cached
-  carcasse_user_nom_de_famille            String? // cached
-  carcasse_user_raison_sociale            String? // cached
-  carcasse_user_numero_cfei               String? // cached
-  carcasse_user_numero_centre_collecte    String? // cached
-  carcasse_user_address_ligne_1           String? // cached
-  carcasse_user_address_ligne_2           String? // cached
-  carcasse_user_code_postal               String? // cached
-  carcasse_user_ville                     String? // cached
-  carcasse_prise_en_charge                Boolean?
-  carcasse_date_prise_en_charge           DateTime?
-  carcasse_motif_refus                    String?
-  carcasse_approbation_mise_sur_le_marche Boolean?
-  carcasse_sans_anomalie                  Boolean?
-  anomalies_carcasse                      String[]
-  abats_sans_anomalie                     Boolean?
-  anomalies_abats                         String[]
-  carcasse_commentaire                    String?
-  created_at                              DateTime  @default(now())
-  updated_at                              DateTime  @default(now()) @updatedAt
-  deleted_at                              DateTime?
-  User                                    User      @relation(fields: [carcasse_user_id], references: [id])
-  Carcasse                                Carcasse  @relation(fields: [carcasse_id], references: [id], onDelete: Cascade)
+  id                                            String    @id @default(uuid())
+  carcasse_id                                   String
+  suivi_carcasse_user_id                        String
+  suivi_carcasse_user_role                      UserRoles
+  suivi_carcasse_user_email                     String? // cached
+  suivi_carcasse_user_telephone                 String? // cached
+  suivi_carcasse_user_prenom                    String? // cached
+  suivi_carcasse_user_nom_de_famille            String? // cached
+  suivi_carcasse_user_raison_sociale            String? // cached
+  suivi_carcasse_user_numero_cfei               String? // cached
+  suivi_carcasse_user_numero_centre_collecte    String? // cached
+  suivi_carcasse_user_address_ligne_1           String? // cached
+  suivi_carcasse_user_address_ligne_2           String? // cached
+  suivi_carcasse_user_code_postal               String? // cached
+  suivi_carcasse_user_ville                     String? // cached
+  suivi_carcasse_prise_en_charge                Boolean?
+  suivi_carcasse_date_prise_en_charge           DateTime?
+  suivi_carcasse_motif_refus                    String?
+  suivi_carcasse_approbation_mise_sur_le_marche Boolean?
+  suivi_carcasse_sans_anomalie                  Boolean?
+  suivi_anomalies_carcasse                      String[]
+  suivi_abats_sans_anomalie                     Boolean?
+  suivi_anomalies_abats                         String[]
+  suivi_carcasse_commentaire                    String?
+  created_at                                    DateTime  @default(now())
+  updated_at                                    DateTime  @default(now()) @updatedAt
+  deleted_at                                    DateTime?
+  SuiviCarcassePar                              User      @relation(fields: [suivi_carcasse_user_id], references: [id])
+  Carcasse                                      Carcasse  @relation(fields: [carcasse_id], references: [id], onDelete: Cascade)
 
-  @@index([carcasse_id, carcasse_user_id, carcasse_user_role])
+  @@index([carcasse_id, suivi_carcasse_user_id, suivi_carcasse_user_role])
 }
 
 model NotificationLog {
