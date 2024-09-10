@@ -1,4 +1,12 @@
-import { EntityTypes, EntityRelations, UserRelations, UserRoles, type Entity, type User } from "@prisma/client";
+import {
+  EntityTypes,
+  EntityRelations,
+  UserRelations,
+  UserRoles,
+  type Entity,
+  type User,
+  UserRelationType,
+} from "@prisma/client";
 
 type EntitiesById = Record<Entity["id"], Entity>;
 type EntitiesByTypeAndId = Record<EntityTypes, EntitiesById>;
@@ -64,18 +72,27 @@ export function sortUsersByRoleAndId(users: Array<PartialUser>): [UsersById, Use
   return [allUsersIds, allUsersByRoleAndId];
 }
 
-export function sortUsersRelationsByRoleAndId(users: Array<UserRelations>, usersById: UsersById): UsersByRoleAndId {
+export function sortUsersRelationsByRoleAndId(
+  userRelations: Array<UserRelations>,
+  usersById: UsersById
+): UsersByRoleAndId {
   const usersByRoleAndId: UsersByRoleAndId = {
     [UserRoles.DETENTEUR_INITIAL]: {},
     [UserRoles.EXAMINATEUR_INITIAL]: {},
   };
-  for (const userRelation of users) {
+  for (const userRelation of userRelations) {
     const user = usersById[userRelation.related_id];
     if (user) {
-      if (user.roles.includes(UserRoles.DETENTEUR_INITIAL)) {
+      if (
+        userRelation.relation === UserRelationType.DETENTEUR_INITIAL &&
+        user.roles.includes(UserRoles.DETENTEUR_INITIAL)
+      ) {
         usersByRoleAndId[UserRoles.DETENTEUR_INITIAL][user.id] = user;
       }
-      if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      if (
+        userRelation.relation === UserRelationType.EXAMINATEUR_INITIAL &&
+        user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)
+      ) {
         usersByRoleAndId[UserRoles.EXAMINATEUR_INITIAL][user.id] = user;
       }
     }

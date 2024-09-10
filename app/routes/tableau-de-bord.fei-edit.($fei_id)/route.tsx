@@ -10,7 +10,7 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
-import { EntityTypes, RelationType, UserRoles, type Entity } from "@prisma/client";
+import { EntityTypes, EntityRelationType, UserRoles, type Entity } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import FEIDetenteurInitial from "./detenteur-initial";
 
@@ -21,7 +21,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const userEntitiesRelations = await prisma.entityRelations.findMany({
     where: {
       owner_id: user.id,
-      relation: RelationType.WORKING_FOR,
+      relation: EntityRelationType.WORKING_FOR,
     },
   });
 
@@ -239,7 +239,7 @@ function AccordionEntreprise({
       >
         <input type="hidden" name="owner_id" value={user.id} />
         <input type="hidden" name="_action" value="create" />
-        <input type="hidden" name="relation" value={RelationType.WORKING_FOR} />
+        <input type="hidden" name="relation" value={EntityRelationType.WORKING_FOR} />
         <Select
           label={addLabel}
           hint={selectLabel}

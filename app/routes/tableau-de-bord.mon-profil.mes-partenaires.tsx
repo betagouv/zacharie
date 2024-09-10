@@ -9,7 +9,7 @@ import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
-import { EntityTypes, RelationType, UserRoles } from "@prisma/client";
+import { EntityTypes, EntityRelationType, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import {
   sortEntitiesByTypeAndId,
@@ -26,13 +26,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const userEntitiesRelations = await prisma.entityRelations.findMany({
     where: {
       owner_id: user.id,
-      relation: RelationType.WORKING_WITH,
+      relation: EntityRelationType.WORKING_WITH,
     },
   });
   const userRelationsWithOtherUsers = await prisma.userRelations.findMany({
     where: {
       owner_id: user.id,
-      relation: RelationType.WORKING_WITH,
     },
   });
   const allUsers = await prisma.user.findMany({
@@ -238,7 +237,7 @@ function AccordionEntreprise({
       >
         <input type="hidden" name="owner_id" value={user.id} />
         <input type="hidden" name="_action" value="create" />
-        <input type="hidden" name="relation" value={RelationType.WORKING_WITH} />
+        <input type="hidden" name="relation" value={EntityRelationType.WORKING_WITH} />
         <Select
           label={addLabel}
           hint={selectLabel}
@@ -306,6 +305,7 @@ function AccordionUser({ userType, addLabel, selectLabel, accordionLabel, fetche
                   {
                     owner_id: user.id,
                     related_id: relatedUser.id,
+                    relation: userType,
                     _action: "delete",
                   },
                   {
@@ -330,12 +330,12 @@ function AccordionUser({ userType, addLabel, selectLabel, accordionLabel, fetche
         id={fetcherKey}
         className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
         method="POST"
-        action={`/action/user-entity/${user.id}`}
+        action={`/action/user-relation/${user.id}`}
         preventScrollReset
       >
         <input type="hidden" name="owner_id" value={user.id} />
         <input type="hidden" name="_action" value="create" />
-        <input type="hidden" name="relation" value={RelationType.WORKING_WITH} />
+        <input type="hidden" name="relation" value={userType} />
         <Select
           label={addLabel}
           hint={selectLabel}
