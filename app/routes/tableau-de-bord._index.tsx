@@ -9,9 +9,13 @@ import { UserRoles } from "@prisma/client";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
-  if (!user) throw redirect("/connexion?type=compte-existant");
+  if (!user) {
+    throw redirect("/connexion?type=compte-existant");
+  }
   const onboardingRoute = getUserOnboardingRoute(user);
-  if (onboardingRoute) throw redirect(onboardingRoute);
+  if (onboardingRoute) {
+    throw redirect(onboardingRoute);
+  }
   return json({ user });
 }
 
@@ -27,7 +31,7 @@ export default function TableauDeBordIndex() {
           </CallOut>
           {(user.roles.includes(UserRoles.DETENTEUR_INITIAL) || user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) && (
             <section className="bg-white mb-6 md:shadow">
-              <div className="p-4 md:p-8 pb-32 md:pb-0">
+              <div className="p-4 md:p-8 md:pb-0">
                 <h2 className="fr-h3 fr-mb-2w">Nouvelle FEI</h2>
                 <p className="fr-text--regular mb-4">Pour créer une nouvelle FEI, c'est par ici 👇</p>
                 <div className="flex flex-col items-start [&_ul]:md:min-w-96 bg-white">
@@ -36,7 +40,8 @@ export default function TableauDeBordIndex() {
                       {
                         children: "Nouvelle FEI",
                         linkProps: {
-                          href: "/tableau-de-bord/fei-edit",
+                          to: "/tableau-de-bord/fei/nouvelle",
+                          href: "#",
                         },
                       },
                     ]}
@@ -46,7 +51,7 @@ export default function TableauDeBordIndex() {
             </section>
           )}
           <section className="bg-white mb-6 md:shadow">
-            <div className="p-4 md:p-8 pb-32 md:pb-0">
+            <div className="p-4 md:p-8 md:pb-0">
               <h2 className="fr-h3 fr-mb-2w">FEI assignées</h2>
               <div className="flex flex-col items-start [&_ul]:md:min-w-96 bg-white">
                 <ButtonsGroup
@@ -63,7 +68,7 @@ export default function TableauDeBordIndex() {
             </div>
           </section>
           <section className="bg-white mb-6 md:shadow">
-            <div className="p-4 md:p-8 pb-32 md:pb-0">
+            <div className="p-4 md:p-8 md:pb-0">
               <h2 className="fr-h3 fr-mb-2w">FEI passées</h2>
               <div className="flex flex-col items-start [&_ul]:md:min-w-96 bg-white">
                 <ButtonsGroup

@@ -9,12 +9,15 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
-import { EntityTypes, EntityRelationType, UserRoles, type Entity } from "@prisma/client";
+import { EntityTypes, EntityRelationType, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
+import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
-  if (!user) throw redirect("/connexion?type=compte-existant");
+  if (!user) {
+    throw redirect("/connexion?type=compte-existant");
+  }
   const allEntities = await prisma.entity.findMany();
   const userEntitiesRelations = await prisma.entityRelations.findMany({
     where: {
@@ -23,31 +26,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  const allEntitiesIds: Record<Entity["id"], Entity> = {};
-  const allEntitiesByTypeAndId: Record<EntityTypes, Record<Entity["id"], Entity>> = Object.values(EntityTypes).reduce(
-    (acc, type) => {
-      acc[type] = {};
-      return acc;
-    },
-    {} as Record<EntityTypes, Record<Entity["id"], Entity>>
-  );
-  for (const entity of allEntities) {
-    allEntitiesIds[entity.id] = entity;
-    allEntitiesByTypeAndId[entity.type][entity.id] = entity;
-  }
-  const userAllEntitiesIds: Record<string, Entity> = {};
-  const userEntitiesByTypeAndId: Record<EntityTypes, Record<Entity["id"], Entity>> = Object.values(EntityTypes).reduce(
-    (acc, type) => {
-      acc[type] = {};
-      return acc;
-    },
-    {} as Record<EntityTypes, Record<Entity["id"], Entity>>
-  );
-  for (const relation of userEntitiesRelations) {
-    userAllEntitiesIds[relation.entity_id] = allEntitiesIds[relation.entity_id];
-    userEntitiesByTypeAndId[allEntitiesIds[relation.entity_id].type][relation.entity_id] =
-      allEntitiesIds[relation.entity_id];
-  }
+  const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
+  const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(userEntitiesRelations, allEntitiesIds);
 
   const userCentresCollectes = user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.EXPLOITANT_CENTRE_COLLECTE])
@@ -306,7 +286,7 @@ export default function MesInformations() {
                 </a>
               </div>
             </div>
-            <div className="fixed md:relative md:mt-16 bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white">
+            <div className="fixed md:relative bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white shadow-2xl md:shadow-none">
               <ButtonsGroup
                 buttons={[
                   {

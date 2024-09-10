@@ -31,38 +31,40 @@ enum UserNotifications {
 }
 
 model User {
-  id                   String              @id @default(uuid())
-  email                String?             @unique // email is optional, we can have users without email like the Collecteur Pro
-  telephone            String?
-  prenom               String?
-  nom_de_famille       String?
-  numero_cfei          String? // Chasseur Formé à l'Examen Initial (de la form CFEI-DEP-YY-001)
-  numero_frei          String? // Formateur Référent Examen Initial (de la form DEP-FREI-YY-001)
-  addresse_ligne_1     String?
-  addresse_ligne_2     String?
-  code_postal          String?
-  ville                String?
-  roles                UserRoles[]
-  created_at           DateTime            @default(now())
-  updated_at           DateTime            @default(now()) @updatedAt
-  last_login_at        DateTime?
-  last_seen_at         DateTime?
-  deleted_at           DateTime?
-  onboarded_at         DateTime?
-  notifications        UserNotifications[]
-  web_push_tokens      String[]
-  prefilled            Boolean             @default(false)
-  Password             Password?
-  UserRelationsOwner   UserRelations[]     @relation("owner")
-  UserRelationsRelated UserRelations[]     @relation("related")
-  FeiCurrentUser       Fei[]               @relation("DetenteurActuel")
-  FeiCreatedBy         Fei[]               @relation("FeiCreatedBy")
-  FeiSuiviPar          SuiviFei[]          @relation("SuiviFeiPar")
-  FeiTransferedToUser  SuiviFei[]          @relation("TransferedToUser")
-  Logs                 Logs[]
-  SuiviCarcasse        SuiviCarcasse[]
-  EntityRelations      EntityRelations[]   @relation("owner")
-  NotificationLog      NotificationLog[]
+  id                              String              @id @default(uuid())
+  email                           String?             @unique // email is optional, we can have users without email like the Collecteur Pro
+  telephone                       String?
+  prenom                          String?
+  nom_de_famille                  String?
+  numero_cfei                     String? // Chasseur Formé à l'Examen Initial (de la form CFEI-DEP-YY-001)
+  numero_frei                     String? // Formateur Référent Examen Initial (de la form DEP-FREI-YY-001)
+  addresse_ligne_1                String?
+  addresse_ligne_2                String?
+  code_postal                     String?
+  ville                           String?
+  roles                           UserRoles[]
+  created_at                      DateTime            @default(now())
+  updated_at                      DateTime            @default(now()) @updatedAt
+  last_login_at                   DateTime?
+  last_seen_at                    DateTime?
+  deleted_at                      DateTime?
+  onboarded_at                    DateTime?
+  notifications                   UserNotifications[]
+  web_push_tokens                 String[]
+  prefilled                       Boolean             @default(false)
+  Password                        Password?
+  UserRelationAsOwner             UserRelations[]     @relation("UserRelationAsOwner")
+  UserRelationsRelated            UserRelations[]     @relation("UserRelationAsRelated")
+  UserEntityRelations             EntityRelations[]   @relation("UserRelatedWithEntity")
+  FeiCreatedByUser                Fei[]               @relation("FeiCreatedByUser")
+  FeiDetenteurInitialUser         Fei[]               @relation("FeiDetenteurInitialUser")
+  FeiExaminateurInitialUser       Fei[]               @relation("FeiExaminateurInitialUser")
+  FeiExploitantCentreCollecteUser Fei[]               @relation("FeiExploitantCentreCollecteUser")
+  FeiCollecteurProUser            Fei[]               @relation("FeiCollecteurProUser")
+  FeiEtgUser                      Fei[]               @relation("FeiEtgUser")
+  FeiSviUser                      Fei[]               @relation("FeiSviUser")
+  Logs                            Logs[]
+  NotificationLog                 NotificationLog[]
 
   @@index([email, prenom, nom_de_famille, roles])
 }
@@ -79,22 +81,26 @@ enum EntityTypes {
 }
 
 model Entity {
-  id              String            @id @default(uuid())
+  id                                String            @id @default(uuid())
   // NO EMAIL: an entity needs AT LEAST one user
-  raison_sociale  String?
-  address_ligne_1 String?
-  address_ligne_2 String?
-  code_postal     String?
-  ville           String?
-  siret           String?
-  numero_ddecpp   String?
-  type            EntityTypes
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @default(now()) @updatedAt
-  deleted_at      DateTime?
-  onboarded_at    DateTime?
-  prefilled       Boolean           @default(false)
-  EntityRelations EntityRelations[] @relation("related")
+  raison_sociale                    String?
+  address_ligne_1                   String?
+  address_ligne_2                   String?
+  code_postal                       String?
+  ville                             String?
+  siret                             String?
+  numero_ddecpp                     String?
+  type                              EntityTypes
+  created_at                        DateTime          @default(now())
+  updated_at                        DateTime          @default(now()) @updatedAt
+  deleted_at                        DateTime?
+  onboarded_at                      DateTime?
+  prefilled                         Boolean           @default(false)
+  EntityRelatedWithUser             EntityRelations[] @relation("EntityRelatedWithUser")
+  FeiExploitantCentreCollecteEntity Fei[]             @relation("FeiExploitantCentreCollecteEntity")
+  FeiCollecteurProEntity            Fei[]             @relation("FeiCollecteurProEntity")
+  FeiEtgEntity                      Fei[]             @relation("FeiEtgEntity")
+  FeiSviEntity                      Fei[]             @relation("FeiSviEntity")
 }
 
 model Password {
@@ -116,15 +122,15 @@ enum UserRelationType {
 }
 
 model UserRelations {
-  id         String           @id @default(uuid())
-  owner_id   String
-  related_id String
-  relation   UserRelationType
-  created_at DateTime         @default(now())
-  updated_at DateTime         @default(now()) @updatedAt
-  deleted_at DateTime?
-  User       User             @relation("owner", fields: [owner_id], references: [id], onDelete: Cascade)
-  Related    User             @relation("related", fields: [related_id], references: [id], onDelete: Cascade)
+  id                    String           @id @default(uuid())
+  owner_id              String
+  related_id            String
+  relation              UserRelationType
+  created_at            DateTime         @default(now())
+  updated_at            DateTime         @default(now()) @updatedAt
+  deleted_at            DateTime?
+  UserRelationAsOwner   User             @relation("UserRelationAsOwner", fields: [owner_id], references: [id], onDelete: Cascade)
+  UserRelationAsRelated User             @relation("UserRelationAsRelated", fields: [related_id], references: [id], onDelete: Cascade)
 
   @@index([owner_id, relation])
 }
@@ -135,15 +141,15 @@ enum EntityRelationType {
 }
 
 model EntityRelations {
-  id         String             @id @default(uuid())
-  owner_id   String
-  entity_id  String
-  relation   EntityRelationType
-  created_at DateTime           @default(now())
-  updated_at DateTime           @default(now()) @updatedAt
-  deleted_at DateTime?
-  User       User               @relation("owner", fields: [owner_id], references: [id], onDelete: Cascade)
-  Related    Entity             @relation("related", fields: [entity_id], references: [id], onDelete: Cascade)
+  id                    String             @id @default(uuid())
+  owner_id              String
+  entity_id             String
+  relation              EntityRelationType
+  created_at            DateTime           @default(now())
+  updated_at            DateTime           @default(now()) @updatedAt
+  deleted_at            DateTime?
+  UserRelatedWithEntity User               @relation("UserRelatedWithEntity", fields: [owner_id], references: [id], onDelete: Cascade)
+  EntityRelatedWithUser Entity             @relation("EntityRelatedWithUser", fields: [entity_id], references: [id], onDelete: Cascade)
 
   @@index([owner_id, relation])
   @@index([entity_id, relation])
@@ -164,102 +170,98 @@ model Logs {
 // Fiche d'Examen Initial
 model Fei {
   id                                                      Int        @id @default(autoincrement())
-  detenteur_actuel_id                                     String? // the user who is currently responsible for this FEI
   numero                                                  String     @unique
-  date_mise_a_mort                                        DateTime   @db.Date // et éviscération
-  commune_mise_a_mort                                     String
-  approbation_mise_sur_le_marche_examinateur_initial      Boolean?
-  date_approbation_mise_sur_le_marche_examinateur_initial DateTime?
+  date_mise_a_mort                                        DateTime?  @db.Date // et éviscération
+  commune_mise_a_mort                                     String?
+  created_by_user_id                                      String
+  examinateur_initial_user_id                             String?
+  examinateur_initial_approbation_mise_sur_le_marche      Boolean?
+  examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
+  detenteur_initial_user_id                               String?
   date_depot_centre_collecte                              DateTime?
-  date_validation_svi                                     DateTime?
-  created_by                                              String
+  exploitant_centre_collecte_entity_id                    String?
+  exploitant_centre_collecte_user_id                      String?
+  exploitant_centre_collecte_commentaire                  String?
+  date_prise_en_charge_collecteur_pro                     DateTime?
+  collecteur_pro_entity_id                                String?
+  collecteur_pro_user_id                                  String?
+  collecteur_pro_commentaire                              String?
+  date_prise_en_charge_etg                                DateTime?
+  etg_entity_id                                           String?
+  etg_user_id                                             String?
+  etg_commentaire                                         String?
+  date_prise_en_charge_svi                                DateTime?
+  svi_entity_id                                           String?
+  svi_user_id                                             String?
+  svi_carcasses_saisies                                   Int?
+  svi_aucune_carcasse_saisie                              Boolean?
+  svi_commentaire                                         String?
+  svi_signed_at                                           DateTime?
   created_at                                              DateTime   @default(now())
   updated_at                                              DateTime   @default(now()) @updatedAt
   deleted_at                                              DateTime?
   Carcasse                                                Carcasse[]
-  FeiCreatedBy                                            User       @relation("FeiCreatedBy", fields: [created_by], references: [id])
-  DetenteurActuel                                         User?      @relation("DetenteurActuel", fields: [detenteur_actuel_id], references: [id])
-  SuiviFei                                                SuiviFei[]
+  FeiCreatedByUser                                        User       @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id])
+  FeiDetenteurInitialUser                                 User?      @relation("FeiDetenteurInitialUser", fields: [detenteur_initial_user_id], references: [id])
+  FeiExaminateurInitialUser                               User?      @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id])
+  FeiExploitantCentreCollecteEntity                       Entity?    @relation("FeiExploitantCentreCollecteEntity", fields: [exploitant_centre_collecte_entity_id], references: [id])
+  FeiExploitantCentreCollecteUser                         User?      @relation("FeiExploitantCentreCollecteUser", fields: [exploitant_centre_collecte_user_id], references: [id])
+  FeiCollecteurProEntity                                  Entity?    @relation("FeiCollecteurProEntity", fields: [collecteur_pro_entity_id], references: [id])
+  FeiCollecteurProUser                                    User?      @relation("FeiCollecteurProUser", fields: [collecteur_pro_user_id], references: [id])
+  FeiEtgEntity                                            Entity?    @relation("FeiEtgEntity", fields: [etg_entity_id], references: [id])
+  FeiEtgUser                                              User?      @relation("FeiEtgUser", fields: [etg_user_id], references: [id])
+  FeiSviEntity                                            Entity?    @relation("FeiSviEntity", fields: [svi_entity_id], references: [id])
+  FeiSviUser                                              User?      @relation("FeiSviUser", fields: [svi_user_id], references: [id])
 
-  @@index([detenteur_actuel_id, numero, date_mise_a_mort])
-}
-
-model SuiviFei {
-  id                                    String    @id @default(uuid())
-  fei_id                                Int
-  suivi_par_user_id                     String
-  suivi_par_user_role                   UserRoles
-  suivi_par_user_email                  String? // cached
-  suivi_par_user_telephone              String? // cached
-  suivi_par_user_prenom                 String? // cached
-  suivi_par_user_nom_de_famille         String? // cached
-  suivi_par_user_raison_sociale         String? // cached
-  suivi_par_user_numero_cfei            String? // cached
-  suivi_par_user_numero_centre_collecte String? // cached
-  suivi_par_user_address_ligne_1        String? // cached
-  suivi_par_user_address_ligne_2        String? // cached
-  suivi_par_user_code_postal            String? // cached
-  suivi_par_user_ville                  String? // cached
-  fei_transfered_to                     String? // the next user who is currently responsible for this FEI
-  fei_approbation_mise_sur_le_marche    Boolean?
-  fei_commentaire                       String?
-  created_at                            DateTime  @default(now())
-  updated_at                            DateTime  @default(now()) @updatedAt
-  deleted_at                            DateTime?
-  SuiviFeiPar                           User      @relation("SuiviFeiPar", fields: [suivi_par_user_id], references: [id])
-  TransferedToUser                      User?     @relation("TransferedToUser", fields: [fei_transfered_to], references: [id])
-  Fei                                   Fei       @relation(fields: [fei_id], references: [id], onDelete: Cascade)
-
-  @@index([fei_id, suivi_par_user_id, suivi_par_user_role])
+  @@index([created_by_user_id])
+  @@index([detenteur_initial_user_id])
+  @@index([examinateur_initial_user_id])
+  @@index([exploitant_centre_collecte_entity_id])
+  @@index([exploitant_centre_collecte_user_id])
+  @@index([collecteur_pro_entity_id])
+  @@index([collecteur_pro_user_id])
+  @@index([etg_entity_id])
+  @@index([etg_user_id])
+  @@index([svi_entity_id])
+  @@index([svi_user_id])
 }
 
 model Carcasse {
-  id                 String          @id @default(uuid())
-  fei_id             Int
-  numero_bracelet    String          @unique
-  heure_mise_a_mort  DateTime        @db.Time
-  heure_evisceration DateTime        @db.Time
-  created_at         DateTime        @default(now())
-  updated_at         DateTime        @default(now()) @updatedAt
-  deleted_at         DateTime?
-  Fei                Fei             @relation(fields: [fei_id], references: [id], onDelete: Cascade)
-  SuiviCarcasse      SuiviCarcasse[]
+  id                                      String    @id @default(uuid())
+  fei_id                                  Int
+  numero_bracelet                         String    @unique
+  heure_mise_a_mort                       DateTime  @db.Time
+  heure_evisceration                      DateTime  @db.Time
+  examinateur_carcasse_sans_anomalie      Boolean?
+  examinateur_anomalies_carcasse          String[]
+  examinateur_abats_sans_anomalie         Boolean?
+  examinateur_anomalies_abats             String[]
+  examinateur_commentaire                 String?
+  examinateur_refus                       Boolean?
+  examinateur_signed_at                   DateTime?
+  exploitant_cc_carcasse_prise_en_charge  Boolean?
+  exploitant_cc_carcasse_refus_motif      String?
+  exploitant_cc_carcasse_signed_at        DateTime?
+  exploitant_cc_carcasse_commentaire      String?
+  collecteur_pro_carcasse_prise_en_charge Boolean?
+  collecteur_pro_carcasse_refus_motif     String?
+  collecteur_pro_carcasse_signed_at       DateTime?
+  collecteur_pro_carcasse_commentaire     String?
+  etg_carcasse_prise_en_charge            Boolean?
+  etg_carcasse_refus_motif                String?
+  etg_carcasse_signed_at                  DateTime?
+  etg_carcasse_commentaire                String?
+  svi_saisie_carcasse                     Boolean?
+  svi_saisie_carcasse_motif               String?
+  svi_saisie_carcasse_at                  DateTime?
+  svi_carcasse_signed_at                  DateTime?
+  svi_carcasse_commentaire                String?
+  created_at                              DateTime  @default(now())
+  updated_at                              DateTime  @default(now()) @updatedAt
+  deleted_at                              DateTime?
+  Fei                                     Fei       @relation(fields: [fei_id], references: [id], onDelete: Cascade)
 
   @@index([fei_id, numero_bracelet])
-}
-
-model SuiviCarcasse {
-  id                                            String    @id @default(uuid())
-  carcasse_id                                   String
-  suivi_carcasse_user_id                        String
-  suivi_carcasse_user_role                      UserRoles
-  suivi_carcasse_user_email                     String? // cached
-  suivi_carcasse_user_telephone                 String? // cached
-  suivi_carcasse_user_prenom                    String? // cached
-  suivi_carcasse_user_nom_de_famille            String? // cached
-  suivi_carcasse_user_raison_sociale            String? // cached
-  suivi_carcasse_user_numero_cfei               String? // cached
-  suivi_carcasse_user_numero_centre_collecte    String? // cached
-  suivi_carcasse_user_address_ligne_1           String? // cached
-  suivi_carcasse_user_address_ligne_2           String? // cached
-  suivi_carcasse_user_code_postal               String? // cached
-  suivi_carcasse_user_ville                     String? // cached
-  suivi_carcasse_prise_en_charge                Boolean?
-  suivi_carcasse_date_prise_en_charge           DateTime?
-  suivi_carcasse_motif_refus                    String?
-  suivi_carcasse_approbation_mise_sur_le_marche Boolean?
-  suivi_carcasse_sans_anomalie                  Boolean?
-  suivi_anomalies_carcasse                      String[]
-  suivi_abats_sans_anomalie                     Boolean?
-  suivi_anomalies_abats                         String[]
-  suivi_carcasse_commentaire                    String?
-  created_at                                    DateTime  @default(now())
-  updated_at                                    DateTime  @default(now()) @updatedAt
-  deleted_at                                    DateTime?
-  SuiviCarcassePar                              User      @relation(fields: [suivi_carcasse_user_id], references: [id])
-  Carcasse                                      Carcasse  @relation(fields: [carcasse_id], references: [id], onDelete: Cascade)
-
-  @@index([carcasse_id, suivi_carcasse_user_id, suivi_carcasse_user_role])
 }
 
 model NotificationLog {

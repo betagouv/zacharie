@@ -7,7 +7,6 @@ export default function TableauDeBordLayout() {
   const submit = useSubmit();
   const location = useLocation();
   const user = useUser();
-  console.log("user", user);
 
   const handleLogout = () => {
     submit(null, { method: "post", action: "/actions/logout" });
@@ -36,9 +35,9 @@ export default function TableauDeBordLayout() {
             menuLinks: [
               {
                 text: "Nouvelle FEI",
-                isActive: location.pathname === "/tableau-de-bord/fei-edit",
+                isActive: location.pathname === "/tableau-de-bord/fei/nouvelle",
                 linkProps: {
-                  to: "/tableau-de-bord/fei",
+                  to: "/tableau-de-bord/fei/nouvelle",
                   href: "#",
                 },
               },
@@ -46,8 +45,8 @@ export default function TableauDeBordLayout() {
                 text: "Mes FEI assignées",
                 isActive: location.pathname === "/tableau-de-bord",
                 linkProps: {
-                  href: "#",
                   to: "/tableau-de-bord",
+                  href: "#",
                 },
               },
             ],
@@ -134,7 +133,7 @@ export default function TableauDeBordLayout() {
         serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
         serviceTitle="Zacharie"
       />
-      <main role="main" id="content" className="fr-background-alt--blue-france relative overflow-auto min-h-[75vh]">
+      <main role="main" id="content" className="fr-background-alt--blue-france relative overflow-auto min-h-full">
         <Outlet />
       </main>
       {/* <Footer

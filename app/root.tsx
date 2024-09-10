@@ -62,7 +62,7 @@ export function loader(): ReturnType<LoaderFunction> {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" suppressHydrationWarning={true}>
+    <html lang="fr" suppressHydrationWarning={true} className="h-screen">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -78,7 +78,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <ManifestLink />
         <Links />
       </head>
-      <body>
+      <body className="h-screen">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -92,7 +92,9 @@ export const ErrorBoundary = () => {
   const error = useRouteError() as Error;
   captureRemixErrorBoundaryError(error);
   console.log("error", error);
-  if (!isRouteErrorResponse(error)) return null;
+  if (!isRouteErrorResponse(error)) {
+    return null;
+  }
   return <RootDisplay>{error.status === 404 ? <NotFound /> : <UnexpectedError />}</RootDisplay>;
 };
 

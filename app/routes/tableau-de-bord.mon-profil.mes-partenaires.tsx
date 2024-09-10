@@ -130,7 +130,7 @@ export default function MesPartenaires() {
                 </a>
               </div>
             </div>
-            <div className="fixed md:relative md:mt-16 bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white">
+            <div className="fixed md:relative bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white shadow-2xl md:shadow-none">
               <ButtonsGroup
                 buttons={[
                   {

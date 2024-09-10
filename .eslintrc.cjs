@@ -50,6 +50,7 @@ module.exports = {
       },
       rules: {
         "react/no-unescaped-entities": "off",
+        curly: ["error", "all"],
       },
     },
 
@@ -69,11 +70,7 @@ module.exports = {
           },
         },
       },
-      extends: [
-        "plugin:@typescript-eslint/recommended",
-        "plugin:import/recommended",
-        "plugin:import/typescript",
-      ],
+      extends: ["plugin:@typescript-eslint/recommended", "plugin:import/recommended", "plugin:import/typescript"],
     },
 
     // Node
