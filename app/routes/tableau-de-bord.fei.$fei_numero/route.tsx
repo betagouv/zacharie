@@ -8,6 +8,7 @@ import { prisma } from "~/db/prisma.server";
 import FEIDetenteurInitial from "./detenteur-initial";
 import FEIExaminateurInitial from "./examinateur-initial";
 import SelectNextOwner from "./select-next-owner";
+import ConfirmCurrentOwner from "./confirm-current-owner";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
@@ -34,6 +35,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const userEntitiesRelations = await prisma.entityRelations.findMany({
     where: {
       owner_id: user.id,
+      relation: EntityRelationType.WORKING_WITH,
+    },
+    include: {
+      EntityRelatedWithUser: true,
+    },
+  });
+  const entitiesUserIsWorkingFor = await prisma.entityRelations.findMany({
+    where: {
+      entity_id: user.id,
       relation: EntityRelationType.WORKING_WITH,
     },
     include: {
@@ -88,6 +98,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     collecteursPro,
     etgs,
     svis,
+    entitiesUserIsWorkingFor,
   });
 }
 
@@ -142,6 +153,7 @@ export default function Fei() {
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+          <ConfirmCurrentOwner />
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
             {selectedTabId === "Examinateur Initial" && <FEIExaminateurInitial />}
             {selectedTabId === "Détenteur Initial" && <FEIDetenteurInitial />}

@@ -58,6 +58,7 @@ export default function SelectNextOwner() {
       id="select-next-owner"
       preventScrollReset
       method="POST"
+      action={`/action/fei/${fei.numero}`}
       onChange={(event) => {
         const formData = new FormData(event.currentTarget);
         fetcher.submit(formData, {
