@@ -1,16 +1,17 @@
 import { useLoaderData } from "@remix-run/react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { Select } from "@codegouvfr/react-dsfr/Select";
-import { UserRoles } from "@prisma/client";
 import { loader } from "./route";
+import UserNotEditable from "~/components/UserNotEditable";
 
-export default function FEIExaminateurInitial({ feiInitRoles }: { feiInitRoles: UserRoles[] }) {
-  const { user, fei, fei_owners, examinateursInitiaux } = useLoaderData<typeof loader>();
+export default function FEIExaminateurInitial() {
+  const { fei } = useLoaderData<typeof loader>();
+
+  console.log(fei?.date_mise_a_mort);
 
   return (
     <>
       <div className="fr-fieldset__element">
-        <Select
+        {/* <Select
           label="Éxaminateur Initial"
           hint="Sélectionnez l'Examinateur Initial de pour cette FEI"
           key={`${feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL)}`}
@@ -33,7 +34,7 @@ export default function FEIExaminateurInitial({ feiInitRoles }: { feiInitRoles: 
               </option>
             );
           })}
-        </Select>
+        </Select> */}
       </div>
       <div className="fr-fieldset__element">
         <Input
@@ -43,7 +44,7 @@ export default function FEIExaminateurInitial({ feiInitRoles }: { feiInitRoles: 
             name: "date_mise_a_mort",
             type: "date",
             autoComplete: "off",
-            defaultValue: fei?.date_mise_a_mort ?? new Date().toISOString().split("T")[0],
+            defaultValue: new Date(fei?.date_mise_a_mort ?? "").toISOString().split("T")[0],
           }}
         />
       </div>
@@ -59,6 +60,7 @@ export default function FEIExaminateurInitial({ feiInitRoles }: { feiInitRoles: 
           }}
         />
       </div>
+      <UserNotEditable user={fei.FeiExaminateurInitialUser} withCfei />
     </>
   );
 }

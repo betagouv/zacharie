@@ -71,7 +71,7 @@ export default function MesInformations() {
     svisDone,
   } = useLoaderData<typeof loader>();
 
-  const userFetcher = useFetcher({ key: "onboarding-etape-2-user-data" });
+  const userFetcher = useFetcher({ key: "mon-profil-mes-informations" });
   const handleUserFormBlur = useCallback(
     (event: React.FocusEvent<HTMLFormElement>) => {
       const formData = new FormData(event.currentTarget);

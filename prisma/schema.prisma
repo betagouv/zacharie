@@ -173,26 +173,14 @@ model Fei {
   fei_current_owner_user_id                               String?
   fei_current_owner_entity_id                             String?
   fei_current_owner_role                                  UserRoles?
+  fei_next_owner_user_id                                  String?
+  fei_next_owner_entity_id                                String?
+  fei_next_owner_role                                     UserRoles?
   examinateur_initial_user_id                             String?
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
   detenteur_initial_user_id                               String?
   date_depot_centre_collecte                              DateTime?
-  exploitant_centre_collecte_entity_id                    String?
-  exploitant_centre_collecte_user_id                      String?
-  exploitant_centre_collecte_commentaire                  String?
-  exploitant_centre_collecte_signed_at                    DateTime?
-  date_prise_en_charge_collecteur_pro                     DateTime?
-  collecteur_pro_entity_id                                String?
-  collecteur_pro_user_id                                  String?
-  collecteur_pro_commentaire                              String?
-  collecteur_pro_signed_at                                DateTime?
-  date_prise_en_charge_etg                                DateTime?
-  etg_entity_id                                           String?
-  etg_user_id                                             String?
-  etg_commentaire                                         String?
-  etg_signed_at                                           DateTime?
-  date_prise_en_charge_svi                                DateTime?
   svi_entity_id                                           String?
   svi_user_id                                             String?
   svi_carcasses_saisies                                   Int?
@@ -213,12 +201,6 @@ model Fei {
   @@index([created_by_user_id])
   @@index([detenteur_initial_user_id])
   @@index([examinateur_initial_user_id])
-  @@index([exploitant_centre_collecte_entity_id])
-  @@index([exploitant_centre_collecte_user_id])
-  @@index([collecteur_pro_entity_id])
-  @@index([collecteur_pro_user_id])
-  @@index([etg_entity_id])
-  @@index([etg_user_id])
   @@index([svi_entity_id])
   @@index([svi_user_id])
 }

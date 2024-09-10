@@ -11,13 +11,15 @@ import { useEffect } from "react";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
-  if (!user) throw redirect("/connexion?type=compte-existant");
+  if (!user) {
+    throw redirect("/connexion?type=compte-existant");
+  }
   return json({ user });
 }
 
 export default function MesNotifications() {
   const { user } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher({ key: "onboarding-notifications" });
+  const fetcher = useFetcher({ key: "mon-profil-mes-notifications" });
   const tokenFetcher = useFetcher({ key: "notifications-token" });
   const { subscribeToPush, canSendPush, isSubscribed, pushSubscription } = usePush();
 

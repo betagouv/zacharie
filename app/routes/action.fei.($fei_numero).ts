@@ -1,81 +1,114 @@
-import { Prisma, Fei } from "@prisma/client";
+import { Prisma, UserRoles } from "@prisma/client";
 import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
-import { authorizeUserOrAdmin } from "~/utils/authorizeUserOrAdmin";
+import { getUserFromCookie } from "~/services/auth.server";
 
 export async function action(args: ActionFunctionArgs) {
-  const { user, error } = await authorizeUserOrAdmin(args);
-  if (!user) {
-    return json({ ok: false, data: null, error }, { status: 401 });
-  }
   const { request, params } = args;
+  const user = await getUserFromCookie(request);
+  if (!user) {
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+  }
 
-  let feiNumero = params.fei_numero;
+  const feiNumero = params.fei_numero;
   const formData = await request.formData();
-  let existingFei: Fei | null = null;
-
-  if (!feiNumero) {
-    if (!formData.get("commune_mise_a_mort")) {
-      return json({ ok: false, data: null, error: "La commune de mise à mort est obligatoire" }, { status: 400 });
-    }
-
-    if (!formData.get("date_mise_a_mort")) {
-      return json({ ok: false, data: null, error: "La date de mise à mort est obligatoire" }, { status: 400 });
-    }
-
-    const newId = (await prisma.fei.count()) + 1;
-    const tenDigits = newId.toString().padStart(10, "0");
-    feiNumero = `FEI-${tenDigits}`;
-
-    // Create a new object with only the fields that are required and set
-    const createData: Prisma.FeiCreateInput = {
-      numero: feiNumero,
-      commune_mise_a_mort: formData.get("commune_mise_a_mort") as string,
-      date_mise_a_mort: new Date(formData.get("date_mise_a_mort") as string),
-      FeiCreatedBy: {
-        connect: {
-          id: user.id,
-        },
-      },
-    };
-
-    existingFei = await prisma.fei.create({
-      data: createData,
-    });
-  } else {
-    existingFei = await prisma.fei.findFirst({ where: { numero: feiNumero } });
-    if (!existingFei) {
-      return json({ ok: false, data: null, error: "La FEI n'existe pas" }, { status: 404 });
-    }
+  const existingFei = await prisma.fei.findUnique({
+    where: { numero: feiNumero },
+  });
+  if (!existingFei) {
+    return json({ ok: false, data: null, error: "FEI not found" }, { status: 404 });
   }
+  const nextFei: Prisma.FeiUpdateInput = {};
 
-  const nextFei = { ...existingFei };
+  // log the whole form data for debugging - key values
+  console.log("formData", Object.fromEntries(formData.entries()));
 
-  if (formData.has("numero")) {
-    nextFei.numero = formData.get("numero") as string;
-  }
   if (formData.has("date_mise_a_mort")) {
-    nextFei.date_mise_a_mort = new Date(formData.get("date_mise_a_mort") as string);
+    nextFei.date_mise_a_mort = formData.get("date_mise_a_mort") as string;
   }
   if (formData.has("commune_mise_a_mort")) {
     nextFei.commune_mise_a_mort = formData.get("commune_mise_a_mort") as string;
   }
-  if (formData.has("approbation_mise_sur_le_marche_examinateur_initial")) {
-    nextFei.approbation_mise_sur_le_marche_examinateur_initial =
-      formData.get("approbation_mise_sur_le_marche_examinateur_initial") === "true" ? true : false;
+  if (formData.has("created_by_user_id")) {
+    nextFei.FeiCreatedByUser = {
+      connect: {
+        id: formData.get("created_by_user_id") as string,
+      },
+    };
   }
-  if (formData.has("date_approbation_mise_sur_le_marche_examinateur_initial")) {
-    nextFei.date_approbation_mise_sur_le_marche_examinateur_initial = new Date(
-      formData.get("date_approbation_mise_sur_le_marche_examinateur_initial") as string
-    );
+  if (formData.has("fei_current_owner_user_id")) {
+    nextFei.fei_current_owner_user_id = formData.get("fei_current_owner_user_id") as string;
+  }
+  if (formData.has("fei_current_owner_entity_id")) {
+    nextFei.fei_current_owner_entity_id = formData.get("fei_current_owner_entity_id") as string;
+  }
+  if (formData.has("fei_current_owner_role")) {
+    nextFei.fei_current_owner_role = formData.get("fei_current_owner_role") as UserRoles;
+  }
+  if (formData.has("fei_next_owner_user_id")) {
+    nextFei.fei_next_owner_user_id = formData.get("fei_next_owner_user_id") as string;
+  }
+  if (formData.has("fei_next_owner_entity_id")) {
+    nextFei.fei_next_owner_entity_id = formData.get("fei_next_owner_entity_id") as string;
+  }
+  if (formData.has("fei_next_owner_role")) {
+    nextFei.fei_next_owner_role = formData.get("fei_next_owner_role") as UserRoles;
+  }
+  if (formData.has("examinateur_initial_user_id")) {
+    nextFei.FeiExaminateurInitialUser = {
+      connect: {
+        id: formData.get("examinateur_initial_user_id") as string,
+      },
+    };
+  }
+  if (formData.has("examinateur_initial_approbation_mise_sur_le_marche")) {
+    nextFei.examinateur_initial_approbation_mise_sur_le_marche =
+      formData.get("examinateur_initial_approbation_mise_sur_le_marche") === "true" ? true : false;
+  }
+  if (formData.has("examinateur_initial_date_approbation_mise_sur_le_marche")) {
+    nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = formData.get(
+      "examinateur_initial_date_approbation_mise_sur_le_marche"
+    ) as string;
+  }
+  if (formData.has("detenteur_initial_user_id")) {
+    nextFei.FeiDetenteurInitialUser = {
+      connect: {
+        id: formData.get("detenteur_initial_user_id") as string,
+      },
+    };
   }
   if (formData.has("date_depot_centre_collecte")) {
-    nextFei.date_depot_centre_collecte = new Date(formData.get("date_depot_centre_collecte") as string);
+    nextFei.date_depot_centre_collecte = formData.get("date_depot_centre_collecte") as string;
   }
-  if (formData.has("date_validation_svi")) {
-    nextFei.date_validation_svi = new Date(formData.get("date_validation_svi") as string);
+  if (formData.has("date_prise_en_charge_svi")) {
+    nextFei.date_prise_en_charge_svi = formData.get("date_prise_en_charge_svi") as string;
   }
-
+  if (formData.has("svi_entity_id")) {
+    nextFei.FeiSviEntity = {
+      connect: {
+        id: formData.get("svi_entity_id") as string,
+      },
+    };
+  }
+  if (formData.has("svi_user_id")) {
+    nextFei.FeiSviUser = {
+      connect: {
+        id: formData.get("svi_user_id") as string,
+      },
+    };
+  }
+  if (formData.has("svi_carcasses_saisies")) {
+    nextFei.svi_carcasses_saisies = Number(formData.get("svi_carcasses_saisies") as string);
+  }
+  if (formData.has("svi_aucune_carcasse_saisie")) {
+    nextFei.svi_aucune_carcasse_saisie = formData.get("svi_aucune_carcasse_saisie") === "true" ? true : false;
+  }
+  if (formData.has("svi_commentaire")) {
+    nextFei.svi_commentaire = formData.get("svi_commentaire") as string;
+  }
+  if (formData.has("svi_signed_at")) {
+    nextFei.svi_signed_at = formData.get("svi_signed_at") as string;
+  }
   const savedFei = await prisma.fei.update({
     where: { numero: feiNumero },
     data: nextFei,

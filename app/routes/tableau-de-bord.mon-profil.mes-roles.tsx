@@ -9,13 +9,15 @@ import { UserRoles } from "@prisma/client";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
-  if (!user) throw redirect("/connexion?type=compte-existant");
+  if (!user) {
+    throw redirect("/connexion?type=compte-existant");
+  }
   return json({ user });
 }
 
 export default function MesRoles() {
   const { user } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher({ key: "onboarding-etape-1" });
+  const fetcher = useFetcher({ key: "mon-profil-mes-roles" });
 
   return (
     <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>

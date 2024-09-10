@@ -6,11 +6,10 @@ import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
-import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
-import { displayUserIdentity } from "~/utils/display-user-identity";
+import UserNotEditable from "~/components/UserNotEditable";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -39,6 +38,7 @@ export async function action(args: ActionFunctionArgs) {
     numero: feiNumero,
     commune_mise_a_mort: formData.get("commune_mise_a_mort") as string,
     date_mise_a_mort: new Date(formData.get("date_mise_a_mort") as string),
+    fei_current_owner_user_id: user.id,
     FeiCreatedByUser: {
       connect: {
         id: user.id,
@@ -52,6 +52,7 @@ export async function action(args: ActionFunctionArgs) {
         id: user.id,
       },
     };
+    createData.fei_current_owner_role = UserRoles.DETENTEUR_INITIAL;
   }
   if (formData.get("examinateur_initial_id")) {
     createData.FeiExaminateurInitialUser = {
@@ -59,6 +60,7 @@ export async function action(args: ActionFunctionArgs) {
         id: user.id,
       },
     };
+    createData.fei_current_owner_role = UserRoles.EXAMINATEUR_INITIAL;
   }
 
   const fei = await prisma.fei.create({
@@ -79,100 +81,78 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function NouvelleFEI() {
   const { user } = useLoaderData<typeof loader>();
 
-  const [feiInitRoles, setFeiInitRoles] = useState<UserRoles[]>([]);
+  const [feiInitRoles, setFeiInitRoles] = useState<UserRoles[]>(() => {
+    if (!user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      return [UserRoles.DETENTEUR_INITIAL];
+    }
+    if (!user.roles.includes(UserRoles.DETENTEUR_INITIAL)) {
+      return [UserRoles.EXAMINATEUR_INITIAL];
+    }
+    return [];
+  });
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper currentStep={2} nextTitle="Vos partenaires" stepCount={4} title="Vos informations" />
           <h1 className="fr-h2 fr-mb-2w">Nouvelle FEI</h1>
           <CallOut title="📮 N'oubliez-pas d'assigner la FEI une fois remplie !" className="bg-white">
             Zacharie se chargera de notifier les personnes concernées.
           </CallOut>
           <div className="bg-white mb-6 md:shadow">
             <div className="p-4 md:p-8 md:pb-4">
-              <Checkbox
-                legend="Pour cette FEI vous êtes"
-                hintText="Vous pouvez être à la fois Détenteur initial et Examinateur initial"
-                options={[
-                  {
-                    label: "Détenteur initial",
-                    nativeInputProps: {
-                      name: "fei-init-roles",
-                      value: UserRoles.DETENTEUR_INITIAL,
-                      defaultChecked: feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL),
-                      onChange: (event) => {
-                        if (event.target.checked) {
-                          setFeiInitRoles((prev) => [...prev, UserRoles.DETENTEUR_INITIAL]);
-                        } else {
-                          setFeiInitRoles((prev) => prev.filter((role) => role !== UserRoles.DETENTEUR_INITIAL));
-                        }
+              {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) &&
+                user.roles.includes(UserRoles.DETENTEUR_INITIAL) && (
+                  <Checkbox
+                    legend="Pour cette FEI vous êtes"
+                    options={[
+                      {
+                        label: "Détenteur initial",
+                        nativeInputProps: {
+                          name: "fei-init-roles",
+                          value: UserRoles.DETENTEUR_INITIAL,
+                          defaultChecked: feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL),
+                          onChange: (event) => {
+                            if (event.target.checked) {
+                              setFeiInitRoles((prev) => [...prev, UserRoles.DETENTEUR_INITIAL]);
+                            } else {
+                              setFeiInitRoles((prev) => prev.filter((role) => role !== UserRoles.DETENTEUR_INITIAL));
+                            }
+                          },
+                        },
                       },
-                    },
-                  },
-                  {
-                    label: "Examinateur initial",
-                    nativeInputProps: {
-                      name: "fei-init-roles",
-                      value: UserRoles.EXAMINATEUR_INITIAL,
-                      defaultChecked: feiInitRoles.includes(UserRoles.EXAMINATEUR_INITIAL),
-                      onChange: (event) => {
-                        if (event.target.checked) {
-                          setFeiInitRoles((prev) => [...prev, UserRoles.EXAMINATEUR_INITIAL]);
-                        } else {
-                          setFeiInitRoles((prev) => prev.filter((role) => role !== UserRoles.EXAMINATEUR_INITIAL));
-                        }
+                      {
+                        label: "Examinateur initial",
+                        nativeInputProps: {
+                          name: "fei-init-roles",
+                          value: UserRoles.EXAMINATEUR_INITIAL,
+                          defaultChecked: feiInitRoles.includes(UserRoles.EXAMINATEUR_INITIAL),
+                          onChange: (event) => {
+                            if (event.target.checked) {
+                              setFeiInitRoles((prev) => [...prev, UserRoles.EXAMINATEUR_INITIAL]);
+                            } else {
+                              setFeiInitRoles((prev) => prev.filter((role) => role !== UserRoles.EXAMINATEUR_INITIAL));
+                            }
+                          },
+                        },
                       },
-                    },
-                  },
-                ]}
-              />
+                    ]}
+                    state="default"
+                    stateRelatedMessage="State description"
+                  />
+                )}
               <Form id="fei_create_form" method="POST">
                 {feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL) && (
                   <div className="mb-8">
                     <h2 className="fr-h3 fr-mb-2w">Détenteur Initial</h2>
                     <input type="hidden" name="detenteur_initial_id" value={user.id} />
-                    <div className="fr-fieldset__element">
-                      <Input
-                        label="Détenteur Initial"
-                        textArea
-                        hintText="C'est vous !"
-                        disabled
-                        nativeTextAreaProps={{
-                          id: "detenteur_initial_description",
-                          name: "detenteur_initial_description",
-                          autoComplete: "off",
-                          required: true,
-                          disabled: true,
-                          rows: user.addresse_ligne_2 ? 6 : 5,
-                          defaultValue: displayUserIdentity(user),
-                        }}
-                      />
-                    </div>
+                    <UserNotEditable user={user} />
                   </div>
                 )}
                 {feiInitRoles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
                   <div className="mb-8">
                     <h2 className="fr-h3 fr-mb-2w">Examinateur Initial</h2>
-                    <input type="hidden" name="examineur_initial_id" value={user.id} />
-                    <div className="fr-fieldset__element">
-                      <Input
-                        label="Détenteur Initial"
-                        textArea
-                        hintText="C'est vous !"
-                        disabled
-                        nativeTextAreaProps={{
-                          id: "examinateur_initial_description",
-                          name: "examinateur_initial_description",
-                          autoComplete: "off",
-                          required: true,
-                          disabled: true,
-                          rows: user.addresse_ligne_2 ? 7 : 6,
-                          defaultValue: displayUserIdentity(user, { withCfei: true }),
-                        }}
-                      />
-                    </div>
+                    <input type="hidden" name="examinateur_initial_id" value={user.id} />
                     <div className="fr-fieldset__element">
                       <Input
                         label="Date de mise à mort et d'éviscération"
@@ -199,6 +179,7 @@ export default function NouvelleFEI() {
                         }}
                       />
                     </div>
+                    <UserNotEditable user={user} withCfei />
                   </div>
                 )}
               </Form>
