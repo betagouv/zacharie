@@ -87,7 +87,13 @@ export default function Connexion() {
   const data = useActionData<typeof action>();
   const [searchParams] = useSearchParams();
   const connexionType = searchParams.get("type") as ConnexionType;
-
+  // Helper function to safely access error message
+  const getErrorMessage = (field: string): string => {
+    if (typeof data === "object" && data !== null && "error" in data) {
+      return data.error.includes(field) ? data.error : "";
+    }
+    return "";
+  };
   return (
     <main role="main" id="content">
       <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -97,14 +103,11 @@ export default function Connexion() {
               <fieldset
                 className="fr-fieldset"
                 id="login-1760-fieldset"
-                aria-labelledby="login-1760-fieldset-legend login-1760-fieldset-messages">
+                aria-labelledby="login-1760-fieldset-legend login-1760-fieldset-messages"
+              >
                 <legend className="fr-fieldset__legend" id="login-1760-fieldset-legend">
                   <h2 className="fr-h3">
-                    {connexionType === "creation-de-compte" ? (
-                      <>Créer mon compte</>
-                    ) : (
-                      <>Me connecter</>
-                    )}
+                    {connexionType === "creation-de-compte" ? <>Créer mon compte</> : <>Me connecter</>}
                   </h2>
                 </legend>
               </fieldset>
@@ -112,8 +115,8 @@ export default function Connexion() {
               <Input
                 hintText="Renseignez votre email ci-dessous"
                 label="Mon email"
-                state={data?.error.includes("email") ? "error" : "default"}
-                stateRelatedMessage={data?.error.includes("email") ? data.error : ""}
+                state={getErrorMessage("email") ? "error" : "default"}
+                stateRelatedMessage={getErrorMessage("email")}
                 nativeInputProps={{
                   name: "email-utilisateur",
                   type: "email",
@@ -123,8 +126,8 @@ export default function Connexion() {
               <Input
                 hintText="Veuillez entrer votre mot de passe"
                 label="Mon mot de passe"
-                state={data?.error.includes("mot de passe") ? "error" : "default"}
-                stateRelatedMessage={data?.error.includes("mot de passe") ? data.error : ""}
+                state={getErrorMessage("mot de passe") ? "error" : "default"}
+                stateRelatedMessage={getErrorMessage("mot de passe")}
                 nativeInputProps={{
                   name: "password-utilisateur",
                   type: "password",
@@ -135,11 +138,7 @@ export default function Connexion() {
               <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left">
                 <li className="flex justify-start w-auto">
                   <Button type="submit">
-                    {connexionType === "creation-de-compte" ? (
-                      <>Créer mon compte</>
-                    ) : (
-                      <>Me connecter</>
-                    )}
+                    {connexionType === "creation-de-compte" ? <>Créer mon compte</> : <>Me connecter</>}
                   </Button>
                 </li>
               </ul>
@@ -148,16 +147,12 @@ export default function Connexion() {
                 {connexionType === "creation-de-compte" ? (
                   <>
                     Vous avez déjà un compte ? <br />
-                    <Link to="/connexion?type=compte-existant">
-                      Cliquez ici pour vous connecter
-                    </Link>
+                    <Link to="/connexion?type=compte-existant">Cliquez ici pour vous connecter</Link>
                   </>
                 ) : (
                   <>
                     Vous n'avez pas encore de compte ? <br />
-                    <Link to="/connexion?type=creation-de-compte">
-                      Cliquez ici pour en créer un
-                    </Link>
+                    <Link to="/connexion?type=creation-de-compte">Cliquez ici pour en créer un</Link>
                   </>
                 )}
               </p>

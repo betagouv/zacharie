@@ -9,7 +9,9 @@ import type { User } from "@prisma/client";
 
 export const createOtpEmail = (user: User, otp: string) => {
   const emailAddress = user.email;
-  if (!emailAddress) throw new Error("No email provided for magic link");
+  if (!emailAddress) {
+    throw new Error("No email provided for magic link");
+  }
   const userExists = Boolean(user.firstName);
 
   const text = `

@@ -8,9 +8,9 @@ import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Prisma, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
+import { displayUserIdentity } from "~/utils/display-user-identity";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -31,76 +31,41 @@ export async function action(args: ActionFunctionArgs) {
   }
 
   const newId = (await prisma.fei.count()) + 1;
-  const tenDigits = newId.toString().padStart(10, "0");
   const today = dayjs().format("YYYYMMDD");
-  feiNumero = `ZACH-FEI-${today}-${tenDigits}`;
+  feiNumero = `ZACH-FEI-${today}-${newId.toString().padStart(9, "0")}`;
 
   // Create a new object with only the fields that are required and set
   const createData: Prisma.FeiCreateInput = {
     numero: feiNumero,
     commune_mise_a_mort: formData.get("commune_mise_a_mort") as string,
     date_mise_a_mort: new Date(formData.get("date_mise_a_mort") as string),
-    FeiCreatedBy: {
+    FeiCreatedByUser: {
       connect: {
         id: user.id,
       },
     },
   };
 
-  const newFei = await prisma.fei.create({
+  if (formData.get("detenteur_initial_id")) {
+    createData.FeiDetenteurInitialUser = {
+      connect: {
+        id: user.id,
+      },
+    };
+  }
+  if (formData.get("examinateur_initial_id")) {
+    createData.FeiExaminateurInitialUser = {
+      connect: {
+        id: user.id,
+      },
+    };
+  }
+
+  const fei = await prisma.fei.create({
     data: createData,
   });
 
-  const nextFei = { ...newFei };
-
-  if (formData.has("date_mise_a_mort")) {
-    nextFei.date_mise_a_mort = new Date(formData.get("date_mise_a_mort") as string);
-  }
-  if (formData.has("commune_mise_a_mort")) {
-    nextFei.commune_mise_a_mort = formData.get("commune_mise_a_mort") as string;
-  }
-  if (formData.has("approbation_mise_sur_le_marche_examinateur_initial")) {
-    nextFei.approbation_mise_sur_le_marche_examinateur_initial =
-      formData.get("approbation_mise_sur_le_marche_examinateur_initial") === "true" ? true : false;
-  }
-  if (formData.has("date_approbation_mise_sur_le_marche_examinateur_initial")) {
-    nextFei.date_approbation_mise_sur_le_marche_examinateur_initial = new Date(
-      formData.get("date_approbation_mise_sur_le_marche_examinateur_initial") as string
-    );
-  }
-  const savedFei = await prisma.fei.update({
-    where: { numero: feiNumero },
-    data: nextFei,
-  });
-
-  console.log(formData.get("detenteur_initial_id"));
-  if (formData.get("detenteur_initial_id")) {
-    console.log("avec detenteur");
-    await prisma.suiviFei.create({
-      data: {
-        fei_id: savedFei.id,
-        suivi_par_user_id: user.id,
-        suivi_par_user_role: UserRoles.DETENTEUR_INITIAL,
-      },
-    });
-  }
-  console.log(formData.get("examinateur_initial_id"));
-  if (formData.get("examinateur_initial_id")) {
-    console.log("avec examinateur");
-    await prisma.suiviFei.create({
-      data: {
-        fei_id: savedFei.id,
-        suivi_par_user_id: user.id,
-        suivi_par_user_role: UserRoles.EXAMINATEUR_INITIAL,
-      },
-    });
-  }
-
-  if (formData.has("_redirect")) {
-    return redirect(formData.get("_redirect") as string);
-  }
-
-  return json({ ok: true, data: savedFei, error: null });
+  return redirect(`/tableau-de-bord/fei/${fei.numero}`);
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -167,47 +132,21 @@ export default function NouvelleFEI() {
                 {feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL) && (
                   <div className="mb-8">
                     <h2 className="fr-h3 fr-mb-2w">Détenteur Initial</h2>
+                    <input type="hidden" name="detenteur_initial_id" value={user.id} />
                     <div className="fr-fieldset__element">
-                      <Select
+                      <Input
                         label="Détenteur Initial"
-                        hint="Sélectionnez le Détenteur Initial de pour cette FEI"
-                        key={`${feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL)}`}
-                        className="!mb-0 grow"
+                        textArea
+                        hintText="C'est vous !"
                         disabled
-                        nativeSelectProps={{
-                          id: "detenteur_initial_id",
-                          name: "detenteur_initial_id",
-                        }}
-                      >
-                        <option value={user.id} selected>
-                          Vous ({user.prenom} {user.nom_de_famille} - {user.code_postal} {user.ville})
-                        </option>
-                      </Select>
-                      <input type="hidden" name="detenteur_initial_id" value={user.id} />
-                    </div>
-                    <div className="fr-fieldset__element">
-                      <Input
-                        label="Date de mise à mort et d'éviscération"
-                        nativeInputProps={{
-                          id: "date_mise_a_mort",
-                          name: "date_mise_a_mort",
-                          type: "date",
+                        nativeTextAreaProps={{
+                          id: "detenteur_initial_description",
+                          name: "detenteur_initial_description",
                           autoComplete: "off",
                           required: true,
-                          defaultValue: new Date().toISOString().split("T")[0],
-                        }}
-                      />
-                    </div>
-                    <div className="fr-fieldset__element">
-                      <Input
-                        label="Commune de mise à mort"
-                        nativeInputProps={{
-                          id: "commune_mise_a_mort",
-                          name: "commune_mise_a_mort",
-                          type: "text",
-                          required: true,
-                          autoComplete: "off",
-                          defaultValue: "",
+                          disabled: true,
+                          rows: user.addresse_ligne_2 ? 6 : 5,
+                          defaultValue: displayUserIdentity(user),
                         }}
                       />
                     </div>
@@ -216,23 +155,23 @@ export default function NouvelleFEI() {
                 {feiInitRoles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
                   <div className="mb-8">
                     <h2 className="fr-h3 fr-mb-2w">Examinateur Initial</h2>
+                    <input type="hidden" name="examineur_initial_id" value={user.id} />
                     <div className="fr-fieldset__element">
-                      <Select
+                      <Input
                         label="Détenteur Initial"
-                        hint="Sélectionnez le Détenteur Initial de pour cette FEI"
-                        key={`${feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL)}`}
-                        className="!mb-0 grow"
+                        textArea
+                        hintText="C'est vous !"
                         disabled
-                        nativeSelectProps={{
-                          name: "examineur_initial_id",
-                          id: "examineur_initial_id",
+                        nativeTextAreaProps={{
+                          id: "examinateur_initial_description",
+                          name: "examinateur_initial_description",
+                          autoComplete: "off",
+                          required: true,
+                          disabled: true,
+                          rows: user.addresse_ligne_2 ? 7 : 6,
+                          defaultValue: displayUserIdentity(user, { withCfei: true }),
                         }}
-                      >
-                        <option value={user.id} selected>
-                          Vous ({user.prenom} {user.nom_de_famille} - {user.code_postal} {user.ville})
-                        </option>
-                      </Select>
-                      <input type="hidden" name="examineur_initial_id" value={user.id} />
+                      />
                     </div>
                     <div className="fr-fieldset__element">
                       <Input
@@ -277,7 +216,7 @@ export default function NouvelleFEI() {
                 <ButtonsGroup
                   buttons={[
                     {
-                      children: "Enregistrer",
+                      children: "Créer la FEI",
                       type: "submit",
                       nativeButtonProps: {
                         form: "fei_create_form",

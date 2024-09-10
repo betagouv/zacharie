@@ -20,13 +20,30 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
+  const fei = await prisma.fei.findUnique({
+    where: {
+      numero: params.fei_numero,
+    },
+    include: {
+      Carcasse: true,
+      FeiDetenteurInitialUser: true,
+      FeiExaminateurInitialUser: true,
+      FeiCreatedByUser: true,
+      FeiSviEntity: true,
+      FeiSviUser: true,
+      FeiIntermediaires: true,
+    },
+  });
+  if (!fei) {
+    throw redirect("/tableau-de-bord");
+  }
   const userEntitiesRelations = await prisma.entityRelations.findMany({
     where: {
       owner_id: user.id,
       relation: EntityRelationType.WORKING_WITH,
     },
     include: {
-      Related: true,
+      EntityRelatedWithUser: true,
     },
   });
   const userRelationsWithOtherUsers = await prisma.userRelations.findMany({
@@ -34,101 +51,63 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       owner_id: user.id,
     },
     include: {
-      Related: true,
+      UserRelatedOfUserRelation: true,
     },
   });
 
   const detenteursInitiaux = userRelationsWithOtherUsers
     .filter((userRelation) => userRelation.relation === UserRelationType.DETENTEUR_INITIAL)
-    .map((userRelation) => userRelation.Related);
+    .map((userRelation) => userRelation.UserRelatedOfUserRelation);
   if (user.roles.includes(UserRoles.DETENTEUR_INITIAL)) {
     detenteursInitiaux.unshift(user);
   }
 
   const examinateursInitiaux = userRelationsWithOtherUsers
     .filter((userRelation) => userRelation.relation === UserRelationType.EXAMINATEUR_INITIAL)
-    .map((userRelation) => userRelation.Related);
+    .map((userRelation) => userRelation.UserRelatedOfUserRelation);
   if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
     examinateursInitiaux.unshift(user);
   }
 
   const centresCollecte = userEntitiesRelations
-    .filter((entityRelation) => entityRelation.Related.type === EntityTypes.EXPLOITANT_CENTRE_COLLECTE)
-    .map((entityRelation) => entityRelation.Related);
+    .filter((entityRelation) => entityRelation.EntityRelatedWithUser.type === EntityTypes.EXPLOITANT_CENTRE_COLLECTE)
+    .map((entityRelation) => entityRelation.EntityRelatedWithUser);
 
   const collecteursPro = userEntitiesRelations
-    .filter((entityRelation) => entityRelation.Related.type === EntityTypes.COLLECTEUR_PRO)
-    .map((entityRelation) => entityRelation.Related);
+    .filter((entityRelation) => entityRelation.EntityRelatedWithUser.type === EntityTypes.COLLECTEUR_PRO)
+    .map((entityRelation) => entityRelation.EntityRelatedWithUser);
 
   const etgs = userEntitiesRelations
-    .filter((entityRelation) => entityRelation.Related.type === EntityTypes.ETG)
-    .map((entityRelation) => entityRelation.Related);
+    .filter((entityRelation) => entityRelation.EntityRelatedWithUser.type === EntityTypes.ETG)
+    .map((entityRelation) => entityRelation.EntityRelatedWithUser);
 
   const svis = userEntitiesRelations
-    .filter((entityRelation) => entityRelation.Related.type === EntityTypes.SVI)
-    .map((entityRelation) => entityRelation.Related);
+    .filter((entityRelation) => entityRelation.EntityRelatedWithUser.type === EntityTypes.SVI)
+    .map((entityRelation) => entityRelation.EntityRelatedWithUser);
 
-  if (!params.fei_id) {
-    return json({
-      user,
-      detenteursInitiaux,
-      examinateursInitiaux,
-      centresCollecte,
-      collecteursPro,
-      etgs,
-      svis,
-      fei: null,
-      fei_owners: null,
-    });
-  }
-  const fei = await prisma.fei.findUnique({
-    where: {
-      id: Number(params.fei_id),
-    },
-    include: {
-      SuiviFei: true,
-    },
-  });
-  if (!fei) {
-    throw redirect("/tableau-de-bord");
-  }
-  const fei_owners = {
-    detenteur_initial_id: fei.SuiviFei.find((suivi) => suivi.suivi_par_user_role === UserRoles.DETENTEUR_INITIAL)
-      ?.suivi_par_user_id,
-    examinateur_initial_id: fei.SuiviFei.find((suivi) => suivi.suivi_par_user_role === UserRoles.EXAMINATEUR_INITIAL)
-      ?.suivi_par_user_id,
-    centre_collecte_id: fei.SuiviFei.find((suivi) => suivi.suivi_par_user_role === UserRoles.EXPLOITANT_CENTRE_COLLECTE)
-      ?.suivi_par_user_id,
-    collecteur_pro_id: fei.SuiviFei.find((suivi) => suivi.suivi_par_user_role === UserRoles.COLLECTEUR_PRO)
-      ?.suivi_par_user_id,
-    etg_id: fei.SuiviFei.find((suivi) => suivi.suivi_par_user_role === UserRoles.ETG)?.suivi_par_user_id,
-    svi_id: fei.SuiviFei.find((suivi) => suivi.suivi_par_user_role === UserRoles.SVI)?.suivi_par_user_id,
-  };
   return json({
     user,
+    fei,
     detenteursInitiaux,
     examinateursInitiaux,
     centresCollecte,
     collecteursPro,
     etgs,
     svis,
-    fei,
-    fei_owners,
   });
 }
 
 export default function NouvelleFEI() {
-  const { user, fei, fei_owners } = useLoaderData<typeof loader>();
+  const { user, fei } = useLoaderData<typeof loader>();
 
   const [feiInitRoles, setFeiInitRoles] = useState<UserRoles[]>(() => {
-    const initRoles: UserRoles[] = [];
-    if (fei_owners?.detenteur_initial_id === user.id) {
-      initRoles.push(UserRoles.DETENTEUR_INITIAL);
+    if (!user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      return [UserRoles.DETENTEUR_INITIAL];
     }
-    if (fei_owners?.examinateur_initial_id === user.id) {
-      initRoles.push(UserRoles.EXAMINATEUR_INITIAL);
+    if (!user.roles.includes(UserRoles.DETENTEUR_INITIAL)) {
+      return [UserRoles.EXAMINATEUR_INITIAL];
     }
-    return initRoles;
+    return [];
   });
   const feiFetcher = useFetcher({ key: "onboarding-etape-2-user-data" });
 
@@ -143,43 +122,46 @@ export default function NouvelleFEI() {
           </CallOut>
           <div className="bg-white mb-6 md:shadow">
             <div className="p-4 md:p-8 pb-32 md:pb-0">
-              <Checkbox
-                legend="Pour cette FEI vous êtes"
-                options={[
-                  {
-                    label: "Détenteur initial",
-                    nativeInputProps: {
-                      name: "fei-init-roles",
-                      value: UserRoles.DETENTEUR_INITIAL,
-                      defaultChecked: feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL),
-                      onChange: (event) => {
-                        if (event.target.checked) {
-                          setFeiInitRoles((prev) => [...prev, UserRoles.DETENTEUR_INITIAL]);
-                        } else {
-                          setFeiInitRoles((prev) => prev.filter((role) => role !== UserRoles.DETENTEUR_INITIAL));
-                        }
+              {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) &&
+                user.roles.includes(UserRoles.DETENTEUR_INITIAL) && (
+                  <Checkbox
+                    legend="Pour cette FEI vous êtes"
+                    options={[
+                      {
+                        label: "Détenteur initial",
+                        nativeInputProps: {
+                          name: "fei-init-roles",
+                          value: UserRoles.DETENTEUR_INITIAL,
+                          defaultChecked: feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL),
+                          onChange: (event) => {
+                            if (event.target.checked) {
+                              setFeiInitRoles((prev) => [...prev, UserRoles.DETENTEUR_INITIAL]);
+                            } else {
+                              setFeiInitRoles((prev) => prev.filter((role) => role !== UserRoles.DETENTEUR_INITIAL));
+                            }
+                          },
+                        },
                       },
-                    },
-                  },
-                  {
-                    label: "Examinateur initial",
-                    nativeInputProps: {
-                      name: "fei-init-roles",
-                      value: UserRoles.EXAMINATEUR_INITIAL,
-                      defaultChecked: feiInitRoles.includes(UserRoles.EXAMINATEUR_INITIAL),
-                      onChange: (event) => {
-                        if (event.target.checked) {
-                          setFeiInitRoles((prev) => [...prev, UserRoles.EXAMINATEUR_INITIAL]);
-                        } else {
-                          setFeiInitRoles((prev) => prev.filter((role) => role !== UserRoles.EXAMINATEUR_INITIAL));
-                        }
+                      {
+                        label: "Examinateur initial",
+                        nativeInputProps: {
+                          name: "fei-init-roles",
+                          value: UserRoles.EXAMINATEUR_INITIAL,
+                          defaultChecked: feiInitRoles.includes(UserRoles.EXAMINATEUR_INITIAL),
+                          onChange: (event) => {
+                            if (event.target.checked) {
+                              setFeiInitRoles((prev) => [...prev, UserRoles.EXAMINATEUR_INITIAL]);
+                            } else {
+                              setFeiInitRoles((prev) => prev.filter((role) => role !== UserRoles.EXAMINATEUR_INITIAL));
+                            }
+                          },
+                        },
                       },
-                    },
-                  },
-                ]}
-                state="default"
-                stateRelatedMessage="State description"
-              />
+                    ]}
+                    state="default"
+                    stateRelatedMessage="State description"
+                  />
+                )}
               <feiFetcher.Form
                 id="fei_data_form"
                 method="POST"
@@ -224,123 +206,5 @@ export default function NouvelleFEI() {
         </div>
       </div>
     </div>
-  );
-}
-
-interface AccordionEntrepriseProps {
-  done: boolean;
-  entityType: EntityTypes;
-  addLabel: string;
-  selectLabel: string;
-  accordionLabel: string;
-  fetcherKey: string;
-}
-
-function AccordionEntreprise({
-  done,
-  entityType,
-  addLabel,
-  selectLabel,
-  accordionLabel,
-  fetcherKey,
-}: AccordionEntrepriseProps) {
-  const { user, userEntitiesByTypeAndId } = useLoaderData<typeof loader>();
-
-  const userEntityFetcher = useFetcher({ key: fetcherKey });
-  const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
-
-  return (
-    <Accordion
-      titleAs="h2"
-      defaultExpanded={!done}
-      label={
-        <div className="inline-flex items-center justify-start w-full">
-          <CompletedTag done={done} /> {accordionLabel}
-        </div>
-      }
-    >
-      {userEntities
-        .filter((entity) => entity.type === entityType)
-        .map((entity) => {
-          return (
-            <div key={entity.id} className="fr-fieldset__element">
-              <Notice
-                className="fr-fieldset__element [&_p.fr-notice\_\_title]:before:hidden fr-text-default--grey fr-background-contrast--grey"
-                style={{
-                  boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
-                }}
-                isClosable
-                onClose={() => {
-                  userEntityFetcher.submit(
-                    {
-                      owner_id: user.id,
-                      entity_id: entity.id,
-                      _action: "delete",
-                    },
-                    {
-                      method: "POST",
-                      action: `/action/user-entity/${user.id}`,
-                      preventScrollReset: true,
-                    }
-                  );
-                }}
-                title={
-                  <>
-                    {entity.raison_sociale}
-                    <br />
-                    {entity.code_postal} {entity.ville}
-                  </>
-                }
-              />
-            </div>
-          );
-        })}
-      <userEntityFetcher.Form
-        id="user_centre_collecte_form"
-        className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
-        method="POST"
-        action={`/action/user-entity/${user.id}`}
-        preventScrollReset
-      >
-        <input type="hidden" name="owner_id" value={user.id} />
-        <input type="hidden" name="_action" value="create" />
-        <input type="hidden" name="relation" value={EntityRelationType.WORKING_FOR} />
-        <Select
-          label={addLabel}
-          hint={selectLabel}
-          className="!mb-0 grow"
-          nativeSelectProps={{
-            name: "entity_id",
-          }}
-        >
-          <option value="">{selectLabel}</option>
-          {userEntities.map((entity) => {
-            return (
-              <option key={entity.id} value={entity.id}>
-                {entity.raison_sociale} - {entity.code_postal} {entity.ville}
-              </option>
-            );
-          })}
-        </Select>
-        <Button type="submit" disabled={!userEntities.length}>
-          Ajouter
-        </Button>
-      </userEntityFetcher.Form>
-    </Accordion>
-  );
-}
-
-function CompletedTag({ done }: { done: boolean }) {
-  if (done) {
-    return (
-      <span className="mr-6 px-3 fr-background-contrast--grey fr-text-default--grey inline-flex text-xs py-1 rounded-full">
-        ✅
-      </span>
-    );
-  }
-  return (
-    <span className="shrink-0 mr-6 px-3 fr-background-contrast--grey fr-text-default--grey inline-flex text-xs py-1 rounded-full">
-      ❓
-    </span>
   );
 }

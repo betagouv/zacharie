@@ -5,7 +5,9 @@ import { authorizeUserOrAdmin } from "~/utils/authorizeUserOrAdmin";
 
 export async function action(args: ActionFunctionArgs) {
   const { user, error } = await authorizeUserOrAdmin(args);
-  if (!user) return json({ ok: false, data: null, error }, { status: 401 });
+  if (!user) {
+    return json({ ok: false, data: null, error }, { status: 401 });
+  }
   const { request, params } = args;
 
   let feiNumero = params.fei_numero;
@@ -42,14 +44,22 @@ export async function action(args: ActionFunctionArgs) {
     });
   } else {
     existingFei = await prisma.fei.findFirst({ where: { numero: feiNumero } });
-    if (!existingFei) return json({ ok: false, data: null, error: "La FEI n'existe pas" }, { status: 404 });
+    if (!existingFei) {
+      return json({ ok: false, data: null, error: "La FEI n'existe pas" }, { status: 404 });
+    }
   }
 
   const nextFei = { ...existingFei };
 
-  if (formData.has("numero")) nextFei.numero = formData.get("numero") as string;
-  if (formData.has("date_mise_a_mort")) nextFei.date_mise_a_mort = new Date(formData.get("date_mise_a_mort") as string);
-  if (formData.has("commune_mise_a_mort")) nextFei.commune_mise_a_mort = formData.get("commune_mise_a_mort") as string;
+  if (formData.has("numero")) {
+    nextFei.numero = formData.get("numero") as string;
+  }
+  if (formData.has("date_mise_a_mort")) {
+    nextFei.date_mise_a_mort = new Date(formData.get("date_mise_a_mort") as string);
+  }
+  if (formData.has("commune_mise_a_mort")) {
+    nextFei.commune_mise_a_mort = formData.get("commune_mise_a_mort") as string;
+  }
   if (formData.has("approbation_mise_sur_le_marche_examinateur_initial")) {
     nextFei.approbation_mise_sur_le_marche_examinateur_initial =
       formData.get("approbation_mise_sur_le_marche_examinateur_initial") === "true" ? true : false;
@@ -71,7 +81,9 @@ export async function action(args: ActionFunctionArgs) {
     data: nextFei,
   });
 
-  if (formData.has("_redirect")) return redirect(formData.get("_redirect") as string);
+  if (formData.has("_redirect")) {
+    return redirect(formData.get("_redirect") as string);
+  }
 
   return json({ ok: true, data: savedFei, error: null });
 }
