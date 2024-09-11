@@ -1,3 +1,4 @@
+/* eslint-disable curly */
 import { createCookieSessionStorage, redirect } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import * as Sentry from "@sentry/remix";
@@ -19,12 +20,7 @@ export const { getSession, commitSession, destroySession } = createCookieSession
 
 export const getUserFromCookie = async (
   request: Request,
-  {
-    failureRedirect = "/connexion?type=compte-existant",
-    successRedirect = null,
-    optional = false,
-    debug = false,
-  } = {}
+  { failureRedirect = "/connexion?type=compte-existant", successRedirect = null, optional = false, debug = false } = {}
 ) => {
   const userId = await getUserIdFromCookie(request, { optional: true });
   if (debug) console.log("get userid from cookie", userId);
@@ -68,10 +64,7 @@ export const getUserFromCookie = async (
   });
 };
 
-export const getUserIdFromCookie = async (
-  request: Request,
-  { failureRedirect = "/", optional = false } = {}
-) => {
+export const getUserIdFromCookie = async (request: Request, { failureRedirect = "/", optional = false } = {}) => {
   const session = await getSession(request.headers.get("Cookie"));
   if (!session) {
     if (optional) return null;
@@ -86,10 +79,7 @@ export const getUserIdFromCookie = async (
   return userId;
 };
 
-export const getUserEmailFromCookie = async (
-  request: Request,
-  { failureRedirect = "/", optional = false } = {}
-) => {
+export const getUserEmailFromCookie = async (request: Request, { failureRedirect = "/", optional = false } = {}) => {
   const session = await getSession(request.headers.get("Cookie"));
   if (!session) {
     if (optional) return null;
@@ -104,8 +94,7 @@ export const getUserEmailFromCookie = async (
   return userEmail;
 };
 
-export const getUnauthentifiedUserFromCookie = (request: Request) =>
-  getUserFromCookie(request, { optional: true });
+export const getUnauthentifiedUserFromCookie = (request: Request) => getUserFromCookie(request, { optional: true });
 
 export const createUserSession = async (request: Request, user: User, failureRedirect: string) => {
   const session = await getSession(request.headers.get("Cookie"));

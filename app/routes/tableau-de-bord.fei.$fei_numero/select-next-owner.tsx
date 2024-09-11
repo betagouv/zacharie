@@ -1,7 +1,7 @@
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { loader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import { UserRoles, Entity, User } from "@prisma/client";
+import { UserRoles, Entity, User, Prisma } from "@prisma/client";
 import { useMemo, useState } from "react";
 import getUserRoleLabel from "~/utils/get-user-roles-label";
 import { SerializeFrom } from "@remix-run/node";
@@ -69,13 +69,13 @@ export default function SelectNextOwner() {
       }}
       className="w-full md:w-auto p-4 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white shadow-2xl md:shadow-none"
     >
-      <input type="hidden" name="fei_numero" value={fei.numero} />
+      <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
       <div className="fr-fieldset__element">
         <Select
           label="Qui doit désormais agir sur la FEI ?"
           className="!mb-0 grow"
           nativeSelectProps={{
-            name: "fei_next_owner_role",
+            name: Prisma.FeiScalarFieldEnum.fei_next_owner_role,
             value: nextRole,
             onChange: (e) => setNextRole(e.target.value as UserRoles),
           }}
@@ -97,7 +97,9 @@ export default function SelectNextOwner() {
             label={`Quel ${getUserRoleLabel(nextRole)}`}
             className="!mb-0 grow"
             nativeSelectProps={{
-              name: nextOwnerIsUser ? "fei_next_owner_user_id" : "fei_next_owner_entity_id",
+              name: nextOwnerIsUser
+                ? Prisma.FeiScalarFieldEnum.fei_next_owner_user_id
+                : Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id,
               defaultValue: (nextOwnerIsUser ? fei.fei_next_owner_user_id : fei.fei_next_owner_entity_id) ?? "",
             }}
           >

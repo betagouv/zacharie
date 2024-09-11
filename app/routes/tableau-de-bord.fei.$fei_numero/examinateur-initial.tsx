@@ -2,11 +2,10 @@ import { useLoaderData } from "@remix-run/react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { loader } from "./route";
 import UserNotEditable from "~/components/UserNotEditable";
+import { Prisma } from "@prisma/client";
 
 export default function FEIExaminateurInitial() {
   const { fei } = useLoaderData<typeof loader>();
-
-  console.log(fei?.date_mise_a_mort);
 
   return (
     <>
@@ -40,8 +39,8 @@ export default function FEIExaminateurInitial() {
         <Input
           label="Date de mise à mort et d'éviscération"
           nativeInputProps={{
-            id: "date_mise_a_mort",
-            name: "date_mise_a_mort",
+            id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+            name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
             type: "date",
             autoComplete: "off",
             defaultValue: new Date(fei?.date_mise_a_mort ?? "").toISOString().split("T")[0],
@@ -52,8 +51,8 @@ export default function FEIExaminateurInitial() {
         <Input
           label="Commune de mise à mort"
           nativeInputProps={{
-            id: "commune_mise_a_mort",
-            name: "commune_mise_a_mort",
+            id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
+            name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
             type: "text",
             autoComplete: "off",
             defaultValue: fei?.commune_mise_a_mort ?? "",

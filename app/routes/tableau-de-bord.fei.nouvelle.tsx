@@ -21,11 +21,11 @@ export async function action(args: ActionFunctionArgs) {
   let feiNumero = params.fei_numero;
   const formData = await request.formData();
 
-  if (!formData.get("commune_mise_a_mort")) {
+  if (!formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
     return json({ ok: false, data: null, error: "La commune de mise à mort est obligatoire" }, { status: 400 });
   }
 
-  if (!formData.get("date_mise_a_mort")) {
+  if (!formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
     return json({ ok: false, data: null, error: "La date de mise à mort est obligatoire" }, { status: 400 });
   }
 
@@ -36,8 +36,8 @@ export async function action(args: ActionFunctionArgs) {
   // Create a new object with only the fields that are required and set
   const createData: Prisma.FeiCreateInput = {
     numero: feiNumero,
-    commune_mise_a_mort: formData.get("commune_mise_a_mort") as string,
-    date_mise_a_mort: new Date(formData.get("date_mise_a_mort") as string),
+    commune_mise_a_mort: formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort) as string,
+    date_mise_a_mort: new Date(formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort) as string),
     fei_current_owner_user_id: user.id,
     FeiCreatedByUser: {
       connect: {
@@ -46,7 +46,7 @@ export async function action(args: ActionFunctionArgs) {
     },
   };
 
-  if (formData.get("detenteur_initial_id")) {
+  if (formData.get(Prisma.FeiScalarFieldEnum.detenteur_initial_user_id)) {
     createData.FeiDetenteurInitialUser = {
       connect: {
         id: user.id,
@@ -54,7 +54,7 @@ export async function action(args: ActionFunctionArgs) {
     };
     createData.fei_current_owner_role = UserRoles.DETENTEUR_INITIAL;
   }
-  if (formData.get("examinateur_initial_id")) {
+  if (formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
     createData.FeiExaminateurInitialUser = {
       connect: {
         id: user.id,
@@ -145,20 +145,20 @@ export default function NouvelleFEI() {
                 {feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL) && (
                   <div className="mb-8">
                     <h2 className="fr-h3 fr-mb-2w">Détenteur Initial</h2>
-                    <input type="hidden" name="detenteur_initial_id" value={user.id} />
+                    <input type="hidden" name={Prisma.FeiScalarFieldEnum.detenteur_initial_user_id} value={user.id} />
                     <UserNotEditable user={user} />
                   </div>
                 )}
                 {feiInitRoles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
                   <div className="mb-8">
                     <h2 className="fr-h3 fr-mb-2w">Examinateur Initial</h2>
-                    <input type="hidden" name="examinateur_initial_id" value={user.id} />
+                    <input type="hidden" name={Prisma.FeiScalarFieldEnum.examinateur_initial_user_id} value={user.id} />
                     <div className="fr-fieldset__element">
                       <Input
                         label="Date de mise à mort et d'éviscération"
                         nativeInputProps={{
-                          id: "date_mise_a_mort",
-                          name: "date_mise_a_mort",
+                          id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                          name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
                           type: "date",
                           required: true,
                           autoComplete: "off",
@@ -170,8 +170,8 @@ export default function NouvelleFEI() {
                       <Input
                         label="Commune de mise à mort"
                         nativeInputProps={{
-                          id: "commune_mise_a_mort",
-                          name: "commune_mise_a_mort",
+                          id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
+                          name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
                           type: "text",
                           required: true,
                           autoComplete: "off",

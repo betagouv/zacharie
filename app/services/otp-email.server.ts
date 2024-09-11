@@ -12,14 +12,14 @@ export const createOtpEmail = (user: User, otp: string) => {
   if (!emailAddress) {
     throw new Error("No email provided for magic link");
   }
-  const userExists = Boolean(user.firstName);
+  const userExists = Boolean(user.prenom);
 
   const text = `
 Voici votre code de confirmation pour Zacharie:
 
 ${otp}
 
-${userExists ? `Heureux de vous voir de retour ${user.firstName} !` : `Bienvenue !`.trim()}
+${userExists ? `Heureux de vous voir de retour ${user.prenom} !` : `Bienvenue !`.trim()}
 
 L'équipe de Zacharie
 

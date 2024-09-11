@@ -47,9 +47,12 @@ export default function ConfirmCurrentOwner() {
       <input type="hidden" name="fei_current_owner_role" value={fei.fei_next_owner_role} />
       <input type="hidden" name="fei_current_owner_entity_id" value={fei.fei_next_owner_entity_id ?? ""} />
       <input type="hidden" name="fei_current_owner_user_id" value={fei.fei_next_owner_user_id ?? user.id} />
+      <input type="hidden" name="fei_next_owner_role" value="" />
       <input type="hidden" name="fei_next_owner_user_id" value="" />
-      <input type="hidden" name="fei_next_owner_user_id" value="" />
-      <input type="hidden" name="fei_next_owner_user_id" value="" />
+      <input type="hidden" name="fei_next_owner_entity_id" value="" />
+      <input type="hidden" name="fei_prev_owner_role" value={fei.fei_current_owner_role ?? ""} />
+      <input type="hidden" name="fei_prev_owner_user_id" value={fei.fei_current_owner_user_id ?? ""} />
+      <input type="hidden" name="fei_prev_owner_entity_id" value={fei.fei_current_owner_entity_id ?? ""} />
       <CallOut title="🫵 Cette FEI vous a été attribuée" className="bg-white">
         En tant que <b>{getUserRoleLabel(fei.fei_next_owner_role)}</b>, vous pouvez prendre en charge cette FEI.
         <br />

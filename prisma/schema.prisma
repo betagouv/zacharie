@@ -176,6 +176,9 @@ model Fei {
   fei_next_owner_user_id                                  String?
   fei_next_owner_entity_id                                String?
   fei_next_owner_role                                     UserRoles?
+  fei_prev_owner_user_id                                  String?
+  fei_prev_owner_entity_id                                String?
+  fei_prev_owner_role                                     UserRoles?
   examinateur_initial_user_id                             String?
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?

@@ -152,13 +152,12 @@ export default function Fei() {
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0 bg-white [&_.fr-tabs\_\_list]:bg-alt-blue-france ">
           <ConfirmCurrentOwner />
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
             {selectedTabId === "Examinateur Initial" && <FEIExaminateurInitial />}
             {selectedTabId === "Détenteur Initial" && <FEIDetenteurInitial />}
           </Tabs>
-          <SelectNextOwner />
         </div>
       </div>
     </div>

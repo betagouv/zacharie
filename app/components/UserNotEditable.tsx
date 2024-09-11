@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import { Prisma, User } from "@prisma/client";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { SerializeFrom } from "@remix-run/node";
 
@@ -16,8 +16,8 @@ export default function UserNtEditable({
           label="Nom de famille"
           className="[&_input]:bg-transparent"
           nativeInputProps={{
-            id: "nom_de_famille",
-            name: "nom_de_famille",
+            id: Prisma.UserScalarFieldEnum.nom_de_famille,
+            name: Prisma.UserScalarFieldEnum.nom_de_famille,
             autoComplete: "off",
             readOnly: true,
             defaultValue: user?.nom_de_famille ?? "",
@@ -29,8 +29,8 @@ export default function UserNtEditable({
           label="Prénom"
           className="[&_input]:bg-transparent"
           nativeInputProps={{
-            id: "prenom",
-            name: "prenom",
+            id: Prisma.UserScalarFieldEnum.prenom,
+            name: Prisma.UserScalarFieldEnum.prenom,
             autoComplete: "off",
             readOnly: true,
             defaultValue: user?.prenom ?? "",
@@ -42,8 +42,8 @@ export default function UserNtEditable({
           label="Téléphone"
           className="[&_input]:bg-transparent"
           nativeInputProps={{
-            id: "telephone",
-            name: "telephone",
+            id: Prisma.UserScalarFieldEnum.telephone,
+            name: Prisma.UserScalarFieldEnum.telephone,
             autoComplete: "off",
             readOnly: true,
             defaultValue: user?.telephone ?? "",
@@ -55,8 +55,8 @@ export default function UserNtEditable({
           label="Email"
           className="[&_input]:bg-transparent"
           nativeInputProps={{
-            id: "email",
-            name: "email",
+            id: Prisma.UserScalarFieldEnum.email,
+            name: Prisma.UserScalarFieldEnum.email,
             autoComplete: "off",
             readOnly: true,
             defaultValue: user?.email ?? "",
@@ -68,8 +68,8 @@ export default function UserNtEditable({
           label="Adresse"
           className="[&_input]:bg-transparent"
           nativeInputProps={{
-            id: "addresse_ligne_1",
-            name: "addresse_ligne_1",
+            id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
+            name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
             autoComplete: "off",
             readOnly: true,
             defaultValue: user?.addresse_ligne_1 ?? "",
@@ -82,8 +82,8 @@ export default function UserNtEditable({
             label="Complément d'adresse (optionnel)"
             className="[&_input]:bg-transparent"
             nativeInputProps={{
-              id: "addresse_ligne_2",
-              name: "addresse_ligne_2",
+              id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
+              name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
               autoComplete: "off",
               readOnly: true,
               defaultValue: user?.addresse_ligne_2 ?? "",
@@ -96,8 +96,8 @@ export default function UserNtEditable({
           label="Code postal"
           className="[&_input]:bg-transparent"
           nativeInputProps={{
-            id: "code_postal",
-            name: "code_postal",
+            id: Prisma.UserScalarFieldEnum.code_postal,
+            name: Prisma.UserScalarFieldEnum.code_postal,
             autoComplete: "off",
             readOnly: true,
             defaultValue: user?.code_postal ?? "",
@@ -109,8 +109,8 @@ export default function UserNtEditable({
           label="Ville ou commune"
           className="[&_input]:bg-transparent"
           nativeInputProps={{
-            id: "ville",
-            name: "ville",
+            id: Prisma.UserScalarFieldEnum.ville,
+            name: Prisma.UserScalarFieldEnum.ville,
             autoComplete: "off",
             readOnly: true,
             defaultValue: user?.ville ?? "",
@@ -125,8 +125,8 @@ export default function UserNtEditable({
               hintText="Formateur Référent Examen Initial"
               className="[&_input]:bg-transparent"
               nativeInputProps={{
-                id: "cfei",
-                name: "cfei",
+                id: Prisma.UserScalarFieldEnum.numero_cfei,
+                name: Prisma.UserScalarFieldEnum.numero_cfei,
                 autoComplete: "off",
                 readOnly: true,
                 defaultValue: user?.numero_cfei ?? "",
@@ -138,8 +138,8 @@ export default function UserNtEditable({
               hintText="Chasseur Formé à l'Examen Initial"
               className="[&_input]:bg-transparent"
               nativeInputProps={{
-                id: "cfei",
-                name: "cfei",
+                id: Prisma.UserScalarFieldEnum.numero_frei,
+                name: Prisma.UserScalarFieldEnum.numero_frei,
                 autoComplete: "off",
                 placeholder: "Non renseigné",
                 readOnly: true,
