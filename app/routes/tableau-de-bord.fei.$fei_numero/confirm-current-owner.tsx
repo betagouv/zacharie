@@ -4,7 +4,7 @@ import { loader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useMemo } from "react";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
-import { Prisma } from "@prisma/client";
+import { Prisma, UserRoles } from "@prisma/client";
 
 export default function ConfirmCurrentOwner() {
   const { user, entitiesUserIsWorkingFor, fei } = useLoaderData<typeof loader>();
@@ -34,7 +34,14 @@ export default function ConfirmCurrentOwner() {
 
   return (
     <div className="bg-alt-blue-france pb-8">
-      <CallOut title="🫵 Cette FEI vous a été attribuée" className="bg-white m-0">
+      <CallOut
+        title={
+          fei.fei_next_owner_user_id
+            ? "🫵  Cette FEI vous a été attribuée"
+            : "🫵  Vous pouvez prendre en charge cette FEI"
+        }
+        className="bg-white m-0"
+      >
         En tant que <b>{getUserRoleLabel(fei.fei_next_owner_role)}</b>
         {fei.FeiNextEntity?.raison_sociale ? ` (${fei.FeiNextEntity?.raison_sociale})` : ""}, vous pouvez prendre en
         charge cette FEI.
@@ -54,6 +61,12 @@ export default function ConfirmCurrentOwner() {
             formData.append(Prisma.FeiScalarFieldEnum.fei_prev_owner_role, fei.fei_current_owner_role || "");
             formData.append(Prisma.FeiScalarFieldEnum.fei_prev_owner_user_id, fei.fei_current_owner_user_id || "");
             formData.append(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id, fei.fei_current_owner_entity_id || "");
+            if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.EXAMINATEUR_INITIAL) {
+              formData.append(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id, user.id);
+            }
+            if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.DETENTEUR_INITIAL) {
+              formData.append(Prisma.FeiScalarFieldEnum.detenteur_initial_user_id, user.id);
+            }
             console.log("formData", Object.fromEntries(formData.entries()));
             fetcher.submit(formData, {
               method: "POST",

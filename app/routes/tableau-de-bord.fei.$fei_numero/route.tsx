@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { json, MetaArgs, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
@@ -116,13 +116,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function Fei() {
-  const { fei } = useLoaderData<typeof loader>();
+  const { fei, user } = useLoaderData<typeof loader>();
 
   const doneEmoji = "✅ ";
 
   const tabs: TabsProps["tabs"] = [
     {
-      tabId: "Détenteur Initial",
+      tabId: UserRoles.DETENTEUR_INITIAL,
       label: (
         <>
           <span className="hidden md:inline">{fei.detenteur_initial_user_id ? doneEmoji : ""}Détenteur Initial</span>
@@ -131,7 +131,7 @@ export default function Fei() {
       ),
     },
     {
-      tabId: "Examinateur Initial",
+      tabId: UserRoles.EXAMINATEUR_INITIAL,
       label: (
         <>
           <span className="hidden md:inline">
@@ -145,7 +145,7 @@ export default function Fei() {
     },
     { tabId: "Intermédiaires", label: <>{fei.svi_entity_id ? doneEmoji : ""}Intermédiaires</> },
     {
-      tabId: "Service Vétérinaire d'Inspection",
+      tabId: UserRoles.SVI,
       label: (
         <>
           <span className="hidden md:inline">
@@ -158,17 +158,55 @@ export default function Fei() {
   ];
   const [selectedTabId, setSelectedTabId] = useState<(typeof tabs)[number]["tabId"]>(() => {
     if (fei.fei_current_owner_role === UserRoles.DETENTEUR_INITIAL) {
-      return "Détenteur Initial";
+      return UserRoles.DETENTEUR_INITIAL;
     }
     if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
-      return "Examinateur Initial";
+      return UserRoles.EXAMINATEUR_INITIAL;
     }
     if (fei.fei_current_owner_role === UserRoles.SVI) {
-      return "Service Vétérinaire d'Inspection";
+      return UserRoles.SVI;
     }
     return "Intermédiaires";
   });
-  // const feiFetcher = useFetcher({ key: "onboarding-etape-2-user-data" });
+
+  const refCurrentRole = useRef(fei.fei_current_owner_role);
+  const refCurrentUserId = useRef(fei.fei_current_owner_user_id);
+  useEffect(() => {
+    if (fei.fei_current_owner_role !== refCurrentRole.current) {
+      if (fei.fei_current_owner_user_id === user.id && refCurrentUserId.current === user.id) {
+        if (fei.fei_current_owner_role === UserRoles.DETENTEUR_INITIAL) {
+          setSelectedTabId(UserRoles.DETENTEUR_INITIAL);
+        }
+        if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
+          setSelectedTabId(UserRoles.EXAMINATEUR_INITIAL);
+        }
+        if (
+          [UserRoles.COLLECTEUR_PRO, UserRoles.EXPLOITANT_CENTRE_COLLECTE, UserRoles.ETG].includes(
+            // @ts-expect-error - TS doesn't know that the following roles are valid tabIds
+            fei.fei_current_owner_role
+          )
+        ) {
+          setSelectedTabId("Intermédiaires");
+        }
+        if (fei.fei_current_owner_role === UserRoles.SVI) {
+          setSelectedTabId(UserRoles.SVI);
+        }
+      }
+    }
+    refCurrentRole.current = fei.fei_current_owner_role;
+    refCurrentUserId.current = fei.fei_current_owner_user_id;
+  }, [fei.fei_current_owner_role, fei.fei_current_owner_user_id, user.id]);
+
+  const refNextRole = useRef(fei.fei_next_owner_role);
+  const refNextUserId = useRef(fei.fei_next_owner_user_id);
+
+  useEffect(() => {
+    if (fei.fei_next_owner_user_id === user.id && refNextUserId.current !== fei.fei_next_owner_user_id) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    refNextRole.current = fei.fei_next_owner_role;
+    refNextUserId.current = fei.fei_next_owner_user_id;
+  }, [fei.fei_next_owner_role, fei.fei_next_owner_user_id, user.id]);
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -177,8 +215,8 @@ export default function Fei() {
           <ConfirmCurrentOwner />
           <CurrentOwner />
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
-            {selectedTabId === "Examinateur Initial" && <FEIExaminateurInitial />}
-            {selectedTabId === "Détenteur Initial" && <FEIDetenteurInitial />}
+            {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
+            {selectedTabId === UserRoles.DETENTEUR_INITIAL && <FEIDetenteurInitial />}
           </Tabs>
         </div>
       </div>

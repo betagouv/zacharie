@@ -21,14 +21,6 @@ export async function action(args: ActionFunctionArgs) {
   let feiNumero = params.fei_numero;
   const formData = await request.formData();
 
-  if (!formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
-    return json({ ok: false, data: null, error: "La commune de mise à mort est obligatoire" }, { status: 400 });
-  }
-
-  if (!formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
-    return json({ ok: false, data: null, error: "La date de mise à mort est obligatoire" }, { status: 400 });
-  }
-
   const newId = (await prisma.fei.count()) + 1;
   const today = dayjs().format("YYYYMMDD");
   feiNumero = `ZACH-FEI-${today}-${newId.toString().padStart(9, "0")}`;
@@ -36,9 +28,11 @@ export async function action(args: ActionFunctionArgs) {
   // Create a new object with only the fields that are required and set
   const createData: Prisma.FeiCreateInput = {
     numero: feiNumero,
-    commune_mise_a_mort: formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort) as string,
-    date_mise_a_mort: new Date(formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort) as string),
-    fei_current_owner_user_id: user.id,
+    FeiCurrentUser: {
+      connect: {
+        id: user.id,
+      },
+    },
     FeiCreatedByUser: {
       connect: {
         id: user.id,
@@ -55,6 +49,16 @@ export async function action(args: ActionFunctionArgs) {
     createData.fei_current_owner_role = UserRoles.DETENTEUR_INITIAL;
   }
   if (formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
+    if (!formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
+      return json({ ok: false, data: null, error: "La commune de mise à mort est obligatoire" }, { status: 400 });
+    }
+
+    if (!formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
+      return json({ ok: false, data: null, error: "La date de mise à mort est obligatoire" }, { status: 400 });
+    }
+
+    createData.date_mise_a_mort = new Date(formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort) as string);
+    createData.commune_mise_a_mort = formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort) as string;
     createData.FeiExaminateurInitialUser = {
       connect: {
         id: user.id,
@@ -137,8 +141,6 @@ export default function NouvelleFEI() {
                         },
                       },
                     ]}
-                    state="default"
-                    stateRelatedMessage="State description"
                   />
                 )}
               <Form id="fei_create_form" method="POST">

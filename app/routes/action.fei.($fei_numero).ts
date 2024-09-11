@@ -24,7 +24,7 @@ export async function action(args: ActionFunctionArgs) {
   console.log("formData", Object.fromEntries(formData.entries()));
 
   if (formData.has(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
-    nextFei.date_mise_a_mort = formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort) as string;
+    nextFei.date_mise_a_mort = new Date(formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort) as string);
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
     nextFei.commune_mise_a_mort = formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort) as string;
@@ -44,11 +44,17 @@ export async function action(args: ActionFunctionArgs) {
     };
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
-    nextFei.FeiCurrentEntity = {
-      connect: {
-        id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id) as string,
-      },
-    };
+    if (!formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
+      nextFei.FeiCurrentEntity = {
+        disconnect: true,
+      };
+    } else {
+      nextFei.FeiCurrentEntity = {
+        connect: {
+          id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id) as string,
+        },
+      };
+    }
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_role)) {
     nextFei.fei_current_owner_role =

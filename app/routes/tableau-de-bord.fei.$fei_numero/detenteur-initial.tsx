@@ -24,7 +24,7 @@ export default function FEIDetenteurInitial() {
 
   const needConfirmation = !fei.FeiDetenteurInitialUser && detenteurInitial?.id === user.id;
 
-  const needSelecteNextUser = useMemo(() => {
+  const needSelectNextUser = useMemo(() => {
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
@@ -36,7 +36,6 @@ export default function FEIDetenteurInitial() {
 
   return (
     <>
-      <div className="fr-fieldset__element"></div>
       <UserNotEditable user={detenteurInitial} />
       {needConfirmation && (
         <div className="w-full md:w-auto p-4 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 ">
@@ -80,7 +79,7 @@ export default function FEIDetenteurInitial() {
           </div>
         </div>
       )}
-      {needSelecteNextUser && (
+      {needSelectNextUser && (
         <>
           <hr className="mt-8 -mb-8" />
           <SelectNextOwner />
