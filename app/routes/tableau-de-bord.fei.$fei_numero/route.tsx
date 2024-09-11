@@ -8,6 +8,7 @@ import { prisma } from "~/db/prisma.server";
 import FEIDetenteurInitial from "./detenteur-initial";
 import FEIExaminateurInitial from "./examinateur-initial";
 import ConfirmCurrentOwner from "./confirm-current-owner";
+import CurrentOwner from "./current-owner";
 
 export function meta({ params }: MetaArgs) {
   return [
@@ -27,6 +28,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       numero: params.fei_numero,
     },
     include: {
+      FeiCurrentEntity: true,
+      FeiCurrentUser: true,
       Carcasse: true,
       FeiDetenteurInitialUser: true,
       FeiExaminateurInitialUser: true,
@@ -131,9 +134,11 @@ export default function Fei() {
       label: (
         <>
           <span className="hidden md:inline">
-            {fei.examinateur_initial_user_id ? doneEmoji : ""}Examinateur Initial
+            {fei.examinateur_initial_approbation_mise_sur_le_marche ? doneEmoji : ""}Examinateur Initial
           </span>
-          <span className="inline md:hidden">{fei.examinateur_initial_user_id ? doneEmoji : ""}Examinateur</span>
+          <span className="inline md:hidden">
+            {fei.examinateur_initial_approbation_mise_sur_le_marche ? doneEmoji : ""}Examinateur
+          </span>
         </>
       ),
     },
@@ -167,8 +172,9 @@ export default function Fei() {
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0 bg-white [&_.fr-tabs\_\_list]:bg-alt-blue-france ">
+        <div className="fr-col-12 fr-col-md-10 md:p-0 m-4 md:m-0 bg-white [&_.fr-tabs\_\_list]:bg-alt-blue-france ">
           <ConfirmCurrentOwner />
+          <CurrentOwner />
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
             {selectedTabId === "Examinateur Initial" && <FEIExaminateurInitial />}
             {selectedTabId === "Détenteur Initial" && <FEIDetenteurInitial />}

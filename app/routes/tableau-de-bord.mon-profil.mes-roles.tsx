@@ -5,7 +5,7 @@ import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
-import { UserRoles } from "@prisma/client";
+import { Prisma, UserRoles } from "@prisma/client";
 
 export function meta() {
   return [
@@ -50,7 +50,7 @@ export default function MesRoles() {
                       hintText: "Chasseur, société de chasse, association de chasse",
                       label: "Détenteur initial",
                       nativeInputProps: {
-                        name: "roles",
+                        name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.DETENTEUR_INITIAL,
                         defaultChecked: user.roles.includes(UserRoles.DETENTEUR_INITIAL),
                       },
@@ -60,7 +60,7 @@ export default function MesRoles() {
                         "Munissez-vous de votre numéro d'attestation (de la forme CFEI-DEP-YY-001) pour l'étape suivante",
                       label: "Examinateur initial",
                       nativeInputProps: {
-                        name: "roles",
+                        name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.EXAMINATEUR_INITIAL,
                         defaultChecked: user.roles.includes(UserRoles.EXAMINATEUR_INITIAL),
                       },
@@ -70,7 +70,7 @@ export default function MesRoles() {
                         "Local réfrigéré où le gibier en entreposé. Le nom de l'établissement sera demandé à l'étape suivante",
                       label: "Exploitant d'un Centre de Collecte",
                       nativeInputProps: {
-                        name: "roles",
+                        name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.EXPLOITANT_CENTRE_COLLECTE,
                         defaultChecked: user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE),
                       },
@@ -80,7 +80,7 @@ export default function MesRoles() {
                         "Récupère les carcasses et les livre aux ETG. Le nom de l'établissement sera demandé à l'étape suivante",
                       label: "Collecteur Professionnel",
                       nativeInputProps: {
-                        name: "roles",
+                        name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.COLLECTEUR_PRO,
                         defaultChecked: user.roles.includes(UserRoles.COLLECTEUR_PRO),
                       },
@@ -89,7 +89,7 @@ export default function MesRoles() {
                       hintText: "Le nom de l'établissement sera demandé à l'étape suivante",
                       label: "Etablissement de Traitement du Gibier (ETG)",
                       nativeInputProps: {
-                        name: "roles",
+                        name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.ETG,
                         defaultChecked: user.roles.includes(UserRoles.ETG),
                       },
@@ -98,7 +98,7 @@ export default function MesRoles() {
                       label: "Service Vétérinaire d'Inspection (SVI)",
                       hintText: "Le nom de l'établissement sera demandé à l'étape suivante",
                       nativeInputProps: {
-                        name: "roles",
+                        name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.SVI,
                         defaultChecked: user.roles.includes(UserRoles.SVI),
                       },

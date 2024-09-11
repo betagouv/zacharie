@@ -1,9 +1,9 @@
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { loader } from "./route";
-import { useFetcher, useLoaderData, useSubmit } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useMemo } from "react";
-import getUserRoleLabel from "~/utils/get-user-roles-label";
+import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import { Prisma } from "@prisma/client";
 
 export default function ConfirmCurrentOwner() {

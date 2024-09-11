@@ -3,7 +3,7 @@ import { loader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { UserRoles, Entity, User, Prisma } from "@prisma/client";
 import { useMemo, useState } from "react";
-import getUserRoleLabel from "~/utils/get-user-roles-label";
+import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import { SerializeFrom } from "@remix-run/node";
 
 export default function SelectNextOwner() {
@@ -84,15 +84,18 @@ export default function SelectNextOwner() {
           {!fei.detenteur_initial_user_id && (
             <option value={UserRoles.DETENTEUR_INITIAL}>{getUserRoleLabel(UserRoles.DETENTEUR_INITIAL)}</option>
           )}
-          {!fei.examinateur_initial_user_id && (
+          {!fei.examinateur_initial_approbation_mise_sur_le_marche ? (
             <option value={UserRoles.EXAMINATEUR_INITIAL}>{getUserRoleLabel(UserRoles.EXAMINATEUR_INITIAL)}</option>
+          ) : (
+            <>
+              <option value={UserRoles.EXPLOITANT_CENTRE_COLLECTE}>
+                {getUserRoleLabel(UserRoles.EXPLOITANT_CENTRE_COLLECTE)}
+              </option>
+              <option value={UserRoles.COLLECTEUR_PRO}>{getUserRoleLabel(UserRoles.COLLECTEUR_PRO)}</option>
+              <option value={UserRoles.ETG}>{getUserRoleLabel(UserRoles.ETG)}</option>
+              <option value={UserRoles.SVI}>{getUserRoleLabel(UserRoles.SVI)}</option>
+            </>
           )}
-          <option value={UserRoles.EXPLOITANT_CENTRE_COLLECTE}>
-            {getUserRoleLabel(UserRoles.EXPLOITANT_CENTRE_COLLECTE)}
-          </option>
-          <option value={UserRoles.COLLECTEUR_PRO}>{getUserRoleLabel(UserRoles.COLLECTEUR_PRO)}</option>
-          <option value={UserRoles.ETG}>{getUserRoleLabel(UserRoles.ETG)}</option>
-          <option value={UserRoles.SVI}>{getUserRoleLabel(UserRoles.SVI)}</option>
         </Select>
       </div>
       {nextRole && (

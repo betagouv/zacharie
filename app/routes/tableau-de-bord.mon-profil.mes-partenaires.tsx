@@ -9,7 +9,7 @@ import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
-import { EntityTypes, EntityRelationType, UserRoles } from "@prisma/client";
+import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import {
   sortEntitiesByTypeAndId,
@@ -245,15 +245,19 @@ function AccordionEntreprise({
         action={`/action/user-entity/${user.id}`}
         preventScrollReset
       >
-        <input type="hidden" name="owner_id" value={user.id} />
+        <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
         <input type="hidden" name="_action" value="create" />
-        <input type="hidden" name="relation" value={EntityRelationType.WORKING_WITH} />
+        <input
+          type="hidden"
+          name={Prisma.EntityRelationsScalarFieldEnum.relation}
+          value={EntityRelationType.WORKING_WITH}
+        />
         <Select
           label={addLabel}
           hint={selectLabel}
           className="!mb-0 grow"
           nativeSelectProps={{
-            name: "entity_id",
+            name: Prisma.EntityRelationsScalarFieldEnum.entity_id,
           }}
         >
           <option value="">{selectLabel}</option>
@@ -343,15 +347,15 @@ function AccordionUser({ userType, addLabel, selectLabel, accordionLabel, fetche
         action={`/action/user-relation/${user.id}`}
         preventScrollReset
       >
-        <input type="hidden" name="owner_id" value={user.id} />
+        <input type="hidden" name={Prisma.UserRelationsScalarFieldEnum.owner_id} value={user.id} />
         <input type="hidden" name="_action" value="create" />
-        <input type="hidden" name="relation" value={userType} />
+        <input type="hidden" name={Prisma.UserRelationsScalarFieldEnum.relation} value={userType} />
         <Select
           label={addLabel}
           hint={selectLabel}
           className="!mb-0 grow"
           nativeSelectProps={{
-            name: "related_id",
+            name: Prisma.UserRelationsScalarFieldEnum.related_id,
           }}
         >
           <option value="">{selectLabel}</option>

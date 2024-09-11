@@ -57,6 +57,7 @@ model User {
   UserRelationsAsRelated    UserRelations[]     @relation("UserRelatedOfUserRelation")
   EntitiesRelations         EntityRelations[]   @relation("UserRelatedWithEntity")
   FeiCreatedByUser          Fei[]               @relation("FeiCreatedByUser")
+  FeiCurrentUser            Fei[]               @relation("FeiCurrentUser")
   FeiDetenteurInitialUser   Fei[]               @relation("FeiDetenteurInitialUser")
   FeiExaminateurInitialUser Fei[]               @relation("FeiExaminateurInitialUser")
   FeiSviUser                Fei[]               @relation("FeiSviUser")
@@ -95,6 +96,7 @@ model Entity {
   onboarded_at           DateTime?
   prefilled              Boolean           @default(false)
   EntityRelatedWithUser  EntityRelations[] @relation("EntityRelatedWithUser")
+  FeiCurrentEntity       Fei[]             @relation("FeiCurrentEntity")
   FeiSviEntity           Fei[]             @relation("FeiSviEntity")
   FeiIntermediaireEntity Intermediaire[]   @relation("FeiIntermediaireEntity")
 }
@@ -200,6 +202,8 @@ model Fei {
   FeiSviEntity                                            Entity?         @relation("FeiSviEntity", fields: [svi_entity_id], references: [id])
   FeiSviUser                                              User?           @relation("FeiSviUser", fields: [svi_user_id], references: [id])
   FeiIntermediaires                                       Intermediaire[]
+  FeiCurrentUser                                          User?           @relation("FeiCurrentUser", fields: [fei_current_owner_user_id], references: [id])
+  FeiCurrentEntity                                        Entity?         @relation("FeiCurrentEntity", fields: [fei_current_owner_entity_id], references: [id])
 
   @@index([created_by_user_id])
   @@index([detenteur_initial_user_id])

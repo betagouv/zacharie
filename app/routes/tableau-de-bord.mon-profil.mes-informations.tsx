@@ -9,7 +9,7 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
-import { EntityTypes, EntityRelationType, UserRoles } from "@prisma/client";
+import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 
@@ -131,8 +131,8 @@ export default function MesInformations() {
                     <Input
                       label="Nom"
                       nativeInputProps={{
-                        id: "nom_de_famille",
-                        name: "nom_de_famille",
+                        id: Prisma.UserScalarFieldEnum.nom_de_famille,
+                        name: Prisma.UserScalarFieldEnum.nom_de_famille,
                         autoComplete: "family-name",
                         defaultValue: user.nom_de_famille ?? "",
                       }}
@@ -142,8 +142,8 @@ export default function MesInformations() {
                     <Input
                       label="Prénom"
                       nativeInputProps={{
-                        id: "prenom",
-                        name: "prenom",
+                        id: Prisma.UserScalarFieldEnum.prenom,
+                        name: Prisma.UserScalarFieldEnum.prenom,
                         autoComplete: "given-name",
                         defaultValue: user.prenom ?? "",
                       }}
@@ -154,8 +154,8 @@ export default function MesInformations() {
                       label="Téléphone"
                       hintText="Format attendu : 01 22 33 44 55"
                       nativeInputProps={{
-                        id: "telephone",
-                        name: "telephone",
+                        id: Prisma.UserScalarFieldEnum.telephone,
+                        name: Prisma.UserScalarFieldEnum.telephone,
                         autoComplete: "tel",
                         defaultValue: user.telephone ?? "",
                       }}
@@ -166,8 +166,8 @@ export default function MesInformations() {
                       label="Adresse"
                       hintText="Indication : numéro et voie"
                       nativeInputProps={{
-                        id: "addresse_ligne_1",
-                        name: "addresse_ligne_1",
+                        id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
+                        name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                         autoComplete: "address-line1",
                         defaultValue: user.addresse_ligne_1 ?? "",
                       }}
@@ -178,8 +178,8 @@ export default function MesInformations() {
                       label="Complément d'adresse (optionnel)"
                       hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
                       nativeInputProps={{
-                        id: "addresse_ligne_2",
-                        name: "addresse_ligne_2",
+                        id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
+                        name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
                         autoComplete: "address-line2",
                         defaultValue: user.addresse_ligne_2 ?? "",
                       }}
@@ -190,8 +190,8 @@ export default function MesInformations() {
                       label="Code postal"
                       hintText="Format attendu : 5 chiffres"
                       nativeInputProps={{
-                        id: "code_postal",
-                        name: "code_postal",
+                        id: Prisma.UserScalarFieldEnum.code_postal,
+                        name: Prisma.UserScalarFieldEnum.code_postal,
                         autoComplete: "postal-code",
                         defaultValue: user.code_postal ?? "",
                       }}
@@ -202,8 +202,8 @@ export default function MesInformations() {
                       label="Ville ou commune"
                       hintText="Exemple : Montpellier"
                       nativeInputProps={{
-                        id: "ville",
-                        name: "ville",
+                        id: Prisma.UserScalarFieldEnum.ville,
+                        name: Prisma.UserScalarFieldEnum.ville,
                         autoComplete: "address-level2",
                         defaultValue: user.ville ?? "",
                       }}
@@ -226,8 +226,8 @@ export default function MesInformations() {
                         label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
                         hintText="De la forme CFEI-DEP-AA-123"
                         nativeInputProps={{
-                          id: "numero_cfei",
-                          name: "numero_cfei",
+                          id: Prisma.UserScalarFieldEnum.numero_cfei,
+                          name: Prisma.UserScalarFieldEnum.numero_cfei,
                           autoComplete: "off",
                           defaultValue: user.numero_cfei ?? "",
                         }}
@@ -238,8 +238,8 @@ export default function MesInformations() {
                         label="Numéro d'attestation de Formateur Référent Examen Initial"
                         hintText="De la forme DEP-FREI-YY-001"
                         nativeInputProps={{
-                          id: "numero_frei",
-                          name: "numero_frei",
+                          id: Prisma.UserScalarFieldEnum.numero_frei,
+                          name: Prisma.UserScalarFieldEnum.numero_frei,
                           autoComplete: "off",
                           defaultValue: user.numero_frei ?? "",
                         }}
@@ -408,7 +408,7 @@ function AccordionEntreprise({
           hint={selectLabel}
           className="!mb-0 grow"
           nativeSelectProps={{
-            name: "entity_id",
+            name: Prisma.UserScalarFieldEnum.entity_id,
           }}
         >
           <option value="">{selectLabel}</option>
