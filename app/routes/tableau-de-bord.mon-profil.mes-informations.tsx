@@ -13,6 +13,14 @@ import { EntityTypes, EntityRelationType, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 
+export function meta() {
+  return [
+    {
+      title: "Mes informations | Zacharie | Ministère de l'Agriculture",
+    },
+  ];
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
@@ -243,7 +251,7 @@ export default function MesInformations() {
               {user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-centre-collecte-data"
-                  accordionLabel="Vous êtes un Exploitant de Centre de Collecte"
+                  accordionLabel="Vous êtes/travaillez pour un Exploitant de Centre de Collecte"
                   addLabel="Ajouter un Centre de Collecte"
                   selectLabel="Sélectionnez un Centre de Collecte"
                   done={centresCollectesDone}
@@ -253,7 +261,7 @@ export default function MesInformations() {
               {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-collecteur-pro-data"
-                  accordionLabel="Vous êtes un Collecteur Professionnel"
+                  accordionLabel="Vous êtes/travaillez pour un Collecteur Professionnel"
                   addLabel="Ajouter un Collecteur Professionnel"
                   selectLabel="Sélectionnez un Collecteur Professionnel"
                   done={collecteursProDone}
@@ -263,7 +271,7 @@ export default function MesInformations() {
               {user.roles.includes(UserRoles.ETG) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-etg-data"
-                  accordionLabel="Vous êtes un Établissement de Transformation des Gibiers (ETG)"
+                  accordionLabel="Vous êtes/travaillez pour un Établissement de Transformation des Gibiers (ETG)"
                   addLabel="Ajouter un ETG"
                   selectLabel="Sélectionnez un ETG"
                   done={etgsDone}
@@ -273,7 +281,7 @@ export default function MesInformations() {
               {user.roles.includes(UserRoles.SVI) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-svi-data"
-                  accordionLabel="Vous êtes un Service Vétérinaire d'Inspection (SVI)"
+                  accordionLabel="Vous êtes/travaillez pour un Service Vétérinaire d'Inspection (SVI)"
                   addLabel="Ajouter un SVI"
                   selectLabel="Sélectionnez un SVI"
                   done={svisDone}

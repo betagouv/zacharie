@@ -67,7 +67,7 @@ export default function SelectNextOwner() {
           preventScrollReset: true, // Prevent scroll reset on submission
         });
       }}
-      className="w-full md:w-auto p-4 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white shadow-2xl md:shadow-none"
+      className="md:w-auto mt-8 border-t border-gray-200 pt-4 z-50 flex flex-col md:items-start [&_ul]:md:min-w-96 bg-white"
     >
       <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
       <div className="fr-fieldset__element">
@@ -81,8 +81,12 @@ export default function SelectNextOwner() {
           }}
         >
           <option value="">Sélectionnez le prochain type d'acteur à agir sur la FEI</option>
-          <option value={UserRoles.DETENTEUR_INITIAL}>{getUserRoleLabel(UserRoles.DETENTEUR_INITIAL)}</option>
-          <option value={UserRoles.EXAMINATEUR_INITIAL}>{getUserRoleLabel(UserRoles.EXAMINATEUR_INITIAL)}</option>
+          {!fei.detenteur_initial_user_id && (
+            <option value={UserRoles.DETENTEUR_INITIAL}>{getUserRoleLabel(UserRoles.DETENTEUR_INITIAL)}</option>
+          )}
+          {!fei.examinateur_initial_user_id && (
+            <option value={UserRoles.EXAMINATEUR_INITIAL}>{getUserRoleLabel(UserRoles.EXAMINATEUR_INITIAL)}</option>
+          )}
           <option value={UserRoles.EXPLOITANT_CENTRE_COLLECTE}>
             {getUserRoleLabel(UserRoles.EXPLOITANT_CENTRE_COLLECTE)}
           </option>
@@ -94,8 +98,9 @@ export default function SelectNextOwner() {
       {nextRole && (
         <div className="fr-fieldset__element grow">
           <Select
-            label={`Quel ${getUserRoleLabel(nextRole)}`}
+            label={`Quel ${getUserRoleLabel(nextRole)} ?`}
             className="!mb-0 grow"
+            key={fei.fei_next_owner_user_id ?? fei.fei_next_owner_entity_id ?? "no-choice-yet"}
             nativeSelectProps={{
               name: nextOwnerIsUser
                 ? Prisma.FeiScalarFieldEnum.fei_next_owner_user_id

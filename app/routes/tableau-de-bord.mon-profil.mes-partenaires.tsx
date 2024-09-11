@@ -19,9 +19,19 @@ import {
   type AllowedRoles,
 } from "~/utils/sort-things-by-type-and-id";
 
+export function meta() {
+  return [
+    {
+      title: "Mes partenaires | Zacharie | Ministère de l'Agriculture",
+    },
+  ];
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
-  if (!user) throw redirect("/connexion?type=compte-existant");
+  if (!user) {
+    throw redirect("/connexion?type=compte-existant");
+  }
   const allEntities = await prisma.entity.findMany();
   const userEntitiesRelations = await prisma.entityRelations.findMany({
     where: {

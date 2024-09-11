@@ -7,6 +7,14 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { UserRoles } from "@prisma/client";
 
+export function meta() {
+  return [
+    {
+      title: "Mes rôles | Zacharie | Ministère de l'Agriculture",
+    },
+  ];
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {

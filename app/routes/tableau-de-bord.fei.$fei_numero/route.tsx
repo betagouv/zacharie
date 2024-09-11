@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, MetaArgs, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
@@ -7,8 +7,15 @@ import { EntityTypes, EntityRelationType, UserRoles, UserRelationType } from "@p
 import { prisma } from "~/db/prisma.server";
 import FEIDetenteurInitial from "./detenteur-initial";
 import FEIExaminateurInitial from "./examinateur-initial";
-import SelectNextOwner from "./select-next-owner";
 import ConfirmCurrentOwner from "./confirm-current-owner";
+
+export function meta({ params }: MetaArgs) {
+  return [
+    {
+      title: `${params.fei_numero} | Zacharie | Ministère de l'Agriculture`,
+    },
+  ];
+}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
@@ -41,15 +48,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       EntityRelatedWithUser: true,
     },
   });
-  const entitiesUserIsWorkingFor = await prisma.entityRelations.findMany({
-    where: {
-      entity_id: user.id,
-      relation: EntityRelationType.WORKING_WITH,
-    },
-    include: {
-      EntityRelatedWithUser: true,
-    },
-  });
+  const entitiesUserIsWorkingFor = (
+    await prisma.entityRelations.findMany({
+      where: {
+        owner_id: user.id,
+        relation: EntityRelationType.WORKING_FOR,
+      },
+      include: {
+        EntityRelatedWithUser: true,
+      },
+    })
+  ).map((entityRelation) => entityRelation.EntityRelatedWithUser);
   const userRelationsWithOtherUsers = await prisma.userRelations.findMany({
     where: {
       owner_id: user.id,
@@ -105,13 +114,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 export default function Fei() {
   const { fei } = useLoaderData<typeof loader>();
 
+  const doneEmoji = "✅ ";
+
   const tabs: TabsProps["tabs"] = [
     {
       tabId: "Détenteur Initial",
       label: (
         <>
-          <span className="hidden md:inline">Détenteur Initial</span>
-          <span className="inline md:hidden">Détenteur</span>
+          <span className="hidden md:inline">{fei.detenteur_initial_user_id ? doneEmoji : ""}Détenteur Initial</span>
+          <span className="inline md:hidden">{fei.detenteur_initial_user_id ? doneEmoji : ""}Détenteur</span>
         </>
       ),
     },
@@ -119,18 +130,22 @@ export default function Fei() {
       tabId: "Examinateur Initial",
       label: (
         <>
-          <span className="hidden md:inline">Examinateur Initial</span>
-          <span className="inline md:hidden">Examinateur</span>
+          <span className="hidden md:inline">
+            {fei.examinateur_initial_user_id ? doneEmoji : ""}Examinateur Initial
+          </span>
+          <span className="inline md:hidden">{fei.examinateur_initial_user_id ? doneEmoji : ""}Examinateur</span>
         </>
       ),
     },
-    { tabId: "Intermédiaires", label: "Intermédiaires" },
+    { tabId: "Intermédiaires", label: <>{fei.svi_entity_id ? doneEmoji : ""}Intermédiaires</> },
     {
       tabId: "Service Vétérinaire d'Inspection",
       label: (
         <>
-          <span className="hidden md:inline">Service Vétérinaire d'Inspection (SVI)</span>
-          <span className="inline md:hidden">SVI</span>
+          <span className="hidden md:inline">
+            {fei.svi_user_id ? doneEmoji : ""}Service Vétérinaire d'Inspection (SVI)
+          </span>
+          <span className="inline md:hidden">{fei.svi_user_id ? doneEmoji : ""}SVI</span>
         </>
       ),
     },

@@ -10,7 +10,7 @@ export default function FEIDetenteurInitial() {
   const { fei, user } = useLoaderData<typeof loader>();
   const fetcher = useFetcher({ key: "confirm-detenteur-initial" });
 
-  const userNotEditable = useMemo(() => {
+  const detenteurInitial = useMemo(() => {
     if (fei.FeiDetenteurInitialUser) {
       return fei.FeiDetenteurInitialUser;
     }
@@ -22,7 +22,7 @@ export default function FEIDetenteurInitial() {
     return null;
   }, [fei, user]);
 
-  const needConfirmation = !fei.FeiDetenteurInitialUser && userNotEditable?.id === user.id;
+  const needConfirmation = !fei.FeiDetenteurInitialUser && detenteurInitial?.id === user.id;
 
   const needSelecteNextUser = useMemo(() => {
     if (fei.fei_current_owner_user_id !== user.id) {
@@ -62,7 +62,7 @@ export default function FEIDetenteurInitial() {
           })}
         </Select> */}
       </div>
-      <UserNotEditable user={userNotEditable} />
+      <UserNotEditable user={detenteurInitial} />
       {needConfirmation && (
         <div className="w-full md:w-auto p-4 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 ">
           <div className="flex flex-col items-center">
@@ -84,7 +84,22 @@ export default function FEIDetenteurInitial() {
               Je suis bien le Détenteur Initial
             </Button>
             <p className="mb-0">Vous n'êtes pas le Détenteur Initial&nbsp;?</p>
-            <Button type="button" priority="tertiary no outline">
+            <Button
+              priority="tertiary no outline"
+              type="submit"
+              className="my-4"
+              onClick={() => {
+                const formData = new FormData();
+                formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
+                formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
+                formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
+                fetcher.submit(formData, {
+                  method: "POST",
+                  action: `/action/fei/${fei.numero}`,
+                  preventScrollReset: true, // Prevent scroll reset on submission
+                });
+              }}
+            >
               Renvoyer la FEI
             </Button>
           </div>
