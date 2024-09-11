@@ -4,8 +4,12 @@ import { getUserFromCookie } from "~/services/auth.server";
 import { getUserOnboardingRoute } from "~/utils/user-onboarded.server";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
-import { useLoaderData } from "@remix-run/react";
+import { Table } from "@codegouvfr/react-dsfr/Table";
+import { Link, useLoaderData } from "@remix-run/react";
 import { UserRoles } from "@prisma/client";
+import { prisma } from "~/db/prisma.server";
+import { getUserRoleLabel } from "~/utils/get-user-roles-label";
+import dayjs from "dayjs";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
@@ -16,11 +20,61 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (onboardingRoute) {
     throw redirect(onboardingRoute);
   }
-  return json({ user });
+  const feiAssigned = await prisma.fei.findMany({
+    where: {
+      OR: [
+        {
+          fei_current_owner_user_id: user.id,
+        },
+        {
+          fei_next_owner_user_id: user.id,
+        },
+        {
+          FeiNextEntity: {
+            EntityRelatedWithUser: {
+              some: {
+                owner_id: user.id,
+              },
+            },
+          },
+        },
+        {
+          FeiCurrentEntity: {
+            EntityRelatedWithUser: {
+              some: {
+                owner_id: user.id,
+              },
+            },
+          },
+        },
+      ],
+    },
+    select: {
+      numero: true,
+      created_at: true,
+      fei_current_owner_role: true,
+    },
+  });
+  const feiDone = await prisma.fei.findMany({
+    where: {
+      created_by_user_id: user.id,
+      svi_signed_at: {
+        not: null,
+      },
+    },
+    select: {
+      numero: true,
+      created_at: true,
+      svi_signed_at: true,
+    },
+  });
+
+  return json({ user, feiAssigned, feiDone });
 }
 
 export default function TableauDeBordIndex() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user, feiAssigned, feiDone } = useLoaderData<typeof loader>();
+  console.log("feiAssigned", feiAssigned);
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -51,42 +105,83 @@ export default function TableauDeBordIndex() {
             </section>
           )}
           <section className="bg-white mb-6 md:shadow">
-            <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3 fr-mb-2w">FEI assignées</h2>
-              <div className="flex flex-col items-start [&_ul]:md:min-w-96 bg-white">
-                <ButtonsGroup
-                  buttons={[
-                    {
-                      children: "Rafraichir",
-                      linkProps: {
-                        href: "/tableau-de-bord/",
-                      },
-                    },
-                  ]}
+            <div className="p-4 md:p-8 md:pb-0 [&_td]:has-[a]:!p-0 [&_a]:p-4 [&_a]:block [&_a]:no-underline">
+              {feiAssigned.length ? (
+                <Table
+                  bordered
+                  caption="FEI assignées"
+                  data={feiAssigned.map((fei) => [
+                    <Link key={fei.numero} to={`/tableau-de-bord/fei/${fei.numero}`}>
+                      {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
+                    </Link>,
+                    <Link key={fei.numero} to={`/tableau-de-bord/fei/${fei.numero}`}>
+                      {getUserRoleLabel(fei.fei_current_owner_role as UserRoles)}
+                    </Link>,
+                  ])}
+                  headers={["Date de création", "Étape en cours"]}
                 />
-              </div>
+              ) : (
+                <>
+                  <h2 className="fr-h3 fr-mb-2w">FEI assignées</h2>
+                  <p className="my-8">Pas encore de donnée</p>
+                </>
+              )}
+            </div>
+            <div className="flex flex-col items-start [&_ul]:md:min-w-96 bg-white px-8">
+              <ButtonsGroup
+                buttons={[
+                  {
+                    children: "Rafraichir",
+                    linkProps: {
+                      to: "/tableau-de-bord/",
+                      href: "#",
+                    },
+                  },
+                ]}
+              />
+              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                Haut de page
+              </a>
             </div>
           </section>
           <section className="bg-white mb-6 md:shadow">
-            <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3 fr-mb-2w">FEI passées</h2>
-              <div className="flex flex-col items-start [&_ul]:md:min-w-96 bg-white">
-                <ButtonsGroup
-                  buttons={[
-                    {
-                      children: "Rafraichir",
-                      linkProps: {
-                        href: "/tableau-de-bord/",
-                      },
-                    },
-                  ]}
+            <div className="p-4 md:p-8 md:pb-0 [&_td]:has-[a]:!p-0 [&_a]:p-4 [&_a]:block [&_a]:no-underline">
+              {feiDone.length ? (
+                <Table
+                  bordered
+                  caption="FEI passées"
+                  data={feiDone.map((fei) => [
+                    <Link key={fei.numero} to={`/tableau-de-bord/fei/${fei.numero}`}>
+                      {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
+                    </Link>,
+                    <Link key={fei.numero} to={`/tableau-de-bord/fei/${fei.numero}`}>
+                      {dayjs(fei.svi_signed_at).format("DD/MM/YYYY")}
+                    </Link>,
+                  ])}
+                  headers={["Date de création", "Date de traitement SVI"]}
                 />
-              </div>
-              <div className="mt-6 ml-6 mb-16">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                  Haut de page
-                </a>
-              </div>
+              ) : (
+                <>
+                  <h2 className="fr-h3 fr-mb-2w">FEI passées</h2>
+                  <p className="my-8">Pas encore de donnée</p>
+                </>
+              )}
+            </div>
+            <div className="flex flex-col items-start [&_ul]:md:min-w-96 bg-white px-8">
+              <ButtonsGroup
+                buttons={[
+                  {
+                    children: "Rafraichir",
+                    linkProps: {
+                      to: "/tableau-de-bord/",
+                      href: "#",
+                    },
+                  },
+                ]}
+              />
+              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                Haut de page
+              </a>
             </div>
           </section>
         </div>

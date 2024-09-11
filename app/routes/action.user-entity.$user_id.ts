@@ -11,6 +11,7 @@ export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
 
   const formData = await request.formData();
+  console.log("formData", Object.fromEntries(formData));
   if (!formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id)) {
     return json({ ok: false, data: null, error: "Missing owner_id" }, { status: 400 });
   }

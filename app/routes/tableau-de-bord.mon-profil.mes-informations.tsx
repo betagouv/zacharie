@@ -408,7 +408,7 @@ function AccordionEntreprise({
           hint={selectLabel}
           className="!mb-0 grow"
           nativeSelectProps={{
-            name: Prisma.UserScalarFieldEnum.entity_id,
+            name: Prisma.EntityRelationsScalarFieldEnum.entity_id,
           }}
         >
           <option value="">{selectLabel}</option>
