@@ -27,6 +27,7 @@
     "@remix-run/react": "^2.11.2",
     "@sentry/remix": "^8.28.0",
     "@sentry/vite-plugin": "^2.22.3",
+    "@uidotdev/usehooks": "^2.4.1",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",

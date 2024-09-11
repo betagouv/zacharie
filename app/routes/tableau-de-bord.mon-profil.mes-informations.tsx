@@ -12,6 +12,7 @@ import { Select } from "@codegouvfr/react-dsfr/Select";
 import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
+import InputVille from "~/components/InputVille";
 
 export function meta() {
   return [
@@ -198,7 +199,7 @@ export default function MesInformations() {
                     />
                   </div>
                   <div className="fr-fieldset__element fr-fieldset__element--inline@md fr-fieldset__element--inline-grow">
-                    <Input
+                    <InputVille
                       label="Ville ou commune"
                       hintText="Exemple : Montpellier"
                       nativeInputProps={{

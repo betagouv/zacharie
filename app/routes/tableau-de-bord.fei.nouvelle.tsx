@@ -10,6 +10,7 @@ import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import UserNotEditable from "~/components/UserNotEditable";
+import InputVille from "~/components/InputVille";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -169,7 +170,7 @@ export default function NouvelleFEI() {
                       />
                     </div>
                     <div className="fr-fieldset__element">
-                      <Input
+                      <InputVille
                         label="Commune de mise à mort"
                         nativeInputProps={{
                           id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,

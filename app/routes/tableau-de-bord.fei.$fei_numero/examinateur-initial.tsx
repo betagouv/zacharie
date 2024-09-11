@@ -10,23 +10,12 @@ import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import dayjs from "dayjs";
 import SelectNextOwner from "./select-next-owner";
+import InputVille from "~/components/InputVille";
 
 export default function FEIExaminateurInitial() {
   const { fei, user } = useLoaderData<typeof loader>();
 
   const approbationFetcher = useFetcher({ key: "approbation-mise-sur-le-marche" });
-  const examFetcher = useFetcher({ key: "examination-fetcher" });
-  const handleUserFormBlur = useCallback(
-    (event: React.FocusEvent<HTMLFormElement>) => {
-      const formData = new FormData(event.currentTarget);
-      examFetcher.submit(formData, {
-        method: "POST",
-        action: `/action/fei/${fei.numero}`,
-        preventScrollReset: true, // Prevent scroll reset on submission
-      });
-    },
-    [examFetcher, fei.numero]
-  );
 
   const canEdit = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
@@ -39,6 +28,23 @@ export default function FEIExaminateurInitial() {
   }, [fei, user]);
 
   const Component = canEdit ? Input : InputNotEditable;
+  const VilleComponent = canEdit ? Input : InputVille;
+
+  const examFetcher = useFetcher({ key: "examination-fetcher" });
+  const handleUserFormBlur = useCallback(
+    (event: React.FocusEvent<HTMLFormElement>) => {
+      if (!canEdit) {
+        return;
+      }
+      const formData = new FormData(event.currentTarget);
+      examFetcher.submit(formData, {
+        method: "POST",
+        action: `/action/fei/${fei.numero}`,
+        preventScrollReset: true, // Prevent scroll reset on submission
+      });
+    },
+    [examFetcher, fei.numero, canEdit]
+  );
 
   const needSelecteNextUser = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
@@ -84,7 +90,7 @@ export default function FEIExaminateurInitial() {
             />
           </div>
           <div className="fr-fieldset__element">
-            <Component
+            <VilleComponent
               label="Commune de mise à mort"
               nativeInputProps={{
                 id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
