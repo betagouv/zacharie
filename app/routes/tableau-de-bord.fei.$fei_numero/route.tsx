@@ -30,6 +30,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     include: {
       FeiCurrentEntity: true,
       FeiCurrentUser: true,
+      FeiNextEntity: true,
       Carcasse: true,
       FeiDetenteurInitialUser: true,
       FeiExaminateurInitialUser: true,

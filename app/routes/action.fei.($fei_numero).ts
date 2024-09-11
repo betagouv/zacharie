@@ -37,20 +37,38 @@ export async function action(args: ActionFunctionArgs) {
     };
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id)) {
-    nextFei.fei_current_owner_user_id = formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id) as string;
+    nextFei.FeiCurrentUser = {
+      connect: {
+        id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id) as string,
+      },
+    };
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
-    nextFei.fei_current_owner_entity_id = formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id) as string;
+    nextFei.FeiCurrentEntity = {
+      connect: {
+        id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id) as string,
+      },
+    };
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_role)) {
     nextFei.fei_current_owner_role =
       (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) as UserRoles) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
-    nextFei.fei_next_owner_user_id = formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) as string;
+    nextFei.fei_next_owner_user_id = (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) as string) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
-    nextFei.fei_next_owner_entity_id = formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id) as string;
+    if (!formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
+      nextFei.FeiNextEntity = {
+        disconnect: true,
+      };
+    } else {
+      nextFei.FeiNextEntity = {
+        connect: {
+          id: formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id) as string,
+        },
+      };
+    }
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_role)) {
     nextFei.fei_next_owner_role = (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_role) as UserRoles) || null;
@@ -71,10 +89,6 @@ export async function action(args: ActionFunctionArgs) {
       },
     };
   }
-  console.log(
-    Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
-    formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)
-  );
   if (formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche) === "true") {
     nextFei.examinateur_initial_approbation_mise_sur_le_marche = true;
     nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = new Date().toISOString();
@@ -128,6 +142,9 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_signed_at)) {
     nextFei.svi_signed_at = formData.get(Prisma.FeiScalarFieldEnum.svi_signed_at) as string;
   }
+
+  console.log("nextFei", nextFei);
+
   const savedFei = await prisma.fei.update({
     where: { numero: feiNumero },
     data: nextFei,

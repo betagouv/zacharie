@@ -80,7 +80,12 @@ export default function FEIDetenteurInitial() {
           </div>
         </div>
       )}
-      {needSelecteNextUser && <SelectNextOwner />}
+      {needSelecteNextUser && (
+        <>
+          <hr className="mt-8 -mb-8" />
+          <SelectNextOwner />
+        </>
+      )}
     </>
   );
 }

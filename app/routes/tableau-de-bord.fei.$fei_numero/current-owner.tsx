@@ -14,7 +14,7 @@ export default function CurrentOwner() {
           root: "fr-highlight--green-emeraude",
         }}
       >
-        Cette FEI est actuellement "dans les mains"
+        Cette FEI est présentement sous la responsabilité
         <b> {getUserRoleLabelPrefixed(fei.fei_current_owner_role as UserRoles)}</b>.<br />
         {fei.FeiCurrentEntity?.raison_sociale && (
           <>

@@ -3,12 +3,13 @@ import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { loader } from "./route";
 import UserNotEditable from "~/components/UserNotEditable";
-import { Prisma } from "@prisma/client";
+import { Prisma, UserRoles } from "@prisma/client";
 import InputNotEditable from "~/components/InputNotEditable";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import dayjs from "dayjs";
+import SelectNextOwner from "./select-next-owner";
 
 export default function FEIExaminateurInitial() {
   const { fei, user } = useLoaderData<typeof loader>();
@@ -25,6 +26,22 @@ export default function FEIExaminateurInitial() {
   }, [fei, user]);
 
   const Component = canEdit ? Input : InputNotEditable;
+
+  const needSelecteNextUser = useMemo(() => {
+    if (fei.examinateur_initial_user_id !== user.id) {
+      return false;
+    }
+    if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
+      return false;
+    }
+    if (fei.fei_current_owner_user_id !== user.id) {
+      return false;
+    }
+    if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
+      return false;
+    }
+    return true;
+  }, [fei, user]);
 
   return (
     <>
@@ -101,6 +118,7 @@ export default function FEIExaminateurInitial() {
           )}
         </approbationFetcher.Form>
       </Accordion>
+      {needSelecteNextUser && <SelectNextOwner />}
     </>
   );
 }

@@ -35,7 +35,9 @@ export default function ConfirmCurrentOwner() {
   return (
     <div className="bg-alt-blue-france pb-8">
       <CallOut title="🫵 Cette FEI vous a été attribuée" className="bg-white m-0">
-        En tant que <b>{getUserRoleLabel(fei.fei_next_owner_role)}</b>, vous pouvez prendre en charge cette FEI.
+        En tant que <b>{getUserRoleLabel(fei.fei_next_owner_role)}</b>
+        {fei.FeiNextEntity?.raison_sociale ? ` (${fei.FeiNextEntity?.raison_sociale})` : ""}, vous pouvez prendre en
+        charge cette FEI.
         <br />
         <Button
           type="submit"
@@ -44,14 +46,15 @@ export default function ConfirmCurrentOwner() {
             const formData = new FormData();
             formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
             formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_role, fei.fei_next_owner_role as string);
-            formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id, fei.fei_next_owner_entity_id ?? "");
-            formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, fei.fei_next_owner_user_id ?? user.id);
+            formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id, fei.fei_next_owner_entity_id || "");
+            formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, fei.fei_next_owner_user_id || user.id);
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_role, "");
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
-            formData.append(Prisma.FeiScalarFieldEnum.fei_prev_owner_role, fei.fei_current_owner_role ?? "");
-            formData.append(Prisma.FeiScalarFieldEnum.fei_prev_owner_user_id, fei.fei_current_owner_user_id ?? "");
-            formData.append(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id, fei.fei_current_owner_entity_id ?? "");
+            formData.append(Prisma.FeiScalarFieldEnum.fei_prev_owner_role, fei.fei_current_owner_role || "");
+            formData.append(Prisma.FeiScalarFieldEnum.fei_prev_owner_user_id, fei.fei_current_owner_user_id || "");
+            formData.append(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id, fei.fei_current_owner_entity_id || "");
+            console.log("formData", Object.fromEntries(formData.entries()));
             fetcher.submit(formData, {
               method: "POST",
               action: `/action/fei/${fei.numero}`,

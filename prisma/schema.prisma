@@ -97,6 +97,7 @@ model Entity {
   prefilled              Boolean           @default(false)
   EntityRelatedWithUser  EntityRelations[] @relation("EntityRelatedWithUser")
   FeiCurrentEntity       Fei[]             @relation("FeiCurrentEntity")
+  FeiNextEntity          Fei[]             @relation("FeiNextEntity")
   FeiSviEntity           Fei[]             @relation("FeiSviEntity")
   FeiIntermediaireEntity Intermediaire[]   @relation("FeiIntermediaireEntity")
 }
@@ -204,6 +205,7 @@ model Fei {
   FeiIntermediaires                                       Intermediaire[]
   FeiCurrentUser                                          User?           @relation("FeiCurrentUser", fields: [fei_current_owner_user_id], references: [id])
   FeiCurrentEntity                                        Entity?         @relation("FeiCurrentEntity", fields: [fei_current_owner_entity_id], references: [id])
+  FeiNextEntity                                           Entity?         @relation("FeiNextEntity", fields: [fei_next_owner_entity_id], references: [id])
 
   @@index([created_by_user_id])
   @@index([detenteur_initial_user_id])
