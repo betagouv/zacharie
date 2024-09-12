@@ -51,9 +51,8 @@ export default function InputVille(props: OnlyInput) {
     const itemsNameContainsOneOfTheWords = [];
     const itemsNameContainsOneOfTheWordsWithNoAccent = [];
 
-    for (const item of villes) {
-      const { code_postal, ville } = item;
-      const code_postal_ville = `${code_postal} ${ville}`;
+    for (const item of villes as Array<{ code_postal: string; ville: string; code_postal_ville: string }>) {
+      const { code_postal, ville, code_postal_ville } = item;
       if (code_postal_ville.startsWith(debouncedVilleSearched)) {
         itemsNameStartWithWord.push(code_postal_ville);
         continue;
@@ -129,6 +128,7 @@ export default function InputVille(props: OnlyInput) {
         nativeInputProps={{
           ...props.nativeInputProps,
           type: "text",
+          defaultValue: undefined,
           value: villeSearched,
           onChange: handleChange,
         }}
