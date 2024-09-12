@@ -10,7 +10,7 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
-import { type Entity, EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
+import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 import InputVille from "~/components/InputVille";
@@ -48,27 +48,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const userEtgs = user.roles.includes(UserRoles.ETG) ? Object.values(userEntitiesByTypeAndId[EntityTypes.ETG]) : [];
   const userSvis = user.roles.includes(UserRoles.SVI) ? Object.values(userEntitiesByTypeAndId[EntityTypes.SVI]) : [];
 
-  const url = new URL(request.url);
-  if (url.searchParams.has("ccg_search")) {
-    const numero_ddecpp = url.searchParams.get("ccg_search") as string;
-    const ccgSearched = await prisma.entity.findUnique({
-      where: {
-        numero_ddecpp,
-        type: EntityTypes.CCG,
-      },
-    });
-    return json({
-      user,
-      allEntitiesByTypeAndId,
-      userEntitiesByTypeAndId,
-      ccgSearched,
-      userCentresCollectes,
-      userCollecteursPro,
-      userEtgs,
-      userSvis,
-    });
-  }
-
   return json({
     user,
     allEntitiesByTypeAndId,
@@ -80,7 +59,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       !!user.addresse_ligne_1 &&
       !!user.code_postal &&
       !!user.ville,
-    examinateurDone: !!user.numero_cfei || !!user.numero_frei,
+    examinateurDone: !!user.numero_cfei,
     ccgsDone: user.roles.includes(UserRoles.CCG) ? userCentresCollectes.length > 0 : true,
     collecteursProDone: user.roles.includes(UserRoles.COLLECTEUR_PRO) ? userCollecteursPro.length > 0 : true,
     etgsDone: user.roles.includes(UserRoles.ETG) ? userEtgs.length > 0 : true,

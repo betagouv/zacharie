@@ -110,32 +110,18 @@ export default function UserNtEditable({
       </div>
       {withCfei && (
         <div className="fr-fieldset__element">
-          {user?.numero_frei ? (
-            <InputNotEditable
-              label="Numéro FREI"
-              hintText="Formateur Référent Examen Initial"
-              className="[&_input]:bg-transparent"
-              nativeInputProps={{
-                id: Prisma.UserScalarFieldEnum.numero_cfei,
-                name: Prisma.UserScalarFieldEnum.numero_cfei,
-                autoComplete: "off",
-                defaultValue: user?.numero_cfei ?? "",
-              }}
-            />
-          ) : (
-            <InputNotEditable
-              label="Numéro CFEI"
-              hintText="Chasseur Formé à l'Examen Initial"
-              className="[&_input]:bg-transparent"
-              nativeInputProps={{
-                id: Prisma.UserScalarFieldEnum.numero_frei,
-                name: Prisma.UserScalarFieldEnum.numero_frei,
-                autoComplete: "off",
-                placeholder: "Non renseigné",
-                defaultValue: user?.numero_cfei ?? "",
-              }}
-            />
-          )}
+          <InputNotEditable
+            label="Numéro CFEI"
+            hintText="Chasseur Formé à l'Examen Initial"
+            className="[&_input]:bg-transparent"
+            nativeInputProps={{
+              id: Prisma.UserScalarFieldEnum.numero_cfei,
+              name: Prisma.UserScalarFieldEnum.numero_cfei,
+              autoComplete: "off",
+              placeholder: "Non renseigné",
+              defaultValue: user?.numero_cfei ?? "",
+            }}
+          />
         </div>
       )}
     </>

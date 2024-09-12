@@ -53,9 +53,6 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.UserScalarFieldEnum.numero_cfei)) {
     nextUser.numero_cfei = formData.get(Prisma.UserScalarFieldEnum.numero_cfei) as string;
   }
-  if (formData.has(Prisma.UserScalarFieldEnum.numero_frei)) {
-    nextUser.numero_frei = formData.get(Prisma.UserScalarFieldEnum.numero_frei) as string;
-  }
   if (formData.has("onboarding_finished")) {
     nextUser.onboarded_at = new Date();
   }
