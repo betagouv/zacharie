@@ -28,7 +28,7 @@ export default function FEIExaminateurInitial() {
   }, [fei, user]);
 
   const Component = canEdit ? Input : InputNotEditable;
-  const VilleComponent = canEdit ? Input : InputVille;
+  const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
   const examFetcher = useFetcher({ key: "examination-fetcher" });
   const handleUserFormBlur = useCallback(

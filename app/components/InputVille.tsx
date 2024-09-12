@@ -12,7 +12,7 @@ export default function InputVille(props: OnlyInput) {
   });
   const debouncedVilleSearched = useDebounce(villeSearched.toLocaleUpperCase(), 300);
   const [villesResults, setVillesResults] = useState<string[]>([]);
-  const canSearch = useRef(true);
+  const canSearch = useRef(false);
 
   function normalizeSearch(search: string) {
     const searchUpperCased = search.toLocaleUpperCase();
