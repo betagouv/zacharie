@@ -157,7 +157,6 @@ export default function SelectNextOwner() {
               <option value={UserRoles.PREMIER_DETENTEUR}>{getUserRoleLabel(UserRoles.PREMIER_DETENTEUR)}</option>
             ) : showIntermediaires ? (
               <>
-                <option value={UserRoles.CCG}>{getUserRoleLabel(UserRoles.CCG)}</option>
                 <option value={UserRoles.COLLECTEUR_PRO}>{getUserRoleLabel(UserRoles.COLLECTEUR_PRO)}</option>
                 <option value={UserRoles.ETG}>{getUserRoleLabel(UserRoles.ETG)}</option>
               </>
@@ -205,7 +204,11 @@ export default function SelectNextOwner() {
       </fetcher.Form>
 
       {(fei.fei_next_owner_user_id || fei.fei_next_owner_entity_id) && (
-        <Alert severity="success" description={`${nextOwnerName} a été notifié`} title="Attribution effectuée" />
+        <Alert
+          severity="success"
+          description={`${nextOwnerName} a été notifié. Vous ne pouvez plus modifier votre FEI.`}
+          title="Attribution effectuée"
+        />
       )}
     </>
   );

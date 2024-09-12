@@ -44,7 +44,7 @@ export default function ConfirmCurrentOwner() {
       >
         En tant que <b>{getUserRoleLabel(fei.fei_next_owner_role)}</b>
         {fei.FeiNextEntity?.raison_sociale ? ` (${fei.FeiNextEntity?.raison_sociale})` : ""}, vous pouvez prendre en
-        charge cette FEI.
+        charge cette FEI et les carcasses associées.
         <br />
         <Button
           type="submit"
@@ -75,13 +75,13 @@ export default function ConfirmCurrentOwner() {
             });
           }}
         >
-          Je prends en charge cette FEI
+          Je prends en charge cette FEI et les carcasses associées
         </Button>
         <span>
-          Cette FEI ne devrait pas vous être attribuée&nbsp;? Où vous ne pouvez/souhaitez pas la prendre en
-          charge&nbsp;?
+          Vous souhaitez la transférer à un autre acteur&nbsp;? (exemple: erreur d'attribution, assignation à un autre
+          collecteur)
         </span>
-        <Button
+        {/* <Button
           priority="tertiary"
           type="submit"
           className="!mt-2 block"
@@ -98,6 +98,24 @@ export default function ConfirmCurrentOwner() {
           }}
         >
           Renvoyer la FEI
+        </Button> */}
+        <Button
+          priority="tertiary"
+          type="submit"
+          className="!mt-2 block"
+          onClick={() => {
+            const formData = new FormData();
+            formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
+            formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
+            formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
+            fetcher.submit(formData, {
+              method: "POST",
+              action: `/action/fei/${fei.numero}`,
+              preventScrollReset: true, // Prevent scroll reset on submission
+            });
+          }}
+        >
+          Transférer la FEI
         </Button>
       </CallOut>
     </div>

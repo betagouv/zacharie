@@ -1,4 +1,4 @@
-import { User, Entity, EntityRelationType, Prisma } from "@prisma/client";
+import { User, Entity, EntityRelationType, Prisma, EntityTypes } from "@prisma/client";
 import { type ActionFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { authorizeUserOrAdmin } from "~/utils/authorizeUserOrAdmin";
@@ -15,7 +15,17 @@ export async function action(args: ActionFunctionArgs) {
   if (!formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id)) {
     return json({ ok: false, data: null, error: "Missing owner_id" }, { status: 400 });
   }
-  if (!formData.get(Prisma.EntityRelationsScalarFieldEnum.entity_id)) {
+  let entityId: string = formData.get(Prisma.EntityRelationsScalarFieldEnum.entity_id) as string;
+  if (formData.get(Prisma.EntityScalarFieldEnum.numero_ddecpp)) {
+    const entity = await prisma.entity.findFirst({
+      where: {
+        numero_ddecpp: formData.get(Prisma.EntityScalarFieldEnum.numero_ddecpp) as string,
+        type: formData.get(Prisma.EntityScalarFieldEnum.type) as EntityTypes,
+      },
+    });
+    entityId = entity?.id || "";
+  }
+  if (!entityId) {
     return json({ ok: false, data: null, error: "Missing entity_id" }, { status: 400 });
   }
   if (params.user_id !== formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id)) {
@@ -29,7 +39,7 @@ export async function action(args: ActionFunctionArgs) {
 
     const nextEntityRelation = {
       owner_id: formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id) as User["id"],
-      entity_id: formData.get(Prisma.EntityRelationsScalarFieldEnum.entity_id) as Entity["id"],
+      entity_id: entityId,
       relation: formData.get(Prisma.EntityRelationsScalarFieldEnum.relation) as EntityRelationType,
     };
 
@@ -50,7 +60,7 @@ export async function action(args: ActionFunctionArgs) {
     const existingEntityRelation = await prisma.entityRelations.findFirst({
       where: {
         owner_id: formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id) as User["id"],
-        entity_id: formData.get(Prisma.EntityRelationsScalarFieldEnum.entity_id) as Entity["id"],
+        entity_id: entityId,
       },
     });
     if (existingEntityRelation) {

@@ -105,6 +105,24 @@ export default function FEIDetenteurInitial() {
             >
               Renvoyer la FEI
             </Button>
+            <Button
+              priority="tertiary no outline"
+              type="submit"
+              className="my-4"
+              onClick={() => {
+                const formData = new FormData();
+                formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
+                formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
+                formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
+                fetcher.submit(formData, {
+                  method: "POST",
+                  action: `/action/fei/${fei.numero}`,
+                  preventScrollReset: true, // Prevent scroll reset on submission
+                });
+              }}
+            >
+              Transférer la FEI
+            </Button>
           </div>
         </div>
       ) : (
@@ -118,7 +136,7 @@ export default function FEIDetenteurInitial() {
             <Checkbox
               options={[
                 {
-                  label: "J'ai déposé les carcasses dans le Centre de Collecte de Gibier (CCG)",
+                  label: "J'ai déposé les carcasses",
                   hintText: "Étape requise pour la suite du processus",
                   nativeInputProps: {
                     required: true,
@@ -136,7 +154,7 @@ export default function FEIDetenteurInitial() {
             <depotFetcher.Form method="POST" action={`/action/fei/${fei.numero}`}>
               <div className="fr-fieldset__element">
                 <Component
-                  label="Date de dépôt au CCG"
+                  label="Date de dépôt"
                   nativeInputProps={{
                     id: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_ccg,
                     name: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_ccg,

@@ -62,7 +62,7 @@ export default function MesRoles() {
                     {
                       label: "Examinateur Initial",
                       hintText:
-                        "Vous avez été formé par votre fédération à l'examen initial. Munissez-vous de votre numéro d'attestation (de la forme CFEI-DEP-YY-001) pour l'étape suivante",
+                        "Vous avez été formé par votre fédération à l'examen initial. Munissez-vous de votre numéro d'attestation (de la forme CFEI-DEP-YY-001 ou  DEP-FREI-YY-001) pour l'étape suivante",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.EXAMINATEUR_INITIAL,
@@ -85,7 +85,7 @@ export default function MesRoles() {
                     {
                       label: "Centre de Collecte de Gibier (CCG)",
                       hintText:
-                        "Vous avez/vous utilisez un CCG, un local réfrigéré où le gibier en entreposé. Un nom du centre et le numéro DD(ec)PP sera demandé à l'étape suivante",
+                        "Vous avez/vous utilisez un CCG, un local réfrigéré où le gibier en entreposé. Le numéro DD(ec)PP sera demandé à l'étape suivante",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.CCG,

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState, useCallback, type ChangeEvent, useEffect, useRef } from "react";
+import { useDebounce } from "@uidotdev/usehooks";
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import { Form, useFetcher, useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
@@ -9,7 +10,7 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
-import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
+import { type Entity, EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 import InputVille from "~/components/InputVille";
@@ -47,6 +48,27 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const userEtgs = user.roles.includes(UserRoles.ETG) ? Object.values(userEntitiesByTypeAndId[EntityTypes.ETG]) : [];
   const userSvis = user.roles.includes(UserRoles.SVI) ? Object.values(userEntitiesByTypeAndId[EntityTypes.SVI]) : [];
 
+  const url = new URL(request.url);
+  if (url.searchParams.has("ccg_search")) {
+    const numero_ddecpp = url.searchParams.get("ccg_search") as string;
+    const ccgSearched = await prisma.entity.findUnique({
+      where: {
+        numero_ddecpp,
+        type: EntityTypes.CCG,
+      },
+    });
+    return json({
+      user,
+      allEntitiesByTypeAndId,
+      userEntitiesByTypeAndId,
+      ccgSearched,
+      userCentresCollectes,
+      userCollecteursPro,
+      userEtgs,
+      userSvis,
+    });
+  }
+
   return json({
     user,
     allEntitiesByTypeAndId,
@@ -63,6 +85,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     collecteursProDone: user.roles.includes(UserRoles.COLLECTEUR_PRO) ? userCollecteursPro.length > 0 : true,
     etgsDone: user.roles.includes(UserRoles.ETG) ? userEtgs.length > 0 : true,
     svisDone: user.roles.includes(UserRoles.SVI) ? userSvis.length > 0 : true,
+    ccgSearched: null,
   });
 }
 
@@ -133,6 +156,7 @@ export default function MesInformations() {
                         id: Prisma.UserScalarFieldEnum.nom_de_famille,
                         name: Prisma.UserScalarFieldEnum.nom_de_famille,
                         autoComplete: "family-name",
+                        required: true,
                         defaultValue: user.nom_de_famille ?? "",
                       }}
                     />
@@ -144,6 +168,7 @@ export default function MesInformations() {
                         id: Prisma.UserScalarFieldEnum.prenom,
                         name: Prisma.UserScalarFieldEnum.prenom,
                         autoComplete: "given-name",
+                        required: true,
                         defaultValue: user.prenom ?? "",
                       }}
                     />
@@ -168,6 +193,7 @@ export default function MesInformations() {
                         id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                         name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                         autoComplete: "address-line1",
+                        required: true,
                         defaultValue: user.addresse_ligne_1 ?? "",
                       }}
                     />
@@ -192,6 +218,7 @@ export default function MesInformations() {
                         id: Prisma.UserScalarFieldEnum.code_postal,
                         name: Prisma.UserScalarFieldEnum.code_postal,
                         autoComplete: "postal-code",
+                        required: true,
                         defaultValue: user.code_postal ?? "",
                       }}
                     />
@@ -204,6 +231,7 @@ export default function MesInformations() {
                         id: Prisma.UserScalarFieldEnum.ville,
                         name: Prisma.UserScalarFieldEnum.ville,
                         autoComplete: "address-level2",
+                        required: true,
                         defaultValue: user.ville ?? "",
                       }}
                     />
@@ -223,24 +251,13 @@ export default function MesInformations() {
                     <div className="fr-fieldset__element">
                       <Input
                         label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                        hintText="De la forme CFEI-DEP-AA-123"
+                        hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
                         nativeInputProps={{
                           id: Prisma.UserScalarFieldEnum.numero_cfei,
                           name: Prisma.UserScalarFieldEnum.numero_cfei,
                           autoComplete: "off",
+                          required: true,
                           defaultValue: user.numero_cfei ?? "",
-                        }}
-                      />
-                    </div>
-                    <div className="fr-fieldset__element">
-                      <Input
-                        label="Numéro d'attestation de Formateur Référent Examen Initial"
-                        hintText="De la forme DEP-FREI-YY-001"
-                        nativeInputProps={{
-                          id: Prisma.UserScalarFieldEnum.numero_frei,
-                          name: Prisma.UserScalarFieldEnum.numero_frei,
-                          autoComplete: "off",
-                          defaultValue: user.numero_frei ?? "",
                         }}
                       />
                     </div>
@@ -249,13 +266,15 @@ export default function MesInformations() {
               </userFetcher.Form>
               {user.roles.includes(UserRoles.CCG) && (
                 <AccordionEntreprise
-                  fetcherKey="onboarding-etape-2-centre-collecte-data"
+                  fetcherKey="onboarding-etape-2-ccg-data"
                   accordionLabel="Vous êtes/travaillez pour un Centre de Collecte de Gibier (CCG)"
-                  addLabel="Ajouter un CCG"
-                  selectLabel="Sélectionnez un CCG"
+                  addLabel="Ajouter un Centre de Collecte de Gibier (CCG)"
+                  selectLabel="Sélectionnez un Centre de Collecte de Gibier (CCG)"
                   done={ccgsDone}
                   entityType={EntityTypes.CCG}
-                />
+                >
+                  <InputCCG />
+                </AccordionEntreprise>
               )}
               {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
                 <AccordionEntreprise
@@ -328,6 +347,7 @@ interface AccordionEntrepriseProps {
   selectLabel: string;
   accordionLabel: string;
   fetcherKey: string;
+  children?: React.ReactNode;
 }
 
 function AccordionEntreprise({
@@ -337,6 +357,7 @@ function AccordionEntreprise({
   selectLabel,
   accordionLabel,
   fetcherKey,
+  children,
 }: AccordionEntrepriseProps) {
   const { user, allEntitiesByTypeAndId, userEntitiesByTypeAndId } = useLoaderData<typeof loader>();
 
@@ -392,37 +413,43 @@ function AccordionEntreprise({
             </div>
           );
         })}
-      <userEntityFetcher.Form
-        id={fetcherKey}
-        className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
-        method="POST"
-        action={`/action/user-entity/${user.id}`}
-        preventScrollReset
-      >
-        <input type="hidden" name="owner_id" value={user.id} />
-        <input type="hidden" name="_action" value="create" />
-        <input type="hidden" name="relation" value={EntityRelationType.WORKING_FOR} />
-        <Select
-          label={addLabel}
-          hint={selectLabel}
-          className="!mb-0 grow"
-          nativeSelectProps={{
-            name: Prisma.EntityRelationsScalarFieldEnum.entity_id,
-          }}
+      {children ?? (
+        <userEntityFetcher.Form
+          id={fetcherKey}
+          className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
+          method="POST"
+          action={`/action/user-entity/${user.id}`}
+          preventScrollReset
         >
-          <option value="">{selectLabel}</option>
-          {remainingEntities.map((entity) => {
-            return (
-              <option key={entity.id} value={entity.id}>
-                {entity.raison_sociale} - {entity.code_postal} {entity.ville}
-              </option>
-            );
-          })}
-        </Select>
-        <Button type="submit" disabled={!remainingEntities.length}>
-          Ajouter
-        </Button>
-      </userEntityFetcher.Form>
+          <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
+          <input type="hidden" name="_action" value="create" />
+          <input
+            type="hidden"
+            name={Prisma.EntityRelationsScalarFieldEnum.relation}
+            value={EntityRelationType.WORKING_FOR}
+          />
+          <Select
+            label={addLabel}
+            hint={selectLabel}
+            className="!mb-0 grow"
+            nativeSelectProps={{
+              name: Prisma.EntityRelationsScalarFieldEnum.entity_id,
+            }}
+          >
+            <option value="">{selectLabel}</option>
+            {remainingEntities.map((entity) => {
+              return (
+                <option key={entity.id} value={entity.id}>
+                  {entity.raison_sociale} - {entity.code_postal} {entity.ville}
+                </option>
+              );
+            })}
+          </Select>
+          <Button type="submit" disabled={!remainingEntities.length}>
+            Ajouter
+          </Button>
+        </userEntityFetcher.Form>
+      )}
     </Accordion>
   );
 }
@@ -439,5 +466,36 @@ function CompletedTag({ done }: { done: boolean }) {
     <span className="shrink-0 mr-6 px-3 fr-background-contrast--grey fr-text-default--grey inline-flex text-xs py-1 rounded-full">
       À compléter
     </span>
+  );
+}
+
+function InputCCG() {
+  const { user } = useLoaderData<typeof loader>();
+  const userCCGFetcher = useFetcher({ key: "ccg-data" });
+  return (
+    <userCCGFetcher.Form
+      method="POST"
+      className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
+      action={`/action/user-entity/${user.id}`}
+    >
+      <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
+      <input type="hidden" name="_action" value="create" />
+      <input
+        type="hidden"
+        name={Prisma.EntityRelationsScalarFieldEnum.relation}
+        value={EntityRelationType.WORKING_FOR}
+      />
+      <input type="hidden" name={Prisma.EntityScalarFieldEnum.type} value={EntityTypes.CCG} />
+      <Input
+        label="Numéro de DD(ec)PP du Centre de Collecte de Gibier (CCG)"
+        className="!mb-0"
+        nativeInputProps={{
+          type: "text",
+          required: true,
+          name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+        }}
+      />
+      <Button type="submit">Ajouter</Button>
+    </userCCGFetcher.Form>
   );
 }

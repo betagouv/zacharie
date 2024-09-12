@@ -36,8 +36,8 @@ model User {
   telephone                 String?
   prenom                    String?
   nom_de_famille            String?
-  numero_cfei               String? // Chasseur Formé à l'Examen Initial (de la form CFEI-DEP-YY-001)
-  numero_frei               String? // Formateur Référent Examen Initial (de la form DEP-FREI-YY-001)
+  numero_cfei               String? // Chasseur Formé à l'Examen Initial (de la forme CFEI-DEP-YY-001)
+  // numero_frei               String? // Formateur Référent Examen Initial (de la forme DEP-FREI-YY-001)
   addresse_ligne_1          String?
   addresse_ligne_2          String?
   code_postal               String?
@@ -89,7 +89,7 @@ model Entity {
   code_postal            String?
   ville                  String?
   siret                  String?
-  numero_ddecpp          String?
+  numero_ddecpp          String?           @unique
   type                   EntityTypes
   created_at             DateTime          @default(now())
   updated_at             DateTime          @default(now()) @updatedAt

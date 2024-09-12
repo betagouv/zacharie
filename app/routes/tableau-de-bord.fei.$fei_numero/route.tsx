@@ -5,7 +5,7 @@ import { getUserFromCookie } from "~/services/auth.server";
 import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
 import { EntityTypes, EntityRelationType, UserRoles, UserRelationType } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
-import FEIDetenteurInitial from "./detenteur-initial";
+import FEIPremierDetenteur from "./premier-detenteur";
 import FEIExaminateurInitial from "./examinateur-initial";
 import ConfirmCurrentOwner from "./confirm-current-owner";
 import CurrentOwner from "./current-owner";
@@ -216,7 +216,7 @@ export default function Fei() {
           <CurrentOwner />
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
             {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
-            {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIDetenteurInitial />}
+            {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur />}
           </Tabs>
         </div>
       </div>

@@ -108,7 +108,7 @@ export default function FEIExaminateurInitial() {
         <UserNotEditable user={fei.FeiExaminateurInitialUser} withCfei />
       </Accordion>
       <Accordion titleAs="h3" label={`Carcasses (${fei.Carcasses.length})`}>
-        <UserNotEditable user={fei.FeiExaminateurInitialUser} withCfei />
+        {/* <UserNotEditable user={fei.FeiExaminateurInitialUser} withCfei /> */}
       </Accordion>
       {fei.FeiExaminateurInitialUser && (
         <Accordion titleAs="h3" label="Approbation de mise sur le marché" defaultExpanded>

@@ -91,7 +91,7 @@ export default function MesPartenaires() {
           </CallOut>
           <div className="bg-white mb-6 md:shadow">
             <div className="p-4 md:p-8 pb-32 md:pb-0">
-              <p className="fr-text--regular mb-4">Sélectionez vos différents partenaires</p>
+              <p className="fr-text--regular mb-4">Sélectionnez vos différents partenaires</p>
               {/* <AccordionUser
                 fetcherKey="mes-partenaires-detenteur-initial-data"
                 accordionLabel="Vos Premiers Détenteurs"

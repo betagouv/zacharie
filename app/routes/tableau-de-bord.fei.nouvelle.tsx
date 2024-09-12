@@ -51,9 +51,9 @@ export async function action(args: ActionFunctionArgs) {
     createData.fei_current_owner_role = UserRoles.PREMIER_DETENTEUR;
   }
   if (formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
-    if (!formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
-      return json({ ok: false, data: null, error: "La commune de mise à mort est obligatoire" }, { status: 400 });
-    }
+    // if (!formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
+    //   return json({ ok: false, data: null, error: "La commune de mise à mort est obligatoire" }, { status: 400 });
+    // }
 
     if (!formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
       return json({ ok: false, data: null, error: "La date de mise à mort est obligatoire" }, { status: 400 });
@@ -114,7 +114,7 @@ export default function NouvelleFEI() {
                       }}
                     />
                   </div>
-                  <div className="fr-fieldset__element">
+                  {/* <div className="fr-fieldset__element">
                     <InputVille
                       label="Commune de mise à mort"
                       nativeInputProps={{
@@ -126,7 +126,7 @@ export default function NouvelleFEI() {
                         defaultValue: "",
                       }}
                     />
-                  </div>
+                  </div> */}
                   <UserNotEditable user={user} withCfei />
                 </div>
                 <div className="mb-8">
