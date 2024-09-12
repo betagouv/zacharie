@@ -11,66 +11,65 @@ import { prisma } from "~/db/prisma.server";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import dayjs from "dayjs";
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
-  if (!user) {
-    throw redirect("/connexion?type=compte-existant");
-  }
-  const onboardingRoute = getUserOnboardingRoute(user);
-  if (onboardingRoute) {
-    throw redirect(onboardingRoute);
-  }
-  const feiAssigned = await prisma.fei.findMany({
-    where: {
-      OR: [
-        {
-          fei_current_owner_user_id: user.id,
-        },
-        {
-          fei_next_owner_user_id: user.id,
-        },
-        {
-          FeiNextEntity: {
-            EntityRelatedWithUser: {
-              some: {
-                owner_id: user.id,
-              },
-            },
-          },
-        },
-        {
-          FeiCurrentEntity: {
-            EntityRelatedWithUser: {
-              some: {
-                owner_id: user.id,
-              },
-            },
-          },
-        },
-      ],
-    },
-    select: {
-      numero: true,
-      created_at: true,
-      fei_current_owner_role: true,
-    },
-  });
-  const feiDone = await prisma.fei.findMany({
-    where: {
-      created_by_user_id: user.id,
-      svi_signed_at: {
-        not: null,
-      },
-    },
-    select: {
-      numero: true,
-      created_at: true,
-      svi_signed_at: true,
-    },
-  });
-
-  return json({ user, feiAssigned, feiDone });
-}
+// export async function loader({ request }: LoaderFunctionArgs) {
+// const user = await getUserFromCookie(request);
+// if (!user) {
+//   throw redirect("/connexion?type=compte-existant");
+// }
+// const onboardingRoute = getUserOnboardingRoute(user);
+// if (onboardingRoute) {
+//   throw redirect(onboardingRoute);
+// }
+// const feiAssigned = await prisma.fei.findMany({
+//   where: {
+//     OR: [
+//       {
+//         fei_current_owner_user_id: user.id,
+//       },
+//       {
+//         fei_next_owner_user_id: user.id,
+//       },
+//       {
+//         FeiNextEntity: {
+//           EntityRelatedWithUser: {
+//             some: {
+//               owner_id: user.id,
+//             },
+//           },
+//         },
+//       },
+//       {
+//         FeiCurrentEntity: {
+//           EntityRelatedWithUser: {
+//             some: {
+//               owner_id: user.id,
+//             },
+//           },
+//         },
+//       },
+//     ],
+//   },
+//   select: {
+//     numero: true,
+//     created_at: true,
+//     fei_current_owner_role: true,
+//   },
+// });
+// const feiDone = await prisma.fei.findMany({
+//   where: {
+//     created_by_user_id: user.id,
+//     svi_signed_at: {
+//       not: null,
+//     },
+//   },
+//   select: {
+//     numero: true,
+//     created_at: true,
+//     svi_signed_at: true,
+//   },
+// });
+// return json({ user, feiAssigned, feiDone });
+// }
 
 export default function TableauDeBordIndex() {
   const { user, feiAssigned, feiDone } = useLoaderData<typeof loader>();
