@@ -36,7 +36,7 @@ export default function LandingPage() {
               iconId="ri-account-box-line"
               className="mb-6"
             >
-              Accéder à mon espace
+              Accéder à mon compte
             </Button>
           ) : (
             <Button
@@ -57,7 +57,7 @@ export default function LandingPage() {
             }}
             iconId="fr-icon-add-circle-line"
           >
-            Créer un espace
+            Créer un compte
           </Button>
         </div>
       </section>

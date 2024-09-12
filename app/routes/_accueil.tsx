@@ -41,7 +41,7 @@ export default function AccueilLayout() {
               href: "#",
             },
             iconId: "fr-icon-add-circle-line",
-            text: "Créer un espace",
+            text: "Créer un compte",
           },
           {
             iconId: "fr-icon-mail-fill",

@@ -32,7 +32,7 @@ export default function RootDisplay({ children }: { children: React.ReactNode })
               href: "#",
             },
             iconId: "fr-icon-add-circle-line",
-            text: "Créer un espace",
+            text: "Créer un compte",
           },
           {
             iconId: "fr-icon-mail-fill",
