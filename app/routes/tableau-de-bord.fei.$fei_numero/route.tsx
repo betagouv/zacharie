@@ -122,15 +122,6 @@ export default function Fei() {
 
   const tabs: TabsProps["tabs"] = [
     {
-      tabId: UserRoles.DETENTEUR_INITIAL,
-      label: (
-        <>
-          <span className="hidden md:inline">{fei.detenteur_initial_user_id ? doneEmoji : ""}Détenteur Initial</span>
-          <span className="inline md:hidden">{fei.detenteur_initial_user_id ? doneEmoji : ""}Détenteur</span>
-        </>
-      ),
-    },
-    {
       tabId: UserRoles.EXAMINATEUR_INITIAL,
       label: (
         <>
@@ -140,6 +131,15 @@ export default function Fei() {
           <span className="inline md:hidden">
             {fei.examinateur_initial_approbation_mise_sur_le_marche ? doneEmoji : ""}Examinateur
           </span>
+        </>
+      ),
+    },
+    {
+      tabId: UserRoles.DETENTEUR_INITIAL,
+      label: (
+        <>
+          <span className="hidden md:inline">{fei.detenteur_initial_user_id ? doneEmoji : ""}Détenteur Initial</span>
+          <span className="inline md:hidden">{fei.detenteur_initial_user_id ? doneEmoji : ""}Détenteur</span>
         </>
       ),
     },

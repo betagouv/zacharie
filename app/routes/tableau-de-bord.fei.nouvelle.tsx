@@ -1,4 +1,3 @@
-import { useState } from "react";
 import dayjs from "dayjs";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
@@ -21,6 +20,8 @@ export async function action(args: ActionFunctionArgs) {
 
   let feiNumero = params.fei_numero;
   const formData = await request.formData();
+
+  console.log("formData", Object.fromEntries(formData));
 
   const newId = (await prisma.fei.count()) + 1;
   const today = dayjs().format("YYYYMMDD");
@@ -86,16 +87,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function NouvelleFEI() {
   const { user } = useLoaderData<typeof loader>();
 
-  const [feiInitRoles, setFeiInitRoles] = useState<UserRoles[]>(() => {
-    if (!user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-      return [UserRoles.DETENTEUR_INITIAL];
-    }
-    if (!user.roles.includes(UserRoles.DETENTEUR_INITIAL)) {
-      return [UserRoles.EXAMINATEUR_INITIAL];
-    }
-    return [];
-  });
-
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -106,110 +97,73 @@ export default function NouvelleFEI() {
           </CallOut>
           <div className="bg-white mb-6 md:shadow">
             <div className="p-4 md:p-8 md:pb-4">
-              {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) &&
-                user.roles.includes(UserRoles.DETENTEUR_INITIAL) && (
+              <Form id="fei_create_form" method="POST">
+                <div className="mb-8">
+                  <h2 className="fr-h3 fr-mb-2w">Examinateur Initial</h2>
+                  <input type="hidden" name={Prisma.FeiScalarFieldEnum.examinateur_initial_user_id} value={user.id} />
+                  <div className="fr-fieldset__element">
+                    <Input
+                      label="Date de mise à mort et d'éviscération"
+                      nativeInputProps={{
+                        id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                        name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                        type: "date",
+                        required: true,
+                        autoComplete: "off",
+                        defaultValue: new Date().toISOString().split("T")[0],
+                      }}
+                    />
+                  </div>
+                  <div className="fr-fieldset__element">
+                    <InputVille
+                      label="Commune de mise à mort"
+                      nativeInputProps={{
+                        id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
+                        name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
+                        type: "text",
+                        required: true,
+                        autoComplete: "off",
+                        defaultValue: "",
+                      }}
+                    />
+                  </div>
+                  <UserNotEditable user={user} withCfei />
+                </div>
+                <div className="mb-8">
+                  <h2 className="fr-h3 fr-mb-2w">Détenteur Initial</h2>
                   <Checkbox
-                    legend="Pour cette FEI vous êtes"
                     options={[
                       {
-                        label: "Détenteur initial",
+                        label: "Je suis aussi le Détenteur Initial des carcasses examinées",
                         nativeInputProps: {
-                          name: "fei-init-roles",
-                          value: UserRoles.DETENTEUR_INITIAL,
-                          defaultChecked: feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL),
-                          onChange: (event) => {
-                            if (event.target.checked) {
-                              setFeiInitRoles((prev) => [...prev, UserRoles.DETENTEUR_INITIAL]);
-                            } else {
-                              setFeiInitRoles((prev) => prev.filter((role) => role !== UserRoles.DETENTEUR_INITIAL));
-                            }
-                          },
-                        },
-                      },
-                      {
-                        label: "Examinateur initial",
-                        nativeInputProps: {
-                          name: "fei-init-roles",
-                          value: UserRoles.EXAMINATEUR_INITIAL,
-                          defaultChecked: feiInitRoles.includes(UserRoles.EXAMINATEUR_INITIAL),
-                          onChange: (event) => {
-                            if (event.target.checked) {
-                              setFeiInitRoles((prev) => [...prev, UserRoles.EXAMINATEUR_INITIAL]);
-                            } else {
-                              setFeiInitRoles((prev) => prev.filter((role) => role !== UserRoles.EXAMINATEUR_INITIAL));
-                            }
-                          },
+                          name: Prisma.FeiScalarFieldEnum.detenteur_initial_user_id,
+                          value: user.id,
                         },
                       },
                     ]}
                   />
-                )}
-              <Form id="fei_create_form" method="POST">
-                {feiInitRoles.includes(UserRoles.DETENTEUR_INITIAL) && (
-                  <div className="mb-8">
-                    <h2 className="fr-h3 fr-mb-2w">Détenteur Initial</h2>
-                    <input type="hidden" name={Prisma.FeiScalarFieldEnum.detenteur_initial_user_id} value={user.id} />
-                    <UserNotEditable user={user} />
-                  </div>
-                )}
-                {feiInitRoles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
-                  <div className="mb-8">
-                    <h2 className="fr-h3 fr-mb-2w">Examinateur Initial</h2>
-                    <input type="hidden" name={Prisma.FeiScalarFieldEnum.examinateur_initial_user_id} value={user.id} />
-                    <div className="fr-fieldset__element">
-                      <Input
-                        label="Date de mise à mort et d'éviscération"
-                        nativeInputProps={{
-                          id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                          name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                          type: "date",
-                          required: true,
-                          autoComplete: "off",
-                          defaultValue: new Date().toISOString().split("T")[0],
-                        }}
-                      />
-                    </div>
-                    <div className="fr-fieldset__element">
-                      <InputVille
-                        label="Commune de mise à mort"
-                        nativeInputProps={{
-                          id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
-                          name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
-                          type: "text",
-                          required: true,
-                          autoComplete: "off",
-                          defaultValue: "",
-                        }}
-                      />
-                    </div>
-                    <UserNotEditable user={user} withCfei />
-                  </div>
-                )}
-              </Form>
-              {!!feiInitRoles.length && (
-                <div className="mt-6 ml-6 mb-16 md:mb-0">
-                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                    Haut de page
-                  </a>
                 </div>
-              )}
-            </div>
-            {!!feiInitRoles.length && (
-              <div className="fixed md:relative bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white shadow-2xl md:shadow-none">
-                {/* <div className="relative md:relative md:mt-16 bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white"> */}
-                <ButtonsGroup
-                  buttons={[
-                    {
-                      children: "Créer la FEI",
-                      type: "submit",
-                      nativeButtonProps: {
-                        form: "fei_create_form",
-                      },
-                    },
-                  ]}
-                />
+              </Form>
+              <div className="mt-6 ml-6 mb-16 md:mb-0">
+                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                  Haut de page
+                </a>
               </div>
-            )}
+            </div>
+            <div className="fixed md:relative bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white shadow-2xl md:shadow-none">
+              {/* <div className="relative md:relative md:mt-16 bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white"> */}
+              <ButtonsGroup
+                buttons={[
+                  {
+                    children: "Créer la FEI",
+                    type: "submit",
+                    nativeButtonProps: {
+                      form: "fei_create_form",
+                    },
+                  },
+                ]}
+              />
+            </div>
           </div>
         </div>
       </div>

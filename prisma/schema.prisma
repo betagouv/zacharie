@@ -60,6 +60,7 @@ model User {
   FeiCurrentUser            Fei[]               @relation("FeiCurrentUser")
   FeiDetenteurInitialUser   Fei[]               @relation("FeiDetenteurInitialUser")
   FeiExaminateurInitialUser Fei[]               @relation("FeiExaminateurInitialUser")
+  FeiEtgUser                Fei[]               @relation("FeiEtgUser")
   FeiSviUser                Fei[]               @relation("FeiSviUser")
   FeiIntermediaireUser      Intermediaire[]     @relation("FeiIntermediaireUser")
   Logs                      Logs[]
@@ -98,6 +99,7 @@ model Entity {
   EntityRelatedWithUser  EntityRelations[] @relation("EntityRelatedWithUser")
   FeiCurrentEntity       Fei[]             @relation("FeiCurrentEntity")
   FeiNextEntity          Fei[]             @relation("FeiNextEntity")
+  FeiEtgEntity           Fei[]             @relation("FeiEtgEntity")
   FeiSviEntity           Fei[]             @relation("FeiSviEntity")
   FeiIntermediaireEntity Intermediaire[]   @relation("FeiIntermediaireEntity")
 }
@@ -186,7 +188,12 @@ model Fei {
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
   detenteur_initial_user_id                               String?
-  date_depot_centre_collecte                              DateTime?
+  detenteur_initial_date_depot_centre_collecte            DateTime?
+  etg_entity_id                                           String?
+  etg_user_id                                             String?
+  etg_received_at                                         DateTime?
+  etg_commentaire                                         String?
+  etg_check_finished_at                                   DateTime?
   svi_entity_id                                           String?
   svi_user_id                                             String?
   svi_carcasses_saisies                                   Int?
@@ -200,6 +207,8 @@ model Fei {
   FeiCreatedByUser                                        User            @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id])
   FeiDetenteurInitialUser                                 User?           @relation("FeiDetenteurInitialUser", fields: [detenteur_initial_user_id], references: [id])
   FeiExaminateurInitialUser                               User?           @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id])
+  FeiEtgEntity                                            Entity?         @relation("FeiEtgEntity", fields: [etg_entity_id], references: [id])
+  FeiEtgUser                                              User?           @relation("FeiEtgUser", fields: [etg_user_id], references: [id])
   FeiSviEntity                                            Entity?         @relation("FeiSviEntity", fields: [svi_entity_id], references: [id])
   FeiSviUser                                              User?           @relation("FeiSviUser", fields: [svi_user_id], references: [id])
   FeiIntermediaires                                       Intermediaire[]
@@ -252,7 +261,9 @@ model Intermediaire {
   intermediaire_user_id      String
   intermediaire_entity_id    String
   commentaire                String?
-  signed_at                  DateTime?
+  received_at                DateTime?
+  check_finished_at          DateTime?
+  handover_at                DateTime?
   created_at                 DateTime   @default(now())
   updated_at                 DateTime   @default(now()) @updatedAt
   deleted_at                 DateTime?

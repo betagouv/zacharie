@@ -75,6 +75,55 @@ export default function SelectNextOwner() {
 
   const fetcher = useFetcher({ key: "select-next-owner" });
 
+  const showDetenteurInitial = useMemo(() => {
+    if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
+      return false;
+    }
+    return !fei.detenteur_initial_date_depot_centre_collecte;
+  }, [fei.detenteur_initial_date_depot_centre_collecte, fei.fei_current_owner_role]);
+
+  const showIntermediaires = useMemo(() => {
+    if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
+      return false;
+    }
+    if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
+      if (fei.examinateur_initial_user_id === fei.detenteur_initial_user_id) {
+        return true;
+      }
+    }
+    if (!fei.detenteur_initial_date_depot_centre_collecte) {
+      return false;
+    }
+    if (
+      UserRoles.DETENTEUR_INITIAL !== fei.fei_current_owner_role &&
+      UserRoles.EXPLOITANT_CENTRE_COLLECTE !== fei.fei_current_owner_role &&
+      UserRoles.COLLECTEUR_PRO !== fei.fei_current_owner_role
+    ) {
+      return false;
+    }
+    return true;
+  }, [
+    fei.detenteur_initial_user_id,
+    fei.fei_current_owner_role,
+    fei.examinateur_initial_user_id,
+    fei.examinateur_initial_approbation_mise_sur_le_marche,
+    fei.detenteur_initial_date_depot_centre_collecte,
+  ]);
+
+  const showSvi = useMemo(() => {
+    if (fei.fei_current_owner_role !== UserRoles.ETG) {
+      return false;
+    }
+    if (!fei.etg_check_finished_at) {
+      return false;
+    }
+    return true;
+  }, [fei.fei_current_owner_role, fei.etg_check_finished_at]);
+
+  if (user.id !== fei.fei_current_owner_user_id) {
+    return null;
+  }
+
   return (
     <>
       <fetcher.Form
@@ -104,12 +153,9 @@ export default function SelectNextOwner() {
             }}
           >
             <option value="">Sélectionnez le prochain type d'acteur à agir sur la FEI</option>
-            {!fei.detenteur_initial_user_id && (
+            {showDetenteurInitial ? (
               <option value={UserRoles.DETENTEUR_INITIAL}>{getUserRoleLabel(UserRoles.DETENTEUR_INITIAL)}</option>
-            )}
-            {!fei.examinateur_initial_approbation_mise_sur_le_marche ? (
-              <option value={UserRoles.EXAMINATEUR_INITIAL}>{getUserRoleLabel(UserRoles.EXAMINATEUR_INITIAL)}</option>
-            ) : (
+            ) : showIntermediaires ? (
               <>
                 <option value={UserRoles.EXPLOITANT_CENTRE_COLLECTE}>
                   {getUserRoleLabel(UserRoles.EXPLOITANT_CENTRE_COLLECTE)}
@@ -118,7 +164,9 @@ export default function SelectNextOwner() {
                 <option value={UserRoles.ETG}>{getUserRoleLabel(UserRoles.ETG)}</option>
                 <option value={UserRoles.SVI}>{getUserRoleLabel(UserRoles.SVI)}</option>
               </>
-            )}
+            ) : showSvi ? (
+              <option value={UserRoles.SVI}>{getUserRoleLabel(UserRoles.SVI)}</option>
+            ) : null}
           </Select>
         </div>
         {nextRole && (
