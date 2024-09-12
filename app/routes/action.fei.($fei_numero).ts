@@ -36,6 +36,11 @@ export async function action(args: ActionFunctionArgs) {
       },
     };
   }
+  if (formData.has(Prisma.FeiScalarFieldEnum.detenteur_initial_date_depot_centre_collecte)) {
+    nextFei.detenteur_initial_date_depot_centre_collecte = new Date(
+      formData.get(Prisma.FeiScalarFieldEnum.detenteur_initial_date_depot_centre_collecte) as string
+    );
+  }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id)) {
     nextFei.FeiCurrentUser = {
       connect: {

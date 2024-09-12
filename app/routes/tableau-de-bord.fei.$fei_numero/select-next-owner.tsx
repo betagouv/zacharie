@@ -162,7 +162,6 @@ export default function SelectNextOwner() {
                 </option>
                 <option value={UserRoles.COLLECTEUR_PRO}>{getUserRoleLabel(UserRoles.COLLECTEUR_PRO)}</option>
                 <option value={UserRoles.ETG}>{getUserRoleLabel(UserRoles.ETG)}</option>
-                <option value={UserRoles.SVI}>{getUserRoleLabel(UserRoles.SVI)}</option>
               </>
             ) : showSvi ? (
               <option value={UserRoles.SVI}>{getUserRoleLabel(UserRoles.SVI)}</option>
