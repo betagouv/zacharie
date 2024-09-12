@@ -6,6 +6,7 @@ import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { Prisma, UserRoles } from "@prisma/client";
+import { useState } from "react";
 
 export function meta() {
   return [
@@ -26,6 +27,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function MesRoles() {
   const { user } = useLoaderData<typeof loader>();
   const fetcher = useFetcher({ key: "mon-profil-mes-roles" });
+  const [checkedRoles, setCheckedRoles] = useState(user.roles);
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setCheckedRoles((roles) => [...roles, e.target.value as UserRoles]);
+    } else {
+      setCheckedRoles((roles) => roles.filter((role) => role !== e.target.value));
+    }
+  };
+
+  const isSvi = checkedRoles.includes(UserRoles.SVI);
 
   return (
     <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>
@@ -50,57 +62,69 @@ export default function MesRoles() {
                     {
                       label: "Examinateur Initial",
                       hintText:
-                        "J'ai été formé par ma fédération à l'examen initial. Munissez-vous de votre numéro d'attestation (de la forme CFEI-DEP-YY-001) pour l'étape suivante",
+                        "Vous avez été formé par votre fédération à l'examen initial. Munissez-vous de votre numéro d'attestation (de la forme CFEI-DEP-YY-001) pour l'étape suivante",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.EXAMINATEUR_INITIAL,
+                        onChange: handleCheckboxChange,
+                        disabled: isSvi,
                         defaultChecked: user.roles.includes(UserRoles.EXAMINATEUR_INITIAL),
                       },
                     },
                     {
                       label: "Premier Détenteur",
-                      hintText: "Je suis un chasseur, une société de chasse, une association de chasse",
+                      hintText: "Vous êtes un chasseur, une société de chasse, une association de chasse",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.PREMIER_DETENTEUR,
+                        onChange: handleCheckboxChange,
+                        disabled: isSvi,
                         defaultChecked: user.roles.includes(UserRoles.PREMIER_DETENTEUR),
                       },
                     },
                     {
                       label: "Centre de Collecte de Gibier (CCG)",
                       hintText:
-                        "J'ai/j'utilise un CCG, un local réfrigéré où le gibier en entreposé. Un nom de l'établissement et le numéro DD(ec)PP sera demandé à l'étape suivante",
+                        "Vous avez/vous utilisez un CCG, un local réfrigéré où le gibier en entreposé. Un nom du centre et le numéro DD(ec)PP sera demandé à l'étape suivante",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.CCG,
+                        onChange: handleCheckboxChange,
+                        disabled: isSvi,
                         defaultChecked: user.roles.includes(UserRoles.CCG),
                       },
                     },
                     {
                       label: "Collecteur Professionnel",
                       hintText:
-                        "Récupère les carcasses et les livre aux ETG. Le nom de l'établissement sera demandé à l'étape suivante",
+                        "Vous récupèrez les carcasses et les livrez aux ETGs. Le nom de l'établissement pour lequel vous travaillez sera demandé à l'étape suivante",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.COLLECTEUR_PRO,
+                        onChange: handleCheckboxChange,
+                        disabled: isSvi,
                         defaultChecked: user.roles.includes(UserRoles.COLLECTEUR_PRO),
                       },
                     },
                     {
-                      label: "Etablissement de Traitement du Gibier (ETG)",
-                      hintText: "Le nom de l'établissement sera demandé à l'étape suivante",
+                      label: "Établissement de Traitement du Gibier (ETG)",
+                      hintText: "Le nom de l'établissement pour lequel vous travaillez sera demandé à l'étape suivante",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.ETG,
+                        onChange: handleCheckboxChange,
+                        disabled: isSvi,
                         defaultChecked: user.roles.includes(UserRoles.ETG),
                       },
                     },
                     {
                       label: "Service Vétérinaire d'Inspection (SVI)",
-                      hintText: "Le nom de l'établissement sera demandé à l'étape suivante",
+                      hintText: "Le nom de l'établissement pour lequel vous travaillez sera demandé à l'étape suivante",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.SVI,
+                        onChange: handleCheckboxChange,
+                        disabled: !!checkedRoles.length && checkedRoles[0] !== UserRoles.SVI,
                         defaultChecked: user.roles.includes(UserRoles.SVI),
                       },
                     },

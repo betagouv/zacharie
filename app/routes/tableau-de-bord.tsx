@@ -30,28 +30,6 @@ export default function TableauDeBordLayout() {
         // check mobile responsive header classes at tailwind.css
         navigation={[
           {
-            text: "Mes FEI",
-            isActive: location.pathname === "/tableau-de-bord" || location.pathname.startsWith("/tableau-de-bord/fei"),
-            menuLinks: [
-              {
-                text: "Nouvelle FEI",
-                isActive: location.pathname === "/tableau-de-bord/fei/nouvelle",
-                linkProps: {
-                  to: "/tableau-de-bord/fei/nouvelle",
-                  href: "#",
-                },
-              },
-              {
-                text: "Mes FEI assignées",
-                isActive: location.pathname === "/tableau-de-bord",
-                linkProps: {
-                  to: "/tableau-de-bord",
-                  href: "#",
-                },
-              },
-            ],
-          },
-          {
             text: "Mon profil",
             isActive: location.pathname.startsWith("/tableau-de-bord/mon-profil"),
             menuLinks: [
@@ -85,6 +63,28 @@ export default function TableauDeBordLayout() {
                 linkProps: {
                   href: "#",
                   to: "/tableau-de-bord/mon-profil/mes-notifications",
+                },
+              },
+            ],
+          },
+          {
+            text: "Mes FEI",
+            isActive: location.pathname === "/tableau-de-bord" || location.pathname.startsWith("/tableau-de-bord/fei"),
+            menuLinks: [
+              {
+                text: "Nouvelle FEI",
+                isActive: location.pathname === "/tableau-de-bord/fei/nouvelle",
+                linkProps: {
+                  to: "/tableau-de-bord/fei/nouvelle",
+                  href: "#",
+                },
+              },
+              {
+                text: "Mes FEI assignées",
+                isActive: location.pathname === "/tableau-de-bord",
+                linkProps: {
+                  to: "/tableau-de-bord",
+                  href: "#",
                 },
               },
             ],
