@@ -130,11 +130,11 @@ export default function NouvelleFEI() {
                   <UserNotEditable user={user} withCfei />
                 </div>
                 <div className="mb-8">
-                  <h2 className="fr-h3 fr-mb-2w">Détenteur Initial</h2>
+                  <h2 className="fr-h3 fr-mb-2w">Premier Détenteur</h2>
                   <Checkbox
                     options={[
                       {
-                        label: "Je suis aussi le Détenteur Initial des carcasses examinées",
+                        label: "Je suis aussi le Premier Détenteur des carcasses examinées",
                         nativeInputProps: {
                           name: Prisma.FeiScalarFieldEnum.detenteur_initial_user_id,
                           value: user.id,

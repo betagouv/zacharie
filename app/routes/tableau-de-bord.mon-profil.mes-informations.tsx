@@ -252,7 +252,7 @@ export default function MesInformations() {
               {user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-centre-collecte-data"
-                  accordionLabel="Vous êtes/travaillez pour un Exploitant de Centre de Collecte"
+                  accordionLabel="Vous êtes/travaillez pour un Exploitant de Centre de Collecte de Gibier"
                   addLabel="Ajouter un Centre de Collecte"
                   selectLabel="Sélectionnez un Centre de Collecte"
                   done={centresCollectesDone}

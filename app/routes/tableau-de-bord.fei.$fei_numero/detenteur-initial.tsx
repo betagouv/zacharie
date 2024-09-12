@@ -84,9 +84,9 @@ export default function FEIDetenteurInitial() {
                 });
               }}
             >
-              Je suis bien le Détenteur Initial
+              Je suis bien le Premier Détenteur
             </Button>
-            <p className="mb-0">Vous n'êtes pas le Détenteur Initial&nbsp;?</p>
+            <p className="mb-0">Vous n'êtes pas le Premier Détenteur&nbsp;?</p>
             <Button
               priority="tertiary no outline"
               type="submit"

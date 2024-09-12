@@ -5,7 +5,7 @@ export function getUserRoleLabel(role: UserRoles | "") {
     case UserRoles.ADMIN:
       return "Administrateur";
     case UserRoles.DETENTEUR_INITIAL:
-      return "Détenteur Initial";
+      return "Premier Détenteur";
     case UserRoles.EXAMINATEUR_INITIAL:
       return "Examinateur Initial";
     case UserRoles.EXPLOITANT_CENTRE_COLLECTE:
@@ -26,7 +26,7 @@ export function getUserRoleLabelPrefixed(role: UserRoles | "") {
     case UserRoles.ADMIN:
       return "de l'Administrateur";
     case UserRoles.DETENTEUR_INITIAL:
-      return "du Détenteur Initial";
+      return "du Premier Détenteur";
     case UserRoles.EXAMINATEUR_INITIAL:
       return "de l'Examinateur Initial";
     case UserRoles.EXPLOITANT_CENTRE_COLLECTE:

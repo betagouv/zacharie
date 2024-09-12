@@ -66,7 +66,7 @@ export default function FEIExaminateurInitial() {
     if (!fei.date_mise_a_mort || !fei.commune_mise_a_mort) {
       return false;
     }
-    // if (!fei.Carcasse?.length) {
+    // if (!fei.Carcasses?.length) {
     //   return false;
     // }
     return true;
@@ -105,6 +105,9 @@ export default function FEIExaminateurInitial() {
         </examFetcher.Form>
       </Accordion>
       <Accordion titleAs="h3" label="Identité de l'Examinateur">
+        <UserNotEditable user={fei.FeiExaminateurInitialUser} withCfei />
+      </Accordion>
+      <Accordion titleAs="h3" label={`Carcasses (${fei.Carcasses.length})`}>
         <UserNotEditable user={fei.FeiExaminateurInitialUser} withCfei />
       </Accordion>
       {fei.FeiExaminateurInitialUser && (

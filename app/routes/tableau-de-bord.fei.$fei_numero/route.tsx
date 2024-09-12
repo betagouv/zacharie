@@ -31,7 +31,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       FeiCurrentEntity: true,
       FeiCurrentUser: true,
       FeiNextEntity: true,
-      Carcasse: true,
+      Carcasses: true,
       FeiDetenteurInitialUser: true,
       FeiExaminateurInitialUser: true,
       FeiCreatedByUser: true,
@@ -138,7 +138,7 @@ export default function Fei() {
       tabId: UserRoles.DETENTEUR_INITIAL,
       label: (
         <>
-          <span className="hidden md:inline">{fei.detenteur_initial_user_id ? doneEmoji : ""}Détenteur Initial</span>
+          <span className="hidden md:inline">{fei.detenteur_initial_user_id ? doneEmoji : ""}Premier Détenteur</span>
           <span className="inline md:hidden">{fei.detenteur_initial_user_id ? doneEmoji : ""}Détenteur</span>
         </>
       ),

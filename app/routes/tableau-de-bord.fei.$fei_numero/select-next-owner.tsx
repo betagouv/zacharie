@@ -33,7 +33,7 @@ export default function SelectNextOwner() {
   const nextOwnerSelectLabel = useMemo(() => {
     switch (nextRole) {
       case UserRoles.DETENTEUR_INITIAL:
-        return "Sélectionnez le Détenteur Initial de pour cette FEI";
+        return "Sélectionnez le Premier Détenteur de pour cette FEI";
       case UserRoles.EXAMINATEUR_INITIAL:
         return "Sélectionnez l'Examinateur Initial de pour cette FEI";
       case UserRoles.EXPLOITANT_CENTRE_COLLECTE:

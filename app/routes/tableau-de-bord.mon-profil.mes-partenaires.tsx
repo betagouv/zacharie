@@ -92,11 +92,11 @@ export default function MesPartenaires() {
           <div className="bg-white mb-6 md:shadow">
             <div className="p-4 md:p-8 pb-32 md:pb-0">
               <p className="fr-text--regular mb-4">Sélectionez vos différents partenaires</p>
-              <AccordionUser
+              {/* <AccordionUser
                 fetcherKey="mes-partenaires-detenteur-initial-data"
-                accordionLabel="Vos Détenteurs Initiaux"
-                addLabel="Ajouter un Détenteur Initial"
-                selectLabel="Sélectionnez un Détenteur Initial"
+                accordionLabel="Vos Premiers Détenteurs"
+                addLabel="Ajouter un Premier Détenteur"
+                selectLabel="Sélectionnez un Premier Détenteur"
                 userType={UserRoles.DETENTEUR_INITIAL}
               />
               <AccordionUser
@@ -105,7 +105,7 @@ export default function MesPartenaires() {
                 addLabel="Ajouter un Examinateur Initial"
                 selectLabel="Sélectionnez un Examinateur Initial"
                 userType={UserRoles.EXAMINATEUR_INITIAL}
-              />
+              /> */}
               <AccordionEntreprise
                 fetcherKey="mes-partenaires-centre-collecte-data"
                 accordionLabel="Vos Exploitants de Centre de Collecte"

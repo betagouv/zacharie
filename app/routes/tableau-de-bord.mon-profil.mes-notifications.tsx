@@ -54,8 +54,8 @@ export default function MesNotifications() {
                   legend="Sélectionnez tous les types de notifications que vous souhaitez recevoir"
                   options={[
                     {
-                      label: "Notification Push",
-                      hintText: canSendPush
+                      label: "Notification via Zacharie",
+                      hintText: !canSendPush
                         ? "Notification directement sur cet appareil"
                         : "Vous devriez installer l'application sur un appareil compatible pour activer les notifications.",
                       nativeInputProps: {

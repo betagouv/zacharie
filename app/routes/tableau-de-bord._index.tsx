@@ -149,7 +149,7 @@ export default function TableauDeBordIndex() {
               {feiDone.length ? (
                 <Table
                   bordered
-                  caption="FEI passées"
+                  caption="FEI archivées"
                   data={feiDone.map((fei) => [
                     <Link key={fei.numero} to={`/tableau-de-bord/fei/${fei.numero}`}>
                       {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
@@ -162,7 +162,7 @@ export default function TableauDeBordIndex() {
                 />
               ) : (
                 <>
-                  <h2 className="fr-h3 fr-mb-2w">FEI passées</h2>
+                  <h2 className="fr-h3 fr-mb-2w">FEI archivées</h2>
                   <p className="my-8">Pas encore de donnée</p>
                 </>
               )}

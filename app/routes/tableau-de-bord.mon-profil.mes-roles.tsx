@@ -38,8 +38,9 @@ export default function MesRoles() {
             <h1 className="fr-h2 fr-mb-2w">Renseignez vos rôles</h1>
             <CallOut title="☝️ Un seul compte pour toutes vos casquettes" className="bg-white">
               Les acteurs de la chasse sont nombreux : examinateur, centre de collecte, etc. et parfois vous combinez
-              plusieurs rôles. <br />
-              Zacharie vous permet de jongler entre tous très facilement. Quels sont vos rôles ?
+              plusieurs rôles. Zacharie vous permet de jongler entre tous très facilement.
+              <br />
+              Quels sont vos rôles ?
             </CallOut>
             <div className="bg-white mb-6 md:shadow">
               <div className="p-4 md:p-8 pb-32 md:pb-0">
@@ -47,8 +48,18 @@ export default function MesRoles() {
                   legend="Sélectionnez tous les rôles qui vous correspondent"
                   options={[
                     {
-                      hintText: "Chasseur, société de chasse, association de chasse",
-                      label: "Détenteur initial",
+                      label: "Examinateur Initial",
+                      hintText:
+                        "J'ai été formé par ma fédération à l'examen initial. Munissez-vous de votre numéro d'attestation (de la forme CFEI-DEP-YY-001) pour l'étape suivante",
+                      nativeInputProps: {
+                        name: Prisma.UserScalarFieldEnum.roles,
+                        value: UserRoles.EXAMINATEUR_INITIAL,
+                        defaultChecked: user.roles.includes(UserRoles.EXAMINATEUR_INITIAL),
+                      },
+                    },
+                    {
+                      label: "Premier Détenteur",
+                      hintText: "Je suis un chasseur, une société de chasse, une association de chasse",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.DETENTEUR_INITIAL,
@@ -57,18 +68,8 @@ export default function MesRoles() {
                     },
                     {
                       hintText:
-                        "Munissez-vous de votre numéro d'attestation (de la forme CFEI-DEP-YY-001) pour l'étape suivante",
-                      label: "Examinateur initial",
-                      nativeInputProps: {
-                        name: Prisma.UserScalarFieldEnum.roles,
-                        value: UserRoles.EXAMINATEUR_INITIAL,
-                        defaultChecked: user.roles.includes(UserRoles.EXAMINATEUR_INITIAL),
-                      },
-                    },
-                    {
-                      hintText:
-                        "Local réfrigéré où le gibier en entreposé. Le nom de l'établissement sera demandé à l'étape suivante",
-                      label: "Exploitant d'un Centre de Collecte",
+                        "Local réfrigéré où le gibier en entreposé. Le nom de l'établissement et le numéro DD(ec)PP sera demandé à l'étape suivante",
+                      label: "Exploitant d'un Centre de Collecte de Gibier",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.EXPLOITANT_CENTRE_COLLECTE,

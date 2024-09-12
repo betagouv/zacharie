@@ -120,8 +120,10 @@ export async function action(args: ActionFunctionArgs) {
       },
     };
   }
-  if (formData.has(Prisma.FeiScalarFieldEnum.date_depot_centre_collecte)) {
-    nextFei.date_depot_centre_collecte = formData.get(Prisma.FeiScalarFieldEnum.date_depot_centre_collecte) as string;
+  if (formData.has(Prisma.FeiScalarFieldEnum.detenteur_initial_date_depot_centre_collecte)) {
+    nextFei.detenteur_initial_date_depot_centre_collecte = new Date(
+      formData.get(Prisma.FeiScalarFieldEnum.detenteur_initial_date_depot_centre_collecte) as string
+    );
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_signed_at)) {
     nextFei.svi_signed_at = formData.get(Prisma.FeiScalarFieldEnum.svi_signed_at) as string;
