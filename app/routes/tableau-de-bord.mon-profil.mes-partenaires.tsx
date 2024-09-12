@@ -47,7 +47,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const allUsers = await prisma.user.findMany({
     where: {
       roles: {
-        hasSome: [UserRoles.DETENTEUR_INITIAL, UserRoles.EXAMINATEUR_INITIAL],
+        hasSome: [UserRoles.PREMIER_DETENTEUR, UserRoles.EXAMINATEUR_INITIAL],
       },
       id: {
         not: user.id,
@@ -97,7 +97,7 @@ export default function MesPartenaires() {
                 accordionLabel="Vos Premiers Détenteurs"
                 addLabel="Ajouter un Premier Détenteur"
                 selectLabel="Sélectionnez un Premier Détenteur"
-                userType={UserRoles.DETENTEUR_INITIAL}
+                userType={UserRoles.PREMIER_DETENTEUR}
               />
               <AccordionUser
                 fetcherKey="mes-partenaires-examinateur-initial-data"
@@ -108,10 +108,10 @@ export default function MesPartenaires() {
               /> */}
               <AccordionEntreprise
                 fetcherKey="mes-partenaires-centre-collecte-data"
-                accordionLabel="Vos Exploitants de Centre de Collecte"
-                addLabel="Ajouter un Centre de Collecte"
-                selectLabel="Sélectionnez un Centre de Collecte"
-                entityType={EntityTypes.EXPLOITANT_CENTRE_COLLECTE}
+                accordionLabel="Vos Centre de Collecte de Gibier (CCG)"
+                addLabel="Ajouter un CCG"
+                selectLabel="Sélectionnez un CCG"
+                entityType={EntityTypes.CCG}
               />
               <AccordionEntreprise
                 fetcherKey="mes-partenaires-collecteur-pro-data"

@@ -36,9 +36,9 @@ export async function action(args: ActionFunctionArgs) {
       },
     };
   }
-  if (formData.has(Prisma.FeiScalarFieldEnum.detenteur_initial_date_depot_centre_collecte)) {
-    nextFei.detenteur_initial_date_depot_centre_collecte = new Date(
-      formData.get(Prisma.FeiScalarFieldEnum.detenteur_initial_date_depot_centre_collecte) as string
+  if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_ccg)) {
+    nextFei.premier_detenteur_date_depot_ccg = new Date(
+      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_ccg) as string
     );
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id)) {
@@ -113,16 +113,16 @@ export async function action(args: ActionFunctionArgs) {
       "examinateur_initial_date_approbation_mise_sur_le_marche"
     ) as string;
   }
-  if (formData.has(Prisma.FeiScalarFieldEnum.detenteur_initial_user_id)) {
+  if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
     nextFei.FeiDetenteurInitialUser = {
       connect: {
-        id: formData.get(Prisma.FeiScalarFieldEnum.detenteur_initial_user_id) as string,
+        id: formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) as string,
       },
     };
   }
-  if (formData.has(Prisma.FeiScalarFieldEnum.detenteur_initial_date_depot_centre_collecte)) {
-    nextFei.detenteur_initial_date_depot_centre_collecte = new Date(
-      formData.get(Prisma.FeiScalarFieldEnum.detenteur_initial_date_depot_centre_collecte) as string
+  if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_ccg)) {
+    nextFei.premier_detenteur_date_depot_ccg = new Date(
+      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_ccg) as string
     );
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_signed_at)) {

@@ -62,24 +62,24 @@ export default function MesRoles() {
                       hintText: "Je suis un chasseur, une société de chasse, une association de chasse",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
-                        value: UserRoles.DETENTEUR_INITIAL,
-                        defaultChecked: user.roles.includes(UserRoles.DETENTEUR_INITIAL),
+                        value: UserRoles.PREMIER_DETENTEUR,
+                        defaultChecked: user.roles.includes(UserRoles.PREMIER_DETENTEUR),
                       },
                     },
                     {
+                      label: "Centre de Collecte de Gibier (CCG)",
                       hintText:
-                        "Local réfrigéré où le gibier en entreposé. Le nom de l'établissement et le numéro DD(ec)PP sera demandé à l'étape suivante",
-                      label: "Exploitant d'un Centre de Collecte de Gibier",
+                        "J'ai/j'utilise un CCG, un local réfrigéré où le gibier en entreposé. Un nom de l'établissement et le numéro DD(ec)PP sera demandé à l'étape suivante",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
-                        value: UserRoles.EXPLOITANT_CENTRE_COLLECTE,
-                        defaultChecked: user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE),
+                        value: UserRoles.CCG,
+                        defaultChecked: user.roles.includes(UserRoles.CCG),
                       },
                     },
                     {
+                      label: "Collecteur Professionnel",
                       hintText:
                         "Récupère les carcasses et les livre aux ETG. Le nom de l'établissement sera demandé à l'étape suivante",
-                      label: "Collecteur Professionnel",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.COLLECTEUR_PRO,
@@ -87,8 +87,8 @@ export default function MesRoles() {
                       },
                     },
                     {
-                      hintText: "Le nom de l'établissement sera demandé à l'étape suivante",
                       label: "Etablissement de Traitement du Gibier (ETG)",
+                      hintText: "Le nom de l'établissement sera demandé à l'étape suivante",
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.roles,
                         value: UserRoles.ETG,

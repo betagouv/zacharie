@@ -1,14 +1,14 @@
 -- CreateEnum
-CREATE TYPE "UserRoles" AS ENUM ('ADMIN', 'EXAMINATEUR_INITIAL', 'DETENTEUR_INITIAL', 'EXPLOITANT_CENTRE_COLLECTE', 'COLLECTEUR_PRO', 'ETG', 'SVI');
+CREATE TYPE "UserRoles" AS ENUM ('ADMIN', 'EXAMINATEUR_INITIAL', 'PREMIER_DETENTEUR', 'CCG', 'COLLECTEUR_PRO', 'ETG', 'SVI');
 
 -- CreateEnum
 CREATE TYPE "UserNotifications" AS ENUM ('EMAIL', 'SMS', 'PUSH');
 
 -- CreateEnum
-CREATE TYPE "EntityTypes" AS ENUM ('COLLECTEUR_PRO', 'EXPLOITANT_CENTRE_COLLECTE', 'ETG', 'SVI');
+CREATE TYPE "EntityTypes" AS ENUM ('COLLECTEUR_PRO', 'CCG', 'ETG', 'SVI');
 
 -- CreateEnum
-CREATE TYPE "UserRelationType" AS ENUM ('DETENTEUR_INITIAL', 'EXAMINATEUR_INITIAL');
+CREATE TYPE "UserRelationType" AS ENUM ('PREMIER_DETENTEUR', 'EXAMINATEUR_INITIAL');
 
 -- CreateEnum
 CREATE TYPE "EntityRelationType" AS ENUM ('WORKING_FOR', 'WORKING_WITH');
@@ -113,15 +113,35 @@ CREATE TABLE "Logs" (
 -- CreateTable
 CREATE TABLE "Fei" (
     "id" SERIAL NOT NULL,
-    "detenteur_actuel_id" TEXT,
     "numero" TEXT NOT NULL,
-    "date_mise_a_mort" DATE NOT NULL,
-    "commune_mise_a_mort" TEXT NOT NULL,
-    "approbation_mise_sur_le_marche_examinateur_initial" BOOLEAN,
-    "date_approbation_mise_sur_le_marche_examinateur_initial" TIMESTAMP(3),
-    "date_depot_centre_collecte" TIMESTAMP(3),
-    "date_validation_svi" TIMESTAMP(3),
-    "created_by" TEXT NOT NULL,
+    "date_mise_a_mort" DATE,
+    "commune_mise_a_mort" TEXT,
+    "created_by_user_id" TEXT NOT NULL,
+    "fei_current_owner_user_id" TEXT,
+    "fei_current_owner_entity_id" TEXT,
+    "fei_current_owner_role" "UserRoles",
+    "fei_next_owner_user_id" TEXT,
+    "fei_next_owner_entity_id" TEXT,
+    "fei_next_owner_role" "UserRoles",
+    "fei_prev_owner_user_id" TEXT,
+    "fei_prev_owner_entity_id" TEXT,
+    "fei_prev_owner_role" "UserRoles",
+    "examinateur_initial_user_id" TEXT,
+    "examinateur_initial_approbation_mise_sur_le_marche" BOOLEAN,
+    "examinateur_initial_date_approbation_mise_sur_le_marche" TIMESTAMP(3),
+    "premier_detenteur_user_id" TEXT,
+    "premier_detenteur_date_depot_ccg" TIMESTAMP(3),
+    "etg_entity_id" TEXT,
+    "etg_user_id" TEXT,
+    "etg_received_at" TIMESTAMP(3),
+    "etg_commentaire" TEXT,
+    "etg_check_finished_at" TIMESTAMP(3),
+    "svi_entity_id" TEXT,
+    "svi_user_id" TEXT,
+    "svi_carcasses_saisies" INTEGER,
+    "svi_aucune_carcasse_saisie" BOOLEAN,
+    "svi_commentaire" TEXT,
+    "svi_signed_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
@@ -130,39 +150,30 @@ CREATE TABLE "Fei" (
 );
 
 -- CreateTable
-CREATE TABLE "SuiviFei" (
-    "id" TEXT NOT NULL,
-    "fei_id" INTEGER NOT NULL,
-    "suivi_par_user_id" TEXT NOT NULL,
-    "suivi_par_user_role" "UserRoles" NOT NULL,
-    "suivi_par_user_email" TEXT,
-    "suivi_par_user_telephone" TEXT,
-    "suivi_par_user_prenom" TEXT,
-    "suivi_par_user_nom_de_famille" TEXT,
-    "suivi_par_user_raison_sociale" TEXT,
-    "suivi_par_user_numero_cfei" TEXT,
-    "suivi_par_user_numero_centre_collecte" TEXT,
-    "suivi_par_user_address_ligne_1" TEXT,
-    "suivi_par_user_address_ligne_2" TEXT,
-    "suivi_par_user_code_postal" TEXT,
-    "suivi_par_user_ville" TEXT,
-    "fei_transfered_to" TEXT,
-    "fei_approbation_mise_sur_le_marche" BOOLEAN,
-    "fei_commentaire" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deleted_at" TIMESTAMP(3),
-
-    CONSTRAINT "SuiviFei_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "Carcasse" (
     "id" TEXT NOT NULL,
-    "fei_id" INTEGER NOT NULL,
+    "fei_numero" TEXT NOT NULL,
     "numero_bracelet" TEXT NOT NULL,
     "heure_mise_a_mort" TIME NOT NULL,
     "heure_evisceration" TIME NOT NULL,
+    "espece" TEXT NOT NULL,
+    "categorie" TEXT NOT NULL,
+    "examinateur_carcasse_sans_anomalie" BOOLEAN,
+    "examinateur_anomalies_carcasse" TEXT[],
+    "examinateur_abats_sans_anomalie" BOOLEAN,
+    "examinateur_anomalies_abats" TEXT[],
+    "examinateur_commentaire" TEXT,
+    "examinateur_refus" BOOLEAN,
+    "examinateur_signed_at" TIMESTAMP(3),
+    "intermediaire_carcasse_refus_intermediaire_id" TEXT,
+    "intermediaire_carcasse_refus_motif" TEXT,
+    "intermediaire_carcasse_signed_at" TIMESTAMP(3),
+    "intermediaire_carcasse_commentaire" TEXT,
+    "svi_saisie_carcasse" BOOLEAN,
+    "svi_saisie_carcasse_motif" TEXT,
+    "svi_saisie_carcasse_at" TIMESTAMP(3),
+    "svi_carcasse_signed_at" TIMESTAMP(3),
+    "svi_carcasse_commentaire" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
@@ -171,36 +182,20 @@ CREATE TABLE "Carcasse" (
 );
 
 -- CreateTable
-CREATE TABLE "SuiviCarcasse" (
+CREATE TABLE "Intermediaire" (
     "id" TEXT NOT NULL,
-    "carcasse_id" TEXT NOT NULL,
-    "suivi_carcasse_user_id" TEXT NOT NULL,
-    "suivi_carcasse_user_role" "UserRoles" NOT NULL,
-    "suivi_carcasse_user_email" TEXT,
-    "suivi_carcasse_user_telephone" TEXT,
-    "suivi_carcasse_user_prenom" TEXT,
-    "suivi_carcasse_user_nom_de_famille" TEXT,
-    "suivi_carcasse_user_raison_sociale" TEXT,
-    "suivi_carcasse_user_numero_cfei" TEXT,
-    "suivi_carcasse_user_numero_centre_collecte" TEXT,
-    "suivi_carcasse_user_address_ligne_1" TEXT,
-    "suivi_carcasse_user_address_ligne_2" TEXT,
-    "suivi_carcasse_user_code_postal" TEXT,
-    "suivi_carcasse_user_ville" TEXT,
-    "suivi_carcasse_prise_en_charge" BOOLEAN,
-    "suivi_carcasse_date_prise_en_charge" TIMESTAMP(3),
-    "suivi_carcasse_motif_refus" TEXT,
-    "suivi_carcasse_approbation_mise_sur_le_marche" BOOLEAN,
-    "suivi_carcasse_sans_anomalie" BOOLEAN,
-    "suivi_anomalies_carcasse" TEXT[],
-    "suivi_abats_sans_anomalie" BOOLEAN,
-    "suivi_anomalies_abats" TEXT[],
-    "suivi_carcasse_commentaire" TEXT,
+    "fei_numero" TEXT NOT NULL,
+    "intermediaire_user_id" TEXT NOT NULL,
+    "intermediaire_entity_id" TEXT NOT NULL,
+    "commentaire" TEXT,
+    "received_at" TIMESTAMP(3),
+    "check_finished_at" TIMESTAMP(3),
+    "handover_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
 
-    CONSTRAINT "SuiviCarcasse_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Intermediaire_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -217,6 +212,12 @@ CREATE TABLE "NotificationLog" (
     "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "NotificationLog_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "_IntermediairesCarcasse" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
 );
 
 -- CreateIndex
@@ -247,22 +248,37 @@ CREATE INDEX "Logs_user_id_action_idx" ON "Logs"("user_id", "action");
 CREATE UNIQUE INDEX "Fei_numero_key" ON "Fei"("numero");
 
 -- CreateIndex
-CREATE INDEX "Fei_detenteur_actuel_id_numero_date_mise_a_mort_idx" ON "Fei"("detenteur_actuel_id", "numero", "date_mise_a_mort");
+CREATE INDEX "Fei_created_by_user_id_idx" ON "Fei"("created_by_user_id");
 
 -- CreateIndex
-CREATE INDEX "SuiviFei_fei_id_suivi_par_user_id_suivi_par_user_role_idx" ON "SuiviFei"("fei_id", "suivi_par_user_id", "suivi_par_user_role");
+CREATE INDEX "Fei_premier_detenteur_user_id_idx" ON "Fei"("premier_detenteur_user_id");
+
+-- CreateIndex
+CREATE INDEX "Fei_examinateur_initial_user_id_idx" ON "Fei"("examinateur_initial_user_id");
+
+-- CreateIndex
+CREATE INDEX "Fei_svi_entity_id_idx" ON "Fei"("svi_entity_id");
+
+-- CreateIndex
+CREATE INDEX "Fei_svi_user_id_idx" ON "Fei"("svi_user_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Carcasse_numero_bracelet_key" ON "Carcasse"("numero_bracelet");
 
 -- CreateIndex
-CREATE INDEX "Carcasse_fei_id_numero_bracelet_idx" ON "Carcasse"("fei_id", "numero_bracelet");
+CREATE INDEX "Carcasse_fei_numero_numero_bracelet_idx" ON "Carcasse"("fei_numero", "numero_bracelet");
 
 -- CreateIndex
-CREATE INDEX "SuiviCarcasse_carcasse_id_suivi_carcasse_user_id_suivi_carc_idx" ON "SuiviCarcasse"("carcasse_id", "suivi_carcasse_user_id", "suivi_carcasse_user_role");
+CREATE INDEX "Intermediaire_fei_numero_intermediaire_user_id_intermediair_idx" ON "Intermediaire"("fei_numero", "intermediaire_user_id", "intermediaire_entity_id");
 
 -- CreateIndex
 CREATE INDEX "NotificationLog_user_id_action_idx" ON "NotificationLog"("user_id", "action");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_IntermediairesCarcasse_AB_unique" ON "_IntermediairesCarcasse"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_IntermediairesCarcasse_B_index" ON "_IntermediairesCarcasse"("B");
 
 -- AddForeignKey
 ALTER TABLE "Password" ADD CONSTRAINT "Password_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -283,28 +299,55 @@ ALTER TABLE "EntityRelations" ADD CONSTRAINT "EntityRelations_entity_id_fkey" FO
 ALTER TABLE "Logs" ADD CONSTRAINT "Logs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Fei" ADD CONSTRAINT "Fei_created_by_user_id_fkey" FOREIGN KEY ("created_by_user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_detenteur_actuel_id_fkey" FOREIGN KEY ("detenteur_actuel_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Fei" ADD CONSTRAINT "Fei_premier_detenteur_user_id_fkey" FOREIGN KEY ("premier_detenteur_user_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SuiviFei" ADD CONSTRAINT "SuiviFei_suivi_par_user_id_fkey" FOREIGN KEY ("suivi_par_user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Fei" ADD CONSTRAINT "Fei_examinateur_initial_user_id_fkey" FOREIGN KEY ("examinateur_initial_user_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SuiviFei" ADD CONSTRAINT "SuiviFei_fei_transfered_to_fkey" FOREIGN KEY ("fei_transfered_to") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Fei" ADD CONSTRAINT "Fei_etg_entity_id_fkey" FOREIGN KEY ("etg_entity_id") REFERENCES "Entity"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SuiviFei" ADD CONSTRAINT "SuiviFei_fei_id_fkey" FOREIGN KEY ("fei_id") REFERENCES "Fei"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Fei" ADD CONSTRAINT "Fei_etg_user_id_fkey" FOREIGN KEY ("etg_user_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Carcasse" ADD CONSTRAINT "Carcasse_fei_id_fkey" FOREIGN KEY ("fei_id") REFERENCES "Fei"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Fei" ADD CONSTRAINT "Fei_svi_entity_id_fkey" FOREIGN KEY ("svi_entity_id") REFERENCES "Entity"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SuiviCarcasse" ADD CONSTRAINT "SuiviCarcasse_suivi_carcasse_user_id_fkey" FOREIGN KEY ("suivi_carcasse_user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Fei" ADD CONSTRAINT "Fei_svi_user_id_fkey" FOREIGN KEY ("svi_user_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SuiviCarcasse" ADD CONSTRAINT "SuiviCarcasse_carcasse_id_fkey" FOREIGN KEY ("carcasse_id") REFERENCES "Carcasse"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Fei" ADD CONSTRAINT "Fei_fei_current_owner_user_id_fkey" FOREIGN KEY ("fei_current_owner_user_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Fei" ADD CONSTRAINT "Fei_fei_current_owner_entity_id_fkey" FOREIGN KEY ("fei_current_owner_entity_id") REFERENCES "Entity"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Fei" ADD CONSTRAINT "Fei_fei_next_owner_entity_id_fkey" FOREIGN KEY ("fei_next_owner_entity_id") REFERENCES "Entity"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Carcasse" ADD CONSTRAINT "Carcasse_fei_numero_fkey" FOREIGN KEY ("fei_numero") REFERENCES "Fei"("numero") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Carcasse" ADD CONSTRAINT "Carcasse_intermediaire_carcasse_refus_intermediaire_id_fkey" FOREIGN KEY ("intermediaire_carcasse_refus_intermediaire_id") REFERENCES "Intermediaire"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Intermediaire" ADD CONSTRAINT "Intermediaire_fei_numero_fkey" FOREIGN KEY ("fei_numero") REFERENCES "Fei"("numero") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Intermediaire" ADD CONSTRAINT "Intermediaire_intermediaire_user_id_fkey" FOREIGN KEY ("intermediaire_user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Intermediaire" ADD CONSTRAINT "Intermediaire_intermediaire_entity_id_fkey" FOREIGN KEY ("intermediaire_entity_id") REFERENCES "Entity"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "NotificationLog" ADD CONSTRAINT "NotificationLog_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_IntermediairesCarcasse" ADD CONSTRAINT "_IntermediairesCarcasse_A_fkey" FOREIGN KEY ("A") REFERENCES "Carcasse"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_IntermediairesCarcasse" ADD CONSTRAINT "_IntermediairesCarcasse_B_fkey" FOREIGN KEY ("B") REFERENCES "Intermediaire"("id") ON DELETE CASCADE ON UPDATE CASCADE;

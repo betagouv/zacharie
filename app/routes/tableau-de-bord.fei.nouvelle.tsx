@@ -42,13 +42,13 @@ export async function action(args: ActionFunctionArgs) {
     },
   };
 
-  if (formData.get(Prisma.FeiScalarFieldEnum.detenteur_initial_user_id)) {
+  if (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
     createData.FeiDetenteurInitialUser = {
       connect: {
         id: user.id,
       },
     };
-    createData.fei_current_owner_role = UserRoles.DETENTEUR_INITIAL;
+    createData.fei_current_owner_role = UserRoles.PREMIER_DETENTEUR;
   }
   if (formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
     if (!formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
@@ -136,7 +136,7 @@ export default function NouvelleFEI() {
                       {
                         label: "Je suis aussi le Premier Détenteur des carcasses examinées",
                         nativeInputProps: {
-                          name: Prisma.FeiScalarFieldEnum.detenteur_initial_user_id,
+                          name: Prisma.FeiScalarFieldEnum.premier_detenteur_user_id,
                           value: user.id,
                         },
                       },

@@ -4,16 +4,16 @@ export function getUserRoleLabel(role: UserRoles | "") {
   switch (role) {
     case UserRoles.ADMIN:
       return "Administrateur";
-    case UserRoles.DETENTEUR_INITIAL:
+    case UserRoles.PREMIER_DETENTEUR:
       return "Premier Détenteur";
     case UserRoles.EXAMINATEUR_INITIAL:
       return "Examinateur Initial";
-    case UserRoles.EXPLOITANT_CENTRE_COLLECTE:
-      return "Exploitant de Centre de Collecte";
+    case UserRoles.CCG:
+      return "Centre de Collecte de Gibier";
     case UserRoles.COLLECTEUR_PRO:
       return "Collecteur Pro";
     case UserRoles.ETG:
-      return "ETG";
+      return "Etablissement de Traitement du Gibier";
     case UserRoles.SVI:
       return "Service Vétérinaire d'Inspection";
     default:
@@ -25,12 +25,12 @@ export function getUserRoleLabelPrefixed(role: UserRoles | "") {
   switch (role) {
     case UserRoles.ADMIN:
       return "de l'Administrateur";
-    case UserRoles.DETENTEUR_INITIAL:
+    case UserRoles.PREMIER_DETENTEUR:
       return "du Premier Détenteur";
     case UserRoles.EXAMINATEUR_INITIAL:
       return "de l'Examinateur Initial";
-    case UserRoles.EXPLOITANT_CENTRE_COLLECTE:
-      return "d'un Exploitant de Centre de Collecte";
+    case UserRoles.CCG:
+      return "d'un Centre de Collecte de Gibier";
     case UserRoles.COLLECTEUR_PRO:
       return "d'un Collecteur Pro";
     case UserRoles.ETG:

@@ -11,8 +11,8 @@ datasource db {
 enum UserRoles {
   ADMIN
   EXAMINATEUR_INITIAL
-  DETENTEUR_INITIAL // un chasseur, une association de chasse, une structure professionnelle de chasse qui se charge d'indiquer le destinataire final du gibier
-  EXPLOITANT_CENTRE_COLLECTE // Exploitant de Centre de Collecte de Gibier où sont entreposées les venaisons à la fin de la chasse
+  PREMIER_DETENTEUR // un chasseur, une association de chasse, une structure professionnelle de chasse qui se charge d'indiquer le destinataire final du gibier
+  CCG // Centre de Collecte de Gibier où sont entreposées les venaisons à la fin de la chasse
   COLLECTEUR_PRO // Transporteur de Gibier
   //Destinataires finaux du gibier
   ETG // Etablissement de Traitement du Gibier
@@ -71,7 +71,7 @@ model User {
 
 enum EntityTypes {
   COLLECTEUR_PRO
-  EXPLOITANT_CENTRE_COLLECTE
+  CCG
   ETG
   SVI
   // COMMERCE_DE_DETAIL
@@ -118,7 +118,7 @@ model Password {
 }
 
 enum UserRelationType {
-  DETENTEUR_INITIAL // a user working with this relation as a detenteur initial
+  PREMIER_DETENTEUR // a user working with this relation as a detenteur initial
   EXAMINATEUR_INITIAL // a user working with this relation as an examinateur initial
 }
 
@@ -187,8 +187,8 @@ model Fei {
   examinateur_initial_user_id                             String?
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
-  detenteur_initial_user_id                               String?
-  detenteur_initial_date_depot_centre_collecte            DateTime?
+  premier_detenteur_user_id                               String?
+  premier_detenteur_date_depot_ccg                        DateTime?
   etg_entity_id                                           String?
   etg_user_id                                             String?
   etg_received_at                                         DateTime?
@@ -205,7 +205,7 @@ model Fei {
   deleted_at                                              DateTime?
   Carcasses                                               Carcasse[]
   FeiCreatedByUser                                        User            @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id])
-  FeiDetenteurInitialUser                                 User?           @relation("FeiDetenteurInitialUser", fields: [detenteur_initial_user_id], references: [id])
+  FeiDetenteurInitialUser                                 User?           @relation("FeiDetenteurInitialUser", fields: [premier_detenteur_user_id], references: [id])
   FeiExaminateurInitialUser                               User?           @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id])
   FeiEtgEntity                                            Entity?         @relation("FeiEtgEntity", fields: [etg_entity_id], references: [id])
   FeiEtgUser                                              User?           @relation("FeiEtgUser", fields: [etg_user_id], references: [id])
@@ -217,7 +217,7 @@ model Fei {
   FeiNextEntity                                           Entity?         @relation("FeiNextEntity", fields: [fei_next_owner_entity_id], references: [id])
 
   @@index([created_by_user_id])
-  @@index([detenteur_initial_user_id])
+  @@index([premier_detenteur_user_id])
   @@index([examinateur_initial_user_id])
   @@index([svi_entity_id])
   @@index([svi_user_id])

@@ -64,8 +64,8 @@ export default function ConfirmCurrentOwner() {
             if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.EXAMINATEUR_INITIAL) {
               formData.append(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id, user.id);
             }
-            if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.DETENTEUR_INITIAL) {
-              formData.append(Prisma.FeiScalarFieldEnum.detenteur_initial_user_id, user.id);
+            if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.PREMIER_DETENTEUR) {
+              formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
             }
             console.log("formData", Object.fromEntries(formData.entries()));
             fetcher.submit(formData, {

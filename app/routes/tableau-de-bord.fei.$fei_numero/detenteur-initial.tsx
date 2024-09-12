@@ -15,14 +15,14 @@ export default function FEIDetenteurInitial() {
   const fetcher = useFetcher({ key: "confirm-detenteur-initial" });
   const depotFetcher = useFetcher({ key: "detenteur-initial-depot" });
   const [showDateDepotCentreCollecte, setShowDateDepotCentreCollecte] = useState(
-    fei.detenteur_initial_date_depot_centre_collecte ? true : false
+    fei.premier_detenteur_date_depot_ccg ? true : false
   );
 
   const detenteurInitial = useMemo(() => {
     if (fei.FeiDetenteurInitialUser) {
       return fei.FeiDetenteurInitialUser;
     }
-    if (fei.fei_current_owner_role === UserRoles.DETENTEUR_INITIAL) {
+    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
       if (fei.fei_current_owner_user_id === user.id) {
         return user;
       }
@@ -31,13 +31,13 @@ export default function FEIDetenteurInitial() {
   }, [fei, user]);
 
   const canEdit = useMemo(() => {
-    if (fei.fei_current_owner_role !== UserRoles.DETENTEUR_INITIAL) {
+    if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
       return false;
     }
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
-    if (fei.detenteur_initial_date_depot_centre_collecte) {
+    if (fei.premier_detenteur_date_depot_ccg) {
       return false;
     }
     return true;
@@ -50,10 +50,10 @@ export default function FEIDetenteurInitial() {
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
-    if (fei.fei_current_owner_role !== UserRoles.DETENTEUR_INITIAL) {
+    if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
       return false;
     }
-    if (!fei.detenteur_initial_date_depot_centre_collecte) {
+    if (!fei.premier_detenteur_date_depot_ccg) {
       return false;
     }
     if (needConfirmation) {
@@ -76,7 +76,7 @@ export default function FEIDetenteurInitial() {
               onClick={() => {
                 const formData = new FormData();
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
-                formData.append(Prisma.FeiScalarFieldEnum.detenteur_initial_user_id, user.id);
+                formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
                 fetcher.submit(formData, {
                   method: "POST",
                   action: `/action/fei/${fei.numero}`,
@@ -111,15 +111,14 @@ export default function FEIDetenteurInitial() {
         <>
           <hr />
           <div
-            className={[
-              "fr-fieldset__element",
-              fei.detenteur_initial_date_depot_centre_collecte ? "pointer-events-none" : "",
-            ].join(" ")}
+            className={["fr-fieldset__element", fei.premier_detenteur_date_depot_ccg ? "pointer-events-none" : ""].join(
+              " "
+            )}
           >
             <Checkbox
               options={[
                 {
-                  label: "J'ai déposé les carcasses dans le Centre de Collecte",
+                  label: "J'ai déposé les carcasses dans le Centre de Collecte de Gibier (CCG)",
                   hintText: "Étape requise pour la suite du processus",
                   nativeInputProps: {
                     required: true,
@@ -127,7 +126,7 @@ export default function FEIDetenteurInitial() {
                       setShowDateDepotCentreCollecte(e.target.checked);
                     },
                     readOnly: !canEdit,
-                    defaultChecked: fei.detenteur_initial_date_depot_centre_collecte ? true : false,
+                    defaultChecked: fei.premier_detenteur_date_depot_ccg ? true : false,
                   },
                 },
               ]}
@@ -137,15 +136,13 @@ export default function FEIDetenteurInitial() {
             <depotFetcher.Form method="POST" action={`/action/fei/${fei.numero}`}>
               <div className="fr-fieldset__element">
                 <Component
-                  label="Date de dépôt au Centre de Collecte"
+                  label="Date de dépôt au CCG"
                   nativeInputProps={{
-                    id: Prisma.FeiScalarFieldEnum.detenteur_initial_date_depot_centre_collecte,
-                    name: Prisma.FeiScalarFieldEnum.detenteur_initial_date_depot_centre_collecte,
+                    id: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_ccg,
+                    name: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_ccg,
                     type: "datetime-local",
                     autoComplete: "off",
-                    defaultValue: dayjs(fei?.detenteur_initial_date_depot_centre_collecte || undefined).format(
-                      "YYYY-MM-DDTHH:mm"
-                    ),
+                    defaultValue: dayjs(fei?.premier_detenteur_date_depot_ccg || undefined).format("YYYY-MM-DDTHH:mm"),
                   }}
                 />
               </div>

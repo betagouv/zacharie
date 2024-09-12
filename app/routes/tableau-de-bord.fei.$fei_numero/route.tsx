@@ -73,9 +73,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   });
 
   const detenteursInitiaux = userRelationsWithOtherUsers
-    .filter((userRelation) => userRelation.relation === UserRelationType.DETENTEUR_INITIAL)
+    .filter((userRelation) => userRelation.relation === UserRelationType.PREMIER_DETENTEUR)
     .map((userRelation) => userRelation.UserRelatedOfUserRelation);
-  if (user.roles.includes(UserRoles.DETENTEUR_INITIAL)) {
+  if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
     detenteursInitiaux.unshift(user);
   }
 
@@ -87,7 +87,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   }
 
   const centresCollecte = userEntitiesRelations
-    .filter((entityRelation) => entityRelation.EntityRelatedWithUser.type === EntityTypes.EXPLOITANT_CENTRE_COLLECTE)
+    .filter((entityRelation) => entityRelation.EntityRelatedWithUser.type === EntityTypes.CCG)
     .map((entityRelation) => entityRelation.EntityRelatedWithUser);
 
   const collecteursPro = userEntitiesRelations
@@ -135,11 +135,11 @@ export default function Fei() {
       ),
     },
     {
-      tabId: UserRoles.DETENTEUR_INITIAL,
+      tabId: UserRoles.PREMIER_DETENTEUR,
       label: (
         <>
-          <span className="hidden md:inline">{fei.detenteur_initial_user_id ? doneEmoji : ""}Premier Détenteur</span>
-          <span className="inline md:hidden">{fei.detenteur_initial_user_id ? doneEmoji : ""}Détenteur</span>
+          <span className="hidden md:inline">{fei.premier_detenteur_user_id ? doneEmoji : ""}Premier Détenteur</span>
+          <span className="inline md:hidden">{fei.premier_detenteur_user_id ? doneEmoji : ""}Détenteur</span>
         </>
       ),
     },
@@ -157,8 +157,8 @@ export default function Fei() {
     },
   ];
   const [selectedTabId, setSelectedTabId] = useState<(typeof tabs)[number]["tabId"]>(() => {
-    if (fei.fei_current_owner_role === UserRoles.DETENTEUR_INITIAL) {
-      return UserRoles.DETENTEUR_INITIAL;
+    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+      return UserRoles.PREMIER_DETENTEUR;
     }
     if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
       return UserRoles.EXAMINATEUR_INITIAL;
@@ -174,14 +174,14 @@ export default function Fei() {
   useEffect(() => {
     if (fei.fei_current_owner_role !== refCurrentRole.current) {
       if (fei.fei_current_owner_user_id === user.id && refCurrentUserId.current === user.id) {
-        if (fei.fei_current_owner_role === UserRoles.DETENTEUR_INITIAL) {
-          setSelectedTabId(UserRoles.DETENTEUR_INITIAL);
+        if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+          setSelectedTabId(UserRoles.PREMIER_DETENTEUR);
         }
         if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
           setSelectedTabId(UserRoles.EXAMINATEUR_INITIAL);
         }
         if (
-          [UserRoles.COLLECTEUR_PRO, UserRoles.EXPLOITANT_CENTRE_COLLECTE, UserRoles.ETG].includes(
+          [UserRoles.COLLECTEUR_PRO, UserRoles.CCG, UserRoles.ETG].includes(
             // @ts-expect-error - TS doesn't know that the following roles are valid tabIds
             fei.fei_current_owner_role
           )
@@ -216,7 +216,7 @@ export default function Fei() {
           <CurrentOwner />
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
             {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
-            {selectedTabId === UserRoles.DETENTEUR_INITIAL && <FEIDetenteurInitial />}
+            {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIDetenteurInitial />}
           </Tabs>
         </div>
       </div>

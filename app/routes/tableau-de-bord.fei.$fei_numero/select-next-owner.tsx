@@ -14,11 +14,11 @@ export default function SelectNextOwner() {
 
   const nextOwners = useMemo(() => {
     switch (nextRole) {
-      case UserRoles.DETENTEUR_INITIAL:
+      case UserRoles.PREMIER_DETENTEUR:
         return detenteursInitiaux;
       case UserRoles.EXAMINATEUR_INITIAL:
         return examinateursInitiaux;
-      case UserRoles.EXPLOITANT_CENTRE_COLLECTE:
+      case UserRoles.CCG:
         return centresCollecte;
       case UserRoles.COLLECTEUR_PRO:
         return collecteursPro;
@@ -32,12 +32,12 @@ export default function SelectNextOwner() {
   }, [nextRole, detenteursInitiaux, examinateursInitiaux, centresCollecte, collecteursPro, etgs, svis]);
   const nextOwnerSelectLabel = useMemo(() => {
     switch (nextRole) {
-      case UserRoles.DETENTEUR_INITIAL:
+      case UserRoles.PREMIER_DETENTEUR:
         return "Sélectionnez le Premier Détenteur de pour cette FEI";
       case UserRoles.EXAMINATEUR_INITIAL:
         return "Sélectionnez l'Examinateur Initial de pour cette FEI";
-      case UserRoles.EXPLOITANT_CENTRE_COLLECTE:
-        return "Sélectionnez un Exploitant de Centre de Collecte pour cette FEI";
+      case UserRoles.CCG:
+        return "Sélectionnez un CCG pour cette FEI";
       case UserRoles.COLLECTEUR_PRO:
         return "Sélectionnez un Collecteur Pro pour cette FEI";
       case UserRoles.ETG:
@@ -49,8 +49,8 @@ export default function SelectNextOwner() {
     }
   }, [nextRole]);
 
-  const nextOwnerIsUser = nextRole === UserRoles.DETENTEUR_INITIAL || nextRole === UserRoles.EXAMINATEUR_INITIAL;
-  const nextOwnerIsEntity = nextRole !== UserRoles.DETENTEUR_INITIAL && nextRole !== UserRoles.EXAMINATEUR_INITIAL;
+  const nextOwnerIsUser = nextRole === UserRoles.PREMIER_DETENTEUR || nextRole === UserRoles.EXAMINATEUR_INITIAL;
+  const nextOwnerIsEntity = nextRole !== UserRoles.PREMIER_DETENTEUR && nextRole !== UserRoles.EXAMINATEUR_INITIAL;
 
   const nextOwnerName = useMemo(() => {
     let nextOwner = nextOwners.find((owner) => {
@@ -79,35 +79,35 @@ export default function SelectNextOwner() {
     if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
       return false;
     }
-    return !fei.detenteur_initial_date_depot_centre_collecte;
-  }, [fei.detenteur_initial_date_depot_centre_collecte, fei.fei_current_owner_role]);
+    return !fei.premier_detenteur_date_depot_ccg;
+  }, [fei.premier_detenteur_date_depot_ccg, fei.fei_current_owner_role]);
 
   const showIntermediaires = useMemo(() => {
     if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
       return false;
     }
     if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
-      if (fei.examinateur_initial_user_id === fei.detenteur_initial_user_id) {
+      if (fei.examinateur_initial_user_id === fei.premier_detenteur_user_id) {
         return true;
       }
     }
-    if (!fei.detenteur_initial_date_depot_centre_collecte) {
+    if (!fei.premier_detenteur_date_depot_ccg) {
       return false;
     }
     if (
-      UserRoles.DETENTEUR_INITIAL !== fei.fei_current_owner_role &&
-      UserRoles.EXPLOITANT_CENTRE_COLLECTE !== fei.fei_current_owner_role &&
+      UserRoles.PREMIER_DETENTEUR !== fei.fei_current_owner_role &&
+      UserRoles.CCG !== fei.fei_current_owner_role &&
       UserRoles.COLLECTEUR_PRO !== fei.fei_current_owner_role
     ) {
       return false;
     }
     return true;
   }, [
-    fei.detenteur_initial_user_id,
+    fei.premier_detenteur_user_id,
     fei.fei_current_owner_role,
     fei.examinateur_initial_user_id,
     fei.examinateur_initial_approbation_mise_sur_le_marche,
-    fei.detenteur_initial_date_depot_centre_collecte,
+    fei.premier_detenteur_date_depot_ccg,
   ]);
 
   const showSvi = useMemo(() => {
@@ -154,12 +154,10 @@ export default function SelectNextOwner() {
           >
             <option value="">Sélectionnez le prochain type d'acteur à agir sur la FEI</option>
             {showDetenteurInitial ? (
-              <option value={UserRoles.DETENTEUR_INITIAL}>{getUserRoleLabel(UserRoles.DETENTEUR_INITIAL)}</option>
+              <option value={UserRoles.PREMIER_DETENTEUR}>{getUserRoleLabel(UserRoles.PREMIER_DETENTEUR)}</option>
             ) : showIntermediaires ? (
               <>
-                <option value={UserRoles.EXPLOITANT_CENTRE_COLLECTE}>
-                  {getUserRoleLabel(UserRoles.EXPLOITANT_CENTRE_COLLECTE)}
-                </option>
+                <option value={UserRoles.CCG}>{getUserRoleLabel(UserRoles.CCG)}</option>
                 <option value={UserRoles.COLLECTEUR_PRO}>{getUserRoleLabel(UserRoles.COLLECTEUR_PRO)}</option>
                 <option value={UserRoles.ETG}>{getUserRoleLabel(UserRoles.ETG)}</option>
               </>

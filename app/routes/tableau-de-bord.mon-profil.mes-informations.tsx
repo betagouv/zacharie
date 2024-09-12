@@ -38,8 +38,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
   const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(userEntitiesRelations, allEntitiesIds);
 
-  const userCentresCollectes = user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE)
-    ? Object.values(userEntitiesByTypeAndId[EntityTypes.EXPLOITANT_CENTRE_COLLECTE])
+  const userCentresCollectes = user.roles.includes(UserRoles.CCG)
+    ? Object.values(userEntitiesByTypeAndId[EntityTypes.CCG])
     : [];
   const userCollecteursPro = user.roles.includes(UserRoles.COLLECTEUR_PRO)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO])
@@ -59,9 +59,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       !!user.code_postal &&
       !!user.ville,
     examinateurDone: !!user.numero_cfei || !!user.numero_frei,
-    centresCollectesDone: user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE)
-      ? userCentresCollectes.length > 0
-      : true,
+    ccgsDone: user.roles.includes(UserRoles.CCG) ? userCentresCollectes.length > 0 : true,
     collecteursProDone: user.roles.includes(UserRoles.COLLECTEUR_PRO) ? userCollecteursPro.length > 0 : true,
     etgsDone: user.roles.includes(UserRoles.ETG) ? userEtgs.length > 0 : true,
     svisDone: user.roles.includes(UserRoles.SVI) ? userSvis.length > 0 : true,
@@ -74,7 +72,7 @@ export default function MesInformations() {
     // for accordions
     identityDone,
     examinateurDone,
-    centresCollectesDone,
+    ccgsDone,
     collecteursProDone,
     etgsDone,
     svisDone,
@@ -249,14 +247,14 @@ export default function MesInformations() {
                   </Accordion>
                 )}
               </userFetcher.Form>
-              {user.roles.includes(UserRoles.EXPLOITANT_CENTRE_COLLECTE) && (
+              {user.roles.includes(UserRoles.CCG) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-centre-collecte-data"
-                  accordionLabel="Vous êtes/travaillez pour un Exploitant de Centre de Collecte de Gibier"
-                  addLabel="Ajouter un Centre de Collecte"
-                  selectLabel="Sélectionnez un Centre de Collecte"
-                  done={centresCollectesDone}
-                  entityType={EntityTypes.EXPLOITANT_CENTRE_COLLECTE}
+                  accordionLabel="Vous êtes/travaillez pour un Centre de Collecte de Gibier (CCG)"
+                  addLabel="Ajouter un CCG"
+                  selectLabel="Sélectionnez un CCG"
+                  done={ccgsDone}
+                  entityType={EntityTypes.CCG}
                 />
               )}
               {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (

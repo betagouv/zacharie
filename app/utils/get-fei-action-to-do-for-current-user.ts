@@ -48,7 +48,7 @@
 
 //   export function feiStatusWithDetenteurInitial(fei: FeiWithRelations): FeiStatus {
 //     console.log("CHECK STATUS FEI POUR DETENTEUR INITIAL");
-//     if (!fei.detenteur_initial_user_id) {
+//     if (!fei.premier_detenteur_user_id) {
 //       // ce n'est pas encore au tour du détenteur initial
 //       return FeiStatus.NOT_READY;
 //     }
