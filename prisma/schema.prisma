@@ -179,6 +179,7 @@ model Fei {
   fei_current_owner_user_id                               String?
   fei_current_owner_entity_id                             String?
   fei_current_owner_role                                  UserRoles?
+  fei_current_owner_wants_to_transfer                     Boolean?
   fei_next_owner_user_id                                  String?
   fei_next_owner_entity_id                                String?
   fei_next_owner_role                                     UserRoles?

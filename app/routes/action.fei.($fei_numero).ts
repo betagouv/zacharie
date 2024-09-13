@@ -60,6 +60,11 @@ export async function action(args: ActionFunctionArgs) {
     nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = new Date().toISOString();
     nextFei.fei_next_owner_role = UserRoles.PREMIER_DETENTEUR;
   }
+  if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer) === "true") {
+    nextFei.examinateur_initial_approbation_mise_sur_le_marche = true;
+    nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = new Date().toISOString();
+    nextFei.fei_next_owner_role = UserRoles.PREMIER_DETENTEUR;
+  }
   if (formData.has(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)) {
     nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = formData.get(
       "examinateur_initial_date_approbation_mise_sur_le_marche"
@@ -119,6 +124,10 @@ export async function action(args: ActionFunctionArgs) {
         id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id) as string,
       },
     };
+  }
+  if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer)) {
+    nextFei.fei_current_owner_wants_to_transfer =
+      formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer) === "true" ? true : false;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
     if (!formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {

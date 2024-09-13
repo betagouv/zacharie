@@ -230,8 +230,10 @@ export default function FEIDetenteurInitial() {
       )}
       {needSelectNextUser && (
         <>
-          <hr className="mt-8 -mb-8" />
-          <SelectNextOwner />
+          <hr className="mt-8 " />
+          <div className="md:w-auto pt-4 z-50 flex flex-col md:items-start [&_ul]:md:min-w-96 bg-white">
+            <SelectNextOwner />
+          </div>
         </>
       )}
     </>

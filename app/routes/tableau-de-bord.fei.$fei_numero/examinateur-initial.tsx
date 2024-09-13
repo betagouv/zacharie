@@ -160,7 +160,11 @@ export default function FEIExaminateurInitial() {
           </approbationFetcher.Form>
         </Accordion>
       )}
-      {needSelecteNextUser && <SelectNextOwner />}
+      {needSelecteNextUser && (
+        <div className="md:w-auto mt-8 pt-4 z-50 flex flex-col md:items-start [&_ul]:md:min-w-96 bg-white">
+          <SelectNextOwner />
+        </div>
+      )}
     </>
   );
 }

@@ -9,6 +9,9 @@ import FEIPremierDetenteur from "./premier-detenteur";
 import FEIExaminateurInitial from "./examinateur-initial";
 import ConfirmCurrentOwner from "./confirm-current-owner";
 import CurrentOwner from "./current-owner";
+import SelectNextOwner from "./select-next-owner";
+import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
+import FeiTransfer from "./transfer-current-owner";
 
 export function meta({ params }: MetaArgs) {
   return [
@@ -219,6 +222,7 @@ export default function Fei() {
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 md:p-0 m-4 md:m-0 bg-white [&_.fr-tabs\_\_list]:bg-alt-blue-france ">
+          <FeiTransfer />
           <ConfirmCurrentOwner />
           <CurrentOwner />
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>

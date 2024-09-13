@@ -77,7 +77,6 @@ export default function SelectNextOwner() {
 
   const nextOwnerFetcher = useFetcher({ key: "select-next-owner" });
   const searchUserFetcher = useFetcher({ key: "search-user" });
-  console.log(searchUserFetcher.data);
 
   const showDetenteurInitial = useMemo(() => {
     if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
@@ -143,7 +142,6 @@ export default function SelectNextOwner() {
             preventScrollReset: true, // Prevent scroll reset on submission
           });
         }}
-        className="md:w-auto mt-8 pt-4 z-50 flex flex-col md:items-start [&_ul]:md:min-w-96 bg-white"
       >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <div className="fr-fieldset__element">
