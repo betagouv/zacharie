@@ -8,6 +8,7 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
+import { Input } from "@codegouvfr/react-dsfr/Input";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
@@ -16,7 +17,6 @@ import {
   sortEntitiesRelationsByTypeAndId,
   sortUsersByRoleAndId,
   sortUsersRelationsByRoleAndId,
-  type AllowedRoles,
 } from "~/utils/sort-things-by-type-and-id";
 
 export function meta() {
@@ -92,27 +92,15 @@ export default function MesPartenaires() {
           <div className="bg-white mb-6 md:shadow">
             <div className="p-4 md:p-8 pb-32 md:pb-0">
               <p className="fr-text--regular mb-4">Sélectionnez vos différents partenaires</p>
-              {/* <AccordionUser
-                fetcherKey="mes-partenaires-detenteur-initial-data"
-                accordionLabel="Vos Premiers Détenteurs"
-                addLabel="Ajouter un Premier Détenteur"
-                selectLabel="Sélectionnez un Premier Détenteur"
-                userType={UserRoles.PREMIER_DETENTEUR}
-              />
-              <AccordionUser
-                fetcherKey="mes-partenaires-examinateur-initial-data"
-                accordionLabel="Vos Examinateurs Initiaux"
-                addLabel="Ajouter un Examinateur Initial"
-                selectLabel="Sélectionnez un Examinateur Initial"
-                userType={UserRoles.EXAMINATEUR_INITIAL}
-              /> */}
               <AccordionEntreprise
-                fetcherKey="mes-partenaires-centre-collecte-data"
-                accordionLabel="Vos Centre de Collecte de Gibier (CCG)"
-                addLabel="Ajouter un CCG"
-                selectLabel="Sélectionnez un CCG"
+                fetcherKey="onboarding-etape-2-ccg-data"
+                accordionLabel="Vous êtes/travaillez pour un Centre de Collecte de Gibier (CCG)"
+                addLabel="Ajouter un Centre de Collecte de Gibier (CCG)"
+                selectLabel="Sélectionnez un Centre de Collecte de Gibier (CCG)"
                 entityType={EntityTypes.CCG}
-              />
+              >
+                <InputCCG />
+              </AccordionEntreprise>
               <AccordionEntreprise
                 fetcherKey="mes-partenaires-collecteur-pro-data"
                 accordionLabel="Vos Collecteurs Professionnel"
@@ -174,6 +162,7 @@ interface AccordionEntrepriseProps {
   selectLabel: string;
   accordionLabel: string;
   fetcherKey: string;
+  children?: React.ReactNode;
 }
 
 function AccordionEntreprise({
@@ -182,6 +171,7 @@ function AccordionEntreprise({
   selectLabel,
   accordionLabel,
   fetcherKey,
+  children,
 }: AccordionEntrepriseProps) {
   const { user, allEntitiesByTypeAndId, userEntitiesByTypeAndId } = useLoaderData<typeof loader>();
 
@@ -238,139 +228,43 @@ function AccordionEntreprise({
             </div>
           );
         })}
-      <userEntityFetcher.Form
-        id={fetcherKey}
-        className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
-        method="POST"
-        action={`/action/user-entity/${user.id}`}
-        preventScrollReset
-      >
-        <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
-        <input type="hidden" name="_action" value="create" />
-        <input
-          type="hidden"
-          name={Prisma.EntityRelationsScalarFieldEnum.relation}
-          value={EntityRelationType.WORKING_WITH}
-        />
-        <Select
-          label={addLabel}
-          hint={selectLabel}
-          className="!mb-0 grow"
-          nativeSelectProps={{
-            name: Prisma.EntityRelationsScalarFieldEnum.entity_id,
-          }}
+      {children ?? (
+        <userEntityFetcher.Form
+          id={fetcherKey}
+          className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
+          method="POST"
+          action={`/action/user-entity/${user.id}`}
+          preventScrollReset
         >
-          <option value="">{selectLabel}</option>
-          {remainingEntities.map((entity) => {
-            return (
-              <option key={entity.id} value={entity.id}>
-                {entity.raison_sociale} - {entity.code_postal} {entity.ville}
-              </option>
-            );
-          })}
-        </Select>
-        <Button type="submit" disabled={!remainingEntities.length}>
-          Ajouter
-        </Button>
-      </userEntityFetcher.Form>
-    </Accordion>
-  );
-}
-
-interface AccordionUserProps {
-  userType: AllowedRoles;
-  addLabel: string;
-  selectLabel: string;
-  accordionLabel: string;
-  fetcherKey: string;
-}
-
-function AccordionUser({ userType, addLabel, selectLabel, accordionLabel, fetcherKey }: AccordionUserProps) {
-  const { user, allUsersByRole, userRelatedUsersByRoleAndId } = useLoaderData<typeof loader>();
-
-  const userRelationsFetcher = useFetcher({ key: fetcherKey });
-  const usersRelatedUsers = Object.values(userRelatedUsersByRoleAndId[userType]);
-  const remainingUsers = Object.values(allUsersByRole[userType]).filter(
-    (entity) => !userRelatedUsersByRoleAndId[userType][entity.id]
-  );
-
-  return (
-    <Accordion
-      titleAs="h2"
-      defaultExpanded={!usersRelatedUsers.length}
-      label={
-        <div className="inline-flex items-center justify-between md:justify-start w-full gap-4">
-          {accordionLabel}
-          <NumberTag number={usersRelatedUsers.length} />
-        </div>
-      }
-    >
-      {usersRelatedUsers.map((relatedUser) => {
-        return (
-          <div key={relatedUser.id} className="fr-fieldset__element">
-            <Notice
-              className="fr-fieldset__element [&_p.fr-notice__title]:before:hidden fr-text-default--grey fr-background-contrast--grey"
-              style={{
-                boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
-              }}
-              isClosable
-              onClose={() => {
-                userRelationsFetcher.submit(
-                  {
-                    owner_id: user.id,
-                    related_id: relatedUser.id,
-                    relation: userType,
-                    _action: "delete",
-                  },
-                  {
-                    method: "POST",
-                    action: `/action/user-relation/${user.id}`,
-                    preventScrollReset: true,
-                  }
-                );
-              }}
-              title={
-                <>
-                  {relatedUser.prenom} {relatedUser.nom_de_famille}
-                  <br />
-                  {relatedUser.code_postal} {relatedUser.ville}
-                </>
-              }
-            />
-          </div>
-        );
-      })}
-      <userRelationsFetcher.Form
-        id={fetcherKey}
-        className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
-        method="POST"
-        action={`/action/user-relation/${user.id}`}
-        preventScrollReset
-      >
-        <input type="hidden" name={Prisma.UserRelationsScalarFieldEnum.owner_id} value={user.id} />
-        <input type="hidden" name="_action" value="create" />
-        <input type="hidden" name={Prisma.UserRelationsScalarFieldEnum.relation} value={userType} />
-        <Select
-          label={addLabel}
-          hint={selectLabel}
-          className="!mb-0 grow"
-          nativeSelectProps={{
-            name: Prisma.UserRelationsScalarFieldEnum.related_id,
-          }}
-        >
-          <option value="">{selectLabel}</option>
-          {remainingUsers.map((relatedUser) => {
-            return (
-              <option key={relatedUser.id} value={relatedUser.id}>
-                {relatedUser.prenom} {relatedUser.nom_de_famille} - {relatedUser.code_postal} {relatedUser.ville}
-              </option>
-            );
-          })}
-        </Select>
-        <Button type="submit" disabled={!remainingUsers.length}>
-          Ajouter
-        </Button>
-      </userRelationsFetcher.Form>
+          <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
+          <input type="hidden" name="_action" value="create" />
+          <input
+            type="hidden"
+            name={Prisma.EntityRelationsScalarFieldEnum.relation}
+            value={EntityRelationType.WORKING_WITH}
+          />
+          <Select
+            label={addLabel}
+            hint={selectLabel}
+            className="!mb-0 grow"
+            nativeSelectProps={{
+              name: Prisma.EntityRelationsScalarFieldEnum.entity_id,
+            }}
+          >
+            <option value="">{selectLabel}</option>
+            {remainingEntities.map((entity) => {
+              return (
+                <option key={entity.id} value={entity.id}>
+                  {entity.raison_sociale} - {entity.code_postal} {entity.ville}
+                </option>
+              );
+            })}
+          </Select>
+          <Button type="submit" disabled={!remainingEntities.length}>
+            Ajouter
+          </Button>
+        </userEntityFetcher.Form>
+      )}
     </Accordion>
   );
 }
@@ -384,4 +278,35 @@ function NumberTag({ number }: { number: number }) {
     );
   }
   return null;
+}
+
+function InputCCG() {
+  const { user } = useLoaderData<typeof loader>();
+  const userCCGFetcher = useFetcher({ key: "ccg-data" });
+  return (
+    <userCCGFetcher.Form
+      method="POST"
+      className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
+      action={`/action/user-entity/${user.id}`}
+    >
+      <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
+      <input type="hidden" name="_action" value="create" />
+      <input
+        type="hidden"
+        name={Prisma.EntityRelationsScalarFieldEnum.relation}
+        value={EntityRelationType.WORKING_WITH}
+      />
+      <input type="hidden" name={Prisma.EntityScalarFieldEnum.type} value={EntityTypes.CCG} />
+      <Input
+        label="Numéro de DD(ec)PP du Centre de Collecte de Gibier (CCG)"
+        className="!mb-0"
+        nativeInputProps={{
+          type: "text",
+          required: true,
+          name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+        }}
+      />
+      <Button type="submit">Ajouter</Button>
+    </userCCGFetcher.Form>
+  );
 }
