@@ -7,6 +7,7 @@ import {
   clearUpOldCaches,
   SkipWaitHandler,
   type DefaultFetchHandler,
+  isActionRequest,
 } from "@remix-pwa/sw";
 
 export {};
@@ -17,9 +18,7 @@ self.addEventListener("install", (event) => {
   console.log("Service worker installed");
 
   event.waitUntil(
-    assetCache.preCacheUrls(
-      self.__workerManifest.assets.filter((url) => !url.endsWith(".map") && !url.endsWith(".js"))
-    )
+    assetCache.preCacheUrls(self.__workerManifest.assets.filter((url) => !url.endsWith(".map") && !url.endsWith(".js")))
   );
 });
 
@@ -37,6 +36,11 @@ export const defaultFetchHandler: DefaultFetchHandler = async ({ context }) => {
     return dataCache.handleRequest(request);
   }
 
+  if (isActionRequest(request)) {
+    console.log("ACtiON REQUEST IN WORKER");
+    return fetch(request);
+  }
+
   if (self.__workerManifest.assets.includes(url.pathname)) {
     return assetCache.handleRequest(request);
   }
@@ -44,7 +48,8 @@ export const defaultFetchHandler: DefaultFetchHandler = async ({ context }) => {
   return fetch(request);
 };
 
-const version = "v2";
+const version = "v3";
+console.log("VERSION SW", version);
 
 // HTML cache
 const documentCache = new EnhancedCache("document-cache", {
@@ -82,18 +87,13 @@ const messageHandler = new NavigationHandler({
 const skipHandler = new SkipWaitHandler();
 
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
-  event.waitUntil(
-    Promise.all([messageHandler.handleMessage(event), skipHandler.handleMessage(event)])
-  );
+  event.waitUntil(Promise.all([messageHandler.handleMessage(event), skipHandler.handleMessage(event)]));
 });
 
 self.addEventListener("activate", (event) => {
   console.log("Service worker activated");
 
   event.waitUntil(
-    Promise.all([
-      clearUpOldCaches(["document-cache", "asset-cache", "data-cache"], version),
-      self.clients.claim(),
-    ])
+    Promise.all([clearUpOldCaches(["document-cache", "asset-cache", "data-cache"], version), self.clients.claim()])
   );
 });

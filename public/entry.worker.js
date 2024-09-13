@@ -110,6 +110,10 @@ function isLoaderRequest$1(e) {
   const t = new URL(e.url);
   return isMethod$1(e, ["get"]) && t.searchParams.get("_data");
 }
+function isActionRequest$1(e) {
+  const t = new URL(e.url);
+  return isMethod$1(e, ["post", "delete", "put", "patch"]) && t.searchParams.get("_data");
+}
 function isDocumentRequest(e) {
   return isMethod$1(e, ["get"]) && "navigate" === e.mode;
 }
@@ -4833,9 +4837,7 @@ class EnhancedCache {
 self.addEventListener("install", (event) => {
   console.log("Service worker installed");
   event.waitUntil(
-    assetCache.preCacheUrls(
-      self.__workerManifest.assets.filter((url) => !url.endsWith(".map") && !url.endsWith(".js"))
-    )
+    assetCache.preCacheUrls(self.__workerManifest.assets.filter((url) => !url.endsWith(".map") && !url.endsWith(".js")))
   );
 });
 const defaultFetchHandler = async ({ context }) => {
@@ -4847,12 +4849,17 @@ const defaultFetchHandler = async ({ context }) => {
   if (isLoaderRequest$1(request)) {
     return dataCache.handleRequest(request);
   }
+  if (isActionRequest$1(request)) {
+    console.log("ACtiON REQUEST IN WORKER");
+    return fetch(request);
+  }
   if (self.__workerManifest.assets.includes(url.pathname)) {
     return assetCache.handleRequest(request);
   }
   return fetch(request);
 };
-const version = "v2";
+const version = "v3";
+console.log("VERSION SW", version);
 const documentCache = new EnhancedCache("document-cache", {
   version,
   strategy: "NetworkFirst",
@@ -4882,17 +4889,12 @@ const messageHandler = new NavigationHandler({
 });
 const skipHandler = new SkipWaitHandler();
 self.addEventListener("message", (event) => {
-  event.waitUntil(
-    Promise.all([messageHandler.handleMessage(event), skipHandler.handleMessage(event)])
-  );
+  event.waitUntil(Promise.all([messageHandler.handleMessage(event), skipHandler.handleMessage(event)]));
 });
 self.addEventListener("activate", (event) => {
   console.log("Service worker activated");
   event.waitUntil(
-    Promise.all([
-      clearUpOldCaches(["document-cache", "asset-cache", "data-cache"], version),
-      self.clients.claim()
-    ])
+    Promise.all([clearUpOldCaches(["document-cache", "asset-cache", "data-cache"], version), self.clients.claim()])
   );
 });
 const entryWorker = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({

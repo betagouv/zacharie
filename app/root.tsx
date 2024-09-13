@@ -25,6 +25,7 @@ import dsfrAppleTouchIcon from "@codegouvfr/react-dsfr/favicon/apple-touch-icon.
 import RootDisplay from "./components/RootDisplay";
 import NotFound from "./routes/404";
 import UnexpectedError from "./components/UnexpectedError";
+import { useState } from "react";
 
 export const meta: MetaFunction = () => {
   return [
@@ -100,20 +101,27 @@ export const ErrorBoundary = () => {
 
 export default function App() {
   const { ENV, honeypotInputProps } = useLoaderData<typeof loader>();
+  const [isOffline, setIsOffline] = useState(false);
   useSWEffect();
   useNetworkConnectivity({
     onOnline: () => {
-      alert("Vous êtes en ligne");
+      setIsOffline(false);
     },
 
     onOffline: () => {
-      alert("Vous êtes en zone blanche");
+      setIsOffline(true);
     },
   });
   const { swUpdate } = usePWAManager();
 
   return (
     <>
+      {isOffline && (
+        <p className="bg-action-high-blue-france text-white text-sm px-4 py-2">
+          Vous n'avez pas internet. Les FEI que vous créez/modifiez actuellement seront synchronisées automatiquement
+          lorsque vous aurez retrouvé une connection.
+        </p>
+      )}
       {swUpdate.isUpdateAvailable && (
         <div className="bg-background text-foreground fixed bottom-6 right-6">
           <p>Nouvelle version disponible</p>
