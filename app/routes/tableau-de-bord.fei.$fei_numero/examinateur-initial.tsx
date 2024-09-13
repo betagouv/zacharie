@@ -11,6 +11,7 @@ import { Button } from "@codegouvfr/react-dsfr/Button";
 import dayjs from "dayjs";
 import SelectNextOwner from "./select-next-owner";
 import InputVille from "~/components/InputVille";
+import CarcassesExaminateur from "./carcasses-examinateur";
 
 export default function FEIExaminateurInitial() {
   const { fei, user } = useLoaderData<typeof loader>();
@@ -108,7 +109,7 @@ export default function FEIExaminateurInitial() {
         <UserNotEditable user={fei.FeiExaminateurInitialUser} withCfei />
       </Accordion>
       <Accordion titleAs="h3" label={`Carcasses (${fei.Carcasses.length})`}>
-        <p>TODO</p>
+        <CarcassesExaminateur />
       </Accordion>
       {fei.FeiExaminateurInitialUser && (
         <Accordion titleAs="h3" label="Approbation de mise sur le marché" defaultExpanded>

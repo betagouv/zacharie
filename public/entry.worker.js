@@ -110,10 +110,6 @@ function isLoaderRequest$1(e) {
   const t = new URL(e.url);
   return isMethod$1(e, ["get"]) && t.searchParams.get("_data");
 }
-function isActionRequest$1(e) {
-  const t = new URL(e.url);
-  return isMethod$1(e, ["post", "delete", "put", "patch"]) && t.searchParams.get("_data");
-}
 function isDocumentRequest(e) {
   return isMethod$1(e, ["get"]) && "navigate" === e.mode;
 }
@@ -4849,27 +4845,23 @@ const defaultFetchHandler = async ({ context }) => {
   if (isLoaderRequest$1(request)) {
     return dataCache.handleRequest(request);
   }
-  if (isActionRequest$1(request)) {
-    console.log("ACtiON REQUEST IN WORKER");
-    return fetch(request);
-  }
   if (self.__workerManifest.assets.includes(url.pathname)) {
     return assetCache.handleRequest(request);
   }
   return fetch(request);
 };
-const version = "v3";
+const version = "v4";
 console.log("VERSION SW", version);
 const documentCache = new EnhancedCache("document-cache", {
   version,
-  strategy: "NetworkFirst",
+  strategy: "CacheFirst",
   strategyOptions: {
     maxEntries: 64
   }
 });
 const assetCache = new EnhancedCache("asset-cache", {
   version,
-  strategy: "NetworkFirst",
+  strategy: "CacheFirst",
   strategyOptions: {
     maxAgeSeconds: 60 * 60 * 24 * 90,
     // 90 days
@@ -5341,18 +5333,6 @@ const routes = {
     hasWorkerAction: false,
     module: route5
   },
-  "routes/action.carcasse.{$numero_bracelet}": {
-    id: "routes/action.carcasse.{$numero_bracelet}",
-    parentId: "root",
-    path: "action/carcasse/{$numero_bracelet}",
-    index: void 0,
-    caseSensitive: void 0,
-    hasLoader: false,
-    hasAction: true,
-    hasWorkerLoader: false,
-    hasWorkerAction: false,
-    module: route6
-  },
   "routes/tableau-de-bord.mon-profil._index": {
     id: "routes/tableau-de-bord.mon-profil._index",
     parentId: "routes/tableau-de-bord",
@@ -5361,6 +5341,18 @@ const routes = {
     caseSensitive: void 0,
     hasLoader: true,
     hasAction: false,
+    hasWorkerLoader: false,
+    hasWorkerAction: false,
+    module: route6
+  },
+  "routes/action.carcasse.$numero_bracelet": {
+    id: "routes/action.carcasse.$numero_bracelet",
+    parentId: "root",
+    path: "action/carcasse/:numero_bracelet",
+    index: void 0,
+    caseSensitive: void 0,
+    hasLoader: false,
+    hasAction: true,
     hasWorkerLoader: false,
     hasWorkerAction: false,
     module: route7

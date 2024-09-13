@@ -9,23 +9,24 @@ import {
   useLoaderData,
   useRouteError,
 } from "@remix-run/react";
-import { useNetworkConnectivity, usePWAManager } from "@remix-pwa/client";
-import { ManifestLink, useSWEffect, sendSkipWaitingMessage } from "@remix-pwa/sw";
+import { ManifestLink, useSWEffect } from "@remix-pwa/sw";
 import { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { honeypot } from "~/services/honeypot.server";
 import { HoneypotProvider } from "remix-utils/honeypot/react";
+import NotFound from "~/routes/404";
+import RootDisplay from "~/components/RootDisplay";
+import UnexpectedError from "~/components/UnexpectedError";
+import OfflineMode from "~/components/OfflineMode";
+import NouvelleVersion from "~/components/NouvelleVersion";
 
-import "./tailwind.css";
+import "~/tailwind.css";
 import dsfrCss from "@codegouvfr/react-dsfr/main.css?url";
 import dsfrColorCss from "@codegouvfr/react-dsfr/dsfr/utility/colors/colors.min.css?url";
 import dsfrWebManifest from "@codegouvfr/react-dsfr/favicon/manifest.webmanifest?url";
 import dsfrFavicon from "@codegouvfr/react-dsfr/favicon/favicon.ico?url";
 import dsfrFaviconSvg from "@codegouvfr/react-dsfr/favicon/favicon.svg?url";
 import dsfrAppleTouchIcon from "@codegouvfr/react-dsfr/favicon/apple-touch-icon.png?url";
-import RootDisplay from "./components/RootDisplay";
-import NotFound from "./routes/404";
-import UnexpectedError from "./components/UnexpectedError";
-import { useState } from "react";
+import InstallApp from "./components/InstallApp";
 
 export const meta: MetaFunction = () => {
   return [
@@ -101,40 +102,13 @@ export const ErrorBoundary = () => {
 
 export default function App() {
   const { ENV, honeypotInputProps } = useLoaderData<typeof loader>();
-  const [isOffline, setIsOffline] = useState(false);
   useSWEffect();
-  useNetworkConnectivity({
-    onOnline: () => {
-      setIsOffline(false);
-    },
-
-    onOffline: () => {
-      setIsOffline(true);
-    },
-  });
-  const { swUpdate } = usePWAManager();
 
   return (
     <>
-      {isOffline && (
-        <p className="bg-action-high-blue-france text-white text-sm px-4 py-2">
-          Vous n'avez pas internet. Les FEI que vous créez/modifiez actuellement seront synchronisées automatiquement
-          lorsque vous aurez retrouvé une connection.
-        </p>
-      )}
-      {/* {swUpdate.isUpdateAvailable && ( */}
-      <div className="bg-background text-foreground fixed bottom-6 right-6">
-        <p>Nouvelle version disponible</p>
-        <button
-          onClick={() => {
-            sendSkipWaitingMessage(swUpdate.newWorker!);
-            window.location.reload();
-          }}
-        >
-          Mettre à jour
-        </button>
-      </div>
-      {/* )} */}
+      <OfflineMode />
+      <NouvelleVersion />
+      <InstallApp />
       <HoneypotProvider {...honeypotInputProps}>
         <Outlet />
       </HoneypotProvider>

@@ -1,7 +1,6 @@
-import { useState, useCallback, type ChangeEvent, useEffect, useRef } from "react";
-import { useDebounce } from "@uidotdev/usehooks";
+import { useState, useCallback, useEffect } from "react";
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { Form, useFetcher, useLoaderData } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";

@@ -7,7 +7,6 @@ import {
   clearUpOldCaches,
   SkipWaitHandler,
   type DefaultFetchHandler,
-  isActionRequest,
 } from "@remix-pwa/sw";
 
 export {};
@@ -36,11 +35,6 @@ export const defaultFetchHandler: DefaultFetchHandler = async ({ context }) => {
     return dataCache.handleRequest(request);
   }
 
-  if (isActionRequest(request)) {
-    console.log("ACtiON REQUEST IN WORKER");
-    return fetch(request);
-  }
-
   if (self.__workerManifest.assets.includes(url.pathname)) {
     return assetCache.handleRequest(request);
   }
@@ -48,13 +42,13 @@ export const defaultFetchHandler: DefaultFetchHandler = async ({ context }) => {
   return fetch(request);
 };
 
-const version = "v3";
+const version = "v4";
 console.log("VERSION SW", version);
 
 // HTML cache
 const documentCache = new EnhancedCache("document-cache", {
   version,
-  strategy: "NetworkFirst",
+  strategy: "CacheFirst",
   strategyOptions: {
     maxEntries: 64,
   },
@@ -63,7 +57,7 @@ const documentCache = new EnhancedCache("document-cache", {
 // CSS, JS, and other assets cache
 const assetCache = new EnhancedCache("asset-cache", {
   version,
-  strategy: "NetworkFirst",
+  strategy: "CacheFirst",
   strategyOptions: {
     maxAgeSeconds: 60 * 60 * 24 * 90, // 90 days
     maxEntries: 100,

@@ -232,10 +232,10 @@ model Carcasse {
   id                                            String          @id @default(uuid())
   fei_numero                                    String
   numero_bracelet                               String          @unique
-  heure_mise_a_mort                             DateTime        @db.Time
-  heure_evisceration                            DateTime        @db.Time
-  espece                                        String // Sanglier, Cerf, etc.
-  categorie                                     String // Laie, MArcassin, etc.
+  heure_mise_a_mort                             String?
+  heure_evisceration                            String?
+  espece                                        String? // Sanglier, Cerf, etc.
+  categorie                                     String? // Laie, MArcassin, etc.
   examinateur_carcasse_sans_anomalie            Boolean?
   examinateur_anomalies_carcasse                String[]
   examinateur_abats_sans_anomalie               Boolean?

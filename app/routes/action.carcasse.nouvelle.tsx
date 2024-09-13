@@ -29,36 +29,44 @@ export async function action(args: ActionFunctionArgs) {
   if (!numero_bracelet) {
     return json({ ok: false, data: null, error: "Le numéro de bracelet est obligatoire" }, { status: 400 });
   }
-  const heure_evisceration = formData.get(Prisma.CarcasseScalarFieldEnum.heure_evisceration) as string;
-  if (!heure_evisceration) {
-    return json({ ok: false, data: null, error: "L'heure d'éviscération est obligatoire" }, { status: 400 });
+  const existingCarcasse = await prisma.carcasse.findUnique({
+    where: {
+      numero_bracelet,
+    },
+  });
+  if (existingCarcasse) {
+    return json({ ok: false, data: null, error: "Le numéro de bracelet est déjà pris" }, { status: 400 });
   }
-  const heure_mise_a_mort = formData.get(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort) as string;
-  if (!heure_mise_a_mort) {
-    return json({ ok: false, data: null, error: "L'heure de mise à mort est obligatoire" }, { status: 400 });
-  }
-  const espece = formData.get(Prisma.CarcasseScalarFieldEnum.espece) as string;
-  if (!espece) {
-    return json({ ok: false, data: null, error: "L'espèce est obligatoire" }, { status: 400 });
-  }
-  const categorie = formData.get(Prisma.CarcasseScalarFieldEnum.categorie) as string;
-  if (!categorie) {
-    return json({ ok: false, data: null, error: "La categorie est obligatoire" }, { status: 400 });
-  }
+  // const heure_evisceration = formData.get(Prisma.CarcasseScalarFieldEnum.heure_evisceration) as string;
+  // if (!heure_evisceration) {
+  //   return json({ ok: false, data: null, error: "L'heure d'éviscération est obligatoire" }, { status: 400 });
+  // }
+  // const heure_mise_a_mort = formData.get(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort) as string;
+  // if (!heure_mise_a_mort) {
+  //   return json({ ok: false, data: null, error: "L'heure de mise à mort est obligatoire" }, { status: 400 });
+  // }
+  // const espece = formData.get(Prisma.CarcasseScalarFieldEnum.espece) as string;
+  // if (!espece) {
+  //   return json({ ok: false, data: null, error: "L'espèce est obligatoire" }, { status: 400 });
+  // }
+  // const categorie = formData.get(Prisma.CarcasseScalarFieldEnum.categorie) as string;
+  // if (!categorie) {
+  //   return json({ ok: false, data: null, error: "La categorie est obligatoire" }, { status: 400 });
+  // }
   const newCarcasse = await prisma.carcasse.create({
     data: {
       fei_numero,
       numero_bracelet,
-      heure_evisceration,
-      heure_mise_a_mort,
-      espece,
-      categorie,
+      // heure_evisceration,
+      // heure_mise_a_mort,
+      // espece,
+      // categorie,
     },
   });
 
-  return redirect(`/tableau-de-bord/fei/${fei.numero}/carcasse-examinateur/${newCarcasse.numero_bracelet}`);
+  return json({ ok: true, data: newCarcasse });
 }
 
-export default function NouvelleCarcasse() {
+export default function NouvelleCarcasseAction() {
   return null;
 }

@@ -34,7 +34,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       FeiCurrentEntity: true,
       FeiCurrentUser: true,
       FeiNextEntity: true,
-      Carcasses: true,
+      Carcasses: {
+        orderBy: {
+          numero_bracelet: "asc",
+        },
+      },
       FeiDetenteurInitialUser: true,
       FeiExaminateurInitialUser: true,
       FeiCreatedByUser: true,
