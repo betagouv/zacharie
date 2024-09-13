@@ -122,19 +122,19 @@ export default function App() {
           lorsque vous aurez retrouvé une connection.
         </p>
       )}
-      {swUpdate.isUpdateAvailable && (
-        <div className="bg-background text-foreground fixed bottom-6 right-6">
-          <p>Nouvelle version disponible</p>
-          <button
-            onClick={() => {
-              sendSkipWaitingMessage(swUpdate.newWorker!);
-              window.location.reload();
-            }}
-          >
-            Mettre à jour
-          </button>
-        </div>
-      )}
+      {/* {swUpdate.isUpdateAvailable && ( */}
+      <div className="bg-background text-foreground fixed bottom-6 right-6">
+        <p>Nouvelle version disponible</p>
+        <button
+          onClick={() => {
+            sendSkipWaitingMessage(swUpdate.newWorker!);
+            window.location.reload();
+          }}
+        >
+          Mettre à jour
+        </button>
+      </div>
+      {/* )} */}
       <HoneypotProvider {...honeypotInputProps}>
         <Outlet />
       </HoneypotProvider>
