@@ -31,7 +31,7 @@ export const meta: MetaFunction = () => {
     { title: "Zacharie | Ministère de l'Agriculture" },
     {
       name: "og:title",
-      content: "Zacharie | Garantir une meilleure qualité sanitaires des viandes de gibier sauvage mises sur le marché",
+      content: "Zacharie | FEI | Ministère de l'Agriculture",
     },
     {
       name: "description",
