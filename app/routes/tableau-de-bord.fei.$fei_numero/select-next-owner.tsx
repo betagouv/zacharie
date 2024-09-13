@@ -1,5 +1,7 @@
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
+import { Input } from "@codegouvfr/react-dsfr/Input";
+import { Button } from "@codegouvfr/react-dsfr/Button";
 import { loader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { UserRoles, Entity, User, Prisma } from "@prisma/client";
@@ -73,7 +75,9 @@ export default function SelectNextOwner() {
     return undefined;
   }, [nextOwners, fei.fei_next_owner_user_id, fei.fei_next_owner_entity_id, nextOwnerIsUser, nextOwnerIsEntity]);
 
-  const fetcher = useFetcher({ key: "select-next-owner" });
+  const nextOwnerFetcher = useFetcher({ key: "select-next-owner" });
+  const searchUserFetcher = useFetcher({ key: "search-user" });
+  console.log(searchUserFetcher.data);
 
   const showDetenteurInitial = useMemo(() => {
     if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
@@ -126,14 +130,14 @@ export default function SelectNextOwner() {
 
   return (
     <>
-      <fetcher.Form
+      <nextOwnerFetcher.Form
         id="select-next-owner"
         preventScrollReset
         method="POST"
         action={`/action/fei/${fei.numero}`}
         onChange={(event) => {
           const formData = new FormData(event.currentTarget);
-          fetcher.submit(formData, {
+          nextOwnerFetcher.submit(formData, {
             method: "POST",
             action: `/action/fei/${fei.numero}`,
             preventScrollReset: true, // Prevent scroll reset on submission
@@ -202,7 +206,37 @@ export default function SelectNextOwner() {
             </Select>
           </div>
         )}
-      </fetcher.Form>
+      </nextOwnerFetcher.Form>
+      {nextRole === UserRoles.PREMIER_DETENTEUR && !fei.fei_next_owner_user_id && (
+        <>
+          <searchUserFetcher.Form
+            className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
+            method="POST"
+            action="/action/trouver-premier-detenteur"
+          >
+            <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
+            <Input
+              label="...ou saisissez l'email du Premier Détenteur si vous ne le trouvez pas"
+              className="!mb-0"
+              hintText="Nous l'ajouterons automatiquement à la liste de vos partenaires pour la prochaine fois"
+              nativeInputProps={{
+                id: Prisma.UserScalarFieldEnum.email,
+                name: Prisma.UserScalarFieldEnum.email,
+                autoComplete: "off",
+              }}
+            />
+            <Button type="submit">Envoyer</Button>
+          </searchUserFetcher.Form>
+          {/* @ts-expect-error no type on fetcher action data */}
+          {searchUserFetcher.data?.error === "L'utilisateur n'existe pas" && (
+            <Alert
+              severity="error"
+              title="Nous ne connaissons pas cet email"
+              description="Vérifiez avec le Premier Détenteur s'il est avec vous ?"
+            />
+          )}
+        </>
+      )}
 
       {(fei.fei_next_owner_user_id || fei.fei_next_owner_entity_id) && (
         <Alert

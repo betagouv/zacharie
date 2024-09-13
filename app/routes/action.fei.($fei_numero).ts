@@ -58,12 +58,12 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche) === "true") {
     nextFei.examinateur_initial_approbation_mise_sur_le_marche = true;
     nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = new Date().toISOString();
+    nextFei.fei_next_owner_role = UserRoles.PREMIER_DETENTEUR;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)) {
     nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = formData.get(
       "examinateur_initial_date_approbation_mise_sur_le_marche"
     ) as string;
-    nextFei.fei_next_owner_role = UserRoles.PREMIER_DETENTEUR;
   }
   /*
   *
