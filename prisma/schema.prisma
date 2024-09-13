@@ -99,6 +99,7 @@ model Entity {
   EntityRelatedWithUser  EntityRelations[] @relation("EntityRelatedWithUser")
   FeiCurrentEntity       Fei[]             @relation("FeiCurrentEntity")
   FeiNextEntity          Fei[]             @relation("FeiNextEntity")
+  FeiDepotEntity         Fei[]             @relation("FeiDepotEntity")
   FeiEtgEntity           Fei[]             @relation("FeiEtgEntity")
   FeiSviEntity           Fei[]             @relation("FeiSviEntity")
   FeiIntermediaireEntity Intermediaire[]   @relation("FeiIntermediaireEntity")
@@ -188,7 +189,9 @@ model Fei {
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
   premier_detenteur_user_id                               String?
-  premier_detenteur_date_depot_ccg                        DateTime?
+  premier_detenteur_date_depot_quelque_part               DateTime?
+  premier_detenteur_depot_entity_id                       String?
+  premier_detenteur_depot_sauvage                         String?
   etg_entity_id                                           String?
   etg_user_id                                             String?
   etg_received_at                                         DateTime?
@@ -207,6 +210,7 @@ model Fei {
   FeiCreatedByUser                                        User            @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id])
   FeiDetenteurInitialUser                                 User?           @relation("FeiDetenteurInitialUser", fields: [premier_detenteur_user_id], references: [id])
   FeiExaminateurInitialUser                               User?           @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id])
+  FeiDepotEntity                                          Entity?         @relation("FeiDepotEntity", fields: [premier_detenteur_depot_entity_id], references: [id])
   FeiEtgEntity                                            Entity?         @relation("FeiEtgEntity", fields: [etg_entity_id], references: [id])
   FeiEtgUser                                              User?           @relation("FeiEtgUser", fields: [etg_user_id], references: [id])
   FeiSviEntity                                            Entity?         @relation("FeiSviEntity", fields: [svi_entity_id], references: [id])

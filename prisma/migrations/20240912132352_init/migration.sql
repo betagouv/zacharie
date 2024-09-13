@@ -1,5 +1,13 @@
 -- CreateEnum
-CREATE TYPE "UserRoles" AS ENUM ('ADMIN', 'EXAMINATEUR_INITIAL', 'PREMIER_DETENTEUR', 'CCG', 'COLLECTEUR_PRO', 'ETG', 'SVI');
+CREATE TYPE "UserRoles" AS ENUM (
+    'ADMIN',
+    'EXAMINATEUR_INITIAL',
+    'PREMIER_DETENTEUR',
+    'CCG',
+    'COLLECTEUR_PRO',
+    'ETG',
+    'SVI'
+);
 
 -- CreateEnum
 CREATE TYPE "UserNotifications" AS ENUM ('EMAIL', 'SMS', 'PUSH');
@@ -26,17 +34,16 @@ CREATE TABLE "User" (
     "addresse_ligne_2" TEXT,
     "code_postal" TEXT,
     "ville" TEXT,
-    "roles" "UserRoles"[],
+    "roles" "UserRoles" [],
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "last_login_at" TIMESTAMP(3),
     "last_seen_at" TIMESTAMP(3),
     "deleted_at" TIMESTAMP(3),
     "onboarded_at" TIMESTAMP(3),
-    "notifications" "UserNotifications"[],
-    "web_push_tokens" TEXT[],
+    "notifications" "UserNotifications" [],
+    "web_push_tokens" TEXT [],
     "prefilled" BOOLEAN NOT NULL DEFAULT false,
-
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
@@ -56,7 +63,6 @@ CREATE TABLE "Entity" (
     "deleted_at" TIMESTAMP(3),
     "onboarded_at" TIMESTAMP(3),
     "prefilled" BOOLEAN NOT NULL DEFAULT false,
-
     CONSTRAINT "Entity_pkey" PRIMARY KEY ("id")
 );
 
@@ -68,7 +74,6 @@ CREATE TABLE "Password" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
-
     CONSTRAINT "Password_pkey" PRIMARY KEY ("id")
 );
 
@@ -81,7 +86,6 @@ CREATE TABLE "UserRelations" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
-
     CONSTRAINT "UserRelations_pkey" PRIMARY KEY ("id")
 );
 
@@ -94,7 +98,6 @@ CREATE TABLE "EntityRelations" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
-
     CONSTRAINT "EntityRelations_pkey" PRIMARY KEY ("id")
 );
 
@@ -106,7 +109,6 @@ CREATE TABLE "Logs" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
-
     CONSTRAINT "Logs_pkey" PRIMARY KEY ("id")
 );
 
@@ -145,7 +147,6 @@ CREATE TABLE "Fei" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
-
     CONSTRAINT "Fei_pkey" PRIMARY KEY ("id")
 );
 
@@ -159,9 +160,9 @@ CREATE TABLE "Carcasse" (
     "espece" TEXT NOT NULL,
     "categorie" TEXT NOT NULL,
     "examinateur_carcasse_sans_anomalie" BOOLEAN,
-    "examinateur_anomalies_carcasse" TEXT[],
+    "examinateur_anomalies_carcasse" TEXT [],
     "examinateur_abats_sans_anomalie" BOOLEAN,
-    "examinateur_anomalies_abats" TEXT[],
+    "examinateur_anomalies_abats" TEXT [],
     "examinateur_commentaire" TEXT,
     "examinateur_refus" BOOLEAN,
     "examinateur_signed_at" TIMESTAMP(3),
@@ -177,7 +178,6 @@ CREATE TABLE "Carcasse" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
-
     CONSTRAINT "Carcasse_pkey" PRIMARY KEY ("id")
 );
 
@@ -194,7 +194,6 @@ CREATE TABLE "Intermediaire" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
-
     CONSTRAINT "Intermediaire_pkey" PRIMARY KEY ("id")
 );
 
@@ -210,15 +209,11 @@ CREATE TABLE "NotificationLog" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
-
     CONSTRAINT "NotificationLog_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "_IntermediairesCarcasse" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
-);
+CREATE TABLE "_IntermediairesCarcasse" ("A" TEXT NOT NULL, "B" TEXT NOT NULL);
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
@@ -269,7 +264,11 @@ CREATE UNIQUE INDEX "Carcasse_numero_bracelet_key" ON "Carcasse"("numero_bracele
 CREATE INDEX "Carcasse_fei_numero_numero_bracelet_idx" ON "Carcasse"("fei_numero", "numero_bracelet");
 
 -- CreateIndex
-CREATE INDEX "Intermediaire_fei_numero_intermediaire_user_id_intermediair_idx" ON "Intermediaire"("fei_numero", "intermediaire_user_id", "intermediaire_entity_id");
+CREATE INDEX "Intermediaire_fei_numero_intermediaire_user_id_intermediair_idx" ON "Intermediaire"(
+    "fei_numero",
+    "intermediaire_user_id",
+    "intermediaire_entity_id"
+);
 
 -- CreateIndex
 CREATE INDEX "NotificationLog_user_id_action_idx" ON "NotificationLog"("user_id", "action");
@@ -281,73 +280,165 @@ CREATE UNIQUE INDEX "_IntermediairesCarcasse_AB_unique" ON "_IntermediairesCarca
 CREATE INDEX "_IntermediairesCarcasse_B_index" ON "_IntermediairesCarcasse"("B");
 
 -- AddForeignKey
-ALTER TABLE "Password" ADD CONSTRAINT "Password_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE
+    "Password"
+ADD
+    CONSTRAINT "Password_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "UserRelations" ADD CONSTRAINT "UserRelations_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE
+    "UserRelations"
+ADD
+    CONSTRAINT "UserRelations_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "UserRelations" ADD CONSTRAINT "UserRelations_related_id_fkey" FOREIGN KEY ("related_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE
+    "UserRelations"
+ADD
+    CONSTRAINT "UserRelations_related_id_fkey" FOREIGN KEY ("related_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "EntityRelations" ADD CONSTRAINT "EntityRelations_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE
+    "EntityRelations"
+ADD
+    CONSTRAINT "EntityRelations_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "EntityRelations" ADD CONSTRAINT "EntityRelations_entity_id_fkey" FOREIGN KEY ("entity_id") REFERENCES "Entity"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE
+    "EntityRelations"
+ADD
+    CONSTRAINT "EntityRelations_entity_id_fkey" FOREIGN KEY ("entity_id") REFERENCES "Entity"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Logs" ADD CONSTRAINT "Logs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE
+    "Logs"
+ADD
+    CONSTRAINT "Logs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_created_by_user_id_fkey" FOREIGN KEY ("created_by_user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE
+    "Fei"
+ADD
+    CONSTRAINT "Fei_created_by_user_id_fkey" FOREIGN KEY ("created_by_user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_premier_detenteur_user_id_fkey" FOREIGN KEY ("premier_detenteur_user_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "Fei"
+ADD
+    CONSTRAINT "Fei_premier_detenteur_user_id_fkey" FOREIGN KEY ("premier_detenteur_user_id") REFERENCES "User"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_examinateur_initial_user_id_fkey" FOREIGN KEY ("examinateur_initial_user_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "Fei"
+ADD
+    CONSTRAINT "Fei_examinateur_initial_user_id_fkey" FOREIGN KEY ("examinateur_initial_user_id") REFERENCES "User"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_etg_entity_id_fkey" FOREIGN KEY ("etg_entity_id") REFERENCES "Entity"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "Fei"
+ADD
+    CONSTRAINT "Fei_etg_entity_id_fkey" FOREIGN KEY ("etg_entity_id") REFERENCES "Entity"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_etg_user_id_fkey" FOREIGN KEY ("etg_user_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "Fei"
+ADD
+    CONSTRAINT "Fei_etg_user_id_fkey" FOREIGN KEY ("etg_user_id") REFERENCES "User"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_svi_entity_id_fkey" FOREIGN KEY ("svi_entity_id") REFERENCES "Entity"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "Fei"
+ADD
+    CONSTRAINT "Fei_svi_entity_id_fkey" FOREIGN KEY ("svi_entity_id") REFERENCES "Entity"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_svi_user_id_fkey" FOREIGN KEY ("svi_user_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "Fei"
+ADD
+    CONSTRAINT "Fei_svi_user_id_fkey" FOREIGN KEY ("svi_user_id") REFERENCES "User"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_fei_current_owner_user_id_fkey" FOREIGN KEY ("fei_current_owner_user_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "Fei"
+ADD
+    CONSTRAINT "Fei_fei_current_owner_user_id_fkey" FOREIGN KEY ("fei_current_owner_user_id") REFERENCES "User"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_fei_current_owner_entity_id_fkey" FOREIGN KEY ("fei_current_owner_entity_id") REFERENCES "Entity"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "Fei"
+ADD
+    CONSTRAINT "Fei_fei_current_owner_entity_id_fkey" FOREIGN KEY ("fei_current_owner_entity_id") REFERENCES "Entity"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Fei" ADD CONSTRAINT "Fei_fei_next_owner_entity_id_fkey" FOREIGN KEY ("fei_next_owner_entity_id") REFERENCES "Entity"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "Fei"
+ADD
+    CONSTRAINT "Fei_fei_next_owner_entity_id_fkey" FOREIGN KEY ("fei_next_owner_entity_id") REFERENCES "Entity"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Carcasse" ADD CONSTRAINT "Carcasse_fei_numero_fkey" FOREIGN KEY ("fei_numero") REFERENCES "Fei"("numero") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE
+    "Carcasse"
+ADD
+    CONSTRAINT "Carcasse_fei_numero_fkey" FOREIGN KEY ("fei_numero") REFERENCES "Fei"("numero") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Carcasse" ADD CONSTRAINT "Carcasse_intermediaire_carcasse_refus_intermediaire_id_fkey" FOREIGN KEY ("intermediaire_carcasse_refus_intermediaire_id") REFERENCES "Intermediaire"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "Carcasse"
+ADD
+    CONSTRAINT "Carcasse_intermediaire_carcasse_refus_intermediaire_id_fkey" FOREIGN KEY ("intermediaire_carcasse_refus_intermediaire_id") REFERENCES "Intermediaire"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Intermediaire" ADD CONSTRAINT "Intermediaire_fei_numero_fkey" FOREIGN KEY ("fei_numero") REFERENCES "Fei"("numero") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE
+    "Intermediaire"
+ADD
+    CONSTRAINT "Intermediaire_fei_numero_fkey" FOREIGN KEY ("fei_numero") REFERENCES "Fei"("numero") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Intermediaire" ADD CONSTRAINT "Intermediaire_intermediaire_user_id_fkey" FOREIGN KEY ("intermediaire_user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE
+    "Intermediaire"
+ADD
+    CONSTRAINT "Intermediaire_intermediaire_user_id_fkey" FOREIGN KEY ("intermediaire_user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Intermediaire" ADD CONSTRAINT "Intermediaire_intermediaire_entity_id_fkey" FOREIGN KEY ("intermediaire_entity_id") REFERENCES "Entity"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE
+    "Intermediaire"
+ADD
+    CONSTRAINT "Intermediaire_intermediaire_entity_id_fkey" FOREIGN KEY ("intermediaire_entity_id") REFERENCES "Entity"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "NotificationLog" ADD CONSTRAINT "NotificationLog_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE
+    "NotificationLog"
+ADD
+    CONSTRAINT "NotificationLog_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_IntermediairesCarcasse" ADD CONSTRAINT "_IntermediairesCarcasse_A_fkey" FOREIGN KEY ("A") REFERENCES "Carcasse"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE
+    "_IntermediairesCarcasse"
+ADD
+    CONSTRAINT "_IntermediairesCarcasse_A_fkey" FOREIGN KEY ("A") REFERENCES "Carcasse"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_IntermediairesCarcasse" ADD CONSTRAINT "_IntermediairesCarcasse_B_fkey" FOREIGN KEY ("B") REFERENCES "Intermediaire"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE
+    "_IntermediairesCarcasse"
+ADD
+    CONSTRAINT "_IntermediairesCarcasse_B_fkey" FOREIGN KEY ("B") REFERENCES "Intermediaire"("id") ON DELETE CASCADE ON UPDATE CASCADE;

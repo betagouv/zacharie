@@ -35,6 +35,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       FeiDetenteurInitialUser: true,
       FeiExaminateurInitialUser: true,
       FeiCreatedByUser: true,
+      FeiDepotEntity: true,
+      FeiEtgEntity: true,
+      FeiEtgUser: true,
       FeiSviEntity: true,
       FeiSviUser: true,
       FeiIntermediaires: true,
@@ -86,7 +89,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     examinateursInitiaux.unshift(user);
   }
 
-  const centresCollecte = userEntitiesRelations
+  const ccgs = userEntitiesRelations
     .filter((entityRelation) => entityRelation.EntityRelatedWithUser.type === EntityTypes.CCG)
     .map((entityRelation) => entityRelation.EntityRelatedWithUser);
 
@@ -107,7 +110,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     fei,
     detenteursInitiaux,
     examinateursInitiaux,
-    centresCollecte,
+    ccgs,
     collecteursPro,
     etgs,
     svis,
@@ -138,8 +141,12 @@ export default function Fei() {
       tabId: UserRoles.PREMIER_DETENTEUR,
       label: (
         <>
-          <span className="hidden md:inline">{fei.premier_detenteur_user_id ? doneEmoji : ""}Premier Détenteur</span>
-          <span className="inline md:hidden">{fei.premier_detenteur_user_id ? doneEmoji : ""}Détenteur</span>
+          <span className="hidden md:inline">
+            {fei.premier_detenteur_date_depot_quelque_part ? doneEmoji : ""}Premier Détenteur
+          </span>
+          <span className="inline md:hidden">
+            {fei.premier_detenteur_date_depot_quelque_part ? doneEmoji : ""}Détenteur
+          </span>
         </>
       ),
     },

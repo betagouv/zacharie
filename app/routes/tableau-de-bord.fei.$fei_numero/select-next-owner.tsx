@@ -8,7 +8,7 @@ import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import { SerializeFrom } from "@remix-run/node";
 
 export default function SelectNextOwner() {
-  const { user, detenteursInitiaux, examinateursInitiaux, centresCollecte, collecteursPro, etgs, svis, fei } =
+  const { user, detenteursInitiaux, examinateursInitiaux, ccgs, collecteursPro, etgs, svis, fei } =
     useLoaderData<typeof loader>();
   const [nextRole, setNextRole] = useState<UserRoles | "">(fei.fei_next_owner_role ?? "");
 
@@ -19,7 +19,7 @@ export default function SelectNextOwner() {
       case UserRoles.EXAMINATEUR_INITIAL:
         return examinateursInitiaux;
       case UserRoles.CCG:
-        return centresCollecte;
+        return ccgs;
       case UserRoles.COLLECTEUR_PRO:
         return collecteursPro;
       case UserRoles.ETG:
@@ -29,7 +29,7 @@ export default function SelectNextOwner() {
       default:
         return [];
     }
-  }, [nextRole, detenteursInitiaux, examinateursInitiaux, centresCollecte, collecteursPro, etgs, svis]);
+  }, [nextRole, detenteursInitiaux, examinateursInitiaux, ccgs, collecteursPro, etgs, svis]);
   const nextOwnerSelectLabel = useMemo(() => {
     switch (nextRole) {
       case UserRoles.PREMIER_DETENTEUR:
@@ -79,8 +79,8 @@ export default function SelectNextOwner() {
     if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
       return false;
     }
-    return !fei.premier_detenteur_date_depot_ccg;
-  }, [fei.premier_detenteur_date_depot_ccg, fei.fei_current_owner_role]);
+    return !fei.premier_detenteur_date_depot_quelque_part;
+  }, [fei.premier_detenteur_date_depot_quelque_part, fei.fei_current_owner_role]);
 
   const showIntermediaires = useMemo(() => {
     if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
@@ -91,7 +91,7 @@ export default function SelectNextOwner() {
         return true;
       }
     }
-    if (!fei.premier_detenteur_date_depot_ccg) {
+    if (!fei.premier_detenteur_date_depot_quelque_part) {
       return false;
     }
     if (
@@ -107,7 +107,7 @@ export default function SelectNextOwner() {
     fei.fei_current_owner_role,
     fei.examinateur_initial_user_id,
     fei.examinateur_initial_approbation_mise_sur_le_marche,
-    fei.premier_detenteur_date_depot_ccg,
+    fei.premier_detenteur_date_depot_quelque_part,
   ]);
 
   const showSvi = useMemo(() => {
@@ -159,6 +159,7 @@ export default function SelectNextOwner() {
               <>
                 <option value={UserRoles.COLLECTEUR_PRO}>{getUserRoleLabel(UserRoles.COLLECTEUR_PRO)}</option>
                 <option value={UserRoles.ETG}>{getUserRoleLabel(UserRoles.ETG)}</option>
+                <option value={UserRoles.CCG}>{getUserRoleLabel(UserRoles.CCG)}</option>
               </>
             ) : showSvi ? (
               <option value={UserRoles.SVI}>{getUserRoleLabel(UserRoles.SVI)}</option>

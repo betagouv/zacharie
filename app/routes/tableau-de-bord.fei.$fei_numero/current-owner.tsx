@@ -10,6 +10,7 @@ export default function CurrentOwner() {
   return (
     <div className="bg-alt-blue-france pb-8">
       <Highlight
+        className="m-0"
         classes={{
           root: "fr-highlight--green-emeraude",
         }}
