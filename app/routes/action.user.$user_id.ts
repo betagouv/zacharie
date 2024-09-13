@@ -11,6 +11,9 @@ export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
 
   const formData = await request.formData();
+
+  console.log("formData", Object.fromEntries(formData.entries()));
+
   const nextUser: Prisma.UserUpdateInput = {};
 
   if (formData.has(Prisma.UserScalarFieldEnum.nom_de_famille)) {

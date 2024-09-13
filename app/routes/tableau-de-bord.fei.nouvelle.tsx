@@ -129,7 +129,7 @@ export default function NouvelleFEI() {
                   </div> */}
                   <UserNotEditable user={user} withCfei />
                 </div>
-                <div className="mb-8">
+                {/* <div className="mb-8">
                   <h2 className="fr-h3 fr-mb-2w">Premier Détenteur</h2>
                   <Checkbox
                     options={[
@@ -142,7 +142,7 @@ export default function NouvelleFEI() {
                       },
                     ]}
                   />
-                </div>
+                </div> */}
               </Form>
               <div className="mt-6 ml-6 mb-16 md:mb-0">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">

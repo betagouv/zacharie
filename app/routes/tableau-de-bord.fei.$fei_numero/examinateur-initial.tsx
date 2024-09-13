@@ -31,7 +31,7 @@ export default function FEIExaminateurInitial() {
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
   const examFetcher = useFetcher({ key: "examination-fetcher" });
-  const handleUserFormBlur = useCallback(
+  const handleUserFormChange = useCallback(
     (event: React.FocusEvent<HTMLFormElement>) => {
       if (!canEdit) {
         return;
@@ -75,7 +75,7 @@ export default function FEIExaminateurInitial() {
   return (
     <>
       <Accordion titleAs="h3" label="Données de chasse" defaultExpanded>
-        <examFetcher.Form method="POST" action={`/action/fei/${fei.numero}`} onBlur={handleUserFormBlur}>
+        <examFetcher.Form method="POST" action={`/action/fei/${fei.numero}`} onBlur={handleUserFormChange}>
           <div className="fr-fieldset__element">
             <Component
               label="Date de mise à mort et d'éviscération"

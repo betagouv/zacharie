@@ -121,12 +121,15 @@ export default function InputVille(props: OnlyInput) {
     setVilleSearched(e.target.value);
   };
 
+  const ref = useRef<HTMLInputElement>(null);
+
   return (
     <>
       <Input
         {...props}
         nativeInputProps={{
           ...props.nativeInputProps,
+          ref: ref,
           type: "text",
           defaultValue: undefined,
           value: villeSearched,
@@ -141,6 +144,10 @@ export default function InputVille(props: OnlyInput) {
               onClick={() => {
                 setVilleSearched(ville);
                 setVillesResults([]);
+                // the parent form is submitted on blur
+                // trigger a focus event then a blur again to submit the form
+                // this is a hack to submit the form on blur again
+                ref.current?.focus();
                 canSearch.current = false;
               }}
               type="button"
