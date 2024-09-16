@@ -31,14 +31,28 @@ export default defineConfig({
     }),
     RemixVitePWAPlugin({
       registerType: "autoUpdate",
+      manifest: {
+        short_name: "Zacharie",
+        name: "Zacharie | Ministère de l'Agriculture",
+        display: "fullscreen",
+        background_color: "#000091",
+        theme_color: "#000091",
+        start_url: "./?mode=standalone",
+        scope: "./",
+      },
+      workbox: {
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+      },
       devOptions: {
         enabled: true,
+        type: "module",
       },
       // PWA options
     }),
   ],
   build: {
     sourcemap: true,
+    chunkSizeWarningLimit: 800,
   },
   // https://github.com/prisma/prisma/issues/12504#issuecomment-1285883083
   resolve: {
