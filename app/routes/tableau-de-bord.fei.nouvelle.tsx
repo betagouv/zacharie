@@ -1,15 +1,16 @@
 import dayjs from "dayjs";
+import type { WorkerActionArgs } from "@remix-pwa/sw";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form, useActionData, useLoaderData, useNavigate } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
-import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
+// import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import UserNotEditable from "~/components/UserNotEditable";
-import InputVille from "~/components/InputVille";
+// import InputVille from "~/components/InputVille";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -73,7 +74,68 @@ export async function action(args: ActionFunctionArgs) {
     data: createData,
   });
 
-  return redirect(`/tableau-de-bord/fei/${fei.numero}`);
+  return json({ ok: true, data: fei }, { status: 200 });
+}
+
+export async function workerAction({ context, request }: WorkerActionArgs) {
+  console.log("BADABOUM");
+  const { fetchFromServer } = context;
+  console.log("BOUM 1");
+  // let response;
+  const response = await fetchFromServer();
+  console.log("BOUM 2");
+
+  // try {
+  //   // Try to fetch from the server
+  //   console.log("Trying to fetch from server...");
+
+  if (response && response.ok) {
+    // If the response is successful, return it
+    return response;
+  }
+  // } catch (err) {
+  //   console.error("Network error:", err);
+  // }
+
+  if (navigator.onLine) {
+    return json({ error: "Network error occurred! Please try again later." }, { status: 500 });
+  }
+
+  console.log("Offline mode detected. Saving form data to Cache.");
+
+  return json({ error: "Offline mode detected. Saving form data to Cache." }, { status: 200 });
+  // // If we're here, either the fetch failed or the response wasn't ok
+  // // Check if we're offline
+  // console.log("Offline mode detected. Saving form data to Cache.");
+
+  // try {
+  //   // Get the form data
+  //   const formData = await request.formData();
+  //   const cacheData = {
+  //     url: request.url,
+  //     method: request.method,
+  //     formData: Object.fromEntries(formData),
+  //     timestamp: Date.now(),
+  //   };
+
+  //   // Open the cache
+  //   const cache = await caches.open("offline-forms");
+
+  //   // Save the form data to the cache
+  //   await cache.put(request.url, new Response(JSON.stringify(cacheData)));
+
+  //   // return json({ error: "Form data saved offline. It will be submitted when you're back online." });
+  //   return json(
+  //     {
+  //       ok: true,
+  //       error: "Le formulaire a été sauvegardé hors ligne. Il sera soumis lorsque vous serez de retour en ligne.",
+  //     },
+  //     { status: 200 }
+  //   );
+  // } catch (cacheError) {
+  //   console.error("Error saving to cache:", cacheError);
+  //   return json({ error: "Une erreur est survenue lors de la sauvegarde du formulaire hors ligne." }, { status: 500 });
+  // }
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -86,7 +148,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function NouvelleFEI() {
   const { user } = useLoaderData<typeof loader>();
-
+  const data = useActionData<typeof action>();
+  const navigate = useNavigate();
+  if (data?.ok && data.data) {
+    const fei = data.data;
+    return navigate(`/tableau-de-bord/fei/${fei.numero}`);
+  }
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">

@@ -569,8 +569,8 @@ function TreeDesc(dyn_tree, stat_desc) {
   this.max_code = 0;
   this.stat_desc = stat_desc;
 }
-const d_code = (dist) => {
-  return dist < 256 ? _dist_code[dist] : _dist_code[256 + (dist >>> 7)];
+const d_code = (dist2) => {
+  return dist2 < 256 ? _dist_code[dist2] : _dist_code[256 + (dist2 >>> 7)];
 };
 const put_short = (s, w) => {
   s.pending_buf[s.pending++] = w & 255;
@@ -705,7 +705,7 @@ const tr_static_init = () => {
   let bits;
   let length;
   let code;
-  let dist;
+  let dist2;
   const bl_count = new Array(MAX_BITS$1 + 1);
   length = 0;
   for (code = 0; code < LENGTH_CODES$1 - 1; code++) {
@@ -715,18 +715,18 @@ const tr_static_init = () => {
     }
   }
   _length_code[length - 1] = code;
-  dist = 0;
+  dist2 = 0;
   for (code = 0; code < 16; code++) {
-    base_dist[code] = dist;
+    base_dist[code] = dist2;
     for (n = 0; n < 1 << extra_dbits[code]; n++) {
-      _dist_code[dist++] = code;
+      _dist_code[dist2++] = code;
     }
   }
-  dist >>= 7;
+  dist2 >>= 7;
   for (; code < D_CODES$1; code++) {
-    base_dist[code] = dist << 7;
+    base_dist[code] = dist2 << 7;
     for (n = 0; n < 1 << extra_dbits[code] - 7; n++) {
-      _dist_code[256 + dist++] = code;
+      _dist_code[256 + dist2++] = code;
     }
   }
   for (bits = 0; bits <= MAX_BITS$1; bits++) {
@@ -808,17 +808,17 @@ const pqdownheap = (s, tree, k) => {
   s.heap[k] = v;
 };
 const compress_block = (s, ltree, dtree) => {
-  let dist;
+  let dist2;
   let lc;
   let sx = 0;
   let code;
   let extra;
   if (s.sym_next !== 0) {
     do {
-      dist = s.pending_buf[s.sym_buf + sx++] & 255;
-      dist += (s.pending_buf[s.sym_buf + sx++] & 255) << 8;
+      dist2 = s.pending_buf[s.sym_buf + sx++] & 255;
+      dist2 += (s.pending_buf[s.sym_buf + sx++] & 255) << 8;
       lc = s.pending_buf[s.sym_buf + sx++];
-      if (dist === 0) {
+      if (dist2 === 0) {
         send_code(s, lc, ltree);
       } else {
         code = _length_code[lc];
@@ -828,13 +828,13 @@ const compress_block = (s, ltree, dtree) => {
           lc -= base_length[code];
           send_bits(s, lc, extra);
         }
-        dist--;
-        code = d_code(dist);
+        dist2--;
+        code = d_code(dist2);
         send_code(s, code, dtree);
         extra = extra_dbits[code];
         if (extra !== 0) {
-          dist -= base_dist[code];
-          send_bits(s, dist, extra);
+          dist2 -= base_dist[code];
+          send_bits(s, dist2, extra);
         }
       }
     } while (sx < s.sym_next);
@@ -1111,17 +1111,17 @@ const _tr_flush_block$1 = (s, buf, stored_len, last) => {
     bi_windup(s);
   }
 };
-const _tr_tally$1 = (s, dist, lc) => {
-  s.pending_buf[s.sym_buf + s.sym_next++] = dist;
-  s.pending_buf[s.sym_buf + s.sym_next++] = dist >> 8;
+const _tr_tally$1 = (s, dist2, lc) => {
+  s.pending_buf[s.sym_buf + s.sym_next++] = dist2;
+  s.pending_buf[s.sym_buf + s.sym_next++] = dist2 >> 8;
   s.pending_buf[s.sym_buf + s.sym_next++] = lc;
-  if (dist === 0) {
+  if (dist2 === 0) {
     s.dyn_ltree[lc * 2]++;
   } else {
     s.matches++;
-    dist--;
+    dist2--;
     s.dyn_ltree[(_length_code[lc] + LITERALS$1 + 1) * 2]++;
-    s.dyn_dtree[d_code(dist) * 2]++;
+    s.dyn_dtree[d_code(dist2) * 2]++;
   }
   return s.sym_next === s.sym_end;
 };
@@ -2733,7 +2733,7 @@ var inffast = function inflate_fast(strm, start) {
   let here;
   let op;
   let len;
-  let dist;
+  let dist2;
   let from;
   let from_source;
   let input, output;
@@ -2799,7 +2799,7 @@ var inffast = function inflate_fast(strm, start) {
                 bits -= op;
                 op = here >>> 16 & 255;
                 if (op & 16) {
-                  dist = here & 65535;
+                  dist2 = here & 65535;
                   op &= 15;
                   if (bits < op) {
                     hold += input[_in++] << bits;
@@ -2809,8 +2809,8 @@ var inffast = function inflate_fast(strm, start) {
                       bits += 8;
                     }
                   }
-                  dist += hold & (1 << op) - 1;
-                  if (dist > dmax) {
+                  dist2 += hold & (1 << op) - 1;
+                  if (dist2 > dmax) {
                     strm.msg = "invalid distance too far back";
                     state.mode = BAD$1;
                     break top;
@@ -2818,8 +2818,8 @@ var inffast = function inflate_fast(strm, start) {
                   hold >>>= op;
                   bits -= op;
                   op = _out - beg;
-                  if (dist > op) {
-                    op = dist - op;
+                  if (dist2 > op) {
+                    op = dist2 - op;
                     if (op > whave) {
                       if (state.sane) {
                         strm.msg = "invalid distance too far back";
@@ -2836,7 +2836,7 @@ var inffast = function inflate_fast(strm, start) {
                         do {
                           output[_out++] = s_window[from++];
                         } while (--op);
-                        from = _out - dist;
+                        from = _out - dist2;
                         from_source = output;
                       }
                     } else if (wnext < op) {
@@ -2854,7 +2854,7 @@ var inffast = function inflate_fast(strm, start) {
                           do {
                             output[_out++] = s_window[from++];
                           } while (--op);
-                          from = _out - dist;
+                          from = _out - dist2;
                           from_source = output;
                         }
                       }
@@ -2865,7 +2865,7 @@ var inffast = function inflate_fast(strm, start) {
                         do {
                           output[_out++] = s_window[from++];
                         } while (--op);
-                        from = _out - dist;
+                        from = _out - dist2;
                         from_source = output;
                       }
                     }
@@ -2882,7 +2882,7 @@ var inffast = function inflate_fast(strm, start) {
                       }
                     }
                   } else {
-                    from = _out - dist;
+                    from = _out - dist2;
                     do {
                       output[_out++] = output[from++];
                       output[_out++] = output[from++];
@@ -3450,7 +3450,7 @@ const fixedtables = (state) => {
   state.distbits = 5;
 };
 const updatewindow = (strm, src, end, copy) => {
-  let dist;
+  let dist2;
   const state = strm.state;
   if (state.window === null) {
     state.wsize = 1 << state.wbits;
@@ -3463,23 +3463,23 @@ const updatewindow = (strm, src, end, copy) => {
     state.wnext = 0;
     state.whave = state.wsize;
   } else {
-    dist = state.wsize - state.wnext;
-    if (dist > copy) {
-      dist = copy;
+    dist2 = state.wsize - state.wnext;
+    if (dist2 > copy) {
+      dist2 = copy;
     }
-    state.window.set(src.subarray(end - copy, end - copy + dist), state.wnext);
-    copy -= dist;
+    state.window.set(src.subarray(end - copy, end - copy + dist2), state.wnext);
+    copy -= dist2;
     if (copy) {
       state.window.set(src.subarray(end - copy, end), 0);
       state.wnext = copy;
       state.whave = state.wsize;
     } else {
-      state.wnext += dist;
+      state.wnext += dist2;
       if (state.wnext === state.wsize) {
         state.wnext = 0;
       }
       if (state.whave < state.wsize) {
-        state.whave += dist;
+        state.whave += dist2;
       }
     }
   }
@@ -4893,20 +4893,6 @@ const entryWorker = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineP
   __proto__: null,
   defaultFetchHandler
 }, Symbol.toStringTag, { value: "Module" }));
-var __getOwnPropNames$p = Object.getOwnPropertyNames;
-var __commonJS$p = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames$p(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
-var require_worker_runtime$p = __commonJS$p({
-  "@remix-pwa/worker-runtime"(exports, module) {
-    module.exports = {};
-  }
-});
-var worker_runtime_default$p = require_worker_runtime$p();
-const route0 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  default: worker_runtime_default$p
-}, Symbol.toStringTag, { value: "Module" }));
 var __getOwnPropNames$o = Object.getOwnPropertyNames;
 var __commonJS$o = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames$o(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
@@ -4917,7 +4903,7 @@ var require_worker_runtime$o = __commonJS$o({
   }
 });
 var worker_runtime_default$o = require_worker_runtime$o();
-const route1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route0 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$o
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4931,7 +4917,7 @@ var require_worker_runtime$n = __commonJS$n({
   }
 });
 var worker_runtime_default$n = require_worker_runtime$n();
-const route2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$n
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4945,7 +4931,7 @@ var require_worker_runtime$m = __commonJS$m({
   }
 });
 var worker_runtime_default$m = require_worker_runtime$m();
-const route3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$m
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4959,7 +4945,7 @@ var require_worker_runtime$l = __commonJS$l({
   }
 });
 var worker_runtime_default$l = require_worker_runtime$l();
-const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$l
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4973,7 +4959,7 @@ var require_worker_runtime$k = __commonJS$k({
   }
 });
 var worker_runtime_default$k = require_worker_runtime$k();
-const route5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$k
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4987,7 +4973,7 @@ var require_worker_runtime$j = __commonJS$j({
   }
 });
 var worker_runtime_default$j = require_worker_runtime$j();
-const route6 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$j
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5001,7 +4987,7 @@ var require_worker_runtime$i = __commonJS$i({
   }
 });
 var worker_runtime_default$i = require_worker_runtime$i();
-const route7 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route6 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$i
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5015,7 +5001,7 @@ var require_worker_runtime$h = __commonJS$h({
   }
 });
 var worker_runtime_default$h = require_worker_runtime$h();
-const route8 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route7 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$h
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5029,7 +5015,7 @@ var require_worker_runtime$g = __commonJS$g({
   }
 });
 var worker_runtime_default$g = require_worker_runtime$g();
-const route9 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route8 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$g
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5043,7 +5029,7 @@ var require_worker_runtime$f = __commonJS$f({
   }
 });
 var worker_runtime_default$f = require_worker_runtime$f();
-const route10 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route9 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$f
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5057,7 +5043,7 @@ var require_worker_runtime$e = __commonJS$e({
   }
 });
 var worker_runtime_default$e = require_worker_runtime$e();
-const route11 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route10 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$e
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5071,9 +5057,29 @@ var require_worker_runtime$d = __commonJS$d({
   }
 });
 var worker_runtime_default$d = require_worker_runtime$d();
-const route12 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route11 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$d
+}, Symbol.toStringTag, { value: "Module" }));
+var dist = {};
+async function workerAction({ context, request }) {
+  console.log("BADABOUM");
+  const { fetchFromServer } = context;
+  console.log("BOUM 1");
+  const response = await fetchFromServer();
+  console.log("BOUM 2");
+  if (response && response.ok) {
+    return response;
+  }
+  if (navigator.onLine) {
+    return dist.json({ error: "Network error occurred! Please try again later." }, { status: 500 });
+  }
+  console.log("Offline mode detected. Saving form data to Cache.");
+  return dist.json({ error: "Offline mode detected. Saving form data to Cache." }, { status: 200 });
+}
+const route12 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  workerAction
 }, Symbol.toStringTag, { value: "Module" }));
 var __getOwnPropNames$c = Object.getOwnPropertyNames;
 var __commonJS$c = (cb, mod) => function __require() {
@@ -5414,7 +5420,7 @@ const routes = {
     hasLoader: true,
     hasAction: true,
     hasWorkerLoader: false,
-    hasWorkerAction: false,
+    hasWorkerAction: true,
     module: route12
   },
   "routes/action.user-entity.$user_id": {
