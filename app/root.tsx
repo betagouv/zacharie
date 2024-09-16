@@ -9,7 +9,6 @@ import {
   useLoaderData,
   useRouteError,
 } from "@remix-run/react";
-import { ManifestLink, useSWEffect } from "@remix-pwa/sw";
 import { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { honeypot } from "~/services/honeypot.server";
 import { HoneypotProvider } from "remix-utils/honeypot/react";
@@ -76,8 +75,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="stylesheet" href={dsfrColorCss} />
 
         <Meta />
-        {/* https://remix-pwa.run/docs/main/web-manifest#registering-the-web-manifest */}
-        <ManifestLink />
         <Links />
       </head>
       <body className="h-screen">
@@ -102,7 +99,6 @@ export const ErrorBoundary = () => {
 
 export default function App() {
   const { ENV, honeypotInputProps } = useLoaderData<typeof loader>();
-  useSWEffect();
 
   return (
     <>

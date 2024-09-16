@@ -2,7 +2,12 @@ import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { remixPWA } from "@remix-pwa/dev";
+import { installGlobals } from "@remix-run/node";
+import { RemixVitePWA } from "@vite-pwa/remix";
+
+installGlobals();
+
+const { RemixVitePWAPlugin, RemixPWAPreset } = RemixVitePWA();
 
 export default defineConfig({
   ssr: {
@@ -16,6 +21,7 @@ export default defineConfig({
         v3_relativeSplatPath: true,
         v3_throwAbortReason: true,
       },
+      presets: [RemixPWAPreset()],
     }),
     tsconfigPaths(),
     sentryVitePlugin({
@@ -23,7 +29,13 @@ export default defineConfig({
       project: "zacharie-remix",
       url: "https://sentry.incubateur.net/",
     }),
-    remixPWA(),
+    RemixVitePWAPlugin({
+      registerType: "autoUpdate",
+      devOptions: {
+        enabled: true,
+      },
+      // PWA options
+    }),
   ],
   build: {
     sourcemap: true,

@@ -91,3 +91,11 @@ self.addEventListener("activate", (event) => {
     Promise.all([clearUpOldCaches(["document-cache", "asset-cache", "data-cache"], version), self.clients.claim()])
   );
 });
+
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
+});

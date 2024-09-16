@@ -1,6 +1,5 @@
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { usePWAManager } from "@remix-pwa/client";
-import { sendSkipWaitingMessage } from "@remix-pwa/sw";
+import { usePWAManager } from "~/services/usePWAManager";
 
 // https://remix-pwa.run/docs/main/offline#service-worker-update
 export default function InstallApp() {

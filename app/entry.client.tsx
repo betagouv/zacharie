@@ -22,14 +22,15 @@ Sentry.init({
       useLocation,
       useMatches,
     }),
+    // eslint-disable-next-line import/namespace
     Sentry.replayIntegration(),
   ],
 });
 
 startReactDsfr({
   Link,
-  // defaultColorScheme: "system",
-  defaultColorScheme: "light",
+  defaultColorScheme: "system",
+  // defaultColorScheme: "light",
   verbose: false,
 });
 

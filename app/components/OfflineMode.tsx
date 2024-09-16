@@ -1,21 +1,36 @@
-import { useNetworkConnectivity } from "@remix-pwa/client";
+import { useEffect, useState } from "react";
 
-import { useState } from "react";
+function isClient() {
+  return typeof window !== "undefined";
+}
+
+function useNetworkConnectivity() {
+  const [isOnline, setIsOnline] = useState(true);
+  const handleOnline = () => {
+    setIsOnline(true);
+  };
+  const handleOffline = () => {
+    setIsOnline(false);
+  };
+  useEffect(() => {
+    if (isClient()) {
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
+      return () => {
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return isOnline;
+}
 
 export default function OfflineMode() {
-  const [isOffline, setIsOffline] = useState(false);
-  useNetworkConnectivity({
-    onOnline: () => {
-      setIsOffline(false);
-    },
+  const isOnline = useNetworkConnectivity();
 
-    onOffline: () => {
-      setIsOffline(true);
-    },
-  });
-
-  if (!isOffline) {
-    return false;
+  if (isOnline) {
+    return null;
   }
   return (
     <p className="bg-action-high-blue-france text-white text-sm px-4 py-2 z-50">

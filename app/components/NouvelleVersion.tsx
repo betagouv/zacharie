@@ -1,7 +1,12 @@
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { usePWAManager } from "@remix-pwa/client";
-import { sendSkipWaitingMessage } from "@remix-pwa/sw";
+import { usePWAManager } from "~/services/usePWAManager";
 
+const messageSW = (e: ServiceWorker, message: { type: string }) => {
+  e.postMessage(message);
+};
+const sendSkipWaitingMessage = (e: ServiceWorker) => {
+  messageSW(e, { type: "SKIP_WAITING" });
+};
 // https://remix-pwa.run/docs/main/offline#service-worker-update
 export default function NouvelleVersion() {
   const stuff = usePWAManager();
