@@ -12,7 +12,7 @@ export default function TableauDeBordLayout() {
     submit(null, { method: "post", action: "/actions/logout" });
   };
 
-  if (!user?.activated) {
+  if (!user?.activated && !location.pathname.includes("mon-profil")) {
     return (
       <>
         <Header
