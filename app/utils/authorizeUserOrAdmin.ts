@@ -5,7 +5,7 @@ import { getUserFromCookie } from "~/services/auth.server";
 export async function authorizeUserOrAdmin({ request, params }: ActionFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
-    return { ok: false, data: null, error: "Unauthorized" };
+    return { ok: false, data: null, error: "Unauthorized", isAdmin: false };
   }
 
   const isAdmin = user.roles.includes(UserRoles.ADMIN);
@@ -14,12 +14,12 @@ export async function authorizeUserOrAdmin({ request, params }: ActionFunctionAr
   if (!userId) {
     // only admins can create new users this way
     if (!isAdmin) {
-      return { ok: false, user: null, error: "Unauthorized" };
+      return { ok: false, user: null, error: "Unauthorized", isAdmin };
     }
   }
 
   if (userId !== user.id && !isAdmin) {
-    return { ok: false, user: null, error: "Unauthorized" };
+    return { ok: false, user: null, error: "Unauthorized", isAdmin };
   }
-  return { ok: true, user, error: null };
+  return { ok: true, user, error: null, isAdmin };
 }

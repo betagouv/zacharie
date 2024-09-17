@@ -53,7 +53,7 @@ export async function action({ request }: ActionFunctionArgs) {
         error: "L'email est incorrect, ou vous n'avez pas encore de compte",
       });
     }
-    user = await prisma.user.create({ data: { email } });
+    user = await prisma.user.create({ data: { email, activated: false, prefilled: false } });
   }
   const hashedPassword = await hashPassword(passwordUser);
   const existingPassword = await prisma.password.findFirst({ where: { user_id: user.id } });
@@ -136,7 +136,7 @@ export default function Connexion() {
                 }}
               />
               <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left">
-                <li className="flex justify-start w-auto">
+                <li className="flex w-auto justify-start">
                   <Button type="submit">
                     {connexionType === "creation-de-compte" ? <>Créer mon compte</> : <>Me connecter</>}
                   </Button>

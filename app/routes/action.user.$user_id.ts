@@ -16,6 +16,12 @@ export async function action(args: ActionFunctionArgs) {
 
   const nextUser: Prisma.UserUpdateInput = {};
 
+  if (formData.has(Prisma.UserScalarFieldEnum.activated)) {
+    nextUser.activated = formData.get(Prisma.UserScalarFieldEnum.activated) === "true" ? true : false;
+  }
+  if (formData.has(Prisma.UserScalarFieldEnum.prefilled)) {
+    nextUser.prefilled = formData.get(Prisma.UserScalarFieldEnum.prefilled) === "true" ? true : false;
+  }
   if (formData.has(Prisma.UserScalarFieldEnum.nom_de_famille)) {
     nextUser.nom_de_famille = formData.get(Prisma.UserScalarFieldEnum.nom_de_famille) as string;
   }

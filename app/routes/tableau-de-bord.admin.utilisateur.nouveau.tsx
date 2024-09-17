@@ -43,7 +43,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return json({ user });
 }
 
-export default function MesInformations() {
+export default function AdminNewUser() {
   const { user } = useLoaderData<typeof loader>();
 
   return (

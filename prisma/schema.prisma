@@ -52,6 +52,7 @@ model User {
   notifications             UserNotifications[]
   web_push_tokens           String[]
   prefilled                 Boolean             @default(false)
+  activated                 Boolean             @default(false)
   Password                  Password?
   UserRelationsAsOwner      UserRelations[]     @relation("UserOwnerOfUserRelation")
   UserRelationsAsRelated    UserRelations[]     @relation("UserRelatedOfUserRelation")

@@ -1,10 +1,10 @@
-import { User, Entity, EntityRelationType, Prisma, EntityTypes } from "@prisma/client";
+import { User, EntityRelationType, Prisma, EntityTypes, UserRoles } from "@prisma/client";
 import { type ActionFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { authorizeUserOrAdmin } from "~/utils/authorizeUserOrAdmin";
 
 export async function action(args: ActionFunctionArgs) {
-  const { user, error } = await authorizeUserOrAdmin(args);
+  const { user, error, isAdmin } = await authorizeUserOrAdmin(args);
   if (!user) {
     return json({ ok: false, data: null, error }, { status: 401 });
   }
@@ -28,7 +28,7 @@ export async function action(args: ActionFunctionArgs) {
   if (!entityId) {
     return json({ ok: false, data: null, error: "Missing entity_id" }, { status: 400 });
   }
-  if (params.user_id !== formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id)) {
+  if (!isAdmin && params.user_id !== formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id)) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -49,6 +49,9 @@ export async function action(args: ActionFunctionArgs) {
     if (existingEntityRelation) {
       return json({ ok: false, data: null, error: "EntityRelation already exists" }, { status: 409 });
     }
+    console.log({
+      nextEntityRelation,
+    });
     const relation = await prisma.entityRelations.create({
       data: nextEntityRelation,
     });

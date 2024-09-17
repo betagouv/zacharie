@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import { useState, type RefObject, useRef, Fragment, useMemo } from "react";
+import { json, redirect, SerializeFrom, type LoaderFunctionArgs } from "@remix-run/node";
+import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
@@ -9,16 +9,20 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
-import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
+import { Entity, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 import InputVille from "~/components/InputVille";
 import RolesCheckBoxes from "~/components/RolesCheckboxes";
+import { RadioButtons } from "@codegouvfr/react-dsfr/RadioButtons";
+import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
+import { Table } from "@codegouvfr/react-dsfr/Table";
+import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 
 export function meta() {
   return [
     {
-      title: "Mes informations | Zacharie | Ministère de l'Agriculture",
+      title: "Utilisateur | Admin | Zacharie | Ministère de l'Agriculture",
     },
   ];
 }
@@ -40,26 +44,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const userEntitiesRelations = await prisma.entityRelations.findMany({
     where: {
       owner_id: user.id,
-      relation: EntityRelationType.WORKING_FOR,
+    },
+    include: {
+      EntityRelatedWithUser: true,
     },
   });
 
-  const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
-  const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(userEntitiesRelations, allEntitiesIds);
-
-  const userCentresCollectes = user.roles.includes(UserRoles.CCG)
-    ? Object.values(userEntitiesByTypeAndId[EntityTypes.CCG])
-    : [];
-  const userCollecteursPro = user.roles.includes(UserRoles.COLLECTEUR_PRO)
-    ? Object.values(userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO])
-    : [];
-  const userEtgs = user.roles.includes(UserRoles.ETG) ? Object.values(userEntitiesByTypeAndId[EntityTypes.ETG]) : [];
-  const userSvis = user.roles.includes(UserRoles.SVI) ? Object.values(userEntitiesByTypeAndId[EntityTypes.SVI]) : [];
-
   return json({
     user,
-    allEntitiesByTypeAndId,
-    userEntitiesByTypeAndId,
     identityDone:
       !!user.nom_de_famille &&
       !!user.prenom &&
@@ -67,75 +59,115 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       !!user.addresse_ligne_1 &&
       !!user.code_postal &&
       !!user.ville,
-    examinateurDone: !!user.numero_cfei,
-    ccgsDone: user.roles.includes(UserRoles.CCG) ? userCentresCollectes.length > 0 : true,
-    collecteursProDone: user.roles.includes(UserRoles.COLLECTEUR_PRO) ? userCollecteursPro.length > 0 : true,
-    etgsDone: user.roles.includes(UserRoles.ETG) ? userEtgs.length > 0 : true,
-    svisDone: user.roles.includes(UserRoles.SVI) ? userSvis.length > 0 : true,
-    ccgSearched: null,
+    examinateurDone: !user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ? true : !!user.numero_cfei,
+    allEntities,
+    userEntitiesRelations,
   });
 }
 
-export default function MesInformations() {
-  const {
-    user,
-    // for accordions
-    identityDone,
-    examinateurDone,
-    ccgsDone,
-    collecteursProDone,
-    etgsDone,
-    svisDone,
-  } = useLoaderData<typeof loader>();
+export default function AdminUser() {
+  const { user, identityDone, examinateurDone, userEntitiesRelations } = useLoaderData<typeof loader>();
 
   const userFetcher = useFetcher({ key: "mon-profil-mes-informations" });
-  const handleUserFormBlur = useCallback(
-    (event: React.FocusEvent<HTMLFormElement>) => {
-      const formData = new FormData(event.currentTarget);
-      userFetcher.submit(formData, {
-        method: "POST",
-        action: `/action/user/${user.id}`,
-        preventScrollReset: true, // Prevent scroll reset on submission
-      });
-    },
-    [userFetcher, user.id],
-  );
+  const activeFormRef = useRef<HTMLFormElement>(null);
+  const idFormRef = useRef<HTMLFormElement>(null);
+  const rolesFormRef = useRef<HTMLFormElement>(null);
+  const handleUserFormSubmit = (formRef: RefObject<HTMLFormElement>) => () => {
+    const formData = new FormData(formRef.current!);
+    userFetcher.submit(formData, {
+      method: "POST",
+      action: `/action/user/${user.id}`,
+      preventScrollReset: true, // Prevent scroll reset on submission
+    });
+  };
 
-  const [identityExpanded, setIdentityExpanded] = useState(!identityDone);
-  useEffect(() => {
-    setIdentityExpanded(!identityDone);
-  }, [identityDone]);
-  const [examinateurExpanded, setExaminateurExpanded] = useState(!examinateurDone);
-  useEffect(() => {
-    setExaminateurExpanded(!examinateurDone);
-  }, [examinateurDone]);
+  const [selectedTabId, setSelectedTabId] = useState("Identité");
+  const tabs: TabsProps["tabs"] = [
+    {
+      tabId: "Roles",
+      label: (user?.roles?.length ? "✅ " : "") + "Roles",
+    },
+    {
+      tabId: "Identité",
+      label: (identityDone && examinateurDone ? "✅ " : "") + "Identité",
+    },
+    {
+      tabId: "Salarié de / Dirigeant de / Propriétaire de",
+      label: `Salarié de / Dirigeant de / Propriétaire de (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
+    },
+    {
+      tabId: "Partenaire de",
+      label: `Partenaire de (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
+    },
+  ];
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <h1 className="fr-h2 fr-mb-2w">{user.email}</h1>
-          <div className="mb-6 bg-white md:shadow">
-            <div className="p-4 pb-32 md:p-8 md:pb-0">
-              <p className="fr-text--regular mb-4">Renseignez les informations de chacun de ses rôles</p>
+          <div className="p-4 pb-32 md:p-8 md:pb-0">
+            <div className="flex flex-row items-center justify-between">
+              <h1 className="fr-h2 fr-mb-2w">
+                {user.prenom ? (
+                  <>
+                    {user.nom_de_famille} {user.prenom}
+                    <br />
+                    <small>{user.email}</small>
+                  </>
+                ) : (
+                  <>{user.email}</>
+                )}
+                <br />
+                {!user.activated ? <small>❌ Utilisateur inactif</small> : <small>✅ Utilisateur activé</small>}
+              </h1>
               <userFetcher.Form
-                id="user_data_form"
+                id="user_active_form"
                 method="POST"
+                ref={activeFormRef}
                 action={`/action/user/${user.id}`}
-                onBlur={handleUserFormBlur}
+                onBlur={handleUserFormSubmit(activeFormRef)}
                 preventScrollReset
               >
-                <Accordion
-                  titleAs="h2"
-                  defaultExpanded={false}
-                  onExpandedChange={setIdentityExpanded}
-                  label={
-                    <div className="inline-flex w-full items-center justify-start">
-                      <CompletedTag done /> <span>Roles</span>
-                    </div>
-                  }
+                <RadioButtons
+                  options={[
+                    {
+                      label: "Utilisateur activé",
+                      nativeInputProps: {
+                        name: Prisma.UserScalarFieldEnum.activated,
+                        value: "true",
+                        onChange: !user.activated ? handleUserFormSubmit(activeFormRef) : undefined,
+                        defaultChecked: user.activated,
+                      },
+                    },
+                    {
+                      label: "Utilisateur inactif",
+                      nativeInputProps: {
+                        name: Prisma.UserScalarFieldEnum.activated,
+                        value: "false",
+                        onChange: user.activated ? handleUserFormSubmit(activeFormRef) : undefined,
+                        defaultChecked: !user.activated,
+                      },
+                    },
+                  ]}
+                />
+              </userFetcher.Form>
+            </div>
+            <Tabs
+              selectedTabId={selectedTabId}
+              tabs={tabs}
+              onTabChange={setSelectedTabId}
+              className="mb-6 bg-white md:shadow [&_.fr-tabs\_\_list]:!bg-alt-blue-france [&_.fr-tabs\_\_list]:!shadow-none"
+            >
+              {selectedTabId === "Roles" && (
+                <userFetcher.Form
+                  id="user_roles_form"
+                  method="POST"
+                  ref={rolesFormRef}
+                  action={`/action/user/${user.id}`}
+                  onBlur={handleUserFormSubmit(rolesFormRef)}
+                  preventScrollReset
                 >
-                  <RolesCheckBoxes withAdmin user={user} legend="Sélectionnez tous les rôles du nouvel utilisateur" />
+                  <RolesCheckBoxes withAdmin user={user} legend="Sélectionnez tous les rôles de cet utilisateur" />
                   <div className="relative flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
                     <ButtonsGroup
                       buttons={[
@@ -143,23 +175,24 @@ export default function MesInformations() {
                           children: "Rafraichir",
                           type: "submit",
                           nativeButtonProps: {
-                            form: "user_data_form",
+                            form: "user_roles_form",
                           },
                         },
                       ]}
                     />
                   </div>
-                </Accordion>
-                <Accordion
-                  titleAs="h2"
-                  expanded={identityExpanded}
-                  onExpandedChange={setIdentityExpanded}
-                  label={
-                    <div className="inline-flex w-full items-center justify-start">
-                      <CompletedTag done={identityDone} /> <span>Identité</span>
-                    </div>
-                  }
+                </userFetcher.Form>
+              )}
+              {selectedTabId === "Identité" && (
+                <userFetcher.Form
+                  id="user_data_form"
+                  method="POST"
+                  ref={idFormRef}
+                  action={`/action/user/${user.id}`}
+                  onBlur={handleUserFormSubmit(idFormRef)}
+                  preventScrollReset
                 >
+                  <input type="hidden" name={Prisma.UserScalarFieldEnum.prefilled} value="true" />
                   <div className="fr-fieldset__element">
                     <Input
                       label="Email"
@@ -263,18 +296,7 @@ export default function MesInformations() {
                       />
                     </div>
                   </div>
-                </Accordion>
-                {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
-                  <Accordion
-                    titleAs="h2"
-                    expanded={examinateurExpanded}
-                    onExpandedChange={setExaminateurExpanded}
-                    label={
-                      <div className="inline-flex w-full items-center justify-start">
-                        <CompletedTag done={examinateurDone} /> Examinateur Initial Certifié
-                      </div>
-                    }
-                  >
+                  {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
                     <div className="fr-fieldset__element">
                       <Input
                         label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
@@ -288,70 +310,34 @@ export default function MesInformations() {
                         }}
                       />
                     </div>
-                  </Accordion>
-                )}
-              </userFetcher.Form>
-              {user.roles.includes(UserRoles.CCG) && (
-                <AccordionEntreprise
-                  fetcherKey="onboarding-etape-2-ccg-data"
-                  accordionLabel="Centre de Collecte de Gibier (CCG)"
-                  addLabel="Ajouter un Centre de Collecte de Gibier (CCG)"
-                  selectLabel="Sélectionnez un Centre de Collecte de Gibier (CCG)"
-                  done={ccgsDone}
-                  entityType={EntityTypes.CCG}
-                >
-                  <InputCCG />
-                </AccordionEntreprise>
+                  )}
+                </userFetcher.Form>
               )}
-              {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
-                <AccordionEntreprise
-                  fetcherKey="onboarding-etape-2-collecteur-pro-data"
-                  accordionLabel="Collecteur Professionnel"
-                  addLabel="Ajouter un Collecteur Professionnel"
-                  selectLabel="Sélectionnez un Collecteur Professionnel"
-                  done={collecteursProDone}
-                  entityType={EntityTypes.COLLECTEUR_PRO}
-                />
+              {selectedTabId === "Salarié de / Dirigeant de / Propriétaire de" && (
+                <WorkingWithOrFor relation={EntityRelationType.WORKING_FOR} fetcherKey="working-for" />
               )}
-              {user.roles.includes(UserRoles.ETG) && (
-                <AccordionEntreprise
-                  fetcherKey="onboarding-etape-2-etg-data"
-                  accordionLabel="Établissement de Transformation des Gibiers (ETG)"
-                  addLabel="Ajouter un ETG"
-                  selectLabel="Sélectionnez un ETG"
-                  done={etgsDone}
-                  entityType={EntityTypes.ETG}
-                />
-              )}
-              {user.roles.includes(UserRoles.SVI) && (
-                <AccordionEntreprise
-                  fetcherKey="onboarding-etape-2-svi-data"
-                  accordionLabel="Service Vétérinaire d'Inspection (SVI)"
-                  addLabel="Ajouter un SVI"
-                  selectLabel="Sélectionnez un SVI"
-                  done={svisDone}
-                  entityType={EntityTypes.SVI}
-                />
+              {selectedTabId === "Partenaire de" && (
+                <WorkingWithOrFor relation={EntityRelationType.WORKING_WITH} fetcherKey="working-with" />
               )}
               <div className="mb-16 ml-6 mt-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>
               </div>
-            </div>
-            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: "Rafraichir",
-                    type: "submit",
-                    nativeButtonProps: {
-                      form: "user_data_form",
+              <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
+                <ButtonsGroup
+                  buttons={[
+                    {
+                      children: "Rafraichir",
+                      type: "submit",
+                      nativeButtonProps: {
+                        form: "user_data_form",
+                      },
                     },
-                  },
-                ]}
-              />
-            </div>
+                  ]}
+                />
+              </div>
+            </Tabs>
           </div>
         </div>
       </div>
@@ -359,46 +345,38 @@ export default function MesInformations() {
   );
 }
 
-interface AccordionEntrepriseProps {
-  done: boolean;
-  entityType: EntityTypes;
-  addLabel: string;
-  selectLabel: string;
-  accordionLabel: string;
+interface WorkingWithOrForProps {
+  relation: EntityRelationType;
   fetcherKey: string;
-  children?: React.ReactNode;
 }
 
-function AccordionEntreprise({
-  done,
-  entityType,
-  addLabel,
-  selectLabel,
-  accordionLabel,
-  fetcherKey,
-  children,
-}: AccordionEntrepriseProps) {
-  const { user, allEntitiesByTypeAndId, userEntitiesByTypeAndId } = useLoaderData<typeof loader>();
+function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
+  const { user, userEntitiesRelations, allEntities } = useLoaderData<typeof loader>();
 
   const userEntityFetcher = useFetcher({ key: fetcherKey });
-  const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
-  const remainingEntities = Object.values(allEntitiesByTypeAndId[entityType]).filter(
-    (entity) => !userEntitiesByTypeAndId[entityType][entity.id],
-  );
+
+  const potentialEntities = useMemo(() => {
+    const userEntityIds: Record<Entity["id"], boolean> = {};
+    for (const userEntityRelation of userEntitiesRelations) {
+      if (userEntityRelation.relation === relation) {
+        userEntityIds[userEntityRelation.entity_id] = true;
+      }
+    }
+    const entities = [];
+    for (const entity of allEntities) {
+      if (!userEntityIds[entity.id]) {
+        entities.push(entity);
+      }
+    }
+    return entities;
+  }, [allEntities, userEntitiesRelations, relation]);
 
   return (
-    <Accordion
-      titleAs="h2"
-      defaultExpanded={!done}
-      label={
-        <div className="inline-flex w-full items-center justify-start">
-          <CompletedTag done={done} /> {accordionLabel}
-        </div>
-      }
-    >
-      {userEntities
-        .filter((entity) => entity.type === entityType)
-        .map((entity) => {
+    <>
+      {userEntitiesRelations
+        .filter((entityRelation) => entityRelation.relation === relation)
+        .map((entityRelation) => {
+          const entity = entityRelation.EntityRelatedWithUser;
           return (
             <div key={entity.id} className="fr-fieldset__element">
               <Notice
@@ -416,105 +394,75 @@ function AccordionEntreprise({
                     },
                     {
                       method: "POST",
-                      action: `/action/user-entity/${user.id}`,
+                      action: `/action/user-entity/${entity.id}`,
                       preventScrollReset: true,
                     },
                   );
                 }}
                 title={
-                  <>
+                  <Link
+                    to={`/tableau-de-bord/admin/entite/${entity.id}`}
+                    className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                  >
                     {entity.raison_sociale}
                     <br />
+                    {getUserRoleLabel(entity.type)}
+                    <br />
+                    {entity.siret}
+                    {entity.numero_ddecpp}
+                    <br />
                     {entity.code_postal} {entity.ville}
-                  </>
+                  </Link>
                 }
               />
             </div>
           );
         })}
-      {children ?? (
-        <userEntityFetcher.Form
-          id={fetcherKey}
-          className="fr-fieldset__element flex w-full flex-row items-end gap-4"
-          method="POST"
-          action={`/action/user-entity/${user.id}`}
-          preventScrollReset
-        >
-          <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
-          <input type="hidden" name="_action" value="create" />
-          <input
-            type="hidden"
-            name={Prisma.EntityRelationsScalarFieldEnum.relation}
-            value={EntityRelationType.WORKING_FOR}
-          />
-          <Select
-            label={addLabel}
-            hint={selectLabel}
-            className="!mb-0 grow"
-            nativeSelectProps={{
-              name: Prisma.EntityRelationsScalarFieldEnum.entity_id,
-            }}
-          >
-            <option value="">{selectLabel}</option>
-            {remainingEntities.map((entity) => {
-              return (
-                <option key={entity.id} value={entity.id}>
-                  {entity.raison_sociale} - {entity.code_postal} {entity.ville}
-                </option>
-              );
-            })}
-          </Select>
-          <Button type="submit" disabled={!remainingEntities.length}>
-            Ajouter
-          </Button>
-        </userEntityFetcher.Form>
-      )}
-    </Accordion>
-  );
-}
-
-function CompletedTag({ done }: { done: boolean }) {
-  if (done) {
-    return (
-      <span className="fr-background-contrast--grey fr-text-default--grey mr-6 inline-flex rounded-full px-3 py-1 text-xs">
-        ✅
-      </span>
-    );
-  }
-  return (
-    <span className="fr-background-contrast--grey fr-text-default--grey mr-6 inline-flex shrink-0 rounded-full px-3 py-1 text-xs">
-      À compléter
-    </span>
-  );
-}
-
-function InputCCG() {
-  const { user } = useLoaderData<typeof loader>();
-  const userCCGFetcher = useFetcher({ key: "ccg-data" });
-  return (
-    <userCCGFetcher.Form
-      method="POST"
-      className="fr-fieldset__element flex w-full flex-row items-end gap-4"
-      action={`/action/user-entity/${user.id}`}
-    >
-      <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
-      <input type="hidden" name="_action" value="create" />
-      <input
-        type="hidden"
-        name={Prisma.EntityRelationsScalarFieldEnum.relation}
-        value={EntityRelationType.WORKING_FOR}
-      />
-      <input type="hidden" name={Prisma.EntityScalarFieldEnum.type} value={EntityTypes.CCG} />
-      <Input
-        label="Numéro de DD(ec)PP du Centre de Collecte de Gibier (CCG)"
-        className="!mb-0"
-        nativeInputProps={{
-          type: "text",
-          required: true,
-          name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
-        }}
-      />
-      <Button type="submit">Ajouter</Button>
-    </userCCGFetcher.Form>
+      <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+        <Table
+          fixed
+          noCaption
+          className="[&_td]:h-px"
+          data={potentialEntities.map((entity) => [
+            <userEntityFetcher.Form
+              key={entity.id}
+              id={fetcherKey}
+              className="fr-fieldset__element flex w-full flex-col items-start gap-4"
+              method="POST"
+              action={`/action/user-entity/${entity.id}`}
+              preventScrollReset
+            >
+              <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
+              <input type="hidden" name="_action" value="create" />
+              <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.relation} value={relation} />
+              <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.entity_id} value={entity.id} />
+              <Link
+                to={`/tableau-de-bord/admin/entite/${user.id}`}
+                className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+              >
+                {entity.raison_sociale}
+                <br />
+                {getUserRoleLabel(entity.type)}
+                <br />
+                {entity.siret}
+                {entity.numero_ddecpp}
+                <br />
+                {entity.code_postal} {entity.ville}
+              </Link>
+              <Button type="submit">Ajouter</Button>
+            </userEntityFetcher.Form>,
+            <p key={user.id} className="!inline-flex size-full items-center justify-start !bg-none !no-underline">
+              {user.roles.map((role) => (
+                <Fragment key={role}>
+                  {role}
+                  <br />
+                </Fragment>
+              ))}
+            </p>,
+          ])}
+          headers={["Utilisateur", "Roles"]}
+        />
+      </div>
+    </>
   );
 }
