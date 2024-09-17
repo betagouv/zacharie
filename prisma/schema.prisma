@@ -49,7 +49,7 @@ model User {
   last_seen_at              DateTime?
   deleted_at                DateTime?
   onboarded_at              DateTime?
-  notifications             UserNotifications[]
+  notifications             UserNotifications[] @default([EMAIL, PUSH])
   web_push_tokens           String[]
   prefilled                 Boolean             @default(false)
   activated                 Boolean             @default(false)
