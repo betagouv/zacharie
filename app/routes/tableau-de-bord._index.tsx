@@ -53,6 +53,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       numero: true,
       created_at: true,
       fei_current_owner_role: true,
+      commune_mise_a_mort: true,
     },
   });
   const feiDone = await prisma.fei.findMany({
@@ -66,6 +67,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       numero: true,
       created_at: true,
       svi_signed_at: true,
+      commune_mise_a_mort: true,
     },
   });
 
@@ -110,15 +112,38 @@ export default function TableauDeBordIndex() {
                 <Table
                   bordered
                   caption="FEI assignées"
+                  className="[&_td]:h-px"
                   data={feiAssigned.map((fei) => [
-                    <Link key={fei.numero} to={`/tableau-de-bord/fei/${fei.numero}`}>
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
+                      {fei.numero}
+                    </Link>,
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
                       {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
                     </Link>,
-                    <Link key={fei.numero} to={`/tableau-de-bord/fei/${fei.numero}`}>
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
+                      {fei.commune_mise_a_mort}
+                    </Link>,
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
                       {getUserRoleLabel(fei.fei_current_owner_role as UserRoles)}
                     </Link>,
                   ])}
-                  headers={["Date de création", "Étape en cours"]}
+                  headers={["Numéro", "Date de création", "Commune", "Étape en cours"]}
                 />
               ) : (
                 <>
@@ -149,16 +174,39 @@ export default function TableauDeBordIndex() {
               {feiDone.length ? (
                 <Table
                   bordered
+                  className="[&_td]:h-px"
                   caption="FEI archivées"
                   data={feiDone.map((fei) => [
-                    <Link key={fei.numero} to={`/tableau-de-bord/fei/${fei.numero}`}>
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
+                      {fei.numero}
+                    </Link>,
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
                       {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
                     </Link>,
-                    <Link key={fei.numero} to={`/tableau-de-bord/fei/${fei.numero}`}>
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
+                      {fei.commune_mise_a_mort}
+                    </Link>,
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
                       {dayjs(fei.svi_signed_at).format("DD/MM/YYYY")}
                     </Link>,
                   ])}
-                  headers={["Date de création", "Date de traitement SVI"]}
+                  headers={["Numéro", "Date de création", "Commune", "Date de traitement SVI"]}
                 />
               ) : (
                 <>

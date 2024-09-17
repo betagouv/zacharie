@@ -1,17 +1,13 @@
 import { useState, type RefObject, useRef, Fragment, useMemo } from "react";
-import { json, redirect, SerializeFrom, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
-import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
-import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Entity, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
-import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 import InputVille from "~/components/InputVille";
 import RolesCheckBoxes from "~/components/RolesCheckboxes";
 import { RadioButtons } from "@codegouvfr/react-dsfr/RadioButtons";
