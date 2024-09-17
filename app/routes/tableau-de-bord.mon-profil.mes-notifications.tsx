@@ -27,12 +27,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function MesNotifications() {
   const { user } = useLoaderData<typeof loader>();
   const fetcher = useFetcher({ key: "mon-profil-mes-notifications" });
-  const tokenFetcher = useFetcher({ key: "notifications-token" });
-  const { subscribeToPush, canSendPush, isSubscribed, pushSubscription } = {
+  // const tokenFetcher = useFetcher({ key: "notifications-token" });
+  const {
+    // subscribeToPush,
+    canSendPush,
+    isSubscribed,
+    pushSubscription,
+  } = {
     canSendPush: false,
     isSubscribed: false,
     pushSubscription: null,
-    subscribeToPush: () => {},
+    // subscribeToPush: () => {},
   };
 
   const checkBoxChecked =
@@ -68,26 +73,26 @@ export default function MesNotifications() {
                         value: UserNotifications.PUSH,
                         defaultChecked: checkBoxChecked,
                         disabled: !canSendPush,
-                        onClick: () => {
-                          subscribeToPush(
-                            window.ENV.VAPID_PUBLIC_KEY,
-                            (subscription) => {
-                              tokenFetcher.submit(
-                                {
-                                  web_push_token: JSON.stringify(subscription),
-                                },
-                                {
-                                  method: "POST",
-                                  action: `/action/user/${user.id}`,
-                                  preventScrollReset: true,
-                                },
-                              );
-                            },
-                            (error) => {
-                              console.error("Error subscribing user to push notifications!", error);
-                            },
-                          );
-                        },
+                        // onClick: () => {
+                        //   subscribeToPush(
+                        //     window.ENV.VAPID_PUBLIC_KEY,
+                        //     (subscription) => {
+                        //       tokenFetcher.submit(
+                        //         {
+                        //           web_push_token: JSON.stringify(subscription),
+                        //         },
+                        //         {
+                        //           method: "POST",
+                        //           action: `/action/user/${user.id}`,
+                        //           preventScrollReset: true,
+                        //         },
+                        //       );
+                        //     },
+                        //     (error) => {
+                        //       console.error("Error subscribing user to push notifications!", error);
+                        //     },
+                        //   );
+                        // },
                       },
                     },
                     {
