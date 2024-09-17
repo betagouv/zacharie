@@ -1,12 +1,11 @@
 import { ActionFunctionArgs, json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { Form, useFetcher, useLoaderData } from "@remix-run/react";
+import { Form, useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { UserRoles, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import RolesCheckBoxes from "~/components/RolesCheckboxes";
-import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 
 export function meta() {
   return [
@@ -51,10 +50,6 @@ export default function AdminNewUser() {
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">Nouvel Utilisateur</h1>
-          <CallOut title="Conseil" className="bg-white">
-            Si vous voulez gagner du temps, créez d'abord les nouvelles entités le cas échéant (Centre de COllecte, ETG,
-            SVI, etc.)
-          </CallOut>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
               <div className="fr-fieldset__element">
