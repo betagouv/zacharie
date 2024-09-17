@@ -4,13 +4,20 @@ import { useDebounce } from "@uidotdev/usehooks";
 import villes from "~/data/villes.json";
 
 type OnlyInput = Omit<InputProps, "nativeTextAreaProps" | "textArea">;
-
-export default function InputVille(props: OnlyInput) {
+interface InputVilleProps extends OnlyInput {
+  trimPostCode?: boolean;
+  postCode?: string;
+}
+export default function InputVille(props: InputVilleProps) {
+  const { trimPostCode, postCode, ...inputProps } = props;
   const [villeSearched, setVilleSearched] = useState<string>(() => {
     const defaultValue = props.nativeInputProps?.defaultValue;
     return typeof defaultValue === "string" ? defaultValue : "";
   });
-  const debouncedVilleSearched = useDebounce(villeSearched.toLocaleUpperCase(), 300);
+  const debouncedVilleSearched = useDebounce(
+    `${postCode ? postCode + " " : ""}${villeSearched.toLocaleUpperCase()}`,
+    300,
+  );
   const [villesResults, setVillesResults] = useState<string[]>([]);
   const canSearch = useRef(false);
 
@@ -36,6 +43,7 @@ export default function InputVille(props: OnlyInput) {
       .filter((word) => word.length > 2);
     const normalizedVille = normalizeSearch(debouncedVilleSearched);
     const searchCodePostal = normalizedVille.match(/\d{5}/)?.[0] ?? "";
+
     const search_code_postal_ville = searchCodePostal ? `${searchCodePostal} ${normalizedVille}` : normalizedVille;
     const multipleNormalizedWords = normalizedVille
       .split(" ")
@@ -114,7 +122,24 @@ export default function InputVille(props: OnlyInput) {
       ]),
     ].slice(0, 5);
     setVillesResults(results);
-  }, [debouncedVilleSearched]);
+  }, [debouncedVilleSearched, postCode]);
+
+  useEffect(() => {
+    if (!villeSearched && postCode && postCode?.length >= 5) {
+      const results = [];
+      for (const item of villes as Array<{ code_postal: string; ville: string; code_postal_ville: string }>) {
+        const { code_postal, code_postal_ville } = item;
+        if (code_postal === postCode) {
+          results.push(code_postal_ville);
+        }
+        if (results.length >= 5) {
+          break;
+        }
+      }
+      setVillesResults(results);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postCode]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     canSearch.current = true;
@@ -126,7 +151,7 @@ export default function InputVille(props: OnlyInput) {
   return (
     <>
       <Input
-        {...props}
+        {...inputProps}
         nativeInputProps={{
           ...props.nativeInputProps,
           ref: ref,
@@ -136,13 +161,18 @@ export default function InputVille(props: OnlyInput) {
           onChange: handleChange,
         }}
       />
-      <div className="flex flex-col w-full -mt-6 border border-gray-200">
+      <div className="-mt-6 flex w-full flex-col border border-gray-200">
         {villesResults.map((ville) => {
           return (
             <button
               key={ville}
               onClick={() => {
-                setVilleSearched(ville);
+                if (trimPostCode) {
+                  const codePostal = ville.split(" ")[0];
+                  setVilleSearched(ville.replace(codePostal, "").trim());
+                } else {
+                  setVilleSearched(ville);
+                }
                 setVillesResults([]);
                 // the parent form is submitted on blur
                 // trigger a focus event then a blur again to submit the form
@@ -151,7 +181,7 @@ export default function InputVille(props: OnlyInput) {
                 canSearch.current = false;
               }}
               type="button"
-              className="block text-left !border-b-2 border-b-gray-200 py-1 pl-4"
+              className="block !border-b-2 border-b-gray-200 py-1 pl-4 text-left"
             >
               {ville}
             </button>

@@ -41,7 +41,7 @@ export async function action(args: ActionFunctionArgs) {
     nextUser.ville = formData.get(Prisma.UserScalarFieldEnum.ville) as string;
   }
   if (formData.has(Prisma.UserScalarFieldEnum.roles)) {
-    nextUser.roles = formData.getAll("roles") as UserRoles[];
+    nextUser.roles = formData.getAll(Prisma.UserScalarFieldEnum.roles) as UserRoles[];
   }
   if (formData.has(Prisma.UserScalarFieldEnum.notifications)) {
     nextUser.notifications = formData.getAll("notifications") as UserNotifications[];

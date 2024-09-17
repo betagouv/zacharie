@@ -7,7 +7,7 @@
     "**/.client/**/*.ts",
     "**/.client/**/*.tsx",
     "app/services/crypto.server.js"
-],
+, "app/routes/tableau-de-bord.admin.utilisateur.$userId.tsx"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["@remix-run/node", "vite/client", "@vite-pwa/remix/remix-sw"],

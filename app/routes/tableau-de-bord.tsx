@@ -110,19 +110,43 @@ export default function TableauDeBordLayout() {
                   isActive: location.pathname.startsWith("/tableau-de-bord/admin"),
                   menuLinks: [
                     {
-                      text: "Ajouter des utilisateurs",
-                      isActive: location.pathname === "/tableau-de-bord/ajouter-utilisateur",
+                      text: "Liste des utilisateurs",
+                      isActive: location.pathname === "/tableau-de-bord/admin/utilisateurs",
                       linkProps: {
                         href: "#",
-                        to: "/tableau-de-bord/ajouter-utilisateur",
+                        to: "/tableau-de-bord/admin/utilisateurs",
                       },
                     },
                     {
-                      text: "Ajouter des entités (SVI, ETG, etc.)",
-                      isActive: location.pathname === "/tableau-de-bord/ajouter-entites",
+                      text: "+ Ajouter des utilisateurs",
+                      isActive: location.pathname === "/tableau-de-bord/admin/ajouter-utilisateur",
                       linkProps: {
                         href: "#",
-                        to: "/tableau-de-bord/ajouter-entites",
+                        to: "/tableau-de-bord/admin/utilisateur/nouveau",
+                      },
+                    },
+                    {
+                      text: "Liste des entités",
+                      isActive: location.pathname === "/tableau-de-bord/admin/entites",
+                      linkProps: {
+                        href: "#",
+                        to: "/tableau-de-bord/admin/entites",
+                      },
+                    },
+                    {
+                      text: "+ Ajouter des entités (SVI, ETG, etc.)",
+                      isActive: location.pathname === "/tableau-de-bord/admin/ajouter-entite",
+                      linkProps: {
+                        href: "#",
+                        to: "/tableau-de-bord/admin/ajouter-entite",
+                      },
+                    },
+                    {
+                      text: "Liste des FEI",
+                      isActive: location.pathname === "/tableau-de-bord/admin/feis",
+                      linkProps: {
+                        href: "#",
+                        to: "/tableau-de-bord/admin/feis",
                       },
                     },
                   ],
@@ -133,7 +157,7 @@ export default function TableauDeBordLayout() {
         serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
         serviceTitle="Zacharie"
       />
-      <main role="main" id="content" className="fr-background-alt--blue-france relative overflow-auto min-h-full">
+      <main role="main" id="content" className="fr-background-alt--blue-france relative min-h-full overflow-auto">
         <Outlet />
       </main>
       {/* <Footer

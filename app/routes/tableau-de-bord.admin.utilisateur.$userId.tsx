@@ -13,6 +13,7 @@ import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/clie
 import { prisma } from "~/db/prisma.server";
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 import InputVille from "~/components/InputVille";
+import RolesCheckBoxes from "~/components/RolesCheckboxes";
 
 export function meta() {
   return [
@@ -22,10 +23,18 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
-  if (!user) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const admin = await getUserFromCookie(request);
+  if (!admin?.roles?.includes(UserRoles.ADMIN)) {
     throw redirect("/connexion?type=compte-existant");
+  }
+  const user = await prisma.user.findUnique({
+    where: {
+      id: params.userId,
+    },
+  });
+  if (!user) {
+    throw redirect("/tableau-de-bord/admin/utilisateurs");
   }
   const allEntities = await prisma.entity.findMany();
   const userEntitiesRelations = await prisma.entityRelations.findMany({
@@ -105,11 +114,10 @@ export default function MesInformations() {
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper currentStep={2} nextTitle="Vos partenaires" stepCount={4} title="Vos informations" />
-          <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations</h1>
+          <h1 className="fr-h2 fr-mb-2w">{user.email}</h1>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
-              <p className="fr-text--regular mb-4">Renseignez les informations de chacun de vos rôles</p>
+              <p className="fr-text--regular mb-4">Renseignez les informations de chacun de ses rôles</p>
               <userFetcher.Form
                 id="user_data_form"
                 method="POST"
@@ -119,21 +127,58 @@ export default function MesInformations() {
               >
                 <Accordion
                   titleAs="h2"
+                  defaultExpanded={false}
+                  onExpandedChange={setIdentityExpanded}
+                  label={
+                    <div className="inline-flex w-full items-center justify-start">
+                      <CompletedTag done /> <span>Roles</span>
+                    </div>
+                  }
+                >
+                  <RolesCheckBoxes withAdmin user={user} legend="Sélectionnez tous les rôles du nouvel utilisateur" />
+                  <div className="relative flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
+                    <ButtonsGroup
+                      buttons={[
+                        {
+                          children: "Rafraichir",
+                          type: "submit",
+                          nativeButtonProps: {
+                            form: "user_data_form",
+                          },
+                        },
+                      ]}
+                    />
+                  </div>
+                </Accordion>
+                <Accordion
+                  titleAs="h2"
                   expanded={identityExpanded}
                   onExpandedChange={setIdentityExpanded}
                   label={
                     <div className="inline-flex w-full items-center justify-start">
-                      <CompletedTag done={identityDone} /> <span>Votre identité</span>
+                      <CompletedTag done={identityDone} /> <span>Identité</span>
                     </div>
                   }
                 >
+                  <div className="fr-fieldset__element">
+                    <Input
+                      label="Email"
+                      nativeInputProps={{
+                        id: Prisma.UserScalarFieldEnum.email,
+                        name: Prisma.UserScalarFieldEnum.email,
+                        autoComplete: "off",
+                        required: true,
+                        defaultValue: user.email ?? "",
+                      }}
+                    />
+                  </div>
                   <div className="fr-fieldset__element">
                     <Input
                       label="Nom"
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.nom_de_famille,
                         name: Prisma.UserScalarFieldEnum.nom_de_famille,
-                        autoComplete: "family-name",
+                        autoComplete: "off",
                         required: true,
                         defaultValue: user.nom_de_famille ?? "",
                       }}
@@ -145,7 +190,7 @@ export default function MesInformations() {
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.prenom,
                         name: Prisma.UserScalarFieldEnum.prenom,
-                        autoComplete: "given-name",
+                        autoComplete: "off",
                         required: true,
                         defaultValue: user.prenom ?? "",
                       }}
@@ -158,7 +203,7 @@ export default function MesInformations() {
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.telephone,
                         name: Prisma.UserScalarFieldEnum.telephone,
-                        autoComplete: "tel",
+                        autoComplete: "off",
                         defaultValue: user.telephone ?? "",
                       }}
                     />
@@ -170,7 +215,7 @@ export default function MesInformations() {
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                         name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                        autoComplete: "address-line1",
+                        autoComplete: "off",
                         required: true,
                         defaultValue: user.addresse_ligne_1 ?? "",
                       }}
@@ -183,19 +228,21 @@ export default function MesInformations() {
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
                         name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                        autoComplete: "address-line2",
+                        autoComplete: "off",
                         defaultValue: user.addresse_ligne_2 ?? "",
                       }}
                     />
                   </div>
+
                   <div className="fr-fieldset__element fr-fieldset__element--inline fr-fieldset__element--postal flex">
                     <Input
                       label="Code postal"
                       hintText="Format attendu : 5 chiffres"
+                      className="shrink-0"
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.code_postal,
                         name: Prisma.UserScalarFieldEnum.code_postal,
-                        autoComplete: "postal-code",
+                        autoComplete: "off",
                         required: true,
                         defaultValue: user.code_postal ?? "",
                       }}
@@ -209,7 +256,7 @@ export default function MesInformations() {
                         nativeInputProps={{
                           id: Prisma.UserScalarFieldEnum.ville,
                           name: Prisma.UserScalarFieldEnum.ville,
-                          autoComplete: "address-level2",
+                          autoComplete: "off",
                           required: true,
                           defaultValue: user.ville ?? "",
                         }}
@@ -224,7 +271,7 @@ export default function MesInformations() {
                     onExpandedChange={setExaminateurExpanded}
                     label={
                       <div className="inline-flex w-full items-center justify-start">
-                        <CompletedTag done={examinateurDone} /> Vous êtes un Examinateur Initial Certifié
+                        <CompletedTag done={examinateurDone} /> Examinateur Initial Certifié
                       </div>
                     }
                   >
@@ -247,7 +294,7 @@ export default function MesInformations() {
               {user.roles.includes(UserRoles.CCG) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-ccg-data"
-                  accordionLabel="Vous êtes/travaillez pour un Centre de Collecte de Gibier (CCG)"
+                  accordionLabel="Centre de Collecte de Gibier (CCG)"
                   addLabel="Ajouter un Centre de Collecte de Gibier (CCG)"
                   selectLabel="Sélectionnez un Centre de Collecte de Gibier (CCG)"
                   done={ccgsDone}
@@ -259,7 +306,7 @@ export default function MesInformations() {
               {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-collecteur-pro-data"
-                  accordionLabel="Vous êtes/travaillez pour un Collecteur Professionnel"
+                  accordionLabel="Collecteur Professionnel"
                   addLabel="Ajouter un Collecteur Professionnel"
                   selectLabel="Sélectionnez un Collecteur Professionnel"
                   done={collecteursProDone}
@@ -269,7 +316,7 @@ export default function MesInformations() {
               {user.roles.includes(UserRoles.ETG) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-etg-data"
-                  accordionLabel="Vous êtes/travaillez pour un Établissement de Transformation des Gibiers (ETG)"
+                  accordionLabel="Établissement de Transformation des Gibiers (ETG)"
                   addLabel="Ajouter un ETG"
                   selectLabel="Sélectionnez un ETG"
                   done={etgsDone}
@@ -279,7 +326,7 @@ export default function MesInformations() {
               {user.roles.includes(UserRoles.SVI) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-svi-data"
-                  accordionLabel="Vous êtes/travaillez pour un Service Vétérinaire d'Inspection (SVI)"
+                  accordionLabel="Service Vétérinaire d'Inspection (SVI)"
                   addLabel="Ajouter un SVI"
                   selectLabel="Sélectionnez un SVI"
                   done={svisDone}
@@ -296,19 +343,11 @@ export default function MesInformations() {
               <ButtonsGroup
                 buttons={[
                   {
-                    children: "Continuer",
-                    linkProps: {
-                      to: "/tableau-de-bord/mon-profil/mes-partenaires",
-                      href: "#",
+                    children: "Rafraichir",
+                    type: "submit",
+                    nativeButtonProps: {
+                      form: "user_data_form",
                     },
-                  },
-                  {
-                    children: "Précédent",
-                    linkProps: {
-                      to: "/tableau-de-bord/mon-profil/mes-roles",
-                      href: "#",
-                    },
-                    priority: "secondary",
                   },
                 ]}
               />

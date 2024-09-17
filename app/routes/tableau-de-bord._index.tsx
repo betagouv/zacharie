@@ -74,7 +74,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function TableauDeBordIndex() {
   const { user, feiAssigned, feiDone } = useLoaderData<typeof loader>();
-  console.log("feiAssigned", feiAssigned);
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -84,11 +84,11 @@ export default function TableauDeBordIndex() {
             Retrouvez ici toutes vos FEI - en cours, validées, refusées - et les actions à mener.
           </CallOut>
           {(user.roles.includes(UserRoles.PREMIER_DETENTEUR) || user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) && (
-            <section className="bg-white mb-6 md:shadow">
+            <section className="mb-6 bg-white md:shadow">
               <div className="p-4 md:p-8 md:pb-0">
                 <h2 className="fr-h3 fr-mb-2w">Nouvelle FEI</h2>
                 <p className="fr-text--regular mb-4">Pour créer une nouvelle FEI, c'est par ici 👇</p>
-                <div className="flex flex-col items-start [&_ul]:md:min-w-96 bg-white">
+                <div className="flex flex-col items-start bg-white [&_ul]:md:min-w-96">
                   <ButtonsGroup
                     buttons={[
                       {
@@ -104,8 +104,8 @@ export default function TableauDeBordIndex() {
               </div>
             </section>
           )}
-          <section className="bg-white mb-6 md:shadow">
-            <div className="p-4 md:p-8 md:pb-0 [&_td]:has-[a]:!p-0 [&_a]:p-4 [&_a]:block [&_a]:no-underline">
+          <section className="mb-6 bg-white md:shadow">
+            <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feiAssigned.length ? (
                 <Table
                   bordered
@@ -127,7 +127,7 @@ export default function TableauDeBordIndex() {
                 </>
               )}
             </div>
-            <div className="flex flex-col items-start [&_ul]:md:min-w-96 bg-white px-8">
+            <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
               <ButtonsGroup
                 buttons={[
                   {
@@ -144,8 +144,8 @@ export default function TableauDeBordIndex() {
               </a>
             </div>
           </section>
-          <section className="bg-white mb-6 md:shadow">
-            <div className="p-4 md:p-8 md:pb-0 [&_td]:has-[a]:!p-0 [&_a]:p-4 [&_a]:block [&_a]:no-underline">
+          <section className="mb-6 bg-white md:shadow">
+            <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feiDone.length ? (
                 <Table
                   bordered
@@ -167,7 +167,7 @@ export default function TableauDeBordIndex() {
                 </>
               )}
             </div>
-            <div className="flex flex-col items-start [&_ul]:md:min-w-96 bg-white px-8">
+            <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
               <ButtonsGroup
                 buttons={[
                   {
