@@ -10,6 +10,10 @@ import { startTransition, StrictMode, useEffect } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { startReactDsfr } from "@codegouvfr/react-dsfr/spa";
 
+if (typeof window !== "undefined") {
+  import("./pwa");
+}
+
 Sentry.init({
   dsn: "https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175",
   tracesSampleRate: 0.01,

@@ -8,12 +8,15 @@ import { RemixVitePWA } from "@vite-pwa/remix";
 installGlobals();
 
 const { RemixVitePWAPlugin, RemixPWAPreset } = RemixVitePWA();
+process.env.VITE_BUILD_DATE = JSON.stringify(new Date().toISOString());
 
 export default defineConfig({
   ssr: {
     noExternal: ["@codegouvfr/react-dsfr"],
   },
-
+  define: {
+    VITE_BUILD_DATE: process.env.VITE_BUILD_DATE,
+  },
   plugins: [
     remix({
       future: {
@@ -24,30 +27,46 @@ export default defineConfig({
       presets: [RemixPWAPreset()],
     }),
     tsconfigPaths(),
-    sentryVitePlugin({
-      org: "betagouv",
-      project: "zacharie-remix",
-      url: "https://sentry.incubateur.net/",
-    }),
     RemixVitePWAPlugin({
+      srcDir: "app",
+      strategies: "injectManifest",
+      filename: "enty.ts",
+      base: "/",
       registerType: "autoUpdate",
+      injectRegister: false,
       manifest: {
         short_name: "Zacharie",
         name: "Zacharie | Ministère de l'Agriculture",
         display: "fullscreen",
         background_color: "#000091",
-        theme_color: "#000091",
+        theme_color: "#ffffff",
         start_url: "./?mode=standalone",
         scope: "./",
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        globPatterns: ["**/*.{js,html,css,png,svg,ico}"],
+      },
+      injectManifest: {
+        globPatterns: ["**/*.{js,html,css,png,svg,ico}"],
+        // for testing purposes only
+        minify: false,
+        // for testing purposes only
+        enableWorkboxModulesLogs: true,
       },
       devOptions: {
         enabled: true,
         type: "module",
+        suppressWarnings: true,
       },
-      // PWA options
+      pwaAssets: {
+        config: true,
+      },
+    }),
+    sentryVitePlugin({
+      org: "betagouv",
+      project: "zacharie-remix",
+      url: "https://sentry.incubateur.net/",
     }),
   ],
   build: {

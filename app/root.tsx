@@ -10,6 +10,8 @@ import {
   useRouteError,
 } from "@remix-run/react";
 import { LoaderFunction, MetaFunction } from "@remix-run/node";
+import { PWAAssets, PWAManifest } from "@vite-pwa/remix/components";
+
 import { honeypot } from "~/services/honeypot.server";
 import { HoneypotProvider } from "remix-utils/honeypot/react";
 import NotFound from "~/routes/404";
@@ -62,6 +64,7 @@ export function loader(): ReturnType<LoaderFunction> {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  console.log({ PWAAssets });
   return (
     <html lang="fr" suppressHydrationWarning={true} className="h-screen">
       <head>
@@ -73,8 +76,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="manifest" href={dsfrWebManifest} crossOrigin="use-credentials" />
         <link rel="stylesheet" href={dsfrCss} />
         <link rel="stylesheet" href={dsfrColorCss} />
+        <PWAAssets />
 
         <Meta />
+        <PWAManifest />
         <Links />
       </head>
       <body className="h-screen">
