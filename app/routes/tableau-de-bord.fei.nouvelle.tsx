@@ -3,13 +3,11 @@ import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from
 import { Form, useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
-import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import UserNotEditable from "~/components/UserNotEditable";
-import InputVille from "~/components/InputVille";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -25,7 +23,7 @@ export async function action(args: ActionFunctionArgs) {
 
   const newId = (await prisma.fei.count()) + 1;
   const today = dayjs().format("YYYYMMDD");
-  feiNumero = `ZACH-FEI-${today}-${newId.toString().padStart(9, "0")}`;
+  feiNumero = `ZACH-FEI-${today}-${newId.toString().padStart(6, "0")}`;
 
   // Create a new object with only the fields that are required and set
   const createData: Prisma.FeiCreateInput = {
@@ -95,7 +93,7 @@ export default function NouvelleFEI() {
           <CallOut title="📮 N'oubliez-pas d'assigner la FEI une fois remplie !" className="bg-white">
             Zacharie se chargera de notifier les personnes concernées.
           </CallOut>
-          <div className="bg-white mb-6 md:shadow">
+          <div className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-4">
               <Form id="fei_create_form" method="POST">
                 <div className="mb-8">
@@ -144,13 +142,13 @@ export default function NouvelleFEI() {
                   />
                 </div> */}
               </Form>
-              <div className="mt-6 ml-6 mb-16 md:mb-0">
+              <div className="mb-16 ml-6 mt-6 md:mb-0">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>
               </div>
             </div>
-            <div className="fixed md:relative bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white shadow-2xl md:shadow-none">
+            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
               {/* <div className="relative md:relative md:mt-16 bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white"> */}
               <ButtonsGroup
                 buttons={[

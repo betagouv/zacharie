@@ -73,32 +73,32 @@ export async function action(args: ActionFunctionArgs) {
 
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie)) {
     nextCarcasse.examinateur_carcasse_sans_anomalie = stringToBoolean(
-      formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie) as string
+      formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie) as string,
     );
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)) {
     nextCarcasse.examinateur_anomalies_carcasse = formData.getAll(
-      Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse
+      Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse,
     ) as string[];
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_abats_sans_anomalie)) {
     nextCarcasse.examinateur_abats_sans_anomalie = stringToBoolean(
-      formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_abats_sans_anomalie) as string
+      formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_abats_sans_anomalie) as string,
     );
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats)) {
     nextCarcasse.examinateur_anomalies_abats = formData.getAll(
-      Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats
+      Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats,
     ) as string[];
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_commentaire)) {
     nextCarcasse.examinateur_commentaire = formData.get(
-      Prisma.CarcasseScalarFieldEnum.examinateur_commentaire
+      Prisma.CarcasseScalarFieldEnum.examinateur_commentaire,
     ) as string;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_refus)) {
     nextCarcasse.examinateur_refus = stringToBoolean(
-      formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_refus) as string
+      formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_refus) as string,
     );
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at)) {
@@ -113,27 +113,27 @@ export async function action(args: ActionFunctionArgs) {
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif)) {
     nextCarcasse.intermediaire_carcasse_refus_motif = formData.get(
-      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif
+      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif,
     ) as string;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at)) {
     nextCarcasse.intermediaire_carcasse_signed_at = formData.get(
-      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at
+      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at,
     ) as string;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire)) {
     nextCarcasse.intermediaire_carcasse_commentaire = formData.get(
-      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire
+      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire,
     ) as string;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse)) {
     nextCarcasse.svi_saisie_carcasse = stringToBoolean(
-      formData.get(Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse) as string
+      formData.get(Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse) as string,
     );
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse_motif)) {
     nextCarcasse.svi_saisie_carcasse_motif = formData.get(
-      Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse_motif
+      Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse_motif,
     ) as string;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse_at)) {
@@ -144,7 +144,7 @@ export async function action(args: ActionFunctionArgs) {
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire)) {
     nextCarcasse.svi_carcasse_commentaire = formData.get(
-      Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire
+      Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire,
     ) as string;
   }
 

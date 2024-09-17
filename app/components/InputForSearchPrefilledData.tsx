@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Input, InputProps } from "@codegouvfr/react-dsfr/Input";
 import { Tag } from "@codegouvfr/react-dsfr/Tag";
+import InputNotEditable from "./InputNotEditable";
 
 interface InputForSearchPrefilledDataProps<T> {
   label: InputProps["label"];
@@ -10,7 +11,10 @@ interface InputForSearchPrefilledDataProps<T> {
   hintText?: InputProps["hintText"];
   placeholder?: string;
   values?: Array<T>;
+  defaultValue?: T;
   hideDataWhenNoSearch?: boolean;
+  addSearchToClickableLabel?: boolean;
+  canEdit?: boolean;
 }
 
 export default function InputForSearchPrefilledData<T extends string>({
@@ -21,12 +25,17 @@ export default function InputForSearchPrefilledData<T extends string>({
   hintText = "",
   placeholder = "Tapez ici...",
   values = [],
+  defaultValue,
   hideDataWhenNoSearch = true,
+  addSearchToClickableLabel = true,
+  canEdit = true,
 }: InputForSearchPrefilledDataProps<T>) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState<T>((defaultValue ?? "") as T);
+  const showTags = useRef(!defaultValue);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+    showTags.current = true;
+    setSearchTerm(event.target.value as T);
   };
 
   const searchWords = searchTerm.toLowerCase().split(" ");
@@ -44,12 +53,17 @@ export default function InputForSearchPrefilledData<T extends string>({
         return true;
       });
 
+  if (addSearchToClickableLabel && !filteredData.includes(searchTerm) && searchTerm.length) {
+    filteredData.push(searchTerm);
+  }
+
+  const Component = canEdit ? Input : InputNotEditable;
+
   return (
     <div>
-      <Input
+      <Component
         label={label}
         hintText={hintText}
-        className="[&_input]:bg-transparent"
         nativeInputProps={{
           type: "text",
           value: searchTerm,
@@ -57,8 +71,8 @@ export default function InputForSearchPrefilledData<T extends string>({
           placeholder,
         }}
       />
-      {!!values.length && (
-        <ul className="flex flex-wrap gap-x-2 gap-y">
+      {showTags.current && !!values.length && (
+        <ul className="gap-y flex flex-wrap gap-x-2">
           {values.map((item) => (
             <li key={item} className="block">
               <Tag
@@ -74,20 +88,26 @@ export default function InputForSearchPrefilledData<T extends string>({
           ))}
         </ul>
       )}
-      <ul className="flex flex-wrap gap-x-2 gap-y">
-        {filteredData.map((item) => (
-          <li key={item}>
-            <Tag
-              // iconId="fr-icon-checkbox-circle-line"
-              nativeButtonProps={{
-                onClick: () => onSelect(item),
-              }}
-            >
-              {item}
-            </Tag>
-          </li>
-        ))}
-      </ul>
+      {showTags.current && (
+        <ul className="gap-y flex flex-wrap gap-x-2">
+          {filteredData.map((item) => (
+            <li key={item}>
+              <Tag
+                // iconId="fr-icon-checkbox-circle-line"
+                nativeButtonProps={{
+                  onClick: () => {
+                    showTags.current = false;
+                    setSearchTerm(item);
+                    onSelect(item);
+                  },
+                }}
+              >
+                {item}
+              </Tag>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

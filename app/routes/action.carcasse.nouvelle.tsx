@@ -64,7 +64,7 @@ export async function action(args: ActionFunctionArgs) {
     },
   });
 
-  return json({ ok: true, data: newCarcasse });
+  return json({ ok: true, data: newCarcasse, error: "" });
 }
 
 export default function NouvelleCarcasseAction() {

@@ -8,6 +8,7 @@ import { UserRoles, Entity, User, Prisma } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import { SerializeFrom } from "@remix-run/node";
+import { action as searchUserAction } from "~/routes/action.trouver-premier-detenteur";
 
 export default function SelectNextOwner() {
   const { user, detenteursInitiaux, examinateursInitiaux, ccgs, collecteursPro, etgs, svis, fei } =
@@ -76,7 +77,7 @@ export default function SelectNextOwner() {
   }, [nextOwners, fei.fei_next_owner_user_id, fei.fei_next_owner_entity_id, nextOwnerIsUser, nextOwnerIsEntity]);
 
   const nextOwnerFetcher = useFetcher({ key: "select-next-owner" });
-  const searchUserFetcher = useFetcher({ key: "search-user" });
+  const searchUserFetcher = useFetcher<typeof searchUserAction>({ key: "search-user" });
 
   const showDetenteurInitial = useMemo(() => {
     if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
@@ -208,7 +209,7 @@ export default function SelectNextOwner() {
       {nextRole === UserRoles.PREMIER_DETENTEUR && !fei.fei_next_owner_user_id && (
         <>
           <searchUserFetcher.Form
-            className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
+            className="fr-fieldset__element flex w-full flex-row items-end gap-4"
             method="POST"
             action="/action/trouver-premier-detenteur"
           >
@@ -225,7 +226,6 @@ export default function SelectNextOwner() {
             />
             <Button type="submit">Envoyer</Button>
           </searchUserFetcher.Form>
-          {/* @ts-expect-error no type on fetcher action data */}
           {searchUserFetcher.data?.error === "L'utilisateur n'existe pas" && (
             <Alert
               severity="error"

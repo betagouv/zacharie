@@ -31,7 +31,7 @@ startReactDsfr({
   Link,
   defaultColorScheme: "system",
   // defaultColorScheme: "light",
-  verbose: true,
+  verbose: false,
 });
 
 declare module "@codegouvfr/react-dsfr/spa" {

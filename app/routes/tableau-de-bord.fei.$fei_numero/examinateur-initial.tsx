@@ -44,7 +44,7 @@ export default function FEIExaminateurInitial() {
         preventScrollReset: true, // Prevent scroll reset on submission
       });
     },
-    [examFetcher, fei.numero, canEdit]
+    [examFetcher, fei.numero, canEdit],
   );
 
   const needSelecteNextUser = useMemo(() => {
@@ -108,8 +108,8 @@ export default function FEIExaminateurInitial() {
       <Accordion titleAs="h3" label="Identité de l'Examinateur">
         <UserNotEditable user={fei.FeiExaminateurInitialUser} withCfei />
       </Accordion>
-      <Accordion titleAs="h3" label={`Carcasses (${fei.Carcasses.length})`}>
-        <CarcassesExaminateur />
+      <Accordion titleAs="h3" label={`Carcasses (${fei.Carcasses.length})`} defaultExpanded>
+        <CarcassesExaminateur canEdit={canEdit} />
       </Accordion>
       {fei.FeiExaminateurInitialUser && (
         <Accordion titleAs="h3" label="Approbation de mise sur le marché" defaultExpanded>
@@ -152,7 +152,7 @@ export default function FEIExaminateurInitial() {
                     type: "datetime-local",
                     autoComplete: "off",
                     defaultValue: dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                      "YYYY-MM-DDTHH:mm"
+                      "YYYY-MM-DDTHH:mm",
                     ),
                   }}
                 />
@@ -162,7 +162,7 @@ export default function FEIExaminateurInitial() {
         </Accordion>
       )}
       {needSelecteNextUser && (
-        <div className="md:w-auto mt-8 pt-4 z-50 flex flex-col md:items-start [&_ul]:md:min-w-96 bg-white">
+        <div className="z-50 mt-8 flex flex-col bg-white pt-4 md:w-auto md:items-start [&_ul]:md:min-w-96">
           <SelectNextOwner />
         </div>
       )}
