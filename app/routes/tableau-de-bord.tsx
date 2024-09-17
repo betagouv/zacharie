@@ -1,16 +1,12 @@
 import { Header } from "@codegouvfr/react-dsfr/Header";
-import { UserRoles } from "@prisma/client";
-import { Outlet, useLocation, useSubmit } from "@remix-run/react";
+import { Outlet, useLocation } from "@remix-run/react";
+import useNavigationMenu from "~/utils/get-navigation-menu";
 import { useUser } from "~/utils/useUser";
 
 export default function TableauDeBordLayout() {
-  const submit = useSubmit();
   const location = useLocation();
   const user = useUser();
-
-  const handleLogout = () => {
-    submit(null, { method: "post", action: "/actions/logout" });
-  };
+  const navigationMenu = useNavigationMenu();
 
   if (!user?.activated && !location.pathname.includes("mon-profil")) {
     return (
@@ -105,132 +101,7 @@ export default function TableauDeBordLayout() {
         }}
         id="fr-header-header-with-quick-access-items"
         // check mobile responsive header classes at tailwind.css
-        navigation={[
-          {
-            text: "Mon profil",
-            isActive: location.pathname.startsWith("/tableau-de-bord/mon-profil"),
-            menuLinks: [
-              {
-                text: "Mes roles",
-                isActive: location.pathname === "/tableau-de-bord/mon-profil/mes-roles",
-                linkProps: {
-                  to: "/tableau-de-bord/mon-profil/mes-roles",
-                  href: "#",
-                },
-              },
-              {
-                text: "Mes informations",
-                isActive: location.pathname === "/tableau-de-bord/mon-profil/mes-informations",
-                linkProps: {
-                  href: "#",
-                  to: "/tableau-de-bord/mon-profil/mes-informations",
-                },
-              },
-              {
-                text: "Mes partenaires",
-                isActive: location.pathname === "/tableau-de-bord/mon-profil/mes-partenaires",
-                linkProps: {
-                  href: "#",
-                  to: "/tableau-de-bord/mon-profil/mes-partenaires",
-                },
-              },
-              {
-                text: "Mes notifications",
-                isActive: location.pathname === "/tableau-de-bord/mon-profil/mes-notifications",
-                linkProps: {
-                  href: "#",
-                  to: "/tableau-de-bord/mon-profil/mes-notifications",
-                },
-              },
-            ],
-          },
-          {
-            text: "Mes FEI",
-            isActive: location.pathname === "/tableau-de-bord" || location.pathname.startsWith("/tableau-de-bord/fei"),
-            menuLinks: [
-              {
-                text: "Nouvelle FEI",
-                isActive: location.pathname === "/tableau-de-bord/fei/nouvelle",
-                linkProps: {
-                  to: "/tableau-de-bord/fei/nouvelle",
-                  href: "#",
-                },
-              },
-              {
-                text: "Mes FEI assignées",
-                isActive: location.pathname === "/tableau-de-bord",
-                linkProps: {
-                  to: "/tableau-de-bord",
-                  href: "#",
-                },
-              },
-            ],
-          },
-          {
-            text: "Se déconnecter",
-            linkProps: {
-              onClick: handleLogout,
-              type: "submit",
-              href: "#",
-            },
-          },
-          {
-            text: "Contactez-nous",
-            linkProps: {
-              href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de mon tableau de bord à Zacharie`,
-            },
-          },
-          ...(user?.roles.includes(UserRoles.ADMIN)
-            ? [
-                {
-                  text: "Admin",
-                  isActive: location.pathname.startsWith("/tableau-de-bord/admin"),
-                  menuLinks: [
-                    {
-                      text: "Liste des utilisateurs",
-                      isActive: location.pathname === "/tableau-de-bord/admin/utilisateurs",
-                      linkProps: {
-                        href: "#",
-                        to: "/tableau-de-bord/admin/utilisateurs",
-                      },
-                    },
-                    {
-                      text: "+ Ajouter des utilisateurs",
-                      isActive: location.pathname === "/tableau-de-bord/admin/ajouter-utilisateur",
-                      linkProps: {
-                        href: "#",
-                        to: "/tableau-de-bord/admin/utilisateur/nouveau",
-                      },
-                    },
-                    {
-                      text: "Liste des entités",
-                      isActive: location.pathname === "/tableau-de-bord/admin/entites",
-                      linkProps: {
-                        href: "#",
-                        to: "/tableau-de-bord/admin/entites",
-                      },
-                    },
-                    {
-                      text: "+ Ajouter des entités (SVI, ETG, etc.)",
-                      isActive: location.pathname === "/tableau-de-bord/admin/ajouter-entite",
-                      linkProps: {
-                        href: "#",
-                        to: "/tableau-de-bord/admin/entite/nouvelle",
-                      },
-                    },
-                    {
-                      text: "Liste des FEI",
-                      isActive: location.pathname === "/tableau-de-bord/admin/feis",
-                      linkProps: {
-                        href: "#",
-                        to: "/tableau-de-bord/admin/feis",
-                      },
-                    },
-                  ],
-                },
-              ]
-            : []),
-        ]}
+        navigation={navigationMenu}
         serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
         serviceTitle="Zacharie"
       />

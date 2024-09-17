@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
@@ -78,6 +78,7 @@ export default function MesInformations() {
     etgsDone,
     svisDone,
   } = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
 
   const userFetcher = useFetcher({ key: "mon-profil-mes-informations" });
   const handleUserFormBlur = useCallback(
@@ -101,11 +102,18 @@ export default function MesInformations() {
     setExaminateurExpanded(!examinateurDone);
   }, [examinateurDone]);
 
+  const isOnlyExaminateurInitial = user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && user.roles.length === 1;
+  const nextTitle = isOnlyExaminateurInitial ? "Vos partenaires" : "Vos notifications";
+  const nextPage = isOnlyExaminateurInitial
+    ? "/tableau-de-bord/mon-profil/mes-partenaires"
+    : "/tableau-de-bord/mon-profil/mes-notifications";
+  const stepCount = isOnlyExaminateurInitial ? 4 : 3;
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper currentStep={2} nextTitle="Vos partenaires" stepCount={4} title="Vos informations" />
+          <Stepper currentStep={2} nextTitle={nextTitle} stepCount={stepCount} title="Vos informations" />
           <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations</h1>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
@@ -298,15 +306,15 @@ export default function MesInformations() {
                   {
                     children: "Continuer",
                     linkProps: {
-                      to: "/tableau-de-bord/mon-profil/mes-partenaires",
+                      to: nextPage,
                       href: "#",
                     },
                   },
                   {
                     children: "Précédent",
-                    linkProps: {
-                      to: "/tableau-de-bord/mon-profil/mes-roles",
-                      href: "#",
+                    type: "button",
+                    nativeButtonProps: {
+                      onClick: () => navigate(-1),
                     },
                     priority: "secondary",
                   },

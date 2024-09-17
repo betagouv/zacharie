@@ -1,5 +1,5 @@
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
@@ -79,6 +79,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function MesPartenaires() {
+  const navigate = useNavigate();
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -89,8 +91,8 @@ export default function MesPartenaires() {
             Avec qui travaillez-vous ? <br />
             On pourra ainsi vous préremplir lorsqu'il s'agira de transmettre une FEI.
           </CallOut>
-          <div className="bg-white mb-6 md:shadow">
-            <div className="p-4 md:p-8 pb-32 md:pb-0">
+          <div className="mb-6 bg-white md:shadow">
+            <div className="p-4 pb-32 md:p-8 md:pb-0">
               <p className="fr-text--regular mb-4">Sélectionnez vos différents partenaires</p>
               <AccordionEntreprise
                 fetcherKey="onboarding-etape-2-ccg-data"
@@ -122,13 +124,13 @@ export default function MesPartenaires() {
                 selectLabel="Sélectionnez un SVI"
                 entityType={EntityTypes.SVI}
               />
-              <div className="mt-6 ml-6 mb-16">
+              <div className="mb-16 ml-6 mt-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>
               </div>
             </div>
-            <div className="fixed md:relative bottom-0 left-0 w-full md:w-auto p-6 pb-2 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 bg-white shadow-2xl md:shadow-none">
+            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
               <ButtonsGroup
                 buttons={[
                   {
@@ -140,9 +142,9 @@ export default function MesPartenaires() {
                   },
                   {
                     children: "Précédent",
-                    linkProps: {
-                      to: "/tableau-de-bord/mon-profil/mes-informations",
-                      href: "#",
+                    type: "button",
+                    nativeButtonProps: {
+                      onClick: () => navigate(-1),
                     },
                     priority: "secondary",
                   },
@@ -178,7 +180,7 @@ function AccordionEntreprise({
   const userEntityFetcher = useFetcher({ key: fetcherKey });
   const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
   const remainingEntities = Object.values(allEntitiesByTypeAndId[entityType]).filter(
-    (entity) => !userEntitiesByTypeAndId[entityType][entity.id]
+    (entity) => !userEntitiesByTypeAndId[entityType][entity.id],
   );
 
   return (
@@ -186,7 +188,7 @@ function AccordionEntreprise({
       titleAs="h2"
       defaultExpanded={!userEntities.length}
       label={
-        <div className="inline-flex items-center justify-between md:justify-start w-full gap-4">
+        <div className="inline-flex w-full items-center justify-between gap-4 md:justify-start">
           {accordionLabel}
           <NumberTag number={userEntities.length} />
         </div>
@@ -198,7 +200,7 @@ function AccordionEntreprise({
           return (
             <div key={entity.id} className="fr-fieldset__element">
               <Notice
-                className="fr-fieldset__element [&_p.fr-notice__title]:before:hidden fr-text-default--grey fr-background-contrast--grey"
+                className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice__title]:before:hidden"
                 style={{
                   boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
                 }}
@@ -214,7 +216,7 @@ function AccordionEntreprise({
                       method: "POST",
                       action: `/action/user-entity/${user.id}`,
                       preventScrollReset: true,
-                    }
+                    },
                   );
                 }}
                 title={
@@ -231,7 +233,7 @@ function AccordionEntreprise({
       {children ?? (
         <userEntityFetcher.Form
           id={fetcherKey}
-          className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
+          className="fr-fieldset__element flex w-full flex-row items-end gap-4"
           method="POST"
           action={`/action/user-entity/${user.id}`}
           preventScrollReset
@@ -272,7 +274,7 @@ function AccordionEntreprise({
 function NumberTag({ number }: { number: number }) {
   if (number) {
     return (
-      <Tag pressed className="shrink-0 fr-background-action-high--blue-france fr-text-inverted--blue-france">
+      <Tag pressed className="fr-background-action-high--blue-france fr-text-inverted--blue-france shrink-0">
         {number}
       </Tag>
     );
@@ -286,7 +288,7 @@ function InputCCG() {
   return (
     <userCCGFetcher.Form
       method="POST"
-      className="fr-fieldset__element flex flex-row items-end gap-4 w-full"
+      className="fr-fieldset__element flex w-full flex-row items-end gap-4"
       action={`/action/user-entity/${user.id}`}
     >
       <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />

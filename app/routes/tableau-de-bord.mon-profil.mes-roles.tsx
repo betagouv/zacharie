@@ -5,6 +5,7 @@ import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import RolesCheckBoxes from "~/components/RolesCheckboxes";
+import { UserRoles } from "@prisma/client";
 
 export function meta() {
   return [
@@ -43,7 +44,11 @@ export default function MesRoles() {
             </CallOut>
             <div className="mb-6 bg-white md:shadow">
               <div className="p-4 pb-32 md:p-8 md:pb-0">
-                <RolesCheckBoxes user={user} legend="Sélectionnez tous les rôles qui vous correspondent" />
+                <RolesCheckBoxes
+                  user={user}
+                  legend="Sélectionnez tous les rôles qui vous correspondent"
+                  withAdmin={user.roles.includes(UserRoles.ADMIN)}
+                />
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>

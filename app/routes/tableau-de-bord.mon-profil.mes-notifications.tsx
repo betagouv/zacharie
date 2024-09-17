@@ -1,12 +1,12 @@
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 // import { usePush } from "@remix-pwa/push/client";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
-import { UserNotifications } from "@prisma/client";
+import { UserNotifications, UserRoles } from "@prisma/client";
 
 export function meta() {
   return [
@@ -27,6 +27,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function MesNotifications() {
   const { user } = useLoaderData<typeof loader>();
   const fetcher = useFetcher({ key: "mon-profil-mes-notifications" });
+  const navigate = useNavigate();
+
   // const tokenFetcher = useFetcher({ key: "notifications-token" });
   const {
     // subscribeToPush,
@@ -46,13 +48,16 @@ export default function MesNotifications() {
     !!pushSubscription &&
     user.web_push_tokens.includes(JSON.stringify(pushSubscription));
 
+  const isOnlyExaminateurInitial = user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && user.roles.length === 1;
+  const stepCount = isOnlyExaminateurInitial ? 4 : 3;
+
   return (
     <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>
       <input type="hidden" name="_redirect" value="/tableau-de-bord/" />
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-            <Stepper currentStep={4} stepCount={4} title="Vos notifications" />
+            <Stepper currentStep={stepCount} stepCount={stepCount} title="Vos notifications" />
             <h1 className="fr-h2 fr-mb-2w">Activez les notifications</h1>
             <CallOut title="🔔 Soyez notifié d'une FEI qui vous est attribuée" className="bg-white">
               Vous pouvez être notifié par mail ou par une notification sur votre smartphone dès qu'une Fiche d'Examen
@@ -122,9 +127,9 @@ export default function MesNotifications() {
                     },
                     {
                       children: "Précédent",
-                      linkProps: {
-                        to: "/tableau-de-bord/mon-profil/mes-partenaires",
-                        href: "#",
+                      type: "button",
+                      nativeButtonProps: {
+                        onClick: () => navigate(-1),
                       },
                       priority: "secondary",
                     },
