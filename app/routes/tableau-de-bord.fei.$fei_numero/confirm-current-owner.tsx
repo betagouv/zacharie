@@ -10,9 +10,10 @@ export default function ConfirmCurrentOwner() {
   const { user, entitiesUserIsWorkingFor, fei } = useLoaderData<typeof loader>();
 
   const fetcher = useFetcher({ key: "confirm-current-owner" });
+  const intermediaireFetcher = useFetcher({ key: "create-intermediaire-fetcher" });
   const nextEntity = useMemo(
     () => entitiesUserIsWorkingFor.find((entity) => entity.id === fei.fei_next_owner_entity_id),
-    [entitiesUserIsWorkingFor, fei]
+    [entitiesUserIsWorkingFor, fei],
   );
 
   const canConfirmCurrentOwner = useMemo(() => {
@@ -56,6 +57,27 @@ export default function ConfirmCurrentOwner() {
       action: `/action/fei/${fei.numero}`,
       preventScrollReset: true, // Prevent scroll reset on submission
     });
+
+    const intermediaireRole: (keyof typeof UserRoles)[] = [UserRoles.COLLECTEUR_PRO, UserRoles.ETG, UserRoles.CCG];
+    if (
+      intermediaireRole.includes(
+        formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) as keyof typeof UserRoles,
+      )
+    ) {
+      const newIntermdaire = new FormData();
+      newIntermdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_numero, fei.numero);
+      newIntermdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_user_id, user.id);
+      newIntermdaire.append(
+        Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_entity_id,
+        fei.fei_next_owner_entity_id || "",
+      );
+
+      intermediaireFetcher.submit(newIntermdaire, {
+        method: "POST",
+        action: "/action/fei-intermediaire/nouveau",
+        preventScrollReset: true, // Prevent scroll reset on submission
+      });
+    }
   }
 
   return (
@@ -66,7 +88,7 @@ export default function ConfirmCurrentOwner() {
             ? "🫵  Cette FEI vous a été attribuée"
             : "🫵  Vous pouvez prendre en charge cette FEI"
         }
-        className="bg-white m-0"
+        className="m-0 bg-white"
       >
         En tant que <b>{getUserRoleLabel(fei.fei_next_owner_role)}</b>
         {fei.FeiNextEntity?.raison_sociale ? ` (${fei.FeiNextEntity?.raison_sociale})` : ""}, vous pouvez prendre en

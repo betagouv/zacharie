@@ -105,11 +105,11 @@ export default function FEIExaminateurInitial() {
           </div>
         </examFetcher.Form>
       </Accordion>
-      <Accordion titleAs="h3" label="Identité de l'Examinateur">
-        <UserNotEditable user={fei.FeiExaminateurInitialUser} withCfei />
-      </Accordion>
       <Accordion titleAs="h3" label={`Carcasses (${fei.Carcasses.length})`} defaultExpanded>
         <CarcassesExaminateur canEdit={canEdit} />
+      </Accordion>
+      <Accordion titleAs="h3" label={`Identité de l'Examinateur ${canEdit ? "🔒" : ""}`}>
+        <UserNotEditable user={fei.FeiExaminateurInitialUser} withCfei />
       </Accordion>
       {fei.FeiExaminateurInitialUser && (
         <Accordion titleAs="h3" label="Approbation de mise sur le marché" defaultExpanded>
@@ -140,7 +140,11 @@ export default function FEIExaminateurInitial() {
                   },
                 ]}
               />
-              {!fei.examinateur_initial_approbation_mise_sur_le_marche && <Button type="submit">Enregistrer</Button>}
+              {!fei.examinateur_initial_approbation_mise_sur_le_marche && (
+                <Button type="submit" disabled={!fei.Carcasses.length}>
+                  Enregistrer
+                </Button>
+              )}
             </div>
             {fei.examinateur_initial_date_approbation_mise_sur_le_marche && (
               <div className="fr-fieldset__element">

@@ -52,7 +52,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     select: {
       numero: true,
       created_at: true,
+      updated_at: true,
       fei_current_owner_role: true,
+      fei_next_owner_role: true,
       commune_mise_a_mort: true,
     },
   });
@@ -66,6 +68,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     select: {
       numero: true,
       created_at: true,
+      updated_at: true,
       svi_signed_at: true,
       commune_mise_a_mort: true,
     },
@@ -133,6 +136,13 @@ export default function TableauDeBordIndex() {
                       key={fei.numero}
                       to={`/tableau-de-bord/fei/${fei.numero}`}
                     >
+                      {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
+                    </Link>,
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
                       {fei.commune_mise_a_mort}
                     </Link>,
                     <Link
@@ -140,10 +150,10 @@ export default function TableauDeBordIndex() {
                       key={fei.numero}
                       to={`/tableau-de-bord/fei/${fei.numero}`}
                     >
-                      {getUserRoleLabel(fei.fei_current_owner_role as UserRoles)}
+                      {getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles))}
                     </Link>,
                   ])}
-                  headers={["Numéro", "Date de création", "Commune", "Étape en cours"]}
+                  headers={["Numéro", "Date de création", "Dernière mise à jour", "Commune", "Étape en cours"]}
                 />
               ) : (
                 <>

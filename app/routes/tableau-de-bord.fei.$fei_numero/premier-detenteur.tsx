@@ -10,6 +10,7 @@ import { RadioButtons } from "@codegouvfr/react-dsfr/RadioButtons";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import InputNotEditable from "~/components/InputNotEditable";
 import dayjs from "dayjs";
+import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 
 export default function FEIDetenteurInitial() {
   const { fei, user, ccgs, etgs, collecteursPro } = useLoaderData<typeof loader>();
@@ -74,7 +75,7 @@ export default function FEIDetenteurInitial() {
       <UserNotEditable user={detenteurInitial} />
 
       {needConfirmation ? (
-        <div className="w-full md:w-auto p-4 z-50 flex flex-col md:items-center [&_ul]:md:min-w-96 ">
+        <div className="z-50 flex w-full flex-col p-4 md:w-auto md:items-center [&_ul]:md:min-w-96">
           <div className="flex flex-col items-center">
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             <Button
@@ -176,7 +177,8 @@ export default function FEIDetenteurInitial() {
                       {[...ccgs, ...collecteursPro, ...etgs].map((entity) => {
                         return (
                           <option key={entity.id} value={entity.id}>
-                            {entity.raison_sociale} - {entity.code_postal} {entity.ville}
+                            {entity.raison_sociale} - {entity.code_postal} {entity.ville} (
+                            {getUserRoleLabel(entity.type)})
                           </option>
                         );
                       })}
@@ -218,7 +220,7 @@ export default function FEIDetenteurInitial() {
                     type: "datetime-local",
                     autoComplete: "off",
                     defaultValue: dayjs(fei?.premier_detenteur_date_depot_quelque_part || undefined).format(
-                      "YYYY-MM-DDTHH:mm"
+                      "YYYY-MM-DDTHH:mm",
                     ),
                   }}
                 />
@@ -230,8 +232,8 @@ export default function FEIDetenteurInitial() {
       )}
       {needSelectNextUser && (
         <>
-          <hr className="mt-8 " />
-          <div className="md:w-auto pt-4 z-50 flex flex-col md:items-start [&_ul]:md:min-w-96 bg-white">
+          <hr className="mt-8" />
+          <div className="z-50 flex flex-col bg-white pt-4 md:w-auto md:items-start [&_ul]:md:min-w-96">
             <SelectNextOwner />
           </div>
         </>

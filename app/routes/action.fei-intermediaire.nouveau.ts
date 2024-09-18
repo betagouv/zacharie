@@ -13,7 +13,7 @@ export async function action(args: ActionFunctionArgs) {
 
   console.log("formData", Object.fromEntries(formData));
 
-  const fei_numero = formData.get(Prisma.CarcasseScalarFieldEnum.fei_numero) as string;
+  const fei_numero = formData.get(Prisma.FeiIntermediaireScalarFieldEnum.fei_numero) as string;
   if (!fei_numero) {
     return json({ ok: false, data: null, error: "Le numéro de la FEI est obligatoire" }, { status: 400 });
   }
@@ -25,26 +25,20 @@ export async function action(args: ActionFunctionArgs) {
   if (!fei) {
     return json({ ok: false, data: null, error: "La FEI n'existe pas" }, { status: 400 });
   }
-  const numero_bracelet = formData.get(Prisma.CarcasseScalarFieldEnum.numero_bracelet) as string;
-  if (!numero_bracelet) {
-    return json({ ok: false, data: null, error: "Le numéro de bracelet est obligatoire" }, { status: 400 });
-  }
-  const existingCarcasse = await prisma.carcasse.findUnique({
-    where: {
-      numero_bracelet,
-    },
-  });
-  if (existingCarcasse) {
-    return json({ ok: false, data: null, error: "Le numéro de bracelet est déjà pris" }, { status: 400 });
-  }
-  const newCarcasse = await prisma.carcasse.create({
+
+  const newFeiIntermediaire = await prisma.feiIntermediaire.create({
     data: {
       fei_numero,
-      numero_bracelet,
+      fei_intermediaire_user_id: formData.get(
+        Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_user_id,
+      ) as string,
+      fei_intermediaire_entity_id: formData.get(
+        Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_entity_id,
+      ) as string,
     },
   });
 
-  return json({ ok: true, data: newCarcasse, error: "" });
+  return json({ ok: true, data: newFeiIntermediaire, error: "" });
 }
 
 export default function NouvelleCarcasseAction() {

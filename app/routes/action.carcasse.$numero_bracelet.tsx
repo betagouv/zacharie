@@ -105,7 +105,7 @@ export async function action(args: ActionFunctionArgs) {
     nextCarcasse.examinateur_signed_at = formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at) as string;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id)) {
-    nextCarcasse.IntermediaireCarcasseRefus = {
+    nextCarcasse.FeiIntermediaireCarcasseRefus = {
       connect: {
         id: formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id) as string,
       },

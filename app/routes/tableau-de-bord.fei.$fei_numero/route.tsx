@@ -10,6 +10,7 @@ import FEIExaminateurInitial from "./examinateur-initial";
 import ConfirmCurrentOwner from "./confirm-current-owner";
 import CurrentOwner from "./current-owner";
 import FeiTransfer from "./transfer-current-owner";
+import FEICurrentIntermediaire from "./current-intermediaire";
 // import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
 
 export function meta({ params }: MetaArgs) {
@@ -46,7 +47,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       FeiEtgUser: true,
       FeiSviEntity: true,
       FeiSviUser: true,
-      FeiIntermediaires: true,
+      FeiIntermediaires: {
+        orderBy: {
+          created_at: "desc", // the lastest first
+        },
+        include: {
+          CarcasseIntermediaire: true,
+        },
+      },
     },
   });
   if (!fei) {
@@ -243,6 +251,7 @@ export default function Fei() {
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
             {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur />}
+            {selectedTabId === "Intermédiaires" && <FEICurrentIntermediaire />}
           </Tabs>
         </div>
       </div>

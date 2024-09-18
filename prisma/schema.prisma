@@ -31,8 +31,8 @@ enum UserNotifications {
 }
 
 model User {
-  id                        String              @id @default(uuid())
-  email                     String?             @unique // email is optional, we can have users without email like the Collecteur Pro
+  id                        String                  @id @default(uuid())
+  email                     String?                 @unique // email is optional, we can have users without email like the Collecteur Pro
   telephone                 String?
   prenom                    String?
   nom_de_famille            String?
@@ -43,29 +43,30 @@ model User {
   code_postal               String?
   ville                     String?
   roles                     UserRoles[]
-  created_at                DateTime            @default(now())
-  updated_at                DateTime            @default(now()) @updatedAt
+  created_at                DateTime                @default(now())
+  updated_at                DateTime                @default(now()) @updatedAt
   last_login_at             DateTime?
   last_seen_at              DateTime?
   deleted_at                DateTime?
   onboarded_at              DateTime?
-  notifications             UserNotifications[] @default([EMAIL, PUSH])
+  notifications             UserNotifications[]     @default([EMAIL, PUSH])
   web_push_tokens           String[]
-  prefilled                 Boolean             @default(false)
-  activated                 Boolean             @default(false)
+  prefilled                 Boolean                 @default(false)
+  activated                 Boolean                 @default(false)
   Password                  Password?
-  UserRelationsAsOwner      UserRelations[]     @relation("UserOwnerOfUserRelation")
-  UserRelationsAsRelated    UserRelations[]     @relation("UserRelatedOfUserRelation")
-  EntitiesRelations         EntityRelations[]   @relation("UserRelatedWithEntity")
-  FeiCreatedByUser          Fei[]               @relation("FeiCreatedByUser")
-  FeiCurrentUser            Fei[]               @relation("FeiCurrentUser")
-  FeiDetenteurInitialUser   Fei[]               @relation("FeiDetenteurInitialUser")
-  FeiExaminateurInitialUser Fei[]               @relation("FeiExaminateurInitialUser")
-  FeiEtgUser                Fei[]               @relation("FeiEtgUser")
-  FeiSviUser                Fei[]               @relation("FeiSviUser")
-  FeiIntermediaireUser      Intermediaire[]     @relation("FeiIntermediaireUser")
+  UserRelationsAsOwner      UserRelations[]         @relation("UserOwnerOfUserRelation")
+  UserRelationsAsRelated    UserRelations[]         @relation("UserRelatedOfUserRelation")
+  EntitiesRelations         EntityRelations[]       @relation("UserRelatedWithEntity")
+  FeiCreatedByUser          Fei[]                   @relation("FeiCreatedByUser")
+  FeiCurrentUser            Fei[]                   @relation("FeiCurrentUser")
+  FeiDetenteurInitialUser   Fei[]                   @relation("FeiDetenteurInitialUser")
+  FeiExaminateurInitialUser Fei[]                   @relation("FeiExaminateurInitialUser")
+  FeiEtgUser                Fei[]                   @relation("FeiEtgUser")
+  FeiSviUser                Fei[]                   @relation("FeiSviUser")
+  FeiIntermediaireUser      FeiIntermediaire[]      @relation("FeiIntermediaireUser")
   Logs                      Logs[]
   NotificationLog           NotificationLog[]
+  CarcasseIntermediaire     CarcasseIntermediaire[] @relation("CarcasseIntermediaireUser")
 
   @@index([email, prenom, nom_de_famille, roles])
 }
@@ -82,7 +83,7 @@ enum EntityTypes {
 }
 
 model Entity {
-  id                     String            @id @default(uuid())
+  id                     String                  @id @default(uuid())
   // NO EMAIL: an entity needs AT LEAST one user
   raison_sociale         String?
   address_ligne_1        String?
@@ -90,20 +91,21 @@ model Entity {
   code_postal            String?
   ville                  String?
   siret                  String?
-  numero_ddecpp          String?           @unique
+  numero_ddecpp          String?                 @unique
   type                   EntityTypes
-  created_at             DateTime          @default(now())
-  updated_at             DateTime          @default(now()) @updatedAt
+  created_at             DateTime                @default(now())
+  updated_at             DateTime                @default(now()) @updatedAt
   deleted_at             DateTime?
   onboarded_at           DateTime?
-  prefilled              Boolean           @default(false)
-  EntityRelatedWithUser  EntityRelations[] @relation("EntityRelatedWithUser")
-  FeiCurrentEntity       Fei[]             @relation("FeiCurrentEntity")
-  FeiNextEntity          Fei[]             @relation("FeiNextEntity")
-  FeiDepotEntity         Fei[]             @relation("FeiDepotEntity")
-  FeiEtgEntity           Fei[]             @relation("FeiEtgEntity")
-  FeiSviEntity           Fei[]             @relation("FeiSviEntity")
-  FeiIntermediaireEntity Intermediaire[]   @relation("FeiIntermediaireEntity")
+  prefilled              Boolean                 @default(false)
+  EntityRelatedWithUser  EntityRelations[]       @relation("EntityRelatedWithUser")
+  FeiCurrentEntity       Fei[]                   @relation("FeiCurrentEntity")
+  FeiNextEntity          Fei[]                   @relation("FeiNextEntity")
+  FeiDepotEntity         Fei[]                   @relation("FeiDepotEntity")
+  FeiEtgEntity           Fei[]                   @relation("FeiEtgEntity")
+  FeiSviEntity           Fei[]                   @relation("FeiSviEntity")
+  FeiIntermediaireEntity FeiIntermediaire[]      @relation("FeiIntermediaireEntity")
+  CarcasseIntermediaire  CarcasseIntermediaire[] @relation("CarcasseIntermediaireEntity")
 }
 
 model Password {
@@ -172,9 +174,9 @@ model Logs {
 
 // Fiche d'Examen Initial
 model Fei {
-  id                                                      Int             @id @default(autoincrement())
-  numero                                                  String          @unique
-  date_mise_a_mort                                        DateTime?       @db.Date // et éviscération
+  id                                                      Int                     @id @default(autoincrement())
+  numero                                                  String                  @unique
+  date_mise_a_mort                                        DateTime?               @db.Date // et éviscération
   commune_mise_a_mort                                     String?
   created_by_user_id                                      String
   fei_current_owner_user_id                               String?
@@ -205,22 +207,23 @@ model Fei {
   svi_aucune_carcasse_saisie                              Boolean?
   svi_commentaire                                         String?
   svi_signed_at                                           DateTime?
-  created_at                                              DateTime        @default(now())
-  updated_at                                              DateTime        @default(now()) @updatedAt
+  created_at                                              DateTime                @default(now())
+  updated_at                                              DateTime                @default(now()) @updatedAt
   deleted_at                                              DateTime?
   Carcasses                                               Carcasse[]
-  FeiCreatedByUser                                        User            @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id])
-  FeiDetenteurInitialUser                                 User?           @relation("FeiDetenteurInitialUser", fields: [premier_detenteur_user_id], references: [id])
-  FeiExaminateurInitialUser                               User?           @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id])
-  FeiDepotEntity                                          Entity?         @relation("FeiDepotEntity", fields: [premier_detenteur_depot_entity_id], references: [id])
-  FeiEtgEntity                                            Entity?         @relation("FeiEtgEntity", fields: [etg_entity_id], references: [id])
-  FeiEtgUser                                              User?           @relation("FeiEtgUser", fields: [etg_user_id], references: [id])
-  FeiSviEntity                                            Entity?         @relation("FeiSviEntity", fields: [svi_entity_id], references: [id])
-  FeiSviUser                                              User?           @relation("FeiSviUser", fields: [svi_user_id], references: [id])
-  FeiIntermediaires                                       Intermediaire[]
-  FeiCurrentUser                                          User?           @relation("FeiCurrentUser", fields: [fei_current_owner_user_id], references: [id])
-  FeiCurrentEntity                                        Entity?         @relation("FeiCurrentEntity", fields: [fei_current_owner_entity_id], references: [id])
-  FeiNextEntity                                           Entity?         @relation("FeiNextEntity", fields: [fei_next_owner_entity_id], references: [id])
+  FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id])
+  FeiDetenteurInitialUser                                 User?                   @relation("FeiDetenteurInitialUser", fields: [premier_detenteur_user_id], references: [id])
+  FeiExaminateurInitialUser                               User?                   @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id])
+  FeiDepotEntity                                          Entity?                 @relation("FeiDepotEntity", fields: [premier_detenteur_depot_entity_id], references: [id])
+  FeiEtgEntity                                            Entity?                 @relation("FeiEtgEntity", fields: [etg_entity_id], references: [id])
+  FeiEtgUser                                              User?                   @relation("FeiEtgUser", fields: [etg_user_id], references: [id])
+  FeiSviEntity                                            Entity?                 @relation("FeiSviEntity", fields: [svi_entity_id], references: [id])
+  FeiSviUser                                              User?                   @relation("FeiSviUser", fields: [svi_user_id], references: [id])
+  FeiIntermediaires                                       FeiIntermediaire[]
+  FeiCurrentUser                                          User?                   @relation("FeiCurrentUser", fields: [fei_current_owner_user_id], references: [id])
+  FeiCurrentEntity                                        Entity?                 @relation("FeiCurrentEntity", fields: [fei_current_owner_entity_id], references: [id])
+  FeiNextEntity                                           Entity?                 @relation("FeiNextEntity", fields: [fei_next_owner_entity_id], references: [id])
+  CarcasseIntermediaire                                   CarcasseIntermediaire[]
 
   @@index([created_by_user_id])
   @@index([premier_detenteur_user_id])
@@ -230,9 +233,9 @@ model Fei {
 }
 
 model Carcasse {
-  id                                            String          @id @default(uuid())
+  id                                            String                  @id @default(uuid())
   fei_numero                                    String
-  numero_bracelet                               String          @unique
+  numero_bracelet                               String                  @unique
   heure_mise_a_mort                             String?
   heure_evisceration                            String?
   espece                                        String? // Sanglier, Cerf, etc.
@@ -253,35 +256,61 @@ model Carcasse {
   svi_saisie_carcasse_at                        DateTime?
   svi_carcasse_signed_at                        DateTime?
   svi_carcasse_commentaire                      String?
-  created_at                                    DateTime        @default(now())
-  updated_at                                    DateTime        @default(now()) @updatedAt
+  created_at                                    DateTime                @default(now())
+  updated_at                                    DateTime                @default(now()) @updatedAt
   deleted_at                                    DateTime?
-  Fei                                           Fei             @relation(fields: [fei_numero], references: [numero], onDelete: Cascade)
-  IntermediairesCarcasse                        Intermediaire[] @relation("IntermediairesCarcasse")
-  IntermediaireCarcasseRefus                    Intermediaire?  @relation("IntermediaireCarcasseRefus", fields: [intermediaire_carcasse_refus_intermediaire_id], references: [id])
+  Fei                                           Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade)
+  FeiIntermediairesCarcasse                     FeiIntermediaire[]      @relation("FeiIntermediairesCarcasse")
+  FeiIntermediaireCarcasseRefus                 FeiIntermediaire?       @relation("FeiIntermediaireCarcasseRefus", fields: [intermediaire_carcasse_refus_intermediaire_id], references: [id])
+  CarcasseIntermediaire                         CarcasseIntermediaire[]
 
   @@index([fei_numero, numero_bracelet])
 }
 
-model Intermediaire {
-  id                          String     @id @default(uuid())
-  fei_numero                  String
-  intermediaire_user_id       String
-  intermediaire_entity_id     String
-  commentaire                 String?
-  received_at                 DateTime?
-  check_finished_at           DateTime?
-  handover_at                 DateTime?
-  created_at                  DateTime   @default(now())
-  updated_at                  DateTime   @default(now()) @updatedAt
-  deleted_at                  DateTime?
-  Fei                         Fei        @relation(fields: [fei_numero], references: [numero])
-  FeiIntermediaireUser        User       @relation("FeiIntermediaireUser", fields: [intermediaire_user_id], references: [id])
-  FeiIntermediaireEntity      Entity     @relation("FeiIntermediaireEntity", fields: [intermediaire_entity_id], references: [id])
-  IntermediairesCarcasses     Carcasse[] @relation("IntermediairesCarcasse")
-  IntermediaireCarcassesRefus Carcasse[] @relation("IntermediaireCarcasseRefus")
+model FeiIntermediaire {
+  id                             String                  @id @default(uuid())
+  fei_numero                     String
+  fei_intermediaire_user_id      String
+  fei_intermediaire_entity_id    String
+  commentaire                    String?
+  received_at                    DateTime?
+  check_finished_at              DateTime?
+  handover_at                    DateTime?
+  created_at                     DateTime                @default(now())
+  updated_at                     DateTime                @default(now()) @updatedAt
+  deleted_at                     DateTime?
+  Fei                            Fei                     @relation(fields: [fei_numero], references: [numero])
+  FeiIntermediaireUser           User                    @relation("FeiIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id])
+  FeiIntermediaireEntity         Entity                  @relation("FeiIntermediaireEntity", fields: [fei_intermediaire_entity_id], references: [id])
+  FeiIntermediairesCarcasses     Carcasse[]              @relation("FeiIntermediairesCarcasse")
+  FeiIntermediaireCarcassesRefus Carcasse[]              @relation("FeiIntermediaireCarcasseRefus")
+  CarcasseIntermediaire          CarcasseIntermediaire[] @relation("FeiIntermediaireCarcasseIntermediaire")
 
-  @@index([fei_numero, intermediaire_user_id, intermediaire_entity_id])
+  @@index([fei_numero, fei_intermediaire_user_id, fei_intermediaire_entity_id])
+}
+
+model CarcasseIntermediaire {
+  id                                     String           @id @default(uuid())
+  fei_numero__bracelet__intermediaire_id String           @unique
+  fei_numero                             String
+  numero_bracelet                        String
+  fei_intermediaire_id                   String
+  fei_intermediaire_user_id              String
+  fei_intermediaire_entity_id            String
+  prise_en_charge                        Boolean?
+  refus                                  String?
+  commentaire                            String?
+  check_finished_at                      DateTime?
+  created_at                             DateTime         @default(now())
+  updated_at                             DateTime         @default(now()) @updatedAt
+  deleted_at                             DateTime?
+  CarcasseIntermediaireFei               Fei              @relation(fields: [fei_numero], references: [numero])
+  CarcasseCarcasseIntermediaire          Carcasse         @relation(fields: [numero_bracelet], references: [numero_bracelet])
+  CarcasseIntermediaireUser              User             @relation("CarcasseIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id])
+  CarcasseIntermediaireEntity            Entity           @relation("CarcasseIntermediaireEntity", fields: [fei_intermediaire_entity_id], references: [id])
+  CarcasseIntermediaireFeiIntermediaire  FeiIntermediaire @relation("FeiIntermediaireCarcasseIntermediaire", fields: [fei_intermediaire_id], references: [id])
+
+  @@index([fei_numero__bracelet__intermediaire_id])
 }
 
 model NotificationLog {
