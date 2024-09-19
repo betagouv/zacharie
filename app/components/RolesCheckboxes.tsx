@@ -63,7 +63,7 @@ export default function RolesCheckBoxes({
     {
       label: "Collecteur Professionnel",
       hintText:
-        "Vous récupèrez les carcasses et les livrez aux ETGs. Le nom de l'établissement pour lequel vous travaillez sera demandé à l'étape suivante",
+        "Vous récupérez les carcasses en peau auprès de plusieurs premiers détenteurs pour les livrer aux Établissements de Traitement du Gibier sauvage agréés (ETG). Le nom de l’établissement avec lequel vous travaillez sera demandé à l’étape suivante",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.COLLECTEUR_PRO,
