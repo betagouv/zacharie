@@ -116,7 +116,7 @@ export default function MesInformations() {
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <Stepper currentStep={2} nextTitle={nextTitle} stepCount={stepCount} title="Vos informations" />
           <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations</h1>
-          <CallOut title="✍️ Pour remplir les FEI qui vont sont attribuées" className="bg-white">
+          <CallOut title="✍️ Pour pouvoir remplir les FEI qui vont sont attribuées" className="bg-white">
             Qui êtes-vous ? À quelles entités êtes-vous rattaché ? <br />
             Lorsqu'une FEI sera attribuée à laquelle vous êtes rattachée, vous pourrez la prendre en charge.
           </CallOut>

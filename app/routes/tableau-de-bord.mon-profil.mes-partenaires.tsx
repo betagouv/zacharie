@@ -105,7 +105,7 @@ export default function MesPartenaires() {
               </AccordionEntreprise>
               <AccordionEntreprise
                 fetcherKey="mes-partenaires-collecteur-pro-data"
-                accordionLabel="Vos Collecteurs Professionnel"
+                accordionLabel="Vos Collecteurs Professionnels"
                 addLabel="Ajouter un Collecteur Professionnel"
                 selectLabel="Sélectionnez un Collecteur Professionnel"
                 entityType={EntityTypes.COLLECTEUR_PRO}
