@@ -8,9 +8,9 @@
  */
 -- AlterTable
 ALTER TABLE
-  "Carcasse" DROP COLUMN "svi_carcasse_saisie",
-  DROP COLUMN "svi_carcasse_saisie_at",
-  DROP COLUMN "svi_carcasse_saisie_motif",
+  "Carcasse" DROP COLUMN "svi_saisie_carcasse",
+  DROP COLUMN "svi_saisie_carcasse_at",
+  DROP COLUMN "svi_saisie_carcasse_motif",
 ADD
   COLUMN "svi_carcasse_saisie" BOOLEAN,
 ADD
