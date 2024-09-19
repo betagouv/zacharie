@@ -43,8 +43,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       FeiExaminateurInitialUser: true,
       FeiCreatedByUser: true,
       FeiDepotEntity: true,
-      FeiEtgEntity: true,
-      FeiEtgUser: true,
       FeiSviEntity: true,
       FeiSviUser: true,
       FeiIntermediaires: {
