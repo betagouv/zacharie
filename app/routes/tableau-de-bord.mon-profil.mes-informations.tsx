@@ -277,7 +277,7 @@ export default function MesInformations() {
               {user.roles.includes(UserRoles.ETG) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-etg-data"
-                  accordionLabel="Vous êtes/travaillez pour un Établissement de Transformation des Gibiers (ETG)"
+                  accordionLabel="Vous êtes/travaillez pour un Établissements de Traitement du Gibier sauvage (ETG)"
                   addLabel="Ajouter un ETG"
                   selectLabel="Sélectionnez un ETG"
                   done={etgsDone}

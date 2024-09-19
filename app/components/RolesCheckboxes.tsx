@@ -73,7 +73,7 @@ export default function RolesCheckBoxes({
       },
     },
     {
-      label: "Établissement de Traitement du Gibier (ETG)",
+      label: "Établissement de Traitement du Gibier sauvage (ETG)",
       hintText: "Le nom de l'établissement pour lequel vous travaillez sera demandé à l'étape suivante",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,

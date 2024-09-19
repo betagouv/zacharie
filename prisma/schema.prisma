@@ -15,7 +15,7 @@ enum UserRoles {
   CCG // Centre de Collecte de Gibier où sont entreposées les venaisons à la fin de la chasse
   COLLECTEUR_PRO // Transporteur de Gibier
   //Destinataires finaux du gibier
-  ETG // Etablissement de Traitement du Gibier
+  ETG // Etablissement de Traitement du Gibier sauvage
   SVI // Service Vétérinaire d'Inspection
   // COMMERCE_DE_DETAIL // Commerce de détail
   // REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif

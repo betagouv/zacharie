@@ -112,7 +112,7 @@ export default function MesPartenaires() {
               />
               <AccordionEntreprise
                 fetcherKey="mes-partenaires-etg-data"
-                accordionLabel="Vos Établissements de Transformation des Gibiers (ETG)"
+                accordionLabel="Vos Établissements de Traitement du Gibier sauvage (ETG)"
                 addLabel="Ajouter un ETG"
                 selectLabel="Sélectionnez un ETG"
                 entityType={EntityTypes.ETG}
