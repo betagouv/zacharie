@@ -14,6 +14,7 @@ import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/clie
 import { prisma } from "~/db/prisma.server";
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 import InputVille from "~/components/InputVille";
+import InputNotEditable from "~/components/InputNotEditable";
 
 export function meta() {
   return [
@@ -74,7 +75,6 @@ export default function MesInformations() {
     // for accordions
     identityDone,
     examinateurDone,
-    ccgsDone,
     collecteursProDone,
     etgsDone,
     svisDone,
@@ -161,6 +161,17 @@ export default function MesInformations() {
                         autoComplete: "given-name",
                         required: true,
                         defaultValue: user.prenom ?? "",
+                      }}
+                    />
+                  </div>
+                  <div className="fr-fieldset__element">
+                    <InputNotEditable
+                      label="Email"
+                      nativeInputProps={{
+                        id: Prisma.UserScalarFieldEnum.email,
+                        name: Prisma.UserScalarFieldEnum.email,
+                        required: true,
+                        defaultValue: user.email ?? "",
                       }}
                     />
                   </div>
@@ -258,18 +269,6 @@ export default function MesInformations() {
                   </Accordion>
                 )}
               </userFetcher.Form>
-              {user.roles.includes(UserRoles.CCG) && (
-                <AccordionEntreprise
-                  fetcherKey="onboarding-etape-2-ccg-data"
-                  accordionLabel="Vos Centres de Collecte du Gibier sauvage (CCG) partenaires"
-                  addLabel="Ajouter un Centre de Collecte du Gibier sauvage (CCG)"
-                  selectLabel="Sélectionnez un Centre de Collecte du Gibier sauvage (CCG)"
-                  done={ccgsDone}
-                  entityType={EntityTypes.CCG}
-                >
-                  <InputCCG />
-                </AccordionEntreprise>
-              )}
               {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-collecteur-pro-data"
@@ -342,6 +341,7 @@ interface AccordionEntrepriseProps {
   accordionLabel: string;
   fetcherKey: string;
   children?: React.ReactNode;
+  description?: React.ReactNode;
 }
 
 function AccordionEntreprise({
@@ -352,6 +352,7 @@ function AccordionEntreprise({
   accordionLabel,
   fetcherKey,
   children,
+  description,
 }: AccordionEntrepriseProps) {
   const { user, allEntitiesByTypeAndId, userEntitiesByTypeAndId } = useLoaderData<typeof loader>();
 
@@ -371,6 +372,7 @@ function AccordionEntreprise({
         </div>
       }
     >
+      {description}
       {userEntities
         .filter((entity) => entity.type === entityType)
         .map((entity) => {
@@ -387,6 +389,7 @@ function AccordionEntreprise({
                     {
                       owner_id: user.id,
                       entity_id: entity.id,
+                      relation: EntityRelationType.WORKING_FOR,
                       _action: "delete",
                     },
                     {
@@ -463,33 +466,33 @@ function CompletedTag({ done }: { done: boolean }) {
   );
 }
 
-function InputCCG() {
-  const { user } = useLoaderData<typeof loader>();
-  const userCCGFetcher = useFetcher({ key: "ccg-data" });
-  return (
-    <userCCGFetcher.Form
-      method="POST"
-      className="fr-fieldset__element flex w-full flex-row items-end gap-4"
-      action={`/action/user-entity/${user.id}`}
-    >
-      <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
-      <input type="hidden" name="_action" value="create" />
-      <input
-        type="hidden"
-        name={Prisma.EntityRelationsScalarFieldEnum.relation}
-        value={EntityRelationType.WORKING_FOR}
-      />
-      <input type="hidden" name={Prisma.EntityScalarFieldEnum.type} value={EntityTypes.CCG} />
-      <Input
-        label="Numéro du Centre de Collecte du Gibier sauvage (CCG)"
-        className="!mb-0"
-        nativeInputProps={{
-          type: "text",
-          required: true,
-          name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
-        }}
-      />
-      <Button type="submit">Ajouter</Button>
-    </userCCGFetcher.Form>
-  );
-}
+// function InputCCG() {
+//   const { user } = useLoaderData<typeof loader>();
+//   const userCCGFetcher = useFetcher({ key: "ccg-data" });
+//   return (
+//     <userCCGFetcher.Form
+//       method="POST"
+//       className="fr-fieldset__element flex w-full flex-row items-end gap-4"
+//       action={`/action/user-entity/${user.id}`}
+//     >
+//       <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
+//       <input type="hidden" name="_action" value="create" />
+//       <input
+//         type="hidden"
+//         name={Prisma.EntityRelationsScalarFieldEnum.relation}
+//         value={EntityRelationType.WORKING_FOR}
+//       />
+//       <input type="hidden" name={Prisma.EntityScalarFieldEnum.type} value={EntityTypes.CCG} />
+//       <Input
+//         label="Numéro du Centre de Collecte du Gibier sauvage (CCG)"
+//         className="!mb-0"
+//         nativeInputProps={{
+//           type: "text",
+//           required: true,
+//           name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+//         }}
+//       />
+//       <Button type="submit">Ajouter</Button>
+//     </userCCGFetcher.Form>
+//   );
+// }

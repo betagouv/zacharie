@@ -63,6 +63,7 @@ export async function action(args: ActionFunctionArgs) {
     const existingEntityRelation = await prisma.entityRelations.findFirst({
       where: {
         owner_id: formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id) as User["id"],
+        relation: formData.get(Prisma.EntityRelationsScalarFieldEnum.relation) as EntityRelationType,
         entity_id: entityId,
       },
     });

@@ -245,9 +245,9 @@ model Carcasse {
   intermediaire_carcasse_refus_motif            String?
   intermediaire_carcasse_signed_at              DateTime?
   intermediaire_carcasse_commentaire            String?
-  svi_saisie_carcasse                           Boolean?
-  svi_saisie_carcasse_motif                     String?
-  svi_saisie_carcasse_at                        DateTime?
+  svi_carcasse_saisie                           Boolean?
+  svi_carcasse_saisie_motif                     String[]
+  svi_carcasse_saisie_at                        DateTime?
   svi_carcasse_signed_at                        DateTime?
   svi_carcasse_commentaire                      String?
   created_at                                    DateTime                @default(now())

@@ -61,10 +61,12 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                     )}
                     <br />
                     <span className="m-0 block font-bold">
-                      {carcasse.examinateur_anomalies_abats?.length || "Pas d'"} anomalies abats
+                      {carcasse.examinateur_anomalies_abats?.length || "Pas d'"} anomalie
+                      {carcasse.examinateur_anomalies_abats?.length > 1 ? "s" : ""} abats
                     </span>
                     <span className="m-0 block font-bold md:-mb-4">
-                      {carcasse.examinateur_anomalies_carcasse?.length || "Pas d'"} anomalies carcasse
+                      {carcasse.examinateur_anomalies_carcasse?.length || "Pas d'"} anomalie
+                      {carcasse.examinateur_anomalies_carcasse?.length > 1 ? "s" : ""} carcasse
                     </span>
                   </>
                 ) : (

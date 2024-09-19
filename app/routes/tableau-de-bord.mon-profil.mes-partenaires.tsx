@@ -96,7 +96,7 @@ export default function MesPartenaires() {
               <p className="fr-text--regular mb-4">Sélectionnez vos différents partenaires</p>
               <AccordionEntreprise
                 fetcherKey="onboarding-etape-2-ccg-data"
-                accordionLabel="Vous êtes/travaillez pour un Centre de Collecte du Gibier sauvage (CCG)"
+                accordionLabel="Vos Centres de Collecte du Gibier sauvage (CCG)"
                 addLabel="Ajouter un Centre de Collecte du Gibier sauvage (CCG)"
                 selectLabel="Sélectionnez un Centre de Collecte du Gibier sauvage (CCG)"
                 entityType={EntityTypes.CCG}
@@ -210,6 +210,7 @@ function AccordionEntreprise({
                     {
                       owner_id: user.id,
                       entity_id: entity.id,
+                      relation: EntityRelationType.WORKING_WITH,
                       _action: "delete",
                     },
                     {

@@ -126,18 +126,18 @@ export async function action(args: ActionFunctionArgs) {
       Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire,
     ) as string;
   }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse)) {
-    nextCarcasse.svi_saisie_carcasse = stringToBoolean(
-      formData.get(Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse) as string,
+  if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)) {
+    nextCarcasse.svi_carcasse_saisie = stringToBoolean(
+      formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie) as string,
     );
   }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse_motif)) {
-    nextCarcasse.svi_saisie_carcasse_motif = formData.get(
-      Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse_motif,
+  if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)) {
+    nextCarcasse.svi_carcasse_saisie_motif = formData.get(
+      Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif,
     ) as string;
   }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse_at)) {
-    nextCarcasse.svi_saisie_carcasse_at = formData.get(Prisma.CarcasseScalarFieldEnum.svi_saisie_carcasse_at) as string;
+  if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at)) {
+    nextCarcasse.svi_carcasse_saisie_at = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at) as string;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at)) {
     nextCarcasse.svi_carcasse_signed_at = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at) as string;
@@ -147,6 +147,10 @@ export async function action(args: ActionFunctionArgs) {
       Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire,
     ) as string;
   }
+
+  console.log({
+    nextCarcasse,
+  });
 
   const updatedCarcasse = await prisma.carcasse.update({
     where: {

@@ -1,4 +1,4 @@
-import { Prisma, UserRoles } from "@prisma/client";
+import { Prisma, UserRelationType, UserRoles } from "@prisma/client";
 import { type ActionFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
@@ -35,6 +35,24 @@ export async function action(args: ActionFunctionArgs) {
   });
   if (!nextPremierDetenteur) {
     return json({ ok: false, data: null, error: "L'utilisateur n'existe pas" }, { status: 400 });
+  }
+
+  const existingRelation = await prisma.userRelations.findFirst({
+    where: {
+      owner_id: user.id,
+      related_id: nextPremierDetenteur.id,
+      relation: UserRelationType.PREMIER_DETENTEUR,
+    },
+  });
+
+  if (!existingRelation) {
+    await prisma.userRelations.create({
+      data: {
+        owner_id: user.id,
+        related_id: nextPremierDetenteur.id,
+        relation: UserRelationType.PREMIER_DETENTEUR,
+      },
+    });
   }
 
   await prisma.fei.update({

@@ -57,6 +57,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       fei_next_owner_role: true,
       commune_mise_a_mort: true,
     },
+    orderBy: {
+      updated_at: "desc",
+    },
   });
   const feiDone = await prisma.fei.findMany({
     where: {

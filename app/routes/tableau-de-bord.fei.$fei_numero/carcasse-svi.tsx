@@ -14,7 +14,7 @@ const style = {
   boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
 };
 
-export default function CarcassesIntermediaire({
+export default function CarcassesSvi({
   canEdit,
   carcasses,
 }: {

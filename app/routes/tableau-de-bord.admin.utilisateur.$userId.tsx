@@ -386,6 +386,7 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
                     {
                       owner_id: user.id,
                       entity_id: entity.id,
+                      relation: relation,
                       _action: "delete",
                     },
                     {

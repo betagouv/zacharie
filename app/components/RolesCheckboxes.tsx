@@ -49,18 +49,6 @@ export default function RolesCheckBoxes({
       },
     },
     {
-      label: "Centre de Collecte du Gibier sauvage (CCG)",
-      hintText:
-        "Vous disposez d’un CCG, un local réfrigéré où le gibier est entreposé. Le numéro du CCG attribué par votre Direction Départementale en charge de la Protection des Populations (DDecPP) sera demandé à l’étape suivante",
-      nativeInputProps: {
-        name: Prisma.UserScalarFieldEnum.roles,
-        value: UserRoles.CCG,
-        onChange: handleCheckboxChange,
-        disabled: !withAdmin && isSvi,
-        defaultChecked: user.roles.includes(UserRoles.CCG),
-      },
-    },
-    {
       label: "Collecteur Professionnel",
       hintText:
         "Vous récupérez les carcasses en peau auprès de plusieurs premiers détenteurs pour les livrer aux Établissements de Traitement du Gibier sauvage agréés (ETG). Le nom de l’établissement avec lequel vous travaillez sera demandé à l’étape suivante",
