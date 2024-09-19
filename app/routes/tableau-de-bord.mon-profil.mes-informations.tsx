@@ -9,6 +9,7 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
+import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
@@ -115,6 +116,10 @@ export default function MesInformations() {
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <Stepper currentStep={2} nextTitle={nextTitle} stepCount={stepCount} title="Vos informations" />
           <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations</h1>
+          <CallOut title="✍️ Pour remplir les FEI qui vont sont attribuées" className="bg-white">
+            Qui êtes-vous ? À quelles entités êtes-vous rattaché ? <br />
+            Lorsqu'une FEI sera attribuée à laquelle vous êtes rattachée, vous pourrez la prendre en charge.
+          </CallOut>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
               <p className="fr-text--regular mb-4">Renseignez les informations de chacun de vos rôles</p>
