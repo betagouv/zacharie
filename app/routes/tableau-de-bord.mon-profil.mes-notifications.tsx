@@ -49,7 +49,7 @@ export default function MesNotifications() {
     user.web_push_tokens.includes(JSON.stringify(pushSubscription));
 
   const isOnlyExaminateurInitial = user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && user.roles.length === 1;
-  const stepCount = isOnlyExaminateurInitial ? 4 : 3;
+  const stepCount = isOnlyExaminateurInitial ? 3 : 4;
 
   return (
     <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>

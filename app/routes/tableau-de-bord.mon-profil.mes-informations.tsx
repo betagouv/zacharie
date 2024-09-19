@@ -103,11 +103,11 @@ export default function MesInformations() {
   }, [examinateurDone]);
 
   const isOnlyExaminateurInitial = user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && user.roles.length === 1;
-  const nextTitle = isOnlyExaminateurInitial ? "Vos partenaires" : "Vos notifications";
+  const nextTitle = isOnlyExaminateurInitial ? "Vos notifications" : "Vos partenaires";
   const nextPage = isOnlyExaminateurInitial
-    ? "/tableau-de-bord/mon-profil/mes-partenaires"
-    : "/tableau-de-bord/mon-profil/mes-notifications";
-  const stepCount = isOnlyExaminateurInitial ? 4 : 3;
+    ? "/tableau-de-bord/mon-profil/mes-notifications"
+    : "/tableau-de-bord/mon-profil/mes-partenaires";
+  const stepCount = isOnlyExaminateurInitial ? 3 : 4;
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -255,7 +255,7 @@ export default function MesInformations() {
               {user.roles.includes(UserRoles.CCG) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-ccg-data"
-                  accordionLabel="Vous êtes/travaillez pour un Centre de Collecte de Gibier (CCG)"
+                  accordionLabel="Vos Centres de Collecte du Gibier sauvage (CCG) partenaires"
                   addLabel="Ajouter un Centre de Collecte de Gibier (CCG)"
                   selectLabel="Sélectionnez un Centre de Collecte de Gibier (CCG)"
                   done={ccgsDone}
