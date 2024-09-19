@@ -124,6 +124,18 @@ export async function action(args: ActionFunctionArgs) {
         id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id) as string,
       },
     };
+    if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.SVI) {
+      nextFei.FeiSviUser = {
+        connect: {
+          id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id) as string,
+        },
+      };
+      nextFei.FeiSviEntity = {
+        connect: {
+          id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id) as string,
+        },
+      };
+    }
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer)) {
     nextFei.fei_current_owner_wants_to_transfer =
@@ -224,8 +236,6 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_signed_at)) {
     nextFei.svi_signed_at = formData.get(Prisma.FeiScalarFieldEnum.svi_signed_at) as string;
   }
-
-  console.log("nextFei", nextFei);
 
   const savedFei = await prisma.fei.update({
     where: { numero: feiNumero },

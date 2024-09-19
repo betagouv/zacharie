@@ -2,6 +2,7 @@ import { json, type ActionFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
+import dayjs from "dayjs";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -132,25 +133,28 @@ export async function action(args: ActionFunctionArgs) {
     );
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)) {
-    nextCarcasse.svi_carcasse_saisie_motif = formData.get(
+    nextCarcasse.svi_carcasse_saisie_motif = formData.getAll(
       Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif,
-    ) as string;
+    ) as string[];
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at)) {
-    nextCarcasse.svi_carcasse_saisie_at = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at) as string;
+    const saisieAt = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at) as string;
+    nextCarcasse.svi_carcasse_saisie_at = dayjs(saisieAt || undefined).toISOString();
+    nextCarcasse.svi_carcasse_signed_at = null;
+    nextCarcasse.svi_carcasse_saisie = true;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at)) {
-    nextCarcasse.svi_carcasse_signed_at = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at) as string;
+    const signedAt = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at) as string;
+    nextCarcasse.svi_carcasse_signed_at = dayjs(signedAt || undefined).toISOString();
+    nextCarcasse.svi_carcasse_saisie_at = null;
+    nextCarcasse.svi_carcasse_saisie_motif = [];
+    nextCarcasse.svi_carcasse_saisie = false;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire)) {
     nextCarcasse.svi_carcasse_commentaire = formData.get(
       Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire,
     ) as string;
   }
-
-  console.log({
-    nextCarcasse,
-  });
 
   const updatedCarcasse = await prisma.carcasse.update({
     where: {

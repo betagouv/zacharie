@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { loader } from "./route";
-import { Prisma, CarcasseIntermediaire, Carcasse } from "@prisma/client";
+import { Prisma, Carcasse } from "@prisma/client";
 import InputNotEditable from "~/components/InputNotEditable";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { Button } from "@codegouvfr/react-dsfr/Button";
+import { Alert } from "@codegouvfr/react-dsfr/Alert";
 import dayjs from "dayjs";
-import SelectNextOwner from "./select-next-owner";
 import CarcassesSvi from "./carcasse-svi";
 import { SerializeFrom } from "@remix-run/node";
 import EntityNotEditable from "~/components/EntityNotEditable";
@@ -15,9 +15,7 @@ import EntityNotEditable from "~/components/EntityNotEditable";
 export default function FEI_SVI() {
   const { fei, user } = useLoaderData<typeof loader>();
 
-  const [intermediaireIndex, setIntermediaireIndex] = useState(0);
-  const svi = fei.FeiIntermediaires[intermediaireIndex];
-  const priseEnChargeFetcher = useFetcher({ key: "prise-en-charge" });
+  const sviFinished = useFetcher({ key: "prise-en-charge" });
 
   const carcassesUnsorted = fei.Carcasses;
   const carcassesSorted = useMemo(() => {
@@ -28,46 +26,34 @@ export default function FEI_SVI() {
       if (carcasse.examinateur_refus || carcasse.intermediaire_carcasse_refus_intermediaire_id) {
         continue;
       }
-      if (carcasse.svi_carcasse_saisie_motif)
+      if (carcasse.svi_carcasse_saisie_motif?.length) {
+        carcassesRefused[carcasse.numero_bracelet] = carcasse;
+        continue;
+      }
+      if (carcasse.svi_carcasse_signed_at) {
+        carcassesApproved[carcasse.numero_bracelet] = carcasse;
+        continue;
+      }
+      carcassesToCheck[carcasse.numero_bracelet] = carcasse;
     }
     return {
       carcassesApproved: Object.values(carcassesApproved),
       carcassesRefused: Object.values(carcassesRefused),
       carcassesToCheck: Object.values(carcassesToCheck),
     };
-  }, [carcassesUnsorted, svi, fei]);
+  }, [carcassesUnsorted]);
 
   const canEdit = useMemo(() => {
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
-    if (!svi) {
-      return false;
-    }
-    if (svi.fei_intermediaire_user_id !== user.id) {
-      return false;
-    }
-    if (svi.check_finished_at) {
+    if (fei.svi_signed_at) {
       return false;
     }
     return true;
-  }, [fei, user, svi]);
+  }, [fei, user]);
 
   const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
-
-  const needSelectNextUser = useMemo(() => {
-    if (fei.fei_current_owner_user_id !== user.id) {
-      return false;
-    }
-    if (!svi.check_finished_at) {
-      return false;
-    }
-    const latestIntermediaire = fei.FeiIntermediaires[0];
-    if (latestIntermediaire.id !== svi.id) {
-      return false;
-    }
-    return true;
-  }, [fei, user, svi]);
 
   const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
   const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(
@@ -87,44 +73,8 @@ export default function FEI_SVI() {
 
   return (
     <>
-      <nav
-        id="fr-breadcrumb-:r54:"
-        role="navigation"
-        className="fr-breadcrumb"
-        aria-label="vous êtes ici :"
-        data-fr-js-breadcrumb="true"
-      >
-        <button
-          className="fr-breadcrumb__button"
-          aria-expanded="false"
-          aria-controls="breadcrumb-:r55:"
-          data-fr-js-collapse-button="true"
-        >
-          Voir les intermédiaires
-        </button>
-        <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
-          <ol className="fr-breadcrumb__list">
-            <li>
-              <span className="fr-breadcrumb__link">Premier Détenteur</span>
-            </li>
-            {fei.FeiIntermediaires.map((_intermediaire, index) => {
-              return (
-                <li key={_intermediaire.id}>
-                  <button
-                    onClick={() => setIntermediaireIndex(index)}
-                    className="fr-breadcrumb__link"
-                    aria-current={_intermediaire.id === svi.id ? "step" : false}
-                  >
-                    {_intermediaire.FeiIntermediaireEntity.raison_sociale}
-                  </button>
-                </li>
-              );
-            }).reverse()}
-          </ol>
-        </div>
-      </nav>
-      <Accordion titleAs="h3" label={`Identité de l'intermédaire ${canEdit ? "🔒" : ""}`}>
-        <EntityNotEditable user={svi.FeiIntermediaireUser} entity={svi.FeiIntermediaireEntity} />
+      <Accordion titleAs="h3" label={`Identité du SVI ${canEdit ? "🔒" : ""}`}>
+        <EntityNotEditable user={fei.FeiSviUser} entity={fei.FeiSviEntity} />
       </Accordion>
       {carcassesSorted.carcassesToCheck.length > 0 && (
         <Accordion
@@ -160,65 +110,64 @@ export default function FEI_SVI() {
           <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesRefused} />
         )}
       </Accordion>
-      <Accordion titleAs="h3" label="Prise en charge des carcasses acceptées" defaultExpanded key={svi.id}>
-        <priseEnChargeFetcher.Form method="POST" action="/action/carcasse-suivi" id="check_finished_at">
+      <Accordion titleAs="h3" label="Prise en charge des carcasses acceptées" defaultExpanded>
+        <sviFinished.Form method="POST" action={`/action/fei/${fei.numero}`} id="svi_check_finished_at">
           <input
-            form="check_finished_at"
+            form="svi_check_finished_at"
             type="hidden"
-            name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_numero}
+            name={Prisma.FeiScalarFieldEnum.numero}
             value={fei.numero}
           />
           <input
             type="hidden"
-            form="check_finished_at"
-            name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_intermediaire_id}
-            value={svi.id}
+            form="svi_check_finished_at"
+            name={Prisma.FeiScalarFieldEnum.svi_signed_at}
+            value={new Date().toISOString()}
           />
-          <div
-            className={["fr-fieldset__element", svi.check_finished_at ? "pointer-events-none" : ""].join(" ")}
-          >
+          <div className={["fr-fieldset__element", fei.svi_signed_at ? "pointer-events-none" : ""].join(" ")}>
             <Checkbox
               options={[
                 {
-                  label: `${svi.check_finished_at ? "J'ai pris" : "Je prends"} en charge les carcasses que j'ai acceptées`,
+                  label: "J'ai fini l'inspection de toutes les carcasses",
                   nativeInputProps: {
                     required: true,
-                    name: Prisma.CarcasseIntermediaireScalarFieldEnum.check_finished_at,
+                    name: "svi_finito",
                     value: "true",
                     disabled: !jobIsDone,
-                    readOnly: !!svi.check_finished_at,
-                    defaultChecked: svi.check_finished_at ? true : false,
+                    readOnly: !!fei.svi_signed_at,
+                    defaultChecked: fei.svi_signed_at ? true : false,
                   },
                 },
               ]}
             />
-            {!svi.check_finished_at && (
+            {!fei.svi_signed_at && (
               <Button type="submit" disabled={!jobIsDone}>
                 Enregistrer
               </Button>
             )}
           </div>
-          {!!svi.check_finished_at && (
+          {!!fei.svi_signed_at && (
             <div className="fr-fieldset__element">
               <InputNotEditable
-                label="Date de prise en charge"
+                label="Date de fin d'inspection"
                 nativeInputProps={{
-                  id: Prisma.CarcasseIntermediaireScalarFieldEnum.check_finished_at,
-                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.check_finished_at,
+                  id: Prisma.FeiScalarFieldEnum.svi_signed_at,
+                  name: Prisma.FeiScalarFieldEnum.svi_signed_at,
                   type: "datetime-local",
                   autoComplete: "off",
-                  defaultValue: dayjs(svi.check_finished_at).format("YYYY-MM-DDTHH:mm"),
+                  defaultValue: dayjs(fei.svi_signed_at).format("YYYY-MM-DDTHH:mm"),
                 }}
               />
             </div>
           )}
-        </priseEnChargeFetcher.Form>
+        </sviFinished.Form>
       </Accordion>
-
-      {needSelectNextUser && (
-        <div className="z-50 mt-8 flex flex-col bg-white pt-4 md:w-auto md:items-start [&_ul]:md:min-w-96">
-          <SelectNextOwner />
-        </div>
+      {fei.svi_signed_at && (
+        <Alert
+          severity="success"
+          description="L'inspection des carcasses est trerminée, cette FEI est clôturée. Merci !"
+          title="FEI clôturée"
+        />
       )}
     </>
   );

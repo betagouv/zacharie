@@ -185,12 +185,12 @@ export default function CarcasseReadAndWrite() {
                 <InputForSearchPrefilledData
                   canEdit={canEdit}
                   // @ts-expect-error we dont type this json
-                  data={espece ? grandGibier.especes_categories[espece] : []}
+                  data={grandGibier.especes_categories[espece] ?? []}
                   label="Sélectionnez la catégorie de l'espèce"
                   hintText=""
                   hideDataWhenNoSearch={false}
                   // @ts-expect-error we dont type this json
-                  placeholder={espece ? grandGibier.especes_categories[espece].join(", ") : ""}
+                  placeholder={espece ? grandGibier.especes_categories[espece]?.join(", ") : ""}
                   onSelect={setCategorie}
                   defaultValue={categorie ?? ""}
                 />

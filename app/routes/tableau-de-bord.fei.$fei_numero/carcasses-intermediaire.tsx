@@ -1,4 +1,4 @@
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Fragment, useState } from "react";
 import { loader } from "./route";
 import { Input } from "@codegouvfr/react-dsfr/Input";
@@ -48,17 +48,14 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
   return (
     <Fragment key={carcasse.id}>
       <Notice
-        className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
+        className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\_\_title]:!block [&_p.fr-notice\_\_title]:before:hidden"
         key={carcasse.id}
         style={style}
         title={
-          <Link
-            to={`/tableau-de-bord/carcasse/${fei.numero}/${carcasse.numero_bracelet}`}
-            className="w-full !border-none !bg-none text-left !no-underline !shadow-none md:pl-8 [&_*]:no-underline [&_*]:hover:no-underline"
-          >
+          <span className="w-full !border-none !bg-none text-left !no-underline !shadow-none [&_*]:no-underline [&_*]:hover:no-underline">
             {carcasse.espece ? (
               <>
-                <span className="block font-bold md:-mt-4">
+                <span className="block font-bold">
                   {carcasse.espece} - {carcasse.categorie}
                 </span>
                 <span className="block font-normal">Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}</span>
@@ -77,7 +74,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                   {carcasse.examinateur_anomalies_abats?.length || "Pas d'"} anomalie
                   {carcasse.examinateur_anomalies_abats?.length > 1 ? "s" : ""} abats
                 </span>
-                <span className="m-0 block font-bold md:-mb-4">
+                <span className="m-0 block font-bold">
                   {carcasse.examinateur_anomalies_carcasse?.length || "Pas d'"} anomalie
                   {carcasse.examinateur_anomalies_carcasse?.length > 1 ? "s" : ""} carcasse
                 </span>
@@ -88,7 +85,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                 <span className="block font-normal md:-mb-4">Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}</span>
               </>
             )}
-          </Link>
+          </span>
         }
       />
       {canEdit && (
@@ -129,16 +126,18 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                 name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
                 value=""
               />
-              <Input
-                label="Commentaire"
-                hintText="Un commentaire à ajouter ?"
-                textArea
-                nativeTextAreaProps={{
-                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
-                  form: `intermediaire-carcasse-${carcasse.id}`,
-                  defaultValue: intermediaireCarcasse?.commentaire || "",
-                }}
-              />
+              <div className="fr-fieldset__element">
+                <Input
+                  label="Commentaire"
+                  hintText="Un commentaire à ajouter ?"
+                  textArea
+                  nativeTextAreaProps={{
+                    name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
+                    form: `intermediaire-carcasse-${carcasse.id}`,
+                    defaultValue: intermediaireCarcasse?.commentaire || "",
+                  }}
+                />
+              </div>
               <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
                 <ButtonsGroup
                   buttons={[
@@ -175,26 +174,30 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                 name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
                 value={refus}
               />
-              <InputForSearchPrefilledData
-                canEdit
-                data={refusIntermedaire}
-                label="Motif du refus"
-                hideDataWhenNoSearch={false}
-                required
-                placeholder="Tapez un motif de refus"
-                onSelect={setRefus}
-                defaultValue={refus ?? ""}
-              />
-              <Input
-                label="Commentaire"
-                hintText="Un commentaire à ajouter ?"
-                textArea
-                nativeTextAreaProps={{
-                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
-                  form: `intermediaire-carcasse-${carcasse.id}`,
-                  defaultValue: intermediaireCarcasse?.commentaire || "",
-                }}
-              />
+              <div className="fr-fieldset__element">
+                <InputForSearchPrefilledData
+                  canEdit
+                  data={refusIntermedaire}
+                  label="Motif du refus"
+                  hideDataWhenNoSearch={false}
+                  required
+                  placeholder="Tapez un motif de refus"
+                  onSelect={setRefus}
+                  defaultValue={refus ?? ""}
+                />
+              </div>
+              <div className="fr-fieldset__element">
+                <Input
+                  label="Commentaire"
+                  hintText="Un commentaire à ajouter ?"
+                  textArea
+                  nativeTextAreaProps={{
+                    name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
+                    form: `intermediaire-carcasse-${carcasse.id}`,
+                    defaultValue: intermediaireCarcasse?.commentaire || "",
+                  }}
+                />
+              </div>
               <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
                 <ButtonsGroup
                   buttons={[

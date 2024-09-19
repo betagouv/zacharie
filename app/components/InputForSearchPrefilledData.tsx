@@ -15,6 +15,7 @@ interface InputForSearchPrefilledDataProps<T> {
   defaultValue?: T;
   hideDataWhenNoSearch?: boolean;
   addSearchToClickableLabel?: boolean;
+  clearInputOnClick?: boolean;
   canEdit?: boolean;
 }
 
@@ -29,6 +30,7 @@ export default function InputForSearchPrefilledData<T extends string>({
   defaultValue,
   hideDataWhenNoSearch = true,
   addSearchToClickableLabel = true,
+  clearInputOnClick = false,
   canEdit = true,
   required = false,
 }: InputForSearchPrefilledDataProps<T>) {
@@ -70,6 +72,7 @@ export default function InputForSearchPrefilledData<T extends string>({
           type: "text",
           value: searchTerm,
           required,
+          autoComplete: "off",
           onChange: handleChange,
           placeholder,
         }}
@@ -100,8 +103,12 @@ export default function InputForSearchPrefilledData<T extends string>({
                 nativeButtonProps={{
                   onClick: () => {
                     showTags.current = false;
-                    setSearchTerm(item);
                     onSelect(item);
+                    if (clearInputOnClick) {
+                      setSearchTerm("" as T);
+                    } else {
+                      setSearchTerm(item);
+                    }
                   },
                 }}
               >

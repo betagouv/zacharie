@@ -50,7 +50,7 @@ export default function EntityNotEditable({
       {entity?.siret && (
         <div className="fr-fieldset__element">
           <InputNotEditable
-            label="Raison Sociale"
+            label="SIRET"
             nativeInputProps={{
               id: Prisma.EntityScalarFieldEnum.siret,
               name: Prisma.EntityScalarFieldEnum.siret,
@@ -63,7 +63,7 @@ export default function EntityNotEditable({
       {entity?.numero_ddecpp && (
         <div className="fr-fieldset__element">
           <InputNotEditable
-            label="Raison Sociale"
+            label="Numéro DD(ec)PP"
             nativeInputProps={{
               id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
               name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
@@ -85,7 +85,14 @@ export default function EntityNotEditable({
       <hr />
       <div className="fr-fieldset__element">
         <InputNotEditable
-          label="Représentant de l'entreprise - Nom de famille"
+          label={
+            <>
+              <span className="ml-2 block font-medium">Représentant de l'entreprise</span>
+              <br />
+              <br />
+              Nom de famille
+            </>
+          }
           nativeInputProps={{
             id: Prisma.UserScalarFieldEnum.nom_de_famille,
             name: Prisma.UserScalarFieldEnum.nom_de_famille,

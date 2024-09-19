@@ -6,11 +6,11 @@ import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
 import { EntityTypes, EntityRelationType, UserRoles, UserRelationType } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import FEIPremierDetenteur from "./premier-detenteur";
-import FEIExaminateurInitial from "./examinateur-initial";
 import ConfirmCurrentOwner from "./confirm-current-owner";
 import CurrentOwner from "./current-owner";
 import FeiTransfer from "./transfer-current-owner";
 import FEICurrentIntermediaire from "./current-intermediaire";
+import FEI_SVI from "./svi";
 
 export function meta({ params }: MetaArgs) {
   return [
@@ -279,7 +279,7 @@ export default function Fei() {
           <ConfirmCurrentOwner />
           <CurrentOwner />
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
-            {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
+            {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur />}
             {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur />}
             {selectedTabId === "Intermédiaires" &&
               (intermediaireTabDisabled ? (
@@ -287,6 +287,7 @@ export default function Fei() {
               ) : (
                 <FEICurrentIntermediaire />
               ))}
+            {selectedTabId === UserRoles.SVI && <FEI_SVI />}
           </Tabs>
         </div>
       </div>
