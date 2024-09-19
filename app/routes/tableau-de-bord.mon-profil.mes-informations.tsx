@@ -104,10 +104,10 @@ export default function MesInformations() {
   }, [examinateurDone]);
 
   const isOnlyExaminateurInitial = user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && user.roles.length === 1;
-  const nextTitle = isOnlyExaminateurInitial ? "Vos notifications" : "Vos partenaires";
+  const nextTitle = isOnlyExaminateurInitial ? "Vos notifications" : "Vos Centres de Collectes du Gibier sauvage";
   const nextPage = isOnlyExaminateurInitial
     ? "/tableau-de-bord/mon-profil/mes-notifications"
-    : "/tableau-de-bord/mon-profil/mes-partenaires";
+    : "/tableau-de-bord/mon-profil/mes-ccgs";
   const stepCount = isOnlyExaminateurInitial ? 3 : 4;
 
   return (
@@ -434,6 +434,7 @@ function AccordionEntreprise({
             }}
           >
             <option value="">{selectLabel}</option>
+            <hr />
             {remainingEntities.map((entity) => {
               return (
                 <option key={entity.id} value={entity.id}>

@@ -1,4 +1,4 @@
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { loader } from "./route";
 import UserNotEditable from "~/components/UserNotEditable";
 import { useMemo, useState } from "react";
@@ -142,7 +142,8 @@ export default function FEIDetenteurInitial() {
               hintText={canEdit ? "Étape requise pour la suite du processus" : ""}
               options={[
                 {
-                  label: "J'ai déposé mes carcasses chez un de mes partenaires",
+                  label:
+                    "J'ai déposé mes carcasses dans un Centre de Collecte du Gibier sauvage ou chez un de mes partenaires",
                   nativeInputProps: {
                     checked: depotType === Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
                     readOnly: !canEdit,
@@ -166,7 +167,13 @@ export default function FEIDetenteurInitial() {
                 <div className="fr-fieldset__element">
                   {canEdit ? (
                     <Select
-                      label="Sélectionnez un de vos partenaire"
+                      label="Sélectionnez un de vos partenaires"
+                      hint={
+                        <>
+                          Vous n'avez pas encore renseigné votre CCG ? Vous pouvez le faire en{" "}
+                          <Link to="/tableau-de-bord/mon-profil/mes-ccgs">cliquant ici</Link>
+                        </>
+                      }
                       className="!mb-0 grow"
                       nativeSelectProps={{
                         name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
@@ -174,14 +181,39 @@ export default function FEIDetenteurInitial() {
                       }}
                     >
                       <option value="">Sélectionnez un de vos partenaires</option>
-                      {[...ccgs, ...collecteursPro, ...etgs].map((entity) => {
-                        return (
-                          <option key={entity.id} value={entity.id}>
-                            {entity.raison_sociale} - {entity.code_postal} {entity.ville} (
-                            {getUserRoleLabel(entity.type)})
-                          </option>
-                        );
-                      })}
+                      <hr />
+                      <optgroup label="Centres de Collecte du Gibier sauvage (CCG)">
+                        {ccgs.map((entity) => {
+                          return (
+                            <option key={entity.id} value={entity.id}>
+                              {entity.raison_sociale} - {entity.code_postal} {entity.ville} (
+                              {getUserRoleLabel(entity.type)})
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                      <hr />
+                      <optgroup label="Collecteurs professionnels">
+                        {collecteursPro.map((entity) => {
+                          return (
+                            <option key={entity.id} value={entity.id}>
+                              {entity.raison_sociale} - {entity.code_postal} {entity.ville} (
+                              {getUserRoleLabel(entity.type)})
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                      <optgroup label="Établissements de Transformation du Gibier sauvage (ETG)">
+                        <hr />
+                        {etgs.map((entity) => {
+                          return (
+                            <option key={entity.id} value={entity.id}>
+                              {entity.raison_sociale} - {entity.code_postal} {entity.ville} (
+                              {getUserRoleLabel(entity.type)})
+                            </option>
+                          );
+                        })}
+                      </optgroup>
                     </Select>
                   ) : (
                     <InputNotEditable

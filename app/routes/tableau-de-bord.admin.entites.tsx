@@ -19,7 +19,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!admin?.roles?.includes(UserRoles.ADMIN)) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const entities = await prisma.entity.findMany();
+  const entities = await prisma.entity.findMany({
+    orderBy: {
+      type: "asc",
+    },
+  });
   return json({ entities });
 }
 

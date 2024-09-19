@@ -11,7 +11,6 @@ import ConfirmCurrentOwner from "./confirm-current-owner";
 import CurrentOwner from "./current-owner";
 import FeiTransfer from "./transfer-current-owner";
 import FEICurrentIntermediaire from "./current-intermediaire";
-// import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
 
 export function meta({ params }: MetaArgs) {
   return [
@@ -78,15 +77,29 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   if (!fei) {
     throw redirect("/tableau-de-bord");
   }
-  const userEntitiesRelations = await prisma.entityRelations.findMany({
-    where: {
-      owner_id: user.id,
-      relation: EntityRelationType.WORKING_WITH,
-    },
-    include: {
-      EntityRelatedWithUser: true,
-    },
-  });
+  const userEntitiesRelations = (
+    await prisma.entityRelations.findMany({
+      where: {
+        owner_id: user.id,
+        relation: EntityRelationType.WORKING_WITH,
+      },
+      include: {
+        EntityRelatedWithUser: true,
+      },
+    })
+  ).map((entityRelation) => ({ ...entityRelation.EntityRelatedWithUser, relation: entityRelation.relation }));
+  const allOtherEntities = (
+    await prisma.entity.findMany({
+      where: {
+        id: {
+          notIn: userEntitiesRelations.map((entity) => entity.id),
+        },
+        type: {
+          not: EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
+        },
+      },
+    })
+  ).map((entity) => ({ ...entity, relation: null }));
   const entitiesUserIsWorkingFor = (
     await prisma.entityRelations.findMany({
       where: {
@@ -109,33 +122,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   const detenteursInitiaux = userRelationsWithOtherUsers
     .filter((userRelation) => userRelation.relation === UserRelationType.PREMIER_DETENTEUR)
-    .map((userRelation) => userRelation.UserRelatedOfUserRelation);
+    .map((userRelation) => ({ ...userRelation.UserRelatedOfUserRelation, relation: userRelation.relation }));
   if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
-    detenteursInitiaux.unshift(user);
+    detenteursInitiaux.unshift({ ...user, relation: UserRelationType.PREMIER_DETENTEUR });
   }
 
   const examinateursInitiaux = userRelationsWithOtherUsers
     .filter((userRelation) => userRelation.relation === UserRelationType.EXAMINATEUR_INITIAL)
-    .map((userRelation) => userRelation.UserRelatedOfUserRelation);
+    .map((userRelation) => ({ ...userRelation.UserRelatedOfUserRelation, relation: userRelation.relation }));
   if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-    examinateursInitiaux.unshift(user);
+    examinateursInitiaux.unshift({ ...user, relation: UserRelationType.EXAMINATEUR_INITIAL });
   }
 
-  const ccgs = userEntitiesRelations
-    .filter((entityRelation) => entityRelation.EntityRelatedWithUser.type === EntityTypes.CCG)
-    .map((entityRelation) => entityRelation.EntityRelatedWithUser);
-
-  const collecteursPro = userEntitiesRelations
-    .filter((entityRelation) => entityRelation.EntityRelatedWithUser.type === EntityTypes.COLLECTEUR_PRO)
-    .map((entityRelation) => entityRelation.EntityRelatedWithUser);
-
-  const etgs = userEntitiesRelations
-    .filter((entityRelation) => entityRelation.EntityRelatedWithUser.type === EntityTypes.ETG)
-    .map((entityRelation) => entityRelation.EntityRelatedWithUser);
-
-  const svis = userEntitiesRelations
-    .filter((entityRelation) => entityRelation.EntityRelatedWithUser.type === EntityTypes.SVI)
-    .map((entityRelation) => entityRelation.EntityRelatedWithUser);
+  const allEntities = [...userEntitiesRelations, ...allOtherEntities];
+  const ccgs = allEntities.filter((entity) => entity.type === EntityTypes.CCG);
+  const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
+  const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
+  const svis = allEntities.filter((entity) => entity.type === EntityTypes.SVI);
 
   return json({
     user,

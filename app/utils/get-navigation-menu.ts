@@ -34,11 +34,11 @@ export default function useNavigationMenu() {
   ];
   if (!isOnlyExaminateurInitial) {
     profileMenu.push({
-      text: "Mes partenaires",
-      isActive: location.pathname === "/tableau-de-bord/mon-profil/mes-partenaires",
+      text: "Mes CCGs",
+      isActive: location.pathname === "/tableau-de-bord/mon-profil/mes-ccgs",
       linkProps: {
         href: "#",
-        to: "/tableau-de-bord/mon-profil/mes-partenaires",
+        to: "/tableau-de-bord/mon-profil/mes-ccgs",
       },
     });
   }

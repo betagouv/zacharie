@@ -1,4 +1,4 @@
-import { Prisma, UserRoles } from "@prisma/client";
+import { EntityRelationType, Prisma, UserRoles } from "@prisma/client";
 import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
@@ -67,7 +67,7 @@ export async function action(args: ActionFunctionArgs) {
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)) {
     nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = formData.get(
-      "examinateur_initial_date_approbation_mise_sur_le_marche"
+      "examinateur_initial_date_approbation_mise_sur_le_marche",
     ) as string;
   }
   /*
@@ -81,7 +81,7 @@ export async function action(args: ActionFunctionArgs) {
 
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part)) {
     nextFei.premier_detenteur_date_depot_quelque_part = new Date(
-      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string
+      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string,
     );
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
@@ -93,7 +93,7 @@ export async function action(args: ActionFunctionArgs) {
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part)) {
     nextFei.premier_detenteur_date_depot_quelque_part = new Date(
-      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string
+      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string,
     );
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id)) {
@@ -105,7 +105,7 @@ export async function action(args: ActionFunctionArgs) {
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage)) {
     nextFei.premier_detenteur_depot_sauvage = formData.get(
-      Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage
+      Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage,
     ) as string;
   }
 
@@ -161,6 +161,15 @@ export async function action(args: ActionFunctionArgs) {
           id: formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id) as string,
         },
       };
+      const nextRelation = {
+        entity_id: formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id) as string,
+        owner_id: user.id,
+        relation: EntityRelationType.WORKING_WITH,
+      };
+      const existingRelation = await prisma.entityRelations.findFirst({ where: nextRelation });
+      if (!existingRelation) {
+        await prisma.entityRelations.create({ data: nextRelation });
+      }
     }
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_role)) {

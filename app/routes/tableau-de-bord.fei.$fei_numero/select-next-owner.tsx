@@ -6,7 +6,7 @@ import { loader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { UserRoles, Entity, User, Prisma } from "@prisma/client";
 import { useMemo, useState } from "react";
-import { getUserRoleLabel } from "~/utils/get-user-roles-label";
+import { getUserRoleLabel, getUserRoleLabelPlural } from "~/utils/get-user-roles-label";
 import { SerializeFrom } from "@remix-run/node";
 import { action as searchUserAction } from "~/routes/action.trouver-premier-detenteur";
 
@@ -64,7 +64,7 @@ export default function SelectNextOwner() {
         return owner.id === fei.fei_next_owner_entity_id;
       }
       return false;
-    });
+    }) as SerializeFrom<User> | SerializeFrom<Entity> | undefined;
     if (nextOwnerIsUser) {
       nextOwner = nextOwner as unknown as SerializeFrom<User>;
       return `${nextOwner?.prenom} ${nextOwner?.nom_de_famille}`;
@@ -135,6 +135,9 @@ export default function SelectNextOwner() {
     return null;
   }
 
+  const nextOwnersWorkingWith = nextOwners.filter((o) => !!o.relation);
+  const nextOwnersNotWorkingWith = nextOwners.filter((o) => !o.relation);
+
   return (
     <>
       <nextOwnerFetcher.Form
@@ -163,6 +166,7 @@ export default function SelectNextOwner() {
             }}
           >
             <option value="">Sélectionnez le prochain type d'acteur à agir sur la FEI</option>
+            <hr />
             {showDetenteurInitial ? (
               <option value={UserRoles.PREMIER_DETENTEUR}>{getUserRoleLabel(UserRoles.PREMIER_DETENTEUR)}</option>
             ) : showIntermediaires ? (
@@ -190,23 +194,33 @@ export default function SelectNextOwner() {
               }}
             >
               <option value="">{nextOwnerSelectLabel}</option>
-              {nextOwners.map((potentielOwner) => {
-                let label = "";
-                if (nextOwnerIsEntity) {
-                  potentielOwner = potentielOwner as unknown as SerializeFrom<Entity>;
-                  label = `${potentielOwner.raison_sociale} - ${potentielOwner.code_postal} ${potentielOwner.ville}`;
-                }
-                if (nextOwnerIsUser) {
-                  potentielOwner = potentielOwner as unknown as SerializeFrom<User>;
-                  label = `${potentielOwner.prenom} ${potentielOwner.nom_de_famille} - ${potentielOwner.code_postal} ${potentielOwner.ville}`;
-                }
-                if (potentielOwner.id === user.id) {
-                  label = `Vous (${label})`;
-                }
+              {nextOwnersWorkingWith.length > 0 && (
+                <>
+                  <optgroup label={`Mes ${getUserRoleLabelPlural(nextRole)}`}>
+                    {nextOwnersWorkingWith.map((potentielOwner) => {
+                      return (
+                        <NextOwnerOption
+                          key={potentielOwner.id}
+                          potentielOwner={potentielOwner}
+                          nextOwnerIsEntity={nextOwnerIsEntity}
+                          nextOwnerIsUser={nextOwnerIsUser}
+                          user={user}
+                        />
+                      );
+                    })}
+                  </optgroup>
+                  <hr />
+                </>
+              )}
+              {nextOwnersNotWorkingWith.map((potentielOwner) => {
                 return (
-                  <option key={potentielOwner.id} value={potentielOwner.id}>
-                    {label}
-                  </option>
+                  <NextOwnerOption
+                    key={potentielOwner.id}
+                    potentielOwner={potentielOwner}
+                    nextOwnerIsEntity={nextOwnerIsEntity}
+                    nextOwnerIsUser={nextOwnerIsUser}
+                    user={user}
+                  />
                 );
               })}
             </Select>
@@ -253,3 +267,30 @@ export default function SelectNextOwner() {
     </>
   );
 }
+
+type NextOwnerOptionProps = {
+  potentielOwner: SerializeFrom<User> | SerializeFrom<Entity>;
+  nextOwnerIsEntity: boolean;
+  nextOwnerIsUser: boolean;
+  user: SerializeFrom<User>;
+};
+
+const NextOwnerOption = ({ potentielOwner, nextOwnerIsEntity, nextOwnerIsUser, user }: NextOwnerOptionProps) => {
+  let label = "";
+  if (nextOwnerIsEntity) {
+    potentielOwner = potentielOwner as unknown as SerializeFrom<Entity>;
+    label = `${potentielOwner.raison_sociale} - ${potentielOwner.code_postal} ${potentielOwner.ville}`;
+  }
+  if (nextOwnerIsUser) {
+    potentielOwner = potentielOwner as unknown as SerializeFrom<User>;
+    label = `${potentielOwner.prenom} ${potentielOwner.nom_de_famille} - ${potentielOwner.code_postal} ${potentielOwner.ville}`;
+  }
+  if (potentielOwner.id === user.id) {
+    label = `Vous (${label})`;
+  }
+  return (
+    <option key={potentielOwner.id} value={potentielOwner.id}>
+      {label}
+    </option>
+  );
+};
