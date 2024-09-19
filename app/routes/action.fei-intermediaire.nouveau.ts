@@ -1,6 +1,6 @@
 import { json, type ActionFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
-import { Prisma } from "@prisma/client";
+import { Prisma, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 
 export async function action(args: ActionFunctionArgs) {
@@ -35,6 +35,7 @@ export async function action(args: ActionFunctionArgs) {
       fei_intermediaire_entity_id: formData.get(
         Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_entity_id,
       ) as string,
+      fei_intermediaire_role: formData.get(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_role) as UserRoles,
     },
   });
 

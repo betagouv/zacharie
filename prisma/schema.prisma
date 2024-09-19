@@ -61,7 +61,6 @@ model User {
   FeiCurrentUser            Fei[]                   @relation("FeiCurrentUser")
   FeiDetenteurInitialUser   Fei[]                   @relation("FeiDetenteurInitialUser")
   FeiExaminateurInitialUser Fei[]                   @relation("FeiExaminateurInitialUser")
-  FeiEtgUser                Fei[]                   @relation("FeiEtgUser")
   FeiSviUser                Fei[]                   @relation("FeiSviUser")
   FeiIntermediaireUser      FeiIntermediaire[]      @relation("FeiIntermediaireUser")
   Logs                      Logs[]
@@ -97,15 +96,17 @@ model Entity {
   updated_at             DateTime                @default(now()) @updatedAt
   deleted_at             DateTime?
   onboarded_at           DateTime?
+  coupled_entity_id      String?                 @unique
   prefilled              Boolean                 @default(false)
   EntityRelatedWithUser  EntityRelations[]       @relation("EntityRelatedWithUser")
   FeiCurrentEntity       Fei[]                   @relation("FeiCurrentEntity")
   FeiNextEntity          Fei[]                   @relation("FeiNextEntity")
   FeiDepotEntity         Fei[]                   @relation("FeiDepotEntity")
-  FeiEtgEntity           Fei[]                   @relation("FeiEtgEntity")
   FeiSviEntity           Fei[]                   @relation("FeiSviEntity")
   FeiIntermediaireEntity FeiIntermediaire[]      @relation("FeiIntermediaireEntity")
   CarcasseIntermediaire  CarcasseIntermediaire[] @relation("CarcasseIntermediaireEntity")
+  CoupledEntity          Entity?                 @relation("CoupledEntity", fields: [coupled_entity_id], references: [id])
+  CoupledEntity_opposite Entity?                 @relation("CoupledEntity")
 }
 
 model Password {
@@ -196,11 +197,6 @@ model Fei {
   premier_detenteur_date_depot_quelque_part               DateTime?
   premier_detenteur_depot_entity_id                       String?
   premier_detenteur_depot_sauvage                         String?
-  etg_entity_id                                           String?
-  etg_user_id                                             String?
-  etg_received_at                                         DateTime?
-  etg_commentaire                                         String?
-  etg_check_finished_at                                   DateTime?
   svi_entity_id                                           String?
   svi_user_id                                             String?
   svi_carcasses_saisies                                   Int?
@@ -215,8 +211,6 @@ model Fei {
   FeiDetenteurInitialUser                                 User?                   @relation("FeiDetenteurInitialUser", fields: [premier_detenteur_user_id], references: [id])
   FeiExaminateurInitialUser                               User?                   @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id])
   FeiDepotEntity                                          Entity?                 @relation("FeiDepotEntity", fields: [premier_detenteur_depot_entity_id], references: [id])
-  FeiEtgEntity                                            Entity?                 @relation("FeiEtgEntity", fields: [etg_entity_id], references: [id])
-  FeiEtgUser                                              User?                   @relation("FeiEtgUser", fields: [etg_user_id], references: [id])
   FeiSviEntity                                            Entity?                 @relation("FeiSviEntity", fields: [svi_entity_id], references: [id])
   FeiSviUser                                              User?                   @relation("FeiSviUser", fields: [svi_user_id], references: [id])
   FeiIntermediaires                                       FeiIntermediaire[]
@@ -272,6 +266,7 @@ model FeiIntermediaire {
   fei_numero                     String
   fei_intermediaire_user_id      String
   fei_intermediaire_entity_id    String
+  fei_intermediaire_role         UserRoles?
   commentaire                    String?
   received_at                    DateTime?
   check_finished_at              DateTime?

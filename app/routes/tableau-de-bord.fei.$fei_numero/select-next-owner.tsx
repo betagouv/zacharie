@@ -118,11 +118,18 @@ export default function SelectNextOwner() {
     if (fei.fei_current_owner_role !== UserRoles.ETG) {
       return false;
     }
-    if (!fei.etg_check_finished_at) {
+    const latestIntermediaire = fei.FeiIntermediaires[0];
+    if (!latestIntermediaire) {
+      return false;
+    }
+    if (latestIntermediaire.fei_intermediaire_role !== UserRoles.ETG) {
+      return false;
+    }
+    if (!latestIntermediaire.check_finished_at) {
       return false;
     }
     return true;
-  }, [fei.fei_current_owner_role, fei.etg_check_finished_at]);
+  }, [fei]);
 
   if (user.id !== fei.fei_current_owner_user_id) {
     return null;

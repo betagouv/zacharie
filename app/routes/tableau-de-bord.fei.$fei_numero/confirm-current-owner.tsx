@@ -67,6 +67,7 @@ export default function ConfirmCurrentOwner() {
       const newIntermdaire = new FormData();
       newIntermdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_numero, fei.numero);
       newIntermdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_user_id, user.id);
+      newIntermdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_role, fei.fei_next_owner_role!);
       newIntermdaire.append(
         Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_entity_id,
         fei.fei_next_owner_entity_id || "",

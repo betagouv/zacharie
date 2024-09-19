@@ -87,6 +87,7 @@ export async function action(args: ActionFunctionArgs) {
       update: data,
     });
     // remove refus if there was one
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const carcasseUpdated = await prisma.carcasse.update({
       where: {
         numero_bracelet: carcasseBracelet,
@@ -111,6 +112,7 @@ export async function action(args: ActionFunctionArgs) {
       create: data,
       update: data,
     });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const carcasseUpdated = await prisma.carcasse.update({
       where: {
         numero_bracelet: carcasseBracelet,
@@ -122,7 +124,6 @@ export async function action(args: ActionFunctionArgs) {
         intermediaire_carcasse_signed_at: new Date(),
       },
     });
-    console.log("carcasseUpdated", carcasseUpdated);
     return json({ ok: true, data: carcasseIntermediaire, error: null });
   }
 

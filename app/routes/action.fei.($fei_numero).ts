@@ -182,44 +182,6 @@ export async function action(args: ActionFunctionArgs) {
   *
   * *
 
-  ETG
-
-  */
-  if (formData.has(Prisma.FeiScalarFieldEnum.etg_received_at)) {
-    nextFei.etg_received_at = formData.get(Prisma.FeiScalarFieldEnum.etg_received_at) as string;
-  }
-  if (formData.has(Prisma.FeiScalarFieldEnum.etg_entity_id)) {
-    nextFei.FeiEtgEntity = {
-      connect: {
-        id: formData.get(Prisma.FeiScalarFieldEnum.etg_entity_id) as string,
-      },
-    };
-  }
-  if (formData.has(Prisma.FeiScalarFieldEnum.etg_user_id)) {
-    nextFei.FeiEtgUser = {
-      connect: {
-        id: formData.get(Prisma.FeiScalarFieldEnum.etg_user_id) as string,
-      },
-    };
-  }
-  // if (formData.has(Prisma.FeiScalarFieldEnum.etg)) {
-  //   nextFei.svi_carcasses_saisies = Number(formData.get(Prisma.FeiScalarFieldEnum.svi_carcasses_saisies) as string);
-  // }
-  // if (formData.has(Prisma.FeiScalarFieldEnum.svi_aucune_carcasse_saisie)) {
-  //   nextFei.svi_aucune_carcasse_saisie =
-  //     formData.get(Prisma.FeiScalarFieldEnum.svi_aucune_carcasse_saisie) === "true" ? true : false;
-  // }
-  if (formData.has(Prisma.FeiScalarFieldEnum.etg_commentaire)) {
-    nextFei.etg_commentaire = formData.get(Prisma.FeiScalarFieldEnum.etg_commentaire) as string;
-  }
-  if (formData.has(Prisma.FeiScalarFieldEnum.etg_check_finished_at)) {
-    nextFei.etg_check_finished_at = formData.get(Prisma.FeiScalarFieldEnum.etg_check_finished_at) as string;
-  }
-  /*
-  *
-  *
-  * *
-
   SVI
 
   */
