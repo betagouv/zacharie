@@ -261,8 +261,8 @@ export default function MesInformations() {
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-ccg-data"
                   accordionLabel="Vos Centres de Collecte du Gibier sauvage (CCG) partenaires"
-                  addLabel="Ajouter un Centre de Collecte de Gibier (CCG)"
-                  selectLabel="Sélectionnez un Centre de Collecte de Gibier (CCG)"
+                  addLabel="Ajouter un Centre de Collecte du Gibier sauvage (CCG)"
+                  selectLabel="Sélectionnez un Centre de Collecte du Gibier sauvage (CCG)"
                   done={ccgsDone}
                   entityType={EntityTypes.CCG}
                 >
@@ -480,7 +480,7 @@ function InputCCG() {
       />
       <input type="hidden" name={Prisma.EntityScalarFieldEnum.type} value={EntityTypes.CCG} />
       <Input
-        label="Numéro de DD(ec)PP du Centre de Collecte de Gibier (CCG)"
+        label="Numéro du Centre de Collecte du Gibier sauvage (CCG)"
         className="!mb-0"
         nativeInputProps={{
           type: "text",

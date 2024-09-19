@@ -12,7 +12,7 @@ enum UserRoles {
   ADMIN
   EXAMINATEUR_INITIAL
   PREMIER_DETENTEUR // un chasseur, une association de chasse, une structure professionnelle de chasse qui se charge d'indiquer le destinataire final du gibier
-  CCG // Centre de Collecte de Gibier où sont entreposées les venaisons à la fin de la chasse
+  CCG // Centre de Collecte du Gibier sauvage où sont entreposées les venaisons à la fin de la chasse
   COLLECTEUR_PRO // Transporteur de Gibier
   //Destinataires finaux du gibier
   ETG // Etablissement de Traitement du Gibier sauvage

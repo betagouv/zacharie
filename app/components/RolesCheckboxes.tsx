@@ -49,9 +49,9 @@ export default function RolesCheckBoxes({
       },
     },
     {
-      label: "Centre de Collecte de Gibier (CCG)",
+      label: "Centre de Collecte du Gibier sauvage (CCG)",
       hintText:
-        "Vous avez/vous utilisez un CCG, un local réfrigéré où le gibier en entreposé. Le numéro DD(ec)PP sera demandé à l'étape suivante",
+        "Vous disposez d’un CCG, un local réfrigéré où le gibier est entreposé. Le numéro du CCG attribué par votre Direction Départementale en charge de la Protection des Populations (DDecPP) sera demandé à l’étape suivante",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.CCG,
