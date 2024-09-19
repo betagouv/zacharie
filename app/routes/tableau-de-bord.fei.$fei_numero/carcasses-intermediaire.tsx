@@ -35,7 +35,7 @@ interface CarcasseAVerifierProps {
   canEdit: boolean;
 }
 
-function CarcasseAVerifier({ carcasse }: CarcasseAVerifierProps) {
+function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
   const { fei } = useLoaderData<typeof loader>();
   const intermediaireCarcasseFetcher = useFetcher({ key: `intermediaire-carcasse-${carcasse.id}` });
   const intermediaire = fei.FeiIntermediaires[0];
@@ -43,11 +43,8 @@ function CarcasseAVerifier({ carcasse }: CarcasseAVerifierProps) {
     (_intermediaireCarcasse) => _intermediaireCarcasse.numero_bracelet === carcasse.numero_bracelet,
   );
 
-  console.log({ carcasse, intermediaireCarcasse, intermediaire });
-
   const [showRefuser, setShowRefuser] = useState(!!intermediaireCarcasse?.refus);
   const [refus, setRefus] = useState(intermediaireCarcasse?.refus ?? "");
-  console.log({ carcasse, intermediaireCarcasse, refus });
   return (
     <Fragment key={carcasse.id}>
       <Notice
@@ -92,133 +89,135 @@ function CarcasseAVerifier({ carcasse }: CarcasseAVerifierProps) {
           </Link>
         }
       />
-      <intermediaireCarcasseFetcher.Form
-        method="POST"
-        action="/action/carcasse-suivi"
-        id={`intermediaire-carcasse-${carcasse.id}`}
-      >
-        <input
-          form={`intermediaire-carcasse-${carcasse.id}`}
-          type="hidden"
-          name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_numero}
-          value={fei.numero}
-        />
-        <input
-          type="hidden"
-          form={`intermediaire-carcasse-${carcasse.id}`}
-          name={Prisma.CarcasseIntermediaireScalarFieldEnum.numero_bracelet}
-          value={carcasse.numero_bracelet}
-        />
-        <input
-          type="hidden"
-          form={`intermediaire-carcasse-${carcasse.id}`}
-          name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_intermediaire_id}
-          value={intermediaire.id}
-        />
-        {!showRefuser ? (
-          <>
-            <input
-              form={`intermediaire-carcasse-${carcasse.id}`}
-              type="hidden"
-              name={Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge}
-              value="true"
-            />
-            <input
-              form={`intermediaire-carcasse-${carcasse.id}`}
-              type="hidden"
-              name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
-              value=""
-            />
-            <Input
-              label="Commentaire"
-              hintText="Un commentaire à ajouter ?"
-              textArea
-              nativeTextAreaProps={{
-                name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
-                form: `intermediaire-carcasse-${carcasse.id}`,
-                defaultValue: intermediaireCarcasse?.commentaire || "",
-              }}
-            />
-            <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: "Accepter",
-                    type: "submit",
-                    nativeButtonProps: {
-                      form: `intermediaire-carcasse-${carcasse.id}`,
-                    },
-                  },
-                  {
-                    children: "Refuser",
-                    priority: "secondary",
-                    type: "button",
-                    nativeButtonProps: {
-                      onClick: () => setShowRefuser(true),
-                    },
-                  },
-                ]}
+      {canEdit && (
+        <intermediaireCarcasseFetcher.Form
+          method="POST"
+          action="/action/carcasse-suivi"
+          id={`intermediaire-carcasse-${carcasse.id}`}
+        >
+          <input
+            form={`intermediaire-carcasse-${carcasse.id}`}
+            type="hidden"
+            name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_numero}
+            value={fei.numero}
+          />
+          <input
+            type="hidden"
+            form={`intermediaire-carcasse-${carcasse.id}`}
+            name={Prisma.CarcasseIntermediaireScalarFieldEnum.numero_bracelet}
+            value={carcasse.numero_bracelet}
+          />
+          <input
+            type="hidden"
+            form={`intermediaire-carcasse-${carcasse.id}`}
+            name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_intermediaire_id}
+            value={intermediaire.id}
+          />
+          {!showRefuser ? (
+            <>
+              <input
+                form={`intermediaire-carcasse-${carcasse.id}`}
+                type="hidden"
+                name={Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge}
+                value="true"
               />
-            </div>
-          </>
-        ) : (
-          <>
-            <input
-              form={`intermediaire-carcasse-${carcasse.id}`}
-              type="hidden"
-              name={Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge}
-              value="false"
-            />
-            <input
-              form={`intermediaire-carcasse-${carcasse.id}`}
-              type="hidden"
-              name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
-              value={refus}
-            />
-            <InputForSearchPrefilledData
-              canEdit
-              data={refusIntermedaire}
-              label="Motif du refus"
-              hideDataWhenNoSearch={false}
-              required
-              placeholder="Tapez un motif de refus"
-              onSelect={setRefus}
-              defaultValue={refus ?? ""}
-            />
-            <Input
-              label="Commentaire"
-              hintText="Un commentaire à ajouter ?"
-              textArea
-              nativeTextAreaProps={{
-                name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
-                form: `intermediaire-carcasse-${carcasse.id}`,
-                defaultValue: intermediaireCarcasse?.commentaire || "",
-              }}
-            />
-            <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: "Refuser",
-                    type: "submit",
-                    nativeButtonProps: {
-                      form: `intermediaire-carcasse-${carcasse.id}`,
-                    },
-                  },
-                  {
-                    children: "Annuler",
-                    priority: "secondary",
-                    type: "button",
-                    nativeButtonProps: {
-                      onClick: () => setShowRefuser(false),
-                    },
-                  },
-                ]}
+              <input
+                form={`intermediaire-carcasse-${carcasse.id}`}
+                type="hidden"
+                name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
+                value=""
               />
-            </div>
-          </>
-        )}
-      </intermediaireCarcasseFetcher.Form>
+              <Input
+                label="Commentaire"
+                hintText="Un commentaire à ajouter ?"
+                textArea
+                nativeTextAreaProps={{
+                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
+                  form: `intermediaire-carcasse-${carcasse.id}`,
+                  defaultValue: intermediaireCarcasse?.commentaire || "",
+                }}
+              />
+              <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
+                <ButtonsGroup
+                  buttons={[
+                    {
+                      children: "Accepter",
+                      type: "submit",
+                      nativeButtonProps: {
+                        form: `intermediaire-carcasse-${carcasse.id}`,
+                      },
+                    },
+                    {
+                      children: "Refuser",
+                      priority: "secondary",
+                      type: "button",
+                      nativeButtonProps: {
+                        onClick: () => setShowRefuser(true),
+                      },
+                    },
+                  ]}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <input
+                form={`intermediaire-carcasse-${carcasse.id}`}
+                type="hidden"
+                name={Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge}
+                value="false"
+              />
+              <input
+                form={`intermediaire-carcasse-${carcasse.id}`}
+                type="hidden"
+                name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
+                value={refus}
+              />
+              <InputForSearchPrefilledData
+                canEdit
+                data={refusIntermedaire}
+                label="Motif du refus"
+                hideDataWhenNoSearch={false}
+                required
+                placeholder="Tapez un motif de refus"
+                onSelect={setRefus}
+                defaultValue={refus ?? ""}
+              />
+              <Input
+                label="Commentaire"
+                hintText="Un commentaire à ajouter ?"
+                textArea
+                nativeTextAreaProps={{
+                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
+                  form: `intermediaire-carcasse-${carcasse.id}`,
+                  defaultValue: intermediaireCarcasse?.commentaire || "",
+                }}
+              />
+              <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
+                <ButtonsGroup
+                  buttons={[
+                    {
+                      children: "Refuser",
+                      type: "submit",
+                      nativeButtonProps: {
+                        form: `intermediaire-carcasse-${carcasse.id}`,
+                      },
+                    },
+                    {
+                      children: "Annuler",
+                      priority: "secondary",
+                      type: "button",
+                      nativeButtonProps: {
+                        onClick: () => setShowRefuser(false),
+                      },
+                    },
+                  ]}
+                />
+              </div>
+            </>
+          )}
+        </intermediaireCarcasseFetcher.Form>
+      )}
     </Fragment>
   );
 }

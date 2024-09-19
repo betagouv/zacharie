@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { json, MetaArgs, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
@@ -53,6 +53,26 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         },
         include: {
           CarcasseIntermediaire: true,
+          FeiIntermediaireEntity: {
+            select: {
+              raison_sociale: true,
+              siret: true,
+              type: true,
+              numero_ddecpp: true,
+              address_ligne_1: true,
+              address_ligne_2: true,
+              code_postal: true,
+              ville: true,
+            },
+          },
+          FeiIntermediaireUser: {
+            select: {
+              nom_de_famille: true,
+              prenom: true,
+              email: true,
+              telephone: true,
+            },
+          },
         },
       },
     },
@@ -177,6 +197,7 @@ export default function Fei() {
       ),
     },
   ];
+
   const [selectedTabId, setSelectedTabId] = useState<(typeof tabs)[number]["tabId"]>(() => {
     if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
       return UserRoles.PREMIER_DETENTEUR;
@@ -229,6 +250,14 @@ export default function Fei() {
     refNextUserId.current = fei.fei_next_owner_user_id;
   }, [fei.fei_next_owner_role, fei.fei_next_owner_user_id, user.id]);
 
+  const intermediaireTabDisabled = useMemo(() => {
+    const intermediaire = fei.FeiIntermediaires[0];
+    if (!intermediaire) {
+      return true;
+    }
+    return false;
+  }, [fei.FeiIntermediaires]);
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -251,7 +280,12 @@ export default function Fei() {
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
             {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur />}
-            {selectedTabId === "Intermédiaires" && <FEICurrentIntermediaire />}
+            {selectedTabId === "Intermédiaires" &&
+              (intermediaireTabDisabled ? (
+                <p>Il n'y a pas encore de premier intermédiaire sélectionné</p>
+              ) : (
+                <FEICurrentIntermediaire />
+              ))}
           </Tabs>
         </div>
       </div>
