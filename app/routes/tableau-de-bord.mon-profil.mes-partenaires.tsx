@@ -117,13 +117,13 @@ export default function MesPartenaires() {
                 selectLabel="Sélectionnez un ETG"
                 entityType={EntityTypes.ETG}
               />
-              <AccordionEntreprise
+              {/* <AccordionEntreprise
                 fetcherKey="mes-partenaires-svi-data"
                 accordionLabel="Vos Services Vétérinaire d'Inspection (SVI)"
                 addLabel="Ajouter un SVI"
                 selectLabel="Sélectionnez un SVI"
                 entityType={EntityTypes.SVI}
-              />
+              /> */}
               <div className="mb-16 ml-6 mt-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
