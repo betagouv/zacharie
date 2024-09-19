@@ -172,6 +172,7 @@ export default function MesInformations() {
                         id: Prisma.UserScalarFieldEnum.telephone,
                         name: Prisma.UserScalarFieldEnum.telephone,
                         autoComplete: "tel",
+                        required: true,
                         defaultValue: user.telephone ?? "",
                       }}
                     />
