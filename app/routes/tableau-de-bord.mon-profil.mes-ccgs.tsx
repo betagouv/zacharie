@@ -61,8 +61,8 @@ export default function MesCCGs() {
           />
           <h1 className="fr-h2 fr-mb-2w">Identifiez vos CCGs</h1>
           <CallOut className="bg-white">
-            Pour être notifié lorsqu'un dépôt de gibier sauvage est effectué dans un Centre de Collecte du Gibier
-            sauvage (CCG) suivi ou géré par vous, votre association ou votre entreprise, vous pouvez les identifier ici.
+            Si vous utilisez un Centre de Collecte du Gibier sauvage (CCG) pour entreposer votre gibier, vous pouvez
+            l'identifier ici.
           </CallOut>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
