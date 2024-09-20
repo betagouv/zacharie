@@ -1,27 +1,20 @@
 import { useEffect, useState } from "react";
 
-function isClient() {
-  return typeof window !== "undefined";
-}
-
 function useNetworkConnectivity() {
   const [isOnline, setIsOnline] = useState(true);
-  const handleOnline = () => {
-    setIsOnline(true);
-  };
-  const handleOffline = () => {
-    setIsOnline(false);
-  };
   useEffect(() => {
-    if (isClient()) {
-      window.addEventListener("online", handleOnline);
-      window.addEventListener("offline", handleOffline);
-      return () => {
-        window.removeEventListener("online", handleOnline);
-        window.removeEventListener("offline", handleOffline);
-      };
+    function handleOnline() {
+      setIsOnline(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    function handleOffline() {
+      setIsOnline(false);
+    }
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
   return isOnline;
 }
@@ -33,7 +26,7 @@ export default function OfflineMode() {
     return null;
   }
   return (
-    <p className="bg-action-high-blue-france text-white text-sm px-4 py-2 z-50">
+    <p className="z-50 bg-action-high-blue-france px-4 py-2 text-sm text-white">
       Vous n'avez pas internet. Les FEI que vous créez/modifiez actuellement seront synchronisées automatiquement
       lorsque vous aurez retrouvé une connection.
     </p>

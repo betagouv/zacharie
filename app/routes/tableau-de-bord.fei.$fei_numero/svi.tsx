@@ -146,7 +146,8 @@ export default function FEI_SVI() {
             type="hidden"
             form="svi_check_finished_at"
             name={Prisma.FeiScalarFieldEnum.svi_signed_at}
-            value={new Date().toISOString()}
+            suppressHydrationWarning
+            value={dayjs().toISOString()}
           />
           <div className={["fr-fieldset__element", fei.svi_signed_at ? "pointer-events-none" : ""].join(" ")}>
             <Checkbox
@@ -179,6 +180,7 @@ export default function FEI_SVI() {
                   name: Prisma.FeiScalarFieldEnum.svi_signed_at,
                   type: "datetime-local",
                   autoComplete: "off",
+                  suppressHydrationWarning: true,
                   defaultValue: dayjs(fei.svi_signed_at).format("YYYY-MM-DDTHH:mm"),
                 }}
               />

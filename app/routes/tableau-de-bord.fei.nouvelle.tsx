@@ -111,7 +111,8 @@ export default function NouvelleFEI() {
                         type: "date",
                         required: true,
                         autoComplete: "off",
-                        defaultValue: new Date().toISOString().split("T")[0],
+                        suppressHydrationWarning: true,
+                        defaultValue: dayjs().toISOString().split("T")[0],
                       }}
                     />
                   </div>

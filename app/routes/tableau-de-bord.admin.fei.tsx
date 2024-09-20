@@ -44,6 +44,7 @@ export default function AdminUsers() {
                     <Link
                       to={`/tableau-de-bord/admin/utilisateur/${user.id}`}
                       className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
+                      suppressHydrationWarning
                     >
                       Compte activé: {user.activated ? "✅" : "❌"}
                       <br />

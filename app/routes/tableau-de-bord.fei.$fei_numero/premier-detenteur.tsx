@@ -251,6 +251,7 @@ export default function FEIDetenteurInitial() {
                     name: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part,
                     type: "datetime-local",
                     autoComplete: "off",
+                    suppressHydrationWarning: true,
                     defaultValue: dayjs(fei?.premier_detenteur_date_depot_quelque_part || undefined).format(
                       "YYYY-MM-DDTHH:mm",
                     ),

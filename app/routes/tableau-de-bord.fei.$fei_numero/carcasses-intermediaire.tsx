@@ -65,12 +65,12 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                 </span>
                 <span className="block font-normal">Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}</span>
                 {!!carcasse.heure_mise_a_mort && (
-                  <span className="block font-normal">
+                  <span className="block font-normal" suppressHydrationWarning>
                     Mise à mort&nbsp;: {dayjs(fei.date_mise_a_mort).format("DD/MM/YYYY")} {carcasse.heure_mise_a_mort}
                   </span>
                 )}
                 {!!carcasse.heure_evisceration && (
-                  <span className="block font-normal">
+                  <span className="block font-normal" suppressHydrationWarning>
                     Éviscération&nbsp;: {dayjs(fei.date_mise_a_mort).format("DD/MM/YYYY")} {carcasse.heure_evisceration}
                   </span>
                 )}

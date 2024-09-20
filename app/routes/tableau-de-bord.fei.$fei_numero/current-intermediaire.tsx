@@ -226,6 +226,7 @@ export default function FEICurrentIntermediaire() {
                   id: Prisma.CarcasseIntermediaireScalarFieldEnum.check_finished_at,
                   name: Prisma.CarcasseIntermediaireScalarFieldEnum.check_finished_at,
                   type: "datetime-local",
+                  suppressHydrationWarning: true,
                   autoComplete: "off",
                   defaultValue: dayjs(intermediaire.check_finished_at).format("YYYY-MM-DDTHH:mm"),
                 }}

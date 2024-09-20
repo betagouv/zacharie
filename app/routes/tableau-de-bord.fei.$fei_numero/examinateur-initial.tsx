@@ -102,6 +102,7 @@ export default function FEIExaminateurInitial() {
                 type: "date",
                 autoComplete: "off",
                 required: true,
+                suppressHydrationWarning: true,
                 defaultValue: fei?.date_mise_a_mort ? new Date(fei?.date_mise_a_mort).toISOString().split("T")[0] : "",
               }}
             />
@@ -171,6 +172,7 @@ export default function FEIExaminateurInitial() {
                     name: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
                     type: "datetime-local",
                     autoComplete: "off",
+                    suppressHydrationWarning: true,
                     defaultValue: dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
                       "YYYY-MM-DDTHH:mm",
                     ),

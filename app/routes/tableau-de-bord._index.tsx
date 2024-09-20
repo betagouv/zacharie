@@ -166,6 +166,7 @@ export default function TableauDeBordIndex() {
                       className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                       key={fei.numero}
                       to={`/tableau-de-bord/fei/${fei.numero}`}
+                      suppressHydrationWarning
                     >
                       {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
                     </Link>,
@@ -173,6 +174,7 @@ export default function TableauDeBordIndex() {
                       className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                       key={fei.numero}
                       to={`/tableau-de-bord/fei/${fei.numero}`}
+                      suppressHydrationWarning
                     >
                       {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
                     </Link>,
@@ -236,6 +238,7 @@ export default function TableauDeBordIndex() {
                       className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                       key={fei.numero}
                       to={`/tableau-de-bord/fei/${fei.numero}`}
+                      suppressHydrationWarning
                     >
                       {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
                     </Link>,
@@ -243,6 +246,7 @@ export default function TableauDeBordIndex() {
                       className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                       key={fei.numero}
                       to={`/tableau-de-bord/fei/${fei.numero}`}
+                      suppressHydrationWarning
                     >
                       {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
                     </Link>,
@@ -256,6 +260,7 @@ export default function TableauDeBordIndex() {
                     <Link
                       className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                       key={fei.numero}
+                      suppressHydrationWarning
                       to={`/tableau-de-bord/fei/${fei.numero}`}
                     >
                       {dayjs(fei.svi_signed_at).format("DD/MM/YYYY")}

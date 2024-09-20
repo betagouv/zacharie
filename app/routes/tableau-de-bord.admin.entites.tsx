@@ -48,6 +48,7 @@ export default function AdminEntites() {
                       key={entity.id}
                       to={`/tableau-de-bord/admin/entite/${entity.id}`}
                       className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
+                      suppressHydrationWarning
                     >
                       {dayjs(entity.created_at).format("DD/MM/YYYY à HH:mm")}
                     </Link>
