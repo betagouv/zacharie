@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
@@ -103,12 +103,20 @@ export default function MesInformations() {
     setExaminateurExpanded(!examinateurDone);
   }, [examinateurDone]);
 
-  const isOnlyExaminateurInitial = user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && user.roles.length === 1;
-  const nextTitle = isOnlyExaminateurInitial ? "Vos notifications" : "Vos Centres de Collectes du Gibier sauvage";
-  const nextPage = isOnlyExaminateurInitial
-    ? "/tableau-de-bord/mon-profil/mes-notifications"
-    : "/tableau-de-bord/mon-profil/mes-ccgs";
-  const stepCount = isOnlyExaminateurInitial ? 3 : 4;
+  const skipCCG = useMemo(() => {
+    if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      if (user.roles.length === 1) {
+        return true;
+      }
+    }
+    if (user.roles.includes(UserRoles.SVI)) {
+      return true;
+    }
+    return false;
+  }, [user.roles]);
+  const nextTitle = skipCCG ? "Vos notifications" : "Vos Centres de Collectes du Gibier sauvage";
+  const nextPage = skipCCG ? "/tableau-de-bord/mon-profil/mes-notifications" : "/tableau-de-bord/mon-profil/mes-ccgs";
+  const stepCount = skipCCG ? 3 : 4;
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">

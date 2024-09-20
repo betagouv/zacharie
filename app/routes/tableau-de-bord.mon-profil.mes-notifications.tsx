@@ -7,6 +7,7 @@ import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { UserNotifications, UserRoles } from "@prisma/client";
+import { useMemo } from "react";
 
 export function meta() {
   return [
@@ -48,8 +49,18 @@ export default function MesNotifications() {
     !!pushSubscription &&
     user.web_push_tokens.includes(JSON.stringify(pushSubscription));
 
-  const isOnlyExaminateurInitial = user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && user.roles.length === 1;
-  const stepCount = isOnlyExaminateurInitial ? 3 : 4;
+  const skipCCG = useMemo(() => {
+    if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      if (user.roles.length === 1) {
+        return true;
+      }
+    }
+    if (user.roles.includes(UserRoles.SVI)) {
+      return true;
+    }
+    return false;
+  }, [user.roles]);
+  const stepCount = skipCCG ? 3 : 4;
 
   return (
     <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>

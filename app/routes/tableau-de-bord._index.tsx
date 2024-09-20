@@ -22,6 +22,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
   const feiAssigned = await prisma.fei.findMany({
     where: {
+      svi_signed_at: null,
       OR: [
         {
           fei_current_owner_user_id: user.id,
@@ -113,7 +114,7 @@ export default function TableauDeBordIndex() {
             </section>
           )}
           <section className="mb-6 bg-white md:shadow">
-            <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+            <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feiAssigned.length ? (
                 <Table
                   bordered
@@ -183,7 +184,7 @@ export default function TableauDeBordIndex() {
             </div>
           </section>
           <section className="mb-6 bg-white md:shadow">
-            <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+            <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feiDone.length ? (
                 <Table
                   bordered
@@ -209,6 +210,13 @@ export default function TableauDeBordIndex() {
                       key={fei.numero}
                       to={`/tableau-de-bord/fei/${fei.numero}`}
                     >
+                      {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
+                    </Link>,
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
                       {fei.commune_mise_a_mort}
                     </Link>,
                     <Link
@@ -219,7 +227,7 @@ export default function TableauDeBordIndex() {
                       {dayjs(fei.svi_signed_at).format("DD/MM/YYYY")}
                     </Link>,
                   ])}
-                  headers={["Numéro", "Date de création", "Commune", "Date de traitement SVI"]}
+                  headers={["Numéro", "Date de création", "Dernière mise à jour", "Commune", "Étape en cours"]}
                 />
               ) : (
                 <>
