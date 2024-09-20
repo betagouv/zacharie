@@ -107,6 +107,7 @@ export default function CarcasseReadAndWrite() {
             className="mb-6 bg-white py-2 md:shadow"
           >
             <div className="p-4 pb-8 md:p-8 md:pb-4">
+              <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.examinateur_signed_at} value="true" />
               <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
               <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.espece} value={espece || ""} />
               <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.categorie} value={categorie || ""} />

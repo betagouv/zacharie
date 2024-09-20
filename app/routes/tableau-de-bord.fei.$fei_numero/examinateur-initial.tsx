@@ -63,15 +63,32 @@ export default function FEIExaminateurInitial() {
     return true;
   }, [fei, user]);
 
+  const carcassesNotReady = useMemo(() => {
+    const notReady = [];
+    for (const carcasse of fei.Carcasses) {
+      if (
+        !carcasse.examinateur_signed_at ||
+        !carcasse.heure_evisceration ||
+        !carcasse.heure_mise_a_mort ||
+        !carcasse.espece ||
+        !carcasse.categorie
+      ) {
+        notReady.push(carcasse);
+      }
+    }
+    return notReady;
+  }, [fei]);
+
+  console.log("carcassesNotReady", carcassesNotReady);
   const jobIsDone = useMemo(() => {
     if (!fei.date_mise_a_mort || !fei.commune_mise_a_mort) {
       return false;
     }
-    // if (!fei.Carcasses?.length) {
-    //   return false;
-    // }
+    if (carcassesNotReady.length > 0) {
+      return false;
+    }
     return true;
-  }, [fei]);
+  }, [fei, carcassesNotReady]);
 
   return (
     <>

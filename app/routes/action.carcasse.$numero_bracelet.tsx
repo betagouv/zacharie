@@ -71,7 +71,6 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.CarcasseScalarFieldEnum.categorie)) {
     nextCarcasse.categorie = formData.get(Prisma.CarcasseScalarFieldEnum.categorie) as string;
   }
-
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie)) {
     nextCarcasse.examinateur_carcasse_sans_anomalie = stringToBoolean(
       formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie) as string,
@@ -103,7 +102,7 @@ export async function action(args: ActionFunctionArgs) {
     );
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at)) {
-    nextCarcasse.examinateur_signed_at = formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at) as string;
+    nextCarcasse.examinateur_signed_at = dayjs().toISOString();
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id)) {
     nextCarcasse.FeiIntermediaireCarcasseRefus = {

@@ -171,7 +171,7 @@ export default function AdminUser() {
                     <ButtonsGroup
                       buttons={[
                         {
-                          children: "Rafraichir",
+                          children: "Enregistrer",
                           type: "submit",
                           nativeButtonProps: {
                             form: "user_roles_form",
@@ -327,7 +327,7 @@ export default function AdminUser() {
                 <ButtonsGroup
                   buttons={[
                     {
-                      children: "Rafraichir",
+                      children: "Enregistrer",
                       type: "submit",
                       nativeButtonProps: {
                         form: "user_data_form",
@@ -442,8 +442,6 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
               >
                 {entity.raison_sociale}
                 <br />
-                {getUserRoleLabel(entity.type)}
-                <br />
                 {entity.siret}
                 {entity.numero_ddecpp}
                 <br />
@@ -452,15 +450,10 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
               <Button type="submit">Ajouter</Button>
             </userEntityFetcher.Form>,
             <p key={user.id} className="!inline-flex size-full items-center justify-start !bg-none !no-underline">
-              {user.roles.map((role) => (
-                <Fragment key={role}>
-                  {role}
-                  <br />
-                </Fragment>
-              ))}
+              {entity.type}
             </p>,
           ])}
-          headers={["Utilisateur", "Roles"]}
+          headers={["Entité", "Type"]}
         />
       </div>
     </>
