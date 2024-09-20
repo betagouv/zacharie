@@ -10,13 +10,15 @@ import {
   useRouteError,
 } from "@remix-run/react";
 import { LoaderFunction, MetaFunction } from "@remix-run/node";
-import { honeypot } from "~/services/honeypot.server";
 import { HoneypotProvider } from "remix-utils/honeypot/react";
+import { honeypot } from "~/services/honeypot.server";
 import NotFound from "~/routes/404";
 import RootDisplay from "~/components/RootDisplay";
 import UnexpectedError from "~/components/UnexpectedError";
 import OfflineMode from "~/components/OfflineMode";
 import NouvelleVersion from "~/components/NouvelleVersion";
+import InstallApp from "~/components/InstallApp";
+import { PWAManifest } from "~/components/PWAManifest";
 
 import "~/tailwind.css";
 import dsfrCss from "@codegouvfr/react-dsfr/main.css?url";
@@ -25,7 +27,6 @@ import dsfrWebManifest from "@codegouvfr/react-dsfr/favicon/manifest.webmanifest
 import dsfrFavicon from "@codegouvfr/react-dsfr/favicon/favicon.ico?url";
 import dsfrFaviconSvg from "@codegouvfr/react-dsfr/favicon/favicon.svg?url";
 import dsfrAppleTouchIcon from "@codegouvfr/react-dsfr/favicon/apple-touch-icon.png?url";
-import InstallApp from "./components/InstallApp";
 
 export const meta: MetaFunction = () => {
   return [
@@ -73,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="manifest" href={dsfrWebManifest} crossOrigin="use-credentials" />
         <link rel="stylesheet" href={dsfrCss} />
         <link rel="stylesheet" href={dsfrColorCss} />
-
+        <PWAManifest />
         <Meta />
         <Links />
       </head>

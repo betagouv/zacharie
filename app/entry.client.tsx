@@ -5,6 +5,8 @@ import * as Sentry from "@sentry/remix";
  * For more information, see https://remix.run/file-conventions/entry.client
  */
 
+import("./pwa");
+
 import { RemixBrowser, Link, useLocation, useMatches } from "@remix-run/react";
 import { startTransition, StrictMode, useEffect } from "react";
 import { hydrateRoot } from "react-dom/client";
@@ -45,6 +47,6 @@ startTransition(() => {
     document,
     <StrictMode>
       <RemixBrowser />
-    </StrictMode>
+    </StrictMode>,
   );
 });

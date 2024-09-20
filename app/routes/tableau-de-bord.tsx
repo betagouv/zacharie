@@ -100,7 +100,7 @@ export default function TableauDeBordLayout() {
           title: "Zacharie - Ministère de l'Agriculture",
         }}
         id="fr-header-header-with-quick-access-items"
-        // check mobile responsive header classes at tailwind.css
+        // @ts-expect-error - IDK where to find the menu type
         navigation={navigationMenu}
         serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
         serviceTitle="Zacharie"

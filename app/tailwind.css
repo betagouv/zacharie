@@ -15,8 +15,14 @@
     margin-top: -0.25rem;
     margin-bottom: -0.5rem;
     padding-top: 1.15rem;
-    background-size: 2.75rem 1.125rem, 2.75rem 1rem, 0;
-    background-position: 0 -0.0625rem, 0 0, 0 0;
+    background-size:
+      2.75rem 1.125rem,
+      2.75rem 1rem,
+      0;
+    background-position:
+      0 -0.0625rem,
+      0 0,
+      0 0;
     display: block;
     font-weight: 700;
     content: "Zacharie - Fiche d'Examen Initiale (FEI)";

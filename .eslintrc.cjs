@@ -70,12 +70,16 @@ module.exports = {
           },
         },
       },
-      extends: ["plugin:@typescript-eslint/recommended", "plugin:import/recommended", "plugin:import/typescript"],
+      extends: [
+        "plugin:@typescript-eslint/recommended",
+        "plugin:import/recommended",
+        "plugin:import/typescript",
+      ],
     },
 
     // Node
     {
-      files: [".eslintrc.cjs", "server.js"],
+      files: [".eslintrc.cjs"],
       env: {
         node: true,
       },

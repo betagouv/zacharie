@@ -5,12 +5,23 @@
     "**/.server/**/*.ts",
     "**/.server/**/*.tsx",
     "**/.client/**/*.ts",
-    "**/.client/**/*.tsx",
-    "app/services/crypto.server.js"
-, "app/routes/tableau-de-bord.admin.utilisateur.$userId.tsx"],
+    "**/.client/**/*.tsx"
+  ],
   "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "types": ["@remix-run/node", "vite/client", "@vite-pwa/remix/remix-sw"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2022"
+    ],
+    "types": [
+      "@remix-run/node",
+      "vite/client",
+      "vite-plugin-pwa/info",
+      "vite-plugin-pwa/pwa-assets",
+      "vite-plugin-pwa/react",
+      "@vite-pwa/remix",
+      "@vite-pwa/remix/remix-sw"
+    ],
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
@@ -26,7 +37,6 @@
     "paths": {
       "~/*": ["./app/*"]
     },
-
     // Vite takes care of building everything, not tsc.
     "noEmit": true
   }
