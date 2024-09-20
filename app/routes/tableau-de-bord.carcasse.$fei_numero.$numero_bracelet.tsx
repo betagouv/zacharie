@@ -271,12 +271,12 @@ export default function CarcasseReadAndWrite() {
                     {canEdit && (
                       <>
                         <div className="mt-2">
-                          <Button onClick={() => setAddAnomalieCarcasse(true)} type="button" iconId="ri-add-box-fill">
+                          <Button onClick={() => setAddAnomalieAbats(true)} type="button" iconId="ri-add-box-fill">
                             Ajouter une anomalie abat
                           </Button>
                         </div>
                         {addAnomalieAbats && (
-                          <div className="fr-fieldset__element">
+                          <div className="fr-fieldset__element mt-4">
                             <InputForSearchPrefilledData
                               data={grandGibierAbats}
                               label="Sélectionnez l'anomalie des abats"
@@ -300,7 +300,7 @@ export default function CarcasseReadAndWrite() {
             <ButtonsGroup
               buttons={[
                 {
-                  children: "Retourner à la FEI",
+                  children: canEdit ? "Enregistrer et retourner à la FEI" : "Retourner à la FEI",
                   priority: "tertiary",
                   linkProps: {
                     to: `/tableau-de-bord/fei/${fei.numero}`,

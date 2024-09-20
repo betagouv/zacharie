@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
@@ -79,7 +79,6 @@ export default function MesInformations() {
     etgsDone,
     svisDone,
   } = useLoaderData<typeof loader>();
-  const navigate = useNavigate();
 
   const userFetcher = useFetcher({ key: "mon-profil-mes-informations" });
   const handleUserFormBlur = useCallback(
@@ -324,10 +323,10 @@ export default function MesInformations() {
                     },
                   },
                   {
-                    children: "Précédent",
-                    type: "button",
-                    nativeButtonProps: {
-                      onClick: () => navigate(-1),
+                    children: "Modifier mes rôles",
+                    linkProps: {
+                      to: "/tableau-de-bord/mon-profil/mes-roles",
+                      href: "#",
                     },
                     priority: "secondary",
                   },
@@ -474,34 +473,3 @@ function CompletedTag({ done }: { done: boolean }) {
     </span>
   );
 }
-
-// function InputCCG() {
-//   const { user } = useLoaderData<typeof loader>();
-//   const userCCGFetcher = useFetcher({ key: "ccg-data" });
-//   return (
-//     <userCCGFetcher.Form
-//       method="POST"
-//       className="fr-fieldset__element flex w-full flex-row items-end gap-4"
-//       action={`/action/user-entity/${user.id}`}
-//     >
-//       <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
-//       <input type="hidden" name="_action" value="create" />
-//       <input
-//         type="hidden"
-//         name={Prisma.EntityRelationsScalarFieldEnum.relation}
-//         value={EntityRelationType.WORKING_FOR}
-//       />
-//       <input type="hidden" name={Prisma.EntityScalarFieldEnum.type} value={EntityTypes.CCG} />
-//       <Input
-//         label="Numéro du Centre de Collecte du Gibier sauvage (CCG)"
-//         className="!mb-0"
-//         nativeInputProps={{
-//           type: "text",
-//           required: true,
-//           name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
-//         }}
-//       />
-//       <Button type="submit">Ajouter</Button>
-//     </userCCGFetcher.Form>
-//   );
-// }

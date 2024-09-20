@@ -1,18 +1,14 @@
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { Tag } from "@codegouvfr/react-dsfr/Tag";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
-import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
-import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
-import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
+import { EntityTypes, EntityRelationType, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
-import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 
 export function meta() {
   return [
@@ -49,7 +45,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function MesCCGs() {
-  const navigate = useNavigate();
   const { user, userCCGs } = useLoaderData<typeof loader>();
 
   const userEntityFetcher = useFetcher({ key: "user-ccgs" });
@@ -133,10 +128,10 @@ export default function MesCCGs() {
                     },
                   },
                   {
-                    children: "Précédent",
-                    type: "button",
-                    nativeButtonProps: {
-                      onClick: () => navigate(-1),
+                    children: "Modifier mes informations",
+                    linkProps: {
+                      to: "/tableau-de-bord/mon-profil/mes-informations",
+                      href: "#",
                     },
                     priority: "secondary",
                   },
