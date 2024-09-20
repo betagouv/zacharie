@@ -33,6 +33,7 @@ export default function useNavigationMenu() {
       },
     },
   ];
+
   if (!isOnlyExaminateurInitial) {
     profileMenu.push({
       text: "Mes CCGs",
@@ -52,27 +53,34 @@ export default function useNavigationMenu() {
     },
   });
 
-  const feiMenuLinks = isExaminateurInitial
-    ? [
-        {
-          text: "Mes FEI",
-          isActive: location.pathname === "/tableau-de-bord",
-          linkProps: {
-            to: "/tableau-de-bord",
-            href: "#",
-          },
+  const mesFeiMenu = {
+    text: "Mes FEI",
+    isActive: location.pathname === "/tableau-de-bord" || location.pathname.startsWith("/tableau-de-bord/fei"),
+  };
+  if (isExaminateurInitial) {
+    // @ts-expect-error - IDK where to find the menu type
+    mesFeiMenu.menuLinks = [
+      {
+        text: "Mes FEI",
+        isActive: location.pathname === "/tableau-de-bord",
+        linkProps: {
+          to: "/tableau-de-bord",
+          href: "#",
         },
-        {
-          text: "Nouvelle FEI",
-          isActive: location.pathname === "/tableau-de-bord/fei/nouvelle",
-          linkProps: {
-            to: "/tableau-de-bord/fei/nouvelle",
-            href: "#",
-          },
+      },
+      {
+        text: "Nouvelle FEI",
+        isActive: location.pathname === "/tableau-de-bord/fei/nouvelle",
+        linkProps: {
+          to: "/tableau-de-bord/fei/nouvelle",
+          href: "#",
         },
-      ]
-    : undefined;
-  const feiLinkProps = isExaminateurInitial ? undefined : { to: "/tableau-de-bord", href: "#" };
+      },
+    ];
+  } else {
+    // @ts-expect-error - IDK where to find the menu type
+    mesFeiMenu.linkProps = { to: "/tableau-de-bord", href: "#" };
+  }
 
   const navigationBase = [
     {
@@ -80,12 +88,7 @@ export default function useNavigationMenu() {
       isActive: location.pathname.startsWith("/tableau-de-bord/mon-profil"),
       menuLinks: profileMenu,
     },
-    {
-      text: "Mes FEI",
-      isActive: location.pathname === "/tableau-de-bord" || location.pathname.startsWith("/tableau-de-bord/fei"),
-      menuLinks: feiMenuLinks,
-      linkProps: feiLinkProps,
-    },
+    mesFeiMenu,
     {
       text:
         process.env.NODE_ENV === "development"

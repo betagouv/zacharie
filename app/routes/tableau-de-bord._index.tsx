@@ -1,5 +1,5 @@
-import { redirect, json, type LoaderFunctionArgs } from "@remix-run/node";
-// import { useLoaderData } from "@remix-run/react";
+import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, type ClientLoaderFunctionArgs } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { getUserOnboardingRoute } from "~/utils/user-onboarded.server";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
@@ -10,6 +10,7 @@ import { UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import dayjs from "dayjs";
+import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
@@ -80,6 +81,39 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   return json({ user, feiAssigned, feiDone });
 }
+
+let isInitialRequest = true;
+
+export async function clientLoader({ serverLoader }: ClientLoaderFunctionArgs) {
+  console.log("clientLoader");
+  const isOnline = window.navigator.onLine;
+
+  console.log("isOnline", isOnline);
+
+  if (isInitialRequest) {
+    isInitialRequest = false;
+    const serverData = await serverLoader<typeof loader>();
+    setCacheItem("user", serverData.user);
+    setCacheItem("feiAssigned", serverData.feiAssigned);
+    setCacheItem("feiDone", serverData.feiDone);
+    return serverData;
+  }
+
+  const cachedUser = await getCacheItem("user");
+  const cachedFeiAssigned = await getCacheItem("feiAssigned");
+  const cachedFeiDone = await getCacheItem("feiDone");
+  if (cachedUser && cachedFeiAssigned && cachedFeiDone) {
+    return json({ user: cachedUser, feiAssigned: cachedFeiAssigned, feiDone: cachedFeiDone });
+  }
+
+  const serverData = await serverLoader<typeof loader>();
+  setCacheItem("user", serverData.user);
+  setCacheItem("feiAssigned", serverData.feiAssigned);
+  setCacheItem("feiDone", serverData.feiDone);
+  return serverData;
+}
+
+clientLoader.hydrate = true; // (2)
 
 export default function TableauDeBordIndex() {
   const { user, feiAssigned, feiDone } = useLoaderData<typeof loader>();

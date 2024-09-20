@@ -14,7 +14,6 @@ import { getUserIdFromCookie } from "~/services/auth.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await getUserIdFromCookie(request, { optional: true });
-  console.log("userId", userId);
   return json({
     isLoggedIn: !!userId,
   });
@@ -24,8 +23,8 @@ export default function LandingPage() {
   const { isLoggedIn } = useLoaderData<typeof loader>();
   return (
     <RootDisplay>
-      <section className="fr-container min-h-[50vh] flex flex-col justify-center my-auto">
-        <div className="fr-grid-row fr-grid-row--gutters fr-py-6w flex flex-col justify-center my-auto">
+      <section className="fr-container my-auto flex min-h-[50vh] flex-col justify-center">
+        <div className="fr-grid-row fr-grid-row--gutters fr-py-6w my-auto flex flex-col justify-center">
           <h1 className="fr-h1">La Fiche d'Examen Initial SIMPLIFIÉE</h1>
           {isLoggedIn ? (
             <Button

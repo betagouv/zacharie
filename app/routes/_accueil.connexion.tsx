@@ -76,7 +76,6 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await getUserIdFromCookie(request, { optional: true });
-  console.log("userId", userId);
   if (userId) {
     throw redirect("/tableau-de-bord");
   }
