@@ -30,7 +30,6 @@ export default function MesRoles() {
   return (
     <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>
       <input type="hidden" name="_redirect" value="/tableau-de-bord/mon-profil/mes-informations" />
-      <input type="hidden" name="onboarding_finished" value="true" />
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">

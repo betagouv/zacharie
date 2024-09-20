@@ -79,7 +79,6 @@ export default function FEIExaminateurInitial() {
     return notReady;
   }, [fei]);
 
-  console.log("carcassesNotReady", carcassesNotReady);
   const jobIsDone = useMemo(() => {
     if (!fei.date_mise_a_mort || !fei.commune_mise_a_mort) {
       return false;

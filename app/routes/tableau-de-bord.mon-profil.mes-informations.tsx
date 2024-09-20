@@ -93,14 +93,14 @@ export default function MesInformations() {
     [userFetcher, user.id],
   );
 
-  const [identityExpanded, setIdentityExpanded] = useState(!identityDone);
+  const [identityExpanded, setIdentityExpanded] = useState(!identityDone || !user.onboarded_at);
   useEffect(() => {
-    setIdentityExpanded(!identityDone);
-  }, [identityDone]);
-  const [examinateurExpanded, setExaminateurExpanded] = useState(!examinateurDone);
+    setIdentityExpanded(!identityDone || !user.onboarded_at);
+  }, [identityDone, user.onboarded_at]);
+  const [examinateurExpanded, setExaminateurExpanded] = useState(!examinateurDone || !user.onboarded_at);
   useEffect(() => {
-    setExaminateurExpanded(!examinateurDone);
-  }, [examinateurDone]);
+    setExaminateurExpanded(!examinateurDone || !user.onboarded_at);
+  }, [examinateurDone, user.onboarded_at]);
 
   const skipCCG = useMemo(() => {
     if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
@@ -372,7 +372,7 @@ function AccordionEntreprise({
   return (
     <Accordion
       titleAs="h2"
-      defaultExpanded={!done}
+      defaultExpanded={!done || !user.onboarded_at}
       label={
         <div className="inline-flex w-full items-center justify-start">
           <CompletedTag done={done} /> {accordionLabel}
