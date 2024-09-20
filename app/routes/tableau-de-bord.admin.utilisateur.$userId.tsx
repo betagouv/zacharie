@@ -163,6 +163,9 @@ export default function AdminUser() {
                   onBlur={handleUserFormSubmit(rolesFormRef)}
                   preventScrollReset
                 >
+                  {user.roles.includes(UserRoles.ADMIN) && (
+                    <input type="hidden" name={Prisma.UserScalarFieldEnum.roles} value={UserRoles.ADMIN} />
+                  )}
                   <RolesCheckBoxes withAdmin user={user} legend="Sélectionnez tous les rôles de cet utilisateur" />
                   <div className="relative flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
                     <ButtonsGroup

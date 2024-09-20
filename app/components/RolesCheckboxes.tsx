@@ -84,10 +84,11 @@ export default function RolesCheckBoxes({
     },
     {
       label: "Administrateur",
-      hintText: "Vous avez accès à toutes les fonctionnalités de Zacharie",
+      hintText: "Vous avez accès à la création d'entités et d'utilisateurs de Zacharie",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.ADMIN,
+        disabled: true,
         onChange: handleCheckboxChange,
         defaultChecked: user.roles.includes(UserRoles.ADMIN),
       },

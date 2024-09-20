@@ -87,7 +87,10 @@ export default function useNavigationMenu() {
       linkProps: feiLinkProps,
     },
     {
-      text: "Se déconnecter",
+      text:
+        process.env.NODE_ENV === "development"
+          ? `Déconnexion ${user?.email} (${user?.roles.map((ro) => ro.slice(0, 3)).join("-")})`
+          : "Se déconnecter",
       linkProps: {
         onClick: handleLogout,
         type: "submit",
