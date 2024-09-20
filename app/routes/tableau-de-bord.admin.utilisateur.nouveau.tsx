@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Input } from "@codegouvfr/react-dsfr/Input";
@@ -43,8 +43,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function AdminNewUser() {
-  const { user } = useLoaderData<typeof loader>();
-
   return (
     <Form className="fr-container fr-container--fluid fr-my-md-14v" method="POST">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -63,10 +61,7 @@ export default function AdminNewUser() {
                   }}
                 />
               </div>
-              {user.roles.includes(UserRoles.ADMIN) && (
-                <input type="hidden" name={Prisma.UserScalarFieldEnum.roles} value={UserRoles.ADMIN} />
-              )}
-              <RolesCheckBoxes withAdmin user={user} legend="Sélectionnez tous les rôles du nouvel utilisateur" />
+              <RolesCheckBoxes withAdmin legend="Sélectionnez tous les rôles du nouvel utilisateur" />
             </div>
             <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
               <ButtonsGroup

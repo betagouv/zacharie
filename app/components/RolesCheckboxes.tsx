@@ -8,11 +8,11 @@ export default function RolesCheckBoxes({
   legend = "Sélectionnez tous les rôles qui vous correspondent",
   withAdmin = false,
 }: {
-  user: SerializeFrom<User>;
+  user?: SerializeFrom<User>;
   legend?: string;
   withAdmin?: boolean;
 }) {
-  const [checkedRoles, setCheckedRoles] = useState(user.roles);
+  const [checkedRoles, setCheckedRoles] = useState(user?.roles || []);
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -34,7 +34,7 @@ export default function RolesCheckBoxes({
         value: UserRoles.EXAMINATEUR_INITIAL,
         onChange: handleCheckboxChange,
         disabled: !withAdmin && isSvi,
-        defaultChecked: user.roles.includes(UserRoles.EXAMINATEUR_INITIAL),
+        defaultChecked: user?.roles.includes(UserRoles.EXAMINATEUR_INITIAL),
       },
     },
     {
@@ -45,7 +45,7 @@ export default function RolesCheckBoxes({
         value: UserRoles.PREMIER_DETENTEUR,
         onChange: handleCheckboxChange,
         disabled: !withAdmin && isSvi,
-        defaultChecked: user.roles.includes(UserRoles.PREMIER_DETENTEUR),
+        defaultChecked: user?.roles.includes(UserRoles.PREMIER_DETENTEUR),
       },
     },
     {
@@ -57,7 +57,7 @@ export default function RolesCheckBoxes({
         value: UserRoles.COLLECTEUR_PRO,
         onChange: handleCheckboxChange,
         disabled: !withAdmin && isSvi,
-        defaultChecked: user.roles.includes(UserRoles.COLLECTEUR_PRO),
+        defaultChecked: user?.roles.includes(UserRoles.COLLECTEUR_PRO),
       },
     },
     {
@@ -68,7 +68,7 @@ export default function RolesCheckBoxes({
         value: UserRoles.ETG,
         onChange: handleCheckboxChange,
         disabled: !withAdmin && isSvi,
-        defaultChecked: user.roles.includes(UserRoles.ETG),
+        defaultChecked: user?.roles.includes(UserRoles.ETG),
       },
     },
     {
@@ -79,7 +79,7 @@ export default function RolesCheckBoxes({
         value: UserRoles.SVI,
         onChange: handleCheckboxChange,
         disabled: !withAdmin && !!checkedRoles.length && checkedRoles[0] !== UserRoles.SVI,
-        defaultChecked: user.roles.includes(UserRoles.SVI),
+        defaultChecked: user?.roles.includes(UserRoles.SVI),
       },
     },
     {
@@ -88,9 +88,9 @@ export default function RolesCheckBoxes({
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.ADMIN,
-        disabled: true,
+        disabled: user?.roles.includes(UserRoles.ADMIN),
         onChange: handleCheckboxChange,
-        defaultChecked: user.roles.includes(UserRoles.ADMIN),
+        defaultChecked: user?.roles.includes(UserRoles.ADMIN),
       },
     },
   ];
