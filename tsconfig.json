@@ -19,6 +19,7 @@
       "vite-plugin-pwa/info",
       "vite-plugin-pwa/pwa-assets",
       "vite-plugin-pwa/react",
+      "vite-plugin-pwa/client",
       "@vite-pwa/remix",
       "@vite-pwa/remix/remix-sw"
     ],

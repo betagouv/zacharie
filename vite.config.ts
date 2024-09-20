@@ -41,13 +41,14 @@ export default defineConfig({
       },
 
       manifest: {
-        name: "Zacharie | Ministère de l'Agriculture",
+        name: "Zacharie",
         short_name: "Zacharie",
         description: "La FEI simpifiée",
         background_color: "#000091",
         theme_color: "#ffffff",
         start_url: "./?mode=standalone",
         display: "fullscreen",
+        lang: "fr",
       },
 
       injectManifest: {

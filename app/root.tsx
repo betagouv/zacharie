@@ -39,6 +39,9 @@ export const meta: MetaFunction = () => {
       name: "description",
       content: "Garantir une meilleure qualité sanitaires des viandes de gibier sauvage mises sur le marché",
     },
+    { property: "apple-mobile-web-app-capable", content: "yes" },
+    { property: "mobile-web-app-capable", content: "yes" },
+    { property: "apple-mobile-web-app-status-bar-style", content: "#000091" },
   ];
 };
 interface WindowEnv {

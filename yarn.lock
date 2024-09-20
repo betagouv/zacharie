@@ -3605,6 +3605,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/bcryptjs@npm:^2.4.6":
+  version: 2.4.6
+  resolution: "@types/bcryptjs@npm:2.4.6"
+  checksum: 10c0/1182663f0c081c5c58760019459cd309335e9b5fc6552780b0fd21b6c5f25661a844709e46218796f4bdbebe6736e11cfc5af0729bc2cdb0160943650aceb3da
+  languageName: node
+  linkType: hard
+
 "@types/connect@npm:3.4.36":
   version: 3.4.36
   resolution: "@types/connect@npm:3.4.36"
@@ -12881,6 +12888,7 @@ __metadata:
     "@remix-run/serve": "npm:^2.12.1"
     "@sentry/remix": "npm:^8.28.0"
     "@sentry/vite-plugin": "npm:^2.22.3"
+    "@types/bcryptjs": "npm:^2.4.6"
     "@types/react": "npm:^18.2.20"
     "@types/react-dom": "npm:^18.2.7"
     "@typescript-eslint/eslint-plugin": "npm:^6.7.4"
