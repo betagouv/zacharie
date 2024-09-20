@@ -24,7 +24,12 @@ export default function CarcassesIntermediaire({
   return (
     <>
       {carcasses.map((carcasse) => {
-        return <CarcasseAVerifier canEdit={canEdit} key={carcasse.id} carcasse={carcasse} />;
+        return (
+          <Fragment key={carcasse.id}>
+            <CarcasseAVerifier canEdit={canEdit} carcasse={carcasse} />;
+            <hr />
+          </Fragment>
+        );
       })}
     </>
   );

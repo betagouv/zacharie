@@ -89,18 +89,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       },
     })
   ).map((entityRelation) => ({ ...entityRelation.EntityRelatedWithUser, relation: entityRelation.relation }));
-  const allOtherEntities = (
-    await prisma.entity.findMany({
-      where: {
-        id: {
-          notIn: userEntitiesRelations.map((entity) => entity.id),
-        },
-        type: {
-          not: EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
-        },
-      },
-    })
-  ).map((entity) => ({ ...entity, relation: null }));
+
   const entitiesUserIsWorkingFor = (
     await prisma.entityRelations.findMany({
       where: {
@@ -112,6 +101,34 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       },
     })
   ).map((entityRelation) => entityRelation.EntityRelatedWithUser);
+
+  const svisOrEtgsCoupledIds = entitiesUserIsWorkingFor
+    .filter((entity) => entity.type === EntityTypes.ETG || entity.type === EntityTypes.SVI)
+    .map((etgOrSvi) => etgOrSvi.coupled_entity_id)
+    .filter((id) => id !== null);
+  const userCoupledEntities = (
+    await prisma.entity.findMany({
+      where: {
+        id: {
+          in: svisOrEtgsCoupledIds,
+          notIn: entitiesUserIsWorkingFor.map((entity) => entity.id),
+        },
+      },
+    })
+  ).map((entity) => ({ ...entity, relation: EntityRelationType.WORKING_WITH }));
+  const allOtherEntities = (
+    await prisma.entity.findMany({
+      where: {
+        id: {
+          notIn: [...userEntitiesRelations.map((entity) => entity.id), ...svisOrEtgsCoupledIds],
+        },
+        type: {
+          not: EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
+        },
+      },
+    })
+  ).map((entity) => ({ ...entity, relation: null }));
+
   const userRelationsWithOtherUsers = await prisma.userRelations.findMany({
     where: {
       owner_id: user.id,
@@ -135,7 +152,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     examinateursInitiaux.unshift({ ...user, relation: UserRelationType.EXAMINATEUR_INITIAL });
   }
 
-  const allEntities = [...userEntitiesRelations, ...allOtherEntities];
+  const allEntities = [...userEntitiesRelations, ...userCoupledEntities, ...allOtherEntities];
   const ccgs = allEntities.filter((entity) => entity.type === EntityTypes.CCG);
   const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
   const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
@@ -217,7 +234,7 @@ export default function Fei() {
   const refCurrentUserId = useRef(fei.fei_current_owner_user_id);
   useEffect(() => {
     if (fei.fei_current_owner_role !== refCurrentRole.current) {
-      if (fei.fei_current_owner_user_id === user.id && refCurrentUserId.current === user.id) {
+      if (fei.fei_current_owner_user_id === user.id) {
         if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
           setSelectedTabId(UserRoles.PREMIER_DETENTEUR);
         }
