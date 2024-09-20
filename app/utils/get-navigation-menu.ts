@@ -11,7 +11,8 @@ export default function useNavigationMenu() {
     submit(null, { method: "post", action: "/actions/logout" });
   };
 
-  const isOnlyExaminateurInitial = user!.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && user!.roles.length === 1;
+  const isExaminateurInitial = user!.roles.includes(UserRoles.EXAMINATEUR_INITIAL);
+  const isOnlyExaminateurInitial = isExaminateurInitial && user!.roles.length === 1;
   const isAdmin = user!.roles.includes(UserRoles.ADMIN);
 
   const profileMenu = [
@@ -51,6 +52,28 @@ export default function useNavigationMenu() {
     },
   });
 
+  const feiMenuLinks = isExaminateurInitial
+    ? [
+        {
+          text: "Mes FEI",
+          isActive: location.pathname === "/tableau-de-bord",
+          linkProps: {
+            to: "/tableau-de-bord",
+            href: "#",
+          },
+        },
+        {
+          text: "Nouvelle FEI",
+          isActive: location.pathname === "/tableau-de-bord/fei/nouvelle",
+          linkProps: {
+            to: "/tableau-de-bord/fei/nouvelle",
+            href: "#",
+          },
+        },
+      ]
+    : undefined;
+  const feiLinkProps = isExaminateurInitial ? undefined : { to: "/tableau-de-bord", href: "#" };
+
   const navigationBase = [
     {
       text: "Mon profil",
@@ -60,24 +83,8 @@ export default function useNavigationMenu() {
     {
       text: "Mes FEI",
       isActive: location.pathname === "/tableau-de-bord" || location.pathname.startsWith("/tableau-de-bord/fei"),
-      menuLinks: [
-        {
-          text: "Nouvelle FEI",
-          isActive: location.pathname === "/tableau-de-bord/fei/nouvelle",
-          linkProps: {
-            to: "/tableau-de-bord/fei/nouvelle",
-            href: "#",
-          },
-        },
-        {
-          text: "Mes FEI",
-          isActive: location.pathname === "/tableau-de-bord",
-          linkProps: {
-            to: "/tableau-de-bord",
-            href: "#",
-          },
-        },
-      ],
+      menuLinks: feiMenuLinks,
+      linkProps: feiLinkProps,
     },
     {
       text: "Se déconnecter",

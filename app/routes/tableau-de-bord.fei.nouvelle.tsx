@@ -79,7 +79,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
-  return json({ user });
+  if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+    return json({ user });
+  }
+  throw redirect("/tableau-de-bord");
 }
 
 export default function NouvelleFEI() {
