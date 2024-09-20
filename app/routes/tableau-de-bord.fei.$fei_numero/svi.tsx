@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { loader } from "./route";
-import { Prisma, Carcasse } from "@prisma/client";
+import { Prisma, Carcasse, UserRoles } from "@prisma/client";
 import InputNotEditable from "~/components/InputNotEditable";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
@@ -48,6 +48,9 @@ export default function FEI_SVI() {
       return false;
     }
     if (fei.svi_signed_at) {
+      return false;
+    }
+    if (fei.fei_current_owner_role !== UserRoles.SVI) {
       return false;
     }
     return true;
