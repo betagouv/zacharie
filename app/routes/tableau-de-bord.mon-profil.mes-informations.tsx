@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
@@ -10,6 +10,7 @@ import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
+import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
@@ -80,6 +81,8 @@ export default function MesInformations() {
     svisDone,
   } = useLoaderData<typeof loader>();
 
+  const navigate = useNavigate();
+
   const userFetcher = useFetcher({ key: "mon-profil-mes-informations" });
   const handleUserFormBlur = useCallback(
     (event: React.FocusEvent<HTMLFormElement>) => {
@@ -116,6 +119,12 @@ export default function MesInformations() {
   const nextTitle = skipCCG ? "Vos notifications" : "Vos Centres de Collectes du Gibier sauvage";
   const nextPage = skipCCG ? "/tableau-de-bord/mon-profil/mes-notifications" : "/tableau-de-bord/mon-profil/mes-ccgs";
   const stepCount = skipCCG ? 3 : 4;
+
+  const showEntrpriseVisibilityCheckbox =
+    user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
+    user.roles.includes(UserRoles.ETG) ||
+    user.roles.includes(UserRoles.SVI);
+  const [visiblitityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -306,6 +315,35 @@ export default function MesInformations() {
                   entityType={EntityTypes.SVI}
                 />
               )}
+              {showEntrpriseVisibilityCheckbox && (
+                <userFetcher.Form
+                  id="user_entities_vivible_checkbox"
+                  method="POST"
+                  action={`/action/user/${user.id}`}
+                  onChange={handleUserFormBlur}
+                  preventScrollReset
+                  className="fr-fieldset__element p-8"
+                >
+                  <Checkbox
+                    options={[
+                      {
+                        label:
+                          "J'autorise le fait que les entreprises pour lesquelles je travaille apparaissent dans les champs de transmission des FEI.",
+                        hintText:
+                          "Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les FEI ne pourront pas être attribuées à votre enreprise",
+                        nativeInputProps: {
+                          required: true,
+                          name: Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox,
+                          value: "true",
+                          onChange: () => setVisibilityChecked(!visiblitityChecked),
+                          checked: visiblitityChecked,
+                        },
+                      },
+                    ]}
+                  />
+                </userFetcher.Form>
+              )}
+
               <div className="mb-16 ml-6 mt-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
@@ -316,10 +354,11 @@ export default function MesInformations() {
               <ButtonsGroup
                 buttons={[
                   {
-                    children: "Continuer",
-                    linkProps: {
-                      to: nextPage,
-                      href: "#",
+                    children: "Enregistrer et Continuer",
+                    disabled: showEntrpriseVisibilityCheckbox ? !visiblitityChecked : false,
+                    type: "button",
+                    nativeButtonProps: {
+                      onClick: () => navigate(nextPage),
                     },
                   },
                   {

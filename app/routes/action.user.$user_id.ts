@@ -19,6 +19,10 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.UserScalarFieldEnum.activated)) {
     nextUser.activated = formData.get(Prisma.UserScalarFieldEnum.activated) === "true" ? true : false;
   }
+  if (formData.has(Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox)) {
+    nextUser.user_entities_vivible_checkbox =
+      formData.get(Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox) === "true" ? true : false;
+  }
   if (formData.has(Prisma.UserScalarFieldEnum.prefilled)) {
     nextUser.prefilled = formData.get(Prisma.UserScalarFieldEnum.prefilled) === "true" ? true : false;
   }

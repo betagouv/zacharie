@@ -31,41 +31,42 @@ enum UserNotifications {
 }
 
 model User {
-  id                        String                  @id @default(uuid())
-  email                     String?                 @unique // email is optional, we can have users without email like the Collecteur Pro
-  telephone                 String?
-  prenom                    String?
-  nom_de_famille            String?
-  numero_cfei               String? // Chasseur Formé à l'Examen Initial (de la forme CFEI-DEP-YY-001)
+  id                             String                  @id @default(uuid())
+  email                          String?                 @unique // email is optional, we can have users without email like the Collecteur Pro
+  telephone                      String?
+  prenom                         String?
+  nom_de_famille                 String?
+  numero_cfei                    String? // Chasseur Formé à l'Examen Initial (de la forme CFEI-DEP-YY-001)
   // numero_frei               String? // Formateur Référent Examen Initial (de la forme DEP-FREI-YY-001)
-  addresse_ligne_1          String?
-  addresse_ligne_2          String?
-  code_postal               String?
-  ville                     String?
-  roles                     UserRoles[]
-  created_at                DateTime                @default(now())
-  updated_at                DateTime                @default(now()) @updatedAt
-  last_login_at             DateTime?
-  last_seen_at              DateTime?
-  deleted_at                DateTime?
-  onboarded_at              DateTime?
-  notifications             UserNotifications[]     @default([EMAIL, PUSH])
-  web_push_tokens           String[]
-  prefilled                 Boolean                 @default(false)
-  activated                 Boolean                 @default(false)
-  Password                  Password?
-  UserRelationsAsOwner      UserRelations[]         @relation("UserOwnerOfUserRelation")
-  UserRelationsAsRelated    UserRelations[]         @relation("UserRelatedOfUserRelation")
-  EntitiesRelations         EntityRelations[]       @relation("UserRelatedWithEntity")
-  FeiCreatedByUser          Fei[]                   @relation("FeiCreatedByUser")
-  FeiCurrentUser            Fei[]                   @relation("FeiCurrentUser")
-  FeiDetenteurInitialUser   Fei[]                   @relation("FeiDetenteurInitialUser")
-  FeiExaminateurInitialUser Fei[]                   @relation("FeiExaminateurInitialUser")
-  FeiSviUser                Fei[]                   @relation("FeiSviUser")
-  FeiIntermediaireUser      FeiIntermediaire[]      @relation("FeiIntermediaireUser")
-  Logs                      Logs[]
-  NotificationLog           NotificationLog[]
-  CarcasseIntermediaire     CarcasseIntermediaire[] @relation("CarcasseIntermediaireUser")
+  addresse_ligne_1               String?
+  addresse_ligne_2               String?
+  code_postal                    String?
+  ville                          String?
+  user_entities_vivible_checkbox Boolean?
+  roles                          UserRoles[]
+  created_at                     DateTime                @default(now())
+  updated_at                     DateTime                @default(now()) @updatedAt
+  last_login_at                  DateTime?
+  last_seen_at                   DateTime?
+  deleted_at                     DateTime?
+  onboarded_at                   DateTime?
+  notifications                  UserNotifications[]     @default([EMAIL, PUSH])
+  web_push_tokens                String[]
+  prefilled                      Boolean                 @default(false)
+  activated                      Boolean                 @default(false)
+  Password                       Password?
+  UserRelationsAsOwner           UserRelations[]         @relation("UserOwnerOfUserRelation")
+  UserRelationsAsRelated         UserRelations[]         @relation("UserRelatedOfUserRelation")
+  EntitiesRelations              EntityRelations[]       @relation("UserRelatedWithEntity")
+  FeiCreatedByUser               Fei[]                   @relation("FeiCreatedByUser")
+  FeiCurrentUser                 Fei[]                   @relation("FeiCurrentUser")
+  FeiDetenteurInitialUser        Fei[]                   @relation("FeiDetenteurInitialUser")
+  FeiExaminateurInitialUser      Fei[]                   @relation("FeiExaminateurInitialUser")
+  FeiSviUser                     Fei[]                   @relation("FeiSviUser")
+  FeiIntermediaireUser           FeiIntermediaire[]      @relation("FeiIntermediaireUser")
+  Logs                           Logs[]
+  NotificationLog                NotificationLog[]
+  CarcasseIntermediaire          CarcasseIntermediaire[] @relation("CarcasseIntermediaireUser")
 
   @@index([email, prenom, nom_de_famille, roles])
 }
