@@ -95,16 +95,27 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                 )}
               </span>
             </span>
-            {motifsSaisie.length > 0 && (
-              <>
-                <br />
-                <span className="m-0 block font-bold">
-                  Saisie SVI&nbsp;:
+            <br />
+            <span className="m-0 block font-bold">
+              Inspection SVI&nbsp;:
+              {motifsSaisie.length > 0 ? (
+                <>
                   {motifsSaisie.map((motif, index) => (
-                    <span className="m-0 block font-medium" key={motif + index}>
+                    <span className="m-0 ml-2 block font-medium" key={motif + index}>
                       - {motif}
                     </span>
                   ))}
+                </>
+              ) : (
+                <span className="m-0 ml-2 block font-medium">- Pas de saisie</span>
+              )}
+            </span>
+            {!canEdit && carcasse.svi_carcasse_commentaire && (
+              <>
+                <br />
+                <span className="m-0 block font-bold">Commentaire du SVI&nbsp;:</span>
+                <span className="m-0 ml-2 block border-l-2 border-l-gray-400 pl-4 font-medium">
+                  {carcasse.svi_carcasse_commentaire}
                 </span>
               </>
             )}

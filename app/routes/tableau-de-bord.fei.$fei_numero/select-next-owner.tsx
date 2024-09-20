@@ -134,6 +134,9 @@ export default function SelectNextOwner() {
   if (user.id !== fei.fei_current_owner_user_id) {
     return null;
   }
+  if (fei.svi_signed_at) {
+    return null;
+  }
 
   const nextOwnersWorkingWith = nextOwners.filter((o) => !!o.relation);
   const nextOwnersNotWorkingWith = nextOwners.filter((o) => !o.relation);

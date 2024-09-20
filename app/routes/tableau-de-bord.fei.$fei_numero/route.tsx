@@ -11,6 +11,7 @@ import CurrentOwner from "./current-owner";
 import FeiTransfer from "./transfer-current-owner";
 import FEICurrentIntermediaire from "./current-intermediaire";
 import FEI_SVI from "./svi";
+import FEIExaminateurInitial from "./examinateur-initial";
 
 export function meta({ params }: MetaArgs) {
   return [
@@ -263,23 +264,11 @@ export default function Fei() {
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 m-4 bg-white md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
-          {/* <Breadcrumb
-            currentPageLabel={fei.numero}
-            className="m-0 bg-alt-blue-france pb-4 pl-2 md:pl-0"
-            segments={[
-              {
-                label: "Mon tableau de bord",
-                linkProps: {
-                  href: "/tableau-de-bord",
-                },
-              },
-            ]}
-          /> */}
           <FeiTransfer />
           <ConfirmCurrentOwner />
           <CurrentOwner />
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
-            {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur />}
+            {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur />}
             {selectedTabId === "Intermédiaires" &&
               (intermediaireTabDisabled ? (

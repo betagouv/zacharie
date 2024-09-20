@@ -125,7 +125,7 @@ export default function FEICurrentIntermediaire() {
         <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
           <ol className="fr-breadcrumb__list">
             <li>
-              <span className="fr-breadcrumb__link">Premier Détenteur</span>
+              <span className="fr-breadcrumb__link !bg-none !no-underline">Premier Détenteur</span>
             </li>
             {fei.FeiIntermediaires.map((_intermediaire, index) => {
               return (
@@ -200,7 +200,7 @@ export default function FEICurrentIntermediaire() {
             <Checkbox
               options={[
                 {
-                  label: `${intermediaire.check_finished_at ? "J'ai pris" : "Je prends"} en charge les carcasses que j'ai acceptées`,
+                  label: `${intermediaire.check_finished_at ? "J'ai pris" : "Je prends"} en charge les carcasses que j'ai acceptées.`,
                   nativeInputProps: {
                     required: true,
                     name: Prisma.CarcasseIntermediaireScalarFieldEnum.check_finished_at,

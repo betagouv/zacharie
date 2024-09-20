@@ -19,26 +19,26 @@ export default function FEI_SVI() {
 
   const carcassesUnsorted = fei.Carcasses;
   const carcassesSorted = useMemo(() => {
-    const carcassesApproved: Record<string, SerializeFrom<Carcasse>> = {};
-    const carcassesRefused: Record<string, SerializeFrom<Carcasse>> = {};
+    const carcassesValidated: Record<string, SerializeFrom<Carcasse>> = {};
+    const carcassesSaisies: Record<string, SerializeFrom<Carcasse>> = {};
     const carcassesToCheck: Record<string, SerializeFrom<Carcasse>> = {};
     for (const carcasse of carcassesUnsorted) {
       if (carcasse.examinateur_refus || carcasse.intermediaire_carcasse_refus_intermediaire_id) {
         continue;
       }
       if (carcasse.svi_carcasse_saisie_motif?.length) {
-        carcassesRefused[carcasse.numero_bracelet] = carcasse;
+        carcassesSaisies[carcasse.numero_bracelet] = carcasse;
         continue;
       }
       if (carcasse.svi_carcasse_signed_at) {
-        carcassesApproved[carcasse.numero_bracelet] = carcasse;
+        carcassesValidated[carcasse.numero_bracelet] = carcasse;
         continue;
       }
       carcassesToCheck[carcasse.numero_bracelet] = carcasse;
     }
     return {
-      carcassesApproved: Object.values(carcassesApproved),
-      carcassesRefused: Object.values(carcassesRefused),
+      carcassesValidated: Object.values(carcassesValidated),
+      carcassesSaisies: Object.values(carcassesSaisies),
       carcassesToCheck: Object.values(carcassesToCheck),
     };
   }, [carcassesUnsorted]);
@@ -71,6 +71,27 @@ export default function FEI_SVI() {
     prevCarcassesToCheckCount.current = carcassesSorted.carcassesToCheck.length;
   }, [carcassesSorted.carcassesToCheck.length]);
 
+  const labelInscectionDone = useMemo(() => {
+    let label = "J'ai fini l'inspection de toutes les carcasses.";
+    const nbCarcassesValidated = carcassesSorted.carcassesValidated.length;
+    if (nbCarcassesValidated > 0) {
+      if (nbCarcassesValidated === 1) {
+        label += " 1 carcasse validée.";
+      } else {
+        label += ` ${nbCarcassesValidated} carcasses validées.`;
+      }
+    }
+    const nbCarcassesSaisies = carcassesSorted.carcassesSaisies.length;
+    if (nbCarcassesSaisies > 0) {
+      if (nbCarcassesSaisies === 1) {
+        label += " 1 carcasse saisie.";
+      } else {
+        label += ` ${nbCarcassesSaisies} carcasses saisies.`;
+      }
+    }
+    return label;
+  }, [carcassesSorted.carcassesValidated.length, carcassesSorted.carcassesSaisies.length]);
+
   return (
     <>
       <Accordion titleAs="h3" label={`Identité du SVI ${canEdit ? "🔒" : ""}`}>
@@ -88,29 +109,29 @@ export default function FEI_SVI() {
       )}
       <Accordion
         titleAs="h3"
-        label={`Carcasses acceptées (${carcassesSorted.carcassesApproved.length})`}
+        label={`Carcasses validées (${carcassesSorted.carcassesValidated.length})`}
         expanded={carcassesAccepteesExpanded}
         onExpandedChange={setCarcassesAccepteesExpanded}
       >
-        {carcassesSorted.carcassesApproved.length === 0 ? (
+        {carcassesSorted.carcassesValidated.length === 0 ? (
           <p>Pas de carcasse acceptée</p>
         ) : (
-          <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesApproved} />
+          <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesValidated} />
         )}
       </Accordion>
       <Accordion
         titleAs="h3"
-        label={`Carcasses rejetées (${carcassesSorted.carcassesRefused.length})`}
+        label={`Carcasses saisies (${carcassesSorted.carcassesSaisies.length})`}
         expanded={carcassesRefuseesExpanded}
         onExpandedChange={setCarcassesRefuseesExpanded}
       >
-        {carcassesSorted.carcassesRefused.length === 0 ? (
+        {carcassesSorted.carcassesSaisies.length === 0 ? (
           <p>Pas de carcasse refusée</p>
         ) : (
-          <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesRefused} />
+          <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesSaisies} />
         )}
       </Accordion>
-      <Accordion titleAs="h3" label="Prise en charge des carcasses acceptées" defaultExpanded>
+      <Accordion titleAs="h3" label="Validation de la FEI" defaultExpanded>
         <sviFinished.Form method="POST" action={`/action/fei/${fei.numero}`} id="svi_check_finished_at">
           <input
             form="svi_check_finished_at"
@@ -128,7 +149,7 @@ export default function FEI_SVI() {
             <Checkbox
               options={[
                 {
-                  label: "J'ai fini l'inspection de toutes les carcasses",
+                  label: labelInscectionDone,
                   nativeInputProps: {
                     required: true,
                     name: "svi_finito",
@@ -165,7 +186,7 @@ export default function FEI_SVI() {
       {fei.svi_signed_at && (
         <Alert
           severity="success"
-          description="L'inspection des carcasses est trerminée, cette FEI est clôturée. Merci !"
+          description="L'inspection des carcasses est terminée, cette FEI est clôturée. Merci !"
           title="FEI clôturée"
         />
       )}
