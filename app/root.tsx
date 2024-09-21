@@ -75,7 +75,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="apple-touch-icon" href={dsfrAppleTouchIcon} />
         <link rel="icon" href={dsfrFaviconSvg} type="image/svg+xml" />
         <link rel="shortcut icon" href={dsfrFavicon} type="image/x-icon" />
-        <link rel="manifest" href={dsfrWebManifest} crossOrigin="use-credentials" />
+        {/* <link rel="manifest" href={dsfrWebManifest} crossOrigin="use-credentials" /> */}
         <link rel="stylesheet" href={dsfrCss} />
         <link rel="stylesheet" href={dsfrColorCss} />
         <PWAManifest />
