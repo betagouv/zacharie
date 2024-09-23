@@ -49,6 +49,11 @@ export async function clientLoader() {
 
   const response = await fetch(`${import.meta.env.VITE_API_URL}/loader/fei`, {
     method: "GET",
+    credentials: "include",
+    headers: new Headers({
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }),
   });
   if (!response.ok) {
     throw new Error("Failed to fetch data");

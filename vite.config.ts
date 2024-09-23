@@ -17,6 +17,12 @@ export default defineConfig(({ mode }) => {
     ssr: {
       noExternal: ["@codegouvfr/react-dsfr"],
     },
+    server: {
+      cors: {
+        origin: "http://localhost:3232",
+        credentials: true,
+      },
+    },
     plugins: [
       remix({
         presets: [RemixPWAPreset()],

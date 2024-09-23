@@ -8,7 +8,6 @@ import { prisma } from "~/db/prisma.server";
 export async function loader({ request }: LoaderFunctionArgs) {
   console.log("BETABIM");
   const user = await getUserFromCookie(request, { debug: true });
-  return json({ ok: true });
   // console.log("user", user);
   // if (!user) {
   //   throw redirect("/connexion?type=compte-existant");
