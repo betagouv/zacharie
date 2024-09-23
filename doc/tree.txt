@@ -1,0 +1,142 @@
+┣ 📂.yarn
+┃ ┣ 📂releases
+┃ ┃ ┗ 📜yarn-stable-temp.cjs
+┃ ┗ 📜install-state.gz
+┣ 📂app
+┃ ┣ 📂components
+┃ ┃ ┣ 📜BreadcrumbCustom.tsx
+┃ ┃ ┣ 📜consentManagement.tsx
+┃ ┃ ┣ 📜EntityNotEditable.tsx
+┃ ┃ ┣ 📜InputForSearchPrefilledData.tsx
+┃ ┃ ┣ 📜InputNotEditable.tsx
+┃ ┃ ┣ 📜InputVille.tsx
+┃ ┃ ┣ 📜InstallApp.tsx
+┃ ┃ ┣ 📜NotFound.tsx
+┃ ┃ ┣ 📜NouvelleVersion.tsx
+┃ ┃ ┣ 📜OfflineMode.tsx
+┃ ┃ ┣ 📜PWAAssets.tsx
+┃ ┃ ┣ 📜PWABadge.css
+┃ ┃ ┣ 📜PWABadge.tsx
+┃ ┃ ┣ 📜PWAManifest.tsx
+┃ ┃ ┣ 📜RolesCheckboxes.tsx
+┃ ┃ ┣ 📜RootDisplay.tsx
+┃ ┃ ┣ 📜Section.tsx
+┃ ┃ ┣ 📜UnexpectedError.tsx
+┃ ┃ ┣ 📜UserInformations.tsx
+┃ ┃ ┗ 📜UserNotEditable.tsx
+┃ ┣ 📂data
+┃ ┃ ┣ 📜grand-gibier-abats.json
+┃ ┃ ┣ 📜grand-gibier-carcasse.json
+┃ ┃ ┣ 📜grand-gibier.json
+┃ ┃ ┣ 📜refus-intermediaire.json
+┃ ┃ ┣ 📜saisie-svi.json
+┃ ┃ ┣ 📜update-villes.js
+┃ ┃ ┗ 📜villes.json
+┃ ┣ 📂db
+┃ ┃ ┗ 📜prisma.server.ts
+┃ ┣ 📂routes
+┃ ┃ ┣ 📂tableau-de-bord.fei.$fei_numero
+┃ ┃ ┃ ┣ 📜carcasse-svi.tsx
+┃ ┃ ┃ ┣ 📜carcasses-examinateur.tsx
+┃ ┃ ┃ ┣ 📜carcasses-intermediaire.tsx
+┃ ┃ ┃ ┣ 📜confirm-current-owner.tsx
+┃ ┃ ┃ ┣ 📜current-intermediaire.tsx
+┃ ┃ ┃ ┣ 📜current-owner.tsx
+┃ ┃ ┃ ┣ 📜examinateur-initial.tsx
+┃ ┃ ┃ ┣ 📜premier-detenteur.tsx
+┃ ┃ ┃ ┣ 📜route.tsx
+┃ ┃ ┃ ┣ 📜select-next-owner.tsx
+┃ ┃ ┃ ┣ 📜svi.tsx
+┃ ┃ ┃ ┗ 📜transfer-current-owner.tsx
+┃ ┃ ┣ 📜_accueil.connexion.tsx
+┃ ┃ ┣ 📜_accueil.tsx
+┃ ┃ ┣ 📜_index.tsx
+┃ ┃ ┣ 📜404.tsx
+┃ ┃ ┣ 📜action.carcasse-suivi.ts
+┃ ┃ ┣ 📜action.carcasse.$numero_bracelet.tsx
+┃ ┃ ┣ 📜action.carcasse.nouvelle.tsx
+┃ ┃ ┣ 📜action.fei-intermediaire.nouveau.ts
+┃ ┃ ┣ 📜action.fei.($fei_numero).ts
+┃ ┃ ┣ 📜action.trouver-premier-detenteur.ts
+┃ ┃ ┣ 📜action.user-entity.$user_id.ts
+┃ ┃ ┣ 📜action.user-relation.$user_id.ts
+┃ ┃ ┣ 📜action.user.$user_id.ts
+┃ ┃ ┣ 📜actions.logout.tsx
+┃ ┃ ┣ 📜sentry-example-page.tsx
+┃ ┃ ┣ 📜tableau-de-bord._index.tsx
+┃ ┃ ┣ 📜tableau-de-bord.admin._index.tsx
+┃ ┃ ┣ 📜tableau-de-bord.admin.entite.$entityId.tsx
+┃ ┃ ┣ 📜tableau-de-bord.admin.entite.nouvelle.tsx
+┃ ┃ ┣ 📜tableau-de-bord.admin.entites.tsx
+┃ ┃ ┣ 📜tableau-de-bord.admin.fei.tsx
+┃ ┃ ┣ 📜tableau-de-bord.admin.tsx
+┃ ┃ ┣ 📜tableau-de-bord.admin.utilisateur.$userId.tsx
+┃ ┃ ┣ 📜tableau-de-bord.admin.utilisateur.nouveau.tsx
+┃ ┃ ┣ 📜tableau-de-bord.admin.utilisateurs.tsx
+┃ ┃ ┣ 📜tableau-de-bord.carcasse.$fei_numero.$numero_bracelet.tsx
+┃ ┃ ┣ 📜tableau-de-bord.fei.nouvelle.tsx
+┃ ┃ ┣ 📜tableau-de-bord.mon-profil._index.tsx
+┃ ┃ ┣ 📜tableau-de-bord.mon-profil.mes-ccgs.tsx
+┃ ┃ ┣ 📜tableau-de-bord.mon-profil.mes-informations.tsx
+┃ ┃ ┣ 📜tableau-de-bord.mon-profil.mes-notifications.tsx
+┃ ┃ ┣ 📜tableau-de-bord.mon-profil.mes-roles.tsx
+┃ ┃ ┗ 📜tableau-de-bord.tsx
+┃ ┣ 📂services
+┃ ┃ ┣ 📜auth.server.ts
+┃ ┃ ┣ 📜capture.ts
+┃ ┃ ┣ 📜crypto.server.ts
+┃ ┃ ┣ 📜honeypot.server.ts
+┃ ┃ ┣ 📜indexed-db.client.ts
+┃ ┃ ┣ 📜otp-email.server.ts
+┃ ┃ ┣ 📜sendEmail.ts
+┃ ┃ ┣ 📜sentry.js
+┃ ┃ ┣ 📜useNetworkConnectivity.js
+┃ ┃ ┗ 📜usePWAManager.js
+┃ ┣ 📂utils
+┃ ┃ ┣ 📜authorizeUserOrAdmin.ts
+┃ ┃ ┣ 📜caches.ts
+┃ ┃ ┣ 📜display-user-identity.ts
+┃ ┃ ┣ 📜get-navigation-menu.ts
+┃ ┃ ┣ 📜get-user-roles-label.ts
+┃ ┃ ┣ 📜sort-things-by-type-and-id.ts
+┃ ┃ ┣ 📜user-onboarded.server.ts
+┃ ┃ ┗ 📜useUser.ts
+┃ ┣ 📜entry.client.tsx
+┃ ┣ 📜entry.server.tsx
+┃ ┣ 📜pwa.ts
+┃ ┣ 📜root.tsx
+┃ ┣ 📜shared-sw.ts
+┃ ┣ 📜sw.ts
+┃ ┗ 📜tailwind.css
+┣ 📂doc
+┃ ┣ 📜automatic reload.md
+┃ ┣ 📜Fiche d accompagnement Grand Fosse.pdf
+┃ ┣ 📜Instruction 2021-555_final.pdf
+┃ ┗ 📜remix pwa offline
+┣ 📂prisma
+┃ ┣ 📂migrations
+┃ ┃ ┣ 📂20240920093200_init
+┃ ┃ ┃ ┗ 📜migration.sql
+┃ ┃ ┗ 📜migration_lock.toml
+┃ ┗ 📜schema.prisma
+┣ 📂public
+┃ ┣ 📜favicon.svg
+┃ ┗ 📜robots.txt
+┣ 📜.dockerignore
+┣ 📜.DS_Store
+┣ 📜.env
+┣ 📜.env.sentry-build-plugin
+┣ 📜.eslintrc.cjs
+┣ 📜.gitignore
+┣ 📜.sentryclirc
+┣ 📜.yarnrc.yml
+┣ 📜Dockerfile
+┣ 📜instrumentation.server.mjs
+┣ 📜package.json
+┣ 📜postcss.config.js
+┣ 📜pwa-assets.config.ts
+┣ 📜README.md
+┣ 📜tailwind.config.ts
+┣ 📜tsconfig.json
+┣ 📜vite.config.ts
+┗ 📜yarn.lock
