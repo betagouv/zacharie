@@ -1,5 +1,5 @@
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
-import { loader } from "./route";
+import { clientLoader } from "./route";
 import UserNotEditable from "~/components/UserNotEditable";
 import { useMemo, useState } from "react";
 import { UserRoles, Prisma } from "@prisma/client";
@@ -13,7 +13,7 @@ import dayjs from "dayjs";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 
 export default function FEIDetenteurInitial() {
-  const { fei, user, ccgs, etgs, collecteursPro } = useLoaderData<typeof loader>();
+  const { fei, user, ccgs, etgs, collecteursPro } = useLoaderData<typeof clientLoader>();
   const fetcher = useFetcher({ key: "confirm-detenteur-initial" });
   const depotFetcher = useFetcher({ key: "detenteur-initial-depot" });
   const [depotType, setDepotType] = useState(() => {

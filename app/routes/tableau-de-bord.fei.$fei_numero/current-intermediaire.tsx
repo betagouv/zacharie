@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import { loader } from "./route";
+import { clientLoader } from "./route";
 import { Prisma, CarcasseIntermediaire, Carcasse } from "@prisma/client";
 import InputNotEditable from "~/components/InputNotEditable";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
@@ -9,11 +9,11 @@ import { Button } from "@codegouvfr/react-dsfr/Button";
 import dayjs from "dayjs";
 import SelectNextOwner from "./select-next-owner";
 import CarcassesIntermediaire from "./carcasses-intermediaire";
-import { SerializeFrom } from "@remix-run/node";
+import type { SerializeFrom } from "@remix-run/node";
 import EntityNotEditable from "~/components/EntityNotEditable";
 
 export default function FEICurrentIntermediaire() {
-  const { fei, user } = useLoaderData<typeof loader>();
+  const { fei, user } = useLoaderData<typeof clientLoader>();
 
   const [intermediaireIndex, setIntermediaireIndex] = useState(0);
   const intermediaire = fei.FeiIntermediaires[intermediaireIndex];

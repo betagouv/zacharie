@@ -1,13 +1,13 @@
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { loader } from "./route";
+import { clientLoader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useMemo } from "react";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import { Prisma, UserRoles } from "@prisma/client";
 
 export default function ConfirmCurrentOwner() {
-  const { user, entitiesUserIsWorkingFor, fei } = useLoaderData<typeof loader>();
+  const { user, entitiesUserIsWorkingFor, fei } = useLoaderData<typeof clientLoader>();
 
   const fetcher = useFetcher({ key: "confirm-current-owner" });
   const intermediaireFetcher = useFetcher({ key: "create-intermediaire-fetcher" });

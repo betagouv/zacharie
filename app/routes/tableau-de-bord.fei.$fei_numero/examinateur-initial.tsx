@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { loader } from "./route";
+import { clientLoader } from "./route";
 import UserNotEditable from "~/components/UserNotEditable";
 import { Prisma, UserRoles } from "@prisma/client";
 import InputNotEditable from "~/components/InputNotEditable";
@@ -14,7 +14,7 @@ import InputVille from "~/components/InputVille";
 import CarcassesExaminateur from "./carcasses-examinateur";
 
 export default function FEIExaminateurInitial() {
-  const { fei, user } = useLoaderData<typeof loader>();
+  const { fei, user } = useLoaderData<typeof clientLoader>();
 
   const approbationFetcher = useFetcher({ key: "approbation-mise-sur-le-marche" });
 

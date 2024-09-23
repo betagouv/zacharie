@@ -66,7 +66,3 @@ export async function action(args: ActionFunctionArgs) {
 
   return json({ ok: true, data: nextPremierDetenteur, error: null });
 }
-
-export default function ActionUser() {
-  return null;
-}

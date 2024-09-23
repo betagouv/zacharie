@@ -1,90 +1,16 @@
-import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { json, type ClientLoaderFunctionArgs } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
-import { getUserOnboardingRoute } from "~/utils/user-onboarded.server";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Table } from "@codegouvfr/react-dsfr/Table";
-import { Link, useLoaderData } from "@remix-run/react";
+import { json, Link, redirect, useLoaderData } from "@remix-run/react";
 import { UserRoles } from "@prisma/client";
-import { prisma } from "~/db/prisma.server";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import dayjs from "dayjs";
 import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
-
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
-  if (!user) {
-    throw redirect("/connexion?type=compte-existant");
-  }
-  const onboardingRoute = getUserOnboardingRoute(user);
-  if (onboardingRoute) {
-    throw redirect(onboardingRoute);
-  }
-  const feiAssigned = await prisma.fei.findMany({
-    where: {
-      svi_signed_at: null,
-      OR: [
-        {
-          fei_current_owner_user_id: user.id,
-        },
-        {
-          fei_next_owner_user_id: user.id,
-        },
-        {
-          FeiNextEntity: {
-            EntityRelatedWithUser: {
-              some: {
-                owner_id: user.id,
-              },
-            },
-          },
-        },
-        {
-          FeiCurrentEntity: {
-            EntityRelatedWithUser: {
-              some: {
-                owner_id: user.id,
-              },
-            },
-          },
-        },
-      ],
-    },
-    select: {
-      numero: true,
-      created_at: true,
-      updated_at: true,
-      fei_current_owner_role: true,
-      fei_next_owner_role: true,
-      commune_mise_a_mort: true,
-    },
-    orderBy: {
-      updated_at: "desc",
-    },
-  });
-  const feiDone = await prisma.fei.findMany({
-    where: {
-      created_by_user_id: user.id,
-      svi_signed_at: {
-        not: null,
-      },
-    },
-    select: {
-      numero: true,
-      created_at: true,
-      updated_at: true,
-      svi_signed_at: true,
-      commune_mise_a_mort: true,
-    },
-  });
-
-  return json({ user, feiAssigned, feiDone });
-}
+import type { FeisLoaderData } from "~/routes/loader.fei";
 
 let isInitialRequest = true;
 
-export async function clientLoader({ serverLoader }: ClientLoaderFunctionArgs) {
+export async function clientLoader() {
   console.log("clientLoader");
   const isOnline = window.navigator.onLine;
 
@@ -92,7 +18,22 @@ export async function clientLoader({ serverLoader }: ClientLoaderFunctionArgs) {
 
   if (isInitialRequest) {
     isInitialRequest = false;
-    const serverData = await serverLoader<typeof loader>();
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/loader/fei`, {
+      method: "GET",
+      credentials: "include",
+      headers: new Headers({
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      }),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to fetch data");
+    }
+    if (response.redirected) {
+      throw redirect(response.url);
+    }
+    console.log("response", response);
+    const serverData = (await response.json()) as FeisLoaderData;
     setCacheItem("user", serverData.user);
     setCacheItem("feiAssigned", serverData.feiAssigned);
     setCacheItem("feiDone", serverData.feiDone);
@@ -106,7 +47,16 @@ export async function clientLoader({ serverLoader }: ClientLoaderFunctionArgs) {
     return json({ user: cachedUser, feiAssigned: cachedFeiAssigned, feiDone: cachedFeiDone });
   }
 
-  const serverData = await serverLoader<typeof loader>();
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/loader/fei`, {
+    method: "GET",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch data");
+  }
+  if (response.redirected) {
+    throw redirect(response.url);
+  }
+  const serverData = (await response.json()) as FeisLoaderData;
   setCacheItem("user", serverData.user);
   setCacheItem("feiAssigned", serverData.feiAssigned);
   setCacheItem("feiDone", serverData.feiDone);

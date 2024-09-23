@@ -1,6 +1,5 @@
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, redirect, type ClientLoaderFunctionArgs } from "@remix-run/react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
@@ -8,7 +7,8 @@ import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { EntityTypes, EntityRelationType, Prisma } from "@prisma/client";
-import { prisma } from "~/db/prisma.server";
+import { type UserCCGsLoaderData } from "~/routes/loader.user-ccgs";
+import { getUserFromClient } from "~/services/auth.client";
 
 export function meta() {
   return [
@@ -18,25 +18,12 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
+export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
+  const user = await getUserFromClient(request);
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const userCCGs = (
-    await prisma.entityRelations.findMany({
-      where: {
-        owner_id: user.id,
-        relation: EntityRelationType.WORKING_WITH,
-        EntityRelatedWithUser: {
-          type: EntityTypes.CCG,
-        },
-      },
-      include: {
-        EntityRelatedWithUser: true,
-      },
-    })
-  ).map((relation) => relation.EntityRelatedWithUser);
+  const userCCGs = ((await fetch("/loader/user-ccgs").then((res) => res.json())) as UserCCGsLoaderData).userCCGs;
 
   return json({
     user,
@@ -45,7 +32,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function MesCCGs() {
-  const { user, userCCGs } = useLoaderData<typeof loader>();
+  const { user, userCCGs } = useLoaderData<typeof clientLoader>();
 
   const userEntityFetcher = useFetcher({ key: "user-ccgs" });
 
@@ -146,7 +133,7 @@ export default function MesCCGs() {
 }
 
 function InputCCG() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user } = useLoaderData<typeof clientLoader>();
   const userCCGFetcher = useFetcher({ key: "ccg-data" });
   return (
     <userCCGFetcher.Form

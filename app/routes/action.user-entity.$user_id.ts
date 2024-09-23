@@ -79,7 +79,3 @@ export async function action(args: ActionFunctionArgs) {
 
   return json({ ok: false, data: null, error: "Invalid action" }, { status: 400 });
 }
-
-export default function ActionUserEntities() {
-  return null;
-}

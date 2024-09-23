@@ -1,7 +1,12 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
+import {
+  json,
+  redirect,
+  type ClientLoaderFunctionArgs,
+  useFetcher,
+  useLoaderData,
+  useNavigate,
+} from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
@@ -12,10 +17,10 @@ import { Select } from "@codegouvfr/react-dsfr/Select";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
-import { prisma } from "~/db/prisma.server";
-import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 import InputVille from "~/components/InputVille";
 import InputNotEditable from "~/components/InputNotEditable";
+import { getUserFromClient } from "~/services/auth.client";
+import { type EntitiesLoaderData } from "~/routes/loader.entities";
 
 export function meta() {
   return [
@@ -25,21 +30,15 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
+export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
+  const user = await getUserFromClient(request);
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const allEntities = await prisma.entity.findMany();
-  const userEntitiesRelations = await prisma.entityRelations.findMany({
-    where: {
-      owner_id: user.id,
-      relation: EntityRelationType.WORKING_FOR,
-    },
-  });
 
-  const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
-  const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(userEntitiesRelations, allEntitiesIds);
+  const response = await fetch("/loader/entities");
+  const data = (await response.json()) as EntitiesLoaderData;
+  const { allEntitiesByTypeAndId, userEntitiesByTypeAndId } = data;
 
   const userCentresCollectes = user.roles.includes(UserRoles.CCG)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.CCG])
@@ -79,7 +78,7 @@ export default function MesInformations() {
     collecteursProDone,
     etgsDone,
     svisDone,
-  } = useLoaderData<typeof loader>();
+  } = useLoaderData<typeof clientLoader>();
 
   const navigate = useNavigate();
 
@@ -400,7 +399,7 @@ function AccordionEntreprise({
   children,
   description,
 }: AccordionEntrepriseProps) {
-  const { user, allEntitiesByTypeAndId, userEntitiesByTypeAndId } = useLoaderData<typeof loader>();
+  const { user, allEntitiesByTypeAndId, userEntitiesByTypeAndId } = useLoaderData<typeof clientLoader>();
 
   const userEntityFetcher = useFetcher({ key: fetcherKey });
   const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);

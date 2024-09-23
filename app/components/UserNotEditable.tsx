@@ -1,5 +1,5 @@
 import { Prisma, User } from "@prisma/client";
-import { SerializeFrom } from "@remix-run/node";
+import type { SerializeFrom } from "@remix-run/node";
 import InputNotEditable from "./InputNotEditable";
 
 export default function UserNtEditable({

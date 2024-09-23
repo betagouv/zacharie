@@ -164,7 +164,3 @@ export async function action(args: ActionFunctionArgs) {
 
   return json({ ok: true, data: updatedCarcasse, error: null });
 }
-
-export default function CarcasseAction() {
-  return null;
-}

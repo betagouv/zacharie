@@ -9,5 +9,3 @@ export async function action({ request }: ActionFunctionArgs) {
     },
   });
 }
-
-export default () => null;

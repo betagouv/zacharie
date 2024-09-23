@@ -10259,7 +10259,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:6.26.2":
+"react-router-dom@npm:6.26.2, react-router-dom@npm:^6.26.2":
   version: 6.26.2
   resolution: "react-router-dom@npm:6.26.2"
   dependencies:
@@ -12918,6 +12918,7 @@ __metadata:
     prisma: "npm:^5.19.1"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
+    react-router-dom: "npm:^6.26.2"
     remix-utils: "npm:^7.6.0"
     tailwindcss: "npm:^3.4.4"
     typescript: "npm:^5.1.6"

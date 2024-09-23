@@ -1,12 +1,12 @@
 import { Highlight } from "@codegouvfr/react-dsfr/Highlight";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
-import { loader } from "./route";
+import { clientLoader } from "./route";
 import { useLoaderData } from "@remix-run/react";
 import { getUserRoleLabelPrefixed } from "~/utils/get-user-roles-label";
 import { UserRoles } from "@prisma/client";
 
 export default function CurrentOwner() {
-  const { fei } = useLoaderData<typeof loader>();
+  const { fei } = useLoaderData<typeof clientLoader>();
 
   if (fei.svi_signed_at) {
     return (

@@ -1,3 +1,4 @@
+import { cors } from "remix-utils/cors";
 import * as Sentry from "@sentry/remix";
 /**
  * By default, Remix will handle generating the HTTP Response for you.
@@ -7,13 +8,14 @@ import * as Sentry from "@sentry/remix";
 
 import { PassThrough } from "node:stream";
 
-import type { AppLoadContext, EntryContext } from "@remix-run/node";
+import type { AppLoadContext, EntryContext, HandleDataRequestFunction } from "@remix-run/node";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
 export const handleError = Sentry.wrapHandleErrorWithSentry((error, { request }) => {
+  console.log("entry.server handleError");
   // Custom handleError implementation
 });
 
@@ -27,8 +29,9 @@ export default function handleRequest(
   // This is ignored so we can keep it in the template for visibility.  Feel
   // free to delete this parameter in your app if you're not using it!
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  loadContext: AppLoadContext
+  loadContext: AppLoadContext,
 ) {
+  console.log("entry.server handleRequest");
   return isbot(request.headers.get("user-agent") || "")
     ? handleBotRequest(request, responseStatusCode, responseHeaders, remixContext)
     : handleBrowserRequest(request, responseStatusCode, responseHeaders, remixContext);
@@ -38,8 +41,9 @@ function handleBotRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
-  remixContext: EntryContext
+  remixContext: EntryContext,
 ) {
+  console.log("entry.server handleBotRequest");
   return new Promise((resolve, reject) => {
     let shellRendered = false;
     const { pipe, abort } = renderToPipeableStream(
@@ -52,11 +56,13 @@ function handleBotRequest(
 
           responseHeaders.set("Content-Type", "text/html");
 
+          console.log("entry.server handleBotRequest onAllReady");
+
           resolve(
             new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
-            })
+            }),
           );
 
           pipe(body);
@@ -73,7 +79,7 @@ function handleBotRequest(
             console.error(error);
           }
         },
-      }
+      },
     );
 
     setTimeout(abort, ABORT_DELAY);
@@ -84,8 +90,9 @@ function handleBrowserRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
-  remixContext: EntryContext
+  remixContext: EntryContext,
 ) {
+  console.log("entry.server handleBrowserRequest");
   return new Promise((resolve, reject) => {
     let shellRendered = false;
     const { pipe, abort } = renderToPipeableStream(
@@ -98,12 +105,24 @@ function handleBrowserRequest(
 
           responseHeaders.set("Content-Type", "text/html");
 
-          resolve(
+          console.log("entry.server handleBrowserRequest onShellReady");
+
+          cors(
+            request,
             new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
-            })
-          );
+            }),
+            {
+              origin: "http://localhost:3232", // or your production domain
+              credentials: true,
+            },
+          ).then((response) => {
+            console.log("entry.server handleBrowserRequest cors");
+            console.log(response.headers);
+
+            resolve(response);
+          });
 
           pipe(body);
         },
@@ -119,9 +138,17 @@ function handleBrowserRequest(
             console.error(error);
           }
         },
-      }
+      },
     );
 
     setTimeout(abort, ABORT_DELAY);
   });
 }
+
+export const handleDataRequest: HandleDataRequestFunction = async (response, { request }) => {
+  console.log("entry.server handleDataRequest");
+  return await cors(request, response, {
+    origin: "http://localhost:3232", // or your production domain
+    credentials: true,
+  });
+};

@@ -248,7 +248,3 @@ export async function action(args: ActionFunctionArgs) {
 
   return json({ ok: true, data: savedFei, error: null });
 }
-
-export default function ActionUser() {
-  return null;
-}

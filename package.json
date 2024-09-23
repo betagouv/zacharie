@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "remix vite:build",
-    "dev": "yarn prisma-deploy && react-dsfr update-icons && remix vite:dev",
+    "dev-serve": "yarn prisma-deploy && react-dsfr update-icons && remix vite:dev --port 3233",
+    "dev-spa": "SPA_MODE=true && remix vite:dev --port 3232",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "npx prisma migrate deploy && react-dsfr update-icons && cross-env NODE_ENV=production remix-serve ./build/server/index.js",
     "prisma-setup": "prisma generate && prisma migrate deploy",
@@ -36,6 +37,7 @@
     "morgan": "^1.10.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.26.2",
     "remix-utils": "^7.6.0"
   },
   "devDependencies": {

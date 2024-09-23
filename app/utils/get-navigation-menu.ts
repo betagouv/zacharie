@@ -90,10 +90,9 @@ export default function useNavigationMenu() {
     },
     mesFeiMenu,
     {
-      text:
-        process.env.NODE_ENV === "development"
-          ? `Déconnexion ${user?.email} (${user?.roles.map((ro) => ro.slice(0, 3)).join("-")})`
-          : "Se déconnecter",
+      text: import.meta.env.PROD
+        ? `Déconnexion ${user?.email} (${user?.roles.map((ro) => ro.slice(0, 3)).join("-")})`
+        : "Se déconnecter",
       linkProps: {
         onClick: handleLogout,
         type: "submit",

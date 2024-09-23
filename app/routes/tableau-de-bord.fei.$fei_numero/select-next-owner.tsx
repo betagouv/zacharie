@@ -1,18 +1,18 @@
+import type { SerializeFrom } from "@remix-run/node";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { loader } from "./route";
+import { clientLoader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { UserRoles, Entity, User, Prisma } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { getUserRoleLabel, getUserRoleLabelPlural } from "~/utils/get-user-roles-label";
-import { SerializeFrom } from "@remix-run/node";
 import { action as searchUserAction } from "~/routes/action.trouver-premier-detenteur";
 
 export default function SelectNextOwner() {
   const { user, detenteursInitiaux, examinateursInitiaux, ccgs, collecteursPro, etgs, svis, fei } =
-    useLoaderData<typeof loader>();
+    useLoaderData<typeof clientLoader>();
   const [nextRole, setNextRole] = useState<UserRoles | "">(fei.fei_next_owner_role ?? "");
 
   const nextOwners = useMemo(() => {

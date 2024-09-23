@@ -1,4 +1,4 @@
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import { json, redirect, type ClientLoaderFunctionArgs, useFetcher, useLoaderData } from "@remix-run/react";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Prisma } from "@prisma/client";
@@ -7,37 +7,31 @@ import grandGibierCarcasse from "~/data/grand-gibier-carcasse.json";
 import grandGibierAbats from "~/data/grand-gibier-abats.json";
 import { useEffect, useMemo, useRef, useState } from "react";
 import InputForSearchPrefilledData from "~/components/InputForSearchPrefilledData";
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { prisma } from "~/db/prisma.server";
-import { getUserFromCookie } from "~/services/auth.server";
-import InputNotEditable from "~/components/InputNotEditable";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
+import { getUserFromCookie } from "~/services/auth.server";
+import InputNotEditable from "~/components/InputNotEditable";
+import { type CarcasseLoaderData } from "~/routes/loader.$fei_numero.$numero_bracelet";
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function clientLoader({ request, params }: ClientLoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const carcasse = await prisma.carcasse.findUnique({
-    where: {
-      numero_bracelet: params.numero_bracelet,
-      fei_numero: params.fei_numero,
-    },
-    include: {
-      Fei: true,
-    },
-  });
-  if (!carcasse) {
+  const carcasseData = (await fetch(`/loader/${params.fei_numero}/${params.numero_bracelet}`).then((res) =>
+    res.json(),
+  )) as CarcasseLoaderData;
+
+  if (!carcasseData) {
     throw redirect(`/tableau-de-bord/fei/${params.fei_numero}`);
   }
 
-  return json({ carcasse, user, fei: carcasse.Fei });
+  return json({ carcasse: carcasseData.carcasse, user, fei: carcasseData.fei });
 }
 
 export default function CarcasseReadAndWrite() {
-  const { fei, carcasse, user } = useLoaderData<typeof loader>();
+  const { fei, carcasse, user } = useLoaderData<typeof clientLoader>();
   const canEdit = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;

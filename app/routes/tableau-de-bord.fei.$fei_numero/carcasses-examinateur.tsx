@@ -1,5 +1,5 @@
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
-import { loader } from "./route";
+import { clientLoader } from "./route";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
@@ -11,7 +11,7 @@ const style = {
 };
 
 export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) {
-  const { fei } = useLoaderData<typeof loader>();
+  const { fei } = useLoaderData<typeof clientLoader>();
   const nouvelleCarcasseFetcher = useFetcher<typeof nouvelleCarcasseAtion>({ key: "nouvelle-carcasse" });
   const carcasseFetcher = useFetcher({ key: "carcasse-delete-fetcher" });
 
