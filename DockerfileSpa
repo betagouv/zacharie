@@ -1,5 +1,5 @@
 # Use an official Node runtime as the parent image
-FROM node:20
+FROM node:20-slim
 
 # Set the working directory in the container
 WORKDIR /app
@@ -16,8 +16,14 @@ COPY .yarnrc.yml* ./
 # Copy Prisma schema
 COPY prisma ./prisma
 
-# Install dependencies
-RUN YARN_ENABLE_GLOBAL_CACHE=false YARN_ENABLE_MIRROR=false YARN_ENABLE_INLINE_BUILDS=true yarn install
+# Install production dependencies only
+ENV NODE_ENV=production
+RUN yarn config set network-timeout 300000 && \
+    YARN_ENABLE_GLOBAL_CACHE=false \
+    YARN_ENABLE_MIRROR=false \
+    YARN_ENABLE_INLINE_BUILDS=true \
+    NODE_OPTIONS="--max_old_space_size=2048" \
+    yarn install --production --frozen-lockfile --network-timeout 300000
 
 # Generate Prisma client
 RUN yarn prisma generate
@@ -29,11 +35,8 @@ COPY . .
 ENV SPA_MODE=true
 RUN yarn build-spa
 
-# Expose the port the app runs on (adjust if your app uses a different port)
+# Expose the port the app runs on
 EXPOSE 8080
-
-# Set NODE_ENV to production
-ENV NODE_ENV=production
 
 # Define the command to run the app
 CMD ["yarn", "start-spa"]
