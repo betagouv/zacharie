@@ -4,6 +4,7 @@ import { installGlobals } from "@remix-run/node";
 import { defineConfig, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { RemixVitePWA } from "@vite-pwa/remix";
+import path from "path";
 
 installGlobals();
 
@@ -11,6 +12,7 @@ const { RemixVitePWAPlugin, RemixPWAPreset } = RemixVitePWA();
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const isSpaMode = env.SPA_MODE === "true";
 
   console.log("Vite mode", mode, env.SPA_MODE);
   return {
@@ -19,19 +21,22 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       cors: {
-        origin: "http://localhost:3232",
+        origin: mode === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
         credentials: true,
       },
     },
     plugins: [
       remix({
         presets: [RemixPWAPreset()],
-        ssr: env.SPA_MODE ? false : true,
+        ssr: !isSpaMode,
+        buildDirectory: isSpaMode ? "build-spa" : "build-server",
+
         future: {
           v3_fetcherPersist: true,
           v3_relativeSplatPath: true,
           v3_throwAbortReason: true,
         },
+        ignoredRouteFiles: isSpaMode ? ["**/routes/action.*", "**/routes/admin.*", "**/routes/loader.*"] : ["**/.*"],
       }),
       tsconfigPaths(),
       sentryVitePlugin({
@@ -90,8 +95,8 @@ export default defineConfig(({ mode }) => {
     build: {
       sourcemap: true,
       chunkSizeWarningLimit: 5000,
+      emptyOutDir: true,
     },
-    // https://github.com/prisma/prisma/issues/12504#issuecomment-1285883083
     resolve: {
       alias: {
         ".prisma/client/index-browser": "./node_modules/.prisma/client/index-browser.js",

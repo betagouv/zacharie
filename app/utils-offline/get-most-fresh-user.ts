@@ -10,21 +10,21 @@ export async function getMostFreshUser() {
   if (!window.navigator.onLine) {
     return cachedUser;
   }
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/loader/me`, {
+  fetch(`${import.meta.env.VITE_API_URL}/loader/me`, {
     method: "GET",
     credentials: "include",
     headers: {
       Accept: "application/json",
     },
-  });
-  if (response.ok) {
-    const userResponse = (await response.json()) as MeLoaderData;
-    if (userResponse && userResponse.user) {
-      await setCacheItem("user", userResponse.user);
-    }
-    return userResponse.user;
-  } else {
-    setCacheItem("user", null);
-    return null;
-  }
+  })
+    .then(async (response) => {
+      const userResponse = (await response.json()) as MeLoaderData;
+      if (userResponse && userResponse.user) {
+        await setCacheItem("user", userResponse.user);
+      }
+      return userResponse.user;
+    })
+    .catch(() => {
+      return cachedUser;
+    });
 }

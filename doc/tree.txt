@@ -33,6 +33,7 @@
 ┃ ┃ ┣ 📜update-villes.js
 ┃ ┃ ┗ 📜villes.json
 ┃ ┣ 📂db
+┃ ┃ ┣ 📜fei.server.ts
 ┃ ┃ ┗ 📜prisma.server.ts
 ┃ ┣ 📂routes
 ┃ ┃ ┣ 📂tableau-de-bord.fei.$fei_numero
@@ -53,15 +54,31 @@
 ┃ ┃ ┣ 📜_index.tsx
 ┃ ┃ ┣ 📜404.tsx
 ┃ ┃ ┣ 📜action.carcasse-suivi.ts
-┃ ┃ ┣ 📜action.carcasse.$numero_bracelet.tsx
-┃ ┃ ┣ 📜action.carcasse.nouvelle.tsx
+┃ ┃ ┣ 📜action.carcasse.$numero_bracelet.ts
+┃ ┃ ┣ 📜action.carcasse.nouvelle.ts
+┃ ┃ ┣ 📜action.connexion.ts
 ┃ ┃ ┣ 📜action.fei-intermediaire.nouveau.ts
-┃ ┃ ┣ 📜action.fei.($fei_numero).ts
+┃ ┃ ┣ 📜action.fei.$fei_numero.ts
+┃ ┃ ┣ 📜action.fei.nouvelle.ts
 ┃ ┃ ┣ 📜action.trouver-premier-detenteur.ts
 ┃ ┃ ┣ 📜action.user-entity.$user_id.ts
 ┃ ┃ ┣ 📜action.user-relation.$user_id.ts
 ┃ ┃ ┣ 📜action.user.$user_id.ts
-┃ ┃ ┣ 📜actions.logout.tsx
+┃ ┃ ┣ 📜action.user.logout.ts
+┃ ┃ ┣ 📜admin.action.entite.$entityId.ts
+┃ ┃ ┣ 📜admin.action.entite.nouvelle.ts
+┃ ┃ ┣ 📜admin.action.utilisateur.nouveau.ts
+┃ ┃ ┣ 📜admin.loader.entite.$entityId.ts
+┃ ┃ ┣ 📜admin.loader.entites.ts
+┃ ┃ ┣ 📜admin.loader.fei.ts
+┃ ┃ ┣ 📜admin.loader.utilisateur.$userId.ts
+┃ ┃ ┣ 📜admin.loader.utilisateurs.ts
+┃ ┃ ┣ 📜loader.$fei_numero.$numero_bracelet.ts
+┃ ┃ ┣ 📜loader.entities.ts
+┃ ┃ ┣ 📜loader.fei.$fei_numero.ts
+┃ ┃ ┣ 📜loader.fei.ts
+┃ ┃ ┣ 📜loader.me.ts
+┃ ┃ ┣ 📜loader.user-ccgs.ts
 ┃ ┃ ┣ 📜sentry-example-page.tsx
 ┃ ┃ ┣ 📜tableau-de-bord._index.tsx
 ┃ ┃ ┣ 📜tableau-de-bord.admin._index.tsx
@@ -82,9 +99,11 @@
 ┃ ┃ ┣ 📜tableau-de-bord.mon-profil.mes-roles.tsx
 ┃ ┃ ┗ 📜tableau-de-bord.tsx
 ┃ ┣ 📂services
+┃ ┃ ┣ 📜auth.client.ts
 ┃ ┃ ┣ 📜auth.server.ts
 ┃ ┃ ┣ 📜capture.ts
 ┃ ┃ ┣ 📜crypto.server.ts
+┃ ┃ ┣ 📜extract-loader-data.ts
 ┃ ┃ ┣ 📜honeypot.server.ts
 ┃ ┃ ┣ 📜indexed-db.client.ts
 ┃ ┃ ┣ 📜otp-email.server.ts
@@ -99,8 +118,10 @@
 ┃ ┃ ┣ 📜get-navigation-menu.ts
 ┃ ┃ ┣ 📜get-user-roles-label.ts
 ┃ ┃ ┣ 📜sort-things-by-type-and-id.ts
-┃ ┃ ┣ 📜user-onboarded.server.ts
+┃ ┃ ┣ 📜user-onboarded.client.ts
 ┃ ┃ ┗ 📜useUser.ts
+┃ ┣ 📂utils-offline
+┃ ┃ ┗ 📜get-most-fresh-user.ts
 ┃ ┣ 📜entry.client.tsx
 ┃ ┣ 📜entry.server.tsx
 ┃ ┣ 📜pwa.ts
@@ -112,7 +133,8 @@
 ┃ ┣ 📜automatic reload.md
 ┃ ┣ 📜Fiche d accompagnement Grand Fosse.pdf
 ┃ ┣ 📜Instruction 2021-555_final.pdf
-┃ ┗ 📜remix pwa offline
+┃ ┣ 📜remix pwa offline
+┃ ┗ 📜tree.txt
 ┣ 📂prisma
 ┃ ┣ 📂migrations
 ┃ ┃ ┣ 📂20240920093200_init
@@ -130,12 +152,14 @@
 ┣ 📜.gitignore
 ┣ 📜.sentryclirc
 ┣ 📜.yarnrc.yml
-┣ 📜Dockerfile
+┣ 📜DockerfileApi
+┣ 📜DockerfileSpa
 ┣ 📜instrumentation.server.mjs
 ┣ 📜package.json
 ┣ 📜postcss.config.js
 ┣ 📜pwa-assets.config.ts
 ┣ 📜README.md
+┣ 📜spa-server.js
 ┣ 📜tailwind.config.ts
 ┣ 📜tsconfig.json
 ┣ 📜vite.config.ts

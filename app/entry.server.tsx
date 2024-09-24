@@ -31,7 +31,6 @@ export default function handleRequest(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   loadContext: AppLoadContext,
 ) {
-  console.log("entry.server handleRequest");
   return isbot(request.headers.get("user-agent") || "")
     ? handleBotRequest(request, responseStatusCode, responseHeaders, remixContext)
     : handleBrowserRequest(request, responseStatusCode, responseHeaders, remixContext);
@@ -55,8 +54,6 @@ function handleBotRequest(
           const stream = createReadableStreamFromReadable(body);
 
           responseHeaders.set("Content-Type", "text/html");
-
-          console.log("entry.server handleBotRequest onAllReady");
 
           resolve(
             new Response(stream, {
@@ -92,7 +89,6 @@ function handleBrowserRequest(
   responseHeaders: Headers,
   remixContext: EntryContext,
 ) {
-  console.log("entry.server handleBrowserRequest");
   return new Promise((resolve, reject) => {
     let shellRendered = false;
     const { pipe, abort } = renderToPipeableStream(
@@ -105,8 +101,6 @@ function handleBrowserRequest(
 
           responseHeaders.set("Content-Type", "text/html");
 
-          console.log("entry.server handleBrowserRequest onShellReady");
-
           cors(
             request,
             new Response(stream, {
@@ -114,13 +108,11 @@ function handleBrowserRequest(
               status: responseStatusCode,
             }),
             {
-              origin: "http://localhost:3232", // or your production domain
+              origin:
+                process.env.NODE_ENV === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
               credentials: true,
             },
           ).then((response) => {
-            console.log("entry.server handleBrowserRequest cors");
-            console.log(response.headers);
-
             resolve(response);
           });
 
@@ -146,9 +138,8 @@ function handleBrowserRequest(
 }
 
 export const handleDataRequest: HandleDataRequestFunction = async (response, { request }) => {
-  console.log("entry.server handleDataRequest");
   return await cors(request, response, {
-    origin: "http://localhost:3232", // or your production domain
+    origin: process.env.NODE_ENV === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
     credentials: true,
   });
 };
