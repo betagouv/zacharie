@@ -1,22 +1,20 @@
-import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { type LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
-import { getUserOnboardingRoute } from "~/utils/user-onboarded.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  console.log("BETABIM");
-  const user = await getUserFromCookie(request, { debug: true });
-  // console.log("user", user);
-  // if (!user) {
-  //   throw redirect("/connexion?type=compte-existant");
-  // }
-  const onboardingRoute = getUserOnboardingRoute(user);
-  if (onboardingRoute) {
-    throw redirect(onboardingRoute);
+  const user = await getUserFromCookie(request);
+  if (!user?.onboarded_at) {
+    return json(
+      { user: null, feisAssigned: [], feisDone: [] },
+      {
+        status: 401,
+      },
+    );
   }
-  const feiAssigned = await prisma.fei.findMany({
+  const feisAssigned = await prisma.fei.findMany({
     where: {
       svi_signed_at: null,
       OR: [
@@ -58,7 +56,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       updated_at: "desc",
     },
   });
-  const feiDone = await prisma.fei.findMany({
+  const feisDone = await prisma.fei.findMany({
     where: {
       created_by_user_id: user.id,
       svi_signed_at: {
@@ -74,7 +72,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  return json({ user, feiAssigned, feiDone });
+  return json({ user, feisAssigned, feisDone });
 }
 
 export type FeisLoaderData = ExtractLoaderData<typeof loader>;

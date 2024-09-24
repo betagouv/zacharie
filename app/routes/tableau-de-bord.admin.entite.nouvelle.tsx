@@ -23,7 +23,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const formData = await request.formData();
-  console.log("formData", Object.fromEntries(formData));
+  console.log("formData tableau-de-bord.admin.entite.nouvelle", Object.fromEntries(formData));
 
   const createdEntity = await prisma.entity.create({
     data: {

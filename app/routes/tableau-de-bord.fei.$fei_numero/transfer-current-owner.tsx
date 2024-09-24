@@ -30,9 +30,9 @@ export default function FeiTransfer() {
           onClick={() => {
             const formData = new FormData();
             formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer, "false");
+            formData.append("route", `/action/fei/${fei.numero}`);
             fetcher.submit(formData, {
               method: "POST",
-              action: `/action/fei/${fei.numero}`,
               preventScrollReset: true, // Prevent scroll reset on submission
             });
           }}

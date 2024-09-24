@@ -27,7 +27,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   const formData = await request.formData();
-  console.log("formData", Object.fromEntries(formData));
+  console.log("formData tableau-de-bord.admin.entite.$entityId", Object.fromEntries(formData));
 
   if (formData.get("_action") === "remove-couple") {
     const entity = await prisma.entity.findUnique({

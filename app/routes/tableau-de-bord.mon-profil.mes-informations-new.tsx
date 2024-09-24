@@ -1,12 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import {
-  json,
-  redirect,
-  type ClientLoaderFunctionArgs,
-  useFetcher,
-  useLoaderData,
-  useNavigate,
-} from "@remix-run/react";
+import { json, redirect, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
@@ -16,11 +9,11 @@ import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
-import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
+import { EntityTypes, EntityRelationType, UserRoles, Prisma, type User } from "@prisma/client";
 import InputVille from "~/components/InputVille";
 import InputNotEditable from "~/components/InputNotEditable";
-import { getUserFromClient } from "~/services/auth.client";
 import { type EntitiesLoaderData } from "~/routes/loader.entities";
+import { getCacheItem } from "~/services/indexed-db.client";
 
 export function meta() {
   return [
@@ -30,13 +23,20 @@ export function meta() {
   ];
 }
 
-export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
-  const user = await getUserFromClient(request);
+export async function clientLoader() {
+  const user = (await getCacheItem("user")) as User | null;
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
 
-  const response = await fetch("/loader/entities");
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/loader/entities`, {
+    method: "GET",
+    credentials: "include",
+    headers: new Headers({
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }),
+  });
   const data = (await response.json()) as EntitiesLoaderData;
   const { allEntitiesByTypeAndId, userEntitiesByTypeAndId } = data;
 

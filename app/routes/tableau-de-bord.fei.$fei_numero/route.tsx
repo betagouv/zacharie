@@ -1,8 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { json, MetaArgs, redirect, type ClientLoaderFunctionArgs } from "@remix-run/react";
-import { useLoaderData } from "@remix-run/react";
+import {
+  json,
+  MetaArgs,
+  redirect,
+  useLoaderData,
+  type ClientActionFunctionArgs,
+  type ClientLoaderFunctionArgs,
+} from "@remix-run/react";
+import { setFeiToCache } from "~/utils/caches";
 import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
-import { UserRoles } from "@prisma/client";
+import { UserRoles, type User } from "@prisma/client";
 import FEIPremierDetenteur from "./premier-detenteur";
 import ConfirmCurrentOwner from "./confirm-current-owner";
 import CurrentOwner from "./current-owner";
@@ -10,8 +17,9 @@ import FeiTransfer from "./transfer-current-owner";
 import FEICurrentIntermediaire from "./current-intermediaire";
 import FEI_SVI from "./svi";
 import FEIExaminateurInitial from "./examinateur-initial";
-import { getUserFromClient } from "~/services/auth.client";
 import { type FeiLoaderData } from "~/routes/loader.fei.$fei_numero";
+import { type FeiActionData } from "~/routes/action.fei.$fei_numero";
+import { getCacheItem } from "~/services/indexed-db.client";
 
 export function meta({ params }: MetaArgs) {
   return [
@@ -21,12 +29,48 @@ export function meta({ params }: MetaArgs) {
   ];
 }
 
-export async function clientLoader({ request, params }: ClientLoaderFunctionArgs) {
-  const user = await getUserFromClient(request);
+export async function clientAction({ request }: ClientActionFunctionArgs) {
+  const formData = await request.formData();
+  console.log("ON EST LA PUTIN", Object.fromEntries(formData.entries()));
+  const route = formData.get("route") as string;
+  if (!route) {
+    console.log("NO ROUTE");
+    return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
+  }
+  const url = `${import.meta.env.VITE_API_URL}${route}`;
+  console.log("URL", url);
+  const response = (await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+    headers: {
+      Accept: "application/json",
+    },
+  }).then((response) => response.json())) as FeiActionData;
+  if (response.ok && response.data?.id) {
+    const fei = response.data;
+    setFeiToCache(fei);
+  }
+  return response;
+}
+
+export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
+  const user = (await getCacheItem("user")) as User | null;
+  console.log("USER", user);
   if (!user) {
+    console.log("REDIRECt CONNArD");
     throw redirect("/connexion?type=compte-existant");
   }
-  const loaderData = (await fetch(`/loader/fei/${params.fei_numero}`).then((res) => res.json())) as FeiLoaderData;
+  const loaderData = (await fetch(`${import.meta.env.VITE_API_URL}/loader/fei/${params.fei_numero}`, {
+    method: "GET",
+    credentials: "include",
+    headers: new Headers({
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }),
+  }).then((res) => res.json())) as FeiLoaderData;
+
+  console.log("LOADER DATA", loaderData);
 
   return json({
     user,

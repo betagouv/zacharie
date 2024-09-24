@@ -11,7 +11,7 @@ export async function action(args: ActionFunctionArgs) {
   }
   const formData = await request.formData();
 
-  console.log("formData", Object.fromEntries(formData));
+  console.log("formData action.fei-intermediaire.nouveau", Object.fromEntries(formData));
 
   const fei_numero = formData.get(Prisma.FeiIntermediaireScalarFieldEnum.fei_numero) as string;
   if (!fei_numero) {

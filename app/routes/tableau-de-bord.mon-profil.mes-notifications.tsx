@@ -1,19 +1,11 @@
-import {
-  json,
-  redirect,
-  useFetcher,
-  useLoaderData,
-  useNavigate,
-  type ClientLoaderFunctionArgs,
-} from "@remix-run/react";
-
+import { useMemo } from "react";
+import { json, redirect, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
-import { UserNotifications, UserRoles } from "@prisma/client";
-import { useMemo } from "react";
-import { getUserFromClient } from "~/services/auth.client";
+import { UserNotifications, UserRoles, type User } from "@prisma/client";
+import { getCacheItem } from "~/services/indexed-db.client";
 
 export function meta() {
   return [
@@ -23,8 +15,9 @@ export function meta() {
   ];
 }
 
-export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
-  const user = await getUserFromClient(request);
+export async function clientLoader() {
+  const user = (await getCacheItem("user")) as User | null;
+
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }

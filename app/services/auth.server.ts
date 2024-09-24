@@ -30,7 +30,7 @@ export const getUserFromCookie = async (
     if (debug) console.log("optional", optional);
     if (optional) return null;
     if (debug) console.log("throw redirect", failureRedirect);
-    throw logoutAndRedirect(request, failureRedirect);
+    return logoutAndRedirect(request, failureRedirect);
   }
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -55,19 +55,19 @@ export const getUserFromCookie = async (
   }
   if (debug) console.log("user deleted", user);
   if (optional) return null;
-  throw logoutAndRedirect(request, failureRedirect);
+  return logoutAndRedirect(request, failureRedirect);
 };
 
 export const getUserIdFromCookie = async (request: Request, { failureRedirect = "/", optional = false } = {}) => {
   const session = await getSession(request.headers.get("Cookie"));
   if (!session) {
     if (optional) return null;
-    throw logoutAndRedirect(request, failureRedirect);
+    return logoutAndRedirect(request, failureRedirect);
   }
   const userId = session.get("userId");
   if (!userId) {
     if (optional) return null;
-    throw logoutAndRedirect(request, failureRedirect);
+    return logoutAndRedirect(request, failureRedirect);
   }
   Sentry.setUser({ id: userId });
   return userId;
@@ -77,17 +77,17 @@ export const getUserEmailFromCookie = async (request: Request, { failureRedirect
   const session = await getSession(request.headers.get("Cookie"));
   if (!session) {
     if (optional) return null;
-    throw logoutAndRedirect(request, failureRedirect);
+    return logoutAndRedirect(request, failureRedirect);
   }
   const userEmail = session.get("userEmail");
   if (!userEmail) {
     if (optional) return null;
-    throw logoutAndRedirect(request, failureRedirect);
+    return logoutAndRedirect(request, failureRedirect);
   }
   const userRoles = session.get("userRoles");
   if (!userRoles) {
     if (optional) return null;
-    throw logoutAndRedirect(request, failureRedirect);
+    return logoutAndRedirect(request, failureRedirect);
   }
   Sentry.setUser({ email: userEmail, roles: userRoles });
   return userEmail;
@@ -95,7 +95,7 @@ export const getUserEmailFromCookie = async (request: Request, { failureRedirect
 
 export const getUnauthentifiedUserFromCookie = (request: Request) => getUserFromCookie(request, { optional: true });
 
-export const createUserSession = async (request: Request, user: User, successRedirect: string) => {
+export const createUserSession = async (request: Request, user: User) => {
   const session = await getSession(request.headers.get("Cookie"));
   session.set("userId", user.id);
   session.set("userEmail", user.email);
@@ -106,7 +106,7 @@ export const createUserSession = async (request: Request, user: User, successRed
   });
   const cookieValue = await commitSession(session);
   return json(
-    { success: true, user: { id: user.id, email: user.email, roles: user.roles }, redirect: successRedirect },
+    { ok: true, error: null, data: user },
     {
       headers: {
         "Set-Cookie": cookieValue,
@@ -120,16 +120,18 @@ export const createUserSession = async (request: Request, user: User, successRed
 const logoutAndRedirect = async (request: Request, failureRedirectPathname: string) => {
   console.log("destroying brother");
   const session = await getSession(request.headers.get("Cookie"));
-  session.set("userId", "");
-  session.set("userEmail", "");
-  session.set("userRoles", "");
-  // get the origin and append the failureRedirectPathname
-  const origin = new URL(request.url).origin;
-  const failureRedirect = `${origin}${failureRedirectPathname}`;
-  redirect(failureRedirect, {
-    headers: {
-      "Set-Cookie": await destroySession(session),
-    },
-  });
+  if (session) {
+    session.set("userId", "");
+    session.set("userEmail", "");
+    session.set("userRoles", "");
+    // get the origin and append the failureRedirectPathname
+    const origin = new URL(request.url).origin;
+    const failureRedirect = `${origin}${failureRedirectPathname}`;
+    redirect(failureRedirect, {
+      headers: {
+        "Set-Cookie": await destroySession(session),
+      },
+    });
+  }
   return null;
 };

@@ -12,7 +12,7 @@ export async function action(args: ActionFunctionArgs) {
 
   const formData = await request.formData();
 
-  console.log("formData", Object.fromEntries(formData.entries()));
+  console.log("formData action.user.$user_id", Object.fromEntries(formData.entries()));
 
   const nextUser: Prisma.UserUpdateInput = {};
 

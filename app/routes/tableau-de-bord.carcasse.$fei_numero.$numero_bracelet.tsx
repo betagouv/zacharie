@@ -1,7 +1,14 @@
-import { json, redirect, type ClientLoaderFunctionArgs, useFetcher, useLoaderData } from "@remix-run/react";
+import {
+  json,
+  redirect,
+  type ClientLoaderFunctionArgs,
+  type ClientActionFunctionArgs,
+  useFetcher,
+  useLoaderData,
+} from "@remix-run/react";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
-import { Prisma } from "@prisma/client";
+import { Prisma, type User } from "@prisma/client";
 import grandGibier from "~/data/grand-gibier.json";
 import grandGibierCarcasse from "~/data/grand-gibier-carcasse.json";
 import grandGibierAbats from "~/data/grand-gibier-abats.json";
@@ -10,19 +17,44 @@ import InputForSearchPrefilledData from "~/components/InputForSearchPrefilledDat
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
-import { getUserFromCookie } from "~/services/auth.server";
 import InputNotEditable from "~/components/InputNotEditable";
 import { type CarcasseLoaderData } from "~/routes/loader.$fei_numero.$numero_bracelet";
+import { type CarcasseActionData } from "~/routes/action.carcasse.$numero_bracelet";
+import { getCacheItem } from "~/services/indexed-db.client";
 
-export async function clientLoader({ request, params }: ClientLoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
+export async function clientAction({ request, params }: ClientActionFunctionArgs) {
+  const formData = await request.formData();
+  console.log("ON EST LA AUSSI", Object.fromEntries(formData.entries()));
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/action/carcasse/${params.numero_bracelet}`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+    headers: {
+      Accept: "application/json",
+    },
+  }).then((response) => response.json())) as CarcasseActionData;
+  return response;
+}
+
+export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
+  const user = (await getCacheItem("user")) as User | null;
+  console.log("carcasseData user", user);
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const carcasseData = (await fetch(`/loader/${params.fei_numero}/${params.numero_bracelet}`).then((res) =>
-    res.json(),
-  )) as CarcasseLoaderData;
+  const carcasseData = (await fetch(
+    `${import.meta.env.VITE_API_URL}/loader/${params.fei_numero}/${params.numero_bracelet}`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: new Headers({
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      }),
+    },
+  ).then((res) => res.json())) as CarcasseLoaderData;
 
+  console.log("carcasseData", carcasseData);
   if (!carcasseData) {
     throw redirect(`/tableau-de-bord/fei/${params.fei_numero}`);
   }
@@ -58,7 +90,6 @@ export default function CarcasseReadAndWrite() {
     const formData = new FormData(formRef.current!);
     carcasseFetcher.submit(formData, {
       method: "POST",
-      action: `/action/carcasse/${carcasse.numero_bracelet}`,
       preventScrollReset: true, // Prevent scroll reset on submission
     });
   };
@@ -97,7 +128,6 @@ export default function CarcasseReadAndWrite() {
             method="POST"
             ref={formRef}
             onChange={handleFormSubmit}
-            action={`/action/carcasse/${carcasse.numero_bracelet}`}
             className="mb-6 bg-white py-2 md:shadow"
           >
             <div className="p-4 pb-8 md:p-8 md:pb-4">

@@ -5,46 +5,37 @@ import {
   useFetcher,
   useSearchParams,
   redirect,
-  type ClientLoaderFunctionArgs,
   type ClientActionFunctionArgs,
 } from "@remix-run/react";
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { getUserIdFromCookieClient } from "~/services/auth.client";
+import type { ConnexionActionData } from "~/routes/action.connexion";
+import type { User } from "@prisma/client";
+import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
+import { getUserOnboardingRoute } from "~/utils/user-onboarded.client";
 
 type ConnexionType = "creation-de-compte" | "compte-existant";
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/action/connexion`, {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/action/connexion`, {
     method: "POST",
     credentials: "include",
     body: await request.formData(),
     headers: {
       Accept: "application/json",
     },
-  });
-  console.log("CACA ZIZI", response);
-  try {
-    const json = await response.json();
-    console.log("CACA ZIZOUT JSON", json);
-  } catch (e) {
-    console.log("CACA ZIZOUT", e);
-    try {
-      const text = await response.text();
-      console.log("CACA ZIZOUT TEXT", text);
-    } catch (e) {
-      console.log("CACA ZIZOUT TEXT LAHELJ", e);
-    }
+  }).then((response) => response.json())) as ConnexionActionData;
+  if (response.ok && response.data?.id) {
+    const user = response.data;
+    setCacheItem("user", user);
+    throw redirect(getUserOnboardingRoute(user) ?? "/tableau-de-bord");
   }
-  console.log("CACA BOUDINOS", response);
-  // if (response.ok) {
-  //   throw redirect("/tableau-de-bord");
-  // }
-  return { ok: true };
+  setCacheItem("user", null);
+  return response;
 }
 
-export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
-  const userId = getUserIdFromCookieClient(request);
-  if (userId) {
+export async function clientLoader() {
+  const user = (await getCacheItem("user")) as User | null;
+  if (user) {
     throw redirect("/tableau-de-bord");
   }
   return null;
@@ -53,7 +44,7 @@ export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
 export default function Connexion() {
   const data = useActionData<{ ok: boolean; error: string }>();
   const [searchParams] = useSearchParams();
-  const connexionType = searchParams.get("type") as ConnexionType;
+  const connexionType = (searchParams.get("type") as ConnexionType) || "compte-existant";
   const connexionFetcher = useFetcher({ key: "connexion" });
 
   // Helper function to safely access error message
@@ -91,7 +82,7 @@ export default function Connexion() {
                   name: "email-utilisateur",
                   type: "email",
                   placeholder: "votre@email.com",
-                  defaultValue: import.meta.env.VITE_EMAIL,
+                  defaultValue: import.meta.env.VITE_EMAIL ?? "",
                 }}
               />
               <Input
@@ -104,7 +95,7 @@ export default function Connexion() {
                   type: "password",
                   minLength: 12,
                   placeholder: "votre mot de passe",
-                  defaultValue: import.meta.env.VITE_PASSWORD,
+                  defaultValue: import.meta.env.VITE_PASSWORD ?? "",
                 }}
               />
               <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left">

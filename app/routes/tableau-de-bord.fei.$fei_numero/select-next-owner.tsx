@@ -147,16 +147,16 @@ export default function SelectNextOwner() {
         id="select-next-owner"
         preventScrollReset
         method="POST"
-        action={`/action/fei/${fei.numero}`}
         onChange={(event) => {
           const formData = new FormData(event.currentTarget);
+          formData.append("route", `/action/fei/${fei.numero}`);
           nextOwnerFetcher.submit(formData, {
             method: "POST",
-            action: `/action/fei/${fei.numero}`,
             preventScrollReset: true, // Prevent scroll reset on submission
           });
         }}
       >
+        <input type="hidden" name="route" value={`/action/fei/${fei.numero}`} />
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <div className="fr-fieldset__element">
           <Select
@@ -232,11 +232,8 @@ export default function SelectNextOwner() {
       </nextOwnerFetcher.Form>
       {nextRole === UserRoles.PREMIER_DETENTEUR && !fei.fei_next_owner_user_id && (
         <>
-          <searchUserFetcher.Form
-            className="fr-fieldset__element flex w-full flex-row items-end gap-4"
-            method="POST"
-            action="/action/trouver-premier-detenteur"
-          >
+          <searchUserFetcher.Form className="fr-fieldset__element flex w-full flex-row items-end gap-4" method="POST">
+            <input type="hidden" name="route" value="/action/trouver-premier-detenteur" />
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             <Input
               label="...ou saisissez l'email du Premier Détenteur si vous ne le trouvez pas"

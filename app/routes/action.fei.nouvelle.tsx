@@ -3,6 +3,8 @@ import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from
 import { getUserFromCookie } from "~/services/auth.server";
 import { Prisma, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
+import type { ExtractLoaderData } from "~/services/extract-loader-data";
+import { getFeiByNumero } from "~/db/fei.server";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -14,7 +16,7 @@ export async function action(args: ActionFunctionArgs) {
   let feiNumero = params.fei_numero;
   const formData = await request.formData();
 
-  console.log("formData", Object.fromEntries(formData));
+  console.log("formData action.fei.nouvelle", Object.fromEntries(formData));
 
   const newId = (await prisma.fei.count()) + 1;
   const today = dayjs().format("YYYYMMDD");
@@ -65,9 +67,12 @@ export async function action(args: ActionFunctionArgs) {
   const fei = await prisma.fei.create({
     data: createData,
   });
+  const feiToReturn = await getFeiByNumero(fei.numero);
 
-  return redirect(`/tableau-de-bord/fei/${fei.numero}`);
+  return json({ ok: true, data: feiToReturn, error: "" }, { status: 200 });
 }
+
+export type FeiNouvelleActionData = ExtractLoaderData<typeof action>;
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);

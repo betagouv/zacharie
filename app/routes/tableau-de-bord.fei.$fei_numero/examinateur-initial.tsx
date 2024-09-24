@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { clientLoader } from "./route";
@@ -32,20 +32,15 @@ export default function FEIExaminateurInitial() {
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
   const examFetcher = useFetcher({ key: "examination-fetcher" });
-  const handleUserFormChange = useCallback(
-    (event: React.FocusEvent<HTMLFormElement>) => {
-      if (!canEdit) {
-        return;
-      }
-      const formData = new FormData(event.currentTarget);
-      examFetcher.submit(formData, {
-        method: "POST",
-        action: `/action/fei/${fei.numero}`,
-        preventScrollReset: true, // Prevent scroll reset on submission
-      });
-    },
-    [examFetcher, fei.numero, canEdit],
-  );
+  const handleUserFormChange = (event: React.FocusEvent<HTMLFormElement>) => {
+    if (!canEdit) {
+      return;
+    }
+    approbationFetcher.submit(new FormData(event.currentTarget), {
+      method: "POST",
+      preventScrollReset: true,
+    });
+  };
 
   const needSelecteNextUser = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
@@ -92,7 +87,8 @@ export default function FEIExaminateurInitial() {
   return (
     <>
       <Accordion titleAs="h3" label="Données de chasse" defaultExpanded>
-        <examFetcher.Form method="POST" action={`/action/fei/${fei.numero}`} onBlur={handleUserFormChange}>
+        <examFetcher.Form method="POST" onBlur={handleUserFormChange}>
+          <input type="hidden" name="route" value={`/action/fei/${fei.numero}`} />
           <div className="fr-fieldset__element">
             <Component
               label="Date de mise à mort et d'éviscération"
@@ -130,7 +126,8 @@ export default function FEIExaminateurInitial() {
       </Accordion>
       {fei.FeiExaminateurInitialUser && (
         <Accordion titleAs="h3" label="Approbation de mise sur le marché" defaultExpanded>
-          <approbationFetcher.Form method="POST" action={`/action/fei/${fei.numero}`}>
+          <approbationFetcher.Form method="POST">
+            <input type="hidden" name="route" value={`/action/fei/${fei.numero}`} />
             <div
               className={[
                 "fr-fieldset__element",

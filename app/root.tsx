@@ -92,7 +92,8 @@ export const ErrorBoundary = () => {
   // https://stackoverflow.com/a/76449254/5225096
   const error = useRouteError() as Error;
   captureRemixErrorBoundaryError(error);
-  console.log("error", error);
+  console.log("error from ErrorBoundary", error);
+  console.log("isRouteErrorResponse", isRouteErrorResponse);
   if (!isRouteErrorResponse(error)) {
     return null;
   }

@@ -3,61 +3,14 @@ import { getUserFromCookie } from "~/services/auth.server";
 import { EntityTypes, EntityRelationType, UserRoles, UserRelationType } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
+import { getFeiByNumero, type FeiByNumero } from "~/db/fei.server";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const fei = await prisma.fei.findUnique({
-    where: {
-      numero: params.fei_numero,
-    },
-    include: {
-      FeiCurrentEntity: true,
-      FeiCurrentUser: true,
-      FeiNextEntity: true,
-      Carcasses: {
-        orderBy: {
-          numero_bracelet: "asc",
-        },
-      },
-      FeiDetenteurInitialUser: true,
-      FeiExaminateurInitialUser: true,
-      FeiCreatedByUser: true,
-      FeiDepotEntity: true,
-      FeiSviEntity: true,
-      FeiSviUser: true,
-      FeiIntermediaires: {
-        orderBy: {
-          created_at: "desc", // the lastest first
-        },
-        include: {
-          CarcasseIntermediaire: true,
-          FeiIntermediaireEntity: {
-            select: {
-              raison_sociale: true,
-              siret: true,
-              type: true,
-              numero_ddecpp: true,
-              address_ligne_1: true,
-              address_ligne_2: true,
-              code_postal: true,
-              ville: true,
-            },
-          },
-          FeiIntermediaireUser: {
-            select: {
-              nom_de_famille: true,
-              prenom: true,
-              email: true,
-              telephone: true,
-            },
-          },
-        },
-      },
-    },
-  });
+  const fei = (await getFeiByNumero(params.fei_numero as string)) as FeiByNumero;
   if (!fei) {
     throw redirect("/tableau-de-bord");
   }

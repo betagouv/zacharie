@@ -1,7 +1,8 @@
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { json, type ClientLoaderFunctionArgs, useLoaderData } from "@remix-run/react";
 import RootDisplay from "~/components/RootDisplay";
-import { getUserIdFromCookieClient } from "~/services/auth.client";
+import { getCacheItem } from "~/services/indexed-db.client";
+import type { User } from "@prisma/client";
 // import type { MetaFunction } from "@remix-run/node";
 
 // export const meta: MetaFunction = () => {
@@ -12,9 +13,9 @@ import { getUserIdFromCookieClient } from "~/services/auth.client";
 // };
 
 export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
-  const userId = getUserIdFromCookieClient(request);
+  const user = (await getCacheItem("user")) as User | null;
   return json({
-    isLoggedIn: !!userId,
+    isLoggedIn: !!user?.id,
   });
 }
 

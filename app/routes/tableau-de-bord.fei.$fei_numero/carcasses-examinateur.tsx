@@ -33,10 +33,10 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                   {
                     numero_bracelet: carcasse.numero_bracelet,
                     _action: "delete",
+                    route: `/action/carcasse/${carcasse.numero_bracelet}`,
                   },
                   {
                     method: "POST",
-                    action: `/action/carcasse/${carcasse.numero_bracelet}`,
                     preventScrollReset: true,
                   },
                 );
@@ -86,8 +86,8 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
         <nouvelleCarcasseFetcher.Form
           method="POST"
           className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end"
-          action="/action/carcasse/nouvelle"
         >
+          <input type="hidden" name="route" value="/action/carcasse/nouvelle" />
           <input type="hidden" required name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
           <Input
             label="Numéro de bracelet"

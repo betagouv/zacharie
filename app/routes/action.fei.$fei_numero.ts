@@ -1,7 +1,9 @@
 import { EntityRelationType, Prisma, UserRoles } from "@prisma/client";
 import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
+import { getFeiByNumero } from "~/db/fei.server";
 import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
+import { type ExtractLoaderData } from "~/services/extract-loader-data";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -21,7 +23,7 @@ export async function action(args: ActionFunctionArgs) {
   const nextFei: Prisma.FeiUpdateInput = {};
 
   // log the whole form data for debugging - key values
-  console.log("formData", Object.fromEntries(formData.entries()));
+  console.log("formData action.fei.$fei_numero", Object.fromEntries(formData.entries()));
 
   /*
   *
@@ -242,9 +244,13 @@ export async function action(args: ActionFunctionArgs) {
     data: nextFei,
   });
 
+  const fei = await getFeiByNumero(savedFei.numero);
+
   if (formData.has("_redirect")) {
     return redirect(formData.get("_redirect") as string);
   }
 
-  return json({ ok: true, data: savedFei, error: null });
+  return json({ ok: true, data: fei, error: null });
 }
+
+export type FeiActionData = ExtractLoaderData<typeof action>;

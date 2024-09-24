@@ -22,7 +22,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const formData = await request.formData();
-  console.log("formData", Object.fromEntries(formData));
+  console.log("formData tableau-de-bord.admin.utilisateur.nouveau", Object.fromEntries(formData));
 
   const createdUser = await prisma.user.create({
     data: {

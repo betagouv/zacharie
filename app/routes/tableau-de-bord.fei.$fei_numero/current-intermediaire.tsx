@@ -181,7 +181,8 @@ export default function FEICurrentIntermediaire() {
         )}
       </Accordion>
       <Accordion titleAs="h3" label="Prise en charge des carcasses acceptées" defaultExpanded key={intermediaire.id}>
-        <priseEnChargeFetcher.Form method="POST" action="/action/carcasse-suivi" id="check_finished_at">
+        <priseEnChargeFetcher.Form method="POST" id="check_finished_at">
+          <input type="hidden" name="route" value="/action/carcasse-suivi" />
           <input
             form="check_finished_at"
             type="hidden"

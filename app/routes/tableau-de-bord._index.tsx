@@ -1,7 +1,7 @@
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Table } from "@codegouvfr/react-dsfr/Table";
-import { json, Link, redirect, useLoaderData } from "@remix-run/react";
+import { Link, redirect, useLoaderData } from "@remix-run/react";
 import { UserRoles } from "@prisma/client";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import dayjs from "dayjs";
@@ -10,43 +10,7 @@ import type { FeisLoaderData } from "~/routes/loader.fei";
 
 let isInitialRequest = true;
 
-export async function clientLoader() {
-  console.log("clientLoader");
-  const isOnline = window.navigator.onLine;
-
-  console.log("isOnline", isOnline);
-
-  if (isInitialRequest) {
-    isInitialRequest = false;
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/loader/fei`, {
-      method: "GET",
-      credentials: "include",
-      headers: new Headers({
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      }),
-    });
-    if (!response.ok) {
-      throw new Error("Failed to fetch data");
-    }
-    if (response.redirected) {
-      throw redirect(response.url);
-    }
-    console.log("response", response);
-    const serverData = (await response.json()) as FeisLoaderData;
-    setCacheItem("user", serverData.user);
-    setCacheItem("feiAssigned", serverData.feiAssigned);
-    setCacheItem("feiDone", serverData.feiDone);
-    return serverData;
-  }
-
-  const cachedUser = await getCacheItem("user");
-  const cachedFeiAssigned = await getCacheItem("feiAssigned");
-  const cachedFeiDone = await getCacheItem("feiDone");
-  if (cachedUser && cachedFeiAssigned && cachedFeiDone) {
-    return json({ user: cachedUser, feiAssigned: cachedFeiAssigned, feiDone: cachedFeiDone });
-  }
-
+async function fetchFeis() {
   const response = await fetch(`${import.meta.env.VITE_API_URL}/loader/fei`, {
     method: "GET",
     credentials: "include",
@@ -56,22 +20,59 @@ export async function clientLoader() {
     }),
   });
   if (!response.ok) {
-    throw new Error("Failed to fetch data");
-  }
-  if (response.redirected) {
-    throw redirect(response.url);
+    return { ok: false, status: 401, data: null, error: "Failed to fetch data" };
   }
   const serverData = (await response.json()) as FeisLoaderData;
   setCacheItem("user", serverData.user);
-  setCacheItem("feiAssigned", serverData.feiAssigned);
-  setCacheItem("feiDone", serverData.feiDone);
-  return serverData;
+  setCacheItem("feisAssigned", serverData.feisAssigned);
+  setCacheItem("feisDone", serverData.feisDone);
+  return { ok: true, status: 200, data: serverData, error: "" };
+}
+
+export async function clientLoader() {
+  console.log("clientLoader");
+  const isOnline = window.navigator.onLine;
+
+  console.log("isOnline", isOnline);
+
+  if (isInitialRequest || isOnline) {
+    isInitialRequest = false;
+    const response = await fetchFeis();
+    console.log("response", response);
+    if (!response.ok) {
+      if (response.status === 401) {
+        return redirect("/connexion?type=compte-existant");
+      }
+      return redirect("/");
+    }
+    return response.data;
+  }
+
+  const cachedUser = (await getCacheItem("user")) as FeisLoaderData["user"];
+  const cachedFeiAssigned = (await getCacheItem("feisAssigned")) as FeisLoaderData["feisAssigned"];
+  const cachedFeiDone = (await getCacheItem("feisDone")) as FeisLoaderData["feisDone"];
+  if (cachedUser && cachedFeiAssigned && cachedFeiDone) {
+    return { user: cachedUser, feisAssigned: cachedFeiAssigned, feisDone: cachedFeiDone };
+  }
+
+  const response = await fetchFeis();
+  console.log("response", response);
+  if (!response.ok) {
+    if (response.status === 401) {
+      return redirect("/connexion?type=compte-existant");
+    }
+    return null;
+  }
+  return response.data;
 }
 
 clientLoader.hydrate = true; // (2)
 
 export default function TableauDeBordIndex() {
-  const { user, feiAssigned, feiDone } = useLoaderData<typeof loader>();
+  const data = useLoaderData<FeisLoaderData>();
+  const user = data.user!;
+  const feisAssigned = data.feisAssigned!.filter((fei) => fei !== null);
+  const feisDone = data.feisDone!.filter((fei) => fei !== null);
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -104,12 +105,12 @@ export default function TableauDeBordIndex() {
           )}
           <section className="mb-6 bg-white md:shadow">
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
-              {feiAssigned.length ? (
+              {feisAssigned.length ? (
                 <Table
                   bordered
                   caption="FEI assignées"
                   className="[&_td]:h-px"
-                  data={feiAssigned.map((fei) => [
+                  data={feisAssigned.map((fei) => [
                     <Link
                       className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                       key={fei.numero}
@@ -176,12 +177,12 @@ export default function TableauDeBordIndex() {
           </section>
           <section className="mb-6 bg-white md:shadow">
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
-              {feiDone.length ? (
+              {feisDone.length ? (
                 <Table
                   bordered
                   className="[&_td]:h-px"
                   caption="FEI archivées"
-                  data={feiDone.map((fei) => [
+                  data={feisDone.map((fei) => [
                     <Link
                       className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                       key={fei.numero}

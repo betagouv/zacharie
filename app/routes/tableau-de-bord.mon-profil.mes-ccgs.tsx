@@ -1,14 +1,13 @@
-import { json, redirect, type ClientLoaderFunctionArgs } from "@remix-run/react";
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import { json, redirect, useFetcher, useLoaderData } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
-import { EntityTypes, EntityRelationType, Prisma } from "@prisma/client";
+import { EntityTypes, EntityRelationType, Prisma, type User } from "@prisma/client";
 import { type UserCCGsLoaderData } from "~/routes/loader.user-ccgs";
-import { getUserFromClient } from "~/services/auth.client";
+import { getCacheItem } from "~/services/indexed-db.client";
 
 export function meta() {
   return [
@@ -18,12 +17,21 @@ export function meta() {
   ];
 }
 
-export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
-  const user = await getUserFromClient(request);
+export async function clientLoader() {
+  const user = (await getCacheItem("user")) as User | null;
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const userCCGs = ((await fetch("/loader/user-ccgs").then((res) => res.json())) as UserCCGsLoaderData).userCCGs;
+  const userCCGs = (
+    (await fetch(`${import.meta.env.VITE_API_URL}/loader/user-ccgs`, {
+      method: "GET",
+      credentials: "include",
+      headers: new Headers({
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      }),
+    }).then((res) => res.json())) as UserCCGsLoaderData
+  ).userCCGs;
 
   return json({
     user,

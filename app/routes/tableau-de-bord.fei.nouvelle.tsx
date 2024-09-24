@@ -1,15 +1,34 @@
 import dayjs from "dayjs";
-import { json, redirect, type ClientLoaderFunctionArgs } from "@remix-run/react";
-import { Form, useLoaderData } from "@remix-run/react";
+import { json, redirect, type ClientActionFunctionArgs } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { Prisma, UserRoles } from "@prisma/client";
+import { Prisma, UserRoles, type User } from "@prisma/client";
 import UserNotEditable from "~/components/UserNotEditable";
-import { getUserFromClient } from "~/services/auth.client";
+import { getCacheItem } from "~/services/indexed-db.client";
+import type { FeiNouvelleActionData } from "~/routes/action.fei.nouvelle";
+import { setFeiToCache } from "~/utils/caches";
 
-export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
-  const user = await getUserFromClient(request);
+export async function clientAction({ request }: ClientActionFunctionArgs) {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/action/fei/nouvelle`, {
+    method: "POST",
+    credentials: "include",
+    body: await request.formData(),
+    headers: {
+      Accept: "application/json",
+    },
+  }).then((response) => response.json())) as FeiNouvelleActionData;
+  if (response.ok && response.data?.numero) {
+    const fei = response.data;
+    setFeiToCache(fei);
+    return redirect(`/tableau-de-bord/fei/${fei.numero}`);
+  }
+  return response;
+}
+
+export async function clientLoader() {
+  const user = (await getCacheItem("user")) as User | null;
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
@@ -21,6 +40,7 @@ export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
 
 export default function NouvelleFEI() {
   const { user } = useLoaderData<typeof clientLoader>();
+  const nouvelleFeiFetcher = useFetcher({ key: "fei_create_form" });
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -32,7 +52,7 @@ export default function NouvelleFEI() {
           </CallOut>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-4">
-              <Form id="fei_create_form" method="POST" action="/action/fei/nouvelle">
+              <nouvelleFeiFetcher.Form id="fei_create_form" method="POST">
                 <div className="mb-8">
                   <h2 className="fr-h3 fr-mb-2w">Examinateur Initial</h2>
                   <input type="hidden" name={Prisma.FeiScalarFieldEnum.examinateur_initial_user_id} value={user.id} />
@@ -79,7 +99,7 @@ export default function NouvelleFEI() {
                     ]}
                   />
                 </div> */}
-              </Form>
+              </nouvelleFeiFetcher.Form>
               <div className="mb-16 ml-6 mt-6 md:mb-0">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page

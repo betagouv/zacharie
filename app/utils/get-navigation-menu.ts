@@ -1,14 +1,23 @@
 import { UserRoles } from "@prisma/client";
-import { useLocation, useSubmit } from "@remix-run/react";
+import { useLocation } from "@remix-run/react";
 import { useUser } from "./useUser";
+import { clearCache } from "~/services/indexed-db.client";
 
 export default function useNavigationMenu() {
-  const submit = useSubmit();
   const location = useLocation();
   const user = useUser();
 
-  const handleLogout = () => {
-    submit(null, { method: "post", action: "/actions/logout" });
+  const handleLogout = async () => {
+    fetch(`${import.meta.env.VITE_API_URL}/action/user/logout`, {
+      method: "POST",
+      credentials: "include",
+    }).then(async (res) => {
+      if (res.ok) {
+        await clearCache().then(() => {
+          window.location.href = "connexion?type=compte-existant";
+        });
+      }
+    });
   };
 
   const isExaminateurInitial = user!.roles.includes(UserRoles.EXAMINATEUR_INITIAL);
