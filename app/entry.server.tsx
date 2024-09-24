@@ -15,7 +15,7 @@ import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
 export const handleError = Sentry.wrapHandleErrorWithSentry((error, { request }) => {
-  console.log("entry.server handleError");
+  console.log("entry.server handleError", error);
   // Custom handleError implementation
 });
 

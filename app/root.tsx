@@ -93,9 +93,9 @@ export const ErrorBoundary = () => {
   const error = useRouteError() as Error;
   captureRemixErrorBoundaryError(error);
   console.log("error from ErrorBoundary", error);
-  console.log("isRouteErrorResponse", isRouteErrorResponse);
+  console.log("isRouteErrorResponse(error)", isRouteErrorResponse(error));
   if (!isRouteErrorResponse(error)) {
-    return null;
+    return <UnexpectedError />;
   }
   return <RootDisplay>{error.status === 404 ? <NotFound /> : <UnexpectedError />}</RootDisplay>;
 };

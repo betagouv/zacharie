@@ -4,11 +4,11 @@ import { useFetcher, useLoaderData } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { Prisma, UserRoles, type User } from "@prisma/client";
+import { Prisma, UserRoles } from "@prisma/client";
 import UserNotEditable from "~/components/UserNotEditable";
-import { getCacheItem } from "~/services/indexed-db.client";
 import type { FeiNouvelleActionData } from "~/routes/action.fei.nouvelle";
 import { setFeiToCache } from "~/utils/caches";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
   const response = (await fetch(`${import.meta.env.VITE_API_URL}/action/fei/nouvelle`, {
@@ -28,7 +28,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 }
 
 export async function clientLoader() {
-  const user = (await getCacheItem("user")) as User | null;
+  const user = await getMostFreshUser();
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }

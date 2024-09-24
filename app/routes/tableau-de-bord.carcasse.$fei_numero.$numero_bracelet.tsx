@@ -8,7 +8,7 @@ import {
 } from "@remix-run/react";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
-import { Prisma, type User } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import grandGibier from "~/data/grand-gibier.json";
 import grandGibierCarcasse from "~/data/grand-gibier-carcasse.json";
 import grandGibierAbats from "~/data/grand-gibier-abats.json";
@@ -20,7 +20,7 @@ import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
 import InputNotEditable from "~/components/InputNotEditable";
 import { type CarcasseLoaderData } from "~/routes/loader.$fei_numero.$numero_bracelet";
 import { type CarcasseActionData } from "~/routes/action.carcasse.$numero_bracelet";
-import { getCacheItem } from "~/services/indexed-db.client";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
   const formData = await request.formData();
@@ -37,7 +37,7 @@ export async function clientAction({ request, params }: ClientActionFunctionArgs
 }
 
 export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
-  const user = (await getCacheItem("user")) as User | null;
+  const user = await getMostFreshUser();
   console.log("carcasseData user", user);
   if (!user) {
     throw redirect("/connexion?type=compte-existant");

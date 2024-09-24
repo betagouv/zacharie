@@ -5,9 +5,9 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
-import { EntityTypes, EntityRelationType, Prisma, type User } from "@prisma/client";
+import { EntityTypes, EntityRelationType, Prisma } from "@prisma/client";
 import { type UserCCGsLoaderData } from "~/routes/loader.user-ccgs";
-import { getCacheItem } from "~/services/indexed-db.client";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export function meta() {
   return [
@@ -18,7 +18,7 @@ export function meta() {
 }
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const user = (await getCacheItem("user")) as User | null;
+  const user = await getMostFreshUser();
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
@@ -35,7 +35,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 }
 
 export async function clientLoader() {
-  const user = (await getCacheItem("user")) as User | null;
+  const user = await getMostFreshUser();
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }

@@ -4,8 +4,8 @@ import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
-import { UserNotifications, UserRoles, type User } from "@prisma/client";
-import { getCacheItem } from "~/services/indexed-db.client";
+import { UserNotifications, UserRoles } from "@prisma/client";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export function meta() {
   return [
@@ -16,8 +16,7 @@ export function meta() {
 }
 
 export async function clientLoader() {
-  const user = (await getCacheItem("user")) as User | null;
-
+  const user = await getMostFreshUser();
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }

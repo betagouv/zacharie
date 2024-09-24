@@ -1,10 +1,7 @@
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
-import { UserRoles } from "@prisma/client";
-import { prisma } from "~/db/prisma.server";
 import { Table } from "@codegouvfr/react-dsfr/Table";
 import dayjs from "dayjs";
+import type { AdminEntitesLoaderData } from "~/routes/admin.loader.entites";
 
 export function meta() {
   return [
@@ -14,21 +11,20 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const admin = await getUserFromCookie(request);
-  if (!admin?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect("/connexion?type=compte-existant");
-  }
-  const entities = await prisma.entity.findMany({
-    orderBy: {
-      type: "asc",
-    },
-  });
-  return json({ entities });
+export async function clientLoader() {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/admin/loader/entites`, {
+    method: "GET",
+    credentials: "include",
+    headers: new Headers({
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }),
+  }).then((res) => res.json())) as AdminEntitesLoaderData;
+  return response;
 }
 
 export default function AdminEntites() {
-  const { entities } = useLoaderData<typeof loader>();
+  const { entities } = useLoaderData<typeof clientLoader>();
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">

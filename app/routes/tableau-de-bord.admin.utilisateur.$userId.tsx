@@ -1,19 +1,26 @@
-import { useState, type RefObject, useRef, Fragment, useMemo } from "react";
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
+import { useState, type RefObject, useRef, useMemo } from "react";
+import {
+  json,
+  redirect,
+  Link,
+  useFetcher,
+  useLoaderData,
+  type ClientLoaderFunctionArgs,
+  type ClientActionFunctionArgs,
+} from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Entity, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
-import { prisma } from "~/db/prisma.server";
 import InputVille from "~/components/InputVille";
 import RolesCheckBoxes from "~/components/RolesCheckboxes";
 import { RadioButtons } from "@codegouvfr/react-dsfr/RadioButtons";
 import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
 import { Table } from "@codegouvfr/react-dsfr/Table";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
+import type { AdminUserLoaderData } from "~/routes/admin.loader.utilisateur.$userId";
 
 export function meta() {
   return [
@@ -23,46 +30,48 @@ export function meta() {
   ];
 }
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
-  const admin = await getUserFromCookie(request);
+export async function clientAction({ request }: ClientActionFunctionArgs) {
+  const formData = await request.formData();
+  console.log("formdata tableau-de-bord.admin.utilisateur.$userId", Object.fromEntries(formData));
+  const route = formData.get("route") as string;
+  if (!route) {
+    return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
+  }
+  const url = `${import.meta.env.VITE_API_URL}${route}`;
+  const response = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+    headers: {
+      Accept: "application/json",
+    },
+  }).then((response) => response.json());
+  return response;
+}
+
+export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
+  const admin = await getMostFreshUser();
   if (!admin?.roles?.includes(UserRoles.ADMIN)) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const user = await prisma.user.findUnique({
-    where: {
-      id: params.userId,
-    },
-  });
-  if (!user) {
-    throw redirect("/tableau-de-bord/admin/utilisateurs");
-  }
-  const allEntities = await prisma.entity.findMany();
-  const userEntitiesRelations = await prisma.entityRelations.findMany({
-    where: {
-      owner_id: user.id,
-    },
-    include: {
-      EntityRelatedWithUser: true,
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/loader/utilisateur/${params.userId}`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
     },
   });
 
-  return json({
-    user,
-    identityDone:
-      !!user.nom_de_famille &&
-      !!user.prenom &&
-      !!user.telephone &&
-      !!user.addresse_ligne_1 &&
-      !!user.code_postal &&
-      !!user.ville,
-    examinateurDone: !user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ? true : !!user.numero_cfei,
-    allEntities,
-    userEntitiesRelations,
-  });
+  if (!response.ok) {
+    throw new Error("Failed to load user");
+  }
+  const data = (await response.json()) as AdminUserLoaderData;
+
+  return json(data);
 }
 
 export default function AdminUser() {
-  const { user, identityDone, examinateurDone, userEntitiesRelations } = useLoaderData<typeof loader>();
+  const { user, identityDone, examinateurDone, userEntitiesRelations } = useLoaderData<typeof clientLoader>();
 
   const userFetcher = useFetcher({ key: "mon-profil-mes-informations" });
   const activeFormRef = useRef<HTMLFormElement>(null);
@@ -70,9 +79,9 @@ export default function AdminUser() {
   const rolesFormRef = useRef<HTMLFormElement>(null);
   const handleUserFormSubmit = (formRef: RefObject<HTMLFormElement>) => () => {
     const formData = new FormData(formRef.current!);
+    formData.append("route", `/action/user/${user.id}`);
     userFetcher.submit(formData, {
       method: "POST",
-      action: `/action/user/${user.id}`,
       preventScrollReset: true, // Prevent scroll reset on submission
     });
   };
@@ -120,10 +129,11 @@ export default function AdminUser() {
                 id="user_active_form"
                 method="POST"
                 ref={activeFormRef}
-                action={`/action/user/${user.id}`}
                 onBlur={handleUserFormSubmit(activeFormRef)}
                 preventScrollReset
               >
+                <input type="hidden" name="route" value={`/action/user/${user.id}`} />
+
                 <RadioButtons
                   options={[
                     {
@@ -159,10 +169,10 @@ export default function AdminUser() {
                   id="user_roles_form"
                   method="POST"
                   ref={rolesFormRef}
-                  action={`/action/user/${user.id}`}
                   onBlur={handleUserFormSubmit(rolesFormRef)}
                   preventScrollReset
                 >
+                  <input type="hidden" name="route" value={`/action/user/${user.id}`} />
                   {user.roles.includes(UserRoles.ADMIN) && (
                     <input type="hidden" name={Prisma.UserScalarFieldEnum.roles} value={UserRoles.ADMIN} />
                   )}
@@ -187,10 +197,10 @@ export default function AdminUser() {
                   id="user_data_form"
                   method="POST"
                   ref={idFormRef}
-                  action={`/action/user/${user.id}`}
                   onBlur={handleUserFormSubmit(idFormRef)}
                   preventScrollReset
                 >
+                  <input type="hidden" name="route" value={`/action/user/${user.id}`} />
                   <input type="hidden" name={Prisma.UserScalarFieldEnum.prefilled} value="true" />
                   <div className="fr-fieldset__element">
                     <Input
@@ -310,6 +320,19 @@ export default function AdminUser() {
                       />
                     </div>
                   )}
+                  <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
+                    <ButtonsGroup
+                      buttons={[
+                        {
+                          children: "Enregistrer",
+                          type: "submit",
+                          nativeButtonProps: {
+                            form: "user_data_form",
+                          },
+                        },
+                      ]}
+                    />
+                  </div>
                 </userFetcher.Form>
               )}
               {selectedTabId === "Salarié de / Dirigeant de / Propriétaire de" && (
@@ -322,19 +345,6 @@ export default function AdminUser() {
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>
-              </div>
-              <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
-                <ButtonsGroup
-                  buttons={[
-                    {
-                      children: "Enregistrer",
-                      type: "submit",
-                      nativeButtonProps: {
-                        form: "user_data_form",
-                      },
-                    },
-                  ]}
-                />
               </div>
             </Tabs>
           </div>
@@ -350,7 +360,7 @@ interface WorkingWithOrForProps {
 }
 
 function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
-  const { user, userEntitiesRelations, allEntities } = useLoaderData<typeof loader>();
+  const { user, userEntitiesRelations, allEntities } = useLoaderData<typeof clientLoader>();
 
   const userEntityFetcher = useFetcher({ key: fetcherKey });
 
@@ -391,10 +401,10 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
                       entity_id: entity.id,
                       relation: relation,
                       _action: "delete",
+                      route: `/action/user-entity/${entity.id}`,
                     },
                     {
                       method: "POST",
-                      action: `/action/user-entity/${entity.id}`,
                       preventScrollReset: true,
                     },
                   );
@@ -429,11 +439,11 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
               id={fetcherKey}
               className="fr-fieldset__element flex w-full flex-col items-start gap-4"
               method="POST"
-              action={`/action/user-entity/${entity.id}`}
               preventScrollReset
             >
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
               <input type="hidden" name="_action" value="create" />
+              <input type="hidden" name="route" value={`/action/user-entity/${entity.id}`} />
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.relation} value={relation} />
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.entity_id} value={entity.id} />
               <Link

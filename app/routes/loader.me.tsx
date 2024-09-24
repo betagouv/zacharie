@@ -1,5 +1,4 @@
-import { type LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "react-router-dom";
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
 
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";

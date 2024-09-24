@@ -9,9 +9,9 @@ import {
 } from "@remix-run/react";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import type { ConnexionActionData } from "~/routes/action.connexion";
-import type { User } from "@prisma/client";
-import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
+import { setCacheItem } from "~/services/indexed-db.client";
 import { getUserOnboardingRoute } from "~/utils/user-onboarded.client";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 type ConnexionType = "creation-de-compte" | "compte-existant";
 
@@ -34,7 +34,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 }
 
 export async function clientLoader() {
-  const user = (await getCacheItem("user")) as User | null;
+  const user = await getMostFreshUser();
   if (user) {
     throw redirect("/tableau-de-bord");
   }

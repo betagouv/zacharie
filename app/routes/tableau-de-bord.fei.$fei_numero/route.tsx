@@ -9,7 +9,7 @@ import {
 } from "@remix-run/react";
 import { setFeiToCache } from "~/utils/caches";
 import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
-import { UserRoles, type User } from "@prisma/client";
+import { UserRoles } from "@prisma/client";
 import FEIPremierDetenteur from "./premier-detenteur";
 import ConfirmCurrentOwner from "./confirm-current-owner";
 import CurrentOwner from "./current-owner";
@@ -19,7 +19,7 @@ import FEI_SVI from "./svi";
 import FEIExaminateurInitial from "./examinateur-initial";
 import { type FeiLoaderData } from "~/routes/loader.fei.$fei_numero";
 import { type FeiActionData } from "~/routes/action.fei.$fei_numero";
-import { getCacheItem } from "~/services/indexed-db.client";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export function meta({ params }: MetaArgs) {
   return [
@@ -53,7 +53,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 }
 
 export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
-  const user = (await getCacheItem("user")) as User | null;
+  const user = await getMostFreshUser();
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }

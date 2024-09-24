@@ -99,7 +99,7 @@ export default function useNavigationMenu() {
     },
     mesFeiMenu,
     {
-      text: import.meta.env.PROD
+      text: !import.meta.env.PROD
         ? `Déconnexion ${user?.email} (${user?.roles.map((ro) => ro.slice(0, 3)).join("-")})`
         : "Se déconnecter",
       linkProps: {

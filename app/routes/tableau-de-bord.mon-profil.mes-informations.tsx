@@ -20,8 +20,8 @@ import { EntityTypes, EntityRelationType, UserRoles, Prisma, type User } from "@
 import InputVille from "~/components/InputVille";
 import InputNotEditable from "~/components/InputNotEditable";
 import { type EntitiesLoaderData } from "~/routes/loader.entities";
-import { type MeLoaderData } from "~/routes/loader.me";
-import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
+import { setCacheItem } from "~/services/indexed-db.client";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export function meta() {
   return [
@@ -32,7 +32,7 @@ export function meta() {
 }
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const user = (await getCacheItem("user")) as User | null;
+  const user = await getMostFreshUser();
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
@@ -57,24 +57,10 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 }
 
 export async function clientLoader() {
-  const cacheUser = (await getCacheItem("user")) as User | null;
-  if (!cacheUser) {
+  const user = await getMostFreshUser();
+  if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const refreshedUserResponse = await fetch(`${import.meta.env.VITE_API_URL}/loader/me`, {
-    method: "GET",
-    credentials: "include",
-    headers: new Headers({
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    }),
-  });
-  const refreshedUser = (await refreshedUserResponse.json()) as MeLoaderData;
-  if (!refreshedUser) {
-    throw redirect("/connexion?type=compte-existant");
-  }
-  const user = refreshedUser.user!;
-  await setCacheItem("user", user);
 
   const response = await fetch(`${import.meta.env.VITE_API_URL}/loader/entities`, {
     method: "GET",

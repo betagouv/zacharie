@@ -1,12 +1,10 @@
-import { ActionFunctionArgs, json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
+import { Form, redirect, type ClientActionFunctionArgs } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { UserRoles, Prisma, EntityTypes } from "@prisma/client";
-import { prisma } from "~/db/prisma.server";
+import { Prisma, EntityTypes } from "@prisma/client";
 import { RadioButtons } from "@codegouvfr/react-dsfr/RadioButtons";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
+import type { AdminNouvelleEntiteActionData } from "~/routes/admin.action.entite.nouvelle";
 
 export function meta() {
   return [
@@ -16,36 +14,21 @@ export function meta() {
   ];
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-  const user = await getUserFromCookie(request);
-  if (!user?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect("/connexion?type=compte-existant");
-  }
-
+export async function clientAction({ request }: ClientActionFunctionArgs) {
   const formData = await request.formData();
   console.log("formData tableau-de-bord.admin.entite.nouvelle", Object.fromEntries(formData));
-
-  const createdEntity = await prisma.entity.create({
-    data: {
-      raison_sociale: formData.get(Prisma.EntityScalarFieldEnum.raison_sociale) as string,
-      type: formData.get(Prisma.EntityScalarFieldEnum.type) as EntityTypes,
-    },
-  });
-
-  return redirect(`/tableau-de-bord/admin/entite/${createdEntity.id}`);
-}
-
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
-  if (!user?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect("/connexion?type=compte-existant");
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/admin/action/entite/nouvelle`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  }).then((response) => (response.json ? response.json() : response))) as AdminNouvelleEntiteActionData;
+  console.log("response tableau-de-bord.admin.entite.nouvelle", response);
+  if (response.ok && response.data) {
+    return redirect(`/tableau-de-bord/admin/entite/${response.data.id}`);
   }
-  return json({ user });
+  return response;
 }
-
 export default function AdminNouvelleEntite() {
-  const { user } = useLoaderData<typeof loader>();
-
   return (
     <Form className="fr-container fr-container--fluid fr-my-md-14v" method="POST">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
