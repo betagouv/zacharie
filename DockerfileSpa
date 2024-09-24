@@ -16,14 +16,15 @@ COPY .yarnrc.yml* ./
 # Copy Prisma schema
 COPY prisma ./prisma
 
-# Install production dependencies only
+# Set environment variables
 ENV NODE_ENV=production
-RUN yarn config set network-timeout 300000 && \
-    YARN_ENABLE_GLOBAL_CACHE=false \
-    YARN_ENABLE_MIRROR=false \
-    YARN_ENABLE_INLINE_BUILDS=true \
-    NODE_OPTIONS="--max_old_space_size=2048" \
-    yarn install --production --frozen-lockfile --network-timeout 300000
+ENV YARN_ENABLE_GLOBAL_CACHE=false
+ENV YARN_ENABLE_MIRROR=false
+ENV YARN_ENABLE_INLINE_BUILDS=true
+ENV NODE_OPTIONS="--max_old_space_size=2048"
+
+# Install production dependencies only
+RUN yarn install --immutable
 
 # Generate Prisma client
 RUN yarn prisma generate
