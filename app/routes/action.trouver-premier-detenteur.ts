@@ -11,7 +11,7 @@ export async function action(args: ActionFunctionArgs) {
   }
 
   const formData = await request.formData();
-  console.log("formData", Object.fromEntries(formData.entries()));
+  console.log("formData action.trouver-premier-detenteur", Object.fromEntries(formData.entries()));
 
   if (!formData.has(Prisma.UserScalarFieldEnum.email)) {
     return json({ ok: false, data: null, error: "L'email est obligatoire" }, { status: 400 });
@@ -65,8 +65,4 @@ export async function action(args: ActionFunctionArgs) {
   });
 
   return json({ ok: true, data: nextPremierDetenteur, error: null });
-}
-
-export default function ActionUser() {
-  return null;
 }

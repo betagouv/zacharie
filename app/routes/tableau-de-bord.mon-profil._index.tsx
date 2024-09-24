@@ -1,6 +1,6 @@
-import { redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/react";
 
-export async function loader() {
+export async function clientLoader() {
   throw redirect("/tableau-de-bord/mon-profil/mes-roles");
 }
 

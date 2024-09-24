@@ -1,11 +1,11 @@
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
+import { json, redirect, useFetcher, useLoaderData, type ClientActionFunctionArgs } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import RolesCheckBoxes from "~/components/RolesCheckboxes";
 import { Prisma, UserRoles } from "@prisma/client";
+import { setCacheItem } from "~/services/indexed-db.client";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export function meta() {
   return [
@@ -15,8 +15,28 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
+export async function clientAction({ request }: ClientActionFunctionArgs) {
+  const user = await getMostFreshUser();
+  if (!user) {
+    throw redirect("/connexion?type=compte-existant");
+  }
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/action/user/${user.id}`, {
+    method: "POST",
+    credentials: "include",
+    body: await request.formData(),
+    headers: {
+      Accept: "application/json",
+    },
+  }).then((response) => response.json());
+  if (response.ok && response.data?.id) {
+    await setCacheItem("user", response.data);
+    return redirect("/tableau-de-bord/mon-profil/mes-informations");
+  }
+  return response;
+}
+
+export async function clientLoader() {
+  const user = await getMostFreshUser();
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
@@ -24,12 +44,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function MesRoles() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user } = useLoaderData<typeof clientLoader>();
   const fetcher = useFetcher({ key: "mon-profil-mes-roles" });
 
   return (
-    <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>
-      <input type="hidden" name="_redirect" value="/tableau-de-bord/mon-profil/mes-informations" />
+    <fetcher.Form id="user_roles_form" method="POST">
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">

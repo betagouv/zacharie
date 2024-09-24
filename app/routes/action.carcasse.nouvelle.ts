@@ -11,7 +11,7 @@ export async function action(args: ActionFunctionArgs) {
   }
   const formData = await request.formData();
 
-  console.log("formData", Object.fromEntries(formData));
+  console.log("formData action.carcasse.nouvelle", Object.fromEntries(formData));
 
   const fei_numero = formData.get(Prisma.CarcasseScalarFieldEnum.fei_numero) as string;
   if (!fei_numero) {
@@ -45,8 +45,4 @@ export async function action(args: ActionFunctionArgs) {
   });
 
   return json({ ok: true, data: newCarcasse, error: "" });
-}
-
-export default function NouvelleCarcasseAction() {
-  return null;
 }

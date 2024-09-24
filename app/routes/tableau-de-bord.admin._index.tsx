@@ -1,9 +1,5 @@
-import { redirect } from "@remix-run/node";
-
-export async function loader() {
-  throw redirect("/tableau-de-bord");
-}
+import { Outlet } from "react-router-dom";
 
 export default function NullFunction() {
-  return null;
+  return <Outlet />;
 }

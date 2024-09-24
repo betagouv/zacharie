@@ -1,14 +1,23 @@
 import { UserRoles } from "@prisma/client";
-import { useLocation, useSubmit } from "@remix-run/react";
+import { useLocation } from "@remix-run/react";
 import { useUser } from "./useUser";
+import { clearCache } from "~/services/indexed-db.client";
 
 export default function useNavigationMenu() {
-  const submit = useSubmit();
   const location = useLocation();
   const user = useUser();
 
-  const handleLogout = () => {
-    submit(null, { method: "post", action: "/actions/logout" });
+  const handleLogout = async () => {
+    fetch(`${import.meta.env.VITE_API_URL}/action/user/logout`, {
+      method: "POST",
+      credentials: "include",
+    }).then(async (res) => {
+      if (res.ok) {
+        await clearCache().then(() => {
+          window.location.href = "connexion?type=compte-existant";
+        });
+      }
+    });
   };
 
   const isExaminateurInitial = user!.roles.includes(UserRoles.EXAMINATEUR_INITIAL);
@@ -90,10 +99,9 @@ export default function useNavigationMenu() {
     },
     mesFeiMenu,
     {
-      text:
-        process.env.NODE_ENV === "development"
-          ? `Déconnexion ${user?.email} (${user?.roles.map((ro) => ro.slice(0, 3)).join("-")})`
-          : "Se déconnecter",
+      text: !import.meta.env.PROD
+        ? `Déconnexion ${user?.email} (${user?.roles.map((ro) => ro.slice(0, 3)).join("-")})`
+        : "Se déconnecter",
       linkProps: {
         onClick: handleLogout,
         type: "submit",

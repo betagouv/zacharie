@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { json, MetaArgs, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
+import {
+  json,
+  MetaArgs,
+  redirect,
+  useLoaderData,
+  type ClientActionFunctionArgs,
+  type ClientLoaderFunctionArgs,
+} from "@remix-run/react";
+import { setFeiToCache } from "~/utils/caches";
 import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
-import { EntityTypes, EntityRelationType, UserRoles, UserRelationType } from "@prisma/client";
-import { prisma } from "~/db/prisma.server";
+import { UserRoles } from "@prisma/client";
 import FEIPremierDetenteur from "./premier-detenteur";
 import ConfirmCurrentOwner from "./confirm-current-owner";
 import CurrentOwner from "./current-owner";
@@ -12,6 +17,9 @@ import FeiTransfer from "./transfer-current-owner";
 import FEICurrentIntermediaire from "./current-intermediaire";
 import FEI_SVI from "./svi";
 import FEIExaminateurInitial from "./examinateur-initial";
+import { type FeiLoaderData } from "~/routes/loader.fei.$fei_numero";
+import { type FeiActionData } from "~/routes/action.fei.$fei_numero";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export function meta({ params }: MetaArgs) {
   return [
@@ -21,158 +29,53 @@ export function meta({ params }: MetaArgs) {
   ];
 }
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
+export async function clientAction({ request }: ClientActionFunctionArgs) {
+  const formData = await request.formData();
+  console.log("ON EST LA PUTIN", Object.fromEntries(formData.entries()));
+  const route = formData.get("route") as string;
+  if (!route) {
+    return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
+  }
+  const url = `${import.meta.env.VITE_API_URL}${route}`;
+  const response = (await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+    headers: {
+      Accept: "application/json",
+    },
+  }).then((response) => response.json())) as FeiActionData;
+  if (response.ok && response.data?.id) {
+    const fei = response.data;
+    setFeiToCache(fei);
+  }
+  return response;
+}
+
+export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
+  const user = await getMostFreshUser();
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const fei = await prisma.fei.findUnique({
-    where: {
-      numero: params.fei_numero,
-    },
-    include: {
-      FeiCurrentEntity: true,
-      FeiCurrentUser: true,
-      FeiNextEntity: true,
-      Carcasses: {
-        orderBy: {
-          numero_bracelet: "asc",
-        },
-      },
-      FeiDetenteurInitialUser: true,
-      FeiExaminateurInitialUser: true,
-      FeiCreatedByUser: true,
-      FeiDepotEntity: true,
-      FeiSviEntity: true,
-      FeiSviUser: true,
-      FeiIntermediaires: {
-        orderBy: {
-          created_at: "desc", // the lastest first
-        },
-        include: {
-          CarcasseIntermediaire: true,
-          FeiIntermediaireEntity: {
-            select: {
-              raison_sociale: true,
-              siret: true,
-              type: true,
-              numero_ddecpp: true,
-              address_ligne_1: true,
-              address_ligne_2: true,
-              code_postal: true,
-              ville: true,
-            },
-          },
-          FeiIntermediaireUser: {
-            select: {
-              nom_de_famille: true,
-              prenom: true,
-              email: true,
-              telephone: true,
-            },
-          },
-        },
-      },
-    },
-  });
-  if (!fei) {
-    throw redirect("/tableau-de-bord");
-  }
-  const userEntitiesRelations = (
-    await prisma.entityRelations.findMany({
-      where: {
-        owner_id: user.id,
-        relation: EntityRelationType.WORKING_WITH,
-      },
-      include: {
-        EntityRelatedWithUser: true,
-      },
-    })
-  ).map((entityRelation) => ({ ...entityRelation.EntityRelatedWithUser, relation: entityRelation.relation }));
+  const loaderData = (await fetch(`${import.meta.env.VITE_API_URL}/loader/fei/${params.fei_numero}`, {
+    method: "GET",
+    credentials: "include",
+    headers: new Headers({
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }),
+  }).then((res) => res.json())) as FeiLoaderData;
 
-  const entitiesUserIsWorkingFor = (
-    await prisma.entityRelations.findMany({
-      where: {
-        owner_id: user.id,
-        relation: EntityRelationType.WORKING_FOR,
-      },
-      include: {
-        EntityRelatedWithUser: true,
-      },
-    })
-  ).map((entityRelation) => entityRelation.EntityRelatedWithUser);
-
-  const svisOrEtgsCoupledIds = entitiesUserIsWorkingFor
-    .filter((entity) => entity.type === EntityTypes.ETG || entity.type === EntityTypes.SVI)
-    .map((etgOrSvi) => etgOrSvi.coupled_entity_id)
-    .filter((id) => id !== null);
-  const userCoupledEntities = (
-    await prisma.entity.findMany({
-      where: {
-        id: {
-          in: svisOrEtgsCoupledIds,
-          notIn: entitiesUserIsWorkingFor.map((entity) => entity.id),
-        },
-      },
-    })
-  ).map((entity) => ({ ...entity, relation: EntityRelationType.WORKING_WITH }));
-  const allOtherEntities = (
-    await prisma.entity.findMany({
-      where: {
-        id: {
-          notIn: [...userEntitiesRelations.map((entity) => entity.id), ...svisOrEtgsCoupledIds],
-        },
-        type: {
-          not: EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
-        },
-      },
-    })
-  ).map((entity) => ({ ...entity, relation: null }));
-
-  const userRelationsWithOtherUsers = await prisma.userRelations.findMany({
-    where: {
-      owner_id: user.id,
-    },
-    include: {
-      UserRelatedOfUserRelation: true,
-    },
-  });
-
-  const detenteursInitiaux = userRelationsWithOtherUsers
-    .filter((userRelation) => userRelation.relation === UserRelationType.PREMIER_DETENTEUR)
-    .map((userRelation) => ({ ...userRelation.UserRelatedOfUserRelation, relation: userRelation.relation }));
-  if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
-    detenteursInitiaux.unshift({ ...user, relation: UserRelationType.PREMIER_DETENTEUR });
-  }
-
-  const examinateursInitiaux = userRelationsWithOtherUsers
-    .filter((userRelation) => userRelation.relation === UserRelationType.EXAMINATEUR_INITIAL)
-    .map((userRelation) => ({ ...userRelation.UserRelatedOfUserRelation, relation: userRelation.relation }));
-  if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-    examinateursInitiaux.unshift({ ...user, relation: UserRelationType.EXAMINATEUR_INITIAL });
-  }
-
-  const allEntities = [...userEntitiesRelations, ...userCoupledEntities, ...allOtherEntities];
-  const ccgs = allEntities.filter((entity) => entity.type === EntityTypes.CCG);
-  const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
-  const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
-  const svis = allEntities.filter((entity) => entity.type === EntityTypes.SVI);
+  console.log("LOADER DATA", loaderData);
 
   return json({
     user,
-    fei,
-    detenteursInitiaux,
-    examinateursInitiaux,
-    ccgs,
-    collecteursPro,
-    etgs,
-    svis,
-    entitiesUserIsWorkingFor,
+    ...loaderData,
   });
 }
 
 export default function Fei() {
-  const { fei, user } = useLoaderData<typeof loader>();
+  const { fei, user } = useLoaderData<typeof clientLoader>();
 
   const doneEmoji = "✅ ";
 

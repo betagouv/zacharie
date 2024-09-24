@@ -1,8 +1,7 @@
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { json, useLoaderData } from "@remix-run/react";
 import RootDisplay from "~/components/RootDisplay";
-import { getUserIdFromCookie } from "~/services/auth.server";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 // import type { MetaFunction } from "@remix-run/node";
 
 // export const meta: MetaFunction = () => {
@@ -12,15 +11,15 @@ import { getUserIdFromCookie } from "~/services/auth.server";
 //   ];
 // };
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const userId = await getUserIdFromCookie(request, { optional: true });
+export async function clientLoader() {
+  const user = await getMostFreshUser();
   return json({
-    isLoggedIn: !!userId,
+    isLoggedIn: !!user?.id,
   });
 }
 
 export default function LandingPage() {
-  const { isLoggedIn } = useLoaderData<typeof loader>();
+  const { isLoggedIn } = useLoaderData<typeof clientLoader>();
   return (
     <RootDisplay>
       <section className="fr-container my-auto flex min-h-[50vh] flex-col justify-center">

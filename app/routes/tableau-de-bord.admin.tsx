@@ -1,10 +1,9 @@
 import { UserRoles } from "@prisma/client";
-import { json, LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { Outlet } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
+import { json, redirect, Outlet } from "@remix-run/react";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
+export async function clientLoader() {
+  const user = await getMostFreshUser();
   if (!user?.roles?.includes(UserRoles.ADMIN)) {
     throw redirect("/connexion?type=compte-existant");
   }

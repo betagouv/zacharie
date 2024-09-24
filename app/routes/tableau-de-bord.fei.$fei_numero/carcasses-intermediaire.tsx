@@ -1,13 +1,13 @@
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Fragment, useState } from "react";
-import { loader } from "./route";
+import { clientLoader } from "./route";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Prisma, Carcasse } from "@prisma/client";
 import refusIntermedaire from "~/data/refus-intermediaire.json";
 import dayjs from "dayjs";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
-import { SerializeFrom } from "@remix-run/node";
+import type { SerializeFrom } from "@remix-run/node";
 import InputForSearchPrefilledData from "~/components/InputForSearchPrefilledData";
 
 const style = {
@@ -41,7 +41,7 @@ interface CarcasseAVerifierProps {
 }
 
 function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
-  const { fei } = useLoaderData<typeof loader>();
+  const { fei } = useLoaderData<typeof clientLoader>();
   const intermediaireCarcasseFetcher = useFetcher({ key: `intermediaire-carcasse-${carcasse.id}` });
   const intermediaire = fei.FeiIntermediaires[0];
   const intermediaireCarcasse = intermediaire.CarcasseIntermediaire.find(
@@ -94,11 +94,8 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
         }
       />
       {canEdit && (
-        <intermediaireCarcasseFetcher.Form
-          method="POST"
-          action="/action/carcasse-suivi"
-          id={`intermediaire-carcasse-${carcasse.id}`}
-        >
+        <intermediaireCarcasseFetcher.Form method="POST" id={`intermediaire-carcasse-${carcasse.id}`}>
+          <input type="hidden" name="route" value="/action/carcasse-suivi" />
           <input
             form={`intermediaire-carcasse-${carcasse.id}`}
             type="hidden"

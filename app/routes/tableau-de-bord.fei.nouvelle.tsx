@@ -1,81 +1,34 @@
 import dayjs from "dayjs";
-import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
+import { json, redirect, type ClientActionFunctionArgs } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma, UserRoles } from "@prisma/client";
-import { prisma } from "~/db/prisma.server";
 import UserNotEditable from "~/components/UserNotEditable";
+import type { FeiNouvelleActionData } from "~/routes/action.fei.nouvelle";
+import { setFeiToCache } from "~/utils/caches";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
-export async function action(args: ActionFunctionArgs) {
-  const { request, params } = args;
-  const user = await getUserFromCookie(request);
-  if (!user) {
-    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
-  }
-
-  let feiNumero = params.fei_numero;
-  const formData = await request.formData();
-
-  console.log("formData", Object.fromEntries(formData));
-
-  const newId = (await prisma.fei.count()) + 1;
-  const today = dayjs().format("YYYYMMDD");
-  feiNumero = `ZACH-FEI-${today}-${newId.toString().padStart(6, "0")}`;
-
-  // Create a new object with only the fields that are required and set
-  const createData: Prisma.FeiCreateInput = {
-    numero: feiNumero,
-    FeiCurrentUser: {
-      connect: {
-        id: user.id,
-      },
+export async function clientAction({ request }: ClientActionFunctionArgs) {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/action/fei/nouvelle`, {
+    method: "POST",
+    credentials: "include",
+    body: await request.formData(),
+    headers: {
+      Accept: "application/json",
     },
-    FeiCreatedByUser: {
-      connect: {
-        id: user.id,
-      },
-    },
-  };
-
-  if (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
-    createData.FeiDetenteurInitialUser = {
-      connect: {
-        id: user.id,
-      },
-    };
-    createData.fei_current_owner_role = UserRoles.PREMIER_DETENTEUR;
+  }).then((response) => response.json())) as FeiNouvelleActionData;
+  if (response.ok && response.data?.numero) {
+    const fei = response.data;
+    setFeiToCache(fei);
+    return redirect(`/tableau-de-bord/fei/${fei.numero}`);
   }
-  if (formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
-    // if (!formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
-    //   return json({ ok: false, data: null, error: "La commune de mise à mort est obligatoire" }, { status: 400 });
-    // }
-
-    if (!formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
-      return json({ ok: false, data: null, error: "La date de mise à mort est obligatoire" }, { status: 400 });
-    }
-
-    createData.date_mise_a_mort = new Date(formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort) as string);
-    createData.commune_mise_a_mort = formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort) as string;
-    createData.FeiExaminateurInitialUser = {
-      connect: {
-        id: user.id,
-      },
-    };
-    createData.fei_current_owner_role = UserRoles.EXAMINATEUR_INITIAL;
-  }
-
-  const fei = await prisma.fei.create({
-    data: createData,
-  });
-
-  return redirect(`/tableau-de-bord/fei/${fei.numero}`);
+  return response;
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
+export async function clientLoader() {
+  const user = await getMostFreshUser();
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
@@ -86,7 +39,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function NouvelleFEI() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user } = useLoaderData<typeof clientLoader>();
+  const nouvelleFeiFetcher = useFetcher({ key: "fei_create_form" });
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -98,7 +52,7 @@ export default function NouvelleFEI() {
           </CallOut>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-4">
-              <Form id="fei_create_form" method="POST">
+              <nouvelleFeiFetcher.Form id="fei_create_form" method="POST">
                 <div className="mb-8">
                   <h2 className="fr-h3 fr-mb-2w">Examinateur Initial</h2>
                   <input type="hidden" name={Prisma.FeiScalarFieldEnum.examinateur_initial_user_id} value={user.id} />
@@ -145,7 +99,7 @@ export default function NouvelleFEI() {
                     ]}
                   />
                 </div> */}
-              </Form>
+              </nouvelleFeiFetcher.Form>
               <div className="mb-16 ml-6 mt-6 md:mb-0">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page

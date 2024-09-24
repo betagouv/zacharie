@@ -1,11 +1,9 @@
-import { ActionFunctionArgs, json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { Form } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
+import { Form, redirect, type ClientActionFunctionArgs } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { UserRoles, Prisma } from "@prisma/client";
-import { prisma } from "~/db/prisma.server";
+import { Prisma } from "@prisma/client";
 import RolesCheckBoxes from "~/components/RolesCheckboxes";
+import type { AdminNouveauUserLoaderData } from "~/routes/admin.action.utilisateur.nouveau";
 
 export function meta() {
   return [
@@ -15,31 +13,19 @@ export function meta() {
   ];
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-  const user = await getUserFromCookie(request);
-  if (!user?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect("/connexion?type=compte-existant");
-  }
-
+export async function clientAction({ request }: ClientActionFunctionArgs) {
   const formData = await request.formData();
-  console.log("formData", Object.fromEntries(formData));
-
-  const createdUser = await prisma.user.create({
-    data: {
-      email: formData.get(Prisma.UserScalarFieldEnum.email) as string,
-      roles: formData.getAll(Prisma.UserScalarFieldEnum.roles) as UserRoles[],
-    },
-  });
-
-  return redirect(`/tableau-de-bord/admin/utilisateur/${createdUser.id}`);
-}
-
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
-  if (!user?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect("/connexion?type=compte-existant");
+  console.log("formData tableau-de-bord.admin.utilisateur.nouveau", Object.fromEntries(formData));
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/admin/action/utilisateur/nouveau`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  }).then((response) => (response.json ? response.json() : response))) as AdminNouveauUserLoaderData;
+  console.log("response tableau-de-bord.admin.utilisateur.nouveau", response);
+  if (response.ok && response.data) {
+    return redirect(`/tableau-de-bord/admin/utilisateur/${response.data.id}`);
   }
-  return json({ user });
+  return response;
 }
 
 export default function AdminNewUser() {

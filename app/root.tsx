@@ -10,8 +10,6 @@ import {
   useRouteError,
 } from "@remix-run/react";
 import { LoaderFunction, MetaFunction } from "@remix-run/node";
-import { HoneypotProvider } from "remix-utils/honeypot/react";
-import { honeypot } from "~/services/honeypot.server";
 import NotFound from "~/routes/404";
 import RootDisplay from "~/components/RootDisplay";
 import UnexpectedError from "~/components/UnexpectedError";
@@ -23,7 +21,7 @@ import { PWAManifest } from "~/components/PWAManifest";
 import "~/tailwind.css";
 import dsfrCss from "@codegouvfr/react-dsfr/main.css?url";
 import dsfrColorCss from "@codegouvfr/react-dsfr/dsfr/utility/colors/colors.min.css?url";
-import dsfrWebManifest from "@codegouvfr/react-dsfr/favicon/manifest.webmanifest?url";
+// import dsfrWebManifest from "@codegouvfr/react-dsfr/favicon/manifest.webmanifest?url";
 import dsfrFavicon from "@codegouvfr/react-dsfr/favicon/favicon.ico?url";
 import dsfrFaviconSvg from "@codegouvfr/react-dsfr/favicon/favicon.svg?url";
 import dsfrAppleTouchIcon from "@codegouvfr/react-dsfr/favicon/apple-touch-icon.png?url";
@@ -56,12 +54,11 @@ declare global {
   }
 }
 
-export function loader(): ReturnType<LoaderFunction> {
+export function clientLoader(): ReturnType<LoaderFunction> {
   return {
-    honeypotInputProps: honeypot.getInputProps(),
     ENV: JSON.stringify({
-      NODE_ENV: process.env.NODE_ENV,
-      VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY as string,
+      NODE_ENV: import.meta.env.MODE,
+      VAPID_PUBLIC_KEY: import.meta.env.VITE_VAPID_PUBLIC_KEY as string,
     } satisfies WindowEnv),
   };
 }
@@ -78,7 +75,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* <link rel="manifest" href={dsfrWebManifest} crossOrigin="use-credentials" /> */}
         <link rel="stylesheet" href={dsfrCss} />
         <link rel="stylesheet" href={dsfrColorCss} />
-        <PWAManifest />
+        {/* <PWAManifest /> */}
         <Meta />
         <Links />
       </head>
@@ -95,24 +92,23 @@ export const ErrorBoundary = () => {
   // https://stackoverflow.com/a/76449254/5225096
   const error = useRouteError() as Error;
   captureRemixErrorBoundaryError(error);
-  console.log("error", error);
+  console.log("error from ErrorBoundary", error);
+  console.log("isRouteErrorResponse(error)", isRouteErrorResponse(error));
   if (!isRouteErrorResponse(error)) {
-    return null;
+    return <UnexpectedError />;
   }
   return <RootDisplay>{error.status === 404 ? <NotFound /> : <UnexpectedError />}</RootDisplay>;
 };
 
 export default function App() {
-  const { ENV, honeypotInputProps } = useLoaderData<typeof loader>();
+  const { ENV } = useLoaderData<typeof clientLoader>();
 
   return (
     <>
       <OfflineMode />
       <NouvelleVersion />
       <InstallApp />
-      <HoneypotProvider {...honeypotInputProps}>
-        <Outlet />
-      </HoneypotProvider>
+      <Outlet />
 
       <script
         suppressHydrationWarning

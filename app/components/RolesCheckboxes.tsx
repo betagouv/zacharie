@@ -1,7 +1,7 @@
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { Prisma, UserRoles, User } from "@prisma/client";
 import { useState } from "react";
-import { SerializeFrom } from "@remix-run/node";
+import type { SerializeFrom } from "@remix-run/node";
 
 export default function RolesCheckBoxes({
   user,

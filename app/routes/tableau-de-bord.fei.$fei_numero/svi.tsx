@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import { loader } from "./route";
+import { clientLoader } from "./route";
 import { Prisma, Carcasse, UserRoles } from "@prisma/client";
 import InputNotEditable from "~/components/InputNotEditable";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
@@ -9,11 +9,11 @@ import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
 import dayjs from "dayjs";
 import CarcassesSvi from "./carcasse-svi";
-import { SerializeFrom } from "@remix-run/node";
+import type { SerializeFrom } from "@remix-run/node";
 import EntityNotEditable from "~/components/EntityNotEditable";
 
 export default function FEI_SVI() {
-  const { fei, user } = useLoaderData<typeof loader>();
+  const { fei, user } = useLoaderData<typeof clientLoader>();
 
   const sviFinished = useFetcher({ key: "prise-en-charge" });
 
@@ -135,7 +135,8 @@ export default function FEI_SVI() {
         )}
       </Accordion>
       <Accordion titleAs="h3" label="Validation de la FEI" defaultExpanded>
-        <sviFinished.Form method="POST" action={`/action/fei/${fei.numero}`} id="svi_check_finished_at">
+        <sviFinished.Form method="POST" id="svi_check_finished_at">
+          <input type="hidden" name="route" value={`/action/fei/${fei.numero}`} />
           <input
             form="svi_check_finished_at"
             type="hidden"

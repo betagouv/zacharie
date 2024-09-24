@@ -1,18 +1,18 @@
+import type { SerializeFrom } from "@remix-run/node";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { loader } from "./route";
+import { clientLoader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { UserRoles, Entity, User, Prisma } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { getUserRoleLabel, getUserRoleLabelPlural } from "~/utils/get-user-roles-label";
-import { SerializeFrom } from "@remix-run/node";
 import { action as searchUserAction } from "~/routes/action.trouver-premier-detenteur";
 
 export default function SelectNextOwner() {
   const { user, detenteursInitiaux, examinateursInitiaux, ccgs, collecteursPro, etgs, svis, fei } =
-    useLoaderData<typeof loader>();
+    useLoaderData<typeof clientLoader>();
   const [nextRole, setNextRole] = useState<UserRoles | "">(fei.fei_next_owner_role ?? "");
 
   const nextOwners = useMemo(() => {
@@ -147,16 +147,16 @@ export default function SelectNextOwner() {
         id="select-next-owner"
         preventScrollReset
         method="POST"
-        action={`/action/fei/${fei.numero}`}
         onChange={(event) => {
           const formData = new FormData(event.currentTarget);
+          formData.append("route", `/action/fei/${fei.numero}`);
           nextOwnerFetcher.submit(formData, {
             method: "POST",
-            action: `/action/fei/${fei.numero}`,
             preventScrollReset: true, // Prevent scroll reset on submission
           });
         }}
       >
+        <input type="hidden" name="route" value={`/action/fei/${fei.numero}`} />
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <div className="fr-fieldset__element">
           <Select
@@ -232,11 +232,8 @@ export default function SelectNextOwner() {
       </nextOwnerFetcher.Form>
       {nextRole === UserRoles.PREMIER_DETENTEUR && !fei.fei_next_owner_user_id && (
         <>
-          <searchUserFetcher.Form
-            className="fr-fieldset__element flex w-full flex-row items-end gap-4"
-            method="POST"
-            action="/action/trouver-premier-detenteur"
-          >
+          <searchUserFetcher.Form className="fr-fieldset__element flex w-full flex-row items-end gap-4" method="POST">
+            <input type="hidden" name="route" value="/action/trouver-premier-detenteur" />
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             <Input
               label="...ou saisissez l'email du Premier Détenteur si vous ne le trouvez pas"

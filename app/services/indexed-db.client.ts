@@ -65,7 +65,7 @@ export async function clearCache(calledFrom = "not defined", iteration = 0) {
   });
 }
 
-type CacheKeys = "user" | "feiAssigned" | "feiDone";
+type CacheKeys = "user" | "feis" | "feisDone" | "feisAssigned" | "feiOngoing";
 
 export async function setCacheItem(key: CacheKeys, value: unknown) {
   if (customStore === null) {

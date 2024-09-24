@@ -11,7 +11,7 @@ export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
 
   const formData = await request.formData();
-  console.log("formData", Object.fromEntries(formData));
+  console.log("formData action.user-entity.$user_id", Object.fromEntries(formData));
   if (!formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id)) {
     return json({ ok: false, data: null, error: "Missing owner_id" }, { status: 400 });
   }
@@ -78,8 +78,4 @@ export async function action(args: ActionFunctionArgs) {
   }
 
   return json({ ok: false, data: null, error: "Invalid action" }, { status: 400 });
-}
-
-export default function ActionUserEntities() {
-  return null;
 }

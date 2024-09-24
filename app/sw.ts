@@ -10,9 +10,9 @@ declare let self: ServiceWorkerGlobalScope;
 const url = navigateFallback ?? "/";
 
 // self.__WB_MANIFEST is the default injection point
-const manifest = self.__WB_MANIFEST
+const manifest = self.__WB_MANIFEST;
 if (import.meta.env.DEV) {
-  const entry = manifest.findIndex((entry) => typeof entry !== 'string' && entry.url === url);
+  const entry = manifest.findIndex((entry) => typeof entry !== "string" && entry.url === url);
   if (entry !== -1) {
     manifest.splice(entry, 1);
   }
@@ -43,12 +43,13 @@ if (import.meta.env.PROD) {
 }
 
 // to allow work offline
-registerRoute(new NavigationRoute(
-  createHandlerBoundToURL(ssr ? url : "index.html"),
-  { allowlist },
-));
+registerRoute(new NavigationRoute(createHandlerBoundToURL(ssr ? url : "index.html"), { allowlist }));
 
+// Add this line to ensure all routes are handled
 setupRoutes();
 
 self.skipWaiting();
 clientsClaim();
+
+// Add a catch-all route for offline support
+registerRoute(({ request }) => request.mode === "navigate", createHandlerBoundToURL(ssr ? url : "index.html"));

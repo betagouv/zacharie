@@ -3,10 +3,10 @@ import { Prisma } from "@prisma/client";
 import SelectNextOwner from "./select-next-owner";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { loader } from "./route";
+import { clientLoader } from "./route";
 
 export default function FeiTransfer() {
-  const { user, fei } = useLoaderData<typeof loader>();
+  const { user, fei } = useLoaderData<typeof clientLoader>();
   const fetcher = useFetcher({ key: "cancle-transfer-current-owner" });
 
   if (!fei.fei_current_owner_wants_to_transfer) {
@@ -19,7 +19,7 @@ export default function FeiTransfer() {
   return (
     <div className="bg-alt-blue-france pb-4">
       <CallOut title="Vous souhaitez transférer cette FEI" className="bg-white">
-        <div className="w-full flex flex-col md:items-start [&_ul]:md:min-w-96 bg-white">
+        <div className="flex w-full flex-col bg-white md:items-start [&_ul]:md:min-w-96">
           <SelectNextOwner />
         </div>
         <span className="text-sm">Vous avez changé d'avis&nbsp;?</span>
@@ -30,9 +30,9 @@ export default function FeiTransfer() {
           onClick={() => {
             const formData = new FormData();
             formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer, "false");
+            formData.append("route", `/action/fei/${fei.numero}`);
             fetcher.submit(formData, {
               method: "POST",
-              action: `/action/fei/${fei.numero}`,
               preventScrollReset: true, // Prevent scroll reset on submission
             });
           }}

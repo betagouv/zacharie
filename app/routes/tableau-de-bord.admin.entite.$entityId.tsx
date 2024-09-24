@@ -1,16 +1,23 @@
 import { useState, useCallback, useRef, Fragment } from "react";
-import { ActionFunctionArgs, json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
-import { getUserFromCookie } from "~/services/auth.server";
+import {
+  json,
+  redirect,
+  Link,
+  useFetcher,
+  useLoaderData,
+  type ClientLoaderFunctionArgs,
+  type ClientActionFunctionArgs,
+} from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { EntityRelationType, EntityTypes, UserRoles, Prisma } from "@prisma/client";
-import { prisma } from "~/db/prisma.server";
 import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
 import InputVille from "~/components/InputVille";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Table } from "@codegouvfr/react-dsfr/Table";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
+import type { AdminEntityLoaderData } from "~/routes/admin.loader.entite.$entityId";
 
 export function meta() {
   return [
@@ -20,194 +27,56 @@ export function meta() {
   ];
 }
 
-export async function action({ request, params }: ActionFunctionArgs) {
-  const user = await getUserFromCookie(request);
-  if (!user?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect("/connexion?type=compte-existant");
-  }
-
+export async function clientAction({ request }: ClientActionFunctionArgs) {
   const formData = await request.formData();
-  console.log("formData", Object.fromEntries(formData));
-
-  if (formData.get("_action") === "remove-couple") {
-    const entity = await prisma.entity.findUnique({
-      where: {
-        id: params.entityId,
-      },
-    });
-    if (entity && entity.coupled_entity_id) {
-      const couple = await prisma.entity.findUnique({
-        where: {
-          id: entity.coupled_entity_id,
-        },
-      });
-      if (couple) {
-        await prisma.entity.update({
-          where: {
-            id: couple.id,
-          },
-          data: {
-            coupled_entity_id: null,
-          },
-        });
-        const updatedEntity = await prisma.entity.update({
-          where: {
-            id: params.entityId,
-          },
-          data: {
-            coupled_entity_id: null,
-          },
-        });
-        return json({ ok: true, data: updatedEntity });
-      }
-    } else {
-      throw redirect("/tableau-de-bord/admin/entites");
-    }
+  console.log("formdata tableau-de-bord.admin.entity.$entityId", Object.fromEntries(formData));
+  const route = formData.get("route") as string;
+  if (!route) {
+    return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
   }
-  if (formData.get(Prisma.EntityScalarFieldEnum.coupled_entity_id)) {
-    const coupledEntityId = formData.get(Prisma.EntityScalarFieldEnum.coupled_entity_id) as string;
-
-    await prisma.entity.update({
-      where: {
-        id: coupledEntityId,
-      },
-      data: {
-        coupled_entity_id: params.entityId,
-      },
-    });
-
-    const updatedEntity = await prisma.entity.update({
-      where: {
-        id: params.entityId,
-      },
-      data: {
-        coupled_entity_id: coupledEntityId,
-      },
-    });
-    return json({ ok: true, data: updatedEntity });
-  }
-
-  const data: Prisma.EntityUncheckedUpdateInput = {
-    raison_sociale: formData.get(Prisma.EntityScalarFieldEnum.raison_sociale) as string,
-    address_ligne_1: formData.get(Prisma.EntityScalarFieldEnum.address_ligne_1) as string,
-    address_ligne_2: formData.get(Prisma.EntityScalarFieldEnum.address_ligne_2) as string,
-    code_postal: formData.get(Prisma.EntityScalarFieldEnum.code_postal) as string,
-    ville: formData.get(Prisma.EntityScalarFieldEnum.ville) as string,
-    siret: (formData.get(Prisma.EntityScalarFieldEnum.siret) as string) || null,
-    numero_ddecpp: (formData.get(Prisma.EntityScalarFieldEnum.numero_ddecpp) as string) || null,
-  };
-
-  const updatedEntity = await prisma.entity.update({
-    where: {
-      id: params.entityId,
+  const url = `${import.meta.env.VITE_API_URL}${route}`;
+  const response = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+    headers: {
+      Accept: "application/json",
     },
-    data,
-  });
-
-  return json({ ok: true, data: updatedEntity });
+  }).then((response) => response.json());
+  return response;
 }
-export async function loader({ request, params }: LoaderFunctionArgs) {
-  const admin = await getUserFromCookie(request);
+
+export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
+  const admin = await getMostFreshUser();
   if (!admin?.roles?.includes(UserRoles.ADMIN)) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const entity = await prisma.entity.findUnique({
-    where: {
-      id: params.entityId,
-    },
-    include: {
-      CoupledEntity: true,
-      EntityRelatedWithUser: {
-        select: {
-          relation: true,
-          UserRelatedWithEntity: {
-            select: {
-              id: true,
-              email: true,
-              nom_de_famille: true,
-              prenom: true,
-              code_postal: true,
-              ville: true,
-              roles: true,
-            },
-          },
-        },
-      },
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/loader/entite/${params.entityId}`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
     },
   });
-  if (!entity) {
-    throw redirect("/tableau-de-bord/admin/entites");
+
+  if (!response.ok) {
+    throw new Error("Failed to load entity");
   }
+  const data = (await response.json()) as AdminEntityLoaderData;
 
-  const usersWithEntityType = await prisma.user.findMany({
-    where: {
-      roles: {
-        has: entity.type,
-      },
-      id: {
-        notIn: entity.EntityRelatedWithUser.filter(
-          (entityRelation) => entityRelation.relation === EntityRelationType.WORKING_FOR,
-        ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
-      },
-    },
-    select: {
-      id: true,
-      email: true,
-      nom_de_famille: true,
-      prenom: true,
-      code_postal: true,
-      ville: true,
-      roles: true,
-    },
-  });
-
-  const potentialPartenaires = await prisma.user.findMany({
-    where: {
-      id: {
-        notIn: entity.EntityRelatedWithUser.filter(
-          (entityRelation) => entityRelation.relation === EntityRelationType.WORKING_WITH,
-        ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
-      },
-    },
-    select: {
-      id: true,
-      email: true,
-      nom_de_famille: true,
-      prenom: true,
-      code_postal: true,
-      ville: true,
-      roles: true,
-    },
-  });
-
-  const sviOrEtgPotentielCouple = await prisma.entity.findMany({
-    where: {
-      id: {
-        not: entity.id,
-      },
-      type: entity.type === EntityTypes.ETG ? EntityTypes.SVI : EntityTypes.ETG,
-      coupled_entity_id: null,
-    },
-  });
-
-  return json({
-    entity,
-    usersWithEntityType,
-    potentialPartenaires,
-    sviOrEtgPotentielCouple,
-  });
+  return json(data);
 }
 
-export default function AdminUser() {
-  const { entity, usersWithEntityType, potentialPartenaires } = useLoaderData<typeof loader>();
+export default function AdminEntity() {
+  const { entity, usersWithEntityType, potentialPartenaires } = useLoaderData<typeof clientLoader>();
 
   const entityFetcher = useFetcher({ key: "admin-entite" });
   const formRef = useRef<HTMLFormElement>(null);
   const handleEntityFormSubmit = useCallback(() => {
     const formData = new FormData(formRef.current!);
+    formData.append("route", `/admin/action/entite/${entity.id}`);
     entityFetcher.submit(formData, {
       method: "POST",
-      action: `/tableau-de-bord/admin/entite/${entity.id}`,
       preventScrollReset: true,
     });
   }, [entityFetcher, formRef, entity]);
@@ -260,6 +129,7 @@ export default function AdminUser() {
                   onBlur={handleEntityFormSubmit}
                   preventScrollReset
                 >
+                  <input type="hidden" name="route" value={`/admin/action/entite/${entity.id}`} />
                   <div className="fr-fieldset__element">
                     <Input
                       label="Raison Sociale"
@@ -419,7 +289,7 @@ interface WorkingWithOrForProps {
 }
 
 function UserWorkingWithOrFor({ relation, potentialUsers, fetcherKey }: WorkingWithOrForProps) {
-  const { entity } = useLoaderData<typeof loader>();
+  const { entity } = useLoaderData<typeof clientLoader>();
 
   const userEntityFetcher = useFetcher({ key: fetcherKey });
 
@@ -440,11 +310,12 @@ function UserWorkingWithOrFor({ relation, potentialUsers, fetcherKey }: WorkingW
                   {
                     owner_id: owner.id,
                     entity_id: entity.id,
+                    relation,
                     _action: "delete",
+                    route: `/action/user-entity/${entity.id}`,
                   },
                   {
                     method: "POST",
-                    action: `/action/user-entity/${entity.id}`,
                     preventScrollReset: true,
                   },
                 );
@@ -478,9 +349,9 @@ function UserWorkingWithOrFor({ relation, potentialUsers, fetcherKey }: WorkingW
               id={fetcherKey}
               className="fr-fieldset__element flex w-full flex-col items-start gap-4"
               method="POST"
-              action={`/action/user-entity/${entity.id}`}
               preventScrollReset
             >
+              <input type="hidden" name="route" value={`/action/user-entity/${entity.id}`} />
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
               <input type="hidden" name="_action" value="create" />
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.relation} value={relation} />
@@ -513,7 +384,7 @@ function UserWorkingWithOrFor({ relation, potentialUsers, fetcherKey }: WorkingW
 }
 
 function CoupledEntity() {
-  const { entity, sviOrEtgPotentielCouple } = useLoaderData<typeof loader>();
+  const { entity, sviOrEtgPotentielCouple } = useLoaderData<typeof clientLoader>();
 
   const coupledEntity = entity.CoupledEntity;
   const coupledEntityFetcher = useFetcher({ key: "coupled-entity-fetcher" });
@@ -532,6 +403,7 @@ function CoupledEntity() {
               coupledEntityFetcher.submit(
                 {
                   _action: "remove-couple",
+                  route: `/admin/action/entite/${entity.id}`,
                 },
                 {
                   method: "POST",
@@ -575,6 +447,7 @@ function CoupledEntity() {
                 preventScrollReset
               >
                 <input type="hidden" name={Prisma.EntityScalarFieldEnum.coupled_entity_id} value={potentielCouple.id} />
+                <input type="hidden" name="route" value={`/admin/action/entite/${entity.id}`} />
                 <Link
                   to={`/tableau-de-bord/admin/entite/${potentielCouple.id}`}
                   className="!inline-flex size-full items-center justify-start !bg-none !no-underline"

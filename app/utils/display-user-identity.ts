@@ -1,5 +1,5 @@
 import { User } from "@prisma/client";
-import { SerializeFrom } from "@remix-run/node";
+import type { SerializeFrom } from "@remix-run/node";
 
 export function displayUserIdentity(user: SerializeFrom<User>, options?: { withCfei: boolean }): string {
   let display = `${user.prenom} ${user.nom_de_famille}

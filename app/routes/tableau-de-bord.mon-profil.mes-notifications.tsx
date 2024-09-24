@@ -1,13 +1,11 @@
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
-// import { usePush } from "@remix-pwa/push/client";
-import { getUserFromCookie } from "~/services/auth.server";
+import { useMemo } from "react";
+import { json, redirect, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { UserNotifications, UserRoles } from "@prisma/client";
-import { useMemo } from "react";
+import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export function meta() {
   return [
@@ -17,8 +15,8 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUserFromCookie(request);
+export async function clientLoader() {
+  const user = await getMostFreshUser();
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
@@ -26,7 +24,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function MesNotifications() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user } = useLoaderData<typeof clientLoader>();
   const fetcher = useFetcher({ key: "mon-profil-mes-notifications" });
   const navigate = useNavigate();
 

@@ -3,6 +3,7 @@ import { getUserFromCookie } from "~/services/auth.server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import dayjs from "dayjs";
+import type { ExtractLoaderData } from "~/services/extract-loader-data";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -16,7 +17,7 @@ export async function action(args: ActionFunctionArgs) {
   }
   const formData = await request.formData();
 
-  console.log("formData", Object.fromEntries(formData));
+  console.log("formData action.carcasse.$numero_bracelet", Object.fromEntries(formData));
 
   if (formData.get("_action") === "delete") {
     const existinCarcasse = await prisma.carcasse.findUnique({
@@ -165,6 +166,4 @@ export async function action(args: ActionFunctionArgs) {
   return json({ ok: true, data: updatedCarcasse, error: null });
 }
 
-export default function CarcasseAction() {
-  return null;
-}
+export type CarcasseActionData = ExtractLoaderData<typeof action>;
