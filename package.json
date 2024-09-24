@@ -10,7 +10,7 @@
     "build-spa": "SPA_MODE=true && remix vite:build",
     "start-spa": "SPA_MODE=true && node ./spa-server.js",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-    "start": "npx prisma migrate deploy && react-dsfr update-icons && cross-env NODE_ENV=production remix-serve ./build/server/index.js",
+    "start": "npx prisma migrate deploy && react-dsfr update-icons && cross-env NODE_ENV=production remix-serve ./build-server/server/index.js",
     "prisma-setup": "prisma generate && prisma migrate deploy",
     "prisma-create-migration": "NODE_ENV=development POSTGRESQL_ADDON_URI=postgresql://postgres@localhost/zacharie-temp npx prisma migrate dev --name",
     "prisma-deploy": "NODE_ENV=production npx prisma migrate deploy",
