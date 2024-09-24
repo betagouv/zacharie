@@ -1,4 +1,4 @@
-import { json, redirect, useFetcher, useLoaderData } from "@remix-run/react";
+import { json, redirect, useFetcher, useLoaderData, type ClientActionFunctionArgs } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
@@ -15,6 +15,23 @@ export function meta() {
       title: "Mes partenaires | Zacharie | Ministère de l'Agriculture",
     },
   ];
+}
+
+export async function clientAction({ request }: ClientActionFunctionArgs) {
+  const user = (await getCacheItem("user")) as User | null;
+  if (!user) {
+    throw redirect("/connexion?type=compte-existant");
+  }
+  const formData = await request.formData();
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/action/user-entity/${user.id}`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+    headers: {
+      Accept: "application/json",
+    },
+  });
+  return response;
 }
 
 export async function clientLoader() {
@@ -41,9 +58,7 @@ export async function clientLoader() {
 
 export default function MesCCGs() {
   const { user, userCCGs } = useLoaderData<typeof clientLoader>();
-
-  const userEntityFetcher = useFetcher({ key: "user-ccgs" });
-
+  const removeCCGFetcher = useFetcher({ key: "ccg-remove" });
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -80,19 +95,15 @@ export default function MesCCGs() {
                       }}
                       isClosable
                       onClose={() => {
-                        userEntityFetcher.submit(
-                          {
-                            owner_id: user.id,
-                            entity_id: entity.id,
-                            relation: EntityRelationType.WORKING_WITH,
-                            _action: "delete",
-                          },
-                          {
-                            method: "POST",
-                            action: `/action/user-entity/${user.id}`,
-                            preventScrollReset: true,
-                          },
-                        );
+                        const form = new FormData();
+                        form.append("_action", "delete");
+                        form.append(Prisma.EntityRelationsScalarFieldEnum.owner_id, user.id);
+                        form.append(Prisma.EntityRelationsScalarFieldEnum.entity_id, entity.id);
+                        form.append("relation", EntityRelationType.WORKING_WITH);
+                        removeCCGFetcher.submit(form, {
+                          method: "POST",
+                          preventScrollReset: true,
+                        });
                       }}
                       title={
                         <>
@@ -142,13 +153,9 @@ export default function MesCCGs() {
 
 function InputCCG() {
   const { user } = useLoaderData<typeof clientLoader>();
-  const userCCGFetcher = useFetcher({ key: "ccg-data" });
+  const userCCGFetcher = useFetcher({ key: "ccg-new" });
   return (
-    <userCCGFetcher.Form
-      method="POST"
-      className="fr-fieldset__element flex w-full flex-row items-end gap-4"
-      action={`/action/user-entity/${user.id}`}
-    >
+    <userCCGFetcher.Form method="POST" className="fr-fieldset__element flex w-full flex-row items-end gap-4">
       <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
       <input type="hidden" name="_action" value="create" />
       <input

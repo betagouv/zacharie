@@ -1,5 +1,12 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { json, redirect, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
+import {
+  json,
+  redirect,
+  useFetcher,
+  useLoaderData,
+  useNavigate,
+  type ClientActionFunctionArgs,
+} from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
@@ -13,7 +20,8 @@ import { EntityTypes, EntityRelationType, UserRoles, Prisma, type User } from "@
 import InputVille from "~/components/InputVille";
 import InputNotEditable from "~/components/InputNotEditable";
 import { type EntitiesLoaderData } from "~/routes/loader.entities";
-import { getCacheItem } from "~/services/indexed-db.client";
+import { type MeLoaderData } from "~/routes/loader.me";
+import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
 
 export function meta() {
   return [
@@ -23,11 +31,50 @@ export function meta() {
   ];
 }
 
-export async function clientLoader() {
+export async function clientAction({ request }: ClientActionFunctionArgs) {
   const user = (await getCacheItem("user")) as User | null;
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
+  const formData = await request.formData();
+  const route = formData.get("route") as string;
+  if (!route) {
+    return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
+  }
+  const response = await fetch(`${import.meta.env.VITE_API_URL}${route}`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+    headers: {
+      Accept: "application/json",
+    },
+  }).then((response) => response.json());
+  if (response.ok && response.data?.id) {
+    await setCacheItem("user", response.data);
+    return redirect("/tableau-de-bord/mon-profil/mes-informations");
+  }
+  return response;
+}
+
+export async function clientLoader() {
+  const cacheUser = (await getCacheItem("user")) as User | null;
+  if (!cacheUser) {
+    throw redirect("/connexion?type=compte-existant");
+  }
+  const refreshedUserResponse = await fetch(`${import.meta.env.VITE_API_URL}/loader/me`, {
+    method: "GET",
+    credentials: "include",
+    headers: new Headers({
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }),
+  });
+  const refreshedUser = (await refreshedUserResponse.json()) as MeLoaderData;
+  if (!refreshedUser) {
+    throw redirect("/connexion?type=compte-existant");
+  }
+  const user = refreshedUser.user!;
+  await setCacheItem("user", user);
 
   const response = await fetch(`${import.meta.env.VITE_API_URL}/loader/entities`, {
     method: "GET",
@@ -86,9 +133,9 @@ export default function MesInformations() {
   const handleUserFormBlur = useCallback(
     (event: React.FocusEvent<HTMLFormElement>) => {
       const formData = new FormData(event.currentTarget);
+      formData.append("route", `/action/user/${user.id}`);
       userFetcher.submit(formData, {
         method: "POST",
-        action: `/action/user/${user.id}`,
         preventScrollReset: true, // Prevent scroll reset on submission
       });
     },
@@ -138,13 +185,8 @@ export default function MesInformations() {
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
               <p className="fr-text--regular mb-4">Renseignez les informations de chacun de vos rôles</p>
-              <userFetcher.Form
-                id="user_data_form"
-                method="POST"
-                action={`/action/user/${user.id}`}
-                onBlur={handleUserFormBlur}
-                preventScrollReset
-              >
+              <userFetcher.Form id="user_data_form" method="POST" onBlur={handleUserFormBlur} preventScrollReset>
+                <input type="hidden" name="route" value={`/action/user/${user.id}`} />
                 <Accordion
                   titleAs="h2"
                   expanded={identityExpanded}
@@ -318,11 +360,11 @@ export default function MesInformations() {
                 <userFetcher.Form
                   id="user_entities_vivible_checkbox"
                   method="POST"
-                  action={`/action/user/${user.id}`}
                   onChange={handleUserFormBlur}
                   preventScrollReset
                   className="fr-fieldset__element p-8"
                 >
+                  <input type="hidden" name="route" value={`/action/user/${user.id}`} />
                   <Checkbox
                     options={[
                       {
@@ -430,19 +472,16 @@ function AccordionEntreprise({
                 }}
                 isClosable
                 onClose={() => {
-                  userEntityFetcher.submit(
-                    {
-                      owner_id: user.id,
-                      entity_id: entity.id,
-                      relation: EntityRelationType.WORKING_FOR,
-                      _action: "delete",
-                    },
-                    {
-                      method: "POST",
-                      action: `/action/user-entity/${user.id}`,
-                      preventScrollReset: true,
-                    },
-                  );
+                  const form = new FormData();
+                  form.append("_action", "delete");
+                  form.append(Prisma.EntityRelationsScalarFieldEnum.owner_id, user.id);
+                  form.append(Prisma.EntityRelationsScalarFieldEnum.entity_id, entity.id);
+                  form.append("relation", EntityRelationType.WORKING_FOR);
+                  form.append("route", `/action/user-entity/${user.id}`);
+                  userEntityFetcher.submit(form, {
+                    method: "POST",
+                    preventScrollReset: true,
+                  });
                 }}
                 title={
                   <>
@@ -460,11 +499,11 @@ function AccordionEntreprise({
           id={fetcherKey}
           className="fr-fieldset__element flex w-full flex-row items-end gap-4"
           method="POST"
-          action={`/action/user-entity/${user.id}`}
           preventScrollReset
         >
           <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
           <input type="hidden" name="_action" value="create" />
+          <input type="hidden" name="route" value={`/action/user-entity/${user.id}`} />
           <input
             type="hidden"
             name={Prisma.EntityRelationsScalarFieldEnum.relation}

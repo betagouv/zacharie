@@ -34,11 +34,9 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   console.log("ON EST LA PUTIN", Object.fromEntries(formData.entries()));
   const route = formData.get("route") as string;
   if (!route) {
-    console.log("NO ROUTE");
     return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
   }
   const url = `${import.meta.env.VITE_API_URL}${route}`;
-  console.log("URL", url);
   const response = (await fetch(url, {
     method: "POST",
     credentials: "include",
@@ -56,9 +54,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 
 export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   const user = (await getCacheItem("user")) as User | null;
-  console.log("USER", user);
   if (!user) {
-    console.log("REDIRECt CONNArD");
     throw redirect("/connexion?type=compte-existant");
   }
   const loaderData = (await fetch(`${import.meta.env.VITE_API_URL}/loader/fei/${params.fei_numero}`, {

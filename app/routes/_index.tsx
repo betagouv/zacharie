@@ -1,5 +1,5 @@
 import { Button } from "@codegouvfr/react-dsfr/Button";
-import { json, type ClientLoaderFunctionArgs, useLoaderData } from "@remix-run/react";
+import { json, useLoaderData } from "@remix-run/react";
 import RootDisplay from "~/components/RootDisplay";
 import { getCacheItem } from "~/services/indexed-db.client";
 import type { User } from "@prisma/client";
@@ -12,7 +12,7 @@ import type { User } from "@prisma/client";
 //   ];
 // };
 
-export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
+export async function clientLoader() {
   const user = (await getCacheItem("user")) as User | null;
   return json({
     isLoggedIn: !!user?.id,
