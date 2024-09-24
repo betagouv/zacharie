@@ -4,8 +4,10 @@ node_modules
 
 /.cache
 /build
+/build-spa
 /public/build
 .env
+.env.production
 
 .yarn/*
 !.yarn/patches
