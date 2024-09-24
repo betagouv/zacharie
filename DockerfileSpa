@@ -13,24 +13,17 @@ COPY package.json yarn.lock ./
 # Copy .yarnrc.yml if it exists
 COPY .yarnrc.yml* ./
 
+
 # Copy Prisma schema
 COPY prisma ./prisma
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV YARN_ENABLE_GLOBAL_CACHE=false
-ENV YARN_ENABLE_MIRROR=false
-ENV YARN_ENABLE_INLINE_BUILDS=true
-ENV NODE_OPTIONS="--max_old_space_size=2048"
-
-# Install production dependencies only
-RUN yarn install --immutable
-
-# Generate Prisma client
-RUN yarn prisma generate
+RUN YARN_ENABLE_GLOBAL_CACHE=false YARN_ENABLE_MIRROR=false YARN_ENABLE_INLINE_BUILDS=true yarn install
 
 # Copy the rest of the application code
 COPY . .
+
+# Run Prisma generate (this will be handled by postinstall script)
+RUN yarn postinstall
 
 # Build the application in SPA mode
 ENV SPA_MODE=true
