@@ -3,6 +3,7 @@ import { json } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
+import { cors } from "remix-utils/cors";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
@@ -72,7 +73,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  return json({ user, feisAssigned, feisDone });
+  return cors(request, json({ user, feisAssigned, feisDone }), {
+    origin: "https://zacharie.cleverapps.io",
+    credentials: true,
+  });
 }
 
 export type FeisLoaderData = ExtractLoaderData<typeof loader>;

@@ -10,8 +10,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!admin?.roles?.includes(UserRoles.ADMIN)) {
     throw redirect("/connexion?type=compte-existant");
   }
-  const users = await prisma.user.findMany();
-  return cors(request, json({ users }), {
+  const feis = await prisma.fei.findMany();
+  return cors(request, json({ feis }), {
     origin: "https://zacharie.cleverapps.io",
     credentials: true,
   });
