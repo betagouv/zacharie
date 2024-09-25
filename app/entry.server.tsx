@@ -1,4 +1,3 @@
-import { cors } from "remix-utils/cors";
 import * as Sentry from "@sentry/remix";
 /**
  * By default, Remix will handle generating the HTTP Response for you.
@@ -55,21 +54,12 @@ function handleBotRequest(
 
           responseHeaders.set("Content-Type", "text/html");
 
-          cors(
-            request,
+          resolve(
             new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
             }),
-            {
-              // origin:
-              // process.env.NODE_ENV === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
-              origin: "https://zacharie.cleverapps.io",
-              credentials: true,
-            },
-          ).then((response) => {
-            resolve(response);
-          });
+          );
 
           pipe(body);
         },
@@ -110,21 +100,12 @@ function handleBrowserRequest(
 
           responseHeaders.set("Content-Type", "text/html");
 
-          cors(
-            request,
+          resolve(
             new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
             }),
-            {
-              // origin:
-              // process.env.NODE_ENV === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
-              origin: "https://zacharie.cleverapps.io",
-              credentials: true,
-            },
-          ).then((response) => {
-            resolve(response);
-          });
+          );
 
           pipe(body);
         },
@@ -146,11 +127,3 @@ function handleBrowserRequest(
     setTimeout(abort, ABORT_DELAY);
   });
 }
-
-export const handleDataRequest: HandleDataRequestFunction = async (response, { request }) => {
-  return await cors(request, response, {
-    // origin: process.env.NODE_ENV === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
-    origin: "https://zacharie.cleverapps.io",
-    credentials: true,
-  });
-};
