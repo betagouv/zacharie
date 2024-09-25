@@ -7,6 +7,7 @@ import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import dayjs from "dayjs";
 import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
 import type { FeisLoaderData } from "~/routes/loader.fei";
+import { useIsOnline } from "~/components/OfflineMode";
 
 let isInitialRequest = true;
 
@@ -76,6 +77,7 @@ export default function TableauDeBordIndex() {
   const feisAssigned = data.feisAssigned!.filter((fei) => fei !== null);
   const feisOngoing = data.feisOngoing!.filter((fei) => fei !== null);
   const feisDone = data.feisDone!.filter((fei) => fei !== null);
+  const isOnline = useIsOnline();
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -166,9 +168,11 @@ export default function TableauDeBordIndex() {
                 buttons={[
                   {
                     children: "Rafraichir",
-                    linkProps: {
-                      to: "/tableau-de-bord/",
-                      href: "#",
+                    disabled: !isOnline,
+                    nativeButtonProps: {
+                      onClick: () => {
+                        window.location.reload();
+                      },
                     },
                   },
                 ]}
@@ -238,9 +242,11 @@ export default function TableauDeBordIndex() {
                 buttons={[
                   {
                     children: "Rafraichir",
-                    linkProps: {
-                      to: "/tableau-de-bord/",
-                      href: "#",
+                    disabled: !isOnline,
+                    nativeButtonProps: {
+                      onClick: () => {
+                        window.location.reload();
+                      },
                     },
                   },
                 ]}
@@ -311,9 +317,11 @@ export default function TableauDeBordIndex() {
                 buttons={[
                   {
                     children: "Rafraichir",
-                    linkProps: {
-                      to: "/tableau-de-bord/",
-                      href: "#",
+                    disabled: !isOnline,
+                    nativeButtonProps: {
+                      onClick: () => {
+                        window.location.reload();
+                      },
                     },
                   },
                 ]}

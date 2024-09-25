@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-function useNetworkConnectivity() {
+export function useIsOnline() {
   const [isOnline, setIsOnline] = useState(true);
   useEffect(() => {
     function handleOnline() {
@@ -20,7 +20,7 @@ function useNetworkConnectivity() {
 }
 
 export default function OfflineMode() {
-  const isOnline = useNetworkConnectivity();
+  const isOnline = useIsOnline();
 
   if (isOnline) {
     return null;
