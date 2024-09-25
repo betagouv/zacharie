@@ -19,6 +19,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       {
         origin: "https://zacharie.cleverapps.io",
         credentials: true,
+        methods: ["GET", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "Accept"],
       },
     );
   }
@@ -83,6 +85,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return cors(request, json({ user, feisAssigned, feisDone }), {
     origin: "https://zacharie.cleverapps.io",
     credentials: true,
+    methods: ["GET", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
   });
 }
 
