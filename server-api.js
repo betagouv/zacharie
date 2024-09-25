@@ -56,11 +56,11 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // Log all incoming requests
-app.use((req, res, next) => {
-  console.log(`LOG1 Incoming request: ${req.method} ${req.url}`);
-  console.log("LOG1 Headers:", req.headers);
-  next();
-});
+// app.use((req, res, next) => {
+//   console.log(`LOG1 Incoming request: ${req.method} ${req.url}`);
+//   console.log("LOG1 Headers:", req.headers);
+//   next();
+// });
 
 app.use(compression());
 
@@ -85,10 +85,10 @@ app.use(morgan("tiny"));
 app.all("*", remixHandler);
 
 // Log all incoming requests
-app.use((req, res, next) => {
-  console.log(`LOG2 Incoming request: ${req.method} ${req.url}`);
-  console.log("LOG2 Headers:", req.headers);
-  next();
-});
+// app.use((req, res, next) => {
+//   console.log(`LOG2 Incoming request: ${req.method} ${req.url}`);
+//   console.log("LOG2 Headers:", req.headers);
+//   next();
+// });
 const port = process.env.PORT || 3233;
 app.listen(port, () => console.log(`Express server listening at http://localhost:${port}`));
