@@ -21,7 +21,8 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       cors: {
-        origin: mode === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
+        // origin: mode === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
+        origin: "https://zacharie.cleverapps.io",
         credentials: true,
       },
     },

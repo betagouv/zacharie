@@ -108,8 +108,9 @@ function handleBrowserRequest(
               status: responseStatusCode,
             }),
             {
-              origin:
-                process.env.NODE_ENV === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
+              // origin:
+              // process.env.NODE_ENV === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
+              origin: "https://zacharie.cleverapps.io",
               credentials: true,
             },
           ).then((response) => {
@@ -139,7 +140,8 @@ function handleBrowserRequest(
 
 export const handleDataRequest: HandleDataRequestFunction = async (response, { request }) => {
   return await cors(request, response, {
-    origin: process.env.NODE_ENV === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
+    // origin: process.env.NODE_ENV === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
+    origin: "https://zacharie.cleverapps.io",
     credentials: true,
   });
 };

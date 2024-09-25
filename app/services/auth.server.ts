@@ -111,7 +111,8 @@ export const createUserSession = async (request: Request, user: User) => {
       headers: {
         "Set-Cookie": cookieValue,
         "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Allow-Origin": import.meta.env.DEV ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
+        // "Access-Control-Allow-Origin": import.meta.env.DEV ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
+        "Access-Control-Allow-Origin": "https://zacharie.cleverapps.io",
       },
     },
   );
