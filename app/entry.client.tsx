@@ -29,12 +29,6 @@ Sentry.init({
   ],
 });
 
-startReactDsfr({
-  Link,
-  defaultColorScheme: "light",
-  verbose: false,
-});
-
 declare module "@codegouvfr/react-dsfr/spa" {
   interface RegisterLink {
     Link: typeof Link;
@@ -42,6 +36,11 @@ declare module "@codegouvfr/react-dsfr/spa" {
 }
 
 startTransition(() => {
+  startReactDsfr({
+    Link,
+    defaultColorScheme: "light",
+    verbose: false,
+  });
   hydrateRoot(
     document,
     <StrictMode>
