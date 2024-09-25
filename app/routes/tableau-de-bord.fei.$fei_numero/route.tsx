@@ -54,6 +54,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 
 export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   const user = await getMostFreshUser();
+  console.log("USER", user);
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }

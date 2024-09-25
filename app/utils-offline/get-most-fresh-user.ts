@@ -4,13 +4,17 @@ import type { MeLoaderData } from "~/routes/loader.me";
 
 export async function getMostFreshUser() {
   const cachedUser = (await getCacheItem("user")) as User | null;
+  console.log("CACHED USER", cachedUser);
   if (typeof window === "undefined") {
+    console.log("RETURNING CACHED USER", cachedUser);
     return cachedUser;
   }
+  console.log("ONLINE", window.navigator.onLine);
   if (!window.navigator.onLine) {
+    console.log("RETURNING CACHED USER OFFLINE", cachedUser);
     return cachedUser;
   }
-  fetch(`${import.meta.env.VITE_API_URL}/loader/me`, {
+  return fetch(`${import.meta.env.VITE_API_URL}/loader/me`, {
     method: "GET",
     credentials: "include",
     headers: {
@@ -19,9 +23,12 @@ export async function getMostFreshUser() {
   })
     .then(async (response) => {
       const userResponse = (await response.json()) as MeLoaderData;
+      console.log("USER RESPONSE", userResponse);
       if (userResponse && userResponse.user) {
+        console.log("SETTING CACHED USER", userResponse.user);
         await setCacheItem("user", userResponse.user);
       }
+      console.log("RETURNING USER", userResponse.user);
       return userResponse.user;
     })
     .catch(() => {
