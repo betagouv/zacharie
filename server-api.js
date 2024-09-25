@@ -44,7 +44,7 @@ app.use(morgan("tiny"));
 app.all("*", remixHandler);
 
 if (process.env.NODE_ENV === "production") {
-  app.use(cors({ credentials: true, origin: ["zacharie.cleverapps.io", "api-zacharie.cleverapps.io"] }));
+  app.use(cors({ credentials: true, origin: "zacharie.cleverapps.io" }));
 } else {
   // app.use(
   //   cors({
