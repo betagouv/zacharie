@@ -26,6 +26,7 @@ RUN yarn postinstall
 
 # Build the application
 ENV NODE_ENV=production
+ENV VITE_API_URL="https://api-zacharie.cleverapps.io"
 RUN yarn build-spa
 
 # Expose the port the app runs on
