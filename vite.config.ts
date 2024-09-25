@@ -19,6 +19,9 @@ export default defineConfig(({ mode }) => {
     ssr: {
       noExternal: ["@codegouvfr/react-dsfr"],
     },
+    define: {
+      __APP_VERSION__: JSON.stringify("v0.0.6"),
+    },
     server: {
       cors: {
         // origin: mode === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
