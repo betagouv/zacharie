@@ -23,11 +23,11 @@ export default function CarcassesIntermediaire({
 }) {
   return (
     <>
-      {carcasses.map((carcasse) => {
+      {carcasses.map((carcasse, index, array) => {
         return (
           <Fragment key={carcasse.id}>
-            <CarcasseAVerifier canEdit={canEdit} carcasse={carcasse} />;
-            <hr />
+            <CarcasseAVerifier canEdit={canEdit} carcasse={carcasse} />
+            {index < array.length - 1 && <hr />}
           </Fragment>
         );
       })}
@@ -83,6 +83,15 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                   {carcasse.examinateur_anomalies_carcasse?.length || "Pas d'"} anomalie
                   {carcasse.examinateur_anomalies_carcasse?.length > 1 ? "s" : ""} carcasse
                 </span>
+                {intermediaireCarcasse?.commentaire && (
+                  <>
+                    <br />
+                    <span className="m-0 block font-bold">
+                      Commentaire de l'examinateur&nbsp;:&nbsp;
+                      <span className="m-0 font-normal">{intermediaireCarcasse?.commentaire}</span>
+                    </span>
+                  </>
+                )}
               </>
             ) : (
               <>
@@ -142,23 +151,35 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
               </div>
               <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
                 <ButtonsGroup
-                  buttons={[
-                    {
-                      children: "Accepter",
-                      type: "submit",
-                      nativeButtonProps: {
-                        form: `intermediaire-carcasse-${carcasse.id}`,
-                      },
-                    },
-                    {
-                      children: "Refuser",
-                      priority: "secondary",
-                      type: "button",
-                      nativeButtonProps: {
-                        onClick: () => setShowRefuser(true),
-                      },
-                    },
-                  ]}
+                  buttons={
+                    intermediaireCarcasse?.prise_en_charge
+                      ? [
+                          {
+                            children: "Refuser",
+                            priority: "secondary",
+                            type: "button",
+                            nativeButtonProps: {
+                              onClick: () => setShowRefuser(true),
+                            },
+                          },
+                        ]
+                      : [
+                          {
+                            children: "Accepter",
+                            type: "submit",
+                            nativeButtonProps: {
+                              form: `intermediaire-carcasse-${carcasse.id}`,
+                            },
+                          },
+                          {
+                            children: "Refuser",
+                            type: "button",
+                            nativeButtonProps: {
+                              onClick: () => setShowRefuser(true),
+                            },
+                          },
+                        ]
+                  }
                 />
               </div>
             </>
@@ -202,23 +223,36 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
               </div>
               <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
                 <ButtonsGroup
-                  buttons={[
-                    {
-                      children: "Refuser",
-                      type: "submit",
-                      nativeButtonProps: {
-                        form: `intermediaire-carcasse-${carcasse.id}`,
-                      },
-                    },
-                    {
-                      children: "Annuler",
-                      priority: "secondary",
-                      type: "button",
-                      nativeButtonProps: {
-                        onClick: () => setShowRefuser(false),
-                      },
-                    },
-                  ]}
+                  buttons={
+                    intermediaireCarcasse?.refus
+                      ? [
+                          {
+                            children: "Annuler",
+                            priority: "secondary",
+                            type: "button",
+                            nativeButtonProps: {
+                              onClick: () => setShowRefuser(false),
+                            },
+                          },
+                        ]
+                      : [
+                          {
+                            children: "Refuser",
+                            type: "submit",
+                            nativeButtonProps: {
+                              form: `intermediaire-carcasse-${carcasse.id}`,
+                            },
+                          },
+                          {
+                            children: "Annuler",
+                            priority: "secondary",
+                            type: "button",
+                            nativeButtonProps: {
+                              onClick: () => setShowRefuser(false),
+                            },
+                          },
+                        ]
+                  }
                 />
               </div>
             </>

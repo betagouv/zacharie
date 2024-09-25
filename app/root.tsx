@@ -25,6 +25,7 @@ import dsfrColorCss from "@codegouvfr/react-dsfr/dsfr/utility/colors/colors.min.
 import dsfrFavicon from "@codegouvfr/react-dsfr/favicon/favicon.ico?url";
 import dsfrFaviconSvg from "@codegouvfr/react-dsfr/favicon/favicon.svg?url";
 import dsfrAppleTouchIcon from "@codegouvfr/react-dsfr/favicon/apple-touch-icon.png?url";
+import Chargement from "./components/Chargement";
 
 export const meta: MetaFunction = () => {
   return [
@@ -99,6 +100,14 @@ export const ErrorBoundary = () => {
   }
   return <RootDisplay>{error.status === 404 ? <NotFound /> : <UnexpectedError />}</RootDisplay>;
 };
+
+export function HydrateFallback() {
+  return (
+    <RootDisplay>
+      <Chargement />
+    </RootDisplay>
+  );
+}
 
 export default function App() {
   const { ENV } = useLoaderData<typeof clientLoader>();

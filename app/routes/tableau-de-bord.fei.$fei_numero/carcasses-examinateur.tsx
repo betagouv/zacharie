@@ -72,9 +72,8 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                 ) : (
                   <>
                     <span className="block font-bold md:-mt-4">Nouvelle carcasse à examiner</span>
-                    <span className="block font-normal md:-mb-4">
-                      Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}
-                    </span>
+                    <span className="block font-normal">Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}</span>
+                    <span className="fr-btn mt-2 block md:-mb-4">Examiner</span>
                   </>
                 )}
               </Link>

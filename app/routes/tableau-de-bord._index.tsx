@@ -25,6 +25,7 @@ async function fetchFeis() {
   const serverData = (await response.json()) as FeisLoaderData;
   setCacheItem("user", serverData.user);
   setCacheItem("feisAssigned", serverData.feisAssigned);
+  setCacheItem("feisOngoing", serverData.feisOngoing);
   setCacheItem("feisDone", serverData.feisDone);
   return { ok: true, status: 200, data: serverData, error: "" };
 }
@@ -45,10 +46,16 @@ export async function clientLoader() {
   }
 
   const cachedUser = (await getCacheItem("user")) as FeisLoaderData["user"];
-  const cachedFeiAssigned = (await getCacheItem("feisAssigned")) as FeisLoaderData["feisAssigned"];
+  const cachedFeisToTake = (await getCacheItem("feisAssigned")) as FeisLoaderData["feisAssigned"];
+  const cachedFeisOngoing = (await getCacheItem("feisOngoing")) as FeisLoaderData["feisOngoing"];
   const cachedFeiDone = (await getCacheItem("feisDone")) as FeisLoaderData["feisDone"];
-  if (cachedUser && cachedFeiAssigned && cachedFeiDone) {
-    return { user: cachedUser, feisAssigned: cachedFeiAssigned, feisDone: cachedFeiDone };
+  if (cachedUser && cachedFeisToTake && cachedFeisOngoing && cachedFeiDone) {
+    return {
+      user: cachedUser,
+      feisAssigned: cachedFeisToTake,
+      feisOngoing: cachedFeisOngoing,
+      feisDone: cachedFeiDone,
+    };
   }
 
   const response = await fetchFeis();
@@ -67,6 +74,7 @@ export default function TableauDeBordIndex() {
   const data = useLoaderData<FeisLoaderData>();
   const user = data.user!;
   const feisAssigned = data.feisAssigned!.filter((fei) => fei !== null);
+  const feisOngoing = data.feisOngoing!.filter((fei) => fei !== null);
   const feisDone = data.feisDone!.filter((fei) => fei !== null);
 
   return (
@@ -149,6 +157,78 @@ export default function TableauDeBordIndex() {
               ) : (
                 <>
                   <h2 className="fr-h3 fr-mb-2w">FEI assignées</h2>
+                  <p className="my-8">Pas encore de donnée</p>
+                </>
+              )}
+            </div>
+            <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
+              <ButtonsGroup
+                buttons={[
+                  {
+                    children: "Rafraichir",
+                    linkProps: {
+                      to: "/tableau-de-bord/",
+                      href: "#",
+                    },
+                  },
+                ]}
+              />
+              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                Haut de page
+              </a>
+            </div>
+          </section>
+          <section className="mb-6 bg-white md:shadow">
+            <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+              {feisOngoing.length ? (
+                <Table
+                  bordered
+                  caption="FEI en cours où j'ai eu une intervention"
+                  className="[&_td]:h-px"
+                  data={feisOngoing.map((fei) => [
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
+                      {fei.numero}
+                    </Link>,
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                      suppressHydrationWarning
+                    >
+                      {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
+                    </Link>,
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                      suppressHydrationWarning
+                    >
+                      {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
+                    </Link>,
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
+                      {fei.commune_mise_a_mort}
+                    </Link>,
+                    <Link
+                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                      key={fei.numero}
+                      to={`/tableau-de-bord/fei/${fei.numero}`}
+                    >
+                      {getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles))}
+                    </Link>,
+                  ])}
+                  headers={["Numéro", "Date de création", "Dernière mise à jour", "Commune", "Étape en cours"]}
+                />
+              ) : (
+                <>
+                  <h2 className="fr-h3 fr-mb-2w">FEI en cours où j'ai eu une intervention</h2>
                   <p className="my-8">Pas encore de donnée</p>
                 </>
               )}
