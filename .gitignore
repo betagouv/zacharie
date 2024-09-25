@@ -3,7 +3,7 @@
 node_modules
 
 /.cache
-/build
+/build-api
 /build-spa
 /public/build
 .env

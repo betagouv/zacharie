@@ -3,6 +3,7 @@ import { getUserFromCookie } from "~/services/auth.server";
 import { UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
+import { cors } from "remix-utils/cors";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const admin = await getUserFromCookie(request);
@@ -10,7 +11,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
     throw redirect("/connexion?type=compte-existant");
   }
   const users = await prisma.user.findMany();
-  return json({ users });
+  return cors(request, json({ users }), {
+    origin: "https://zacharie.cleverapps.io",
+    credentials: true,
+  });
 }
 
 export type AdminFeisLoaderData = ExtractLoaderData<typeof loader>;

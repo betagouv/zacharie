@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
       remix({
         presets: [RemixPWAPreset()],
         ssr: !isSpaMode,
-        buildDirectory: isSpaMode ? "build-spa" : "build-server",
+        buildDirectory: isSpaMode ? "build-spa" : "build-api",
 
         future: {
           v3_fetcherPersist: true,

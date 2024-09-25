@@ -25,7 +25,7 @@ COPY . .
 RUN yarn postinstall
 
 # Build the application
-RUN yarn build
+RUN yarn build-api
 
 # Expose the port the app runs on
 EXPOSE 8080
@@ -34,4 +34,4 @@ EXPOSE 8080
 ENV NODE_ENV=production
 
 # Define the command to run the app
-CMD ["yarn", "start"]
+CMD ["yarn", "start-api"]
