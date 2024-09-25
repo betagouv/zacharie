@@ -29,7 +29,6 @@ const corsOptions = {
   credentials: true,
   origin: (origin, callback) => {
     const allowedOrigins = ["https://zacharie.cleverapps.io"];
-    console.log("Incoming origin:", origin);
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -55,13 +54,6 @@ if (process.env.NODE_ENV === "production") {
   /* Access to fetch at 'http://localhost:3233/action/connexion' from origin 'http://localhost:3232' has been blocked by CORS policy: The 'Access-Control-Allow-Origin' header contains multiple values 'http://localhost:3232, http://localhost:3232', but only one is allowed. Have the server send the header with a valid value, or, if an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled. */
 }
 
-// Log all incoming requests
-// app.use((req, res, next) => {
-//   console.log(`LOG1 Incoming request: ${req.method} ${req.url}`);
-//   console.log("LOG1 Headers:", req.headers);
-//   next();
-// });
-
 app.use(compression());
 
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
@@ -84,11 +76,5 @@ app.use(morgan("tiny"));
 // handle SSR requests
 app.all("*", remixHandler);
 
-// Log all incoming requests
-// app.use((req, res, next) => {
-//   console.log(`LOG2 Incoming request: ${req.method} ${req.url}`);
-//   console.log("LOG2 Headers:", req.headers);
-//   next();
-// });
 const port = process.env.PORT || 3233;
 app.listen(port, () => console.log(`Express server listening at http://localhost:${port}`));

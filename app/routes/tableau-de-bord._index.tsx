@@ -30,15 +30,11 @@ async function fetchFeis() {
 }
 
 export async function clientLoader() {
-  console.log("clientLoader");
   const isOnline = window.navigator.onLine;
-
-  console.log("isOnline", isOnline);
 
   if (isInitialRequest || isOnline) {
     isInitialRequest = false;
     const response = await fetchFeis();
-    console.log("response", response);
     if (!response.ok) {
       if (response.status === 401) {
         return redirect("/connexion?type=compte-existant");
@@ -56,7 +52,6 @@ export async function clientLoader() {
   }
 
   const response = await fetchFeis();
-  console.log("response", response);
   if (!response.ok) {
     if (response.status === 401) {
       return redirect("/connexion?type=compte-existant");

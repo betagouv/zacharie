@@ -22,7 +22,6 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
     credentials: "include",
     body: formData,
   }).then((response) => (response.json ? response.json() : response))) as AdminNouvelleEntiteActionData;
-  console.log("response tableau-de-bord.admin.entite.nouvelle", response);
   if (response.ok && response.data) {
     return redirect(`/tableau-de-bord/admin/entite/${response.data.id}`);
   }

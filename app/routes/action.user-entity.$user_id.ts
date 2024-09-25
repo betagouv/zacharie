@@ -49,9 +49,7 @@ export async function action(args: ActionFunctionArgs) {
     if (existingEntityRelation) {
       return json({ ok: false, data: null, error: "EntityRelation already exists" }, { status: 409 });
     }
-    console.log({
-      nextEntityRelation,
-    });
+
     const relation = await prisma.entityRelations.create({
       data: nextEntityRelation,
     });

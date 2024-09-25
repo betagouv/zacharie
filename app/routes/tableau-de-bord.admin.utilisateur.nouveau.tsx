@@ -21,7 +21,6 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
     credentials: "include",
     body: formData,
   }).then((response) => (response.json ? response.json() : response))) as AdminNouveauUserLoaderData;
-  console.log("response tableau-de-bord.admin.utilisateur.nouveau", response);
   if (response.ok && response.data) {
     return redirect(`/tableau-de-bord/admin/utilisateur/${response.data.id}`);
   }

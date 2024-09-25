@@ -5,7 +5,6 @@ import { prisma } from "~/db/prisma.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  console.log("admin.users.loader");
   const admin = await getUserFromCookie(request);
   if (!admin?.roles?.includes(UserRoles.ADMIN)) {
     throw redirect("/connexion?type=compte-existant");

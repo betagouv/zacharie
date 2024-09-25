@@ -32,20 +32,16 @@ export default function FEICurrentIntermediaire() {
       const checkId = `${fei.numero}__${carcasse.numero_bracelet}__${intermediaire.id}`;
       if (intermediaireCheckById[checkId]) {
         if (intermediaireCheckById[checkId].prise_en_charge) {
-          console.log("carcasse approved", carcasse.espece, carcasse.categorie);
           carcassesApproved[checkId] = carcasse;
         } else {
-          console.log("carcasse refused", carcasse.espece, carcasse.categorie);
           carcassesRefused[checkId] = carcasse;
         }
       } else {
         if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
           if (carcasse.intermediaire_carcasse_refus_intermediaire_id === intermediaire.id) {
-            console.log("carcasse very refused", carcasse.espece, carcasse.categorie);
             carcassesRefused[checkId] = carcasse;
           }
         } else {
-          console.log("carcasse to check", carcasse.espece, carcasse.categorie);
           carcassesToCheck[checkId] = carcasse;
         }
       }

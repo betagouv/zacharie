@@ -31,7 +31,7 @@ export function meta({ params }: MetaArgs) {
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
   const formData = await request.formData();
-  console.log("ON EST LA PUTIN", Object.fromEntries(formData.entries()));
+  console.log("fei route formdata", Object.fromEntries(formData.entries()));
   const route = formData.get("route") as string;
   if (!route) {
     return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
@@ -54,7 +54,6 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 
 export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   const user = await getMostFreshUser();
-  console.log("USER", user);
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
@@ -66,8 +65,6 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
       "Content-Type": "application/json",
     }),
   }).then((res) => res.json())) as FeiLoaderData;
-
-  console.log("LOADER DATA", loaderData);
 
   return json({
     user,

@@ -24,7 +24,7 @@ import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
   const formData = await request.formData();
-  console.log("ON EST LA AUSSI", Object.fromEntries(formData.entries()));
+  console.log("carcasse formdata", Object.fromEntries(formData.entries()));
   const response = (await fetch(`${import.meta.env.VITE_API_URL}/action/carcasse/${params.numero_bracelet}`, {
     method: "POST",
     credentials: "include",
@@ -38,7 +38,6 @@ export async function clientAction({ request, params }: ClientActionFunctionArgs
 
 export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   const user = await getMostFreshUser();
-  console.log("carcasseData user", user);
   if (!user) {
     throw redirect("/connexion?type=compte-existant");
   }
@@ -54,7 +53,6 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
     },
   ).then((res) => res.json())) as CarcasseLoaderData;
 
-  console.log("carcasseData", carcasseData);
   if (!carcasseData) {
     throw redirect(`/tableau-de-bord/fei/${params.fei_numero}`);
   }
