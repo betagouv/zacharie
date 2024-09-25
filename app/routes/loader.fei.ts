@@ -8,10 +8,17 @@ import { cors } from "remix-utils/cors";
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user?.onboarded_at) {
-    return json(
-      { user: null, feisAssigned: [], feisDone: [] },
+    return cors(
+      request,
+      json(
+        { user: null, feisAssigned: [], feisDone: [] },
+        {
+          status: 401,
+        },
+      ),
       {
-        status: 401,
+        origin: "https://zacharie.cleverapps.io",
+        credentials: true,
       },
     );
   }
