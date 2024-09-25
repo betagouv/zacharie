@@ -6,7 +6,6 @@ WORKDIR /app
 
 # Copy package.json (and bun.lockb if it exists)
 COPY package.json ./
-COPY bun.lockb* ./
 
 # Copy Prisma schema
 COPY prisma ./prisma
