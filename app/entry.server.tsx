@@ -55,12 +55,21 @@ function handleBotRequest(
 
           responseHeaders.set("Content-Type", "text/html");
 
-          resolve(
+          cors(
+            request,
             new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
             }),
-          );
+            {
+              // origin:
+              // process.env.NODE_ENV === "development" ? "http://localhost:3232" : "https://zacharie.cleverapps.io",
+              origin: "https://zacharie.cleverapps.io",
+              credentials: true,
+            },
+          ).then((response) => {
+            resolve(response);
+          });
 
           pipe(body);
         },
