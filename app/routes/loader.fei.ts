@@ -114,7 +114,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
   const feisDone = await prisma.fei.findMany({
     where: {
-      created_by_user_id: user.id,
       svi_signed_at: {
         not: null,
       },
@@ -128,6 +127,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   for (const fei of [...feisUnderMyResponsability, ...feisToTake, ...feisOngoing, ...feisDone]) {
     latestFeis[fei.numero] = fei;
   }
+
+  console.log("feisUnderMyResponsability", feisUnderMyResponsability.length);
+  console.log("feisToTake", feisToTake.length);
+  console.log("feisOngoing", feisOngoing.length);
+  console.log("feisDone", feisDone.length);
+  console.log("latestFeis", Object.keys(latestFeis).length);
 
   return json({ user, latestFeis });
 }

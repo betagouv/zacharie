@@ -9,6 +9,7 @@ import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
 import type { FeisLoaderData } from "~/routes/loader.fei";
 import { useIsOnline } from "~/components/OfflineMode";
 import { setFeisToCache, type CachedFeis } from "~/utils/caches";
+import { SerializeFrom } from "@remix-run/node";
 
 let isInitialRequest = true;
 
@@ -66,38 +67,39 @@ export async function clientLoader() {
 
 clientLoader.hydrate = true; // (2)
 
-function categorizeFeis(allFeis: CachedFeis, currentUserId: string) {
+function categorizeFeis(allFeis: SerializeFrom<CachedFeis>, currentUserId: string) {
   // should be an array of values of CachedFeis
-  const feisAssigned: string[] = [];
-  const feisDone: string[] = [];
-  const feisOngoing: string[] = [];
+  const feisAssigned = [];
+  const feisDone = [];
+  const feisOngoing = [];
 
-  for (const [id, fei] of Object.entries(allFeis!)) {
-    if (!fei) {
+  for (const fei of Object.values(allFeis)) {
+    if (!fei || fei === null) {
       continue;
     }
     if (fei.svi_signed_at) {
-      categorized.feisDone.push(fei);
+      feisDone.push(fei);
       continue;
     }
     if (fei.fei_next_owner_user_id === currentUserId) {
-      feisAssigned.push(id);
-    }
+      feisAssigned.push(fei);
     } else {
-      feisOngoing.push(id);
+      feisOngoing.push(fei);
     }
   }
 
-  return categorized;
+  return {
+    feisAssigned,
+    feisDone,
+    feisOngoing,
+  };
 }
 
 export default function TableauDeBordIndex() {
   const data = useLoaderData<FeisLoaderData>();
   const user = data.user!;
 
-  const feisAssigned = data.feisAssigned!.filter((fei) => fei !== null);
-  const feisOngoing = data.feisOngoing!.filter((fei) => fei !== null);
-  const feisDone = data.feisDone!.filter((fei) => fei !== null);
+  const { feisAssigned, feisDone, feisOngoing } = categorizeFeis(data.latestFeis!, user.id);
   const isOnline = useIsOnline();
 
   return (
