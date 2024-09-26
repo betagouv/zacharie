@@ -21,7 +21,7 @@ export default function TableauDeBordLayout() {
           }
           homeLinkProps={{
             href: "/",
-            title: "Zacharie - Ministère de l'Agriculture",
+            title: "Zacharie",
           }}
           id="fr-header-header-with-quick-access-items"
           // check mobile responsive header classes at tailwind.css

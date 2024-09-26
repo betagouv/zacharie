@@ -8,8 +8,7 @@ import dayjs from "dayjs";
 import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
 import type { FeisLoaderData } from "~/routes/loader.fei";
 import { useIsOnline } from "~/components/OfflineMode";
-import { setFeisToCache, type CachedFeis } from "~/utils/caches";
-import { SerializeFrom } from "@remix-run/node";
+import { setFeisToCache } from "~/utils/caches";
 
 let isInitialRequest = true;
 
@@ -70,7 +69,7 @@ clientLoader.hydrate = true; // (2)
 export default function TableauDeBordIndex() {
   const data = useLoaderData<FeisLoaderData>();
   const user = data.user!;
-
+  console.log({ user });
   const { feisDone, feisOngoing, feisToTake, feisUnderMyResponsability } = data;
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake];
   const isOnline = useIsOnline();

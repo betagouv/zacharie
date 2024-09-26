@@ -15,6 +15,7 @@ import grandGibierAbats from "~/data/grand-gibier-abats.json";
 import { useEffect, useMemo, useRef, useState } from "react";
 import InputForSearchPrefilledData from "~/components/InputForSearchPrefilledData";
 import { Input } from "@codegouvfr/react-dsfr/Input";
+import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
 import InputNotEditable from "~/components/InputNotEditable";
@@ -77,10 +78,14 @@ export default function CarcasseReadAndWrite() {
   const carcasseFetcher = useFetcher({ key: "carcasse-edit-fetcher" });
   const [espece, setEspece] = useState(carcasse.espece);
   const [categorie, setCategorie] = useState(carcasse.categorie);
+  const [showAsSelectOption, setShowAsSelectOption] = useState(false);
   const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(carcasse.examinateur_anomalies_abats);
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(carcasse.examinateur_anomalies_carcasse);
   const [addAnomalieAbats, setAddAnomalieAbats] = useState(false);
   const [addAnomalieCarcasse, setAddAnomalieCarcasse] = useState(false);
+  const [showScroll, setShowScroll] = useState(
+    canEdit && espece && !anomaliesAbats.length && !anomaliesCarcasse.length,
+  );
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -194,6 +199,50 @@ export default function CarcasseReadAndWrite() {
                 </div>
               </div>
               <div className="fr-fieldset__element">
+                <input type="hidden" name="espece" value={espece ?? ""} />
+                <input type="hidden" name="categorie" value={categorie ?? ""} />
+                <Select
+                  label="Sélectionnez l'espèce et la catégorie du gibier"
+                  className="group !mb-0 grow"
+                  nativeSelectProps={{
+                    name: Prisma.FeiScalarFieldEnum.fei_next_owner_role,
+                    value: `${espece}__${categorie}`,
+                    onClick: () => {
+                      setShowAsSelectOption(true);
+                    },
+                    onBlur: () => {
+                      setShowAsSelectOption(false);
+                    },
+                    onChange: (e) => {
+                      const espece__categorie = e.currentTarget.value;
+                      const [newEspece, newCategorie] = espece__categorie.split("__");
+                      setShowAsSelectOption(false);
+                      setEspece(newEspece);
+                      setCategorie(newCategorie);
+                      if (!espece || !anomaliesAbats.length || !anomaliesCarcasse.length) {
+                        setShowScroll(true);
+                      }
+                    },
+                  }}
+                >
+                  <option value="">Sélectionnez l'espèce et la catégorie du gibier</option>
+                  <hr />
+                  {Object.entries(grandGibier.especes_categories).map(([_espece, _categories]) => {
+                    return (
+                      <optgroup label={_espece} key={_espece}>
+                        {_categories.map((_categorie: string) => {
+                          return (
+                            <option key={`${_espece}__${_categorie}`} value={`${_espece}__${_categorie}`}>
+                              {showAsSelectOption ? _categorie : `${_espece} - ${_categorie}`}
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                    );
+                  })}
+                </Select>
+              </div>
+              {/* <div className="fr-fieldset__element">
                 <InputForSearchPrefilledData
                   canEdit={canEdit}
                   data={Object.keys(grandGibier.especes_categories)}
@@ -219,7 +268,7 @@ export default function CarcasseReadAndWrite() {
                   onSelect={setCategorie}
                   defaultValue={categorie ?? ""}
                 />
-              </div>
+              </div> */}
             </div>
           </carcasseFetcher.Form>
           {espece && categorie && (
@@ -272,7 +321,7 @@ export default function CarcasseReadAndWrite() {
                   </div>
                 </div>
               </div>
-              <div className="mb-6 bg-white md:shadow">
+              <div className="mb-16 bg-white md:shadow">
                 <div className="p-4 pb-8 md:p-8 md:pb-4">
                   <div className="fr-fieldset__element">
                     <h3 className="fr-h4 fr-mb-2w">
@@ -321,19 +370,35 @@ export default function CarcasseReadAndWrite() {
               </div>
             </>
           )}
-          <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
-            <ButtonsGroup
-              buttons={[
-                {
-                  children: canEdit ? "Enregistrer et retourner à la FEI" : "Retourner à la FEI",
-                  priority: "tertiary",
-                  linkProps: {
-                    to: `/tableau-de-bord/fei/${fei.numero}`,
-                    href: "#",
+          <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
+            {showScroll && (
+              <div className="w-full p-6 pb-2 md:hidden">
+                <button
+                  type="button"
+                  className="ml-auto block rounded-full bg-white px-4 py-1 shadow-lg"
+                  onClick={() => {
+                    window.scrollTo({ top: window.innerHeight, behavior: "smooth" });
+                    setShowScroll(false);
+                  }}
+                >
+                  ⬇️ Anomalies
+                </button>
+              </div>
+            )}
+            <div className="w-full bg-white p-6 pb-2">
+              <ButtonsGroup
+                buttons={[
+                  {
+                    children: canEdit ? "Enregistrer et retourner à la FEI" : "Retourner à la FEI",
+                    priority: "tertiary",
+                    linkProps: {
+                      to: `/tableau-de-bord/fei/${fei.numero}`,
+                      href: "#",
+                    },
                   },
-                },
-              ]}
-            />
+                ]}
+              />
+            </div>
           </div>
         </div>
       </div>

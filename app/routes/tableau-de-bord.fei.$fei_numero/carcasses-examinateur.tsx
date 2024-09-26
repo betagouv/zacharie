@@ -1,10 +1,11 @@
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+import { useEffect } from "react";
+import { Link, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { clientLoader } from "./route";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Prisma } from "@prisma/client";
-import { action as nouvelleCarcasseAtion } from "~/routes/action.carcasse.nouvelle";
+import { action as nouvelleCarcasseAction } from "~/routes/action.carcasse.nouvelle";
 
 const style = {
   boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
@@ -12,10 +13,17 @@ const style = {
 
 export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) {
   const { fei } = useLoaderData<typeof clientLoader>();
-  const nouvelleCarcasseFetcher = useFetcher<typeof nouvelleCarcasseAtion>({ key: "nouvelle-carcasse" });
+  const navigate = useNavigate();
+  const nouvelleCarcasseFetcher = useFetcher<typeof nouvelleCarcasseAction>({ key: "nouvelle-carcasse" });
   const carcasseFetcher = useFetcher({ key: "carcasse-delete-fetcher" });
 
   const error = nouvelleCarcasseFetcher.data?.error;
+
+  useEffect(() => {
+    if (nouvelleCarcasseFetcher.data?.data?.numero_bracelet) {
+      navigate(`/tableau-de-bord/carcasse/${fei.numero}/${nouvelleCarcasseFetcher.data?.data?.numero_bracelet}`);
+    }
+  }, [nouvelleCarcasseFetcher.data?.data?.numero_bracelet, fei.numero, navigate]);
 
   return (
     <>
