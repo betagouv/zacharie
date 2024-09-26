@@ -47,53 +47,53 @@ export default defineConfig(({ mode }) => {
         project: "zacharie-remix",
         url: "https://sentry.incubateur.net/",
       }),
-      // RemixVitePWAPlugin({
-      //   strategies: "injectManifest",
-      //   srcDir: "app",
-      //   filename: "sw.ts",
-      //   registerType: "autoUpdate",
-      //   injectRegister: false,
-      //   pwaAssets: {
-      //     disabled: false,
-      //     config: true,
-      //   },
-      //   manifest: {
-      //     name: "Zacharie",
-      //     short_name: "Zacharie",
-      //     description: "La FEI simpifiée",
-      //     background_color: "#000091",
-      //     theme_color: "#ffffff",
-      //     start_url: "./?mode=standalone",
-      //     display: "fullscreen",
-      //     lang: "fr",
-      //   },
-      //   injectManifest: {
-      //     globPatterns: ["**/*.{js,html,css,png,svg,ico}"],
-      //     maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
-      //   },
-      //   devOptions: {
-      //     enabled: true,
-      //     suppressWarnings: false,
-      //     navigateFallback: "/",
-      //     navigateFallbackAllowlist: [/^\/$/],
-      //     type: "module",
-      //   },
-      //   workbox: {
-      //     runtimeCaching: [
-      //       {
-      //         urlPattern: /^https:\/\/your-api-domain\.com\//,
-      //         handler: "NetworkFirst",
-      //         options: {
-      //           cacheName: "api-cache",
-      //           expiration: {
-      //             maxEntries: 100,
-      //             maxAgeSeconds: 60 * 60 * 24, // 1 day
-      //           },
-      //         },
-      //       },
-      //     ],
-      //   },
-      // }),
+      RemixVitePWAPlugin({
+        strategies: "injectManifest",
+        srcDir: "app",
+        filename: "sw.ts",
+        registerType: "autoUpdate",
+        injectRegister: false,
+        pwaAssets: {
+          disabled: false,
+          config: true,
+        },
+        manifest: {
+          name: "Zacharie",
+          short_name: "Zacharie",
+          description: "La FEI simpifiée",
+          background_color: "#000091",
+          theme_color: "#ffffff",
+          start_url: "./?mode=standalone",
+          display: "fullscreen",
+          lang: "fr",
+        },
+        injectManifest: {
+          globPatterns: ["**/*.{js,html,css,png,svg,ico}"],
+          maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        },
+        devOptions: {
+          enabled: true,
+          suppressWarnings: false,
+          navigateFallback: "/",
+          navigateFallbackAllowlist: [/^\/$/],
+          type: "module",
+        },
+        workbox: {
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/api\.zacharie\.beta\.gouv\.fr\//,
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "api-cache",
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 60 * 24, // 1 day
+                },
+              },
+            },
+          ],
+        },
+      }),
     ],
     build: {
       sourcemap: true,

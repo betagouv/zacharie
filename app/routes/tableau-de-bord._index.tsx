@@ -111,45 +111,47 @@ export default function TableauDeBordIndex() {
                   bordered
                   caption="FEI assignées"
                   className="[&_td]:h-px"
-                  data={feisAssigned.map((fei) => [
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                    >
-                      {fei.numero}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                      suppressHydrationWarning
-                    >
-                      {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                      suppressHydrationWarning
-                    >
-                      {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                    >
-                      {fei.commune_mise_a_mort}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                    >
-                      {getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles))}
-                    </Link>,
-                  ])}
+                  data={feisAssigned
+                    .filter((fei) => fei !== null)
+                    .map((fei) => [
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                      >
+                        {fei.numero}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                        suppressHydrationWarning
+                      >
+                        {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                        suppressHydrationWarning
+                      >
+                        {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                      >
+                        {fei.commune_mise_a_mort}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                      >
+                        {getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles))}
+                      </Link>,
+                    ])}
                   headers={["Numéro", "Date de création", "Dernière mise à jour", "Commune", "Étape en cours"]}
                 />
               ) : (
@@ -185,45 +187,47 @@ export default function TableauDeBordIndex() {
                   bordered
                   caption="FEI en cours où j'ai eu une intervention"
                   className="[&_td]:h-px"
-                  data={feisOngoing.map((fei) => [
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                    >
-                      {fei.numero}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                      suppressHydrationWarning
-                    >
-                      {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                      suppressHydrationWarning
-                    >
-                      {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                    >
-                      {fei.commune_mise_a_mort}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                    >
-                      {getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles))}
-                    </Link>,
-                  ])}
+                  data={feisOngoing
+                    .filter((fei) => fei !== null)
+                    .map((fei) => [
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                      >
+                        {fei.numero}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                        suppressHydrationWarning
+                      >
+                        {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                        suppressHydrationWarning
+                      >
+                        {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                      >
+                        {fei.commune_mise_a_mort}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                      >
+                        {getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles))}
+                      </Link>,
+                    ])}
                   headers={["Numéro", "Date de création", "Dernière mise à jour", "Commune", "Étape en cours"]}
                 />
               ) : (
@@ -259,46 +263,48 @@ export default function TableauDeBordIndex() {
                   bordered
                   className="[&_td]:h-px"
                   caption="FEI archivées"
-                  data={feisDone.map((fei) => [
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                    >
-                      {fei.numero}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                      suppressHydrationWarning
-                    >
-                      {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                      suppressHydrationWarning
-                    >
-                      {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                    >
-                      {fei.commune_mise_a_mort}
-                    </Link>,
-                    <Link
-                      className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                      key={fei.numero}
-                      suppressHydrationWarning
-                      to={`/tableau-de-bord/fei/${fei.numero}`}
-                    >
-                      {dayjs(fei.svi_signed_at).format("DD/MM/YYYY")}
-                    </Link>,
-                  ])}
+                  data={feisDone
+                    .filter((fei) => fei !== null)
+                    .map((fei) => [
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                      >
+                        {fei.numero}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                        suppressHydrationWarning
+                      >
+                        {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                        suppressHydrationWarning
+                      >
+                        {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                      >
+                        {fei.commune_mise_a_mort}
+                      </Link>,
+                      <Link
+                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                        key={fei.numero}
+                        suppressHydrationWarning
+                        to={`/tableau-de-bord/fei/${fei.numero}`}
+                      >
+                        {dayjs(fei.svi_signed_at).format("DD/MM/YYYY")}
+                      </Link>,
+                    ])}
                   headers={["Numéro", "Date de création", "Dernière mise à jour", "Commune", "Étape en cours"]}
                 />
               ) : (
