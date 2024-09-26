@@ -8,6 +8,7 @@ import dayjs from "dayjs";
 import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
 import type { FeisLoaderData } from "~/routes/loader.fei";
 import { useIsOnline } from "~/components/OfflineMode";
+import { setFeisToCache, type CachedFeis } from "~/utils/caches";
 
 let isInitialRequest = true;
 
@@ -25,9 +26,7 @@ async function fetchFeis() {
   }
   const serverData = (await response.json()) as FeisLoaderData;
   setCacheItem("user", serverData.user);
-  setCacheItem("feisAssigned", serverData.feisAssigned);
-  setCacheItem("feisOngoing", serverData.feisOngoing);
-  setCacheItem("feisDone", serverData.feisDone);
+  setFeisToCache(serverData.latestFeis);
   return { ok: true, status: 200, data: serverData, error: "" };
 }
 
@@ -47,15 +46,11 @@ export async function clientLoader() {
   }
 
   const cachedUser = (await getCacheItem("user")) as FeisLoaderData["user"];
-  const cachedFeisToTake = (await getCacheItem("feisAssigned")) as FeisLoaderData["feisAssigned"];
-  const cachedFeisOngoing = (await getCacheItem("feisOngoing")) as FeisLoaderData["feisOngoing"];
-  const cachedFeiDone = (await getCacheItem("feisDone")) as FeisLoaderData["feisDone"];
-  if (cachedUser && cachedFeisToTake && cachedFeisOngoing && cachedFeiDone) {
+  const cachedFeis = await getCacheItem("feis");
+  if (cachedUser && cachedFeis) {
     return {
       user: cachedUser,
-      feisAssigned: cachedFeisToTake,
-      feisOngoing: cachedFeisOngoing,
-      feisDone: cachedFeiDone,
+      latestFeis: cachedFeis,
     };
   }
 
@@ -71,9 +66,35 @@ export async function clientLoader() {
 
 clientLoader.hydrate = true; // (2)
 
+function categorizeFeis(allFeis: CachedFeis, currentUserId: string) {
+  // should be an array of values of CachedFeis
+  const feisAssigned: string[] = [];
+  const feisDone: string[] = [];
+  const feisOngoing: string[] = [];
+
+  for (const [id, fei] of Object.entries(allFeis!)) {
+    if (!fei) {
+      continue;
+    }
+    if (fei.svi_signed_at) {
+      categorized.feisDone.push(fei);
+      continue;
+    }
+    if (fei.fei_next_owner_user_id === currentUserId) {
+      feisAssigned.push(id);
+    }
+    } else {
+      feisOngoing.push(id);
+    }
+  }
+
+  return categorized;
+}
+
 export default function TableauDeBordIndex() {
   const data = useLoaderData<FeisLoaderData>();
   const user = data.user!;
+
   const feisAssigned = data.feisAssigned!.filter((fei) => fei !== null);
   const feisOngoing = data.feisOngoing!.filter((fei) => fei !== null);
   const feisDone = data.feisDone!.filter((fei) => fei !== null);

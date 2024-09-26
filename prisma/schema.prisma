@@ -68,7 +68,9 @@ model User {
   NotificationLog                NotificationLog[]
   CarcasseIntermediaire          CarcasseIntermediaire[] @relation("CarcasseIntermediaireUser")
 
-  @@index([email, prenom, nom_de_famille, roles])
+  @@index([id]) // New: Added for faster user lookups
+  @@index([email]) // Modified: Simplified from the composite index
+  @@index([onboarded_at]) // New: Added based on loader query
 }
 
 enum EntityTypes {
@@ -160,6 +162,7 @@ model EntityRelations {
 
   @@index([owner_id, relation])
   @@index([entity_id, relation])
+  @@index([owner_id, entity_id]) // Add: Used in nested queries for FeiNextEntity
 }
 
 model Logs {
@@ -223,8 +226,12 @@ model Fei {
   @@index([created_by_user_id])
   @@index([premier_detenteur_user_id])
   @@index([examinateur_initial_user_id])
-  @@index([svi_entity_id])
-  @@index([svi_user_id])
+  @@index([svi_signed_at])
+  @@index([fei_next_owner_user_id])
+  @@index([fei_next_owner_entity_id])
+  @@index([fei_current_owner_user_id])
+  @@index([fei_current_owner_entity_id])
+  @@index([updated_at])
 }
 
 model Carcasse {
@@ -282,7 +289,8 @@ model FeiIntermediaire {
   FeiIntermediaireCarcassesRefus Carcasse[]              @relation("FeiIntermediaireCarcasseRefus")
   CarcasseIntermediaire          CarcasseIntermediaire[] @relation("FeiIntermediaireCarcasseIntermediaire")
 
-  @@index([fei_numero, fei_intermediaire_user_id, fei_intermediaire_entity_id])
+  @@index([fei_numero, fei_intermediaire_user_id]) // Modify: Focus on these two fields
+  @@index([fei_intermediaire_entity_id]) // Add: Used in nested queries
 }
 
 model CarcasseIntermediaire {

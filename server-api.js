@@ -28,7 +28,7 @@ console.log("NODE_ENV:", process.env.NODE_ENV);
 const corsOptions = {
   credentials: true,
   origin: (origin, callback) => {
-    const allowedOrigins = ["https://zacharie.cleverapps.io"];
+    const allowedOrigins = ["https://zacharie.beta.gouv.fr"];
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -39,7 +39,7 @@ const corsOptions = {
 
 if (process.env.NODE_ENV === "production") {
   app.use(cors(corsOptions));
-  // app.use(cors({ credentials: true, origin: "zacharie.cleverapps.io" }));
+  // app.use(cors({ credentials: true, origin: "zacharie.beta.gouv.fr" }));
 } else {
   // app.use(
   //   cors({

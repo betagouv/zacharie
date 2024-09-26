@@ -3,12 +3,16 @@ import { json } from "@remix-run/react";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
+import { feiInclude } from "~/db/fei.server";
+import { type CachedFeis } from "~/utils/caches";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
+  const latestFeis: CachedFeis = {};
+
   if (!user?.onboarded_at) {
     return json(
-      { user: null, feisAssigned: [], feisOngoing: [], feisDone: [] },
+      { user: null, latestFeis },
       {
         status: 401,
       },
@@ -34,14 +38,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         },
       ],
     },
-    select: {
-      numero: true,
-      created_at: true,
-      updated_at: true,
-      fei_current_owner_role: true,
-      fei_next_owner_role: true,
-      commune_mise_a_mort: true,
-    },
+    include: feiInclude,
     orderBy: {
       updated_at: "desc",
     },
@@ -64,14 +61,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         },
       ],
     },
-    select: {
-      numero: true,
-      created_at: true,
-      updated_at: true,
-      fei_current_owner_role: true,
-      fei_next_owner_role: true,
-      commune_mise_a_mort: true,
-    },
+    include: feiInclude,
     orderBy: {
       updated_at: "desc",
     },
@@ -117,14 +107,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         },
       ],
     },
-    select: {
-      numero: true,
-      created_at: true,
-      updated_at: true,
-      fei_current_owner_role: true,
-      fei_next_owner_role: true,
-      commune_mise_a_mort: true,
-    },
+    include: feiInclude,
     orderBy: {
       updated_at: "desc",
     },
@@ -136,16 +119,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
         not: null,
       },
     },
-    select: {
-      numero: true,
-      created_at: true,
-      updated_at: true,
-      svi_signed_at: true,
-      commune_mise_a_mort: true,
+    include: feiInclude,
+    orderBy: {
+      updated_at: "desc",
     },
   });
 
-  return json({ user, feisAssigned: [...feisUnderMyResponsability, ...feisToTake], feisOngoing, feisDone });
+  for (const fei of [...feisUnderMyResponsability, ...feisToTake, ...feisOngoing, ...feisDone]) {
+    latestFeis[fei.numero] = fei;
+  }
+
+  return json({ user, latestFeis });
 }
 
 export type FeisLoaderData = ExtractLoaderData<typeof loader>;
