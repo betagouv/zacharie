@@ -27,7 +27,7 @@ async function fetchFeis() {
   }
   const serverData = (await response.json()) as FeisLoaderData;
   setCacheItem("user", serverData.user);
-  setFeisToCache(serverData.latestFeis);
+  setFeisToCache(serverData);
   return { ok: true, status: 200, data: serverData, error: "" };
 }
 
@@ -67,39 +67,12 @@ export async function clientLoader() {
 
 clientLoader.hydrate = true; // (2)
 
-function categorizeFeis(allFeis: SerializeFrom<CachedFeis>, currentUserId: string) {
-  // should be an array of values of CachedFeis
-  const feisAssigned = [];
-  const feisDone = [];
-  const feisOngoing = [];
-
-  for (const fei of Object.values(allFeis)) {
-    if (!fei || fei === null) {
-      continue;
-    }
-    if (fei.svi_signed_at) {
-      feisDone.push(fei);
-      continue;
-    }
-    if (fei.fei_next_owner_user_id === currentUserId) {
-      feisAssigned.push(fei);
-    } else {
-      feisOngoing.push(fei);
-    }
-  }
-
-  return {
-    feisAssigned,
-    feisDone,
-    feisOngoing,
-  };
-}
-
 export default function TableauDeBordIndex() {
   const data = useLoaderData<FeisLoaderData>();
   const user = data.user!;
 
-  const { feisAssigned, feisDone, feisOngoing } = categorizeFeis(data.latestFeis!, user.id);
+  const { feisDone, feisOngoing, feisToTake, feisUnderMyResponsability } = data;
+  const feisAssigned = [...feisUnderMyResponsability, ...feisToTake];
   const isOnline = useIsOnline();
 
   return (

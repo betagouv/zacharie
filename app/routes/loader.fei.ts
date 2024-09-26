@@ -4,15 +4,13 @@ import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
 import { feiInclude } from "~/db/fei.server";
-import { type CachedFeis } from "~/utils/caches";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
-  const latestFeis: CachedFeis = {};
 
   if (!user?.onboarded_at) {
     return json(
-      { user: null, latestFeis },
+      { user: null, feisUnderMyResponsability: [], feisToTake: [], feisOngoing: [], feisDone: [] },
       {
         status: 401,
       },
@@ -124,17 +122,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  for (const fei of [...feisUnderMyResponsability, ...feisToTake, ...feisOngoing, ...feisDone]) {
-    latestFeis[fei.numero] = fei;
-  }
-
   console.log("feisUnderMyResponsability", feisUnderMyResponsability.length);
   console.log("feisToTake", feisToTake.length);
   console.log("feisOngoing", feisOngoing.length);
   console.log("feisDone", feisDone.length);
-  console.log("latestFeis", Object.keys(latestFeis).length);
 
-  return json({ user, latestFeis });
+  return json({ user, feisUnderMyResponsability, feisToTake, feisOngoing, feisDone });
 }
 
 export type FeisLoaderData = ExtractLoaderData<typeof loader>;
