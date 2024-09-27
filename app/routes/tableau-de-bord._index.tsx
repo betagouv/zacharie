@@ -69,7 +69,6 @@ clientLoader.hydrate = true; // (2)
 export default function TableauDeBordIndex() {
   const data = useLoaderData<FeisLoaderData>();
   const user = data.user!;
-  console.log({ user });
   const { feisDone, feisOngoing, feisToTake, feisUnderMyResponsability } = data;
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake];
   const isOnline = useIsOnline();
