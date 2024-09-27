@@ -11,7 +11,8 @@ import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Prisma } from "@prisma/client";
 import grandGibier from "~/data/grand-gibier.json";
 import grandGibierCarcasse from "~/data/grand-gibier-carcasse.json";
-import grandGibierAbats from "~/data/grand-gibier-abats.json";
+import grandGibierAbatstree from "~/data/grand-gibier-abats/tree.json";
+import grandGibierAbatsList from "~/data/grand-gibier-abats/list.json";
 import { useEffect, useMemo, useRef, useState } from "react";
 import InputForSearchPrefilledData from "~/components/InputForSearchPrefilledData";
 import { Input } from "@codegouvfr/react-dsfr/Input";
@@ -22,6 +23,8 @@ import InputNotEditable from "~/components/InputNotEditable";
 import { type CarcasseLoaderData } from "~/routes/loader.$fei_numero.$numero_bracelet";
 import { type CarcasseActionData } from "~/routes/action.carcasse.$numero_bracelet";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
+import { createModal } from "@codegouvfr/react-dsfr/Modal";
+import ModalTreeDisplay from "~/components/ModalTreeDisplay";
 
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
   const formData = await request.formData();
@@ -61,6 +64,11 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   return json({ carcasse: carcasseData.carcasse, user, fei: carcasseData.fei });
 }
 
+const anomaliesAbatsModal = createModal({
+  isOpenedByDefault: false,
+  id: "anomalie-abats-modal-carcasse",
+});
+
 export default function CarcasseReadAndWrite() {
   const { fei, carcasse, user } = useLoaderData<typeof clientLoader>();
   const canEdit = useMemo(() => {
@@ -81,8 +89,8 @@ export default function CarcasseReadAndWrite() {
   const [showAsSelectOption, setShowAsSelectOption] = useState(false);
   const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(carcasse.examinateur_anomalies_abats);
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(carcasse.examinateur_anomalies_carcasse);
-  const [addAnomalieAbats, setAddAnomalieAbats] = useState(false);
-  const [addAnomalieCarcasse, setAddAnomalieCarcasse] = useState(false);
+  const [addAnomalieAbats, setAddAnomalieAbats] = useState(true);
+  const [addAnomalieCarcasse, setAddAnomalieCarcasse] = useState(true);
   const [showScroll, setShowScroll] = useState(
     canEdit && espece && !anomaliesAbats.length && !anomaliesCarcasse.length,
   );
@@ -101,6 +109,21 @@ export default function CarcasseReadAndWrite() {
     handleFormSubmit();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [espece, categorie, anomaliesAbats, anomaliesCarcasse]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+        setShowScroll(false);
+      }
+    };
+    if (showScroll) {
+      // on window scroll to bottom, hide the button
+      window.addEventListener("scroll", handleScroll);
+    }
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [showScroll]);
+
+  console.log({ anomaliesAbats });
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -296,11 +319,11 @@ export default function CarcasseReadAndWrite() {
                     </div>
                     {canEdit && (
                       <>
-                        <div className="mt-2">
+                        {/* <div className="mt-2">
                           <Button onClick={() => setAddAnomalieCarcasse(true)} type="button" iconId="ri-add-box-fill">
                             Ajouter une anomalie carcasse
                           </Button>
-                        </div>
+                        </div> */}
                         {addAnomalieCarcasse && (
                           <div className="fr-fieldset__element mt-4">
                             <InputForSearchPrefilledData
@@ -310,7 +333,7 @@ export default function CarcasseReadAndWrite() {
                               hintText=""
                               hideDataWhenNoSearch
                               onSelect={(newAnomalie) => {
-                                setAddAnomalieCarcasse(false);
+                                // setAddAnomalieCarcasse(false);
                                 setAnomaliesCarcasse([...anomaliesCarcasse, newAnomalie]);
                               }}
                             />
@@ -335,7 +358,7 @@ export default function CarcasseReadAndWrite() {
                             className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey p-2 [&_p.fr-notice\\_\\_title]:before:hidden"
                             title={anomalie}
                             isClosable={canEdit}
-                            onClose={() => setAnomaliesCarcasse(anomaliesAbats.filter((a) => a !== anomalie))}
+                            onClose={() => setAnomaliesAbats(anomaliesAbats.filter((a) => a !== anomalie))}
                             key={anomalie + index}
                           />
                         );
@@ -344,20 +367,40 @@ export default function CarcasseReadAndWrite() {
                     </div>
                     {canEdit && (
                       <>
-                        <div className="mt-2">
+                        {/* <div className="mt-2">
                           <Button onClick={() => setAddAnomalieAbats(true)} type="button" iconId="ri-add-box-fill">
                             Ajouter une anomalie abat
                           </Button>
-                        </div>
+                        </div> */}
                         {addAnomalieAbats && (
                           <div className="fr-fieldset__element mt-4">
                             <InputForSearchPrefilledData
-                              data={grandGibierAbats}
+                              data={grandGibierAbatsList}
                               label="Sélectionnez l'anomalie des abats"
-                              hintText=""
+                              hintText={
+                                <>
+                                  Voir le référentiel des anomalies d'abats en{" "}
+                                  <button
+                                    type="button"
+                                    className="underline"
+                                    onClick={() => anomaliesAbatsModal.open()}
+                                  >
+                                    cliquant ici
+                                  </button>
+                                </>
+                              }
                               hideDataWhenNoSearch
                               onSelect={(newAnomalie) => {
-                                setAddAnomalieAbats(false);
+                                // setAddAnomalieAbats(false);
+                                setAnomaliesAbats([...anomaliesAbats, newAnomalie]);
+                              }}
+                            />
+                            <ModalTreeDisplay
+                              data={grandGibierAbatstree}
+                              modal={anomaliesAbatsModal}
+                              title="Anomalies abats"
+                              onItemClick={(newAnomalie) => {
+                                // setAddAnomalieAbats(false);
                                 setAnomaliesAbats([...anomaliesAbats, newAnomalie]);
                               }}
                             />
