@@ -284,14 +284,6 @@ export default function TableauDeBordIndex() {
                         className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                         key={fei.numero}
                         to={`/tableau-de-bord/fei/${fei.numero}`}
-                        suppressHydrationWarning
-                      >
-                        {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/tableau-de-bord/fei/${fei.numero}`}
                       >
                         {fei.commune_mise_a_mort}
                       </Link>,
@@ -301,10 +293,10 @@ export default function TableauDeBordIndex() {
                         suppressHydrationWarning
                         to={`/tableau-de-bord/fei/${fei.numero}`}
                       >
-                        {dayjs(fei.svi_signed_at).format("DD/MM/YYYY")}
+                        {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
                       </Link>,
                     ])}
-                  headers={["Numéro", "Date de création", "Dernière mise à jour", "Commune", "Étape en cours"]}
+                  headers={["Numéro", "Date de création", "Commune", "Inspection SVI le"]}
                 />
               ) : (
                 <>

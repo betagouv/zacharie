@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Link, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { clientLoader } from "./route";
 import { Button } from "@codegouvfr/react-dsfr/Button";
@@ -19,8 +19,11 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
 
   const error = nouvelleCarcasseFetcher.data?.error;
 
+  const lastNavigation = useRef<string>(nouvelleCarcasseFetcher.data?.data?.numero_bracelet ?? "");
   useEffect(() => {
-    if (nouvelleCarcasseFetcher.data?.data?.numero_bracelet) {
+    const nextBracelet = nouvelleCarcasseFetcher.data?.data?.numero_bracelet;
+    if (nextBracelet && lastNavigation.current !== nextBracelet) {
+      lastNavigation.current === nextBracelet;
       navigate(`/tableau-de-bord/carcasse/${fei.numero}/${nouvelleCarcasseFetcher.data?.data?.numero_bracelet}`);
     }
   }, [nouvelleCarcasseFetcher.data?.data?.numero_bracelet, fei.numero, navigate]);

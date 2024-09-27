@@ -6,11 +6,11 @@ import {
   useFetcher,
   useLoaderData,
 } from "@remix-run/react";
-import { Button } from "@codegouvfr/react-dsfr/Button";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Prisma } from "@prisma/client";
 import grandGibier from "~/data/grand-gibier.json";
-import grandGibierCarcasse from "~/data/grand-gibier-carcasse.json";
+import grandGibierCarcasseList from "~/data/grand-gibier-carcasse/list.json";
+import grandGibierCarcasseTree from "~/data/grand-gibier-carcasse/tree.json";
 import grandGibierAbatstree from "~/data/grand-gibier-abats/tree.json";
 import grandGibierAbatsList from "~/data/grand-gibier-abats/list.json";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -69,6 +69,11 @@ const anomaliesAbatsModal = createModal({
   id: "anomalie-abats-modal-carcasse",
 });
 
+const anomaliesCarcasseModal = createModal({
+  isOpenedByDefault: false,
+  id: "anomalie-carcasse-modal-carcasse",
+});
+
 export default function CarcasseReadAndWrite() {
   const { fei, carcasse, user } = useLoaderData<typeof clientLoader>();
   const canEdit = useMemo(() => {
@@ -89,8 +94,10 @@ export default function CarcasseReadAndWrite() {
   const [showAsSelectOption, setShowAsSelectOption] = useState(false);
   const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(carcasse.examinateur_anomalies_abats);
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(carcasse.examinateur_anomalies_carcasse);
-  const [addAnomalieAbats, setAddAnomalieAbats] = useState(true);
-  const [addAnomalieCarcasse, setAddAnomalieCarcasse] = useState(true);
+  // const [addAnomalieAbats, setAddAnomalieAbats] = useState(true);
+  // const [addAnomalieCarcasse, setAddAnomalieCarcasse] = useState(true);
+  const addAnomalieAbats = true;
+  const addAnomalieCarcasse = true;
   const [showScroll, setShowScroll] = useState(
     canEdit && espece && !anomaliesAbats.length && !anomaliesCarcasse.length,
   );
@@ -122,8 +129,6 @@ export default function CarcasseReadAndWrite() {
     }
     return () => window.removeEventListener("scroll", handleScroll);
   }, [showScroll]);
-
-  console.log({ anomaliesAbats });
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -328,11 +333,31 @@ export default function CarcasseReadAndWrite() {
                           <div className="fr-fieldset__element mt-4">
                             <InputForSearchPrefilledData
                               canEdit={canEdit}
-                              data={grandGibierCarcasse}
+                              data={grandGibierCarcasseList}
                               label="Sélectionnez l'anomalie de la carcasse"
-                              hintText=""
+                              hintText={
+                                <>
+                                  Voir le référentiel des anomalies de carcasse en{" "}
+                                  <button
+                                    type="button"
+                                    className="underline"
+                                    onClick={() => anomaliesCarcasseModal.open()}
+                                  >
+                                    cliquant ici
+                                  </button>
+                                </>
+                              }
                               hideDataWhenNoSearch
                               onSelect={(newAnomalie) => {
+                                // setAddAnomalieCarcasse(false);
+                                setAnomaliesCarcasse([...anomaliesCarcasse, newAnomalie]);
+                              }}
+                            />
+                            <ModalTreeDisplay
+                              data={grandGibierCarcasseTree}
+                              modal={anomaliesCarcasseModal}
+                              title="Anomalies carcasse"
+                              onItemClick={(newAnomalie) => {
                                 // setAddAnomalieCarcasse(false);
                                 setAnomaliesCarcasse([...anomaliesCarcasse, newAnomalie]);
                               }}
