@@ -1,4 +1,11 @@
-import { json, redirect, useFetcher, useLoaderData, type ClientActionFunctionArgs } from "@remix-run/react";
+import {
+  json,
+  redirect,
+  useFetcher,
+  useLoaderData,
+  useSearchParams,
+  type ClientActionFunctionArgs,
+} from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
@@ -59,6 +66,8 @@ export async function clientLoader() {
 export default function MesCCGs() {
   const { user, userCCGs } = useLoaderData<typeof clientLoader>();
   const removeCCGFetcher = useFetcher({ key: "ccg-remove" });
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get("redirect");
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -129,14 +138,14 @@ export default function MesCCGs() {
                   {
                     children: "Continuer",
                     linkProps: {
-                      to: "/tableau-de-bord/mon-profil/mes-notifications",
+                      to: redirect || "/tableau-de-bord/mon-profil/mes-notifications",
                       href: "#",
                     },
                   },
                   {
-                    children: "Modifier mes informations",
+                    children: redirect ? "Retour" : "Modifier mes informations",
                     linkProps: {
-                      to: "/tableau-de-bord/mon-profil/mes-informations",
+                      to: redirect || "/tableau-de-bord/mon-profil/mes-notifications",
                       href: "#",
                     },
                     priority: "secondary",

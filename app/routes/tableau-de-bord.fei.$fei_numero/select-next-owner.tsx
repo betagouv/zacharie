@@ -1,6 +1,7 @@
 import type { SerializeFrom } from "@remix-run/node";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
+import { Button } from "@codegouvfr/react-dsfr/Button";
 import { clientLoader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { UserRoles, Entity, User, Prisma } from "@prisma/client";
@@ -9,7 +10,21 @@ import { getUserRoleLabel, getUserRoleLabelPlural } from "~/utils/get-user-roles
 
 export default function SelectNextOwner() {
   const { user, ccgs, collecteursPro, etgs, svis, fei } = useLoaderData<typeof clientLoader>();
-  const [nextRole, setNextRole] = useState<UserRoles | "">(fei.fei_next_owner_role ?? "");
+  const [nextRole, setNextRole] = useState<UserRoles | "">(() => {
+    if (fei.fei_next_owner_role) {
+      return fei.fei_next_owner_role;
+    }
+    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+      const depotAtEntityId = fei.premier_detenteur_depot_entity_id;
+      if (depotAtEntityId) {
+        const potentielDepotEntity = [...collecteursPro, ...etgs].find((entity) => entity.id === depotAtEntityId);
+        if (potentielDepotEntity) {
+          return potentielDepotEntity.type;
+        }
+      }
+    }
+    return fei.fei_next_owner_role ?? "";
+  });
 
   const nextOwners = useMemo(() => {
     switch (nextRole) {
@@ -65,6 +80,23 @@ export default function SelectNextOwner() {
   }, [nextOwners, fei.fei_next_owner_user_id, fei.fei_next_owner_entity_id, nextOwnerIsUser, nextOwnerIsEntity]);
 
   const nextOwnerFetcher = useFetcher({ key: "select-next-owner" });
+
+  const nextOwnerDefaultValue = useMemo(() => {
+    const savedNextOwner = nextOwnerIsUser ? fei.fei_next_owner_user_id : fei.fei_next_owner_entity_id;
+    if (savedNextOwner) {
+      return savedNextOwner;
+    }
+    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+      return fei.premier_detenteur_depot_entity_id ?? "";
+    }
+    return "";
+  }, [
+    fei.fei_current_owner_role,
+    fei.fei_next_owner_entity_id,
+    fei.fei_next_owner_user_id,
+    fei.premier_detenteur_depot_entity_id,
+    nextOwnerIsUser,
+  ]);
 
   const showIntermediaires = useMemo(() => {
     if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
@@ -127,7 +159,7 @@ export default function SelectNextOwner() {
         id="select-next-owner"
         preventScrollReset
         method="POST"
-        onChange={(event) => {
+        onSubmit={(event) => {
           const formData = new FormData(event.currentTarget);
           formData.append("route", `/action/fei/${fei.numero}`);
           nextOwnerFetcher.submit(formData, {
@@ -154,7 +186,7 @@ export default function SelectNextOwner() {
               <>
                 <option value={UserRoles.COLLECTEUR_PRO}>{getUserRoleLabel(UserRoles.COLLECTEUR_PRO)}</option>
                 <option value={UserRoles.ETG}>{getUserRoleLabel(UserRoles.ETG)}</option>
-                <option value={UserRoles.CCG}>{getUserRoleLabel(UserRoles.CCG)}</option>
+                {/* <option value={UserRoles.CCG}>{getUserRoleLabel(UserRoles.CCG)}</option> */}
               </>
             ) : showSvi ? (
               <option value={UserRoles.SVI}>{getUserRoleLabel(UserRoles.SVI)}</option>
@@ -162,50 +194,55 @@ export default function SelectNextOwner() {
           </Select>
         </div>
         {nextRole && (
-          <div className="fr-fieldset__element grow">
-            <Select
-              label={`Quel ${getUserRoleLabel(nextRole)} ?`}
-              className="!mb-0 grow"
-              key={fei.fei_next_owner_user_id ?? fei.fei_next_owner_entity_id ?? "no-choice-yet"}
-              nativeSelectProps={{
-                name: nextOwnerIsUser
-                  ? Prisma.FeiScalarFieldEnum.fei_next_owner_user_id
-                  : Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id,
-                defaultValue: (nextOwnerIsUser ? fei.fei_next_owner_user_id : fei.fei_next_owner_entity_id) ?? "",
-              }}
-            >
-              <option value="">{nextOwnerSelectLabel}</option>
-              {nextOwnersWorkingWith.length > 0 && (
-                <>
-                  <optgroup label={`Mes ${getUserRoleLabelPlural(nextRole)}`}>
-                    {nextOwnersWorkingWith.map((potentielOwner) => {
-                      return (
-                        <NextOwnerOption
-                          key={potentielOwner.id}
-                          potentielOwner={potentielOwner}
-                          nextOwnerIsEntity={nextOwnerIsEntity}
-                          nextOwnerIsUser={nextOwnerIsUser}
-                          user={user}
-                        />
-                      );
-                    })}
-                  </optgroup>
-                  <hr />
-                </>
-              )}
-              {nextOwnersNotWorkingWith.map((potentielOwner) => {
-                return (
-                  <NextOwnerOption
-                    key={potentielOwner.id}
-                    potentielOwner={potentielOwner}
-                    nextOwnerIsEntity={nextOwnerIsEntity}
-                    nextOwnerIsUser={nextOwnerIsUser}
-                    user={user}
-                  />
-                );
-              })}
-            </Select>
-          </div>
+          <>
+            <div className="fr-fieldset__element grow">
+              <Select
+                label={`Quel ${getUserRoleLabel(nextRole)} ?`}
+                className="!mb-0 grow"
+                key={fei.fei_next_owner_user_id ?? fei.fei_next_owner_entity_id ?? "no-choice-yet"}
+                nativeSelectProps={{
+                  name: nextOwnerIsUser
+                    ? Prisma.FeiScalarFieldEnum.fei_next_owner_user_id
+                    : Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id,
+                  defaultValue: nextOwnerDefaultValue,
+                }}
+              >
+                <option value="">{nextOwnerSelectLabel}</option>
+                {nextOwnersWorkingWith.length > 0 && (
+                  <>
+                    <optgroup label={`Mes ${getUserRoleLabelPlural(nextRole)}`}>
+                      {nextOwnersWorkingWith.map((potentielOwner) => {
+                        return (
+                          <NextOwnerOption
+                            key={potentielOwner.id}
+                            potentielOwner={potentielOwner}
+                            nextOwnerIsEntity={nextOwnerIsEntity}
+                            nextOwnerIsUser={nextOwnerIsUser}
+                            user={user}
+                          />
+                        );
+                      })}
+                    </optgroup>
+                    <hr />
+                  </>
+                )}
+                {nextOwnersNotWorkingWith.map((potentielOwner) => {
+                  return (
+                    <NextOwnerOption
+                      key={potentielOwner.id}
+                      potentielOwner={potentielOwner}
+                      nextOwnerIsEntity={nextOwnerIsEntity}
+                      nextOwnerIsUser={nextOwnerIsUser}
+                      user={user}
+                    />
+                  );
+                })}
+              </Select>
+              <Button type="submit" className="mt-2">
+                Envoyer
+              </Button>
+            </div>
+          </>
         )}
       </nextOwnerFetcher.Form>
       {(fei.fei_next_owner_user_id || fei.fei_next_owner_entity_id) && (

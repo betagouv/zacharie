@@ -172,7 +172,9 @@ export default function FEIDetenteurInitial() {
                       hint={
                         <>
                           Vous n'avez pas encore renseigné votre CCG ? Vous pouvez le faire en{" "}
-                          <Link to="/tableau-de-bord/mon-profil/mes-ccgs">cliquant ici</Link>
+                          <Link to={`/tableau-de-bord/mon-profil/mes-ccgs?redirect=/tableau-de-bord/fei/${fei.numero}`}>
+                            cliquant ici
+                          </Link>
                         </>
                       }
                       className="!mb-0 grow"
