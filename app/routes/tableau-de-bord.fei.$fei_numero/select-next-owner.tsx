@@ -1,26 +1,18 @@
 import type { SerializeFrom } from "@remix-run/node";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
-import { Input } from "@codegouvfr/react-dsfr/Input";
-import { Button } from "@codegouvfr/react-dsfr/Button";
 import { clientLoader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { UserRoles, Entity, User, Prisma } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { getUserRoleLabel, getUserRoleLabelPlural } from "~/utils/get-user-roles-label";
-import { action as searchUserAction } from "~/routes/action.trouver-premier-detenteur";
 
 export default function SelectNextOwner() {
-  const { user, detenteursInitiaux, examinateursInitiaux, ccgs, collecteursPro, etgs, svis, fei } =
-    useLoaderData<typeof clientLoader>();
+  const { user, ccgs, collecteursPro, etgs, svis, fei } = useLoaderData<typeof clientLoader>();
   const [nextRole, setNextRole] = useState<UserRoles | "">(fei.fei_next_owner_role ?? "");
 
   const nextOwners = useMemo(() => {
     switch (nextRole) {
-      case UserRoles.PREMIER_DETENTEUR:
-        return detenteursInitiaux;
-      case UserRoles.EXAMINATEUR_INITIAL:
-        return examinateursInitiaux;
       case UserRoles.CCG:
         return ccgs;
       case UserRoles.COLLECTEUR_PRO:
@@ -32,13 +24,9 @@ export default function SelectNextOwner() {
       default:
         return [];
     }
-  }, [nextRole, detenteursInitiaux, examinateursInitiaux, ccgs, collecteursPro, etgs, svis]);
+  }, [nextRole, ccgs, collecteursPro, etgs, svis]);
   const nextOwnerSelectLabel = useMemo(() => {
     switch (nextRole) {
-      case UserRoles.PREMIER_DETENTEUR:
-        return "Sélectionnez le Premier Détenteur de pour cette FEI";
-      case UserRoles.EXAMINATEUR_INITIAL:
-        return "Sélectionnez l'Examinateur Initial de pour cette FEI";
       case UserRoles.CCG:
         return "Sélectionnez un CCG pour cette FEI";
       case UserRoles.COLLECTEUR_PRO:
@@ -63,7 +51,7 @@ export default function SelectNextOwner() {
       if (nextOwnerIsEntity) {
         return owner.id === fei.fei_next_owner_entity_id;
       }
-      return false;
+      return undefined;
     }) as SerializeFrom<User> | SerializeFrom<Entity> | undefined;
     if (nextOwnerIsUser) {
       nextOwner = nextOwner as unknown as SerializeFrom<User>;
@@ -77,14 +65,6 @@ export default function SelectNextOwner() {
   }, [nextOwners, fei.fei_next_owner_user_id, fei.fei_next_owner_entity_id, nextOwnerIsUser, nextOwnerIsEntity]);
 
   const nextOwnerFetcher = useFetcher({ key: "select-next-owner" });
-  const searchUserFetcher = useFetcher<typeof searchUserAction>({ key: "search-user" });
-
-  const showDetenteurInitial = useMemo(() => {
-    if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
-      return false;
-    }
-    return !fei.premier_detenteur_date_depot_quelque_part;
-  }, [fei.premier_detenteur_date_depot_quelque_part, fei.fei_current_owner_role]);
 
   const showIntermediaires = useMemo(() => {
     if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
@@ -170,9 +150,7 @@ export default function SelectNextOwner() {
           >
             <option value="">Sélectionnez le prochain type d'acteur à agir sur la FEI</option>
             <hr />
-            {showDetenteurInitial ? (
-              <option value={UserRoles.PREMIER_DETENTEUR}>{getUserRoleLabel(UserRoles.PREMIER_DETENTEUR)}</option>
-            ) : showIntermediaires ? (
+            {showIntermediaires ? (
               <>
                 <option value={UserRoles.COLLECTEUR_PRO}>{getUserRoleLabel(UserRoles.COLLECTEUR_PRO)}</option>
                 <option value={UserRoles.ETG}>{getUserRoleLabel(UserRoles.ETG)}</option>
@@ -230,33 +208,6 @@ export default function SelectNextOwner() {
           </div>
         )}
       </nextOwnerFetcher.Form>
-      {nextRole === UserRoles.PREMIER_DETENTEUR && !fei.fei_next_owner_user_id && (
-        <>
-          <searchUserFetcher.Form className="fr-fieldset__element flex w-full flex-row items-end gap-4" method="POST">
-            <input type="hidden" name="route" value="/action/trouver-premier-detenteur" />
-            <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
-            <Input
-              label="...ou saisissez l'email du Premier Détenteur si vous ne le trouvez pas"
-              className="!mb-0"
-              hintText="Nous l'ajouterons automatiquement à la liste de vos partenaires pour la prochaine fois"
-              nativeInputProps={{
-                id: Prisma.UserScalarFieldEnum.email,
-                name: Prisma.UserScalarFieldEnum.email,
-                autoComplete: "off",
-              }}
-            />
-            <Button type="submit">Envoyer</Button>
-          </searchUserFetcher.Form>
-          {searchUserFetcher.data?.error === "L'utilisateur n'existe pas" && (
-            <Alert
-              severity="error"
-              title="Nous ne connaissons pas cet email"
-              description="Vérifiez avec le Premier Détenteur s'il est avec vous ?"
-            />
-          )}
-        </>
-      )}
-
       {(fei.fei_next_owner_user_id || fei.fei_next_owner_entity_id) && (
         <Alert
           severity="success"

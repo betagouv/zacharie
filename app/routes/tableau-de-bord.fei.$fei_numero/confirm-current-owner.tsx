@@ -104,11 +104,11 @@ export default function ConfirmCurrentOwner() {
         <Button priority="tertiary" type="button" className="!mt-2 block" onClick={() => handlePriseEnCharge(true)}>
           Transférer la FEI
         </Button>
-        <span className="text-sm">Vous souhaitez la renvoyer à l'expéditeur&nbsp;?</span>
+        <span className="mt-4 inline-block text-sm">Vous souhaitez la renvoyer à l'expéditeur&nbsp;?</span>
         <Button
           priority="tertiary no outline"
           type="submit"
-          className="text-sm"
+          className="!mt-0 text-sm"
           onClick={() => {
             const formData = new FormData();
             formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
