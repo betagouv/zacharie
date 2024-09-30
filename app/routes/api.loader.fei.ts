@@ -30,10 +30,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
       fei_next_owner_entity_id: null,
       OR: [
         {
-          fei_next_owner_user_id: user.id,
+          fei_current_owner_user_id: user.id,
         },
         {
-          FeiNextEntity: {
+          FeiCurrentEntity: {
             EntityRelatedWithUser: {
               some: {
                 owner_id: user.id,
