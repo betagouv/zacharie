@@ -1,7 +1,16 @@
 import { Footer } from "@codegouvfr/react-dsfr/Footer";
 import { Header } from "@codegouvfr/react-dsfr/Header";
+import { Outlet } from "@remix-run/react";
+// import type { MetaFunction } from "@remix-run/node";
 
-export default function RootDisplay({ children }: { children: React.ReactNode }) {
+// export const meta: MetaFunction = () => {
+//   return [
+//     { title: "New Remix App" },
+//     { name: "description", content: "Welcome to Remix!" },
+//   ];
+// };
+
+export default function AccueilLayout() {
   return (
     <>
       <Header
@@ -37,7 +46,7 @@ export default function RootDisplay({ children }: { children: React.ReactNode })
           {
             iconId: "fr-icon-mail-fill",
             linkProps: {
-              href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de Zacharie`,
+              href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de ma connexion à Zacharie`,
             },
             text: "Contactez-nous",
           },
@@ -45,7 +54,7 @@ export default function RootDisplay({ children }: { children: React.ReactNode })
         serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
         serviceTitle="Zacharie"
       />
-      {children}
+      <Outlet />
       <Footer
         accessibility="fully compliant"
         contentDescription={`
@@ -53,8 +62,7 @@ export default function RootDisplay({ children }: { children: React.ReactNode })
 
 
 
-        Zacharie a pour objectif premier d’améliorer le niveau de complétude et de fiabilité des informations sanitaires et de traçabilité relatives aux viandes de gibier traitées. Ainsi, Zacharie contribue à améliorer la qualité sanitaire des viandes mises sur le marché, réduire les risques d’intoxication alimentaire et de gaspillage alimentaire.\n
-        ${__APP_VERSION__}
+        Zacharie a pour objectif premier d’améliorer le niveau de complétude et de fiabilité des informations sanitaires et de traçabilité relatives aux viandes de gibier traitées. Ainsi, Zacharie contribue à améliorer la qualité sanitaire des viandes mises sur le marché, réduire les risques d’intoxication alimentaire et de gaspillage alimentaire.
         `}
         termsLinkProps={{
           href: "#",

@@ -39,13 +39,16 @@ export default defineConfig(({ mode }) => {
           v3_relativeSplatPath: true,
           v3_throwAbortReason: true,
         },
-        ignoredRouteFiles: isSpaMode ? ["**/routes/action.*", "**/routes/admin.*", "**/routes/loader.*"] : ["**/.*"],
+        ignoredRouteFiles: isSpaMode ? ["**/routes/api.*"] : ["**/routes/app.*"],
       }),
       tsconfigPaths(),
       sentryVitePlugin({
         org: "betagouv",
         project: "zacharie-remix",
         url: "https://sentry.incubateur.net/",
+        sourcemaps: {
+          filesToDeleteAfterUpload: ["./build-spa/**/*.js.map", "./build-spa/*.js.map"],
+        },
       }),
       RemixVitePWAPlugin({
         strategies: "injectManifest",

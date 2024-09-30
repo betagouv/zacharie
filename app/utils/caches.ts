@@ -1,6 +1,6 @@
 import type { FeiByNumero } from "~/db/fei.server";
 import type { Fei } from "@prisma/client";
-import type { FeisLoaderData } from "~/routes/loader.fei";
+import type { FeisLoaderData } from "~/routes/api.loader.fei";
 import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
 
 export type CachedFeis = Record<Fei["numero"], FeiByNumero>;

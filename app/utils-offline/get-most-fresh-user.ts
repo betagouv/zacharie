@@ -1,6 +1,6 @@
 import type { User } from "@prisma/client";
 import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
-import type { MeLoaderData } from "~/routes/loader.me";
+import type { MeLoaderData } from "~/routes/api.loader.me";
 
 export async function getMostFreshUser() {
   const cachedUser = (await getCacheItem("user")) as User | null;
@@ -10,7 +10,7 @@ export async function getMostFreshUser() {
   if (!window.navigator.onLine) {
     return cachedUser;
   }
-  return fetch(`${import.meta.env.VITE_API_URL}/loader/me`, {
+  return fetch(`${import.meta.env.VITE_API_URL}/api/loader/me`, {
     method: "GET",
     credentials: "include",
     headers: {

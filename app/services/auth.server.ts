@@ -21,7 +21,7 @@ export const { getSession, commitSession, destroySession } = createCookieSession
 
 export const getUserFromCookie = async (
   request: Request,
-  { failureRedirect = "/connexion?type=compte-existant", optional = false, debug = false } = {},
+  { failureRedirect = "/app/connexion?type=compte-existant", optional = false, debug = false } = {},
 ) => {
   if (process.env.NODE_ENV === "development") {
     // because ios cookie in dev not working

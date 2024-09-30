@@ -15,11 +15,12 @@ import { renderToPipeableStream } from "react-dom/server";
 
 export const handleError =
   process.env.NODE_ENV === "production"
-    ? Sentry.wrapHandleErrorWithSentry((error, { request }) => {
+    ? // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      Sentry.wrapHandleErrorWithSentry((error: unknown, { request }) => {
         console.log("entry.server handleError", error);
         // Custom handleError implementation
       })
-    : (error, { request }) => {
+    : (error: unknown) => {
         console.log("entry.server handleError", error);
         // Custom handleError implementation
       };
@@ -36,7 +37,8 @@ export default function handleRequest(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   loadContext: AppLoadContext,
 ) {
-  return isbot(request.headers.get("user-agent") || "")
+  const returnBot = isbot(request.headers.get("user-agent") || "") || !!import.meta.env.SPA_MODE;
+  return returnBot
     ? handleBotRequest(request, responseStatusCode, responseHeaders, remixContext)
     : handleBrowserRequest(request, responseStatusCode, responseHeaders, remixContext);
 }

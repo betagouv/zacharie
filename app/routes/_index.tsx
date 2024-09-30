@@ -28,7 +28,7 @@ export default function LandingPage() {
           {isLoggedIn ? (
             <Button
               linkProps={{
-                to: "/tableau-de-bord",
+                to: "/app/tableau-de-bord",
                 href: "#",
               }}
               iconId="ri-account-box-line"
