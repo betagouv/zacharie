@@ -50,6 +50,7 @@
     "@types/cors": "^2",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
+    "@types/serviceworker": "^0.0.97",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
     "@vite-pwa/assets-generator": "^0.2.6",

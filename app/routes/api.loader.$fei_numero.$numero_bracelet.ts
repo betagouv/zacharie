@@ -21,7 +21,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     throw redirect(`/app/tableau-de-bord/fei/${params.fei_numero}`);
   }
 
-  return json({ carcasse, fei: carcasse.Fei });
+  return json({ carcasse, fei: carcasse.Fei, latestVersion: __VITE_BUILD_ID__ });
 }
 
 export type CarcasseLoaderData = ExtractLoaderData<typeof loader>;

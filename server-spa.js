@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";

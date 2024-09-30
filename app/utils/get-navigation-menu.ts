@@ -1,11 +1,15 @@
 import { UserRoles } from "@prisma/client";
 import { useLocation } from "@remix-run/react";
+import { type MainNavigationProps } from "@codegouvfr/react-dsfr/MainNavigation";
 import { useUser } from "./useUser";
 import { clearCache } from "~/services/indexed-db.client";
+import { useLatestVersion } from "./useLatestVersion";
 
 export default function useNavigationMenu() {
   const location = useLocation();
   const user = useUser();
+  const latestVersion = useLatestVersion();
+  const clientLatestVersion = __VITE_BUILD_ID__;
 
   const handleLogout = async () => {
     fetch(`${import.meta.env.VITE_API_URL}/api/action/user/logout`, {
@@ -62,36 +66,35 @@ export default function useNavigationMenu() {
     },
   });
 
-  const mesFeiMenu = {
+  const mesFeiMenuCommon = {
     text: "Mes FEI",
     isActive: location.pathname === "/app/tableau-de-bord" || location.pathname.startsWith("/app/tableau-de-bord/fei"),
   };
-  if (isExaminateurInitial) {
-    // @ts-expect-error - IDK where to find the menu type
-    mesFeiMenu.menuLinks = [
-      {
-        text: "Mes FEI",
-        isActive: location.pathname === "/app/tableau-de-bord",
-        linkProps: {
-          to: "/app/tableau-de-bord",
-          href: "#",
-        },
-      },
-      {
-        text: "Nouvelle FEI",
-        isActive: location.pathname === "/app/tableau-de-bord/fei/nouvelle",
-        linkProps: {
-          to: "/app/tableau-de-bord/fei/nouvelle",
-          href: "#",
-        },
-      },
-    ];
-  } else {
-    // @ts-expect-error - IDK where to find the menu type
-    mesFeiMenu.linkProps = { to: "/app/tableau-de-bord", href: "#" };
-  }
+  const mesFeiMenu: MainNavigationProps.Item = isExaminateurInitial
+    ? {
+        ...mesFeiMenuCommon,
+        menuLinks: [
+          {
+            text: "Mes FEI",
+            isActive: location.pathname === "/app/tableau-de-bord",
+            linkProps: {
+              to: "/app/tableau-de-bord",
+              href: "#",
+            },
+          },
+          {
+            text: "Nouvelle FEI",
+            isActive: location.pathname === "/app/tableau-de-bord/fei/nouvelle",
+            linkProps: {
+              to: "/app/tableau-de-bord/fei/nouvelle",
+              href: "#",
+            },
+          },
+        ],
+      }
+    : { ...mesFeiMenuCommon, linkProps: { to: "/app/tableau-de-bord", href: "#" } };
 
-  const navigationBase = [
+  const navigationBase: MainNavigationProps.Item[] = [
     {
       text: "Mon profil",
       isActive: location.pathname.startsWith("/app/tableau-de-bord/mon-profil"),
@@ -164,5 +167,19 @@ export default function useNavigationMenu() {
       ],
     });
   }
+
+  console.log("latestVersion", latestVersion);
+  console.log("clientLatestVersion", clientLatestVersion);
+
+  if (latestVersion !== clientLatestVersion) {
+    navigationBase.push({
+      text: "Obtenir la dernière version de l'app",
+      linkProps: {
+        href: "#",
+        onClick: () => clearCache().then(() => window.location.reload()),
+      },
+    });
+  }
+
   return navigationBase;
 }

@@ -9,6 +9,8 @@ import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
 import type { FeisLoaderData } from "~/routes/api.loader.fei";
 import { useIsOnline } from "~/components/OfflineMode";
 import { setFeisToCache } from "~/utils/caches";
+import { useEffect } from "react";
+import { registerServiceWorker } from "~/sw/registerServiceWorker";
 
 let isInitialRequest = true;
 
@@ -72,6 +74,12 @@ export default function TableauDeBordIndex() {
   const { feisDone, feisOngoing, feisToTake, feisUnderMyResponsability } = data;
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake];
   const isOnline = useIsOnline();
+
+  useEffect(() => {
+    if (user) {
+      registerServiceWorker();
+    }
+  }, [user]);
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">

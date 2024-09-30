@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     throw redirect("/app/connexion?type=compte-existant");
   }
   const users = await prisma.user.findMany();
-  return json({ users });
+  return json({ users, latestVersion: __VITE_BUILD_ID__ });
 }
 
 export type AdminFeisLoaderData = ExtractLoaderData<typeof loader>;

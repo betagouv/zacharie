@@ -10,7 +10,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   if (!user?.onboarded_at) {
     return json(
-      { user: null, feisUnderMyResponsability: [], feisToTake: [], feisOngoing: [], feisDone: [] },
+      {
+        user: null,
+        feisUnderMyResponsability: [],
+        feisToTake: [],
+        feisOngoing: [],
+        feisDone: [],
+        latestVersion: __VITE_BUILD_ID__,
+      },
       {
         status: 401,
       },
@@ -127,7 +134,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   console.log("feisOngoing", feisOngoing.length);
   console.log("feisDone", feisDone.length);
 
-  return json({ user, feisUnderMyResponsability, feisToTake, feisOngoing, feisDone });
+  return json({
+    user,
+    feisUnderMyResponsability,
+    feisToTake,
+    feisOngoing,
+    feisDone,
+    latestVersion: __VITE_BUILD_ID__,
+  });
 }
 
 export type FeisLoaderData = ExtractLoaderData<typeof loader>;

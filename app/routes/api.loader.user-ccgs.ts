@@ -26,6 +26,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   return json({
     userCCGs,
+    latestVersion: __VITE_BUILD_ID__,
   });
 }
 

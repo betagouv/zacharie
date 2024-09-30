@@ -103,6 +103,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     etgs,
     svis,
     entitiesUserIsWorkingFor,
+    latestVersion: __VITE_BUILD_ID__,
   });
 }
 

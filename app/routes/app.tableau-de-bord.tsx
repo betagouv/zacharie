@@ -100,7 +100,6 @@ export default function TableauDeBordLayout() {
           title: "Zacharie - Ministère de l'Agriculture",
         }}
         id="fr-header-header-with-quick-access-items"
-        // @ts-expect-error - IDK where to find the menu type
         navigation={navigationMenu}
         serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
         serviceTitle="Zacharie"

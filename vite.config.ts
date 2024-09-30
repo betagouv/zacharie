@@ -10,7 +10,8 @@ installGlobals();
 
 const { RemixVitePWAPlugin, RemixPWAPreset } = RemixVitePWA();
 
-process.env.VITE_BUILD_DATE = JSON.stringify(new Date().toISOString());
+const buildId = JSON.stringify(new Date().toISOString().split("T")[0] + "-v0");
+process.env.VITE_BUILD_ID = buildId;
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -22,7 +23,7 @@ export default defineConfig(({ mode }) => {
       noExternal: ["@codegouvfr/react-dsfr"],
     },
     define: {
-      __VITE_BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+      __VITE_BUILD_ID__: buildId,
     },
     server: {
       cors: {
@@ -53,9 +54,9 @@ export default defineConfig(({ mode }) => {
         },
       }),
       RemixVitePWAPlugin({
-        strategies: "injectManifest",
+        strategies: "injectManifest", // This tells the plugin to use our custom Service Worker file.
         srcDir: "app",
-        filename: "sw.ts",
+        filename: "main-sw.ts", // next to entry-client.ts
         registerType: "autoUpdate",
         injectRegister: false,
         pwaAssets: {
@@ -73,7 +74,8 @@ export default defineConfig(({ mode }) => {
           lang: "fr",
         },
         injectManifest: {
-          globPatterns: ["**/*.{js,html,css,png,svg,ico}"],
+          // This configuration tells the plugin to include all js, css, html, ico, png, svg, and woff2 files in the precache manifest.
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         },
         devOptions: {
@@ -84,6 +86,7 @@ export default defineConfig(({ mode }) => {
           type: "module",
         },
         workbox: {
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/api\.zacharie\.beta\.gouv\.fr\//,
@@ -92,7 +95,8 @@ export default defineConfig(({ mode }) => {
                 cacheName: "api-cache",
                 expiration: {
                   maxEntries: 100,
-                  maxAgeSeconds: 60 * 60 * 24, // 1 day
+                  // maxAgeSeconds: 60 * 60 * 24, // 1 day
+                  maxAgeSeconds: 60, // 1 minute
                 },
               },
             },

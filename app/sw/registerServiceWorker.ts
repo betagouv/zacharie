@@ -1,0 +1,64 @@
+// app/utils/registerServiceWorker.ts
+
+export function registerServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", async () => {
+      try {
+        const registration = await navigator.serviceWorker.register("/main-sw.js");
+        console.log("ServiceWorker registration successful with scope: ", registration.scope);
+
+        // Check for updates
+        registration.addEventListener("updatefound", () => {
+          const newWorker = registration.installing;
+          newWorker?.addEventListener("statechange", () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              // New version available
+              if (confirm("A new version is available. Update now?")) {
+                newWorker.postMessage({ type: "SKIP_WAITING" });
+                window.location.reload();
+              }
+            }
+          });
+        });
+      } catch (error) {
+        console.log("ServiceWorker registration failed: ", error);
+      }
+    });
+  }
+}
+
+// ... rest of the file remains the same
+export function clearCache() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.controller?.postMessage("clearCache");
+    window.location.reload();
+  }
+}
+
+export function requestNotificationPermission() {
+  if ("Notification" in window) {
+    Notification.requestPermission().then((permission) => {
+      if (permission === "granted") {
+        console.log("Notification permission granted");
+        subscribeToPushNotifications();
+      }
+    });
+  }
+}
+
+function subscribeToPushNotifications() {
+  navigator.serviceWorker.ready.then((registration) => {
+    registration.pushManager
+      .subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: "YOUR_PUBLIC_VAPID_KEY_HERE",
+      })
+      .then((subscription) => {
+        // Send subscription to your server
+        console.log("Push notification subscription:", subscription);
+      })
+      .catch((error) => {
+        console.error("Push notification subscription failed:", error);
+      });
+  });
+}

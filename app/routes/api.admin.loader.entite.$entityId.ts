@@ -93,6 +93,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     usersWithEntityType,
     potentialPartenaires,
     sviOrEtgPotentielCouple,
+    latestVersion: __VITE_BUILD_ID__,
   });
 }
 
