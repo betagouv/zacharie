@@ -56,15 +56,6 @@ self.addEventListener("fetch", (event: FetchEvent) => {
   );
 });
 
-self.addEventListener("sync", (event: SyncEvent) => {
-  if (event.tag === "background-sync") {
-    event.waitUntil(
-      // Perform background sync operations here
-      console.log("Background sync triggered"),
-    );
-  }
-});
-
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
   if (event.data === "skipWaiting") {
     self.skipWaiting();
@@ -76,6 +67,13 @@ self.addEventListener("message", (event: ExtendableMessageEvent) => {
         console.log("Cache cleared");
       });
     }
+  }
+
+  // Add a new message type for manual sync
+  if (event.data === "manualSync") {
+    // Perform sync operations here
+    console.log("Manual sync triggered");
+    // Implement your sync logic here
   }
 });
 

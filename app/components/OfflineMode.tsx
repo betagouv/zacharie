@@ -4,6 +4,7 @@ export function useIsOnline() {
   const [isOnline, setIsOnline] = useState(true);
   useEffect(() => {
     function handleOnline() {
+      navigator.serviceWorker?.controller?.postMessage("manualSync");
       setIsOnline(true);
     }
     function handleOffline() {

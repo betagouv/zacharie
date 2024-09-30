@@ -16,7 +16,7 @@ import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 type ConnexionType = "creation-de-compte" | "compte-existant";
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/action/app/connexion`, {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/action/connexion`, {
     method: "POST",
     credentials: "include",
     body: await request.formData(),
