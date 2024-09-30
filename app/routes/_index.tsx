@@ -24,9 +24,9 @@ export default function LandingPage() {
   const { isLoggedIn } = useLoaderData<typeof clientLoader>();
 
   useEffect(() => {
-    console.log("registerServiceWorker tableau de bord ?");
+    console.log("registerServiceWorker index ?");
     registerServiceWorker();
-    console.log("registerServiceWorker YESSA");
+    console.log("registerServiceWorker YESSA in index");
 
     if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
       console.log("POST MESSAGE");

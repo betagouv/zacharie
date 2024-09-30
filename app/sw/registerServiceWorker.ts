@@ -4,8 +4,9 @@ export function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
     console.log("Attempting to register service worker");
     (async () => {
+      const swUrl = import.meta.env.DEV ? "/app/main-sw.ts" : "/main-sw.js";
       try {
-        const registration = await navigator.serviceWorker.register("/main-sw.js");
+        const registration = await navigator.serviceWorker.register(swUrl, { type: "module" });
         console.log("ServiceWorker registration successful with scope: ", registration.scope);
 
         // Check for updates

@@ -9,7 +9,7 @@ installGlobals();
 
 const { RemixVitePWAPlugin, RemixPWAPreset } = RemixVitePWA();
 
-const buildId = JSON.stringify(new Date().toISOString().split("T")[0] + "-v3");
+const buildId = JSON.stringify(new Date().toISOString().split("T")[0] + "-v4");
 process.env.VITE_BUILD_ID = buildId;
 
 export default defineConfig(({ mode }) => {
@@ -76,6 +76,7 @@ export default defineConfig(({ mode }) => {
           // This configuration tells the plugin to include all js, css, html, ico, png, svg, and woff2 files in the precache manifest.
           globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+          injectionPoint: undefined,
         },
         devOptions: {
           enabled: true,
@@ -112,6 +113,9 @@ export default defineConfig(({ mode }) => {
       alias: {
         ".prisma/client/index-browser": "./node_modules/.prisma/client/index-browser.js",
       },
+    },
+    worker: {
+      format: "es",
     },
   };
 });

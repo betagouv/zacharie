@@ -12,7 +12,9 @@ declare interface PrecacheEntry {
 declare let self: ServiceWorkerGlobalScope;
 
 // This array will be populated at build time with the list of all assets in build-spa/client
-const ASSETS_TO_CACHE: Array<PrecacheEntry | string> = self.__WB_MANIFEST;
+const ASSETS_TO_CACHE: Array<PrecacheEntry | string> = self.__WB_MANIFEST || [];
+
+console.log({ ASSETS_TO_CACHE });
 
 self.addEventListener("install", (event: ExtendableEvent) => {
   event.waitUntil(
@@ -92,7 +94,7 @@ function findFeiInAllFeisData(allFeisData: any, feiNumero: string) {
     ...allFeisData.feisUnderMyResponsability,
     ...allFeisData.feisToTake,
     ...allFeisData.feisOngoing,
-    ...allFeisData.feisDone,
+    // ...allFeisData.feisDone,
   ];
   return allFeis.find((fei) => fei.numero === feiNumero);
 }
