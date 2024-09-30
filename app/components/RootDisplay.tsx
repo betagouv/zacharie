@@ -54,7 +54,7 @@ export default function RootDisplay({ children }: { children: React.ReactNode })
 
 
         Zacharie a pour objectif premier d’améliorer le niveau de complétude et de fiabilité des informations sanitaires et de traçabilité relatives aux viandes de gibier traitées. Ainsi, Zacharie contribue à améliorer la qualité sanitaire des viandes mises sur le marché, réduire les risques d’intoxication alimentaire et de gaspillage alimentaire.\n
-        ${__APP_VERSION__}
+        Dernière mise à jour le ${__VITE_BUILD_DATE__}
         `}
         termsLinkProps={{
           href: "#",

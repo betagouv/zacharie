@@ -10,6 +10,8 @@ installGlobals();
 
 const { RemixVitePWAPlugin, RemixPWAPreset } = RemixVitePWA();
 
+process.env.VITE_BUILD_DATE = JSON.stringify(new Date().toISOString());
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const isSpaMode = env.SPA_MODE === "true";
@@ -20,7 +22,7 @@ export default defineConfig(({ mode }) => {
       noExternal: ["@codegouvfr/react-dsfr"],
     },
     define: {
-      __APP_VERSION__: JSON.stringify("v0.0.6"),
+      __VITE_BUILD_DATE__: JSON.stringify(new Date().toISOString()),
     },
     server: {
       cors: {
