@@ -12,58 +12,31 @@ import { setFeisToCache } from "~/utils/caches";
 import { useEffect } from "react";
 import { registerServiceWorker } from "~/sw/registerServiceWorker";
 
-let isInitialRequest = true;
-
-async function fetchFeis() {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/fei`, {
-    method: "GET",
-    credentials: "include",
-    headers: new Headers({
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    }),
-  });
-  if (!response.ok) {
-    return { ok: false, status: 401, data: null, error: "Failed to fetch data" };
-  }
-  const serverData = (await response.json()) as FeisLoaderData;
-  setCacheItem("user", serverData.user);
-  setFeisToCache(serverData);
-  return { ok: true, status: 200, data: serverData, error: "" };
-}
-
 export async function clientLoader() {
-  const isOnline = window.navigator.onLine;
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/fei`, {
+      method: "GET",
+      credentials: "include",
+      headers: new Headers({
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      }),
+    });
 
-  if (isInitialRequest || isOnline) {
-    isInitialRequest = false;
-    const response = await fetchFeis();
     if (!response.ok) {
       if (response.status === 401) {
         return redirect("/app/connexion?type=compte-existant");
       }
-      return redirect("/");
+      throw new Error("Failed to fetch data");
     }
-    return response.data;
-  }
 
-  const cachedUser = (await getCacheItem("user")) as FeisLoaderData["user"];
-  const cachedFeis = await getCacheItem("feis");
-  if (cachedUser && cachedFeis) {
-    return {
-      user: cachedUser,
-      latestFeis: cachedFeis,
-    };
-  }
-
-  const response = await fetchFeis();
-  if (!response.ok) {
-    if (response.status === 401) {
-      return redirect("/app/connexion?type=compte-existant");
-    }
+    const data = (await response.json()) as FeisLoaderData;
+    return data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    // If fetch fails (e.g., offline), the service worker will handle serving cached data
     return null;
   }
-  return response.data;
 }
 
 clientLoader.hydrate = true; // (2)
@@ -71,13 +44,16 @@ clientLoader.hydrate = true; // (2)
 export default function TableauDeBordIndex() {
   const data = useLoaderData<FeisLoaderData>();
   const user = data.user!;
-  const { feisDone, feisOngoing, feisToTake, feisUnderMyResponsability } = data;
+  const { feisOngoing, feisToTake, feisUnderMyResponsability } = data;
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake];
   const isOnline = useIsOnline();
 
   useEffect(() => {
     if (user) {
       registerServiceWorker();
+    }
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: "APP_OPENED" });
     }
   }, [user]);
 
@@ -262,7 +238,7 @@ export default function TableauDeBordIndex() {
               </a>
             </div>
           </section>
-          <section className="mb-6 bg-white md:shadow">
+          {/* <section className="mb-6 bg-white md:shadow">
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feisDone.length ? (
                 <Table
@@ -330,7 +306,7 @@ export default function TableauDeBordIndex() {
                 Haut de page
               </a>
             </div>
-          </section>
+          </section> */}
         </div>
       </div>
     </div>

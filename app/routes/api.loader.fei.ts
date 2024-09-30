@@ -132,14 +132,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   console.log("feisUnderMyResponsability", feisUnderMyResponsability.length);
   console.log("feisToTake", feisToTake.length);
   console.log("feisOngoing", feisOngoing.length);
-  console.log("feisDone", feisDone.length);
 
   return json({
     user,
     feisUnderMyResponsability,
     feisToTake,
     feisOngoing,
-    feisDone,
     latestVersion: __VITE_BUILD_ID__,
   });
 }
