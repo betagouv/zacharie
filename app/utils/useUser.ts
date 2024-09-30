@@ -14,5 +14,11 @@ export function useUser() {
     }
     return null;
   }, [matches]);
+  if (!user) {
+    if (typeof window !== "undefined") {
+      // window.localStorage.setItem("user", JSON.stringify(cachedUser));
+      return JSON.parse(window.localStorage.getItem("user") || "null") as User | null;
+    }
+  }
   return user;
 }

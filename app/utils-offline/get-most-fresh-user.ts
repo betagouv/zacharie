@@ -8,6 +8,7 @@ export async function getMostFreshUser() {
     return cachedUser;
   }
   if (!window.navigator.onLine) {
+    window.localStorage.setItem("user", JSON.stringify(cachedUser));
     return cachedUser;
   }
   return fetch(`${import.meta.env.VITE_API_URL}/api/loader/me`, {
@@ -20,6 +21,7 @@ export async function getMostFreshUser() {
     .then(async (response) => {
       const userResponse = (await response.json()) as MeLoaderData;
       if (userResponse && userResponse.user) {
+        window.localStorage.setItem("user", JSON.stringify(userResponse.user));
         await setCacheItem("user", userResponse.user);
       }
       return userResponse.user;
