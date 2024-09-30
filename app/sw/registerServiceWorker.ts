@@ -2,7 +2,8 @@
 
 export function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", async () => {
+    console.log("Attempting to register service worker");
+    (async () => {
       try {
         const registration = await navigator.serviceWorker.register("/main-sw.js");
         console.log("ServiceWorker registration successful with scope: ", registration.scope);
@@ -23,7 +24,9 @@ export function registerServiceWorker() {
       } catch (error) {
         console.log("ServiceWorker registration failed: ", error);
       }
-    });
+    })();
+  } else {
+    console.log("ServiceWorker not supported");
   }
 }
 
