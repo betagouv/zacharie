@@ -39,7 +39,7 @@ export default function LandingPage() {
           ) : (
             <Button
               linkProps={{
-                to: "connexion?type=compte-existant",
+                to: "/app/connexion?type=compte-existant",
                 href: "#",
               }}
               iconId="ri-account-box-line"
@@ -50,7 +50,7 @@ export default function LandingPage() {
           )}
           <Button
             linkProps={{
-              to: "connexion?type=creation-de-compte",
+              to: "/app/connexion?type=creation-de-compte",
               href: "#",
             }}
             iconId="fr-icon-add-circle-line"

@@ -14,7 +14,7 @@ export default function useNavigationMenu() {
     }).then(async (res) => {
       if (res.ok) {
         await clearCache().then(() => {
-          window.location.href = "connexion?type=compte-existant";
+          window.location.href = "/app/connexion?type=compte-existant";
         });
       }
     });
