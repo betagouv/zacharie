@@ -5,10 +5,9 @@ import { Link, redirect, useLoaderData } from "@remix-run/react";
 import { UserRoles } from "@prisma/client";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import dayjs from "dayjs";
-import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
 import type { FeisLoaderData } from "~/routes/api.loader.fei";
+import type { FeisDoneLoaderData } from "~/routes/api.loader.fei-done";
 import { useIsOnline } from "~/components/OfflineMode";
-import { setFeisToCache } from "~/utils/caches";
 import { useEffect } from "react";
 import { registerServiceWorker } from "~/sw/registerServiceWorker";
 
@@ -31,7 +30,28 @@ export async function clientLoader() {
     }
 
     const data = (await response.json()) as FeisLoaderData;
-    return data;
+
+    const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/fei-done`, {
+      method: "GET",
+      credentials: "include",
+      headers: new Headers({
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        return redirect("/app/connexion?type=compte-existant");
+      }
+      throw new Error("Failed to fetch data");
+    }
+
+    const doneData = (await responseDone.json()) as FeisDoneLoaderData;
+    return {
+      ...data,
+      ...doneData,
+    };
   } catch (error) {
     console.error("Error fetching data:", error);
     // If fetch fails (e.g., offline), the service worker will handle serving cached data
@@ -42,9 +62,9 @@ export async function clientLoader() {
 clientLoader.hydrate = true; // (2)
 
 export default function TableauDeBordIndex() {
-  const data = useLoaderData<FeisLoaderData>();
+  const data = useLoaderData<typeof clientLoader>()!;
   const user = data.user!;
-  const { feisOngoing, feisToTake, feisUnderMyResponsability } = data;
+  const { feisDone, feisOngoing, feisToTake, feisUnderMyResponsability } = data;
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake];
   const isOnline = useIsOnline();
 
@@ -238,7 +258,7 @@ export default function TableauDeBordIndex() {
               </a>
             </div>
           </section>
-          {/* <section className="mb-6 bg-white md:shadow">
+          <section className="mb-6 bg-white md:shadow">
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feisDone.length ? (
                 <Table
@@ -306,7 +326,7 @@ export default function TableauDeBordIndex() {
                 Haut de page
               </a>
             </div>
-          </section> */}
+          </section>
         </div>
       </div>
     </div>

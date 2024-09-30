@@ -10,7 +10,7 @@ installGlobals();
 
 const { RemixVitePWAPlugin, RemixPWAPreset } = RemixVitePWA();
 
-const buildId = JSON.stringify(new Date().toISOString().split("T")[0] + "-v0");
+const buildId = JSON.stringify(new Date().toISOString().split("T")[0] + "-v1");
 process.env.VITE_BUILD_ID = buildId;
 
 export default defineConfig(({ mode }) => {

@@ -117,17 +117,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       updated_at: "desc",
     },
   });
-  const feisDone = await prisma.fei.findMany({
-    where: {
-      svi_signed_at: {
-        not: null,
-      },
-    },
-    include: feiInclude,
-    orderBy: {
-      updated_at: "desc",
-    },
-  });
 
   console.log("feisUnderMyResponsability", feisUnderMyResponsability.length);
   console.log("feisToTake", feisToTake.length);
