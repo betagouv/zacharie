@@ -24,11 +24,17 @@ if (viteDevServer) {
   app.use(viteDevServer.middlewares);
 } else {
   // Vite fingerprints its assets so we can cache forever.
-  app.use("/assets", express.static("build/client/assets", { immutable: true, maxAge: "1y" }));
+  app.use("/assets", express.static("build-spa/client/assets", { immutable: true, maxAge: "1y" }));
 }
 
-app.use("/assets", express.static("build-spa/client/assets"));
-app.get("*", (req, res, next) => res.sendFile(path.join(process.cwd(), "build-spa/client/index.html"), next));
+// Serve static files from the build-spa/client directory
+app.use(express.static(path.join(process.cwd(), "build-spa", "client")));
+
+// For any other routes, send the index.html file
+app.get("*", (req, res, next) => {
+  res.sendFile(path.join(process.cwd(), "build-spa", "client", "index.html"), next);
+});
+
 app.use(morgan("tiny"));
 
 const port = process.env.PORT || 8080;

@@ -5,12 +5,14 @@
 ┣ 📂app
 ┃ ┣ 📂components
 ┃ ┃ ┣ 📜BreadcrumbCustom.tsx
+┃ ┃ ┣ 📜Chargement.tsx
 ┃ ┃ ┣ 📜consentManagement.tsx
 ┃ ┃ ┣ 📜EntityNotEditable.tsx
 ┃ ┃ ┣ 📜InputForSearchPrefilledData.tsx
 ┃ ┃ ┣ 📜InputNotEditable.tsx
 ┃ ┃ ┣ 📜InputVille.tsx
 ┃ ┃ ┣ 📜InstallApp.tsx
+┃ ┃ ┣ 📜ModalTreeDisplay.tsx
 ┃ ┃ ┣ 📜NotFound.tsx
 ┃ ┃ ┣ 📜NouvelleVersion.tsx
 ┃ ┃ ┣ 📜OfflineMode.tsx
@@ -25,8 +27,12 @@
 ┃ ┃ ┣ 📜UserInformations.tsx
 ┃ ┃ ┗ 📜UserNotEditable.tsx
 ┃ ┣ 📂data
-┃ ┃ ┣ 📜grand-gibier-abats.json
-┃ ┃ ┣ 📜grand-gibier-carcasse.json
+┃ ┃ ┣ 📂grand-gibier-abats
+┃ ┃ ┃ ┣ 📜list.json
+┃ ┃ ┃ ┗ 📜tree.json
+┃ ┃ ┣ 📂grand-gibier-carcasse
+┃ ┃ ┃ ┣ 📜list.json
+┃ ┃ ┃ ┗ 📜tree.json
 ┃ ┃ ┣ 📜grand-gibier.json
 ┃ ┃ ┣ 📜refus-intermediaire.json
 ┃ ┃ ┣ 📜saisie-svi.json
@@ -36,7 +42,9 @@
 ┃ ┃ ┣ 📜fei.server.ts
 ┃ ┃ ┗ 📜prisma.server.ts
 ┃ ┣ 📂routes
-┃ ┃ ┣ 📂tableau-de-bord.fei.$fei_numero
+┃ ┃ ┣ 📂app
+┃ ┃ ┃ ┗ 📜_accueil.connexion.tsx
+┃ ┃ ┣ 📂app.tableau-de-bord.fei.$fei_numero
 ┃ ┃ ┃ ┣ 📜carcasse-svi.tsx
 ┃ ┃ ┃ ┣ 📜carcasses-examinateur.tsx
 ┃ ┃ ┃ ┣ 📜carcasses-intermediaire.tsx
@@ -47,57 +55,59 @@
 ┃ ┃ ┃ ┣ 📜premier-detenteur.tsx
 ┃ ┃ ┃ ┣ 📜route.tsx
 ┃ ┃ ┃ ┣ 📜select-next-owner.tsx
+┃ ┃ ┃ ┣ 📜select-next-premier-detenteur.tsx
 ┃ ┃ ┃ ┣ 📜svi.tsx
 ┃ ┃ ┃ ┗ 📜transfer-current-owner.tsx
-┃ ┃ ┣ 📜_accueil.connexion.tsx
-┃ ┃ ┣ 📜_accueil.tsx
 ┃ ┃ ┣ 📜_index.tsx
+┃ ┃ ┣ 📜.DS_Store
 ┃ ┃ ┣ 📜404.tsx
-┃ ┃ ┣ 📜action.carcasse-suivi.ts
-┃ ┃ ┣ 📜action.carcasse.$numero_bracelet.ts
-┃ ┃ ┣ 📜action.carcasse.nouvelle.ts
-┃ ┃ ┣ 📜action.connexion.ts
-┃ ┃ ┣ 📜action.fei-intermediaire.nouveau.ts
-┃ ┃ ┣ 📜action.fei.$fei_numero.ts
-┃ ┃ ┣ 📜action.fei.nouvelle.ts
-┃ ┃ ┣ 📜action.trouver-premier-detenteur.ts
-┃ ┃ ┣ 📜action.user-entity.$user_id.ts
-┃ ┃ ┣ 📜action.user-relation.$user_id.ts
-┃ ┃ ┣ 📜action.user.$user_id.ts
-┃ ┃ ┣ 📜action.user.logout.ts
-┃ ┃ ┣ 📜admin.action.entite.$entityId.ts
-┃ ┃ ┣ 📜admin.action.entite.nouvelle.ts
-┃ ┃ ┣ 📜admin.action.utilisateur.nouveau.ts
-┃ ┃ ┣ 📜admin.loader.entite.$entityId.ts
-┃ ┃ ┣ 📜admin.loader.entites.ts
-┃ ┃ ┣ 📜admin.loader.fei.ts
-┃ ┃ ┣ 📜admin.loader.utilisateur.$userId.ts
-┃ ┃ ┣ 📜admin.loader.utilisateurs.ts
-┃ ┃ ┣ 📜loader.$fei_numero.$numero_bracelet.ts
-┃ ┃ ┣ 📜loader.entities.ts
-┃ ┃ ┣ 📜loader.fei.$fei_numero.ts
-┃ ┃ ┣ 📜loader.fei.ts
-┃ ┃ ┣ 📜loader.me.ts
-┃ ┃ ┣ 📜loader.user-ccgs.ts
-┃ ┃ ┣ 📜sentry-example-page.tsx
-┃ ┃ ┣ 📜tableau-de-bord._index.tsx
-┃ ┃ ┣ 📜tableau-de-bord.admin._index.tsx
-┃ ┃ ┣ 📜tableau-de-bord.admin.entite.$entityId.tsx
-┃ ┃ ┣ 📜tableau-de-bord.admin.entite.nouvelle.tsx
-┃ ┃ ┣ 📜tableau-de-bord.admin.entites.tsx
-┃ ┃ ┣ 📜tableau-de-bord.admin.fei.tsx
-┃ ┃ ┣ 📜tableau-de-bord.admin.tsx
-┃ ┃ ┣ 📜tableau-de-bord.admin.utilisateur.$userId.tsx
-┃ ┃ ┣ 📜tableau-de-bord.admin.utilisateur.nouveau.tsx
-┃ ┃ ┣ 📜tableau-de-bord.admin.utilisateurs.tsx
-┃ ┃ ┣ 📜tableau-de-bord.carcasse.$fei_numero.$numero_bracelet.tsx
-┃ ┃ ┣ 📜tableau-de-bord.fei.nouvelle.tsx
-┃ ┃ ┣ 📜tableau-de-bord.mon-profil._index.tsx
-┃ ┃ ┣ 📜tableau-de-bord.mon-profil.mes-ccgs.tsx
-┃ ┃ ┣ 📜tableau-de-bord.mon-profil.mes-informations.tsx
-┃ ┃ ┣ 📜tableau-de-bord.mon-profil.mes-notifications.tsx
-┃ ┃ ┣ 📜tableau-de-bord.mon-profil.mes-roles.tsx
-┃ ┃ ┗ 📜tableau-de-bord.tsx
+┃ ┃ ┣ 📜api.action.carcasse-suivi.ts
+┃ ┃ ┣ 📜api.action.carcasse.$numero_bracelet.ts
+┃ ┃ ┣ 📜api.action.carcasse.nouvelle.ts
+┃ ┃ ┣ 📜api.action.connexion.ts
+┃ ┃ ┣ 📜api.action.fei-intermediaire.nouveau.ts
+┃ ┃ ┣ 📜api.action.fei.$fei_numero.ts
+┃ ┃ ┣ 📜api.action.fei.nouvelle.ts
+┃ ┃ ┣ 📜api.action.trouver-premier-detenteur.ts
+┃ ┃ ┣ 📜api.action.user-entity.$user_id.ts
+┃ ┃ ┣ 📜api.action.user-relation.$user_id.ts
+┃ ┃ ┣ 📜api.action.user.$user_id.ts
+┃ ┃ ┣ 📜api.action.user.logout.ts
+┃ ┃ ┣ 📜api.admin.action.entite.$entityId.ts
+┃ ┃ ┣ 📜api.admin.action.entite.nouvelle.ts
+┃ ┃ ┣ 📜api.admin.action.utilisateur.nouveau.ts
+┃ ┃ ┣ 📜api.admin.loader.entite.$entityId.ts
+┃ ┃ ┣ 📜api.admin.loader.entites.ts
+┃ ┃ ┣ 📜api.admin.loader.fei.ts
+┃ ┃ ┣ 📜api.admin.loader.utilisateur.$userId.ts
+┃ ┃ ┣ 📜api.admin.loader.utilisateurs.ts
+┃ ┃ ┣ 📜api.loader.$fei_numero.$numero_bracelet.ts
+┃ ┃ ┣ 📜api.loader.entities.ts
+┃ ┃ ┣ 📜api.loader.fei.$fei_numero.ts
+┃ ┃ ┣ 📜api.loader.fei.ts
+┃ ┃ ┣ 📜api.loader.me.ts
+┃ ┃ ┣ 📜api.loader.user-ccgs.ts
+┃ ┃ ┣ 📜app._accueil.connexion.tsx
+┃ ┃ ┣ 📜app._accueil.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord._index.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.admin._index.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.admin.entite.$entityId.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.admin.entite.nouvelle.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.admin.entites.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.admin.fei.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.admin.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.admin.utilisateur.$userId.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.admin.utilisateur.nouveau.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.admin.utilisateurs.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.carcasse.$fei_numero.$numero_bracelet.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.fei.nouvelle.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.mon-profil._index.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-ccgs.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-informations.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-notifications.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-roles.tsx
+┃ ┃ ┣ 📜app.tableau-de-bord.tsx
+┃ ┃ ┗ 📜sentry-example-page.tsx
 ┃ ┣ 📂services
 ┃ ┃ ┣ 📜auth.client.ts
 ┃ ┃ ┣ 📜auth.server.ts
@@ -122,6 +132,7 @@
 ┃ ┃ ┗ 📜useUser.ts
 ┃ ┣ 📂utils-offline
 ┃ ┃ ┗ 📜get-most-fresh-user.ts
+┃ ┣ 📜.DS_Store
 ┃ ┣ 📜entry.client.tsx
 ┃ ┣ 📜entry.server.tsx
 ┃ ┣ 📜pwa.ts
@@ -129,6 +140,124 @@
 ┃ ┣ 📜shared-sw.ts
 ┃ ┣ 📜sw.ts
 ┃ ┗ 📜tailwind.css
+┣ 📂build-spa
+┃ ┗ 📂client
+┃   ┣ 📂assets
+┃   ┃ ┣ 📜_index-B8sQikUS.js
+┃   ┃ ┣ 📜_sentry-release-injection-file-odU7xFxg.js
+┃   ┃ ┣ 📜404-BOsSsSJI.js
+┃   ┃ ┣ 📜404-FohybIUE.js
+┃   ┃ ┣ 📜Accordion-B7-cAWx2.js
+┃   ┃ ┣ 📜app._accueil-DknvXU_5.js
+┃   ┃ ┣ 📜app._accueil.connexion-BibdLWdV.js
+┃   ┃ ┣ 📜app.tableau-de-bord-D3Eat9aF.js
+┃   ┃ ┣ 📜app.tableau-de-bord._index-ByFuxdbI.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin-gIvDkeR3.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin._index-QVB0WudH.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.entite._entityId-CPuPE4ZO.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.entite.nouvelle-DH6OcdFs.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.entites-BSmIuj7C.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.fei-DLgcWop0.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.utilisateur._userId-BHOksbdG.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.utilisateur.nouveau-qclwRr9s.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.utilisateurs-gu3vPld0.js
+┃   ┃ ┣ 📜app.tableau-de-bord.carcasse._fei_numero._numero_bracelet-BBDzVblN.js
+┃   ┃ ┣ 📜app.tableau-de-bord.fei.nouvelle-h1BNmfo5.js
+┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil._index-DO6xWVLG.js
+┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-ccgs-BIJzI_o8.js
+┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-informations-DCoJTxxN.js
+┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-notifications-FTGU5Ceh.js
+┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-roles-DT_gRYnv.js
+┃   ┃ ┣ 📜Button-DJlWrOtg.js
+┃   ┃ ┣ 📜ButtonsGroup-CHAzdj79.js
+┃   ┃ ┣ 📜caches-CMT5q59g.js
+┃   ┃ ┣ 📜CallOut-oU2tAyQ4.js
+┃   ┃ ┣ 📜Checkbox-DG1VXR37.js
+┃   ┃ ┣ 📜colors.min-Bkv9N-kd.css
+┃   ┃ ┣ 📜components-Ut_ckXGw.js
+┃   ┃ ┣ 📜dark-BLRRW9zh.svg
+┃   ┃ ┣ 📜dayjs.min-CxRSc6Cw.js
+┃   ┃ ┣ 📜dsfr.module-CBcszKQc.js
+┃   ┃ ┣ 📜entry.client-BRW-lIvu.js
+┃   ┃ ┣ 📜exports-BVMBGnVZ.js
+┃   ┃ ┣ 📜favicon-BMkCb9zi.ico
+┃   ┃ ┣ 📜favicon-CduWKyBp.svg
+┃   ┃ ┣ 📜Fieldset-CXI1ZNTa.js
+┃   ┃ ┣ 📜Footer-fksiK7b0.js
+┃   ┃ ┣ 📜get-most-fresh-user-D2K-jeS7.js
+┃   ┃ ┣ 📜get-user-roles-label-B5cmlh07.js
+┃   ┃ ┣ 📜Header-B5_bomVm.css
+┃   ┃ ┣ 📜Header-Bny1G02s.js
+┃   ┃ ┣ 📜i18n-CadUTQrd.js
+┃   ┃ ┣ 📜index-browser-dTS3c4Lp.js
+┃   ┃ ┣ 📜index-CA3n0-ay.js
+┃   ┃ ┣ 📜index-CQqhlU0F.js
+┃   ┃ ┣ 📜indexed-db.client-DBcJjM8D.js
+┃   ┃ ┣ 📜Input-Dhd6G3FB.js
+┃   ┃ ┣ 📜InputForSearchPrefilledData-BeC5PrLj.js
+┃   ┃ ┣ 📜InputNotEditable-B89FU6a8.js
+┃   ┃ ┣ 📜InputVille-DyWX-PQE.js
+┃   ┃ ┣ 📜jsx-runtime-SBMRC0Ul.js
+┃   ┃ ┣ 📜light-BcMY7tSa.svg
+┃   ┃ ┣ 📜link--eb7filN.js
+┃   ┃ ┣ 📜main-C_y-lPS1.css
+┃   ┃ ┣ 📜manifest-90f19541.js
+┃   ┃ ┣ 📜Marianne-Bold_Italic-BqW9V1Nh.woff2
+┃   ┃ ┣ 📜Marianne-Bold_Italic-BWnPOpjP.woff
+┃   ┃ ┣ 📜Marianne-Bold-CYjThbH0.woff2
+┃   ┃ ┣ 📜Marianne-Bold-u6yfe4-h.woff
+┃   ┃ ┣ 📜Marianne-Light_Italic-BJOCXSxu.woff
+┃   ┃ ┣ 📜Marianne-Light_Italic-Yne2G_jl.woff2
+┃   ┃ ┣ 📜Marianne-Light-DqWaxKdz.woff
+┃   ┃ ┣ 📜Marianne-Light-DsZfzyg9.woff2
+┃   ┃ ┣ 📜Marianne-Medium_Italic-BP8MGzkr.woff
+┃   ┃ ┣ 📜Marianne-Medium_Italic-WqZFT7wM.woff2
+┃   ┃ ┣ 📜Marianne-Medium-CmsIrdJJ.woff
+┃   ┃ ┣ 📜Marianne-Medium-DptVAR1p.woff2
+┃   ┃ ┣ 📜Marianne-Regular_Italic-BQJsTSNr.woff
+┃   ┃ ┣ 📜Marianne-Regular_Italic-DdH8FtNo.woff2
+┃   ┃ ┣ 📜Marianne-Regular-CaCqrnJM.woff2
+┃   ┃ ┣ 📜Marianne-Regular-DxIeSxmB.woff
+┃   ┃ ┣ 📜Modal-By-Q1cOW.js
+┃   ┃ ┣ 📜Notice-CLirbXEd.js
+┃   ┃ ┣ 📜OfflineMode-BVmYw5sV.js
+┃   ┃ ┣ 📜overwriteReadonlyProp-Bnf1Zmtp.js
+┃   ┃ ┣ 📜ovoid-CfHELTcL.svg
+┃   ┃ ┣ 📜RadioButtons-1kcq0DRk.js
+┃   ┃ ┣ 📜responses-_OhPzEu2.js
+┃   ┃ ┣ 📜RolesCheckboxes-6eLsDeRV.js
+┃   ┃ ┣ 📜root-b_wBvT14.js
+┃   ┃ ┣ 📜root-BAWJmb5A.css
+┃   ┃ ┣ 📜RootDisplay-CUdEWBkn.js
+┃   ┃ ┣ 📜route-DDAIO5nL.js
+┃   ┃ ┣ 📜router-FoCj7pkv.js
+┃   ┃ ┣ 📜sdk-D1totzpk.js
+┃   ┃ ┣ 📜Select-59tSDtfT.js
+┃   ┃ ┣ 📜sentry-example-page-DFyCBuDx.js
+┃   ┃ ┣ 📜Spectral-ExtraBold-CCzfBm-A.woff2
+┃   ┃ ┣ 📜Spectral-ExtraBold-U325s3c2.woff
+┃   ┃ ┣ 📜Spectral-Regular-D0Iocl0n.woff
+┃   ┃ ┣ 📜Spectral-Regular-PmBQicsR.woff2
+┃   ┃ ┣ 📜Stepper-B3r3Koqf.js
+┃   ┃ ┣ 📜system-BJKRkqTi.svg
+┃   ┃ ┣ 📜Table-BMy8in4f.js
+┃   ┃ ┣ 📜Tabs-DsVUuN3M.js
+┃   ┃ ┣ 📜technical-error-DY5jg3TD.svg
+┃   ┃ ┣ 📜useAnalyticsId-CRcABkG3.js
+┃   ┃ ┣ 📜useConstCallback-88O013lq.js
+┃   ┃ ┗ 📜UserNotEditable-CGycwRD-.js
+┃   ┣ 📜apple-touch-icon-180x180.png
+┃   ┣ 📜favicon.ico
+┃   ┣ 📜favicon.svg
+┃   ┣ 📜index.html
+┃   ┣ 📜manifest.webmanifest
+┃   ┣ 📜maskable-icon-512x512.png
+┃   ┣ 📜pwa-192x192.png
+┃   ┣ 📜pwa-512x512.png
+┃   ┣ 📜pwa-64x64.png
+┃   ┣ 📜robots.txt
+┃   ┣ 📜sw.js
+┃   ┗ 📜sw.js.map
 ┣ 📂doc
 ┃ ┣ 📜automatic reload.md
 ┃ ┣ 📜Fiche d accompagnement Grand Fosse.pdf
@@ -139,14 +268,20 @@
 ┃ ┣ 📂migrations
 ┃ ┃ ┣ 📂20240920093200_init
 ┃ ┃ ┃ ┗ 📜migration.sql
+┃ ┃ ┣ 📂20240925203543_indexes
+┃ ┃ ┃ ┗ 📜migration.sql
+┃ ┃ ┣ 📂20240925210217_indexes_again
+┃ ┃ ┃ ┗ 📜migration.sql
 ┃ ┃ ┗ 📜migration_lock.toml
 ┃ ┗ 📜schema.prisma
 ┣ 📂public
 ┃ ┣ 📜favicon.svg
+┃ ┣ 📜manifest.webmanifest
 ┃ ┗ 📜robots.txt
 ┣ 📜.dockerignore
 ┣ 📜.DS_Store
 ┣ 📜.env
+┣ 📜.env.production
 ┣ 📜.env.sentry-build-plugin
 ┣ 📜.eslintrc.cjs
 ┣ 📜.gitignore
@@ -159,8 +294,10 @@
 ┣ 📜postcss.config.js
 ┣ 📜pwa-assets.config.ts
 ┣ 📜README.md
-┣ 📜spa-server.js
+┣ 📜server-api.js
+┣ 📜server-spa.js
 ┣ 📜tailwind.config.ts
 ┣ 📜tsconfig.json
+┣ 📜vite-env.d.ts
 ┣ 📜vite.config.ts
 ┗ 📜yarn.lock
