@@ -83,6 +83,7 @@
 ┃ ┃ ┣ 📜api.admin.loader.utilisateurs.ts
 ┃ ┃ ┣ 📜api.loader.$fei_numero.$numero_bracelet.ts
 ┃ ┃ ┣ 📜api.loader.entities.ts
+┃ ┃ ┣ 📜api.loader.fei-done.ts
 ┃ ┃ ┣ 📜api.loader.fei.$fei_numero.ts
 ┃ ┃ ┣ 📜api.loader.fei.ts
 ┃ ┃ ┣ 📜api.loader.me.ts
@@ -121,6 +122,8 @@
 ┃ ┃ ┣ 📜sentry.js
 ┃ ┃ ┣ 📜useNetworkConnectivity.js
 ┃ ┃ ┗ 📜usePWAManager.js
+┃ ┣ 📂sw
+┃ ┃ ┗ 📜registerServiceWorker.ts
 ┃ ┣ 📂utils
 ┃ ┃ ┣ 📜authorizeUserOrAdmin.ts
 ┃ ┃ ┣ 📜caches.ts
@@ -128,6 +131,8 @@
 ┃ ┃ ┣ 📜get-navigation-menu.ts
 ┃ ┃ ┣ 📜get-user-roles-label.ts
 ┃ ┃ ┣ 📜sort-things-by-type-and-id.ts
+┃ ┃ ┣ 📜standalone.ts
+┃ ┃ ┣ 📜useLatestVersion.ts
 ┃ ┃ ┣ 📜user-onboarded.client.ts
 ┃ ┃ ┗ 📜useUser.ts
 ┃ ┣ 📂utils-offline
@@ -135,73 +140,72 @@
 ┃ ┣ 📜.DS_Store
 ┃ ┣ 📜entry.client.tsx
 ┃ ┣ 📜entry.server.tsx
-┃ ┣ 📜pwa.ts
+┃ ┣ 📜main-sw.ts
 ┃ ┣ 📜root.tsx
-┃ ┣ 📜shared-sw.ts
-┃ ┣ 📜sw.ts
-┃ ┗ 📜tailwind.css
+┃ ┣ 📜tailwind.css
+┃ ┗ 📜zach-service-worker
 ┣ 📂build-spa
 ┃ ┗ 📂client
 ┃   ┣ 📂assets
-┃   ┃ ┣ 📜_index-B8sQikUS.js
-┃   ┃ ┣ 📜_sentry-release-injection-file-odU7xFxg.js
-┃   ┃ ┣ 📜404-BOsSsSJI.js
-┃   ┃ ┣ 📜404-FohybIUE.js
-┃   ┃ ┣ 📜Accordion-B7-cAWx2.js
-┃   ┃ ┣ 📜app._accueil-DknvXU_5.js
-┃   ┃ ┣ 📜app._accueil.connexion-BibdLWdV.js
-┃   ┃ ┣ 📜app.tableau-de-bord-D3Eat9aF.js
-┃   ┃ ┣ 📜app.tableau-de-bord._index-ByFuxdbI.js
-┃   ┃ ┣ 📜app.tableau-de-bord.admin-gIvDkeR3.js
-┃   ┃ ┣ 📜app.tableau-de-bord.admin._index-QVB0WudH.js
-┃   ┃ ┣ 📜app.tableau-de-bord.admin.entite._entityId-CPuPE4ZO.js
-┃   ┃ ┣ 📜app.tableau-de-bord.admin.entite.nouvelle-DH6OcdFs.js
-┃   ┃ ┣ 📜app.tableau-de-bord.admin.entites-BSmIuj7C.js
-┃   ┃ ┣ 📜app.tableau-de-bord.admin.fei-DLgcWop0.js
-┃   ┃ ┣ 📜app.tableau-de-bord.admin.utilisateur._userId-BHOksbdG.js
-┃   ┃ ┣ 📜app.tableau-de-bord.admin.utilisateur.nouveau-qclwRr9s.js
-┃   ┃ ┣ 📜app.tableau-de-bord.admin.utilisateurs-gu3vPld0.js
-┃   ┃ ┣ 📜app.tableau-de-bord.carcasse._fei_numero._numero_bracelet-BBDzVblN.js
-┃   ┃ ┣ 📜app.tableau-de-bord.fei.nouvelle-h1BNmfo5.js
-┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil._index-DO6xWVLG.js
-┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-ccgs-BIJzI_o8.js
-┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-informations-DCoJTxxN.js
-┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-notifications-FTGU5Ceh.js
-┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-roles-DT_gRYnv.js
-┃   ┃ ┣ 📜Button-DJlWrOtg.js
-┃   ┃ ┣ 📜ButtonsGroup-CHAzdj79.js
-┃   ┃ ┣ 📜caches-CMT5q59g.js
-┃   ┃ ┣ 📜CallOut-oU2tAyQ4.js
-┃   ┃ ┣ 📜Checkbox-DG1VXR37.js
+┃   ┃ ┣ 📜_index-1Ldf6qhD.js
+┃   ┃ ┣ 📜_sentry-release-injection-file-Z9aNig_E.js
+┃   ┃ ┣ 📜404-Bp_9HnWc.js
+┃   ┃ ┣ 📜404-DpV45dlW.js
+┃   ┃ ┣ 📜Accordion-BAFds9RH.js
+┃   ┃ ┣ 📜app._accueil-BBov3csI.js
+┃   ┃ ┣ 📜app._accueil.connexion-X_WJ6PkP.js
+┃   ┃ ┣ 📜app.tableau-de-bord-CHK0cKYc.js
+┃   ┃ ┣ 📜app.tableau-de-bord._index-CTVwJjpn.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin-mO1Sgmrz.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin._index-C_aTV80t.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.entite._entityId-C4OyM4sv.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.entite.nouvelle-Pkd4YcmM.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.entites-UbQnNQZs.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.fei-CVRFwldT.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.utilisateur._userId-BVs8R6WQ.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.utilisateur.nouveau-5_E8Mdzi.js
+┃   ┃ ┣ 📜app.tableau-de-bord.admin.utilisateurs-BpUBhzso.js
+┃   ┃ ┣ 📜app.tableau-de-bord.carcasse._fei_numero._numero_bracelet-BNhYMMy2.js
+┃   ┃ ┣ 📜app.tableau-de-bord.fei.nouvelle-BatH1SJj.js
+┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil._index-DbWHNS4u.js
+┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-ccgs-Cf7hQ_4n.js
+┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-informations-DiXfgfVV.js
+┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-notifications-BxgApQnq.js
+┃   ┃ ┣ 📜app.tableau-de-bord.mon-profil.mes-roles-DQIWNK7o.js
+┃   ┃ ┣ 📜Button-DnikKX2K.js
+┃   ┃ ┣ 📜ButtonsGroup-BCIbu-yB.js
+┃   ┃ ┣ 📜caches-CCFFpcSj.js
+┃   ┃ ┣ 📜CallOut-BF0kxbqx.js
+┃   ┃ ┣ 📜Checkbox-D_K275MQ.js
 ┃   ┃ ┣ 📜colors.min-Bkv9N-kd.css
-┃   ┃ ┣ 📜components-Ut_ckXGw.js
+┃   ┃ ┣ 📜components-BTALbKsv.js
 ┃   ┃ ┣ 📜dark-BLRRW9zh.svg
-┃   ┃ ┣ 📜dayjs.min-CxRSc6Cw.js
+┃   ┃ ┣ 📜dayjs.min-eD9Xfpx1.js
 ┃   ┃ ┣ 📜dsfr.module-CBcszKQc.js
-┃   ┃ ┣ 📜entry.client-BRW-lIvu.js
+┃   ┃ ┣ 📜entry.client-BLPXug3m.js
 ┃   ┃ ┣ 📜exports-BVMBGnVZ.js
 ┃   ┃ ┣ 📜favicon-BMkCb9zi.ico
 ┃   ┃ ┣ 📜favicon-CduWKyBp.svg
-┃   ┃ ┣ 📜Fieldset-CXI1ZNTa.js
-┃   ┃ ┣ 📜Footer-fksiK7b0.js
-┃   ┃ ┣ 📜get-most-fresh-user-D2K-jeS7.js
-┃   ┃ ┣ 📜get-user-roles-label-B5cmlh07.js
+┃   ┃ ┣ 📜Fieldset-Cj6t8nVg.js
+┃   ┃ ┣ 📜Footer-DfDTSAcZ.js
+┃   ┃ ┣ 📜get-most-fresh-user-CXBgIfsX.js
+┃   ┃ ┣ 📜get-user-roles-label-BZhXNJ9v.js
 ┃   ┃ ┣ 📜Header-B5_bomVm.css
-┃   ┃ ┣ 📜Header-Bny1G02s.js
-┃   ┃ ┣ 📜i18n-CadUTQrd.js
-┃   ┃ ┣ 📜index-browser-dTS3c4Lp.js
-┃   ┃ ┣ 📜index-CA3n0-ay.js
-┃   ┃ ┣ 📜index-CQqhlU0F.js
-┃   ┃ ┣ 📜indexed-db.client-DBcJjM8D.js
-┃   ┃ ┣ 📜Input-Dhd6G3FB.js
-┃   ┃ ┣ 📜InputForSearchPrefilledData-BeC5PrLj.js
-┃   ┃ ┣ 📜InputNotEditable-B89FU6a8.js
-┃   ┃ ┣ 📜InputVille-DyWX-PQE.js
-┃   ┃ ┣ 📜jsx-runtime-SBMRC0Ul.js
+┃   ┃ ┣ 📜Header-DkPb9Ydv.js
+┃   ┃ ┣ 📜i18n-DtEPKf4e.js
+┃   ┃ ┣ 📜index-BnAXwZrO.js
+┃   ┃ ┣ 📜index-browser-rIcAgP2v.js
+┃   ┃ ┣ 📜index-DNL-WtqT.js
+┃   ┃ ┣ 📜indexed-db.client-ByikGNK5.js
+┃   ┃ ┣ 📜Input-B6zjgv5N.js
+┃   ┃ ┣ 📜InputForSearchPrefilledData-DVu2t7vl.js
+┃   ┃ ┣ 📜InputNotEditable-KEIQvSis.js
+┃   ┃ ┣ 📜InputVille-BATiihUz.js
+┃   ┃ ┣ 📜jsx-runtime-BtKuhbvN.js
 ┃   ┃ ┣ 📜light-BcMY7tSa.svg
-┃   ┃ ┣ 📜link--eb7filN.js
-┃   ┃ ┣ 📜main-C_y-lPS1.css
-┃   ┃ ┣ 📜manifest-90f19541.js
+┃   ┃ ┣ 📜link-DQaesKGV.js
+┃   ┃ ┣ 📜main-BgcFRs7G.css
+┃   ┃ ┣ 📜manifest-bd0c1b8e.js
 ┃   ┃ ┣ 📜Marianne-Bold_Italic-BqW9V1Nh.woff2
 ┃   ┃ ┣ 📜Marianne-Bold_Italic-BWnPOpjP.woff
 ┃   ┃ ┣ 📜Marianne-Bold-CYjThbH0.woff2
@@ -218,46 +222,46 @@
 ┃   ┃ ┣ 📜Marianne-Regular_Italic-DdH8FtNo.woff2
 ┃   ┃ ┣ 📜Marianne-Regular-CaCqrnJM.woff2
 ┃   ┃ ┣ 📜Marianne-Regular-DxIeSxmB.woff
-┃   ┃ ┣ 📜Modal-By-Q1cOW.js
-┃   ┃ ┣ 📜Notice-CLirbXEd.js
-┃   ┃ ┣ 📜OfflineMode-BVmYw5sV.js
-┃   ┃ ┣ 📜overwriteReadonlyProp-Bnf1Zmtp.js
+┃   ┃ ┣ 📜Modal-B9pXXHHn.js
+┃   ┃ ┣ 📜Notice-DSbgrNlP.js
+┃   ┃ ┣ 📜OfflineMode-Bt2VDN1P.js
+┃   ┃ ┣ 📜overwriteReadonlyProp-BIsw83Qh.js
 ┃   ┃ ┣ 📜ovoid-CfHELTcL.svg
-┃   ┃ ┣ 📜RadioButtons-1kcq0DRk.js
+┃   ┃ ┣ 📜RadioButtons-BAPqqGYg.js
 ┃   ┃ ┣ 📜responses-_OhPzEu2.js
-┃   ┃ ┣ 📜RolesCheckboxes-6eLsDeRV.js
-┃   ┃ ┣ 📜root-b_wBvT14.js
+┃   ┃ ┣ 📜RolesCheckboxes-Bkx4f3rv.js
 ┃   ┃ ┣ 📜root-BAWJmb5A.css
-┃   ┃ ┣ 📜RootDisplay-CUdEWBkn.js
-┃   ┃ ┣ 📜route-DDAIO5nL.js
+┃   ┃ ┣ 📜root-DRKNzOvd.js
+┃   ┃ ┣ 📜RootDisplay-C3au88yg.js
+┃   ┃ ┣ 📜route-C4dnfXfG.js
 ┃   ┃ ┣ 📜router-FoCj7pkv.js
-┃   ┃ ┣ 📜sdk-D1totzpk.js
-┃   ┃ ┣ 📜Select-59tSDtfT.js
-┃   ┃ ┣ 📜sentry-example-page-DFyCBuDx.js
+┃   ┃ ┣ 📜sdk-DauRHls1.js
+┃   ┃ ┣ 📜Select-zQ2vaLpU.js
+┃   ┃ ┣ 📜sentry-example-page-BruTT5xw.js
 ┃   ┃ ┣ 📜Spectral-ExtraBold-CCzfBm-A.woff2
 ┃   ┃ ┣ 📜Spectral-ExtraBold-U325s3c2.woff
 ┃   ┃ ┣ 📜Spectral-Regular-D0Iocl0n.woff
 ┃   ┃ ┣ 📜Spectral-Regular-PmBQicsR.woff2
-┃   ┃ ┣ 📜Stepper-B3r3Koqf.js
+┃   ┃ ┣ 📜Stepper-CUwjVP7G.js
 ┃   ┃ ┣ 📜system-BJKRkqTi.svg
-┃   ┃ ┣ 📜Table-BMy8in4f.js
-┃   ┃ ┣ 📜Tabs-DsVUuN3M.js
+┃   ┃ ┣ 📜Table-Ca2Ku9iK.js
+┃   ┃ ┣ 📜Tabs-BXydoPYZ.js
 ┃   ┃ ┣ 📜technical-error-DY5jg3TD.svg
-┃   ┃ ┣ 📜useAnalyticsId-CRcABkG3.js
-┃   ┃ ┣ 📜useConstCallback-88O013lq.js
-┃   ┃ ┗ 📜UserNotEditable-CGycwRD-.js
+┃   ┃ ┣ 📜useAnalyticsId-CTZqeLns.js
+┃   ┃ ┣ 📜useConstCallback-lvHnhsC1.js
+┃   ┃ ┗ 📜UserNotEditable-BFHi34dh.js
 ┃   ┣ 📜apple-touch-icon-180x180.png
 ┃   ┣ 📜favicon.ico
 ┃   ┣ 📜favicon.svg
 ┃   ┣ 📜index.html
+┃   ┣ 📜main-sw.js
+┃   ┣ 📜main-sw.js.map
 ┃   ┣ 📜manifest.webmanifest
 ┃   ┣ 📜maskable-icon-512x512.png
 ┃   ┣ 📜pwa-192x192.png
 ┃   ┣ 📜pwa-512x512.png
 ┃   ┣ 📜pwa-64x64.png
-┃   ┣ 📜robots.txt
-┃   ┣ 📜sw.js
-┃   ┗ 📜sw.js.map
+┃   ┗ 📜robots.txt
 ┣ 📂doc
 ┃ ┣ 📜automatic reload.md
 ┃ ┣ 📜Fiche d accompagnement Grand Fosse.pdf
@@ -278,6 +282,10 @@
 ┃ ┣ 📜favicon.svg
 ┃ ┣ 📜manifest.webmanifest
 ┃ ┗ 📜robots.txt
+┣ 📂vite-pwa-config
+┃ ┣ 📜pwa.ts
+┃ ┣ 📜shared-sw.ts
+┃ ┗ 📜sw.ts
 ┣ 📜.dockerignore
 ┣ 📜.DS_Store
 ┣ 📜.env

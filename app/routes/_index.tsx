@@ -1,6 +1,8 @@
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { json, useLoaderData } from "@remix-run/react";
+import { useEffect } from "react";
 import RootDisplay from "~/components/RootDisplay";
+import { registerServiceWorker } from "~/sw/registerServiceWorker";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 // import type { MetaFunction } from "@remix-run/node";
 
@@ -20,6 +22,18 @@ export async function clientLoader() {
 
 export default function LandingPage() {
   const { isLoggedIn } = useLoaderData<typeof clientLoader>();
+
+  useEffect(() => {
+    console.log("registerServiceWorker tableau de bord ?");
+    registerServiceWorker();
+    console.log("registerServiceWorker YESSA");
+
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+      console.log("POST MESSAGE");
+      navigator.serviceWorker.controller.postMessage({ type: "APP_OPENED" });
+    }
+  }, []);
+
   return (
     <RootDisplay>
       <section className="fr-container my-auto flex min-h-[50vh] flex-col justify-center">
