@@ -5,9 +5,11 @@ export function useIsOnline() {
   useEffect(() => {
     function handleOnline() {
       navigator.serviceWorker?.controller?.postMessage("manualSync");
+      console.log("IS FUCKING ONLINE");
       setIsOnline(true);
     }
     function handleOffline() {
+      console.log("IS FUCKING OFFLINE");
       setIsOnline(false);
     }
     window.addEventListener("online", handleOnline);
