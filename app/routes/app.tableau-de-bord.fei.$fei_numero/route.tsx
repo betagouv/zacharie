@@ -19,6 +19,7 @@ import FEI_SVI from "./svi";
 import FEIExaminateurInitial from "./examinateur-initial";
 import { type FeiLoaderData } from "~/routes/api.loader.fei.$fei_numero";
 import { type FeiActionData } from "~/routes/api.action.fei.$fei_numero";
+import { type MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export function meta({ params }: MetaArgs) {
@@ -66,9 +67,18 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
     }),
   }).then((res) => res.json())) as FeiLoaderData;
 
+  const myRelationsData = (await fetch(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`, {
+    method: "GET",
+    credentials: "include",
+    headers: new Headers({
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }),
+  }).then((res) => res.json())) as MyRelationsLoaderData;
+
   return json({
-    user,
     ...loaderData,
+    ...myRelationsData,
   });
 }
 

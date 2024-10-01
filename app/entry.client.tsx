@@ -13,24 +13,24 @@ import { registerServiceWorker } from "~/sw/registerServiceWorker";
 
 registerServiceWorker();
 
-if (process.env.NODE_ENV === "production") {
-  Sentry.init({
-    dsn: "https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175",
-    tracesSampleRate: 0.01,
-    replaysSessionSampleRate: 0.01,
-    replaysOnErrorSampleRate: 0.01,
-    enabled: false,
-    integrations: [
-      Sentry.browserTracingIntegration({
-        useEffect,
-        useLocation,
-        useMatches,
-      }),
-      // eslint-disable-next-line import/namespace
-      Sentry.replayIntegration(),
-    ],
-  });
-}
+// if (process.env.NODE_ENV === "production") {
+//   Sentry.init({
+//     dsn: "https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175",
+//     tracesSampleRate: 0.01,
+//     replaysSessionSampleRate: 0.01,
+//     replaysOnErrorSampleRate: 0.01,
+//     enabled: false,
+//     integrations: [
+//       Sentry.browserTracingIntegration({
+//         useEffect,
+//         useLocation,
+//         useMatches,
+//       }),
+//       // eslint-disable-next-line import/namespace
+//       Sentry.replayIntegration(),
+//     ],
+//   });
+// }
 
 declare module "@codegouvfr/react-dsfr/spa" {
   interface RegisterLink {

@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/node";
+// import * as Sentry from "@sentry/node";
 
 interface Context {
   extra?: Record<string, unknown>;
@@ -10,6 +10,9 @@ type ErrorType = Error | string;
 export function capture(err: ErrorType, context: Context | string): void {
   let parsedContext: Context;
 
+  if (import.meta.env.DEV) {
+    return console.log("capture", err, context);
+  }
   if (typeof context === "string") {
     parsedContext = JSON.parse(context);
   } else {
@@ -32,13 +35,13 @@ export function capture(err: ErrorType, context: Context | string): void {
       }
       parsedContext.extra = newExtra;
     } catch (e) {
-      Sentry.captureMessage(String(e), parsedContext);
+      // Sentry.captureMessage(String(e), parsedContext);
     }
   }
 
-  if (typeof err === "string") {
-    Sentry.captureMessage(err, parsedContext);
-  } else {
-    Sentry.captureException(err, parsedContext);
-  }
+  // if (typeof err === "string") {
+  //   Sentry.captureMessage(err, parsedContext);
+  // } else {
+  //   Sentry.captureException(err, parsedContext);
+  // }
 }

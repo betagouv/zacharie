@@ -22,10 +22,11 @@ export default defineConfig(({ mode }) => {
       noExternal: ["@codegouvfr/react-dsfr"],
     },
     // optimizeDeps: {
-    //   exclude: ["@sentry/remix"],
+    //   noDiscovery: true,
     // },
     define: {
       __VITE_BUILD_ID__: buildId,
+      "process.env": process.env,
     },
     server: {
       cors: {
@@ -109,14 +110,15 @@ export default defineConfig(({ mode }) => {
           ],
         },
       }),
-      sentryVitePlugin({
-        org: "betagouv",
-        project: "zacharie-remix",
-        url: "https://sentry.incubateur.net/",
-        sourcemaps: {
-          filesToDeleteAfterUpload: ["./build-spa/**/*.js.map", "./build-spa/*.mjs.map"],
-        },
-      }),
+      // sentryVitePlugin({
+      //   org: "betagouv",
+      //   project: "zacharie-remix",
+      //   url: "https://sentry.incubateur.net/",
+      //   disable: mode === "development",
+      //   sourcemaps: {
+      //     filesToDeleteAfterUpload: ["./build-spa/**/*.js.map", "./build-spa/*.mjs.map"],
+      //   },
+      // }),
       {
         name: "configure-server",
         configureServer(server) {

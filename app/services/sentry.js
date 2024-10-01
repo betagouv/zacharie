@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/react";
+// import * as Sentry from "@sentry/react";
 
 export const capture = (err, context = {}) => {
   if (import.meta.env.NODE_ENV === "development") {
@@ -24,18 +24,18 @@ export const capture = (err, context = {}) => {
       }
       context.extra = newExtra;
     } catch (e) {
-      Sentry.captureMessage(e, context);
+      // Sentry.captureMessage(e, context);
     }
   }
-  if (Sentry && err) {
-    if (typeof err === "string") {
-      Sentry.captureMessage(err, context);
-    } else {
-      Sentry.captureException(err, context);
-    }
-  } else {
-    console.log("capture", err, JSON.stringify(context));
-  }
+  // if (Sentry && err) {
+  // if (typeof err === "string") {
+  //   Sentry.captureMessage(err, context);
+  // } else {
+  //   Sentry.captureException(err, context);
+  // }
+  // } else {
+  //   console.log("capture", err, JSON.stringify(context));
+  // }
 };
 
-export const AppSentry = Sentry;
+// export const AppSentry = Sentry;
