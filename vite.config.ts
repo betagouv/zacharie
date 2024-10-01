@@ -82,7 +82,7 @@ export default defineConfig(({ mode }) => {
           // This configuration tells the plugin to include all js, css, html, ico, png, svg, and woff2 files in the precache manifest.
           globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
-          injectionPoint: undefined,
+          // injectionPoint: undefined,
         },
         devOptions: {
           enabled: true,
