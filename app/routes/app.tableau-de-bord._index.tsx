@@ -9,7 +9,6 @@ import type { FeisLoaderData } from "~/routes/api.loader.fei";
 import type { FeisDoneLoaderData } from "~/routes/api.loader.fei-done";
 import { useIsOnline } from "~/components/OfflineMode";
 import { useEffect } from "react";
-import { registerServiceWorker } from "~/sw/registerServiceWorker";
 
 export async function clientLoader() {
   try {
@@ -69,11 +68,6 @@ export default function TableauDeBordIndex() {
   const isOnline = useIsOnline();
 
   useEffect(() => {
-    console.log("registerServiceWorker tableau de bord ?");
-    if (user) {
-      console.log("registerServiceWorker YESSA");
-      registerServiceWorker();
-    }
     if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
       console.log("POST MESSAGE");
       navigator.serviceWorker.controller.postMessage({ type: "APP_OPENED" });

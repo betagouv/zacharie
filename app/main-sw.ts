@@ -83,7 +83,7 @@ async function handleFetchRequest(request: Request): Promise<Response> {
     }
   }
 
-  return new Response("Offline and data not available", {
+  return new Response(`Offline and data not available\n${JSON.stringify(request, null, 2)}`, {
     status: 404,
     headers: { "Content-Type": "text/plain" },
   });

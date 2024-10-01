@@ -60,9 +60,17 @@ export default defineConfig(({ mode }) => {
           description: "La FEI simpifiée",
           background_color: "#000091",
           theme_color: "#ffffff",
+          id: "./?mode=standalone",
           start_url: "./?mode=standalone",
           display: "fullscreen",
+          display_override: ["standalone", "fullscreen", "browser"],
           lang: "fr",
+          protocol_handlers: [
+            {
+              protocol: "web+zachariegouvfr",
+              url: "./",
+            },
+          ],
         },
         injectManifest: {
           // This configuration tells the plugin to include all js, css, html, ico, png, svg, and woff2 files in the precache manifest.
