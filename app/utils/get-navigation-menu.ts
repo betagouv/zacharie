@@ -171,15 +171,15 @@ export default function useNavigationMenu() {
   console.log("latestVersion", latestVersion);
   console.log("clientLatestVersion", clientLatestVersion);
 
-  if (latestVersion !== clientLatestVersion) {
-    navigationBase.push({
-      text: "Obtenir la dernière version de l'app",
-      linkProps: {
-        href: "#",
-        onClick: () => clearCache().then(() => window.location.reload()),
-      },
-    });
-  }
+  // if (latestVersion !== clientLatestVersion) {
+  navigationBase.push({
+    text: "Obtenir la dernière version de l'app",
+    linkProps: {
+      href: "#",
+      onClick: () => clearCache().then(() => window.location.reload()),
+    },
+  });
+  // }
 
   return navigationBase;
 }
