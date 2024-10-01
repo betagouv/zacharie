@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev-api": "yarn prisma-deploy && react-dsfr update-icons && node ./server-api.js",
-    "dev-spa": "SPA_MODE=true && remix vite:dev --port 3232 --force",
+    "dev-spa": "rm -rf node_modules/.vite && SPA_MODE=true && remix vite:dev --port 3232 --force",
     "build-api": "remix vite:build",
     "build-spa": "SPA_MODE=true && remix vite:build",
     "start-spa": "SPA_MODE=true && node ./server-spa.js",
@@ -42,7 +42,8 @@
     "prisma": "^5.19.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "remix-utils": "^7.6.0"
+    "remix-utils": "^7.6.0",
+    "short-unique-id": "^5.2.0"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.12.1",

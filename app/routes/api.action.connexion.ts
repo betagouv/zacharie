@@ -1,10 +1,10 @@
 import { type ActionFunctionArgs, redirect, json, type LoaderFunctionArgs } from "@remix-run/node";
-
 import { prisma } from "~/db/prisma.server";
 import { comparePassword, hashPassword } from "~/services/crypto.server";
 import { createUserSession, getUserIdFromCookie } from "~/services/auth.server";
 import { capture } from "~/services/capture";
 import { ExtractLoaderData } from "~/services/extract-loader-data";
+import createUserId from "~/utils/createUserId.server";
 
 type ConnexionType = "creation-de-compte" | "compte-existant";
 
@@ -41,7 +41,14 @@ export async function action({ request }: ActionFunctionArgs) {
         error: "L'email est incorrect, ou vous n'avez pas encore de compte",
       });
     }
-    user = await prisma.user.create({ data: { email, activated: false, prefilled: false } });
+    user = await prisma.user.create({
+      data: {
+        id: await createUserId(),
+        email,
+        activated: false,
+        prefilled: false,
+      },
+    });
   }
   const hashedPassword = await hashPassword(passwordUser);
   const existingPassword = await prisma.password.findFirst({ where: { user_id: user.id } });

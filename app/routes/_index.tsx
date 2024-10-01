@@ -1,6 +1,5 @@
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { json, useLoaderData } from "@remix-run/react";
-import { useEffect } from "react";
 import RootDisplay from "~/components/RootDisplay";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 // import type { MetaFunction } from "@remix-run/node";
@@ -21,13 +20,6 @@ export async function clientLoader() {
 
 export default function LandingPage() {
   const { isLoggedIn } = useLoaderData<typeof clientLoader>();
-
-  useEffect(() => {
-    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-      console.log("POST MESSAGE");
-      navigator.serviceWorker.controller.postMessage({ type: "APP_OPENED" });
-    }
-  }, []);
 
   return (
     <RootDisplay>

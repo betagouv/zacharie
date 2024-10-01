@@ -85,7 +85,7 @@ export default function FEIDetenteurInitial() {
                 const formData = new FormData();
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
                 formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
-                formData.append("route", `/action/fei/${fei.numero}`);
+                formData.append("route", `/api/action/fei/${fei.numero}`);
                 fetcher.submit(formData, {
                   method: "POST",
                   preventScrollReset: true, // Prevent scroll reset on submission
@@ -104,7 +104,7 @@ export default function FEIDetenteurInitial() {
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
                 formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
                 formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
-                formData.append("route", `/action/fei/${fei.numero}`);
+                formData.append("route", `/api/action/fei/${fei.numero}`);
                 fetcher.submit(formData, {
                   method: "POST",
                   preventScrollReset: true, // Prevent scroll reset on submission
@@ -122,7 +122,7 @@ export default function FEIDetenteurInitial() {
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
                 formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
                 formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
-                formData.append("route", `/action/fei/${fei.numero}`);
+                formData.append("route", `/api/action/fei/${fei.numero}`);
                 fetcher.submit(formData, {
                   method: "POST",
                   preventScrollReset: true, // Prevent scroll reset on submission
@@ -163,7 +163,7 @@ export default function FEIDetenteurInitial() {
           </div>
           {depotType && (
             <depotFetcher.Form method="POST">
-              <input type="hidden" name="route" value={`/action/fei/${fei.numero}`} />
+              <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
               {depotType === Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id && (
                 <div className="fr-fieldset__element">
                   {canEdit ? (

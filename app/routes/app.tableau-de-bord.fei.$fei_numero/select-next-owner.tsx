@@ -161,14 +161,14 @@ export default function SelectNextOwner() {
         method="POST"
         onSubmit={(event) => {
           const formData = new FormData(event.currentTarget);
-          formData.append("route", `/action/fei/${fei.numero}`);
+          formData.append("route", `/api/action/fei/${fei.numero}`);
           nextOwnerFetcher.submit(formData, {
             method: "POST",
             preventScrollReset: true, // Prevent scroll reset on submission
           });
         }}
       >
-        <input type="hidden" name="route" value={`/action/fei/${fei.numero}`} />
+        <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <div className="fr-fieldset__element">
           <Select

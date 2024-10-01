@@ -2,6 +2,7 @@ import { Prisma, User, UserNotifications, UserRoles } from "@prisma/client";
 import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { authorizeUserOrAdmin } from "~/utils/authorizeUserOrAdmin";
+import createUserId from "~/utils/createUserId.server";
 
 export async function action(args: ActionFunctionArgs) {
   const { user, error } = await authorizeUserOrAdmin(args);
@@ -74,6 +75,8 @@ export async function action(args: ActionFunctionArgs) {
   const userId = params.user_id;
   if (!userId) {
     // admin creation
+    nextUser.id = await createUserId();
+
     savedUser = await prisma.user.create({
       data: nextUser as Prisma.UserCreateInput,
     });

@@ -79,7 +79,7 @@ export default function AdminUser() {
   const rolesFormRef = useRef<HTMLFormElement>(null);
   const handleUserFormSubmit = (formRef: RefObject<HTMLFormElement>) => () => {
     const formData = new FormData(formRef.current!);
-    formData.append("route", `/action/user/${user.id}`);
+    formData.append("route", `/api/action/user/${user.id}`);
     userFetcher.submit(formData, {
       method: "POST",
       preventScrollReset: true, // Prevent scroll reset on submission
@@ -132,7 +132,7 @@ export default function AdminUser() {
                 onBlur={handleUserFormSubmit(activeFormRef)}
                 preventScrollReset
               >
-                <input type="hidden" name="route" value={`/action/user/${user.id}`} />
+                <input type="hidden" name="route" value={`/api/action/user/${user.id}`} />
 
                 <RadioButtons
                   options={[
@@ -172,7 +172,7 @@ export default function AdminUser() {
                   onBlur={handleUserFormSubmit(rolesFormRef)}
                   preventScrollReset
                 >
-                  <input type="hidden" name="route" value={`/action/user/${user.id}`} />
+                  <input type="hidden" name="route" value={`/api/action/user/${user.id}`} />
                   {user.roles.includes(UserRoles.ADMIN) && (
                     <input type="hidden" name={Prisma.UserScalarFieldEnum.roles} value={UserRoles.ADMIN} />
                   )}
@@ -200,7 +200,7 @@ export default function AdminUser() {
                   onBlur={handleUserFormSubmit(idFormRef)}
                   preventScrollReset
                 >
-                  <input type="hidden" name="route" value={`/action/user/${user.id}`} />
+                  <input type="hidden" name="route" value={`/api/action/user/${user.id}`} />
                   <input type="hidden" name={Prisma.UserScalarFieldEnum.prefilled} value="true" />
                   <div className="fr-fieldset__element">
                     <Input
@@ -443,7 +443,7 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
             >
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
               <input type="hidden" name="_action" value="create" />
-              <input type="hidden" name="route" value={`/action/user-entity/${entity.id}`} />
+              <input type="hidden" name="route" value={`/api/action/user-entity/${entity.id}`} />
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.relation} value={relation} />
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.entity_id} value={entity.id} />
               <Link

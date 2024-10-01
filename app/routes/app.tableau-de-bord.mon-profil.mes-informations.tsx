@@ -119,7 +119,7 @@ export default function MesInformations() {
   const handleUserFormBlur = useCallback(
     (event: React.FocusEvent<HTMLFormElement>) => {
       const formData = new FormData(event.currentTarget);
-      formData.append("route", `/action/user/${user.id}`);
+      formData.append("route", `/api/action/user/${user.id}`);
       userFetcher.submit(formData, {
         method: "POST",
         preventScrollReset: true, // Prevent scroll reset on submission
@@ -174,7 +174,7 @@ export default function MesInformations() {
             <div className="p-4 pb-32 md:p-8 md:pb-0">
               <p className="fr-text--regular mb-4">Renseignez les informations de chacun de vos rôles</p>
               <userFetcher.Form id="user_data_form" method="POST" onBlur={handleUserFormBlur} preventScrollReset>
-                <input type="hidden" name="route" value={`/action/user/${user.id}`} />
+                <input type="hidden" name="route" value={`/api/action/user/${user.id}`} />
                 <Accordion
                   titleAs="h2"
                   expanded={identityExpanded}
@@ -352,7 +352,7 @@ export default function MesInformations() {
                   preventScrollReset
                   className="fr-fieldset__element p-8"
                 >
-                  <input type="hidden" name="route" value={`/action/user/${user.id}`} />
+                  <input type="hidden" name="route" value={`/api/action/user/${user.id}`} />
                   <Checkbox
                     options={[
                       {
@@ -465,7 +465,7 @@ function AccordionEntreprise({
                   form.append(Prisma.EntityRelationsScalarFieldEnum.owner_id, user.id);
                   form.append(Prisma.EntityRelationsScalarFieldEnum.entity_id, entity.id);
                   form.append("relation", EntityRelationType.WORKING_FOR);
-                  form.append("route", `/action/user-entity/${user.id}`);
+                  form.append("route", `/api/action/user-entity/${user.id}`);
                   userEntityFetcher.submit(form, {
                     method: "POST",
                     preventScrollReset: true,
@@ -491,7 +491,7 @@ function AccordionEntreprise({
         >
           <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
           <input type="hidden" name="_action" value="create" />
-          <input type="hidden" name="route" value={`/action/user-entity/${user.id}`} />
+          <input type="hidden" name="route" value={`/api/action/user-entity/${user.id}`} />
           <input
             type="hidden"
             name={Prisma.EntityRelationsScalarFieldEnum.relation}

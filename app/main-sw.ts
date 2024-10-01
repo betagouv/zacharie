@@ -135,7 +135,7 @@ self.addEventListener("message", (event: ExtendableMessageEvent) => {
     event.waitUntil(fetchAllFeis());
   }
 
-  if (event.data.type === "APP_OPENED") {
+  if (event.data.type === "TABLEAU_DE_BORD_OPEN") {
     event.waitUntil(handleAppOpen());
   }
 });

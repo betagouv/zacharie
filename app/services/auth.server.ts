@@ -1,7 +1,7 @@
 /* eslint-disable curly */
 import { createCookieSessionStorage, redirect, json } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
-// import * as Sentry from "@sentry/remix";
+import * as Sentry from "@sentry/remix";
 import type { User } from "@prisma/client";
 
 const sessionExpirationTime = 1000 * 60 * 60 * 24 * 365; // 10 years
@@ -25,7 +25,7 @@ export const getUserFromCookie = async (
 ) => {
   if (process.env.NODE_ENV === "development") {
     // because ios cookie in dev not working
-    return JSON.parse(import.meta.env.VITE_COOKIE_USER);
+    return JSON.parse(import.meta.env.VITE_COOKIE_USER) as User;
   }
   const userId = await getUserIdFromCookie(request, { optional: true });
   if (debug) console.log("get userid from cookie", userId);
@@ -41,12 +41,12 @@ export const getUserFromCookie = async (
   });
   if (debug) console.log("user", !!user);
   if (user && !user.deleted_at) {
-    // Sentry.setUser({
-    //   id: userId,
-    //   firstName: user.prenom,
-    //   lastName: user.nom_de_famille,
-    //   email: user.email ?? "",
-    // });
+    Sentry.setUser({
+      id: userId,
+      firstName: user.prenom,
+      lastName: user.nom_de_famille,
+      email: user.email ?? "",
+    });
     await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -73,7 +73,7 @@ export const getUserIdFromCookie = async (request: Request, { failureRedirect = 
     if (optional) return null;
     return logoutAndRedirect(request, failureRedirect);
   }
-  // Sentry.setUser({ id: userId });
+  Sentry.setUser({ id: userId });
   return userId;
 };
 
@@ -93,7 +93,7 @@ export const getUserEmailFromCookie = async (request: Request, { failureRedirect
     if (optional) return null;
     return logoutAndRedirect(request, failureRedirect);
   }
-  // Sentry.setUser({ email: userEmail, roles: userRoles });
+  Sentry.setUser({ email: userEmail, roles: userRoles });
   return userEmail;
 };
 

@@ -31,7 +31,7 @@ enum UserNotifications {
 }
 
 model User {
-  id                             String                  @id @default(uuid())
+  id                             String                  @id // new ShortUniqueId({ length: 5, dictionary: "alphanum_upper" }).randomUUID() so that we can use it in FEI numbers (36^5 = 60M possibilities)
   email                          String?                 @unique // email is optional, we can have users without email like the Collecteur Pro
   telephone                      String?
   prenom                         String?

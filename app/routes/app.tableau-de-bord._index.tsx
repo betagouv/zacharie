@@ -85,8 +85,7 @@ export default function TableauDeBordIndex() {
 
   useEffect(() => {
     if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-      console.log("POST MESSAGE");
-      navigator.serviceWorker.controller.postMessage({ type: "APP_OPENED" });
+      navigator.serviceWorker.controller.postMessage({ type: "TABLEAU_DE_BORD_OPEN" });
     }
   }, [user]);
 

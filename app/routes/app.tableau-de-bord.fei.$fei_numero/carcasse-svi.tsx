@@ -124,7 +124,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
       />
       {canEdit && (
         <sviCarcasseFetcher.Form method="POST" id={`svi-carcasse-${carcasse.id}`}>
-          <input type="hidden" name="route" value={`/action/carcasse/${carcasse.numero_bracelet}`} />
+          <input type="hidden" name="route" value={`/api/action/carcasse/${carcasse.numero_bracelet}`} />
           <input
             form={`svi-carcasse-${carcasse.id}`}
             type="hidden"

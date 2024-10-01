@@ -136,7 +136,7 @@ export default function FEI_SVI() {
       </Accordion>
       <Accordion titleAs="h3" label="Validation de la FEI" defaultExpanded>
         <sviFinished.Form method="POST" id="svi_check_finished_at">
-          <input type="hidden" name="route" value={`/action/fei/${fei.numero}`} />
+          <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
           <input
             form="svi_check_finished_at"
             type="hidden"

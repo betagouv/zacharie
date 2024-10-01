@@ -351,7 +351,7 @@ function UserWorkingWithOrFor({ relation, potentialUsers, fetcherKey }: WorkingW
               method="POST"
               preventScrollReset
             >
-              <input type="hidden" name="route" value={`/action/user-entity/${entity.id}`} />
+              <input type="hidden" name="route" value={`/api/action/user-entity/${entity.id}`} />
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
               <input type="hidden" name="_action" value="create" />
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.relation} value={relation} />

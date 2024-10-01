@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import { Prisma, UserRoles } from "@prisma/client";
@@ -9,22 +8,17 @@ import { getFeiByNumero } from "~/db/fei.server";
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
   const user = await getUserFromCookie(request);
-  if (!user) {
+  if (!user?.roles?.includes(UserRoles.EXAMINATEUR_INITIAL)) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
-  let feiNumero = params.fei_numero;
   const formData = await request.formData();
 
   console.log("formData action.fei.nouvelle", Object.fromEntries(formData));
 
-  const newId = (await prisma.fei.count()) + 1;
-  const today = dayjs().format("YYYYMMDD");
-  feiNumero = `ZACH-FEI-${today}-${newId.toString().padStart(6, "0")}`;
-
   // Create a new object with only the fields that are required and set
   const createData: Prisma.FeiCreateInput = {
-    numero: feiNumero,
+    numero: formData.get(Prisma.FeiScalarFieldEnum.numero) as string,
     FeiCurrentUser: {
       connect: {
         id: user.id,

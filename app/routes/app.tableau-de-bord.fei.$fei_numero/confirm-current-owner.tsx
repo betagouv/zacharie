@@ -52,7 +52,7 @@ export default function ConfirmCurrentOwner() {
     if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.PREMIER_DETENTEUR) {
       formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
     }
-    formData.append("route", `/action/fei/${fei.numero}`);
+    formData.append("route", `/api/action/fei/${fei.numero}`);
     fetcher.submit(formData, {
       method: "POST",
       preventScrollReset: true, // Prevent scroll reset on submission
@@ -64,16 +64,16 @@ export default function ConfirmCurrentOwner() {
         formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) as keyof typeof UserRoles,
       )
     ) {
-      const newIntermdaire = new FormData();
-      newIntermdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_numero, fei.numero);
-      newIntermdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_user_id, user.id);
-      newIntermdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_role, fei.fei_next_owner_role!);
-      newIntermdaire.append(
+      const newInteremdaire = new FormData();
+      newInteremdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_numero, fei.numero);
+      newInteremdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_user_id, user.id);
+      newInteremdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_role, fei.fei_next_owner_role!);
+      newInteremdaire.append(
         Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_entity_id,
         fei.fei_next_owner_entity_id || "",
       );
-      newIntermdaire.append("route", "/action/fei-intermediaire/nouveau");
-      intermediaireFetcher.submit(newIntermdaire, {
+      newInteremdaire.append("route", `/api/action/fei-intermediaire/nouveau`);
+      intermediaireFetcher.submit(newInteremdaire, {
         method: "POST",
         preventScrollReset: true, // Prevent scroll reset on submission
       });
@@ -114,7 +114,7 @@ export default function ConfirmCurrentOwner() {
             formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
-            formData.append("route", `/action/fei/${fei.numero}`);
+            formData.append("route", `/api/action/fei/${fei.numero}`);
             fetcher.submit(formData, {
               method: "POST",
               preventScrollReset: true, // Prevent scroll reset on submission

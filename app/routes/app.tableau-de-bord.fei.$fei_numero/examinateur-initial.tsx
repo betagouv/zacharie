@@ -88,7 +88,7 @@ export default function FEIExaminateurInitial() {
     <>
       <Accordion titleAs="h3" label="Données de chasse" defaultExpanded>
         <examFetcher.Form method="POST" onBlur={handleUserFormChange}>
-          <input type="hidden" name="route" value={`/action/fei/${fei.numero}`} />
+          <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
           <div className="fr-fieldset__element">
             <Component
               label="Date de mise à mort et d'éviscération"
@@ -127,7 +127,7 @@ export default function FEIExaminateurInitial() {
       {fei.FeiExaminateurInitialUser && (
         <Accordion titleAs="h3" label="Approbation de mise sur le marché" defaultExpanded>
           <approbationFetcher.Form method="POST">
-            <input type="hidden" name="route" value={`/action/fei/${fei.numero}`} />
+            <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
             <div
               className={[
                 "fr-fieldset__element",

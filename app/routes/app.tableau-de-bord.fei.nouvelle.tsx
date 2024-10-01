@@ -11,6 +11,11 @@ import { setFeiToCache } from "~/utils/caches";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
+  const user = await getMostFreshUser();
+  if (!user) {
+    throw redirect("/app/connexion?type=compte-existant");
+  }
+
   const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/action/fei/nouvelle`, {
     method: "POST",
     credentials: "include",
@@ -56,6 +61,11 @@ export default function NouvelleFEI() {
                 <div className="mb-8">
                   <h2 className="fr-h3 fr-mb-2w">Examinateur Initial</h2>
                   <input type="hidden" name={Prisma.FeiScalarFieldEnum.examinateur_initial_user_id} value={user.id} />
+                  <input
+                    type="hidden"
+                    name={Prisma.FeiScalarFieldEnum.numero}
+                    value={`ZACH-FEI-${dayjs().format("YYYYMMDD")}-${user.id}-${dayjs().format("HHmm")}`}
+                  />
                   <div className="fr-fieldset__element">
                     <Input
                       label="Date de mise à mort et d'éviscération"
