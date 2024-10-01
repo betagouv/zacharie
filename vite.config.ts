@@ -44,14 +44,6 @@ export default defineConfig(({ mode }) => {
         ignoredRouteFiles: isSpaMode ? ["**/routes/api.*"] : ["**/routes/app.*"],
       }),
       tsconfigPaths(),
-      sentryVitePlugin({
-        org: "betagouv",
-        project: "zacharie-remix",
-        url: "https://sentry.incubateur.net/",
-        sourcemaps: {
-          filesToDeleteAfterUpload: ["./build-spa/**/*.js.map", "./build-spa/*.js.map"],
-        },
-      }),
       RemixVitePWAPlugin({
         strategies: "injectManifest", // This tells the plugin to use our custom Service Worker file.
         srcDir: "app",
@@ -101,6 +93,14 @@ export default defineConfig(({ mode }) => {
               },
             },
           ],
+        },
+      }),
+      sentryVitePlugin({
+        org: "betagouv",
+        project: "zacharie-remix",
+        url: "https://sentry.incubateur.net/",
+        sourcemaps: {
+          filesToDeleteAfterUpload: ["./build-spa/**/*.js.map", "./build-spa/*.mjs.map"],
         },
       }),
     ],
