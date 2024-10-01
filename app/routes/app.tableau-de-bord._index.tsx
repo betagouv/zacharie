@@ -8,7 +8,7 @@ import dayjs from "dayjs";
 import type { FeisLoaderData } from "~/routes/api.loader.fei";
 import type { FeisDoneLoaderData } from "~/routes/api.loader.fei-done";
 import { useIsOnline } from "~/components/OfflineMode";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export async function clientLoader() {
   try {
@@ -78,7 +78,10 @@ export default function TableauDeBordIndex() {
   const user = data.user!;
   const { feisDone, feisOngoing, feisToTake, feisUnderMyResponsability } = data;
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake];
-  const isOnline = useIsOnline();
+  const [showBackOnlineRefresh, setShowBackOnlineRefresh] = useState(false);
+  const isOnline = useIsOnline(() => {
+    setShowBackOnlineRefresh(true);
+  });
 
   useEffect(() => {
     if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
@@ -91,6 +94,18 @@ export default function TableauDeBordIndex() {
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+          {showBackOnlineRefresh && (
+            <button
+              className="block bg-action-high-blue-france px-4 py-2 text-sm text-white"
+              onClick={() => {
+                window.location.reload();
+                setShowBackOnlineRefresh(false);
+              }}
+              type="button"
+            >
+              Vous êtes de retour en ligne. Cicquez <u>ici</u> pour rafraichir les données.
+            </button>
+          )}
           <h1 className="fr-h2 fr-mb-2w">Mes FEI</h1>
           <CallOut title="🖥️ Toutes vos FEI centralisées" className="bg-white">
             Retrouvez ici toutes vos FEI - en cours, validées, refusées - et les actions à mener.
