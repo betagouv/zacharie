@@ -4,7 +4,7 @@ export async function registerServiceWorker() {
       const swUrl = import.meta.env.DEV ? "/app/main-sw.ts" : "/main-sw.js";
       const registration = await navigator.serviceWorker.register(swUrl, {
         type: "module",
-        // scope: '/' // Uncomment and adjust if you need a specific scope
+        scope: "/", // Uncomment and adjust if you need a specific scope
       });
       console.log("ServiceWorker registration successful with scope:", registration.scope);
 
