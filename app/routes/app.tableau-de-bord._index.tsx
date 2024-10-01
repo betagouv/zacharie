@@ -1,7 +1,6 @@
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
-import { Table } from "@codegouvfr/react-dsfr/Table";
-import { Link, redirect, useLoaderData } from "@remix-run/react";
+import { redirect, useLoaderData } from "@remix-run/react";
 import { UserRoles } from "@prisma/client";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import dayjs from "dayjs";
@@ -9,6 +8,7 @@ import type { FeisLoaderData } from "~/routes/api.loader.fei";
 import type { FeisDoneLoaderData } from "~/routes/api.loader.fei-done";
 import { useIsOnline } from "~/components/OfflineMode";
 import { useEffect, useState } from "react";
+import ResponsiveTable from "~/components/TableResponsive";
 
 export async function clientLoader() {
   try {
@@ -131,62 +131,29 @@ export default function TableauDeBordIndex() {
             </section>
           )}
           <section className="mb-6 bg-white md:shadow">
-            <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
-              {feisAssigned.length ? (
-                <Table
-                  bordered
-                  caption="FEI assignées"
-                  className="[&_td]:h-px"
-                  data={feisAssigned
-                    .filter((fei) => fei !== null)
-                    .map((fei) => [
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                      >
-                        {fei.numero}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                        suppressHydrationWarning
-                      >
-                        {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                        suppressHydrationWarning
-                      >
-                        {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                      >
-                        {fei.commune_mise_a_mort}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                      >
-                        {getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles))}
-                      </Link>,
-                    ])}
-                  headers={["Numéro", "Date de création", "Dernière mise à jour", "Commune", "Étape en cours"]}
-                />
-              ) : (
-                <>
-                  <h2 className="fr-h3 fr-mb-2w">FEI assignées</h2>
-                  <p className="my-8">Pas encore de donnée</p>
-                </>
-              )}
+            <div className="p-4 md:p-8 md:pb-0">
+              <h2 className="fr-h3">FEI assignées</h2>
             </div>
+            {feisAssigned.length ? (
+              <ResponsiveTable
+                headers={["Numéro", "Créée le", "Modifiée le", "Commune", "Étape en cours"]}
+                data={feisAssigned
+                  .filter((fei) => fei !== null)
+                  .map((fei) => ({
+                    link: `/app/tableau-de-bord/fei/${fei.numero}`,
+                    id: fei.numero,
+                    rows: [
+                      fei.numero!,
+                      dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
+                      dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm"),
+                      fei.commune_mise_a_mort!,
+                      getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles)),
+                    ],
+                  }))}
+              />
+            ) : (
+              <p className="my-8">Pas de FEI assignée</p>
+            )}
             <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
               <ButtonsGroup
                 buttons={[
@@ -207,62 +174,29 @@ export default function TableauDeBordIndex() {
             </div>
           </section>
           <section className="mb-6 bg-white md:shadow">
-            <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
-              {feisOngoing.length ? (
-                <Table
-                  bordered
-                  caption="FEI en cours où j'ai eu une intervention"
-                  className="[&_td]:h-px"
-                  data={feisOngoing
-                    .filter((fei) => fei !== null)
-                    .map((fei) => [
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                      >
-                        {fei.numero}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                        suppressHydrationWarning
-                      >
-                        {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                        suppressHydrationWarning
-                      >
-                        {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                      >
-                        {fei.commune_mise_a_mort}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                      >
-                        {getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles))}
-                      </Link>,
-                    ])}
-                  headers={["Numéro", "Date de création", "Dernière mise à jour", "Commune", "Étape en cours"]}
-                />
-              ) : (
-                <>
-                  <h2 className="fr-h3 fr-mb-2w">FEI en cours où j'ai eu une intervention</h2>
-                  <p className="my-8">Pas encore de donnée</p>
-                </>
-              )}
+            <div className="p-4 md:p-8 md:pb-0">
+              <h2 className="fr-h3">FEI en cours où j'ai eu une intervention</h2>
             </div>
+            {feisOngoing.length ? (
+              <ResponsiveTable
+                headers={["Numéro", "Créée le", "Modifiée le", "Commune", "Étape en cours"]}
+                data={feisOngoing
+                  .filter((fei) => fei !== null)
+                  .map((fei) => ({
+                    link: `/app/tableau-de-bord/fei/${fei.numero}`,
+                    id: fei.numero,
+                    rows: [
+                      fei.numero!,
+                      dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
+                      dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm"),
+                      fei.commune_mise_a_mort!,
+                      getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles)),
+                    ],
+                  }))}
+              />
+            ) : (
+              <p className="my-8">Pas de FEI en cours</p>
+            )}
             <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
               <ButtonsGroup
                 buttons={[
@@ -288,52 +222,29 @@ export default function TableauDeBordIndex() {
                 Vous ne pouvez pas accéder au détail de vos FEI archivées sans connexion internet.
               </p>
             )}
+            <div className="p-4 md:p-8 md:pb-0">
+              <h2 className="fr-h3">FEI archivées</h2>
+            </div>
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feisDone.length ? (
-                <Table
-                  bordered
-                  className="[&_td]:h-px"
-                  caption="FEI archivées"
+                <ResponsiveTable
+                  headers={["Numéro", "Créée le", "Commune", "Inspection SVI le"]}
                   data={feisDone
                     .filter((fei) => fei !== null)
-                    .map((fei) => [
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                      >
-                        {fei.numero}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                        suppressHydrationWarning
-                      >
-                        {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                      >
-                        {fei.commune_mise_a_mort}
-                      </Link>,
-                      <Link
-                        className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                        key={fei.numero}
-                        suppressHydrationWarning
-                        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-                      >
-                        {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
-                      </Link>,
-                    ])}
-                  headers={["Numéro", "Date de création", "Commune", "Inspection SVI le"]}
+                    .map((fei) => ({
+                      link: `/app/tableau-de-bord/fei/${fei.numero}`,
+                      id: fei.numero,
+                      rows: [
+                        fei.numero!,
+                        dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
+                        fei.commune_mise_a_mort!,
+                        dayjs(fei.svi_signed_at).format("DD/MM/YYYY à HH:mm"),
+                      ],
+                    }))}
                 />
               ) : (
                 <>
-                  <h2 className="fr-h3 fr-mb-2w">FEI archivées</h2>
-                  <p className="my-8">Pas encore de donnée</p>
+                  <p className="my-8">Pas encore de FEI archivée</p>
                 </>
               )}
             </div>
