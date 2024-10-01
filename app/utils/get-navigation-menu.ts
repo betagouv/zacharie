@@ -75,7 +75,7 @@ export default function useNavigationMenu() {
         ...mesFeiMenuCommon,
         menuLinks: [
           {
-            text: "Mes FEI",
+            text: "Toutes mes FEI",
             isActive: location.pathname === "/app/tableau-de-bord",
             linkProps: {
               to: "/app/tableau-de-bord",
