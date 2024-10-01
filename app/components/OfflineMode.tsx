@@ -12,6 +12,7 @@ export function useIsOnline() {
       console.log("IS FUCKING OFFLINE");
       setIsOnline(false);
     }
+    setIsOnline(navigator.onLine);
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
     return () => {
