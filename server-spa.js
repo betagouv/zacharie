@@ -21,8 +21,15 @@ app.use(compression());
 app.disable("x-powered-by");
 
 // handle asset requests
+console.log({ viteDevServer });
+
 if (viteDevServer) {
   app.use(viteDevServer.middlewares);
+  app.use((req, res, next) => {
+    res.setHeader("Service-Worker-Allowed", "/");
+    console.log("Set Service-Worker-Allowed header");
+    next();
+  });
 } else {
   // Vite fingerprints its assets so we can cache forever.
   app.use("/assets", express.static("build-spa/client/assets", { immutable: true, maxAge: "1y" }));

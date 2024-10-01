@@ -21,6 +21,9 @@ export default defineConfig(({ mode }) => {
     ssr: {
       noExternal: ["@codegouvfr/react-dsfr"],
     },
+    // optimizeDeps: {
+    //   exclude: ["@sentry/remix"],
+    // },
     define: {
       __VITE_BUILD_ID__: buildId,
     },
@@ -28,6 +31,9 @@ export default defineConfig(({ mode }) => {
       cors: {
         origin: ["http://localhost:3232", "http://localhost:3233", "https://zacharie.beta.gouv.fr"],
         credentials: true,
+      },
+      fs: {
+        allow: ["."], // This allows serving files from project root
       },
     },
     plugins: [
@@ -65,12 +71,12 @@ export default defineConfig(({ mode }) => {
           display: "fullscreen",
           display_override: ["standalone", "fullscreen", "browser"],
           lang: "fr",
-          protocol_handlers: [
-            {
-              protocol: "web+zachariegouvfr",
-              url: "./",
-            },
-          ],
+          // protocol_handlers: [
+          //   {
+          //     protocol: "web+zachariegouvfr",
+          //     url: "./",
+          //   },
+          // ],
         },
         injectManifest: {
           // This configuration tells the plugin to include all js, css, html, ico, png, svg, and woff2 files in the precache manifest.
@@ -111,6 +117,15 @@ export default defineConfig(({ mode }) => {
           filesToDeleteAfterUpload: ["./build-spa/**/*.js.map", "./build-spa/*.mjs.map"],
         },
       }),
+      {
+        name: "configure-server",
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            res.setHeader("Service-Worker-Allowed", "/");
+            next();
+          });
+        },
+      },
     ],
     build: {
       sourcemap: true,
