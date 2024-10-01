@@ -269,6 +269,11 @@ export default function TableauDeBordIndex() {
             </div>
           </section>
           <section className="mb-6 bg-white md:shadow">
+            {!isOnline && (
+              <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
+                Vous ne pouvez pas accéder au détail de vos FEI archivées sans connexion internet.
+              </p>
+            )}
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feisDone.length ? (
                 <Table

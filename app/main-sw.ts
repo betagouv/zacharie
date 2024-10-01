@@ -21,7 +21,16 @@ self.addEventListener("install", (event: ExtendableEvent) => {
     caches
       .open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(ASSETS_TO_CACHE.filter((entry) => typeof entry !== "string").map((asset) => asset.url));
+        console.log("Caching assets:", ASSETS_TO_CACHE);
+        return Promise.all(
+          ASSETS_TO_CACHE.map((entry) => {
+            if (typeof entry === "string") {
+              return cache.add(entry);
+            } else {
+              return cache.add(entry.url);
+            }
+          }),
+        );
       })
       .then(() => self.skipWaiting()),
   );

@@ -82,7 +82,7 @@ export default defineConfig(({ mode }) => {
         injectManifest: {
           // This configuration tells the plugin to include all js, css, html, ico, png, svg, and woff2 files in the precache manifest.
           globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-          maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+          maximumFileSizeToCacheInBytes: 100 * 1024 * 1024,
           // injectionPoint: undefined,
         },
         devOptions: {
@@ -131,7 +131,7 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       sourcemap: true,
-      chunkSizeWarningLimit: 5000,
+      chunkSizeWarningLimit: 100000,
       emptyOutDir: true,
     },
     resolve: {
