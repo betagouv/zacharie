@@ -27,6 +27,6 @@ export async function getMostFreshUser() {
       return userResponse.user;
     })
     .catch(() => {
-      return cachedUser;
+      return null;
     });
 }
