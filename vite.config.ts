@@ -52,70 +52,72 @@ export default defineConfig(({ mode }) => {
         ignoredRouteFiles: isSpaMode ? ["**/routes/api.*"] : ["**/routes/app.*"],
       }),
       tsconfigPaths(),
-      isSpaMode
-        ? RemixVitePWAPlugin({
-            strategies: "injectManifest", // This tells the plugin to use our custom Service Worker file.
-            srcDir: "app",
-            filename: "main-sw.ts", // next to entry-client.ts
-            registerType: "autoUpdate",
-            injectRegister: false,
-            pwaAssets: {
-              disabled: false,
-              config: true,
-            },
-            manifest: {
-              name: "Zacharie",
-              short_name: "Zacharie",
-              description: "La FEI simpifiée",
-              background_color: "#000091",
-              theme_color: "#ffffff",
-              id: "./?mode=standalone",
-              start_url: "./?mode=standalone",
-              display: "fullscreen",
-              display_override: ["standalone", "fullscreen", "browser"],
-              lang: "fr",
-              // protocol_handlers: [
-              //   {
-              //     protocol: "web+zachariegouvfr",
-              //     url: "./",
-              //   },
-              // ],
-            },
-            injectManifest: {
-              // This configuration tells the plugin to include all js, css, html, ico, png, svg, and woff2 files in the precache manifest.
-              globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-              maximumFileSizeToCacheInBytes: 100 * 1024 * 1024,
-              // injectionPoint: undefined,
-              rollupFormat: "es",
-              swDest: "build-spa/client/main-sw.js",
-              swSrc: "build-spa/client/main-sw.mjs",
-            },
-            devOptions: {
-              enabled: true,
-              suppressWarnings: false,
-              navigateFallback: "/",
-              navigateFallbackAllowlist: [/^\/$/],
-              type: "module",
-            },
-            workbox: {
-              globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-              runtimeCaching: [
-                {
-                  urlPattern: /^https:\/\/api\.zacharie\.beta\.gouv\.fr\//,
-                  handler: "NetworkFirst",
-                  options: {
-                    cacheName: "api-cache",
-                    expiration: {
-                      maxEntries: 100,
-                      // maxAgeSeconds: 60 * 60 * 24, // 1 day
-                      maxAgeSeconds: 60, // 1 minute
-                    },
-                  },
+      RemixVitePWAPlugin({
+        strategies: "injectManifest", // This tells the plugin to use our custom Service Worker file.
+        srcDir: "app",
+        filename: "main-sw.ts", // next to entry-client.ts
+        registerType: "autoUpdate",
+        injectRegister: false,
+        pwaAssets: {
+          disabled: false,
+          config: true,
+        },
+        manifest: {
+          name: "Zacharie",
+          short_name: "Zacharie",
+          description: "La FEI simpifiée",
+          background_color: "#000091",
+          theme_color: "#ffffff",
+          id: "./?mode=standalone",
+          start_url: "./?mode=standalone",
+          display: "fullscreen",
+          display_override: ["standalone", "fullscreen", "browser"],
+          lang: "fr",
+          // protocol_handlers: [
+          //   {
+          //     protocol: "web+zachariegouvfr",
+          //     url: "./",
+          //   },
+          // ],
+        },
+        injectManifest: {
+          // This configuration tells the plugin to include all js, css, html, ico, png, svg, and woff2 files in the precache manifest.
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+          maximumFileSizeToCacheInBytes: 100 * 1024 * 1024,
+          // injectionPoint: undefined,
+          ...(isSpaMode
+            ? {
+                rollupFormat: "es",
+                swDest: "build-spa/client/main-sw.js",
+                swSrc: "build-spa/client/main-sw.mjs",
+              }
+            : {}),
+        },
+        devOptions: {
+          enabled: true,
+          suppressWarnings: false,
+          navigateFallback: "/",
+          navigateFallbackAllowlist: [/^\/$/],
+          type: "module",
+        },
+        workbox: {
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/api\.zacharie\.beta\.gouv\.fr\//,
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "api-cache",
+                expiration: {
+                  maxEntries: 100,
+                  // maxAgeSeconds: 60 * 60 * 24, // 1 day
+                  maxAgeSeconds: 60, // 1 minute
                 },
-              ],
+              },
             },
-          })
-        : undefined,
+          ],
+        },
+      }),
       sentryVitePlugin({
         org: "betagouv",
         project: "zacharie-remix",
@@ -139,7 +141,6 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       chunkSizeWarningLimit: 100000,
       emptyOutDir: true,
-      rollupOptions: isSpaMode ? undefined : { external: ["virtual:pwa-info"] },
     },
     resolve: {
       alias: {

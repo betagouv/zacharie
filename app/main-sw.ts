@@ -171,7 +171,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
   await queuePostRequest(request);
   console.log("Request queued for later execution");
   // Handle FEI creation when offline
-  if (request.url.includes("/api/action/fei/nouvelle")) {
+  if (request.url.includes(`/api/action/fei/`)) {
     console.log("Handling offline FEI creation");
     const clonedRequest = request.clone();
     const formData = await clonedRequest.formData();
