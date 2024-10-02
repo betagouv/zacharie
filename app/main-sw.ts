@@ -100,7 +100,10 @@ async function handleFetchRequest(request: Request): Promise<Response> {
           // Calculate the badge count
           const badgeCount = (feiData?.feisUnderMyResponsability?.length || 0) + (feiData?.feisToTake?.length || 0);
           if (navigator.setAppBadge) {
+            console.log("navigator.setAppBadge", badgeCount);
             navigator.setAppBadge(badgeCount);
+          } else {
+            console.log("navigator.setAppBadge not available");
           }
         }
       }
