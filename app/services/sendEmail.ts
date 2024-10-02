@@ -13,15 +13,11 @@ export function sendEmail({
   subject,
   from = "contact@zacharie.beta.gouv.fr",
 }: SendEmailProps) {
-  if (!process.env.TIPIMAIL_API_USER || !process.env.TIPIMAIL_API_KEY) {
-    console.error("TIPIMAIL_API_USER or TIPIMAIL_API_KEY not set");
-    return;
-  }
   return fetch("https://api.tipimail.com/v1/messages/send", {
     method: "POST",
     headers: {
-      "X-Tipimail-ApiUser": process.env.TIPIMAIL_API_USER,
-      "X-Tipimail-ApiKey": process.env.TIPIMAIL_API_KEY,
+      "X-Tipimail-ApiUser": process.env.TIPIMAIL_API_USER!,
+      "X-Tipimail-ApiKey": process.env.TIPIMAIL_API_KEY!,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({

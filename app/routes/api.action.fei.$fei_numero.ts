@@ -4,6 +4,7 @@ import { getFeiByNumero } from "~/db/fei.server";
 import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
 import { type ExtractLoaderData } from "~/services/extract-loader-data";
+import sendNotificationToUser from "~/services/notifications.server";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -245,6 +246,17 @@ export async function action(args: ActionFunctionArgs) {
   });
 
   const fei = await getFeiByNumero(savedFei.numero);
+
+  if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
+    const nextOwner = await prisma.user.findUnique({
+      where: { id: formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) as string },
+    });
+    sendNotificationToUser({
+      user: nextOwner!,
+      title: "Vous avez une nouvelle FEI à traiter",
+      body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
+    });
+  }
 
   if (formData.has("_redirect")) {
     return redirect(formData.get("_redirect") as string);
