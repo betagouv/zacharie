@@ -30,8 +30,8 @@ export default async function sendNotificationToUser({
           .sendNotification(JSON.parse(web_push_subscription), JSON.stringify({ title, body, img }), {
             vapidDetails: {
               subject: "mailto:contact@zacharie.beta.gouv.fr",
-              publicKey: import.meta.env.VITE_VAPID_PUBLIC_KEY!,
-              privateKey: import.meta.env.VITE_VAPID_PRIVATE_KEY!,
+              publicKey: process.env.VITE_VAPID_PUBLIC_KEY!,
+              privateKey: process.env.VITE_VAPID_PRIVATE_KEY!,
             },
             urgency: "high",
           })
