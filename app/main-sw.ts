@@ -157,6 +157,7 @@ async function fetchAllFeis(calledFrom: string) {
 HANDLE POST REQUESTS
 
 */
+
 async function handlePostRequest(request: Request): Promise<Response> {
   try {
     if (navigator.onLine) {
@@ -174,22 +175,33 @@ async function handlePostRequest(request: Request): Promise<Response> {
     // Handle FEI creation when offline
     if (request.url.includes(`/api/action/fei/`)) {
       console.log("Handling offline FEI creation");
+      console.log("Cloning request");
       const clonedRequest = request.clone();
       const formData = await clonedRequest.formData();
       const feiData = Object.fromEntries(formData) as unknown as Fei;
-
+      console.log("Opening cache");
       const cache = await caches.open(CACHE_NAME);
+      console.log("USerResponse from cache");
       const userResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/me`);
+      console.log("CLone user response");
       const userResponseClone = userResponse!.clone();
+      console.log("User data from cache");
       const userData = await userResponseClone.json();
+      console.log("MyRelationsResponse from cache");
       const myRelationsResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`);
+      console.log("Clone my relations response");
       const myRelationsResponseClone = myRelationsResponse!.clone();
+      console.log("My relations data from cache");
       const myRelationsData = await myRelationsResponseClone.json();
+      console.log("AllFeisResponse from cache");
       const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
+      console.log("Clone all feis response");
       const allFeisResponseClone = allFeisResponse!.clone();
+      console.log("All feis data from cache");
       const allFeisData = await allFeisResponseClone.json();
+      console.log("Specific fei populated");
       const specificFeiPopulated = findFeiInAllFeisData(allFeisData, feiData.numero);
-
+      console.log("Specific fei populated", specificFeiPopulated);
       const offlineFei = formatFeiOfflineQueue(
         specificFeiPopulated,
         feiData,
@@ -197,8 +209,9 @@ async function handlePostRequest(request: Request): Promise<Response> {
         myRelationsData,
         formData.get("step") as FeiAction,
       );
+      console.log("Offline FEI", offlineFei);
       await addOfflineFeiToCache(offlineFei);
-
+      console.log("Offline FEI added to cache");
       return new Response(JSON.stringify({ ok: true, data: offlineFei }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -211,6 +224,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    console.log("Error handling POST request", e.message);
     return new Response(JSON.stringify({ error: e.message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
@@ -278,22 +292,32 @@ async function processOfflineQueue(processingFrom: string) {
 }
 
 async function addOfflineFeiToCache(offlineFei: ReturnType<typeof formatFeiOfflineQueue>) {
+  console.log("Adding offline FEI to cache");
   const cache = await caches.open(CACHE_NAME);
+  console.log("Fetching all FEIs from cache");
   const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
 
   if (allFeisResponse) {
-    const allFeisData = await allFeisResponse.json();
+    console.log("All FEIs data found in cache");
+    const allFeisResponseClone = allFeisResponse.clone();
+    console.log("All FEIs data from cache");
+    const allFeisData = await allFeisResponseClone.json();
+    console.log("Updating all FEIs data");
     allFeisData.feisUnderMyResponsability = [
       ...allFeisData.feisUnderMyResponsability.filter((fei: Fei) => fei.numero !== offlineFei.numero),
       offlineFei,
     ];
 
+    console.log("Putting updated all FEIs data in cache");
     await cache.put(
       `${import.meta.env.VITE_API_URL}/api/loader/fei`,
       new Response(JSON.stringify(allFeisData), {
         headers: { "Content-Type": "application/json" },
       }),
     );
+    console.log("All FEIs data updated in cache");
+  } else {
+    console.log("No all FEIs data found in cache");
   }
 }
 /*

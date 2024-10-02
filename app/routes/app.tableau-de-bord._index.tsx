@@ -132,7 +132,7 @@ export default function TableauDeBordIndex() {
           )}
           <section className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">FEI assignées</h2>
+              <h2 className="fr-h3">FEI assignées{feisAssigned.length > 0 ? ` (${feisAssigned.length})` : null}</h2>
             </div>
             {feisAssigned.length ? (
               <ResponsiveTable
@@ -175,7 +175,9 @@ export default function TableauDeBordIndex() {
           </section>
           <section className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">FEI en cours où j'ai eu une intervention</h2>
+              <h2 className="fr-h3">
+                FEI en cours où j'ai eu une intervention{feisOngoing.length > 0 ? ` (${feisOngoing.length})` : null}
+              </h2>
             </div>
             {feisOngoing.length ? (
               <ResponsiveTable
@@ -223,7 +225,7 @@ export default function TableauDeBordIndex() {
               </p>
             )}
             <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">FEI archivées</h2>
+              <h2 className="fr-h3">FEI archivées{feisDone.length > 0 ? ` (${feisDone.length})` : null}</h2>
             </div>
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feisDone.length ? (
