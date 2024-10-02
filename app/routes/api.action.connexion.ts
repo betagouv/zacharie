@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs, redirect, json, type LoaderFunctionArgs } from "@remix-run/node";
+import { type ActionFunctionArgs, json, type LoaderFunctionArgs } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { comparePassword, hashPassword } from "~/services/crypto.server";
 import { createUserSession, getUserIdFromCookie } from "~/services/auth.server";
@@ -24,7 +24,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
   if (formData.get("name")) {
     capture(new Error("Spam detected"), { extra: { email, message: "Spam detected" } });
-    throw redirect("/");
+    return json({ ok: false, data: null, error: "Unauthorized" });
   }
 
   let user = await prisma.user.findUnique({ where: { email } });
@@ -74,7 +74,7 @@ export type ConnexionActionData = ExtractLoaderData<typeof action>;
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await getUserIdFromCookie(request, { optional: true });
   if (userId) {
-    throw redirect("/app/tableau-de-bord");
+    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
   return null;
 }

@@ -5,7 +5,7 @@ import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 export async function clientLoader() {
   const user = await getMostFreshUser();
   if (!user?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect(`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`);
+    throw redirect(`/app/connexion?type=compte-existant`);
   }
   return json({ user });
 }

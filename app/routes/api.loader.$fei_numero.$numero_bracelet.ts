@@ -1,4 +1,4 @@
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
@@ -6,7 +6,7 @@ import type { ExtractLoaderData } from "~/services/extract-loader-data";
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
-    throw redirect(`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`);
+    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
   const carcasse = await prisma.carcasse.findUnique({
     where: {
@@ -18,7 +18,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     },
   });
   if (!carcasse) {
-    throw redirect(`/app/tableau-de-bord/fei/${params.fei_numero}`);
+    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
   return json({ carcasse, fei: carcasse.Fei, latestVersion: __VITE_BUILD_ID__ });

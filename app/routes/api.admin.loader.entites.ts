@@ -1,4 +1,4 @@
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import { UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
@@ -7,7 +7,7 @@ import type { ExtractLoaderData } from "~/services/extract-loader-data";
 export async function loader({ request }: LoaderFunctionArgs) {
   const admin = await getUserFromCookie(request);
   if (!admin?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect(`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`);
+    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
   const entities = await prisma.entity.findMany({
     orderBy: {

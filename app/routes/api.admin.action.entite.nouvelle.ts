@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
+import { type ActionFunctionArgs, json } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import { UserRoles, Prisma, EntityTypes } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
@@ -7,7 +7,7 @@ import type { ExtractLoaderData } from "~/services/extract-loader-data";
 export async function action({ request }: ActionFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect(`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`);
+    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
   const formData = await request.formData();

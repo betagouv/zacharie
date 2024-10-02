@@ -51,7 +51,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   const user = await getMostFreshUser();
   if (!user) {
-    throw redirect(`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`);
+    throw redirect(`/app/connexion?type=compte-existant`);
   }
   const loaderData = (await fetch(`${import.meta.env.VITE_API_URL}/api/loader/fei/${params.fei_numero}`, {
     method: "GET",
