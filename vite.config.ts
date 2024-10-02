@@ -71,26 +71,46 @@ export default defineConfig(({ mode }) => {
         registerType: "autoUpdate",
         injectRegister: false,
         pwaAssets: {
-          disabled: false,
-          config: true,
+          disabled: true,
         },
         manifest: {
           name: "Zacharie",
           short_name: "Zacharie",
-          description: "La FEI simpifiée",
-          background_color: "#000091",
-          theme_color: "#ffffff",
           id: "./?mode=standalone",
           start_url: "./?mode=standalone",
           display: "fullscreen",
           display_override: ["standalone", "fullscreen", "browser"],
+          background_color: "#000091",
           lang: "fr",
-          // protocol_handlers: [
-          //   {
-          //     protocol: "web+zachariegouvfr",
-          //     url: "./",
-          //   },
-          // ],
+          scope: "/",
+          description: "Garantir des viandes de gibier sauvage saines et sûres",
+          theme_color: "#ffffff",
+          icons: [
+            {
+              src: "/pwa-assets/manifest-icon-192.maskable.png",
+              sizes: "192x192",
+              type: "image/png",
+              purpose: "any",
+            },
+            {
+              src: "/pwa-assets/manifest-icon-192.maskable.png",
+              sizes: "192x192",
+              type: "image/png",
+              purpose: "maskable",
+            },
+            {
+              src: "/pwa-assets/manifest-icon-512.maskable.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "any",
+            },
+            {
+              src: "/pwa-assets/manifest-icon-512.maskable.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable",
+            },
+          ],
         },
         injectManifest: {
           // This configuration tells the plugin to include all js, css, html, ico, png, svg, and woff2 files in the precache manifest.

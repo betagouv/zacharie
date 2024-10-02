@@ -45,8 +45,8 @@ export default function TableResponsive({ headers, data }: TableProps) {
             {data.map(({ link, id, rows }) => {
               return (
                 <tr key={id}>
-                  <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-0">
-                    <Link to={link} className="bg-none !no-underline">
+                  <td className="w-full max-w-0 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-0">
+                    <Link to={link} className="block bg-none py-4 pl-4 pr-3 !no-underline">
                       {rows[0]}
                       <dl className="font-normal lg:hidden">
                         <dt className="mt-2">{headers[1]}</dt>
@@ -58,10 +58,26 @@ export default function TableResponsive({ headers, data }: TableProps) {
                       </dl>
                     </Link>
                   </td>
-                  <td className="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{rows[1]}</td>
-                  <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">{rows[2]}</td>
-                  <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">{rows[3]}</td>
-                  <td className="py-4 pl-3 pr-4 text-left text-sm font-medium sm:pr-0">{rows[4]}</td>
+                  <td className="hidden text-sm text-gray-500 lg:table-cell">
+                    <Link to={link} className="block bg-none px-3 py-4 !no-underline">
+                      {rows[1]}
+                    </Link>
+                  </td>
+                  <td className="hidden text-sm text-gray-500 sm:table-cell">
+                    <Link to={link} className="block bg-none px-3 py-4 !no-underline">
+                      {rows[2]}
+                    </Link>
+                  </td>
+                  <td className="hidden text-sm text-gray-500 sm:table-cell">
+                    <Link to={link} className="block bg-none px-3 py-4 !no-underline">
+                      {rows[3]}
+                    </Link>
+                  </td>
+                  <td className="flex h-full items-stretch justify-center text-left text-sm font-medium sm:pr-0">
+                    <Link to={link} className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 !no-underline">
+                      {rows[4]}
+                    </Link>
+                  </td>
                 </tr>
               );
             })}
