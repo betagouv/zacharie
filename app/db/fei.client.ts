@@ -1,5 +1,6 @@
 import { type Fei, type User, UserRoles } from "@prisma/client";
 import type { FeiByNumero } from "./fei.server";
+import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 
 type NonNullFeiByNumero = Exclude<FeiByNumero, null>;
 
@@ -46,7 +47,7 @@ function offlineNullFei(): OfflineNullFei {
     FeiCurrentEntity: null,
     FeiNextEntity: null,
     Carcasses: [],
-    FeiDetenteurInitialUser: null,
+    FeiPremierDetenteurUser: null,
     FeiDepotEntity: null,
     FeiSviEntity: null,
     FeiSviUser: null,
@@ -54,29 +55,118 @@ function offlineNullFei(): OfflineNullFei {
   } as const;
 }
 
-export function formatNouvelleFeiOfflineQueue(fei: Fei, examinateur: User): FeiByNumero {
+export type FeiAction =
+  | "fei_action_nouvelle"
+  | "fei_action_confirm_current_owner"
+  | "fei_action_reject_current_owner"
+  | "fei_action_examinateur_initial"
+  | "fei_action_premier_detenteur"
+  | "fei_action_premier_detenteur_depot"
+  | "fei_action_next_role";
+
+export function formatFeiOfflineQueue(
+  existingFeiPopulated: FeiByNumero,
+  nextFeiData: Fei,
+  me: User,
+  relations: MyRelationsLoaderData,
+  step: FeiAction,
+): NonNullFeiByNumero {
+  if (!existingFeiPopulated) {
+    return formatFeiOfflineQueueNouvelleFei(nextFeiData, me);
+  }
+  switch (step) {
+    case "fei_action_nouvelle":
+      return formatFeiOfflineQueueNouvelleFei(nextFeiData, me);
+    case "fei_action_confirm_current_owner":
+      return formatFeiOfflineQueueConfirmCurrentOwner(existingFeiPopulated, nextFeiData, me, relations);
+    case "fei_action_premier_detenteur_depot":
+      return formatFeiOfflineQueuePremierDetenteurDepot(existingFeiPopulated, nextFeiData, relations);
+    case "fei_action_next_role":
+      return formatFeiOfflineQueueNextEntity(existingFeiPopulated, nextFeiData, relations);
+    case "fei_action_reject_current_owner":
+    case "fei_action_examinateur_initial":
+    case "fei_action_premier_detenteur":
+    default:
+      return {
+        ...existingFeiPopulated,
+        ...nextFeiData,
+      };
+  }
+}
+
+function formatFeiOfflineQueueNouvelleFei(fei: Fei, me: User): NonNullFeiByNumero {
   const baseFei = offlineNullFei();
+
   return {
     ...baseFei,
     id: Date.now(),
     numero: fei.numero,
     date_mise_a_mort: fei.date_mise_a_mort,
-    created_by_user_id: examinateur.id,
-    fei_current_owner_user_id: examinateur.id,
+    created_by_user_id: me.id,
+    fei_current_owner_user_id: me.id,
     fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
-    examinateur_initial_user_id: examinateur.id,
+    examinateur_initial_user_id: me.id,
     created_at: fei.created_at,
     updated_at: fei.updated_at,
-    FeiExaminateurInitialUser: examinateur,
-    FeiCreatedByUser: examinateur,
-    FeiCurrentUser: examinateur,
+    FeiExaminateurInitialUser: me,
+    FeiCreatedByUser: me,
+    FeiCurrentUser: me,
   };
 }
 
-export function formatPremierDetenteurFeiOfflineQueue(fei: FeiByNumero): FeiByNumero {
-  const baseFei = offlineNullFei();
+function formatFeiOfflineQueueConfirmCurrentOwner(
+  existingFeiPopulated: NonNullFeiByNumero,
+  fei: Fei,
+  me: User,
+  relations: MyRelationsLoaderData,
+): NonNullFeiByNumero {
   return {
-    ...baseFei,
-    id: Date.now(),
+    ...existingFeiPopulated,
+    ...fei,
+    FeiCurrentUser: me,
+    FeiCurrentEntity: relations.entitiesUserIsWorkingFor.find(
+      (entity) => entity.id === fei.fei_current_owner_entity_id,
+    )!,
+    FeiNextEntity: null,
+  };
+}
+
+function formatFeiOfflineQueuePremierDetenteurDepot(
+  existingFeiPopulated: NonNullFeiByNumero,
+  fei: Fei,
+  relations: MyRelationsLoaderData,
+): NonNullFeiByNumero {
+  const allEntities = [
+    ...relations.entitiesUserIsWorkingFor,
+    ...relations.collecteursPro,
+    ...relations.ccgs,
+    ...relations.etgs,
+    ...relations.svis,
+  ];
+
+  return {
+    ...existingFeiPopulated,
+    ...fei,
+    FeiDepotEntity: allEntities.find((entity) => entity.id === fei.premier_detenteur_depot_entity_id)!,
+  };
+}
+
+function formatFeiOfflineQueueNextEntity(
+  existingFeiPopulated: NonNullFeiByNumero,
+  fei: Fei,
+  relations: MyRelationsLoaderData,
+): NonNullFeiByNumero {
+  const allEntities = [
+    ...relations.entitiesUserIsWorkingFor,
+    ...relations.collecteursPro,
+    ...relations.ccgs,
+    ...relations.etgs,
+    ...relations.svis,
+  ];
+
+  return {
+    ...existingFeiPopulated,
+    ...fei,
+    FeiNextEntity: allEntities.find((entity) => entity.id === fei.fei_next_owner_entity_id)!,
   };
 }

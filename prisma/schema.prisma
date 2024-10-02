@@ -60,7 +60,7 @@ model User {
   EntitiesRelations              EntityRelations[]       @relation("UserRelatedWithEntity")
   FeiCreatedByUser               Fei[]                   @relation("FeiCreatedByUser")
   FeiCurrentUser                 Fei[]                   @relation("FeiCurrentUser")
-  FeiDetenteurInitialUser        Fei[]                   @relation("FeiDetenteurInitialUser")
+  FeiPremierDetenteurUser        Fei[]                   @relation("FeiPremierDetenteurUser")
   FeiExaminateurInitialUser      Fei[]                   @relation("FeiExaminateurInitialUser")
   FeiSviUser                     Fei[]                   @relation("FeiSviUser")
   FeiIntermediaireUser           FeiIntermediaire[]      @relation("FeiIntermediaireUser")
@@ -209,11 +209,10 @@ model Fei {
   svi_signed_at                                           DateTime?
   created_at                                              DateTime                @default(now())
   updated_at                                              DateTime                @default(now()) @updatedAt
-  manually_updated_at                                     DateTime?
   deleted_at                                              DateTime?
   Carcasses                                               Carcasse[]
   FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade)
-  FeiDetenteurInitialUser                                 User?                   @relation("FeiDetenteurInitialUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade)
+  FeiPremierDetenteurUser                                 User?                   @relation("FeiPremierDetenteurUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade)
   FeiExaminateurInitialUser                               User?                   @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id], onDelete: Cascade)
   FeiDepotEntity                                          Entity?                 @relation("FeiDepotEntity", fields: [premier_detenteur_depot_entity_id], references: [id], onDelete: Cascade)
   FeiSviEntity                                            Entity?                 @relation("FeiSviEntity", fields: [svi_entity_id], references: [id], onDelete: Cascade)

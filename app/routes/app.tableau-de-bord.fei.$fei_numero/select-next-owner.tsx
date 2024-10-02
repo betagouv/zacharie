@@ -7,6 +7,7 @@ import { useFetcher, useLoaderData } from "@remix-run/react";
 import { UserRoles, Entity, User, Prisma } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { getUserRoleLabel, getUserRoleLabelPlural } from "~/utils/get-user-roles-label";
+import type { FeiAction } from "~/db/fei.client";
 
 export default function SelectNextOwner() {
   const { user, ccgs, collecteursPro, etgs, svis, fei } = useLoaderData<typeof clientLoader>();
@@ -161,7 +162,6 @@ export default function SelectNextOwner() {
         method="POST"
         onSubmit={(event) => {
           const formData = new FormData(event.currentTarget);
-          formData.append("route", `/api/action/fei/${fei.numero}`);
           nextOwnerFetcher.submit(formData, {
             method: "POST",
             preventScrollReset: true, // Prevent scroll reset on submission
@@ -169,6 +169,7 @@ export default function SelectNextOwner() {
         }}
       >
         <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
+        <input type="hidden" name="step" value={"fei_action_next_role" satisfies FeiAction} />
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <div className="fr-fieldset__element">
           <Select

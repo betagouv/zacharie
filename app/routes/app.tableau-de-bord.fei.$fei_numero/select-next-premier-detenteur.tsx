@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { clientLoader } from "./route";
-import { Prisma, UserRoles, Entity, User } from "@prisma/client";
+import { Prisma, Entity, User } from "@prisma/client";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import type { SerializeFrom } from "@remix-run/node";
 import { Select } from "@codegouvfr/react-dsfr/Select";
@@ -11,10 +11,7 @@ import { action as searchUserAction } from "~/routes/api.action.trouver-premier-
 
 export default function SelectPremierDetenteur() {
   const { user, detenteursInitiaux, fei } = useLoaderData<typeof clientLoader>();
-  const nextRole = UserRoles.PREMIER_DETENTEUR;
   const nextOwnerSelectLabel = "Sélectionnez le Premier Détenteur de pour cette FEI";
-
-  const nextOwnerIsUser = nextRole === UserRoles.PREMIER_DETENTEUR || nextRole === UserRoles.EXAMINATEUR_INITIAL;
 
   const nextOwnerName = useMemo(() => {
     const nextOwner = detenteursInitiaux.find((owner) => {
@@ -51,12 +48,10 @@ export default function SelectPremierDetenteur() {
           <Select
             label="Quel Premier Détenteur doit désormais agir sur la FEI ?"
             className="!mb-0 grow"
-            key={fei.fei_next_owner_user_id ?? fei.fei_next_owner_entity_id ?? "no-choice-yet"}
+            key={fei.fei_next_owner_user_id ?? "no-choice-yet"}
             nativeSelectProps={{
-              name: nextOwnerIsUser
-                ? Prisma.FeiScalarFieldEnum.fei_next_owner_user_id
-                : Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id,
-              defaultValue: (nextOwnerIsUser ? fei.fei_next_owner_user_id : fei.fei_next_owner_entity_id) ?? "",
+              name: Prisma.FeiScalarFieldEnum.fei_next_owner_user_id,
+              defaultValue: fei.fei_next_owner_user_id ?? "",
             }}
           >
             <option value="">{nextOwnerSelectLabel}</option>
@@ -96,7 +91,7 @@ export default function SelectPremierDetenteur() {
         </>
       )}
 
-      {(fei.fei_next_owner_user_id || fei.fei_next_owner_entity_id) && (
+      {fei.fei_next_owner_user_id && (
         <Alert
           severity="success"
           description={`${nextOwnerName} a été notifié. Vous ne pouvez plus modifier votre FEI.`}

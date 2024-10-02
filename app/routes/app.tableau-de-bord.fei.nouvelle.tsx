@@ -6,8 +6,8 @@ import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma, UserRoles } from "@prisma/client";
 import UserNotEditable from "~/components/UserNotEditable";
-import type { FeiNouvelleActionData } from "~/routes/api.action.fei.nouvelle";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
+import { type FeiActionData } from "~/routes/api.action.fei.$fei_numero";
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
   const user = await getMostFreshUser();
@@ -18,7 +18,6 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   const formData = await request.formData();
   const feiNumero = `ZACH-FEI-${dayjs().format("YYYYMMDD")}-${user.id}-${dayjs().format("HHmmss")}`;
   formData.append(Prisma.FeiScalarFieldEnum.numero, feiNumero);
-  formData.append(Prisma.FeiScalarFieldEnum.manually_updated_at, new Date().toISOString());
 
   console.log("fei route formdata", Object.fromEntries(formData.entries()));
 
@@ -29,7 +28,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
     headers: {
       Accept: "application/json",
     },
-  }).then((response) => response.json())) as FeiNouvelleActionData;
+  }).then((response) => response.json())) as FeiActionData;
   console.log("response", response);
   if (response.ok && response.data?.numero) {
     const fei = response.data;
@@ -67,6 +66,13 @@ export default function NouvelleFEI() {
                 <div className="mb-8">
                   <h2 className="fr-h3 fr-mb-2w">Examinateur Initial</h2>
                   <input type="hidden" name={Prisma.FeiScalarFieldEnum.examinateur_initial_user_id} value={user.id} />
+                  <input type="hidden" name={Prisma.FeiScalarFieldEnum.fei_current_owner_user_id} value={user.id} />
+                  <input type="hidden" name={Prisma.FeiScalarFieldEnum.created_by_user_id} value={user.id} />
+                  <input
+                    type="hidden"
+                    name={Prisma.FeiScalarFieldEnum.fei_current_owner_role}
+                    value={UserRoles.EXAMINATEUR_INITIAL}
+                  />
                   <div className="fr-fieldset__element">
                     <Input
                       label="Date de mise à mort et d'éviscération"

@@ -10,7 +10,7 @@ export const feiInclude = {
       numero_bracelet: "asc",
     },
   },
-  FeiDetenteurInitialUser: true,
+  FeiPremierDetenteurUser: true,
   FeiExaminateurInitialUser: true,
   FeiCreatedByUser: true,
   FeiDepotEntity: true,

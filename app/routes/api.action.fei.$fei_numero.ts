@@ -87,7 +87,7 @@ export async function action(args: ActionFunctionArgs) {
     );
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
-    nextFei.FeiDetenteurInitialUser = {
+    nextFei.FeiPremierDetenteurUser = {
       connect: {
         id: formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) as string,
       },

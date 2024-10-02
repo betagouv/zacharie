@@ -1,6 +1,6 @@
 // sw.ts
 /// <reference lib="webworker" />
-import { formatNouvelleFeiOfflineQueue } from "~/db/fei.client";
+import { formatFeiOfflineQueue, type FeiAction } from "~/db/fei.client";
 import type { Fei } from "@prisma/client";
 import { createStore, set, get, del, keys } from "idb-keyval";
 
@@ -158,61 +158,64 @@ HANDLE POST REQUESTS
 
 */
 async function handlePostRequest(request: Request): Promise<Response> {
-  if (navigator.onLine) {
-    try {
-      const response = await fetch(request);
-      return response;
-    } catch (error) {
-      console.error("POST request failed; queueing for later", error);
-    }
-  }
-
-  console.log("POST request received while offline; queueing for later");
-  await queuePostRequest(request);
-  console.log("Request queued for later execution");
-  // Handle FEI creation when offline
-  if (request.url.includes(`/api/action/fei/`)) {
-    console.log("Handling offline FEI creation");
-    const clonedRequest = request.clone();
-    const formData = await clonedRequest.formData();
-    const feiData = Object.fromEntries(formData) as unknown as Fei;
-
-    const cache = await caches.open(CACHE_NAME);
-    const userResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/me`);
-    if (userResponse) {
-      // Clone the response before parsing JSON
-      const userResponseClone = userResponse.clone();
-      let userData;
+  try {
+    if (navigator.onLine) {
       try {
-        userData = await userResponseClone.json();
+        const response = await fetch(request);
+        return response;
       } catch (error) {
-        console.error("Failed to parse user data from cache", error);
-        return new Response(JSON.stringify({ error: "Failed to parse user data" }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
+        console.error("POST request failed; queueing for later", error);
       }
+    }
 
-      const offlineFei = formatNouvelleFeiOfflineQueue(feiData, userData);
+    console.log("POST request received while offline; queueing for later");
+    await queuePostRequest(request);
+    console.log("Request queued for later execution");
+    // Handle FEI creation when offline
+    if (request.url.includes(`/api/action/fei/`)) {
+      console.log("Handling offline FEI creation");
+      const clonedRequest = request.clone();
+      const formData = await clonedRequest.formData();
+      const feiData = Object.fromEntries(formData) as unknown as Fei;
+
+      const cache = await caches.open(CACHE_NAME);
+      const userResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/me`);
+      const userResponseClone = userResponse!.clone();
+      const userData = await userResponseClone.json();
+      const myRelationsResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`);
+      const myRelationsResponseClone = myRelationsResponse!.clone();
+      const myRelationsData = await myRelationsResponseClone.json();
+      const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
+      const allFeisResponseClone = allFeisResponse!.clone();
+      const allFeisData = await allFeisResponseClone.json();
+      const specificFeiPopulated = findFeiInAllFeisData(allFeisData, feiData.numero);
+
+      const offlineFei = formatFeiOfflineQueue(
+        specificFeiPopulated,
+        feiData,
+        userData,
+        myRelationsData,
+        formData.get("step") as FeiAction,
+      );
       await addOfflineFeiToCache(offlineFei);
 
       return new Response(JSON.stringify({ ok: true, data: offlineFei }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
-    } else {
-      console.error("User data not found in cache");
-      return new Response(JSON.stringify({ error: "User data not available offline" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
     }
-  }
 
-  return new Response(JSON.stringify(QueuedResponse), {
-    status: 202,
-    headers: { "Content-Type": "application/json" },
-  });
+    return new Response(JSON.stringify(QueuedResponse), {
+      status: 202,
+      headers: { "Content-Type": "application/json" },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
 
 const store = createStore("OfflineQueue", "requests");
@@ -237,7 +240,7 @@ async function queuePostRequest(request: Request) {
     timestamp: Date.now(),
   };
 
-  await set(serialized.timestamp.toString(), serialized, store);
+  await set(clonedRequest.url, serialized, store);
   console.log("Request queued", serialized);
 }
 
@@ -274,13 +277,16 @@ async function processOfflineQueue(processingFrom: string) {
   console.log("Finished processing offline queue");
 }
 
-async function addOfflineFeiToCache(offlineFei: ReturnType<typeof formatNouvelleFeiOfflineQueue>) {
+async function addOfflineFeiToCache(offlineFei: ReturnType<typeof formatFeiOfflineQueue>) {
   const cache = await caches.open(CACHE_NAME);
   const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
 
   if (allFeisResponse) {
     const allFeisData = await allFeisResponse.json();
-    allFeisData.feisUnderMyResponsability.push(offlineFei);
+    allFeisData.feisUnderMyResponsability = [
+      ...allFeisData.feisUnderMyResponsability.filter((fei: Fei) => fei.numero !== offlineFei.numero),
+      offlineFei,
+    ];
 
     await cache.put(
       `${import.meta.env.VITE_API_URL}/api/loader/fei`,
@@ -290,7 +296,6 @@ async function addOfflineFeiToCache(offlineFei: ReturnType<typeof formatNouvelle
     );
   }
 }
-
 /*
 
 

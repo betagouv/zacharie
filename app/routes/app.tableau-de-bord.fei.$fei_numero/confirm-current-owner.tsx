@@ -5,6 +5,7 @@ import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useMemo } from "react";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import { Prisma, UserRoles } from "@prisma/client";
+import type { FeiAction } from "~/db/fei.client";
 
 export default function ConfirmCurrentOwner() {
   const { user, entitiesUserIsWorkingFor, fei } = useLoaderData<typeof clientLoader>();
@@ -53,6 +54,7 @@ export default function ConfirmCurrentOwner() {
       formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
     }
     formData.append("route", `/api/action/fei/${fei.numero}`);
+    formData.append("step", "fei_action_confirm_current_owner" satisfies FeiAction);
     fetcher.submit(formData, {
       method: "POST",
       preventScrollReset: true, // Prevent scroll reset on submission
@@ -115,7 +117,7 @@ export default function ConfirmCurrentOwner() {
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
             formData.append("route", `/api/action/fei/${fei.numero}`);
-            formData.append(Prisma.FeiScalarFieldEnum.manually_updated_at, new Date().toISOString());
+            formData.append("step", "fei_action_reject_current_owner" satisfies FeiAction);
             fetcher.submit(formData, {
               method: "POST",
               preventScrollReset: true, // Prevent scroll reset on submission

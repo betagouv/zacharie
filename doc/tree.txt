@@ -69,7 +69,6 @@
 ┃ ┃ ┣ 📜api.action.connexion.ts
 ┃ ┃ ┣ 📜api.action.fei-intermediaire.nouveau.ts
 ┃ ┃ ┣ 📜api.action.fei.$fei_numero.ts
-┃ ┃ ┣ 📜api.action.fei.nouvelle.ts
 ┃ ┃ ┣ 📜api.action.trouver-premier-detenteur.ts
 ┃ ┃ ┣ 📜api.action.user-entity.$user_id.ts
 ┃ ┃ ┣ 📜api.action.user-relation.$user_id.ts
