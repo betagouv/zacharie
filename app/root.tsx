@@ -77,7 +77,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* <link rel="manifest" href={dsfrWebManifest} crossOrigin="use-credentials" /> */}
         <link rel="stylesheet" href={dsfrCss} />
         <link rel="stylesheet" href={dsfrColorCss} />
-        {import.meta.env.SPA_MODE && <PWAManifest />}
+        {process.env.SPA_MODE && <PWAManifest />}
         <Meta />
         <Links />
       </head>
