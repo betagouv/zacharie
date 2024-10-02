@@ -28,31 +28,3 @@ export async function registerServiceWorker() {
     console.log("ServiceWorker not supported");
   }
 }
-
-export function requestNotificationPermission() {
-  if ("Notification" in window) {
-    Notification.requestPermission().then((permission) => {
-      if (permission === "granted") {
-        console.log("Notification permission granted");
-        subscribeToPushNotifications();
-      }
-    });
-  }
-}
-
-function subscribeToPushNotifications() {
-  navigator.serviceWorker.ready.then((registration) => {
-    registration.pushManager
-      .subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: "YOUR_PUBLIC_VAPID_KEY_HERE",
-      })
-      .then((subscription) => {
-        // Send subscription to your server
-        console.log("Push notification subscription:", subscription);
-      })
-      .catch((error) => {
-        console.error("Push notification subscription failed:", error);
-      });
-  });
-}

@@ -9,7 +9,7 @@ import { RemixBrowser, Link, useLocation, useMatches } from "@remix-run/react";
 import { startTransition, StrictMode, useEffect } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { startReactDsfr } from "@codegouvfr/react-dsfr/spa";
-import { registerServiceWorker } from "~/sw/registerServiceWorker";
+import { registerServiceWorker } from "~/sw/register";
 
 registerServiceWorker();
 

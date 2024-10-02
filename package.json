@@ -8,7 +8,7 @@
     "dev-spa": "rm -rf node_modules/.vite && SPA_MODE=true && remix vite:dev --port 3232 --force",
     "build-api": "remix vite:build",
     "build-spa": "SPA_MODE=true && remix vite:build",
-    "start-spa": "SPA_MODE=true && node ./server-spa.js",
+    "start-spa": "NODE_ENV=production SPA_MODE=true PORT=8080 node ./server-spa.js",
     "start-api": "npx prisma migrate deploy && react-dsfr update-icons && cross-env NODE_ENV=production node ./server-api.js",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "prisma-setup": "prisma generate && prisma migrate deploy",

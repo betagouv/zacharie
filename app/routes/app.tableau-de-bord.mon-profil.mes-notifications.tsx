@@ -28,7 +28,7 @@ export default function MesNotifications() {
   const fetcher = useFetcher({ key: "mon-profil-mes-notifications" });
   const navigate = useNavigate();
 
-  // const tokenFetcher = useFetcher({ key: "notifications-token" });
+  const tokenFetcher = useFetcher({ key: "notifications-token" });
   const {
     // subscribeToPush,
     canSendPush,
@@ -88,26 +88,26 @@ export default function MesNotifications() {
                         value: UserNotifications.PUSH,
                         defaultChecked: checkBoxChecked,
                         disabled: !canSendPush,
-                        // onClick: () => {
-                        //   subscribeToPush(
-                        //     window.ENV.VAPID_PUBLIC_KEY,
-                        //     (subscription) => {
-                        //       tokenFetcher.submit(
-                        //         {
-                        //           web_push_token: JSON.stringify(subscription),
-                        //         },
-                        //         {
-                        //           method: "POST",
-                        //           action: `/action/user/${user.id}`,
-                        //           preventScrollReset: true,
-                        //         },
-                        //       );
-                        //     },
-                        //     (error) => {
-                        //       console.error("Error subscribing user to push notifications!", error);
-                        //     },
-                        //   );
-                        // },
+                        onClick: () => {
+                          subscribeToPush(
+                            window.ENV.VAPID_PUBLIC_KEY,
+                            (subscription) => {
+                              tokenFetcher.submit(
+                                {
+                                  web_push_token: JSON.stringify(subscription),
+                                },
+                                {
+                                  method: "POST",
+                                  action: `/action/user/${user.id}`,
+                                  preventScrollReset: true,
+                                },
+                              );
+                            },
+                            (error) => {
+                              console.error("Error subscribing user to push notifications!", error);
+                            },
+                          );
+                        },
                       },
                     },
                     {
