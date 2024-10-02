@@ -231,7 +231,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       });
     }
 
-    return new Response(JSON.stringify(QueuedResponse), {
+    return new Response(JSON.stringify({ ok: true, data: "Request queued for later execution" }), {
       status: 202,
       headers: { "Content-Type": "application/json" },
     });
