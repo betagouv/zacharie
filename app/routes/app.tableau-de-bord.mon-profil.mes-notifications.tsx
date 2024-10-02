@@ -118,6 +118,10 @@ export default function MesNotifications() {
                           subscribeToPush(
                             VAPID_PUBLIC_KEY,
                             (subscription) => {
+                              console.log({
+                                subscription,
+                                VAPID_PUBLIC_KEY,
+                              });
                               tokenFetcher.submit(
                                 {
                                   web_push_token: JSON.stringify(subscription.toJSON()),

@@ -19,7 +19,7 @@ if (process.env.NODE_ENV === "production") {
     tracesSampleRate: 0.01,
     replaysSessionSampleRate: 0.01,
     replaysOnErrorSampleRate: 0.01,
-    enabled: false,
+    enabled: process.env.NODE_ENV === "production",
     integrations: [
       Sentry.browserTracingIntegration({
         useEffect,
