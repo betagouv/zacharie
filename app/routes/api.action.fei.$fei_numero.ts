@@ -310,7 +310,7 @@ export async function action(args: ActionFunctionArgs) {
     return redirect(formData.get("_redirect") as string);
   }
 
-  return json({ ok: true, data: fei, error: null });
+  return json({ ok: true, data: fei, error: "" });
 }
 
 export type FeiActionData = ExtractLoaderData<typeof action>;

@@ -7,7 +7,7 @@ import type { ExtractLoaderData } from "~/services/extract-loader-data";
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const admin = await getUserFromCookie(request);
   if (!admin?.roles?.includes(UserRoles.ADMIN)) {
-    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
   const entity = await prisma.entity.findUnique({
     where: {
@@ -34,7 +34,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     },
   });
   if (!entity) {
-    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
   const usersWithEntityType = await prisma.user.findMany({
@@ -89,11 +89,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   });
 
   return json({
-    entity,
-    usersWithEntityType,
-    potentialPartenaires,
-    sviOrEtgPotentielCouple,
-    latestVersion: __VITE_BUILD_ID__,
+    ok: true,
+    data: {
+      entity,
+      usersWithEntityType,
+      potentialPartenaires,
+      sviOrEtgPotentielCouple,
+      latestVersion: __VITE_BUILD_ID__,
+    },
+    error: "",
   });
 }
 

@@ -74,7 +74,7 @@ export type ConnexionActionData = ExtractLoaderData<typeof action>;
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await getUserIdFromCookie(request, { optional: true });
   if (userId) {
-    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
   return null;
 }

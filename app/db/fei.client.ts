@@ -68,7 +68,7 @@ export function formatFeiOfflineQueue(
   existingFeiPopulated: FeiByNumero,
   nextFeiData: Fei,
   me: User,
-  relations: MyRelationsLoaderData,
+  relations: MyRelationsLoaderData["data"],
   step: FeiAction,
 ): NonNullFeiByNumero {
   if (!existingFeiPopulated) {
@@ -118,13 +118,13 @@ function formatFeiOfflineQueueConfirmCurrentOwner(
   existingFeiPopulated: NonNullFeiByNumero,
   fei: Fei,
   me: User,
-  relations: MyRelationsLoaderData,
+  relations: MyRelationsLoaderData["data"],
 ): NonNullFeiByNumero {
   return {
     ...existingFeiPopulated,
     ...fei,
     FeiCurrentUser: me,
-    FeiCurrentEntity: relations.entitiesUserIsWorkingFor.find(
+    FeiCurrentEntity: relations!.entitiesUserIsWorkingFor.find(
       (entity) => entity.id === fei.fei_current_owner_entity_id,
     )!,
     FeiNextEntity: null,
@@ -134,14 +134,14 @@ function formatFeiOfflineQueueConfirmCurrentOwner(
 function formatFeiOfflineQueuePremierDetenteurDepot(
   existingFeiPopulated: NonNullFeiByNumero,
   fei: Fei,
-  relations: MyRelationsLoaderData,
+  relations: MyRelationsLoaderData["data"],
 ): NonNullFeiByNumero {
   const allEntities = [
-    ...relations.entitiesUserIsWorkingFor,
-    ...relations.collecteursPro,
-    ...relations.ccgs,
-    ...relations.etgs,
-    ...relations.svis,
+    ...relations!.entitiesUserIsWorkingFor,
+    ...relations!.collecteursPro,
+    ...relations!.ccgs,
+    ...relations!.etgs,
+    ...relations!.svis,
   ];
 
   return {
@@ -154,14 +154,14 @@ function formatFeiOfflineQueuePremierDetenteurDepot(
 function formatFeiOfflineQueueNextEntity(
   existingFeiPopulated: NonNullFeiByNumero,
   fei: Fei,
-  relations: MyRelationsLoaderData,
+  relations: MyRelationsLoaderData["data"],
 ): NonNullFeiByNumero {
   const allEntities = [
-    ...relations.entitiesUserIsWorkingFor,
-    ...relations.collecteursPro,
-    ...relations.ccgs,
-    ...relations.etgs,
-    ...relations.svis,
+    ...relations!.entitiesUserIsWorkingFor,
+    ...relations!.collecteursPro,
+    ...relations!.ccgs,
+    ...relations!.etgs,
+    ...relations!.svis,
   ];
 
   return {

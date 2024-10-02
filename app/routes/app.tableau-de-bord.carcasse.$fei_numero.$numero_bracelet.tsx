@@ -45,7 +45,7 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   if (!user) {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
-  const carcasseData = (await fetch(
+  const response = (await fetch(
     `${import.meta.env.VITE_API_URL}/api/loader/${params.fei_numero}/${params.numero_bracelet}`,
     {
       method: "GET",
@@ -57,11 +57,11 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
     },
   ).then((res) => res.json())) as CarcasseLoaderData;
 
-  if (!carcasseData) {
+  if (!response?.ok) {
     throw redirect(`/app/tableau-de-bord/fei/${params.fei_numero}`);
   }
 
-  return json({ carcasse: carcasseData.carcasse, user, fei: carcasseData.fei });
+  return json({ carcasse: response.data!.carcasse!, user, fei: response.data!.fei! });
 }
 
 const anomaliesAbatsModal = createModal({

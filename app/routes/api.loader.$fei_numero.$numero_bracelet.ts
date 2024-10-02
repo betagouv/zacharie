@@ -6,7 +6,7 @@ import type { ExtractLoaderData } from "~/services/extract-loader-data";
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
-    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
   const carcasse = await prisma.carcasse.findUnique({
     where: {
@@ -18,10 +18,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     },
   });
   if (!carcasse) {
-    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
-  return json({ carcasse, fei: carcasse.Fei, latestVersion: __VITE_BUILD_ID__ });
+  return json({ ok: true, data: { carcasse, fei: carcasse.Fei, latestVersion: __VITE_BUILD_ID__ }, error: "" });
 }
 
 export type CarcasseLoaderData = ExtractLoaderData<typeof loader>;

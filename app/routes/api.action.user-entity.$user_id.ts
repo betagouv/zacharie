@@ -1,4 +1,4 @@
-import { User, EntityRelationType, Prisma, EntityTypes, UserRoles } from "@prisma/client";
+import { User, EntityRelationType, Prisma, EntityTypes } from "@prisma/client";
 import { type ActionFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { authorizeUserOrAdmin } from "~/utils/authorizeUserOrAdmin";
@@ -54,7 +54,7 @@ export async function action(args: ActionFunctionArgs) {
       data: nextEntityRelation,
     });
 
-    return json({ ok: true, data: relation, error: null });
+    return json({ ok: true, data: relation, error: "" });
   }
 
   if (formData.get("_action") === "delete") {
@@ -71,7 +71,7 @@ export async function action(args: ActionFunctionArgs) {
           id: existingEntityRelation.id,
         },
       });
-      return json({ ok: true, data: null, error: null });
+      return json({ ok: true, data: null, error: "" });
     }
   }
 

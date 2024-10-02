@@ -20,11 +20,11 @@ export async function getMostFreshUser() {
   })
     .then(async (response) => {
       const userResponse = (await response.json()) as MeLoaderData;
-      if (userResponse && userResponse.user) {
-        window.localStorage.setItem("user", JSON.stringify(userResponse.user));
-        await setCacheItem("user", userResponse.user);
+      if (userResponse?.ok && userResponse.data?.user) {
+        window.localStorage.setItem("user", JSON.stringify(userResponse.data.user));
+        await setCacheItem("user", userResponse.data.user);
       }
-      return userResponse.user;
+      return userResponse.data?.user;
     })
     .catch(() => {
       return null;

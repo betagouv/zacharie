@@ -9,7 +9,7 @@ import type { ExtractLoaderData } from "~/services/extract-loader-data";
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
-    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
   const allEntities = await prisma.entity.findMany();
@@ -24,9 +24,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(userEntitiesRelations, allEntitiesIds);
 
   return json({
-    allEntitiesByTypeAndId,
-    userEntitiesByTypeAndId,
-    latestVersion: __VITE_BUILD_ID__,
+    ok: true,
+    data: {
+      allEntitiesByTypeAndId,
+      userEntitiesByTypeAndId,
+      latestVersion: __VITE_BUILD_ID__,
+    },
+    error: "",
   });
 }
 

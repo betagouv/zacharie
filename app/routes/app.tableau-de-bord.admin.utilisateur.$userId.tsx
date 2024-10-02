@@ -54,20 +54,17 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   if (!admin?.roles?.includes(UserRoles.ADMIN)) {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/loader/utilisateur/${params.userId}`, {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/admin/loader/utilisateur/${params.userId}`, {
     method: "GET",
     credentials: "include",
     headers: {
       Accept: "application/json",
     },
-  });
-
+  }).then((res) => res.json())) as AdminUserLoaderData;
   if (!response.ok) {
-    throw new Error("Failed to load user");
+    throw redirect("/");
   }
-  const data = (await response.json()) as AdminUserLoaderData;
-
-  return json(data);
+  return response.data!;
 }
 
 export default function AdminUser() {

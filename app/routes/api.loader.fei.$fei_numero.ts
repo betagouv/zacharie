@@ -6,16 +6,20 @@ import { getFeiByNumero, type FeiByNumero } from "~/db/fei.server";
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
-    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
   const fei = (await getFeiByNumero(params.fei_numero as string)) as FeiByNumero;
   if (!fei) {
-    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
   return json({
-    fei,
-    latestVersion: __VITE_BUILD_ID__,
+    ok: true,
+    data: {
+      fei,
+      latestVersion: __VITE_BUILD_ID__,
+    },
+    error: "",
   });
 }
 

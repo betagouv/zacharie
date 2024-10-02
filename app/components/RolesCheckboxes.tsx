@@ -8,7 +8,7 @@ export default function RolesCheckBoxes({
   legend = "Sélectionnez tous les rôles qui vous correspondent",
   withAdmin = false,
 }: {
-  user?: SerializeFrom<User>;
+  user?: SerializeFrom<User> | User;
   legend?: string;
   withAdmin?: boolean;
 }) {

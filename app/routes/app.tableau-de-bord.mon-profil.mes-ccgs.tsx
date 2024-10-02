@@ -55,7 +55,7 @@ export async function clientLoader() {
         "Content-Type": "application/json",
       }),
     }).then((res) => res.json())) as UserCCGsLoaderData
-  ).userCCGs;
+  ).data!.userCCGs!;
 
   return json({
     user,

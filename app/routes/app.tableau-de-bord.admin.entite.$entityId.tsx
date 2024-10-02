@@ -62,9 +62,9 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   if (!response.ok) {
     throw new Error("Failed to load entity");
   }
-  const data = (await response.json()) as AdminEntityLoaderData;
+  const adminEntityLoaderData = (await response.json()) as AdminEntityLoaderData;
 
-  return json(data);
+  return json(adminEntityLoaderData.data!);
 }
 
 export default function AdminEntity() {

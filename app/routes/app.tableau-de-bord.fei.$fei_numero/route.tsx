@@ -74,8 +74,8 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   }).then((res) => res.json())) as MyRelationsLoaderData;
 
   return json({
-    ...loaderData,
-    ...myRelationsData,
+    ...loaderData.data!,
+    ...myRelationsData.data!,
   });
 }
 

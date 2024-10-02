@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, redirect, useLoaderData } from "@remix-run/react";
 import { Table } from "@codegouvfr/react-dsfr/Table";
 import dayjs from "dayjs";
 import type { AdminUsersLoaderData } from "~/routes/api.admin.loader.utilisateurs";
@@ -21,7 +21,10 @@ export async function clientLoader() {
       "Content-Type": "application/json",
     }),
   }).then((res) => res.json())) as AdminUsersLoaderData;
-  return response;
+  if (!response.ok) {
+    throw redirect("/");
+  }
+  return response.data!;
 }
 
 export default function AdminUsers() {

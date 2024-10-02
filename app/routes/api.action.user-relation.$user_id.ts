@@ -42,7 +42,7 @@ export async function action(args: ActionFunctionArgs) {
       data: nextUserRelation,
     });
 
-    return json({ ok: true, data: relation, error: null });
+    return json({ ok: true, data: relation, error: "" });
   }
 
   if (formData.get("_action") === "delete") {
@@ -59,7 +59,7 @@ export async function action(args: ActionFunctionArgs) {
           id: existingEntityRelation.id,
         },
       });
-      return json({ ok: true, data: null, error: null });
+      return json({ ok: true, data: null, error: "" });
     }
   }
 

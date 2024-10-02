@@ -34,7 +34,7 @@ export async function action(args: ActionFunctionArgs) {
         check_finished_at: new Date(),
       },
     });
-    return json({ ok: true, data: null, error: null });
+    return json({ ok: true, data: null, error: "" });
   }
   const carcasseBracelet = formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.numero_bracelet) as string;
   const existingCarcasse = await prisma.carcasse.findUnique({
@@ -99,7 +99,7 @@ export async function action(args: ActionFunctionArgs) {
         intermediaire_carcasse_signed_at: null,
       },
     });
-    return json({ ok: true, data: carcasseIntermediaire, error: null });
+    return json({ ok: true, data: carcasseIntermediaire, error: "" });
   }
   if (formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus)) {
     data.refus = formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus) as string;
@@ -124,8 +124,8 @@ export async function action(args: ActionFunctionArgs) {
         intermediaire_carcasse_signed_at: new Date(),
       },
     });
-    return json({ ok: true, data: carcasseIntermediaire, error: null });
+    return json({ ok: true, data: carcasseIntermediaire, error: "" });
   }
 
-  return json({ ok: true, data: null, error: null });
+  return json({ ok: true, data: null, error: "" });
 }

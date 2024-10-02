@@ -1,4 +1,4 @@
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, redirect, useLoaderData } from "@remix-run/react";
 import { Table } from "@codegouvfr/react-dsfr/Table";
 import dayjs from "dayjs";
 import type { AdminEntitesLoaderData } from "~/routes/api.admin.loader.entites";
@@ -20,7 +20,10 @@ export async function clientLoader() {
       "Content-Type": "application/json",
     }),
   }).then((res) => res.json())) as AdminEntitesLoaderData;
-  return response;
+  if (!response.ok) {
+    throw redirect("/");
+  }
+  return response.data!;
 }
 
 export default function AdminEntites() {

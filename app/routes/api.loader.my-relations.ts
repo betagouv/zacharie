@@ -7,7 +7,7 @@ import type { ExtractLoaderData } from "~/services/extract-loader-data";
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
-    return json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
   const userEntitiesRelations = (
     await prisma.entityRelations.findMany({
@@ -90,15 +90,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const svis = allEntities.filter((entity) => entity.type === EntityTypes.SVI);
 
   return json({
-    user,
-    detenteursInitiaux,
-    examinateursInitiaux,
-    ccgs,
-    collecteursPro,
-    etgs,
-    svis,
-    entitiesUserIsWorkingFor,
-    latestVersion: __VITE_BUILD_ID__,
+    ok: true,
+    data: {
+      user,
+      detenteursInitiaux,
+      examinateursInitiaux,
+      ccgs,
+      collecteursPro,
+      etgs,
+      svis,
+      entitiesUserIsWorkingFor,
+      latestVersion: __VITE_BUILD_ID__,
+    },
+    error: "",
   });
 }
 

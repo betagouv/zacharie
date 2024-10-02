@@ -31,7 +31,7 @@ export async function action(args: ActionFunctionArgs) {
           numero_bracelet,
         },
       });
-      return json({ ok: true, data: null, error: null });
+      return json({ ok: true, data: null, error: "" });
     }
   }
 
@@ -163,7 +163,7 @@ export async function action(args: ActionFunctionArgs) {
     data: nextCarcasse,
   });
 
-  return json({ ok: true, data: updatedCarcasse, error: null });
+  return json({ ok: true, data: updatedCarcasse, error: "" });
 }
 
 export type CarcasseActionData = ExtractLoaderData<typeof action>;

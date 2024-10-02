@@ -16,7 +16,7 @@ import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
-import { EntityTypes, EntityRelationType, UserRoles, Prisma, type User } from "@prisma/client";
+import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import InputVille from "~/components/InputVille";
 import InputNotEditable from "~/components/InputNotEditable";
 import { type EntitiesLoaderData } from "~/routes/api.loader.entities";
@@ -62,16 +62,15 @@ export async function clientLoader() {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/entities`, {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/loader/entities`, {
     method: "GET",
     credentials: "include",
     headers: new Headers({
       Accept: "application/json",
       "Content-Type": "application/json",
     }),
-  });
-  const data = (await response.json()) as EntitiesLoaderData;
-  const { allEntitiesByTypeAndId, userEntitiesByTypeAndId } = data;
+  }).then((res) => res.json())) as EntitiesLoaderData;
+  const { allEntitiesByTypeAndId, userEntitiesByTypeAndId } = response.data!;
 
   const userCentresCollectes = user.roles.includes(UserRoles.CCG)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.CCG])
