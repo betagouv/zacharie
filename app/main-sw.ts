@@ -94,7 +94,7 @@ async function handleFetchRequest(request: Request): Promise<Response> {
       if (response.ok) {
         const cache = await caches.open(CACHE_NAME);
         cache.put(request, response.clone());
-        if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/loader/fei`)) {
+        if (request.url === `${import.meta.env.VITE_API_URL}/api/loader/fei`) {
           const feiResponseCloned = response.clone();
           const feiData = await feiResponseCloned?.json();
           // Calculate the badge count
