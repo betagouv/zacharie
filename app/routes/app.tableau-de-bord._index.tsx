@@ -109,7 +109,7 @@ export default function TableauDeBordIndex() {
           <CallOut title="🖥️ Toutes vos FEI centralisées" className="bg-white">
             Retrouvez ici toutes vos FEI - en cours, validées, refusées - et les actions à mener.
           </CallOut>
-          {(user.roles.includes(UserRoles.PREMIER_DETENTEUR) || user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) && (
+          {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
             <section className="mb-6 bg-white md:shadow">
               <div className="p-4 md:p-8 md:pb-0">
                 <h2 className="fr-h3 fr-mb-2w">Nouvelle FEI</h2>

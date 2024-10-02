@@ -35,6 +35,9 @@ export default async function sendNotificationToUser({
             },
             urgency: "high",
           })
+          .then((response) => {
+            console.log("web push response", response);
+          })
           .catch((error) => {
             console.error("error in web push");
             console.error(error, web_push_subscription, title, body, img);
