@@ -29,17 +29,20 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   if (!user) {
     throw redirect("/app/connexion?type=compte-existant");
   }
+  const formData = await request.formData();
   const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/user/${user.id}`, {
     method: "POST",
     credentials: "include",
-    body: await request.formData(),
+    body: formData,
     headers: {
       Accept: "application/json",
     },
   }).then((response) => response.json());
   if (response.ok && response.data?.id) {
     await setCacheItem("user", response.data);
-    return redirect("/app/tableau-de-bord");
+  }
+  if (formData.has("_redirect")) {
+    return redirect(formData.get("_redirect") as string);
   }
   return response;
 }

@@ -88,9 +88,5 @@ export async function action(args: ActionFunctionArgs) {
     });
   }
 
-  if (formData.has("_redirect")) {
-    return redirect(formData.get("_redirect") as string);
-  }
-
   return json({ ok: true, data: savedUser, error: null });
 }
