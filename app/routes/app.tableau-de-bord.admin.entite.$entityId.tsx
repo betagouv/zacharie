@@ -312,7 +312,7 @@ function UserWorkingWithOrFor({ relation, potentialUsers, fetcherKey }: WorkingW
                     entity_id: entity.id,
                     relation,
                     _action: "delete",
-                    route: `/action/user-entity/${entity.id}`,
+                    route: `/api/action/user-entity/${entity.id}`,
                   },
                   {
                     method: "POST",

@@ -49,7 +49,7 @@ if (process.env.NODE_ENV === "production") {
   // );
   // it must be defined in the vite.config.ts file
   // if not, there will be the following error:
-  /* Access to fetch at 'http://localhost:3233/loader/me' from origin 'http://localhost:3232' has been blocked by CORS policy: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. */
+  /* Access to fetch at 'http://localhost:3233/api/loader/me' from origin 'http://localhost:3232' has been blocked by CORS policy: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. */
   // if you put it, there will be the following error:
   /* Access to fetch at 'http://localhost:3233/action/connexion' from origin 'http://localhost:3232' has been blocked by CORS policy: The 'Access-Control-Allow-Origin' header contains multiple values 'http://localhost:3232, http://localhost:3232', but only one is allowed. Have the server send the header with a valid value, or, if an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled. */
 }

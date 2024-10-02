@@ -66,8 +66,11 @@ export default function SelectPremierDetenteur() {
       </nextOwnerFetcher.Form>
       {!fei.fei_next_owner_user_id && (
         <>
-          <searchUserFetcher.Form className="fr-fieldset__element flex w-full flex-row items-end gap-4" method="POST">
-            <input type="hidden" name="route" value="/action/trouver-premier-detenteur" />
+          <searchUserFetcher.Form
+            className="fr-fieldset__element relative flex w-full flex-row items-end gap-4"
+            method="POST"
+          >
+            <input type="hidden" name="route" value="/api/action/trouver-premier-detenteur" />
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             <Input
               label="...ou saisissez l'email du Premier Détenteur si vous ne le trouvez pas"
@@ -80,6 +83,11 @@ export default function SelectPremierDetenteur() {
               }}
             />
             <Button type="submit">Envoyer</Button>
+            <div className="absolute inset-0 z-50 flex items-end bg-white/70">
+              <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
+                ✋ ❌ Cette fonctionnalité n'existe pas encore sans connexion internet.
+              </p>
+            </div>
           </searchUserFetcher.Form>
           {searchUserFetcher.data?.error === "L'utilisateur n'existe pas" && (
             <Alert

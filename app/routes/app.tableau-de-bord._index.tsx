@@ -48,7 +48,7 @@ export async function clientLoader() {
     const doneData = (await responseDone.json()) as FeisDoneLoaderData;
 
     // we call myRelations here because
-    // even if the data is not used here (it's used within a FEI, so in /loader/fei/$fei_numero)
+    // even if the data is not used here (it's used within a FEI, so in /api/loader/fei/$fei_numero)
     // we want to cache the data before the user goes to the FEI page
     // for the offline mode to work properly
     fetch(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`, {

@@ -46,7 +46,7 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
     throw redirect("/app/connexion?type=compte-existant");
   }
   const carcasseData = (await fetch(
-    `${import.meta.env.VITE_API_URL}/loader/${params.fei_numero}/${params.numero_bracelet}`,
+    `${import.meta.env.VITE_API_URL}/api/loader/${params.fei_numero}/${params.numero_bracelet}`,
     {
       method: "GET",
       credentials: "include",

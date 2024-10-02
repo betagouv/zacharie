@@ -104,7 +104,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
       />
       {canEdit && (
         <intermediaireCarcasseFetcher.Form method="POST" id={`intermediaire-carcasse-${carcasse.id}`}>
-          <input type="hidden" name="route" value="/action/carcasse-suivi" />
+          <input type="hidden" name="route" value="/api/action/carcasse-suivi" />
           <input
             form={`intermediaire-carcasse-${carcasse.id}`}
             type="hidden"

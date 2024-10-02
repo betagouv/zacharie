@@ -401,7 +401,7 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
                       entity_id: entity.id,
                       relation: relation,
                       _action: "delete",
-                      route: `/action/user-entity/${entity.id}`,
+                      route: `/api/action/user-entity/${entity.id}`,
                     },
                     {
                       method: "POST",
