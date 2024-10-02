@@ -94,6 +94,15 @@ async function handleFetchRequest(request: Request): Promise<Response> {
       if (response.ok) {
         const cache = await caches.open(CACHE_NAME);
         cache.put(request, response.clone());
+        if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/loader/fei`)) {
+          const feiResponseCloned = response.clone();
+          const feiData = await feiResponseCloned?.json();
+          // Calculate the badge count
+          const badgeCount = (feiData?.feisUnderMyResponsability?.length || 0) + (feiData?.feisToTake?.length || 0);
+          if (navigator.setAppBadge) {
+            navigator.setAppBadge(badgeCount);
+          }
+        }
       }
       return response;
     } catch (error) {
@@ -110,7 +119,8 @@ async function handleFetchRequest(request: Request): Promise<Response> {
   if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/loader/fei/`)) {
     const allFeisCache = await caches.match(new Request(`${import.meta.env.VITE_API_URL}/api/loader/fei`));
     if (allFeisCache) {
-      const allFeisData = await allFeisCache.json();
+      const allFeisCacheCloned = allFeisCache.clone();
+      const allFeisData = await allFeisCacheCloned.json();
       const feiNumero = request.url.split("/").pop() as string;
       const specificFei = findFeiInAllFeisData(allFeisData, feiNumero);
 
@@ -361,20 +371,36 @@ PUSH NOTIFICATIONS
 
 
 */
-
 self.addEventListener("push", (event: PushEvent) => {
-  const options: NotificationOptions = {
-    body: event.data?.text() ?? "No payload",
-    icon: "/pwa-192x192.png",
-    badge: "/pwa-64x64.png",
-  };
-
   event.waitUntil(
-    Promise.all([
-      self.registration.showNotification("Zacharie Notification", options),
-      fetchAllFeis("PUSH_NOTIFICATION"),
-      processOfflineQueue("PUSH_NOTIFICATION"),
-    ]),
+    (async () => {
+      const data = event.data?.json() ?? {
+        title: "Zacharie Notification",
+        body: "No payload",
+        img: "/pwa-192x192.png",
+      };
+
+      // Fetch all FEIs first
+      await fetchAllFeis("PUSH_NOTIFICATION");
+
+      // Get the cached FEI data
+      const cache = await caches.open(CACHE_NAME);
+      const feiResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
+      const feiResponseCloned = feiResponse?.clone();
+      const feiData = await feiResponseCloned?.json();
+
+      // Calculate the badge count
+      const badgeCount = (feiData?.feisUnderMyResponsability?.length || 0) + (feiData?.feisToTake?.length || 0);
+
+      const options: NotificationOptions = {
+        body: data.body,
+        icon: data.img || "/favicon.svg",
+        badge: badgeCount,
+      };
+
+      await self.registration.showNotification(data.title, options);
+      await processOfflineQueue("PUSH_NOTIFICATION");
+    })(),
   );
 });
 

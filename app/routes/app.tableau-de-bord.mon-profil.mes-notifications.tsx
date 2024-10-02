@@ -13,7 +13,7 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { UserNotifications, UserRoles } from "@prisma/client";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
-import { usePush } from "~/sw/notifications";
+import { usePush } from "~/sw/web-push-notifications";
 import { setCacheItem } from "~/services/indexed-db.client";
 
 export function meta() {
