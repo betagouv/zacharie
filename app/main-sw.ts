@@ -308,9 +308,25 @@ async function processOfflineQueue(processingFrom: string) {
 async function addOfflineFeiToCache(offlineFei: ReturnType<typeof formatFeiOfflineQueue>) {
   console.log("Adding offline FEI to cache");
   const cache = await caches.open(CACHE_NAME);
+
+  await cache.put(
+    `${import.meta.env.VITE_API_URL}/api/loader/fei/${offlineFei.numero}`,
+    new Response(
+      JSON.stringify({
+        ok: true,
+        data: {
+          fei: offlineFei,
+        },
+        error: "",
+      }),
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    ),
+  );
+
   console.log("Fetching all FEIs from cache");
   const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
-
   if (allFeisResponse) {
     console.log("All FEIs data found in cache");
     const allFeisResponseClone = allFeisResponse.clone();
