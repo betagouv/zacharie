@@ -72,3 +72,11 @@ export function formatNouvelleFeiOfflineQueue(fei: Fei, examinateur: User): FeiB
     FeiCurrentUser: examinateur,
   };
 }
+
+export function formatPremierDetenteurFeiOfflineQueue(fei: FeiByNumero): FeiByNumero {
+  const baseFei = offlineNullFei();
+  return {
+    ...baseFei,
+    id: Date.now(),
+  };
+}

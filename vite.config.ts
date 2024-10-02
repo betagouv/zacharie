@@ -84,6 +84,9 @@ export default defineConfig(({ mode }) => {
           globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
           maximumFileSizeToCacheInBytes: 100 * 1024 * 1024,
           // injectionPoint: undefined,
+          rollupFormat: "es",
+          swDest: "build-spa/client/main-sw.js",
+          swSrc: "build-spa/client/main-sw.mjs",
         },
         devOptions: {
           enabled: true,
@@ -137,6 +140,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         ".prisma/client/index-browser": "./node_modules/.prisma/client/index-browser.js",
+        "~": "/app",
       },
     },
     worker: {
