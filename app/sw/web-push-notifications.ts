@@ -162,7 +162,7 @@ export const usePush = (): PushObject => {
   }, []);
 
   useEffect(() => {
-    if (swRegistration) {
+    if (swRegistration?.pushManager) {
       swRegistration.pushManager.getSubscription().then((subscription) => {
         setIsSubscribed(!!subscription);
         setPushSubscription(subscription);
