@@ -7,7 +7,6 @@ import {
   type ClientActionFunctionArgs,
   type ClientLoaderFunctionArgs,
 } from "@remix-run/react";
-import { setFeiToCache } from "~/utils/caches";
 import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
 import { UserRoles } from "@prisma/client";
 import FEIPremierDetenteur from "./premier-detenteur";
@@ -46,10 +45,6 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
       Accept: "application/json",
     },
   }).then((response) => response.json())) as FeiActionData;
-  if (response.ok && response.data?.id) {
-    const fei = response.data;
-    setFeiToCache(fei);
-  }
   return response;
 }
 
@@ -66,6 +61,8 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
       "Content-Type": "application/json",
     }),
   }).then((res) => res.json())) as FeiLoaderData;
+
+  console.log("loaderData", loaderData);
 
   const myRelationsData = (await fetch(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`, {
     method: "GET",

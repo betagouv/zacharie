@@ -18,7 +18,7 @@ export async function setFeiToCache(fei: Fei) {
 
 export async function setFeisToCache(lastestServerData: FeisLoaderData) {
   const latestFeis: CachedFeis = {};
-  const { feisUnderMyResponsability, feisToTake, feisOngoing, feisDone } = lastestServerData;
+  const { feisUnderMyResponsability, feisToTake, feisOngoing } = lastestServerData;
   for (const fei of feisUnderMyResponsability) {
     latestFeis[fei.numero] = fei;
   }
@@ -26,9 +26,6 @@ export async function setFeisToCache(lastestServerData: FeisLoaderData) {
     latestFeis[fei.numero] = fei;
   }
   for (const fei of feisOngoing) {
-    latestFeis[fei.numero] = fei;
-  }
-  for (const fei of feisDone) {
     latestFeis[fei.numero] = fei;
   }
   const feis = (await getCacheItem("feis")) as CachedFeis | undefined;

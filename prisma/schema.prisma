@@ -108,7 +108,7 @@ model Entity {
   FeiSviEntity           Fei[]                   @relation("FeiSviEntity")
   FeiIntermediaireEntity FeiIntermediaire[]      @relation("FeiIntermediaireEntity")
   CarcasseIntermediaire  CarcasseIntermediaire[] @relation("CarcasseIntermediaireEntity")
-  CoupledEntity          Entity?                 @relation("CoupledEntity", fields: [coupled_entity_id], references: [id])
+  CoupledEntity          Entity?                 @relation("CoupledEntity", fields: [coupled_entity_id], references: [id], onDelete: Cascade)
   CoupledEntity_opposite Entity?                 @relation("CoupledEntity")
 }
 
@@ -211,16 +211,16 @@ model Fei {
   updated_at                                              DateTime                @default(now()) @updatedAt
   deleted_at                                              DateTime?
   Carcasses                                               Carcasse[]
-  FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id])
-  FeiDetenteurInitialUser                                 User?                   @relation("FeiDetenteurInitialUser", fields: [premier_detenteur_user_id], references: [id])
-  FeiExaminateurInitialUser                               User?                   @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id])
-  FeiDepotEntity                                          Entity?                 @relation("FeiDepotEntity", fields: [premier_detenteur_depot_entity_id], references: [id])
-  FeiSviEntity                                            Entity?                 @relation("FeiSviEntity", fields: [svi_entity_id], references: [id])
-  FeiSviUser                                              User?                   @relation("FeiSviUser", fields: [svi_user_id], references: [id])
+  FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade)
+  FeiDetenteurInitialUser                                 User?                   @relation("FeiDetenteurInitialUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade)
+  FeiExaminateurInitialUser                               User?                   @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id], onDelete: Cascade)
+  FeiDepotEntity                                          Entity?                 @relation("FeiDepotEntity", fields: [premier_detenteur_depot_entity_id], references: [id], onDelete: Cascade)
+  FeiSviEntity                                            Entity?                 @relation("FeiSviEntity", fields: [svi_entity_id], references: [id], onDelete: Cascade)
+  FeiSviUser                                              User?                   @relation("FeiSviUser", fields: [svi_user_id], references: [id], onDelete: Cascade)
   FeiIntermediaires                                       FeiIntermediaire[]
-  FeiCurrentUser                                          User?                   @relation("FeiCurrentUser", fields: [fei_current_owner_user_id], references: [id])
-  FeiCurrentEntity                                        Entity?                 @relation("FeiCurrentEntity", fields: [fei_current_owner_entity_id], references: [id])
-  FeiNextEntity                                           Entity?                 @relation("FeiNextEntity", fields: [fei_next_owner_entity_id], references: [id])
+  FeiCurrentUser                                          User?                   @relation("FeiCurrentUser", fields: [fei_current_owner_user_id], references: [id], onDelete: Cascade)
+  FeiCurrentEntity                                        Entity?                 @relation("FeiCurrentEntity", fields: [fei_current_owner_entity_id], references: [id], onDelete: Cascade)
+  FeiNextEntity                                           Entity?                 @relation("FeiNextEntity", fields: [fei_next_owner_entity_id], references: [id], onDelete: Cascade)
   CarcasseIntermediaire                                   CarcasseIntermediaire[]
 
   @@index([created_by_user_id])
@@ -263,7 +263,7 @@ model Carcasse {
   deleted_at                                    DateTime?
   Fei                                           Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade)
   FeiIntermediairesCarcasse                     FeiIntermediaire[]      @relation("FeiIntermediairesCarcasse")
-  FeiIntermediaireCarcasseRefus                 FeiIntermediaire?       @relation("FeiIntermediaireCarcasseRefus", fields: [intermediaire_carcasse_refus_intermediaire_id], references: [id])
+  FeiIntermediaireCarcasseRefus                 FeiIntermediaire?       @relation("FeiIntermediaireCarcasseRefus", fields: [intermediaire_carcasse_refus_intermediaire_id], references: [id], onDelete: Cascade)
   CarcasseIntermediaire                         CarcasseIntermediaire[]
 
   @@index([fei_numero, numero_bracelet])
@@ -282,9 +282,9 @@ model FeiIntermediaire {
   created_at                     DateTime                @default(now())
   updated_at                     DateTime                @default(now()) @updatedAt
   deleted_at                     DateTime?
-  Fei                            Fei                     @relation(fields: [fei_numero], references: [numero])
-  FeiIntermediaireUser           User                    @relation("FeiIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id])
-  FeiIntermediaireEntity         Entity                  @relation("FeiIntermediaireEntity", fields: [fei_intermediaire_entity_id], references: [id])
+  Fei                            Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade)
+  FeiIntermediaireUser           User                    @relation("FeiIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id], onDelete: Cascade)
+  FeiIntermediaireEntity         Entity                  @relation("FeiIntermediaireEntity", fields: [fei_intermediaire_entity_id], references: [id], onDelete: Cascade)
   FeiIntermediairesCarcasses     Carcasse[]              @relation("FeiIntermediairesCarcasse")
   FeiIntermediaireCarcassesRefus Carcasse[]              @relation("FeiIntermediaireCarcasseRefus")
   CarcasseIntermediaire          CarcasseIntermediaire[] @relation("FeiIntermediaireCarcasseIntermediaire")
@@ -308,11 +308,11 @@ model CarcasseIntermediaire {
   created_at                             DateTime         @default(now())
   updated_at                             DateTime         @default(now()) @updatedAt
   deleted_at                             DateTime?
-  CarcasseIntermediaireFei               Fei              @relation(fields: [fei_numero], references: [numero])
-  CarcasseCarcasseIntermediaire          Carcasse         @relation(fields: [numero_bracelet], references: [numero_bracelet])
-  CarcasseIntermediaireUser              User             @relation("CarcasseIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id])
-  CarcasseIntermediaireEntity            Entity           @relation("CarcasseIntermediaireEntity", fields: [fei_intermediaire_entity_id], references: [id])
-  CarcasseIntermediaireFeiIntermediaire  FeiIntermediaire @relation("FeiIntermediaireCarcasseIntermediaire", fields: [fei_intermediaire_id], references: [id])
+  CarcasseIntermediaireFei               Fei              @relation(fields: [fei_numero], references: [numero], onDelete: Cascade)
+  CarcasseCarcasseIntermediaire          Carcasse         @relation(fields: [numero_bracelet], references: [numero_bracelet], onDelete: Cascade)
+  CarcasseIntermediaireUser              User             @relation("CarcasseIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id], onDelete: Cascade)
+  CarcasseIntermediaireEntity            Entity           @relation("CarcasseIntermediaireEntity", fields: [fei_intermediaire_entity_id], references: [id], onDelete: Cascade)
+  CarcasseIntermediaireFeiIntermediaire  FeiIntermediaire @relation("FeiIntermediaireCarcasseIntermediaire", fields: [fei_intermediaire_id], references: [id], onDelete: Cascade)
 
   @@index([fei_numero__bracelet__intermediaire_id])
 }

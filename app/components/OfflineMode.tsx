@@ -4,15 +4,13 @@ export function useIsOnline(callback?: () => void) {
   const [isOnline, setIsOnline] = useState(true);
   useEffect(() => {
     function handleOnline() {
-      navigator.serviceWorker?.controller?.postMessage("manualSync");
-      console.log("IS FUCKING ONLINE");
+      navigator.serviceWorker?.controller?.postMessage("SW_MESSAGE_BACK_TO_ONLINE");
       setIsOnline(true);
       if (callback) {
         callback();
       }
     }
     function handleOffline() {
-      console.log("IS FUCKING OFFLINE");
       setIsOnline(false);
     }
     setIsOnline(navigator.onLine);

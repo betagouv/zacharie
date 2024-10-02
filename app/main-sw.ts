@@ -1,8 +1,19 @@
 // sw.ts
 /// <reference lib="webworker" />
+import { formatNouvelleFeiOfflineQueue } from "~/db/fei.client";
+import type { Fei } from "@prisma/client";
+import { createStore, set, get, del, keys } from "idb-keyval";
 
 const CACHE_NAME = "zacharie-pwa-cache-v1";
 const previousCacheNames = ["zacharie-pwa-cache-v0"];
+
+/*
+
+CACHE ALL ASSETS TO NAVIGATE OFFLINE
+
+
+
+*/
 
 declare interface PrecacheEntry {
   integrity?: string;
@@ -13,8 +24,6 @@ declare let self: ServiceWorkerGlobalScope;
 
 // This array will be populated at build time with the list of all assets in build-spa/client
 const ASSETS_TO_CACHE: Array<PrecacheEntry | string> = self.__WB_MANIFEST || [];
-
-console.log({ ASSETS_TO_CACHE });
 
 self.addEventListener("install", (event: ExtendableEvent) => {
   event.waitUntil(
@@ -53,11 +62,32 @@ self.addEventListener("activate", (event: ExtendableEvent) => {
   );
 });
 
+/*
+
+HANDLE GET REQUESTS TO PUT IN CACHE TO USE OFFLINE TOO
+AND HANDLE POST REQUESTS TO QUEUE WHEN OFFLINE
+
+*/
+
 self.addEventListener("fetch", (event: FetchEvent) => {
-  event.respondWith(handleFetchRequest(event.request));
+  if (event.request.method === "POST") {
+    console.log("AIAIAIAIE POST REQUEST", event.request.url);
+    event.respondWith(handlePostRequest(event.request));
+  } else {
+    event.respondWith(handleFetchRequest(event.request));
+  }
 });
 
+/*
+
+HANDLE GET REQUESTS
+
+*/
+
 async function handleFetchRequest(request: Request): Promise<Response> {
+  if (request.method !== "GET") {
+    return fetch(request);
+  }
   if (navigator.onLine) {
     try {
       const response = await fetch(request);
@@ -98,6 +128,7 @@ async function handleFetchRequest(request: Request): Promise<Response> {
   });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function findFeiInAllFeisData(allFeisData: any, feiNumero: string) {
   const allFeis = [
     ...allFeisData.feisUnderMyResponsability,
@@ -108,7 +139,11 @@ function findFeiInAllFeisData(allFeisData: any, feiNumero: string) {
   return allFeis.find((fei) => fei.numero === feiNumero);
 }
 
-async function fetchAllFeis() {
+async function fetchAllFeis(calledFrom: string) {
+  if (!navigator.onLine) {
+    return;
+  }
+  console.log("fetchAllFeis called from", calledFrom);
   const cache = await caches.open(CACHE_NAME);
   const response = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
   if (response.ok) {
@@ -117,12 +152,159 @@ async function fetchAllFeis() {
   return response;
 }
 
+/*
+
+HANDLE POST REQUESTS
+
+*/
+async function handlePostRequest(request: Request): Promise<Response> {
+  if (navigator.onLine) {
+    try {
+      const response = await fetch(request);
+      return response;
+    } catch (error) {
+      console.error("POST request failed; queueing for later", error);
+    }
+  }
+
+  console.log("POST request received while offline; queueing for later");
+  await queuePostRequest(request);
+  console.log("Request queued for later execution");
+  // Handle FEI creation when offline
+  if (request.url.includes("/api/action/fei/nouvelle")) {
+    console.log("Handling offline FEI creation");
+    const clonedRequest = request.clone();
+    const formData = await clonedRequest.formData();
+    const feiData = Object.fromEntries(formData) as unknown as Fei;
+
+    const cache = await caches.open(CACHE_NAME);
+    const userResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/me`);
+    if (userResponse) {
+      // Clone the response before parsing JSON
+      const userResponseClone = userResponse.clone();
+      let userData;
+      try {
+        userData = await userResponseClone.json();
+      } catch (error) {
+        console.error("Failed to parse user data from cache", error);
+        return new Response(JSON.stringify({ error: "Failed to parse user data" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      const offlineFei = formatNouvelleFeiOfflineQueue(feiData, userData);
+      await addOfflineFeiToCache(offlineFei);
+
+      return new Response(JSON.stringify({ ok: true, data: offlineFei }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } else {
+      console.error("User data not found in cache");
+      return new Response(JSON.stringify({ error: "User data not available offline" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  return new Response(JSON.stringify(QueuedResponse), {
+    status: 202,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+const store = createStore("OfflineQueue", "requests");
+
+interface SerializedRequest {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body: string;
+  timestamp: number;
+}
+
+async function queuePostRequest(request: Request) {
+  const clonedRequest = request.clone();
+  const bodyText = await clonedRequest.text();
+
+  const serialized: SerializedRequest = {
+    url: clonedRequest.url,
+    method: clonedRequest.method,
+    headers: Object.fromEntries(clonedRequest.headers),
+    body: bodyText,
+    timestamp: Date.now(),
+  };
+
+  await set(serialized.timestamp.toString(), serialized, store);
+  console.log("Request queued", serialized);
+}
+
+async function processOfflineQueue(processingFrom: string) {
+  console.log("Processing offline queue from", processingFrom);
+
+  const allKeys = await keys(store);
+  for (const key of allKeys) {
+    const request = (await get(key, store)) as SerializedRequest;
+    if (!request) {
+      continue;
+    }
+
+    try {
+      const response = await fetch(
+        new Request(request.url, {
+          method: request.method,
+          headers: request.headers,
+          body: request.body,
+        }),
+      );
+
+      if (response.ok) {
+        await del(key, store);
+        console.log("Processed and removed request", request.url);
+      } else {
+        console.error("Failed to process request", request.url, response.status);
+      }
+    } catch (error) {
+      console.error("Error processing request", request.url, error);
+    }
+  }
+
+  console.log("Finished processing offline queue");
+}
+
+async function addOfflineFeiToCache(offlineFei: ReturnType<typeof formatNouvelleFeiOfflineQueue>) {
+  const cache = await caches.open(CACHE_NAME);
+  const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
+
+  if (allFeisResponse) {
+    const allFeisData = await allFeisResponse.json();
+    allFeisData.feisUnderMyResponsability.push(offlineFei);
+
+    await cache.put(
+      `${import.meta.env.VITE_API_URL}/api/loader/fei`,
+      new Response(JSON.stringify(allFeisData), {
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+  }
+}
+
+/*
+
+
+BRIDGE BETWEEN SERVICE WORKER AND CLIENT
+
+
+*/
+
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
   if (event.data === "skipWaiting") {
     self.skipWaiting();
   }
 
-  if (event.data === "clearCache") {
+  if (event.data === "SW_MESSAGE_CLEAR_CACHE") {
     for (const _cache_name of [CACHE_NAME, ...previousCacheNames]) {
       caches.delete(_cache_name).then(() => {
         console.log("Cache cleared");
@@ -130,15 +312,25 @@ self.addEventListener("message", (event: ExtendableMessageEvent) => {
     }
   }
 
-  if (event.data === "manualSync") {
-    console.log("Manual sync triggered");
-    event.waitUntil(fetchAllFeis());
+  if (event.data === "SW_MESSAGE_BACK_TO_ONLINE") {
+    console.log("back to online triggered");
+    event.waitUntil(
+      Promise.all([fetchAllFeis("SW_MESSAGE_BACK_TO_ONLINE"), processOfflineQueue("SW_MESSAGE_BACK_TO_ONLINE")]),
+    );
   }
 
   if (event.data.type === "TABLEAU_DE_BORD_OPEN") {
-    event.waitUntil(handleAppOpen());
+    event.waitUntil(Promise.all([fetchAllFeis("TABLEAU_DE_BORD_OPEN"), processOfflineQueue("TABLEAU_DE_BORD_OPEN")]));
   }
 });
+
+/*
+
+
+PUSH NOTIFICATIONS
+
+
+*/
 
 self.addEventListener("push", (event: PushEvent) => {
   const options: NotificationOptions = {
@@ -147,13 +339,13 @@ self.addEventListener("push", (event: PushEvent) => {
     badge: "/pwa-64x64.png",
   };
 
-  event.waitUntil(Promise.all([self.registration.showNotification("Zacharie Notification", options), fetchAllFeis()]));
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification("Zacharie Notification", options),
+      fetchAllFeis("PUSH_NOTIFICATION"),
+      processOfflineQueue("PUSH_NOTIFICATION"),
+    ]),
+  );
 });
-
-async function handleAppOpen() {
-  if (navigator.onLine) {
-    await fetchAllFeis();
-  }
-}
 
 export {};

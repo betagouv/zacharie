@@ -3,13 +3,13 @@ import { useLocation } from "@remix-run/react";
 import { type MainNavigationProps } from "@codegouvfr/react-dsfr/MainNavigation";
 import { useUser } from "./useUser";
 import { clearCache } from "~/services/indexed-db.client";
-import { useLatestVersion } from "./useLatestVersion";
+// import { useLatestVersion } from "./useLatestVersion";
 
 export default function useNavigationMenu() {
   const location = useLocation();
   const user = useUser();
-  const latestVersion = useLatestVersion();
-  const clientLatestVersion = __VITE_BUILD_ID__;
+  // const latestVersion = useLatestVersion();
+  // const clientLatestVersion = __VITE_BUILD_ID__;
 
   const handleLogout = async () => {
     fetch(`${import.meta.env.VITE_API_URL}/api/action/user/logout`, {
@@ -167,9 +167,6 @@ export default function useNavigationMenu() {
       ],
     });
   }
-
-  console.log("latestVersion", latestVersion);
-  console.log("clientLatestVersion", clientLatestVersion);
 
   // if (latestVersion !== clientLatestVersion) {
   navigationBase.push({

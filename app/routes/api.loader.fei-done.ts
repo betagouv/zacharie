@@ -11,9 +11,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json(
       {
         user: null,
-        feisUnderMyResponsability: [],
-        feisToTake: [],
-        feisOngoing: [],
         feisDone: [],
         latestVersion: __VITE_BUILD_ID__,
       },
@@ -35,6 +32,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       fei_current_owner_role: true,
       fei_next_owner_role: true,
       commune_mise_a_mort: true,
+      svi_signed_at: true,
     },
     orderBy: {
       updated_at: "desc",

@@ -14,7 +14,7 @@ export async function registerServiceWorker() {
         newWorker?.addEventListener("statechange", () => {
           if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
             // New version available
-            if (confirm("A new version is available. Update now?")) {
+            if (confirm("Une nouvelle version est disponible. Mettre à jour maintenant ?")) {
               newWorker.postMessage({ type: "SKIP_WAITING" });
               window.location.reload();
             }
@@ -26,13 +26,6 @@ export async function registerServiceWorker() {
     }
   } else {
     console.log("ServiceWorker not supported");
-  }
-}
-// ... rest of the file remains the same
-export function clearCache() {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.controller?.postMessage("clearCache");
-    window.location.reload();
   }
 }
 

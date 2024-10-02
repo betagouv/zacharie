@@ -7,7 +7,6 @@ import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma, UserRoles } from "@prisma/client";
 import UserNotEditable from "~/components/UserNotEditable";
 import type { FeiNouvelleActionData } from "~/routes/api.action.fei.nouvelle";
-import { setFeiToCache } from "~/utils/caches";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
@@ -16,18 +15,24 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
     throw redirect("/app/connexion?type=compte-existant");
   }
 
+  const formData = await request.formData();
+  console.log("fei route formdata", Object.fromEntries(formData.entries()));
+
   const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/action/fei/nouvelle`, {
     method: "POST",
     credentials: "include",
-    body: await request.formData(),
+    body: formData,
     headers: {
       Accept: "application/json",
     },
-  }).then((response) => response.json())) as FeiNouvelleActionData;
+  }).then((response) => response.json())) as FeiNouvelleActionData | typeof QueuedResponse;
+  console.log("response", response);
   if (response.ok && response.data?.numero) {
     const fei = response.data;
-    setFeiToCache(fei);
     return redirect(`/app/tableau-de-bord/fei/${fei.numero}`);
+  }
+  if (response.error === "queued") {
+    return redirect(`/app/tableau-de-bord/fei/${formData.get(Prisma.FeiScalarFieldEnum.numero)}`);
   }
   return response;
 }
@@ -64,7 +69,7 @@ export default function NouvelleFEI() {
                   <input
                     type="hidden"
                     name={Prisma.FeiScalarFieldEnum.numero}
-                    value={`ZACH-FEI-${dayjs().format("YYYYMMDD")}-${user.id}-${dayjs().format("HHmm")}`}
+                    value={`ZACH-FEI-${dayjs().format("YYYYMMDD")}-${user.id}-${dayjs().format("HHmmss")}`}
                   />
                   <div className="fr-fieldset__element">
                     <Input

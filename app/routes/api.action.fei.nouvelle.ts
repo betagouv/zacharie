@@ -6,7 +6,7 @@ import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { getFeiByNumero } from "~/db/fei.server";
 
 export async function action(args: ActionFunctionArgs) {
-  const { request, params } = args;
+  const { request } = args;
   const user = await getUserFromCookie(request);
   if (!user?.roles?.includes(UserRoles.EXAMINATEUR_INITIAL)) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });

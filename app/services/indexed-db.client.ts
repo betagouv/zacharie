@@ -45,7 +45,9 @@ export async function clearCache(calledFrom = "not defined", iteration = 0) {
   const localStorageEmpty = window.localStorage.length === 0;
   // const sessionStorageEmpty = window.sessionStorage.length === 0;
   const indexedDBEmpty = customStore ? (await keys(customStore)).length === 0 : true;
-
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.controller?.postMessage("SW_MESSAGE_CLEAR_CACHE");
+  }
   // If the cache is not empty, try again
   return new Promise((resolve) => {
     // if (localStorageEmpty && sessionStorageEmpty && indexedDBEmpty) {
