@@ -14,11 +14,20 @@ export async function action(args: ActionFunctionArgs) {
 
   const feiNumero = params.fei_numero;
   const formData = await request.formData();
-  const existingFei = await prisma.fei.findUnique({
+  let existingFei = await prisma.fei.findUnique({
     where: { numero: feiNumero },
   });
   if (!existingFei) {
-    return json({ ok: false, data: null, error: "FEI not found" }, { status: 404 });
+    existingFei = await prisma.fei.create({
+      data: {
+        numero: feiNumero!,
+        FeiCreatedByUser: {
+          connect: {
+            id: user.id,
+          },
+        },
+      },
+    });
   }
   const nextFei: Prisma.FeiUpdateInput = {};
 

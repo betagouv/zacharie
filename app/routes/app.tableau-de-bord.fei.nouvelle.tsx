@@ -16,23 +16,24 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   }
 
   const formData = await request.formData();
+  const feiNumero = `ZACH-FEI-${dayjs().format("YYYYMMDD")}-${user.id}-${dayjs().format("HHmmss")}`;
+  formData.append(Prisma.FeiScalarFieldEnum.numero, feiNumero);
+  formData.append(Prisma.FeiScalarFieldEnum.manually_updated_at, new Date().toISOString());
+
   console.log("fei route formdata", Object.fromEntries(formData.entries()));
 
-  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/action/fei/nouvelle`, {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/action/fei/${feiNumero}`, {
     method: "POST",
     credentials: "include",
     body: formData,
     headers: {
       Accept: "application/json",
     },
-  }).then((response) => response.json())) as FeiNouvelleActionData | typeof QueuedResponse;
+  }).then((response) => response.json())) as FeiNouvelleActionData;
   console.log("response", response);
   if (response.ok && response.data?.numero) {
     const fei = response.data;
     return redirect(`/app/tableau-de-bord/fei/${fei.numero}`);
-  }
-  if (response.error === "queued") {
-    return redirect(`/app/tableau-de-bord/fei/${formData.get(Prisma.FeiScalarFieldEnum.numero)}`);
   }
   return response;
 }
@@ -66,11 +67,6 @@ export default function NouvelleFEI() {
                 <div className="mb-8">
                   <h2 className="fr-h3 fr-mb-2w">Examinateur Initial</h2>
                   <input type="hidden" name={Prisma.FeiScalarFieldEnum.examinateur_initial_user_id} value={user.id} />
-                  <input
-                    type="hidden"
-                    name={Prisma.FeiScalarFieldEnum.numero}
-                    value={`ZACH-FEI-${dayjs().format("YYYYMMDD")}-${user.id}-${dayjs().format("HHmmss")}`}
-                  />
                   <div className="fr-fieldset__element">
                     <Input
                       label="Date de mise à mort et d'éviscération"

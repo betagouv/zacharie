@@ -209,6 +209,7 @@ model Fei {
   svi_signed_at                                           DateTime?
   created_at                                              DateTime                @default(now())
   updated_at                                              DateTime                @default(now()) @updatedAt
+  manually_updated_at                                     DateTime?
   deleted_at                                              DateTime?
   Carcasses                                               Carcasse[]
   FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade)

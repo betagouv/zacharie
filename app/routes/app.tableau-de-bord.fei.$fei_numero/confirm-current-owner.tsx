@@ -53,6 +53,7 @@ export default function ConfirmCurrentOwner() {
       formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
     }
     formData.append("route", `/api/action/fei/${fei.numero}`);
+    formData.append(Prisma.FeiScalarFieldEnum.manually_updated_at, new Date().toISOString());
     fetcher.submit(formData, {
       method: "POST",
       preventScrollReset: true, // Prevent scroll reset on submission
@@ -115,6 +116,7 @@ export default function ConfirmCurrentOwner() {
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
             formData.append("route", `/api/action/fei/${fei.numero}`);
+            formData.append(Prisma.FeiScalarFieldEnum.manually_updated_at, new Date().toISOString());
             fetcher.submit(formData, {
               method: "POST",
               preventScrollReset: true, // Prevent scroll reset on submission
