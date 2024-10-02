@@ -5,5 +5,5 @@ export default defineConfig({
     preset: "2023",
   },
   preset,
-  images: ["public/zacharie-logo.png"],
+  images: ["public/zacharie-logo-square.svg"],
 });
