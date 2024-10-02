@@ -6,6 +6,7 @@ import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { UserNotifications, UserRoles } from "@prisma/client";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
+import { usePush } from "~/sw/web-push-notifications";
 
 export function meta() {
   return [
@@ -29,17 +30,7 @@ export default function MesNotifications() {
   const navigate = useNavigate();
 
   const tokenFetcher = useFetcher({ key: "notifications-token" });
-  const {
-    // subscribeToPush,
-    canSendPush,
-    isSubscribed,
-    pushSubscription,
-  } = {
-    canSendPush: false,
-    isSubscribed: false,
-    pushSubscription: null,
-    // subscribeToPush: () => {},
-  };
+  const { subscribeToPush, canSendPush, isSubscribed, pushSubscription } = usePush();
 
   const checkBoxChecked =
     canSendPush &&
@@ -87,7 +78,7 @@ export default function MesNotifications() {
                         name: "notifications",
                         value: UserNotifications.PUSH,
                         defaultChecked: checkBoxChecked,
-                        disabled: !canSendPush,
+                        // disabled: !canSendPush,
                         onClick: () => {
                           subscribeToPush(
                             window.ENV.VAPID_PUBLIC_KEY,

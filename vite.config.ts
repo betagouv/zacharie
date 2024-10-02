@@ -9,7 +9,7 @@ installGlobals();
 
 const { RemixVitePWAPlugin, RemixPWAPreset } = RemixVitePWA();
 
-const buildId = JSON.stringify(new Date().toISOString().split("T")[0] + "-v4");
+const buildId = JSON.stringify(new Date().toISOString().split("T")[0] + "-v0");
 process.env.VITE_BUILD_ID = buildId;
 
 export default defineConfig(({ mode }) => {
@@ -55,6 +55,9 @@ export default defineConfig(({ mode }) => {
         org: "betagouv",
         project: "zacharie-remix",
         url: "https://sentry.incubateur.net/",
+        release: {
+          name: buildId,
+        },
         disable: mode === "development",
         sourcemaps: {
           filesToDeleteAfterUpload: ["./build-spa/**/*.js.map", "./build-spa/*.mjs.map"],
