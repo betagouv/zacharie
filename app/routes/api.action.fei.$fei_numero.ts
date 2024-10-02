@@ -247,7 +247,7 @@ export async function action(args: ActionFunctionArgs) {
 
   const fei = await getFeiByNumero(savedFei.numero);
 
-  if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
+  if (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
     const nextOwnerId = formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) as string;
     if (nextOwnerId !== user.id) {
       const nextOwner = await prisma.user.findUnique({ where: { id: nextOwnerId } });
@@ -267,7 +267,7 @@ export async function action(args: ActionFunctionArgs) {
     }
   }
 
-  if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
+  if (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
     const usersWorkingForEntity = (
       await prisma.entityRelations.findMany({
         where: {
