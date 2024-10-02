@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { clientLoader } from "./route";
@@ -8,9 +8,11 @@ import type { SerializeFrom } from "@remix-run/node";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
 import { action as searchUserAction } from "~/routes/api.action.trouver-premier-detenteur";
+import { useIsOnline } from "~/components/OfflineMode";
 
 export default function SelectPremierDetenteur() {
   const { user, detenteursInitiaux, fei } = useLoaderData<typeof clientLoader>();
+  const isOnline = useIsOnline();
   const nextOwnerSelectLabel = "Sélectionnez le Premier Détenteur de pour cette FEI";
 
   const nextOwnerName = useMemo(() => {
@@ -22,6 +24,7 @@ export default function SelectPremierDetenteur() {
 
   const nextOwnerFetcher = useFetcher({ key: "select-next-owner" });
   const searchUserFetcher = useFetcher<typeof searchUserAction>({ key: "search-user" });
+  const [nextValue, setNextValue] = useState(fei.fei_next_owner_user_id ?? "");
 
   if (user.id !== fei.fei_current_owner_user_id) {
     return null;
@@ -51,7 +54,10 @@ export default function SelectPremierDetenteur() {
             key={fei.fei_next_owner_user_id ?? "no-choice-yet"}
             nativeSelectProps={{
               name: Prisma.FeiScalarFieldEnum.fei_next_owner_user_id,
-              defaultValue: fei.fei_next_owner_user_id ?? "",
+              value: nextValue,
+              onChange: (event) => {
+                setNextValue(event.target.value);
+              },
             }}
           >
             <option value="">{nextOwnerSelectLabel}</option>
@@ -59,9 +65,12 @@ export default function SelectPremierDetenteur() {
               return <NextOwnerOption key={potentielOwner.id} potentielOwner={potentielOwner} user={user} />;
             })}
           </Select>
-          <Button className="mt-2" type="submit">
-            Envoyer
-          </Button>
+          {!nextValue ||
+            (nextValue !== fei.fei_next_owner_user_id && (
+              <Button className="mt-2" type="submit" disabled={!nextValue}>
+                Envoyer
+              </Button>
+            ))}
         </div>
       </nextOwnerFetcher.Form>
       {!fei.fei_next_owner_user_id && (
@@ -83,11 +92,13 @@ export default function SelectPremierDetenteur() {
               }}
             />
             <Button type="submit">Envoyer</Button>
-            <div className="absolute inset-0 z-50 flex items-end bg-white/70">
-              <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
-                ✋ ❌ Cette fonctionnalité n'existe pas encore sans connexion internet.
-              </p>
-            </div>
+            {!isOnline && (
+              <div className="absolute inset-0 z-50 flex items-end bg-white/70">
+                <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
+                  ✋ ❌ Cette fonctionnalité n'existe pas encore sans connexion internet.
+                </p>
+              </div>
+            )}
           </searchUserFetcher.Form>
           {searchUserFetcher.data?.error === "L'utilisateur n'existe pas" && (
             <Alert

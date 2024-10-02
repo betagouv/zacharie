@@ -2,6 +2,7 @@ import { Prisma, UserRelationType, UserRoles } from "@prisma/client";
 import { type ActionFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
+import sendNotificationToUser from "~/services/notifications.server";
 
 export async function action(args: ActionFunctionArgs) {
   const { request } = args;
@@ -63,6 +64,14 @@ export async function action(args: ActionFunctionArgs) {
       fei_next_owner_user_id: nextPremierDetenteur.id,
     },
   });
+
+  if (nextPremierDetenteur.id !== user.id) {
+    sendNotificationToUser({
+      user: nextPremierDetenteur!,
+      title: "Vous avez une nouvelle FEI à traiter",
+      body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
+    });
+  }
 
   return json({ ok: true, data: nextPremierDetenteur, error: null });
 }

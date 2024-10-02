@@ -82,7 +82,8 @@ export default function SelectNextOwner() {
 
   const nextOwnerFetcher = useFetcher({ key: "select-next-owner" });
 
-  const nextOwnerDefaultValue = useMemo(() => {
+  const savedNextOwner = nextOwnerIsUser ? fei.fei_next_owner_user_id : fei.fei_next_owner_entity_id;
+  const [nextOwnerValue, setNextOwnerValue] = useState(() => {
     const savedNextOwner = nextOwnerIsUser ? fei.fei_next_owner_user_id : fei.fei_next_owner_entity_id;
     if (savedNextOwner) {
       return savedNextOwner;
@@ -91,13 +92,7 @@ export default function SelectNextOwner() {
       return fei.premier_detenteur_depot_entity_id ?? "";
     }
     return "";
-  }, [
-    fei.fei_current_owner_role,
-    fei.fei_next_owner_entity_id,
-    fei.fei_next_owner_user_id,
-    fei.premier_detenteur_depot_entity_id,
-    nextOwnerIsUser,
-  ]);
+  });
 
   const showIntermediaires = useMemo(() => {
     if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
@@ -205,7 +200,8 @@ export default function SelectNextOwner() {
                   name: nextOwnerIsUser
                     ? Prisma.FeiScalarFieldEnum.fei_next_owner_user_id
                     : Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id,
-                  defaultValue: nextOwnerDefaultValue,
+                  value: nextOwnerValue,
+                  onChange: (e) => setNextOwnerValue(e.target.value),
                 }}
               >
                 <option value="">{nextOwnerSelectLabel}</option>
@@ -239,9 +235,11 @@ export default function SelectNextOwner() {
                   );
                 })}
               </Select>
-              <Button type="submit" className="mt-2">
-                Envoyer
-              </Button>
+              {(!nextOwnerValue || nextOwnerValue !== savedNextOwner) && (
+                <Button type="submit" className="mt-2" disabled={!nextOwnerValue}>
+                  Envoyer
+                </Button>
+              )}
             </div>
           </>
         )}

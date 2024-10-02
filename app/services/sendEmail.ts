@@ -16,12 +16,12 @@ export function sendEmail({
   return fetch("https://api.tipimail.com/v1/messages/send", {
     method: "POST",
     headers: {
-      "X-Tipimail-ApiUser": process.env.TIPIMAIL_API_USER!,
-      "X-Tipimail-ApiKey": process.env.TIPIMAIL_API_KEY!,
+      "X-Tipimail-ApiUser": import.meta.env.VITE_TIPIMAIL_API_USER!,
+      "X-Tipimail-ApiKey": import.meta.env.VITE_TIPIMAIL_API_KEY!,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      apiKey: process.env.TIPIMAIL_API_KEY,
+      apiKey: import.meta.env.VITE_TIPIMAIL_API_KEY!,
       to: emails.map((address) => ({ address })),
       msg: {
         from: {

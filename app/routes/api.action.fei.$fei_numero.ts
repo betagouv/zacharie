@@ -248,14 +248,15 @@ export async function action(args: ActionFunctionArgs) {
   const fei = await getFeiByNumero(savedFei.numero);
 
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
-    const nextOwner = await prisma.user.findUnique({
-      where: { id: formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) as string },
-    });
-    sendNotificationToUser({
-      user: nextOwner!,
-      title: "Vous avez une nouvelle FEI à traiter",
-      body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
-    });
+    const nextOwnerId = formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) as string;
+    if (nextOwnerId !== user.id) {
+      const nextOwner = await prisma.user.findUnique({ where: { id: nextOwnerId } });
+      sendNotificationToUser({
+        user: nextOwner!,
+        title: "Vous avez une nouvelle FEI à traiter",
+        body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
+      });
+    }
   }
 
   if (formData.has("_redirect")) {

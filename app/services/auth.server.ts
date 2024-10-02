@@ -10,7 +10,7 @@ export const { getSession, commitSession, destroySession } = createCookieSession
   cookie: {
     name: `Zacharie_session`,
     // domain: process.env.NODE_ENV === "production" ? "zacharie.beta.gouv.fr" : "localhost:3232",
-    secrets: [process.env.SECRET ?? "not-so-secret"],
+    secrets: [import.meta.env.VITE_SECRET ?? "not-so-secret"],
     sameSite: "none",
     path: "/",
     maxAge: sessionExpirationTime / 1000,
