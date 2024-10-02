@@ -272,6 +272,7 @@ async function processOfflineQueue(processingFrom: string) {
       const response = await fetch(
         new Request(request.url, {
           method: request.method,
+          credentials: "include",
           headers: request.headers,
           body: request.body,
         }),
