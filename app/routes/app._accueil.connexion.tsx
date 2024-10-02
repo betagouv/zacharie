@@ -1,12 +1,5 @@
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import {
-  Link,
-  useActionData,
-  useFetcher,
-  useSearchParams,
-  redirect,
-  type ClientActionFunctionArgs,
-} from "@remix-run/react";
+import { json, Link, useFetcher, useSearchParams, redirect, type ClientActionFunctionArgs } from "@remix-run/react";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import type { ConnexionActionData } from "~/routes/api.action.connexion";
 import { setCacheItem } from "~/services/indexed-db.client";
@@ -24,13 +17,16 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
       Accept: "application/json",
     },
   }).then((response) => response.json())) as ConnexionActionData;
+  console.log("response", response);
   if (response.ok && response.data?.id) {
     const user = response.data;
     setCacheItem("user", user);
+    console.log("redirecting");
     throw redirect(getUserOnboardingRoute(user) ?? "/app/tableau-de-bord");
   }
   setCacheItem("user", null);
-  return response;
+  console.log("should return action data");
+  return json(response);
 }
 
 export async function clientLoader() {
@@ -42,18 +38,19 @@ export async function clientLoader() {
 }
 
 export default function Connexion() {
-  const data = useActionData<{ ok: boolean; error: string }>();
   const [searchParams] = useSearchParams();
   const connexionType = (searchParams.get("type") as ConnexionType) || "compte-existant";
-  const connexionFetcher = useFetcher({ key: "connexion" });
+  const connexionFetcher = useFetcher<typeof clientAction>({ key: "connexion" });
+  const actionData = connexionFetcher.data;
 
   // Helper function to safely access error message
   const getErrorMessage = (field: string): string => {
-    if (typeof data === "object" && data !== null && "error" in data) {
-      return data.error.includes(field) ? data.error : "";
+    if (typeof actionData === "object" && actionData !== null && "error" in actionData) {
+      return actionData.error!.includes(field) ? actionData.error! : "";
     }
     return "";
   };
+
   return (
     <main role="main" id="content">
       <div className="fr-container fr-container--fluid fr-my-md-14v">
