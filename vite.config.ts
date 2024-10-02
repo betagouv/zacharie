@@ -134,11 +134,12 @@ export default defineConfig(({ mode }) => {
           });
         },
       },
-    ].filter(Boolean),
+    ],
     build: {
       sourcemap: true,
       chunkSizeWarningLimit: 100000,
       emptyOutDir: true,
+      rollupOptions: isSpaMode ? undefined : { external: ["virtual:pwa-info"] },
     },
     resolve: {
       alias: {
