@@ -52,7 +52,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   const admin = await getMostFreshUser();
   if (!admin?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect("/app/connexion?type=compte-existant");
+    throw redirect(`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`);
   }
   const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/loader/utilisateur/${params.userId}`, {
     method: "GET",

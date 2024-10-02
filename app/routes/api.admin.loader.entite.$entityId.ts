@@ -7,7 +7,7 @@ import type { ExtractLoaderData } from "~/services/extract-loader-data";
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const admin = await getUserFromCookie(request);
   if (!admin?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect("/app/connexion?type=compte-existant");
+    throw redirect(`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`);
   }
   const entity = await prisma.entity.findUnique({
     where: {

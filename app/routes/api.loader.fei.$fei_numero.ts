@@ -6,7 +6,7 @@ import { getFeiByNumero, type FeiByNumero } from "~/db/fei.server";
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
-    throw redirect("/app/connexion?type=compte-existant");
+    throw redirect(`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`);
   }
   const fei = (await getFeiByNumero(params.fei_numero as string)) as FeiByNumero;
   if (!fei) {

@@ -8,7 +8,7 @@ import createUserId from "~/utils/createUserId.server";
 export async function action({ request }: ActionFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect("/app/connexion?type=compte-existant");
+    throw redirect(`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`);
   }
 
   const formData = await request.formData();

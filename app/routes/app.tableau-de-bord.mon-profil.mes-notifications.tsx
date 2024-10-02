@@ -27,7 +27,7 @@ export function meta() {
 export async function clientAction({ request }: ClientActionFunctionArgs) {
   const user = await getMostFreshUser();
   if (!user) {
-    throw redirect("/app/connexion?type=compte-existant");
+    throw redirect(`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`);
   }
   const formData = await request.formData();
   const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/user/${user.id}`, {
@@ -50,7 +50,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 export async function clientLoader() {
   const user = await getMostFreshUser();
   if (!user) {
-    throw redirect("/app/connexion?type=compte-existant");
+    throw redirect(`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`);
   }
   return json({ user, VAPID_PUBLIC_KEY: import.meta.env.VITE_VAPID_PUBLIC_KEY as string });
 }
