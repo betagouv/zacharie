@@ -23,10 +23,10 @@ export const getUserFromCookie = async (
   request: Request,
   { failureRedirect = "/app/connexion?type=compte-existant", optional = false, debug = false } = {},
 ) => {
-  if (process.env.NODE_ENV === "development") {
-    // because ios cookie in dev not working
-    return JSON.parse(import.meta.env.VITE_COOKIE_USER) as User;
-  }
+  // if (process.env.NODE_ENV === "development") {
+  //   // because ios cookie in dev not working
+  //   return JSON.parse(import.meta.env.VITE_COOKIE_USER) as User;
+  // }
   const userId = await getUserIdFromCookie(request, { optional: true });
   if (debug) console.log("get userid from cookie", userId);
   if (!userId) {

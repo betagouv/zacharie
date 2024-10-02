@@ -25,6 +25,7 @@ export type PushObject = {
   subscribeToPush: (
     publicKey: string,
     callback?: (subscription: PushSubscription) => void,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     errorCallback?: (error: any) => void,
   ) => void;
   /**
@@ -71,6 +72,7 @@ export const usePush = (): PushObject => {
   const subscribeToPush = (
     publicKey: string,
     callback?: (subscription: PushSubscription) => void,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     errorCallback?: (error: any) => void,
   ) => {
     if (swRegistration === null) {
@@ -94,6 +96,7 @@ export const usePush = (): PushObject => {
       );
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const unsubscribeFromPush = (callback?: () => void, errorCallback?: (error: any) => void) => {
     if (swRegistration === null) {
       return;

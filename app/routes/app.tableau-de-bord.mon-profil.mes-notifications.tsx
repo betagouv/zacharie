@@ -1,5 +1,12 @@
 import { useMemo } from "react";
-import { json, redirect, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
+import {
+  json,
+  redirect,
+  useFetcher,
+  useLoaderData,
+  useNavigate,
+  type ClientActionFunctionArgs,
+} from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Stepper } from "@codegouvfr/react-dsfr/Stepper";
@@ -7,6 +14,7 @@ import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { UserNotifications, UserRoles } from "@prisma/client";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 import { usePush } from "~/sw/web-push-notifications";
+import { setCacheItem } from "~/services/indexed-db.client";
 
 export function meta() {
   return [
@@ -16,27 +24,50 @@ export function meta() {
   ];
 }
 
+export async function clientAction({ request }: ClientActionFunctionArgs) {
+  const user = await getMostFreshUser();
+  if (!user) {
+    throw redirect("/app/connexion?type=compte-existant");
+  }
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/user/${user.id}`, {
+    method: "POST",
+    credentials: "include",
+    body: await request.formData(),
+    headers: {
+      Accept: "application/json",
+    },
+  }).then((response) => response.json());
+  if (response.ok && response.data?.id) {
+    await setCacheItem("user", response.data);
+    return redirect("/app/tableau-de-bord");
+  }
+  return response;
+}
+
 export async function clientLoader() {
   const user = await getMostFreshUser();
   if (!user) {
     throw redirect("/app/connexion?type=compte-existant");
   }
-  return json({ user });
+  return json({ user, VAPID_PUBLIC_KEY: import.meta.env.VITE_VAPID_PUBLIC_KEY as string });
 }
 
 export default function MesNotifications() {
-  const { user } = useLoaderData<typeof clientLoader>();
+  const { user, VAPID_PUBLIC_KEY } = useLoaderData<typeof clientLoader>();
   const fetcher = useFetcher({ key: "mon-profil-mes-notifications" });
   const navigate = useNavigate();
 
   const tokenFetcher = useFetcher({ key: "notifications-token" });
-  const { subscribeToPush, canSendPush, isSubscribed, pushSubscription } = usePush();
+  const { subscribeToPush, canSendPush, isSubscribed, pushSubscription, pushAvailable } = usePush();
 
-  const checkBoxChecked =
-    canSendPush &&
-    isSubscribed &&
-    !!pushSubscription &&
-    user.web_push_tokens.includes(JSON.stringify(pushSubscription));
+  const checkBoxChecked = useMemo(() => {
+    return (
+      canSendPush &&
+      isSubscribed &&
+      !!pushSubscription &&
+      !!user?.web_push_tokens?.find((token) => JSON.parse(token)?.endpoint === pushSubscription?.endpoint)
+    );
+  }, [canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
 
   const skipCCG = useMemo(() => {
     if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
@@ -52,7 +83,7 @@ export default function MesNotifications() {
   const stepCount = skipCCG ? 3 : 4;
 
   return (
-    <fetcher.Form id="user_roles_form" method="POST" action={`/action/user/${user.id}`}>
+    <fetcher.Form id="user_roles_form" method="POST">
       <input type="hidden" name="_redirect" value="/app/tableau-de-bord/" />
       <input type="hidden" name="onboarding_finished" value="true" />
       <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -67,29 +98,29 @@ export default function MesNotifications() {
             <div className="mb-6 bg-white md:shadow">
               <div className="p-4 pb-32 md:p-8 md:pb-0">
                 <Checkbox
+                  key={checkBoxChecked ? "checked" : "unchecked"}
                   legend="Sélectionnez tous les types de notifications que vous souhaitez recevoir"
                   options={[
                     {
                       label: "Notification via Zacharie",
-                      hintText: !canSendPush
+                      hintText: pushAvailable
                         ? "Notification directement sur cet appareil"
                         : "Vous devriez installer l'application sur un appareil compatible pour activer les notifications.",
                       nativeInputProps: {
                         name: "notifications",
                         value: UserNotifications.PUSH,
                         defaultChecked: checkBoxChecked,
-                        // disabled: !canSendPush,
+                        disabled: !pushAvailable,
                         onClick: () => {
                           subscribeToPush(
-                            window.ENV.VAPID_PUBLIC_KEY,
+                            VAPID_PUBLIC_KEY,
                             (subscription) => {
                               tokenFetcher.submit(
                                 {
-                                  web_push_token: JSON.stringify(subscription),
+                                  web_push_token: JSON.stringify(subscription.toJSON()),
                                 },
                                 {
                                   method: "POST",
-                                  action: `/action/user/${user.id}`,
                                   preventScrollReset: true,
                                 },
                               );
