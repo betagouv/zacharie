@@ -152,7 +152,7 @@ export default function TableauDeBordIndex() {
                   }))}
               />
             ) : (
-              <p className="my-8">Pas de FEI assignée</p>
+              <p className="m-8">Pas de FEI assignée</p>
             )}
             <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
               <ButtonsGroup
@@ -197,7 +197,7 @@ export default function TableauDeBordIndex() {
                   }))}
               />
             ) : (
-              <p className="my-8">Pas de FEI en cours</p>
+              <p className="m-8">Pas de FEI en cours</p>
             )}
             <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
               <ButtonsGroup
@@ -246,7 +246,7 @@ export default function TableauDeBordIndex() {
                 />
               ) : (
                 <>
-                  <p className="my-8">Pas encore de FEI archivée</p>
+                  <p className="m-8">Pas encore de FEI archivée</p>
                 </>
               )}
             </div>

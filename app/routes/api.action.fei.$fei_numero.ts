@@ -1,4 +1,4 @@
-import { EntityRelationType, Prisma, UserRoles } from "@prisma/client";
+import { EntityRelationType, Prisma, UserRoles, type User } from "@prisma/client";
 import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { getFeiByNumero } from "~/db/fei.server";
 import { prisma } from "~/db/prisma.server";
@@ -256,6 +256,53 @@ export async function action(args: ActionFunctionArgs) {
         title: "Vous avez une nouvelle FEI à traiter",
         body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
       });
+    }
+    if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwnerId) {
+      const exNextOwner = await prisma.user.findUnique({ where: { id: existingFei.fei_next_owner_user_id } });
+      sendNotificationToUser({
+        user: exNextOwner!,
+        title: "Une FEI ne vous est plus attribuée",
+        body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une nouvelle FEI, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+      });
+    }
+  }
+
+  if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
+    const usersWorkingForEntity = (
+      await prisma.entityRelations.findMany({
+        where: {
+          entity_id: formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id) as string,
+        },
+        include: {
+          UserRelatedWithEntity: {
+            select: {
+              id: true,
+              web_push_tokens: true,
+              notifications: true,
+              prenom: true,
+              nom_de_famille: true,
+              email: true,
+            },
+          },
+        },
+      })
+    ).map((relation) => relation.UserRelatedWithEntity);
+    for (const nextOwner of usersWorkingForEntity) {
+      if (nextOwner.id !== user.id) {
+        sendNotificationToUser({
+          user: nextOwner as User,
+          title: "Vous avez une nouvelle FEI à traiter",
+          body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
+        });
+      }
+      if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwner.id) {
+        const exNextOwner = await prisma.user.findUnique({ where: { id: existingFei.fei_next_owner_user_id } });
+        sendNotificationToUser({
+          user: exNextOwner!,
+          title: "Une FEI ne vous est plus attribuée",
+          body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une nouvelle FEI, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+        });
+      }
     }
   }
 
