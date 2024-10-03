@@ -18,7 +18,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
           // @ts-expect-error we dont type this json
           <Notice
             className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
-            key={carcasse.id}
+            key={carcasse.numero_bracelet}
             style={style}
             isClosable={canEdit}
             onClose={() => {

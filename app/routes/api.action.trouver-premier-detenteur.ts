@@ -70,6 +70,7 @@ export async function action(args: ActionFunctionArgs) {
       user: nextPremierDetenteur!,
       title: "Vous avez une nouvelle FEI à traiter",
       body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
+      email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI, la ${fei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
     });
   }
 

@@ -256,6 +256,7 @@ export async function action(args: ActionFunctionArgs) {
         user: nextOwner!,
         title: "Vous avez une nouvelle FEI à traiter",
         body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
+        email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI, la ${fei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
       });
     } else if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwnerId) {
       console.log("need to send notification remove FEI");
@@ -263,7 +264,8 @@ export async function action(args: ActionFunctionArgs) {
       sendNotificationToUser({
         user: exNextOwner!,
         title: "Une FEI ne vous est plus attribuée",
-        body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une nouvelle FEI, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+        body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une FEI, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+        email: `${user.prenom} ${user.nom_de_famille} vous avait attribué la FEI ${fei?.numero}, mais elle a finalement été attribuée à quelqu'un d'autre.`,
       });
     } else {
       console.log("no need to send notification");
@@ -296,6 +298,7 @@ export async function action(args: ActionFunctionArgs) {
           user: nextOwner as User,
           title: "Vous avez une nouvelle FEI à traiter",
           body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
+          email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI, la ${fei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
         });
       }
       if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwner.id) {
@@ -303,7 +306,8 @@ export async function action(args: ActionFunctionArgs) {
         sendNotificationToUser({
           user: exNextOwner!,
           title: "Une FEI ne vous est plus attribuée",
-          body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une nouvelle FEI, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+          body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une FEI, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+          email: `${user.prenom} ${user.nom_de_famille} vous avait attribué la FEI ${fei?.numero}, mais elle a finalement été attribuée à quelqu'un d'autre.`,
         });
       }
     }

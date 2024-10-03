@@ -151,18 +151,7 @@ export default function SelectNextOwner() {
 
   return (
     <>
-      <nextOwnerFetcher.Form
-        id="select-next-owner"
-        preventScrollReset
-        method="POST"
-        onSubmit={(event) => {
-          const formData = new FormData(event.currentTarget);
-          nextOwnerFetcher.submit(formData, {
-            method: "POST",
-            preventScrollReset: true, // Prevent scroll reset on submission
-          });
-        }}
-      >
+      <nextOwnerFetcher.Form id="select-next-owner" preventScrollReset method="POST">
         <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
         <input type="hidden" name="step" value={"fei_action_next_role" satisfies FeiAction} />
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />

@@ -22,7 +22,7 @@ export default function SelectPremierDetenteur() {
     return `${nextOwner?.prenom} ${nextOwner?.nom_de_famille}`;
   }, [detenteursInitiaux, fei.fei_next_owner_user_id]);
 
-  const nextOwnerFetcher = useFetcher({ key: "select-next-owner" });
+  const nextOwnerFetcher = useFetcher({ key: "select-next-premier-detenteur" });
   const searchUserFetcher = useFetcher<typeof searchUserAction>({ key: "search-user" });
   const [nextValue, setNextValue] = useState(fei.fei_next_owner_user_id ?? "");
 
@@ -32,19 +32,7 @@ export default function SelectPremierDetenteur() {
 
   return (
     <>
-      <nextOwnerFetcher.Form
-        id="select-next-owner"
-        preventScrollReset
-        method="POST"
-        onSubmit={(event) => {
-          const formData = new FormData(event.currentTarget);
-          formData.append("route", `/api/action/fei/${fei.numero}`);
-          nextOwnerFetcher.submit(formData, {
-            method: "POST",
-            preventScrollReset: true, // Prevent scroll reset on submission
-          });
-        }}
-      >
+      <nextOwnerFetcher.Form id="select-next-owner" preventScrollReset method="POST">
         <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <div className="fr-fieldset__element grow">

@@ -12,6 +12,9 @@ export async function action(args: ActionFunctionArgs) {
 
   const { intermediaire_id } = params;
   const formData = await request.formData();
+  if (!intermediaire_id) {
+    return json({ ok: false, data: null, error: "L'identifiant de l'intermédiaire est obligatoire" }, { status: 400 });
+  }
 
   console.log("formData action.fei-intermediaire.$intermedaire_id", Object.fromEntries(formData));
 

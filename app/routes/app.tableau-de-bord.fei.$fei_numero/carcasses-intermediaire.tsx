@@ -25,7 +25,7 @@ export default function CarcassesIntermediaire({
     <>
       {carcasses.map((carcasse, index, array) => {
         return (
-          <Fragment key={carcasse.id}>
+          <Fragment key={carcasse.numero_bracelet}>
             <CarcasseAVerifier canEdit={canEdit} carcasse={carcasse} />
             {index < array.length - 1 && <hr />}
           </Fragment>
@@ -42,7 +42,7 @@ interface CarcasseAVerifierProps {
 
 function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
   const { fei } = useLoaderData<typeof clientLoader>();
-  const intermediaireCarcasseFetcher = useFetcher({ key: `intermediaire-carcasse-${carcasse.id}` });
+  const intermediaireCarcasseFetcher = useFetcher({ key: `intermediaire-carcasse-${carcasse.numero_bracelet}` });
   const intermediaire = fei.FeiIntermediaires[0];
   const intermediaireCarcasse = intermediaire.CarcasseIntermediaire.find(
     (_intermediaireCarcasse) => _intermediaireCarcasse.numero_bracelet === carcasse.numero_bracelet,
@@ -51,10 +51,10 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
   const [showRefuser, setShowRefuser] = useState(!!intermediaireCarcasse?.refus);
   const [refus, setRefus] = useState(intermediaireCarcasse?.refus ?? "");
   return (
-    <Fragment key={carcasse.id}>
+    <Fragment key={carcasse.numero_bracelet}>
       <Notice
         className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\_\_title]:!block [&_p.fr-notice\_\_title]:before:hidden"
-        key={carcasse.id}
+        key={carcasse.numero_bracelet}
         style={style}
         title={
           <span className="w-full !border-none !bg-none text-left !no-underline !shadow-none [&_*]:no-underline [&_*]:hover:no-underline">
@@ -103,36 +103,36 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
         }
       />
       {canEdit && (
-        <intermediaireCarcasseFetcher.Form method="POST" id={`intermediaire-carcasse-${carcasse.id}`}>
+        <intermediaireCarcasseFetcher.Form method="POST" id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}>
           <input type="hidden" name="route" value="/api/action/carcasse-suivi" />
           <input
-            form={`intermediaire-carcasse-${carcasse.id}`}
+            form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
             type="hidden"
             name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_numero}
             value={fei.numero}
           />
           <input
             type="hidden"
-            form={`intermediaire-carcasse-${carcasse.id}`}
+            form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
             name={Prisma.CarcasseIntermediaireScalarFieldEnum.numero_bracelet}
             value={carcasse.numero_bracelet}
           />
           <input
             type="hidden"
-            form={`intermediaire-carcasse-${carcasse.id}`}
+            form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
             name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_intermediaire_id}
             value={intermediaire.id}
           />
           {!showRefuser ? (
             <>
               <input
-                form={`intermediaire-carcasse-${carcasse.id}`}
+                form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
                 type="hidden"
                 name={Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge}
                 value="true"
               />
               <input
-                form={`intermediaire-carcasse-${carcasse.id}`}
+                form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
                 type="hidden"
                 name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
                 value=""
@@ -144,7 +144,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                   textArea
                   nativeTextAreaProps={{
                     name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
-                    form: `intermediaire-carcasse-${carcasse.id}`,
+                    form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
                     defaultValue: intermediaireCarcasse?.commentaire || "",
                   }}
                 />
@@ -168,7 +168,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                             children: "Accepter",
                             type: "submit",
                             nativeButtonProps: {
-                              form: `intermediaire-carcasse-${carcasse.id}`,
+                              form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
                             },
                           },
                           {
@@ -186,13 +186,13 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
           ) : (
             <>
               <input
-                form={`intermediaire-carcasse-${carcasse.id}`}
+                form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
                 type="hidden"
                 name={Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge}
                 value="false"
               />
               <input
-                form={`intermediaire-carcasse-${carcasse.id}`}
+                form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
                 type="hidden"
                 name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
                 value={refus}
@@ -216,7 +216,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                   textArea
                   nativeTextAreaProps={{
                     name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
-                    form: `intermediaire-carcasse-${carcasse.id}`,
+                    form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
                     defaultValue: intermediaireCarcasse?.commentaire || "",
                   }}
                 />
@@ -240,7 +240,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                             children: "Refuser",
                             type: "submit",
                             nativeButtonProps: {
-                              form: `intermediaire-carcasse-${carcasse.id}`,
+                              form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
                             },
                           },
                           {

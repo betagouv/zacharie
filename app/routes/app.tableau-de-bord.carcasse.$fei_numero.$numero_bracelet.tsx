@@ -199,7 +199,8 @@ export default function CarcasseReadAndWrite() {
               id="carcasse-edit-form"
               method="POST"
               ref={numeroFormRef}
-              onSubmit={() => {
+              onSubmit={(e) => {
+                e.preventDefault();
                 const formData = new FormData(numeroFormRef.current!);
                 formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
                 numeroFetcher.submit(formData, {
@@ -488,7 +489,8 @@ export default function CarcasseReadAndWrite() {
                     className="p-4 pb-8 md:p-8 md:pb-4"
                     method="POST"
                     ref={noAnomalieFormRef}
-                    onSubmit={() => {
+                    onSubmit={(e) => {
+                      e.preventDefault();
                       const formData = new FormData(noAnomalieFormRef.current!);
                       formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
                       noAnomalieFetcher.submit(formData, {

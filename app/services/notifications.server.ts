@@ -7,6 +7,7 @@ type WebPushNotification = {
   user: User;
   body: string;
   title: string;
+  email: string;
   img?: string;
 };
 
@@ -14,6 +15,7 @@ export default async function sendNotificationToUser({
   user,
   body,
   title,
+  email,
   img = "https://zacharie.beta.gouv.fr/favicon.svg",
 }: WebPushNotification) {
   if (user.notifications.includes(UserNotifications.PUSH)) {
@@ -52,19 +54,19 @@ export default async function sendNotificationToUser({
     //   data: { badge_count: { increment: 1 } },
     // });
   }
+  console.log(user.notifications);
   if (user.notifications.includes(UserNotifications.EMAIL)) {
     console.log("SENDING EMAIL NOTIFICATION", user.id);
     sendEmail({
       emails: import.meta.env.DEV ? ["arnaud@ambroselli.io"] : [user.email!],
       subject: title,
-      text: body,
-      html: body,
-      from: "Zacharie <contact@zacharie.beta.gouv.fr>",
+      text: email,
+      html: email,
     }).catch((error) => {
       console.error("error in send email");
       console.error(error);
       Sentry.captureException(error, {
-        extra: { user, body, title, img },
+        extra: { user, body, email, title, img },
       });
     });
   }

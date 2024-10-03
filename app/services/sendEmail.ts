@@ -36,6 +36,7 @@ export function sendEmail({
     }),
   })
     .then((response) => response.json())
+    .then(console.log)
     .catch((error) => {
       console.error("Error sending email", error);
     });

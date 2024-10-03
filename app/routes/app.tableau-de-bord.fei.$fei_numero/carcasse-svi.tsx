@@ -24,7 +24,7 @@ export default function CarcassesSvi({
   return (
     <>
       {carcasses.map((carcasse) => {
-        return <CarcasseAVerifier canEdit={canEdit} key={carcasse.id} carcasse={carcasse} />;
+        return <CarcasseAVerifier canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
       })}
     </>
   );
@@ -37,15 +37,15 @@ interface CarcasseAVerifierProps {
 
 function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
   const { fei } = useLoaderData<typeof clientLoader>();
-  const sviCarcasseFetcher = useFetcher({ key: `svi-carcasse-${carcasse.id}` });
+  const sviCarcasseFetcher = useFetcher({ key: `svi-carcasse-${carcasse.numero_bracelet}` });
 
   const [showSaisir, setShowSaisir] = useState(!!carcasse?.svi_carcasse_saisie);
   const [motifsSaisie, setMotifsSaisie] = useState(carcasse?.svi_carcasse_saisie_motif ?? []);
   return (
-    <Fragment key={carcasse.id}>
+    <Fragment key={carcasse.numero_bracelet}>
       <Notice
         className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\_\_title]:!block [&_p.fr-notice\_\_title]:before:hidden"
-        key={carcasse.id}
+        key={carcasse.numero_bracelet}
         style={style}
         title={
           <span className="w-full !border-none !bg-none text-left !no-underline !shadow-none [&_*]:no-underline [&_*]:hover:no-underline">
@@ -123,24 +123,24 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
         }
       />
       {canEdit && (
-        <sviCarcasseFetcher.Form method="POST" id={`svi-carcasse-${carcasse.id}`}>
+        <sviCarcasseFetcher.Form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`}>
           <input type="hidden" name="route" value={`/api/action/carcasse/${carcasse.numero_bracelet}`} />
           <input
-            form={`svi-carcasse-${carcasse.id}`}
+            form={`svi-carcasse-${carcasse.numero_bracelet}`}
             type="hidden"
             name={Prisma.CarcasseScalarFieldEnum.fei_numero}
             value={fei.numero}
           />
           <input
             type="hidden"
-            form={`svi-carcasse-${carcasse.id}`}
+            form={`svi-carcasse-${carcasse.numero_bracelet}`}
             name={Prisma.CarcasseScalarFieldEnum.numero_bracelet}
             value={carcasse.numero_bracelet}
           />
           {!showSaisir ? (
             <>
               <input
-                form={`svi-carcasse-${carcasse.id}`}
+                form={`svi-carcasse-${carcasse.numero_bracelet}`}
                 type="hidden"
                 name={Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie}
                 value="false"
@@ -152,7 +152,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                   textArea
                   nativeTextAreaProps={{
                     name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire,
-                    form: `svi-carcasse-${carcasse.id}`,
+                    form: `svi-carcasse-${carcasse.numero_bracelet}`,
                     defaultValue: carcasse?.svi_carcasse_commentaire || "",
                   }}
                 />
@@ -164,7 +164,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                       children: "Accepter",
                       type: "submit",
                       nativeButtonProps: {
-                        form: `svi-carcasse-${carcasse.id}`,
+                        form: `svi-carcasse-${carcasse.numero_bracelet}`,
                         name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at,
                         suppressHydrationWarning: true,
                         value: dayjs().toISOString(),
@@ -185,7 +185,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
           ) : (
             <>
               <input
-                form={`svi-carcasse-${carcasse.id}`}
+                form={`svi-carcasse-${carcasse.numero_bracelet}`}
                 type="hidden"
                 name={Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie}
                 value="true"
@@ -194,7 +194,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                 return (
                   <input
                     key={motifSaisie + index}
-                    form={`svi-carcasse-${carcasse.id}`}
+                    form={`svi-carcasse-${carcasse.numero_bracelet}`}
                     type="hidden"
                     required
                     name={Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif}
@@ -222,7 +222,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                   textArea
                   nativeTextAreaProps={{
                     name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire,
-                    form: `svi-carcasse-${carcasse.id}`,
+                    form: `svi-carcasse-${carcasse.numero_bracelet}`,
                     defaultValue: carcasse?.svi_carcasse_commentaire || "",
                   }}
                 />
@@ -234,7 +234,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                       children: "Saisir",
                       type: "submit",
                       nativeButtonProps: {
-                        form: `svi-carcasse-${carcasse.id}`,
+                        form: `svi-carcasse-${carcasse.numero_bracelet}`,
                         name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at,
                         suppressHydrationWarning: true,
                         value: dayjs().toISOString(),
