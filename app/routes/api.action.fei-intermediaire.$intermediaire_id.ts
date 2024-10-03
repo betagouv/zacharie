@@ -4,14 +4,16 @@ import { Prisma, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 
 export async function action(args: ActionFunctionArgs) {
-  const { request } = args;
+  const { request, params } = args;
   const user = await getUserFromCookie(request);
   if (!user) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
+
+  const { intermediaire_id } = params;
   const formData = await request.formData();
 
-  console.log("formData action.fei-intermediaire.nouveau", Object.fromEntries(formData));
+  console.log("formData action.fei-intermediaire.$intermedaire_id", Object.fromEntries(formData));
 
   const fei_numero = formData.get(Prisma.FeiIntermediaireScalarFieldEnum.fei_numero) as string;
   if (!fei_numero) {
@@ -28,6 +30,7 @@ export async function action(args: ActionFunctionArgs) {
 
   const newFeiIntermediaire = await prisma.feiIntermediaire.create({
     data: {
+      id: intermediaire_id, // {user_id}_{fei_numero}_{HHMMSS}
       fei_numero,
       fei_intermediaire_user_id: formData.get(
         Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_user_id,

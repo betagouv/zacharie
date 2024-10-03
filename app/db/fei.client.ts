@@ -1,4 +1,4 @@
-import { type Fei, type User, type Carcasse, UserRoles } from "@prisma/client";
+import { type Fei, type User, type Carcasse, type FeiIntermediaire, UserRoles } from "@prisma/client";
 import type { FeiByNumero } from "./fei.server";
 import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 
@@ -207,5 +207,51 @@ export function formatFeiOfflineQueueCarcasse(
         ...carcasse,
       },
     ].sort((a, b) => a.numero_bracelet.localeCompare(b.numero_bracelet)),
+  };
+}
+
+export function formatFeiOfflineQueueFeiIntermediaire(
+  existingFeiPopulated: NonNullFeiByNumero,
+  feiIntermediaire: FeiIntermediaire,
+  me: User,
+  relations: MyRelationsLoaderData["data"],
+): NonNullFeiByNumero {
+  const intermediaireEntity = relations!.entitiesUserIsWorkingFor.find(
+    (entity) => entity.id === feiIntermediaire.fei_intermediaire_entity_id,
+  )!;
+  const newIntermediaire: NonNullFeiByNumero["FeiIntermediaires"][0] = {
+    id: feiIntermediaire.id,
+    fei_numero: feiIntermediaire.fei_numero,
+    created_at: feiIntermediaire.created_at,
+    deleted_at: feiIntermediaire.deleted_at,
+    commentaire: feiIntermediaire.commentaire,
+    received_at: feiIntermediaire.received_at,
+    handover_at: feiIntermediaire.handover_at,
+    check_finished_at: feiIntermediaire.check_finished_at,
+    updated_at: feiIntermediaire.updated_at,
+    fei_intermediaire_role: feiIntermediaire.fei_intermediaire_role,
+    fei_intermediaire_user_id: feiIntermediaire.fei_intermediaire_user_id,
+    fei_intermediaire_entity_id: feiIntermediaire.fei_intermediaire_entity_id,
+    CarcasseIntermediaire: [],
+    FeiIntermediaireEntity: {
+      raison_sociale: intermediaireEntity.raison_sociale,
+      siret: intermediaireEntity.siret,
+      type: intermediaireEntity.type,
+      numero_ddecpp: intermediaireEntity.numero_ddecpp,
+      address_ligne_1: intermediaireEntity.address_ligne_1,
+      address_ligne_2: intermediaireEntity.address_ligne_2,
+      code_postal: intermediaireEntity.code_postal,
+      ville: intermediaireEntity.ville,
+    },
+    FeiIntermediaireUser: {
+      nom_de_famille: me.nom_de_famille,
+      prenom: me.prenom,
+      email: me.email,
+      telephone: me.telephone,
+    },
+  };
+  return {
+    ...existingFeiPopulated,
+    FeiIntermediaires: [...existingFeiPopulated.FeiIntermediaires, newIntermediaire],
   };
 }

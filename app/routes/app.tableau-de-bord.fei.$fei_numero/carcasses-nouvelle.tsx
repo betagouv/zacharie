@@ -4,7 +4,7 @@ import { clientLoader } from "./route";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma } from "@prisma/client";
-import { action as nouvelleCarcasseAction } from "~/routes/api.action.carcasse.nouvelle";
+import { action as nouvelleCarcasseAction } from "~/routes/api.action.carcasse.$numero_bracelet";
 
 export default function NouvelleCarcasse() {
   const { fei } = useLoaderData<typeof clientLoader>();

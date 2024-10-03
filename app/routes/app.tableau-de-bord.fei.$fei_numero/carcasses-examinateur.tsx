@@ -1,8 +1,6 @@
-import { useEffect, useRef } from "react";
-import { Link, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
+import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { clientLoader } from "./route";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
-import { action as nouvelleCarcasseAction } from "~/routes/api.action.carcasse.nouvelle";
 import NouvelleCarcasse from "./carcasses-nouvelle";
 
 const style = {
@@ -11,18 +9,7 @@ const style = {
 
 export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) {
   const { fei } = useLoaderData<typeof clientLoader>();
-  const navigate = useNavigate();
-  const nouvelleCarcasseFetcher = useFetcher<typeof nouvelleCarcasseAction>({ key: "nouvelle-carcasse" });
   const carcasseFetcher = useFetcher({ key: "carcasse-delete-fetcher" });
-
-  const lastNavigation = useRef<string>(nouvelleCarcasseFetcher.data?.data?.numero_bracelet ?? "");
-  useEffect(() => {
-    const nextBracelet = nouvelleCarcasseFetcher.data?.data?.numero_bracelet;
-    if (nextBracelet && lastNavigation.current !== nextBracelet) {
-      lastNavigation.current === nextBracelet;
-      navigate(`/app/tableau-de-bord/carcasse/${fei.numero}/${nouvelleCarcasseFetcher.data?.data?.numero_bracelet}`);
-    }
-  }, [nouvelleCarcasseFetcher.data?.data?.numero_bracelet, fei.numero, navigate]);
 
   return (
     <>

@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import { Prisma, UserRoles } from "@prisma/client";
 import type { FeiAction } from "~/db/fei.client";
+import dayjs from "dayjs";
 
 export default function ConfirmCurrentOwner() {
   const { user, entitiesUserIsWorkingFor, fei } = useLoaderData<typeof clientLoader>();
@@ -66,16 +67,19 @@ export default function ConfirmCurrentOwner() {
         formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) as keyof typeof UserRoles,
       )
     ) {
-      const newInteremdaire = new FormData();
-      newInteremdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_numero, fei.numero);
-      newInteremdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_user_id, user.id);
-      newInteremdaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_role, fei.fei_next_owner_role!);
-      newInteremdaire.append(
+      const newIntermedaire = new FormData();
+      //{user_id}_{fei_numero}_{HHMMSS}
+      const newId = `${user.id}_${fei.numero}_${dayjs().format("HHmmss")}`;
+      newIntermedaire.append(Prisma.FeiIntermediaireScalarFieldEnum.id, newId);
+      newIntermedaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_numero, fei.numero);
+      newIntermedaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_user_id, user.id);
+      newIntermedaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_role, fei.fei_next_owner_role!);
+      newIntermedaire.append(
         Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_entity_id,
         fei.fei_next_owner_entity_id || "",
       );
-      newInteremdaire.append("route", `/api/action/fei-intermediaire/nouveau`);
-      intermediaireFetcher.submit(newInteremdaire, {
+      newIntermedaire.append("route", `/api/action/fei-intermediaire/${newId}`);
+      intermediaireFetcher.submit(newIntermedaire, {
         method: "POST",
         preventScrollReset: true, // Prevent scroll reset on submission
       });

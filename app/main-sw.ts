@@ -1,8 +1,13 @@
 // sw.ts
 /// <reference lib="webworker" />
-import { formatFeiOfflineQueue, formatFeiOfflineQueueCarcasse, type FeiAction } from "~/db/fei.client";
+import {
+  formatFeiOfflineQueue,
+  formatFeiOfflineQueueCarcasse,
+  formatFeiOfflineQueueFeiIntermediaire,
+  type FeiAction,
+} from "~/db/fei.client";
 import type { FeiByNumero } from "~/db/fei.server";
-import type { Fei, Carcasse } from "@prisma/client";
+import type { Fei, Carcasse, FeiIntermediaire } from "@prisma/client";
 import type { MeLoaderData } from "~/routes/api.loader.me";
 import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 import type { FeisLoaderData } from "~/routes/api.loader.fei";
@@ -199,24 +204,28 @@ async function handlePostRequest(request: Request): Promise<Response> {
     // Handle FEI creation when offline
     if (request.url.includes(`/api/action/fei/`)) {
       console.log("Handling offline FEI creation");
+      /* Fei action */
       console.log("Cloning request");
       const clonedRequest = request.clone();
       const formData = await clonedRequest.formData();
       const feiData = Object.fromEntries(formData) as unknown as Fei;
       console.log("Opening cache");
       const cache = await caches.open(CACHE_NAME);
+      /* User */
       console.log("USerResponse from cache");
       const userResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/me`);
       console.log("CLone user response");
       const userResponseClone = userResponse!.clone();
       console.log("User data from cache");
       const userData = (await userResponseClone.json()) as MeLoaderData;
+      /* My Relations */
       console.log("MyRelationsResponse from cache");
       const myRelationsResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`);
       console.log("Clone my relations response");
       const myRelationsResponseClone = myRelationsResponse!.clone();
       console.log("My relations data from cache");
       const myRelationsData = (await myRelationsResponseClone.json()) as MyRelationsLoaderData;
+      /* All Feis */
       console.log("AllFeisResponse from cache");
       const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
       console.log("Clone all feis response");
@@ -226,6 +235,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("Specific fei populated");
       const specificFeiPopulated = findFeiInAllFeisData(allFeisData, feiData.numero);
       console.log("Specific fei populated", specificFeiPopulated);
+      /* Treatment */
       const offlineFei = formatFeiOfflineQueue(
         specificFeiPopulated,
         feiData,
@@ -244,18 +254,14 @@ async function handlePostRequest(request: Request): Promise<Response> {
 
     if (request.url.includes(`/api/action/carcasse/`)) {
       console.log("Handling offline carcasse examination");
+      /* Carcasse action */
       console.log("Cloning request");
       const clonedRequest = request.clone();
       const formData = await clonedRequest.formData();
       const carcasseData = Object.fromEntries(formData) as unknown as Carcasse;
       console.log("Opening cache");
       const cache = await caches.open(CACHE_NAME);
-      console.log("USerResponse from cache");
-      const userResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/me`);
-      console.log("CLone user response");
-      const userResponseClone = userResponse!.clone();
-      console.log("User data from cache");
-      const userData = (await userResponseClone.json()) as MeLoaderData;
+      /* All Feis */
       console.log("AllFeisResponse from cache");
       const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
       console.log("Clone all feis response");
@@ -265,7 +271,57 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("Specific fei populated");
       const specificFeiPopulated = findFeiInAllFeisData(allFeisData, carcasseData.fei_numero);
       console.log("Specific fei populated", specificFeiPopulated);
+      /* Treatment */
       const offlineFei = formatFeiOfflineQueueCarcasse(specificFeiPopulated!, carcasseData);
+      console.log("Offline FEI", offlineFei);
+      await addOfflineFeiToCache(offlineFei);
+      console.log("Offline FEI added to cache");
+      return new Response(JSON.stringify({ ok: true, data: offlineFei }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (request.url.includes(`/api/action/fei-intermedaire/`)) {
+      console.log("Handling offline fei-intermediaire creation");
+      /* Fei Intermediaire action */
+      console.log("Cloning request");
+      const clonedRequest = request.clone();
+      const formData = await clonedRequest.formData();
+      const feiIntermediaire = Object.fromEntries(formData) as unknown as FeiIntermediaire;
+      console.log("Opening cache");
+      const cache = await caches.open(CACHE_NAME);
+      /* User */
+      console.log("USerResponse from cache");
+      const userResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/me`);
+      console.log("CLone user response");
+      const userResponseClone = userResponse!.clone();
+      console.log("User data from cache");
+      const userData = (await userResponseClone.json()) as MeLoaderData;
+      /* My Relations */
+      console.log("MyRelationsResponse from cache");
+      const myRelationsResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`);
+      console.log("Clone my relations response");
+      const myRelationsResponseClone = myRelationsResponse!.clone();
+      console.log("My relations data from cache");
+      const myRelationsData = (await myRelationsResponseClone.json()) as MyRelationsLoaderData;
+      /* All Feis */
+      console.log("AllFeisResponse from cache");
+      const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
+      console.log("Clone all feis response");
+      const allFeisResponseClone = allFeisResponse!.clone();
+      console.log("All feis data from cache");
+      const allFeisData = (await allFeisResponseClone.json()) as FeisLoaderData;
+      console.log("Specific fei populated");
+      const specificFeiPopulated = findFeiInAllFeisData(allFeisData, feiIntermediaire.fei_numero);
+      console.log("Specific fei populated", specificFeiPopulated);
+      /* Treatment */
+      const offlineFei = formatFeiOfflineQueueFeiIntermediaire(
+        specificFeiPopulated!,
+        feiIntermediaire,
+        userData.data.user!,
+        myRelationsData.data!,
+      );
       console.log("Offline FEI", offlineFei);
       await addOfflineFeiToCache(offlineFei);
       console.log("Offline FEI added to cache");
