@@ -8,7 +8,7 @@ import {
   type ClientLoaderFunctionArgs,
 } from "@remix-run/react";
 import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
-import { UserRoles } from "@prisma/client";
+import { Prisma, UserRoles } from "@prisma/client";
 import FEIPremierDetenteur from "./premier-detenteur";
 import ConfirmCurrentOwner from "./confirm-current-owner";
 import CurrentOwner from "./current-owner";
@@ -36,7 +36,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   if (!route) {
     return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
   }
-  if (!formData.get("numero") && !formData.get("fei_numero")) {
+  if (!formData.get(Prisma.FeiScalarFieldEnum.numero) && !formData.get(Prisma.CarcasseScalarFieldEnum.fei_numero)) {
     return json({ ok: false, data: null, error: "NUmero is required" }, { status: 400 });
   }
   const url = `${import.meta.env.VITE_API_URL}${route}`;

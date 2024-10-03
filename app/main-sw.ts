@@ -135,55 +135,45 @@ async function handleFetchRequest(request: Request): Promise<Response> {
 
   // If it's a specific FEI request and we don't have it cached, try to find it in the all-FEIs cache
   if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/loader/fei/`)) {
-    const allFeisCache = await caches.match(new Request(`${import.meta.env.VITE_API_URL}/api/loader/fei`));
-    if (allFeisCache) {
-      const allFeisCacheCloned = allFeisCache.clone();
-      const allFeisData = (await allFeisCacheCloned.json()) as FeisLoaderData;
-      const feiNumero = request.url.split("/").pop() as string;
-      const specificFei = findFeiInAllFeisData(allFeisData, feiNumero);
+    const feiNumero = request.url.split("/").at(-1) as string;
+    const specificFei = await findFeiInAllFeisData(feiNumero);
 
-      if (specificFei) {
-        return new Response(
-          JSON.stringify({
-            ok: true,
-            data: {
-              fei: specificFei,
-            },
-            error: "",
-          } satisfies FeiLoaderData),
-          {
-            headers: { "Content-Type": "application/json" },
+    if (specificFei) {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          data: {
+            fei: specificFei,
           },
-        );
-      }
+          error: "",
+        } satisfies FeiLoaderData),
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
   }
   // If it's a specific FEI request and we don't have it cached, try to find it in the all-FEIs cache
   if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/loader/carcasse/`)) {
-    const allFeisCache = await caches.match(new Request(`${import.meta.env.VITE_API_URL}/api/loader/fei`));
-    if (allFeisCache) {
-      const allFeisCacheCloned = allFeisCache.clone();
-      const allFeisData = (await allFeisCacheCloned.json()) as FeisLoaderData;
-      const bracelet = request.url.split("/").at(-1) as string;
-      const feiNumero = request.url.split("/").at(-2) as string;
-      const specificFei = findFeiInAllFeisData(allFeisData, feiNumero);
+    const bracelet = request.url.split("/").at(-1) as string;
+    const feiNumero = request.url.split("/").at(-2) as string;
+    const specificFei = await findFeiInAllFeisData(feiNumero);
 
-      if (specificFei) {
-        const carcasse = specificFei.Carcasses.find((c) => c.numero_bracelet === bracelet)!;
-        return new Response(
-          JSON.stringify({
-            ok: true,
-            data: {
-              carcasse: { ...carcasse, Fei: specificFei as Fei },
-              fei: specificFei,
-            },
-            error: "",
-          } satisfies CarcasseLoaderData),
-          {
-            headers: { "Content-Type": "application/json" },
+    if (specificFei) {
+      const carcasse = specificFei.Carcasses.find((c) => c.numero_bracelet === bracelet)!;
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          data: {
+            carcasse: { ...carcasse, Fei: specificFei as Fei },
+            fei: specificFei,
           },
-        );
-      }
+          error: "",
+        } satisfies CarcasseLoaderData),
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
   }
 
@@ -194,14 +184,28 @@ async function handleFetchRequest(request: Request): Promise<Response> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function findFeiInAllFeisData(allFeisData: FeisLoaderData, feiNumero: string) {
+async function findFeiInAllFeisData(feiNumero: string) {
+  const cache = await caches.open(CACHE_NAME);
+  const allFeisCache = await cache.match(new Request(`${import.meta.env.VITE_API_URL}/api/loader/fei`));
+  const allFeisCacheCloned = allFeisCache!.clone();
+  const allFeisData = (await allFeisCacheCloned.json()) as FeisLoaderData;
   const allFeis = [
     ...allFeisData.feisUnderMyResponsability,
     ...allFeisData.feisToTake,
     ...allFeisData.feisOngoing,
     // ...allFeisData.feisDone,
   ];
-  return allFeis.find((fei) => fei.numero === feiNumero) as FeiWithRelations;
+  const cachedFei = allFeis.find((fei) => fei.numero === feiNumero) as FeiWithRelations;
+  if (cachedFei) {
+    return cachedFei;
+  }
+  const feiRequestCached = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei/${feiNumero}`);
+  if (feiRequestCached) {
+    const feiRequestCachedCloned = feiRequestCached.clone();
+    const feiData = (await feiRequestCachedCloned.json()) as FeiLoaderData;
+    return feiData.data;
+  }
+  return null;
 }
 
 async function fetchAllFeis(calledFrom: string) {
@@ -270,14 +274,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("My relations data from cache");
       const myRelationsData = (await myRelationsResponseClone.json()) as MyRelationsLoaderData;
       /* All Feis */
-      console.log("AllFeisResponse from cache");
-      const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
-      console.log("Clone all feis response");
-      const allFeisResponseClone = allFeisResponse!.clone();
-      console.log("All feis data from cache");
-      const allFeisData = (await allFeisResponseClone.json()) as FeisLoaderData;
-      console.log("Specific fei populated");
-      const specificFeiPopulated = findFeiInAllFeisData(allFeisData, feiNumero);
+      const specificFeiPopulated = await findFeiInAllFeisData(feiNumero);
       console.log("Specific fei populated", specificFeiPopulated);
       /* Treatment */
       const offlineFei = formatFeiOfflineQueue(
@@ -304,16 +301,9 @@ async function handlePostRequest(request: Request): Promise<Response> {
       const formData = await clonedRequest.formData();
       const carcasseData = Object.fromEntries(formData) as unknown as Carcasse;
       console.log("Opening cache");
-      const cache = await caches.open(CACHE_NAME);
       /* All Feis */
       console.log("AllFeisResponse from cache");
-      const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
-      console.log("Clone all feis response");
-      const allFeisResponseClone = allFeisResponse!.clone();
-      console.log("All feis data from cache");
-      const allFeisData = (await allFeisResponseClone.json()) as FeisLoaderData;
-      console.log("Looking for Specific fei populated", carcasseData.fei_numero);
-      const specificFeiPopulated = findFeiInAllFeisData(allFeisData, carcasseData.fei_numero);
+      const specificFeiPopulated = await findFeiInAllFeisData(carcasseData.fei_numero);
       console.log("Specific fei populated", specificFeiPopulated);
       const carcasseActionData = formatCarcasseOfflineActionReturn(
         carcasseData,
@@ -355,14 +345,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("My relations data from cache");
       const myRelationsData = (await myRelationsResponseClone.json()) as MyRelationsLoaderData;
       /* All Feis */
-      console.log("AllFeisResponse from cache");
-      const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
-      console.log("Clone all feis response");
-      const allFeisResponseClone = allFeisResponse!.clone();
-      console.log("All feis data from cache");
-      const allFeisData = (await allFeisResponseClone.json()) as FeisLoaderData;
-      console.log("Specific fei populated");
-      const specificFeiPopulated = findFeiInAllFeisData(allFeisData, feiIntermediaire.fei_numero);
+      const specificFeiPopulated = await findFeiInAllFeisData(feiIntermediaire.fei_numero);
       console.log("Specific fei populated", specificFeiPopulated);
       /* Treatment */
       const offlineFei = formatFeiOfflineQueueFeiIntermediaire(

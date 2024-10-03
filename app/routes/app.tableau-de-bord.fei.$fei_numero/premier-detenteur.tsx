@@ -87,7 +87,7 @@ export default function FEIDetenteurInitial() {
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
                 formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
                 formData.append("route", `/api/action/fei/${fei.numero}`);
-                formData.append("numero", fei.numero);
+                formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
                 formData.append("step", "fei_action_premier_detenteur" satisfies FeiAction);
 
                 fetcher.submit(formData, {
@@ -109,7 +109,7 @@ export default function FEIDetenteurInitial() {
                 formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
                 formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
                 formData.append("route", `/api/action/fei/${fei.numero}`);
-                formData.append("numero", fei.numero);
+                formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
                 formData.append("step", "fei_action_reject_current_owner" satisfies FeiAction);
                 fetcher.submit(formData, {
                   method: "POST",
