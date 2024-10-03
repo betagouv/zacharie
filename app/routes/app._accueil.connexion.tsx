@@ -112,7 +112,12 @@ export default function Connexion() {
                 ) : (
                   <>
                     Vous n'avez pas encore de compte ? <br />
-                    <Link to="/app/connexion?type=creation-de-compte">Cliquez ici pour en créer un</Link>
+                    {/* <Link to="/app/connexion?type=creation-de-compte">Cliquez ici pour en créer un</Link> */}
+                    <Link
+                      to={`mailto:contact@zacharie.beta.gouv.fr?subject=Je souhaite devenir utilisateur-testeur de Zacharie`}
+                    >
+                      Contactez-nous pour devenir utilisateur-testeur de Zacharie
+                    </Link>
                   </>
                 )}
               </p>

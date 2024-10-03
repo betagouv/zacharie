@@ -290,11 +290,12 @@ function CTA({ mobile, desktop }: { mobile?: boolean; desktop?: boolean }) {
       <Button
         className="m-0"
         linkProps={{
-          to: "/app/connexion?type=creation-de-compte",
+          // to: "/app/connexion?type=creation-de-compte",
+          to: isLoggedIn ? "/app/connexion?type=compte-existant" : "/beta-testeurs",
           href: "#",
         }}
       >
-        Découvrir le service
+        {isLoggedIn ? "Accéder à mon compte" : "Découvrir le service"}
       </Button>
     </div>
   );

@@ -43,7 +43,8 @@ export default function RootDisplay({
           },
           {
             linkProps: {
-              to: "/app/connexion?type=creation-de-compte",
+              // to: "/app/connexion?type=creation-de-compte",
+              to: "/beta-testeurs",
               href: "#",
             },
             iconId: "fr-icon-add-circle-line",
@@ -59,7 +60,7 @@ export default function RootDisplay({
         ]}
         operatorLogo={{
           alt: "Logo de Zacharie - un bois de cerf bland sur fond bleu avec liseré rouge",
-          imgUrl: "/zacharie-logo-vertical.svg",
+          imgUrl: "/logo_zacharie_solo_small.svg",
           orientation: "vertical",
         }}
         serviceTagline="Garantir des viandes de gibier sauvage saines et sûres"
