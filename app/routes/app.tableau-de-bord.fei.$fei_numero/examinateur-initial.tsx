@@ -19,15 +19,21 @@ export default function FEIExaminateurInitial() {
 
   const approbationFetcher = useFetcher({ key: "approbation-mise-sur-le-marche" });
 
+  console.log({ fei, user });
+
   const canEdit = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
+      console.log("not examinateur");
       return false;
     }
     if (fei.examinateur_initial_approbation_mise_sur_le_marche) {
+      console.log("already approved");
       return false;
     }
     return true;
   }, [fei, user]);
+
+  console.log({ canEdit });
 
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;

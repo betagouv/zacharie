@@ -5,7 +5,7 @@ import type { ExtractLoaderData } from "~/services/extract-loader-data";
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
-    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+    return json({ ok: false, data: { user: null }, error: "Unauthorized" }, { status: 401 });
   }
   return json({
     ok: true,

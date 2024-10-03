@@ -4,7 +4,7 @@ import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 
 type NonNullFeiByNumero = Exclude<FeiByNumero, null>;
 
-type OfflineNullFei = Omit<
+type OfflineFeiWithExaminateurFieldsOmitted = Omit<
   NonNullFeiByNumero,
   | "id"
   | "created_at"
@@ -20,7 +20,7 @@ type OfflineNullFei = Omit<
   | "FeiCurrentUser"
 >;
 
-function offlineNullFei(): OfflineNullFei {
+function offlineNullFeiToBeCompletedByExaminateurFields(): OfflineFeiWithExaminateurFieldsOmitted {
   return {
     commune_mise_a_mort: null,
     fei_current_owner_entity_id: null,
@@ -76,6 +76,7 @@ export function formatFeiOfflineQueue(
   }
   switch (step) {
     case "fei_action_nouvelle":
+      console.log("BIMBADADABOOM");
       return formatFeiOfflineQueueNouvelleFei(nextFeiData, me);
     case "fei_action_confirm_current_owner":
       return formatFeiOfflineQueueConfirmCurrentOwner(existingFeiPopulated, nextFeiData, me, relations);
@@ -95,7 +96,27 @@ export function formatFeiOfflineQueue(
 }
 
 function formatFeiOfflineQueueNouvelleFei(fei: Fei, me: User): NonNullFeiByNumero {
-  const baseFei = offlineNullFei();
+  const baseFei = offlineNullFeiToBeCompletedByExaminateurFields();
+
+  console.log("formatFeiOfflineQueueNouvelleFei", {
+    fei,
+    me,
+    offline: {
+      ...baseFei,
+      id: Date.now(),
+      numero: fei.numero,
+      date_mise_a_mort: fei.date_mise_a_mort,
+      created_by_user_id: me.id,
+      fei_current_owner_user_id: me.id,
+      fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
+      examinateur_initial_user_id: me.id,
+      created_at: fei.created_at,
+      updated_at: fei.updated_at,
+      FeiExaminateurInitialUser: me,
+      FeiCreatedByUser: me,
+      FeiCurrentUser: me,
+    },
+  });
 
   return {
     ...baseFei,

@@ -1,7 +1,11 @@
 // sw.ts
 /// <reference lib="webworker" />
 import { formatFeiOfflineQueue, type FeiAction } from "~/db/fei.client";
+import type { FeiByNumero } from "~/db/fei.server";
 import type { Fei } from "@prisma/client";
+import type { MeLoaderData } from "~/routes/api.loader.me";
+import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
+import type { FeisLoaderData } from "~/routes/api.loader.fei";
 import { createStore, set, get, del, keys } from "idb-keyval";
 
 const CACHE_NAME = "zacharie-pwa-cache-v1";
@@ -123,7 +127,7 @@ async function handleFetchRequest(request: Request): Promise<Response> {
     const allFeisCache = await caches.match(new Request(`${import.meta.env.VITE_API_URL}/api/loader/fei`));
     if (allFeisCache) {
       const allFeisCacheCloned = allFeisCache.clone();
-      const allFeisData = await allFeisCacheCloned.json();
+      const allFeisData = (await allFeisCacheCloned.json()) as FeisLoaderData;
       const feiNumero = request.url.split("/").pop() as string;
       const specificFei = findFeiInAllFeisData(allFeisData, feiNumero);
 
@@ -142,14 +146,14 @@ async function handleFetchRequest(request: Request): Promise<Response> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function findFeiInAllFeisData(allFeisData: any, feiNumero: string) {
+function findFeiInAllFeisData(allFeisData: FeisLoaderData, feiNumero: string) {
   const allFeis = [
     ...allFeisData.feisUnderMyResponsability,
     ...allFeisData.feisToTake,
     ...allFeisData.feisOngoing,
     // ...allFeisData.feisDone,
   ];
-  return allFeis.find((fei) => fei.numero === feiNumero);
+  return allFeis.find((fei) => fei.numero === feiNumero) as FeiByNumero;
 }
 
 async function fetchAllFeis(calledFrom: string) {
@@ -158,7 +162,14 @@ async function fetchAllFeis(calledFrom: string) {
   }
   console.log("fetchAllFeis called from", calledFrom);
   const cache = await caches.open(CACHE_NAME);
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/fei?calledFrom=sw+${calledFrom}`, {
+    method: "GET",
+    credentials: "include",
+    headers: new Headers({
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }),
+  });
   if (response.ok) {
     await cache.put(`${import.meta.env.VITE_API_URL}/api/loader/fei`, response.clone());
   }
@@ -199,27 +210,27 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("CLone user response");
       const userResponseClone = userResponse!.clone();
       console.log("User data from cache");
-      const userData = await userResponseClone.json();
+      const userData = (await userResponseClone.json()) as MeLoaderData;
       console.log("MyRelationsResponse from cache");
       const myRelationsResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`);
       console.log("Clone my relations response");
       const myRelationsResponseClone = myRelationsResponse!.clone();
       console.log("My relations data from cache");
-      const myRelationsData = await myRelationsResponseClone.json();
+      const myRelationsData = (await myRelationsResponseClone.json()) as MyRelationsLoaderData;
       console.log("AllFeisResponse from cache");
       const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);
       console.log("Clone all feis response");
       const allFeisResponseClone = allFeisResponse!.clone();
       console.log("All feis data from cache");
-      const allFeisData = await allFeisResponseClone.json();
+      const allFeisData = (await allFeisResponseClone.json()) as FeisLoaderData;
       console.log("Specific fei populated");
       const specificFeiPopulated = findFeiInAllFeisData(allFeisData, feiData.numero);
       console.log("Specific fei populated", specificFeiPopulated);
       const offlineFei = formatFeiOfflineQueue(
         specificFeiPopulated,
         feiData,
-        userData,
-        myRelationsData,
+        userData.data.user!,
+        myRelationsData.data!,
         formData.get("step") as FeiAction,
       );
       console.log("Offline FEI", offlineFei);
@@ -331,7 +342,7 @@ async function addOfflineFeiToCache(offlineFei: ReturnType<typeof formatFeiOffli
     console.log("All FEIs data found in cache");
     const allFeisResponseClone = allFeisResponse.clone();
     console.log("All FEIs data from cache");
-    const allFeisData = await allFeisResponseClone.json();
+    const allFeisData = (await allFeisResponseClone.json()) as FeisLoaderData;
     console.log("Updating all FEIs data");
     allFeisData.feisUnderMyResponsability = [
       ...allFeisData.feisUnderMyResponsability.filter((fei: Fei) => fei.numero !== offlineFei.numero),
