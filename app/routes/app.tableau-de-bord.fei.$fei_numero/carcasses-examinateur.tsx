@@ -6,6 +6,7 @@ import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Prisma } from "@prisma/client";
 import { action as nouvelleCarcasseAction } from "~/routes/api.action.carcasse.nouvelle";
+import NouvelleCarcasse from "./carcasses-nouvelle";
 
 const style = {
   boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
@@ -92,27 +93,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
           />
         );
       })}
-      {canEdit && (
-        <nouvelleCarcasseFetcher.Form
-          method="POST"
-          className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end"
-        >
-          <input type="hidden" name="route" value="/api/action/carcasse/nouvelle" />
-          <input type="hidden" required name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
-          <Input
-            label="Numéro de bracelet"
-            className="!mb-0 grow"
-            state={error ? "error" : "default"}
-            stateRelatedMessage={error ?? ""}
-            nativeInputProps={{
-              type: "text",
-              required: true,
-              name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
-            }}
-          />
-          <Button type="submit">Ajouter une carcasse</Button>
-        </nouvelleCarcasseFetcher.Form>
-      )}
+      {canEdit && <NouvelleCarcasse />}
     </>
   );
 }

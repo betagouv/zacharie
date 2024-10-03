@@ -15,6 +15,7 @@ export async function action(args: ActionFunctionArgs) {
   if (!numero_bracelet) {
     return json({ ok: false, data: null, error: "Le numéro de la carcasse est obligatoire" }, { status: 400 });
   }
+
   const formData = await request.formData();
 
   console.log("formData action.carcasse.$numero_bracelet", Object.fromEntries(formData));
@@ -44,6 +45,21 @@ export async function action(args: ActionFunctionArgs) {
   if (!fei) {
     return json({ ok: false, data: null, error: "La FEI n'existe pas" }, { status: 400 });
   }
+
+  let existingCarcasse = await prisma.carcasse.findUnique({
+    where: {
+      numero_bracelet,
+    },
+  });
+  if (!existingCarcasse) {
+    existingCarcasse = await prisma.carcasse.create({
+      data: {
+        numero_bracelet,
+        fei_numero,
+      },
+    });
+  }
+
   const nextCarcasse: Prisma.CarcasseUpdateInput = {};
 
   // Helper function to convert string to boolean
@@ -158,7 +174,7 @@ export async function action(args: ActionFunctionArgs) {
 
   const updatedCarcasse = await prisma.carcasse.update({
     where: {
-      numero_bracelet,
+      numero_bracelet: existingCarcasse.numero_bracelet,
     },
     data: nextCarcasse,
   });

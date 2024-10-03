@@ -19,6 +19,7 @@ import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
+import { Button } from "@codegouvfr/react-dsfr/Button";
 import InputNotEditable from "~/components/InputNotEditable";
 import { type CarcasseLoaderData } from "~/routes/api.loader.$fei_numero.$numero_bracelet";
 import { type CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
@@ -37,6 +38,9 @@ export async function clientAction({ request, params }: ClientActionFunctionArgs
       Accept: "application/json",
     },
   }).then((response) => response.json())) as CarcasseActionData;
+  if (response.ok && response.data && response.data.numero_bracelet !== params.numero_bracelet) {
+    throw redirect(`/app/tableau-de-bord/carcasse/${params.fei_numero}/${response.data.numero_bracelet}`);
+  }
   return response;
 }
 
@@ -154,6 +158,32 @@ export default function CarcasseReadAndWrite() {
               },
             ]}
           />
+          {canEdit && (
+            <carcasseFetcher.Form
+              id="carcasse-edit-form"
+              method="POST"
+              ref={formRef}
+              onChange={handleFormSubmit}
+              className="mb-6 bg-white py-2 md:shadow"
+            >
+              <div className="p-4">
+                <div className="fr-fieldset__element">
+                  <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
+                  <Input
+                    label="Numéro de bracelet"
+                    nativeInputProps={{
+                      type: "text",
+                      name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
+                      defaultValue: carcasse.numero_bracelet,
+                    }}
+                  />
+                </div>
+                <div className="fr-fieldset__element m-0 flex justify-end">
+                  <Button type="submit">Modifier</Button>
+                </div>
+              </div>
+            </carcasseFetcher.Form>
+          )}
           <carcasseFetcher.Form
             id="carcasse-edit-form"
             method="POST"
@@ -162,7 +192,6 @@ export default function CarcasseReadAndWrite() {
             className="mb-6 bg-white py-2 md:shadow"
           >
             <div className="p-4 pb-8 md:p-8 md:pb-4">
-              <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.examinateur_signed_at} value="true" />
               <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
               <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.espece} value={espece || ""} />
               <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.categorie} value={categorie || ""} />
@@ -193,15 +222,18 @@ export default function CarcasseReadAndWrite() {
                 />
               ))}
 
-              <div className="fr-fieldset__element">
-                <InputNotEditable
-                  label="Numéro de bracelet"
-                  nativeInputProps={{
-                    name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
-                    defaultValue: carcasse.numero_bracelet,
-                  }}
-                />
-              </div>
+              {!canEdit && (
+                <div className="fr-fieldset__element">
+                  <Component
+                    label="Numéro de bracelet"
+                    nativeInputProps={{
+                      type: "text",
+                      name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
+                      defaultValue: carcasse.numero_bracelet,
+                    }}
+                  />
+                </div>
+              )}
               <div className="flex flex-col gap-x-4 md:flex-row">
                 <div className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end">
                   <Component
@@ -334,7 +366,7 @@ export default function CarcasseReadAndWrite() {
                             <InputForSearchPrefilledData
                               canEdit={canEdit}
                               data={grandGibierCarcasseList}
-                              label="Sélectionnez l'anomalie de la carcasse"
+                              label="Ajouter une nouvelle anomalie"
                               hintText={
                                 <>
                                   Voir le référentiel des anomalies de carcasse en{" "}
@@ -401,7 +433,7 @@ export default function CarcasseReadAndWrite() {
                           <div className="fr-fieldset__element mt-4">
                             <InputForSearchPrefilledData
                               data={grandGibierAbatsList}
-                              label="Sélectionnez l'anomalie des abats"
+                              label="Ajouter une nouvelle anomalie"
                               hintText={
                                 <>
                                   Voir le référentiel des anomalies d'abats en{" "}

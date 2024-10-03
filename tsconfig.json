@@ -22,7 +22,8 @@
       "vite-plugin-pwa/react",
       "vite-plugin-pwa/client",
       "@vite-pwa/remix",
-      "@vite-pwa/remix/remix-sw"
+      "@vite-pwa/remix/remix-sw",
+      "workbox-precaching"
     ],
     "isolatedModules": true,
     "esModuleInterop": true,
