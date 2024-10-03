@@ -1,33 +1,16 @@
-import { Header } from "@codegouvfr/react-dsfr/Header";
 import { Outlet, useLocation } from "@remix-run/react";
+import RootDisplay from "~/components/RootDisplay";
 import useNavigationMenu from "~/utils/get-navigation-menu";
 import { useUser } from "~/utils/useUser";
 
 export default function TableauDeBordLayout() {
   const location = useLocation();
   const user = useUser();
-  const navigationMenu = useNavigationMenu();
+  const navigation = useNavigationMenu();
 
   if (!user?.activated && !location.pathname.includes("mon-profil")) {
     return (
-      <>
-        <Header
-          brandTop={
-            <>
-              Ministère
-              <br />
-              de l'Agriculture
-            </>
-          }
-          homeLinkProps={{
-            href: "/",
-            title: "Zacharie",
-          }}
-          id="fr-header-header-with-quick-access-items"
-          // check mobile responsive header classes at tailwind.css
-          serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
-          serviceTitle="Zacharie"
-        />
+      <RootDisplay hideMinistereName>
         <main role="main" id="content">
           <div className="fr-container">
             <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center">
@@ -60,50 +43,12 @@ export default function TableauDeBordLayout() {
             </div>
           </div>
         </main>
-        {/* <Footer
-        accessibility="fully compliant"
-        contentDescription={`
-        Zacharie c’est un service à destination des chasseurs et des acteurs de la filière de valorisation des viandes de gibier sauvage (collecteurs, ETG, SVI). Elle permet aux chasseurs de créer des fiches d’examen initial en un format numérique unique, partagé, modifiable et traçable par tous les acteurs.\u000A\u000A
-
-
-
-        Zacharie a pour objectif premier d’améliorer le niveau de complétude et de fiabilité des informations sanitaires et de traçabilité relatives aux viandes de gibier traitées. Ainsi, Zacharie contribue à améliorer la qualité sanitaire des viandes mises sur le marché, réduire les risques d’intoxication alimentaire et de gaspillage alimentaire.
-        `}
-        termsLinkProps={{
-          href: "#",
-        }}
-        websiteMapLinkProps={{
-          href: "#",
-        }}
-        // bottomItems={[
-        //     headerFooterDisplayItem,
-        //     <FooterPersonalDataPolicyItem />,
-        //     <FooterConsentManagementItem />
-        // ]}
-      /> */}
-      </>
+      </RootDisplay>
     );
   }
 
   return (
-    <>
-      <Header
-        brandTop={
-          <>
-            Ministère
-            <br />
-            de l'Agriculture
-          </>
-        }
-        homeLinkProps={{
-          href: "/",
-          title: "Zacharie - Ministère de l'Agriculture",
-        }}
-        id="fr-header-header-with-quick-access-items"
-        navigation={navigationMenu}
-        serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
-        serviceTitle="Zacharie"
-      />
+    <RootDisplay navigation={navigation} hideMinistereName>
       <main role="main" id="content" className="fr-background-alt--blue-france relative min-h-full overflow-auto">
         <Outlet />
       </main>
@@ -128,6 +73,6 @@ export default function TableauDeBordLayout() {
         //     <FooterConsentManagementItem />
         // ]}
       /> */}
-    </>
+    </RootDisplay>
   );
 }

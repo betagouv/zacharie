@@ -1,22 +1,37 @@
 import { Footer } from "@codegouvfr/react-dsfr/Footer";
 import { Header } from "@codegouvfr/react-dsfr/Header";
+import { type MainNavigationProps } from "@codegouvfr/react-dsfr/MainNavigation";
 
-export default function RootDisplay({ children }: { children: React.ReactNode }) {
+export default function RootDisplay({
+  navigation,
+  children,
+  hideMinistereName,
+}: {
+  navigation?: MainNavigationProps.Item[];
+  children: React.ReactNode;
+  hideMinistereName?: boolean;
+}) {
   return (
     <>
       <Header
         brandTop={
-          <>
+          <span className={hideMinistereName ? "hidden md:inline" : ""}>
             Ministère
             <br />
             de l'Agriculture
-          </>
+            <br />
+            et de la Souveraineté
+            <br />
+            Alimentaire et de la Forêt
+          </span>
         }
         homeLinkProps={{
-          href: "/",
-          title: "Zacharie - Ministère de l'Agriculture",
+          to: "/",
+          title: "Zacharie | Ministère de l'Agriculture",
         }}
         id="fr-header-header-with-quick-access-items"
+        className="[&_.fr-header\_\_service-title]:flex [&_.fr-header\_\_service-title]:items-end"
+        navigation={navigation}
         quickAccessItems={[
           {
             linkProps: {
@@ -39,21 +54,29 @@ export default function RootDisplay({ children }: { children: React.ReactNode })
             linkProps: {
               href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de Zacharie`,
             },
-            text: "Contactez-nous",
+            text: "Contact",
           },
         ]}
-        serviceTagline="La Fiche d’Examen Initial (FEI) simplifiée"
-        serviceTitle="Zacharie"
+        operatorLogo={{
+          alt: "Logo de Zacharie - un bois de cerf bland sur fond bleu avec liseré rouge",
+          imgUrl: "/zacharie-logo-vertical.svg",
+          orientation: "vertical",
+        }}
+        serviceTagline="Garantir des viandes de gibier sauvage saines et sûres"
+        serviceTitle={
+          <>
+            Zacharie
+            <span className="ml-4 inline-block">
+              <em className="mb-1 block rounded bg-green-300 px-1 text-sm not-italic text-green-900">VERSION BETA</em>
+            </span>
+          </>
+        }
       />
       {children}
       <Footer
         accessibility="fully compliant"
         contentDescription={`
-        Zacharie c’est un service à destination des chasseurs et des acteurs de la filière de valorisation des viandes de gibier sauvage (collecteurs, ETG, SVI). Elle permet aux chasseurs de créer des fiches d’examen initial en un format numérique unique, partagé, modifiable et traçable par tous les acteurs.\u000A\u000A
-
-
-
-        Zacharie a pour objectif premier d’améliorer le niveau de complétude et de fiabilité des informations sanitaires et de traçabilité relatives aux viandes de gibier traitées. Ainsi, Zacharie contribue à améliorer la qualité sanitaire des viandes mises sur le marché, réduire les risques d’intoxication alimentaire et de gaspillage alimentaire.\n
+        Zacharie est un service à destination des chasseurs et des acteurs de  la filière de valorisation des viandes de gibier sauvage (collecteurs,  ETG, SVI). Il permet de créer des fiches d’examen  initial en un format numérique unique, partagé, modifiable et traçable  par tous les acteurs.
         Dernière mise à jour le ${__VITE_BUILD_ID__}
         `}
         termsLinkProps={{

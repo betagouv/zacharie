@@ -40,6 +40,7 @@ export const meta: MetaFunction = () => {
     },
     { property: "apple-mobile-web-app-capable", content: "yes" },
     { property: "mobile-web-app-capable", content: "yes" },
+    { property: "apple-touch-fullscreen", content: "yes" },
     { property: "apple-mobile-web-app-title", content: "Zacharie" },
     { property: "apple-mobile-web-app-status-bar-style", content: "#000091" },
   ];

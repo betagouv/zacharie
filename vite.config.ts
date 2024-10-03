@@ -4,12 +4,13 @@ import { installGlobals } from "@remix-run/node";
 import { defineConfig, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { RemixVitePWA } from "@vite-pwa/remix";
+import dayjs from "dayjs";
 
 installGlobals();
 
 const { RemixVitePWAPlugin, RemixPWAPreset } = RemixVitePWA();
 
-const buildId = JSON.stringify(new Date().toISOString().split("T")[0] + "-v0");
+const buildId = JSON.stringify(`${dayjs().format("DD-MM-YYYY")} vers ${dayjs().format("HH")}:00`);
 process.env.VITE_BUILD_ID = buildId;
 
 export default defineConfig(({ mode }) => {
