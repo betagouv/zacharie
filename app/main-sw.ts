@@ -6,16 +6,17 @@ import {
   formatFeiOfflineQueueFeiIntermediaire,
   type FeiAction,
 } from "~/db/fei.client";
-import type { FeiByNumero } from "~/db/fei.server";
+import type { FeiWithRelations } from "~/db/fei.server";
 import type { Fei, Carcasse, FeiIntermediaire } from "@prisma/client";
 import type { MeLoaderData } from "~/routes/api.loader.me";
 import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 import type { FeisLoaderData } from "~/routes/api.loader.fei";
 import type { FeiLoaderData } from "~/routes/api.loader.fei.$fei_numero";
-import type { CarcasseLoaderData } from "~/routes/api.loader.$fei_numero.$numero_bracelet";
+import type { CarcasseLoaderData } from "~/routes/api.loader.carcasse.$fei_numero.$numero_bracelet";
 import type { CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
 import type { FeiIntermediaireActionData } from "~/routes/api.action.fei-intermediaire.$intermediaire_id";
 import { createStore, set, get, del, keys } from "idb-keyval";
+import { formatCarcasseOfflineActionReturn } from "./db/carcasse.client";
 
 const CACHE_NAME = "zacharie-pwa-cache-v1";
 const previousCacheNames = ["zacharie-pwa-cache-v0"];
@@ -156,6 +157,34 @@ async function handleFetchRequest(request: Request): Promise<Response> {
       }
     }
   }
+  // If it's a specific FEI request and we don't have it cached, try to find it in the all-FEIs cache
+  if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/loader/carcasse/`)) {
+    const allFeisCache = await caches.match(new Request(`${import.meta.env.VITE_API_URL}/api/loader/fei`));
+    if (allFeisCache) {
+      const allFeisCacheCloned = allFeisCache.clone();
+      const allFeisData = (await allFeisCacheCloned.json()) as FeisLoaderData;
+      const bracelet = request.url.split("/").at(-1) as string;
+      const feiNumero = request.url.split("/").at(-2) as string;
+      const specificFei = findFeiInAllFeisData(allFeisData, feiNumero);
+
+      if (specificFei) {
+        const carcasse = specificFei.Carcasses.find((c) => c.numero_bracelet === bracelet)!;
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            data: {
+              carcasse: { ...carcasse, Fei: specificFei as Fei },
+              fei: specificFei,
+            },
+            error: "",
+          } satisfies CarcasseLoaderData),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+    }
+  }
 
   return new Response(`Offline and data not available\n${JSON.stringify(request, null, 2)}`, {
     status: 404,
@@ -171,7 +200,7 @@ function findFeiInAllFeisData(allFeisData: FeisLoaderData, feiNumero: string) {
     ...allFeisData.feisOngoing,
     // ...allFeisData.feisDone,
   ];
-  return allFeis.find((fei) => fei.numero === feiNumero) as FeiByNumero;
+  return allFeis.find((fei) => fei.numero === feiNumero) as FeiWithRelations;
 }
 
 async function fetchAllFeis(calledFrom: string) {
@@ -284,19 +313,20 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("Specific fei populated");
       const specificFeiPopulated = findFeiInAllFeisData(allFeisData, carcasseData.fei_numero);
       console.log("Specific fei populated", specificFeiPopulated);
+      const carcasseActionData = formatCarcasseOfflineActionReturn(
+        carcasseData,
+        specificFeiPopulated.Carcasses.find((c) => c.numero_bracelet === carcasseData.numero_bracelet) ?? null,
+      );
       /* Treatment */
-      const offlineFei = formatFeiOfflineQueueCarcasse(specificFeiPopulated!, carcasseData);
+      const offlineFei = formatFeiOfflineQueueCarcasse(specificFeiPopulated!, carcasseActionData.data!);
       console.log("Offline FEI", offlineFei);
       await addOfflineFeiToCache(offlineFei);
       console.log("Offline FEI added to cache");
       // FIXME: return carcasse data
-      return new Response(
-        JSON.stringify({ ok: true, data: { fei: offlineFei }, error: "" } satisfies CarcasseActionData),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return new Response(JSON.stringify(carcasseActionData satisfies CarcasseActionData), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     if (request.url.includes(`/api/action/fei-intermedaire/`)) {

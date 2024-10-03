@@ -1,257 +1,74 @@
-import { type Fei, type User, type Carcasse, type FeiIntermediaire, UserRoles } from "@prisma/client";
-import type { FeiByNumero } from "./fei.server";
-import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
+import { type Fei, type Carcasse } from "@prisma/client";
+import type { FeiWithRelations } from "./fei.server";
+import type { CarcasseLoaderData } from "~/routes/api.loader.carcasse.$fei_numero.$numero_bracelet";
+import type { CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
 
-type NonNullFeiByNumero = Exclude<FeiByNumero, null>;
-
-type OfflineFeiWithExaminateurFieldsOmitted = Omit<
-  NonNullFeiByNumero,
-  | "id"
-  | "created_at"
-  | "updated_at"
-  | "numero"
-  | "date_mise_a_mort"
-  | "created_by_user_id"
-  | "FeiExaminateurInitialUser"
-  | "fei_current_owner_user_id"
-  | "fei_current_owner_role"
-  | "examinateur_initial_user_id"
-  | "FeiCreatedByUser"
-  | "FeiCurrentUser"
->;
-
-function offlineNullFeiToBeCompletedByExaminateurFields(): OfflineFeiWithExaminateurFieldsOmitted {
+export function formatCarcasseOfflineActionReturn(
+  carcasseFormData: Carcasse,
+  originalCarcasse: CarcasseActionData["data"] | FeiWithRelations["Carcasses"][0] | null,
+): CarcasseActionData {
   return {
-    commune_mise_a_mort: null,
-    fei_current_owner_entity_id: null,
-    fei_current_owner_wants_to_transfer: null,
-    fei_next_owner_user_id: null,
-    fei_next_owner_entity_id: null,
-    fei_next_owner_role: null,
-    fei_prev_owner_user_id: null,
-    fei_prev_owner_entity_id: null,
-    fei_prev_owner_role: null,
-    examinateur_initial_approbation_mise_sur_le_marche: null,
-    examinateur_initial_date_approbation_mise_sur_le_marche: null,
-    premier_detenteur_user_id: null,
-    premier_detenteur_date_depot_quelque_part: null,
-    premier_detenteur_depot_entity_id: null,
-    premier_detenteur_depot_sauvage: null,
-    svi_entity_id: null,
-    svi_user_id: null,
-    svi_carcasses_saisies: null,
-    svi_aucune_carcasse_saisie: null,
-    svi_commentaire: null,
-    svi_signed_at: null,
-    deleted_at: null,
-    FeiCurrentEntity: null,
-    FeiNextEntity: null,
-    Carcasses: [],
-    FeiPremierDetenteurUser: null,
-    FeiDepotEntity: null,
-    FeiSviEntity: null,
-    FeiSviUser: null,
-    FeiIntermediaires: [],
-  } as const;
-}
-
-export type FeiAction =
-  | "fei_action_nouvelle"
-  | "fei_action_confirm_current_owner"
-  | "fei_action_reject_current_owner"
-  | "fei_action_examinateur_initial"
-  | "fei_action_premier_detenteur"
-  | "fei_action_premier_detenteur_depot"
-  | "fei_action_next_role";
-
-export function formatFeiOfflineQueue(
-  existingFeiPopulated: FeiByNumero,
-  nextFeiData: Fei,
-  me: User,
-  relations: MyRelationsLoaderData["data"],
-  step: FeiAction,
-): NonNullFeiByNumero {
-  if (!existingFeiPopulated) {
-    return formatFeiOfflineQueueNouvelleFei(nextFeiData, me);
-  }
-  switch (step) {
-    case "fei_action_nouvelle":
-      console.log("BIMBADADABOOM");
-      return formatFeiOfflineQueueNouvelleFei(nextFeiData, me);
-    case "fei_action_confirm_current_owner":
-      return formatFeiOfflineQueueConfirmCurrentOwner(existingFeiPopulated, nextFeiData, me, relations);
-    case "fei_action_premier_detenteur_depot":
-      return formatFeiOfflineQueuePremierDetenteurDepot(existingFeiPopulated, nextFeiData, relations);
-    case "fei_action_next_role":
-      return formatFeiOfflineQueueNextEntity(existingFeiPopulated, nextFeiData, relations);
-    case "fei_action_reject_current_owner":
-    case "fei_action_examinateur_initial":
-    case "fei_action_premier_detenteur":
-    default:
-      return {
-        ...existingFeiPopulated,
-        ...nextFeiData,
-      };
-  }
-}
-
-function formatFeiOfflineQueueNouvelleFei(fei: Fei, me: User): NonNullFeiByNumero {
-  const baseFei = offlineNullFeiToBeCompletedByExaminateurFields();
-
-  console.log("formatFeiOfflineQueueNouvelleFei", {
-    fei,
-    me,
-    offline: {
-      ...baseFei,
-      id: Date.now(),
-      numero: fei.numero,
-      date_mise_a_mort: fei.date_mise_a_mort,
-      created_by_user_id: me.id,
-      fei_current_owner_user_id: me.id,
-      fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
-      examinateur_initial_user_id: me.id,
-      created_at: fei.created_at,
-      updated_at: fei.updated_at,
-      FeiExaminateurInitialUser: me,
-      FeiCreatedByUser: me,
-      FeiCurrentUser: me,
+    ok: true,
+    error: "",
+    data: {
+      numero_bracelet: carcasseFormData.numero_bracelet ?? originalCarcasse?.numero_bracelet,
+      fei_numero: carcasseFormData.fei_numero ?? originalCarcasse?.fei_numero,
+      heure_mise_a_mort: carcasseFormData.heure_mise_a_mort ?? originalCarcasse?.heure_mise_a_mort ?? null,
+      heure_evisceration: carcasseFormData.heure_evisceration ?? originalCarcasse?.heure_evisceration ?? null,
+      espece: carcasseFormData.espece ?? originalCarcasse?.espece ?? null,
+      categorie: carcasseFormData.categorie ?? originalCarcasse?.categorie ?? null,
+      examinateur_carcasse_sans_anomalie:
+        carcasseFormData.examinateur_carcasse_sans_anomalie ??
+        originalCarcasse?.examinateur_carcasse_sans_anomalie ??
+        null,
+      examinateur_anomalies_carcasse:
+        carcasseFormData.examinateur_anomalies_carcasse ?? originalCarcasse?.examinateur_anomalies_carcasse,
+      examinateur_anomalies_abats:
+        carcasseFormData.examinateur_anomalies_abats ?? originalCarcasse?.examinateur_anomalies_abats,
+      examinateur_commentaire:
+        carcasseFormData.examinateur_commentaire ?? originalCarcasse?.examinateur_commentaire ?? null,
+      examinateur_refus: carcasseFormData.examinateur_refus ?? originalCarcasse?.examinateur_refus ?? null,
+      examinateur_signed_at: carcasseFormData.examinateur_signed_at ?? originalCarcasse?.examinateur_signed_at ?? null,
+      intermediaire_carcasse_refus_intermediaire_id:
+        carcasseFormData.intermediaire_carcasse_refus_intermediaire_id ??
+        originalCarcasse?.intermediaire_carcasse_refus_intermediaire_id ??
+        null,
+      intermediaire_carcasse_refus_motif:
+        carcasseFormData.intermediaire_carcasse_refus_motif ??
+        originalCarcasse?.intermediaire_carcasse_refus_motif ??
+        null,
+      intermediaire_carcasse_signed_at:
+        carcasseFormData.intermediaire_carcasse_signed_at ?? originalCarcasse?.intermediaire_carcasse_signed_at ?? null,
+      intermediaire_carcasse_commentaire:
+        carcasseFormData.intermediaire_carcasse_commentaire ??
+        originalCarcasse?.intermediaire_carcasse_commentaire ??
+        null,
+      svi_carcasse_saisie: carcasseFormData.svi_carcasse_saisie ?? originalCarcasse?.svi_carcasse_saisie ?? null,
+      svi_carcasse_saisie_motif:
+        carcasseFormData.svi_carcasse_saisie_motif ?? originalCarcasse?.svi_carcasse_saisie_motif,
+      svi_carcasse_saisie_at:
+        carcasseFormData.svi_carcasse_saisie_at ?? originalCarcasse?.svi_carcasse_saisie_at ?? null,
+      svi_carcasse_signed_at:
+        carcasseFormData.svi_carcasse_signed_at ?? originalCarcasse?.svi_carcasse_signed_at ?? null,
+      svi_carcasse_commentaire:
+        carcasseFormData.svi_carcasse_commentaire ?? originalCarcasse?.svi_carcasse_commentaire ?? null,
+      created_at: carcasseFormData.created_at ?? originalCarcasse?.created_at,
+      updated_at: carcasseFormData.updated_at ?? originalCarcasse?.updated_at,
+      deleted_at: carcasseFormData.deleted_at ?? originalCarcasse?.deleted_at ?? null,
     },
-  });
-
-  return {
-    ...baseFei,
-    id: Date.now(),
-    numero: fei.numero,
-    date_mise_a_mort: fei.date_mise_a_mort,
-    created_by_user_id: me.id,
-    fei_current_owner_user_id: me.id,
-    fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
-    examinateur_initial_user_id: me.id,
-    created_at: fei.created_at,
-    updated_at: fei.updated_at,
-    FeiExaminateurInitialUser: me,
-    FeiCreatedByUser: me,
-    FeiCurrentUser: me,
   };
 }
 
-function formatFeiOfflineQueueConfirmCurrentOwner(
-  existingFeiPopulated: NonNullFeiByNumero,
-  fei: Fei,
-  me: User,
-  relations: MyRelationsLoaderData["data"],
-): NonNullFeiByNumero {
+export function formatCarcasseOfflineLoaderReturn(carcasse: Carcasse, fei: Fei): CarcasseLoaderData {
   return {
-    ...existingFeiPopulated,
-    ...fei,
-    FeiCurrentUser: me,
-    FeiCurrentEntity: relations!.entitiesUserIsWorkingFor.find(
-      (entity) => entity.id === fei.fei_current_owner_entity_id,
-    )!,
-    FeiNextEntity: null,
-  };
-}
-
-function formatFeiOfflineQueuePremierDetenteurDepot(
-  existingFeiPopulated: NonNullFeiByNumero,
-  fei: Fei,
-  relations: MyRelationsLoaderData["data"],
-): NonNullFeiByNumero {
-  const allEntities = [
-    ...relations!.entitiesUserIsWorkingFor,
-    ...relations!.collecteursPro,
-    ...relations!.ccgs,
-    ...relations!.etgs,
-    ...relations!.svis,
-  ];
-
-  return {
-    ...existingFeiPopulated,
-    ...fei,
-    FeiDepotEntity: allEntities.find((entity) => entity.id === fei.premier_detenteur_depot_entity_id)!,
-  };
-}
-
-function formatFeiOfflineQueueNextEntity(
-  existingFeiPopulated: NonNullFeiByNumero,
-  fei: Fei,
-  relations: MyRelationsLoaderData["data"],
-): NonNullFeiByNumero {
-  const allEntities = [
-    ...relations!.entitiesUserIsWorkingFor,
-    ...relations!.collecteursPro,
-    ...relations!.ccgs,
-    ...relations!.etgs,
-    ...relations!.svis,
-  ];
-
-  return {
-    ...existingFeiPopulated,
-    ...fei,
-    FeiNextEntity: allEntities.find((entity) => entity.id === fei.fei_next_owner_entity_id)!,
-  };
-}
-
-export function formatFeiOfflineQueueCarcasse(
-  existingFeiPopulated: NonNullFeiByNumero,
-  carcasse: Carcasse,
-): NonNullFeiByNumero {
-  const existingCarcasse = existingFeiPopulated.Carcasses.find((c) => c.numero_bracelet === carcasse.numero_bracelet);
-
-  return {
-    ...existingFeiPopulated,
-    Carcasses: [
-      ...existingFeiPopulated.Carcasses.filter((c) => c.numero_bracelet !== carcasse.numero_bracelet),
-      {
-        ...existingCarcasse,
+    ok: true,
+    data: {
+      carcasse: {
         ...carcasse,
+        Fei: fei,
       },
-    ].sort((a, b) => a.numero_bracelet.localeCompare(b.numero_bracelet)),
-  };
-}
-
-export function formatFeiOfflineQueueFeiIntermediaire(
-  existingFeiPopulated: NonNullFeiByNumero,
-  feiIntermediaire: FeiIntermediaire,
-  me: User,
-  relations: MyRelationsLoaderData["data"],
-): NonNullFeiByNumero {
-  const intermediaireEntity = relations!.entitiesUserIsWorkingFor.find(
-    (entity) => entity.id === feiIntermediaire.fei_intermediaire_entity_id,
-  )!;
-  const newIntermediaire: NonNullFeiByNumero["FeiIntermediaires"][0] = {
-    id: feiIntermediaire.id,
-    fei_numero: feiIntermediaire.fei_numero,
-    created_at: feiIntermediaire.created_at,
-    deleted_at: feiIntermediaire.deleted_at,
-    commentaire: feiIntermediaire.commentaire,
-    received_at: feiIntermediaire.received_at,
-    handover_at: feiIntermediaire.handover_at,
-    check_finished_at: feiIntermediaire.check_finished_at,
-    updated_at: feiIntermediaire.updated_at,
-    fei_intermediaire_role: feiIntermediaire.fei_intermediaire_role,
-    fei_intermediaire_user_id: feiIntermediaire.fei_intermediaire_user_id,
-    fei_intermediaire_entity_id: feiIntermediaire.fei_intermediaire_entity_id,
-    CarcasseIntermediaire: [],
-    FeiIntermediaireEntity: {
-      raison_sociale: intermediaireEntity.raison_sociale,
-      siret: intermediaireEntity.siret,
-      type: intermediaireEntity.type,
-      numero_ddecpp: intermediaireEntity.numero_ddecpp,
-      address_ligne_1: intermediaireEntity.address_ligne_1,
-      address_ligne_2: intermediaireEntity.address_ligne_2,
-      code_postal: intermediaireEntity.code_postal,
-      ville: intermediaireEntity.ville,
+      fei: fei,
     },
-    FeiIntermediaireUser: {
-      nom_de_famille: me.nom_de_famille,
-      prenom: me.prenom,
-      email: me.email,
-      telephone: me.telephone,
-    },
-  };
-  return {
-    ...existingFeiPopulated,
-    FeiIntermediaires: [...existingFeiPopulated.FeiIntermediaires, newIntermediaire],
+    error: "",
   };
 }

@@ -1,11 +1,9 @@
 import { type Fei, type User, type Carcasse, type FeiIntermediaire, UserRoles } from "@prisma/client";
-import type { FeiByNumero } from "./fei.server";
+import type { FeiWithRelations } from "./fei.server";
 import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 
-type NonNullFeiByNumero = Exclude<FeiByNumero, null>;
-
 type OfflineFeiWithExaminateurFieldsOmitted = Omit<
-  NonNullFeiByNumero,
+  FeiWithRelations,
   | "id"
   | "created_at"
   | "updated_at"
@@ -65,12 +63,12 @@ export type FeiAction =
   | "fei_action_next_role";
 
 export function formatFeiOfflineQueue(
-  existingFeiPopulated: FeiByNumero,
+  existingFeiPopulated: FeiWithRelations,
   nextFeiData: Fei,
   me: User,
   relations: MyRelationsLoaderData["data"],
   step: FeiAction,
-): NonNullFeiByNumero {
+): FeiWithRelations {
   if (!existingFeiPopulated) {
     return formatFeiOfflineQueueNouvelleFei(nextFeiData, me);
   }
@@ -95,7 +93,7 @@ export function formatFeiOfflineQueue(
   }
 }
 
-function formatFeiOfflineQueueNouvelleFei(fei: Fei, me: User): NonNullFeiByNumero {
+function formatFeiOfflineQueueNouvelleFei(fei: Fei, me: User): FeiWithRelations {
   const baseFei = offlineNullFeiToBeCompletedByExaminateurFields();
 
   console.log("formatFeiOfflineQueueNouvelleFei", {
@@ -136,11 +134,11 @@ function formatFeiOfflineQueueNouvelleFei(fei: Fei, me: User): NonNullFeiByNumer
 }
 
 function formatFeiOfflineQueueConfirmCurrentOwner(
-  existingFeiPopulated: NonNullFeiByNumero,
+  existingFeiPopulated: FeiWithRelations,
   fei: Fei,
   me: User,
   relations: MyRelationsLoaderData["data"],
-): NonNullFeiByNumero {
+): FeiWithRelations {
   return {
     ...existingFeiPopulated,
     ...fei,
@@ -153,10 +151,10 @@ function formatFeiOfflineQueueConfirmCurrentOwner(
 }
 
 function formatFeiOfflineQueuePremierDetenteurDepot(
-  existingFeiPopulated: NonNullFeiByNumero,
+  existingFeiPopulated: FeiWithRelations,
   fei: Fei,
   relations: MyRelationsLoaderData["data"],
-): NonNullFeiByNumero {
+): FeiWithRelations {
   const allEntities = [
     ...relations!.entitiesUserIsWorkingFor,
     ...relations!.collecteursPro,
@@ -173,10 +171,10 @@ function formatFeiOfflineQueuePremierDetenteurDepot(
 }
 
 function formatFeiOfflineQueueNextEntity(
-  existingFeiPopulated: NonNullFeiByNumero,
+  existingFeiPopulated: FeiWithRelations,
   fei: Fei,
   relations: MyRelationsLoaderData["data"],
-): NonNullFeiByNumero {
+): FeiWithRelations {
   const allEntities = [
     ...relations!.entitiesUserIsWorkingFor,
     ...relations!.collecteursPro,
@@ -193,9 +191,9 @@ function formatFeiOfflineQueueNextEntity(
 }
 
 export function formatFeiOfflineQueueCarcasse(
-  existingFeiPopulated: NonNullFeiByNumero,
+  existingFeiPopulated: FeiWithRelations,
   carcasse: Carcasse,
-): NonNullFeiByNumero {
+): FeiWithRelations {
   const existingCarcasse = existingFeiPopulated.Carcasses.find((c) => c.numero_bracelet === carcasse.numero_bracelet);
 
   return {
@@ -211,15 +209,15 @@ export function formatFeiOfflineQueueCarcasse(
 }
 
 export function formatFeiOfflineQueueFeiIntermediaire(
-  existingFeiPopulated: NonNullFeiByNumero,
+  existingFeiPopulated: FeiWithRelations,
   feiIntermediaire: FeiIntermediaire,
   me: User,
   relations: MyRelationsLoaderData["data"],
-): NonNullFeiByNumero {
+): FeiWithRelations {
   const intermediaireEntity = relations!.entitiesUserIsWorkingFor.find(
     (entity) => entity.id === feiIntermediaire.fei_intermediaire_entity_id,
   )!;
-  const newIntermediaire: NonNullFeiByNumero["FeiIntermediaires"][0] = {
+  const newIntermediaire: FeiWithRelations["FeiIntermediaires"][0] = {
     id: feiIntermediaire.id,
     fei_numero: feiIntermediaire.fei_numero,
     created_at: feiIntermediaire.created_at,

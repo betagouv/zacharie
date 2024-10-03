@@ -22,7 +22,7 @@ import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import InputNotEditable from "~/components/InputNotEditable";
-import { type CarcasseLoaderData } from "~/routes/api.loader.$fei_numero.$numero_bracelet";
+import { type CarcasseLoaderData } from "~/routes/api.loader.carcasse.$fei_numero.$numero_bracelet";
 import { type CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 import { createModal } from "@codegouvfr/react-dsfr/Modal";
@@ -51,7 +51,7 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
   const response = (await fetch(
-    `${import.meta.env.VITE_API_URL}/api/loader/${params.fei_numero}/${params.numero_bracelet}`,
+    `${import.meta.env.VITE_API_URL}/api/loader/carcasse/${params.fei_numero}/${params.numero_bracelet}`,
     {
       method: "GET",
       credentials: "include",

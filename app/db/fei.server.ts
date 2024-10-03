@@ -10,8 +10,8 @@ export const feiInclude = {
       numero_bracelet: "asc",
     },
   },
-  FeiPremierDetenteurUser: true,
   FeiExaminateurInitialUser: true,
+  FeiPremierDetenteurUser: true,
   FeiCreatedByUser: true,
   FeiDepotEntity: true,
   FeiSviEntity: true,
@@ -46,11 +46,12 @@ export const feiInclude = {
   },
 } as const;
 
-type FeiWithRelations = Prisma.FeiGetPayload<{
+export type FeiWithRelations = Prisma.FeiGetPayload<{
   include: typeof feiInclude;
 }>;
+export type FeiByNumero = FeiWithRelations | null;
 
-export async function getFeiByNumero(fei_numero: Fei["numero"]): Promise<Fei | null> {
+export async function getFeiByNumero(fei_numero: Fei["numero"]): Promise<FeiByNumero> {
   const fei = await prisma.fei.findUnique({
     where: {
       numero: fei_numero,
@@ -59,5 +60,3 @@ export async function getFeiByNumero(fei_numero: Fei["numero"]): Promise<Fei | n
   });
   return fei;
 }
-
-export type FeiByNumero = FeiWithRelations | null;
