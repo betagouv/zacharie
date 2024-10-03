@@ -36,7 +36,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   if (!route) {
     return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
   }
-  if (!formData.get("numero")) {
+  if (!formData.get("numero") && !formData.get("fei_numero")) {
     return json({ ok: false, data: null, error: "NUmero is required" }, { status: 400 });
   }
   const url = `${import.meta.env.VITE_API_URL}${route}`;
