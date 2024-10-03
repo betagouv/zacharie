@@ -1,10 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { clientLoader } from "./route";
-import { Button } from "@codegouvfr/react-dsfr/Button";
-import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
-import { Prisma } from "@prisma/client";
 import { action as nouvelleCarcasseAction } from "~/routes/api.action.carcasse.nouvelle";
 import NouvelleCarcasse from "./carcasses-nouvelle";
 
@@ -17,8 +14,6 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
   const navigate = useNavigate();
   const nouvelleCarcasseFetcher = useFetcher<typeof nouvelleCarcasseAction>({ key: "nouvelle-carcasse" });
   const carcasseFetcher = useFetcher({ key: "carcasse-delete-fetcher" });
-
-  const error = nouvelleCarcasseFetcher.data?.error;
 
   const lastNavigation = useRef<string>(nouvelleCarcasseFetcher.data?.data?.numero_bracelet ?? "");
   useEffect(() => {

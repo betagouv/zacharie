@@ -16,6 +16,7 @@ import grandGibierAbatsList from "~/data/grand-gibier-abats/list.json";
 import { useEffect, useMemo, useRef, useState } from "react";
 import InputForSearchPrefilledData from "~/components/InputForSearchPrefilledData";
 import { Input } from "@codegouvfr/react-dsfr/Input";
+import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
@@ -92,12 +93,15 @@ export default function CarcasseReadAndWrite() {
 
   const Component = canEdit ? Input : InputNotEditable;
 
+  const numeroFetcher = useFetcher({ key: "carcasse-numero-edit-fetcher" });
+  const noAnomalieFetcher = useFetcher({ key: "carcasse-no-anomalie-fetcher" });
   const carcasseFetcher = useFetcher({ key: "carcasse-edit-fetcher" });
   const [espece, setEspece] = useState(carcasse.espece);
   const [categorie, setCategorie] = useState(carcasse.categorie);
   const [showAsSelectOption, setShowAsSelectOption] = useState(false);
   const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(carcasse.examinateur_anomalies_abats);
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(carcasse.examinateur_anomalies_carcasse);
+  const [noANomalie, setNoAnomalie] = useState(carcasse.examinateur_carcasse_sans_anomalie);
   // const [addAnomalieAbats, setAddAnomalieAbats] = useState(true);
   // const [addAnomalieCarcasse, setAddAnomalieCarcasse] = useState(true);
   const addAnomalieAbats = true;
@@ -106,6 +110,8 @@ export default function CarcasseReadAndWrite() {
     canEdit && espece && !anomaliesAbats.length && !anomaliesCarcasse.length,
   );
 
+  const numeroFormRef = useRef<HTMLFormElement>(null);
+  const noAnomalieFormRef = useRef<HTMLFormElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleFormSubmit = () => {
@@ -134,6 +140,35 @@ export default function CarcasseReadAndWrite() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [showScroll]);
 
+  function PermanentFields() {
+    return (
+      <>
+        <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
+        <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.espece} value={espece || ""} />
+        <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.categorie} value={categorie || ""} />
+        {anomaliesAbats?.map((anomalie, index) => (
+          <input
+            key={anomalie + index}
+            type="hidden"
+            name={Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats}
+            value={anomalie || ""}
+          />
+        ))}
+        {anomaliesCarcasse?.map((anomalie, index) => (
+          <input
+            key={anomalie + index}
+            type="hidden"
+            name={Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse}
+            value={anomalie || ""}
+          />
+        ))}
+        {(anomaliesAbats.length > 0 || anomaliesCarcasse.length > 0) && (
+          <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie} value="false" />
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -159,16 +194,22 @@ export default function CarcasseReadAndWrite() {
             ]}
           />
           {canEdit && (
-            <carcasseFetcher.Form
+            <numeroFetcher.Form
               id="carcasse-edit-form"
               method="POST"
-              ref={formRef}
-              onChange={handleFormSubmit}
+              ref={numeroFormRef}
+              onSubmit={() => {
+                const formData = new FormData(numeroFormRef.current!);
+                numeroFetcher.submit(formData, {
+                  method: "POST",
+                  preventScrollReset: true, // Prevent scroll reset on submission
+                });
+              }}
               className="mb-6 bg-white py-2 md:shadow"
             >
               <div className="p-4">
                 <div className="fr-fieldset__element">
-                  <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
+                  <PermanentFields />
                   <Input
                     label="Numéro de bracelet"
                     nativeInputProps={{
@@ -182,7 +223,7 @@ export default function CarcasseReadAndWrite() {
                   <Button type="submit">Modifier</Button>
                 </div>
               </div>
-            </carcasseFetcher.Form>
+            </numeroFetcher.Form>
           )}
           <carcasseFetcher.Form
             id="carcasse-edit-form"
@@ -192,39 +233,10 @@ export default function CarcasseReadAndWrite() {
             className="mb-6 bg-white py-2 md:shadow"
           >
             <div className="p-4 pb-8 md:p-8 md:pb-4">
-              <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
-              <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.espece} value={espece || ""} />
-              <input type="hidden" name={Prisma.CarcasseScalarFieldEnum.categorie} value={categorie || ""} />
-              <input
-                type="hidden"
-                name={Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie}
-                value={!anomaliesCarcasse?.length ? "true" : "false"}
-              />
-              <input
-                type="hidden"
-                name={Prisma.CarcasseScalarFieldEnum.examinateur_abats_sans_anomalie}
-                value={!anomaliesAbats?.length ? "true" : "false"}
-              />
-              {anomaliesAbats?.map((anomalie, index) => (
-                <input
-                  key={anomalie + index}
-                  type="hidden"
-                  name={Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats}
-                  value={anomalie || ""}
-                />
-              ))}
-              {anomaliesCarcasse?.map((anomalie, index) => (
-                <input
-                  key={anomalie + index}
-                  type="hidden"
-                  name={Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse}
-                  value={anomalie || ""}
-                />
-              ))}
-
+              <PermanentFields />
               {!canEdit && (
                 <div className="fr-fieldset__element">
-                  <Component
+                  <InputNotEditable
                     label="Numéro de bracelet"
                     nativeInputProps={{
                       type: "text",
@@ -401,7 +413,7 @@ export default function CarcasseReadAndWrite() {
                   </div>
                 </div>
               </div>
-              <div className="mb-16 bg-white md:shadow">
+              <div className="mb-6 bg-white md:shadow">
                 <div className="p-4 pb-8 md:p-8 md:pb-4">
                   <div className="fr-fieldset__element">
                     <h3 className="fr-h4 fr-mb-2w">
@@ -468,6 +480,50 @@ export default function CarcasseReadAndWrite() {
                   </div>
                 </div>
               </div>
+              {anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0 && (
+                <div className="mb-6 bg-white md:shadow">
+                  <noAnomalieFetcher.Form
+                    className="p-4 pb-8 md:p-8 md:pb-4"
+                    method="POST"
+                    ref={noAnomalieFormRef}
+                    onSubmit={() => {
+                      const formData = new FormData(noAnomalieFormRef.current!);
+                      noAnomalieFetcher.submit(formData, {
+                        method: "POST",
+                        preventScrollReset: true, // Prevent scroll reset on submission
+                      });
+                    }}
+                  >
+                    <div className={["fr-fieldset__element", !canEdit ? "pointer-events-none" : ""].join(" ")}>
+                      <PermanentFields />
+                      <Checkbox
+                        options={[
+                          {
+                            label: `${
+                              carcasse.examinateur_carcasse_sans_anomalie ? "J'ai certifié" : "Je certifie"
+                            } ne constater aucune anomalie sur la carcasse`,
+                            hintText:
+                              "Attention, les anomalies que vous omettez seront détectées par le collecteur et l’ETG et augmente significativement le taux de saisie. Une anomalie déclarée c’est moins de gâchis.",
+                            nativeInputProps: {
+                              required: true,
+                              name: Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie,
+                              value: "true",
+                              readOnly: !canEdit,
+                              checked: !!noANomalie,
+                              onChange: (e) => {
+                                setNoAnomalie(e.target.checked);
+                              },
+                            },
+                          },
+                        ]}
+                      />
+                      {canEdit && carcasse.examinateur_carcasse_sans_anomalie !== noANomalie && (
+                        <Button type="submit">Enregistrer</Button>
+                      )}
+                    </div>
+                  </noAnomalieFetcher.Form>
+                </div>
+              )}
             </>
           )}
           <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">

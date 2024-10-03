@@ -89,19 +89,19 @@ export async function action(args: ActionFunctionArgs) {
     nextCarcasse.categorie = formData.get(Prisma.CarcasseScalarFieldEnum.categorie) as string;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie)) {
-    nextCarcasse.examinateur_carcasse_sans_anomalie = stringToBoolean(
+    const nextValue = stringToBoolean(
       formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie) as string,
     );
+    nextCarcasse.examinateur_carcasse_sans_anomalie = nextValue;
+    if (nextValue === true) {
+      nextCarcasse.examinateur_anomalies_carcasse = [];
+      nextCarcasse.examinateur_anomalies_abats = [];
+    }
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)) {
     nextCarcasse.examinateur_anomalies_carcasse = formData.getAll(
       Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse,
     ) as string[];
-  }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_abats_sans_anomalie)) {
-    nextCarcasse.examinateur_abats_sans_anomalie = stringToBoolean(
-      formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_abats_sans_anomalie) as string,
-    );
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats)) {
     nextCarcasse.examinateur_anomalies_abats = formData.getAll(
