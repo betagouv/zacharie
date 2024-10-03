@@ -252,6 +252,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       const clonedRequest = request.clone();
       const formData = await clonedRequest.formData();
       const feiData = Object.fromEntries(formData) as unknown as Fei;
+      const feiNumero = request.url.split("/").at(-1) as Fei["numero"];
       console.log("Opening cache");
       const cache = await caches.open(CACHE_NAME);
       /* User */
@@ -276,7 +277,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("All feis data from cache");
       const allFeisData = (await allFeisResponseClone.json()) as FeisLoaderData;
       console.log("Specific fei populated");
-      const specificFeiPopulated = findFeiInAllFeisData(allFeisData, feiData.numero);
+      const specificFeiPopulated = findFeiInAllFeisData(allFeisData, feiNumero);
       console.log("Specific fei populated", specificFeiPopulated);
       /* Treatment */
       const offlineFei = formatFeiOfflineQueue(

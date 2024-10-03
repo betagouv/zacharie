@@ -121,6 +121,7 @@ export default function ConfirmCurrentOwner() {
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
             formData.append("route", `/api/action/fei/${fei.numero}`);
+            formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
             formData.append("step", "fei_action_reject_current_owner" satisfies FeiAction);
             fetcher.submit(formData, {
               method: "POST",

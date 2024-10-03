@@ -153,6 +153,7 @@ export default function SelectNextOwner() {
     <>
       <nextOwnerFetcher.Form id="select-next-owner" preventScrollReset method="POST">
         <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
+        <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <input type="hidden" name="step" value={"fei_action_next_role" satisfies FeiAction} />
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <div className="fr-fieldset__element">

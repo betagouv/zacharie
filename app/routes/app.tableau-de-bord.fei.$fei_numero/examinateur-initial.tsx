@@ -93,6 +93,7 @@ export default function FEIExaminateurInitial() {
         <examFetcher.Form method="POST" onBlur={handleUserFormChange}>
           <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
           <input type="hidden" name="step" value={"fei_action_examinateur_initial" satisfies FeiAction} />
+          <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
           <div className="fr-fieldset__element">
             <Component
               label="Date de mise à mort et d'éviscération"
@@ -133,6 +134,7 @@ export default function FEIExaminateurInitial() {
           <approbationFetcher.Form method="POST">
             <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
             <input type="hidden" name="step" value={"fei_action_examinateur_initial" satisfies FeiAction} />
+            <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             <div
               className={[
                 "fr-fieldset__element",

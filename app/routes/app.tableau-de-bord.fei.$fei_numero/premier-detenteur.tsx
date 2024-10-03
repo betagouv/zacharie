@@ -87,6 +87,7 @@ export default function FEIDetenteurInitial() {
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
                 formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
                 formData.append("route", `/api/action/fei/${fei.numero}`);
+                formData.append("numero", fei.numero);
                 formData.append("step", "fei_action_premier_detenteur" satisfies FeiAction);
 
                 fetcher.submit(formData, {
@@ -108,6 +109,7 @@ export default function FEIDetenteurInitial() {
                 formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
                 formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
                 formData.append("route", `/api/action/fei/${fei.numero}`);
+                formData.append("numero", fei.numero);
                 formData.append("step", "fei_action_reject_current_owner" satisfies FeiAction);
                 fetcher.submit(formData, {
                   method: "POST",
@@ -150,6 +152,7 @@ export default function FEIDetenteurInitial() {
           {depotType && (
             <depotFetcher.Form method="POST">
               <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
+              <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
               {depotType === Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id && (
                 <div className="fr-fieldset__element">
                   <input type="hidden" name="step" value={"fei_action_premier_detenteur_depot" satisfies FeiAction} />

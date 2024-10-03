@@ -179,6 +179,7 @@ export default function FEICurrentIntermediaire() {
       <Accordion titleAs="h3" label="Prise en charge des carcasses acceptées" defaultExpanded key={intermediaire.id}>
         <priseEnChargeFetcher.Form method="POST" id="check_finished_at">
           <input type="hidden" name="route" value="/api/action/carcasse-suivi" />
+          <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
           <input
             form="check_finished_at"
             type="hidden"
