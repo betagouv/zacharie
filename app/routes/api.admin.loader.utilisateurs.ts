@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
   const users = await prisma.user.findMany();
-  return json({ ok: true, data: { users, latestVersion: __VITE_BUILD_ID__ }, error: "" });
+  return json({ ok: true, data: { users }, error: "" });
 }
 
 export type AdminUsersLoaderData = ExtractLoaderData<typeof loader>;

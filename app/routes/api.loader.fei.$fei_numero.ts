@@ -17,7 +17,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     ok: true,
     data: {
       fei,
-      latestVersion: __VITE_BUILD_ID__,
     },
     error: "",
   });

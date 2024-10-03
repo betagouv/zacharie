@@ -15,7 +15,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
         feisToTake: [],
         feisOngoing: [],
         feisDone: [],
-        latestVersion: __VITE_BUILD_ID__,
       },
       {
         status: 401,
@@ -126,7 +125,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     feisUnderMyResponsability,
     feisToTake,
     feisOngoing,
-    latestVersion: __VITE_BUILD_ID__,
   });
 }
 

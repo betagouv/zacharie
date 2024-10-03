@@ -28,7 +28,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     ok: true,
     data: {
       userCCGs,
-      latestVersion: __VITE_BUILD_ID__,
     },
     error: "",
   });

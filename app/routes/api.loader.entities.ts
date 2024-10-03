@@ -28,7 +28,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     data: {
       allEntitiesByTypeAndId,
       userEntitiesByTypeAndId,
-      latestVersion: __VITE_BUILD_ID__,
     },
     error: "",
   });

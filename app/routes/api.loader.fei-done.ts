@@ -12,7 +12,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       {
         user: null,
         feisDone: [],
-        latestVersion: __VITE_BUILD_ID__,
       },
       {
         status: 401,
@@ -44,7 +43,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return json({
     user,
     feisDone,
-    latestVersion: __VITE_BUILD_ID__,
   });
 }
 

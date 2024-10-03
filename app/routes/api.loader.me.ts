@@ -11,7 +11,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     ok: true,
     data: {
       user,
-      latestVersion: __VITE_BUILD_ID__,
     },
     error: "",
   });

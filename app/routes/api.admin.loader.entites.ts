@@ -14,7 +14,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       type: "asc",
     },
   });
-  return json({ ok: true, data: { entities, latestVersion: __VITE_BUILD_ID__ }, error: "" });
+  return json({ ok: true, data: { entities }, error: "" });
 }
 
 export type AdminEntitesLoaderData = ExtractLoaderData<typeof loader>;

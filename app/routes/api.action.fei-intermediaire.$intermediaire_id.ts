@@ -2,6 +2,7 @@ import { json, type ActionFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import { Prisma, UserRoles } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
+import type { ExtractLoaderData } from "~/services/extract-loader-data";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -47,3 +48,5 @@ export async function action(args: ActionFunctionArgs) {
 
   return json({ ok: true, data: newFeiIntermediaire, error: "" });
 }
+
+export type FeiIntermediaireActionData = ExtractLoaderData<typeof action>;

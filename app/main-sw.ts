@@ -11,6 +11,10 @@ import type { Fei, Carcasse, FeiIntermediaire } from "@prisma/client";
 import type { MeLoaderData } from "~/routes/api.loader.me";
 import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 import type { FeisLoaderData } from "~/routes/api.loader.fei";
+import type { FeiLoaderData } from "~/routes/api.loader.fei.$fei_numero";
+import type { CarcasseLoaderData } from "~/routes/api.loader.$fei_numero.$numero_bracelet";
+import type { CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
+import type { FeiIntermediaireActionData } from "~/routes/api.action.fei-intermediaire.$intermediaire_id";
 import { createStore, set, get, del, keys } from "idb-keyval";
 
 const CACHE_NAME = "zacharie-pwa-cache-v1";
@@ -137,9 +141,18 @@ async function handleFetchRequest(request: Request): Promise<Response> {
       const specificFei = findFeiInAllFeisData(allFeisData, feiNumero);
 
       if (specificFei) {
-        return new Response(JSON.stringify({ fei: specificFei }), {
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            data: {
+              fei: specificFei,
+            },
+            error: "",
+          } satisfies FeiLoaderData),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        );
       }
     }
   }
@@ -246,7 +259,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("Offline FEI", offlineFei);
       await addOfflineFeiToCache(offlineFei);
       console.log("Offline FEI added to cache");
-      return new Response(JSON.stringify({ ok: true, data: offlineFei }), {
+      return new Response(JSON.stringify({ ok: true, data: { fei: offlineFei }, error: "" } satisfies FeiLoaderData), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
@@ -276,10 +289,14 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("Offline FEI", offlineFei);
       await addOfflineFeiToCache(offlineFei);
       console.log("Offline FEI added to cache");
-      return new Response(JSON.stringify({ ok: true, data: offlineFei }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      // FIXME: return carcasse data
+      return new Response(
+        JSON.stringify({ ok: true, data: { fei: offlineFei }, error: "" } satisfies CarcasseActionData),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     if (request.url.includes(`/api/action/fei-intermedaire/`)) {
@@ -325,7 +342,8 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("Offline FEI", offlineFei);
       await addOfflineFeiToCache(offlineFei);
       console.log("Offline FEI added to cache");
-      return new Response(JSON.stringify({ ok: true, data: offlineFei }), {
+      // FIXME: return fei data
+      return new Response(JSON.stringify({ ok: true, data: offlineFei } satisfies FeiIntermediaireActionData), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
@@ -409,21 +427,28 @@ async function addOfflineFeiToCache(offlineFei: ReturnType<typeof formatFeiOffli
   console.log("Adding offline FEI to cache");
   const cache = await caches.open(CACHE_NAME);
 
-  await cache.put(
-    `${import.meta.env.VITE_API_URL}/api/loader/fei/${offlineFei.numero}`,
-    new Response(
-      JSON.stringify({
-        ok: true,
-        data: {
-          fei: offlineFei,
+  await cache
+    .put(
+      `${import.meta.env.VITE_API_URL}/api/loader/fei/${offlineFei.numero}`,
+      new Response(
+        JSON.stringify({
+          ok: true,
+          data: {
+            fei: offlineFei,
+          },
+          error: "",
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
         },
-        error: "",
-      }),
-      {
-        headers: { "Content-Type": "application/json" },
-      },
-    ),
-  );
+      ),
+    )
+    .then(() => {
+      console.log("Offline FEI added to cache");
+    })
+    .catch((error) => {
+      console.error("Error adding offline FEI to cache", error);
+    });
 
   console.log("Fetching all FEIs from cache");
   const allFeisResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei`);

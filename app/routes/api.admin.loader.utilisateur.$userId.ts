@@ -41,7 +41,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       examinateurDone: !user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ? true : !!user.numero_cfei,
       allEntities,
       userEntitiesRelations,
-      latestVersion: __VITE_BUILD_ID__,
     },
     error: "",
   });

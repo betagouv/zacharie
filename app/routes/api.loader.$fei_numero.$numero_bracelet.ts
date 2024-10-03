@@ -21,7 +21,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
-  return json({ ok: true, data: { carcasse, fei: carcasse.Fei, latestVersion: __VITE_BUILD_ID__ }, error: "" });
+  return json({ ok: true, data: { carcasse, fei: carcasse.Fei }, error: "" });
 }
 
 export type CarcasseLoaderData = ExtractLoaderData<typeof loader>;
