@@ -329,7 +329,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       });
     }
 
-    if (request.url.includes(`/api/action/fei-intermedaire/`)) {
+    if (request.url.includes(`/api/action/fei-intermediaire/`)) {
       console.log("Handling offline fei-intermediaire creation");
       /* Fei Intermediaire action */
       console.log("Cloning request");
@@ -373,10 +373,17 @@ async function handlePostRequest(request: Request): Promise<Response> {
       await addOfflineFeiToCache(offlineFei);
       console.log("Offline FEI added to cache");
       // FIXME: return fei data
-      return new Response(JSON.stringify({ ok: true, data: offlineFei } satisfies FeiIntermediaireActionData), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          data: offlineFei.FeiIntermediaires.find((inter) => inter.id === feiIntermediaire.id)!,
+          error: "",
+        } satisfies FeiIntermediaireActionData),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     return new Response(JSON.stringify({ ok: true, data: "Request queued for later execution" }), {
@@ -398,6 +405,7 @@ const store = createStore("OfflineQueue", "requests");
 interface SerializedRequest {
   url: string;
   method: string;
+  credentials: RequestCredentials;
   headers: Record<string, string>;
   body: string;
   timestamp: number;
@@ -410,6 +418,7 @@ async function queuePostRequest(request: Request) {
   const serialized: SerializedRequest = {
     url: clonedRequest.url,
     method: clonedRequest.method,
+    credentials: clonedRequest.credentials,
     headers: Object.fromEntries(clonedRequest.headers),
     body: bodyText,
     timestamp: Date.now(),
@@ -424,7 +433,7 @@ async function processOfflineQueue(processingFrom: string) {
 
   const allKeys = await keys(store);
   for (const key of allKeys) {
-    const request = (await get(key, store)) as SerializedRequest;
+    const request = (await get(key, store)) satisfies SerializedRequest | undefined;
     if (!request) {
       continue;
     }
@@ -433,7 +442,7 @@ async function processOfflineQueue(processingFrom: string) {
       const response = await fetch(
         new Request(request.url, {
           method: request.method,
-          credentials: "include",
+          credentials: request.credentials,
           headers: request.headers,
           body: request.body,
         }),
