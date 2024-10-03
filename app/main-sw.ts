@@ -12,6 +12,7 @@ import type { MeLoaderData } from "~/routes/api.loader.me";
 import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 import type { FeisLoaderData } from "~/routes/api.loader.fei";
 import type { FeiLoaderData } from "~/routes/api.loader.fei.$fei_numero";
+import type { FeiActionData } from "~/routes/api.action.fei.$fei_numero";
 import type { CarcasseLoaderData } from "~/routes/api.loader.carcasse.$fei_numero.$numero_bracelet";
 import type { CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
 import type { FeiIntermediaireActionData } from "~/routes/api.action.fei-intermediaire.$intermediaire_id";
@@ -288,7 +289,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("Offline FEI", offlineFei);
       await addOfflineFeiToCache(offlineFei);
       console.log("Offline FEI added to cache");
-      return new Response(JSON.stringify({ ok: true, data: { fei: offlineFei }, error: "" } satisfies FeiLoaderData), {
+      return new Response(JSON.stringify({ ok: true, data: offlineFei, error: "" } satisfies FeiActionData), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
