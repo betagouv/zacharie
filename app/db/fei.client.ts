@@ -1,4 +1,4 @@
-import { type Fei, type User, UserRoles } from "@prisma/client";
+import { type Fei, type User, type Carcasse, UserRoles } from "@prisma/client";
 import type { FeiByNumero } from "./fei.server";
 import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 
@@ -189,5 +189,23 @@ function formatFeiOfflineQueueNextEntity(
     ...existingFeiPopulated,
     ...fei,
     FeiNextEntity: allEntities.find((entity) => entity.id === fei.fei_next_owner_entity_id)!,
+  };
+}
+
+export function formatFeiOfflineQueueCarcasse(
+  existingFeiPopulated: NonNullFeiByNumero,
+  carcasse: Carcasse,
+): NonNullFeiByNumero {
+  const existingCarcasse = existingFeiPopulated.Carcasses.find((c) => c.numero_bracelet === carcasse.numero_bracelet);
+
+  return {
+    ...existingFeiPopulated,
+    Carcasses: [
+      ...existingFeiPopulated.Carcasses.filter((c) => c.numero_bracelet !== carcasse.numero_bracelet),
+      {
+        ...existingCarcasse,
+        ...carcasse,
+      },
+    ].sort((a, b) => a.numero_bracelet.localeCompare(b.numero_bracelet)),
   };
 }

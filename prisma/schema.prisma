@@ -235,9 +235,8 @@ model Fei {
 }
 
 model Carcasse {
-  id                                            String                  @id @default(uuid())
+  numero_bracelet                               String                  @id
   fei_numero                                    String
-  numero_bracelet                               String                  @unique
   heure_mise_a_mort                             String?
   heure_evisceration                            String?
   espece                                        String? // Sanglier, Cerf, etc.
@@ -269,7 +268,7 @@ model Carcasse {
 }
 
 model FeiIntermediaire {
-  id                             String                  @id @default(uuid())
+  id                             String                  @id // {user_id}_{fei_numero}_{HHMMSS}
   fei_numero                     String
   fei_intermediaire_user_id      String
   fei_intermediaire_entity_id    String
@@ -293,8 +292,7 @@ model FeiIntermediaire {
 }
 
 model CarcasseIntermediaire {
-  id                                     String           @id @default(uuid())
-  fei_numero__bracelet__intermediaire_id String           @unique
+  fei_numero__bracelet__intermediaire_id String           @id
   fei_numero                             String
   numero_bracelet                        String
   fei_intermediaire_id                   String
