@@ -195,16 +195,20 @@ export function formatFeiOfflineQueueCarcasse(
   carcasse: Carcasse,
 ): FeiWithRelations {
   const existingCarcasse = existingFeiPopulated.Carcasses.find((c) => c.numero_bracelet === carcasse.numero_bracelet);
+  const nextCarcasse = {
+    ...existingCarcasse,
+    ...carcasse,
+  };
+  const nextCarcasses = [
+    ...existingFeiPopulated.Carcasses.filter((c) => c.numero_bracelet !== carcasse.numero_bracelet),
+    nextCarcasse,
+  ];
+
+  console.log({ existingCarcasse, carcasse, nextCarcasse, nextCarcasses });
 
   return {
     ...existingFeiPopulated,
-    Carcasses: [
-      ...existingFeiPopulated.Carcasses.filter((c) => c.numero_bracelet !== carcasse.numero_bracelet),
-      {
-        ...existingCarcasse,
-        ...carcasse,
-      },
-    ].sort((a, b) => a.numero_bracelet.localeCompare(b.numero_bracelet)),
+    Carcasses: nextCarcasses.sort((a, b) => a.numero_bracelet?.localeCompare?.(b?.numero_bracelet)),
   };
 }
 
