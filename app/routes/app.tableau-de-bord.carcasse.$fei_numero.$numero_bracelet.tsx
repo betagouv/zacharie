@@ -116,6 +116,7 @@ export default function CarcasseReadAndWrite() {
 
   const handleFormSubmit = () => {
     const formData = new FormData(formRef.current!);
+    formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
     carcasseFetcher.submit(formData, {
       method: "POST",
       preventScrollReset: true, // Prevent scroll reset on submission
@@ -200,6 +201,7 @@ export default function CarcasseReadAndWrite() {
               ref={numeroFormRef}
               onSubmit={() => {
                 const formData = new FormData(numeroFormRef.current!);
+                formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
                 numeroFetcher.submit(formData, {
                   method: "POST",
                   preventScrollReset: true, // Prevent scroll reset on submission
@@ -488,6 +490,7 @@ export default function CarcasseReadAndWrite() {
                     ref={noAnomalieFormRef}
                     onSubmit={() => {
                       const formData = new FormData(noAnomalieFormRef.current!);
+                      formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
                       noAnomalieFetcher.submit(formData, {
                         method: "POST",
                         preventScrollReset: true, // Prevent scroll reset on submission

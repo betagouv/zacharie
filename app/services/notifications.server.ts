@@ -53,6 +53,7 @@ export default async function sendNotificationToUser({
     // });
   }
   if (user.notifications.includes(UserNotifications.EMAIL)) {
+    console.log("SENDING EMAIL NOTIFICATION", user.id);
     sendEmail({
       emails: import.meta.env.DEV ? ["arnaud@ambroselli.io"] : [user.email!],
       subject: title,
