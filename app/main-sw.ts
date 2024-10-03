@@ -311,7 +311,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       const allFeisResponseClone = allFeisResponse!.clone();
       console.log("All feis data from cache");
       const allFeisData = (await allFeisResponseClone.json()) as FeisLoaderData;
-      console.log("Specific fei populated");
+      console.log("Looking for Specific fei populated", carcasseData.fei_numero);
       const specificFeiPopulated = findFeiInAllFeisData(allFeisData, carcasseData.fei_numero);
       console.log("Specific fei populated", specificFeiPopulated);
       const carcasseActionData = formatCarcasseOfflineActionReturn(
