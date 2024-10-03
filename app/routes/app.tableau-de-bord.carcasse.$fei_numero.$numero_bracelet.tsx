@@ -237,7 +237,13 @@ export default function CarcasseReadAndWrite() {
           >
             <div className="p-4 pb-8 md:p-8 md:pb-4">
               <PermanentFields />
-              {!canEdit && (
+              {canEdit ? (
+                <input
+                  type="hidden"
+                  name={Prisma.CarcasseScalarFieldEnum.numero_bracelet}
+                  value={carcasse.numero_bracelet}
+                />
+              ) : (
                 <div className="fr-fieldset__element">
                   <InputNotEditable
                     label="Numéro de bracelet"
@@ -501,6 +507,11 @@ export default function CarcasseReadAndWrite() {
                   >
                     <div className={["fr-fieldset__element", !canEdit ? "pointer-events-none" : ""].join(" ")}>
                       <PermanentFields />
+                      <input
+                        type="hidden"
+                        name={Prisma.CarcasseScalarFieldEnum.numero_bracelet}
+                        value={carcasse.numero_bracelet}
+                      />
                       <Checkbox
                         options={[
                           {
