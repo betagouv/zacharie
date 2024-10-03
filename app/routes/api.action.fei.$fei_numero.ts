@@ -250,20 +250,23 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
     const nextOwnerId = formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) as string;
     if (nextOwnerId !== user.id) {
+      console.log("need to send notification new FEI");
       const nextOwner = await prisma.user.findUnique({ where: { id: nextOwnerId } });
       sendNotificationToUser({
         user: nextOwner!,
         title: "Vous avez une nouvelle FEI à traiter",
         body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
       });
-    }
-    if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwnerId) {
+    } else if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwnerId) {
+      console.log("need to send notification remove FEI");
       const exNextOwner = await prisma.user.findUnique({ where: { id: existingFei.fei_next_owner_user_id } });
       sendNotificationToUser({
         user: exNextOwner!,
         title: "Une FEI ne vous est plus attribuée",
         body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une nouvelle FEI, mais elle a finalement été attribuée à quelqu'un d'autre.`,
       });
+    } else {
+      console.log("no need to send notification");
     }
   }
 
