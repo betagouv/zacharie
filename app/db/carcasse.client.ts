@@ -22,9 +22,9 @@ export function formatCarcasseOfflineActionReturn(
         originalCarcasse?.examinateur_carcasse_sans_anomalie ??
         null,
       examinateur_anomalies_carcasse:
-        carcasseFormData.examinateur_anomalies_carcasse ?? originalCarcasse?.examinateur_anomalies_carcasse,
+        carcasseFormData.examinateur_anomalies_carcasse || originalCarcasse?.examinateur_anomalies_carcasse || [],
       examinateur_anomalies_abats:
-        carcasseFormData.examinateur_anomalies_abats ?? originalCarcasse?.examinateur_anomalies_abats,
+        carcasseFormData.examinateur_anomalies_abats || originalCarcasse?.examinateur_anomalies_abats || [],
       examinateur_commentaire:
         carcasseFormData.examinateur_commentaire ?? originalCarcasse?.examinateur_commentaire ?? null,
       examinateur_refus: carcasseFormData.examinateur_refus ?? originalCarcasse?.examinateur_refus ?? null,

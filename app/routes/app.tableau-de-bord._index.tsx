@@ -77,7 +77,9 @@ export default function TableauDeBordIndex() {
   const data = useLoaderData<typeof clientLoader>()!;
   const user = data.user!;
   const { feisDone, feisOngoing, feisToTake, feisUnderMyResponsability } = data;
-  const feisAssigned = [...feisUnderMyResponsability, ...feisToTake];
+  const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
+    return b.updated_at < a.updated_at ? -1 : 1;
+  });
   const [showBackOnlineRefresh, setShowBackOnlineRefresh] = useState(false);
   const isOnline = useIsOnline(() => {
     setShowBackOnlineRefresh(true);
