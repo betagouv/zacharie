@@ -72,8 +72,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const feisOngoing = await prisma.fei.findMany({
     where: {
       svi_signed_at: null,
-      fei_current_owner_user_id: { not: user.id },
-      fei_next_owner_user_id: { not: user.id },
+      // fei_current_owner_user_id: { not: user.id },
+      AND: [
+        {
+          fei_next_owner_user_id: { not: user.id },
+        },
+        {
+          fei_next_owner_user_id: { not: null },
+        },
+      ],
       FeiNextEntity: {
         EntityRelatedWithUser: {
           none: {
