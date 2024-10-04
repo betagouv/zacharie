@@ -178,7 +178,6 @@ export default function InputVille(props: InputVilleProps) {
                 // trigger a focus event then a blur again to submit the form
                 // this is a hack to submit the form on blur again
                 ref.current?.focus();
-                ref.current?.blur();
                 canSearch.current = false;
               }}
               type="button"

@@ -90,7 +90,7 @@ export default function FEIExaminateurInitial() {
   return (
     <>
       <Accordion titleAs="h3" label="Données de chasse" defaultExpanded>
-        <examFetcher.Form method="POST" onBlur={handleUserFormChange} id="examination-fetcher-form">
+        <examFetcher.Form method="POST" onBlur={handleUserFormChange}>
           <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
           <input type="hidden" name="step" value={"fei_action_examinateur_initial" satisfies FeiAction} />
           <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
@@ -115,7 +115,6 @@ export default function FEIExaminateurInitial() {
                 id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
                 name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
                 type: "text",
-                form: "examination-fetcher-form",
                 required: true,
                 autoComplete: "off",
                 defaultValue: fei?.commune_mise_a_mort ?? "",

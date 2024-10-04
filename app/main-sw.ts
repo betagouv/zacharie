@@ -426,11 +426,18 @@ async function processOfflineQueue(processingFrom: string) {
   const allKeys = await IDB.keys(store);
 
   // Process requests in order: fei, carcasse, then others
-  for (const key of allKeys.sort((a, b) => Number(b) - Number(a))) {
+  for (const key of allKeys.sort((a, b) => Number(a) - Number(b))) {
+    console.log("processing key", key);
     const request = (await IDB.get(key, store)) satisfies SerializedRequest | undefined;
     if (!request) {
       continue;
     }
+    try {
+      console.log("processing request", request.url);
+      console.log("processing body", request.body);
+      const processedBody = Object.fromEntries(request.body as unknown as FormData);
+      console.log("process body", processedBody);
+    } catch (e) {}
     try {
       const response = await fetch(
         new Request(request.url, {
