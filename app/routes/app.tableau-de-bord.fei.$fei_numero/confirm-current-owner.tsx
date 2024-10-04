@@ -43,7 +43,7 @@ export default function ConfirmCurrentOwner() {
     formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_role, fei.fei_next_owner_role as string);
     formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id, fei.fei_next_owner_entity_id || "");
     formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, fei.fei_next_owner_user_id || user.id);
-    formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer, transfer ? "true" : "false");
+    formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer, transfer ? "true" : "");
     formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_role, "");
     formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
     formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");

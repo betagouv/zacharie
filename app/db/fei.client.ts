@@ -80,11 +80,12 @@ export function formatFeiOfflineQueue(
       return formatFeiOfflineQueueConfirmCurrentOwner(existingFeiPopulated, nextFeiData, me, relations);
     case "fei_action_premier_detenteur_depot":
       return formatFeiOfflineQueuePremierDetenteurDepot(existingFeiPopulated, nextFeiData, relations);
+    case "fei_action_premier_detenteur":
+      return formatFeiOfflineQueuePremierDetenteur(existingFeiPopulated, me);
     case "fei_action_next_role":
       return formatFeiOfflineQueueNextEntity(existingFeiPopulated, nextFeiData, relations);
     case "fei_action_reject_current_owner":
     case "fei_action_examinateur_initial":
-    case "fei_action_premier_detenteur":
     default:
       return {
         ...existingFeiPopulated,
@@ -167,6 +168,13 @@ function formatFeiOfflineQueuePremierDetenteurDepot(
     ...existingFeiPopulated,
     ...fei,
     FeiDepotEntity: allEntities.find((entity) => entity.id === fei.premier_detenteur_depot_entity_id)!,
+  };
+}
+
+function formatFeiOfflineQueuePremierDetenteur(existingFeiPopulated: FeiWithRelations, me: User): FeiWithRelations {
+  return {
+    ...existingFeiPopulated,
+    FeiPremierDetenteurUser: me,
   };
 }
 
