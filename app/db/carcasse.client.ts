@@ -105,19 +105,29 @@ export function insertSuiviCarcasseByIntermediaireInFei(
       if (intermediaire.id !== carcasseIntermediaire.fei_intermediaire_id) {
         return intermediaire;
       }
+      const existingCarcasseIntermediaire = intermediaire.CarcasseIntermediaire.find(
+        (ci) =>
+          ci.fei_numero__bracelet__intermediaire_id === carcasseIntermediaire.fei_numero__bracelet__intermediaire_id,
+      );
+      if (existingCarcasseIntermediaire) {
+        return {
+          ...intermediaire,
+          CarcasseIntermediaire: intermediaire.CarcasseIntermediaire.map((ci) => {
+            if (
+              ci.fei_numero__bracelet__intermediaire_id !== carcasseIntermediaire.fei_numero__bracelet__intermediaire_id
+            ) {
+              return ci;
+            }
+            return {
+              ...ci,
+              ...carcasseIntermediaire,
+            };
+          }),
+        };
+      }
       return {
         ...intermediaire,
-        CarcasseIntermediaire: intermediaire.CarcasseIntermediaire.map((ci) => {
-          if (
-            ci.fei_numero__bracelet__intermediaire_id !== carcasseIntermediaire.fei_numero__bracelet__intermediaire_id
-          ) {
-            return ci;
-          }
-          return {
-            ...ci,
-            ...carcasseIntermediaire,
-          };
-        }),
+        CarcasseIntermediaire: [...intermediaire.CarcasseIntermediaire, carcasseIntermediaire],
       };
     }),
   };

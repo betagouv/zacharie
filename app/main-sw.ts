@@ -399,7 +399,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
     }
 
     if (request.url.includes(`/api/action/carcasse-suivi/`)) {
-      console.log("Handling offline fei-intermediaire creation");
+      console.log("Handling offline CARCASSE SUIVI");
       /* Fei Intermediaire action */
       console.log("Cloning request");
       const clonedRequest = request.clone();
@@ -412,11 +412,11 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("Specific fei populated", specificFeiPopulated);
       /* Treatment */
       const suiviCarcasseActionData = formatSuiviCarcasseByIntermediaire(carcasseIntermediaire);
+      console.log("Suivi Carcasse Action Data", suiviCarcasseActionData);
       const offlineFei = insertSuiviCarcasseByIntermediaireInFei(suiviCarcasseActionData.data!, specificFeiPopulated!);
-      console.log("Offline FEI", offlineFei);
+      console.log("Offline FEI after suivi action data", offlineFei);
       await addOfflineFeiToCache(offlineFei);
       console.log("Offline FEI added to cache");
-      // FIXME: return fei data
       return new Response(JSON.stringify(suiviCarcasseActionData satisfies SuiviCarcasseActionData), {
         status: 200,
         headers: { "Content-Type": "application/json" },
