@@ -142,6 +142,14 @@ export default function FEICurrentIntermediaire() {
       <Accordion titleAs="h3" label={`Identité de l'intermédaire ${canEdit ? "🔒" : ""}`}>
         <EntityNotEditable user={intermediaire.FeiIntermediaireUser} entity={intermediaire.FeiIntermediaireEntity} />
       </Accordion>
+      {/* <Accordion
+        titleAs="h3"
+        label={`Carcasses (${carcassesUnsorted.length})`}
+        expanded={carcassesAValiderExpanded}
+        onExpandedChange={setCarcassesAValiderExpanded}
+      >
+        <CarcassesIntermediaire canEdit={canEdit} carcasses={carcassesUnsorted} />
+      </Accordion> */}
       {carcassesSorted.carcassesToCheck.length > 0 && (
         <Accordion
           titleAs="h3"

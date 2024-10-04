@@ -1,7 +1,8 @@
-import { Prisma, type Fei, type Carcasse } from "@prisma/client";
+import { Prisma, type Fei, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
 import type { FeiWithRelations } from "./fei.server";
 import type { CarcasseLoaderData } from "~/routes/api.loader.carcasse.$fei_numero.$numero_bracelet";
 import type { CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
+import type { SuiviCarcasseActionData } from "~/routes/api.action.carcasse-suivi.$numero_bracelet.$intermediaire_id";
 
 export function formatCarcasseOfflineActionReturn(
   carcasseFormData: FormData,
@@ -78,5 +79,27 @@ export function formatCarcasseOfflineLoaderReturn(carcasse: Carcasse, fei: Fei):
       fei: fei,
     },
     error: "",
+  };
+}
+
+export function formatSuiviCarcasseByIntermediaire(
+  carcasseIntermediaire: CarcasseIntermediaire,
+): SuiviCarcasseActionData {
+  return {
+    ok: true,
+    data: {
+      ...carcasseIntermediaire,
+      carcasse_check_finished_at: new Date(),
+    },
+    error: "",
+  };
+}
+
+export function insertSuiviCarcasseByIntermediaireInFei(
+  carcasseIntermediaire: CarcasseIntermediaire,
+  fei: FeiWithRelations,
+): FeiWithRelations {
+  return {
+    ...fei,
   };
 }

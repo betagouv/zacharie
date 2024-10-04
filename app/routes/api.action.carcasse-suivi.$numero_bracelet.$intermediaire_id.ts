@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { type ActionFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
+import type { ExtractLoaderData } from "~/services/extract-loader-data";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -41,33 +42,13 @@ export async function action(args: ActionFunctionArgs) {
     return json({ ok: false, data: null, error: "Carcasse not found" }, { status: 404 });
   }
   const fei_numero__bracelet__intermediaire_id = `${feiNumero}__${numero_bracelet}__${intermediaire_id}`;
-  const data: Prisma.CarcasseIntermediaireCreateInput = {
+  const data: Prisma.CarcasseIntermediaireUncheckedCreateInput = {
     fei_numero__bracelet__intermediaire_id,
-    CarcasseIntermediaireFei: {
-      connect: {
-        numero: feiNumero,
-      },
-    },
-    CarcasseCarcasseIntermediaire: {
-      connect: {
-        numero_bracelet: numero_bracelet,
-      },
-    },
-    CarcasseIntermediaireFeiIntermediaire: {
-      connect: {
-        id: intermediaire_id,
-      },
-    },
-    CarcasseIntermediaireUser: {
-      connect: {
-        id: user.id,
-      },
-    },
-    CarcasseIntermediaireEntity: {
-      connect: {
-        id: existingFei.fei_current_owner_entity_id!,
-      },
-    },
+    fei_numero: feiNumero,
+    numero_bracelet,
+    fei_intermediaire_id: intermediaire_id,
+    fei_intermediaire_user_id: user.id,
+    fei_intermediaire_entity_id: feiIntermediaire.fei_intermediaire_entity_id,
   };
   if (formData.has(Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire)) {
     data.commentaire = formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire) as string;
@@ -126,3 +107,5 @@ export async function action(args: ActionFunctionArgs) {
 
   return json({ ok: true, data: null, error: "" });
 }
+
+export type SuiviCarcasseActionData = ExtractLoaderData<typeof action>;

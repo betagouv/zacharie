@@ -112,12 +112,6 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
           <input
             form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
             type="hidden"
-            name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_numero__bracelet__intermediaire_id}
-            value={`${fei.numero}__${carcasse.numero_bracelet}__${intermediaire.id}`}
-          />
-          <input
-            form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-            type="hidden"
             name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_numero}
             value={fei.numero}
           />
@@ -132,18 +126,6 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
             form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
             name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_intermediaire_id}
             value={intermediaire.id}
-          />
-          <input
-            type="hidden"
-            form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-            name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_intermediaire_user_id}
-            value={intermediaire.fei_intermediaire_user_id}
-          />
-          <input
-            type="hidden"
-            form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-            name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_intermediaire_entity_id}
-            value={intermediaire.fei_intermediaire_entity_id}
           />
           {!showRefuser ? (
             <>
