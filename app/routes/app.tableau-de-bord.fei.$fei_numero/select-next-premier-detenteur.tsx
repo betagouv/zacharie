@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { clientLoader } from "./route";
-import { Prisma, Entity, User } from "@prisma/client";
+import { Prisma, Entity, User, UserRoles } from "@prisma/client";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import type { SerializeFrom } from "@remix-run/node";
 import { Select } from "@codegouvfr/react-dsfr/Select";
@@ -35,6 +35,7 @@ export default function SelectPremierDetenteur() {
       <nextOwnerFetcher.Form id="select-next-owner" preventScrollReset method="POST">
         <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
+        <input type="hidden" name={Prisma.FeiScalarFieldEnum.fei_next_owner_role} value={UserRoles.PREMIER_DETENTEUR} />
         <div className="fr-fieldset__element grow">
           <Select
             label="Quel Premier Détenteur doit désormais agir sur la FEI ?"

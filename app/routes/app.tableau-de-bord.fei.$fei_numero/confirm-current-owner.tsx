@@ -28,6 +28,8 @@ export default function ConfirmCurrentOwner() {
     return false;
   }, [fei, user, nextEntity]);
 
+  console.log({ canConfirmCurrentOwner, fei });
+
   if (!fei.fei_next_owner_role) {
     return null;
   }

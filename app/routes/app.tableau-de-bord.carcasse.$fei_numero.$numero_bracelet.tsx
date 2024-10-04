@@ -221,6 +221,11 @@ export default function CarcasseReadAndWrite() {
                   <PermanentFields />
                   <NumeroBraceletComponent
                     label="Numéro de bracelet"
+                    hintText={
+                      isOnline
+                        ? ""
+                        : "ATTENTION: en mode hors-ligne vous ne pouvez pas modifier ce numéro pour le moment"
+                    }
                     nativeInputProps={{
                       type: "text",
                       name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
@@ -228,9 +233,11 @@ export default function CarcasseReadAndWrite() {
                     }}
                   />
                 </div>
-                <div className="fr-fieldset__element m-0 flex justify-end">
-                  <Button type="submit">Modifier</Button>
-                </div>
+                {isOnline && (
+                  <div className="fr-fieldset__element m-0 flex justify-end">
+                    <Button type="submit">Modifier</Button>
+                  </div>
+                )}
               </div>
             </numeroFetcher.Form>
           )}
