@@ -3,11 +3,12 @@
 import {
   formatFeiOfflineQueue,
   formatFeiOfflineQueueCarcasse,
+  formatFeiOfflineQueueCarcasseDelete,
   formatFeiOfflineQueueFeiIntermediaire,
   type FeiAction,
 } from "~/db/fei.client";
 import type { FeiWithRelations } from "~/db/fei.server";
-import type { Fei, FeiIntermediaire } from "@prisma/client";
+import type { Fei, Carcasse, FeiIntermediaire } from "@prisma/client";
 import type { MeLoaderData } from "~/routes/api.loader.me";
 import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 import type { FeisLoaderData } from "~/routes/api.loader.fei";
@@ -305,28 +306,40 @@ async function handlePostRequest(request: Request): Promise<Response> {
       /* Carcasse action */
       console.log("Cloning request");
       const clonedRequest = request.clone();
+      const carcasseBracelet = request.url.split("/").at(-1) as Carcasse["numero_bracelet"];
       const carcasseFormData = await clonedRequest.formData();
       console.log("Opening cache");
       /* All Feis */
       console.log("AllFeisResponse from cache");
       const specificFeiPopulated = await findFeiInAllFeisData(carcasseFormData.get("fei_numero") as string);
       console.log("Specific fei populated", specificFeiPopulated);
-      const carcasseActionData = formatCarcasseOfflineActionReturn(
-        carcasseFormData,
-        specificFeiPopulated!.Carcasses.find(
-          (c) => c.numero_bracelet === (carcasseFormData.get("numero_bracelet") as string),
-        ) ?? null,
-      );
-      /* Treatment */
-      const offlineFei = formatFeiOfflineQueueCarcasse(specificFeiPopulated!, carcasseActionData.data!);
-      console.log("Offline FEI", offlineFei);
-      await addOfflineFeiToCache(offlineFei);
-      console.log("Offline FEI added to cache");
-      // FIXME: return carcasse data
-      return new Response(JSON.stringify(carcasseActionData satisfies CarcasseActionData), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      if (carcasseFormData.get("_action") === "delete") {
+        const offlineFei = formatFeiOfflineQueueCarcasseDelete(
+          specificFeiPopulated!,
+          carcasseFormData.get("numero_bracelet") as string,
+        );
+        console.log("Offline FEI", offlineFei);
+        await addOfflineFeiToCache(offlineFei);
+        console.log("Offline FEI added to cache");
+        return new Response(JSON.stringify({ ok: true, data: null, error: "" } satisfies CarcasseActionData), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      } else {
+        const carcasseActionData = formatCarcasseOfflineActionReturn(
+          carcasseFormData,
+          specificFeiPopulated!.Carcasses.find((c) => c.numero_bracelet === carcasseBracelet) || null,
+        );
+        /* Treatment */
+        const offlineFei = formatFeiOfflineQueueCarcasse(specificFeiPopulated!, carcasseActionData.data!);
+        console.log("Offline FEI", offlineFei);
+        await addOfflineFeiToCache(offlineFei);
+        console.log("Offline FEI added to cache");
+        return new Response(JSON.stringify(carcasseActionData satisfies CarcasseActionData), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
     }
 
     if (request.url.includes(`/api/action/fei-intermediaire/`)) {
@@ -439,12 +452,6 @@ async function processOfflineQueue(processingFrom: string) {
     if (!request) {
       continue;
     }
-    try {
-      console.log("processing request", request.url);
-      console.log("processing body", request.body);
-      const processedBody = Object.fromEntries(request.body as unknown as FormData);
-      console.log("process body", processedBody);
-    } catch (e) {}
     try {
       const response = await fetch(
         new Request(request.url, {

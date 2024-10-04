@@ -2,6 +2,7 @@ import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { clientLoader } from "./route";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import NouvelleCarcasse from "./carcasses-nouvelle";
+import { useMemo } from "react";
 
 const style = {
   boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
@@ -14,6 +15,12 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
   return (
     <>
       {fei.Carcasses.map((carcasse) => {
+        const examinationNotFinished =
+          !carcasse.examinateur_anomalies_abats?.length &&
+          !carcasse.examinateur_anomalies_carcasse?.length &&
+          !carcasse.examinateur_carcasse_sans_anomalie;
+        const missingFields =
+          !carcasse.espece || !carcasse.categorie || !carcasse.heure_mise_a_mort || !carcasse.heure_evisceration;
         return (
           // @ts-expect-error we dont type this json
           <Notice
@@ -53,15 +60,25 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                     <span className="block font-normal">
                       Éviscération&nbsp;: {carcasse.heure_evisceration || "À REMPLIR"}
                     </span>
+                    {(examinationNotFinished || missingFields) && (
+                      <>
+                        <br />
+                        <span className="block font-normal">À remplir</span>
+                      </>
+                    )}
                     <br />
-                    <span className="m-0 block font-bold">
-                      {carcasse.examinateur_anomalies_abats?.length || "Pas d'"} anomalie
-                      {carcasse.examinateur_anomalies_abats?.length > 1 ? "s" : ""} abats
-                    </span>
-                    <span className="m-0 block font-bold md:-mb-4">
-                      {carcasse.examinateur_anomalies_carcasse?.length || "Pas d'"} anomalie
-                      {carcasse.examinateur_anomalies_carcasse?.length > 1 ? "s" : ""} carcasse
-                    </span>
+                    {!examinationNotFinished && (
+                      <>
+                        <span className="m-0 block font-bold">
+                          {carcasse.examinateur_anomalies_abats?.length || "Pas d'"} anomalie
+                          {carcasse.examinateur_anomalies_abats?.length > 1 ? "s" : ""} abats
+                        </span>
+                        <span className="m-0 block font-bold md:-mb-4">
+                          {carcasse.examinateur_anomalies_carcasse?.length || "Pas d'"} anomalie
+                          {carcasse.examinateur_anomalies_carcasse?.length > 1 ? "s" : ""} carcasse
+                        </span>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>

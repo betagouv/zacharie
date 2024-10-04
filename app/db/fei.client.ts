@@ -212,6 +212,16 @@ export function formatFeiOfflineQueueCarcasse(
   };
 }
 
+export function formatFeiOfflineQueueCarcasseDelete(
+  existingFeiPopulated: FeiWithRelations,
+  numero_bracelet: Carcasse["numero_bracelet"],
+): FeiWithRelations {
+  return {
+    ...existingFeiPopulated,
+    Carcasses: existingFeiPopulated.Carcasses.filter((c) => c.numero_bracelet !== numero_bracelet),
+  };
+}
+
 export function formatFeiOfflineQueueFeiIntermediaire(
   existingFeiPopulated: FeiWithRelations,
   feiIntermediaire: FeiIntermediaire,
