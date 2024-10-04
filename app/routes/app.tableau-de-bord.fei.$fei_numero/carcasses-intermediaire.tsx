@@ -75,15 +75,39 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                   </span>
                 )}
                 <br />
-                <span className="m-0 block font-bold">
-                  {carcasse.examinateur_anomalies_abats?.length || "Pas d'"} anomalie
-                  {carcasse.examinateur_anomalies_abats?.length > 1 ? "s" : ""} abats
-                </span>
-                <span className="m-0 block font-bold">
-                  {carcasse.examinateur_anomalies_carcasse?.length || "Pas d'"} anomalie
-                  {carcasse.examinateur_anomalies_carcasse?.length > 1 ? "s" : ""} carcasse
-                </span>
-                {intermediaireCarcasse?.commentaire && (
+                <>
+                  {!carcasse.examinateur_anomalies_abats?.length ? (
+                    <span className="m-0 block font-bold">Pas d'anomalie abats</span>
+                  ) : (
+                    <>
+                      <span className="m-0 block font-bold">Anomalies abats:</span>
+                      {carcasse.examinateur_anomalies_abats.map((anomalie) => {
+                        return (
+                          <>
+                            <span className="m-0 ml-2 block font-bold">{anomalie}</span>
+                          </>
+                        );
+                      })}
+                    </>
+                  )}
+                </>
+                <>
+                  {!carcasse.examinateur_anomalies_carcasse?.length ? (
+                    <span className="m-0 block font-bold">Pas d'anomalie carcasse</span>
+                  ) : (
+                    <>
+                      <span className="m-0 block font-bold">Anomalies carcasse:</span>
+                      {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
+                        return (
+                          <>
+                            <span className="m-0 ml-2 block font-bold">{anomalie}</span>
+                          </>
+                        );
+                      })}
+                    </>
+                  )}
+                </>
+                {!canEdit && intermediaireCarcasse?.commentaire && (
                   <>
                     <br />
                     <span className="m-0 block font-bold">
@@ -103,7 +127,18 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
         }
       />
       {canEdit && (
-        <intermediaireCarcasseFetcher.Form method="POST" id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}>
+        <intermediaireCarcasseFetcher.Form
+          method="POST"
+          id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
+          onBlur={(e) => {
+            console.log("submit or what");
+            const form = new FormData(e.currentTarget);
+            intermediaireCarcasseFetcher.submit(form, {
+              method: "POST",
+              preventScrollReset: true,
+            });
+          }}
+        >
           <input
             type="hidden"
             name="route"

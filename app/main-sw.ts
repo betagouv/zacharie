@@ -8,7 +8,7 @@ import {
   type FeiAction,
 } from "~/db/fei.client";
 import type { FeiWithRelations } from "~/db/fei.server";
-import type { Fei, Carcasse, FeiIntermediaire } from "@prisma/client";
+import type { Fei, Carcasse, FeiIntermediaire, CarcasseIntermediaire } from "@prisma/client";
 import type { MeLoaderData } from "~/routes/api.loader.me";
 import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 import type { FeisLoaderData } from "~/routes/api.loader.fei";
@@ -16,9 +16,14 @@ import type { FeiLoaderData } from "~/routes/api.loader.fei.$fei_numero";
 import type { FeiActionData } from "~/routes/api.action.fei.$fei_numero";
 import type { CarcasseLoaderData } from "~/routes/api.loader.carcasse.$fei_numero.$numero_bracelet";
 import type { CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
+import type { SuiviCarcasseActionData } from "~/routes/api.action.carcasse-suivi.$numero_bracelet.$intermediaire_id";
 import type { FeiIntermediaireActionData } from "~/routes/api.action.fei-intermediaire.$intermediaire_id";
 import * as IDB from "idb-keyval";
-import { formatCarcasseOfflineActionReturn } from "./db/carcasse.client";
+import {
+  formatCarcasseOfflineActionReturn,
+  formatSuiviCarcasseByIntermediaire,
+  insertSuiviCarcasseByIntermediaireInFei,
+} from "./db/carcasse.client";
 
 const CACHE_NAME = "zacharie-pwa-cache-v1";
 const previousCacheNames = ["zacharie-pwa-cache-v0"];
@@ -391,6 +396,31 @@ async function handlePostRequest(request: Request): Promise<Response> {
           headers: { "Content-Type": "application/json" },
         },
       );
+    }
+
+    if (request.url.includes(`/api/action/carcasse-suivi/`)) {
+      console.log("Handling offline fei-intermediaire creation");
+      /* Fei Intermediaire action */
+      console.log("Cloning request");
+      const clonedRequest = request.clone();
+      const formData = await clonedRequest.formData();
+      // note: there is no array entry in the form data so it's easier to convert it to an object
+      const carcasseIntermediaire = Object.fromEntries(formData) as unknown as CarcasseIntermediaire;
+      console.log("Opening cache");
+      /* All Feis */
+      const specificFeiPopulated = await findFeiInAllFeisData(carcasseIntermediaire.fei_numero);
+      console.log("Specific fei populated", specificFeiPopulated);
+      /* Treatment */
+      const suiviCarcasseActionData = formatSuiviCarcasseByIntermediaire(carcasseIntermediaire);
+      const offlineFei = insertSuiviCarcasseByIntermediaireInFei(suiviCarcasseActionData.data!, specificFeiPopulated!);
+      console.log("Offline FEI", offlineFei);
+      await addOfflineFeiToCache(offlineFei);
+      console.log("Offline FEI added to cache");
+      // FIXME: return fei data
+      return new Response(JSON.stringify(suiviCarcasseActionData satisfies SuiviCarcasseActionData), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify({ ok: true, data: "Request queued for later execution" }), {

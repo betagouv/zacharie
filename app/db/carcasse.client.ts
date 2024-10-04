@@ -1,4 +1,4 @@
-import { Prisma, type Fei, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
+import { type Fei, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
 import type { FeiWithRelations } from "./fei.server";
 import type { CarcasseLoaderData } from "~/routes/api.loader.carcasse.$fei_numero.$numero_bracelet";
 import type { CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
@@ -101,5 +101,24 @@ export function insertSuiviCarcasseByIntermediaireInFei(
 ): FeiWithRelations {
   return {
     ...fei,
+    FeiIntermediaires: fei.FeiIntermediaires.map((intermediaire) => {
+      if (intermediaire.id !== carcasseIntermediaire.fei_intermediaire_id) {
+        return intermediaire;
+      }
+      return {
+        ...intermediaire,
+        CarcasseIntermediaire: intermediaire.CarcasseIntermediaire.map((ci) => {
+          if (
+            ci.fei_numero__bracelet__intermediaire_id !== carcasseIntermediaire.fei_numero__bracelet__intermediaire_id
+          ) {
+            return ci;
+          }
+          return {
+            ...ci,
+            ...carcasseIntermediaire,
+          };
+        }),
+      };
+    }),
   };
 }
