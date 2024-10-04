@@ -6,12 +6,12 @@ const dbName = "zacharie";
 const storeName = "store";
 
 let customStore: UseStore | null = null;
-const savedCacheKey = window.localStorage.getItem("zach-currentCacheKey");
-if (savedCacheKey !== currentCacheKey) {
-  clearCache("savedCacheKey diff currentCacheKey");
-} else {
-  setupDB();
-}
+// const savedCacheKey = window.localStorage.getItem("zach-currentCacheKey");
+// if (savedCacheKey !== currentCacheKey) {
+//   clearCache("savedCacheKey diff currentCacheKey");
+// } else {
+setupDB();
+// }
 
 function setupDB() {
   window.localStorage.setItem("zach-currentCacheKey", currentCacheKey);
