@@ -149,7 +149,11 @@ export default function TableauDeBordIndex() {
                       dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
                       dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm"),
                       fei.commune_mise_a_mort!,
-                      getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles)),
+                      getUserRoleLabel(
+                        fei.fei_next_owner_role && (fei.fei_next_owner_user_id || fei.fei_next_owner_user_id)
+                          ? fei.fei_next_owner_role
+                          : fei.fei_current_owner_role!,
+                      ),
                     ],
                   }))}
               />

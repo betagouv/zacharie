@@ -27,9 +27,12 @@ export async function action(args: ActionFunctionArgs) {
       },
     });
     if (existinCarcasse) {
-      await prisma.carcasse.delete({
+      await prisma.carcasse.update({
         where: {
           numero_bracelet,
+        },
+        data: {
+          deleted_at: dayjs().toISOString(),
         },
       });
     }
