@@ -1,5 +1,4 @@
-import { prisma } from "~/db/prisma.server";
-import type { Prisma, Fei } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 export const feiInclude = {
   FeiCurrentEntity: true,
@@ -49,14 +48,3 @@ export const feiInclude = {
 export type FeiWithRelations = Prisma.FeiGetPayload<{
   include: typeof feiInclude;
 }>;
-export type FeiByNumero = FeiWithRelations | null;
-
-export async function getFeiByNumero(fei_numero: Fei["numero"]): Promise<FeiByNumero> {
-  const fei = await prisma.fei.findUnique({
-    where: {
-      numero: fei_numero,
-    },
-    include: feiInclude,
-  });
-  return fei;
-}

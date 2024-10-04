@@ -389,6 +389,7 @@ export default function CarcasseReadAndWrite() {
                             <InputForSearchPrefilledData
                               canEdit={canEdit}
                               data={grandGibierCarcasseList}
+                              clearInputOnClick
                               label="Ajouter une nouvelle anomalie"
                               hintText={
                                 <>
@@ -457,6 +458,7 @@ export default function CarcasseReadAndWrite() {
                             <InputForSearchPrefilledData
                               data={grandGibierAbatsList}
                               label="Ajouter une nouvelle anomalie"
+                              clearInputOnClick
                               hintText={
                                 <>
                                   Voir le référentiel des anomalies d'abats en{" "}

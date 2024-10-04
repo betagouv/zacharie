@@ -23,7 +23,7 @@ export default function FEI_SVI() {
     const carcassesSaisies: Record<string, SerializeFrom<Carcasse>> = {};
     const carcassesToCheck: Record<string, SerializeFrom<Carcasse>> = {};
     for (const carcasse of carcassesUnsorted) {
-      if (carcasse.examinateur_refus || carcasse.intermediaire_carcasse_refus_intermediaire_id) {
+      if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
         continue;
       }
       if (carcasse.svi_carcasse_saisie_motif?.length) {

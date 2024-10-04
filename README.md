@@ -2,13 +2,22 @@
 
 - on doit pouvoir utiliser l'app en mode offline, pour l'utiliser dans les zones blanches en plein chasse
 - on doit pouvoir l'utiliser autant sur un smartphone que sur un ordinateur
-- on n'a a priori pas besoin du marketing d'une app mobile
+- on n'a a priori pas besoin du marketing d'une app mobile qui justifierait de passer par les stores
 - on peut a priori se passer d'un deeplink
 
 On a donc choisi
 - du Web
 - une PWA
-- Remix
+
+Initialement j'ai choisi la stack Remix, pour le côté SSR+SPA, et leur philosophie proche du web qui me plait bien.
+Avec prisma, qui permet de faire du type checking relativement simple.
+Et il existe deux options pour le PWA, remix-pwa et vite-plugin-pwa.
+
+J'ai d'abord choisi `remix-pwa` mais je l'ai vite abandonné parce que j'ai trouvé la librairie très complexe.
+Il offre beaucoup de copier-coller qui marche pas mal, mais ensuite pour naviguer dedans je n'y comprenais pas grand chose.
+J'ai donc choisi `vite-plugin-pwa`, qui était plus prometteur pour moi.
+Mais là encore, je ne sais pas pouruqoi mais j'ai trouvé tout très compliqué.
+Je me suis donc passé de librairie PWA, et j'ai fait un service worker à la main, qui n'est pas si simple mais qui est compréhensible.
 
 # Steps d'installation de la stack
 

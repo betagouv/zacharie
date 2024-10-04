@@ -245,7 +245,6 @@ model Carcasse {
   examinateur_anomalies_carcasse                String[]
   examinateur_anomalies_abats                   String[]
   examinateur_commentaire                       String?
-  examinateur_refus                             Boolean?
   examinateur_signed_at                         DateTime?
   intermediaire_carcasse_refus_intermediaire_id String?
   intermediaire_carcasse_refus_motif            String?

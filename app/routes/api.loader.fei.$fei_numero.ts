@@ -1,14 +1,20 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
-import { getFeiByNumero, type FeiByNumero } from "~/db/fei.server";
+import { feiInclude } from "~/db/fei.server";
+import { prisma } from "~/db/prisma.server";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
   if (!user) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
-  const fei = (await getFeiByNumero(params.fei_numero as string)) as FeiByNumero;
+  const fei = await prisma.fei.findUnique({
+    where: {
+      numero: params.fei_numero as string,
+    },
+    include: feiInclude,
+  });
   if (!fei) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }

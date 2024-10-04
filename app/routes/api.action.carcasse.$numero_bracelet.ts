@@ -113,11 +113,6 @@ export async function action(args: ActionFunctionArgs) {
       Prisma.CarcasseScalarFieldEnum.examinateur_commentaire,
     ) as string;
   }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_refus)) {
-    nextCarcasse.examinateur_refus = stringToBoolean(
-      formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_refus) as string,
-    );
-  }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at)) {
     nextCarcasse.examinateur_signed_at = dayjs().toISOString();
   }

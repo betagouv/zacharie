@@ -7,7 +7,7 @@ import {
   type FeiAction,
 } from "~/db/fei.client";
 import type { FeiWithRelations } from "~/db/fei.server";
-import type { Fei, Carcasse, FeiIntermediaire } from "@prisma/client";
+import type { Fei, FeiIntermediaire } from "@prisma/client";
 import type { MeLoaderData } from "~/routes/api.loader.me";
 import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 import type { FeisLoaderData } from "~/routes/api.loader.fei";
@@ -184,25 +184,25 @@ async function handleFetchRequest(request: Request): Promise<Response> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function findFeiInAllFeisData(feiNumero: string) {
+async function findFeiInAllFeisData(feiNumero: string): Promise<FeiWithRelations | null> {
   const cache = await caches.open(CACHE_NAME);
   const allFeisCache = await cache.match(new Request(`${import.meta.env.VITE_API_URL}/api/loader/fei`));
   const allFeisCacheCloned = allFeisCache!.clone();
-  const allFeisData = (await allFeisCacheCloned.json()) as FeisLoaderData;
+  const allFeisData = (await allFeisCacheCloned.json()) satisfies FeisLoaderData;
   const allFeis = [
     ...allFeisData.feisUnderMyResponsability,
     ...allFeisData.feisToTake,
     ...allFeisData.feisOngoing,
     // ...allFeisData.feisDone,
   ];
-  const cachedFei = allFeis.find((fei) => fei.numero === feiNumero) as FeiWithRelations;
+  const cachedFei = allFeis.find((fei) => fei.numero === feiNumero) satisfies FeiWithRelations;
   if (cachedFei) {
     return cachedFei;
   }
   const feiRequestCached = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/fei/${feiNumero}`);
   if (feiRequestCached) {
     const feiRequestCachedCloned = feiRequestCached.clone();
-    const feiData = (await feiRequestCachedCloned.json()) as FeiLoaderData;
+    const feiData = (await feiRequestCachedCloned.json()) satisfies FeiLoaderData;
     return feiData.data;
   }
   return null;
@@ -278,7 +278,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("Specific fei populated", specificFeiPopulated);
       /* Treatment */
       const offlineFei = formatFeiOfflineQueue(
-        specificFeiPopulated,
+        specificFeiPopulated!,
         feiData,
         userData.data.user!,
         myRelationsData.data!,
@@ -298,16 +298,17 @@ async function handlePostRequest(request: Request): Promise<Response> {
       /* Carcasse action */
       console.log("Cloning request");
       const clonedRequest = request.clone();
-      const formData = await clonedRequest.formData();
-      const carcasseData = Object.fromEntries(formData) as unknown as Carcasse;
+      const carcasseFormData = await clonedRequest.formData();
       console.log("Opening cache");
       /* All Feis */
       console.log("AllFeisResponse from cache");
-      const specificFeiPopulated = await findFeiInAllFeisData(carcasseData.fei_numero);
+      const specificFeiPopulated = await findFeiInAllFeisData(carcasseFormData.get("fei_numero") as string);
       console.log("Specific fei populated", specificFeiPopulated);
       const carcasseActionData = formatCarcasseOfflineActionReturn(
-        carcasseData,
-        specificFeiPopulated.Carcasses.find((c) => c.numero_bracelet === carcasseData.numero_bracelet) ?? null,
+        carcasseFormData,
+        specificFeiPopulated!.Carcasses.find(
+          (c) => c.numero_bracelet === (carcasseFormData.get("numero_bracelet") as string),
+        ) ?? null,
       );
       /* Treatment */
       const offlineFei = formatFeiOfflineQueueCarcasse(specificFeiPopulated!, carcasseActionData.data!);
@@ -327,6 +328,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("Cloning request");
       const clonedRequest = request.clone();
       const formData = await clonedRequest.formData();
+      // note: there is no array entry in the form data so it's easier to convert it to an object
       const feiIntermediaire = Object.fromEntries(formData) as unknown as FeiIntermediaire;
       console.log("Opening cache");
       const cache = await caches.open(CACHE_NAME);
