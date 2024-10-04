@@ -64,7 +64,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                     {(examinationNotFinished || missingFields) && (
                       <>
                         <br />
-                        <span className="fr-btn mt-2 block md:-mb-4">Finie l'examination</span>
+                        <span className="fr-btn mt-2 block md:-mb-4">Finir l'examination</span>
                       </>
                     )}
                     <br />

@@ -181,7 +181,7 @@ export default function Fei() {
   }, [fei.fei_next_owner_role, fei.fei_next_owner_user_id, user.id]);
 
   const intermediaireTabDisabled = useMemo(() => {
-    const intermediaire = fei.FeiIntermediaires[0];
+    const intermediaire = fei.FeiIntermediaires?.[0];
     if (!intermediaire) {
       return true;
     }
