@@ -417,32 +417,45 @@ async function queuePostRequest(request: Request) {
 
 async function processOfflineQueue(processingFrom: string) {
   console.log("Processing offline queue from", processingFrom);
-
   const allKeys = await keys(store);
-  for (const key of allKeys) {
-    const request = (await get(key, store)) satisfies SerializedRequest | undefined;
-    if (!request) {
-      continue;
-    }
 
-    try {
-      const response = await fetch(
-        new Request(request.url, {
-          method: request.method,
-          credentials: request.credentials,
-          headers: request.headers,
-          body: request.body,
-        }),
-      );
+  // Helper function to safely check if a key includes a substring
+  function keyIncludes(key: IDBValidKey, substring: string): boolean {
+    return typeof key === "string" && key.includes(substring);
+  }
 
-      if (response.ok) {
-        await del(key, store);
-        console.log("Processed and removed request", request.url);
-      } else {
-        console.error("Failed to process request", request.url, response.status);
+  // Separate keys into fei, carcasse, and other requests
+  const feiKeys = allKeys.filter((key) => keyIncludes(key, "/api/action/fei/"));
+  const carcasseKeys = allKeys.filter((key) => keyIncludes(key, "/api/action/carcasse/"));
+  const otherKeys = allKeys.filter(
+    (key) => !keyIncludes(key, "/api/action/fei/") && !keyIncludes(key, "/api/action/carcasse/"),
+  );
+
+  // Process requests in order: fei, carcasse, then others
+  for (const keyGroup of [feiKeys, carcasseKeys, otherKeys]) {
+    for (const key of keyGroup) {
+      const request = (await get(key, store)) satisfies SerializedRequest | undefined;
+      if (!request) {
+        continue;
       }
-    } catch (error) {
-      console.error("Error processing request", request.url, error);
+      try {
+        const response = await fetch(
+          new Request(request.url, {
+            method: request.method,
+            credentials: request.credentials,
+            headers: request.headers,
+            body: request.body,
+          }),
+        );
+        if (response.ok) {
+          await del(key, store);
+          console.log("Processed and removed request", request.url);
+        } else {
+          console.error("Failed to process request", request.url, response.status);
+        }
+      } catch (error) {
+        console.error("Error processing request", request.url, error);
+      }
     }
   }
 
