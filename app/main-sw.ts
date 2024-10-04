@@ -530,12 +530,22 @@ self.addEventListener("message", (event: ExtendableMessageEvent) => {
   if (event.data === "SW_MESSAGE_BACK_TO_ONLINE") {
     console.log("back to online triggered");
     event.waitUntil(
-      Promise.all([fetchAllFeis("SW_MESSAGE_BACK_TO_ONLINE"), processOfflineQueue("SW_MESSAGE_BACK_TO_ONLINE")]),
+      Promise.resolve(async () => {
+        await processOfflineQueue("SW_MESSAGE_BACK_TO_ONLINE");
+        await fetchAllFeis("SW_MESSAGE_BACK_TO_ONLINE");
+      }),
     );
   }
 
   if (event.data.type === "TABLEAU_DE_BORD_OPEN") {
-    event.waitUntil(Promise.all([fetchAllFeis("TABLEAU_DE_BORD_OPEN"), processOfflineQueue("TABLEAU_DE_BORD_OPEN")]));
+    if (navigator.onLine) {
+      event.waitUntil(
+        Promise.resolve(async () => {
+          await processOfflineQueue("TABLEAU_DE_BORD_OPEN");
+          await fetchAllFeis("TABLEAU_DE_BORD_OPEN");
+        }),
+      );
+    }
   }
 });
 
