@@ -74,7 +74,7 @@ export default function AdminEntity() {
   const formRef = useRef<HTMLFormElement>(null);
   const handleEntityFormSubmit = useCallback(() => {
     const formData = new FormData(formRef.current!);
-    formData.append("route", `/admin/action/entite/${entity.id}`);
+    formData.append("route", `/api/admin/action/entite/${entity.id}`);
     entityFetcher.submit(formData, {
       method: "POST",
       preventScrollReset: true,
@@ -129,7 +129,7 @@ export default function AdminEntity() {
                   onBlur={handleEntityFormSubmit}
                   preventScrollReset
                 >
-                  <input type="hidden" name="route" value={`/admin/action/entite/${entity.id}`} />
+                  <input type="hidden" name="route" value={`/api/admin/action/entite/${entity.id}`} />
                   <div className="fr-fieldset__element">
                     <Input
                       label="Raison Sociale"
@@ -403,7 +403,7 @@ function CoupledEntity() {
               coupledEntityFetcher.submit(
                 {
                   _action: "remove-couple",
-                  route: `/admin/action/entite/${entity.id}`,
+                  route: `/api/admin/action/entite/${entity.id}`,
                 },
                 {
                   method: "POST",
@@ -447,7 +447,7 @@ function CoupledEntity() {
                 preventScrollReset
               >
                 <input type="hidden" name={Prisma.EntityScalarFieldEnum.coupled_entity_id} value={potentielCouple.id} />
-                <input type="hidden" name="route" value={`/admin/action/entite/${entity.id}`} />
+                <input type="hidden" name="route" value={`/api/admin/action/entite/${entity.id}`} />
                 <Link
                   to={`/app/tableau-de-bord/admin/entite/${potentielCouple.id}`}
                   className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
