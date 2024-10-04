@@ -246,6 +246,13 @@ async function handlePostRequest(request: Request): Promise<Response> {
     }
 
     console.log("POST request received while offline; queueing for later");
+    if (request.url.includes("sentry")) {
+      console.log("Ignoring sentry request");
+      return new Response(JSON.stringify({ ok: true, data: "Request queued for later execution" }), {
+        status: 202,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     await queuePostRequest(request);
     console.log("Request queued for later execution");
     // Handle FEI creation when offline
