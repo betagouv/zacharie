@@ -300,7 +300,7 @@ model CarcasseIntermediaire {
   prise_en_charge                        Boolean?
   refus                                  String?
   commentaire                            String?
-  check_finished_at                      DateTime?
+  carcasse_check_finished_at             DateTime?
   created_at                             DateTime         @default(now())
   updated_at                             DateTime         @default(now()) @updatedAt
   deleted_at                             DateTime?

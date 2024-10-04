@@ -239,6 +239,17 @@ export function formatFeiOfflineQueueFeiIntermediaire(
   const intermediaireEntity = relations!.entitiesUserIsWorkingFor.find(
     (entity) => entity.id === feiIntermediaire.fei_intermediaire_entity_id,
   )!;
+  const existingIntermediaire = existingFeiPopulated.FeiIntermediaires.find(
+    (intermediaire) => intermediaire.id === feiIntermediaire.id,
+  );
+  if (existingIntermediaire && feiIntermediaire.check_finished_at) {
+    return {
+      ...existingFeiPopulated,
+      FeiIntermediaires: existingFeiPopulated.FeiIntermediaires.map((intermediaire) =>
+        intermediaire.id === feiIntermediaire.id ? { ...intermediaire, check_finished_at: new Date() } : intermediaire,
+      ),
+    };
+  }
   const newIntermediaire: FeiWithRelations["FeiIntermediaires"][0] = {
     id: feiIntermediaire.id,
     fei_numero: feiIntermediaire.fei_numero,

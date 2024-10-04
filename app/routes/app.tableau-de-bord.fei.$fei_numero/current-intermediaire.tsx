@@ -177,19 +177,29 @@ export default function FEICurrentIntermediaire() {
         )}
       </Accordion>
       <Accordion titleAs="h3" label="Prise en charge des carcasses acceptées" defaultExpanded key={intermediaire.id}>
-        <priseEnChargeFetcher.Form method="POST" id="check_finished_at">
-          <input type="hidden" name="route" value="/api/action/carcasse-suivi" />
-          <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
+        <priseEnChargeFetcher.Form method="POST" id="form_intermediaire_check_finished_at">
           <input
-            form="check_finished_at"
+            form="form_intermediaire_check_finished_at"
             type="hidden"
-            name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_numero}
+            name="route"
+            value={`/api/action/fei-intermediaire/${intermediaire.id}`}
+          />
+          <input
+            form="form_intermediaire_check_finished_at"
+            type="hidden"
+            name={Prisma.FeiScalarFieldEnum.numero}
             value={fei.numero}
           />
           <input
+            form="form_intermediaire_check_finished_at"
             type="hidden"
-            form="check_finished_at"
-            name={Prisma.CarcasseIntermediaireScalarFieldEnum.fei_intermediaire_id}
+            name={Prisma.FeiIntermediaireScalarFieldEnum.fei_numero}
+            value={fei.numero}
+          />
+          <input
+            form="form_intermediaire_check_finished_at"
+            type="hidden"
+            name={Prisma.FeiIntermediaireScalarFieldEnum.id}
             value={intermediaire.id}
           />
           <div
@@ -201,9 +211,10 @@ export default function FEICurrentIntermediaire() {
                   label: `${intermediaire.check_finished_at ? "J'ai pris" : "Je prends"} en charge les carcasses que j'ai acceptées.`,
                   nativeInputProps: {
                     required: true,
-                    name: Prisma.CarcasseIntermediaireScalarFieldEnum.check_finished_at,
+                    name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
                     value: "true",
                     disabled: !jobIsDone,
+                    form: "form_intermediaire_check_finished_at",
                     readOnly: !!intermediaire.check_finished_at,
                     defaultChecked: intermediaire.check_finished_at ? true : false,
                   },
@@ -221,9 +232,10 @@ export default function FEICurrentIntermediaire() {
               <InputNotEditable
                 label="Date de prise en charge"
                 nativeInputProps={{
-                  id: Prisma.CarcasseIntermediaireScalarFieldEnum.check_finished_at,
-                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.check_finished_at,
+                  id: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
+                  name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
                   type: "datetime-local",
+                  form: "form_intermediaire_check_finished_at",
                   suppressHydrationWarning: true,
                   autoComplete: "off",
                   defaultValue: dayjs(intermediaire.check_finished_at).format("YYYY-MM-DDTHH:mm"),

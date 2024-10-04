@@ -4,10 +4,20 @@ import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
 
 export async function action(args: ActionFunctionArgs) {
-  const { request } = args;
+  const { request, params } = args;
   const user = await getUserFromCookie(request);
   if (!user) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+  }
+
+  const numero_bracelet = params.numero_bracelet;
+  if (!numero_bracelet) {
+    return json({ ok: false, data: null, error: "Le numéro de la carcasse est obligatoire" }, { status: 400 });
+  }
+
+  const { intermediaire_id } = params;
+  if (!intermediaire_id) {
+    return json({ ok: false, data: null, error: "L'identifiant de l'intermédiaire est obligatoire" }, { status: 400 });
   }
 
   const formData = await request.formData();
@@ -18,32 +28,19 @@ export async function action(args: ActionFunctionArgs) {
   if (!existingFei) {
     return json({ ok: false, data: null, error: "FEI not found" }, { status: 404 });
   }
-  const feiIntermediaireId = formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.fei_intermediaire_id) as string;
   const feiIntermediaire = await prisma.feiIntermediaire.findUnique({
-    where: { id: feiIntermediaireId },
+    where: { id: intermediaire_id },
   });
   if (!feiIntermediaire) {
     return json({ ok: false, data: null, error: "FEI intermediaire not found" }, { status: 404 });
   }
-  if (formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.check_finished_at)) {
-    await prisma.feiIntermediaire.update({
-      where: {
-        id: feiIntermediaireId,
-      },
-      data: {
-        check_finished_at: new Date(),
-      },
-    });
-    return json({ ok: true, data: null, error: "" });
-  }
-  const carcasseBracelet = formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.numero_bracelet) as string;
   const existingCarcasse = await prisma.carcasse.findUnique({
-    where: { numero_bracelet: carcasseBracelet },
+    where: { numero_bracelet: numero_bracelet },
   });
   if (!existingCarcasse) {
     return json({ ok: false, data: null, error: "Carcasse not found" }, { status: 404 });
   }
-  const fei_numero__bracelet__intermediaire_id = `${feiNumero}__${carcasseBracelet}__${feiIntermediaireId}`;
+  const fei_numero__bracelet__intermediaire_id = `${feiNumero}__${numero_bracelet}__${intermediaire_id}`;
   const data: Prisma.CarcasseIntermediaireCreateInput = {
     fei_numero__bracelet__intermediaire_id,
     CarcasseIntermediaireFei: {
@@ -53,12 +50,12 @@ export async function action(args: ActionFunctionArgs) {
     },
     CarcasseCarcasseIntermediaire: {
       connect: {
-        numero_bracelet: carcasseBracelet,
+        numero_bracelet: numero_bracelet,
       },
     },
     CarcasseIntermediaireFeiIntermediaire: {
       connect: {
-        id: feiIntermediaireId,
+        id: intermediaire_id,
       },
     },
     CarcasseIntermediaireUser: {
@@ -78,7 +75,7 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge) === "true") {
     data.prise_en_charge = true;
     data.refus = null;
-    data.check_finished_at = new Date();
+    data.carcasse_check_finished_at = new Date();
     const carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
       where: {
         fei_numero__bracelet__intermediaire_id,
@@ -90,7 +87,7 @@ export async function action(args: ActionFunctionArgs) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const carcasseUpdated = await prisma.carcasse.update({
       where: {
-        numero_bracelet: carcasseBracelet,
+        numero_bracelet: numero_bracelet,
       },
       data: {
         intermediaire_carcasse_commentaire: null,
@@ -104,7 +101,7 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus)) {
     data.refus = formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus) as string;
     data.prise_en_charge = false;
-    data.check_finished_at = new Date();
+    data.carcasse_check_finished_at = new Date();
     const carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
       where: {
         fei_numero__bracelet__intermediaire_id,
@@ -115,12 +112,12 @@ export async function action(args: ActionFunctionArgs) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const carcasseUpdated = await prisma.carcasse.update({
       where: {
-        numero_bracelet: carcasseBracelet,
+        numero_bracelet: numero_bracelet,
       },
       data: {
         intermediaire_carcasse_commentaire: data.commentaire,
         intermediaire_carcasse_refus_motif: data.refus,
-        intermediaire_carcasse_refus_intermediaire_id: feiIntermediaireId,
+        intermediaire_carcasse_refus_intermediaire_id: intermediaire_id,
         intermediaire_carcasse_signed_at: new Date(),
       },
     });

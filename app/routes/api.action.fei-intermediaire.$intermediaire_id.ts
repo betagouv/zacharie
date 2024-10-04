@@ -12,11 +12,11 @@ export async function action(args: ActionFunctionArgs) {
   }
 
   const { intermediaire_id } = params;
-  const formData = await request.formData();
   if (!intermediaire_id) {
     return json({ ok: false, data: null, error: "L'identifiant de l'intermédiaire est obligatoire" }, { status: 400 });
   }
 
+  const formData = await request.formData();
   console.log("formData action.fei-intermediaire.$intermedaire_id", Object.fromEntries(formData));
 
   const fei_numero = formData.get(Prisma.FeiIntermediaireScalarFieldEnum.fei_numero) as string;
@@ -30,6 +30,18 @@ export async function action(args: ActionFunctionArgs) {
   });
   if (!fei) {
     return json({ ok: false, data: null, error: "La FEI n'existe pas" }, { status: 400 });
+  }
+
+  if (formData.get(Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at)) {
+    const intermediaire = await prisma.feiIntermediaire.update({
+      where: {
+        id: intermediaire_id,
+      },
+      data: {
+        check_finished_at: new Date(),
+      },
+    });
+    return json({ ok: true, data: intermediaire, error: "" });
   }
 
   const newFeiIntermediaire = await prisma.feiIntermediaire.create({
