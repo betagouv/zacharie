@@ -33,6 +33,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                 carcasseFetcher.submit(
                   {
                     numero_bracelet: carcasse.numero_bracelet,
+                    fei_numero: fei.numero,
                     _action: "delete",
                     route: `/api/action/carcasse/${carcasse.numero_bracelet}`,
                   },
