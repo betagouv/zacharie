@@ -2,7 +2,6 @@ import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { clientLoader } from "./route";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import NouvelleCarcasse from "./carcasses-nouvelle";
-import { useMemo } from "react";
 
 const style = {
   boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",

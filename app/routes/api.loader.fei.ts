@@ -75,45 +75,58 @@ export async function loader({ request }: LoaderFunctionArgs) {
       // fei_current_owner_user_id: { not: user.id },
       AND: [
         {
-          fei_next_owner_user_id: { not: user.id },
-        },
-        {
-          fei_next_owner_user_id: { not: null },
-        },
-      ],
-      FeiNextEntity: {
-        EntityRelatedWithUser: {
-          none: {
-            owner_id: user.id,
-          },
-        },
-      },
-      OR: [
-        {
-          examinateur_initial_user_id: user.id,
-        },
-        {
-          premier_detenteur_user_id: user.id,
-        },
-        {
-          FeiIntermediaires: {
-            some: {
-              fei_intermediaire_user_id: user.id,
+          AND: [
+            {
+              fei_next_owner_user_id: { not: user.id },
             },
-          },
+            {
+              fei_next_owner_user_id: { not: null },
+            },
+          ],
         },
         {
-          FeiIntermediaires: {
-            some: {
-              FeiIntermediaireEntity: {
+          OR: [
+            { fei_next_owner_entity_id: null },
+            {
+              FeiNextEntity: {
                 EntityRelatedWithUser: {
-                  some: {
+                  none: {
                     owner_id: user.id,
                   },
                 },
               },
             },
-          },
+          ],
+        },
+        {
+          OR: [
+            {
+              examinateur_initial_user_id: user.id,
+            },
+            {
+              premier_detenteur_user_id: user.id,
+            },
+            {
+              FeiIntermediaires: {
+                some: {
+                  fei_intermediaire_user_id: user.id,
+                },
+              },
+            },
+            {
+              FeiIntermediaires: {
+                some: {
+                  FeiIntermediaireEntity: {
+                    EntityRelatedWithUser: {
+                      some: {
+                        owner_id: user.id,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
         },
       ],
     },
