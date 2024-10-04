@@ -32,8 +32,8 @@ export async function action(args: ActionFunctionArgs) {
           numero_bracelet,
         },
       });
-      return json({ ok: true, data: null, error: "" });
     }
+    return json({ ok: true, data: null, error: "" });
   }
 
   const fei_numero = formData.get(Prisma.CarcasseScalarFieldEnum.fei_numero) as string;
