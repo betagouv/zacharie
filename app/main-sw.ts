@@ -513,6 +513,10 @@ BRIDGE BETWEEN SERVICE WORKER AND CLIENT
 
 
 */
+async function syncBackOnline(calledFrom: string) {
+  await processOfflineQueue(calledFrom);
+  await fetchAllFeis(calledFrom);
+}
 
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
   if (event.data === "skipWaiting") {
@@ -529,22 +533,12 @@ self.addEventListener("message", (event: ExtendableMessageEvent) => {
 
   if (event.data === "SW_MESSAGE_BACK_TO_ONLINE") {
     console.log("back to online triggered");
-    event.waitUntil(
-      Promise.resolve(async () => {
-        await processOfflineQueue("SW_MESSAGE_BACK_TO_ONLINE");
-        await fetchAllFeis("SW_MESSAGE_BACK_TO_ONLINE");
-      }),
-    );
+    event.waitUntil(syncBackOnline("SW_MESSAGE_BACK_TO_ONLINE"));
   }
 
   if (event.data.type === "TABLEAU_DE_BORD_OPEN") {
     if (navigator.onLine) {
-      event.waitUntil(
-        Promise.resolve(async () => {
-          await processOfflineQueue("TABLEAU_DE_BORD_OPEN");
-          await fetchAllFeis("TABLEAU_DE_BORD_OPEN");
-        }),
-      );
+      event.waitUntil(syncBackOnline("TABLEAU_DE_BORD_OPEN"));
     }
   }
 });
