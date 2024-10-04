@@ -16,7 +16,7 @@ import type { FeiActionData } from "~/routes/api.action.fei.$fei_numero";
 import type { CarcasseLoaderData } from "~/routes/api.loader.carcasse.$fei_numero.$numero_bracelet";
 import type { CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
 import type { FeiIntermediaireActionData } from "~/routes/api.action.fei-intermediaire.$intermediaire_id";
-import { createStore, set, get, del, keys } from "idb-keyval";
+import * as IDB from "idb-keyval";
 import { formatCarcasseOfflineActionReturn } from "./db/carcasse.client";
 
 const CACHE_NAME = "zacharie-pwa-cache-v1";
@@ -387,7 +387,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
   }
 }
 
-const store = createStore("OfflineQueue", "requests");
+const store = IDB.createStore("OfflineQueue", "requests");
 
 interface SerializedRequest {
   url: string;
@@ -402,60 +402,52 @@ async function queuePostRequest(request: Request) {
   const clonedRequest = request.clone();
   const bodyText = await clonedRequest.text();
 
+  const now = Date.now();
+
   const serialized: SerializedRequest = {
     url: clonedRequest.url,
     method: clonedRequest.method,
     credentials: clonedRequest.credentials,
     headers: Object.fromEntries(clonedRequest.headers),
     body: bodyText,
-    timestamp: Date.now(),
+    timestamp: now,
   };
 
-  await set(clonedRequest.url, serialized, store);
+  await IDB.set(now, serialized, store);
   console.log("Request queued", serialized);
 }
 
 async function processOfflineQueue(processingFrom: string) {
   console.log("Processing offline queue from", processingFrom);
-  const allKeys = await keys(store);
-
-  // Helper function to safely check if a key includes a substring
-  function keyIncludes(key: IDBValidKey, substring: string): boolean {
-    return typeof key === "string" && key.includes(substring);
+  if (!navigator.onLine) {
+    console.log("No network so no process ofline queue");
+    return;
   }
-
-  // Separate keys into fei, carcasse, and other requests
-  const feiKeys = allKeys.filter((key) => keyIncludes(key, "/api/action/fei/"));
-  const carcasseKeys = allKeys.filter((key) => keyIncludes(key, "/api/action/carcasse/"));
-  const otherKeys = allKeys.filter(
-    (key) => !keyIncludes(key, "/api/action/fei/") && !keyIncludes(key, "/api/action/carcasse/"),
-  );
+  const allKeys = await IDB.keys(store);
 
   // Process requests in order: fei, carcasse, then others
-  for (const keyGroup of [feiKeys, carcasseKeys, otherKeys]) {
-    for (const key of keyGroup) {
-      const request = (await get(key, store)) satisfies SerializedRequest | undefined;
-      if (!request) {
-        continue;
+  for (const key of allKeys.sort()) {
+    const request = (await IDB.get(key, store)) satisfies SerializedRequest | undefined;
+    if (!request) {
+      continue;
+    }
+    try {
+      const response = await fetch(
+        new Request(request.url, {
+          method: request.method,
+          credentials: request.credentials,
+          headers: request.headers,
+          body: request.body,
+        }),
+      );
+      if (response.ok) {
+        await IDB.del(key, store);
+        console.log("Processed and removed request", request.url);
+      } else {
+        console.error("Failed to process request", request.url, response.status);
       }
-      try {
-        const response = await fetch(
-          new Request(request.url, {
-            method: request.method,
-            credentials: request.credentials,
-            headers: request.headers,
-            body: request.body,
-          }),
-        );
-        if (response.ok) {
-          await del(key, store);
-          console.log("Processed and removed request", request.url);
-        } else {
-          console.error("Failed to process request", request.url, response.status);
-        }
-      } catch (error) {
-        console.error("Error processing request", request.url, error);
-      }
+    } catch (error) {
+      console.error("Error processing request", request.url, error);
     }
   }
 

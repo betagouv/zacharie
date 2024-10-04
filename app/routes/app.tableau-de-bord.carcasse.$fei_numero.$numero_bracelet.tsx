@@ -566,7 +566,6 @@ export default function CarcasseReadAndWrite() {
                 buttons={[
                   {
                     children: canEdit ? "Enregistrer et retourner à la FEI" : "Retourner à la FEI",
-                    priority: "tertiary",
                     linkProps: {
                       to: `/app/tableau-de-bord/fei/${fei.numero}`,
                       href: "#",
