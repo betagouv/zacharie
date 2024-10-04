@@ -5,9 +5,11 @@ import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma } from "@prisma/client";
 import { action as nouvelleCarcasseAction } from "~/routes/api.action.carcasse.$numero_bracelet";
+import { useIsOnline } from "~/components/OfflineMode";
 
 export default function NouvelleCarcasse() {
   const { fei } = useLoaderData<typeof clientLoader>();
+  const isOnline = useIsOnline();
   const navigate = useNavigate();
   const nouvelleCarcasseFetcher = useFetcher<typeof nouvelleCarcasseAction>({ key: "nouvelle-carcasse" });
   const [numeroBracelet, setNumeroBracelet] = useState<string>("");
@@ -37,6 +39,11 @@ export default function NouvelleCarcasse() {
           className="!mb-0 grow"
           state={error ? "error" : "default"}
           stateRelatedMessage={error ?? ""}
+          hintText={
+            isOnline
+              ? null
+              : "ATTENTION: en mode hors-ligne vous ne pouvez pas encore modifier ce numéro une fois renseigné"
+          }
           nativeInputProps={{
             type: "text",
             required: true,

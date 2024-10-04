@@ -27,6 +27,7 @@ import { type CarcasseActionData } from "~/routes/api.action.carcasse.$numero_br
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 import { createModal } from "@codegouvfr/react-dsfr/Modal";
 import ModalTreeDisplay from "~/components/ModalTreeDisplay";
+import { useIsOnline } from "~/components/OfflineMode";
 
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
   const formData = await request.formData();
@@ -92,6 +93,7 @@ export default function CarcasseReadAndWrite() {
   }, [fei, user]);
 
   const Component = canEdit ? Input : InputNotEditable;
+  const isOnline = useIsOnline();
 
   const numeroFetcher = useFetcher({ key: "carcasse-numero-edit-fetcher" });
   const noAnomalieFetcher = useFetcher({ key: "carcasse-no-anomalie-fetcher" });
@@ -172,6 +174,8 @@ export default function CarcasseReadAndWrite() {
     );
   }
 
+  const NumeroBraceletComponent = isOnline ? Input : InputNotEditable;
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -215,7 +219,7 @@ export default function CarcasseReadAndWrite() {
               <div className="p-4">
                 <div className="fr-fieldset__element">
                   <PermanentFields />
-                  <Input
+                  <NumeroBraceletComponent
                     label="Numéro de bracelet"
                     nativeInputProps={{
                       type: "text",
