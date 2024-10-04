@@ -96,12 +96,14 @@ export default function CarcasseReadAndWrite() {
   const numeroFetcher = useFetcher({ key: "carcasse-numero-edit-fetcher" });
   const noAnomalieFetcher = useFetcher({ key: "carcasse-no-anomalie-fetcher" });
   const carcasseFetcher = useFetcher({ key: "carcasse-edit-fetcher" });
-  const [espece, setEspece] = useState(carcasse.espece);
-  const [categorie, setCategorie] = useState(carcasse.categorie);
+  const [espece, setEspece] = useState(carcasse.espece || "");
+  const [categorie, setCategorie] = useState(carcasse.categorie || "");
   const [showAsSelectOption, setShowAsSelectOption] = useState(false);
-  const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(carcasse.examinateur_anomalies_abats);
-  const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(carcasse.examinateur_anomalies_carcasse);
-  const [noANomalie, setNoAnomalie] = useState(carcasse.examinateur_carcasse_sans_anomalie);
+  const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(carcasse.examinateur_anomalies_abats || []);
+  const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(
+    carcasse.examinateur_anomalies_carcasse || [],
+  );
+  const [noANomalie, setNoAnomalie] = useState(carcasse.examinateur_carcasse_sans_anomalie || false);
   // const [addAnomalieAbats, setAddAnomalieAbats] = useState(true);
   // const [addAnomalieCarcasse, setAddAnomalieCarcasse] = useState(true);
   const addAnomalieAbats = true;
