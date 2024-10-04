@@ -426,7 +426,7 @@ async function processOfflineQueue(processingFrom: string) {
   const allKeys = await IDB.keys(store);
 
   // Process requests in order: fei, carcasse, then others
-  for (const key of allKeys.sort()) {
+  for (const key of allKeys.sort((a, b) => Number(b) - Number(a))) {
     const request = (await IDB.get(key, store)) satisfies SerializedRequest | undefined;
     if (!request) {
       continue;
