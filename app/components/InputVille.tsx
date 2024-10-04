@@ -174,7 +174,11 @@ export default function InputVille(props: InputVilleProps) {
                   setVilleSearched(ville);
                 }
                 setVillesResults([]);
-                ref.current?.form?.submit();
+                // the parent form is submitted on blur
+                // trigger a focus event then a blur again to submit the form
+                // this is a hack to submit the form on blur again
+                ref.current?.focus();
+                ref.current?.blur();
                 canSearch.current = false;
               }}
               type="button"
