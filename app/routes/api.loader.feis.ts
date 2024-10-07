@@ -2,7 +2,6 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
-import { feiInclude } from "~/db/fei.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
@@ -41,7 +40,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
         },
       ],
     },
-    include: feiInclude,
     orderBy: {
       updated_at: "desc",
     },
@@ -64,7 +62,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
         },
       ],
     },
-    include: feiInclude,
     orderBy: {
       updated_at: "desc",
     },
@@ -130,7 +127,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
         },
       ],
     },
-    include: feiInclude,
     orderBy: {
       updated_at: "desc",
     },

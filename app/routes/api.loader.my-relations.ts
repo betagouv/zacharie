@@ -1,6 +1,6 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
-import { EntityTypes, EntityRelationType, UserRoles, UserRelationType } from "@prisma/client";
+import { type User, type Entity, EntityTypes, EntityRelationType, UserRoles, UserRelationType } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 
@@ -78,12 +78,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     detenteursInitiaux.unshift({ ...user, relation: UserRelationType.PREMIER_DETENTEUR });
   }
 
-  const examinateursInitiaux = userRelationsWithOtherUsers
-    .filter((userRelation) => userRelation.relation === UserRelationType.EXAMINATEUR_INITIAL)
-    .map((userRelation) => ({ ...userRelation.UserRelatedOfUserRelation, relation: userRelation.relation }));
-  if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-    examinateursInitiaux.unshift({ ...user, relation: UserRelationType.EXAMINATEUR_INITIAL });
-  }
+  // const examinateursInitiaux = userRelationsWithOtherUsers
+  //   .filter((userRelation) => userRelation.relation === UserRelationType.EXAMINATEUR_INITIAL)
+  //   .map((userRelation) => ({ ...userRelation.UserRelatedOfUserRelation, relation: userRelation.relation }));
+  // if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+  //   examinateursInitiaux.unshift({ ...user, relation: UserRelationType.EXAMINATEUR_INITIAL });
+  // }
 
   const allEntities = [...userEntitiesRelations, ...userCoupledEntities, ...allOtherEntities];
   const ccgs = userEntitiesRelations.filter((entity) => entity.type === EntityTypes.CCG);
@@ -99,14 +99,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return json({
     ok: true,
     data: {
-      user,
-      detenteursInitiaux,
-      examinateursInitiaux,
-      ccgs,
-      collecteursPro,
-      etgs,
-      svis,
-      entitiesUserIsWorkingFor,
+      user: user satisfies User,
+      detenteursInitiaux: detenteursInitiaux satisfies Array<User>,
+      // examinateursInitiaux: examinateursInitiaux satisfies Array<User>,
+      ccgs: ccgs satisfies Array<Entity>,
+      collecteursPro: collecteursPro satisfies Array<Entity>,
+      etgs: etgs satisfies Array<Entity>,
+      svis: svis satisfies Array<Entity>,
+      entitiesUserIsWorkingFor: entitiesUserIsWorkingFor satisfies Array<Entity>,
     },
     error: "",
   });

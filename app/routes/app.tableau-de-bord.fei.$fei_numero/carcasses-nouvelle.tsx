@@ -4,7 +4,7 @@ import { clientLoader } from "./route";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma } from "@prisma/client";
-import { action as nouvelleCarcasseAction } from "~/routes/api.action.carcasse.$numero_bracelet";
+import { action as nouvelleCarcasseAction } from "~/routes/api.fei-carcasse.$fei_numero.$numero_bracelet";
 import { useIsOnline } from "~/components/OfflineMode";
 
 export default function NouvelleCarcasse() {
@@ -32,7 +32,7 @@ export default function NouvelleCarcasse() {
         className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end"
         key={nouvelleCarcasseFetcher.data?.data?.numero_bracelet}
       >
-        <input type="hidden" name="route" value={`/api/action/carcasse/${numeroBracelet}`} />
+        <input type="hidden" name="route" value={`/api/fei-carcasse/${fei.numero}/${numeroBracelet}`} />
         <input type="hidden" required name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
         <Input
           label="Numéro de bracelet"

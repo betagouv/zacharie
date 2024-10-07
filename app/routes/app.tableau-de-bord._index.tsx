@@ -4,15 +4,15 @@ import { redirect, useLoaderData } from "@remix-run/react";
 import { UserRoles } from "@prisma/client";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import dayjs from "dayjs";
-import type { FeisLoaderData } from "~/routes/api.loader.fei";
-import type { FeisDoneLoaderData } from "~/routes/api.loader.fei-done";
+import type { FeisLoaderData } from "~/routes/api.loader.feis";
+import type { FeisDoneLoaderData } from "~/routes/api.loader.feis-done";
 import { useIsOnline } from "~/components/OfflineMode";
 import { useEffect, useState } from "react";
 import ResponsiveTable from "~/components/TableResponsive";
 
 export async function clientLoader() {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/fei`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/feis`, {
       method: "GET",
       credentials: "include",
       headers: new Headers({
@@ -30,7 +30,7 @@ export async function clientLoader() {
 
     const data = (await response.json()) as FeisLoaderData;
 
-    const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/fei-done`, {
+    const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/feis-done`, {
       method: "GET",
       credentials: "include",
       headers: new Headers({
@@ -48,7 +48,7 @@ export async function clientLoader() {
     const doneData = (await responseDone.json()) as FeisDoneLoaderData;
 
     // we call myRelations here because
-    // even if the data is not used here (it's used within a FEI, so in /api/loader/fei/$fei_numero)
+    // even if the data is not used here (it's used within a FEI, so in /api/fei/$fei_numero)
     // we want to cache the data before the user goes to the FEI page
     // for the offline mode to work properly
     fetch(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`, {

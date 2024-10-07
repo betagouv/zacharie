@@ -1,8 +1,8 @@
-import { EntityRelationType, Prisma, UserRoles, type User } from "@prisma/client";
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
-import { prisma } from "~/db/prisma.server";
+import { json, type LoaderFunctionArgs, type ActionFunctionArgs, redirect } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
-import { type ExtractLoaderData } from "~/services/extract-loader-data";
+import type { ExtractLoaderData } from "~/services/extract-loader-data";
+import { prisma } from "~/db/prisma.server";
+import { EntityRelationType, Prisma, UserRoles, type User } from "@prisma/client";
 import sendNotificationToUser from "~/services/notifications.server";
 
 export async function action(args: ActionFunctionArgs) {
@@ -21,15 +21,11 @@ export async function action(args: ActionFunctionArgs) {
     existingFei = await prisma.fei.create({
       data: {
         numero: feiNumero!,
-        FeiCreatedByUser: {
-          connect: {
-            id: user.id,
-          },
-        },
+        created_by_user_id: user.id,
       },
     });
   }
-  const nextFei: Prisma.FeiUpdateInput = {};
+  const nextFei: Prisma.FeiUncheckedUpdateInput = {};
 
   // log the whole form data for debugging - key values
   console.log("formData action.fei.$fei_numero", Object.fromEntries(formData.entries()));
@@ -49,18 +45,10 @@ export async function action(args: ActionFunctionArgs) {
     nextFei.commune_mise_a_mort = formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort) as string;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
-    nextFei.FeiCreatedByUser = {
-      connect: {
-        id: formData.get(Prisma.FeiScalarFieldEnum.created_by_user_id) as string,
-      },
-    };
+    nextFei.created_by_user_id = formData.get(Prisma.FeiScalarFieldEnum.created_by_user_id) as string;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
-    nextFei.FeiExaminateurInitialUser = {
-      connect: {
-        id: formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id) as string,
-      },
-    };
+    nextFei.examinateur_initial_user_id = formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id) as string;
   }
   if (formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche) === "true") {
     nextFei.examinateur_initial_approbation_mise_sur_le_marche = true;
@@ -87,11 +75,7 @@ export async function action(args: ActionFunctionArgs) {
     );
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
-    nextFei.FeiPremierDetenteurUser = {
-      connect: {
-        id: formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) as string,
-      },
-    };
+    nextFei.premier_detenteur_user_id = formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) as string;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part)) {
     nextFei.premier_detenteur_date_depot_quelque_part = new Date(
@@ -99,11 +83,9 @@ export async function action(args: ActionFunctionArgs) {
     );
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id)) {
-    nextFei.FeiDepotEntity = {
-      connect: {
-        id: formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id) as string,
-      },
-    };
+    nextFei.premier_detenteur_depot_entity_id = formData.get(
+      Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
+    ) as string;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage)) {
     nextFei.premier_detenteur_depot_sauvage = formData.get(
@@ -121,22 +103,13 @@ export async function action(args: ActionFunctionArgs) {
   */
   /*  Current Owner */
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id)) {
-    nextFei.FeiCurrentUser = {
-      connect: {
-        id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id) as string,
-      },
-    };
+    nextFei.fei_current_owner_user_id =
+      (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id) as string) || null;
     if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.SVI) {
-      nextFei.FeiSviUser = {
-        connect: {
-          id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id) as string,
-        },
-      };
-      nextFei.FeiSviEntity = {
-        connect: {
-          id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id) as string,
-        },
-      };
+      nextFei.fei_current_owner_user_id =
+        (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id) as string) || null;
+      nextFei.fei_current_owner_entity_id =
+        (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id) as string) || null;
     }
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer)) {
@@ -145,15 +118,11 @@ export async function action(args: ActionFunctionArgs) {
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
     if (!formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
-      nextFei.FeiCurrentEntity = {
-        disconnect: true,
-      };
+      nextFei.fei_current_owner_entity_id = null;
     } else {
-      nextFei.FeiCurrentEntity = {
-        connect: {
-          id: formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id) as string,
-        },
-      };
+      nextFei.fei_current_owner_entity_id = formData.get(
+        Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id,
+      ) as string;
     }
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_role)) {
@@ -166,15 +135,9 @@ export async function action(args: ActionFunctionArgs) {
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
     if (!formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
-      nextFei.FeiNextEntity = {
-        disconnect: true,
-      };
+      nextFei.fei_next_owner_entity_id = null;
     } else {
-      nextFei.FeiNextEntity = {
-        connect: {
-          id: formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id) as string,
-        },
-      };
+      nextFei.fei_next_owner_entity_id = formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id) as string;
       const nextRelation = {
         entity_id: formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id) as string,
         owner_id: user.id,
@@ -212,18 +175,10 @@ export async function action(args: ActionFunctionArgs) {
     nextFei.svi_signed_at = formData.get(Prisma.FeiScalarFieldEnum.svi_signed_at) as string;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_entity_id)) {
-    nextFei.FeiSviEntity = {
-      connect: {
-        id: formData.get(Prisma.FeiScalarFieldEnum.svi_entity_id) as string,
-      },
-    };
+    nextFei.svi_entity_id = formData.get(Prisma.FeiScalarFieldEnum.svi_entity_id) as string;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_user_id)) {
-    nextFei.FeiSviUser = {
-      connect: {
-        id: formData.get(Prisma.FeiScalarFieldEnum.svi_user_id) as string,
-      },
-    };
+    nextFei.svi_user_id = formData.get(Prisma.FeiScalarFieldEnum.svi_user_id) as string;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_carcasses_saisies)) {
     nextFei.svi_carcasses_saisies = Number(formData.get(Prisma.FeiScalarFieldEnum.svi_carcasses_saisies) as string);
@@ -314,7 +269,32 @@ export async function action(args: ActionFunctionArgs) {
     return redirect(formData.get("_redirect") as string);
   }
 
-  return json({ ok: true, data: savedFei, error: "" });
+  return json({ ok: true, data: { fei: savedFei }, error: "" });
 }
 
 export type FeiActionData = ExtractLoaderData<typeof action>;
+
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const user = await getUserFromCookie(request);
+  if (!user) {
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+  }
+  const fei = await prisma.fei.findUnique({
+    where: {
+      numero: params.fei_numero as string,
+    },
+  });
+  if (!fei) {
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+  }
+
+  return json({
+    ok: true,
+    data: {
+      fei,
+    },
+    error: "",
+  });
+}
+
+export type FeiLoaderData = ExtractLoaderData<typeof loader>;

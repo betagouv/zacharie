@@ -41,7 +41,6 @@
 ┃ ┃ ┗ 📜villes.json
 ┃ ┣ 📂db
 ┃ ┃ ┣ 📜fei.client.ts
-┃ ┃ ┣ 📜fei.server.ts
 ┃ ┃ ┗ 📜prisma.server.ts
 ┃ ┣ 📂routes
 ┃ ┃ ┣ 📂app

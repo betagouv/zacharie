@@ -1,9 +1,9 @@
-import { json, type ActionFunctionArgs } from "@remix-run/node";
-import { getUserFromCookie } from "~/services/auth.server";
-import { Prisma } from "@prisma/client";
+import { json, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
-import dayjs from "dayjs";
+import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
+import { Prisma } from "@prisma/client";
+import dayjs from "dayjs";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -63,7 +63,7 @@ export async function action(args: ActionFunctionArgs) {
     });
   }
 
-  const nextCarcasse: Prisma.CarcasseUpdateInput = {};
+  const nextCarcasse: Prisma.CarcasseUncheckedUpdateInput = {};
 
   // Helper function to convert string to boolean
   const stringToBoolean = (value: string | null): boolean | undefined => {
@@ -120,26 +120,20 @@ export async function action(args: ActionFunctionArgs) {
     nextCarcasse.examinateur_signed_at = dayjs().toISOString();
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id)) {
-    nextCarcasse.FeiIntermediaireCarcasseRefus = {
-      connect: {
-        id: formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id) as string,
-      },
-    };
+    nextCarcasse.intermediaire_carcasse_refus_intermediaire_id =
+      (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id) as string) || null;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif)) {
-    nextCarcasse.intermediaire_carcasse_refus_motif = formData.get(
-      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif,
-    ) as string;
+    nextCarcasse.intermediaire_carcasse_refus_motif =
+      (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif) as string) || null;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at)) {
-    nextCarcasse.intermediaire_carcasse_signed_at = formData.get(
-      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at,
-    ) as string;
+    nextCarcasse.intermediaire_carcasse_signed_at =
+      (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at) as string) || null;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire)) {
-    nextCarcasse.intermediaire_carcasse_commentaire = formData.get(
-      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire,
-    ) as string;
+    nextCarcasse.intermediaire_carcasse_commentaire =
+      (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire) as string) || null;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)) {
     nextCarcasse.svi_carcasse_saisie = stringToBoolean(
@@ -181,3 +175,23 @@ export async function action(args: ActionFunctionArgs) {
 }
 
 export type CarcasseActionData = ExtractLoaderData<typeof action>;
+
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const user = await getUserFromCookie(request);
+  if (!user) {
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+  }
+  const carcasse = await prisma.carcasse.findUnique({
+    where: {
+      numero_bracelet: params.numero_bracelet,
+      fei_numero: params.fei_numero,
+    },
+  });
+  if (!carcasse) {
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+  }
+
+  return json({ ok: true, data: { carcasse }, error: "" });
+}
+
+export type CarcasseLoaderData = ExtractLoaderData<typeof loader>;

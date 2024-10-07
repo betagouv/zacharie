@@ -19,7 +19,7 @@ import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { EntityTypes, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
 import InputVille from "~/components/InputVille";
 import InputNotEditable from "~/components/InputNotEditable";
-import { type EntitiesLoaderData } from "~/routes/api.loader.entities";
+import { type EntitiesLoaderData } from "~/routes/api.loader.entites";
 import { setCacheItem } from "~/services/indexed-db.client";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
@@ -62,7 +62,7 @@ export async function clientLoader() {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
 
-  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/loader/entities`, {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/loader/entites`, {
     method: "GET",
     credentials: "include",
     headers: new Headers({

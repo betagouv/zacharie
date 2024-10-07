@@ -2841,6 +2841,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@prisma/generator-helper@npm:^5.14.0":
+  version: 5.20.0
+  resolution: "@prisma/generator-helper@npm:5.20.0"
+  dependencies:
+    "@prisma/debug": "npm:5.20.0"
+  checksum: 10c0/3628b960b0c3dad40b781e9f226d6bf79423fcb4708c408852e265735709346cf037ae42cad5624cae3ea3884e6919098a0dfeba70d8d379b8dd1049a7a59fb0
+  languageName: node
+  linkType: hard
+
 "@prisma/get-platform@npm:5.20.0":
   version: 5.20.0
   resolution: "@prisma/get-platform@npm:5.20.0"
@@ -4977,6 +4986,13 @@ __metadata:
   version: 1.0.4
   resolution: "clone@npm:1.0.4"
   checksum: 10c0/2176952b3649293473999a95d7bebfc9dc96410f6cbd3d2595cf12fd401f63a4bf41a7adbfd3ab2ff09ed60cb9870c58c6acdd18b87767366fabfc163700f13b
+  languageName: node
+  linkType: hard
+
+"code-block-writer@npm:^12.0.0":
+  version: 12.0.0
+  resolution: "code-block-writer@npm:12.0.0"
+  checksum: 10c0/ced73cdc466bff968bba9e8e32340d88420d25a229b9269f7425a10a7c2c9a12ca702dcb601b2462b96472d354f021cf66e552179fcbe30c8f7ecd0173c5fa07
   languageName: node
   linkType: hard
 
@@ -13076,8 +13092,30 @@ __metadata:
     workbox-routing: "npm:^7.1.0"
     workbox-strategies: "npm:^7.1.0"
     workbox-window: "npm:^7.1.0"
+    zod-prisma-types: "npm:^3.1.8"
   languageName: unknown
   linkType: soft
+
+"zod-prisma-types@npm:^3.1.8":
+  version: 3.1.8
+  resolution: "zod-prisma-types@npm:3.1.8"
+  dependencies:
+    "@prisma/generator-helper": "npm:^5.14.0"
+    code-block-writer: "npm:^12.0.0"
+    lodash: "npm:^4.17.21"
+    zod: "npm:^3.23.8"
+  bin:
+    zod-prisma-types: dist/bin.js
+  checksum: 10c0/b9bd0d339951dc3516b721f5ce0aba524b65f0c87ec7746c56547eddfc3e3e75ba9788ddb413072c3572248adc840babfd905b7c4be007a5bfa17c46d37b1dd6
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.23.8":
+  version: 3.23.8
+  resolution: "zod@npm:3.23.8"
+  checksum: 10c0/8f14c87d6b1b53c944c25ce7a28616896319d95bc46a9660fe441adc0ed0a81253b02b5abdaeffedbeb23bdd25a0bf1c29d2c12dd919aef6447652dd295e3e69
+  languageName: node
+  linkType: hard
 
 "zwitch@npm:^2.0.0":
   version: 2.0.4

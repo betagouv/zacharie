@@ -8,7 +8,7 @@ import {
   type ClientLoaderFunctionArgs,
 } from "@remix-run/react";
 import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
-import { Prisma, UserRoles } from "@prisma/client";
+import { Prisma, UserRoles, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
 import FEIPremierDetenteur from "./premier-detenteur";
 import ConfirmCurrentOwner from "./confirm-current-owner";
 import CurrentOwner from "./current-owner";
@@ -16,8 +16,12 @@ import FeiTransfer from "./transfer-current-owner";
 import FEICurrentIntermediaire from "./current-intermediaire";
 import FEI_SVI from "./svi";
 import FEIExaminateurInitial from "./examinateur-initial";
-import { type FeiLoaderData } from "~/routes/api.loader.fei.$fei_numero";
-import { type FeiActionData } from "~/routes/api.action.fei.$fei_numero";
+import { type FeiLoaderData, type FeiActionData } from "~/routes/api.fei.$fei_numero";
+import { type FeiUserLoaderData } from "~/routes/api.fei-user.$fei_numero.$user_id";
+import { type FeiEntityLoaderData } from "~/routes/api.fei-entity.$fei_numero.$entity_id";
+import { type CarcassesLoaderData } from "~/routes/api.fei-carcasses.$fei_numero";
+import { type FeiIntermediairesLoaderData } from "~/routes/api.fei-intermediaires.$fei_numero";
+import { type FeiCarcasseIntermediaireLoaderData } from "~/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
 import { type MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
@@ -56,34 +60,125 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   if (!user) {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
-  const loaderData = (await fetch(`${import.meta.env.VITE_API_URL}/api/loader/fei/${params.fei_numero}`, {
-    method: "GET",
-    credentials: "include",
-    headers: new Headers({
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    }),
-  }).then((res) => res.json())) as FeiLoaderData;
 
-  console.log("loaderData", loaderData);
+  async function get(pathname: string) {
+    return fetch(`${import.meta.env.VITE_API_URL}${pathname}`, {
+      method: "GET",
+      credentials: "include",
+      headers: new Headers({
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      }),
+    }).then((res) => res.json());
+  }
 
-  const myRelationsData = (await fetch(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`, {
-    method: "GET",
-    credentials: "include",
-    headers: new Headers({
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    }),
-  }).then((res) => res.json())) as MyRelationsLoaderData;
+  const feiData = (await get(`/api/fei/${params.fei_numero}`)) as FeiLoaderData;
+
+  const examinateurInitialId = feiData.data?.fei.examinateur_initial_user_id;
+  const examinateurInitialUser = examinateurInitialId
+    ? ((await get(`/api/fei-user/${params.fei_numero}/${examinateurInitialId}`)) as FeiUserLoaderData)
+    : null;
+
+  const premierDetenteurId = feiData.data?.fei.premier_detenteur_user_id;
+  const premierDetenteurUser = premierDetenteurId
+    ? ((await get(`/api/fei-user/${params.fei_numero}/${premierDetenteurId}`)) as FeiUserLoaderData)
+    : null;
+
+  const depotEntityId = feiData.data?.fei.premier_detenteur_depot_entity_id;
+  const premierDetenteurDepotEntityId = depotEntityId
+    ? ((await get(`/api/fei-entity/${params.fei_numero}/${depotEntityId}`)) as FeiEntityLoaderData)
+    : null;
+
+  const currentOwnerId = feiData.data?.fei.fei_current_owner_user_id;
+  const currentOwnerUser = currentOwnerId
+    ? ((await get(`/api/fei-user/${params.fei_numero}/${currentOwnerId}`)) as FeiUserLoaderData)
+    : null;
+
+  const currentOwnerEntityId = feiData.data?.fei.fei_current_owner_entity_id;
+  const currentOwnerEntity = currentOwnerEntityId
+    ? ((await get(`/api/fei-entity/${params.fei_numero}/${currentOwnerEntityId}`)) as FeiEntityLoaderData)
+    : null;
+
+  const nextOwnerUserId = feiData.data?.fei.fei_next_owner_user_id;
+  const nextOwnerUser = nextOwnerUserId
+    ? ((await get(`/api/fei-user/${params.fei_numero}/${nextOwnerUserId}`)) as FeiUserLoaderData)
+    : null;
+
+  const nextOwnerEntityId = feiData.data?.fei.fei_next_owner_entity_id;
+  const nextOwnerEntity = nextOwnerEntityId
+    ? ((await get(`/api/fei-entity/${params.fei_numero}/${nextOwnerEntityId}`)) as FeiEntityLoaderData)
+    : null;
+
+  const sviUserId = feiData.data?.fei.svi_user_id;
+  const sviUser = sviUserId
+    ? ((await get(`/api/fei-user/${params.fei_numero}/${sviUserId}`)) as FeiUserLoaderData)
+    : null;
+
+  const sviEntityid = feiData.data?.fei.svi_entity_id;
+  const svi = sviEntityid
+    ? ((await get(`/api/fei-entity/${params.fei_numero}/${sviEntityid}`)) as FeiEntityLoaderData)
+    : null;
+
+  const carcasses = (await get(`/api/fei-carcasses/${params.fei_numero}`)) as CarcassesLoaderData;
+
+  const intermediaires = (await get(`/api/fei-intermediaires/${params.fei_numero}`)) as FeiIntermediairesLoaderData;
+  const inetermediairesPopulated = [];
+  for (const intermediaire of intermediaires.data?.intermediaires || []) {
+    const intermediaireUser = intermediaire.fei_intermediaire_user_id
+      ? ((await get(
+          `/api/fei-user/${params.fei_numero}/${intermediaire.fei_intermediaire_user_id}`,
+        )) as FeiUserLoaderData)
+      : null;
+    const intermediaireEntity = intermediaire.fei_intermediaire_entity_id
+      ? ((await get(
+          `/api/fei-entity/${params.fei_numero}/${intermediaire.fei_intermediaire_entity_id}`,
+        )) as FeiEntityLoaderData)
+      : null;
+    const intermediaireCarcasses: Record<Carcasse["numero_bracelet"], CarcasseIntermediaire | null> = {};
+    for (const carcasse of carcasses.data?.carcasses || []) {
+      const intermediaireCarcasse = (await get(
+        `/api/fei-carcasse-intermediaire/${params.fei_numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+      )) as FeiCarcasseIntermediaireLoaderData;
+      intermediaireCarcasses[carcasse.numero_bracelet] = intermediaireCarcasse.data?.carcasseIntermediaire || null;
+    }
+    inetermediairesPopulated.push({
+      ...intermediaire,
+      user: intermediaireUser?.data?.user,
+      entity: intermediaireEntity?.data?.entity,
+      carcasses: intermediaireCarcasses,
+    });
+  }
+
+  const myRelationsData = (await get(`/api/loader/my-relations`)) as MyRelationsLoaderData;
 
   return json({
-    ...loaderData.data!,
-    ...myRelationsData.data!,
+    user,
+    fei: feiData.data!.fei,
+    examinateurInitialUser: examinateurInitialUser?.data?.user,
+    premierDetenteurUser: premierDetenteurUser?.data?.user,
+    premierDetenteurDepotEntity: premierDetenteurDepotEntityId?.data?.entity,
+    currentOwnerUser: currentOwnerUser?.data?.user,
+    currentOwnerEntity: currentOwnerEntity?.data?.entity,
+    nextOwnerUser: nextOwnerUser?.data?.user,
+    nextOwnerEntity: nextOwnerEntity?.data?.entity,
+    sviUser: sviUser?.data?.user,
+    svi: svi?.data?.entity,
+    carcasses: carcasses.data?.carcasses || [],
+    inetermediairesPopulated,
+    relationsCatalog: {
+      detenteursInitiaux: myRelationsData.data?.detenteursInitiaux || [],
+      // examinateursInitiaux: myRelationsData.data?.examinateursInitiaux || [],
+      ccgs: myRelationsData.data?.ccgs || [],
+      collecteursPro: myRelationsData.data?.collecteursPro || [],
+      etgs: myRelationsData.data?.etgs || [],
+      svis: myRelationsData.data?.svis || [],
+      entitiesUserIsWorkingFor: myRelationsData.data?.entitiesUserIsWorkingFor || [],
+    },
   });
 }
 
 export default function Fei() {
-  const { fei, user } = useLoaderData<typeof clientLoader>();
+  const { fei, user, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
 
   const doneEmoji = "✅ ";
 
@@ -181,12 +276,12 @@ export default function Fei() {
   }, [fei.fei_next_owner_role, fei.fei_next_owner_user_id, user.id]);
 
   const intermediaireTabDisabled = useMemo(() => {
-    const intermediaire = fei.FeiIntermediaires?.[0];
+    const intermediaire = inetermediairesPopulated?.[0];
     if (!intermediaire) {
       return true;
     }
     return false;
-  }, [fei.FeiIntermediaires]);
+  }, [inetermediairesPopulated]);
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">

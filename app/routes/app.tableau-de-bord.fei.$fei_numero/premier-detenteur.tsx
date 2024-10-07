@@ -11,10 +11,16 @@ import { Select } from "@codegouvfr/react-dsfr/Select";
 import InputNotEditable from "~/components/InputNotEditable";
 import dayjs from "dayjs";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
-import type { FeiAction } from "~/db/fei.client";
+import { mergeFei } from "~/db/fei.client";
 
 export default function FEIDetenteurInitial() {
-  const { fei, user, ccgs, etgs, collecteursPro } = useLoaderData<typeof clientLoader>();
+  const {
+    fei,
+    user,
+    premierDetenteurUser,
+    premierDetenteurDepotEntity,
+    relationsCatalog: { ccgs, etgs, collecteursPro },
+  } = useLoaderData<typeof clientLoader>();
   const fetcher = useFetcher({ key: "confirm-detenteur-initial" });
   const depotFetcher = useFetcher({ key: "detenteur-initial-depot" });
   const [depotType, setDepotType] = useState(() => {
@@ -28,8 +34,8 @@ export default function FEIDetenteurInitial() {
   });
 
   const premierDetenteur = useMemo(() => {
-    if (fei.FeiPremierDetenteurUser) {
-      return fei.FeiPremierDetenteurUser;
+    if (premierDetenteurUser) {
+      return premierDetenteurUser;
     }
     if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
       if (fei.fei_current_owner_user_id === user.id) {
@@ -37,7 +43,7 @@ export default function FEIDetenteurInitial() {
       }
     }
     return null;
-  }, [fei, user]);
+  }, [fei, user, premierDetenteurUser]);
 
   const canEdit = useMemo(() => {
     if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
@@ -53,7 +59,7 @@ export default function FEIDetenteurInitial() {
   }, [fei, user]);
 
   const Component = canEdit ? Input : InputNotEditable;
-  const needConfirmation = !fei.FeiPremierDetenteurUser && premierDetenteur?.id === user.id;
+  const needConfirmation = !premierDetenteurUser && premierDetenteur?.id === user.id;
 
   const needSelectNextUser = useMemo(() => {
     if (fei.fei_current_owner_user_id !== user.id) {
@@ -86,14 +92,18 @@ export default function FEIDetenteurInitial() {
                 const formData = new FormData();
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
                 formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
-                formData.append("route", `/api/action/fei/${fei.numero}`);
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
-                formData.append("step", "fei_action_premier_detenteur" satisfies FeiAction);
-
-                fetcher.submit(formData, {
-                  method: "POST",
-                  preventScrollReset: true, // Prevent scroll reset on submission
-                });
+                const nextFei = mergeFei(fei, formData);
+                fetcher.submit(
+                  {
+                    ...nextFei,
+                    route: `/api/fei/${fei.numero}`,
+                  },
+                  {
+                    method: "POST",
+                    preventScrollReset: true, // Prevent scroll reset on submission
+                  },
+                );
               }}
             >
               Je suis bien le Premier Détenteur
@@ -108,13 +118,18 @@ export default function FEIDetenteurInitial() {
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
                 formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
                 formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
-                formData.append("route", `/api/action/fei/${fei.numero}`);
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
-                formData.append("step", "fei_action_reject_current_owner" satisfies FeiAction);
-                fetcher.submit(formData, {
-                  method: "POST",
-                  preventScrollReset: true, // Prevent scroll reset on submission
-                });
+                const nextFei = mergeFei(fei, formData);
+                fetcher.submit(
+                  {
+                    ...nextFei,
+                    route: `/api/fei/${fei.numero}`,
+                  },
+                  {
+                    method: "POST",
+                    preventScrollReset: true, // Prevent scroll reset on submission
+                  },
+                );
               }}
             >
               Renvoyer la FEI
@@ -150,12 +165,27 @@ export default function FEIDetenteurInitial() {
             />
           </div>
           {depotType && (
-            <depotFetcher.Form method="POST">
-              <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
+            <depotFetcher.Form
+              method="POST"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const formData = new FormData(event.currentTarget);
+                const nextFei = mergeFei(fei, formData);
+                fetcher.submit(
+                  {
+                    ...nextFei,
+                    route: `/api/fei/${fei.numero}`,
+                  },
+                  {
+                    method: "POST",
+                    preventScrollReset: true, // Prevent scroll reset on submission
+                  },
+                );
+              }}
+            >
               <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
               {depotType === Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id && (
                 <div className="fr-fieldset__element">
-                  <input type="hidden" name="step" value={"fei_action_premier_detenteur_depot" satisfies FeiAction} />
                   {canEdit ? (
                     <Select
                       label="Sélectionnez un de vos partenaires"
@@ -218,7 +248,7 @@ export default function FEIDetenteurInitial() {
                         name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage,
                         type: "text",
                         autoComplete: "off",
-                        defaultValue: `${fei.FeiDepotEntity?.raison_sociale} - ${fei.FeiDepotEntity?.code_postal} ${fei.FeiDepotEntity?.ville}`,
+                        defaultValue: `${premierDetenteurDepotEntity?.raison_sociale} - ${premierDetenteurDepotEntity?.code_postal} ${premierDetenteurDepotEntity?.ville}`,
                       }}
                     />
                   )}
@@ -226,7 +256,6 @@ export default function FEIDetenteurInitial() {
               )}
               {depotType === Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage && (
                 <>
-                  <input type="hidden" name="step" value={"fei_action_premier_detenteur" satisfies FeiAction} />
                   <div className="fr-fieldset__element">
                     <Component
                       label="Emplacement du dépôt"

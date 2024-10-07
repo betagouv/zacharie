@@ -8,12 +8,12 @@ const style = {
 };
 
 export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) {
-  const { fei } = useLoaderData<typeof clientLoader>();
+  const { fei, carcasses } = useLoaderData<typeof clientLoader>();
   const carcasseFetcher = useFetcher({ key: "carcasse-delete-fetcher" });
 
   return (
     <>
-      {fei.Carcasses.map((carcasse) => {
+      {carcasses.map((carcasse) => {
         const examinationNotFinished =
           !carcasse.examinateur_anomalies_abats?.length &&
           !carcasse.examinateur_anomalies_carcasse?.length &&
@@ -34,7 +34,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                     numero_bracelet: carcasse.numero_bracelet,
                     fei_numero: fei.numero,
                     _action: "delete",
-                    route: `/api/action/carcasse/${carcasse.numero_bracelet}`,
+                    route: `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`,
                   },
                   {
                     method: "POST",

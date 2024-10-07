@@ -1,6 +1,6 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
-import { EntityTypes, EntityRelationType } from "@prisma/client";
+import { type Entity, EntityTypes, EntityRelationType } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 
@@ -22,7 +22,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         EntityRelatedWithUser: true,
       },
     })
-  ).map((relation) => relation.EntityRelatedWithUser);
+  ).map((relation) => relation.EntityRelatedWithUser) satisfies Array<Entity>;
 
   return json({
     ok: true,
