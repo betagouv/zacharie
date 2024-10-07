@@ -2,6 +2,7 @@ import webpush from "web-push";
 import { type User, UserNotifications } from "@prisma/client";
 import * as Sentry from "@sentry/node";
 import { sendEmail } from "./sendEmail";
+import { prisma } from "~/db/prisma.server";
 
 type WebPushNotification = {
   user: User;
@@ -37,8 +38,22 @@ export default async function sendNotificationToUser({
             },
             urgency: "high",
           })
-          .then((response) => {
+          .then(async (response) => {
             console.log("web push response", response);
+            await prisma.notificationLog.create({
+              data: {
+                user_id: user.id,
+                payload: JSON.stringify({
+                  title,
+                  body,
+                  email,
+                  response,
+                }),
+                type: "PUSH",
+                web_push_token: web_push_subscription,
+                action: "FEI NOTIFICATION",
+              },
+            });
           })
           .catch((error) => {
             console.error("error in web push");
@@ -62,12 +77,29 @@ export default async function sendNotificationToUser({
       subject: title,
       text: email,
       html: email,
-    }).catch((error) => {
-      console.error("error in send email");
-      console.error(error);
-      Sentry.captureException(error, {
-        extra: { user, body, email, title, img },
+    })
+      .then(async (response) => {
+        await prisma.notificationLog.create({
+          data: {
+            user_id: user.id,
+            payload: JSON.stringify({
+              title,
+              body,
+              email,
+              response,
+            }),
+            type: "EMAIL",
+            email: user.email,
+            action: "FEI NOTIFICATION",
+          },
+        });
+      })
+      .catch((error) => {
+        console.error("error in send email");
+        console.error(error);
+        Sentry.captureException(error, {
+          extra: { user, body, email, title, img },
+        });
       });
-    });
   }
 }
