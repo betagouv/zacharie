@@ -18,16 +18,18 @@ const style = {
 export default function CarcassesIntermediaire({
   canEdit,
   carcasses,
+  intermediaire,
 }: {
   canEdit: boolean;
   carcasses: SerializeFrom<Carcasse>[];
+  intermediaire: SerializeFrom<typeof clientLoader>["inetermediairesPopulated"][0];
 }) {
   return (
     <>
       {carcasses.map((carcasse, index, array) => {
         return (
           <Fragment key={carcasse.numero_bracelet}>
-            <CarcasseAVerifier canEdit={canEdit} carcasse={carcasse} />
+            <CarcasseAVerifier intermediaire={intermediaire} canEdit={canEdit} carcasse={carcasse} />
             {index < array.length - 1 && <hr />}
           </Fragment>
         );
@@ -39,14 +41,14 @@ export default function CarcassesIntermediaire({
 interface CarcasseAVerifierProps {
   carcasse: SerializeFrom<Carcasse>;
   canEdit: boolean;
+  intermediaire: SerializeFrom<typeof clientLoader>["inetermediairesPopulated"][0];
 }
 
-function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
-  const { fei, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
+function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifierProps) {
+  const { fei } = useLoaderData<typeof clientLoader>();
   const intermediaireCarcasseFetcher = useFetcher({ key: `intermediaire-carcasse-${carcasse.numero_bracelet}` });
   const formRef = useRef<HTMLFormElement>(null);
   const carcasseFetcher = useFetcher({ key: `carcasse-from-intermediaire-${carcasse.numero_bracelet}` });
-  const intermediaire = inetermediairesPopulated[0];
   const intermediaireCarcasse = useMemo(() => {
     return (
       intermediaire.carcasses[carcasse.numero_bracelet] ?? {
@@ -241,7 +243,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                                 console.log("submit accept");
                                 e.preventDefault();
                                 const form = new FormData(formRef.current!);
-                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, "false");
+                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, "");
                                 form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge, "true");
 
                                 const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
@@ -368,7 +370,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                                 console.log("submit refus");
                                 e.preventDefault();
                                 const form = new FormData(formRef.current!);
-                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, "true");
+                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, refus);
                                 form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge, "false");
                                 const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
                                 nextIntermediaire.append(

@@ -151,7 +151,7 @@ export default function FEICurrentIntermediaire() {
         expanded={carcassesAValiderExpanded}
         onExpandedChange={setCarcassesAValiderExpanded}
       >
-        <CarcassesIntermediaire canEdit={canEdit} carcasses={carcassesUnsorted} />
+        <CarcassesIntermediaire canEdit={canEdit} intermediaire={intermediaire} carcasses={carcassesUnsorted} />
       </Accordion> */}
       {carcassesSorted.carcassesToCheck.length > 0 && (
         <Accordion
@@ -160,7 +160,11 @@ export default function FEICurrentIntermediaire() {
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >
-          <CarcassesIntermediaire canEdit={canEdit} carcasses={carcassesSorted.carcassesToCheck} />
+          <CarcassesIntermediaire
+            canEdit={canEdit}
+            intermediaire={intermediaire}
+            carcasses={carcassesSorted.carcassesToCheck}
+          />
         </Accordion>
       )}
       <Accordion
@@ -172,7 +176,11 @@ export default function FEICurrentIntermediaire() {
         {carcassesSorted.carcassesApproved.length === 0 ? (
           <p>Pas de carcasse acceptée</p>
         ) : (
-          <CarcassesIntermediaire canEdit={canEdit} carcasses={carcassesSorted.carcassesApproved} />
+          <CarcassesIntermediaire
+            canEdit={canEdit}
+            intermediaire={intermediaire}
+            carcasses={carcassesSorted.carcassesApproved}
+          />
         )}
       </Accordion>
       <Accordion
@@ -184,7 +192,11 @@ export default function FEICurrentIntermediaire() {
         {carcassesSorted.carcassesRefused.length === 0 ? (
           <p>Pas de carcasse refusée</p>
         ) : (
-          <CarcassesIntermediaire canEdit={canEdit} carcasses={carcassesSorted.carcassesRefused} />
+          <CarcassesIntermediaire
+            canEdit={canEdit}
+            intermediaire={intermediaire}
+            carcasses={carcassesSorted.carcassesRefused}
+          />
         )}
       </Accordion>
       <Accordion titleAs="h3" label="Prise en charge des carcasses acceptées" defaultExpanded key={intermediaire.id}>
