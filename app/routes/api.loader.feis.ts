@@ -1,7 +1,8 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, SerializeFrom, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
+import type { Fei } from "@prisma/client";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
@@ -138,9 +139,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   return json({
     user,
-    feisUnderMyResponsability,
-    feisToTake,
-    feisOngoing,
+    feisUnderMyResponsability: JSON.parse(JSON.stringify(feisUnderMyResponsability)) as SerializeFrom<Array<Fei>>,
+    feisToTake: JSON.parse(JSON.stringify(feisToTake)) as SerializeFrom<Array<Fei>>,
+    feisOngoing: JSON.parse(JSON.stringify(feisOngoing)) as SerializeFrom<Array<Fei>>,
   });
 }
 

@@ -1,4 +1,4 @@
-import * as zodSchemas from "prisma/generated/zod";
+// import * as zodSchemas from "prisma/generated/zod";
 import type { FeiIntermediaire } from "@prisma/client";
 import { SerializeFrom } from "@remix-run/node";
 import dayjs from "dayjs";
@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 export function mergeFeiIntermediaireToJSON(
   oldItem: SerializeFrom<FeiIntermediaire>,
   newItem: FormData = new FormData(),
-): FormData | SerializeFrom<FeiIntermediaire> {
+): SerializeFrom<FeiIntermediaire> {
   if (newItem) {
     for (const key of newItem?.keys() ?? []) {
       if (newItem?.get(key) === undefined) {
@@ -38,8 +38,8 @@ export function mergeFeiIntermediaireToJSON(
     deleted_at: mergedItem.deleted_at ? dayjs(mergedItem.deleted_at).toISOString() : null,
   };
 
-  const validatedFeiIntermediaireResult = zodSchemas.FeiIntermediaireSchema.parse(result);
-  console.log({ validatedFeiIntermediaireResult });
+  // const validatedFeiIntermediaireResult = zodSchemas.FeiIntermediaireSchema.parse(result);
+  // console.log({ validatedFeiIntermediaireResult });
 
   return result;
 }

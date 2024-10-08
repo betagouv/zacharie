@@ -11,7 +11,7 @@ import { hydrateRoot } from "react-dom/client";
 import { startReactDsfr } from "@codegouvfr/react-dsfr/spa";
 import { registerServiceWorker } from "~/sw/register";
 
-// registerServiceWorker();
+registerServiceWorker();
 
 if (process.env.NODE_ENV === "production") {
   Sentry.init({

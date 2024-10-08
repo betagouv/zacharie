@@ -1,4 +1,4 @@
-import { json, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, SerializeFrom, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
@@ -105,7 +105,15 @@ export async function action(args: ActionFunctionArgs) {
         intermediaire_carcasse_signed_at: new Date(),
       },
     });
-    return json({ ok: true, data: { carcasseIntermediaire }, error: "" });
+    return json({
+      ok: true,
+      data: {
+        carcasseIntermediaire: JSON.parse(
+          JSON.stringify(carcasseIntermediaire satisfies CarcasseIntermediaire),
+        ) satisfies SerializeFrom<CarcasseIntermediaire>,
+      },
+      error: "",
+    });
   }
 
   return json({ ok: true, data: null, error: "" });
@@ -148,10 +156,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   return json({
     ok: true,
     data: {
-      carcasseIntermediaire: carcasseIntermediaire satisfies CarcasseIntermediaire,
+      carcasseIntermediaire: JSON.parse(
+        JSON.stringify(carcasseIntermediaire),
+      ) satisfies SerializeFrom<CarcasseIntermediaire>,
     },
     error: "",
   });
 }
 
-export type FeiCarcasseIntermediaireLoaderData = ExtractLoaderData<typeof loader>;
+export type CarcasseIntermediaireLoaderData = ExtractLoaderData<typeof loader>;

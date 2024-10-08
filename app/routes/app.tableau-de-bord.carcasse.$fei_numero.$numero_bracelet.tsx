@@ -48,8 +48,8 @@ export async function clientAction({ request, params }: ClientActionFunctionArgs
       },
     },
   ).then((response) => response.json())) as CarcasseActionData;
-  if (response.ok && response.data && response.data.numero_bracelet !== params.numero_bracelet) {
-    throw redirect(`/app/tableau-de-bord/carcasse/${params.fei_numero}/${response.data.numero_bracelet}`);
+  if (response.ok && response.data && response.data.carcasse.numero_bracelet !== params.numero_bracelet) {
+    throw redirect(`/app/tableau-de-bord/carcasse/${params.fei_numero}/${response.data.carcasse.numero_bracelet}`);
   }
   return response;
 }

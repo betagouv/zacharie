@@ -1,4 +1,4 @@
-import * as zodSchemas from "prisma/generated/zod";
+// import * as zodSchemas from "prisma/generated/zod";
 import dayjs from "dayjs";
 import { SerializeFrom } from "@remix-run/node";
 import { type Fei, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
@@ -7,13 +7,10 @@ import { type FeiUserLoaderData } from "~/routes/api.fei-user.$fei_numero.$user_
 import { type FeiEntityLoaderData } from "~/routes/api.fei-entity.$fei_numero.$entity_id";
 import { type CarcassesLoaderData } from "~/routes/api.fei-carcasses.$fei_numero";
 import { type FeiIntermediairesLoaderData } from "~/routes/api.fei-intermediaires.$fei_numero";
-import { type FeiCarcasseIntermediaireLoaderData } from "~/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
+import { type CarcasseIntermediaireLoaderData } from "~/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
 
 // Implementation
-export function mergeFeiToJSON(
-  oldItem: SerializeFrom<Fei>,
-  newItem: FormData = new FormData(),
-): FormData | SerializeFrom<Fei> {
+export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = new FormData()): SerializeFrom<Fei> {
   if (newItem) {
     for (const key of newItem?.keys() ?? []) {
       if (newItem?.get(key) === undefined) {
@@ -84,8 +81,8 @@ export function mergeFeiToJSON(
 
   console.log("feoi result", result);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const validatedResult = zodSchemas.FeiSchema.parse(result);
-  console.log({ validatedResult });
+  // const validatedResult = zodSchemas.FeiSchema.parse(result);
+  // console.log({ validatedResult });
 
   return result;
 }
@@ -173,7 +170,7 @@ export async function loadFei(fei_numero: string) {
     for (const carcasse of carcasses.data?.carcasses || []) {
       const intermediaireCarcasse = (await get(
         `/api/fei-carcasse-intermediaire/${fei_numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
-      )) as FeiCarcasseIntermediaireLoaderData;
+      )) as CarcasseIntermediaireLoaderData;
       intermediaireCarcasses[carcasse.numero_bracelet] = intermediaireCarcasse.data?.carcasseIntermediaire || null;
     }
     inetermediairesPopulated.push({

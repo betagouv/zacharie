@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, SerializeFrom, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import type { Carcasse } from "@prisma/client";
@@ -24,7 +24,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   return json({
     ok: true,
     data: {
-      carcasses: carcasses satisfies Array<Carcasse>,
+      carcasses: JSON.parse(JSON.stringify(carcasses)) as Array<SerializeFrom<Carcasse>>,
     },
     error: "",
   });

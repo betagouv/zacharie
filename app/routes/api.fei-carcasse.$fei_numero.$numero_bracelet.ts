@@ -1,8 +1,8 @@
-import { json, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, SerializeFrom, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
-import { Prisma } from "@prisma/client";
+import { Prisma, type Carcasse } from "@prisma/client";
 import dayjs from "dayjs";
 
 export async function action(args: ActionFunctionArgs) {
@@ -184,7 +184,13 @@ export async function action(args: ActionFunctionArgs) {
     data: nextCarcasse,
   });
 
-  return json({ ok: true, data: updatedCarcasse, error: "" });
+  return json({
+    ok: true,
+    data: {
+      carcasse: JSON.parse(JSON.stringify(updatedCarcasse)) as SerializeFrom<Carcasse>,
+    },
+    error: "",
+  });
 }
 
 export type CarcasseActionData = ExtractLoaderData<typeof action>;
@@ -204,7 +210,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
-  return json({ ok: true, data: { carcasse }, error: "" });
+  return json({
+    ok: true,
+    data: {
+      carcasse: JSON.parse(JSON.stringify(carcasse)) as SerializeFrom<Carcasse>,
+    },
+    error: "",
+  });
 }
 
 export type CarcasseLoaderData = ExtractLoaderData<typeof loader>;

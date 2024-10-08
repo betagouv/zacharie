@@ -156,12 +156,7 @@ export default function Fei() {
         if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
           setSelectedTabId(UserRoles.EXAMINATEUR_INITIAL);
         }
-        if (
-          [UserRoles.COLLECTEUR_PRO, UserRoles.CCG, UserRoles.ETG].includes(
-            // @ts-expect-error - TS doesn't know that the following roles are valid tabIds
-            fei.fei_current_owner_role,
-          )
-        ) {
+        if ([UserRoles.COLLECTEUR_PRO, UserRoles.CCG, UserRoles.ETG].includes(fei.fei_current_owner_role)) {
           setSelectedTabId("Intermédiaires");
         }
         if (fei.fei_current_owner_role === UserRoles.SVI) {

@@ -1,12 +1,9 @@
-import * as zodSchemas from "prisma/generated/zod";
+// import * as zodSchemas from "prisma/generated/zod";
 import { Prisma, type Carcasse } from "@prisma/client";
 import { SerializeFrom } from "@remix-run/node";
 import dayjs from "dayjs";
 
-export function mergeCarcasseToJSON(
-  oldItem: SerializeFrom<Carcasse>,
-  newItem: FormData = new FormData(),
-): FormData | SerializeFrom<Carcasse> {
+export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: FormData): SerializeFrom<Carcasse> {
   if (newItem) {
     for (const key of newItem?.keys() ?? []) {
       if (newItem?.get(key) === undefined) {
@@ -71,8 +68,8 @@ export function mergeCarcasseToJSON(
     deleted_at: mergedItem.deleted_at ? dayjs(mergedItem.deleted_at).toISOString() : null,
   };
 
-  const zodCarcasseResult = zodSchemas.CarcasseSchema.parse(result);
-  console.log({ zodCarcasseResult });
+  // const zodCarcasseResult = zodSchemas.CarcasseSchema.parse(result);
+  // console.log({ zodCarcasseResult });
 
   return result;
 }

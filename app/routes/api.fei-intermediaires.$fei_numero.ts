@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, SerializeFrom, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import type { FeiIntermediaire } from "@prisma/client";
@@ -21,15 +21,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     },
   });
 
-  console.log(
-    "intermediaires",
-    intermediaires.map((i) => i.id),
-  );
-
   return json({
     ok: true,
     data: {
-      intermediaires: intermediaires satisfies Array<FeiIntermediaire>,
+      intermediaires: JSON.parse(JSON.stringify(intermediaires)) as SerializeFrom<Array<FeiIntermediaire>>,
     },
     error: "",
   });

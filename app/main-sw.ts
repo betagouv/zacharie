@@ -1,10 +1,29 @@
 // sw.ts
 /// <reference lib="webworker" />
 
-import type { Fei } from "@prisma/client";
+import type { Carcasse, Fei, CarcasseIntermediaire, FeiIntermediaire } from "@prisma/client";
 import type { FeisLoaderData } from "~/routes/api.loader.feis";
 import type { FeiLoaderData, FeiActionData } from "~/routes/api.fei.$fei_numero";
+import type { CarcasseActionData, CarcasseLoaderData } from "~/routes/api.fei-carcasse.$fei_numero.$numero_bracelet";
+import type { CarcassesLoaderData } from "~/routes/api.fei-carcasses.$fei_numero";
+import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
+import type { FeiIntermediairesLoaderData } from "~/routes/api.fei-intermediaires.$fei_numero";
+import type { FeiEntityLoaderData } from "~/routes/api.fei-entity.$fei_numero.$entity_id";
+import type { FeiUserLoaderData } from "~/routes/api.fei-user.$fei_numero.$user_id";
+import type {
+  CarcasseIntermediaireActionData,
+  CarcasseIntermediaireLoaderData,
+} from "~/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
+import type {
+  FeiIntermediaireActionData,
+  FeiIntermediaireLoaderData,
+} from "~/routes/api.fei-intermediaire.$fei_numero.$intermediaire_id";
 import * as IDB from "idb-keyval";
+import { mergeCarcasseToJSON } from "./db/carcasse.client";
+import { SerializeFrom } from "@remix-run/node";
+import { mergeCarcasseIntermediaireToJSON } from "./db/carcasse-intermediaire.client";
+import { mergeFeiIntermediaireToJSON } from "./db/fei-intermediaire.client";
+import { mergeFeiToJSON } from "./db/fei.client";
 
 const CACHE_NAME = "zacharie-pwa-cache-v1";
 const previousCacheNames = ["zacharie-pwa-cache-v0"];
@@ -141,6 +160,60 @@ async function handleFetchRequest(request: Request): Promise<Response> {
     }
   }
 
+  if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/fei-entity/`)) {
+    const cache = await caches.open(CACHE_NAME);
+    const entityId = request.url.split("/").at(-1) as string;
+    const allEntitiesRequest = await cache.match(
+      new Request(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`),
+    );
+    const allEntitiesRequestCloned = allEntitiesRequest!.clone();
+    const allEntities = (await allEntitiesRequestCloned.json()) as MyRelationsLoaderData;
+    const entity = [
+      ...allEntities.data!.ccgs,
+      ...allEntities.data!.collecteursPro,
+      ...allEntities.data!.etgs,
+      ...allEntities.data!.svis,
+      ...allEntities.data!.entitiesUserIsWorkingFor,
+    ].find((e) => e.id === entityId)!;
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        data: {
+          entity,
+        },
+        error: "",
+      } satisfies FeiEntityLoaderData),
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
+  if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/fei-user/`)) {
+    const cache = await caches.open(CACHE_NAME);
+    const userId = request.url.split("/").at(-1) as string;
+    const allEntitiesRequest = await cache.match(
+      new Request(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`),
+    );
+    const allEntitiesRequestCloned = allEntitiesRequest!.clone();
+    const allEntities = (await allEntitiesRequestCloned.json()) as MyRelationsLoaderData;
+    const user = [...allEntities.data!.detenteursInitiaux].find((u) => u.id === userId)!;
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        data: {
+          user,
+        },
+        error: "",
+      } satisfies FeiUserLoaderData),
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
   return new Response(`Offline and data not available\n${JSON.stringify(request, null, 2)}`, {
     status: 404,
     headers: { "Content-Type": "text/plain" },
@@ -150,6 +223,12 @@ async function handleFetchRequest(request: Request): Promise<Response> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function findFeiInAllFeisData(feiNumero: string): Promise<Fei | null> {
   const cache = await caches.open(CACHE_NAME);
+  const feiRequestCached = await cache.match(`${import.meta.env.VITE_API_URL}/api/fei/${feiNumero}`);
+  if (feiRequestCached) {
+    const feiRequestCachedCloned = feiRequestCached.clone();
+    const feiData = (await feiRequestCachedCloned.json()) satisfies FeiLoaderData;
+    return feiData.data;
+  }
   const allFeisCache = await cache.match(new Request(`${import.meta.env.VITE_API_URL}/api/loader/feis`));
   const allFeisCacheCloned = allFeisCache!.clone();
   const allFeisData = (await allFeisCacheCloned.json()) satisfies FeisLoaderData;
@@ -162,12 +241,6 @@ async function findFeiInAllFeisData(feiNumero: string): Promise<Fei | null> {
   const cachedFei = allFeis.find((fei) => fei.numero === feiNumero) satisfies Fei;
   if (cachedFei) {
     return cachedFei;
-  }
-  const feiRequestCached = await cache.match(`${import.meta.env.VITE_API_URL}/api/fei/${feiNumero}`);
-  if (feiRequestCached) {
-    const feiRequestCachedCloned = feiRequestCached.clone();
-    const feiData = (await feiRequestCachedCloned.json()) satisfies FeiLoaderData;
-    return feiData.data;
   }
   return null;
 }
@@ -222,16 +295,132 @@ async function handlePostRequest(request: Request): Promise<Response> {
     console.log("Request queued for later execution");
     // Handle FEI creation when offline
     if (request.url.includes(`/api/fei/`)) {
-      console.log("Handling offline FEI creation");
-      /* Fei action */
       console.log("Cloning request");
       const clonedRequest = request.clone();
       const formData = await clonedRequest.formData();
-      const fei = Object.fromEntries(formData) as unknown as Fei;
+      const jsonFei = mergeFeiToJSON({} as SerializeFrom<Fei>, formData);
       /* All Feis */
       // console.log("Offline FEI", offlineFei);
-      await addOfflineFeiToCache(fei);
-      return new Response(JSON.stringify({ ok: true, data: { fei }, error: "" } satisfies FeiActionData), {
+      await addOfflineFeiToCache(jsonFei);
+      return new Response(JSON.stringify({ ok: true, data: { fei: jsonFei }, error: "" } satisfies FeiActionData), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (request.url.includes(`/api/fei-carcasse/`)) {
+      console.log("Cloning request");
+      const clonedRequest = request.clone();
+      const formData = await clonedRequest.formData();
+      const jsonCarcasse = mergeCarcasseToJSON({} as SerializeFrom<Carcasse>, formData);
+      const cache = await caches.open(CACHE_NAME);
+      const newResponse = {
+        ok: true,
+        data: { carcasse: jsonCarcasse },
+        error: "",
+      };
+      await cache.put(
+        request.url,
+        new Response(JSON.stringify(newResponse satisfies CarcasseLoaderData), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+      const allFeiCarcassesResponse = await cache.match(
+        new Request(`${import.meta.env.VITE_API_URL}/api/fei-carcasses/${jsonCarcasse.fei_numero}`),
+      );
+      const allFeisCarcassesCloned = allFeiCarcassesResponse!.clone();
+      const allCarcasses = (await allFeisCarcassesCloned.json()) as CarcassesLoaderData;
+      const newCarcasses = [
+        ...allCarcasses
+          .data!.carcasses.filter((c) => c.numero_bracelet !== jsonCarcasse.numero_bracelet)
+          // sort create_at desc
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+        jsonCarcasse,
+      ];
+      await cache.put(
+        `${import.meta.env.VITE_API_URL}/api/fei-carcasses/${jsonCarcasse.fei_numero}`,
+        new Response(
+          JSON.stringify({ ok: true, data: { carcasses: newCarcasses }, error: "" } satisfies CarcassesLoaderData),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      );
+      return new Response(JSON.stringify(newResponse satisfies CarcasseActionData), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (request.url.includes(`/api/fei-carcasse-intermediaire/`)) {
+      console.log("Cloning request");
+      const clonedRequest = request.clone();
+      const formData = await clonedRequest.formData();
+      const jsonCarcasseIntermediaire = mergeCarcasseIntermediaireToJSON(
+        {} as SerializeFrom<CarcasseIntermediaire>,
+        formData,
+      );
+      const cache = await caches.open(CACHE_NAME);
+      const newResponse = {
+        ok: true,
+        data: { carcasseIntermediaire: jsonCarcasseIntermediaire },
+        error: "",
+      };
+      await cache.put(
+        request.url,
+        new Response(JSON.stringify(newResponse satisfies CarcasseIntermediaireLoaderData), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+      return new Response(JSON.stringify(newResponse satisfies CarcasseIntermediaireActionData), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (request.url.includes(`/api/fei-intermediaire/`)) {
+      console.log("Cloning request");
+      const clonedRequest = request.clone();
+      const formData = await clonedRequest.formData();
+      const jsonIntermediaire = mergeFeiIntermediaireToJSON({} as SerializeFrom<FeiIntermediaire>, formData);
+      const cache = await caches.open(CACHE_NAME);
+      const newResponse = {
+        ok: true,
+        data: { intermediaire: jsonIntermediaire },
+        error: "",
+      };
+      await cache.put(
+        request.url,
+        new Response(JSON.stringify(newResponse satisfies FeiIntermediaireLoaderData), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+      const allFeiIntermediairesResponse = await cache.match(
+        new Request(`${import.meta.env.VITE_API_URL}/api/fei-intermediaires/${jsonIntermediaire.fei_numero}`),
+      );
+      const allFeiIntermediairesCloned = allFeiIntermediairesResponse!.clone();
+      const allIntermediaires = (await allFeiIntermediairesCloned.json()) as FeiIntermediairesLoaderData;
+      const newIntermediaires = [
+        ...allIntermediaires
+          .data!.intermediaires.filter((c) => c.id !== jsonIntermediaire.id)
+          // sort create_at desc
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+        jsonIntermediaire,
+      ];
+      await cache.put(
+        `${import.meta.env.VITE_API_URL}/api/fei-intermediaires/${jsonIntermediaire.fei_numero}`,
+        new Response(
+          JSON.stringify({
+            ok: true,
+            data: { intermediaires: newIntermediaires },
+            error: "",
+          } satisfies FeiIntermediairesLoaderData),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      );
+      return new Response(JSON.stringify(newResponse satisfies FeiIntermediaireActionData), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
@@ -319,7 +508,7 @@ async function processOfflineQueue(processingFrom: string) {
   console.log("Finished processing offline queue");
 }
 
-async function addOfflineFeiToCache(offlineFei: Fei) {
+async function addOfflineFeiToCache(offlineFei: SerializeFrom<Fei>) {
   console.log("Adding offline FEI to cache");
   const cache = await caches.open(CACHE_NAME);
 
@@ -355,7 +544,7 @@ async function addOfflineFeiToCache(offlineFei: Fei) {
     const allFeisData = (await allFeisResponseClone.json()) as FeisLoaderData;
     console.log("Updating all FEIs data");
     allFeisData.feisUnderMyResponsability = [
-      ...allFeisData.feisUnderMyResponsability.filter((fei: Fei) => fei.numero !== offlineFei.numero),
+      ...allFeisData.feisUnderMyResponsability.filter((fei: SerializeFrom<Fei>) => fei.numero !== offlineFei.numero),
       offlineFei,
     ];
 

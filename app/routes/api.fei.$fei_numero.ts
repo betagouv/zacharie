@@ -1,8 +1,8 @@
-import { json, type LoaderFunctionArgs, type ActionFunctionArgs, redirect } from "@remix-run/node";
+import { json, type LoaderFunctionArgs, type ActionFunctionArgs, redirect, SerializeFrom } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
-import { EntityRelationType, Prisma, UserRoles, type User } from "@prisma/client";
+import { EntityRelationType, Prisma, UserRoles, type User, type Fei } from "@prisma/client";
 import sendNotificationToUser from "~/services/notifications.server";
 
 export async function action(args: ActionFunctionArgs) {
@@ -278,7 +278,13 @@ export async function action(args: ActionFunctionArgs) {
     return redirect(formData.get("_redirect") as string);
   }
 
-  return json({ ok: true, data: { fei: savedFei }, error: "" });
+  return json({
+    ok: true,
+    data: {
+      fei: JSON.parse(JSON.stringify(savedFei)) satisfies SerializeFrom<Fei>,
+    },
+    error: "",
+  });
 }
 
 export type FeiActionData = ExtractLoaderData<typeof action>;
@@ -300,7 +306,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   return json({
     ok: true,
     data: {
-      fei,
+      fei: JSON.parse(JSON.stringify(fei)) satisfies SerializeFrom<Fei>,
     },
     error: "",
   });

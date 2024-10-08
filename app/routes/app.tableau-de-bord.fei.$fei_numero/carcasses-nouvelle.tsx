@@ -16,21 +16,23 @@ export default function NouvelleCarcasse() {
 
   const error = nouvelleCarcasseFetcher.data?.error;
 
-  const lastNavigation = useRef<string>(nouvelleCarcasseFetcher.data?.data?.numero_bracelet ?? "");
+  const lastNavigation = useRef<string>(nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet ?? "");
   useEffect(() => {
-    const nextBracelet = nouvelleCarcasseFetcher.data?.data?.numero_bracelet;
+    const nextBracelet = nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet;
     if (nextBracelet && lastNavigation.current !== nextBracelet) {
       lastNavigation.current === nextBracelet;
-      navigate(`/app/tableau-de-bord/carcasse/${fei.numero}/${nouvelleCarcasseFetcher.data?.data?.numero_bracelet}`);
+      navigate(
+        `/app/tableau-de-bord/carcasse/${fei.numero}/${nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet}`,
+      );
     }
-  }, [nouvelleCarcasseFetcher.data?.data?.numero_bracelet, fei.numero, navigate]);
+  }, [nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet, fei.numero, navigate]);
 
   return (
     <>
       <nouvelleCarcasseFetcher.Form
         method="POST"
         className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end"
-        key={nouvelleCarcasseFetcher.data?.data?.numero_bracelet}
+        key={nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet}
       >
         <input type="hidden" name="route" value={`/api/fei-carcasse/${fei.numero}/${numeroBracelet}`} />
         <input type="hidden" required name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />

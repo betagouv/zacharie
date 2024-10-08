@@ -1,4 +1,4 @@
-import * as zodSchemas from "prisma/generated/zod";
+// import * as zodSchemas from "prisma/generated/zod";
 import type { CarcasseIntermediaire } from "@prisma/client";
 import dayjs from "dayjs";
 import { SerializeFrom } from "@remix-run/node";
@@ -46,8 +46,8 @@ export function mergeCarcasseIntermediaireToJSON(
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const zodCarcasseIntermediaireResult = zodSchemas.CarcasseIntermediaireSchema.parse(result);
-  console.log({ zodCarcasseIntermediaireResult });
+  // const zodCarcasseIntermediaireResult = zodSchemas.CarcasseIntermediaireSchema.parse(result);
+  // console.log({ zodCarcasseIntermediaireResult });
 
   return result satisfies SerializeFrom<CarcasseIntermediaire>;
 }
