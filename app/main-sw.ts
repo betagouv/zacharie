@@ -1,26 +1,10 @@
 // sw.ts
 /// <reference lib="webworker" />
-import {
-  formatFeiOfflineQueue,
-  formatFeiOfflineQueueCarcasse,
-  formatFeiOfflineQueueCarcasseDelete,
-  formatFeiOfflineQueueFeiIntermediaire,
-  type FeiAction,
-} from "~/db/fei.client";
-import type { Fei, Carcasse, FeiIntermediaire, CarcasseIntermediaire } from "@prisma/client";
-import type { MeLoaderData } from "~/routes/api.loader.me";
-import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
+
+import type { Fei } from "@prisma/client";
 import type { FeisLoaderData } from "~/routes/api.loader.feis";
 import type { FeiLoaderData, FeiActionData } from "~/routes/api.fei.$fei_numero";
-import type { CarcasseLoaderData, CarcasseActionData } from "~/routes/api.fei-carcasse.$fei_numero.$numero_bracelet";
-import type { CarcasseIntermediaireActionData } from "~/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
-import type { FeiIntermediaireActionData } from "~/routes/api.fei-intermediaire.$fei_numero.$intermediaire_id";
 import * as IDB from "idb-keyval";
-import {
-  formatCarcasseOfflineActionReturn,
-  formatSuiviCarcasseByIntermediaire,
-  insertSuiviCarcasseByIntermediaireInFei,
-} from "./db/carcasse.client";
 
 const CACHE_NAME = "zacharie-pwa-cache-v1";
 const previousCacheNames = ["zacharie-pwa-cache-v0"];
@@ -335,7 +319,7 @@ async function processOfflineQueue(processingFrom: string) {
   console.log("Finished processing offline queue");
 }
 
-async function addOfflineFeiToCache(offlineFei: ReturnType<typeof formatFeiOfflineQueue>) {
+async function addOfflineFeiToCache(offlineFei: Fei) {
   console.log("Adding offline FEI to cache");
   const cache = await caches.open(CACHE_NAME);
 

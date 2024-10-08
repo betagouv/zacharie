@@ -9,7 +9,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!admin?.roles?.includes(UserRoles.ADMIN)) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
-  const users = await prisma.user.findMany();
+  const users = await prisma.user.findMany({
+    orderBy: {
+      updated_at: "desc",
+    },
+  });
   return json({ ok: true, data: { users }, error: "" });
 }
 

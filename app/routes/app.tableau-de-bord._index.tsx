@@ -9,6 +9,7 @@ import type { FeisDoneLoaderData } from "~/routes/api.loader.feis-done";
 import { useIsOnline } from "~/components/OfflineMode";
 import { useEffect, useState } from "react";
 import ResponsiveTable from "~/components/TableResponsive";
+import { loadFei } from "~/db/fei.client";
 
 export async function clientLoader() {
   try {
@@ -29,6 +30,10 @@ export async function clientLoader() {
     }
 
     const data = (await response.json()) as FeisLoaderData;
+    const allFeis = [...data.feisUnderMyResponsability, ...data.feisToTake, ...data.feisOngoing];
+    for (const fei of allFeis) {
+      await loadFei(fei.numero);
+    }
 
     const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/feis-done`, {
       method: "GET",

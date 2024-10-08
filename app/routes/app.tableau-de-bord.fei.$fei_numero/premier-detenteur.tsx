@@ -94,16 +94,11 @@ export default function FEIDetenteurInitial() {
                 formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
                 const nextFei = mergeFei(fei, formData);
-                fetcher.submit(
-                  {
-                    ...nextFei,
-                    route: `/api/fei/${fei.numero}`,
-                  },
-                  {
-                    method: "POST",
-                    preventScrollReset: true, // Prevent scroll reset on submission
-                  },
-                );
+                nextFei.append("route", `/api/fei/${fei.numero}`);
+                fetcher.submit(nextFei, {
+                  method: "POST",
+                  preventScrollReset: true, // Prevent scroll reset on submission
+                });
               }}
             >
               Je suis bien le Premier Détenteur
@@ -120,16 +115,11 @@ export default function FEIDetenteurInitial() {
                 formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
                 formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
                 const nextFei = mergeFei(fei, formData);
-                fetcher.submit(
-                  {
-                    ...nextFei,
-                    route: `/api/fei/${fei.numero}`,
-                  },
-                  {
-                    method: "POST",
-                    preventScrollReset: true, // Prevent scroll reset on submission
-                  },
-                );
+                nextFei.append("route", `/api/fei/${fei.numero}`);
+                fetcher.submit(nextFei, {
+                  method: "POST",
+                  preventScrollReset: true, // Prevent scroll reset on submission
+                });
               }}
             >
               Renvoyer la FEI
@@ -171,16 +161,11 @@ export default function FEIDetenteurInitial() {
                 event.preventDefault();
                 const formData = new FormData(event.currentTarget);
                 const nextFei = mergeFei(fei, formData);
-                fetcher.submit(
-                  {
-                    ...nextFei,
-                    route: `/api/fei/${fei.numero}`,
-                  },
-                  {
-                    method: "POST",
-                    preventScrollReset: true, // Prevent scroll reset on submission
-                  },
-                );
+                nextFei.append("route", `/api/fei/${fei.numero}`);
+                fetcher.submit(nextFei, {
+                  method: "POST",
+                  preventScrollReset: true, // Prevent scroll reset on submission
+                });
               }}
             >
               <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />

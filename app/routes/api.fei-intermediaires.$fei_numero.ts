@@ -21,6 +21,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     },
   });
 
+  console.log(
+    "intermediaires",
+    intermediaires.map((i) => i.id),
+  );
+
   return json({
     ok: true,
     data: {

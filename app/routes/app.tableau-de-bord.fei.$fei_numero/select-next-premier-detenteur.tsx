@@ -45,16 +45,11 @@ export default function SelectPremierDetenteur() {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
           const nextFei = mergeFei(fei, formData);
-          nextOwnerFetcher.submit(
-            {
-              ...nextFei,
-              route: `/api/fei/${fei.numero}`,
-            },
-            {
-              method: "POST",
-              preventScrollReset: true,
-            },
-          );
+          nextFei.append("route", `/api/fei/${fei.numero}`);
+          nextOwnerFetcher.submit(nextFei, {
+            method: "POST",
+            preventScrollReset: true,
+          });
         }}
       >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />

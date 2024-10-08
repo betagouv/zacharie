@@ -31,6 +31,11 @@ import { useIsOnline } from "~/components/OfflineMode";
 
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
   const formData = await request.formData();
+  for (const key of formData.keys()) {
+    if (formData.get(key) === "null") {
+      formData.set(key, "");
+    }
+  }
   console.log("carcasse formdata", Object.fromEntries(formData.entries()));
   const response = (await fetch(
     `${import.meta.env.VITE_API_URL}/api/fei-carcasse/${params.fei_numero}/${params.numero_bracelet}`,

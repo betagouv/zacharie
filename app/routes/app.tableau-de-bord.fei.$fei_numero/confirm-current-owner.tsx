@@ -34,8 +34,6 @@ export default function ConfirmCurrentOwner() {
     return false;
   }, [fei, user, nextEntity]);
 
-  console.log({ canConfirmCurrentOwner, fei });
-
   if (!fei.fei_next_owner_role) {
     return null;
   }
@@ -63,16 +61,11 @@ export default function ConfirmCurrentOwner() {
       formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
     }
     const nextFei = mergeFei(fei, formData);
-    fetcher.submit(
-      {
-        ...nextFei,
-        route: `/api/fei/${fei.numero}`,
-      },
-      {
-        method: "POST",
-        preventScrollReset: true, // Prevent scroll reset on submission
-      },
-    );
+    nextFei.append("route", `/api/fei/${fei.numero}`);
+    fetcher.submit(nextFei, {
+      method: "POST",
+      preventScrollReset: true, // Prevent scroll reset on submission
+    });
 
     const intermediaireRole: (keyof typeof UserRoles)[] = [UserRoles.COLLECTEUR_PRO, UserRoles.ETG, UserRoles.CCG];
     if (
@@ -95,17 +88,11 @@ export default function ConfirmCurrentOwner() {
         handover_at: null,
         received_at: null,
       });
-      intermediaireFetcher.submit(
-        {
-          ...newIntermediaire,
-          step: "create",
-          route: `/api/fei-intermediaire/${fei.numero}/${newId}`,
-        },
-        {
-          method: "POST",
-          preventScrollReset: true, // Prevent scroll reset on submission
-        },
-      );
+      newIntermediaire.append("route", `/api/fei-intermediaire/${fei.numero}/${newId}`);
+      intermediaireFetcher.submit(newIntermediaire, {
+        method: "POST",
+        preventScrollReset: true, // Prevent scroll reset on submission
+      });
     }
   }
 
@@ -145,16 +132,11 @@ export default function ConfirmCurrentOwner() {
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
             formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
             const nextFei = mergeFei(fei, formData);
-            fetcher.submit(
-              {
-                ...nextFei,
-                route: `/api/fei/${fei.numero}`,
-              },
-              {
-                method: "POST",
-                preventScrollReset: true, // Prevent scroll reset on submission
-              },
-            );
+            nextFei.append("route", `/api/fei/${fei.numero}`);
+            fetcher.submit(nextFei, {
+              method: "POST",
+              preventScrollReset: true, // Prevent scroll reset on submission
+            });
           }}
         >
           Renvoyer la FEI

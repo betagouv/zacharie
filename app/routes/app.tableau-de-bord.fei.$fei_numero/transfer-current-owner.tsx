@@ -33,16 +33,11 @@ export default function FeiTransfer() {
             const formData = new FormData();
             formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer, "false");
             const nextFei = mergeFei(fei, formData);
-            fetcher.submit(
-              {
-                ...nextFei,
-                route: `/api/fei/${fei.numero}`,
-              },
-              {
-                method: "POST",
-                preventScrollReset: true, // Prevent scroll reset on submission
-              },
-            );
+            nextFei.append("route", `/api/fei/${fei.numero}`);
+            fetcher.submit(nextFei, {
+              method: "POST",
+              preventScrollReset: true, // Prevent scroll reset on submission
+            });
           }}
         >
           Je prends en charge cette FEI

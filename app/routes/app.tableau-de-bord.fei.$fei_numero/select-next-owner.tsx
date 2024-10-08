@@ -151,6 +151,8 @@ export default function SelectNextOwner() {
     return null;
   }
 
+  console.log({ nextOwners, nextRole, nextOwnerValue, savedNextOwner, showIntermediaires, showSvi });
+
   const nextOwnersWorkingWith = nextOwners.filter((o) => !!o.relation);
   const nextOwnersNotWorkingWith = nextOwners.filter((o) => !o.relation);
 
@@ -164,16 +166,12 @@ export default function SelectNextOwner() {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
           const nextFei = mergeFei(fei, formData);
-          nextOwnerFetcher.submit(
-            {
-              ...nextFei,
-              route: `/api/fei/${fei.numero}`,
-            },
-            {
-              method: "POST",
-              preventScrollReset: true,
-            },
-          );
+          nextFei.append("route", `/api/fei/${fei.numero}`);
+          console.log({ nextFei });
+          nextOwnerFetcher.submit(nextFei, {
+            method: "POST",
+            preventScrollReset: true,
+          });
         }}
       >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />

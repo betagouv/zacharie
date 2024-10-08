@@ -48,6 +48,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
       },
     },
+    orderBy: {
+      updated_at: "desc",
+    },
     select: {
       id: true,
       email: true,
@@ -67,6 +70,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
       },
     },
+    orderBy: {
+      updated_at: "desc",
+    },
     select: {
       id: true,
       email: true,
@@ -85,6 +91,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       },
       type: entity.type === EntityTypes.ETG ? EntityTypes.SVI : EntityTypes.ETG,
       coupled_entity_id: null,
+    },
+    orderBy: {
+      updated_at: "desc",
     },
   });
 

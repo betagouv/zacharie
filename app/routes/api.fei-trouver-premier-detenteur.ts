@@ -23,7 +23,7 @@ export async function action(args: ActionFunctionArgs) {
   const fei = await prisma.fei.findUnique({
     where: {
       numero: formData.get(Prisma.FeiScalarFieldEnum.numero) as string,
-      fei_next_owner_role: UserRoles.PREMIER_DETENTEUR,
+      fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
     },
   });
   if (!fei) {

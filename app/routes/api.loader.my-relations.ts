@@ -18,6 +18,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       include: {
         EntityRelatedWithUser: true,
       },
+      orderBy: {
+        updated_at: "desc",
+      },
     })
   ).map((entityRelation) => ({ ...entityRelation.EntityRelatedWithUser, relation: entityRelation.relation }));
 
@@ -29,6 +32,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       },
       include: {
         EntityRelatedWithUser: true,
+      },
+      orderBy: {
+        updated_at: "desc",
       },
     })
   ).map((entityRelation) => entityRelation.EntityRelatedWithUser);
@@ -46,6 +52,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
           notIn: entitiesUserIsWorkingFor.map((entity) => entity.id),
         },
       },
+      orderBy: {
+        updated_at: "desc",
+      },
     })
   ).map((entity) => ({ ...entity, relation: EntityRelationType.WORKING_WITH }));
 
@@ -59,6 +68,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
           not: EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
         },
       },
+      orderBy: {
+        updated_at: "desc",
+      },
     })
   ).map((entity) => ({ ...entity, relation: null }));
 
@@ -68,6 +80,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
     include: {
       UserRelatedOfUserRelation: true,
+    },
+    orderBy: {
+      updated_at: "desc",
     },
   });
 

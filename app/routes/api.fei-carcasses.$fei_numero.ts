@@ -16,6 +16,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     where: {
       fei_numero: params.fei_numero,
     },
+    orderBy: {
+      created_at: "desc", // the latest first
+    },
   });
 
   return json({

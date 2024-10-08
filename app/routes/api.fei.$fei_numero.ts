@@ -39,7 +39,11 @@ export async function action(args: ActionFunctionArgs) {
 
   */
   if (formData.has(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
-    nextFei.date_mise_a_mort = new Date(formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort) as string);
+    if (formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort) === "") {
+      nextFei.date_mise_a_mort = null;
+    } else {
+      nextFei.date_mise_a_mort = new Date(formData.get(Prisma.FeiScalarFieldEnum.date_mise_a_mort) as string);
+    }
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
     nextFei.commune_mise_a_mort = formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort) as string;
@@ -56,9 +60,13 @@ export async function action(args: ActionFunctionArgs) {
     nextFei.fei_next_owner_role = UserRoles.PREMIER_DETENTEUR;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)) {
-    nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = formData.get(
-      "examinateur_initial_date_approbation_mise_sur_le_marche",
-    ) as string;
+    if (formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche) === "") {
+      nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = null;
+    } else {
+      nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = new Date(
+        formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche) as string,
+      );
+    }
   }
   /*
   *
@@ -68,24 +76,22 @@ export async function action(args: ActionFunctionArgs) {
   Premier détenteur
 
   */
-
-  if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part)) {
-    nextFei.premier_detenteur_date_depot_quelque_part = new Date(
-      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string,
-    );
-  }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
-    nextFei.premier_detenteur_user_id = formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) as string;
+    nextFei.premier_detenteur_user_id =
+      (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) as string) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part)) {
-    nextFei.premier_detenteur_date_depot_quelque_part = new Date(
-      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string,
-    );
+    if (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) === "") {
+      nextFei.premier_detenteur_date_depot_quelque_part = null;
+    } else {
+      nextFei.premier_detenteur_date_depot_quelque_part = new Date(
+        formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string,
+      );
+    }
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id)) {
-    nextFei.premier_detenteur_depot_entity_id = formData.get(
-      Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
-    ) as string;
+    nextFei.premier_detenteur_depot_entity_id =
+      (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id) as string) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage)) {
     nextFei.premier_detenteur_depot_sauvage = formData.get(
@@ -154,10 +160,11 @@ export async function action(args: ActionFunctionArgs) {
   }
   /*  Prev Owner */
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_prev_owner_user_id)) {
-    nextFei.fei_prev_owner_user_id = formData.get(Prisma.FeiScalarFieldEnum.fei_prev_owner_user_id) as string;
+    nextFei.fei_prev_owner_user_id = (formData.get(Prisma.FeiScalarFieldEnum.fei_prev_owner_user_id) as string) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id)) {
-    nextFei.fei_prev_owner_entity_id = formData.get(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id) as string;
+    nextFei.fei_prev_owner_entity_id =
+      (formData.get(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id) as string) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_prev_owner_role)) {
     nextFei.fei_prev_owner_role = (formData.get(Prisma.FeiScalarFieldEnum.fei_prev_owner_role) as UserRoles) || null;
@@ -172,26 +179,27 @@ export async function action(args: ActionFunctionArgs) {
 
   */
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_signed_at)) {
-    nextFei.svi_signed_at = formData.get(Prisma.FeiScalarFieldEnum.svi_signed_at) as string;
+    if (formData.get(Prisma.FeiScalarFieldEnum.svi_signed_at) === "") {
+      nextFei.svi_signed_at = null;
+    } else {
+      nextFei.svi_signed_at = new Date(formData.get(Prisma.FeiScalarFieldEnum.svi_signed_at) as string);
+    }
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_entity_id)) {
-    nextFei.svi_entity_id = formData.get(Prisma.FeiScalarFieldEnum.svi_entity_id) as string;
+    nextFei.svi_entity_id = (formData.get(Prisma.FeiScalarFieldEnum.svi_entity_id) as string) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_user_id)) {
-    nextFei.svi_user_id = formData.get(Prisma.FeiScalarFieldEnum.svi_user_id) as string;
+    nextFei.svi_user_id = (formData.get(Prisma.FeiScalarFieldEnum.svi_user_id) as string) || null;
   }
-  if (formData.has(Prisma.FeiScalarFieldEnum.svi_carcasses_saisies)) {
+  if (formData.get(Prisma.FeiScalarFieldEnum.svi_carcasses_saisies)) {
     nextFei.svi_carcasses_saisies = Number(formData.get(Prisma.FeiScalarFieldEnum.svi_carcasses_saisies) as string);
   }
-  if (formData.has(Prisma.FeiScalarFieldEnum.svi_aucune_carcasse_saisie)) {
+  if (formData.get(Prisma.FeiScalarFieldEnum.svi_aucune_carcasse_saisie)) {
     nextFei.svi_aucune_carcasse_saisie =
       formData.get(Prisma.FeiScalarFieldEnum.svi_aucune_carcasse_saisie) === "true" ? true : false;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_commentaire)) {
     nextFei.svi_commentaire = formData.get(Prisma.FeiScalarFieldEnum.svi_commentaire) as string;
-  }
-  if (formData.has(Prisma.FeiScalarFieldEnum.svi_signed_at)) {
-    nextFei.svi_signed_at = formData.get(Prisma.FeiScalarFieldEnum.svi_signed_at) as string;
   }
 
   const savedFei = await prisma.fei.update({
@@ -229,6 +237,7 @@ export async function action(args: ActionFunctionArgs) {
       await prisma.entityRelations.findMany({
         where: {
           entity_id: formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id) as string,
+          relation: EntityRelationType.WORKING_FOR,
         },
         include: {
           UserRelatedWithEntity: {

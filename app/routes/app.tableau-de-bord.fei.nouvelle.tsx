@@ -30,8 +30,8 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
     },
   }).then((response) => response.json())) as FeiActionData;
   console.log("response", response);
-  if (response.ok && response.data?.numero) {
-    const fei = response.data;
+  if (response.ok && response.data?.fei.numero) {
+    const fei = response.data.fei;
     return redirect(`/app/tableau-de-bord/fei/${fei.numero}`);
   }
   return response;

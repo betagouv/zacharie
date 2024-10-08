@@ -117,7 +117,24 @@ export async function action(args: ActionFunctionArgs) {
     ) as string;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at)) {
-    nextCarcasse.examinateur_signed_at = dayjs().toISOString();
+    if (formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at) === "") {
+      nextCarcasse.examinateur_signed_at = null;
+    } else {
+      // nextCarcasse.examinateur_signed_at = dayjs().toISOString();
+      nextCarcasse.examinateur_signed_at = new Date(
+        formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at) as string,
+      );
+    }
+  }
+  if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at)) {
+    if (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at) === "") {
+      nextCarcasse.intermediaire_carcasse_signed_at = null;
+    } else {
+      // nextCarcasse.intermediaire_carcasse_signed_at = dayjs().toISOString();
+      nextCarcasse.intermediaire_carcasse_signed_at = new Date(
+        formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at) as string,
+      );
+    }
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id)) {
     nextCarcasse.intermediaire_carcasse_refus_intermediaire_id =
@@ -126,10 +143,6 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif)) {
     nextCarcasse.intermediaire_carcasse_refus_motif =
       (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif) as string) || null;
-  }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at)) {
-    nextCarcasse.intermediaire_carcasse_signed_at =
-      (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at) as string) || null;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire)) {
     nextCarcasse.intermediaire_carcasse_commentaire =

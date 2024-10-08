@@ -69,14 +69,38 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                     <br />
                     {!examinationNotFinished && (
                       <>
-                        <span className="m-0 block font-bold">
-                          {carcasse.examinateur_anomalies_abats?.length || "Pas d'"} anomalie
-                          {carcasse.examinateur_anomalies_abats?.length > 1 ? "s" : ""} abats
-                        </span>
-                        <span className="m-0 block font-bold md:-mb-4">
-                          {carcasse.examinateur_anomalies_carcasse?.length || "Pas d'"} anomalie
-                          {carcasse.examinateur_anomalies_carcasse?.length > 1 ? "s" : ""} carcasse
-                        </span>
+                        <>
+                          {!carcasse.examinateur_anomalies_abats?.length ? (
+                            <span className="m-0 block font-bold">Pas d'anomalie abats</span>
+                          ) : (
+                            <>
+                              <span className="m-0 block font-bold">Anomalies abats:</span>
+                              {carcasse.examinateur_anomalies_abats.map((anomalie) => {
+                                return (
+                                  <>
+                                    <span className="m-0 ml-2 block font-bold">{anomalie}</span>
+                                  </>
+                                );
+                              })}
+                            </>
+                          )}
+                        </>
+                        <>
+                          {!carcasse.examinateur_anomalies_carcasse?.length ? (
+                            <span className="m-0 block font-bold">Pas d'anomalie carcasse</span>
+                          ) : (
+                            <>
+                              <span className="m-0 block font-bold">Anomalies carcasse:</span>
+                              {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
+                                return (
+                                  <>
+                                    <span className="m-0 ml-2 block font-bold">{anomalie}</span>
+                                  </>
+                                );
+                              })}
+                            </>
+                          )}
+                        </>
                       </>
                     )}
                   </>

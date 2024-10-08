@@ -1,5 +1,5 @@
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import { clientLoader } from "./route";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
@@ -44,6 +44,7 @@ interface CarcasseAVerifierProps {
 function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
   const { fei, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
   const intermediaireCarcasseFetcher = useFetcher({ key: `intermediaire-carcasse-${carcasse.numero_bracelet}` });
+  const formRef = useRef<HTMLFormElement>(null);
   const carcasseFetcher = useFetcher({ key: `carcasse-from-intermediaire-${carcasse.numero_bracelet}` });
   const intermediaire = inetermediairesPopulated[0];
   const intermediaireCarcasse = useMemo(() => {
@@ -68,6 +69,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
 
   const [showRefuser, setShowRefuser] = useState(!!intermediaireCarcasse.refus);
   const [refus, setRefus] = useState(intermediaireCarcasse.refus ?? "");
+
   return (
     <Fragment key={carcasse.numero_bracelet}>
       <Notice
@@ -147,65 +149,9 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
       {canEdit && (
         <intermediaireCarcasseFetcher.Form
           method="POST"
+          ref={formRef}
           id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-          onBlur={(e) => {
-            console.log("submit or what");
-            const form = new FormData(e.currentTarget);
-            intermediaireCarcasseFetcher.submit(
-              {
-                ...mergeCarcasseIntermediaire(intermediaireCarcasse, form),
-                route: `/api/fei-carcasse-intermediaire/${fei.numero}/${carcasse.numero_bracelet}/${intermediaire.id}`,
-              },
-              {
-                method: "POST",
-                preventScrollReset: true,
-              },
-            );
-            if (form.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus) === "true") {
-              // we do it server side too, to make sure good thiings happen
-              // but we do it client side too to simplify code offline mode
-              const carcasseForm = new FormData();
-              carcasseForm.append(
-                Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire,
-                form.get(Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire) as string,
-              );
-              carcasseForm.append(
-                Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif,
-                form.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus) as string,
-              );
-              carcasseForm.append(
-                Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id,
-                intermediaire.id,
-              );
-              carcasseForm.append(
-                Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at,
-                new Date().toISOString(),
-              );
-              carcasseFetcher.submit(carcasseForm, {
-                method: "POST",
-                preventScrollReset: true,
-              });
-            }
-            if (form.get(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge) === "true") {
-              // we do it server side too, to make sure good thiings happen
-              // but we do it client side too to simplify code offline mode
-              const carcasseForm = new FormData();
-              carcasseForm.append(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire, "");
-              carcasseForm.append(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif, "");
-              carcasseForm.append(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id, "");
-              carcasseForm.append(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at, "");
-              carcasseFetcher.submit(carcasseForm, {
-                method: "POST",
-                preventScrollReset: true,
-              });
-            }
-          }}
         >
-          <input
-            type="hidden"
-            name="route"
-            value={`/api/fei-carcasse-intermediaire/${fei.numero}/${carcasse.numero_bracelet}/${intermediaire.id}`}
-          />
           <input
             form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
             type="hidden"
@@ -244,18 +190,6 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
           />
           {!showRefuser ? (
             <>
-              <input
-                form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-                type="hidden"
-                name={Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge}
-                value="true"
-              />
-              <input
-                form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-                type="hidden"
-                name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
-                value=""
-              />
               <div className="fr-fieldset__element">
                 <Input
                   label="Commentaire"
@@ -265,6 +199,21 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                     name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
                     form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
                     defaultValue: intermediaireCarcasse.commentaire || "",
+                    onBlur: (e) => {
+                      console.log("submit comment");
+                      const form = new FormData();
+                      form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire, e.target.value);
+                      console.log("form", Object.fromEntries(form));
+                      const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
+                      nextIntermediaire.append(
+                        "route",
+                        `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+                      );
+                      intermediaireCarcasseFetcher.submit(nextIntermediaire, {
+                        method: "POST",
+                        preventScrollReset: true,
+                      });
+                    },
                   }}
                 />
               </div>
@@ -288,6 +237,52 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                             type: "submit",
                             nativeButtonProps: {
                               form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                              onClick: (e) => {
+                                console.log("submit accept");
+                                e.preventDefault();
+                                const form = new FormData(formRef.current!);
+                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, "false");
+                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge, "true");
+
+                                const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
+                                nextIntermediaire.append(
+                                  "route",
+                                  `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+                                );
+                                console.log("nextIntermediaire", Object.fromEntries(nextIntermediaire));
+                                intermediaireCarcasseFetcher.submit(nextIntermediaire, {
+                                  method: "POST",
+                                  preventScrollReset: true,
+                                });
+
+                                // we do it server side too, to make sure good thiings happen
+                                // but we do it client side too to simplify code offline mode
+                                const carcasseForm = new FormData();
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire,
+                                  "",
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif,
+                                  "",
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id,
+                                  "",
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at,
+                                  "",
+                                );
+                                carcasseForm.append(
+                                  "route",
+                                  `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`,
+                                );
+                                carcasseFetcher.submit(carcasseForm, {
+                                  method: "POST",
+                                  preventScrollReset: true,
+                                });
+                              },
                             },
                           },
                           {
@@ -304,12 +299,6 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
             </>
           ) : (
             <>
-              <input
-                form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-                type="hidden"
-                name={Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge}
-                value="false"
-              />
               <input
                 form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
                 type="hidden"
@@ -337,6 +326,21 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                     name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
                     form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
                     defaultValue: intermediaireCarcasse.commentaire || "",
+                    onBlur: (e) => {
+                      console.log("submit comment");
+                      const form = new FormData();
+                      form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire, e.target.value);
+                      console.log("form", Object.fromEntries(form));
+                      const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
+                      nextIntermediaire.append(
+                        "route",
+                        `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+                      );
+                      intermediaireCarcasseFetcher.submit(nextIntermediaire, {
+                        method: "POST",
+                        preventScrollReset: true,
+                      });
+                    },
                   }}
                 />
               </div>
@@ -360,6 +364,51 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                             type: "submit",
                             nativeButtonProps: {
                               form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                              onClick: (e) => {
+                                console.log("submit refus");
+                                e.preventDefault();
+                                const form = new FormData(formRef.current!);
+                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, "true");
+                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge, "false");
+                                const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
+                                nextIntermediaire.append(
+                                  "route",
+                                  `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+                                );
+                                console.log("nextIntermediaire", Object.fromEntries(nextIntermediaire));
+                                intermediaireCarcasseFetcher.submit(nextIntermediaire, {
+                                  method: "POST",
+                                  preventScrollReset: true,
+                                });
+
+                                // we do it server side too, to make sure good thiings happen
+                                // but we do it client side too to simplify code offline mode
+                                const carcasseForm = new FormData();
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire,
+                                  form.get(Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire) as string,
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif,
+                                  form.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus) as string,
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id,
+                                  intermediaire.id,
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at,
+                                  new Date().toISOString(),
+                                );
+                                carcasseForm.append(
+                                  "route",
+                                  `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`,
+                                );
+                                carcasseFetcher.submit(carcasseForm, {
+                                  method: "POST",
+                                  preventScrollReset: true,
+                                });
+                              },
                             },
                           },
                           {

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { clientLoader } from "./route";
@@ -35,21 +35,17 @@ export default function FEIExaminateurInitial() {
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
   const examFetcher = useFetcher({ key: "examination-fetcher" });
-  const handleUserFormChange = (event: React.FocusEvent<HTMLFormElement>) => {
+  const examRef = useRef<HTMLFormElement>(null);
+  const handleUserFormChange = () => {
     if (!canEdit) {
       return;
     }
-    const nextFei = mergeFei(fei, new FormData(event.currentTarget));
-    approbationFetcher.submit(
-      {
-        ...nextFei,
-        route: `/api/fei/${fei.numero}`,
-      },
-      {
-        method: "POST",
-        preventScrollReset: true,
-      },
-    );
+    const nextFei = mergeFei(fei, new FormData(examRef.current!));
+    nextFei.append("route", `/api/fei/${fei.numero}`);
+    approbationFetcher.submit(nextFei, {
+      method: "POST",
+      preventScrollReset: true,
+    });
   };
 
   const needSelecteNextUser = useMemo(() => {
@@ -97,7 +93,7 @@ export default function FEIExaminateurInitial() {
   return (
     <>
       <Accordion titleAs="h3" label="Données de chasse" defaultExpanded>
-        <examFetcher.Form method="POST" onBlur={handleUserFormChange}>
+        <examFetcher.Form method="POST" onBlur={handleUserFormChange} ref={examRef}>
           <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
           <div className="fr-fieldset__element">
             <Component
@@ -141,16 +137,11 @@ export default function FEIExaminateurInitial() {
             onSubmit={(event) => {
               event.preventDefault();
               const nextFei = mergeFei(fei, new FormData(event.currentTarget));
-              approbationFetcher.submit(
-                {
-                  ...nextFei,
-                  route: `/api/fei/${fei.numero}`,
-                },
-                {
-                  method: "POST",
-                  preventScrollReset: true,
-                },
-              );
+              nextFei.append("route", `/api/fei/${fei.numero}`);
+              approbationFetcher.submit(nextFei, {
+                method: "POST",
+                preventScrollReset: true,
+              });
             }}
           >
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />

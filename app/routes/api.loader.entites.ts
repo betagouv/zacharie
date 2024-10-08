@@ -16,11 +16,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
     where: {
       type: { not: EntityTypes.CCG },
     },
+    orderBy: {
+      updated_at: "desc",
+    },
   });
   const userEntitiesRelations = await prisma.entityRelations.findMany({
     where: {
       owner_id: user.id,
       relation: EntityRelationType.WORKING_FOR,
+    },
+    orderBy: {
+      updated_at: "desc",
     },
   });
 

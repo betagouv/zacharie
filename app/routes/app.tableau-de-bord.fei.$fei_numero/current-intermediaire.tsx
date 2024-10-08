@@ -192,17 +192,13 @@ export default function FEICurrentIntermediaire() {
           method="POST"
           id="form_intermediaire_check_finished_at"
           onSubmit={(e) => {
-            const nextIntermediaire = mergeFeiIntermediaire(intermediaire, new FormData(e.currentTarget));
-            priseEnChargeFetcher.submit(
-              {
-                ...nextIntermediaire,
-                route: `/api/fei-intermediaire/${fei.numero}/${intermediaire.id}`,
-              },
-              {
-                method: "POST",
-                preventScrollReset: true,
-              },
-            );
+            e.preventDefault();
+            const nextIntermediaire = mergeFeiIntermediaire(intermediaire, new FormData(e.currentTarget)) as FormData;
+            nextIntermediaire.append("route", `/api/fei-intermediaire/${fei.numero}/${intermediaire.id}`);
+            priseEnChargeFetcher.submit(nextIntermediaire, {
+              method: "POST",
+              preventScrollReset: true,
+            });
           }}
         >
           <input
