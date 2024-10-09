@@ -23,6 +23,47 @@ export async function loader({ request }: LoaderFunctionArgs) {
       svi_signed_at: {
         not: null,
       },
+
+      OR: [
+        {
+          examinateur_initial_user_id: user.id,
+        },
+        {
+          premier_detenteur_user_id: user.id,
+        },
+        {
+          svi_user_id: user.id,
+        },
+        {
+          FeiIntermediaires: {
+            some: {
+              fei_intermediaire_user_id: user.id,
+            },
+          },
+        },
+        {
+          FeiIntermediaires: {
+            some: {
+              FeiIntermediaireEntity: {
+                EntityRelatedWithUser: {
+                  some: {
+                    owner_id: user.id,
+                  },
+                },
+              },
+            },
+          },
+        },
+        {
+          FeiSviEntity: {
+            EntityRelatedWithUser: {
+              some: {
+                owner_id: user.id,
+              },
+            },
+          },
+        },
+      ],
     },
     select: {
       numero: true,

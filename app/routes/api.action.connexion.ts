@@ -17,10 +17,10 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log("NO EMAIL");
     return json({ ok: false, data: null, error: "Veuillez renseigner votre email" });
   }
-  if (!passwordUser) {
-    console.log("NO PASSWORD");
-    return json({ ok: false, data: null, error: "Veuillez renseigner votre mot de passe" });
-  }
+  // if (!passwordUser) {
+  //   console.log("NO PASSWORD");
+  //   return json({ ok: false, data: null, error: "Veuillez renseigner votre mot de passe" });
+  // }
   if (!connexionType) {
     console.log("NO CONNEXION TYPE");
     return json({ ok: false, data: null, error: "L'URL de connexion est incorrecte" });
@@ -56,24 +56,24 @@ export async function action({ request }: ActionFunctionArgs) {
       },
     });
   }
-  const hashedPassword = await hashPassword(passwordUser);
-  const existingPassword = await prisma.password.findFirst({ where: { user_id: user.id } });
-  if (!existingPassword) {
-    await prisma.password.create({
-      data: { user_id: user.id, password: hashedPassword },
-    });
-  } else {
-    const isOk = await comparePassword(passwordUser, existingPassword.password);
-    if (!isOk) {
-      if (connexionType === "compte-existant") {
-        console.log("WRONG PASSWORD");
-        return json({ ok: false, data: null, error: "Le mot de passe est incorrect" });
-      } else {
-        console.log("ACCOUNT ALREADY EXISTS");
-        return json({ ok: false, data: null, error: "Un compte existe déjà avec cet email" });
-      }
-    }
-  }
+  // const hashedPassword = await hashPassword(passwordUser);
+  // const existingPassword = await prisma.password.findFirst({ where: { user_id: user.id } });
+  // if (!existingPassword) {
+  //   await prisma.password.create({
+  //     data: { user_id: user.id, password: hashedPassword },
+  //   });
+  // } else {
+  //   const isOk = await comparePassword(passwordUser, existingPassword.password);
+  //   if (!isOk) {
+  //     if (connexionType === "compte-existant") {
+  //       console.log("WRONG PASSWORD");
+  //       return json({ ok: false, data: null, error: "Le mot de passe est incorrect" });
+  //     } else {
+  //       console.log("ACCOUNT ALREADY EXISTS");
+  //       return json({ ok: false, data: null, error: "Un compte existe déjà avec cet email" });
+  //     }
+  //   }
+  // }
   console.log("OK BEBE");
   return createUserSession(request, user);
 }
