@@ -163,7 +163,34 @@ export default function SelectNextOwner() {
             nativeSelectProps={{
               name: Prisma.FeiScalarFieldEnum.fei_next_owner_role,
               value: nextRole,
-              onChange: (e) => setNextRole(e.target.value as UserRoles),
+              onChange: (e) => {
+                const _nextRole = e.target.value as UserRoles;
+                setNextRole(_nextRole);
+                switch (_nextRole) {
+                  case UserRoles.CCG:
+                    if (ccgs.length === 1) {
+                      setNextOwnerValue(ccgs[0].id);
+                    }
+                    break;
+                  case UserRoles.COLLECTEUR_PRO:
+                    if (collecteursPro.length === 1) {
+                      setNextOwnerValue(collecteursPro[0].id);
+                    }
+                    break;
+                  case UserRoles.ETG:
+                    if (etgs.length === 1) {
+                      setNextOwnerValue(etgs[0].id);
+                    }
+                    break;
+                  case UserRoles.SVI:
+                    if (svis.length === 1) {
+                      setNextOwnerValue(svis[0].id);
+                    }
+                    break;
+                  default:
+                    break;
+                }
+              },
             }}
           >
             <option value="">Sélectionnez le prochain type d'acteur à agir sur la FEI</option>
