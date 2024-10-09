@@ -3,10 +3,12 @@ import { useLocation } from "@remix-run/react";
 import { type MainNavigationProps } from "@codegouvfr/react-dsfr/MainNavigation";
 import { useUser } from "./useUser";
 import { clearCache } from "~/services/indexed-db.client";
+import { useIsOnline } from "~/components/OfflineMode";
 
 export default function useNavigationMenu() {
   const location = useLocation();
   const user = useUser();
+  const isOnline = useIsOnline();
 
   const handleLogout = async () => {
     fetch(`${import.meta.env.VITE_API_URL}/api/action/user/logout`, {
@@ -169,7 +171,13 @@ export default function useNavigationMenu() {
     text: "Obtenir la dernière version de l'app",
     linkProps: {
       href: "#",
-      onClick: () => clearCache().then(() => window.location.reload()),
+      onClick: () => {
+        if (isOnline) {
+          clearCache().then(() => window.location.reload());
+        } else {
+          alert("Vous devez être connecté à internet pour effectuer cette action");
+        }
+      },
     },
   });
 

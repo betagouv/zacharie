@@ -1,6 +1,8 @@
 import { Footer } from "@codegouvfr/react-dsfr/Footer";
 import { Header } from "@codegouvfr/react-dsfr/Header";
 import { type MainNavigationProps } from "@codegouvfr/react-dsfr/MainNavigation";
+import { clearCache } from "~/services/indexed-db.client";
+import { useIsOnline } from "./OfflineMode";
 
 export default function RootDisplay({
   navigation,
@@ -11,6 +13,7 @@ export default function RootDisplay({
   children: React.ReactNode;
   hideMinistereName?: boolean;
 }) {
+  const isOnline = useIsOnline();
   return (
     <>
       <Header
@@ -86,11 +89,51 @@ export default function RootDisplay({
         websiteMapLinkProps={{
           href: "#",
         }}
-        // bottomItems={[
-        //     headerFooterDisplayItem,
-        //     <FooterPersonalDataPolicyItem />,
-        //     <FooterConsentManagementItem />
-        // ]}
+        linkList={[
+          {
+            categoryName: "Connexion",
+            links: [
+              {
+                linkProps: {
+                  to: "/app/connexion?type=compte-existant",
+                  href: "#",
+                },
+                text: "Se connecter",
+              },
+              {
+                linkProps: {
+                  to: "/app/tableau-de-bord",
+                  href: "#",
+                },
+                text: "Accéder à mon compte",
+              },
+            ],
+          },
+          {
+            categoryName: "Assistance",
+            links: [
+              {
+                linkProps: {
+                  href: "#",
+                  onClick: () => {
+                    if (isOnline) {
+                      clearCache().then(() => window.location.reload());
+                    } else {
+                      alert("Vous devez être connecté à internet pour effectuer cette action");
+                    }
+                  },
+                },
+                text: "Obtenir la dernière version de l'app",
+              },
+              {
+                linkProps: {
+                  href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de Zacharie`,
+                },
+                text: "Contactez-nous",
+              },
+            ],
+          },
+        ]}
       />
     </>
   );

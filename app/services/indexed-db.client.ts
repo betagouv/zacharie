@@ -35,6 +35,9 @@ export async function clearCache(calledFrom = "not defined", iteration = 0) {
   await deleteDB().catch(capture);
   console.log("clearing localStorage");
   window.localStorage?.clear();
+  for (const key in caches.keys()) {
+    caches.delete(key);
+  }
   console.log("cleared localStorage");
   // window.sessionStorage?.clear();
 
