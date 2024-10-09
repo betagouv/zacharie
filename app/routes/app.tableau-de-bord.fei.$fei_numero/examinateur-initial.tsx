@@ -42,13 +42,14 @@ export default function FEIExaminateurInitial() {
     }
     const nextFei = mergeFei(fei, new FormData(examRef.current!));
     nextFei.append("route", `/api/fei/${fei.numero}`);
+    console.log("submitting", nextFei);
     approbationFetcher.submit(nextFei, {
       method: "POST",
       preventScrollReset: true,
     });
   };
 
-  const needSelecteNextUser = useMemo(() => {
+  const needSelectNextUser = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;
     }
@@ -197,7 +198,7 @@ export default function FEIExaminateurInitial() {
           </approbationFetcher.Form>
         </Accordion>
       )}
-      {needSelecteNextUser && (
+      {needSelectNextUser && (
         <div className="z-50 mt-4 flex flex-col bg-white pt-4 md:w-auto md:items-start [&_ul]:md:min-w-96">
           <SelectPremierDetenteur />
         </div>

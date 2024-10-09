@@ -29,7 +29,7 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
         ? true
         : newItem?.get("examinateur_carcasse_sans_anomalie") === "false"
           ? false
-          : mergedItem.examinateur_carcasse_sans_anomalie,
+          : mergedItem.examinateur_carcasse_sans_anomalie || null,
     // prettier-ignore
     examinateur_anomalies_carcasse: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)?.length
       ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse).map(String)
@@ -52,7 +52,7 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
         ? true
         : newItem?.get("svi_carcasse_saisie") === "false"
           ? false
-          : mergedItem.svi_carcasse_saisie,
+          : mergedItem.svi_carcasse_saisie || null,
     svi_carcasse_saisie_motif: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)?.length
       ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif).map(String)
       : (oldItem.svi_carcasse_saisie_motif ?? []),

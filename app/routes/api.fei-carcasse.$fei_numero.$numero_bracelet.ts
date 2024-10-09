@@ -66,14 +66,14 @@ export async function action(args: ActionFunctionArgs) {
   const nextCarcasse: Prisma.CarcasseUncheckedUpdateInput = {};
 
   // Helper function to convert string to boolean
-  const stringToBoolean = (value: string | null): boolean | undefined => {
+  const stringToBoolean = (value: string | null): boolean | null => {
     if (value === "true") {
       return true;
     }
     if (value === "false") {
       return false;
     }
-    return undefined;
+    return null;
   };
 
   if (formData.has(Prisma.CarcasseScalarFieldEnum.numero_bracelet)) {

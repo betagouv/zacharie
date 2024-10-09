@@ -161,6 +161,7 @@ async function handleFetchRequest(request: Request): Promise<Response> {
   }
 
   if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/fei-entity/`)) {
+    console.log("fei-entity");
     const cache = await caches.open(CACHE_NAME);
     const entityId = request.url.split("/").at(-1) as string;
     const allEntitiesRequest = await cache.match(
@@ -191,6 +192,7 @@ async function handleFetchRequest(request: Request): Promise<Response> {
   }
 
   if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/fei-user/`)) {
+    console.log("fei-user");
     const cache = await caches.open(CACHE_NAME);
     const userId = request.url.split("/").at(-1) as string;
     const allEntitiesRequest = await cache.match(
@@ -212,6 +214,46 @@ async function handleFetchRequest(request: Request): Promise<Response> {
         headers: { "Content-Type": "application/json" },
       },
     );
+  }
+
+  // If it's a specific FEI request and we don't have it cached, try to find it in the all-FEIs cache
+  if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/fei-carcasses/`)) {
+    console.log("fei-carcasses");
+    const cache = await caches.open(CACHE_NAME);
+    const response = new Response(
+      JSON.stringify({
+        ok: true,
+        data: {
+          carcasses: [],
+        },
+        error: "",
+      } satisfies CarcassesLoaderData),
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    await cache.put(request.url, response.clone());
+    return response.clone();
+  }
+
+  // If it's a specific FEI request and we don't have it cached, try to find it in the all-FEIs cache
+  if (request.url.includes(`${import.meta.env.VITE_API_URL}/api/fei-intermediaires/`)) {
+    console.log("fei-intermediaires");
+    const cache = await caches.open(CACHE_NAME);
+    const response = new Response(
+      JSON.stringify({
+        ok: true,
+        data: {
+          intermediaires: [],
+        },
+        error: "",
+      } satisfies FeiIntermediairesLoaderData),
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    await cache.put(request.url, response.clone());
+    return response.clone();
   }
 
   return new Response(`Offline and data not available\n${JSON.stringify(request, null, 2)}`, {

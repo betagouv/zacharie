@@ -36,7 +36,7 @@ export function mergeCarcasseIntermediaireToJSON(
         ? true
         : newItem?.get("prise_en_charge") === "false"
           ? false
-          : oldItem.prise_en_charge,
+          : oldItem.prise_en_charge || null,
     refus: mergedItem.refus || null,
     commentaire: mergedItem.commentaire || null,
     carcasse_check_finished_at: mergedItem.carcasse_check_finished_at

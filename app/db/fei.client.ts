@@ -56,7 +56,7 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
         ? true
         : newItem?.get("examinateur_initial_approbation_mise_sur_le_marche") === "false"
           ? false
-          : mergedItem.examinateur_initial_approbation_mise_sur_le_marche,
+          : mergedItem.examinateur_initial_approbation_mise_sur_le_marche || null,
     premier_detenteur_user_id: mergedItem.premier_detenteur_user_id || null,
     premier_detenteur_date_depot_quelque_part: mergedItem.premier_detenteur_date_depot_quelque_part
       ? dayjs(mergedItem.premier_detenteur_date_depot_quelque_part).toISOString()
@@ -71,7 +71,7 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
         ? true
         : newItem?.get("svi_aucune_carcasse_saisie") === "false"
           ? false
-          : mergedItem.svi_aucune_carcasse_saisie,
+          : mergedItem.svi_aucune_carcasse_saisie || null,
     svi_commentaire: mergedItem.svi_commentaire,
     svi_signed_at: mergedItem.svi_signed_at ? dayjs(mergedItem.svi_signed_at).toISOString() : null,
     created_at: mergedItem.created_at,
