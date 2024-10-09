@@ -37,6 +37,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .filter((entity) => entity.type === EntityTypes.ETG || entity.type === EntityTypes.SVI)
     .map((etgOrSvi) => etgOrSvi.coupled_entity_id)
     .filter((id) => id !== null);
+
   const userCoupledEntities = (
     await prisma.entity.findMany({
       where: {
@@ -47,6 +48,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       },
     })
   ).map((entity) => ({ ...entity, relation: EntityRelationType.WORKING_WITH }));
+
   const allOtherEntities = (
     await prisma.entity.findMany({
       where: {
@@ -84,10 +86,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const allEntities = [...userEntitiesRelations, ...userCoupledEntities, ...allOtherEntities];
-  const ccgs = allEntities.filter((entity) => entity.type === EntityTypes.CCG);
-  const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
-  const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
-  const svis = allEntities.filter((entity) => entity.type === EntityTypes.SVI);
+  const ccgs = userEntitiesRelations.filter((entity) => entity.type === EntityTypes.CCG);
+  const myCollecteursPros = userEntitiesRelations.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
+  const collecteursPro = myCollecteursPros.length
+    ? myCollecteursPros
+    : allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
+  const myEtgs = [...userEntitiesRelations, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.ETG);
+  const etgs = myEtgs.length ? myEtgs : allEntities.filter((entity) => entity.type === EntityTypes.ETG);
+  const mySvis = [...userEntitiesRelations, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.SVI);
+  const svis = mySvis.length ? mySvis : allEntities.filter((entity) => entity.type === EntityTypes.SVI);
 
   return json({
     ok: true,
