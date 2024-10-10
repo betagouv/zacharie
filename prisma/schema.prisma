@@ -259,9 +259,16 @@ model Fei {
   @@index([updated_at])
 }
 
+enum CarcasseType {
+  PETIT_GIBIER
+  GROS_GIBIER
+}
+
 model Carcasse {
   numero_bracelet                               String                  @id
   fei_numero                                    String
+  type                                          CarcasseType?
+  nombre_d_animaux                              Int?
   heure_mise_a_mort                             String?
   heure_evisceration                            String?
   espece                                        String? // Sanglier, Cerf, etc.

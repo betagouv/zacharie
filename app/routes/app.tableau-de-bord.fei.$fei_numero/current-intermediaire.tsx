@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { clientLoader } from "./route";
 import { Prisma, CarcasseIntermediaire, Carcasse } from "@prisma/client";
@@ -44,7 +44,7 @@ export default function FEICurrentIntermediaire() {
     }
     const carcassesApproved: Record<string, SerializeFrom<Carcasse>> = {};
     const carcassesRefused: Record<string, SerializeFrom<Carcasse>> = {};
-    const carcassesToCheck: Record<string, SerializeFrom<Carcasse>> = {};
+    // const carcassesToCheck: Record<string, SerializeFrom<Carcasse>> = {};
     for (const carcasse of carcassesUnsorted) {
       const checkId = `${fei.numero}__${carcasse.numero_bracelet}__${intermediaire.id}`;
       if (intermediaireCheckById[checkId]) {
@@ -59,14 +59,14 @@ export default function FEICurrentIntermediaire() {
             carcassesRefused[checkId] = carcasse;
           }
         } else {
-          carcassesToCheck[checkId] = carcasse;
+          // carcassesToCheck[checkId] = carcasse;
         }
       }
     }
     return {
       carcassesApproved: Object.values(carcassesApproved),
       carcassesRefused: Object.values(carcassesRefused),
-      carcassesToCheck: Object.values(carcassesToCheck),
+      // carcassesToCheck: Object.values(carcassesToCheck),
     };
   }, [carcassesUnsorted, intermediaire, fei]);
 
@@ -87,19 +87,19 @@ export default function FEICurrentIntermediaire() {
     return true;
   }, [fei, user, intermediaire, inetermediairesPopulated]);
 
-  const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
+  // const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
   const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(true);
   const [carcassesAccepteesExpanded, setCarcassesAccepteesExpanded] = useState(false);
   const [carcassesRefuseesExpanded, setCarcassesRefuseesExpanded] = useState(false);
 
-  useEffect(() => {
-    if (prevCarcassesToCheckCount.current > 0 && carcassesSorted.carcassesToCheck.length === 0) {
-      setCarcassesAValiderExpanded(false);
-      setCarcassesAccepteesExpanded(false);
-      setCarcassesRefuseesExpanded(false);
-    }
-    prevCarcassesToCheckCount.current = carcassesSorted.carcassesToCheck.length;
-  }, [carcassesSorted.carcassesToCheck.length]);
+  // useEffect(() => {
+  //   if (prevCarcassesToCheckCount.current > 0 && carcassesSorted.carcassesToCheck.length === 0) {
+  //     setCarcassesAValiderExpanded(false);
+  //     setCarcassesAccepteesExpanded(false);
+  //     setCarcassesRefuseesExpanded(false);
+  //   }
+  //   prevCarcassesToCheckCount.current = carcassesSorted.carcassesToCheck.length;
+  // }, [carcassesSorted.carcassesToCheck.length]);
 
   return (
     <>

@@ -4,7 +4,7 @@ import { clientLoader } from "./route";
 import { type CarcasseIntermediaireActionData } from "~/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
-import { Prisma, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
+import { CarcasseType, Prisma, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
 import refusIntermedaire from "~/data/refus-intermediaire.json";
 import dayjs from "dayjs";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
@@ -121,6 +121,11 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
                   {carcasse.espece} - {carcasse.categorie}
                 </span>
                 <span className="block font-normal">Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}</span>
+                {carcasse.type === CarcasseType.PETIT_GIBIER && (
+                  <span className="block font-normal">
+                    Nombre de carcasses dans le lot&nbsp;: {carcasse.nombre_d_animaux || "À REMPLIR"}
+                  </span>
+                )}
                 {!!carcasse.heure_mise_a_mort && (
                   <span className="block font-normal" suppressHydrationWarning>
                     Mise à mort&nbsp;: {dayjs(fei.date_mise_a_mort).format("DD/MM/YYYY")} {carcasse.heure_mise_a_mort}
@@ -132,22 +137,24 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
                   </span>
                 )}
                 <br />
-                <>
-                  {!carcasse.examinateur_anomalies_abats?.length ? (
-                    <span className="m-0 block font-bold">Pas d'anomalie abats</span>
-                  ) : (
-                    <>
-                      <span className="m-0 block font-bold">Anomalies abats:</span>
-                      {carcasse.examinateur_anomalies_abats.map((anomalie) => {
-                        return (
-                          <>
-                            <span className="m-0 ml-2 block font-normal">{anomalie}</span>
-                          </>
-                        );
-                      })}
-                    </>
-                  )}
-                </>
+                {carcasse.type === CarcasseType.GROS_GIBIER && (
+                  <>
+                    {!carcasse.examinateur_anomalies_abats?.length ? (
+                      <span className="m-0 block font-bold">Pas d'anomalie abats</span>
+                    ) : (
+                      <>
+                        <span className="m-0 block font-bold">Anomalies abats:</span>
+                        {carcasse.examinateur_anomalies_abats.map((anomalie) => {
+                          return (
+                            <>
+                              <span className="m-0 ml-2 block font-normal">{anomalie}</span>
+                            </>
+                          );
+                        })}
+                      </>
+                    )}
+                  </>
+                )}
                 <>
                   {!carcasse.examinateur_anomalies_carcasse?.length ? (
                     <span className="m-0 block font-bold">Pas d'anomalie carcasse</span>
@@ -240,7 +247,7 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
               <div className="fr-fieldset__element">
                 <Input
                   label="Commentaire"
-                  hintText="Un commentaire à ajouter ?"
+                  hintText="Un commentaire à ajouter ? Une carcasse retirée ?"
                   textArea
                   nativeTextAreaProps={{
                     name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
@@ -353,7 +360,7 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
               />
               <InputForSearchPrefilledData
                 canEdit
-                data={refusIntermedaire}
+                data={refusIntermedaire[carcasse.type ?? CarcasseType.GROS_GIBIER]}
                 label="Motif du refus"
                 hideDataWhenNoSearch={false}
                 required
@@ -363,7 +370,7 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
               />
               <Input
                 label="Commentaire"
-                hintText="Un commentaire à ajouter ?"
+                hintText="Un commentaire à ajouter ? Une carcasse retirée ?"
                 textArea
                 nativeTextAreaProps={{
                   name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,

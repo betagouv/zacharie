@@ -7,10 +7,13 @@ import {
   useLoaderData,
 } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
-import { Prisma } from "@prisma/client";
+import { CarcasseType, Prisma } from "@prisma/client";
 import grandGibier from "~/data/grand-gibier.json";
+import petitGibier from "~/data/petit-gibier.json";
 import grandGibierCarcasseList from "~/data/grand-gibier-carcasse/list.json";
 import grandGibierCarcasseTree from "~/data/grand-gibier-carcasse/tree.json";
+import petitGibierCarcasseList from "~/data/petit-gibier-carcasse/list.json";
+import petitGibierCarcasseTree from "~/data/petit-gibier-carcasse/tree.json";
 import grandGibierAbatstree from "~/data/grand-gibier-abats/tree.json";
 import grandGibierAbatsList from "~/data/grand-gibier-abats/list.json";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -29,6 +32,7 @@ import { createModal } from "@codegouvfr/react-dsfr/Modal";
 import ModalTreeDisplay from "~/components/ModalTreeDisplay";
 import { useIsOnline } from "~/components/OfflineMode";
 import { mergeCarcasse } from "~/db/carcasse.client";
+import { RadioButtons } from "@codegouvfr/react-dsfr/RadioButtons";
 
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
   const formData = await request.formData();
@@ -144,6 +148,12 @@ export default function CarcasseReadAndWrite() {
     });
   };
 
+  const gibier = carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibier : grandGibier;
+  const referentielAnomaliesCarcasseList =
+    carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibierCarcasseList : grandGibierCarcasseList;
+  const referentielAnomaliesCarcasseTree =
+    carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibierCarcasseTree : grandGibierCarcasseTree;
+
   useEffect(() => {
     handleFormSubmit();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -197,7 +207,7 @@ export default function CarcasseReadAndWrite() {
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <h1 className="fr-h2 fr-mb-2w">Carcasse Grand Gibier</h1>
+          <h1 className="fr-h2 fr-mb-2w">Lots de carcasse(s) {carcasse.numero_bracelet}</h1>
           <Breadcrumb
             currentPageLabel={`Carcasse ${carcasse.numero_bracelet}`}
             segments={[
@@ -291,6 +301,34 @@ export default function CarcasseReadAndWrite() {
               )}
 
               <div className="fr-fieldset__element">
+                <RadioButtons
+                  legend="Type de gibier"
+                  name="radio"
+                  key={carcasse.type}
+                  options={[
+                    {
+                      label: "Petit gibier",
+                      hintText: "Lièvre, Lapin...",
+                      nativeInputProps: {
+                        name: Prisma.CarcasseScalarFieldEnum.type,
+                        value: CarcasseType.PETIT_GIBIER,
+                        defaultChecked: carcasse.type === CarcasseType.PETIT_GIBIER,
+                      },
+                    },
+                    {
+                      label: "Gros gibier",
+                      hintText: "Cerf, Sanglier...",
+                      nativeInputProps: {
+                        name: Prisma.CarcasseScalarFieldEnum.type,
+                        value: CarcasseType.GROS_GIBIER,
+                        defaultChecked: carcasse.type === CarcasseType.GROS_GIBIER,
+                      },
+                    },
+                  ]}
+                  orientation="horizontal"
+                />
+              </div>
+              <div className="fr-fieldset__element">
                 <input type="hidden" name="espece" value={espece ?? ""} />
                 <input type="hidden" name="categorie" value={categorie ?? ""} />
                 <Select
@@ -319,7 +357,7 @@ export default function CarcasseReadAndWrite() {
                 >
                   <option value="">Sélectionnez l'espèce et la catégorie du gibier</option>
                   <hr />
-                  {Object.entries(grandGibier.especes_categories).map(([_espece, _categories]) => {
+                  {Object.entries(gibier.especes_categories).map(([_espece, _categories]) => {
                     return (
                       <optgroup label={_espece} key={_espece}>
                         {_categories.map((_categorie: string) => {
@@ -333,6 +371,19 @@ export default function CarcasseReadAndWrite() {
                     );
                   })}
                 </Select>
+              </div>
+              <div className={carcasse.type === CarcasseType.GROS_GIBIER ? "hidden" : "fr-fieldset__element"}>
+                <Component
+                  label="Nombre de carcasses"
+                  className="!mb-0 grow"
+                  hintText="Optionel"
+                  nativeInputProps={{
+                    type: "number",
+                    name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
+                    defaultValue: carcasse.type === CarcasseType.GROS_GIBIER ? "1" : (carcasse.nombre_d_animaux ?? ""),
+                    disabled: carcasse.type === CarcasseType.GROS_GIBIER,
+                  }}
+                />
               </div>
               <div className="flex flex-col gap-x-4 md:flex-row">
                 <div className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end">
@@ -425,7 +476,7 @@ export default function CarcasseReadAndWrite() {
                           <div className="fr-fieldset__element mt-4">
                             <InputForSearchPrefilledData
                               canEdit={canEdit}
-                              data={grandGibierCarcasseList}
+                              data={referentielAnomaliesCarcasseList}
                               clearInputOnClick
                               label="Ajouter une nouvelle anomalie"
                               hintText={
@@ -447,7 +498,7 @@ export default function CarcasseReadAndWrite() {
                               }}
                             />
                             <ModalTreeDisplay
-                              data={grandGibierCarcasseTree}
+                              data={referentielAnomaliesCarcasseTree}
                               modal={anomaliesCarcasseModal}
                               title="Anomalies carcasse"
                               onItemClick={(newAnomalie) => {
@@ -462,76 +513,78 @@ export default function CarcasseReadAndWrite() {
                   </div>
                 </div>
               </div>
-              <div className="mb-6 bg-white md:shadow">
-                <div className="p-4 pb-8 md:p-8 md:pb-4">
-                  <div className="fr-fieldset__element">
-                    <h3 className="fr-h4 fr-mb-2w">
-                      Anomalies abat<span className="fr-hint-text"></span>
-                    </h3>
-                    <div className="mt-4">
-                      {anomaliesAbats.map((anomalie, index) => {
-                        return (
-                          // @ts-expect-error isClosable is of type `true` but we expect `boolean`
-                          <Notice
-                            className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey p-2 [&_p.fr-notice\\_\\_title]:before:hidden"
-                            title={anomalie}
-                            isClosable={canEdit}
-                            onClose={() =>
-                              setAnomaliesAbats(anomaliesAbats.filter((a) => a !== anomalie).filter(Boolean))
-                            }
-                            key={anomalie + index}
-                          />
-                        );
-                      })}
-                      {!anomaliesAbats.length && <p className="fr-text--sm">Aucune anomalie abat.</p>}
-                    </div>
-                    {canEdit && (
-                      <>
-                        {/* <div className="mt-2">
+              {carcasse.type === CarcasseType.GROS_GIBIER && (
+                <div className="mb-6 bg-white md:shadow">
+                  <div className="p-4 pb-8 md:p-8 md:pb-4">
+                    <div className="fr-fieldset__element">
+                      <h3 className="fr-h4 fr-mb-2w">
+                        Anomalies abat<span className="fr-hint-text"></span>
+                      </h3>
+                      <div className="mt-4">
+                        {anomaliesAbats.map((anomalie, index) => {
+                          return (
+                            // @ts-expect-error isClosable is of type `true` but we expect `boolean`
+                            <Notice
+                              className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey p-2 [&_p.fr-notice\\_\\_title]:before:hidden"
+                              title={anomalie}
+                              isClosable={canEdit}
+                              onClose={() =>
+                                setAnomaliesAbats(anomaliesAbats.filter((a) => a !== anomalie).filter(Boolean))
+                              }
+                              key={anomalie + index}
+                            />
+                          );
+                        })}
+                        {!anomaliesAbats.length && <p className="fr-text--sm">Aucune anomalie abat.</p>}
+                      </div>
+                      {canEdit && (
+                        <>
+                          {/* <div className="mt-2">
                           <Button onClick={() => setAddAnomalieAbats(true)} type="button" iconId="ri-add-box-fill">
                             Ajouter une anomalie abat
                           </Button>
                         </div> */}
-                        {addAnomalieAbats && (
-                          <div className="fr-fieldset__element mt-4">
-                            <InputForSearchPrefilledData
-                              data={grandGibierAbatsList}
-                              label="Ajouter une nouvelle anomalie"
-                              clearInputOnClick
-                              hintText={
-                                <>
-                                  Voir le référentiel des anomalies d'abats en{" "}
-                                  <button
-                                    type="button"
-                                    className="underline"
-                                    onClick={() => anomaliesAbatsModal.open()}
-                                  >
-                                    cliquant ici
-                                  </button>
-                                </>
-                              }
-                              hideDataWhenNoSearch
-                              onSelect={(newAnomalie) => {
-                                // setAddAnomalieAbats(false);
-                                setAnomaliesAbats([...anomaliesAbats, newAnomalie]);
-                              }}
-                            />
-                            <ModalTreeDisplay
-                              data={grandGibierAbatstree}
-                              modal={anomaliesAbatsModal}
-                              title="Anomalies abats"
-                              onItemClick={(newAnomalie) => {
-                                // setAddAnomalieAbats(false);
-                                setAnomaliesAbats([...anomaliesAbats, newAnomalie]);
-                              }}
-                            />
-                          </div>
-                        )}
-                      </>
-                    )}
+                          {addAnomalieAbats && (
+                            <div className="fr-fieldset__element mt-4">
+                              <InputForSearchPrefilledData
+                                data={grandGibierAbatsList}
+                                label="Ajouter une nouvelle anomalie"
+                                clearInputOnClick
+                                hintText={
+                                  <>
+                                    Voir le référentiel des anomalies d'abats en{" "}
+                                    <button
+                                      type="button"
+                                      className="underline"
+                                      onClick={() => anomaliesAbatsModal.open()}
+                                    >
+                                      cliquant ici
+                                    </button>
+                                  </>
+                                }
+                                hideDataWhenNoSearch
+                                onSelect={(newAnomalie) => {
+                                  // setAddAnomalieAbats(false);
+                                  setAnomaliesAbats([...anomaliesAbats, newAnomalie]);
+                                }}
+                              />
+                              <ModalTreeDisplay
+                                data={grandGibierAbatstree}
+                                modal={anomaliesAbatsModal}
+                                title="Anomalies abats"
+                                onItemClick={(newAnomalie) => {
+                                  // setAddAnomalieAbats(false);
+                                  setAnomaliesAbats([...anomaliesAbats, newAnomalie]);
+                                }}
+                              />
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
               {anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0 && (
                 <div className="mb-6 bg-white md:shadow">
                   <noAnomalieFetcher.Form
@@ -561,7 +614,7 @@ export default function CarcasseReadAndWrite() {
                           {
                             label: `${
                               carcasse.examinateur_carcasse_sans_anomalie ? "J'ai certifié" : "Je certifie"
-                            } ne constater aucune anomalie sur la carcasse`,
+                            } ne constater aucune anomalie sur ${Number(carcasse.nombre_d_animaux ?? 0) > 1 ? "les carcasses" : "la carcasse"}`,
                             hintText:
                               "Attention, les anomalies que vous omettez seront détectées par le collecteur et l’ETG et augmente significativement le taux de saisie. Une anomalie déclarée c’est moins de gâchis.",
                             nativeInputProps: {

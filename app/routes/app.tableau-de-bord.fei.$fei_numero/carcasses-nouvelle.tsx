@@ -3,10 +3,24 @@ import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { clientLoader } from "./route";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { Prisma } from "@prisma/client";
+import { Prisma, type Fei } from "@prisma/client";
 import { action as nouvelleCarcasseAction } from "~/routes/api.fei-carcasse.$fei_numero.$numero_bracelet";
 import { useIsOnline } from "~/components/OfflineMode";
 import dayjs from "dayjs";
+import { SerializeFrom } from "@remix-run/node";
+
+function getNewDefaultNumeroBracelet(fei: SerializeFrom<Fei>) {
+  console.log({
+    commune: fei.commune_mise_a_mort,
+    'fei.commune_mise_a_mort?.split(" ")[0]': fei.commune_mise_a_mort?.split(" ")[0],
+    'fei.commune_mise_a_mort?.split(" ")[0].slice(0, -3)': fei.commune_mise_a_mort?.split(" ")[0].slice(0, -3),
+    'fei.commune_mise_a_mort?.split(" ")[0].slice(0, -3).padStart(2, "0")': fei.commune_mise_a_mort
+      ?.split(" ")[0]
+      .slice(0, -3)
+      .padStart(2, "0"),
+  });
+  return `ZACH-${fei.commune_mise_a_mort?.split(" ")[0].slice(0, -3).padStart(2, "0")}-${fei.examinateur_initial_user_id}-${dayjs().format("DDMMYY-HHmm")}`;
+}
 
 export default function NouvelleCarcasse() {
   const { fei } = useLoaderData<typeof clientLoader>();
@@ -22,14 +36,18 @@ export default function NouvelleCarcasse() {
     const nextBracelet = nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet;
     if (nextBracelet && lastNavigation.current !== nextBracelet) {
       lastNavigation.current === nextBracelet;
-      defaultNumeroBracelet.current = `${fei.numero}-${dayjs().format("HHmm")}`;
+      defaultNumeroBracelet.current = getNewDefaultNumeroBracelet(fei);
       navigate(
         `/app/tableau-de-bord/carcasse/${fei.numero}/${nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet}`,
       );
     }
-  }, [nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet, fei.numero, navigate]);
+  }, [nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet, fei, navigate]);
 
-  const defaultNumeroBracelet = useRef(`${fei.numero}-${dayjs().format("HHmm")}`);
+  useEffect(() => {
+    defaultNumeroBracelet.current = getNewDefaultNumeroBracelet(fei);
+  }, [fei]);
+
+  const defaultNumeroBracelet = useRef(getNewDefaultNumeroBracelet(fei));
 
   return (
     <>
@@ -41,7 +59,7 @@ export default function NouvelleCarcasse() {
         <input type="hidden" name="route" value={`/api/fei-carcasse/${fei.numero}/${numeroBracelet}`} />
         <input type="hidden" required name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
         <Input
-          label="Numéro de bracelet"
+          label="Numéro de marquage (bracelet, languette)"
           className="!mb-0 grow"
           state={error ? "error" : "default"}
           stateRelatedMessage={error ?? ""}
@@ -49,8 +67,12 @@ export default function NouvelleCarcasse() {
             <>
               {!numeroBracelet && (
                 <>
-                  Votre chasse n'a pas de bracelet ?{" "}
-                  <button type="button" onClick={() => setNumeroBracelet(defaultNumeroBracelet.current)}>
+                  Votre chasse n'a pas de dispositif de marquage ?{" "}
+                  <button
+                    type="button"
+                    className="inline text-left underline"
+                    onClick={() => setNumeroBracelet(defaultNumeroBracelet.current)}
+                  >
                     Cliquez ici pour utiliser {defaultNumeroBracelet.current}
                   </button>
                   .
@@ -70,7 +92,7 @@ export default function NouvelleCarcasse() {
             onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, "_")),
           }}
         />
-        <Button type="submit">Ajouter une carcasse</Button>
+        <Button type="submit">Ajouter une carcasse / un lot de carcasse</Button>
       </nouvelleCarcasseFetcher.Form>
     </>
   );

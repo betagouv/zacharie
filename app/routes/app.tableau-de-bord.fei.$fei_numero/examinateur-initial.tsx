@@ -98,7 +98,7 @@ export default function FEIExaminateurInitial() {
           <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
           <div className="fr-fieldset__element">
             <Component
-              label="Date de mise à mort et d'éviscération"
+              label="Date de mise à mort (et d'éviscération)"
               nativeInputProps={{
                 id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
                 name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
@@ -125,7 +125,7 @@ export default function FEIExaminateurInitial() {
           </div>
         </examFetcher.Form>
       </Accordion>
-      <Accordion titleAs="h3" label={`Carcasses (${carcasses.length})`} defaultExpanded>
+      <Accordion titleAs="h3" label={`Lots de carcasse(s) (${carcasses.length})`} defaultExpanded>
         <CarcassesExaminateur canEdit={canEdit} />
       </Accordion>
       <Accordion titleAs="h3" label={`Identité de l'Examinateur ${canEdit ? "🔒" : ""}`}>

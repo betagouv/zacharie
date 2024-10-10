@@ -2,6 +2,7 @@ import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { clientLoader } from "./route";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import NouvelleCarcasse from "./carcasses-nouvelle";
+import { CarcasseType } from "@prisma/client";
 
 const style = {
   boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
@@ -55,6 +56,11 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                       {carcasse.espece} - {carcasse.categorie}
                     </span>
                     <span className="block font-normal">Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}</span>
+                    {carcasse.type === CarcasseType.PETIT_GIBIER && (
+                      <span className="block font-normal">
+                        Nombre de carcasses dans le lot&nbsp;: {carcasse.nombre_d_animaux || "À REMPLIR"}
+                      </span>
+                    )}
                     {carcasse.heure_mise_a_mort && (
                       <span className="block font-normal">
                         Mise à mort&nbsp;: {carcasse.heure_mise_a_mort || "À REMPLIR"}
@@ -74,22 +80,24 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                     <br />
                     {!examinationNotFinished && (
                       <>
-                        <>
-                          {!carcasse.examinateur_anomalies_abats?.length ? (
-                            <span className="m-0 block font-bold">Pas d'anomalie abats</span>
-                          ) : (
-                            <>
-                              <span className="m-0 block font-bold">Anomalies abats:</span>
-                              {carcasse.examinateur_anomalies_abats.map((anomalie) => {
-                                return (
-                                  <>
-                                    <span className="m-0 ml-2 block font-bold">{anomalie}</span>
-                                  </>
-                                );
-                              })}
-                            </>
-                          )}
-                        </>
+                        {carcasse.type === CarcasseType.GROS_GIBIER && (
+                          <>
+                            {!carcasse.examinateur_anomalies_abats?.length ? (
+                              <span className="m-0 block font-bold">Pas d'anomalie abats</span>
+                            ) : (
+                              <>
+                                <span className="m-0 block font-bold">Anomalies abats:</span>
+                                {carcasse.examinateur_anomalies_abats.map((anomalie) => {
+                                  return (
+                                    <>
+                                      <span className="m-0 ml-2 block font-bold">{anomalie}</span>
+                                    </>
+                                  );
+                                })}
+                              </>
+                            )}
+                          </>
+                        )}
                         <>
                           {!carcasse.examinateur_anomalies_carcasse?.length ? (
                             <span className="m-0 block font-bold">Pas d'anomalie carcasse</span>
@@ -111,7 +119,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                   </>
                 ) : (
                   <>
-                    <span className="block font-bold md:-mt-4">Nouvelle carcasse à examiner</span>
+                    <span className="block font-bold md:-mt-4">Nouveau lot de carcasse(s) à examiner</span>
                     <span className="block font-normal">Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}</span>
                     <span className="fr-btn mt-2 block md:-mb-4">Examiner</span>
                   </>
@@ -121,7 +129,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
           />
         );
       })}
-      {canEdit && <NouvelleCarcasse />}
+      {canEdit && <NouvelleCarcasse key={fei.commune_mise_a_mort} />}
     </>
   );
 }

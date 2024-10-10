@@ -75,7 +75,7 @@ export default function NouvelleFEI() {
                   />
                   <div className="fr-fieldset__element">
                     <Input
-                      label="Date de mise à mort et d'éviscération"
+                      label="Date de mise à mort (et d'éviscération)"
                       nativeInputProps={{
                         id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
                         name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,

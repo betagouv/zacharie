@@ -2,7 +2,7 @@ import { json, SerializeFrom, type ActionFunctionArgs, type LoaderFunctionArgs }
 import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
-import { Prisma, type Carcasse } from "@prisma/client";
+import { CarcasseType, Prisma, type Carcasse } from "@prisma/client";
 import dayjs from "dayjs";
 
 export async function action(args: ActionFunctionArgs) {
@@ -81,6 +81,14 @@ export async function action(args: ActionFunctionArgs) {
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.heure_evisceration)) {
     nextCarcasse.heure_evisceration = formData.get(Prisma.CarcasseScalarFieldEnum.heure_evisceration) as string;
+  }
+  if (formData.has(Prisma.CarcasseScalarFieldEnum.type)) {
+    nextCarcasse.type = formData.get(Prisma.CarcasseScalarFieldEnum.type) as CarcasseType;
+  }
+  if (formData.has(Prisma.CarcasseScalarFieldEnum.nombre_d_animaux)) {
+    nextCarcasse.nombre_d_animaux = Number(
+      (formData.get(Prisma.CarcasseScalarFieldEnum.nombre_d_animaux) as string) || 0,
+    );
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort)) {
     nextCarcasse.heure_mise_a_mort = formData.get(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort) as string;

@@ -1,9 +1,9 @@
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { clientLoader } from "./route";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
-import { Prisma, Carcasse } from "@prisma/client";
+import { Prisma, Carcasse, CarcasseType } from "@prisma/client";
 import saisieSvi from "~/data/saisie-svi.json";
 import dayjs from "dayjs";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
@@ -36,12 +36,23 @@ interface CarcasseAVerifierProps {
 }
 
 function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
-  const { fei } = useLoaderData<typeof clientLoader>();
+  const { fei, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
   const sviCarcasseFetcher = useFetcher({ key: `svi-carcasse-${carcasse.numero_bracelet}` });
 
   const [showSaisir, setShowSaisir] = useState(!!carcasse?.svi_carcasse_saisie);
   const [motifsSaisie, setMotifsSaisie] = useState(carcasse?.svi_carcasse_saisie_motif?.filter(Boolean) ?? []);
   const priseEnCharge = !carcasse.svi_carcasse_saisie;
+  const commentairesIntermediaires = useMemo(() => {
+    const commentaires = [];
+    for (const intermediaire of inetermediairesPopulated) {
+      const intermediaireCarcasse = intermediaire.carcasses[carcasse.numero_bracelet];
+      if (intermediaireCarcasse?.commentaire) {
+        commentaires.push(`${intermediaire.entity?.raison_sociale}: ${intermediaireCarcasse?.commentaire}`);
+      }
+    }
+    return commentaires;
+  }, [inetermediairesPopulated, carcasse]);
+
   return (
     <div
       key={carcasse.updated_at}
@@ -63,6 +74,11 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
               {carcasse.espece} - {carcasse.categorie}
             </span>
             <span className="block font-normal">Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}</span>
+            {carcasse.type === CarcasseType.PETIT_GIBIER && (
+              <span className="block font-normal">
+                Nombre de carcasses dans le lot&nbsp;: {carcasse.nombre_d_animaux || "À REMPLIR"}
+              </span>
+            )}
             {!!carcasse.heure_mise_a_mort && (
               <span className="block font-normal" suppressHydrationWarning>
                 Mise à mort&nbsp;: {dayjs(fei.date_mise_a_mort).format("DD/MM/YYYY")} {carcasse.heure_mise_a_mort}
@@ -76,20 +92,22 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
             <br />
             <span className="m-0 block font-bold">Examen Initial&nbsp;:</span>
             <span className="list-inside list-disc">
-              <span className="m-0 block pl-2 font-medium">
-                {carcasse.examinateur_anomalies_abats?.length === 0 ? (
-                  "- Pas d'anomalie abats"
-                ) : (
-                  <span className="m-0 block pl-2 font-medium">
-                    - Anomalies abats&nbsp;:
-                    {carcasse.examinateur_anomalies_abats.map((anomalie, index) => (
-                      <span className="m-0 block font-medium" key={anomalie + index}>
-                        - {anomalie}
-                      </span>
-                    ))}
-                  </span>
-                )}
-              </span>
+              {carcasse.type === CarcasseType.GROS_GIBIER && (
+                <span className="m-0 block pl-2 font-medium">
+                  {carcasse.examinateur_anomalies_abats?.length === 0 ? (
+                    "- Pas d'anomalie abats"
+                  ) : (
+                    <span className="m-0 block pl-2 font-medium">
+                      - Anomalies abats&nbsp;:
+                      {carcasse.examinateur_anomalies_abats.map((anomalie, index) => (
+                        <span className="m-0 block font-medium" key={anomalie + index}>
+                          - {anomalie}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </span>
+              )}
               <span className="m-0 block pl-2 font-medium">
                 {carcasse.examinateur_anomalies_carcasse?.length === 0 ? (
                   "- Pas d'anomalie carcasse"
@@ -106,6 +124,20 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
               </span>
             </span>
             <br />
+            {commentairesIntermediaires.length > 0 && (
+              <>
+                <span className="m-0 block font-bold">Commentaires des intermédiaires&nbsp;:</span>
+                {commentairesIntermediaires.map((commentaire, index) => (
+                  <span
+                    className="m-0 ml-2 block border-l-2 border-l-gray-400 pl-4 font-medium"
+                    key={commentaire + index}
+                  >
+                    {commentaire}
+                  </span>
+                ))}
+                <br />
+              </>
+            )}
             <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_carcasse_saisie_motif)}>
               Inspection SVI&nbsp;:
               {motifsSaisie.length > 0 ? (
@@ -170,6 +202,18 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                     name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire,
                     form: `svi-carcasse-${carcasse.numero_bracelet}`,
                     defaultValue: carcasse?.svi_carcasse_commentaire || "",
+                    onBlur: (e) => {
+                      console.log("submit comment");
+                      const form = new FormData();
+                      form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire, e.target.value);
+                      form.append("route", `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`);
+                      form.append(Prisma.CarcasseScalarFieldEnum.fei_numero, fei.numero);
+                      console.log("form", Object.fromEntries(form));
+                      sviCarcasseFetcher.submit(form, {
+                        method: "POST",
+                        preventScrollReset: true,
+                      });
+                    },
                   }}
                 />
               </div>
@@ -234,7 +278,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
               <div className="fr-fieldset__element">
                 <InputForSearchPrefilledData
                   canEdit
-                  data={saisieSvi}
+                  data={saisieSvi[carcasse.type ?? CarcasseType.GROS_GIBIER]}
                   label="Motif de la saisie"
                   hideDataWhenNoSearch
                   clearInputOnClick
@@ -253,6 +297,17 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                     name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire,
                     form: `svi-carcasse-${carcasse.numero_bracelet}`,
                     defaultValue: carcasse?.svi_carcasse_commentaire || "",
+                    onBlur: (e) => {
+                      console.log("submit comment");
+                      const form = new FormData();
+                      form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire, e.target.value);
+                      form.append("route", `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`);
+                      console.log("form", Object.fromEntries(form));
+                      sviCarcasseFetcher.submit(form, {
+                        method: "POST",
+                        preventScrollReset: true,
+                      });
+                    },
                   }}
                 />
               </div>

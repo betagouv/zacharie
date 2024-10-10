@@ -1,5 +1,5 @@
 // import * as zodSchemas from "prisma/generated/zod";
-import { Prisma, type Carcasse } from "@prisma/client";
+import { CarcasseType, Prisma, type Carcasse } from "@prisma/client";
 import { SerializeFrom } from "@remix-run/node";
 import dayjs from "dayjs";
 
@@ -26,6 +26,8 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
   const result = {
     numero_bracelet: mergedItem.numero_bracelet,
     fei_numero: mergedItem.fei_numero,
+    type: mergedItem.type ?? CarcasseType.GROS_GIBIER,
+    nombre_d_animaux: mergedItem.nombre_d_animaux || 0,
     heure_mise_a_mort: mergedItem.heure_mise_a_mort || null,
     heure_evisceration: mergedItem.heure_evisceration || null,
     espece: mergedItem.espece || null,
