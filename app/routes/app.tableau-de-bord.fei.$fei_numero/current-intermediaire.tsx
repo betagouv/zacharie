@@ -88,9 +88,7 @@ export default function FEICurrentIntermediaire() {
   }, [fei, user, intermediaire, inetermediairesPopulated]);
 
   const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
-  const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(
-    carcassesSorted.carcassesToCheck.length > 0,
-  );
+  const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(true);
   const [carcassesAccepteesExpanded, setCarcassesAccepteesExpanded] = useState(false);
   const [carcassesRefuseesExpanded, setCarcassesRefuseesExpanded] = useState(false);
 
