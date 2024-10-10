@@ -98,7 +98,9 @@ export default function SelectPremierDetenteur() {
                 autoComplete: "off",
               }}
             />
-            <Button type="submit">Envoyer</Button>
+            <Button type="submit" disabled={searchUserFetcher.state !== "idle"}>
+              {searchUserFetcher.state === "idle" ? "Envoyer" : "Recherche en cours..."}
+            </Button>
             {!isOnline && (
               <div className="absolute inset-0 z-50 flex items-end bg-white/70">
                 <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">

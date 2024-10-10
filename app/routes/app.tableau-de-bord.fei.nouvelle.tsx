@@ -128,7 +128,8 @@ export default function NouvelleFEI() {
               <ButtonsGroup
                 buttons={[
                   {
-                    children: "Créer la FEI",
+                    children: nouvelleFeiFetcher.state === "idle" ? "Créer la FEI" : "Création en cours...",
+                    disabled: nouvelleFeiFetcher.state !== "idle",
                     type: "submit",
                     nativeButtonProps: {
                       form: "fei_create_form",

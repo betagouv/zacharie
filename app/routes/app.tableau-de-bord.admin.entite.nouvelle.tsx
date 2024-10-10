@@ -1,4 +1,4 @@
-import { Form, redirect, type ClientActionFunctionArgs } from "@remix-run/react";
+import { Form, redirect, useNavigation, type ClientActionFunctionArgs } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma, EntityTypes } from "@prisma/client";
@@ -28,6 +28,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   return response;
 }
 export default function AdminNouvelleEntite() {
+  const navigation = useNavigation();
   return (
     <Form className="fr-container fr-container--fluid fr-my-md-14v" method="POST">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -91,7 +92,8 @@ export default function AdminNouvelleEntite() {
               <ButtonsGroup
                 buttons={[
                   {
-                    children: "Créer",
+                    children: navigation.state === "idle" ? "Créer" : "Création en cours...",
+                    disabled: navigation.state !== "idle",
                     type: "submit",
                   },
                 ]}

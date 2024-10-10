@@ -97,7 +97,7 @@ export default function Connexion() {
               />
               <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left">
                 <li className="flex w-auto justify-start">
-                  <Button type="submit">
+                  <Button type="submit" disabled={connexionFetcher.state !== "idle"}>
                     {connexionType === "creation-de-compte" ? <>Créer mon compte</> : <>Me connecter</>}
                   </Button>
                 </li>
