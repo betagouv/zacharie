@@ -1,10 +1,10 @@
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import { Fragment, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { clientLoader } from "./route";
 import { type CarcasseIntermediaireActionData } from "~/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
-import { Prisma, Carcasse } from "@prisma/client";
+import { Prisma, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
 import refusIntermedaire from "~/data/refus-intermediaire.json";
 import dayjs from "dayjs";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
@@ -53,32 +53,47 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
   const formRef = useRef<HTMLFormElement>(null);
   const carcasseFetcher = useFetcher({ key: `carcasse-from-intermediaire-${carcasse.numero_bracelet}` });
 
-  const intermediaireCarcasse = useMemo(() => {
+  const intermediaireCarcasse: SerializeFrom<CarcasseIntermediaire> = useMemo(() => {
     if (intermediaireCarcasseFetcher.state === "loading") {
       if (intermediaireCarcasseFetcher.data?.data?.carcasseIntermediaire) {
         return intermediaireCarcasseFetcher.data.data.carcasseIntermediaire;
       }
     }
-    return (
-      intermediaire.carcasses[carcasse.numero_bracelet] ?? {
-        fei_numero__bracelet__intermediaire_id: `${fei.numero}__${carcasse.numero_bracelet}__${intermediaire.id}`,
-        fei_numero: fei.numero,
-        numero_bracelet: carcasse.numero_bracelet,
-        fei_intermediaire_id: intermediaire.id,
-        fei_intermediaire_user_id: intermediaire.fei_intermediaire_user_id,
-        fei_intermediaire_entity_id: intermediaire.fei_intermediaire_entity_id,
-        created_at: dayjs().toISOString(),
-        updated_at: dayjs().toISOString(),
-        prise_en_charge: null,
-        refus: null,
-        commentaire: null,
-        carcasse_check_finished_at: null,
-        deleted_at: null,
-      }
-    );
+    if (intermediaire.carcasses[carcasse.numero_bracelet]) {
+      return intermediaire.carcasses[carcasse.numero_bracelet];
+    }
+    return {
+      fei_numero__bracelet__intermediaire_id: `${fei.numero}__${carcasse.numero_bracelet}__${intermediaire.id}`,
+      fei_numero: fei.numero,
+      numero_bracelet: carcasse.numero_bracelet,
+      fei_intermediaire_id: intermediaire.id,
+      fei_intermediaire_user_id: intermediaire.fei_intermediaire_user_id,
+      fei_intermediaire_entity_id: intermediaire.fei_intermediaire_entity_id,
+      created_at: dayjs().toISOString(),
+      updated_at: dayjs().toISOString(),
+      prise_en_charge: true,
+      refus: null,
+      commentaire: null,
+      carcasse_check_finished_at: null,
+      deleted_at: null,
+    };
   }, [intermediaire, carcasse, fei, intermediaireCarcasseFetcher.state, intermediaireCarcasseFetcher.data]);
 
-  console.log({ intermediaireCarcasse, carcasse, intermediaireCarcasseFetcher });
+  const initiated = useRef(false);
+  useEffect(() => {
+    if (!intermediaire.carcasses[carcasse.numero_bracelet] && !initiated.current) {
+      initiated.current = true;
+      const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse);
+      nextIntermediaire.append(
+        "route",
+        `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+      );
+      intermediaireCarcasseFetcher.submit(nextIntermediaire, {
+        method: "POST",
+        preventScrollReset: true,
+      });
+    }
+  }, [intermediaire, carcasse, fei, intermediaireCarcasseFetcher, intermediaireCarcasse]);
 
   const [showRefuser, setShowRefuser] = useState(!!intermediaireCarcasse.refus);
   const [refus, setRefus] = useState(intermediaireCarcasse.refus ?? "");

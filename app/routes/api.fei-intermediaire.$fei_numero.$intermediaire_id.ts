@@ -59,7 +59,7 @@ export async function action(args: ActionFunctionArgs) {
   return json({
     ok: true,
     data: {
-      intermediaire: JSON.parse(JSON.stringify(intermediaire)) satisfies SerializeFrom<FeiIntermediaire>,
+      intermediaire: JSON.parse(JSON.stringify(intermediaire)) as SerializeFrom<FeiIntermediaire>,
     },
     error: "",
   });
@@ -102,7 +102,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   return json({
     ok: true,
     data: {
-      intermediaire: JSON.parse(JSON.stringify(feiIntermedaire)) satisfies SerializeFrom<FeiIntermediaire>,
+      intermediaire: JSON.parse(JSON.stringify(feiIntermedaire)) as SerializeFrom<FeiIntermediaire>,
     },
     error: "",
   });

@@ -150,17 +150,19 @@ export default function Fei() {
   useEffect(() => {
     if (fei.fei_current_owner_role !== refCurrentRole.current) {
       if (fei.fei_current_owner_user_id === user.id) {
-        if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
-          setSelectedTabId(UserRoles.PREMIER_DETENTEUR);
-        }
-        if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
-          setSelectedTabId(UserRoles.EXAMINATEUR_INITIAL);
-        }
-        if ([UserRoles.COLLECTEUR_PRO, UserRoles.CCG, UserRoles.ETG].includes(fei.fei_current_owner_role)) {
-          setSelectedTabId("Intermédiaires");
-        }
-        if (fei.fei_current_owner_role === UserRoles.SVI) {
-          setSelectedTabId(UserRoles.SVI);
+        switch (fei.fei_current_owner_role) {
+          case UserRoles.EXAMINATEUR_INITIAL:
+            setSelectedTabId(UserRoles.EXAMINATEUR_INITIAL);
+            break;
+          case UserRoles.PREMIER_DETENTEUR:
+            setSelectedTabId(UserRoles.PREMIER_DETENTEUR);
+            break;
+          case UserRoles.SVI:
+            setSelectedTabId(UserRoles.SVI);
+            break;
+          default:
+            setSelectedTabId("Intermédiaires");
+            break;
         }
       }
     }

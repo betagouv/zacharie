@@ -285,7 +285,7 @@ export async function action(args: ActionFunctionArgs) {
   return json({
     ok: true,
     data: {
-      fei: JSON.parse(JSON.stringify(savedFei)) satisfies SerializeFrom<Fei>,
+      fei: JSON.parse(JSON.stringify(savedFei)) as SerializeFrom<Fei>,
     },
     error: "",
   });
@@ -310,7 +310,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   return json({
     ok: true,
     data: {
-      fei: JSON.parse(JSON.stringify(fei)) satisfies SerializeFrom<Fei>,
+      fei: JSON.parse(JSON.stringify(fei)) as SerializeFrom<Fei>,
     },
     error: "",
   });

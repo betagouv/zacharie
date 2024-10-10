@@ -166,12 +166,14 @@ export async function loadFei(fei_numero: string) {
           `/api/fei-entity/${fei_numero}/${intermediaire.fei_intermediaire_entity_id}`,
         )) as FeiEntityLoaderData)
       : null;
-    const intermediaireCarcasses: Record<Carcasse["numero_bracelet"], CarcasseIntermediaire | null> = {};
+    const intermediaireCarcasses: Record<Carcasse["numero_bracelet"], SerializeFrom<CarcasseIntermediaire>> = {};
     for (const carcasse of carcasses.data?.carcasses || []) {
       const intermediaireCarcasse = (await get(
         `/api/fei-carcasse-intermediaire/${fei_numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
       )) as CarcasseIntermediaireLoaderData;
-      intermediaireCarcasses[carcasse.numero_bracelet] = intermediaireCarcasse.data?.carcasseIntermediaire || null;
+      if (intermediaireCarcasse.data?.carcasseIntermediaire) {
+        intermediaireCarcasses[carcasse.numero_bracelet] = intermediaireCarcasse.data?.carcasseIntermediaire;
+      }
     }
     inetermediairesPopulated.push({
       ...intermediaire,

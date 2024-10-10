@@ -70,7 +70,8 @@ export default function FEICurrentIntermediaire() {
     };
   }, [carcassesUnsorted, intermediaire, fei]);
 
-  const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
+  // const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
+  const jobIsDone = true;
 
   const needSelectNextUser = useMemo(() => {
     if (fei.fei_current_owner_user_id !== user.id) {
@@ -85,13 +86,6 @@ export default function FEICurrentIntermediaire() {
     }
     return true;
   }, [fei, user, intermediaire, inetermediairesPopulated]);
-
-  console.log("needSelectNextUser", needSelectNextUser, {
-    "fei.fei_current_owner_user_id !== user.id": fei.fei_current_owner_user_id !== user.id,
-    "intermediaire.check_finished_at": intermediaire.check_finished_at,
-    "latestIntermediaire.id !== intermediaire.id": inetermediairesPopulated[0].id !== intermediaire.id,
-    latestIntermediaire: inetermediairesPopulated[0],
-  });
 
   const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
   const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(

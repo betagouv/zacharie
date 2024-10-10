@@ -263,7 +263,7 @@ async function handleFetchRequest(request: Request): Promise<Response> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function findFeiInAllFeisData(feiNumero: string): Promise<Fei | null> {
+async function findFeiInAllFeisData(feiNumero: string): Promise<SerializeFrom<Fei> | null> {
   const cache = await caches.open(CACHE_NAME);
   const feiRequestCached = await cache.match(`${import.meta.env.VITE_API_URL}/api/fei/${feiNumero}`);
   if (feiRequestCached) {
@@ -280,7 +280,7 @@ async function findFeiInAllFeisData(feiNumero: string): Promise<Fei | null> {
     ...allFeisData.feisOngoing,
     // ...allFeisData.feisDone,
   ];
-  const cachedFei = allFeis.find((fei) => fei.numero === feiNumero) satisfies Fei;
+  const cachedFei = allFeis.find((fei) => fei.numero === feiNumero) satisfies SerializeFrom<Fei>;
   if (cachedFei) {
     return cachedFei;
   }

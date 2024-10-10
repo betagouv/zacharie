@@ -79,7 +79,15 @@ export async function action(args: ActionFunctionArgs) {
       },
     });
 
-    return json({ ok: true, data: { carcasseIntermediaire }, error: "" });
+    return json({
+      ok: true,
+      data: {
+        carcasseIntermediaire: JSON.parse(
+          JSON.stringify(carcasseIntermediaire),
+        ) as SerializeFrom<CarcasseIntermediaire>,
+      },
+      error: "",
+    });
   }
 
   if (formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus)) {
@@ -109,8 +117,8 @@ export async function action(args: ActionFunctionArgs) {
       ok: true,
       data: {
         carcasseIntermediaire: JSON.parse(
-          JSON.stringify(carcasseIntermediaire satisfies CarcasseIntermediaire),
-        ) satisfies SerializeFrom<CarcasseIntermediaire>,
+          JSON.stringify(carcasseIntermediaire),
+        ) as SerializeFrom<CarcasseIntermediaire>,
       },
       error: "",
     });
@@ -156,9 +164,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   return json({
     ok: true,
     data: {
-      carcasseIntermediaire: JSON.parse(
-        JSON.stringify(carcasseIntermediaire),
-      ) satisfies SerializeFrom<CarcasseIntermediaire>,
+      carcasseIntermediaire: JSON.parse(JSON.stringify(carcasseIntermediaire)) as SerializeFrom<CarcasseIntermediaire>,
     },
     error: "",
   });
