@@ -31,13 +31,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
           fei_current_owner_user_id: user.id,
         },
         {
-          FeiCurrentEntity: {
-            EntityRelatedWithUser: {
-              some: {
-                owner_id: user.id,
+          AND: [
+            {
+              fei_current_owner_user_id: null,
+            },
+            {
+              FeiCurrentEntity: {
+                EntityRelatedWithUser: {
+                  some: {
+                    owner_id: user.id,
+                  },
+                },
               },
             },
-          },
+          ],
         },
       ],
     },

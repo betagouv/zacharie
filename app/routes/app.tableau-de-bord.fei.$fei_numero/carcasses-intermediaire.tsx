@@ -78,10 +78,10 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
     );
   }, [intermediaire, carcasse, fei, intermediaireCarcasseFetcher.state, intermediaireCarcasseFetcher.data]);
 
+  console.log({ intermediaireCarcasse, carcasse, intermediaireCarcasseFetcher });
+
   const [showRefuser, setShowRefuser] = useState(!!intermediaireCarcasse.refus);
   const [refus, setRefus] = useState(intermediaireCarcasse.refus ?? "");
-
-  console.log({ refus });
 
   return (
     <div

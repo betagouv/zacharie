@@ -476,32 +476,36 @@ async function handlePostRequest(request: Request): Promise<Response> {
       const allFeiCarcassesCloned = allFeiCarcassesResponse!.clone();
       const allCarcasses = (await allFeiCarcassesCloned.json()) as CarcassesLoaderData;
       for (const carcasse of allCarcasses.data!.carcasses) {
-        const jsonCarcasseIntermediaire = mergeCarcasseIntermediaireToJSON(
-          {
-            fei_numero__bracelet__intermediaire_id: `${feiNumero}__${carcasse.numero_bracelet}__${jsonIntermediaire.id}`,
-            fei_numero: feiNumero,
-            numero_bracelet: carcasse.numero_bracelet,
-            fei_intermediaire_id: jsonIntermediaire.id,
-            fei_intermediaire_user_id: jsonIntermediaire.fei_intermediaire_user_id,
-            fei_intermediaire_entity_id: jsonIntermediaire.fei_intermediaire_entity_id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          } as SerializeFrom<CarcasseIntermediaire>,
-          formData,
-        );
-        await cache.put(
-          `${import.meta.env.VITE_API_URL}/api/fei-carcasse-intermediaire/${feiNumero}/${jsonIntermediaire.id}/${carcasse.numero_bracelet}`,
-          new Response(
-            JSON.stringify({
-              ok: true,
-              data: { carcasseIntermediaire: jsonCarcasseIntermediaire },
-              error: "",
-            } satisfies CarcasseIntermediaireLoaderData),
+        const carcasseIntermedaireUrl = `${import.meta.env.VITE_API_URL}/api/fei-carcasse-intermediaire/${feiNumero}/${jsonIntermediaire.id}/${carcasse.numero_bracelet}`;
+        const cacheCarcasseIntermediaire = await cache.match(carcasseIntermedaireUrl);
+        if (!cacheCarcasseIntermediaire) {
+          const jsonCarcasseIntermediaire = mergeCarcasseIntermediaireToJSON(
             {
-              headers: { "Content-Type": "application/json" },
-            },
-          ),
-        );
+              fei_numero__bracelet__intermediaire_id: `${feiNumero}__${carcasse.numero_bracelet}__${jsonIntermediaire.id}`,
+              fei_numero: feiNumero,
+              numero_bracelet: carcasse.numero_bracelet,
+              fei_intermediaire_id: jsonIntermediaire.id,
+              fei_intermediaire_user_id: jsonIntermediaire.fei_intermediaire_user_id,
+              fei_intermediaire_entity_id: jsonIntermediaire.fei_intermediaire_entity_id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            } as SerializeFrom<CarcasseIntermediaire>,
+            formData,
+          );
+          await cache.put(
+            `${import.meta.env.VITE_API_URL}/api/fei-carcasse-intermediaire/${feiNumero}/${jsonIntermediaire.id}/${carcasse.numero_bracelet}`,
+            new Response(
+              JSON.stringify({
+                ok: true,
+                data: { carcasseIntermediaire: jsonCarcasseIntermediaire },
+                error: "",
+              } satisfies CarcasseIntermediaireLoaderData),
+              {
+                headers: { "Content-Type": "application/json" },
+              },
+            ),
+          );
+        }
       }
       const allFeiIntermediairesResponse = await cache.match(
         new Request(`${import.meta.env.VITE_API_URL}/api/fei-intermediaires/${feiNumero}`),

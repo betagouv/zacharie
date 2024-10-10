@@ -51,7 +51,8 @@ export default function NouvelleCarcasse() {
             required: true,
             name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
             value: numeroBracelet,
-            onChange: (e) => setNumeroBracelet(e.target.value),
+            // replce slash and space by underscore
+            onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, "_")),
           }}
         />
         <Button type="submit">Ajouter une carcasse</Button>
