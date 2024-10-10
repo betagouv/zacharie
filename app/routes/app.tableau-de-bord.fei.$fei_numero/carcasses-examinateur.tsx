@@ -9,7 +9,7 @@ const style = {
 };
 
 export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) {
-  const { fei, carcasses } = useLoaderData<typeof clientLoader>();
+  const { fei, carcasses, user } = useLoaderData<typeof clientLoader>();
   const carcasseFetcher = useFetcher({ key: "carcasse-delete-fetcher" });
 
   return (
@@ -28,7 +28,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
             className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
             key={carcasse.numero_bracelet}
             style={style}
-            isClosable={canEdit}
+            isClosable={user.id === fei.examinateur_initial_user_id || user.id === fei.premier_detenteur_user_id}
             onClose={() => {
               if (window.confirm("Voulez-vous supprimer cette carcasse ? Cette opération est irréversible")) {
                 carcasseFetcher.submit(
