@@ -25,8 +25,8 @@ import { mergeCarcasseIntermediaireToJSON } from "./db/carcasse-intermediaire.cl
 import { mergeFeiIntermediaireToJSON } from "./db/fei-intermediaire.client";
 import { mergeFeiToJSON } from "./db/fei.client";
 
-const CACHE_NAME = "zacharie-pwa-cache-v1";
-const previousCacheNames = ["zacharie-pwa-cache-v0"];
+const CACHE_NAME = "zacharie-pwa-cache-v2";
+const previousCacheNames = ["zacharie-pwa-cache-v0", "zacharie-pwa-cache-v1"];
 
 /*
 
