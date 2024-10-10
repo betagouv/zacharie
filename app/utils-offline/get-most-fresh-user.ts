@@ -1,4 +1,5 @@
 import type { User } from "@prisma/client";
+import * as Sentry from "@sentry/remix";
 import { getCacheItem, setCacheItem } from "~/services/indexed-db.client";
 import type { MeLoaderData } from "~/routes/api.loader.me";
 
@@ -8,6 +9,12 @@ export async function getMostFreshUser() {
     return cachedUser;
   }
   if (!window.navigator.onLine) {
+    if (cachedUser) {
+      Sentry.setUser({
+        email: cachedUser.email!,
+        id: cachedUser.id,
+      });
+    }
     window.localStorage.setItem("user", JSON.stringify(cachedUser));
     return cachedUser;
   }
@@ -21,6 +28,12 @@ export async function getMostFreshUser() {
     .then(async (response) => {
       const userResponse = (await response.json()) as MeLoaderData;
       if (userResponse?.ok && userResponse.data?.user) {
+        if (cachedUser) {
+          Sentry.setUser({
+            email: cachedUser.email!,
+            id: cachedUser.id,
+          });
+        }
         window.localStorage.setItem("user", JSON.stringify(userResponse.data.user));
         await setCacheItem("user", userResponse.data.user);
       }
