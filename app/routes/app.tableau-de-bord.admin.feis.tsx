@@ -2,7 +2,7 @@ import { Link, redirect, useLoaderData } from "@remix-run/react";
 import { Table } from "@codegouvfr/react-dsfr/Table";
 import dayjs from "dayjs";
 import { Fragment } from "react";
-import type { AdminFeisLoaderData } from "~/routes/api.admin.loader.fei";
+import type { AdminFeisLoaderData } from "~/routes/api.admin.loader.feis";
 
 export function meta() {
   return [
@@ -13,7 +13,7 @@ export function meta() {
 }
 
 export async function clientLoader() {
-  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/admin/loader/fei`, {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/admin/loader/feis`, {
     method: "GET",
     credentials: "include",
     headers: new Headers({
