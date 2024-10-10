@@ -26,7 +26,7 @@ export default function FEI_SVI() {
       if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
         continue;
       }
-      if (carcasse.svi_carcasse_saisie_motif?.length) {
+      if (carcasse.svi_carcasse_saisie_motif?.filter(Boolean)?.length) {
         carcassesSaisies[carcasse.numero_bracelet] = carcasse;
         continue;
       }

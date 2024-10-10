@@ -154,9 +154,9 @@ export async function action(args: ActionFunctionArgs) {
     );
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)) {
-    nextCarcasse.svi_carcasse_saisie_motif = formData.getAll(
-      Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif,
-    ) as string[];
+    nextCarcasse.svi_carcasse_saisie_motif = formData
+      .getAll(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)
+      .filter(Boolean) as string[];
   }
   if (formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at)) {
     const saisieAt = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at) as string;

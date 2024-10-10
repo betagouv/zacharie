@@ -145,6 +145,12 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                 name={Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie}
                 value="false"
               />
+              <input
+                form={`svi-carcasse-${carcasse.numero_bracelet}`}
+                type="hidden"
+                name={Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at}
+                value={new Date().toISOString()}
+              />
               <div className="fr-fieldset__element">
                 <Input
                   label="Commentaire"
@@ -227,6 +233,12 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                   }}
                 />
               </div>
+              <input
+                form={`svi-carcasse-${carcasse.numero_bracelet}`}
+                type="hidden"
+                name={Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at}
+                value={new Date().toISOString()}
+              />
               <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
                 <ButtonsGroup
                   buttons={[
@@ -234,6 +246,14 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                       children: "Saisir",
                       type: "submit",
                       nativeButtonProps: {
+                        onClick: (e) => {
+                          console.log({ motifsSaisie });
+                          if (!motifsSaisie.length) {
+                            e.preventDefault();
+                            alert("Veuillez ajouter au moins un motif de saisie");
+                            return;
+                          }
+                        },
                         form: `svi-carcasse-${carcasse.numero_bracelet}`,
                         name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at,
                         suppressHydrationWarning: true,
