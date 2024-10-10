@@ -40,7 +40,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
   const sviCarcasseFetcher = useFetcher({ key: `svi-carcasse-${carcasse.numero_bracelet}` });
 
   const [showSaisir, setShowSaisir] = useState(!!carcasse?.svi_carcasse_saisie);
-  const [motifsSaisie, setMotifsSaisie] = useState(carcasse?.svi_carcasse_saisie_motif ?? []);
+  const [motifsSaisie, setMotifsSaisie] = useState(carcasse?.svi_carcasse_saisie_motif?.filter(Boolean) ?? []);
   return (
     <Fragment key={carcasse.numero_bracelet}>
       <Notice

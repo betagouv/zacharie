@@ -20,6 +20,22 @@ export default function FEICurrentIntermediaire() {
   const intermediaire = inetermediairesPopulated[intermediaireIndex];
   const priseEnChargeFetcher = useFetcher({ key: "prise-en-charge" });
 
+  const canEdit = useMemo(() => {
+    if (fei.fei_current_owner_user_id !== user.id) {
+      return false;
+    }
+    if (!intermediaire) {
+      return false;
+    }
+    if (intermediaire.fei_intermediaire_user_id !== user.id) {
+      return false;
+    }
+    if (intermediaire.check_finished_at) {
+      return false;
+    }
+    return true;
+  }, [fei, user, intermediaire]);
+
   const carcassesUnsorted = carcasses;
   const carcassesSorted = useMemo(() => {
     const intermediaireCheckById: Record<string, SerializeFrom<CarcasseIntermediaire>> = {};
@@ -53,22 +69,6 @@ export default function FEICurrentIntermediaire() {
       carcassesToCheck: Object.values(carcassesToCheck),
     };
   }, [carcassesUnsorted, intermediaire, fei]);
-
-  const canEdit = useMemo(() => {
-    if (fei.fei_current_owner_user_id !== user.id) {
-      return false;
-    }
-    if (!intermediaire) {
-      return false;
-    }
-    if (intermediaire.fei_intermediaire_user_id !== user.id) {
-      return false;
-    }
-    if (intermediaire.check_finished_at) {
-      return false;
-    }
-    return true;
-  }, [fei, user, intermediaire]);
 
   const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
 
@@ -145,60 +145,51 @@ export default function FEICurrentIntermediaire() {
       <Accordion titleAs="h3" label={`Identité de l'intermédaire ${canEdit ? "🔒" : ""}`}>
         <EntityNotEditable user={intermediaire.user!} entity={intermediaire.entity!} />
       </Accordion>
-      {/* <Accordion
-        titleAs="h3"
-        label={`Carcasses (${carcassesUnsorted.length})`}
-        expanded={carcassesAValiderExpanded}
-        onExpandedChange={setCarcassesAValiderExpanded}
-      >
-        <CarcassesIntermediaire canEdit={canEdit} intermediaire={intermediaire} carcasses={carcassesUnsorted} />
-      </Accordion> */}
-      {carcassesSorted.carcassesToCheck.length > 0 && (
+      {canEdit ? (
         <Accordion
           titleAs="h3"
-          label={`Carcasses à vérifier (${carcassesSorted.carcassesToCheck.length})`}
+          label={`Carcasses à vérifier (${carcassesUnsorted.length})`}
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >
-          <CarcassesIntermediaire
-            canEdit={canEdit}
-            intermediaire={intermediaire}
-            carcasses={carcassesSorted.carcassesToCheck}
-          />
+          <CarcassesIntermediaire canEdit={canEdit} intermediaire={intermediaire} carcasses={carcasses} />
         </Accordion>
+      ) : (
+        <>
+          <Accordion
+            titleAs="h3"
+            label={`Carcasses acceptées (${carcassesSorted.carcassesApproved.length})`}
+            expanded={carcassesAccepteesExpanded}
+            onExpandedChange={setCarcassesAccepteesExpanded}
+          >
+            {carcassesSorted.carcassesApproved.length === 0 ? (
+              <p>Pas de carcasse acceptée</p>
+            ) : (
+              <CarcassesIntermediaire
+                canEdit={canEdit}
+                intermediaire={intermediaire}
+                carcasses={carcassesSorted.carcassesApproved}
+              />
+            )}
+          </Accordion>
+          <Accordion
+            titleAs="h3"
+            label={`Carcasses rejetées (${carcassesSorted.carcassesRefused.length})`}
+            expanded={carcassesRefuseesExpanded}
+            onExpandedChange={setCarcassesRefuseesExpanded}
+          >
+            {carcassesSorted.carcassesRefused.length === 0 ? (
+              <p>Pas de carcasse refusée</p>
+            ) : (
+              <CarcassesIntermediaire
+                canEdit={canEdit}
+                intermediaire={intermediaire}
+                carcasses={carcassesSorted.carcassesRefused}
+              />
+            )}
+          </Accordion>
+        </>
       )}
-      <Accordion
-        titleAs="h3"
-        label={`Carcasses acceptées (${carcassesSorted.carcassesApproved.length})`}
-        expanded={carcassesAccepteesExpanded}
-        onExpandedChange={setCarcassesAccepteesExpanded}
-      >
-        {carcassesSorted.carcassesApproved.length === 0 ? (
-          <p>Pas de carcasse acceptée</p>
-        ) : (
-          <CarcassesIntermediaire
-            canEdit={canEdit}
-            intermediaire={intermediaire}
-            carcasses={carcassesSorted.carcassesApproved}
-          />
-        )}
-      </Accordion>
-      <Accordion
-        titleAs="h3"
-        label={`Carcasses rejetées (${carcassesSorted.carcassesRefused.length})`}
-        expanded={carcassesRefuseesExpanded}
-        onExpandedChange={setCarcassesRefuseesExpanded}
-      >
-        {carcassesSorted.carcassesRefused.length === 0 ? (
-          <p>Pas de carcasse refusée</p>
-        ) : (
-          <CarcassesIntermediaire
-            canEdit={canEdit}
-            intermediaire={intermediaire}
-            carcasses={carcassesSorted.carcassesRefused}
-          />
-        )}
-      </Accordion>
       <Accordion titleAs="h3" label="Prise en charge des carcasses acceptées" defaultExpanded key={intermediaire.id}>
         <priseEnChargeFetcher.Form
           method="POST"

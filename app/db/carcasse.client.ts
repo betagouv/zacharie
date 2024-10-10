@@ -20,10 +20,10 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
   const result = {
     numero_bracelet: mergedItem.numero_bracelet,
     fei_numero: mergedItem.fei_numero,
-    heure_mise_a_mort: mergedItem.heure_mise_a_mort,
-    heure_evisceration: mergedItem.heure_evisceration,
-    espece: mergedItem.espece,
-    categorie: mergedItem.categorie,
+    heure_mise_a_mort: mergedItem.heure_mise_a_mort || null,
+    heure_evisceration: mergedItem.heure_evisceration || null,
+    espece: mergedItem.espece || null,
+    categorie: mergedItem.categorie || null,
     examinateur_carcasse_sans_anomalie:
       newItem?.get("examinateur_carcasse_sans_anomalie") === "true"
         ? true
@@ -32,21 +32,21 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
           : mergedItem.examinateur_carcasse_sans_anomalie || null,
     // prettier-ignore
     examinateur_anomalies_carcasse: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)?.length
-      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse).map(String)
+      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse).map(String).filter(Boolean)
       : (oldItem.examinateur_anomalies_carcasse ?? []),
     examinateur_anomalies_abats: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats)?.length
-      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats).map(String)
+      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats).map(String).filter(Boolean)
       : (oldItem.examinateur_anomalies_abats ?? []),
     examinateur_commentaire: mergedItem.examinateur_commentaire,
     examinateur_signed_at: mergedItem.examinateur_signed_at
       ? dayjs(mergedItem.examinateur_signed_at).toISOString()
       : null,
     intermediaire_carcasse_refus_intermediaire_id: mergedItem.intermediaire_carcasse_refus_intermediaire_id || null,
-    intermediaire_carcasse_refus_motif: mergedItem.intermediaire_carcasse_refus_motif,
+    intermediaire_carcasse_refus_motif: mergedItem.intermediaire_carcasse_refus_motif || null,
     intermediaire_carcasse_signed_at: mergedItem.intermediaire_carcasse_signed_at
       ? dayjs(mergedItem.intermediaire_carcasse_signed_at).toISOString()
       : null,
-    intermediaire_carcasse_commentaire: mergedItem.intermediaire_carcasse_commentaire,
+    intermediaire_carcasse_commentaire: mergedItem.intermediaire_carcasse_commentaire || null,
     svi_carcasse_saisie:
       newItem?.get("svi_carcasse_saisie") === "true"
         ? true
@@ -54,7 +54,7 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
           ? false
           : mergedItem.svi_carcasse_saisie || null,
     svi_carcasse_saisie_motif: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)?.length
-      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif).map(String)
+      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif).map(String).filter(Boolean)
       : (oldItem.svi_carcasse_saisie_motif ?? []),
     svi_carcasse_saisie_at: mergedItem.svi_carcasse_saisie_at
       ? dayjs(mergedItem.svi_carcasse_saisie_at).toISOString()
@@ -62,7 +62,7 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
     svi_carcasse_signed_at: mergedItem.svi_carcasse_signed_at
       ? dayjs(mergedItem.svi_carcasse_signed_at).toISOString()
       : null,
-    svi_carcasse_commentaire: mergedItem.svi_carcasse_commentaire,
+    svi_carcasse_commentaire: mergedItem.svi_carcasse_commentaire || null,
     created_at: mergedItem.created_at,
     updated_at: dayjs().toISOString(),
     deleted_at: mergedItem.deleted_at ? dayjs(mergedItem.deleted_at).toISOString() : null,

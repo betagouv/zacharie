@@ -1,6 +1,7 @@
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Fragment, useMemo, useRef, useState } from "react";
 import { clientLoader } from "./route";
+import { type CarcasseIntermediaireActionData } from "~/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Prisma, Carcasse } from "@prisma/client";
@@ -46,10 +47,18 @@ interface CarcasseAVerifierProps {
 
 function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifierProps) {
   const { fei } = useLoaderData<typeof clientLoader>();
-  const intermediaireCarcasseFetcher = useFetcher({ key: `intermediaire-carcasse-${carcasse.numero_bracelet}` });
+  const intermediaireCarcasseFetcher = useFetcher<CarcasseIntermediaireActionData>({
+    key: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+  });
   const formRef = useRef<HTMLFormElement>(null);
   const carcasseFetcher = useFetcher({ key: `carcasse-from-intermediaire-${carcasse.numero_bracelet}` });
+
   const intermediaireCarcasse = useMemo(() => {
+    if (intermediaireCarcasseFetcher.state === "loading") {
+      if (intermediaireCarcasseFetcher.data?.data?.carcasseIntermediaire) {
+        return intermediaireCarcasseFetcher.data.data.carcasseIntermediaire;
+      }
+    }
     return (
       intermediaire.carcasses[carcasse.numero_bracelet] ?? {
         fei_numero__bracelet__intermediaire_id: `${fei.numero}__${carcasse.numero_bracelet}__${intermediaire.id}`,
@@ -67,13 +76,24 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
         deleted_at: null,
       }
     );
-  }, [intermediaire, carcasse, fei]);
+  }, [intermediaire, carcasse, fei, intermediaireCarcasseFetcher.state, intermediaireCarcasseFetcher.data]);
 
   const [showRefuser, setShowRefuser] = useState(!!intermediaireCarcasse.refus);
   const [refus, setRefus] = useState(intermediaireCarcasse.refus ?? "");
 
+  console.log({ refus });
+
   return (
-    <Fragment key={carcasse.numero_bracelet}>
+    <div
+      key={carcasse.numero_bracelet}
+      className={[
+        "border-4 border-transparent p-4",
+        !!intermediaireCarcasse.refus && "!border-red-500",
+        intermediaireCarcasse.prise_en_charge && "!border-action-high-blue-france",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <Notice
         className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\_\_title]:!block [&_p.fr-notice\_\_title]:before:hidden"
         key={carcasse.numero_bracelet}
@@ -106,7 +126,7 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
                       {carcasse.examinateur_anomalies_abats.map((anomalie) => {
                         return (
                           <>
-                            <span className="m-0 ml-2 block font-bold">{anomalie}</span>
+                            <span className="m-0 ml-2 block font-normal">{anomalie}</span>
                           </>
                         );
                       })}
@@ -122,13 +142,23 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
                       {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
                         return (
                           <>
-                            <span className="m-0 ml-2 block font-bold">{anomalie}</span>
+                            <span className="m-0 ml-2 block font-normal">{anomalie}</span>
                           </>
                         );
                       })}
                     </>
                   )}
                 </>
+                {!canEdit && intermediaireCarcasse.refus && (
+                  <>
+                    <br />
+                    <span className="m-0 block font-bold">
+                      Motif du refus de l'examinateur&nbsp;:&nbsp;
+                      <br />
+                      <span className="m-0 ml-2 block font-normal">{intermediaireCarcasse.refus}</span>
+                    </span>
+                  </>
+                )}
                 {!canEdit && intermediaireCarcasse.commentaire && (
                   <>
                     <br />
@@ -251,7 +281,6 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
                                   "route",
                                   `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
                                 );
-                                console.log("nextIntermediaire", Object.fromEntries(nextIntermediaire));
                                 intermediaireCarcasseFetcher.submit(nextIntermediaire, {
                                   method: "POST",
                                   preventScrollReset: true,
@@ -307,45 +336,41 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
                 name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
                 value={refus}
               />
-              <div className="fr-fieldset__element">
-                <InputForSearchPrefilledData
-                  canEdit
-                  data={refusIntermedaire}
-                  label="Motif du refus"
-                  hideDataWhenNoSearch={false}
-                  required
-                  placeholder="Tapez un motif de refus"
-                  onSelect={setRefus}
-                  defaultValue={refus ?? ""}
-                />
-              </div>
-              <div className="fr-fieldset__element">
-                <Input
-                  label="Commentaire"
-                  hintText="Un commentaire à ajouter ?"
-                  textArea
-                  nativeTextAreaProps={{
-                    name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
-                    form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                    defaultValue: intermediaireCarcasse.commentaire || "",
-                    onBlur: (e) => {
-                      console.log("submit comment");
-                      const form = new FormData();
-                      form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire, e.target.value);
-                      console.log("form", Object.fromEntries(form));
-                      const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
-                      nextIntermediaire.append(
-                        "route",
-                        `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
-                      );
-                      intermediaireCarcasseFetcher.submit(nextIntermediaire, {
-                        method: "POST",
-                        preventScrollReset: true,
-                      });
-                    },
-                  }}
-                />
-              </div>
+              <InputForSearchPrefilledData
+                canEdit
+                data={refusIntermedaire}
+                label="Motif du refus"
+                hideDataWhenNoSearch={false}
+                required
+                placeholder="Tapez un motif de refus"
+                onSelect={setRefus}
+                defaultValue={refus ?? ""}
+              />
+              <Input
+                label="Commentaire"
+                hintText="Un commentaire à ajouter ?"
+                textArea
+                nativeTextAreaProps={{
+                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
+                  form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                  defaultValue: intermediaireCarcasse.commentaire || "",
+                  onBlur: (e) => {
+                    console.log("submit comment");
+                    const form = new FormData();
+                    form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire, e.target.value);
+                    console.log("form", Object.fromEntries(form));
+                    const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
+                    nextIntermediaire.append(
+                      "route",
+                      `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+                    );
+                    intermediaireCarcasseFetcher.submit(nextIntermediaire, {
+                      method: "POST",
+                      preventScrollReset: true,
+                    });
+                  },
+                }}
+              />
               <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
                 <ButtonsGroup
                   buttons={
@@ -429,6 +454,6 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
           )}
         </intermediaireCarcasseFetcher.Form>
       )}
-    </Fragment>
+    </div>
   );
 }

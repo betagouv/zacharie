@@ -31,7 +31,7 @@ export function mergeFeiIntermediaireToJSON(
 
     /* Optional fields */
     fei_intermediaire_role: mergedItem.fei_intermediaire_role || null,
-    commentaire: mergedItem.commentaire,
+    commentaire: mergedItem.commentaire || null,
     received_at: mergedItem.received_at ? dayjs(mergedItem.received_at).toISOString() : null,
     check_finished_at: mergedItem.check_finished_at === "true" ? dayjs().toISOString() : null,
     handover_at: mergedItem.handover_at ? dayjs(mergedItem.handover_at).toISOString() : null,

@@ -26,10 +26,10 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
 
   // Explicitly handle each field, including optional ones
   const result = {
-    id: mergedItem.id,
+    id: mergedItem.id || Date.now(),
     numero: mergedItem.numero,
     date_mise_a_mort: mergedItem.date_mise_a_mort ? dayjs(mergedItem.date_mise_a_mort).toISOString() : null,
-    commune_mise_a_mort: mergedItem.commune_mise_a_mort,
+    commune_mise_a_mort: mergedItem.commune_mise_a_mort || null,
     created_by_user_id: mergedItem.created_by_user_id,
     fei_current_owner_user_id: mergedItem.fei_current_owner_user_id || null,
     fei_current_owner_entity_id: mergedItem.fei_current_owner_entity_id || null,
@@ -62,17 +62,17 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
       ? dayjs(mergedItem.premier_detenteur_date_depot_quelque_part).toISOString()
       : null,
     premier_detenteur_depot_entity_id: mergedItem.premier_detenteur_depot_entity_id || null,
-    premier_detenteur_depot_sauvage: mergedItem.premier_detenteur_depot_sauvage,
+    premier_detenteur_depot_sauvage: mergedItem.premier_detenteur_depot_sauvage || null,
     svi_entity_id: mergedItem.svi_entity_id || null,
     svi_user_id: mergedItem.svi_user_id || null,
-    svi_carcasses_saisies: mergedItem.svi_carcasses_saisies,
+    svi_carcasses_saisies: mergedItem.svi_carcasses_saisies || null,
     svi_aucune_carcasse_saisie:
       newItem?.get("svi_aucune_carcasse_saisie") === "true"
         ? true
         : newItem?.get("svi_aucune_carcasse_saisie") === "false"
           ? false
           : mergedItem.svi_aucune_carcasse_saisie || null,
-    svi_commentaire: mergedItem.svi_commentaire,
+    svi_commentaire: mergedItem.svi_commentaire || null,
     svi_signed_at: mergedItem.svi_signed_at ? dayjs(mergedItem.svi_signed_at).toISOString() : null,
     created_at: mergedItem.created_at,
     updated_at: dayjs().toISOString(),

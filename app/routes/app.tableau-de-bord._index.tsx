@@ -32,7 +32,7 @@ export async function clientLoader() {
     const data = (await response.json()) as FeisLoaderData;
     const allFeis = [...data.feisUnderMyResponsability, ...data.feisToTake, ...data.feisOngoing];
     for (const fei of allFeis) {
-      await loadFei(fei.numero);
+      loadFei(fei.numero);
     }
 
     const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/api/loader/feis-done`, {
@@ -75,8 +75,6 @@ export async function clientLoader() {
     return null;
   }
 }
-
-clientLoader.hydrate = true; // (2)
 
 export default function TableauDeBordIndex() {
   const data = useLoaderData<typeof clientLoader>()!;

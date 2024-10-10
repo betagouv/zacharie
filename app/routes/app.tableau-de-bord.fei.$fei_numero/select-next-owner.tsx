@@ -151,8 +151,6 @@ export default function SelectNextOwner() {
     return null;
   }
 
-  console.log({ nextOwners, nextRole, nextOwnerValue, savedNextOwner, showIntermediaires, showSvi });
-
   const nextOwnersWorkingWith = nextOwners.filter((o) => !!o.relation);
   const nextOwnersNotWorkingWith = nextOwners.filter((o) => !o.relation);
 

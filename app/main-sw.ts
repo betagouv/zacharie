@@ -353,7 +353,39 @@ async function handlePostRequest(request: Request): Promise<Response> {
     if (request.url.includes(`/api/fei-carcasse/`)) {
       console.log("Cloning request");
       const clonedRequest = request.clone();
+      const numeroBracelet = request.url.split("/").at(-1) as string;
+      const feiNumero = request.url.split("/").at(-2) as string;
       const formData = await clonedRequest.formData();
+      if (formData.get("_action") === "delete") {
+        const cache = await caches.open(CACHE_NAME);
+        await cache.delete(request.url);
+        const allFeiCarcassesResponse = await cache.match(
+          new Request(`${import.meta.env.VITE_API_URL}/api/fei-carcasses/${feiNumero}`),
+        );
+        const allFeisCarcassesCloned = allFeiCarcassesResponse!.clone();
+        const allCarcasses = (await allFeisCarcassesCloned.json()) as CarcassesLoaderData;
+        const newCarcasses = [...allCarcasses.data!.carcasses.filter((c) => c.numero_bracelet !== numeroBracelet)];
+        await cache.put(
+          `${import.meta.env.VITE_API_URL}/api/fei-carcasses/${feiNumero}`,
+          new Response(
+            JSON.stringify({ ok: true, data: { carcasses: newCarcasses }, error: "" } satisfies CarcassesLoaderData),
+            {
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        );
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            data: null,
+            error: "",
+          } satisfies CarcasseActionData),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
       const jsonCarcasse = mergeCarcasseToJSON({} as SerializeFrom<Carcasse>, formData);
       const cache = await caches.open(CACHE_NAME);
       const newResponse = {
@@ -368,19 +400,19 @@ async function handlePostRequest(request: Request): Promise<Response> {
         }),
       );
       const allFeiCarcassesResponse = await cache.match(
-        new Request(`${import.meta.env.VITE_API_URL}/api/fei-carcasses/${jsonCarcasse.fei_numero}`),
+        new Request(`${import.meta.env.VITE_API_URL}/api/fei-carcasses/${feiNumero}`),
       );
       const allFeisCarcassesCloned = allFeiCarcassesResponse!.clone();
       const allCarcasses = (await allFeisCarcassesCloned.json()) as CarcassesLoaderData;
       const newCarcasses = [
         ...allCarcasses
-          .data!.carcasses.filter((c) => c.numero_bracelet !== jsonCarcasse.numero_bracelet)
+          .data!.carcasses.filter((c) => c.numero_bracelet !== numeroBracelet)
           // sort create_at desc
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
         jsonCarcasse,
       ];
       await cache.put(
-        `${import.meta.env.VITE_API_URL}/api/fei-carcasses/${jsonCarcasse.fei_numero}`,
+        `${import.meta.env.VITE_API_URL}/api/fei-carcasses/${feiNumero}`,
         new Response(
           JSON.stringify({ ok: true, data: { carcasses: newCarcasses }, error: "" } satisfies CarcassesLoaderData),
           {
@@ -423,6 +455,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
     if (request.url.includes(`/api/fei-intermediaire/`)) {
       console.log("Cloning request");
       const clonedRequest = request.clone();
+      const feiNumero = request.url.split("/").at(-2) as string;
       const formData = await clonedRequest.formData();
       const jsonIntermediaire = mergeFeiIntermediaireToJSON({} as SerializeFrom<FeiIntermediaire>, formData);
       const cache = await caches.open(CACHE_NAME);
@@ -437,8 +470,41 @@ async function handlePostRequest(request: Request): Promise<Response> {
           headers: { "Content-Type": "application/json" },
         }),
       );
+      const allFeiCarcassesResponse = await cache.match(
+        new Request(`${import.meta.env.VITE_API_URL}/api/fei-carcasses/${feiNumero}`),
+      );
+      const allFeiCarcassesCloned = allFeiCarcassesResponse!.clone();
+      const allCarcasses = (await allFeiCarcassesCloned.json()) as CarcassesLoaderData;
+      for (const carcasse of allCarcasses.data!.carcasses) {
+        const jsonCarcasseIntermediaire = mergeCarcasseIntermediaireToJSON(
+          {
+            fei_numero__bracelet__intermediaire_id: `${feiNumero}__${carcasse.numero_bracelet}__${jsonIntermediaire.id}`,
+            fei_numero: feiNumero,
+            numero_bracelet: carcasse.numero_bracelet,
+            fei_intermediaire_id: jsonIntermediaire.id,
+            fei_intermediaire_user_id: jsonIntermediaire.fei_intermediaire_user_id,
+            fei_intermediaire_entity_id: jsonIntermediaire.fei_intermediaire_entity_id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as SerializeFrom<CarcasseIntermediaire>,
+          formData,
+        );
+        await cache.put(
+          `${import.meta.env.VITE_API_URL}/api/fei-carcasse-intermediaire/${feiNumero}/${jsonIntermediaire.id}/${carcasse.numero_bracelet}`,
+          new Response(
+            JSON.stringify({
+              ok: true,
+              data: { carcasseIntermediaire: jsonCarcasseIntermediaire },
+              error: "",
+            } satisfies CarcasseIntermediaireLoaderData),
+            {
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        );
+      }
       const allFeiIntermediairesResponse = await cache.match(
-        new Request(`${import.meta.env.VITE_API_URL}/api/fei-intermediaires/${jsonIntermediaire.fei_numero}`),
+        new Request(`${import.meta.env.VITE_API_URL}/api/fei-intermediaires/${feiNumero}`),
       );
       const allFeiIntermediairesCloned = allFeiIntermediairesResponse!.clone();
       const allIntermediaires = (await allFeiIntermediairesCloned.json()) as FeiIntermediairesLoaderData;
@@ -450,7 +516,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
         jsonIntermediaire,
       ];
       await cache.put(
-        `${import.meta.env.VITE_API_URL}/api/fei-intermediaires/${jsonIntermediaire.fei_numero}`,
+        `${import.meta.env.VITE_API_URL}/api/fei-intermediaires/${feiNumero}`,
         new Response(
           JSON.stringify({
             ok: true,

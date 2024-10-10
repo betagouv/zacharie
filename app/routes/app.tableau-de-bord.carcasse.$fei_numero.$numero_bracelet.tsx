@@ -28,6 +28,7 @@ import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 import { createModal } from "@codegouvfr/react-dsfr/Modal";
 import ModalTreeDisplay from "~/components/ModalTreeDisplay";
 import { useIsOnline } from "~/components/OfflineMode";
+import { mergeCarcasse } from "~/db/carcasse.client";
 
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
   const formData = await request.formData();
@@ -114,9 +115,11 @@ export default function CarcasseReadAndWrite() {
   const [espece, setEspece] = useState(carcasse.espece || "");
   const [categorie, setCategorie] = useState(carcasse.categorie || "");
   const [showAsSelectOption, setShowAsSelectOption] = useState(false);
-  const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(carcasse.examinateur_anomalies_abats || []);
+  const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(
+    carcasse.examinateur_anomalies_abats?.filter(Boolean) || [],
+  );
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(
-    carcasse.examinateur_anomalies_carcasse || [],
+    carcasse.examinateur_anomalies_carcasse?.filter(Boolean) || [],
   );
   const [noANomalie, setNoAnomalie] = useState(carcasse.examinateur_carcasse_sans_anomalie || false);
   // const [addAnomalieAbats, setAddAnomalieAbats] = useState(true);
@@ -134,7 +137,8 @@ export default function CarcasseReadAndWrite() {
   const handleFormSubmit = () => {
     const formData = new FormData(formRef.current!);
     formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
-    carcasseFetcher.submit(formData, {
+    const nextCarcasse = mergeCarcasse(carcasse, formData);
+    carcasseFetcher.submit(nextCarcasse, {
       method: "POST",
       preventScrollReset: true, // Prevent scroll reset on submission
     });
@@ -222,7 +226,8 @@ export default function CarcasseReadAndWrite() {
                 e.preventDefault();
                 const formData = new FormData(numeroFormRef.current!);
                 formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
-                numeroFetcher.submit(formData, {
+                const nextCarcasse = mergeCarcasse(carcasse, formData);
+                numeroFetcher.submit(nextCarcasse, {
                   method: "POST",
                   preventScrollReset: true, // Prevent scroll reset on submission
                 });
@@ -397,7 +402,9 @@ export default function CarcasseReadAndWrite() {
                             className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey p-2 [&_p.fr-notice\\_\\_title]:before:hidden"
                             title={anomalie}
                             isClosable={canEdit}
-                            onClose={() => setAnomaliesCarcasse(anomaliesCarcasse.filter((a) => a !== anomalie))}
+                            onClose={() =>
+                              setAnomaliesCarcasse(anomaliesCarcasse.filter((a) => a !== anomalie).filter(Boolean))
+                            }
                             key={anomalie + index}
                           />
                         );
@@ -466,7 +473,9 @@ export default function CarcasseReadAndWrite() {
                             className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey p-2 [&_p.fr-notice\\_\\_title]:before:hidden"
                             title={anomalie}
                             isClosable={canEdit}
-                            onClose={() => setAnomaliesAbats(anomaliesAbats.filter((a) => a !== anomalie))}
+                            onClose={() =>
+                              setAnomaliesAbats(anomaliesAbats.filter((a) => a !== anomalie).filter(Boolean))
+                            }
                             key={anomalie + index}
                           />
                         );
@@ -530,7 +539,8 @@ export default function CarcasseReadAndWrite() {
                       e.preventDefault();
                       const formData = new FormData(noAnomalieFormRef.current!);
                       formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
-                      noAnomalieFetcher.submit(formData, {
+                      const nextCarcasse = mergeCarcasse(carcasse, formData);
+                      noAnomalieFetcher.submit(nextCarcasse, {
                         method: "POST",
                         preventScrollReset: true, // Prevent scroll reset on submission
                       });
