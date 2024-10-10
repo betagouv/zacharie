@@ -14,6 +14,7 @@ import { Input } from "@codegouvfr/react-dsfr/Input";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { EntityTypes, EntityRelationType, Prisma } from "@prisma/client";
 import { type UserCCGsLoaderData } from "~/routes/api.loader.user-ccgs";
+import { type UserEntityActionData } from "~/routes/api.action.user-entity.$user_id";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 
 export function meta() {
@@ -30,14 +31,14 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
   const formData = await request.formData();
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/user-entity/${user.id}`, {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/action/user-entity/${user.id}`, {
     method: "POST",
     credentials: "include",
     body: formData,
     headers: {
       Accept: "application/json",
     },
-  });
+  }).then((res) => res.json())) as UserEntityActionData;
   return response;
 }
 
@@ -116,6 +117,8 @@ export default function MesCCGs() {
                       }}
                       title={
                         <>
+                          {entity.numero_ddecpp}
+                          <br />
                           {entity.raison_sociale}
                           <br />
                           {entity.code_postal} {entity.ville}
@@ -162,7 +165,8 @@ export default function MesCCGs() {
 
 function InputCCG() {
   const { user } = useLoaderData<typeof clientLoader>();
-  const userCCGFetcher = useFetcher({ key: "ccg-new" });
+  const userCCGFetcher = useFetcher<typeof clientAction>({ key: "ccg-new" });
+
   return (
     <userCCGFetcher.Form method="POST" className="fr-fieldset__element flex w-full flex-row items-end gap-4">
       <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
@@ -176,13 +180,17 @@ function InputCCG() {
       <Input
         label="Numéro du Centre de Collecte du Gibier sauvage (CCG)"
         className="!mb-0"
+        state={userCCGFetcher.data?.error ? "error" : "default"}
+        stateRelatedMessage={userCCGFetcher.data?.error}
         nativeInputProps={{
           type: "text",
           required: true,
           name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
         }}
       />
-      <Button type="submit">Ajouter</Button>
+      <Button type="submit" disabled={userCCGFetcher.state !== "idle"}>
+        {userCCGFetcher.state === "idle" ? "Ajouter" : "Recherche en cours..."}
+      </Button>
     </userCCGFetcher.Form>
   );
 }

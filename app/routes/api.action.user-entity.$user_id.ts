@@ -2,6 +2,7 @@ import { User, EntityRelationType, Prisma, EntityTypes } from "@prisma/client";
 import { type ActionFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { authorizeUserOrAdmin } from "~/utils/authorizeUserOrAdmin";
+import type { ExtractLoaderData } from "~/services/extract-loader-data";
 
 export async function action(args: ActionFunctionArgs) {
   const { user, error, isAdmin } = await authorizeUserOrAdmin(args);
@@ -23,6 +24,9 @@ export async function action(args: ActionFunctionArgs) {
         type: formData.get(Prisma.EntityScalarFieldEnum.type) as EntityTypes,
       },
     });
+    if (!entity) {
+      return json({ ok: false, data: null, error: "Ce Centre de Collecte n'existe pas" }, { status: 404 });
+    }
     entityId = entity?.id || "";
   }
   if (!entityId) {
@@ -77,3 +81,5 @@ export async function action(args: ActionFunctionArgs) {
 
   return json({ ok: false, data: null, error: "Invalid action" }, { status: 400 });
 }
+
+export type UserEntityActionData = ExtractLoaderData<typeof action>;
