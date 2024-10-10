@@ -6,6 +6,7 @@ import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma } from "@prisma/client";
 import { action as nouvelleCarcasseAction } from "~/routes/api.fei-carcasse.$fei_numero.$numero_bracelet";
 import { useIsOnline } from "~/components/OfflineMode";
+import dayjs from "dayjs";
 
 export default function NouvelleCarcasse() {
   const { fei } = useLoaderData<typeof clientLoader>();
@@ -21,11 +22,14 @@ export default function NouvelleCarcasse() {
     const nextBracelet = nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet;
     if (nextBracelet && lastNavigation.current !== nextBracelet) {
       lastNavigation.current === nextBracelet;
+      defaultNumeroBracelet.current = `${fei.numero}-${dayjs().format("HHmm")}`;
       navigate(
         `/app/tableau-de-bord/carcasse/${fei.numero}/${nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet}`,
       );
     }
   }, [nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet, fei.numero, navigate]);
+
+  const defaultNumeroBracelet = useRef(`${fei.numero}-${dayjs().format("HHmm")}`);
 
   return (
     <>
@@ -42,9 +46,20 @@ export default function NouvelleCarcasse() {
           state={error ? "error" : "default"}
           stateRelatedMessage={error ?? ""}
           hintText={
-            isOnline
-              ? null
-              : "ATTENTION: en mode hors-ligne vous ne pouvez pas encore modifier ce numéro une fois renseigné"
+            <>
+              {!numeroBracelet && (
+                <>
+                  Votre chasse n'a pas de bracelet ?{" "}
+                  <button type="button" onClick={() => setNumeroBracelet(defaultNumeroBracelet.current)}>
+                    Cliquez ici pour utiliser {defaultNumeroBracelet.current}
+                  </button>
+                  .
+                </>
+              )}
+              {isOnline
+                ? null
+                : " ATTENTION: en mode hors-ligne vous ne pouvez pas encore modifier ce numéro une fois renseigné"}
+            </>
           }
           nativeInputProps={{
             type: "text",
