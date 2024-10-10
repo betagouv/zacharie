@@ -7,7 +7,7 @@ import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma, UserRoles } from "@prisma/client";
 import UserNotEditable from "~/components/UserNotEditable";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
-import { type FeiActionData } from "~/routes/api.action.fei.$fei_numero";
+import { type FeiActionData } from "~/routes/api.fei.$fei_numero";
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
   const user = await getMostFreshUser();
@@ -21,7 +21,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 
   console.log("fei route formdata", Object.fromEntries(formData.entries()));
 
-  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/action/fei/${feiNumero}`, {
+  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/fei/${feiNumero}`, {
     method: "POST",
     credentials: "include",
     body: formData,
@@ -30,8 +30,8 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
     },
   }).then((response) => response.json())) as FeiActionData;
   console.log("response", response);
-  if (response.ok && response.data?.numero) {
-    const fei = response.data;
+  if (response.ok && response.data?.fei.numero) {
+    const fei = response.data.fei;
     return redirect(`/app/tableau-de-bord/fei/${fei.numero}`);
   }
   return response;

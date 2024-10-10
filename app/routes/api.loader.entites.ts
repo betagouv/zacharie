@@ -1,6 +1,6 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
-import { EntityRelationType } from "@prisma/client";
+import { EntityRelationType, EntityTypes } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from "~/utils/sort-things-by-type-and-id";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
@@ -12,11 +12,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
-  const allEntities = await prisma.entity.findMany();
+  const allEntities = await prisma.entity.findMany({
+    where: {
+      type: { not: EntityTypes.CCG },
+    },
+    orderBy: {
+      updated_at: "desc",
+    },
+  });
   const userEntitiesRelations = await prisma.entityRelations.findMany({
     where: {
       owner_id: user.id,
       relation: EntityRelationType.WORKING_FOR,
+    },
+    orderBy: {
+      updated_at: "desc",
     },
   });
 

@@ -13,6 +13,10 @@ export function sendEmail({
   subject,
   from = "contact@zacharie.beta.gouv.fr",
 }: SendEmailProps) {
+  if (import.meta.env.DEV) {
+    console.log({ emails, text, html, subject, from });
+    return Promise.resolve({ status: "success" });
+  }
   return fetch("https://api.tipimail.com/v1/messages/send", {
     method: "POST",
     headers: {

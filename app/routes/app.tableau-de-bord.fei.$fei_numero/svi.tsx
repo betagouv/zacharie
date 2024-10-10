@@ -13,11 +13,11 @@ import type { SerializeFrom } from "@remix-run/node";
 import EntityNotEditable from "~/components/EntityNotEditable";
 
 export default function FEI_SVI() {
-  const { fei, user } = useLoaderData<typeof clientLoader>();
+  const { fei, sviUser, svi, carcasses, user } = useLoaderData<typeof clientLoader>();
 
-  const sviFinished = useFetcher({ key: "prise-en-charge" });
+  const sviFinishedFetcher = useFetcher({ key: "prise-en-charge" });
 
-  const carcassesUnsorted = fei.Carcasses;
+  const carcassesUnsorted = carcasses;
   const carcassesSorted = useMemo(() => {
     const carcassesValidated: Record<string, SerializeFrom<Carcasse>> = {};
     const carcassesSaisies: Record<string, SerializeFrom<Carcasse>> = {};
@@ -95,10 +95,12 @@ export default function FEI_SVI() {
     return label;
   }, [carcassesSorted.carcassesValidated.length, carcassesSorted.carcassesSaisies.length]);
 
+  console.log({ carcassesSorted });
+
   return (
     <>
       <Accordion titleAs="h3" label={`Identité du SVI ${canEdit ? "🔒" : ""}`}>
-        <EntityNotEditable user={fei.FeiSviUser} entity={fei.FeiSviEntity} />
+        <EntityNotEditable user={sviUser!} entity={svi!} />
       </Accordion>
       {carcassesSorted.carcassesToCheck.length > 0 && (
         <Accordion
@@ -135,8 +137,8 @@ export default function FEI_SVI() {
         )}
       </Accordion>
       <Accordion titleAs="h3" label="Validation de la FEI" defaultExpanded>
-        <sviFinished.Form method="POST" id="svi_check_finished_at">
-          <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
+        <sviFinishedFetcher.Form method="POST" id="svi_check_finished_at">
+          <input type="hidden" name="route" value={`/api/fei/${fei.numero}`} />
           <input
             form="svi_check_finished_at"
             type="hidden"
@@ -187,7 +189,7 @@ export default function FEI_SVI() {
               />
             </div>
           )}
-        </sviFinished.Form>
+        </sviFinishedFetcher.Form>
       </Accordion>
       {fei.svi_signed_at && (
         <Alert

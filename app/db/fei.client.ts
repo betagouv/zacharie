@@ -1,288 +1,198 @@
-import { type Fei, type User, type Carcasse, type FeiIntermediaire, UserRoles } from "@prisma/client";
-import type { FeiWithRelations } from "./fei.server";
-import type { MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
+// import * as zodSchemas from "prisma/generated/zod";
+import dayjs from "dayjs";
+import { SerializeFrom } from "@remix-run/node";
+import { type Fei, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
+import { type FeiLoaderData } from "~/routes/api.fei.$fei_numero";
+import { type FeiUserLoaderData } from "~/routes/api.fei-user.$fei_numero.$user_id";
+import { type FeiEntityLoaderData } from "~/routes/api.fei-entity.$fei_numero.$entity_id";
+import { type CarcassesLoaderData } from "~/routes/api.fei-carcasses.$fei_numero";
+import { type FeiIntermediairesLoaderData } from "~/routes/api.fei-intermediaires.$fei_numero";
+import { type CarcasseIntermediaireLoaderData } from "~/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
 
-type OfflineFeiWithExaminateurFieldsOmitted = Omit<
-  FeiWithRelations,
-  | "id"
-  | "created_at"
-  | "updated_at"
-  | "numero"
-  | "date_mise_a_mort"
-  | "created_by_user_id"
-  | "FeiExaminateurInitialUser"
-  | "fei_current_owner_user_id"
-  | "fei_current_owner_role"
-  | "examinateur_initial_user_id"
-  | "FeiCreatedByUser"
-  | "FeiCurrentUser"
->;
-
-function offlineNullFeiToBeCompletedByExaminateurFields(): OfflineFeiWithExaminateurFieldsOmitted {
-  return {
-    commune_mise_a_mort: null,
-    fei_current_owner_entity_id: null,
-    fei_current_owner_wants_to_transfer: null,
-    fei_next_owner_user_id: null,
-    fei_next_owner_entity_id: null,
-    fei_next_owner_role: null,
-    fei_prev_owner_user_id: null,
-    fei_prev_owner_entity_id: null,
-    fei_prev_owner_role: null,
-    examinateur_initial_approbation_mise_sur_le_marche: null,
-    examinateur_initial_date_approbation_mise_sur_le_marche: null,
-    premier_detenteur_user_id: null,
-    premier_detenteur_date_depot_quelque_part: null,
-    premier_detenteur_depot_entity_id: null,
-    premier_detenteur_depot_sauvage: null,
-    svi_entity_id: null,
-    svi_user_id: null,
-    svi_carcasses_saisies: null,
-    svi_aucune_carcasse_saisie: null,
-    svi_commentaire: null,
-    svi_signed_at: null,
-    deleted_at: null,
-    FeiCurrentEntity: null,
-    FeiNextEntity: null,
-    Carcasses: [],
-    FeiPremierDetenteurUser: null,
-    FeiDepotEntity: null,
-    FeiSviEntity: null,
-    FeiSviUser: null,
-    FeiIntermediaires: [],
-  } as const;
-}
-
-export type FeiAction =
-  | "fei_action_nouvelle"
-  | "fei_action_confirm_current_owner"
-  | "fei_action_reject_current_owner"
-  | "fei_action_examinateur_initial"
-  | "fei_action_premier_detenteur"
-  | "fei_action_premier_detenteur_depot"
-  | "fei_action_next_role";
-
-export function formatFeiOfflineQueue(
-  existingFeiPopulated: FeiWithRelations,
-  nextFeiData: Fei,
-  me: User,
-  relations: MyRelationsLoaderData["data"],
-  step: FeiAction,
-): FeiWithRelations {
-  if (!existingFeiPopulated) {
-    return formatFeiOfflineQueueNouvelleFei(nextFeiData, me);
+// Implementation
+export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = new FormData()): SerializeFrom<Fei> {
+  if (newItem) {
+    for (const key of newItem?.keys() ?? []) {
+      if (newItem?.get(key) === undefined) {
+        newItem!.delete(key);
+      }
+    }
   }
-  switch (step) {
-    case "fei_action_nouvelle":
-      console.log("BIMBADADABOOM");
-      return formatFeiOfflineQueueNouvelleFei(nextFeiData, me);
-    case "fei_action_confirm_current_owner":
-      return formatFeiOfflineQueueConfirmCurrentOwner(existingFeiPopulated, nextFeiData, me, relations);
-    case "fei_action_premier_detenteur_depot":
-      return formatFeiOfflineQueuePremierDetenteurDepot(existingFeiPopulated, nextFeiData, relations);
-    case "fei_action_premier_detenteur":
-      return formatFeiOfflineQueuePremierDetenteur(existingFeiPopulated, me);
-    case "fei_action_next_role":
-      return formatFeiOfflineQueueNextEntity(existingFeiPopulated, nextFeiData, relations);
-    case "fei_action_reject_current_owner":
-    case "fei_action_examinateur_initial":
-    default:
-      return {
-        ...existingFeiPopulated,
-        ...nextFeiData,
-      };
+
+  const mergedItem: SerializeFrom<Fei> = {
+    ...oldItem,
+    ...Object.fromEntries(newItem!),
+  };
+
+  // Explicitly handle each field, including optional ones
+  const result = {
+    id: mergedItem.id || Date.now(),
+    numero: mergedItem.numero,
+    date_mise_a_mort: mergedItem.date_mise_a_mort ? dayjs(mergedItem.date_mise_a_mort).toISOString() : null,
+    commune_mise_a_mort: mergedItem.commune_mise_a_mort || null,
+    created_by_user_id: mergedItem.created_by_user_id,
+    fei_current_owner_user_id: mergedItem.fei_current_owner_user_id || null,
+    fei_current_owner_entity_id: mergedItem.fei_current_owner_entity_id || null,
+    fei_current_owner_role: mergedItem.fei_current_owner_role || null,
+    fei_current_owner_wants_to_transfer:
+      newItem?.get("fei_current_owner_wants_to_transfer") === "true"
+        ? true
+        : newItem?.get("fei_current_owner_wants_to_transfer") === "false"
+          ? false
+          : mergedItem.fei_current_owner_wants_to_transfer || null,
+    fei_next_owner_user_id: mergedItem.fei_next_owner_user_id || null,
+    fei_next_owner_entity_id: mergedItem.fei_next_owner_entity_id || null,
+    fei_next_owner_role: mergedItem.fei_next_owner_role || null,
+    fei_prev_owner_user_id: mergedItem.fei_prev_owner_user_id || null,
+    fei_prev_owner_entity_id: mergedItem.fei_prev_owner_entity_id || null,
+    fei_prev_owner_role: mergedItem.fei_prev_owner_role || null,
+    examinateur_initial_user_id: mergedItem.examinateur_initial_user_id || null,
+    examinateur_initial_date_approbation_mise_sur_le_marche:
+      mergedItem.examinateur_initial_date_approbation_mise_sur_le_marche
+        ? dayjs(mergedItem.examinateur_initial_date_approbation_mise_sur_le_marche).toISOString()
+        : null,
+    examinateur_initial_approbation_mise_sur_le_marche:
+      newItem?.get("examinateur_initial_approbation_mise_sur_le_marche") === "true"
+        ? true
+        : newItem?.get("examinateur_initial_approbation_mise_sur_le_marche") === "false"
+          ? false
+          : mergedItem.examinateur_initial_approbation_mise_sur_le_marche || null,
+    premier_detenteur_user_id: mergedItem.premier_detenteur_user_id || null,
+    premier_detenteur_date_depot_quelque_part: mergedItem.premier_detenteur_date_depot_quelque_part
+      ? dayjs(mergedItem.premier_detenteur_date_depot_quelque_part).toISOString()
+      : null,
+    premier_detenteur_depot_entity_id: mergedItem.premier_detenteur_depot_entity_id || null,
+    premier_detenteur_depot_sauvage: mergedItem.premier_detenteur_depot_sauvage || null,
+    svi_entity_id: mergedItem.svi_entity_id || null,
+    svi_user_id: mergedItem.svi_user_id || null,
+    svi_carcasses_saisies: mergedItem.svi_carcasses_saisies || null,
+    svi_aucune_carcasse_saisie:
+      newItem?.get("svi_aucune_carcasse_saisie") === "true"
+        ? true
+        : newItem?.get("svi_aucune_carcasse_saisie") === "false"
+          ? false
+          : mergedItem.svi_aucune_carcasse_saisie || null,
+    svi_commentaire: mergedItem.svi_commentaire || null,
+    svi_signed_at: mergedItem.svi_signed_at ? dayjs(mergedItem.svi_signed_at).toISOString() : null,
+    created_at: mergedItem.created_at,
+    updated_at: dayjs().toISOString(),
+    deleted_at: mergedItem.deleted_at ? dayjs(mergedItem.deleted_at).toISOString() : null,
+  };
+
+  console.log("feoi result", result);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // const validatedResult = zodSchemas.FeiSchema.parse(result);
+  // console.log({ validatedResult });
+
+  return result;
+}
+
+export function mergeFei(oldItem: SerializeFrom<Fei>, newItem?: FormData): FormData {
+  const result = mergeFeiToJSON(oldItem, newItem);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function getFormData(object: Record<string, any>) {
+    const formData = new FormData();
+    Object.keys(object).forEach((key) => formData.append(key, object[key]));
+    return formData;
   }
+  return getFormData(result) satisfies FormData;
 }
 
-function formatFeiOfflineQueueNouvelleFei(fei: Fei, me: User): FeiWithRelations {
-  const baseFei = offlineNullFeiToBeCompletedByExaminateurFields();
-
-  console.log("formatFeiOfflineQueueNouvelleFei", {
-    fei,
-    me,
-    offline: {
-      ...baseFei,
-      id: Date.now(),
-      numero: fei.numero,
-      date_mise_a_mort: fei.date_mise_a_mort,
-      created_by_user_id: me.id,
-      fei_current_owner_user_id: me.id,
-      fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
-      examinateur_initial_user_id: me.id,
-      created_at: fei.created_at,
-      updated_at: fei.updated_at,
-      FeiExaminateurInitialUser: me,
-      FeiCreatedByUser: me,
-      FeiCurrentUser: me,
-    },
-  });
-
-  return {
-    ...baseFei,
-    id: Date.now(),
-    numero: fei.numero,
-    date_mise_a_mort: fei.date_mise_a_mort,
-    created_by_user_id: me.id,
-    fei_current_owner_user_id: me.id,
-    fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
-    examinateur_initial_user_id: me.id,
-    created_at: fei.created_at,
-    updated_at: fei.updated_at,
-    FeiExaminateurInitialUser: me,
-    FeiCreatedByUser: me,
-    FeiCurrentUser: me,
-  };
+async function get(pathname: string) {
+  return fetch(`${import.meta.env.VITE_API_URL}${pathname}`, {
+    method: "GET",
+    credentials: "include",
+    headers: new Headers({
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }),
+  }).then((res) => res.json());
 }
 
-function formatFeiOfflineQueueConfirmCurrentOwner(
-  existingFeiPopulated: FeiWithRelations,
-  fei: Fei,
-  me: User,
-  relations: MyRelationsLoaderData["data"],
-): FeiWithRelations {
-  return {
-    ...existingFeiPopulated,
-    ...fei,
-    FeiCurrentUser: me,
-    FeiCurrentEntity: relations!.entitiesUserIsWorkingFor.find(
-      (entity) => entity.id === fei.fei_current_owner_entity_id,
-    )!,
-    FeiNextEntity: null,
-  };
-}
+export async function loadFei(fei_numero: string) {
+  const feiData = (await get(`/api/fei/${fei_numero}`)) as FeiLoaderData;
 
-function formatFeiOfflineQueuePremierDetenteurDepot(
-  existingFeiPopulated: FeiWithRelations,
-  fei: Fei,
-  relations: MyRelationsLoaderData["data"],
-): FeiWithRelations {
-  const allEntities = [
-    ...relations!.entitiesUserIsWorkingFor,
-    ...relations!.collecteursPro,
-    ...relations!.ccgs,
-    ...relations!.etgs,
-    ...relations!.svis,
-  ];
+  const examinateurInitialId = feiData.data?.fei.examinateur_initial_user_id;
+  const examinateurInitialUser = examinateurInitialId
+    ? ((await get(`/api/fei-user/${fei_numero}/${examinateurInitialId}`)) as FeiUserLoaderData)
+    : null;
 
-  return {
-    ...existingFeiPopulated,
-    ...fei,
-    FeiDepotEntity: allEntities.find((entity) => entity.id === fei.premier_detenteur_depot_entity_id)!,
-  };
-}
+  const premierDetenteurId = feiData.data?.fei.premier_detenteur_user_id;
+  const premierDetenteurUser = premierDetenteurId
+    ? ((await get(`/api/fei-user/${fei_numero}/${premierDetenteurId}`)) as FeiUserLoaderData)
+    : null;
 
-function formatFeiOfflineQueuePremierDetenteur(existingFeiPopulated: FeiWithRelations, me: User): FeiWithRelations {
-  return {
-    ...existingFeiPopulated,
-    FeiPremierDetenteurUser: me,
-  };
-}
+  const depotEntityId = feiData.data?.fei.premier_detenteur_depot_entity_id;
+  const premierDetenteurDepotEntityId = depotEntityId
+    ? ((await get(`/api/fei-entity/${fei_numero}/${depotEntityId}`)) as FeiEntityLoaderData)
+    : null;
 
-function formatFeiOfflineQueueNextEntity(
-  existingFeiPopulated: FeiWithRelations,
-  fei: Fei,
-  relations: MyRelationsLoaderData["data"],
-): FeiWithRelations {
-  const allEntities = [
-    ...relations!.entitiesUserIsWorkingFor,
-    ...relations!.collecteursPro,
-    ...relations!.ccgs,
-    ...relations!.etgs,
-    ...relations!.svis,
-  ];
+  const currentOwnerId = feiData.data?.fei.fei_current_owner_user_id;
+  const currentOwnerUser = currentOwnerId
+    ? ((await get(`/api/fei-user/${fei_numero}/${currentOwnerId}`)) as FeiUserLoaderData)
+    : null;
 
-  return {
-    ...existingFeiPopulated,
-    ...fei,
-    FeiNextEntity: allEntities.find((entity) => entity.id === fei.fei_next_owner_entity_id)!,
-  };
-}
+  const currentOwnerEntityId = feiData.data?.fei.fei_current_owner_entity_id;
+  const currentOwnerEntity = currentOwnerEntityId
+    ? ((await get(`/api/fei-entity/${fei_numero}/${currentOwnerEntityId}`)) as FeiEntityLoaderData)
+    : null;
 
-export function formatFeiOfflineQueueCarcasse(
-  existingFeiPopulated: FeiWithRelations,
-  carcasse: Carcasse,
-): FeiWithRelations {
-  const existingCarcasse = existingFeiPopulated.Carcasses.find((c) => c.numero_bracelet === carcasse.numero_bracelet);
-  const nextCarcasse = {
-    ...existingCarcasse,
-    ...carcasse,
-  };
-  const nextCarcasses = [
-    ...existingFeiPopulated.Carcasses.filter((c) => c.numero_bracelet !== carcasse.numero_bracelet),
-    nextCarcasse,
-  ];
+  const nextOwnerUserId = feiData.data?.fei.fei_next_owner_user_id;
+  const nextOwnerUser = nextOwnerUserId
+    ? ((await get(`/api/fei-user/${fei_numero}/${nextOwnerUserId}`)) as FeiUserLoaderData)
+    : null;
 
-  console.log({ existingCarcasse, carcasse, nextCarcasse, nextCarcasses });
+  const nextOwnerEntityId = feiData.data?.fei.fei_next_owner_entity_id;
+  const nextOwnerEntity = nextOwnerEntityId
+    ? ((await get(`/api/fei-entity/${fei_numero}/${nextOwnerEntityId}`)) as FeiEntityLoaderData)
+    : null;
 
-  return {
-    ...existingFeiPopulated,
-    Carcasses: nextCarcasses.sort((a, b) => a.numero_bracelet?.localeCompare?.(b?.numero_bracelet)),
-  };
-}
+  const sviUserId = feiData.data?.fei.svi_user_id;
+  const sviUser = sviUserId ? ((await get(`/api/fei-user/${fei_numero}/${sviUserId}`)) as FeiUserLoaderData) : null;
 
-export function formatFeiOfflineQueueCarcasseDelete(
-  existingFeiPopulated: FeiWithRelations,
-  numero_bracelet: Carcasse["numero_bracelet"],
-): FeiWithRelations {
-  return {
-    ...existingFeiPopulated,
-    Carcasses: existingFeiPopulated.Carcasses.filter((c) => c.numero_bracelet !== numero_bracelet),
-  };
-}
+  const sviEntityid = feiData.data?.fei.svi_entity_id;
+  const svi = sviEntityid ? ((await get(`/api/fei-entity/${fei_numero}/${sviEntityid}`)) as FeiEntityLoaderData) : null;
 
-export function formatFeiOfflineQueueFeiIntermediaire(
-  existingFeiPopulated: FeiWithRelations,
-  feiIntermediaire: FeiIntermediaire,
-  me: User,
-  relations: MyRelationsLoaderData["data"],
-): FeiWithRelations {
-  const intermediaireEntity = relations!.entitiesUserIsWorkingFor.find(
-    (entity) => entity.id === feiIntermediaire.fei_intermediaire_entity_id,
-  )!;
-  const existingIntermediaire = existingFeiPopulated.FeiIntermediaires.find(
-    (intermediaire) => intermediaire.id === feiIntermediaire.id,
-  );
-  if (existingIntermediaire && feiIntermediaire.check_finished_at) {
-    return {
-      ...existingFeiPopulated,
-      FeiIntermediaires: existingFeiPopulated.FeiIntermediaires.map((intermediaire) =>
-        intermediaire.id === feiIntermediaire.id ? { ...intermediaire, check_finished_at: new Date() } : intermediaire,
-      ),
-    };
+  const carcasses = (await get(`/api/fei-carcasses/${fei_numero}`)) as CarcassesLoaderData;
+
+  const intermediaires = (await get(`/api/fei-intermediaires/${fei_numero}`)) as FeiIntermediairesLoaderData;
+  const inetermediairesPopulated = [];
+  for (const intermediaire of intermediaires.data?.intermediaires || []) {
+    const intermediaireUser = intermediaire.fei_intermediaire_user_id
+      ? ((await get(`/api/fei-user/${fei_numero}/${intermediaire.fei_intermediaire_user_id}`)) as FeiUserLoaderData)
+      : null;
+    const intermediaireEntity = intermediaire.fei_intermediaire_entity_id
+      ? ((await get(
+          `/api/fei-entity/${fei_numero}/${intermediaire.fei_intermediaire_entity_id}`,
+        )) as FeiEntityLoaderData)
+      : null;
+    const intermediaireCarcasses: Record<Carcasse["numero_bracelet"], CarcasseIntermediaire | null> = {};
+    for (const carcasse of carcasses.data?.carcasses || []) {
+      const intermediaireCarcasse = (await get(
+        `/api/fei-carcasse-intermediaire/${fei_numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+      )) as CarcasseIntermediaireLoaderData;
+      intermediaireCarcasses[carcasse.numero_bracelet] = intermediaireCarcasse.data?.carcasseIntermediaire || null;
+    }
+    inetermediairesPopulated.push({
+      ...intermediaire,
+      user: intermediaireUser?.data?.user,
+      entity: intermediaireEntity?.data?.entity,
+      carcasses: intermediaireCarcasses,
+    });
   }
-  const newIntermediaire: FeiWithRelations["FeiIntermediaires"][0] = {
-    id: feiIntermediaire.id,
-    fei_numero: feiIntermediaire.fei_numero,
-    created_at: feiIntermediaire.created_at,
-    deleted_at: feiIntermediaire.deleted_at,
-    commentaire: feiIntermediaire.commentaire,
-    received_at: feiIntermediaire.received_at,
-    handover_at: feiIntermediaire.handover_at,
-    check_finished_at: feiIntermediaire.check_finished_at,
-    updated_at: feiIntermediaire.updated_at,
-    fei_intermediaire_role: feiIntermediaire.fei_intermediaire_role,
-    fei_intermediaire_user_id: feiIntermediaire.fei_intermediaire_user_id,
-    fei_intermediaire_entity_id: feiIntermediaire.fei_intermediaire_entity_id,
-    CarcasseIntermediaire: [],
-    FeiIntermediaireEntity: {
-      raison_sociale: intermediaireEntity.raison_sociale,
-      siret: intermediaireEntity.siret,
-      type: intermediaireEntity.type,
-      numero_ddecpp: intermediaireEntity.numero_ddecpp,
-      address_ligne_1: intermediaireEntity.address_ligne_1,
-      address_ligne_2: intermediaireEntity.address_ligne_2,
-      code_postal: intermediaireEntity.code_postal,
-      ville: intermediaireEntity.ville,
-    },
-    FeiIntermediaireUser: {
-      nom_de_famille: me.nom_de_famille,
-      prenom: me.prenom,
-      email: me.email,
-      telephone: me.telephone,
-    },
-  };
+
   return {
-    ...existingFeiPopulated,
-    FeiIntermediaires: [...existingFeiPopulated.FeiIntermediaires, newIntermediaire],
+    fei: feiData.data!.fei,
+    examinateurInitialUser: examinateurInitialUser?.data?.user,
+    premierDetenteurUser: premierDetenteurUser?.data?.user,
+    premierDetenteurDepotEntity: premierDetenteurDepotEntityId?.data?.entity,
+    currentOwnerUser: currentOwnerUser?.data?.user,
+    currentOwnerEntity: currentOwnerEntity?.data?.entity,
+    nextOwnerUser: nextOwnerUser?.data?.user,
+    nextOwnerEntity: nextOwnerEntity?.data?.entity,
+    sviUser: sviUser?.data?.user,
+    svi: svi?.data?.entity,
+    carcasses: carcasses.data?.carcasses || [],
+    inetermediairesPopulated,
   };
 }

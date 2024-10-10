@@ -5,11 +5,17 @@ import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useMemo } from "react";
 import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 import { Prisma, UserRoles } from "@prisma/client";
-import type { FeiAction } from "~/db/fei.client";
 import dayjs from "dayjs";
+import { mergeFeiIntermediaire } from "~/db/fei-intermediaire.client";
+import { mergeFei } from "~/db/fei.client";
 
 export default function ConfirmCurrentOwner() {
-  const { user, entitiesUserIsWorkingFor, fei } = useLoaderData<typeof clientLoader>();
+  const {
+    user,
+    relationsCatalog: { entitiesUserIsWorkingFor },
+    fei,
+    nextOwnerEntity,
+  } = useLoaderData<typeof clientLoader>();
 
   const fetcher = useFetcher({ key: "confirm-current-owner" });
   const intermediaireFetcher = useFetcher({ key: "create-intermediaire-fetcher" });
@@ -27,8 +33,6 @@ export default function ConfirmCurrentOwner() {
     }
     return false;
   }, [fei, user, nextEntity]);
-
-  console.log({ canConfirmCurrentOwner, fei });
 
   if (!fei.fei_next_owner_role) {
     return null;
@@ -56,9 +60,9 @@ export default function ConfirmCurrentOwner() {
     if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.PREMIER_DETENTEUR) {
       formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
     }
-    formData.append("route", `/api/action/fei/${fei.numero}`);
-    formData.append("step", "fei_action_confirm_current_owner" satisfies FeiAction);
-    fetcher.submit(formData, {
+    const nextFei = mergeFei(fei, formData);
+    nextFei.append("route", `/api/fei/${fei.numero}`);
+    fetcher.submit(nextFei, {
       method: "POST",
       preventScrollReset: true, // Prevent scroll reset on submission
     });
@@ -69,19 +73,23 @@ export default function ConfirmCurrentOwner() {
         formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) as keyof typeof UserRoles,
       )
     ) {
-      const newIntermedaire = new FormData();
-      //{user_id}_{fei_numero}_{HHMMSS}
       const newId = `${user.id}_${fei.numero}_${dayjs().format("HHmmss")}`;
-      newIntermedaire.append(Prisma.FeiIntermediaireScalarFieldEnum.id, newId);
-      newIntermedaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_numero, fei.numero);
-      newIntermedaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_user_id, user.id);
-      newIntermedaire.append(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_role, fei.fei_next_owner_role!);
-      newIntermedaire.append(
-        Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_entity_id,
-        fei.fei_next_owner_entity_id || "",
-      );
-      newIntermedaire.append("route", `/api/action/fei-intermediaire/${newId}`);
-      intermediaireFetcher.submit(newIntermedaire, {
+      const newIntermediaire = mergeFeiIntermediaire({
+        id: newId,
+        fei_numero: fei.numero,
+        fei_intermediaire_user_id: user.id,
+        fei_intermediaire_role: fei.fei_next_owner_role!,
+        fei_intermediaire_entity_id: fei.fei_next_owner_entity_id || "",
+        check_finished_at: null,
+        created_at: dayjs().toISOString(),
+        updated_at: dayjs().toISOString(),
+        commentaire: null,
+        deleted_at: null,
+        handover_at: null,
+        received_at: null,
+      });
+      newIntermediaire.append("route", `/api/fei-intermediaire/${fei.numero}/${newId}`);
+      intermediaireFetcher.submit(newIntermediaire, {
         method: "POST",
         preventScrollReset: true, // Prevent scroll reset on submission
       });
@@ -99,8 +107,8 @@ export default function ConfirmCurrentOwner() {
         className="m-0 bg-white"
       >
         En tant que <b>{getUserRoleLabel(fei.fei_next_owner_role)}</b>
-        {fei.FeiNextEntity?.raison_sociale ? ` (${fei.FeiNextEntity?.raison_sociale})` : ""}, vous pouvez prendre en
-        charge cette FEI et les carcasses associées.
+        {nextOwnerEntity?.raison_sociale ? ` (${nextOwnerEntity?.raison_sociale})` : ""}, vous pouvez prendre en charge
+        cette FEI et les carcasses associées.
         <br />
         <Button type="submit" className="my-4 block" onClick={() => handlePriseEnCharge(false)}>
           Je prends en charge cette FEI et les carcasses associées
@@ -122,10 +130,10 @@ export default function ConfirmCurrentOwner() {
             formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
             formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
-            formData.append("route", `/api/action/fei/${fei.numero}`);
             formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
-            formData.append("step", "fei_action_reject_current_owner" satisfies FeiAction);
-            fetcher.submit(formData, {
+            const nextFei = mergeFei(fei, formData);
+            nextFei.append("route", `/api/fei/${fei.numero}`);
+            fetcher.submit(nextFei, {
               method: "POST",
               preventScrollReset: true, // Prevent scroll reset on submission
             });

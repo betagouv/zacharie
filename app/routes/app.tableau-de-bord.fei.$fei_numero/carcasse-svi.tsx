@@ -40,7 +40,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
   const sviCarcasseFetcher = useFetcher({ key: `svi-carcasse-${carcasse.numero_bracelet}` });
 
   const [showSaisir, setShowSaisir] = useState(!!carcasse?.svi_carcasse_saisie);
-  const [motifsSaisie, setMotifsSaisie] = useState(carcasse?.svi_carcasse_saisie_motif ?? []);
+  const [motifsSaisie, setMotifsSaisie] = useState(carcasse?.svi_carcasse_saisie_motif?.filter(Boolean) ?? []);
   return (
     <Fragment key={carcasse.numero_bracelet}>
       <Notice
@@ -124,7 +124,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
       />
       {canEdit && (
         <sviCarcasseFetcher.Form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`}>
-          <input type="hidden" name="route" value={`/api/action/carcasse/${carcasse.numero_bracelet}`} />
+          <input type="hidden" name="route" value={`/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`} />
           <input
             form={`svi-carcasse-${carcasse.numero_bracelet}`}
             type="hidden"

@@ -4,7 +4,7 @@ import { clientLoader } from "./route";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma } from "@prisma/client";
-import { action as nouvelleCarcasseAction } from "~/routes/api.action.carcasse.$numero_bracelet";
+import { action as nouvelleCarcasseAction } from "~/routes/api.fei-carcasse.$fei_numero.$numero_bracelet";
 import { useIsOnline } from "~/components/OfflineMode";
 
 export default function NouvelleCarcasse() {
@@ -16,23 +16,25 @@ export default function NouvelleCarcasse() {
 
   const error = nouvelleCarcasseFetcher.data?.error;
 
-  const lastNavigation = useRef<string>(nouvelleCarcasseFetcher.data?.data?.numero_bracelet ?? "");
+  const lastNavigation = useRef<string>(nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet ?? "");
   useEffect(() => {
-    const nextBracelet = nouvelleCarcasseFetcher.data?.data?.numero_bracelet;
+    const nextBracelet = nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet;
     if (nextBracelet && lastNavigation.current !== nextBracelet) {
       lastNavigation.current === nextBracelet;
-      navigate(`/app/tableau-de-bord/carcasse/${fei.numero}/${nouvelleCarcasseFetcher.data?.data?.numero_bracelet}`);
+      navigate(
+        `/app/tableau-de-bord/carcasse/${fei.numero}/${nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet}`,
+      );
     }
-  }, [nouvelleCarcasseFetcher.data?.data?.numero_bracelet, fei.numero, navigate]);
+  }, [nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet, fei.numero, navigate]);
 
   return (
     <>
       <nouvelleCarcasseFetcher.Form
         method="POST"
         className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end"
-        key={nouvelleCarcasseFetcher.data?.data?.numero_bracelet}
+        key={nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet}
       >
-        <input type="hidden" name="route" value={`/api/action/carcasse/${numeroBracelet}`} />
+        <input type="hidden" name="route" value={`/api/fei-carcasse/${fei.numero}/${numeroBracelet}`} />
         <input type="hidden" required name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
         <Input
           label="Numéro de bracelet"
@@ -49,7 +51,8 @@ export default function NouvelleCarcasse() {
             required: true,
             name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
             value: numeroBracelet,
-            onChange: (e) => setNumeroBracelet(e.target.value),
+            // replce slash and space by underscore
+            onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, "_")),
           }}
         />
         <Button type="submit">Ajouter une carcasse</Button>

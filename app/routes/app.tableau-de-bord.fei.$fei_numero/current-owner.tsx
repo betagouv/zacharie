@@ -6,7 +6,7 @@ import { getUserRoleLabelPrefixed } from "~/utils/get-user-roles-label";
 import { UserRoles } from "@prisma/client";
 
 export default function CurrentOwner() {
-  const { fei } = useLoaderData<typeof clientLoader>();
+  const { fei, currentOwnerUser, currentOwnerEntity } = useLoaderData<typeof clientLoader>();
 
   if (fei.svi_signed_at) {
     return (
@@ -32,20 +32,19 @@ export default function CurrentOwner() {
       >
         Cette FEI est présentement sous la responsabilité
         <b> {getUserRoleLabelPrefixed(fei.fei_current_owner_role as UserRoles)}</b>.<br />
-        {fei.FeiCurrentEntity?.raison_sociale && (
+        {currentOwnerEntity?.raison_sociale && (
           <>
-            <b>{fei.FeiCurrentEntity.raison_sociale}</b> - {fei.FeiCurrentEntity.code_postal}{" "}
-            {fei.FeiCurrentEntity.ville}
+            <b>{currentOwnerEntity.raison_sociale}</b> - {currentOwnerEntity.code_postal} {currentOwnerEntity.ville}
             <br />
           </>
         )}
-        {fei.FeiCurrentUser?.prenom && (
+        {currentOwnerUser?.prenom && (
           <>
             <b>
-              {fei.FeiCurrentUser.prenom} {fei.FeiCurrentUser.nom_de_famille}
+              {currentOwnerUser.prenom} {currentOwnerUser.nom_de_famille}
             </b>
             {" - "}
-            {fei.FeiCurrentUser.code_postal} {fei.FeiCurrentUser.ville}
+            {currentOwnerUser.code_postal} {currentOwnerUser.ville}
             <br />
           </>
         )}

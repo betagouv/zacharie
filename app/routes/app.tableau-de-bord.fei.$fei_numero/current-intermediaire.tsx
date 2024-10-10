@@ -11,18 +11,35 @@ import SelectNextOwner from "./select-next-owner";
 import CarcassesIntermediaire from "./carcasses-intermediaire";
 import type { SerializeFrom } from "@remix-run/node";
 import EntityNotEditable from "~/components/EntityNotEditable";
+import { mergeFeiIntermediaire } from "~/db/fei-intermediaire.client";
 
 export default function FEICurrentIntermediaire() {
-  const { fei, user } = useLoaderData<typeof clientLoader>();
+  const { fei, user, inetermediairesPopulated, carcasses } = useLoaderData<typeof clientLoader>();
 
   const [intermediaireIndex, setIntermediaireIndex] = useState(0);
-  const intermediaire = fei.FeiIntermediaires[intermediaireIndex];
+  const intermediaire = inetermediairesPopulated[intermediaireIndex];
   const priseEnChargeFetcher = useFetcher({ key: "prise-en-charge" });
 
-  const carcassesUnsorted = fei.Carcasses;
+  const canEdit = useMemo(() => {
+    if (fei.fei_current_owner_user_id !== user.id) {
+      return false;
+    }
+    if (!intermediaire) {
+      return false;
+    }
+    if (intermediaire.fei_intermediaire_user_id !== user.id) {
+      return false;
+    }
+    if (intermediaire.check_finished_at) {
+      return false;
+    }
+    return true;
+  }, [fei, user, intermediaire]);
+
+  const carcassesUnsorted = carcasses;
   const carcassesSorted = useMemo(() => {
     const intermediaireCheckById: Record<string, SerializeFrom<CarcasseIntermediaire>> = {};
-    for (const intermediaireCheck of intermediaire.CarcasseIntermediaire) {
+    for (const intermediaireCheck of Object.values(intermediaire.carcasses).filter((c) => c != null)) {
       intermediaireCheckById[intermediaireCheck.fei_numero__bracelet__intermediaire_id] = intermediaireCheck;
     }
     const carcassesApproved: Record<string, SerializeFrom<Carcasse>> = {};
@@ -53,22 +70,6 @@ export default function FEICurrentIntermediaire() {
     };
   }, [carcassesUnsorted, intermediaire, fei]);
 
-  const canEdit = useMemo(() => {
-    if (fei.fei_current_owner_user_id !== user.id) {
-      return false;
-    }
-    if (!intermediaire) {
-      return false;
-    }
-    if (intermediaire.fei_intermediaire_user_id !== user.id) {
-      return false;
-    }
-    if (intermediaire.check_finished_at) {
-      return false;
-    }
-    return true;
-  }, [fei, user, intermediaire]);
-
   const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
 
   const needSelectNextUser = useMemo(() => {
@@ -78,12 +79,19 @@ export default function FEICurrentIntermediaire() {
     if (!intermediaire.check_finished_at) {
       return false;
     }
-    const latestIntermediaire = fei.FeiIntermediaires[0];
+    const latestIntermediaire = inetermediairesPopulated[0];
     if (latestIntermediaire.id !== intermediaire.id) {
       return false;
     }
     return true;
-  }, [fei, user, intermediaire]);
+  }, [fei, user, intermediaire, inetermediairesPopulated]);
+
+  console.log("needSelectNextUser", needSelectNextUser, {
+    "fei.fei_current_owner_user_id !== user.id": fei.fei_current_owner_user_id !== user.id,
+    "intermediaire.check_finished_at": intermediaire.check_finished_at,
+    "latestIntermediaire.id !== intermediaire.id": inetermediairesPopulated[0].id !== intermediaire.id,
+    latestIntermediaire: inetermediairesPopulated[0],
+  });
 
   const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
   const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(
@@ -123,75 +131,91 @@ export default function FEICurrentIntermediaire() {
             <li>
               <span className="fr-breadcrumb__link !bg-none !no-underline">Premier Détenteur</span>
             </li>
-            {fei.FeiIntermediaires.map((_intermediaire, index) => {
-              return (
-                <li key={_intermediaire.id}>
-                  <button
-                    onClick={() => setIntermediaireIndex(index)}
-                    className="fr-breadcrumb__link"
-                    aria-current={_intermediaire.id === intermediaire.id ? "step" : false}
-                  >
-                    {_intermediaire.FeiIntermediaireEntity.raison_sociale}
-                  </button>
-                </li>
-              );
-            }).reverse()}
+            {inetermediairesPopulated
+              .map((_intermediaire, index) => {
+                return (
+                  <li key={_intermediaire.id}>
+                    <button
+                      onClick={() => setIntermediaireIndex(index)}
+                      className="fr-breadcrumb__link"
+                      aria-current={_intermediaire.id === intermediaire.id ? "step" : false}
+                    >
+                      {_intermediaire.entity?.raison_sociale}
+                    </button>
+                  </li>
+                );
+              })
+              .reverse()}
           </ol>
         </div>
       </nav>
       <Accordion titleAs="h3" label={`Identité de l'intermédaire ${canEdit ? "🔒" : ""}`}>
-        <EntityNotEditable user={intermediaire.FeiIntermediaireUser} entity={intermediaire.FeiIntermediaireEntity} />
+        <EntityNotEditable user={intermediaire.user!} entity={intermediaire.entity!} />
       </Accordion>
-      {/* <Accordion
-        titleAs="h3"
-        label={`Carcasses (${carcassesUnsorted.length})`}
-        expanded={carcassesAValiderExpanded}
-        onExpandedChange={setCarcassesAValiderExpanded}
-      >
-        <CarcassesIntermediaire canEdit={canEdit} carcasses={carcassesUnsorted} />
-      </Accordion> */}
-      {carcassesSorted.carcassesToCheck.length > 0 && (
+      {canEdit ? (
         <Accordion
           titleAs="h3"
-          label={`Carcasses à vérifier (${carcassesSorted.carcassesToCheck.length})`}
+          label={`Carcasses à vérifier (${carcassesUnsorted.length})`}
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >
-          <CarcassesIntermediaire canEdit={canEdit} carcasses={carcassesSorted.carcassesToCheck} />
+          <CarcassesIntermediaire canEdit={canEdit} intermediaire={intermediaire} carcasses={carcasses} />
         </Accordion>
+      ) : (
+        <>
+          <Accordion
+            titleAs="h3"
+            label={`Carcasses acceptées (${carcassesSorted.carcassesApproved.length})`}
+            expanded={carcassesAccepteesExpanded}
+            onExpandedChange={setCarcassesAccepteesExpanded}
+          >
+            {carcassesSorted.carcassesApproved.length === 0 ? (
+              <p>Pas de carcasse acceptée</p>
+            ) : (
+              <CarcassesIntermediaire
+                canEdit={canEdit}
+                intermediaire={intermediaire}
+                carcasses={carcassesSorted.carcassesApproved}
+              />
+            )}
+          </Accordion>
+          <Accordion
+            titleAs="h3"
+            label={`Carcasses rejetées (${carcassesSorted.carcassesRefused.length})`}
+            expanded={carcassesRefuseesExpanded}
+            onExpandedChange={setCarcassesRefuseesExpanded}
+          >
+            {carcassesSorted.carcassesRefused.length === 0 ? (
+              <p>Pas de carcasse refusée</p>
+            ) : (
+              <CarcassesIntermediaire
+                canEdit={canEdit}
+                intermediaire={intermediaire}
+                carcasses={carcassesSorted.carcassesRefused}
+              />
+            )}
+          </Accordion>
+        </>
       )}
-      <Accordion
-        titleAs="h3"
-        label={`Carcasses acceptées (${carcassesSorted.carcassesApproved.length})`}
-        expanded={carcassesAccepteesExpanded}
-        onExpandedChange={setCarcassesAccepteesExpanded}
-      >
-        {carcassesSorted.carcassesApproved.length === 0 ? (
-          <p>Pas de carcasse acceptée</p>
-        ) : (
-          <CarcassesIntermediaire canEdit={canEdit} carcasses={carcassesSorted.carcassesApproved} />
-        )}
-      </Accordion>
-      <Accordion
-        titleAs="h3"
-        label={`Carcasses rejetées (${carcassesSorted.carcassesRefused.length})`}
-        expanded={carcassesRefuseesExpanded}
-        onExpandedChange={setCarcassesRefuseesExpanded}
-      >
-        {carcassesSorted.carcassesRefused.length === 0 ? (
-          <p>Pas de carcasse refusée</p>
-        ) : (
-          <CarcassesIntermediaire canEdit={canEdit} carcasses={carcassesSorted.carcassesRefused} />
-        )}
-      </Accordion>
       <Accordion titleAs="h3" label="Prise en charge des carcasses acceptées" defaultExpanded key={intermediaire.id}>
-        <priseEnChargeFetcher.Form method="POST" id="form_intermediaire_check_finished_at">
-          <input
-            form="form_intermediaire_check_finished_at"
-            type="hidden"
-            name="route"
-            value={`/api/action/fei-intermediaire/${intermediaire.id}`}
-          />
+        <priseEnChargeFetcher.Form
+          method="POST"
+          id="form_intermediaire_check_finished_at"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const nextFormIntermediaire = new FormData(e.currentTarget);
+            nextFormIntermediaire.append(
+              Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
+              new Date().toISOString(),
+            );
+            const nextIntermediaire = mergeFeiIntermediaire(intermediaire, nextFormIntermediaire) as FormData;
+            nextIntermediaire.append("route", `/api/fei-intermediaire/${fei.numero}/${intermediaire.id}`);
+            priseEnChargeFetcher.submit(nextIntermediaire, {
+              method: "POST",
+              preventScrollReset: true,
+            });
+          }}
+        >
           <input
             form="form_intermediaire_check_finished_at"
             type="hidden"

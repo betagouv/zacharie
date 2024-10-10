@@ -6,7 +6,21 @@ export default function UserNtEditable({
   user = null,
   withCfei = false,
 }: {
-  user: null | SerializeFrom<User>;
+  user:
+    | null
+    | SerializeFrom<User>
+    | Pick<
+        User,
+        | "nom_de_famille"
+        | "prenom"
+        | "telephone"
+        | "email"
+        | "addresse_ligne_1"
+        | "addresse_ligne_2"
+        | "code_postal"
+        | "ville"
+        | "numero_cfei"
+      >;
   withCfei?: boolean;
 }) {
   return (

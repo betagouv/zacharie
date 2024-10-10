@@ -7,10 +7,15 @@ import { useFetcher, useLoaderData } from "@remix-run/react";
 import { UserRoles, Entity, User, Prisma } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { getUserRoleLabel, getUserRoleLabelPlural } from "~/utils/get-user-roles-label";
-import type { FeiAction } from "~/db/fei.client";
+import { mergeFei } from "~/db/fei.client";
 
 export default function SelectNextOwner() {
-  const { user, ccgs, collecteursPro, etgs, svis, fei } = useLoaderData<typeof clientLoader>();
+  const {
+    user,
+    relationsCatalog: { ccgs, collecteursPro, etgs, svis },
+    inetermediairesPopulated,
+    fei,
+  } = useLoaderData<typeof clientLoader>();
   const [nextRole, setNextRole] = useState<UserRoles | "">(() => {
     if (fei.fei_next_owner_role) {
       return fei.fei_next_owner_role;
@@ -126,7 +131,7 @@ export default function SelectNextOwner() {
     if (fei.fei_current_owner_role !== UserRoles.ETG) {
       return false;
     }
-    const latestIntermediaire = fei.FeiIntermediaires[0];
+    const latestIntermediaire = inetermediairesPopulated[0];
     if (!latestIntermediaire) {
       return false;
     }
@@ -137,7 +142,7 @@ export default function SelectNextOwner() {
       return false;
     }
     return true;
-  }, [fei]);
+  }, [fei.fei_current_owner_role, inetermediairesPopulated]);
 
   if (user.id !== fei.fei_current_owner_user_id) {
     return null;
@@ -151,10 +156,22 @@ export default function SelectNextOwner() {
 
   return (
     <>
-      <nextOwnerFetcher.Form id="select-next-owner" preventScrollReset method="POST">
-        <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
-        <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
-        <input type="hidden" name="step" value={"fei_action_next_role" satisfies FeiAction} />
+      <nextOwnerFetcher.Form
+        id="select-next-owner"
+        preventScrollReset
+        method="POST"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const formData = new FormData(event.currentTarget);
+          const nextFei = mergeFei(fei, formData);
+          nextFei.append("route", `/api/fei/${fei.numero}`);
+          console.log({ nextFei });
+          nextOwnerFetcher.submit(nextFei, {
+            method: "POST",
+            preventScrollReset: true,
+          });
+        }}
+      >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <div className="fr-fieldset__element">
           <Select

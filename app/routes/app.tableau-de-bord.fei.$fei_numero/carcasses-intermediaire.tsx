@@ -1,6 +1,7 @@
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import { clientLoader } from "./route";
+import { type CarcasseIntermediaireActionData } from "~/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Prisma, Carcasse } from "@prisma/client";
@@ -9,6 +10,7 @@ import dayjs from "dayjs";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import type { SerializeFrom } from "@remix-run/node";
 import InputForSearchPrefilledData from "~/components/InputForSearchPrefilledData";
+import { mergeCarcasseIntermediaire } from "~/db/carcasse-intermediaire.client";
 
 const style = {
   boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
@@ -17,16 +19,18 @@ const style = {
 export default function CarcassesIntermediaire({
   canEdit,
   carcasses,
+  intermediaire,
 }: {
   canEdit: boolean;
   carcasses: SerializeFrom<Carcasse>[];
+  intermediaire: SerializeFrom<typeof clientLoader>["inetermediairesPopulated"][0];
 }) {
   return (
     <>
       {carcasses.map((carcasse, index, array) => {
         return (
           <Fragment key={carcasse.numero_bracelet}>
-            <CarcasseAVerifier canEdit={canEdit} carcasse={carcasse} />
+            <CarcasseAVerifier intermediaire={intermediaire} canEdit={canEdit} carcasse={carcasse} />
             {index < array.length - 1 && <hr />}
           </Fragment>
         );
@@ -38,20 +42,58 @@ export default function CarcassesIntermediaire({
 interface CarcasseAVerifierProps {
   carcasse: SerializeFrom<Carcasse>;
   canEdit: boolean;
+  intermediaire: SerializeFrom<typeof clientLoader>["inetermediairesPopulated"][0];
 }
 
-function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
+function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifierProps) {
   const { fei } = useLoaderData<typeof clientLoader>();
-  const intermediaireCarcasseFetcher = useFetcher({ key: `intermediaire-carcasse-${carcasse.numero_bracelet}` });
-  const intermediaire = fei.FeiIntermediaires[0];
-  const intermediaireCarcasse = intermediaire.CarcasseIntermediaire.find(
-    (_intermediaireCarcasse) => _intermediaireCarcasse.numero_bracelet === carcasse.numero_bracelet,
-  );
+  const intermediaireCarcasseFetcher = useFetcher<CarcasseIntermediaireActionData>({
+    key: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+  });
+  const formRef = useRef<HTMLFormElement>(null);
+  const carcasseFetcher = useFetcher({ key: `carcasse-from-intermediaire-${carcasse.numero_bracelet}` });
 
-  const [showRefuser, setShowRefuser] = useState(!!intermediaireCarcasse?.refus);
-  const [refus, setRefus] = useState(intermediaireCarcasse?.refus ?? "");
+  const intermediaireCarcasse = useMemo(() => {
+    if (intermediaireCarcasseFetcher.state === "loading") {
+      if (intermediaireCarcasseFetcher.data?.data?.carcasseIntermediaire) {
+        return intermediaireCarcasseFetcher.data.data.carcasseIntermediaire;
+      }
+    }
+    return (
+      intermediaire.carcasses[carcasse.numero_bracelet] ?? {
+        fei_numero__bracelet__intermediaire_id: `${fei.numero}__${carcasse.numero_bracelet}__${intermediaire.id}`,
+        fei_numero: fei.numero,
+        numero_bracelet: carcasse.numero_bracelet,
+        fei_intermediaire_id: intermediaire.id,
+        fei_intermediaire_user_id: intermediaire.fei_intermediaire_user_id,
+        fei_intermediaire_entity_id: intermediaire.fei_intermediaire_entity_id,
+        created_at: dayjs().toISOString(),
+        updated_at: dayjs().toISOString(),
+        prise_en_charge: null,
+        refus: null,
+        commentaire: null,
+        carcasse_check_finished_at: null,
+        deleted_at: null,
+      }
+    );
+  }, [intermediaire, carcasse, fei, intermediaireCarcasseFetcher.state, intermediaireCarcasseFetcher.data]);
+
+  console.log({ intermediaireCarcasse, carcasse, intermediaireCarcasseFetcher });
+
+  const [showRefuser, setShowRefuser] = useState(!!intermediaireCarcasse.refus);
+  const [refus, setRefus] = useState(intermediaireCarcasse.refus ?? "");
+
   return (
-    <Fragment key={carcasse.numero_bracelet}>
+    <div
+      key={carcasse.numero_bracelet}
+      className={[
+        "border-4 border-transparent p-4",
+        !!intermediaireCarcasse.refus && "!border-red-500",
+        intermediaireCarcasse.prise_en_charge && "!border-action-high-blue-france",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <Notice
         className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\_\_title]:!block [&_p.fr-notice\_\_title]:before:hidden"
         key={carcasse.numero_bracelet}
@@ -84,7 +126,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                       {carcasse.examinateur_anomalies_abats.map((anomalie) => {
                         return (
                           <>
-                            <span className="m-0 ml-2 block font-bold">{anomalie}</span>
+                            <span className="m-0 ml-2 block font-normal">{anomalie}</span>
                           </>
                         );
                       })}
@@ -100,19 +142,29 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                       {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
                         return (
                           <>
-                            <span className="m-0 ml-2 block font-bold">{anomalie}</span>
+                            <span className="m-0 ml-2 block font-normal">{anomalie}</span>
                           </>
                         );
                       })}
                     </>
                   )}
                 </>
-                {!canEdit && intermediaireCarcasse?.commentaire && (
+                {!canEdit && intermediaireCarcasse.refus && (
+                  <>
+                    <br />
+                    <span className="m-0 block font-bold">
+                      Motif du refus de l'examinateur&nbsp;:&nbsp;
+                      <br />
+                      <span className="m-0 ml-2 block font-normal">{intermediaireCarcasse.refus}</span>
+                    </span>
+                  </>
+                )}
+                {!canEdit && intermediaireCarcasse.commentaire && (
                   <>
                     <br />
                     <span className="m-0 block font-bold">
                       Commentaire de l'examinateur&nbsp;:&nbsp;
-                      <span className="m-0 font-normal">{intermediaireCarcasse?.commentaire}</span>
+                      <span className="m-0 font-normal">{intermediaireCarcasse.commentaire}</span>
                     </span>
                   </>
                 )}
@@ -129,21 +181,9 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
       {canEdit && (
         <intermediaireCarcasseFetcher.Form
           method="POST"
+          ref={formRef}
           id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-          onBlur={(e) => {
-            console.log("submit or what");
-            const form = new FormData(e.currentTarget);
-            intermediaireCarcasseFetcher.submit(form, {
-              method: "POST",
-              preventScrollReset: true,
-            });
-          }}
         >
-          <input
-            type="hidden"
-            name="route"
-            value={`/api/action/carcasse-suivi/${carcasse.numero_bracelet}/${intermediaire.id}`}
-          />
           <input
             form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
             type="hidden"
@@ -182,18 +222,6 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
           />
           {!showRefuser ? (
             <>
-              <input
-                form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-                type="hidden"
-                name={Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge}
-                value="true"
-              />
-              <input
-                form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-                type="hidden"
-                name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
-                value=""
-              />
               <div className="fr-fieldset__element">
                 <Input
                   label="Commentaire"
@@ -202,14 +230,29 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                   nativeTextAreaProps={{
                     name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
                     form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                    defaultValue: intermediaireCarcasse?.commentaire || "",
+                    defaultValue: intermediaireCarcasse.commentaire || "",
+                    onBlur: (e) => {
+                      console.log("submit comment");
+                      const form = new FormData();
+                      form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire, e.target.value);
+                      console.log("form", Object.fromEntries(form));
+                      const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
+                      nextIntermediaire.append(
+                        "route",
+                        `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+                      );
+                      intermediaireCarcasseFetcher.submit(nextIntermediaire, {
+                        method: "POST",
+                        preventScrollReset: true,
+                      });
+                    },
                   }}
                 />
               </div>
               <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
                 <ButtonsGroup
                   buttons={
-                    intermediaireCarcasse?.prise_en_charge
+                    intermediaireCarcasse.prise_en_charge
                       ? [
                           {
                             children: "Refuser",
@@ -226,6 +269,51 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                             type: "submit",
                             nativeButtonProps: {
                               form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                              onClick: (e) => {
+                                console.log("submit accept");
+                                e.preventDefault();
+                                const form = new FormData(formRef.current!);
+                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, "");
+                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge, "true");
+
+                                const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
+                                nextIntermediaire.append(
+                                  "route",
+                                  `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+                                );
+                                intermediaireCarcasseFetcher.submit(nextIntermediaire, {
+                                  method: "POST",
+                                  preventScrollReset: true,
+                                });
+
+                                // we do it server side too, to make sure good thiings happen
+                                // but we do it client side too to simplify code offline mode
+                                const carcasseForm = new FormData();
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire,
+                                  "",
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif,
+                                  "",
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id,
+                                  "",
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at,
+                                  "",
+                                );
+                                carcasseForm.append(
+                                  "route",
+                                  `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`,
+                                );
+                                carcasseFetcher.submit(carcasseForm, {
+                                  method: "POST",
+                                  preventScrollReset: true,
+                                });
+                              },
                             },
                           },
                           {
@@ -245,43 +333,48 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
               <input
                 form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
                 type="hidden"
-                name={Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge}
-                value="false"
-              />
-              <input
-                form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-                type="hidden"
                 name={Prisma.CarcasseIntermediaireScalarFieldEnum.refus}
                 value={refus}
               />
-              <div className="fr-fieldset__element">
-                <InputForSearchPrefilledData
-                  canEdit
-                  data={refusIntermedaire}
-                  label="Motif du refus"
-                  hideDataWhenNoSearch={false}
-                  required
-                  placeholder="Tapez un motif de refus"
-                  onSelect={setRefus}
-                  defaultValue={refus ?? ""}
-                />
-              </div>
-              <div className="fr-fieldset__element">
-                <Input
-                  label="Commentaire"
-                  hintText="Un commentaire à ajouter ?"
-                  textArea
-                  nativeTextAreaProps={{
-                    name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
-                    form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                    defaultValue: intermediaireCarcasse?.commentaire || "",
-                  }}
-                />
-              </div>
+              <InputForSearchPrefilledData
+                canEdit
+                data={refusIntermedaire}
+                label="Motif du refus"
+                hideDataWhenNoSearch={false}
+                required
+                placeholder="Tapez un motif de refus"
+                onSelect={setRefus}
+                defaultValue={refus ?? ""}
+              />
+              <Input
+                label="Commentaire"
+                hintText="Un commentaire à ajouter ?"
+                textArea
+                nativeTextAreaProps={{
+                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
+                  form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                  defaultValue: intermediaireCarcasse.commentaire || "",
+                  onBlur: (e) => {
+                    console.log("submit comment");
+                    const form = new FormData();
+                    form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire, e.target.value);
+                    console.log("form", Object.fromEntries(form));
+                    const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
+                    nextIntermediaire.append(
+                      "route",
+                      `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+                    );
+                    intermediaireCarcasseFetcher.submit(nextIntermediaire, {
+                      method: "POST",
+                      preventScrollReset: true,
+                    });
+                  },
+                }}
+              />
               <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
                 <ButtonsGroup
                   buttons={
-                    intermediaireCarcasse?.refus
+                    intermediaireCarcasse.refus
                       ? [
                           {
                             children: "Annuler",
@@ -298,6 +391,51 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                             type: "submit",
                             nativeButtonProps: {
                               form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                              onClick: (e) => {
+                                console.log("submit refus");
+                                e.preventDefault();
+                                const form = new FormData(formRef.current!);
+                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, refus);
+                                form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge, "false");
+                                const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
+                                nextIntermediaire.append(
+                                  "route",
+                                  `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+                                );
+                                console.log("nextIntermediaire", Object.fromEntries(nextIntermediaire));
+                                intermediaireCarcasseFetcher.submit(nextIntermediaire, {
+                                  method: "POST",
+                                  preventScrollReset: true,
+                                });
+
+                                // we do it server side too, to make sure good thiings happen
+                                // but we do it client side too to simplify code offline mode
+                                const carcasseForm = new FormData();
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire,
+                                  form.get(Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire) as string,
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif,
+                                  form.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus) as string,
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id,
+                                  intermediaire.id,
+                                );
+                                carcasseForm.append(
+                                  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at,
+                                  new Date().toISOString(),
+                                );
+                                carcasseForm.append(
+                                  "route",
+                                  `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`,
+                                );
+                                carcasseFetcher.submit(carcasseForm, {
+                                  method: "POST",
+                                  preventScrollReset: true,
+                                });
+                              },
                             },
                           },
                           {
@@ -316,6 +454,6 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
           )}
         </intermediaireCarcasseFetcher.Form>
       )}
-    </Fragment>
+    </div>
   );
 }

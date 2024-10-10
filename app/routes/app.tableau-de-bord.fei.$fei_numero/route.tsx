@@ -16,10 +16,10 @@ import FeiTransfer from "./transfer-current-owner";
 import FEICurrentIntermediaire from "./current-intermediaire";
 import FEI_SVI from "./svi";
 import FEIExaminateurInitial from "./examinateur-initial";
-import { type FeiLoaderData } from "~/routes/api.loader.fei.$fei_numero";
-import { type FeiActionData } from "~/routes/api.action.fei.$fei_numero";
-import { type MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
+import { type FeiActionData } from "~/routes/api.fei.$fei_numero";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
+import { loadFei } from "~/db/fei.client";
+import { type MyRelationsLoaderData } from "~/routes/api.loader.my-relations";
 
 export function meta({ params }: MetaArgs) {
   return [
@@ -32,6 +32,11 @@ export function meta({ params }: MetaArgs) {
 export async function clientAction({ request }: ClientActionFunctionArgs) {
   const formData = await request.formData();
   console.log("fei route formdata", Object.fromEntries(formData.entries()));
+  for (const key of formData.keys()) {
+    if (formData.get(key) === "null") {
+      formData.set(key, "");
+    }
+  }
   const route = formData.get("route") as string;
   if (!route) {
     return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
@@ -56,16 +61,6 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   if (!user) {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
-  const loaderData = (await fetch(`${import.meta.env.VITE_API_URL}/api/loader/fei/${params.fei_numero}`, {
-    method: "GET",
-    credentials: "include",
-    headers: new Headers({
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    }),
-  }).then((res) => res.json())) as FeiLoaderData;
-
-  console.log("loaderData", loaderData);
 
   const myRelationsData = (await fetch(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`, {
     method: "GET",
@@ -77,13 +72,22 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   }).then((res) => res.json())) as MyRelationsLoaderData;
 
   return json({
-    ...loaderData.data!,
-    ...myRelationsData.data!,
+    ...(await loadFei(params.fei_numero!)),
+    user,
+    relationsCatalog: {
+      detenteursInitiaux: myRelationsData.data?.detenteursInitiaux || [],
+      // examinateursInitiaux: myRelationsData.data?.examinateursInitiaux || [],
+      ccgs: myRelationsData.data?.ccgs || [],
+      collecteursPro: myRelationsData.data?.collecteursPro || [],
+      etgs: myRelationsData.data?.etgs || [],
+      svis: myRelationsData.data?.svis || [],
+      entitiesUserIsWorkingFor: myRelationsData.data?.entitiesUserIsWorkingFor || [],
+    },
   });
 }
 
 export default function Fei() {
-  const { fei, user } = useLoaderData<typeof clientLoader>();
+  const { fei, user, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
 
   const doneEmoji = "✅ ";
 
@@ -152,12 +156,7 @@ export default function Fei() {
         if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
           setSelectedTabId(UserRoles.EXAMINATEUR_INITIAL);
         }
-        if (
-          [UserRoles.COLLECTEUR_PRO, UserRoles.CCG, UserRoles.ETG].includes(
-            // @ts-expect-error - TS doesn't know that the following roles are valid tabIds
-            fei.fei_current_owner_role,
-          )
-        ) {
+        if ([UserRoles.COLLECTEUR_PRO, UserRoles.CCG, UserRoles.ETG].includes(fei.fei_current_owner_role)) {
           setSelectedTabId("Intermédiaires");
         }
         if (fei.fei_current_owner_role === UserRoles.SVI) {
@@ -181,12 +180,12 @@ export default function Fei() {
   }, [fei.fei_next_owner_role, fei.fei_next_owner_user_id, user.id]);
 
   const intermediaireTabDisabled = useMemo(() => {
-    const intermediaire = fei.FeiIntermediaires?.[0];
+    const intermediaire = inetermediairesPopulated?.[0];
     if (!intermediaire) {
       return true;
     }
     return false;
-  }, [fei.FeiIntermediaires]);
+  }, [inetermediairesPopulated]);
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">

@@ -5,6 +5,7 @@ import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { clientLoader } from "./route";
 import SelectPremierDetenteur from "./select-next-premier-detenteur";
+import { mergeFei } from "~/db/fei.client";
 
 export default function FeiTransfer() {
   const { user, fei } = useLoaderData<typeof clientLoader>();
@@ -31,9 +32,12 @@ export default function FeiTransfer() {
           onClick={() => {
             const formData = new FormData();
             formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer, "false");
-            formData.append("route", `/api/action/fei/${fei.numero}`);
-            formData.append(Prisma.FeiScalarFieldEnum.numero, fei.numero);
-            fetcher.submit(formData, {
+            formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
+            formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_role, "");
+            formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
+            const nextFei = mergeFei(fei, formData);
+            nextFei.append("route", `/api/fei/${fei.numero}`);
+            fetcher.submit(nextFei, {
               method: "POST",
               preventScrollReset: true, // Prevent scroll reset on submission
             });

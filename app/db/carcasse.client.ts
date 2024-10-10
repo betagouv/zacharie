@@ -1,134 +1,92 @@
-import { type Fei, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
-import type { FeiWithRelations } from "./fei.server";
-import type { CarcasseLoaderData } from "~/routes/api.loader.carcasse.$fei_numero.$numero_bracelet";
-import type { CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
-import type { SuiviCarcasseActionData } from "~/routes/api.action.carcasse-suivi.$numero_bracelet.$intermediaire_id";
+// import * as zodSchemas from "prisma/generated/zod";
+import { Prisma, type Carcasse } from "@prisma/client";
+import { SerializeFrom } from "@remix-run/node";
+import dayjs from "dayjs";
 
-export function formatCarcasseOfflineActionReturn(
-  carcasseFormData: FormData,
-  originalCarcasse: CarcasseActionData["data"] | FeiWithRelations["Carcasses"][0] | null,
-): CarcasseActionData {
-  const getFormValue = (key: keyof Carcasse) => {
-    const value = carcasseFormData.get(key);
-    return value !== null ? value.toString() : null;
-  };
-
-  const getFormArray = (key: keyof Carcasse) => {
-    return carcasseFormData.getAll(key).map(String);
-  };
-
-  return {
-    ok: true,
-    error: "",
-    data: {
-      numero_bracelet: getFormValue("numero_bracelet")!,
-      fei_numero: getFormValue("fei_numero")!,
-      heure_mise_a_mort: getFormValue("heure_mise_a_mort") ?? originalCarcasse?.heure_mise_a_mort ?? null,
-      heure_evisceration: getFormValue("heure_evisceration") ?? originalCarcasse?.heure_evisceration ?? null,
-      espece: getFormValue("espece") ?? originalCarcasse?.espece ?? null,
-      categorie: getFormValue("categorie") ?? originalCarcasse?.categorie ?? null,
-      examinateur_carcasse_sans_anomalie: getFormValue("examinateur_carcasse_sans_anomalie") === "true",
-      examinateur_anomalies_carcasse:
-        getFormArray("examinateur_anomalies_carcasse").length > 0
-          ? getFormArray("examinateur_anomalies_carcasse")
-          : originalCarcasse?.examinateur_anomalies_carcasse || [],
-      examinateur_anomalies_abats:
-        getFormArray("examinateur_anomalies_abats").length > 0
-          ? getFormArray("examinateur_anomalies_abats")
-          : originalCarcasse?.examinateur_anomalies_abats || [],
-      examinateur_commentaire:
-        getFormValue("examinateur_commentaire") ?? originalCarcasse?.examinateur_commentaire ?? null,
-      examinateur_signed_at:
-        (getFormValue("examinateur_signed_at") as unknown as Date) ?? originalCarcasse?.examinateur_signed_at ?? null,
-      intermediaire_carcasse_refus_intermediaire_id:
-        getFormValue("intermediaire_carcasse_refus_intermediaire_id") ??
-        originalCarcasse?.intermediaire_carcasse_refus_intermediaire_id ??
-        null,
-      intermediaire_carcasse_refus_motif:
-        getFormValue("intermediaire_carcasse_refus_motif") ??
-        originalCarcasse?.intermediaire_carcasse_refus_motif ??
-        null,
-      intermediaire_carcasse_signed_at:
-        (getFormValue("intermediaire_carcasse_signed_at") as unknown as Date) ??
-        originalCarcasse?.intermediaire_carcasse_signed_at ??
-        null,
-      intermediaire_carcasse_commentaire:
-        getFormValue("intermediaire_carcasse_commentaire") ??
-        originalCarcasse?.intermediaire_carcasse_commentaire ??
-        null,
-      svi_carcasse_saisie: originalCarcasse?.svi_carcasse_saisie ?? null,
-      svi_carcasse_saisie_motif: originalCarcasse?.svi_carcasse_saisie_motif || [],
-      svi_carcasse_saisie_at: originalCarcasse?.svi_carcasse_saisie_at ?? null,
-      svi_carcasse_signed_at: originalCarcasse?.svi_carcasse_signed_at ?? null,
-      svi_carcasse_commentaire: originalCarcasse?.svi_carcasse_commentaire ?? null,
-      created_at: originalCarcasse?.created_at ?? new Date(),
-      updated_at: new Date(),
-      deleted_at: originalCarcasse?.deleted_at ?? null,
-    },
-  };
-}
-
-export function formatCarcasseOfflineLoaderReturn(carcasse: Carcasse, fei: Fei): CarcasseLoaderData {
-  return {
-    ok: true,
-    data: {
-      carcasse: {
-        ...carcasse,
-        Fei: fei,
-      },
-      fei: fei,
-    },
-    error: "",
-  };
-}
-
-export function formatSuiviCarcasseByIntermediaire(
-  carcasseIntermediaire: CarcasseIntermediaire,
-): SuiviCarcasseActionData {
-  return {
-    ok: true,
-    data: {
-      ...carcasseIntermediaire,
-      carcasse_check_finished_at: new Date(),
-    },
-    error: "",
-  };
-}
-
-export function insertSuiviCarcasseByIntermediaireInFei(
-  carcasseIntermediaire: CarcasseIntermediaire,
-  fei: FeiWithRelations,
-): FeiWithRelations {
-  return {
-    ...fei,
-    FeiIntermediaires: fei.FeiIntermediaires.map((intermediaire) => {
-      if (intermediaire.id !== carcasseIntermediaire.fei_intermediaire_id) {
-        return intermediaire;
+export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: FormData): SerializeFrom<Carcasse> {
+  if (newItem) {
+    for (const key of newItem?.keys() ?? []) {
+      if (newItem?.get(key) === undefined) {
+        newItem!.delete(key);
       }
-      const existingCarcasseIntermediaire = intermediaire.CarcasseIntermediaire.find(
-        (ci) =>
-          ci.fei_numero__bracelet__intermediaire_id === carcasseIntermediaire.fei_numero__bracelet__intermediaire_id,
-      );
-      if (existingCarcasseIntermediaire) {
-        return {
-          ...intermediaire,
-          CarcasseIntermediaire: intermediaire.CarcasseIntermediaire.map((ci) => {
-            if (
-              ci.fei_numero__bracelet__intermediaire_id !== carcasseIntermediaire.fei_numero__bracelet__intermediaire_id
-            ) {
-              return ci;
-            }
-            return {
-              ...ci,
-              ...carcasseIntermediaire,
-            };
-          }),
-        };
-      }
-      return {
-        ...intermediaire,
-        CarcasseIntermediaire: [...intermediaire.CarcasseIntermediaire, carcasseIntermediaire],
-      };
-    }),
+    }
+  }
+  const mergedItem: SerializeFrom<Carcasse> = {
+    ...oldItem,
+    ...Object.fromEntries(newItem!),
   };
+
+  console.log({
+    oldItem,
+    newItem: Object.fromEntries(newItem!),
+    mergedItem,
+  });
+
+  // Explicitly handle each field, including optional ones
+  const result = {
+    numero_bracelet: mergedItem.numero_bracelet,
+    fei_numero: mergedItem.fei_numero,
+    heure_mise_a_mort: mergedItem.heure_mise_a_mort || null,
+    heure_evisceration: mergedItem.heure_evisceration || null,
+    espece: mergedItem.espece || null,
+    categorie: mergedItem.categorie || null,
+    examinateur_carcasse_sans_anomalie:
+      newItem?.get("examinateur_carcasse_sans_anomalie") === "true"
+        ? true
+        : newItem?.get("examinateur_carcasse_sans_anomalie") === "false"
+          ? false
+          : mergedItem.examinateur_carcasse_sans_anomalie || null,
+    // prettier-ignore
+    examinateur_anomalies_carcasse: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)?.length
+      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse).map(String).filter(Boolean)
+      : (oldItem.examinateur_anomalies_carcasse ?? []),
+    examinateur_anomalies_abats: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats)?.length
+      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats).map(String).filter(Boolean)
+      : (oldItem.examinateur_anomalies_abats ?? []),
+    examinateur_commentaire: mergedItem.examinateur_commentaire,
+    examinateur_signed_at: mergedItem.examinateur_signed_at
+      ? dayjs(mergedItem.examinateur_signed_at).toISOString()
+      : null,
+    intermediaire_carcasse_refus_intermediaire_id: mergedItem.intermediaire_carcasse_refus_intermediaire_id || null,
+    intermediaire_carcasse_refus_motif: mergedItem.intermediaire_carcasse_refus_motif || null,
+    intermediaire_carcasse_signed_at: mergedItem.intermediaire_carcasse_signed_at
+      ? dayjs(mergedItem.intermediaire_carcasse_signed_at).toISOString()
+      : null,
+    intermediaire_carcasse_commentaire: mergedItem.intermediaire_carcasse_commentaire || null,
+    svi_carcasse_saisie:
+      newItem?.get("svi_carcasse_saisie") === "true"
+        ? true
+        : newItem?.get("svi_carcasse_saisie") === "false"
+          ? false
+          : mergedItem.svi_carcasse_saisie || null,
+    svi_carcasse_saisie_motif: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)?.length
+      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif).map(String).filter(Boolean)
+      : (oldItem.svi_carcasse_saisie_motif ?? []),
+    svi_carcasse_saisie_at: mergedItem.svi_carcasse_saisie_at
+      ? dayjs(mergedItem.svi_carcasse_saisie_at).toISOString()
+      : null,
+    svi_carcasse_signed_at: mergedItem.svi_carcasse_signed_at
+      ? dayjs(mergedItem.svi_carcasse_signed_at).toISOString()
+      : null,
+    svi_carcasse_commentaire: mergedItem.svi_carcasse_commentaire || null,
+    created_at: mergedItem.created_at,
+    updated_at: dayjs().toISOString(),
+    deleted_at: mergedItem.deleted_at ? dayjs(mergedItem.deleted_at).toISOString() : null,
+  };
+
+  // const zodCarcasseResult = zodSchemas.CarcasseSchema.parse(result);
+  // console.log({ zodCarcasseResult });
+
+  return result;
+}
+
+export function mergeCarcasse(oldItem: SerializeFrom<Carcasse>, newItem?: FormData): FormData {
+  const result = mergeCarcasseToJSON(oldItem, newItem);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function getFormData(object: Record<string, any>) {
+    const formData = new FormData();
+    Object.keys(object).forEach((key) => formData.append(key, object[key]));
+    return formData;
+  }
+  return getFormData(result) satisfies FormData;
 }

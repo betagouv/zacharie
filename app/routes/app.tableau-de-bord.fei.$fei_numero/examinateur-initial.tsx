@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { clientLoader } from "./route";
@@ -12,10 +12,10 @@ import dayjs from "dayjs";
 import InputVille from "~/components/InputVille";
 import CarcassesExaminateur from "./carcasses-examinateur";
 import SelectPremierDetenteur from "./select-next-premier-detenteur";
-import type { FeiAction } from "~/db/fei.client";
+import { mergeFei } from "~/db/fei.client";
 
 export default function FEIExaminateurInitial() {
-  const { fei, user } = useLoaderData<typeof clientLoader>();
+  const { fei, user, carcasses, examinateurInitialUser } = useLoaderData<typeof clientLoader>();
 
   const approbationFetcher = useFetcher({ key: "approbation-mise-sur-le-marche" });
 
@@ -35,17 +35,21 @@ export default function FEIExaminateurInitial() {
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
   const examFetcher = useFetcher({ key: "examination-fetcher" });
-  const handleUserFormChange = (event: React.FocusEvent<HTMLFormElement>) => {
+  const examRef = useRef<HTMLFormElement>(null);
+  const handleUserFormChange = () => {
     if (!canEdit) {
       return;
     }
-    approbationFetcher.submit(new FormData(event.currentTarget), {
+    const nextFei = mergeFei(fei, new FormData(examRef.current!));
+    nextFei.append("route", `/api/fei/${fei.numero}`);
+    console.log("submitting", nextFei);
+    approbationFetcher.submit(nextFei, {
       method: "POST",
       preventScrollReset: true,
     });
   };
 
-  const needSelecteNextUser = useMemo(() => {
+  const needSelectNextUser = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;
     }
@@ -63,7 +67,7 @@ export default function FEIExaminateurInitial() {
 
   const carcassesNotReady = useMemo(() => {
     const notReady = [];
-    for (const carcasse of fei.Carcasses) {
+    for (const carcasse of carcasses) {
       if (
         !carcasse.examinateur_signed_at ||
         !carcasse.heure_evisceration ||
@@ -75,7 +79,7 @@ export default function FEIExaminateurInitial() {
       }
     }
     return notReady;
-  }, [fei]);
+  }, [carcasses]);
 
   const jobIsDone = useMemo(() => {
     if (!fei.date_mise_a_mort || !fei.commune_mise_a_mort) {
@@ -90,9 +94,7 @@ export default function FEIExaminateurInitial() {
   return (
     <>
       <Accordion titleAs="h3" label="Données de chasse" defaultExpanded>
-        <examFetcher.Form method="POST" onBlur={handleUserFormChange}>
-          <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
-          <input type="hidden" name="step" value={"fei_action_examinateur_initial" satisfies FeiAction} />
+        <examFetcher.Form method="POST" onBlur={handleUserFormChange} ref={examRef}>
           <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
           <div className="fr-fieldset__element">
             <Component
@@ -123,17 +125,26 @@ export default function FEIExaminateurInitial() {
           </div>
         </examFetcher.Form>
       </Accordion>
-      <Accordion titleAs="h3" label={`Carcasses (${fei.Carcasses.length})`} defaultExpanded>
+      <Accordion titleAs="h3" label={`Carcasses (${carcasses.length})`} defaultExpanded>
         <CarcassesExaminateur canEdit={canEdit} />
       </Accordion>
       <Accordion titleAs="h3" label={`Identité de l'Examinateur ${canEdit ? "🔒" : ""}`}>
-        <UserNotEditable user={fei.FeiExaminateurInitialUser} withCfei />
+        <UserNotEditable user={examinateurInitialUser!} withCfei />
       </Accordion>
-      {fei.FeiExaminateurInitialUser && (
+      {examinateurInitialUser && (
         <Accordion titleAs="h3" label="Approbation de mise sur le marché" defaultExpanded>
-          <approbationFetcher.Form method="POST">
-            <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
-            <input type="hidden" name="step" value={"fei_action_examinateur_initial" satisfies FeiAction} />
+          <approbationFetcher.Form
+            method="POST"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const nextFei = mergeFei(fei, new FormData(event.currentTarget));
+              nextFei.append("route", `/api/fei/${fei.numero}`);
+              approbationFetcher.submit(nextFei, {
+                method: "POST",
+                preventScrollReset: true,
+              });
+            }}
+          >
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             <div
               className={[
@@ -162,7 +173,7 @@ export default function FEIExaminateurInitial() {
                 ]}
               />
               {!fei.examinateur_initial_approbation_mise_sur_le_marche && (
-                <Button type="submit" disabled={!fei.Carcasses.length}>
+                <Button type="submit" disabled={!carcasses.length}>
                   Enregistrer
                 </Button>
               )}
@@ -187,7 +198,7 @@ export default function FEIExaminateurInitial() {
           </approbationFetcher.Form>
         </Accordion>
       )}
-      {needSelecteNextUser && (
+      {needSelectNextUser && (
         <div className="z-50 mt-4 flex flex-col bg-white pt-4 md:w-auto md:items-start [&_ul]:md:min-w-96">
           <SelectPremierDetenteur />
         </div>

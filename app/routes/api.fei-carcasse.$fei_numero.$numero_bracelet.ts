@@ -1,9 +1,9 @@
-import { json, type ActionFunctionArgs } from "@remix-run/node";
-import { getUserFromCookie } from "~/services/auth.server";
-import { Prisma } from "@prisma/client";
+import { json, SerializeFrom, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
-import dayjs from "dayjs";
+import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
+import { Prisma, type Carcasse } from "@prisma/client";
+import dayjs from "dayjs";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -63,17 +63,17 @@ export async function action(args: ActionFunctionArgs) {
     });
   }
 
-  const nextCarcasse: Prisma.CarcasseUpdateInput = {};
+  const nextCarcasse: Prisma.CarcasseUncheckedUpdateInput = {};
 
   // Helper function to convert string to boolean
-  const stringToBoolean = (value: string | null): boolean | undefined => {
+  const stringToBoolean = (value: string | null): boolean | null => {
     if (value === "true") {
       return true;
     }
     if (value === "false") {
       return false;
     }
-    return undefined;
+    return null;
   };
 
   if (formData.has(Prisma.CarcasseScalarFieldEnum.numero_bracelet)) {
@@ -102,14 +102,14 @@ export async function action(args: ActionFunctionArgs) {
     }
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)) {
-    nextCarcasse.examinateur_anomalies_carcasse = formData.getAll(
-      Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse,
-    ) as string[];
+    nextCarcasse.examinateur_anomalies_carcasse = formData
+      .getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)
+      .filter(Boolean) as string[];
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats)) {
-    nextCarcasse.examinateur_anomalies_abats = formData.getAll(
-      Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats,
-    ) as string[];
+    nextCarcasse.examinateur_anomalies_abats = formData
+      .getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats)
+      .filter(Boolean) as string[];
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_commentaire)) {
     nextCarcasse.examinateur_commentaire = formData.get(
@@ -117,29 +117,36 @@ export async function action(args: ActionFunctionArgs) {
     ) as string;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at)) {
-    nextCarcasse.examinateur_signed_at = dayjs().toISOString();
-  }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id)) {
-    nextCarcasse.FeiIntermediaireCarcasseRefus = {
-      connect: {
-        id: formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id) as string,
-      },
-    };
-  }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif)) {
-    nextCarcasse.intermediaire_carcasse_refus_motif = formData.get(
-      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif,
-    ) as string;
+    if (formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at) === "") {
+      nextCarcasse.examinateur_signed_at = null;
+    } else {
+      // nextCarcasse.examinateur_signed_at = dayjs().toISOString();
+      nextCarcasse.examinateur_signed_at = new Date(
+        formData.get(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at) as string,
+      );
+    }
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at)) {
-    nextCarcasse.intermediaire_carcasse_signed_at = formData.get(
-      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at,
-    ) as string;
+    if (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at) === "") {
+      nextCarcasse.intermediaire_carcasse_signed_at = null;
+    } else {
+      // nextCarcasse.intermediaire_carcasse_signed_at = dayjs().toISOString();
+      nextCarcasse.intermediaire_carcasse_signed_at = new Date(
+        formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at) as string,
+      );
+    }
+  }
+  if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id)) {
+    nextCarcasse.intermediaire_carcasse_refus_intermediaire_id =
+      (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id) as string) || null;
+  }
+  if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif)) {
+    nextCarcasse.intermediaire_carcasse_refus_motif =
+      (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif) as string) || null;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire)) {
-    nextCarcasse.intermediaire_carcasse_commentaire = formData.get(
-      Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire,
-    ) as string;
+    nextCarcasse.intermediaire_carcasse_commentaire =
+      (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire) as string) || null;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)) {
     nextCarcasse.svi_carcasse_saisie = stringToBoolean(
@@ -151,18 +158,22 @@ export async function action(args: ActionFunctionArgs) {
       Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif,
     ) as string[];
   }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at)) {
+  if (formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at)) {
     const saisieAt = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at) as string;
-    nextCarcasse.svi_carcasse_saisie_at = dayjs(saisieAt || undefined).toISOString();
-    nextCarcasse.svi_carcasse_signed_at = null;
-    nextCarcasse.svi_carcasse_saisie = true;
+    if (saisieAt !== "") {
+      nextCarcasse.svi_carcasse_saisie_at = dayjs(saisieAt || undefined).toISOString();
+      nextCarcasse.svi_carcasse_signed_at = null;
+      nextCarcasse.svi_carcasse_saisie = true;
+    }
   }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at)) {
+  if (formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at)) {
     const signedAt = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at) as string;
-    nextCarcasse.svi_carcasse_signed_at = dayjs(signedAt || undefined).toISOString();
-    nextCarcasse.svi_carcasse_saisie_at = null;
-    nextCarcasse.svi_carcasse_saisie_motif = [];
-    nextCarcasse.svi_carcasse_saisie = false;
+    if (signedAt !== "") {
+      nextCarcasse.svi_carcasse_signed_at = dayjs(signedAt || undefined).toISOString();
+      nextCarcasse.svi_carcasse_saisie_at = null;
+      nextCarcasse.svi_carcasse_saisie_motif = [];
+      nextCarcasse.svi_carcasse_saisie = false;
+    }
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire)) {
     nextCarcasse.svi_carcasse_commentaire = formData.get(
@@ -177,7 +188,39 @@ export async function action(args: ActionFunctionArgs) {
     data: nextCarcasse,
   });
 
-  return json({ ok: true, data: updatedCarcasse, error: "" });
+  return json({
+    ok: true,
+    data: {
+      carcasse: JSON.parse(JSON.stringify(updatedCarcasse)) as SerializeFrom<Carcasse>,
+    },
+    error: "",
+  });
 }
 
 export type CarcasseActionData = ExtractLoaderData<typeof action>;
+
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const user = await getUserFromCookie(request);
+  if (!user) {
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+  }
+  const carcasse = await prisma.carcasse.findUnique({
+    where: {
+      numero_bracelet: params.numero_bracelet,
+      fei_numero: params.fei_numero,
+    },
+  });
+  if (!carcasse) {
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+  }
+
+  return json({
+    ok: true,
+    data: {
+      carcasse: JSON.parse(JSON.stringify(carcasse)) as SerializeFrom<Carcasse>,
+    },
+    error: "",
+  });
+}
+
+export type CarcasseLoaderData = ExtractLoaderData<typeof loader>;

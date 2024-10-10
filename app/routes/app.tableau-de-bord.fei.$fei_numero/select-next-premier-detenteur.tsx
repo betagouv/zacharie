@@ -7,11 +7,16 @@ import { Button } from "@codegouvfr/react-dsfr/Button";
 import type { SerializeFrom } from "@remix-run/node";
 import { Select } from "@codegouvfr/react-dsfr/Select";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
-import { action as searchUserAction } from "~/routes/api.action.trouver-premier-detenteur";
+import { action as searchUserAction } from "~/routes/api.fei-trouver-premier-detenteur";
 import { useIsOnline } from "~/components/OfflineMode";
+import { mergeFei } from "~/db/fei.client";
 
 export default function SelectPremierDetenteur() {
-  const { user, detenteursInitiaux, fei } = useLoaderData<typeof clientLoader>();
+  const {
+    user,
+    relationsCatalog: { detenteursInitiaux },
+    fei,
+  } = useLoaderData<typeof clientLoader>();
   const isOnline = useIsOnline();
   const nextOwnerSelectLabel = "Sélectionnez le Premier Détenteur de pour cette FEI";
 
@@ -32,8 +37,21 @@ export default function SelectPremierDetenteur() {
 
   return (
     <>
-      <nextOwnerFetcher.Form id="select-next-owner" preventScrollReset method="POST">
-        <input type="hidden" name="route" value={`/api/action/fei/${fei.numero}`} />
+      <nextOwnerFetcher.Form
+        id="select-next-owner"
+        preventScrollReset
+        method="POST"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const formData = new FormData(event.currentTarget);
+          const nextFei = mergeFei(fei, formData);
+          nextFei.append("route", `/api/fei/${fei.numero}`);
+          nextOwnerFetcher.submit(nextFei, {
+            method: "POST",
+            preventScrollReset: true,
+          });
+        }}
+      >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.fei_next_owner_role} value={UserRoles.PREMIER_DETENTEUR} />
         <div className="fr-fieldset__element grow">
@@ -68,7 +86,7 @@ export default function SelectPremierDetenteur() {
             className="fr-fieldset__element relative flex w-full flex-row items-end gap-4"
             method="POST"
           >
-            <input type="hidden" name="route" value="/api/action/trouver-premier-detenteur" />
+            <input type="hidden" name="route" value="/api/fei-trouver-premier-detenteur" />
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             <Input
               label="...ou saisissez l'email du Premier Détenteur si vous ne le trouvez pas"

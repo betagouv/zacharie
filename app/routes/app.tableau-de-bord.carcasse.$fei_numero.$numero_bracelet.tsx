@@ -22,26 +22,35 @@ import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import InputNotEditable from "~/components/InputNotEditable";
-import { type CarcasseLoaderData } from "~/routes/api.loader.carcasse.$fei_numero.$numero_bracelet";
-import { type CarcasseActionData } from "~/routes/api.action.carcasse.$numero_bracelet";
+import type { CarcasseLoaderData, CarcasseActionData } from "~/routes/api.fei-carcasse.$fei_numero.$numero_bracelet";
+import type { FeiLoaderData } from "~/routes/api.fei.$fei_numero";
 import { getMostFreshUser } from "~/utils-offline/get-most-fresh-user";
 import { createModal } from "@codegouvfr/react-dsfr/Modal";
 import ModalTreeDisplay from "~/components/ModalTreeDisplay";
 import { useIsOnline } from "~/components/OfflineMode";
+import { mergeCarcasse } from "~/db/carcasse.client";
 
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
   const formData = await request.formData();
+  for (const key of formData.keys()) {
+    if (formData.get(key) === "null") {
+      formData.set(key, "");
+    }
+  }
   console.log("carcasse formdata", Object.fromEntries(formData.entries()));
-  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/action/carcasse/${params.numero_bracelet}`, {
-    method: "POST",
-    credentials: "include",
-    body: formData,
-    headers: {
-      Accept: "application/json",
+  const response = (await fetch(
+    `${import.meta.env.VITE_API_URL}/api/fei-carcasse/${params.fei_numero}/${params.numero_bracelet}`,
+    {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+      headers: {
+        Accept: "application/json",
+      },
     },
-  }).then((response) => response.json())) as CarcasseActionData;
-  if (response.ok && response.data && response.data.numero_bracelet !== params.numero_bracelet) {
-    throw redirect(`/app/tableau-de-bord/carcasse/${params.fei_numero}/${response.data.numero_bracelet}`);
+  ).then((response) => response.json())) as CarcasseActionData;
+  if (response.ok && response.data && response.data.carcasse.numero_bracelet !== params.numero_bracelet) {
+    throw redirect(`/app/tableau-de-bord/carcasse/${params.fei_numero}/${response.data.carcasse.numero_bracelet}`);
   }
   return response;
 }
@@ -51,23 +60,28 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
   if (!user) {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
-  const response = (await fetch(
-    `${import.meta.env.VITE_API_URL}/api/loader/carcasse/${params.fei_numero}/${params.numero_bracelet}`,
-    {
+  async function get(pathname: string) {
+    return fetch(`${import.meta.env.VITE_API_URL}${pathname}`, {
       method: "GET",
       credentials: "include",
       headers: new Headers({
         Accept: "application/json",
         "Content-Type": "application/json",
       }),
-    },
-  ).then((res) => res.json())) as CarcasseLoaderData;
+    }).then((res) => res.json());
+  }
+
+  const response = (await get(
+    `/api/fei-carcasse/${params.fei_numero}/${params.numero_bracelet}`,
+  )) as CarcasseLoaderData;
 
   if (!response?.ok) {
     throw redirect(`/app/tableau-de-bord/fei/${params.fei_numero}`);
   }
 
-  return json({ carcasse: response.data!.carcasse!, user, fei: response.data!.fei! });
+  const feiResponse = (await get(`/api/fei/${params.fei_numero}`)) as FeiLoaderData;
+
+  return json({ carcasse: response.data!.carcasse!, user, fei: feiResponse.data!.fei! });
 }
 
 const anomaliesAbatsModal = createModal({
@@ -101,9 +115,11 @@ export default function CarcasseReadAndWrite() {
   const [espece, setEspece] = useState(carcasse.espece || "");
   const [categorie, setCategorie] = useState(carcasse.categorie || "");
   const [showAsSelectOption, setShowAsSelectOption] = useState(false);
-  const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(carcasse.examinateur_anomalies_abats || []);
+  const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(
+    carcasse.examinateur_anomalies_abats?.filter(Boolean) || [],
+  );
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(
-    carcasse.examinateur_anomalies_carcasse || [],
+    carcasse.examinateur_anomalies_carcasse?.filter(Boolean) || [],
   );
   const [noANomalie, setNoAnomalie] = useState(carcasse.examinateur_carcasse_sans_anomalie || false);
   // const [addAnomalieAbats, setAddAnomalieAbats] = useState(true);
@@ -121,7 +137,8 @@ export default function CarcasseReadAndWrite() {
   const handleFormSubmit = () => {
     const formData = new FormData(formRef.current!);
     formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
-    carcasseFetcher.submit(formData, {
+    const nextCarcasse = mergeCarcasse(carcasse, formData);
+    carcasseFetcher.submit(nextCarcasse, {
       method: "POST",
       preventScrollReset: true, // Prevent scroll reset on submission
     });
@@ -209,7 +226,8 @@ export default function CarcasseReadAndWrite() {
                 e.preventDefault();
                 const formData = new FormData(numeroFormRef.current!);
                 formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
-                numeroFetcher.submit(formData, {
+                const nextCarcasse = mergeCarcasse(carcasse, formData);
+                numeroFetcher.submit(nextCarcasse, {
                   method: "POST",
                   preventScrollReset: true, // Prevent scroll reset on submission
                 });
@@ -245,7 +263,10 @@ export default function CarcasseReadAndWrite() {
             id="carcasse-edit-form"
             method="POST"
             ref={formRef}
-            onChange={handleFormSubmit}
+            onChange={(e) => {
+              e.preventDefault();
+              handleFormSubmit();
+            }}
             className="mb-6 bg-white py-2 md:shadow"
           >
             <div className="p-4 pb-8 md:p-8 md:pb-4">
@@ -381,7 +402,9 @@ export default function CarcasseReadAndWrite() {
                             className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey p-2 [&_p.fr-notice\\_\\_title]:before:hidden"
                             title={anomalie}
                             isClosable={canEdit}
-                            onClose={() => setAnomaliesCarcasse(anomaliesCarcasse.filter((a) => a !== anomalie))}
+                            onClose={() =>
+                              setAnomaliesCarcasse(anomaliesCarcasse.filter((a) => a !== anomalie).filter(Boolean))
+                            }
                             key={anomalie + index}
                           />
                         );
@@ -450,7 +473,9 @@ export default function CarcasseReadAndWrite() {
                             className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey p-2 [&_p.fr-notice\\_\\_title]:before:hidden"
                             title={anomalie}
                             isClosable={canEdit}
-                            onClose={() => setAnomaliesAbats(anomaliesAbats.filter((a) => a !== anomalie))}
+                            onClose={() =>
+                              setAnomaliesAbats(anomaliesAbats.filter((a) => a !== anomalie).filter(Boolean))
+                            }
                             key={anomalie + index}
                           />
                         );
@@ -514,7 +539,8 @@ export default function CarcasseReadAndWrite() {
                       e.preventDefault();
                       const formData = new FormData(noAnomalieFormRef.current!);
                       formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
-                      noAnomalieFetcher.submit(formData, {
+                      const nextCarcasse = mergeCarcasse(carcasse, formData);
+                      noAnomalieFetcher.submit(nextCarcasse, {
                         method: "POST",
                         preventScrollReset: true, // Prevent scroll reset on submission
                       });

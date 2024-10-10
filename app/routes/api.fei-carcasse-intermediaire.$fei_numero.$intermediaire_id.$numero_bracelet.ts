@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
-import { type ActionFunctionArgs, json } from "@remix-run/node";
-import { prisma } from "~/db/prisma.server";
+import { json, SerializeFrom, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
+import { prisma } from "~/db/prisma.server";
+import { Prisma, type CarcasseIntermediaire } from "@prisma/client";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -11,23 +11,28 @@ export async function action(args: ActionFunctionArgs) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
-  const numero_bracelet = params.numero_bracelet;
-  if (!numero_bracelet) {
-    return json({ ok: false, data: null, error: "Le numéro de la carcasse est obligatoire" }, { status: 400 });
+  const { fei_numero, intermediaire_id, numero_bracelet } = params;
+  if (!fei_numero) {
+    return json({ ok: false, data: null, error: "Le numéro FEI est obligatoire" }, { status: 400 });
   }
-
-  const { intermediaire_id } = params;
-  if (!intermediaire_id) {
-    return json({ ok: false, data: null, error: "L'identifiant de l'intermédiaire est obligatoire" }, { status: 400 });
-  }
-
-  const formData = await request.formData();
-  const feiNumero = formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.fei_numero) as string;
   const existingFei = await prisma.fei.findUnique({
-    where: { numero: feiNumero },
+    where: { numero: fei_numero },
   });
   if (!existingFei) {
     return json({ ok: false, data: null, error: "FEI not found" }, { status: 404 });
+  }
+  if (!numero_bracelet) {
+    return json({ ok: false, data: null, error: "Le numéro de la carcasse est obligatoire" }, { status: 400 });
+  }
+  console.log("numero_bracelet", numero_bracelet);
+  const existingCarcasse = await prisma.carcasse.findUnique({
+    where: { numero_bracelet: numero_bracelet },
+  });
+  if (!existingCarcasse) {
+    return json({ ok: false, data: null, error: "Carcasse not found" }, { status: 404 });
+  }
+  if (!intermediaire_id) {
+    return json({ ok: false, data: null, error: "L'identifiant de l'intermédiaire est obligatoire" }, { status: 400 });
   }
   const feiIntermediaire = await prisma.feiIntermediaire.findUnique({
     where: { id: intermediaire_id },
@@ -35,16 +40,12 @@ export async function action(args: ActionFunctionArgs) {
   if (!feiIntermediaire) {
     return json({ ok: false, data: null, error: "FEI intermediaire not found" }, { status: 404 });
   }
-  const existingCarcasse = await prisma.carcasse.findUnique({
-    where: { numero_bracelet: numero_bracelet },
-  });
-  if (!existingCarcasse) {
-    return json({ ok: false, data: null, error: "Carcasse not found" }, { status: 404 });
-  }
-  const fei_numero__bracelet__intermediaire_id = `${feiNumero}__${numero_bracelet}__${intermediaire_id}`;
+
+  const formData = await request.formData();
+  const fei_numero__bracelet__intermediaire_id = `${fei_numero}__${numero_bracelet}__${intermediaire_id}`;
   const data: Prisma.CarcasseIntermediaireUncheckedCreateInput = {
     fei_numero__bracelet__intermediaire_id,
-    fei_numero: feiNumero,
+    fei_numero: fei_numero,
     numero_bracelet,
     fei_intermediaire_id: intermediaire_id,
     fei_intermediaire_user_id: user.id,
@@ -77,8 +78,10 @@ export async function action(args: ActionFunctionArgs) {
         intermediaire_carcasse_signed_at: null,
       },
     });
-    return json({ ok: true, data: carcasseIntermediaire, error: "" });
+
+    return json({ ok: true, data: { carcasseIntermediaire }, error: "" });
   }
+
   if (formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus)) {
     data.refus = formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus) as string;
     data.prise_en_charge = false;
@@ -91,7 +94,7 @@ export async function action(args: ActionFunctionArgs) {
       update: data,
     });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const carcasseUpdated = await prisma.carcasse.update({
+    await prisma.carcasse.update({
       where: {
         numero_bracelet: numero_bracelet,
       },
@@ -102,10 +105,63 @@ export async function action(args: ActionFunctionArgs) {
         intermediaire_carcasse_signed_at: new Date(),
       },
     });
-    return json({ ok: true, data: carcasseIntermediaire, error: "" });
+    return json({
+      ok: true,
+      data: {
+        carcasseIntermediaire: JSON.parse(
+          JSON.stringify(carcasseIntermediaire satisfies CarcasseIntermediaire),
+        ) satisfies SerializeFrom<CarcasseIntermediaire>,
+      },
+      error: "",
+    });
   }
 
   return json({ ok: true, data: null, error: "" });
 }
 
-export type SuiviCarcasseActionData = ExtractLoaderData<typeof action>;
+export type CarcasseIntermediaireActionData = ExtractLoaderData<typeof action>;
+
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const user = await getUserFromCookie(request);
+  if (!user) {
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+  }
+  if (!params.fei_numero) {
+    return json({ ok: false, data: null, error: "Missing fei_numero" }, { status: 401 });
+  }
+  const fei = await prisma.fei.findUnique({
+    where: {
+      numero: params.fei_numero as string,
+    },
+  });
+  if (!fei) {
+    return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+  }
+  if (!params.intermediaire_id) {
+    return json({ ok: false, data: null, error: "Missing intermediaire_id" }, { status: 400 });
+  }
+  const carcasseIntermediaire = await prisma.carcasseIntermediaire.findUnique({
+    where: {
+      fei_numero__bracelet__intermediaire_id: `${params.fei_numero}__${params.numero_bracelet}__${params.intermediaire_id}`,
+    },
+  });
+  if (!carcasseIntermediaire) {
+    return json({
+      ok: true,
+      data: null,
+      error: "",
+    });
+  }
+
+  return json({
+    ok: true,
+    data: {
+      carcasseIntermediaire: JSON.parse(
+        JSON.stringify(carcasseIntermediaire),
+      ) satisfies SerializeFrom<CarcasseIntermediaire>,
+    },
+    error: "",
+  });
+}
+
+export type CarcasseIntermediaireLoaderData = ExtractLoaderData<typeof loader>;
