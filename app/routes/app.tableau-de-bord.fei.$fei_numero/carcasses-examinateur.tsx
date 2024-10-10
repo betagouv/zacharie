@@ -18,8 +18,9 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
           !carcasse.examinateur_anomalies_abats?.length &&
           !carcasse.examinateur_anomalies_carcasse?.length &&
           !carcasse.examinateur_carcasse_sans_anomalie;
-        const missingFields =
-          !carcasse.espece || !carcasse.categorie || !carcasse.heure_mise_a_mort || !carcasse.heure_evisceration;
+        // const missingFields =
+        //   !carcasse.espece || !carcasse.categorie || !carcasse.heure_mise_a_mort || !carcasse.heure_evisceration;
+        const missingFields = !carcasse.espece || !carcasse.categorie;
         return (
           // @ts-expect-error we dont type this json
           <Notice
@@ -54,12 +55,16 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                       {carcasse.espece} - {carcasse.categorie}
                     </span>
                     <span className="block font-normal">Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}</span>
-                    <span className="block font-normal">
-                      Mise à mort&nbsp;: {carcasse.heure_mise_a_mort || "À REMPLIR"}
-                    </span>
-                    <span className="block font-normal">
-                      Éviscération&nbsp;: {carcasse.heure_evisceration || "À REMPLIR"}
-                    </span>
+                    {carcasse.heure_mise_a_mort && (
+                      <span className="block font-normal">
+                        Mise à mort&nbsp;: {carcasse.heure_mise_a_mort || "À REMPLIR"}
+                      </span>
+                    )}
+                    {carcasse.heure_evisceration && (
+                      <span className="block font-normal">
+                        Éviscération&nbsp;: {carcasse.heure_evisceration || "À REMPLIR"}
+                      </span>
+                    )}
                     {(examinationNotFinished || missingFields) && (
                       <>
                         <br />

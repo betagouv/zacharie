@@ -70,8 +70,8 @@ export default function FEIExaminateurInitial() {
     for (const carcasse of carcasses) {
       if (
         !carcasse.examinateur_signed_at ||
-        !carcasse.heure_evisceration ||
-        !carcasse.heure_mise_a_mort ||
+        // !carcasse.heure_evisceration ||
+        // !carcasse.heure_mise_a_mort ||
         !carcasse.espece ||
         !carcasse.categorie
       ) {

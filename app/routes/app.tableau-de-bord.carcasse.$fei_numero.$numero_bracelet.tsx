@@ -289,30 +289,7 @@ export default function CarcasseReadAndWrite() {
                   />
                 </div>
               )}
-              <div className="flex flex-col gap-x-4 md:flex-row">
-                <div className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end">
-                  <Component
-                    label="Heure de la mise à mort"
-                    className="!mb-0 grow"
-                    nativeInputProps={{
-                      type: "time",
-                      name: Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort,
-                      defaultValue: carcasse.heure_mise_a_mort ?? "",
-                    }}
-                  />
-                </div>
-                <div className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end">
-                  <Component
-                    label="Heure de l'évisceration"
-                    className="!mb-0 grow"
-                    nativeInputProps={{
-                      type: "time",
-                      name: Prisma.CarcasseScalarFieldEnum.heure_evisceration,
-                      defaultValue: carcasse.heure_evisceration ?? "",
-                    }}
-                  />
-                </div>
-              </div>
+
               <div className="fr-fieldset__element">
                 <input type="hidden" name="espece" value={espece ?? ""} />
                 <input type="hidden" name="categorie" value={categorie ?? ""} />
@@ -356,6 +333,32 @@ export default function CarcasseReadAndWrite() {
                     );
                   })}
                 </Select>
+              </div>
+              <div className="flex flex-col gap-x-4 md:flex-row">
+                <div className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end">
+                  <Component
+                    label="Heure de la mise à mort"
+                    className="!mb-0 grow"
+                    hintText="Optionel"
+                    nativeInputProps={{
+                      type: "time",
+                      name: Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort,
+                      defaultValue: carcasse.heure_mise_a_mort ?? "",
+                    }}
+                  />
+                </div>
+                <div className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end">
+                  <Component
+                    label="Heure de l'évisceration"
+                    className="!mb-0 grow"
+                    hintText="Optionel"
+                    nativeInputProps={{
+                      type: "time",
+                      name: Prisma.CarcasseScalarFieldEnum.heure_evisceration,
+                      defaultValue: carcasse.heure_evisceration ?? "",
+                    }}
+                  />
+                </div>
               </div>
               {/* <div className="fr-fieldset__element">
                 <InputForSearchPrefilledData
