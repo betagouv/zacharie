@@ -9,6 +9,7 @@ type WebPushNotification = {
   body: string;
   title: string;
   email: string;
+  notificationLogAction: string;
   img?: string;
 };
 
@@ -17,11 +18,23 @@ export default async function sendNotificationToUser({
   body,
   title,
   email,
+  notificationLogAction,
   img = "https://zacharie.beta.gouv.fr/favicon.svg",
 }: WebPushNotification) {
   if (user.notifications.includes(UserNotifications.PUSH)) {
     if (user.web_push_tokens?.length) {
       console.log("SENDING WEB PUSH NOTIFICATION", user.id);
+      const existingNotification = await prisma.notificationLog.findFirst({
+        where: {
+          user_id: user.id,
+          type: "PUSH",
+          action: notificationLogAction,
+        },
+      });
+      if (existingNotification) {
+        console.log("Notification already sent", user.id);
+        return;
+      }
       for (const web_push_subscription of user.web_push_tokens) {
         if (!web_push_subscription) {
           continue;
@@ -51,7 +64,7 @@ export default async function sendNotificationToUser({
                 }),
                 type: "PUSH",
                 web_push_token: web_push_subscription,
-                action: "FEI NOTIFICATION",
+                action: notificationLogAction,
               },
             });
           })
@@ -72,6 +85,17 @@ export default async function sendNotificationToUser({
   console.log(user.notifications);
   if (user.notifications.includes(UserNotifications.EMAIL)) {
     console.log("SENDING EMAIL NOTIFICATION", user.id);
+    const existingNotification = await prisma.notificationLog.findFirst({
+      where: {
+        user_id: user.id,
+        type: "EMAIL",
+        action: notificationLogAction,
+      },
+    });
+    if (existingNotification) {
+      console.log("Email already sent", user.id);
+      return;
+    }
     sendEmail({
       emails: import.meta.env.DEV ? ["arnaud@ambroselli.io"] : [user.email!],
       subject: title,
@@ -90,7 +114,7 @@ export default async function sendNotificationToUser({
             }),
             type: "EMAIL",
             email: user.email,
-            action: "FEI NOTIFICATION",
+            action: notificationLogAction,
           },
         });
       })

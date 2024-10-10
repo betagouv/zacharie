@@ -217,6 +217,7 @@ export async function action(args: ActionFunctionArgs) {
         title: "Vous avez une nouvelle FEI à traiter",
         body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
         email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI, la ${savedFei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
+        notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
       });
     } else if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwnerId) {
       console.log("need to send notification remove FEI");
@@ -226,6 +227,7 @@ export async function action(args: ActionFunctionArgs) {
         title: "Une FEI ne vous est plus attribuée",
         body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une FEI, mais elle a finalement été attribuée à quelqu'un d'autre.`,
         email: `${user.prenom} ${user.nom_de_famille} vous avait attribué la FEI ${savedFei?.numero}, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+        notificationLogAction: `FEI_REMOVED_FROM_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
       });
     } else {
       console.log("no need to send notification");
@@ -260,6 +262,7 @@ export async function action(args: ActionFunctionArgs) {
           title: "Vous avez une nouvelle FEI à traiter",
           body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
           email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI, la ${savedFei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
+          notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
         });
       }
       if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwner.id) {
@@ -269,6 +272,7 @@ export async function action(args: ActionFunctionArgs) {
           title: "Une FEI ne vous est plus attribuée",
           body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une FEI, mais elle a finalement été attribuée à quelqu'un d'autre.`,
           email: `${user.prenom} ${user.nom_de_famille} vous avait attribué la FEI ${savedFei?.numero}, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+          notificationLogAction: `FEI_REMOVED_FROM_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
         });
       }
     }
