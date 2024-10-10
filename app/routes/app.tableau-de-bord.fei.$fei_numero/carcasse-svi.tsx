@@ -1,5 +1,5 @@
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { clientLoader } from "./route";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Notice } from "@codegouvfr/react-dsfr/Notice";
@@ -41,8 +41,18 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
 
   const [showSaisir, setShowSaisir] = useState(!!carcasse?.svi_carcasse_saisie);
   const [motifsSaisie, setMotifsSaisie] = useState(carcasse?.svi_carcasse_saisie_motif?.filter(Boolean) ?? []);
+  const priseEnCharge = !carcasse.svi_carcasse_saisie;
   return (
-    <Fragment key={carcasse.numero_bracelet}>
+    <div
+      key={carcasse.updated_at}
+      className={[
+        "border-4 border-transparent p-4",
+        !!carcasse.svi_carcasse_saisie && "!border-red-500",
+        priseEnCharge && "!border-action-high-blue-france",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <Notice
         className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\_\_title]:!block [&_p.fr-notice\_\_title]:before:hidden"
         key={carcasse.numero_bracelet}
@@ -96,7 +106,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
               </span>
             </span>
             <br />
-            <span className="m-0 block font-bold">
+            <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_carcasse_saisie_motif)}>
               Inspection SVI&nbsp;:
               {motifsSaisie.length > 0 ? (
                 <>
@@ -165,26 +175,39 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
               </div>
               <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
                 <ButtonsGroup
-                  buttons={[
-                    {
-                      children: "Accepter",
-                      type: "submit",
-                      nativeButtonProps: {
-                        form: `svi-carcasse-${carcasse.numero_bracelet}`,
-                        name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at,
-                        suppressHydrationWarning: true,
-                        value: dayjs().toISOString(),
-                      },
-                    },
-                    {
-                      children: "Saisir",
-                      priority: "secondary",
-                      type: "button",
-                      nativeButtonProps: {
-                        onClick: () => setShowSaisir(true),
-                      },
-                    },
-                  ]}
+                  buttons={
+                    !carcasse.svi_carcasse_saisie_motif?.length
+                      ? [
+                          {
+                            children: "Saisir",
+                            priority: "secondary",
+                            type: "button",
+                            nativeButtonProps: {
+                              onClick: () => setShowSaisir(true),
+                            },
+                          },
+                        ]
+                      : [
+                          {
+                            children: "Accepter",
+                            type: "submit",
+                            nativeButtonProps: {
+                              form: `svi-carcasse-${carcasse.numero_bracelet}`,
+                              name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at,
+                              suppressHydrationWarning: true,
+                              value: dayjs().toISOString(),
+                            },
+                          },
+                          {
+                            children: "Saisir",
+                            priority: "secondary",
+                            type: "button",
+                            nativeButtonProps: {
+                              onClick: () => setShowSaisir(true),
+                            },
+                          },
+                        ]
+                  }
                 />
               </div>
             </>
@@ -212,7 +235,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                 <InputForSearchPrefilledData
                   canEdit
                   data={saisieSvi}
-                  label="Motif de la sasie"
+                  label="Motif de la saisie"
                   hideDataWhenNoSearch
                   clearInputOnClick
                   placeholder="Commencez à taper un motif de saisie"
@@ -241,40 +264,54 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
               />
               <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
                 <ButtonsGroup
-                  buttons={[
-                    {
-                      children: "Saisir",
-                      type: "submit",
-                      nativeButtonProps: {
-                        onClick: (e) => {
-                          console.log({ motifsSaisie });
-                          if (!motifsSaisie.length) {
-                            e.preventDefault();
-                            alert("Veuillez ajouter au moins un motif de saisie");
-                            return;
-                          }
-                        },
-                        form: `svi-carcasse-${carcasse.numero_bracelet}`,
-                        name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at,
-                        suppressHydrationWarning: true,
-                        value: dayjs().toISOString(),
-                      },
-                    },
-                    {
-                      children: "Annuler",
-                      priority: "secondary",
-                      type: "button",
-                      nativeButtonProps: {
-                        onClick: () => setShowSaisir(false),
-                      },
-                    },
-                  ]}
+                  buttons={
+                    !motifsSaisie.length ||
+                    JSON.stringify(carcasse.svi_carcasse_saisie_motif) !== JSON.stringify(motifsSaisie)
+                      ? [
+                          {
+                            children: "Saisir",
+                            type: "submit",
+                            nativeButtonProps: {
+                              onClick: (e) => {
+                                console.log({ motifsSaisie });
+                                if (!motifsSaisie.length) {
+                                  e.preventDefault();
+                                  alert("Veuillez ajouter au moins un motif de saisie");
+                                  return;
+                                }
+                              },
+                              form: `svi-carcasse-${carcasse.numero_bracelet}`,
+                              name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at,
+                              suppressHydrationWarning: true,
+                              value: dayjs().toISOString(),
+                            },
+                          },
+                          {
+                            children: "Annuler",
+                            priority: "secondary",
+                            type: "button",
+                            nativeButtonProps: {
+                              onClick: () => setShowSaisir(false),
+                            },
+                          },
+                        ]
+                      : [
+                          {
+                            children: "Annuler",
+                            priority: "secondary",
+                            type: "button",
+                            nativeButtonProps: {
+                              onClick: () => setShowSaisir(false),
+                            },
+                          },
+                        ]
+                  }
                 />
               </div>
             </>
           )}
         </sviCarcasseFetcher.Form>
       )}
-    </Fragment>
+    </div>
   );
 }

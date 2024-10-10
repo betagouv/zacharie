@@ -181,6 +181,8 @@ export async function action(args: ActionFunctionArgs) {
     ) as string;
   }
 
+  console.log({ nextCarcasse });
+
   const updatedCarcasse = await prisma.carcasse.update({
     where: {
       numero_bracelet: existingCarcasse.numero_bracelet,

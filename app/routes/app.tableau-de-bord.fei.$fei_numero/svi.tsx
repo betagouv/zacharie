@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { clientLoader } from "./route";
 import { Prisma, Carcasse, UserRoles } from "@prisma/client";
@@ -21,7 +21,7 @@ export default function FEI_SVI() {
   const carcassesSorted = useMemo(() => {
     const carcassesValidated: Record<string, SerializeFrom<Carcasse>> = {};
     const carcassesSaisies: Record<string, SerializeFrom<Carcasse>> = {};
-    const carcassesToCheck: Record<string, SerializeFrom<Carcasse>> = {};
+    // const carcassesToCheck: Record<string, SerializeFrom<Carcasse>> = {};
     for (const carcasse of carcassesUnsorted) {
       if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
         continue;
@@ -30,16 +30,16 @@ export default function FEI_SVI() {
         carcassesSaisies[carcasse.numero_bracelet] = carcasse;
         continue;
       }
-      if (carcasse.svi_carcasse_signed_at) {
-        carcassesValidated[carcasse.numero_bracelet] = carcasse;
-        continue;
-      }
-      carcassesToCheck[carcasse.numero_bracelet] = carcasse;
+      // if (carcasse.svi_carcasse_signed_at) {
+      carcassesValidated[carcasse.numero_bracelet] = carcasse;
+      // continue;
+      // }
+      // carcassesToCheck[carcasse.numero_bracelet] = carcasse;
     }
     return {
       carcassesValidated: Object.values(carcassesValidated),
       carcassesSaisies: Object.values(carcassesSaisies),
-      carcassesToCheck: Object.values(carcassesToCheck),
+      // carcassesToCheck: Object.values(carcassesToCheck),
     };
   }, [carcassesUnsorted]);
 
@@ -56,21 +56,22 @@ export default function FEI_SVI() {
     return true;
   }, [fei, user]);
 
-  const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
+  // const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
+  const jobIsDone = true;
 
-  const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
+  // const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
   const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(true);
   const [carcassesAccepteesExpanded, setCarcassesAccepteesExpanded] = useState(false);
   const [carcassesRefuseesExpanded, setCarcassesRefuseesExpanded] = useState(false);
 
-  useEffect(() => {
-    if (prevCarcassesToCheckCount.current > 0 && carcassesSorted.carcassesToCheck.length === 0) {
-      setCarcassesAValiderExpanded(false);
-      setCarcassesAccepteesExpanded(false);
-      setCarcassesRefuseesExpanded(false);
-    }
-    prevCarcassesToCheckCount.current = carcassesSorted.carcassesToCheck.length;
-  }, [carcassesSorted.carcassesToCheck.length]);
+  // useEffect(() => {
+  //   if (prevCarcassesToCheckCount.current > 0 && carcassesSorted.carcassesToCheck.length === 0) {
+  //     setCarcassesAValiderExpanded(false);
+  //     setCarcassesAccepteesExpanded(false);
+  //     setCarcassesRefuseesExpanded(false);
+  //   }
+  //   prevCarcassesToCheckCount.current = carcassesSorted.carcassesToCheck.length;
+  // }, [carcassesSorted.carcassesToCheck.length]);
 
   const labelInscectionDone = useMemo(() => {
     let label = "J'ai fini l'inspection de toutes les carcasses.";
@@ -93,47 +94,49 @@ export default function FEI_SVI() {
     return label;
   }, [carcassesSorted.carcassesValidated.length, carcassesSorted.carcassesSaisies.length]);
 
-  console.log({ carcassesSorted });
-
   return (
     <>
       <Accordion titleAs="h3" label={`Identité du SVI ${canEdit ? "🔒" : ""}`}>
         <EntityNotEditable user={sviUser!} entity={svi!} />
       </Accordion>
-      {carcassesSorted.carcassesToCheck.length > 0 && (
+      {canEdit ? (
         <Accordion
           titleAs="h3"
-          label={`Carcasses à vérifier (${carcassesSorted.carcassesToCheck.length})`}
+          // label={`Carcasses à vérifier (${carcassesSorted.carcassesToCheck.length})`}
+          label={`Carcasses à vérifier (${carcasses.length})`}
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >
-          <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesToCheck} />
+          <CarcassesSvi canEdit={canEdit} carcasses={carcasses} />
         </Accordion>
+      ) : (
+        <>
+          <Accordion
+            titleAs="h3"
+            label={`Carcasses validées (${carcassesSorted.carcassesValidated.length})`}
+            expanded={carcassesAccepteesExpanded}
+            onExpandedChange={setCarcassesAccepteesExpanded}
+          >
+            {carcassesSorted.carcassesValidated.length === 0 ? (
+              <p>Pas de carcasse acceptée</p>
+            ) : (
+              <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesValidated} />
+            )}
+          </Accordion>
+          <Accordion
+            titleAs="h3"
+            label={`Carcasses saisies (${carcassesSorted.carcassesSaisies.length})`}
+            expanded={carcassesRefuseesExpanded}
+            onExpandedChange={setCarcassesRefuseesExpanded}
+          >
+            {carcassesSorted.carcassesSaisies.length === 0 ? (
+              <p>Pas de carcasse refusée</p>
+            ) : (
+              <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesSaisies} />
+            )}
+          </Accordion>
+        </>
       )}
-      <Accordion
-        titleAs="h3"
-        label={`Carcasses validées (${carcassesSorted.carcassesValidated.length})`}
-        expanded={carcassesAccepteesExpanded}
-        onExpandedChange={setCarcassesAccepteesExpanded}
-      >
-        {carcassesSorted.carcassesValidated.length === 0 ? (
-          <p>Pas de carcasse acceptée</p>
-        ) : (
-          <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesValidated} />
-        )}
-      </Accordion>
-      <Accordion
-        titleAs="h3"
-        label={`Carcasses saisies (${carcassesSorted.carcassesSaisies.length})`}
-        expanded={carcassesRefuseesExpanded}
-        onExpandedChange={setCarcassesRefuseesExpanded}
-      >
-        {carcassesSorted.carcassesSaisies.length === 0 ? (
-          <p>Pas de carcasse refusée</p>
-        ) : (
-          <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesSaisies} />
-        )}
-      </Accordion>
       <Accordion titleAs="h3" label="Validation de la FEI" defaultExpanded>
         <sviFinishedFetcher.Form method="POST" id="svi_check_finished_at">
           <input type="hidden" name="route" value={`/api/fei/${fei.numero}`} />
