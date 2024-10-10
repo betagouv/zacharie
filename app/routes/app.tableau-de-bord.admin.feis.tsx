@@ -1,8 +1,9 @@
+import { UserRoles } from "@prisma/client";
 import { Link, redirect, useLoaderData } from "@remix-run/react";
-import { Table } from "@codegouvfr/react-dsfr/Table";
 import dayjs from "dayjs";
-import { Fragment } from "react";
+import ResponsiveTable from "~/components/TableResponsive";
 import type { AdminFeisLoaderData } from "~/routes/api.admin.loader.feis";
+import { getUserRoleLabel } from "~/utils/get-user-roles-label";
 
 export function meta() {
   return [
@@ -28,7 +29,7 @@ export async function clientLoader() {
 }
 
 export default function AdminFeis() {
-  const { users } = useLoaderData<typeof clientLoader>();
+  const feis = useLoaderData<typeof clientLoader>();
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -36,60 +37,56 @@ export default function AdminFeis() {
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">FEI</h1>
           <section className="mb-6 bg-white md:shadow">
-            <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
-              <Table
-                fixed
-                noCaption
-                className="[&_td]:h-px"
-                data={users.map((user, index) => [
-                  <div key={user.id} className="flex size-full flex-row items-start">
-                    <span className="p-4">{index + 1}</span>
-                    <Link
-                      to={`/app/tableau-de-bord/admin/utilisateur/${user.id}`}
-                      className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
-                      suppressHydrationWarning
-                    >
-                      Compte activé: {user.activated ? "✅" : "❌"}
-                      <br />
-                      Création: {dayjs(user.created_at).format("DD/MM/YYYY à HH:mm")}
-                      <br />
-                      Fin d'onboarding: {dayjs(user.onboarded_at).format("DD/MM/YYYY à HH:mm")}
-                    </Link>
-                  </div>,
-                  <Link
-                    key={user.id}
-                    to={`/app/tableau-de-bord/admin/utilisateur/${user.id}`}
-                    className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
-                  >
-                    {user.prenom} {user.nom_de_famille}
-                    <br />＠ {user.email}
-                    <br />
-                    ☎️ {user.telephone}
-                    <br />
-                    🏡 {user.addresse_ligne_1}
-                    <br />
-                    {user.addresse_ligne_2 && (
+            <div className="p-4 md:p-8 md:pb-0">
+              <h2 className="fr-h3">FEIs ({feis.length})</h2>
+            </div>
+            <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+              <ResponsiveTable
+                headers={["Numéro", "Créée le", "Responsabilités", "Intervenants"]}
+                // @ts-expect-error Element or null
+                data={feis
+                  .filter((fei) => fei !== null)
+                  .map((fei) => ({
+                    link: `/app/tableau-de-bord/fei/${fei.numero}`,
+                    id: fei.numero,
+                    rows: [
+                      fei.numero!,
                       <>
+                        Créée le
                         <br />
-                        {user.addresse_ligne_2}
-                      </>
-                    )}
-                    {user.code_postal} {user.ville}
-                  </Link>,
-                  <Link
-                    key={user.id}
-                    to={`/app/tableau-de-bord/admin/utilisateur/${user.id}`}
-                    className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
-                  >
-                    {user.roles.map((role) => (
-                      <Fragment key={role}>
-                        {role}
+                        {dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm")}
                         <br />
-                      </Fragment>
-                    ))}
-                  </Link>,
-                ])}
-                headers={["Dates", "Identité", "Roles"]}
+                        Modifiée le
+                        <br />
+                        {dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm")}
+                        <br />
+                        Commune: {fei.commune_mise_a_mort}
+                      </>,
+                      fei.responsabilites!.map((responsable, index) => {
+                        return (
+                          <li key={index}>
+                            {/* // @ts-expect-error intervenants is not null */}
+                            {responsable.type}:<br />
+                            {responsable.role ? getUserRoleLabel(responsable.role as UserRoles) : "N/A"}:{" "}
+                            {responsable.role ? (responsable.email! ?? responsable?.raison_sociale ?? "Inconnu") : ""}
+                            <br />
+                          </li>
+                        );
+                      }),
+                      fei.intervenants!.map((intervenant, index) => {
+                        if (!intervenant.email && !intervenant.raison_sociale) {
+                          return null;
+                        }
+                        return (
+                          <li key={index}>
+                            {/* // @ts-expect-error intervenants is not null */}
+                            {intervenant.type}: {intervenant.email! ?? intervenant?.raison_sociale}
+                            <br />
+                          </li>
+                        );
+                      }),
+                    ],
+                  }))}
               />
             </div>
             <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">

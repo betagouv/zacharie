@@ -67,6 +67,7 @@ model User {
   Logs                           Logs[]
   NotificationLog                NotificationLog[]
   CarcasseIntermediaire          CarcasseIntermediaire[] @relation("CarcasseIntermediaireUser")
+  FeiNextUser                    Fei[]                   @relation("FeiNextUser")
 
   @@index([id]) // New: Added for faster user lookups
   @@index([email]) // Modified: Simplified from the composite index
@@ -221,6 +222,7 @@ model Fei {
   FeiCurrentUser                                          User?                   @relation("FeiCurrentUser", fields: [fei_current_owner_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiCurrentEntity                                        Entity?                 @relation("FeiCurrentEntity", fields: [fei_current_owner_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiNextEntity                                           Entity?                 @relation("FeiNextEntity", fields: [fei_next_owner_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  FeiNextUser                                             User?                   @relation("FeiNextUser", fields: [fei_next_owner_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaire                                   CarcasseIntermediaire[]
 
   @@index([created_by_user_id])
