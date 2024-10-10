@@ -86,6 +86,13 @@ export default function FEICurrentIntermediaire() {
     return true;
   }, [fei, user, intermediaire, inetermediairesPopulated]);
 
+  console.log("needSelectNextUser", needSelectNextUser, {
+    "fei.fei_current_owner_user_id !== user.id": fei.fei_current_owner_user_id !== user.id,
+    "intermediaire.check_finished_at": intermediaire.check_finished_at,
+    "latestIntermediaire.id !== intermediaire.id": inetermediairesPopulated[0].id !== intermediaire.id,
+    latestIntermediaire: inetermediairesPopulated[0],
+  });
+
   const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
   const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(
     carcassesSorted.carcassesToCheck.length > 0,
@@ -196,7 +203,12 @@ export default function FEICurrentIntermediaire() {
           id="form_intermediaire_check_finished_at"
           onSubmit={(e) => {
             e.preventDefault();
-            const nextIntermediaire = mergeFeiIntermediaire(intermediaire, new FormData(e.currentTarget)) as FormData;
+            const nextFormIntermediaire = new FormData(e.currentTarget);
+            nextFormIntermediaire.append(
+              Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
+              new Date().toISOString(),
+            );
+            const nextIntermediaire = mergeFeiIntermediaire(intermediaire, nextFormIntermediaire) as FormData;
             nextIntermediaire.append("route", `/api/fei-intermediaire/${fei.numero}/${intermediaire.id}`);
             priseEnChargeFetcher.submit(nextIntermediaire, {
               method: "POST",

@@ -95,6 +95,8 @@ export default function FEI_SVI() {
     return label;
   }, [carcassesSorted.carcassesValidated.length, carcassesSorted.carcassesSaisies.length]);
 
+  console.log({ carcassesSorted });
+
   return (
     <>
       <Accordion titleAs="h3" label={`Identité du SVI ${canEdit ? "🔒" : ""}`}>

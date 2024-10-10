@@ -16,6 +16,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const fei = await prisma.fei.findUnique({
     where: {
       numero: params.fei_numero as string,
+      deleted_at: null,
     },
   });
   if (!fei) {

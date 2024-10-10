@@ -16,6 +16,12 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
     ...Object.fromEntries(newItem!),
   };
 
+  console.log({
+    oldItem,
+    newItem: Object.fromEntries(newItem!),
+    mergedItem,
+  });
+
   // Explicitly handle each field, including optional ones
   const result = {
     numero_bracelet: mergedItem.numero_bracelet,

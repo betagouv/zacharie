@@ -15,7 +15,7 @@ export async function action(args: ActionFunctionArgs) {
   const feiNumero = params.fei_numero;
   const formData = await request.formData();
   let existingFei = await prisma.fei.findUnique({
-    where: { numero: feiNumero },
+    where: { numero: feiNumero, deleted_at: null },
   });
   if (!existingFei) {
     existingFei = await prisma.fei.create({

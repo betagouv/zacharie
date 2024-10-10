@@ -24,7 +24,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   return json({
     ok: true,
     data: {
-      carcasses: JSON.parse(JSON.stringify(carcasses)) as Array<SerializeFrom<Carcasse>>,
+      carcasses: JSON.parse(JSON.stringify(carcasses.filter((c) => !c.deleted_at))) as Array<SerializeFrom<Carcasse>>,
     },
     error: "",
   });
