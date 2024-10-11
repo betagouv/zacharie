@@ -189,6 +189,13 @@ export default function Fei() {
     return false;
   }, [inetermediairesPopulated]);
 
+  const sviTabDisabled = useMemo(() => {
+    if (fei.svi_signed_at) {
+      return false;
+    }
+    return !user.roles.includes(UserRoles.SVI);
+  }, [fei.svi_signed_at, user.roles]);
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -205,7 +212,8 @@ export default function Fei() {
               ) : (
                 <FEICurrentIntermediaire />
               ))}
-            {selectedTabId === UserRoles.SVI && <FEI_SVI />}
+            {selectedTabId === UserRoles.SVI &&
+              (sviTabDisabled ? <p>Le service vétérinaire n'a pas encore terminé son inspection</p> : <FEI_SVI />)}
           </Tabs>
         </div>
       </div>
