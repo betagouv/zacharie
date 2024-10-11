@@ -138,20 +138,46 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
                 <br />
               </>
             )}
-            <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_carcasse_saisie_motif)}>
-              Inspection SVI&nbsp;:
-              {motifsSaisie.length > 0 ? (
-                <>
-                  {motifsSaisie.map((motif, index) => (
-                    <span className="m-0 ml-2 block font-medium" key={motif + index}>
-                      - {motif}
-                    </span>
-                  ))}
-                </>
-              ) : (
-                <span className="m-0 ml-2 block font-medium">- Pas de saisie</span>
-              )}
-            </span>
+            {(!canEdit || motifsSaisie.length > 0) && (
+              <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_carcasse_saisie_motif)}>
+                Inspection SVI&nbsp;:
+                {motifsSaisie.length > 0 ? (
+                  <>
+                    {motifsSaisie.map((motif, index) => {
+                      if (canEdit) {
+                        return (
+                          <span
+                            className="m-0 ml-2 flex items-center justify-between border-b border-b-gray-300 font-medium"
+                            key={motif + index}
+                          >
+                            - {motif}
+                            <button
+                              className="block px-4 py-1 font-medium"
+                              title="Supprimer"
+                              key={motif + index}
+                              onClick={() => {
+                                setMotifsSaisie((motifsSaisie) => {
+                                  return motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
+                                });
+                              }}
+                            >
+                              {`\u0078`}
+                            </button>
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="m-0 ml-2 block font-medium" key={motif + index}>
+                          - {motif}
+                        </span>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <span className="m-0 ml-2 block font-medium">- Pas de saisie</span>
+                )}
+              </span>
+            )}
             {!canEdit && carcasse.svi_carcasse_commentaire && (
               <>
                 <br />
