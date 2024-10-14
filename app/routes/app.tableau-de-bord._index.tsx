@@ -111,30 +111,6 @@ export default function TableauDeBordIndex() {
             </button>
           )}
           <h1 className="fr-h2 fr-mb-2w">Mes FEI</h1>
-          <CallOut title="🖥️ Toutes vos FEI centralisées" className="bg-white">
-            Retrouvez ici toutes vos FEI - en cours, validées, refusées - et les actions à mener.
-          </CallOut>
-          {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
-            <section className="mb-6 bg-white md:shadow">
-              <div className="p-4 md:p-8 md:pb-0">
-                <h2 className="fr-h3 fr-mb-2w">Nouvelle FEI</h2>
-                <p className="fr-text--regular mb-4">Pour créer une nouvelle FEI, c'est par ici 👇</p>
-                <div className="flex flex-col items-start bg-white [&_ul]:md:min-w-96">
-                  <ButtonsGroup
-                    buttons={[
-                      {
-                        children: "Nouvelle FEI",
-                        linkProps: {
-                          to: "/app/tableau-de-bord/fei/nouvelle",
-                          href: "#",
-                        },
-                      },
-                    ]}
-                  />
-                </div>
-              </div>
-            </section>
-          )}
           <section className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-0">
               <h2 className="fr-h3">FEI à compléter{feisAssigned.length > 0 ? ` (${feisAssigned.length})` : null}</h2>
@@ -278,6 +254,27 @@ export default function TableauDeBordIndex() {
               </a>
             </div>
           </section>
+          {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
+            <section className="mb-6 bg-white md:shadow">
+              <div className="p-4 md:p-8 md:pb-0">
+                <h2 className="fr-h3 fr-mb-2w">Nouvelle FEI</h2>
+                <p className="fr-text--regular mb-4">Pour créer une nouvelle FEI, c'est par ici 👇</p>
+                <div className="flex flex-col items-start bg-white [&_ul]:md:min-w-96">
+                  <ButtonsGroup
+                    buttons={[
+                      {
+                        children: "Nouvelle FEI",
+                        linkProps: {
+                          to: "/app/tableau-de-bord/fei/nouvelle",
+                          href: "#",
+                        },
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </div>
