@@ -137,7 +137,7 @@ export default function TableauDeBordIndex() {
           )}
           <section className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">FEI assignées{feisAssigned.length > 0 ? ` (${feisAssigned.length})` : null}</h2>
+              <h2 className="fr-h3">FEI à compléter{feisAssigned.length > 0 ? ` (${feisAssigned.length})` : null}</h2>
             </div>
             {feisAssigned.length ? (
               <ResponsiveTable
