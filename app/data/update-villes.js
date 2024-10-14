@@ -8,7 +8,8 @@ const jsonData = JSON.parse(fs.readFileSync(filePath, "utf8"));
 // Modify the data
 const modifiedData = jsonData.map((item) => ({
   ...item,
-  code_postal_ville: `${item.code_postal} ${item.ville}`,
+  code_postal: item.code_postal.toString().padStart(5, "0"),
+  code_postal_ville: `${item.code_postal.toString().padStart(5, "0")} ${item.ville}`,
 }));
 
 // Write the modified data back to the file
