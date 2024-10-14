@@ -44,12 +44,19 @@ export default function SelectPremierDetenteur() {
         onSubmit={(event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
+          if (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) === fei.fei_current_owner_user_id) {
+            formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
+            formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_role, "");
+            formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
+            formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_role, UserRoles.PREMIER_DETENTEUR);
+          }
           const nextFei = mergeFei(fei, formData);
           nextFei.append("route", `/api/fei/${fei.numero}`);
           nextOwnerFetcher.submit(nextFei, {
             method: "POST",
             preventScrollReset: true,
           });
+          window.scrollTo(0, 0);
         }}
       >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
@@ -80,7 +87,7 @@ export default function SelectPremierDetenteur() {
             ))}
         </div>
       </nextOwnerFetcher.Form>
-      {!fei.fei_next_owner_user_id && (
+      {!fei.fei_next_owner_user_id && !nextValue && (
         <>
           <searchUserFetcher.Form
             className="fr-fieldset__element relative flex w-full flex-row items-end gap-4"
