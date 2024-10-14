@@ -22,6 +22,19 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
     mergedItem,
   });
 
+  let nextAnomaliesCarcasse: string[] = [];
+  let nextAnomaliesAbats: string[] = [];
+  if (newItem?.get("examinateur_carcasse_sans_anomalie") === "false") {
+    nextAnomaliesCarcasse = newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)?.length
+      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse).map(String).filter(Boolean)
+      : (oldItem.examinateur_anomalies_carcasse ?? []);
+    nextAnomaliesAbats = newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats)?.length
+      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats).map(String).filter(Boolean)
+      : (oldItem.examinateur_anomalies_abats ?? []);
+  }
+
+  console.log({ nextAnomaliesCarcasse, nextAnomaliesAbats });
+
   // Explicitly handle each field, including optional ones
   const result = {
     numero_bracelet: mergedItem.numero_bracelet,
@@ -39,12 +52,8 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
           ? false
           : mergedItem.examinateur_carcasse_sans_anomalie || null,
     // prettier-ignore
-    examinateur_anomalies_carcasse: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)?.length
-      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse).map(String).filter(Boolean)
-      : (oldItem.examinateur_anomalies_carcasse ?? []),
-    examinateur_anomalies_abats: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats)?.length
-      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats).map(String).filter(Boolean)
-      : (oldItem.examinateur_anomalies_abats ?? []),
+    examinateur_anomalies_carcasse:nextAnomaliesCarcasse,
+    examinateur_anomalies_abats: nextAnomaliesAbats,
     examinateur_commentaire: mergedItem.examinateur_commentaire,
     examinateur_signed_at: mergedItem.examinateur_signed_at
       ? dayjs(mergedItem.examinateur_signed_at).toISOString()
@@ -87,7 +96,15 @@ export function mergeCarcasse(oldItem: SerializeFrom<Carcasse>, newItem?: FormDa
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function getFormData(object: Record<string, any>) {
     const formData = new FormData();
-    Object.keys(object).forEach((key) => formData.append(key, object[key]));
+    Object.keys(object).forEach((key) => {
+      if (Array.isArray(object[key])) {
+        object[key].forEach((value) => {
+          formData.append(key, value);
+        });
+      } else {
+        formData.append(key, object[key]);
+      }
+    });
     return formData;
   }
   return getFormData(result) satisfies FormData;
