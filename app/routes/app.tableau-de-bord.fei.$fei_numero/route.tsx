@@ -87,7 +87,7 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
 }
 
 export default function Fei() {
-  const { fei, user, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
+  const { fei, user, inetermediairesPopulated, nextOwnerEntity } = useLoaderData<typeof clientLoader>();
 
   const doneEmoji = "✅ ";
 
@@ -189,6 +189,18 @@ export default function Fei() {
     return false;
   }, [inetermediairesPopulated]);
 
+  const intermediaireTabDisabledText = useMemo(() => {
+    const intermediaire = inetermediairesPopulated?.[0];
+    if (intermediaire) {
+      return "";
+    }
+    const nextIntermediaireId = fei.fei_next_owner_entity_id;
+    if (!nextIntermediaireId) {
+      return "Il n'y a pas encore de premier intermédiaire sélectionné";
+    }
+    return `Le prochain intermédiaire est: ${nextOwnerEntity?.raison_sociale}`;
+  }, [inetermediairesPopulated, fei.fei_next_owner_entity_id, nextOwnerEntity]);
+
   const sviTabDisabled = useMemo(() => {
     if (fei.svi_signed_at) {
       return false;
@@ -207,11 +219,7 @@ export default function Fei() {
             {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur />}
             {selectedTabId === "Intermédiaires" &&
-              (intermediaireTabDisabled ? (
-                <p>Il n'y a pas encore de premier intermédiaire sélectionné</p>
-              ) : (
-                <FEICurrentIntermediaire />
-              ))}
+              (intermediaireTabDisabledText ? <p>{intermediaireTabDisabledText}</p> : <FEICurrentIntermediaire />)}
             {selectedTabId === UserRoles.SVI &&
               (sviTabDisabled ? <p>Le service vétérinaire n'a pas encore terminé son inspection</p> : <FEI_SVI />)}
           </Tabs>
