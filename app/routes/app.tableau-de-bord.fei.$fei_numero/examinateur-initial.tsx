@@ -98,7 +98,7 @@ export default function FEIExaminateurInitial() {
           <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
           <div className="fr-fieldset__element">
             <Component
-              label="Date de mise à mort (et d'éviscération)"
+              label="Date de mise à mort (et d'éviscération) *"
               nativeInputProps={{
                 id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
                 name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
@@ -112,7 +112,7 @@ export default function FEIExaminateurInitial() {
           </div>
           <div className="fr-fieldset__element">
             <VilleComponent
-              label="Commune de mise à mort"
+              label="Commune de mise à mort *"
               nativeInputProps={{
                 id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
                 name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
@@ -125,7 +125,7 @@ export default function FEIExaminateurInitial() {
           </div>
         </examFetcher.Form>
       </Accordion>
-      <Accordion titleAs="h3" label={`Lots de carcasse(s) (${carcasses.length})`} defaultExpanded>
+      <Accordion titleAs="h3" label={`Carcasse(s)/Lots de carcasse(s) (${carcasses.length})`} defaultExpanded>
         <CarcassesExaminateur canEdit={canEdit} />
       </Accordion>
       <Accordion titleAs="h3" label={`Identité de l'Examinateur ${canEdit ? "🔒" : ""}`}>
@@ -160,7 +160,7 @@ export default function FEIExaminateurInitial() {
                     } que les carcasses en peau examinées ce jour peuvent être mises sur le marché`,
                     hintText: jobIsDone
                       ? ""
-                      : "Veuillez remplir les données de chasse et examiner des carcasses au préalable",
+                      : "Veuillez remplir la date et la commune de mise à mort, et finir l'examen des carcasses au préalable",
                     nativeInputProps: {
                       required: true,
                       name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,

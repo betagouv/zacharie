@@ -73,20 +73,11 @@ export default function NouvelleFEI() {
                     name={Prisma.FeiScalarFieldEnum.fei_current_owner_role}
                     value={UserRoles.EXAMINATEUR_INITIAL}
                   />
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Date de mise à mort (et d'éviscération)"
-                      nativeInputProps={{
-                        id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                        name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                        type: "date",
-                        required: true,
-                        autoComplete: "off",
-                        suppressHydrationWarning: true,
-                        defaultValue: dayjs().toISOString().split("T")[0],
-                      }}
-                    />
-                  </div>
+                  <input
+                    type="hidden"
+                    name={Prisma.FeiScalarFieldEnum.date_mise_a_mort}
+                    value={dayjs().toISOString().split("T")[0]}
+                  />
                   {/* <div className="fr-fieldset__element">
                     <InputVille
                       label="Commune de mise à mort"
