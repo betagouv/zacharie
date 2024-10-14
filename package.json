@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev-api": "prisma generate && yarn prisma-deploy && react-dsfr update-icons && node ./server-api.js",
-    "dev-spa": "rm -rf node_modules/.vite && SPA_MODE=true && remix vite:dev --port 3232 --force",
+    "dev-spa": "rm -rf node_modules/.vite && react-dsfr update-icons && SPA_MODE=true && remix vite:dev --port 3232 --force",
     "build-api": "remix vite:build",
     "build-spa": "SPA_MODE=true remix vite:build",
     "start-spa": "NODE_ENV=production SPA_MODE=true PORT=8080 node ./server-spa.js",

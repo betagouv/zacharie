@@ -1,4 +1,4 @@
-import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
+import { Button } from "@codegouvfr/react-dsfr/Button";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { redirect, useLoaderData } from "@remix-run/react";
 import { UserRoles } from "@prisma/client";
@@ -139,20 +139,15 @@ export default function TableauDeBordIndex() {
             ) : (
               <p className="m-8">Pas de FEI assignée</p>
             )}
-            <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: "Rafraichir",
-                    disabled: !isOnline,
-                    nativeButtonProps: {
-                      onClick: () => {
-                        window.location.reload();
-                      },
-                    },
-                  },
-                ]}
-              />
+            <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+              <Button
+                priority="tertiary"
+                iconId="ri-refresh-line"
+                disabled={!isOnline}
+                onClick={() => window.location.reload()}
+              >
+                Mettre à jour
+              </Button>
               <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
                 Haut de page
               </a>
@@ -184,20 +179,15 @@ export default function TableauDeBordIndex() {
             ) : (
               <p className="m-8">Pas de FEI en cours</p>
             )}
-            <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: "Rafraichir",
-                    disabled: !isOnline,
-                    nativeButtonProps: {
-                      onClick: () => {
-                        window.location.reload();
-                      },
-                    },
-                  },
-                ]}
-              />
+            <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+              <Button
+                priority="tertiary"
+                iconId="ri-refresh-line"
+                disabled={!isOnline}
+                onClick={() => window.location.reload()}
+              >
+                Mettre à jour
+              </Button>
               <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
                 Haut de page
               </a>
@@ -235,20 +225,15 @@ export default function TableauDeBordIndex() {
                 </>
               )}
             </div>
-            <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: "Rafraichir",
-                    disabled: !isOnline,
-                    nativeButtonProps: {
-                      onClick: () => {
-                        window.location.reload();
-                      },
-                    },
-                  },
-                ]}
-              />
+            <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+              <Button
+                priority="tertiary"
+                iconId="ri-refresh-line"
+                disabled={!isOnline}
+                onClick={() => window.location.reload()}
+              >
+                Mettre à jour
+              </Button>
               <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
                 Haut de page
               </a>
