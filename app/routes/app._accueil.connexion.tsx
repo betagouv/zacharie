@@ -1,6 +1,7 @@
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { json, Link, useFetcher, useSearchParams, redirect, type ClientActionFunctionArgs } from "@remix-run/react";
 import { Button } from "@codegouvfr/react-dsfr/Button";
+import { PasswordInput } from "@codegouvfr/react-dsfr/blocks/PasswordInput";
 import type { ConnexionActionData } from "~/routes/api.action.connexion";
 import { setCacheItem } from "~/services/indexed-db.client";
 import { getUserOnboardingRoute } from "~/utils/user-onboarded.client";
@@ -82,7 +83,7 @@ export default function Connexion() {
                   defaultValue: import.meta.env.VITE_EMAIL ?? "",
                 }}
               />
-              <Input
+              <PasswordInput
                 hintText="Veuillez entrer votre mot de passe"
                 label="Mon mot de passe"
                 state={getErrorMessage("mot de passe") ? "error" : "default"}
