@@ -125,7 +125,7 @@ export default function FEIExaminateurInitial() {
           </div>
         </examFetcher.Form>
       </Accordion>
-      <Accordion titleAs="h3" label={`Carcasse(s)/Lots de carcasse(s) (${carcasses.length})`} defaultExpanded>
+      <Accordion titleAs="h3" label={`Carcasses/Lots de carcasses (${carcasses.length})`} defaultExpanded>
         <CarcassesExaminateur canEdit={canEdit} />
       </Accordion>
       <Accordion titleAs="h3" label={`Identité de l'Examinateur ${canEdit ? "🔒" : ""}`}>
