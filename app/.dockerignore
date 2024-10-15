@@ -5,10 +5,3 @@ node_modules
    **/.git
    **/.DS_Store
    **/node_modules
-**/node_modules
-**/build
-**/Dockerfile
-.dockerignore
-**/.gitignore
-**/.vscode
-**/README.md

@@ -1,22 +1,19 @@
-
-
 node_modules
-
-/.cache
-/build-api
-/build-spa
-/public/build
+.DS_Store
+.github/.DS_Store
 .env
-.env.production
+.cache_ggshield
+test-local.js
+/test-results/
+/playwright-report/
+/playwright/.cache/
+.vscode/launch.json
+.secrets
 
+# Yarn Berry
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-# Sentry Config File
-.sentryclirc
-
-# Sentry Config File
-.env.sentry-build-plugin
