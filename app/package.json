@@ -1,0 +1,92 @@
+{
+  "name": "zacharie-pwa-model",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "dev-spa": "rm -rf node_modules/.vite && react-dsfr update-icons && SPA_MODE=true && remix vite:dev --port 3232 --force",
+    "build-spa": "SPA_MODE=true remix vite:build",
+    "start-spa": "NODE_ENV=production SPA_MODE=true PORT=8080 node ./server-spa.js",
+    "start-spa-local": "NODE_ENV=production SPA_MODE=true PORT=3232 node ./server-spa.js",
+    "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
+    "typecheck": "tsc",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@codegouvfr/react-dsfr": "^1.13.2",
+    "@prisma/client": "^5.19.1",
+    "@remix-run/express": "^2.11.2",
+    "@remix-run/node": "^2.12.1",
+    "@remix-run/react": "^2.12.1",
+    "@remix-run/serve": "^2.12.1",
+    "@sentry/remix": "^8.28.0",
+    "@sentry/vite-plugin": "^2.22.3",
+    "@uidotdev/usehooks": "^2.4.1",
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
+    "crypto-js": "^4.2.0",
+    "dayjs": "^1.11.13",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "idb-keyval": "^6.2.1",
+    "isbot": "^4.1.0",
+    "morgan": "^1.10.0",
+    "prisma": "^5.19.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remix-utils": "^7.6.0",
+    "short-unique-id": "^5.2.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^2.12.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2",
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.0",
+    "@types/serviceworker": "^0.0.97",
+    "@types/web-push": "^3.6.3",
+    "@typescript-eslint/eslint-plugin": "^6.7.4",
+    "@typescript-eslint/parser": "^6.7.4",
+    "@vite-pwa/assets-generator": "^0.2.6",
+    "@vite-pwa/remix": "^0.1.3",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.38.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "postcss": "^8.4.38",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.6",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.1.6",
+    "vite": "^5.1.0",
+    "vite-plugin-pwa": "^0.20.5",
+    "vite-tsconfig-paths": "^4.2.1",
+    "workbox-cacheable-response": "^7.1.0",
+    "workbox-core": "^7.1.0",
+    "workbox-precaching": "^7.1.0",
+    "workbox-routing": "^7.1.0",
+    "workbox-strategies": "^7.1.0",
+    "workbox-window": "^7.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "overrides": {
+    "sharp": "0.32.6",
+    "sharp-ico": "0.1.5"
+  },
+  "packageManager": "yarn@4.4.1",
+  "prettier": {
+    "plugins": [
+      "prettier-plugin-tailwindcss"
+    ],
+    "semi": true,
+    "printWidth": 120
+  }
+}

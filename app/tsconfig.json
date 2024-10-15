@@ -1,0 +1,49 @@
+{
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/.server/**/*.ts",
+    "**/.server/**/*.tsx",
+    "**/.client/**/*.ts",
+    "**/.client/**/*.tsx"
+  ],
+  "compilerOptions": {
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2022",
+      "WebWorker"
+    ],
+    "types": [
+      "@remix-run/node",
+      "vite/client",
+      "vite-plugin-pwa/info",
+      "vite-plugin-pwa/pwa-assets",
+      "vite-plugin-pwa/react",
+      "vite-plugin-pwa/client",
+      "@vite-pwa/remix",
+      "@vite-pwa/remix/remix-sw",
+      "workbox-precaching"
+    ],
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "target": "ES2022",
+    "strict": true,
+    "strictNullChecks": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@app/*": ["./app/*"],
+      "@api/*": ["../api-remix/app/*"],
+      "~/*": ["../api-remix/app/*"]
+    },
+    // Vite takes care of building everything, not tsc.
+    "noEmit": true
+  }
+}
