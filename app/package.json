@@ -9,7 +9,8 @@
     "start-spa": "NODE_ENV=production SPA_MODE=true PORT=8080 node ./server-spa.js",
     "start-spa-local": "NODE_ENV=production SPA_MODE=true PORT=3232 node ./server-spa.js",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@codegouvfr/react-dsfr": "^1.13.2",
