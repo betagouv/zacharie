@@ -1,7 +1,7 @@
 // import * as zodSchemas from "prisma/generated/zod";
 import dayjs from "dayjs";
 import { SerializeFrom } from "@remix-run/node";
-import { type Fei, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
+import { type Fei, type User, type Carcasse, type CarcasseIntermediaire, UserRoles } from "@prisma/client";
 import { type FeiLoaderData } from "@api/routes/api.fei.$fei_numero";
 import { type FeiUserLoaderData } from "@api/routes/api.fei-user.$fei_numero.$user_id";
 import { type FeiEntityLoaderData } from "@api/routes/api.fei-entity.$fei_numero.$entity_id";
@@ -24,12 +24,20 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
     ...Object.fromEntries(newItem!),
   };
 
+  const next_examinateur_initial_approbation_mise_sur_le_marche =
+    newItem?.get("examinateur_initial_approbation_mise_sur_le_marche") === "true"
+      ? true
+      : newItem?.get("examinateur_initial_approbation_mise_sur_le_marche") === "false"
+        ? false
+        : mergedItem.examinateur_initial_approbation_mise_sur_le_marche || null;
   // Explicitly handle each field, including optional ones
   const result = {
     id: mergedItem.id || Date.now(),
     numero: mergedItem.numero,
     date_mise_a_mort: mergedItem.date_mise_a_mort ? dayjs(mergedItem.date_mise_a_mort).toISOString() : null,
     commune_mise_a_mort: mergedItem.commune_mise_a_mort || null,
+    heure_mise_a_mort_premiere_carcasse: mergedItem.heure_mise_a_mort_premiere_carcasse || null,
+    heure_evisceration_derniere_carcasse: mergedItem.heure_evisceration_derniere_carcasse || null,
     created_by_user_id: mergedItem.created_by_user_id,
     fei_current_owner_user_id: mergedItem.fei_current_owner_user_id || null,
     fei_current_owner_entity_id: mergedItem.fei_current_owner_entity_id || null,
@@ -48,16 +56,10 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
     fei_prev_owner_role: mergedItem.fei_prev_owner_role || null,
     examinateur_initial_user_id: mergedItem.examinateur_initial_user_id || null,
     examinateur_initial_date_approbation_mise_sur_le_marche:
-      mergedItem.examinateur_initial_date_approbation_mise_sur_le_marche
-        ? dayjs(mergedItem.examinateur_initial_date_approbation_mise_sur_le_marche).toISOString()
-        : null,
-    examinateur_initial_approbation_mise_sur_le_marche:
-      newItem?.get("examinateur_initial_approbation_mise_sur_le_marche") === "true"
-        ? true
-        : newItem?.get("examinateur_initial_approbation_mise_sur_le_marche") === "false"
-          ? false
-          : mergedItem.examinateur_initial_approbation_mise_sur_le_marche || null,
+      next_examinateur_initial_approbation_mise_sur_le_marche === true ? dayjs().toISOString() : null,
+    examinateur_initial_approbation_mise_sur_le_marche: next_examinateur_initial_approbation_mise_sur_le_marche,
     premier_detenteur_user_id: mergedItem.premier_detenteur_user_id || null,
+    premier_detenteur_entity_id: mergedItem.premier_detenteur_entity_id || null,
     premier_detenteur_date_depot_quelque_part: mergedItem.premier_detenteur_date_depot_quelque_part
       ? dayjs(mergedItem.premier_detenteur_date_depot_quelque_part).toISOString()
       : null,
@@ -120,6 +122,11 @@ export async function loadFei(fei_numero: string) {
   const premierDetenteurId = feiData.data?.fei.premier_detenteur_user_id;
   const premierDetenteurUser = premierDetenteurId
     ? ((await get(`/api/fei-user/${fei_numero}/${premierDetenteurId}`)) as FeiUserLoaderData)
+    : null;
+
+  const premierDetenteurEntityId = feiData.data?.fei.premier_detenteur_entity_id;
+  const premierDetenteurEntity = premierDetenteurEntityId
+    ? ((await get(`/api/fei-entity/${fei_numero}/${premierDetenteurEntityId}`)) as FeiEntityLoaderData)
     : null;
 
   const depotEntityId = feiData.data?.fei.premier_detenteur_depot_entity_id;
@@ -187,6 +194,7 @@ export async function loadFei(fei_numero: string) {
     fei: feiData.data!.fei,
     examinateurInitialUser: examinateurInitialUser?.data?.user,
     premierDetenteurUser: premierDetenteurUser?.data?.user,
+    premierDetenteurEntity: premierDetenteurEntity?.data?.entity,
     premierDetenteurDepotEntity: premierDetenteurDepotEntityId?.data?.entity,
     currentOwnerUser: currentOwnerUser?.data?.user,
     currentOwnerEntity: currentOwnerEntity?.data?.entity,
@@ -197,4 +205,29 @@ export async function loadFei(fei_numero: string) {
     carcasses: carcasses.data?.carcasses || [],
     inetermediairesPopulated,
   };
+}
+
+export function createFei(user: User) {
+  return {
+    fei: {
+      numero: `ZACH-FEI-${dayjs().format("YYYYMMDD")}-${user.id}-${dayjs().format("HHmmss")}`,
+      created_by_user_id: user.id,
+      examinateur_initial_user_id: user.id,
+      fei_current_owner_user_id: user.id,
+      fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
+      date_mise_a_mort: dayjs().toISOString().split("T")[0],
+    },
+    examinateurInitialUser: user,
+    premierDetenteurUser: null,
+    premierDetenteurEntity: null,
+    premierDetenteurDepotEntity: null,
+    currentOwnerUser: user,
+    currentOwnerEntity: null,
+    nextOwnerUser: null,
+    nextOwnerEntity: null,
+    sviUser: null,
+    svi: null,
+    carcasses: [],
+    inetermediairesPopulated: [],
+  } as unknown as Awaited<ReturnType<typeof loadFei>>;
 }

@@ -8,5 +8,17 @@
     "Chamois": ["Bouc", "Chèvre", "Chevreau"],
     "Isard": ["Isard", "Isarde", "Cabri"],
     "Mouflon méditerranéen": ["Bélier", "Brebis", "Agneau"]
-  }
+  },
+  "especes": [
+    "Cerf",
+    "Biche",
+    "Faon",
+    "Chevreuil",
+    "Chevrette",
+    "Daim",
+    "Sanglier",
+    "Chamois",
+    "Isard",
+    "Mouflon méditerranéen"
+  ]
 }

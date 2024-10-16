@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       updated_at: "desc",
     },
   });
-  const userEntitiesRelations = await prisma.entityRelations.findMany({
+  const userEntitiesRelationsWorkingFor = await prisma.entityRelations.findMany({
     where: {
       owner_id: user.id,
       relation: EntityRelationType.WORKING_FOR,
@@ -31,7 +31,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 
   const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
-  const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(userEntitiesRelations, allEntitiesIds);
+  const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(userEntitiesRelationsWorkingFor, allEntitiesIds);
 
   return json({
     ok: true,

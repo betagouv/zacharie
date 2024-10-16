@@ -11,11 +11,14 @@ import { Button } from "@codegouvfr/react-dsfr/Button";
 import dayjs from "dayjs";
 import InputVille from "@app/components/InputVille";
 import CarcassesExaminateur from "./carcasses-examinateur";
-import SelectPremierDetenteur from "./select-next-premier-detenteur";
+import SelectNextForExaminateur from "./select-next-for-examinateur";
 import { mergeFei } from "@app/db/fei.client";
+import FeiPremierDetenteur from "./premier-detenteur";
+import EntityNotEditable from "@app/components/EntityNotEditable";
 
 export default function FEIExaminateurInitial() {
-  const { fei, user, carcasses, examinateurInitialUser } = useLoaderData<typeof clientLoader>();
+  const { fei, user, carcasses, examinateurInitialUser, premierDetenteurUser, premierDetenteurEntity } =
+    useLoaderData<typeof clientLoader>();
 
   const approbationFetcher = useFetcher({ key: "approbation-mise-sur-le-marche" });
 
@@ -65,15 +68,31 @@ export default function FEIExaminateurInitial() {
     return true;
   }, [fei, user]);
 
+  const examinateurIsAlsoPremierDetenteur = useMemo(() => {
+    if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
+      return false;
+    }
+    if (fei.fei_current_owner_user_id !== user.id) {
+      return false;
+    }
+    if (fei.premier_detenteur_user_id !== user.id) {
+      return false;
+    }
+    if (fei.examinateur_initial_user_id !== user.id) {
+      return false;
+    }
+    return true;
+  }, [fei, user]);
+
   const carcassesNotReady = useMemo(() => {
     const notReady = [];
-    for (const carcasse of carcasses) {
+    for (const carcasse of carcasses.filter((c) => c !== null)) {
       if (
         !carcasse.examinateur_signed_at ||
         // !carcasse.heure_evisceration ||
         // !carcasse.heure_mise_a_mort ||
-        !carcasse.espece ||
-        !carcasse.categorie
+        // !carcasse.categorie ||
+        !carcasse.espece
       ) {
         notReady.push(carcasse);
       }
@@ -82,14 +101,22 @@ export default function FEIExaminateurInitial() {
   }, [carcasses]);
 
   const jobIsDone = useMemo(() => {
-    if (!fei.date_mise_a_mort || !fei.commune_mise_a_mort) {
+    if (
+      !fei.date_mise_a_mort ||
+      !fei.commune_mise_a_mort ||
+      !fei.heure_mise_a_mort_premiere_carcasse ||
+      !fei.heure_evisceration_derniere_carcasse
+    ) {
+      return false;
+    }
+    if (carcasses.length === 0) {
       return false;
     }
     if (carcassesNotReady.length > 0) {
       return false;
     }
     return true;
-  }, [fei, carcassesNotReady]);
+  }, [fei, carcassesNotReady, carcasses]);
 
   return (
     <>
@@ -123,6 +150,19 @@ export default function FEIExaminateurInitial() {
               }}
             />
           </div>
+          <div className="fr-fieldset__element">
+            <Component
+              label="Heure de mise à mort de la première carcasse *"
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                type: "time",
+                required: true,
+                autoComplete: "off",
+                defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? "",
+              }}
+            />
+          </div>
         </examFetcher.Form>
       </Accordion>
       <Accordion titleAs="h3" label={`Carcasses/Lots de carcasses (${carcasses.length})`} defaultExpanded>
@@ -146,6 +186,30 @@ export default function FEIExaminateurInitial() {
             }}
           >
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
+            <div className="fr-fieldset__element">
+              <Component
+                label="Heure d'éviscération de la dernière carcasse"
+                nativeInputProps={{
+                  id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                  name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                  type: "time",
+                  required: true,
+                  autoComplete: "off",
+                  onBlur: (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget.form as HTMLFormElement);
+                    formData.append(Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse, e.target.value);
+                    const nextFei = mergeFei(fei, formData);
+                    nextFei.append("route", `/api/fei/${fei.numero}`);
+                    approbationFetcher.submit(nextFei, {
+                      method: "POST",
+                      preventScrollReset: true,
+                    });
+                  },
+                  defaultValue: fei?.heure_evisceration_derniere_carcasse ?? "",
+                }}
+              />
+            </div>
             <div
               className={[
                 "fr-fieldset__element",
@@ -160,7 +224,7 @@ export default function FEIExaminateurInitial() {
                     } que les carcasses en peau examinées ce jour peuvent être mises sur le marché`,
                     hintText: jobIsDone
                       ? ""
-                      : "Veuillez remplir la date et la commune de mise à mort, et finir l'examen des carcasses au préalable",
+                      : "Veuillez remplir au préalable la date et la commune de mise à mort, les heures de mise à mort et d'éviscération des carcasses",
                     nativeInputProps: {
                       required: true,
                       name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
@@ -200,8 +264,15 @@ export default function FEIExaminateurInitial() {
       )}
       {needSelectNextUser && (
         <div className="z-50 mt-4 flex flex-col bg-white pt-4 md:w-auto md:items-start [&_ul]:md:min-w-96">
-          <SelectPremierDetenteur />
+          <SelectNextForExaminateur />
         </div>
+      )}
+      {examinateurIsAlsoPremierDetenteur && (
+        <>
+          <Accordion titleAs="h3" label="Premier détenteur" defaultExpanded>
+            <FeiPremierDetenteur showIdentity={!!premierDetenteurEntity} />
+          </Accordion>
+        </>
       )}
     </>
   );

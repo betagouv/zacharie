@@ -17,7 +17,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       fei_numero: params.fei_numero,
     },
     orderBy: {
-      created_at: "desc", // the latest first
+      created_at: "asc", // the latest first
     },
   });
 

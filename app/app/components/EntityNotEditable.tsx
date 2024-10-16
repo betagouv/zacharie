@@ -1,11 +1,14 @@
 import { Prisma, User, Entity } from "@prisma/client";
 import type { SerializeFrom } from "@remix-run/node";
 import InputNotEditable from "./InputNotEditable";
+import { getUserRoleLabel } from "@app/utils/get-user-roles-label";
 
 export default function EntityNotEditable({
+  hideType = false,
   user = null,
   entity = null,
 }: {
+  hideType?: boolean;
   user: null | SerializeFrom<{
     nom_de_famille: User["nom_de_famille"];
     prenom: User["prenom"];
@@ -25,17 +28,19 @@ export default function EntityNotEditable({
 }) {
   return (
     <>
-      <div className="fr-fieldset__element">
-        <InputNotEditable
-          label="Type"
-          nativeInputProps={{
-            id: Prisma.EntityScalarFieldEnum.type,
-            name: Prisma.EntityScalarFieldEnum.type,
-            autoComplete: "off",
-            defaultValue: entity?.type ?? "",
-          }}
-        />
-      </div>
+      {!hideType && (
+        <div className="fr-fieldset__element">
+          <InputNotEditable
+            label="Type"
+            nativeInputProps={{
+              id: Prisma.EntityScalarFieldEnum.type,
+              name: Prisma.EntityScalarFieldEnum.type,
+              autoComplete: "off",
+              defaultValue: getUserRoleLabel(entity?.type ?? ""),
+            }}
+          />
+        </div>
+      )}
       <div className="fr-fieldset__element">
         <InputNotEditable
           label="Raison Sociale"
@@ -87,7 +92,7 @@ export default function EntityNotEditable({
         <InputNotEditable
           label={
             <>
-              <span className="ml-2 block font-medium">Représentant de l'entreprise</span>
+              <span className="ml-2 block font-medium">Représenté ici par</span>
               <br />
               <br />
               Nom de famille

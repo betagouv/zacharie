@@ -148,7 +148,7 @@ export default function MesCCGs() {
                   {
                     children: redirect ? "Retour" : "Modifier mes informations",
                     linkProps: {
-                      to: redirect || "/app/tableau-de-bord/mon-profil/mes-notifications",
+                      to: redirect || "/app/tableau-de-bord/mon-profil/mes-informations",
                       href: "#",
                     },
                     priority: "secondary",

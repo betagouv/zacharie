@@ -10,5 +10,17 @@
       "Autres oiseaux  "
     ],
     "Petit gibier à poils": ["Lapins", "Lièvres", "Autres petits gibiers à poils"]
-  }
+  },
+  "especes": [
+    "Cailles",
+    "Canards",
+    "Oies",
+    "Faisans de chasse",
+    "Perdrix",
+    "Pigeons",
+    "Autres oiseaux",
+    "Lapins",
+    "Lièvres",
+    "Autres petits gibiers à poils"
+  ]
 }

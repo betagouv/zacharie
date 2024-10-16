@@ -41,6 +41,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   if (!route) {
     return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
   }
+  console.log(`${import.meta.env.VITE_API_URL}${route}`);
   const response = await fetch(`${import.meta.env.VITE_API_URL}${route}`, {
     method: "POST",
     credentials: "include",
@@ -257,7 +258,7 @@ export default function MesInformations() {
                       }}
                     />
                   </div>
-                  <div className="fr-fieldset__element fr-fieldset__element--inline fr-fieldset__element--postal flex">
+                  <div className="fr-fieldset__element fr-fieldset__element--inline fr-fieldset__element--postal flex flex-col md:flex-row">
                     <Input
                       label="Code postal"
                       hintText="Format attendu : 5 chiffres"
@@ -286,6 +287,17 @@ export default function MesInformations() {
                     </div>
                   </div>
                 </Accordion>
+                {(user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ||
+                  user.roles.includes(UserRoles.PREMIER_DETENTEUR)) && (
+                  <AccordionEntreprise
+                    fetcherKey="onboarding-etape-2-collecteur-pro-data"
+                    accordionLabel="Vos associations de chasse / repas associatifs"
+                    addLabel="Ajouter une association de chasse"
+                    selectLabel="Sélectionnez une association de chasse"
+                    done
+                    entityType={EntityTypes.PREMIER_DETENTEUR}
+                  />
+                )}
                 {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
                   <Accordion
                     titleAs="h2"
@@ -313,6 +325,7 @@ export default function MesInformations() {
                   </Accordion>
                 )}
               </userFetcher.Form>
+
               {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-collecteur-pro-data"
@@ -514,7 +527,21 @@ function AccordionEntreprise({
               );
             })}
           </Select>
-          <Button type="submit" disabled={!remainingEntities.length}>
+          <Button
+            type="submit"
+            nativeButtonProps={{ form: fetcherKey }}
+            onClick={(e) => {
+              console.log("submit");
+              e.preventDefault();
+              const form = new FormData(e.currentTarget.form as HTMLFormElement);
+              console.log("submitted");
+              userEntityFetcher.submit(form, {
+                method: "POST",
+                preventScrollReset: true,
+              });
+            }}
+            disabled={!remainingEntities.length}
+          >
             Ajouter
           </Button>
         </userEntityFetcher.Form>

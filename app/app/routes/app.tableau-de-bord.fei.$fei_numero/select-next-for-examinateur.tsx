@@ -11,25 +11,46 @@ import { action as searchUserAction } from "@api/routes/api.fei-trouver-premier-
 import { useIsOnline } from "@app/components/OfflineMode";
 import { mergeFei } from "@app/db/fei.client";
 
-export default function SelectPremierDetenteur() {
+export default function SelectNextForExaminateur() {
   const {
     user,
-    relationsCatalog: { detenteursInitiaux },
+    relationsCatalog: { detenteursInitiaux, associationsDeChasse },
     fei,
   } = useLoaderData<typeof clientLoader>();
   const isOnline = useIsOnline();
   const nextOwnerSelectLabel = "Sélectionnez le Premier Détenteur de pour cette FEI";
-
-  const nextOwnerName = useMemo(() => {
-    const nextOwner = detenteursInitiaux.find((owner) => {
-      return owner.id === fei.fei_next_owner_user_id;
-    }) as SerializeFrom<User>;
-    return `${nextOwner?.prenom} ${nextOwner?.nom_de_famille}`;
-  }, [detenteursInitiaux, fei.fei_next_owner_user_id]);
-
   const nextOwnerFetcher = useFetcher({ key: "select-next-premier-detenteur" });
   const searchUserFetcher = useFetcher<typeof searchUserAction>({ key: "search-user" });
-  const [nextValue, setNextValue] = useState(fei.fei_next_owner_user_id ?? "");
+  const [nextValue, setNextValue] = useState(fei.fei_next_owner_user_id ?? fei.fei_next_owner_entity_id ?? "");
+
+  const { nextOwnerUser, nextOwnerEntity } = useMemo(() => {
+    const _nextOwner = detenteursInitiaux.find((owner) => {
+      return owner.id === nextValue;
+    }) as SerializeFrom<User>;
+    if (_nextOwner) {
+      return { nextOwnerUser: _nextOwner, nextOwnerEntity: null };
+    }
+    const _nextEntity = associationsDeChasse.find((entity) => {
+      return entity.id === nextValue;
+    }) as SerializeFrom<Entity>;
+    if (_nextEntity) {
+      return { nextOwnerUser: null, nextOwnerEntity: _nextEntity };
+    }
+    return { nextOwnerUser: null, nextOwnerEntity: null };
+  }, [detenteursInitiaux, associationsDeChasse, nextValue]);
+
+  console.log("nextOwnerUser", nextOwnerUser);
+  console.log("nextOwnerEntity", nextOwnerEntity);
+
+  const nextOwnerName = useMemo(() => {
+    if (nextOwnerUser) {
+      return `${nextOwnerUser.prenom} ${nextOwnerUser.nom_de_famille}`;
+    }
+    if (nextOwnerEntity) {
+      return nextOwnerEntity.raison_sociale;
+    }
+    return "";
+  }, [nextOwnerUser, nextOwnerEntity]);
 
   if (user.id !== fei.fei_current_owner_user_id) {
     return null;
@@ -44,11 +65,28 @@ export default function SelectPremierDetenteur() {
         onSubmit={(event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
-          if (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) === fei.fei_current_owner_user_id) {
-            formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
-            formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_role, "");
-            formData.append(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
-            formData.append(Prisma.FeiScalarFieldEnum.fei_current_owner_role, UserRoles.PREMIER_DETENTEUR);
+          const nextIsMe = nextOwnerUser?.id === user.id;
+          const nextIsMyAssociation = !!nextOwnerEntity?.id;
+          if (nextIsMe) {
+            console.log("nextIsMe");
+            formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
+            formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_role, "");
+            formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
+            formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_role, UserRoles.PREMIER_DETENTEUR);
+            formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, user.id);
+            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
+          } else if (nextIsMyAssociation) {
+            console.log("nextIsMyAssociation");
+            formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
+            formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_role, "");
+            formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
+            formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_role, UserRoles.PREMIER_DETENTEUR);
+            formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id, nextOwnerEntity.id);
+            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id, nextOwnerEntity.id);
+            formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, user.id);
+            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
+          } else {
+            console.log("nextIsSomeoneElse");
           }
           const nextFei = mergeFei(fei, formData);
           nextFei.append("route", `/api/fei/${fei.numero}`);
@@ -61,13 +99,19 @@ export default function SelectPremierDetenteur() {
       >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.fei_next_owner_role} value={UserRoles.PREMIER_DETENTEUR} />
+        {nextOwnerUser && (
+          <input type="hidden" name={Prisma.FeiScalarFieldEnum.fei_next_owner_user_id} value={nextOwnerUser.id} />
+        )}
+        {nextOwnerEntity && (
+          <input type="hidden" name={Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id} value={nextOwnerEntity.id} />
+        )}
         <div className="fr-fieldset__element grow">
           <Select
             label="Quel Premier Détenteur doit désormais agir sur la FEI ?"
             className="!mb-0 grow"
             key={fei.fei_next_owner_user_id ?? "no-choice-yet"}
             nativeSelectProps={{
-              name: Prisma.FeiScalarFieldEnum.fei_next_owner_user_id,
+              name: "next_owner",
               value: nextValue,
               onChange: (event) => {
                 setNextValue(event.target.value);
@@ -75,9 +119,30 @@ export default function SelectPremierDetenteur() {
             }}
           >
             <option value="">{nextOwnerSelectLabel}</option>
-            {detenteursInitiaux.map((potentielOwner) => {
-              return <NextOwnerOption key={potentielOwner.id} potentielOwner={potentielOwner} user={user} />;
-            })}
+            <optgroup label="Vos associations">
+              {associationsDeChasse.map((potentielOwner) => {
+                return (
+                  <NextOwnerOption
+                    nextOwnerIsEntity
+                    key={potentielOwner.id}
+                    potentielOwner={potentielOwner}
+                    user={user}
+                  />
+                );
+              })}
+            </optgroup>
+            <optgroup label="Autres personnes">
+              {detenteursInitiaux.map((potentielOwner) => {
+                return (
+                  <NextOwnerOption
+                    nextOwnerIsUser
+                    key={potentielOwner.id}
+                    potentielOwner={potentielOwner}
+                    user={user}
+                  />
+                );
+              })}
+            </optgroup>
           </Select>
           {!nextValue ||
             (nextValue !== fei.fei_next_owner_user_id && (
@@ -140,13 +205,26 @@ export default function SelectPremierDetenteur() {
 type NextOwnerOptionProps = {
   potentielOwner: SerializeFrom<User> | SerializeFrom<Entity>;
   user: SerializeFrom<User>;
+  nextOwnerIsEntity?: boolean;
+  nextOwnerIsUser?: boolean;
 };
 
-const NextOwnerOption = ({ potentielOwner, user }: NextOwnerOptionProps) => {
+const NextOwnerOption = ({ potentielOwner, nextOwnerIsEntity, nextOwnerIsUser, user }: NextOwnerOptionProps) => {
   let label = "";
-  potentielOwner = potentielOwner as unknown as SerializeFrom<User>;
-  label = `${potentielOwner.prenom} ${potentielOwner.nom_de_famille} - ${potentielOwner.code_postal} ${potentielOwner.ville}`;
-
+  if (nextOwnerIsEntity) {
+    potentielOwner = potentielOwner as unknown as SerializeFrom<Entity>;
+    label = `${potentielOwner.raison_sociale}`;
+    if (potentielOwner.code_postal) {
+      label += ` - ${potentielOwner.code_postal} ${potentielOwner.ville}`;
+    }
+  }
+  if (nextOwnerIsUser) {
+    potentielOwner = potentielOwner as unknown as SerializeFrom<User>;
+    label = `${potentielOwner.prenom} ${potentielOwner.nom_de_famille}`;
+    if (potentielOwner.code_postal) {
+      label += ` - ${potentielOwner.code_postal} ${potentielOwner.ville}`;
+    }
+  }
   if (potentielOwner.id === user.id) {
     label = `Vous (${label})`;
   }

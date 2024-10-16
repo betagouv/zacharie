@@ -12,7 +12,7 @@ export async function action(args: ActionFunctionArgs) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
-  const feiNumero = params.fei_numero;
+  const feiNumero = params.fei_numero; // can also be "nouvelle"
   const formData = await request.formData();
   let existingFei = await prisma.fei.findUnique({
     where: { numero: feiNumero, deleted_at: null },
@@ -48,6 +48,16 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
     nextFei.commune_mise_a_mort = formData.get(Prisma.FeiScalarFieldEnum.commune_mise_a_mort) as string;
   }
+  if (formData.has(Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse)) {
+    nextFei.heure_mise_a_mort_premiere_carcasse = formData.get(
+      Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+    ) as string;
+  }
+  if (formData.has(Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse)) {
+    nextFei.heure_evisceration_derniere_carcasse = formData.get(
+      Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+    ) as string;
+  }
   if (formData.has(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
     nextFei.created_by_user_id = formData.get(Prisma.FeiScalarFieldEnum.created_by_user_id) as string;
   }
@@ -79,6 +89,10 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
     nextFei.premier_detenteur_user_id =
       (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) as string) || null;
+  }
+  if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
+    nextFei.premier_detenteur_entity_id =
+      (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id) as string) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part)) {
     if (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) === "") {

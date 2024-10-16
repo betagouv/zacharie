@@ -76,6 +76,7 @@ model User {
 }
 
 enum EntityTypes {
+  PREMIER_DETENTEUR
   COLLECTEUR_PRO
   CCG
   ETG
@@ -87,32 +88,33 @@ enum EntityTypes {
 }
 
 model Entity {
-  id                     String                  @id @default(uuid())
+  id                        String                  @id @default(uuid())
   // NO EMAIL: an entity needs AT LEAST one user
-  raison_sociale         String?
-  address_ligne_1        String?
-  address_ligne_2        String?
-  code_postal            String?
-  ville                  String?
-  siret                  String?
-  numero_ddecpp          String?                 @unique
-  type                   EntityTypes
-  created_at             DateTime                @default(now())
-  updated_at             DateTime                @default(now()) @updatedAt
-  deleted_at             DateTime?
-  onboarded_at           DateTime?
-  coupled_entity_id      String?                 @unique
-  prefilled              Boolean                 @default(false)
-  EntityRelatedWithUser  EntityRelations[]       @relation("EntityRelatedWithUser")
-  FeiCurrentEntity       Fei[]                   @relation("FeiCurrentEntity")
-  FeiNextEntity          Fei[]                   @relation("FeiNextEntity")
-  FeiDepotEntity         Fei[]                   @relation("FeiDepotEntity")
-  FeiSviEntity           Fei[]                   @relation("FeiSviEntity")
-  FeiIntermediaireEntity FeiIntermediaire[]      @relation("FeiIntermediaireEntity")
-  CarcasseIntermediaire  CarcasseIntermediaire[] @relation("CarcasseIntermediaireEntity")
-  CoupledEntity          Entity?                 @relation("CoupledEntity", fields: [coupled_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  CoupledEntity_opposite Entity?                 @relation("CoupledEntity")
-  InterventionOnFei      InterventionOnFei[]
+  raison_sociale            String?
+  address_ligne_1           String?
+  address_ligne_2           String?
+  code_postal               String?
+  ville                     String?
+  siret                     String?
+  numero_ddecpp             String?                 @unique
+  type                      EntityTypes
+  created_at                DateTime                @default(now())
+  updated_at                DateTime                @default(now()) @updatedAt
+  deleted_at                DateTime?
+  onboarded_at              DateTime?
+  coupled_entity_id         String?                 @unique
+  prefilled                 Boolean                 @default(false)
+  EntityRelatedWithUser     EntityRelations[]       @relation("EntityRelatedWithUser")
+  FeiCurrentEntity          Fei[]                   @relation("FeiCurrentEntity")
+  FeiNextEntity             Fei[]                   @relation("FeiNextEntity")
+  FeiDepotEntity            Fei[]                   @relation("FeiDepotEntity")
+  FeiPremierDetenteurEntity Fei[]                   @relation("FeiPremierDetenteurEntity")
+  FeiSviEntity              Fei[]                   @relation("FeiSviEntity")
+  FeiIntermediaireEntity    FeiIntermediaire[]      @relation("FeiIntermediaireEntity")
+  CarcasseIntermediaire     CarcasseIntermediaire[] @relation("CarcasseIntermediaireEntity")
+  CoupledEntity             Entity?                 @relation("CoupledEntity", fields: [coupled_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  CoupledEntity_opposite    Entity?                 @relation("CoupledEntity")
+  InterventionOnFei         InterventionOnFei[]
 }
 
 model Password {
@@ -186,6 +188,8 @@ model Fei {
   numero                                                  String                  @unique
   date_mise_a_mort                                        DateTime?               @db.Date // et éviscération
   commune_mise_a_mort                                     String?
+  heure_mise_a_mort_premiere_carcasse                     String?
+  heure_evisceration_derniere_carcasse                    String?
   created_by_user_id                                      String
   fei_current_owner_user_id                               String?
   fei_current_owner_entity_id                             String?
@@ -201,6 +205,7 @@ model Fei {
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
   premier_detenteur_user_id                               String?
+  premier_detenteur_entity_id                             String?
   premier_detenteur_date_depot_quelque_part               DateTime?
   premier_detenteur_depot_entity_id                       String?
   premier_detenteur_depot_sauvage                         String?
@@ -216,6 +221,7 @@ model Fei {
   Carcasses                                               Carcasse[]
   FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiPremierDetenteurUser                                 User?                   @relation("FeiPremierDetenteurUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  FeiPremierDetenteurEntity                               Entity?                 @relation("FeiPremierDetenteurEntity", fields: [premier_detenteur_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiExaminateurInitialUser                               User?                   @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiDepotEntity                                          Entity?                 @relation("FeiDepotEntity", fields: [premier_detenteur_depot_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiSviEntity                                            Entity?                 @relation("FeiSviEntity", fields: [svi_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)

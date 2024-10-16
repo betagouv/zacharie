@@ -56,6 +56,14 @@ export default function AdminNouvelleEntite() {
                       nativeInputProps: {
                         required: true,
                         name: Prisma.EntityScalarFieldEnum.type,
+                        value: EntityTypes.PREMIER_DETENTEUR,
+                      },
+                      label: "Premier détenteur (association de chasse, repas associatif, etc.)",
+                    },
+                    {
+                      nativeInputProps: {
+                        required: true,
+                        name: Prisma.EntityScalarFieldEnum.type,
                         value: EntityTypes.CCG,
                       },
                       label: getUserRoleLabel(EntityTypes.CCG),

@@ -3,7 +3,9 @@ import {
   json,
   MetaArgs,
   redirect,
+  useFetcher,
   useLoaderData,
+  useLocation,
   type ClientActionFunctionArgs,
   type ClientLoaderFunctionArgs,
 } from "@remix-run/react";
@@ -18,7 +20,7 @@ import FEI_SVI from "./svi";
 import FEIExaminateurInitial from "./examinateur-initial";
 import { type FeiActionData } from "@api/routes/api.fei.$fei_numero";
 import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
-import { loadFei } from "@app/db/fei.client";
+import { loadFei, createFei, mergeFei } from "@app/db/fei.client";
 import { type MyRelationsLoaderData } from "@api/routes/api.loader.my-relations";
 
 export function meta({ params }: MetaArgs) {
@@ -29,9 +31,8 @@ export function meta({ params }: MetaArgs) {
   ];
 }
 
-export async function clientAction({ request }: ClientActionFunctionArgs) {
+export async function clientAction({ request, params }: ClientActionFunctionArgs) {
   const formData = await request.formData();
-  console.log("fei route formdata", Object.fromEntries(formData.entries()));
   for (const key of formData.keys()) {
     if (formData.get(key) === "null") {
       formData.set(key, "");
@@ -53,6 +54,9 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
       Accept: "application/json",
     },
   }).then((response) => response.json())) as FeiActionData;
+  if (params.fei_numero === "nouvelle") {
+    return redirect(`/app/tableau-de-bord/fei/${response.data?.fei.numero}`);
+  }
   return response;
 }
 
@@ -71,23 +75,36 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
     }),
   }).then((res) => res.json())) as MyRelationsLoaderData;
 
+  const data = params.fei_numero === "nouvelle" ? createFei(user) : await loadFei(params.fei_numero!);
   return json({
-    ...(await loadFei(params.fei_numero!)),
+    ...data,
     user,
     relationsCatalog: {
       detenteursInitiaux: myRelationsData.data?.detenteursInitiaux || [],
+      associationsDeChasse: myRelationsData.data?.associationsDeChasse || [],
       // examinateursInitiaux: myRelationsData.data?.examinateursInitiaux || [],
       ccgs: myRelationsData.data?.ccgs || [],
       collecteursPro: myRelationsData.data?.collecteursPro || [],
       etgs: myRelationsData.data?.etgs || [],
       svis: myRelationsData.data?.svis || [],
-      entitiesUserIsWorkingFor: myRelationsData.data?.entitiesUserIsWorkingFor || [],
+      entitiesWorkingFor: myRelationsData.data?.entitiesWorkingFor || [],
     },
   });
 }
 
 export default function Fei() {
   const { fei, user, inetermediairesPopulated, nextOwnerEntity } = useLoaderData<typeof clientLoader>();
+  const location = useLocation();
+  const newFeiFetcher = useFetcher({ key: "new-fei" });
+
+  useEffect(() => {
+    if (location.pathname.startsWith("/app/tableau-de-bord/fei/nouvelle")) {
+      const newFeiFormData = mergeFei(fei);
+      newFeiFormData.set("route", `/api/fei/${fei.numero}`);
+      newFeiFetcher.submit(newFeiFormData, { method: "POST" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   const doneEmoji = "✅ ";
 
@@ -155,12 +172,14 @@ export default function Fei() {
             setSelectedTabId(UserRoles.EXAMINATEUR_INITIAL);
             break;
           case UserRoles.PREMIER_DETENTEUR:
-            setSelectedTabId(UserRoles.PREMIER_DETENTEUR);
+            // setSelectedTabId(UserRoles.PREMIER_DETENTEUR);
             break;
           case UserRoles.SVI:
+            window.scrollTo({ top: 0, behavior: "smooth" });
             setSelectedTabId(UserRoles.SVI);
             break;
           default:
+            window.scrollTo({ top: 0, behavior: "smooth" });
             setSelectedTabId("Intermédiaires");
             break;
         }
@@ -169,25 +188,6 @@ export default function Fei() {
     refCurrentRole.current = fei.fei_current_owner_role;
     refCurrentUserId.current = fei.fei_current_owner_user_id;
   }, [fei.fei_current_owner_role, fei.fei_current_owner_user_id, user.id]);
-
-  const refNextRole = useRef(fei.fei_next_owner_role);
-  const refNextUserId = useRef(fei.fei_next_owner_user_id);
-
-  useEffect(() => {
-    if (fei.fei_next_owner_user_id === user.id && refNextUserId.current !== fei.fei_next_owner_user_id) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-    refNextRole.current = fei.fei_next_owner_role;
-    refNextUserId.current = fei.fei_next_owner_user_id;
-  }, [fei.fei_next_owner_role, fei.fei_next_owner_user_id, user.id]);
-
-  const intermediaireTabDisabled = useMemo(() => {
-    const intermediaire = inetermediairesPopulated?.[0];
-    if (!intermediaire) {
-      return true;
-    }
-    return false;
-  }, [inetermediairesPopulated]);
 
   const intermediaireTabDisabledText = useMemo(() => {
     const intermediaire = inetermediairesPopulated?.[0];
@@ -217,7 +217,7 @@ export default function Fei() {
           <CurrentOwner />
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
             {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
-            {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur />}
+            {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur showIdentity />}
             {selectedTabId === "Intermédiaires" &&
               (intermediaireTabDisabledText ? <p>{intermediaireTabDisabledText}</p> : <FEICurrentIntermediaire />)}
             {selectedTabId === UserRoles.SVI &&

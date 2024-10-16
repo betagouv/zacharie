@@ -39,9 +39,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   const usersWithEntityType = await prisma.user.findMany({
     where: {
-      roles: {
-        has: entity.type,
-      },
+      roles:
+        entity.type === EntityTypes.PREMIER_DETENTEUR
+          ? {
+              hasSome: [UserRoles.PREMIER_DETENTEUR, UserRoles.EXAMINATEUR_INITIAL],
+            }
+          : {
+              has: entity.type,
+            },
       id: {
         notIn: entity.EntityRelatedWithUser.filter(
           (entityRelation) => entityRelation.relation === EntityRelationType.WORKING_FOR,

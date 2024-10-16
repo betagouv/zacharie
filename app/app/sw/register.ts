@@ -1,6 +1,7 @@
 export async function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
     try {
+      console.log("import.meta.env.DEV", import.meta.env.DEV);
       const swUrl = import.meta.env.DEV ? "/app/main-sw.ts" : "/main-sw.js";
       const registration = await navigator.serviceWorker.register(swUrl, {
         type: "module",

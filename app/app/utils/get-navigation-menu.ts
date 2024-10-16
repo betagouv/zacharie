@@ -65,33 +65,23 @@ export default function useNavigationMenu() {
     },
   });
 
-  const mesFeiMenuCommon = {
-    text: "Mes FEI",
-    isActive: location.pathname === "/app/tableau-de-bord" || location.pathname.startsWith("/app/tableau-de-bord/fei"),
-  };
-  const mesFeiMenu: MainNavigationProps.Item = isExaminateurInitial
-    ? {
-        ...mesFeiMenuCommon,
-        menuLinks: [
-          {
-            text: "Toutes mes FEI",
-            isActive: location.pathname === "/app/tableau-de-bord",
-            linkProps: {
-              to: "/app/tableau-de-bord",
-              href: "#",
-            },
-          },
-          {
-            text: "Nouvelle FEI",
-            isActive: location.pathname === "/app/tableau-de-bord/fei/nouvelle",
-            linkProps: {
-              to: "/app/tableau-de-bord/fei/nouvelle",
-              href: "#",
-            },
-          },
-        ],
-      }
-    : { ...mesFeiMenuCommon, linkProps: { to: "/app/tableau-de-bord", href: "#" } };
+  const feiMenu = [
+    {
+      text: "Mes FEI",
+      isActive: location.pathname === "/app/tableau-de-bord",
+      linkProps: { to: "/app/tableau-de-bord", href: "#" },
+    },
+  ];
+  if (isExaminateurInitial) {
+    feiMenu.push({
+      text: "Nouvelle FEI",
+      isActive: location.pathname === "/app/tableau-de-bord/fei/nouvelle",
+      linkProps: {
+        to: "/app/tableau-de-bord/fei/nouvelle",
+        href: "#",
+      },
+    });
+  }
 
   const navigationBase: MainNavigationProps.Item[] = [
     {
@@ -99,7 +89,7 @@ export default function useNavigationMenu() {
       isActive: location.pathname.startsWith("/app/tableau-de-bord/mon-profil"),
       menuLinks: profileMenu,
     },
-    mesFeiMenu,
+    ...feiMenu,
     {
       text: !import.meta.env.PROD
         ? `Déconnexion ${user?.email} (${user?.roles.map((ro) => ro.slice(0, 3)).join("-")})`

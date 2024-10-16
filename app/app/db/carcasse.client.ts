@@ -16,12 +16,6 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
     ...Object.fromEntries(newItem!),
   };
 
-  console.log({
-    oldItem,
-    newItem: Object.fromEntries(newItem!),
-    mergedItem,
-  });
-
   let nextAnomaliesCarcasse: string[] = [];
   let nextAnomaliesAbats: string[] = [];
   if (newItem?.get("examinateur_carcasse_sans_anomalie") === "false") {

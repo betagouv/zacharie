@@ -9,7 +9,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!user) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
-  const userEntitiesRelations = (
+  const entitiesWorkingWith = (
     await prisma.entityRelations.findMany({
       where: {
         owner_id: user.id,
@@ -24,7 +24,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     })
   ).map((entityRelation) => ({ ...entityRelation.EntityRelatedWithUser, relation: entityRelation.relation }));
 
-  const entitiesUserIsWorkingFor = (
+  const entitiesWorkingFor = (
     await prisma.entityRelations.findMany({
       where: {
         owner_id: user.id,
@@ -39,7 +39,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     })
   ).map((entityRelation) => entityRelation.EntityRelatedWithUser);
 
-  const svisOrEtgsCoupledIds = entitiesUserIsWorkingFor
+  const svisOrEtgsCoupledIds = entitiesWorkingFor
     .filter((entity) => entity.type === EntityTypes.ETG || entity.type === EntityTypes.SVI)
     .map((etgOrSvi) => etgOrSvi.coupled_entity_id)
     .filter((id) => id !== null);
@@ -49,7 +49,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       where: {
         id: {
           in: svisOrEtgsCoupledIds,
-          notIn: entitiesUserIsWorkingFor.map((entity) => entity.id),
+          notIn: entitiesWorkingFor.map((entity) => entity.id),
         },
       },
       orderBy: {
@@ -62,7 +62,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     await prisma.entity.findMany({
       where: {
         id: {
-          notIn: [...userEntitiesRelations.map((entity) => entity.id), ...svisOrEtgsCoupledIds],
+          notIn: [...entitiesWorkingWith.map((entity) => entity.id), ...svisOrEtgsCoupledIds],
         },
         type: {
           not: EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
@@ -100,15 +100,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
   //   examinateursInitiaux.unshift({ ...user, relation: UserRelationType.EXAMINATEUR_INITIAL });
   // }
 
-  const allEntities = [...userEntitiesRelations, ...userCoupledEntities, ...allOtherEntities];
-  const ccgs = userEntitiesRelations.filter((entity) => entity.type === EntityTypes.CCG);
-  const myCollecteursPros = userEntitiesRelations.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
+  const allEntities = [...entitiesWorkingWith, ...userCoupledEntities, ...allOtherEntities];
+  const ccgs = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.CCG);
+  const associationsDeChasse = entitiesWorkingFor.filter((entity) => entity.type === EntityTypes.PREMIER_DETENTEUR);
+  const myCollecteursPros = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
   const collecteursPro = myCollecteursPros.length
     ? myCollecteursPros
     : allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
-  const myEtgs = [...userEntitiesRelations, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.ETG);
+  const myEtgs = [...entitiesWorkingWith, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.ETG);
   const etgs = myEtgs.length ? myEtgs : allEntities.filter((entity) => entity.type === EntityTypes.ETG);
-  const mySvis = [...userEntitiesRelations, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.SVI);
+  const mySvis = [...entitiesWorkingWith, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.SVI);
   const svis = mySvis.length ? mySvis : allEntities.filter((entity) => entity.type === EntityTypes.SVI);
 
   return json({
@@ -117,11 +118,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
       user: user satisfies User,
       detenteursInitiaux: detenteursInitiaux satisfies Array<User>,
       // examinateursInitiaux: examinateursInitiaux satisfies Array<User>,
+      associationsDeChasse: associationsDeChasse satisfies Array<Entity>,
       ccgs: ccgs satisfies Array<Entity>,
       collecteursPro: collecteursPro satisfies Array<Entity>,
       etgs: etgs satisfies Array<Entity>,
       svis: svis satisfies Array<Entity>,
-      entitiesUserIsWorkingFor: entitiesUserIsWorkingFor satisfies Array<Entity>,
+      entitiesWorkingFor: entitiesWorkingFor satisfies Array<Entity>,
     },
     error: "",
   });

@@ -19,6 +19,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       FeiNextUser: { select: { email: true } }, // Fetching the next user's email
       FeiExaminateurInitialUser: { select: { email: true } }, // Fetching the examinateur's email
       FeiPremierDetenteurUser: { select: { email: true } }, // Fetching the premier detenteur's email
+      FeiPremierDetenteurEntity: { select: { raison_sociale: true } }, // Fetching the premier detenteur's raison sociale
       FeiIntermediaires: {
         include: {
           FeiIntermediaireEntity: {

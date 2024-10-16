@@ -170,11 +170,12 @@ async function handleFetchRequest(request: Request): Promise<Response> {
     const allEntitiesRequestCloned = allEntitiesRequest!.clone();
     const allEntities = (await allEntitiesRequestCloned.json()) as MyRelationsLoaderData;
     const entity = [
+      ...allEntities.data!.associationsDeChasse,
       ...allEntities.data!.ccgs,
       ...allEntities.data!.collecteursPro,
       ...allEntities.data!.etgs,
       ...allEntities.data!.svis,
-      ...allEntities.data!.entitiesUserIsWorkingFor,
+      ...allEntities.data!.entitiesWorkingFor,
     ].find((e) => e.id === entityId)!;
 
     return new Response(

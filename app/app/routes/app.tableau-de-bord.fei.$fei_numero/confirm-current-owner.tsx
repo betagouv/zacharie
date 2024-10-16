@@ -12,7 +12,7 @@ import { mergeFei } from "@app/db/fei.client";
 export default function ConfirmCurrentOwner() {
   const {
     user,
-    relationsCatalog: { entitiesUserIsWorkingFor },
+    relationsCatalog: { entitiesWorkingFor },
     fei,
     nextOwnerEntity,
   } = useLoaderData<typeof clientLoader>();
@@ -20,8 +20,8 @@ export default function ConfirmCurrentOwner() {
   const fetcher = useFetcher({ key: "confirm-current-owner" });
   const intermediaireFetcher = useFetcher({ key: "create-intermediaire-fetcher" });
   const nextEntity = useMemo(
-    () => entitiesUserIsWorkingFor.find((entity) => entity.id === fei.fei_next_owner_entity_id),
-    [entitiesUserIsWorkingFor, fei],
+    () => entitiesWorkingFor.find((entity) => entity.id === fei.fei_next_owner_entity_id),
+    [entitiesWorkingFor, fei],
   );
 
   const canConfirmCurrentOwner = useMemo(() => {

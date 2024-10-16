@@ -19,9 +19,10 @@ export default defineConfig(({ mode }) => {
     ssr: {
       noExternal: ["@codegouvfr/react-dsfr"],
     },
-    // optimizeDeps: {
-    //   noDiscovery: true,
-    // },
+    optimizeDeps: {
+      noDiscovery: true,
+      include: ["hoist-non-react-statics", "@prisma/client", "dayjs"],
+    },
     define: {
       __VITE_BUILD_ID__: buildId,
       "process.env": process.env,
@@ -45,7 +46,7 @@ export default defineConfig(({ mode }) => {
           v3_fetcherPersist: true,
           v3_relativeSplatPath: true,
           v3_throwAbortReason: true,
-          unstable_optimizeDeps: true,
+          unstable_optimizeDeps: false,
         },
       }),
       // sentryVitePlugin({
