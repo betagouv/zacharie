@@ -4,7 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev-api": "prisma generate && yarn prisma-deploy && node ./server-api.js",
+    "dev": "prisma generate && node ./scripts/copy-schema-to-app-side.js && yarn prisma-deploy && node ./server-api.js",
     "build-api": "remix vite:build",
     "start-api": "npx prisma migrate deploy && cross-env NODE_ENV=production node ./server-api.js",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
@@ -12,8 +12,7 @@
     "prisma-create-migration": "NODE_ENV=development POSTGRESQL_ADDON_URI=postgresql://postgres@localhost/zacharie-temp npx prisma migrate dev --name",
     "prisma-deploy": "NODE_ENV=production npx prisma migrate deploy",
     "prisma-reset-db": "rm -rf prisma/migrations && npx prisma migrate reset --force && npm run prisma-setup",
-    "typecheck": "tsc",
-    "postinstall": "prisma generate"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@prisma/client": "^5.19.1",
@@ -35,6 +34,7 @@
     "isbot": "^4.1.0",
     "morgan": "^1.10.0",
     "prisma": "^5.19.1",
+    "prisma-types-export": "^1.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "remix-utils": "^7.6.0",

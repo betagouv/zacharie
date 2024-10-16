@@ -2778,6 +2778,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@prisma/debug@npm:5.1.0":
+  version: 5.1.0
+  resolution: "@prisma/debug@npm:5.1.0"
+  dependencies:
+    "@types/debug": "npm:4.1.8"
+    debug: "npm:4.3.4"
+    strip-ansi: "npm:6.0.1"
+  checksum: 10c0/df1074115bf17c5711a8d814138e52280d13733679b8bc57d68d94c2ed07d17969a10064a9cba4bcd47979fd297db425fad56535a48fad1ac5d533289623ce11
+  languageName: node
+  linkType: hard
+
 "@prisma/debug@npm:5.20.0":
   version: 5.20.0
   resolution: "@prisma/debug@npm:5.20.0"
@@ -2812,6 +2823,18 @@ __metadata:
     "@prisma/engines-version": "npm:5.20.0-12.06fc58a368dc7be9fbbbe894adf8d445d208c284"
     "@prisma/get-platform": "npm:5.20.0"
   checksum: 10c0/854f4fce34b734e5046e4a5e660f2b689a40231f3dfe7c77f805c4011afab1c58570e4d45f915aa69b8889c06ea64ecb763d6f71ba8cc50b26c4365e762dbd63
+  languageName: node
+  linkType: hard
+
+"@prisma/generator-helper@npm:5.1.0":
+  version: 5.1.0
+  resolution: "@prisma/generator-helper@npm:5.1.0"
+  dependencies:
+    "@prisma/debug": "npm:5.1.0"
+    "@types/cross-spawn": "npm:6.0.2"
+    cross-spawn: "npm:7.0.3"
+    kleur: "npm:4.1.5"
+  checksum: 10c0/4316486a6130b892ae3c1ec77ea240166099cf892bf0dd0d225ba43c9ffb7f6912bfbd28bef22241f8b7836b11cc785383c81b10c210f4ee9cdedc8ede3f2d83
   languageName: node
   linkType: hard
 
@@ -3633,6 +3656,24 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10c0/457364c28c89f3d9ed34800e1de5c6eaaf344d1bb39af122f013322a50bc606eb2aa6f63de4e41a7a08ba7ef454473926c94a830636723da45bf786df032696d
+  languageName: node
+  linkType: hard
+
+"@types/cross-spawn@npm:6.0.2":
+  version: 6.0.2
+  resolution: "@types/cross-spawn@npm:6.0.2"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/658bd49267a7200e87e67c48ef1e58ee7418bbd4417fb191393b7051d47f590023090cad7b69eb3821d1907b82392b764e1114b1ec6000b01e98126926c8b06f
+  languageName: node
+  linkType: hard
+
+"@types/debug@npm:4.1.8":
+  version: 4.1.8
+  resolution: "@types/debug@npm:4.1.8"
+  dependencies:
+    "@types/ms": "npm:*"
+  checksum: 10c0/913aea60b8c94cd0009bbdd531d8a3594ec3275ca0e8d1cbcf783417884252b3c53113f6665fd2fb0076b8ce628ee12cd083d2af107ed26c0f2e75852d8bc074
   languageName: node
   linkType: hard
 
@@ -5147,7 +5188,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cross-spawn@npm:^7.0.0, cross-spawn@npm:^7.0.1, cross-spawn@npm:^7.0.2, cross-spawn@npm:^7.0.3":
+"cross-spawn@npm:7.0.3, cross-spawn@npm:^7.0.0, cross-spawn@npm:^7.0.1, cross-spawn@npm:^7.0.2, cross-spawn@npm:^7.0.3":
   version: 7.0.3
   resolution: "cross-spawn@npm:7.0.3"
   dependencies:
@@ -5267,6 +5308,18 @@ __metadata:
     supports-color:
       optional: true
   checksum: 10c0/1471db19c3b06d485a622d62f65947a19a23fbd0dd73f7fd3eafb697eec5360cde447fb075919987899b1a2096e85d35d4eb5a4de09a57600ac9cf7e6c8e768b
+  languageName: node
+  linkType: hard
+
+"debug@npm:4.3.4":
+  version: 4.3.4
+  resolution: "debug@npm:4.3.4"
+  dependencies:
+    ms: "npm:2.1.2"
+  peerDependenciesMeta:
+    supports-color:
+      optional: true
+  checksum: 10c0/cedbec45298dd5c501d01b92b119cd3faebe5438c3917ff11ae1bff86a6c722930ac9c8659792824013168ba6db7c4668225d845c633fbdafbbf902a6389f736
   languageName: node
   linkType: hard
 
@@ -8013,7 +8066,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"kleur@npm:^4.0.3":
+"kleur@npm:4.1.5, kleur@npm:^4.0.3":
   version: 4.1.5
   resolution: "kleur@npm:4.1.5"
   checksum: 10c0/e9de6cb49657b6fa70ba2d1448fd3d691a5c4370d8f7bbf1c2f64c24d461270f2117e1b0afe8cb3114f13bbd8e51de158c2a224953960331904e636a5e4c0f2a
@@ -9060,6 +9113,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ms@npm:2.1.2":
+  version: 2.1.2
+  resolution: "ms@npm:2.1.2"
+  checksum: 10c0/a437714e2f90dbf881b5191d35a6db792efbca5badf112f87b9e1c712aace4b4b9b742dd6537f3edf90fd6f684de897cec230abde57e87883766712ddda297cc
+  languageName: node
+  linkType: hard
+
 "ms@npm:2.1.3, ms@npm:^2.1.1, ms@npm:^2.1.3":
   version: 2.1.3
   resolution: "ms@npm:2.1.3"
@@ -9939,6 +9999,19 @@ __metadata:
   dependencies:
     parse-ms: "npm:^2.1.0"
   checksum: 10c0/069aec9d939e7903846b3db53b020bed92e3dc5909e0fef09ec8ab104a0b7f9a846605a1633c60af900d288582fb333f6f30469e59d6487a2330301fad35a89c
+  languageName: node
+  linkType: hard
+
+"prisma-types-export@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "prisma-types-export@npm:1.0.0"
+  dependencies:
+    "@prisma/generator-helper": "npm:5.1.0"
+  peerDependencies:
+    "@prisma/client": ">=5.0.0"
+  bin:
+    prisma-types-export: dist/bin.js
+  checksum: 10c0/b012816c084c96202f34e64b7e5a9fb5c1db064693869273a2283e0061a81e7330ecb94f5a4d2e822420c7a4afa2861cd38c7dfb68f88235e1468ef9909206c4
   languageName: node
   linkType: hard
 
@@ -11317,7 +11390,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strip-ansi-cjs@npm:strip-ansi@^6.0.1, strip-ansi@npm:^6.0.0, strip-ansi@npm:^6.0.1":
+"strip-ansi-cjs@npm:strip-ansi@^6.0.1, strip-ansi@npm:6.0.1, strip-ansi@npm:^6.0.0, strip-ansi@npm:^6.0.1":
   version: 6.0.1
   resolution: "strip-ansi@npm:6.0.1"
   dependencies:
@@ -12758,6 +12831,7 @@ __metadata:
     postcss: "npm:^8.4.38"
     prettier: "npm:^3.3.3"
     prisma: "npm:^5.19.1"
+    prisma-types-export: "npm:^1.0.0"
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     remix-utils: "npm:^7.6.0"

@@ -6,7 +6,7 @@
     "**/.server/**/*.tsx",
     "**/.client/**/*.ts",
     "**/.client/**/*.tsx"
-  ],
+, "scripts/copy-schema-to-app-side.js"  ],
   "compilerOptions": {
     "lib": [
       "DOM",

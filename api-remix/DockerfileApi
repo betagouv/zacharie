@@ -32,7 +32,7 @@ RUN YARN_ENABLE_GLOBAL_CACHE=false YARN_ENABLE_MIRROR=false YARN_ENABLE_INLINE_B
 COPY . .
 
 # Run Prisma generate (this will be handled by postinstall script)
-RUN yarn postinstall
+RUN npx prisma generate
 
 # Build the application
 RUN yarn build-api
