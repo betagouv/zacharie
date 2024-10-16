@@ -4,17 +4,16 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev-spa": "rm -rf node_modules/.vite && react-dsfr update-icons && SPA_MODE=true && remix vite:dev --port 3232 --force",
+    "dev": "prisma generate && rm -rf node_modules/.vite && react-dsfr update-icons && SPA_MODE=true && remix vite:dev --port 3232 --force",
     "build-spa": "SPA_MODE=true remix vite:build",
     "start-spa": "NODE_ENV=production SPA_MODE=true PORT=8080 node ./server-spa.js",
     "start-spa-local": "NODE_ENV=production SPA_MODE=true PORT=3232 node ./server-spa.js",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-    "typecheck": "tsc",
-    "postinstall": "prisma generate"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@codegouvfr/react-dsfr": "^1.13.2",
-    "@prisma/client": "^5.19.1",
+    "@prisma/client": "^5.21.0",
     "@remix-run/express": "^2.11.2",
     "@remix-run/node": "^2.12.1",
     "@remix-run/react": "^2.12.1",
@@ -33,7 +32,6 @@
     "idb-keyval": "^6.2.1",
     "isbot": "^4.1.0",
     "morgan": "^1.10.0",
-    "prisma": "^5.19.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "remix-utils": "^7.6.0",
@@ -62,6 +60,7 @@
     "postcss": "^8.4.38",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.6",
+    "prisma": "^5.21.0",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.1.6",
     "vite": "^5.1.0",

@@ -24,9 +24,6 @@ RUN YARN_ENABLE_GLOBAL_CACHE=false YARN_ENABLE_MIRROR=false YARN_ENABLE_INLINE_B
 # Copy the rest of the application code
 COPY . .
 
-# Run Prisma generate (this will be handled by postinstall script)
-RUN yarn postinstall
-
 # Build the application
 ENV NODE_ENV=production
 ENV VITE_API_URL="https://api.zacharie.beta.gouv.fr"
