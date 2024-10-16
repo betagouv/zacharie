@@ -94,7 +94,6 @@ export default function SelectNextForExaminateur() {
             method: "POST",
             preventScrollReset: true,
           });
-          window.scrollTo(0, 0);
         }}
       >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />

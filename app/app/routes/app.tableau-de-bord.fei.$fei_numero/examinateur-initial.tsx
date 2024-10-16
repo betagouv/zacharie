@@ -168,7 +168,7 @@ export default function FEIExaminateurInitial() {
       <Accordion titleAs="h3" label={`Carcasses/Lots de carcasses (${carcasses.length})`} defaultExpanded>
         <CarcassesExaminateur canEdit={canEdit} />
       </Accordion>
-      <Accordion titleAs="h3" label={`Identité de l'Examinateur ${canEdit ? "🔒" : ""}`}>
+      <Accordion titleAs="h3" label="Identité de l'Examinateur 🔒">
         <UserNotEditable user={examinateurInitialUser!} withCfei />
       </Accordion>
       {examinateurInitialUser && (
@@ -269,8 +269,15 @@ export default function FEIExaminateurInitial() {
       )}
       {examinateurIsAlsoPremierDetenteur && (
         <>
-          <Accordion titleAs="h3" label="Premier détenteur" defaultExpanded>
-            <FeiPremierDetenteur showIdentity={!!premierDetenteurEntity} />
+          <Accordion titleAs="h3" label="Identité du Premier détenteur 🔒" defaultExpanded={false}>
+            {premierDetenteurEntity ? (
+              <EntityNotEditable hideType entity={premierDetenteurEntity} user={premierDetenteurUser!} />
+            ) : (
+              <UserNotEditable user={premierDetenteurUser!} />
+            )}
+          </Accordion>
+          <Accordion titleAs="h3" label="Action du Premier détenteur" defaultExpanded>
+            <FeiPremierDetenteur showIdentity={false} />
           </Accordion>
         </>
       )}
