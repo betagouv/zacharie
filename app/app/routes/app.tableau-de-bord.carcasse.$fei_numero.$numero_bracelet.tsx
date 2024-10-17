@@ -34,7 +34,10 @@ import ModalTreeDisplay from "@app/components/ModalTreeDisplay";
 import { useIsOnline } from "@app/components/OfflineMode";
 import { mergeCarcasse } from "@app/db/carcasse.client";
 import { RadioButtons } from "@codegouvfr/react-dsfr/RadioButtons";
-
+const gibierSelect = {
+  grand: grandGibier.especes,
+  petit: petitGibier.especes,
+};
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
   const formData = await request.formData();
   for (const key of formData.keys()) {
@@ -118,11 +121,9 @@ export default function CarcasseReadAndWrite() {
   const numeroFetcher = useFetcher({ key: "carcasse-numero-edit-fetcher" });
   const noAnomalieFetcher = useFetcher({ key: "carcasse-no-anomalie-fetcher" });
   const saveFetcher = useFetcher({ key: "carcasse-save-fetcher" });
-  console.log(saveFetcher);
   const carcasseFetcher = useFetcher({ key: "carcasse-edit-fetcher" });
   const [espece, setEspece] = useState(carcasse.espece || "");
-  const [categorie, setCategorie] = useState(carcasse.categorie || "");
-  const [showAsSelectOption, setShowAsSelectOption] = useState(false);
+  console.log(carcasse);
   const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(
     carcasse.examinateur_anomalies_abats?.filter(Boolean) || [],
   );
@@ -152,7 +153,10 @@ export default function CarcasseReadAndWrite() {
     });
   };
 
-  const gibier = carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibier : grandGibier;
+  const isPetitGibier = useMemo(() => {
+    return petitGibier.especes.includes(espece);
+  }, [espece]);
+
   const referentielAnomaliesCarcasseList =
     carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibierCarcasseList : grandGibierCarcasseList;
   const referentielAnomaliesCarcasseTree =
@@ -161,7 +165,7 @@ export default function CarcasseReadAndWrite() {
   useEffect(() => {
     handleFormSubmit();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [espece, categorie, anomaliesAbats, anomaliesCarcasse]);
+  }, [espece, anomaliesAbats, anomaliesCarcasse]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -181,7 +185,12 @@ export default function CarcasseReadAndWrite() {
       <>
         <input form={form} type="hidden" name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
         <input form={form} type="hidden" name={Prisma.CarcasseScalarFieldEnum.espece} value={espece || ""} />
-        <input form={form} type="hidden" name={Prisma.CarcasseScalarFieldEnum.categorie} value={categorie || ""} />
+        <input
+          type="hidden"
+          required
+          name={Prisma.CarcasseScalarFieldEnum.type}
+          value={isPetitGibier ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER}
+        />
       </>
     );
   }
@@ -231,7 +240,7 @@ export default function CarcasseReadAndWrite() {
               }}
               className="mb-6 bg-white py-2 md:shadow"
             >
-              <div className="p-4">
+              <div className="p-4 pb-8 md:p-8 md:pb-4">
                 <div className="fr-fieldset__element">
                   <PermanentFields form="carcasse-edit-form" />
                   <NumeroBraceletComponent
@@ -286,71 +295,28 @@ export default function CarcasseReadAndWrite() {
                   />
                 </div>
               )}
-
               <div className="fr-fieldset__element">
-                <RadioButtons
-                  legend="Type de gibier"
-                  name="radio"
-                  key={carcasse.type}
-                  options={[
-                    {
-                      label: "Petit gibier",
-                      hintText: "Lièvre, Lapin...",
-                      nativeInputProps: {
-                        name: Prisma.CarcasseScalarFieldEnum.type,
-                        value: CarcasseType.PETIT_GIBIER,
-                        defaultChecked: carcasse.type === CarcasseType.PETIT_GIBIER,
-                      },
-                    },
-                    {
-                      label: "Gros gibier",
-                      hintText: "Cerf, Sanglier...",
-                      nativeInputProps: {
-                        name: Prisma.CarcasseScalarFieldEnum.type,
-                        value: CarcasseType.GROS_GIBIER,
-                        defaultChecked: carcasse.type === CarcasseType.GROS_GIBIER,
-                      },
-                    },
-                  ]}
-                  orientation="horizontal"
-                />
-              </div>
-              <div className="fr-fieldset__element">
-                <input type="hidden" name="espece" value={espece ?? ""} />
-                <input type="hidden" name="categorie" value={categorie ?? ""} />
                 <Select
-                  label="Sélectionnez l'espèce et la catégorie du gibier"
+                  label="Sélectionnez l'espèce du gibier"
                   className="group !mb-0 grow"
                   nativeSelectProps={{
-                    name: Prisma.FeiScalarFieldEnum.fei_next_owner_role,
-                    value: `${espece}__${categorie}`,
-                    onClick: () => {
-                      setShowAsSelectOption(true);
-                    },
-                    onBlur: () => {
-                      setShowAsSelectOption(false);
-                    },
+                    name: Prisma.CarcasseScalarFieldEnum.espece,
+                    value: espece,
                     onChange: (e) => {
-                      const espece__categorie = e.currentTarget.value;
-                      const [newEspece, newCategorie] = espece__categorie.split("__");
-                      setShowAsSelectOption(false);
+                      const newEspece = e.currentTarget.value;
                       setEspece(newEspece);
-                      setCategorie(newCategorie);
-                      if (!espece || !anomaliesAbats.length || !anomaliesCarcasse.length) {
-                        setShowScroll(true);
-                      }
                     },
                   }}
                 >
-                  <option value="">Sélectionnez l'espèce et la catégorie du gibier</option>
+                  <option value="">Sélectionnez l'espèce du gibier</option>
                   <hr />
-                  {Object.entries(gibier.especes_categories).map(([_espece, _categories]) => {
+                  {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
                     return (
-                      <optgroup label={_espece} key={_espece}>
-                        {_categories.map((_categorie: string) => {
+                      <optgroup label={typeGibier} key={typeGibier}>
+                        {_especes.map((_espece: string) => {
                           return (
-                            <option key={`${_espece}__${_categorie}`} value={`${_espece}__${_categorie}`}>
-                              {showAsSelectOption ? _categorie : `${_espece} - ${_categorie}`}
+                            <option value={_espece} key={_espece}>
+                              {_espece}
                             </option>
                           );
                         })}
@@ -372,7 +338,7 @@ export default function CarcasseReadAndWrite() {
                   }}
                 />
               </div>
-              <div className="flex flex-col gap-x-4 md:flex-row">
+              {/* <div className="flex flex-col gap-x-4 md:flex-row">
                 <div className="fr-fieldset__element flex w-full flex-col items-stretch gap-4 md:flex-row md:items-end">
                   <Component
                     label="Heure de la mise à mort"
@@ -397,7 +363,7 @@ export default function CarcasseReadAndWrite() {
                     }}
                   />
                 </div>
-              </div>
+              </div> */}
               {/* <div className="fr-fieldset__element">
                 <InputForSearchPrefilledData
                   canEdit={canEdit}
@@ -427,7 +393,7 @@ export default function CarcasseReadAndWrite() {
               </div> */}
             </div>
           </carcasseFetcher.Form>
-          {espece && categorie && (
+          {espece && (
             <>
               <div className="mb-6 bg-white md:shadow">
                 <div className="p-4 pb-8 md:p-8 md:pb-4">

@@ -9,16 +9,5 @@
     "Isard": ["Isard", "Isarde", "Cabri"],
     "Mouflon méditerranéen": ["Bélier", "Brebis", "Agneau"]
   },
-  "especes": [
-    "Cerf",
-    "Biche",
-    "Faon",
-    "Chevreuil",
-    "Chevrette",
-    "Daim",
-    "Sanglier",
-    "Chamois",
-    "Isard",
-    "Mouflon méditerranéen"
-  ]
+  "especes": ["Cerf élaphe", "Cerf sika", "Chevreuil", "Daim", "Sanglier", "Chamois", "Isard", "Mouflon méditerranéen"]
 }

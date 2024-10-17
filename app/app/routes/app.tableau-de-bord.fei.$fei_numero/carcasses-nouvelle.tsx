@@ -49,7 +49,7 @@ export default function NouvelleCarcasse() {
     <>
       <nouvelleCarcasseFetcher.Form
         method="POST"
-        className="flex w-full flex-col items-stretch md:flex-row md:items-end"
+        className="flex w-full flex-col items-stretch"
         key={nouvelleCarcasseFetcher.data?.data?.carcasse?.numero_bracelet}
       >
         <input type="hidden" name="route" value={`/api/fei-carcasse/${fei.numero}/${numeroBracelet}`} />
@@ -79,7 +79,7 @@ export default function NouvelleCarcasse() {
               },
             }}
           >
-            <option value="">Sélectionnez l'espèce et la catégorie du gibier</option>
+            <option value="">Sélectionnez l'espèce du gibier</option>
             <hr />
             {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
               return (
@@ -150,9 +150,11 @@ export default function NouvelleCarcasse() {
             }}
           />
         </div>
-        <Button type="submit" disabled={!fei.commune_mise_a_mort}>
-          {isPetitGibier ? "Ajouter un lot de carcasses" : "Ajouter une carcasse"}
-        </Button>
+        <div className="fr-fieldset__element">
+          <Button type="submit" disabled={!fei.commune_mise_a_mort}>
+            {isPetitGibier ? "Ajouter un lot de carcasses" : "Ajouter une carcasse"}
+          </Button>
+        </div>
       </nouvelleCarcasseFetcher.Form>
     </>
   );
