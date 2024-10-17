@@ -198,8 +198,12 @@ export default function Fei() {
     if (!nextIntermediaireId) {
       return "Il n'y a pas encore de premier intermédiaire sélectionné";
     }
-    return `Le prochain intermédiaire est: ${nextOwnerEntity?.raison_sociale}`;
-  }, [inetermediairesPopulated, fei.fei_next_owner_entity_id, nextOwnerEntity]);
+    let base = `Le prochain intermédiaire est: ${nextOwnerEntity?.raison_sociale}`;
+    if (fei.fei_current_owner_user_id === user.id) {
+      base += `\nLa FEI n'a pas encore été prise en charge par cet intermédiaire.`;
+    }
+    return base;
+  }, [inetermediairesPopulated, fei.fei_next_owner_entity_id, nextOwnerEntity, user.id, fei.fei_current_owner_user_id]);
 
   const sviTabDisabled = useMemo(() => {
     if (fei.svi_signed_at) {
