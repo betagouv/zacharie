@@ -1,5 +1,6 @@
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 import { Button } from "@codegouvfr/react-dsfr/Button";
+import { Alert } from "@codegouvfr/react-dsfr/Alert";
 import { clientLoader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useMemo } from "react";
@@ -34,10 +35,33 @@ export default function ConfirmCurrentOwner() {
     return false;
   }, [fei, user, nextEntity]);
 
+  const needNextOwnerButNotMe = useMemo(() => {
+    if (!fei.fei_next_owner_user_id && !fei.fei_next_owner_entity_id) {
+      return false;
+    }
+    if (canConfirmCurrentOwner) {
+      return false;
+    }
+    return true;
+  }, [fei, canConfirmCurrentOwner]);
+
   if (!fei.fei_next_owner_role) {
     return null;
   }
   if (!canConfirmCurrentOwner) {
+    if (needNextOwnerButNotMe) {
+      return (
+        <div className="bg-alt-blue-france pb-8">
+          <div className="bg-white">
+            <Alert
+              severity="info"
+              description={`Cette FEI a été attribuée à un intervenant que vous ne pouvez pas représenter.\u00a0C'est à elle ou lui d'intervenir.`}
+              title="FEI en attente de prise en charge par l'intervenant suivant."
+            />
+          </div>
+        </div>
+      );
+    }
     return null;
   }
 
