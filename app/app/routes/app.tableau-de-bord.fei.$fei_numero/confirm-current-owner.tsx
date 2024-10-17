@@ -22,7 +22,7 @@ export default function ConfirmCurrentOwner() {
   const intermediaireFetcher = useFetcher({ key: "create-intermediaire-fetcher" });
   const nextEntity = useMemo(
     () => entitiesWorkingFor.find((entity) => entity.id === fei.fei_next_owner_entity_id),
-    [entitiesWorkingFor, fei],
+    [entitiesWorkingFor, fei.fei_next_owner_entity_id],
   );
 
   const canConfirmCurrentOwner = useMemo(() => {

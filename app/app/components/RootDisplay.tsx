@@ -3,12 +3,15 @@ import { Header } from "@codegouvfr/react-dsfr/Header";
 import { type MainNavigationProps } from "@codegouvfr/react-dsfr/MainNavigation";
 import { clearCache } from "@app/services/indexed-db.client";
 import { useIsOnline } from "./OfflineMode";
+import type { User } from "@prisma/client";
 
 export default function RootDisplay({
   navigation,
   children,
   hideMinistereName,
+  user,
 }: {
+  user?: User;
   navigation?: MainNavigationProps.Item[];
   children: React.ReactNode;
   hideMinistereName?: boolean;
@@ -38,11 +41,11 @@ export default function RootDisplay({
         quickAccessItems={[
           {
             linkProps: {
-              to: "/app/connexion?type=compte-existant",
+              to: user?.email ? "/app/tableau-de-bord" : "/app/connexion?type=compte-existant",
               href: "#",
             },
             iconId: "ri-account-box-line",
-            text: "Se connecter",
+            text: user?.email ?? "Se connecter",
           },
           {
             linkProps: {
