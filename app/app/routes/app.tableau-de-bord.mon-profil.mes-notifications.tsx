@@ -94,9 +94,9 @@ export default function MesNotifications() {
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
             <Stepper currentStep={stepCount} stepCount={stepCount} title="Vos notifications" />
             <h1 className="fr-h2 fr-mb-2w">Activez les notifications</h1>
-            <CallOut title="🔔 Soyez notifié d'une FEI qui vous est attribuée" className="bg-white">
+            <CallOut title="🔔 Soyez notifié d'une fiche qui vous est attribuée" className="bg-white">
               Vous pouvez être notifié par mail ou par une notification sur votre smartphone dès qu'une Fiche d'Examen
-              Initial (FEI) vous est attribuée.
+              Initial vous est attribuée.
             </CallOut>
             <div className="mb-6 bg-white md:shadow">
               <div className="p-4 pb-32 md:p-8 md:pb-0">

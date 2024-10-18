@@ -67,14 +67,14 @@ export default function useNavigationMenu() {
 
   const feiMenu = [
     {
-      text: "Mes FEI",
+      text: "Mes fiches",
       isActive: location.pathname === "/app/tableau-de-bord",
       linkProps: { to: "/app/tableau-de-bord", href: "#" },
     },
   ];
   if (isExaminateurInitial) {
     feiMenu.push({
-      text: "Nouvelle FEI",
+      text: "Nouvelle fiche",
       isActive: location.pathname === "/app/tableau-de-bord/fei/nouvelle",
       linkProps: {
         to: "/app/tableau-de-bord/fei/nouvelle",

@@ -94,6 +94,10 @@ export async function action(args: ActionFunctionArgs) {
     nextFei.premier_detenteur_entity_id =
       (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id) as string) || null;
   }
+  if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache)) {
+    nextFei.premier_detenteur_name_cache =
+      (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache) as string) || null;
+  }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part)) {
     if (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) === "") {
       nextFei.premier_detenteur_date_depot_quelque_part = null;
@@ -228,9 +232,9 @@ export async function action(args: ActionFunctionArgs) {
       const nextOwner = await prisma.user.findUnique({ where: { id: nextOwnerId } });
       sendNotificationToUser({
         user: nextOwner!,
-        title: "Vous avez une nouvelle FEI à traiter",
-        body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
-        email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI, la ${savedFei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
+        title: "Vous avez une nouvelle fiche à traiter",
+        body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
+        email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${savedFei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
         notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
       });
     } else if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwnerId) {
@@ -238,9 +242,9 @@ export async function action(args: ActionFunctionArgs) {
       const exNextOwner = await prisma.user.findUnique({ where: { id: existingFei.fei_next_owner_user_id } });
       sendNotificationToUser({
         user: exNextOwner!,
-        title: "Une FEI ne vous est plus attribuée",
-        body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une FEI, mais elle a finalement été attribuée à quelqu'un d'autre.`,
-        email: `${user.prenom} ${user.nom_de_famille} vous avait attribué la FEI ${savedFei?.numero}, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+        title: "Une fiche ne vous est plus attribuée",
+        body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une fiche, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+        email: `${user.prenom} ${user.nom_de_famille} vous avait attribué la fiche ${savedFei?.numero}, mais elle a finalement été attribuée à quelqu'un d'autre.`,
         notificationLogAction: `FEI_REMOVED_FROM_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
       });
     } else {
@@ -273,9 +277,9 @@ export async function action(args: ActionFunctionArgs) {
       if (nextOwner.id !== user.id) {
         sendNotificationToUser({
           user: nextOwner as User,
-          title: "Vous avez une nouvelle FEI à traiter",
-          body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
-          email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI, la ${savedFei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
+          title: "Vous avez une nouvelle fiche à traiter",
+          body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
+          email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${savedFei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
           notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
         });
       }
@@ -283,9 +287,9 @@ export async function action(args: ActionFunctionArgs) {
         const exNextOwner = await prisma.user.findUnique({ where: { id: existingFei.fei_next_owner_user_id } });
         sendNotificationToUser({
           user: exNextOwner!,
-          title: "Une FEI ne vous est plus attribuée",
-          body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une FEI, mais elle a finalement été attribuée à quelqu'un d'autre.`,
-          email: `${user.prenom} ${user.nom_de_famille} vous avait attribué la FEI ${savedFei?.numero}, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+          title: "Une fiche ne vous est plus attribuée",
+          body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une fiche, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+          email: `${user.prenom} ${user.nom_de_famille} vous avait attribué la fiche ${savedFei?.numero}, mais elle a finalement été attribuée à quelqu'un d'autre.`,
           notificationLogAction: `FEI_REMOVED_FROM_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
         });
       }

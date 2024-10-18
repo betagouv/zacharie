@@ -35,7 +35,7 @@ export default function AdminFeis() {
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <h1 className="fr-h2 fr-mb-2w">FEI</h1>
+          <h1 className="fr-h2 fr-mb-2w">Toutes les fiches d'examen initial</h1>
           <section className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-0">
               <h2 className="fr-h3">FEIs ({feis.length})</h2>

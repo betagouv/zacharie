@@ -55,8 +55,8 @@ export default function ConfirmCurrentOwner() {
           <div className="bg-white">
             <Alert
               severity="info"
-              description={`Cette FEI a été attribuée à un intervenant que vous ne pouvez pas représenter.\u00a0C'est à elle ou lui d'intervenir.`}
-              title="FEI en attente de prise en charge par l'intervenant suivant."
+              description={`Cette fiche a été attribuée à un intervenant que vous ne pouvez pas représenter.\u00a0C'est à elle ou lui d'intervenir.`}
+              title="Fiche en attente de prise en charge par l'intervenant suivant."
             />
           </div>
         </div>
@@ -125,24 +125,24 @@ export default function ConfirmCurrentOwner() {
       <CallOut
         title={
           fei.fei_next_owner_user_id
-            ? "🫵  Cette FEI vous a été attribuée"
-            : "🫵  Vous pouvez prendre en charge cette FEI"
+            ? "🫵  Cette fiche vous a été attribuée"
+            : "🫵  Vous pouvez prendre en charge cette fiche"
         }
         className="m-0 bg-white"
       >
         En tant que <b>{getUserRoleLabel(fei.fei_next_owner_role)}</b>
         {nextOwnerEntity?.raison_sociale ? ` (${nextOwnerEntity?.raison_sociale})` : ""}, vous pouvez prendre en charge
-        cette FEI et les carcasses associées.
+        cette fiche et les carcasses associées.
         <br />
         <Button type="submit" className="my-4 block" onClick={() => handlePriseEnCharge(false)}>
-          Je prends en charge cette FEI et les carcasses associées
+          Je prends en charge cette fiche et les carcasses associées
         </Button>
         <span>
           Vous souhaitez la transférer à un autre acteur&nbsp;? (exemple: erreur d'attribution, assignation à un autre
           collecteur)
         </span>
         <Button priority="tertiary" type="button" className="!mt-2 block" onClick={() => handlePriseEnCharge(true)}>
-          Transférer la FEI
+          Transférer la fiche
         </Button>
         <span className="mt-4 inline-block text-sm">Vous souhaitez la renvoyer à l'expéditeur&nbsp;?</span>
         <Button
@@ -163,7 +163,7 @@ export default function ConfirmCurrentOwner() {
             });
           }}
         >
-          Renvoyer la FEI
+          Renvoyer la fiche
         </Button>
       </CallOut>
     </div>

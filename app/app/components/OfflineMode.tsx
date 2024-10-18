@@ -32,7 +32,7 @@ export default function OfflineMode() {
   }
   return (
     <p className="z-50 bg-action-high-blue-france px-4 py-2 text-sm text-white">
-      Vous n'avez pas internet. Les FEI que vous créez/modifiez actuellement seront synchronisées automatiquement
+      Vous n'avez pas internet. Les fiches que vous créez/modifiez actuellement seront synchronisées automatiquement
       lorsque vous aurez retrouvé une connexion.
     </p>
   );

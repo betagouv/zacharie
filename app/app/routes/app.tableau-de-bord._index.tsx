@@ -110,14 +110,16 @@ export default function TableauDeBordIndex() {
               Vous êtes de retour en ligne. Cicquez <u>ici</u> pour rafraichir les données.
             </button>
           )}
-          <h1 className="fr-h2 fr-mb-2w">Mes FEI</h1>
+          <h1 className="fr-h2 fr-mb-2w">Mes fiches d'examen initial</h1>
           <section className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">FEI à compléter{feisAssigned.length > 0 ? ` (${feisAssigned.length})` : null}</h2>
+              <h2 className="fr-h3">
+                Fiches à compléter{feisAssigned.length > 0 ? ` (${feisAssigned.length})` : null}
+              </h2>
             </div>
             {feisAssigned.length ? (
               <ResponsiveTable
-                headers={["Numéro", "Créée le", "Modifiée le", "Commune", "Étape en cours"]}
+                headers={["Numéro", "Créée le", "Par la chasse", "Commune", "Étape en cours"]}
                 data={feisAssigned
                   .filter((fei) => fei !== null)
                   .map((fei) => ({
@@ -126,7 +128,7 @@ export default function TableauDeBordIndex() {
                     rows: [
                       fei.numero!,
                       dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
-                      dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm"),
+                      fei.premier_detenteur_name_cache!,
                       fei.commune_mise_a_mort!,
                       getUserRoleLabel(
                         fei.fei_next_owner_role && (fei.fei_next_owner_user_id || fei.fei_next_owner_entity_id)
@@ -137,7 +139,7 @@ export default function TableauDeBordIndex() {
                   }))}
               />
             ) : (
-              <p className="m-8">Pas de FEI assignée</p>
+              <p className="m-8">Pas de fiche assignée</p>
             )}
             <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
               <Button
@@ -156,7 +158,7 @@ export default function TableauDeBordIndex() {
           <section className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-0">
               <h2 className="fr-h3">
-                FEI en cours où j'ai eu une intervention{feisOngoing.length > 0 ? ` (${feisOngoing.length})` : null}
+                Fiches en cours où j'ai eu une intervention{feisOngoing.length > 0 ? ` (${feisOngoing.length})` : null}
               </h2>
             </div>
             {feisOngoing.length ? (
@@ -177,7 +179,7 @@ export default function TableauDeBordIndex() {
                   }))}
               />
             ) : (
-              <p className="m-8">Pas de FEI en cours</p>
+              <p className="m-8">Pas de fiche en cours</p>
             )}
             <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
               <Button
@@ -196,11 +198,11 @@ export default function TableauDeBordIndex() {
           <section className="mb-6 bg-white md:shadow">
             {!isOnline && (
               <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
-                Vous ne pouvez pas accéder au détail de vos FEI archivées sans connexion internet.
+                Vous ne pouvez pas accéder au détail de vos fiches archivées sans connexion internet.
               </p>
             )}
             <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">FEI archivées{feisDone.length > 0 ? ` (${feisDone.length})` : null}</h2>
+              <h2 className="fr-h3">Fiches archivées{feisDone.length > 0 ? ` (${feisDone.length})` : null}</h2>
             </div>
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feisDone.length ? (
@@ -221,7 +223,7 @@ export default function TableauDeBordIndex() {
                 />
               ) : (
                 <>
-                  <p className="m-8">Pas encore de FEI archivée</p>
+                  <p className="m-8">Pas encore de fiche archivée</p>
                 </>
               )}
             </div>
@@ -242,13 +244,13 @@ export default function TableauDeBordIndex() {
           {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
             <section className="mb-6 bg-white md:shadow">
               <div className="p-4 md:p-8 md:pb-0">
-                <h2 className="fr-h3 fr-mb-2w">Nouvelle FEI</h2>
-                <p className="fr-text--regular mb-4">Pour créer une nouvelle FEI, c'est par ici 👇</p>
+                <h2 className="fr-h3 fr-mb-2w">Nouvelle fiche</h2>
+                <p className="fr-text--regular mb-4">Pour créer une nouvelle fiche, c'est par ici 👇</p>
                 <div className="flex flex-col items-start bg-white [&_ul]:md:min-w-96">
                   <ButtonsGroup
                     buttons={[
                       {
-                        children: "Nouvelle FEI",
+                        children: "Nouvelle fiche",
                         linkProps: {
                           to: "/app/tableau-de-bord/fei/nouvelle",
                           href: "#",

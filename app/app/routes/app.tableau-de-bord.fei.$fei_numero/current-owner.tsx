@@ -14,8 +14,8 @@ export default function CurrentOwner() {
         <div className="bg-white">
           <Alert
             severity="success"
-            description="Merci à l'ensemble des acteurs pour la prise en charge de cette FEI."
-            title="FEI clôturée"
+            description="Merci à l'ensemble des acteurs pour la prise en charge de cette fiche."
+            title="FIche clôturée"
           />
         </div>
       </div>
@@ -30,7 +30,7 @@ export default function CurrentOwner() {
           root: "fr-highlight--green-emeraude",
         }}
       >
-        Cette FEI est présentement sous la responsabilité
+        Cette fiche est présentement sous la responsabilité
         <b> {getUserRoleLabelPrefixed(fei.fei_current_owner_role as UserRoles)}</b>.<br />
         {currentOwnerEntity?.raison_sociale && (
           <>

@@ -206,6 +206,7 @@ model Fei {
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
   premier_detenteur_user_id                               String?
   premier_detenteur_entity_id                             String?
+  premier_detenteur_name_cache                            String?
   premier_detenteur_date_depot_quelque_part               DateTime?
   premier_detenteur_depot_entity_id                       String?
   premier_detenteur_depot_sauvage                         String?

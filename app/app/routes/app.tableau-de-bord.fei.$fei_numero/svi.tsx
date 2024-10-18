@@ -137,7 +137,7 @@ export default function FEI_SVI() {
           </Accordion>
         </>
       )}
-      <Accordion titleAs="h3" label="Validation de la FEI" defaultExpanded>
+      <Accordion titleAs="h3" label="Validation de la fiche" defaultExpanded>
         <sviFinishedFetcher.Form method="POST" id="svi_check_finished_at">
           <input type="hidden" name="route" value={`/api/fei/${fei.numero}`} />
           <input
@@ -195,8 +195,8 @@ export default function FEI_SVI() {
       {fei.svi_signed_at && (
         <Alert
           severity="success"
-          description="L'inspection des carcasses est terminée, cette FEI est clôturée. Merci !"
-          title="FEI clôturée"
+          description="L'inspection des carcasses est terminée, cette fiche est clôturée. Merci !"
+          title="Fiche clôturée"
         />
       )}
     </>

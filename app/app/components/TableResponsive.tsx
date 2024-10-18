@@ -47,7 +47,7 @@ export default function TableResponsive({ headers, data }: TableProps) {
                 <tr key={id}>
                   <td className="w-full max-w-0 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-0">
                     <Link to={link} className="block bg-none py-4 pl-4 pr-3 !no-underline">
-                      {rows[0]}
+                      <span className="block max-w-24 text-xs">{rows[0]}</span>
                       <dl className="font-normal lg:hidden">
                         <dt className="mt-2">{headers[1]}</dt>
                         <dd className="truncate text-gray-700">{rows[1]}</dd>
@@ -63,12 +63,12 @@ export default function TableResponsive({ headers, data }: TableProps) {
                       {rows[1]}
                     </Link>
                   </td>
-                  <td className="hidden text-sm text-gray-500 sm:table-cell">
+                  <td className="hidden max-w-40 text-sm text-gray-500 sm:table-cell">
                     <Link to={link} className="block bg-none px-3 py-4 !no-underline">
                       {rows[2]}
                     </Link>
                   </td>
-                  <td className="hidden text-sm text-gray-500 sm:table-cell">
+                  <td className="hidden max-w-40 text-sm text-gray-500 sm:table-cell">
                     <Link to={link} className="block bg-none px-3 py-4 !no-underline">
                       {rows[3]}
                     </Link>

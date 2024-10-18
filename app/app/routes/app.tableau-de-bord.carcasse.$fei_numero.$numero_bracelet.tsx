@@ -646,7 +646,7 @@ export default function CarcasseReadAndWrite() {
               <ButtonsGroup
                 buttons={[
                   {
-                    children: canEdit ? "Enregistrer et retourner à la FEI" : "Retourner à la FEI",
+                    children: canEdit ? "Enregistrer et retourner à la fiche" : "Retourner à la fiche",
                     type: canEdit ? "submit" : "button",
                     nativeButtonProps: {
                       form: "carcasse-submit-form",

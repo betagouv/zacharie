@@ -32,7 +32,7 @@ export const meta: MetaFunction = () => {
     { title: "Zacharie | Ministère de l'Agriculture" },
     {
       name: "og:title",
-      content: "Zacharie | FEI | Ministère de l'Agriculture",
+      content: "Zacharie | Ministère de l'Agriculture",
     },
     {
       name: "description",

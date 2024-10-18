@@ -49,13 +49,13 @@ export default function SelectNextOwner() {
   const nextOwnerSelectLabel = useMemo(() => {
     switch (nextRole) {
       case UserRoles.CCG:
-        return "Sélectionnez un CCG pour cette FEI";
+        return "Sélectionnez un CCG pour cette fiche";
       case UserRoles.COLLECTEUR_PRO:
-        return "Sélectionnez un Collecteur Pro pour cette FEI";
+        return "Sélectionnez un Collecteur Pro pour cette fiche";
       case UserRoles.ETG:
-        return "Sélectionnez un ETG pour cette FEI";
+        return "Sélectionnez un ETG pour cette fiche";
       case UserRoles.SVI:
-        return "Sélectionnez le Service Vétérinaire d'Inspection pour cette FEI";
+        return "Sélectionnez le Service Vétérinaire d'Inspection pour cette fiche";
       default:
         return [];
     }
@@ -175,7 +175,7 @@ export default function SelectNextOwner() {
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <div className="fr-fieldset__element">
           <Select
-            label="Qui doit désormais agir sur la FEI ?"
+            label="Qui doit désormais agir sur la fiche ?"
             className="!mb-0 grow"
             nativeSelectProps={{
               name: Prisma.FeiScalarFieldEnum.fei_next_owner_role,
@@ -210,7 +210,7 @@ export default function SelectNextOwner() {
               },
             }}
           >
-            <option value="">Sélectionnez le prochain type d'acteur à agir sur la FEI</option>
+            <option value="">Sélectionnez le prochain type d'acteur à agir sur la fiche</option>
             <hr />
             {showIntermediaires ? (
               <>
@@ -281,7 +281,7 @@ export default function SelectNextOwner() {
       {(fei.fei_next_owner_user_id || fei.fei_next_owner_entity_id) && (
         <Alert
           severity="success"
-          description={`${nextOwnerName} a été notifié. Vous ne pouvez plus modifier votre FEI.`}
+          description={`${nextOwnerName} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
           title="Attribution effectuée"
         />
       )}

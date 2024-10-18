@@ -166,9 +166,9 @@ export default function MesInformations() {
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <Stepper currentStep={2} nextTitle={nextTitle} stepCount={stepCount} title="Vos informations" />
           <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations</h1>
-          <CallOut title="✍️ Pour pouvoir remplir les FEI qui vont sont attribuées" className="bg-white">
+          <CallOut title="✍️ Pour pouvoir remplir les fiches qui vont sont attribuées" className="bg-white">
             Qui êtes-vous ? À quelles entités êtes-vous rattaché ? <br />
-            Lorsqu'une FEI sera attribuée à laquelle vous êtes rattachée, vous pourrez la prendre en charge.
+            Lorsqu'une fiche sera attribuée à laquelle vous êtes rattachée, vous pourrez la prendre en charge.
           </CallOut>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
@@ -369,9 +369,9 @@ export default function MesInformations() {
                     options={[
                       {
                         label:
-                          "J'autorise le fait que les entreprises pour lesquelles je travaille apparaissent dans les champs de transmission des FEI.",
+                          "J'autorise le fait que les entreprises pour lesquelles je travaille apparaissent dans les champs de transmission des fiches.",
                         hintText:
-                          "Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les FEI ne pourront pas être attribuées à votre enreprise",
+                          "Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les fiches ne pourront pas être attribuées à votre enreprise",
                         nativeInputProps: {
                           required: true,
                           name: Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox,

@@ -200,7 +200,7 @@ export default function Fei() {
     }
     let base = `Le prochain intermédiaire est&nbsp;: ${nextOwnerEntity?.raison_sociale}.`;
     if (fei.fei_current_owner_user_id === user.id) {
-      base += `<br />La FEI n'a pas encore été prise en charge par cet intermédiaire.`;
+      base += `<br />La fiche n'a pas encore été prise en charge par cet intermédiaire.`;
     }
     return base;
   }, [inetermediairesPopulated, fei.fei_next_owner_entity_id, nextOwnerEntity, user.id, fei.fei_current_owner_user_id]);

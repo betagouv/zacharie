@@ -18,7 +18,7 @@ export default function SelectNextForExaminateur() {
     fei,
   } = useLoaderData<typeof clientLoader>();
   const isOnline = useIsOnline();
-  const nextOwnerSelectLabel = "Sélectionnez le Premier Détenteur de pour cette FEI";
+  const nextOwnerSelectLabel = "Sélectionnez le Premier Détenteur de pour cette fiche";
   const nextOwnerFetcher = useFetcher({ key: "select-next-premier-detenteur" });
   const searchUserFetcher = useFetcher<typeof searchUserAction>({ key: "search-user" });
   const [nextValue, setNextValue] = useState(fei.fei_next_owner_user_id ?? fei.fei_next_owner_entity_id ?? "");
@@ -75,6 +75,7 @@ export default function SelectNextForExaminateur() {
             formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_role, UserRoles.PREMIER_DETENTEUR);
             formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, user.id);
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
+            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache, user.nom_de_famille ?? "");
           } else if (nextIsMyAssociation) {
             console.log("nextIsMyAssociation");
             formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
@@ -82,9 +83,10 @@ export default function SelectNextForExaminateur() {
             formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
             formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_role, UserRoles.PREMIER_DETENTEUR);
             formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id, nextOwnerEntity.id);
-            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id, nextOwnerEntity.id);
             formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, user.id);
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
+            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id, nextOwnerEntity.id);
+            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache, nextOwnerEntity?.raison_sociale ?? "");
           } else {
             console.log("nextIsSomeoneElse");
           }
@@ -106,7 +108,7 @@ export default function SelectNextForExaminateur() {
         )}
         <div className="fr-fieldset__element grow">
           <Select
-            label="Quel Premier Détenteur doit désormais agir sur la FEI ?"
+            label="Quel Premier Détenteur doit désormais agir sur la fiche ?"
             className="!mb-0 grow"
             key={fei.fei_next_owner_user_id ?? "no-choice-yet"}
             nativeSelectProps={{
@@ -193,7 +195,7 @@ export default function SelectNextForExaminateur() {
       {fei.fei_next_owner_user_id && (
         <Alert
           severity="success"
-          description={`${nextOwnerName} a été notifié. Vous ne pouvez plus modifier votre FEI.`}
+          description={`${nextOwnerName} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
           title="Attribution effectuée"
         />
       )}

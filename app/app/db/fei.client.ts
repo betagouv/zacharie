@@ -60,6 +60,7 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
     examinateur_initial_approbation_mise_sur_le_marche: next_examinateur_initial_approbation_mise_sur_le_marche,
     premier_detenteur_user_id: mergedItem.premier_detenteur_user_id || null,
     premier_detenteur_entity_id: mergedItem.premier_detenteur_entity_id || null,
+    premier_detenteur_name_cache: mergedItem.premier_detenteur_name_cache || null,
     premier_detenteur_date_depot_quelque_part: mergedItem.premier_detenteur_date_depot_quelque_part
       ? dayjs(mergedItem.premier_detenteur_date_depot_quelque_part).toISOString()
       : null,
