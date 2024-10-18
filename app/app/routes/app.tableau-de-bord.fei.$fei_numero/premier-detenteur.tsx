@@ -132,6 +132,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
                 nativeSelectProps={{
                   name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
                   required: true,
+                  defaultValue: etgs.length === 1 ? etgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ""),
                 }}
               >
                 <option value="">Sélectionnez un Établissements de Transformation du Gibier sauvage</option>
@@ -148,11 +149,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
           )}
           {canEdit && depotType === EntityTypes.CCG && (
             <Select
-              label={
-                depotType === EntityTypes.CCG
-                  ? "Centre de collecte"
-                  : "Sélectionnez un Établissements de Transformation du Gibier sauvage"
-              }
+              label="Centre de collecte"
               hint={
                 <>
                   Vous n'avez pas encore renseigné votre centre de collecte ? Vous pouvez le faire en{" "}
@@ -165,6 +162,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               nativeSelectProps={{
                 name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
                 required: true,
+                defaultValue: ccgs.length === 1 ? ccgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ""),
               }}
             >
               <option value="">Sélectionnez un centre de collecte</option>
