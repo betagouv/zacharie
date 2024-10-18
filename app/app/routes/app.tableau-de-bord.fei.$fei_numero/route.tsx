@@ -198,9 +198,9 @@ export default function Fei() {
     if (!nextIntermediaireId) {
       return "Il n'y a pas encore de premier intermédiaire sélectionné";
     }
-    let base = `Le prochain intermédiaire est: ${nextOwnerEntity?.raison_sociale}`;
+    let base = `Le prochain intermédiaire est&nbsp;: ${nextOwnerEntity?.raison_sociale}.`;
     if (fei.fei_current_owner_user_id === user.id) {
-      base += `\nLa FEI n'a pas encore été prise en charge par cet intermédiaire.`;
+      base += `<br />La FEI n'a pas encore été prise en charge par cet intermédiaire.`;
     }
     return base;
   }, [inetermediairesPopulated, fei.fei_next_owner_entity_id, nextOwnerEntity, user.id, fei.fei_current_owner_user_id]);
@@ -223,7 +223,11 @@ export default function Fei() {
             {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur showIdentity />}
             {selectedTabId === "Intermédiaires" &&
-              (intermediaireTabDisabledText ? <p>{intermediaireTabDisabledText}</p> : <FEICurrentIntermediaire />)}
+              (intermediaireTabDisabledText ? (
+                <p dangerouslySetInnerHTML={{ __html: intermediaireTabDisabledText }} />
+              ) : (
+                <FEICurrentIntermediaire />
+              ))}
             {selectedTabId === UserRoles.SVI &&
               (sviTabDisabled ? <p>Le service vétérinaire n'a pas encore terminé son inspection</p> : <FEI_SVI />)}
           </Tabs>

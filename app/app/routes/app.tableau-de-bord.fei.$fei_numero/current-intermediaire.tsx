@@ -147,7 +147,7 @@ export default function FEICurrentIntermediaire() {
       {canEdit ? (
         <Accordion
           titleAs="h3"
-          label={`Carcasses à vérifier (${carcassesUnsorted.length})`}
+          label={`Carcasses (${carcassesUnsorted.length})`}
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >

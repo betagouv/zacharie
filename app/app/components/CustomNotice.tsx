@@ -13,7 +13,7 @@ export function CustomNotice({
   return (
     <div
       role="listitem"
-      className={[className, "fr-background-contrast--grey relative border-b-2 border-b-black p-4"].join(" ")}
+      className={[className, "fr-background-contrast--grey relative border-b-2 border-b-black"].join(" ")}
     >
       {isClosable && (
         <button type="button" onClick={onClose} className="absolute right-0 top-0 px-4 py-2">

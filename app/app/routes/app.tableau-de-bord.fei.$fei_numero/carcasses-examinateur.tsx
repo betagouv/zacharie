@@ -58,7 +58,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
             >
               <Link
                 to={`/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.numero_bracelet}`}
-                className="w-full text-left [&_*]:no-underline [&_*]:hover:no-underline"
+                className="block w-full bg-none p-4 text-left [&_*]:no-underline [&_*]:hover:no-underline"
               >
                 {carcasse.espece ? (
                   <>
@@ -69,7 +69,9 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                     <span className="absolute right-8 top-2.5 block text-sm font-normal italic opacity-50">
                       {carcasse.type === CarcasseType.PETIT_GIBIER ? "Petit gibier" : "Gros gibier"}
                     </span>
-                    <span className="block font-normal">Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}</span>
+                    <span className="block font-normal">
+                      Numéro de bracelet&nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span>
+                    </span>
                     {carcasse.type === CarcasseType.PETIT_GIBIER && (
                       <span className="block font-normal">
                         Nombre de carcasses dans le lot&nbsp;: {carcasse.nombre_d_animaux || "À REMPLIR"}
@@ -125,7 +127,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
         })}
       </div>
       {carcasses.length > 0 && canEdit && <hr />}
-      {carcasses.length > 0 && (
+      {carcasses.length > 0 && canEdit && (
         <p className="-mt-4 mb-4 ml-4 text-sm text-gray-500">
           Déjà rentrés&nbsp;:
           {Object.entries(countCarcassesByEspece).map(([espece, { carcasses, nombre_d_animaux }]) => (
