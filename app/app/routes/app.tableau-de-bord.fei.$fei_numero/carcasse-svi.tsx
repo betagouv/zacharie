@@ -47,7 +47,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
     for (const intermediaire of inetermediairesPopulated) {
       const intermediaireCarcasse = intermediaire.carcasses[carcasse.numero_bracelet];
       if (intermediaireCarcasse?.commentaire) {
-        commentaires.push(`${intermediaire.entity?.raison_sociale}: ${intermediaireCarcasse?.commentaire}`);
+        commentaires.push(`${intermediaire.entity?.raison_sociale} : ${intermediaireCarcasse?.commentaire}`);
       }
     }
     return commentaires;

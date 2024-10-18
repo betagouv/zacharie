@@ -127,10 +127,10 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
       {carcasses.length > 0 && canEdit && <hr />}
       {carcasses.length > 0 && (
         <p className="-mt-4 mb-4 ml-4 text-sm text-gray-500">
-          Déjà rentrés:
+          Déjà rentrés&nbsp;:
           {Object.entries(countCarcassesByEspece).map(([espece, { carcasses, nombre_d_animaux }]) => (
             <span className="ml-4 block" key={espece}>
-              {espece}: {carcasses}{" "}
+              {espece}&nbsp;: {carcasses}{" "}
               {nombre_d_animaux > carcasses ? `lots (${nombre_d_animaux} carcasses)` : "carcasses"}
             </span>
           ))}

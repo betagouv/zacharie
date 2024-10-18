@@ -66,8 +66,9 @@ export default function AdminFeis() {
                         return (
                           <li key={index}>
                             {/* // @ts-expect-error intervenants is not null */}
-                            {responsable.type}:<br />
-                            {responsable.role ? getUserRoleLabel(responsable.role as UserRoles) : "N/A"}:{" "}
+                            {responsable.type}&nbsp;:
+                            <br />
+                            {responsable.role ? getUserRoleLabel(responsable.role as UserRoles) : "N/A"}&nbsp;:{" "}
                             {responsable.role ? (responsable.email! ?? responsable?.raison_sociale ?? "Inconnu") : ""}
                             <br />
                           </li>
