@@ -110,7 +110,7 @@ export default function TableauDeBordIndex() {
               Vous êtes de retour en ligne. Cicquez <u>ici</u> pour rafraichir les données.
             </button>
           )}
-          <h1 className="fr-h2 fr-mb-2w">Mes fiches d'examen initial</h1>
+          <h1 className="fr-h2 fr-mb-2w">Mes fiches d'examen initial (FEI)</h1>
           <section className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-0">
               <h2 className="fr-h3">
