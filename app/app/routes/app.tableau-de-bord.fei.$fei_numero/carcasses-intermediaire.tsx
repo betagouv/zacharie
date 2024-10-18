@@ -134,7 +134,7 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
             {carcasse.categorie && ` - ${carcasse.categorie}`}
           </span>
           <span className="absolute right-8 top-2.5 block text-sm font-normal italic opacity-50">
-            {carcasse.type === CarcasseType.PETIT_GIBIER ? "Petit gibier" : "Gros gibier"}
+            {carcasse.type === CarcasseType.PETIT_GIBIER ? "Petit gibier" : "Grand gibier"}
           </span>
           <span className="block font-normal">
             Numéro de bracelet&nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span>
