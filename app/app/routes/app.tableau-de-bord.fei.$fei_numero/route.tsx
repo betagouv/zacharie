@@ -135,7 +135,7 @@ export default function Fei() {
         </>
       ),
     },
-    { tabId: "Intermédiaires", label: <>{fei.svi_entity_id ? doneEmoji : ""}Intermédiaires</> },
+    { tabId: "Destinataires", label: <>{fei.svi_entity_id ? doneEmoji : ""}Destinataires</> },
     {
       tabId: UserRoles.SVI,
       label: (
@@ -159,7 +159,7 @@ export default function Fei() {
     if (fei.fei_current_owner_role === UserRoles.SVI) {
       return UserRoles.SVI;
     }
-    return "Intermédiaires";
+    return "Destinataires";
   });
 
   const refCurrentRole = useRef(fei.fei_current_owner_role);
@@ -180,7 +180,7 @@ export default function Fei() {
             break;
           default:
             window.scrollTo({ top: 0, behavior: "smooth" });
-            setSelectedTabId("Intermédiaires");
+            setSelectedTabId("Destinataires");
             break;
         }
       }
@@ -196,11 +196,11 @@ export default function Fei() {
     }
     const nextIntermediaireId = fei.fei_next_owner_entity_id;
     if (!nextIntermediaireId) {
-      return "Il n'y a pas encore de premier intermédiaire sélectionné";
+      return "Il n'y a pas encore de premier destinataire sélectionné";
     }
-    let base = `Le prochain intermédiaire est&nbsp;: ${nextOwnerEntity?.raison_sociale}.`;
+    let base = `Le prochain destinataire est&nbsp;: ${nextOwnerEntity?.raison_sociale}.`;
     if (fei.fei_current_owner_user_id === user.id) {
-      base += `<br />La fiche n'a pas encore été prise en charge par cet intermédiaire.`;
+      base += `<br />La fiche n'a pas encore été prise en charge par ce destinataire.`;
     }
     return base;
   }, [inetermediairesPopulated, fei.fei_next_owner_entity_id, nextOwnerEntity, user.id, fei.fei_current_owner_user_id]);
@@ -222,7 +222,7 @@ export default function Fei() {
           <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
             {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur showIdentity />}
-            {selectedTabId === "Intermédiaires" &&
+            {selectedTabId === "Destinataires" &&
               (intermediaireTabDisabledText ? (
                 <p dangerouslySetInnerHTML={{ __html: intermediaireTabDisabledText }} />
               ) : (

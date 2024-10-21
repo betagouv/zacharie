@@ -116,7 +116,7 @@ export default function FEICurrentIntermediaire() {
           aria-controls="breadcrumb-:r55:"
           data-fr-js-collapse-button="true"
         >
-          Voir les intermédiaires
+          Voir les destinataires
         </button>
         <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
           <ol className="fr-breadcrumb__list">

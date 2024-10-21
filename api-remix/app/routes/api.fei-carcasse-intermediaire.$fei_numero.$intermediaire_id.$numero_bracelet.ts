@@ -32,7 +32,7 @@ export async function action(args: ActionFunctionArgs) {
     return json({ ok: false, data: null, error: "Carcasse not found" }, { status: 404 });
   }
   if (!intermediaire_id) {
-    return json({ ok: false, data: null, error: "L'identifiant de l'intermédiaire est obligatoire" }, { status: 400 });
+    return json({ ok: false, data: null, error: "L'identifiant du destinataire est obligatoire" }, { status: 400 });
   }
   const feiIntermediaire = await prisma.feiIntermediaire.findUnique({
     where: { id: intermediaire_id },

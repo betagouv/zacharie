@@ -13,7 +13,7 @@ export async function action(args: ActionFunctionArgs) {
 
   const { intermediaire_id, fei_numero } = params;
   if (!intermediaire_id) {
-    return json({ ok: false, data: null, error: "L'identifiant de l'intermédiaire est obligatoire" }, { status: 400 });
+    return json({ ok: false, data: null, error: "L'identifiant du destinataire est obligatoire" }, { status: 400 });
   }
   if (!fei_numero) {
     return json({ ok: false, data: null, error: "Le numéro de la FEI est obligatoire" }, { status: 400 });
