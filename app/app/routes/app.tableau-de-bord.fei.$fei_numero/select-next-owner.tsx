@@ -16,7 +16,56 @@ export default function SelectNextOwner() {
     inetermediairesPopulated,
     fei,
   } = useLoaderData<typeof clientLoader>();
+
+  const showIntermediaires = useMemo(() => {
+    if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
+      return false;
+    }
+    if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
+      if (fei.examinateur_initial_user_id === fei.premier_detenteur_user_id) {
+        return true;
+      }
+    }
+    if (!fei.premier_detenteur_date_depot_quelque_part) {
+      return false;
+    }
+    if (
+      UserRoles.PREMIER_DETENTEUR !== fei.fei_current_owner_role &&
+      UserRoles.CCG !== fei.fei_current_owner_role &&
+      UserRoles.COLLECTEUR_PRO !== fei.fei_current_owner_role
+    ) {
+      return false;
+    }
+    return true;
+  }, [
+    fei.premier_detenteur_user_id,
+    fei.fei_current_owner_role,
+    fei.examinateur_initial_user_id,
+    fei.examinateur_initial_approbation_mise_sur_le_marche,
+    fei.premier_detenteur_date_depot_quelque_part,
+  ]);
+
+  const showSvi = useMemo(() => {
+    if (fei.fei_current_owner_role !== UserRoles.ETG) {
+      return false;
+    }
+    const latestIntermediaire = inetermediairesPopulated[0];
+    if (!latestIntermediaire) {
+      return false;
+    }
+    if (latestIntermediaire.fei_intermediaire_role !== UserRoles.ETG) {
+      return false;
+    }
+    if (!latestIntermediaire.check_finished_at) {
+      return false;
+    }
+    return true;
+  }, [fei.fei_current_owner_role, inetermediairesPopulated]);
+
   const [nextRole, setNextRole] = useState<UserRoles | "">(() => {
+    if (showSvi) {
+      return UserRoles.SVI;
+    }
     if (fei.fei_next_owner_role) {
       return fei.fei_next_owner_role;
     }
@@ -93,56 +142,14 @@ export default function SelectNextOwner() {
     if (savedNextOwner) {
       return savedNextOwner;
     }
+    if (showSvi) {
+      return svis[0].id;
+    }
     if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
       return fei.premier_detenteur_depot_entity_id ?? "";
     }
     return "";
   });
-
-  const showIntermediaires = useMemo(() => {
-    if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
-      return false;
-    }
-    if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
-      if (fei.examinateur_initial_user_id === fei.premier_detenteur_user_id) {
-        return true;
-      }
-    }
-    if (!fei.premier_detenteur_date_depot_quelque_part) {
-      return false;
-    }
-    if (
-      UserRoles.PREMIER_DETENTEUR !== fei.fei_current_owner_role &&
-      UserRoles.CCG !== fei.fei_current_owner_role &&
-      UserRoles.COLLECTEUR_PRO !== fei.fei_current_owner_role
-    ) {
-      return false;
-    }
-    return true;
-  }, [
-    fei.premier_detenteur_user_id,
-    fei.fei_current_owner_role,
-    fei.examinateur_initial_user_id,
-    fei.examinateur_initial_approbation_mise_sur_le_marche,
-    fei.premier_detenteur_date_depot_quelque_part,
-  ]);
-
-  const showSvi = useMemo(() => {
-    if (fei.fei_current_owner_role !== UserRoles.ETG) {
-      return false;
-    }
-    const latestIntermediaire = inetermediairesPopulated[0];
-    if (!latestIntermediaire) {
-      return false;
-    }
-    if (latestIntermediaire.fei_intermediaire_role !== UserRoles.ETG) {
-      return false;
-    }
-    if (!latestIntermediaire.check_finished_at) {
-      return false;
-    }
-    return true;
-  }, [fei.fei_current_owner_role, inetermediairesPopulated]);
 
   if (user.id !== fei.fei_current_owner_user_id) {
     return null;

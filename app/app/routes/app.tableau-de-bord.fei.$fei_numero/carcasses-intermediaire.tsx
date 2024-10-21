@@ -144,14 +144,6 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
               Nombre de carcasses dans le lot&nbsp;: {carcasse.nombre_d_animaux || "À REMPLIR"}
             </span>
           )}
-          {commentairesIntermediaires.map((commentaire, index) => {
-            console.log("render commentaire", commentaire);
-            return (
-              <span key={commentaire + index} className="mt-2 block font-normal">
-                {commentaire}
-              </span>
-            );
-          })}
           {carcasse.heure_mise_a_mort && (
             <span className="block font-normal">Mise à mort&nbsp;: {carcasse.heure_mise_a_mort || "À REMPLIR"}</span>
           )}
@@ -184,6 +176,13 @@ function CarcasseAVerifier({ carcasse, canEdit, intermediaire }: CarcasseAVerifi
               })}
             </>
           )}
+          {commentairesIntermediaires.map((commentaire, index) => {
+            return (
+              <span key={commentaire + index} className="mt-2 block font-normal">
+                {commentaire}
+              </span>
+            );
+          })}
         </Component>
       </CustomNotice>
       {canEdit && showRefuser && (

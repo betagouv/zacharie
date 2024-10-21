@@ -27,8 +27,6 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
       : (oldItem.examinateur_anomalies_abats ?? []);
   }
 
-  console.log({ nextAnomaliesCarcasse, nextAnomaliesAbats });
-
   // Explicitly handle each field, including optional ones
   const result = {
     numero_bracelet: mergedItem.numero_bracelet,
