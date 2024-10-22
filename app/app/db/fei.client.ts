@@ -1,6 +1,7 @@
 // import * as zodSchemas from "prisma/generated/zod";
 import dayjs from "dayjs";
 import { SerializeFrom } from "@remix-run/node";
+import { redirect } from "@remix-run/react";
 import { type Fei, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
 import { type FeiLoaderData } from "@api/routes/api.fei.$fei_numero";
 import { type FeiUserLoaderData } from "@api/routes/api.fei-user.$fei_numero.$user_id";
@@ -60,7 +61,9 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
     fei_prev_owner_role: mergedItem.fei_prev_owner_role || null,
     examinateur_initial_user_id: mergedItem.examinateur_initial_user_id || null,
     examinateur_initial_date_approbation_mise_sur_le_marche:
-      next_examinateur_initial_approbation_mise_sur_le_marche === true ? dayjs().toISOString() : null,
+      next_examinateur_initial_approbation_mise_sur_le_marche === true
+        ? dayjs(mergedItem.examinateur_initial_date_approbation_mise_sur_le_marche || undefined).toISOString()
+        : null,
     examinateur_initial_approbation_mise_sur_le_marche: next_examinateur_initial_approbation_mise_sur_le_marche,
     premier_detenteur_user_id: mergedItem.premier_detenteur_user_id || null,
     premier_detenteur_entity_id: mergedItem.premier_detenteur_entity_id || null,
@@ -118,6 +121,10 @@ async function get(pathname: string) {
 
 export async function loadFei(fei_numero: string) {
   const feiData = (await get(`/api/fei/${fei_numero}`)) as FeiLoaderData;
+
+  if (!feiData.ok) {
+    return redirect("/app/tableau-de-bord");
+  }
 
   const examinateurInitialId = feiData.data?.fei.examinateur_initial_user_id;
   const examinateurInitialUser = examinateurInitialId

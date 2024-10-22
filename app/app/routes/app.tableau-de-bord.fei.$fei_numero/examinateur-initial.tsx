@@ -236,29 +236,29 @@ export default function FEIExaminateurInitial() {
                   },
                 ]}
               />
+            </div>
+            <div className="fr-fieldset__element">
+              <Component
+                label="Date d'approbation de mise sur le marché"
+                nativeInputProps={{
+                  id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
+                  name: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
+                  type: "datetime-local",
+                  autoComplete: "off",
+                  suppressHydrationWarning: true,
+                  defaultValue: dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche || undefined).format(
+                    "YYYY-MM-DDTHH:mm",
+                  ),
+                }}
+              />
+            </div>
+            <div className="fr-fieldset__element">
               {!fei.examinateur_initial_approbation_mise_sur_le_marche && (
                 <Button type="submit" disabled={!carcasses.length}>
                   Enregistrer
                 </Button>
               )}
             </div>
-            {fei.examinateur_initial_date_approbation_mise_sur_le_marche && (
-              <div className="fr-fieldset__element">
-                <InputNotEditable
-                  label="Date d'approbation de mise sur le marché"
-                  nativeInputProps={{
-                    id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
-                    name: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
-                    type: "datetime-local",
-                    autoComplete: "off",
-                    suppressHydrationWarning: true,
-                    defaultValue: dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                      "YYYY-MM-DDTHH:mm",
-                    ),
-                  }}
-                />
-              </div>
-            )}
           </approbationFetcher.Form>
         </Accordion>
       )}

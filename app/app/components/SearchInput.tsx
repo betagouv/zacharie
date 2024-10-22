@@ -28,10 +28,6 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
     }
   }, [location.pathname, successUrl]);
 
-  console.log("location.pathname", location.pathname);
-  console.log("successUrl", successUrl);
-  console.log("location.pathname !== successUrl", location.pathname !== successUrl);
-
   const searchDebounce = useRef<ReturnType<typeof setTimeout>>();
   const errorDebounce = useRef<ReturnType<typeof setTimeout>>();
   const searchRef = useRef<HTMLInputElement>(null);

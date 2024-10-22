@@ -28,15 +28,23 @@ export async function action(args: ActionFunctionArgs) {
   }
 
   const formData = await request.formData();
-  console.log("formData api.fei-intermediaire.$fei_numero.$intermedaire_id", Object.fromEntries(formData));
 
   if (formData.get(Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at)) {
+    // check if valid date
+    let dateValue;
+    const date = new Date(formData.get(Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at) as string);
+    if (!isNaN(date.getTime())) {
+      dateValue = date;
+    } else {
+      dateValue = new Date();
+    }
+
     const intermediaire = await prisma.feiIntermediaire.update({
       where: {
         id: intermediaire_id,
       },
       data: {
-        check_finished_at: new Date(),
+        check_finished_at: dateValue,
       },
     });
     return json({ ok: true, data: { intermediaire }, error: "" });

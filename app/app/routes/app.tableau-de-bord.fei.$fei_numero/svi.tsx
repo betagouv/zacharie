@@ -70,9 +70,9 @@ export default function FEI_SVI() {
   //   prevCarcassesToCheckCount.current = carcassesSorted.carcassesToCheck.length;
   // }, [carcassesSorted.carcassesToCheck.length]);
 
-  const labelInscectionDone = useMemo(() => {
+  const labelInspectionDone = useMemo(() => {
     let label = "J'ai fini l'inspection de toutes les carcasses.";
-    const nbCarcassesValidated = carcassesSorted.carcassesValidated.length;
+    const nbCarcassesValidated = carcassesSorted.carcassesValidated?.length;
     if (nbCarcassesValidated > 0) {
       if (nbCarcassesValidated === 1) {
         label += " 1 carcasse validée.";
@@ -80,7 +80,7 @@ export default function FEI_SVI() {
         label += ` ${nbCarcassesValidated} carcasses validées.`;
       }
     }
-    const nbCarcassesSaisies = carcassesSorted.carcassesSaisies.length;
+    const nbCarcassesSaisies = carcassesSorted.carcassesSaisies?.length;
     if (nbCarcassesSaisies > 0) {
       if (nbCarcassesSaisies === 1) {
         label += " 1 carcasse saisie.";
@@ -89,7 +89,7 @@ export default function FEI_SVI() {
       }
     }
     return label;
-  }, [carcassesSorted.carcassesValidated.length, carcassesSorted.carcassesSaisies.length]);
+  }, [carcassesSorted.carcassesValidated?.length, carcassesSorted.carcassesSaisies?.length]);
 
   return (
     <>
@@ -160,7 +160,7 @@ export default function FEI_SVI() {
             <Checkbox
               options={[
                 {
-                  label: labelInscectionDone,
+                  label: labelInspectionDone,
                   nativeInputProps: {
                     required: true,
                     name: "svi_finito",

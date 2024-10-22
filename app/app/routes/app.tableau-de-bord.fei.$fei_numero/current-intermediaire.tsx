@@ -6,6 +6,7 @@ import InputNotEditable from "@app/components/InputNotEditable";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { Button } from "@codegouvfr/react-dsfr/Button";
+import { Input } from "@codegouvfr/react-dsfr/Input";
 import dayjs from "dayjs";
 import SelectNextOwner from "./select-next-owner";
 import CarcasseIntermediaireComp from "./carcasse-intermediaire";
@@ -18,7 +19,7 @@ export default function FEICurrentIntermediaire() {
 
   const [intermediaireIndex, setIntermediaireIndex] = useState(0);
   const intermediaire = inetermediairesPopulated[intermediaireIndex];
-  const priseEnChargeFetcher = useFetcher({ key: "prise-en-charge" });
+  const priseEnChargeFetcher = useFetcher({ key: `prise-en-charge-${intermediaire.id}` });
 
   const canEdit = useMemo(() => {
     if (fei.fei_current_owner_user_id !== user.id) {
@@ -35,6 +36,8 @@ export default function FEICurrentIntermediaire() {
     }
     return true;
   }, [fei, user, intermediaire]);
+
+  const PriseEnChargeInput = canEdit ? Input : InputNotEditable;
 
   const carcassesUnsorted = carcasses.filter((carcasse) => !!intermediaire.carcasses[carcasse.numero_bracelet]);
   const carcassesSorted = useMemo(() => {
@@ -81,6 +84,40 @@ export default function FEICurrentIntermediaire() {
 
   // const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
   const jobIsDone = true;
+
+  const labelCheckDone = useMemo(() => {
+    let label = `${intermediaire.check_finished_at ? "J'ai pris" : "Je prends"} en charge les carcasses que j'ai acceptées.`;
+    const nbCarcassesValidated = carcassesSorted.carcassesApproved.length;
+    if (nbCarcassesValidated > 0) {
+      if (nbCarcassesValidated === 1) {
+        label += " 1 carcasse validée.";
+      } else {
+        label += ` ${nbCarcassesValidated} carcasses/lot validés.`;
+      }
+    }
+    const nbCarcassesRejetees = carcassesSorted.carcassesRejetees.length;
+    if (nbCarcassesRejetees > 0) {
+      if (nbCarcassesRejetees === 1) {
+        label += " 1 carcasse saisie.";
+      } else {
+        label += ` ${nbCarcassesRejetees} carcasses/lots rejetés.`;
+      }
+    }
+    const nbCarcassesManquantes = carcassesSorted.carcassesManquantes.length;
+    if (nbCarcassesManquantes > 0) {
+      if (nbCarcassesManquantes === 1) {
+        label += " 1 carcasse saisie.";
+      } else {
+        label += ` ${nbCarcassesManquantes} carcasses/lots manquants.`;
+      }
+    }
+    return label;
+  }, [
+    carcassesSorted.carcassesApproved.length,
+    carcassesSorted.carcassesRejetees.length,
+    carcassesSorted.carcassesManquantes.length,
+    intermediaire.check_finished_at,
+  ]);
 
   const needSelectNextUser = useMemo(() => {
     if (fei.fei_current_owner_user_id !== user.id) {
@@ -234,10 +271,6 @@ export default function FEICurrentIntermediaire() {
           onSubmit={(e) => {
             e.preventDefault();
             const nextFormIntermediaire = new FormData(e.currentTarget);
-            nextFormIntermediaire.append(
-              Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
-              new Date().toISOString(),
-            );
             const nextIntermediaire = mergeFeiIntermediaire(intermediaire, nextFormIntermediaire) as FormData;
             nextIntermediaire.append("route", `/api/fei-intermediaire/${fei.numero}/${intermediaire.id}`);
             priseEnChargeFetcher.submit(nextIntermediaire, {
@@ -270,7 +303,7 @@ export default function FEICurrentIntermediaire() {
             <Checkbox
               options={[
                 {
-                  label: `${intermediaire.check_finished_at ? "J'ai pris" : "Je prends"} en charge les carcasses que j'ai acceptées.`,
+                  label: labelCheckDone,
                   nativeInputProps: {
                     required: true,
                     name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
@@ -283,15 +316,8 @@ export default function FEICurrentIntermediaire() {
                 },
               ]}
             />
-            {!intermediaire.check_finished_at && (
-              <Button type="submit" disabled={!jobIsDone}>
-                Enregistrer
-              </Button>
-            )}
-          </div>
-          {!!intermediaire.check_finished_at && (
             <div className="fr-fieldset__element">
-              <InputNotEditable
+              <PriseEnChargeInput
                 label="Date de prise en charge"
                 nativeInputProps={{
                   id: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
@@ -300,11 +326,16 @@ export default function FEICurrentIntermediaire() {
                   form: "form_intermediaire_check_finished_at",
                   suppressHydrationWarning: true,
                   autoComplete: "off",
-                  defaultValue: dayjs(intermediaire.check_finished_at).format("YYYY-MM-DDTHH:mm"),
+                  defaultValue: dayjs(intermediaire.check_finished_at || undefined).format("YYYY-MM-DDTHH:mm"),
                 }}
               />
             </div>
-          )}
+            {!intermediaire.check_finished_at && (
+              <Button type="submit" disabled={!jobIsDone}>
+                Enregistrer
+              </Button>
+            )}
+          </div>
         </priseEnChargeFetcher.Form>
       </Accordion>
 
