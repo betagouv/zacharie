@@ -3,7 +3,7 @@ import { Header } from "@codegouvfr/react-dsfr/Header";
 import { type MainNavigationProps } from "@codegouvfr/react-dsfr/MainNavigation";
 import { clearCache } from "@app/services/indexed-db.client";
 import { useIsOnline } from "./OfflineMode";
-import type { User } from "@prisma/client";
+import { UserRoles, type User } from "@prisma/client";
 import { SerializeFrom } from "@remix-run/node";
 import SearchInput from "./SearchInput";
 
@@ -26,11 +26,13 @@ export default function RootDisplay({
           <span className={hideMinistereName ? "hidden md:inline" : ""}>
             Ministère
             <br />
-            de l'Agriculture
+            de l'Agriculture et
             <br />
-            et de la Souveraineté
+            de la Souveraineté
             <br />
-            Alimentaire et de la Forêt
+            Alimentaire et
+            <br />
+            de la Forêt
           </span>
         }
         homeLinkProps={{
@@ -41,7 +43,7 @@ export default function RootDisplay({
         className="[&_.fr-header\_\_service-title]:flex [&_.fr-header\_\_service-title]:items-end"
         navigation={navigation}
         allowEmptySearch={false}
-        renderSearchInput={SearchInput}
+        renderSearchInput={user?.roles.includes(UserRoles.SVI) ? SearchInput : undefined}
         quickAccessItems={[
           {
             linkProps: {
