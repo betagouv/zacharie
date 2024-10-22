@@ -36,7 +36,7 @@ export default function FEICurrentIntermediaire() {
     return true;
   }, [fei, user, intermediaire]);
 
-  const carcassesUnsorted = carcasses;
+  const carcassesUnsorted = carcasses.filter((carcasse) => !!intermediaire.carcasses[carcasse.numero_bracelet]);
   const carcassesSorted = useMemo(() => {
     const intermediaireCheckById: Record<string, SerializeFrom<CarcasseIntermediaire>> = {};
     for (const intermediaireCheck of Object.values(intermediaire.carcasses).filter((c) => c != null)) {
@@ -161,7 +161,7 @@ export default function FEICurrentIntermediaire() {
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >
-          {carcasses.map((carcasse) => {
+          {carcassesUnsorted.map((carcasse) => {
             return (
               <Fragment key={carcasse.numero_bracelet}>
                 <CarcasseIntermediaireComp intermediaire={intermediaire} canEdit={canEdit} carcasse={carcasse} />

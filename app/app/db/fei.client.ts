@@ -7,7 +7,11 @@ import { type FeiUserLoaderData } from "@api/routes/api.fei-user.$fei_numero.$us
 import { type FeiEntityLoaderData } from "@api/routes/api.fei-entity.$fei_numero.$entity_id";
 import { type CarcassesLoaderData } from "@api/routes/api.fei-carcasses.$fei_numero";
 import { type FeiIntermediairesLoaderData } from "@api/routes/api.fei-intermediaires.$fei_numero";
-import { type CarcasseIntermediaireLoaderData } from "@api/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
+import {
+  type CarcasseIntermediaireLoaderData,
+  type CarcasseIntermediaireActionData,
+} from "@api/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet";
+import { mergeCarcasseIntermediaire } from "./carcasse-intermediaire.client";
 
 // Implementation
 export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = new FormData()): SerializeFrom<Fei> {
@@ -82,7 +86,7 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
     deleted_at: mergedItem.deleted_at ? dayjs(mergedItem.deleted_at).toISOString() : null,
   };
 
-  console.log("feoi result", result);
+  // console.log("feoi result", result);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // const validatedResult = zodSchemas.FeiSchema.parse(result);
   // console.log({ validatedResult });
@@ -181,26 +185,52 @@ export async function loadFei(fei_numero: string) {
         `/api/fei-carcasse-intermediaire/${fei_numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
       )) as CarcasseIntermediaireLoaderData;
       const carcasseIntermediaire = intermediaireCarcasse.data?.carcasseIntermediaire;
-      if (!carcasseIntermediaire) {
-        continue;
-      }
       if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
         const refusOrManquanteAt = carcasse.intermediaire_carcasse_signed_at;
-        console.log("DEBUG -----------------------" + intermediaire.id);
-        console.log("carcasse.intermediaire_carcasse_signed_at", carcasse.intermediaire_carcasse_signed_at, carcasse);
-        console.log("intermediaire.created_at", intermediaire.created_at, intermediaire);
-
         if (refusOrManquanteAt && intermediaire.created_at > refusOrManquanteAt) {
-          console.log("NOT INCLIDED");
-          console.log("--------------------------DEBUG " + intermediaire.id);
-
           continue;
         }
-
-        console.log("INCLIDED");
-        console.log("--------------------------DEBUG " + intermediaire.id);
       }
-      intermediaireCarcasses[carcasse.numero_bracelet] = carcasseIntermediaire;
+      if (!carcasseIntermediaire) {
+        const newCarcasseIntermediaire = mergeCarcasseIntermediaire({
+          fei_numero__bracelet__intermediaire_id: `${fei_numero}__${carcasse.numero_bracelet}__${intermediaire.id}`,
+          fei_numero: fei_numero,
+          numero_bracelet: carcasse.numero_bracelet,
+          fei_intermediaire_id: intermediaire.id,
+          fei_intermediaire_user_id: intermediaire.fei_intermediaire_user_id,
+          fei_intermediaire_entity_id: intermediaire.fei_intermediaire_entity_id,
+          created_at: dayjs().toISOString(),
+          updated_at: dayjs().toISOString(),
+          prise_en_charge: !carcasse.intermediaire_carcasse_manquante,
+          manquante: carcasse.intermediaire_carcasse_manquante,
+          refus: null,
+          commentaire: null,
+          carcasse_check_finished_at: dayjs().toISOString(),
+          deleted_at: null,
+        });
+        for (const key of newCarcasseIntermediaire.keys()) {
+          if (newCarcasseIntermediaire.get(key) === "null") {
+            newCarcasseIntermediaire.set(key, "");
+          }
+        }
+        console.log("newCarcasseIntermediaire", Object.fromEntries(newCarcasseIntermediaire));
+        const newCarcasseIntermediaireRes = (await fetch(
+          `${import.meta.env.VITE_API_URL}/api/fei-carcasse-intermediaire/${fei_numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: new Headers({
+              Accept: "application/json",
+            }),
+            body: newCarcasseIntermediaire,
+          },
+        ).then((res) => res.json())) as CarcasseIntermediaireActionData;
+        if (newCarcasseIntermediaireRes.ok) {
+          intermediaireCarcasses[carcasse.numero_bracelet] = newCarcasseIntermediaireRes.data!.carcasseIntermediaire;
+        }
+      } else {
+        intermediaireCarcasses[carcasse.numero_bracelet] = carcasseIntermediaire;
+      }
     }
     inetermediairesPopulated.push({
       ...intermediaire,

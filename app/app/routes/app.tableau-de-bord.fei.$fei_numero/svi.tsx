@@ -17,15 +17,12 @@ export default function FEI_SVI() {
 
   const sviFinishedFetcher = useFetcher({ key: "prise-en-charge" });
 
-  const carcassesUnsorted = carcasses;
+  const carcassesUnsorted = carcasses.filter((carcasse) => !carcasse.intermediaire_carcasse_refus_intermediaire_id);
   const carcassesSorted = useMemo(() => {
     const carcassesValidated: Record<string, SerializeFrom<Carcasse>> = {};
     const carcassesSaisies: Record<string, SerializeFrom<Carcasse>> = {};
     // const carcassesToCheck: Record<string, SerializeFrom<Carcasse>> = {};
     for (const carcasse of carcassesUnsorted) {
-      if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
-        continue;
-      }
       if (carcasse.svi_carcasse_saisie_motif?.filter(Boolean)?.length) {
         carcassesSaisies[carcasse.numero_bracelet] = carcasse;
         continue;
@@ -103,11 +100,11 @@ export default function FEI_SVI() {
         <Accordion
           titleAs="h3"
           // label={`Carcasses à vérifier (${carcassesSorted.carcassesToCheck.length})`}
-          label={`Carcasses à vérifier (${carcasses.length})`}
+          label={`Carcasses à vérifier (${carcassesUnsorted.length})`}
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >
-          <CarcassesSvi canEdit={canEdit} carcasses={carcasses} />
+          <CarcassesSvi canEdit={canEdit} carcasses={carcassesUnsorted} />
         </Accordion>
       ) : (
         <>

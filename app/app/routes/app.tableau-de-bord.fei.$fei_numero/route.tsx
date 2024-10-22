@@ -18,7 +18,7 @@ import FEI_SVI from "./svi";
 import FEIExaminateurInitial from "./examinateur-initial";
 import { type FeiActionData } from "@api/routes/api.fei.$fei_numero";
 import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
-import { loadFei, mergeFei } from "@app/db/fei.client";
+import { loadFei } from "@app/db/fei.client";
 import { type MyRelationsLoaderData } from "@api/routes/api.loader.my-relations";
 
 export function meta({ params }: MetaArgs) {
