@@ -269,6 +269,7 @@ model Carcasse {
   intermediaire_carcasse_refus_motif            String?
   intermediaire_carcasse_signed_at              DateTime?
   intermediaire_carcasse_commentaire            String?
+  intermediaire_carcasse_manquante              Boolean?
   svi_carcasse_saisie                           Boolean?
   svi_carcasse_saisie_motif                     String[]
   svi_carcasse_saisie_at                        DateTime?
@@ -334,6 +335,7 @@ model CarcasseIntermediaire {
   fei_intermediaire_user_id              String
   fei_intermediaire_entity_id            String
   prise_en_charge                        Boolean?
+  manquante                              Boolean?
   refus                                  String?
   commentaire                            String?
   carcasse_check_finished_at             DateTime?

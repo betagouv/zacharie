@@ -71,7 +71,8 @@ if (viteDevServer) {
 // more aggressive with this caching.
 app.use(express.static("build/client", { maxAge: "1h" }));
 
-app.use(morgan("tiny"));
+// only log POST requests
+app.use(morgan("tiny", { skip: (req, res) => req.method !== "POST" }));
 
 // handle SSR requests
 app.all("*", remixHandler);

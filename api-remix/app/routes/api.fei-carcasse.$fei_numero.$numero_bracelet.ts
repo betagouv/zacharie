@@ -135,6 +135,7 @@ export async function action(args: ActionFunctionArgs) {
     }
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at)) {
+    console.log("MAAANQUANTE DIRECTE API");
     if (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at) === "") {
       nextCarcasse.intermediaire_carcasse_signed_at = null;
     } else {
@@ -143,6 +144,12 @@ export async function action(args: ActionFunctionArgs) {
         formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at) as string,
       );
     }
+  }
+  if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_manquante)) {
+    const nextValue = stringToBoolean(
+      formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_manquante) as string,
+    );
+    nextCarcasse.intermediaire_carcasse_manquante = nextValue;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id)) {
     nextCarcasse.intermediaire_carcasse_refus_intermediaire_id =

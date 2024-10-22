@@ -62,7 +62,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     await prisma.entity.findMany({
       where: {
         id: {
-          notIn: [...entitiesWorkingWith.map((entity) => entity.id), ...svisOrEtgsCoupledIds],
+          notIn: entitiesWorkingWith.map((entity) => entity.id),
         },
         type: {
           not: EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
@@ -101,16 +101,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // }
 
   const allEntities = [...entitiesWorkingWith, ...userCoupledEntities, ...allOtherEntities];
+
   const ccgs = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.CCG);
   const associationsDeChasse = entitiesWorkingFor.filter((entity) => entity.type === EntityTypes.PREMIER_DETENTEUR);
-  const myCollecteursPros = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
-  const collecteursPro = myCollecteursPros.length
-    ? myCollecteursPros
-    : allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
-  const myEtgs = [...entitiesWorkingWith, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.ETG);
-  const etgs = myEtgs.length ? myEtgs : allEntities.filter((entity) => entity.type === EntityTypes.ETG);
-  const mySvis = [...entitiesWorkingWith, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.SVI);
-  const svis = mySvis.length ? mySvis : allEntities.filter((entity) => entity.type === EntityTypes.SVI);
+  // const myCollecteursPros = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
+  // const collecteursPro = myCollecteursPros.length
+  //   ? myCollecteursPros
+  //   : allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
+  const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
+  // const myEtgs = [...entitiesWorkingWith, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.ETG);
+  // const etgs = myEtgs.length ? myEtgs : allEntities.filter((entity) => entity.type === EntityTypes.ETG);
+  const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
+  // const mySvis = [...entitiesWorkingWith, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.SVI);
+  // const svis = mySvis.length ? mySvis : allEntities.filter((entity) => entity.type === EntityTypes.SVI);
+  const svis = allEntities.filter((entity) => entity.type === EntityTypes.SVI);
 
   return json({
     ok: true,

@@ -67,17 +67,54 @@ export async function action(args: ActionFunctionArgs) {
     });
     // remove refus if there was one
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const carcasseUpdated = await prisma.carcasse.update({
-      where: {
-        numero_bracelet: numero_bracelet,
-      },
+    // const carcasseUpdated = await prisma.carcasse.update({
+    //   where: {
+    //     numero_bracelet: numero_bracelet,
+    //   },
+    //   data: {
+    //     intermediaire_carcasse_commentaire: null,
+    //     intermediaire_carcasse_refus_motif: null,
+    //     intermediaire_carcasse_refus_intermediaire_id: null,
+    //     intermediaire_carcasse_signed_at: null,
+    //   },
+    // });
+
+    return json({
+      ok: true,
       data: {
-        intermediaire_carcasse_commentaire: null,
-        intermediaire_carcasse_refus_motif: null,
-        intermediaire_carcasse_refus_intermediaire_id: null,
-        intermediaire_carcasse_signed_at: null,
+        carcasseIntermediaire: JSON.parse(
+          JSON.stringify(carcasseIntermediaire),
+        ) as SerializeFrom<CarcasseIntermediaire>,
       },
+      error: "",
     });
+  }
+
+  if (formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.manquante) === "true") {
+    console.log("MAAANQUANTE INDIRECTE API");
+    data.manquante = true;
+    data.prise_en_charge = false;
+    data.refus = null;
+    data.carcasse_check_finished_at = new Date();
+    const carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
+      where: {
+        fei_numero__bracelet__intermediaire_id,
+      },
+      create: data,
+      update: data,
+    });
+    // remove refus if there was one
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // const carcasseUpdated = await prisma.carcasse.update({
+    //   where: {
+    //     numero_bracelet: numero_bracelet,
+    //   },
+    //   data: {
+    //     intermediaire_carcasse_manquante: true,
+    //     intermediaire_carcasse_refus_motif: null,
+    //     intermediaire_carcasse_signed_at: new Date(),
+    //   },
+    // });
 
     return json({
       ok: true,
@@ -102,17 +139,17 @@ export async function action(args: ActionFunctionArgs) {
       update: data,
     });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    await prisma.carcasse.update({
-      where: {
-        numero_bracelet: numero_bracelet,
-      },
-      data: {
-        intermediaire_carcasse_commentaire: data.commentaire,
-        intermediaire_carcasse_refus_motif: data.refus,
-        intermediaire_carcasse_refus_intermediaire_id: intermediaire_id,
-        intermediaire_carcasse_signed_at: new Date(),
-      },
-    });
+    // await prisma.carcasse.update({
+    //   where: {
+    //     numero_bracelet: numero_bracelet,
+    //   },
+    //   data: {
+    //     intermediaire_carcasse_commentaire: data.commentaire,
+    //     intermediaire_carcasse_refus_motif: data.refus,
+    //     intermediaire_carcasse_refus_intermediaire_id: intermediaire_id,
+    //     intermediaire_carcasse_signed_at: new Date(),
+    //   },
+    // });
     return json({
       ok: true,
       data: {
