@@ -88,8 +88,6 @@ export default function CarcasseEditSVI() {
     return true;
   }, [fei, user]);
 
-  console.log({ motifsSaisie });
-
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">

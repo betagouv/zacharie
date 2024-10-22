@@ -15,7 +15,7 @@ export default function CurrentOwner() {
           <Alert
             severity="success"
             description="Merci à l'ensemble des acteurs pour la prise en charge de cette fiche."
-            title="FIche clôturée"
+            title="Fiche clôturée"
           />
         </div>
       </div>

@@ -5,6 +5,7 @@ import { clearCache } from "@app/services/indexed-db.client";
 import { useIsOnline } from "./OfflineMode";
 import type { User } from "@prisma/client";
 import { SerializeFrom } from "@remix-run/node";
+import SearchInput from "./SearchInput";
 
 export default function RootDisplay({
   navigation,
@@ -39,6 +40,8 @@ export default function RootDisplay({
         id="fr-header-header-with-quick-access-items"
         className="[&_.fr-header\_\_service-title]:flex [&_.fr-header\_\_service-title]:items-end"
         navigation={navigation}
+        allowEmptySearch={false}
+        renderSearchInput={SearchInput}
         quickAccessItems={[
           {
             linkProps: {
