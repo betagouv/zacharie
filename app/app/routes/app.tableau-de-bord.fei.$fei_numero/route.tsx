@@ -38,12 +38,15 @@ export async function clientAction({ request, params }: ClientActionFunctionArgs
   }
   const route = formData.get("route") as string;
   if (!route) {
+    console.log("Route is required");
     return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
   }
   if (!formData.get(Prisma.FeiScalarFieldEnum.numero) && !formData.get(Prisma.CarcasseScalarFieldEnum.fei_numero)) {
+    console.log("NUmero is required");
     return json({ ok: false, data: null, error: "NUmero is required" }, { status: 400 });
   }
   const url = `${import.meta.env.VITE_API_URL}${route}`;
+  console.log("GOGOGOG", url);
   const response = (await fetch(url, {
     method: "POST",
     credentials: "include",

@@ -1,42 +1,20 @@
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { useMemo, useState } from "react";
 import { clientLoader } from "./route";
-import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma, Carcasse, CarcasseType } from "@prisma/client";
-import saisieSvi from "@app/data/saisie-svi.json";
 import dayjs from "dayjs";
-import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import type { SerializeFrom } from "@remix-run/node";
-import InputForSearchPrefilledData from "@app/components/InputForSearchPrefilledData";
 import { CustomNotice } from "@app/components/CustomNotice";
-
-export default function CarcassesSvi({
-  canEdit,
-  carcasses,
-}: {
-  canEdit: boolean;
-  carcasses: SerializeFrom<Carcasse>[];
-}) {
-  return (
-    <>
-      {carcasses.map((carcasse) => {
-        return <CarcasseAVerifier canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
-      })}
-    </>
-  );
-}
 
 interface CarcasseAVerifierProps {
   carcasse: SerializeFrom<Carcasse>;
   canEdit: boolean;
 }
 
-function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
+export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProps) {
   const { fei, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
-  const sviCarcasseFetcher = useFetcher({ key: `svi-carcasse-${carcasse.numero_bracelet}` });
+  const sviCarcasseFetcher = useFetcher({ key: `svi-carcasse-resume-${carcasse.numero_bracelet}` });
 
-  const [showSaisir, setShowSaisir] = useState(!!carcasse?.svi_carcasse_saisie);
-  console.log("carcasse?.svi_carcasse_saisie", carcasse?.svi_carcasse_saisie);
   const [motifsSaisie, setMotifsSaisie] = useState(carcasse?.svi_carcasse_saisie_motif?.filter(Boolean) ?? []);
   const priseEnCharge = !carcasse.svi_carcasse_saisie;
   const commentairesIntermediaires = useMemo(() => {
@@ -50,7 +28,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
     return commentaires;
   }, [inetermediairesPopulated, carcasse]);
 
-  const Component = canEdit ? "button" : "div";
+  const Component = canEdit ? Link : "div";
 
   return (
     <div
@@ -69,8 +47,7 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
       >
         <Component
           className="block w-full p-4 text-left [&_*]:no-underline [&_*]:hover:no-underline"
-          type={canEdit ? "button" : undefined}
-          onClick={canEdit ? () => setShowSaisir(true) : undefined}
+          to={canEdit ? `/app/tableau-de-bord/carcasse-svi/${fei.numero}/${carcasse.numero_bracelet}` : ""}
         >
           <span className="block font-bold">
             {carcasse.espece}
@@ -200,147 +177,6 @@ function CarcasseAVerifier({ carcasse, canEdit }: CarcasseAVerifierProps) {
           )}
         </Component>
       </CustomNotice>
-      {canEdit && showSaisir && (
-        <sviCarcasseFetcher.Form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`}>
-          <input type="hidden" name="route" value={`/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`} />
-          <input
-            form={`svi-carcasse-${carcasse.numero_bracelet}`}
-            type="hidden"
-            name={Prisma.CarcasseScalarFieldEnum.fei_numero}
-            value={fei.numero}
-          />
-          <input
-            type="hidden"
-            form={`svi-carcasse-${carcasse.numero_bracelet}`}
-            name={Prisma.CarcasseScalarFieldEnum.numero_bracelet}
-            value={carcasse.numero_bracelet}
-          />
-          <input
-            form={`svi-carcasse-${carcasse.numero_bracelet}`}
-            type="hidden"
-            name={Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie}
-            value="true"
-          />
-          {motifsSaisie.map((motifSaisie, index) => {
-            return (
-              <input
-                key={motifSaisie + index}
-                form={`svi-carcasse-${carcasse.numero_bracelet}`}
-                type="hidden"
-                required
-                name={Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif}
-                value={motifSaisie}
-              />
-            );
-          })}
-          <div className="fr-fieldset__element mt-4">
-            <InputForSearchPrefilledData
-              canEdit
-              data={saisieSvi[carcasse.type ?? CarcasseType.GROS_GIBIER]}
-              label="Motif de la saisie"
-              hideDataWhenNoSearch
-              clearInputOnClick
-              placeholder={
-                motifsSaisie.length
-                  ? "Commencez à taper un autre de saisie supplémentaire"
-                  : "Commencez à taper un motif de saisie"
-              }
-              onSelect={(newMotifSaisie) => {
-                setMotifsSaisie([...motifsSaisie, newMotifSaisie]);
-              }}
-            />
-          </div>
-          <div className="fr-fieldset__element">
-            <Input
-              label="Commentaire"
-              hintText="Un commentaire à ajouter ?"
-              textArea
-              nativeTextAreaProps={{
-                name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire,
-                form: `svi-carcasse-${carcasse.numero_bracelet}`,
-                defaultValue: carcasse?.svi_carcasse_commentaire || "",
-                onBlur: (e) => {
-                  console.log("submit comment");
-                  const form = new FormData();
-                  form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire, e.target.value);
-                  form.append(Prisma.CarcasseScalarFieldEnum.fei_numero, fei.numero);
-                  form.append("route", `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`);
-                  console.log("form", Object.fromEntries(form));
-                  sviCarcasseFetcher.submit(form, {
-                    method: "POST",
-                    preventScrollReset: true,
-                  });
-                },
-              }}
-            />
-          </div>
-          <input
-            form={`svi-carcasse-${carcasse.numero_bracelet}`}
-            type="hidden"
-            name={Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at}
-            value={new Date().toISOString()}
-          />
-          <div className="flex flex-col items-start bg-white pl-2 [&_ul]:md:min-w-96">
-            <ButtonsGroup
-              buttons={
-                !motifsSaisie.length ||
-                JSON.stringify(carcasse.svi_carcasse_saisie_motif) !== JSON.stringify(motifsSaisie)
-                  ? [
-                      {
-                        children: "Saisir",
-                        type: "submit",
-                        nativeButtonProps: {
-                          onClick: (e) => {
-                            if (!motifsSaisie.length) {
-                              e.preventDefault();
-                              alert("Veuillez ajouter au moins un motif de saisie");
-                              return;
-                            }
-                          },
-                          form: `svi-carcasse-${carcasse.numero_bracelet}`,
-                          name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at,
-                          suppressHydrationWarning: true,
-                          value: dayjs().toISOString(),
-                        },
-                      },
-                      {
-                        children: "Annuler",
-                        priority: "secondary",
-                        type: "button",
-                        nativeButtonProps: {
-                          onClick: () => {
-                            setShowSaisir(false);
-                            setMotifsSaisie([]);
-                            const form = new FormData();
-                            form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire, "");
-                            form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, "");
-                            form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie, "false");
-                            form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at, "");
-                            form.append(Prisma.CarcasseScalarFieldEnum.fei_numero, fei.numero);
-                            form.append("route", `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`);
-                            sviCarcasseFetcher.submit(form, {
-                              method: "POST",
-                              preventScrollReset: true,
-                            });
-                          },
-                        },
-                      },
-                    ]
-                  : [
-                      {
-                        children: "Annuler",
-                        priority: "secondary",
-                        type: "button",
-                        nativeButtonProps: {
-                          onClick: () => setShowSaisir(false),
-                        },
-                      },
-                    ]
-              }
-            />
-          </div>
-        </sviCarcasseFetcher.Form>
-      )}
     </div>
   );
 }

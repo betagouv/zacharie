@@ -2,7 +2,7 @@ import { json, SerializeFrom, type ActionFunctionArgs, type LoaderFunctionArgs }
 import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
-import { CarcasseType, Prisma, type Carcasse } from "@prisma/client";
+import { CarcasseType, Prisma, UserRoles, type Carcasse } from "@prisma/client";
 import dayjs from "dayjs";
 
 export async function action(args: ActionFunctionArgs) {
@@ -134,6 +134,7 @@ export async function action(args: ActionFunctionArgs) {
       );
     }
   }
+
   if (formData.has(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at)) {
     console.log("MAAANQUANTE DIRECTE API");
     if (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at) === "") {
@@ -163,37 +164,40 @@ export async function action(args: ActionFunctionArgs) {
     nextCarcasse.intermediaire_carcasse_commentaire =
       (formData.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire) as string) || null;
   }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)) {
-    nextCarcasse.svi_carcasse_saisie = stringToBoolean(
-      formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie) as string,
-    );
-  }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)) {
-    nextCarcasse.svi_carcasse_saisie_motif = formData
-      .getAll(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)
-      .filter(Boolean) as string[];
-  }
-  if (formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at)) {
-    const saisieAt = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at) as string;
-    if (saisieAt !== "") {
-      nextCarcasse.svi_carcasse_saisie_at = dayjs(saisieAt || undefined).toISOString();
-      nextCarcasse.svi_carcasse_signed_at = null;
-      nextCarcasse.svi_carcasse_saisie = true;
+
+  if (user.roles.includes(UserRoles.SVI)) {
+    if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)) {
+      nextCarcasse.svi_carcasse_saisie = stringToBoolean(
+        formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie) as string,
+      );
     }
-  }
-  if (formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at)) {
-    const signedAt = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at) as string;
-    if (signedAt !== "") {
-      nextCarcasse.svi_carcasse_signed_at = dayjs(signedAt || undefined).toISOString();
-      nextCarcasse.svi_carcasse_saisie_at = null;
-      nextCarcasse.svi_carcasse_saisie_motif = [];
-      nextCarcasse.svi_carcasse_saisie = false;
+    if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)) {
+      nextCarcasse.svi_carcasse_saisie_motif = formData
+        .getAll(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)
+        .filter(Boolean) as string[];
     }
-  }
-  if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire)) {
-    nextCarcasse.svi_carcasse_commentaire = formData.get(
-      Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire,
-    ) as string;
+    if (formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at)) {
+      const saisieAt = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at) as string;
+      if (saisieAt !== "") {
+        nextCarcasse.svi_carcasse_saisie_at = dayjs(saisieAt || undefined).toISOString();
+        nextCarcasse.svi_carcasse_signed_at = null;
+        nextCarcasse.svi_carcasse_saisie = true;
+      }
+    }
+    if (formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at)) {
+      const signedAt = formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at) as string;
+      if (signedAt !== "") {
+        nextCarcasse.svi_carcasse_signed_at = dayjs(signedAt || undefined).toISOString();
+        nextCarcasse.svi_carcasse_saisie_at = null;
+        nextCarcasse.svi_carcasse_saisie_motif = [];
+        nextCarcasse.svi_carcasse_saisie = false;
+      }
+    }
+    if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire)) {
+      nextCarcasse.svi_carcasse_commentaire = formData.get(
+        Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire,
+      ) as string;
+    }
   }
 
   console.log({ nextCarcasse });

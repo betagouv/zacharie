@@ -8,7 +8,7 @@ import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
 import dayjs from "dayjs";
-import CarcassesSvi from "./carcasse-svi";
+import CarcasseSVI from "./carcasse-svi";
 import type { SerializeFrom } from "@remix-run/node";
 import EntityNotEditable from "@app/components/EntityNotEditable";
 
@@ -104,7 +104,9 @@ export default function FEI_SVI() {
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >
-          <CarcassesSvi canEdit={canEdit} carcasses={carcassesUnsorted} />
+          {carcassesUnsorted.map((carcasse) => {
+            return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
+          })}
         </Accordion>
       ) : (
         <>
@@ -117,7 +119,9 @@ export default function FEI_SVI() {
             {carcassesSorted.carcassesValidated.length === 0 ? (
               <p>Pas de carcasse acceptée</p>
             ) : (
-              <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesValidated} />
+              carcassesSorted.carcassesValidated.map((carcasse) => {
+                return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
+              })
             )}
           </Accordion>
           <Accordion
@@ -129,7 +133,9 @@ export default function FEI_SVI() {
             {carcassesSorted.carcassesSaisies.length === 0 ? (
               <p>Pas de carcasse refusée</p>
             ) : (
-              <CarcassesSvi canEdit={canEdit} carcasses={carcassesSorted.carcassesSaisies} />
+              carcassesSorted.carcassesSaisies.map((carcasse) => {
+                return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
+              })
             )}
           </Accordion>
         </>

@@ -12,7 +12,7 @@ export default function InputNotEditable(props: InputNotEditableProps) {
     return (
       <Input
         {...rest}
-        className="[&_input]:bg-transparent"
+        className="[&_textarea]:bg-transparent"
         textArea={true}
         nativeTextAreaProps={{
           ...nativeTextAreaProps,
