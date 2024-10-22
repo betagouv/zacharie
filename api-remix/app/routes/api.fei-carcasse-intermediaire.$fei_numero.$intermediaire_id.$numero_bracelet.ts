@@ -42,6 +42,10 @@ export async function action(args: ActionFunctionArgs) {
   }
 
   const formData = await request.formData();
+  console.log(
+    "api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet.ts",
+    Object.fromEntries(formData),
+  );
   const fei_numero__bracelet__intermediaire_id = `${fei_numero}__${numero_bracelet}__${intermediaire_id}`;
   const data: Prisma.CarcasseIntermediaireUncheckedCreateInput = {
     fei_numero__bracelet__intermediaire_id,

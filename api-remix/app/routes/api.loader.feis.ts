@@ -140,9 +140,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  console.log("feisUnderMyResponsability", feisUnderMyResponsability.length);
-  console.log("feisToTake", feisToTake.length);
-  console.log("feisOngoing", feisOngoing.length);
+  // console.log("feisUnderMyResponsability", feisUnderMyResponsability.length);
+  // console.log("feisToTake", feisToTake.length);
+  // console.log("feisOngoing", feisOngoing.length);
 
   return json({
     user,
