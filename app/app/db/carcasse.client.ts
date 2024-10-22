@@ -18,7 +18,7 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
 
   let nextAnomaliesCarcasse: string[] = [];
   let nextAnomaliesAbats: string[] = [];
-  if (newItem?.get("examinateur_carcasse_sans_anomalie") === "false") {
+  if (newItem?.get(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie) === "false") {
     nextAnomaliesCarcasse = newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)?.length
       ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse).map(String).filter(Boolean)
       : (oldItem.examinateur_anomalies_carcasse ?? []);
@@ -38,11 +38,17 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
     espece: mergedItem.espece || null,
     categorie: mergedItem.categorie || null,
     examinateur_carcasse_sans_anomalie:
-      newItem?.get("examinateur_carcasse_sans_anomalie") === "true"
+      newItem?.get(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie) === "true"
         ? true
-        : newItem?.get("examinateur_carcasse_sans_anomalie") === "false"
+        : newItem?.get(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie) === "false"
           ? false
           : mergedItem.examinateur_carcasse_sans_anomalie || null,
+    intermediaire_carcasse_manquante:
+      newItem?.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_manquante) === "true"
+        ? true
+        : newItem?.get(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_manquante) === "false"
+          ? false
+          : mergedItem.intermediaire_carcasse_manquante || null,
     // prettier-ignore
     examinateur_anomalies_carcasse:nextAnomaliesCarcasse,
     examinateur_anomalies_abats: nextAnomaliesAbats,

@@ -21,7 +21,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
     premierDetenteurUser,
     premierDetenteurEntity,
     premierDetenteurDepotEntity,
-    relationsCatalog: { ccgs, etgs, collecteursPro },
+    relationsCatalog: { ccgs, etgs },
   } = useLoaderData<typeof clientLoader>();
   const fetcher = useFetcher({ key: "confirm-detenteur-initial" });
   const depotFetcher = useFetcher({ key: "detenteur-initial-depot" });

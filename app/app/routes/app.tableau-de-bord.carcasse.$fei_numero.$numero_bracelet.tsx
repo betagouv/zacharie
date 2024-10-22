@@ -33,7 +33,7 @@ import { createModal } from "@codegouvfr/react-dsfr/Modal";
 import ModalTreeDisplay from "@app/components/ModalTreeDisplay";
 import { useIsOnline } from "@app/components/OfflineMode";
 import { mergeCarcasse } from "@app/db/carcasse.client";
-import { RadioButtons } from "@codegouvfr/react-dsfr/RadioButtons";
+
 const gibierSelect = {
   grand: grandGibier.especes,
   petit: petitGibier.especes,

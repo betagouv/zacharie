@@ -2,7 +2,6 @@ import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useMemo, useState } from "react";
 import { clientLoader } from "./route";
 import { Input } from "@codegouvfr/react-dsfr/Input";
-import { Notice } from "@codegouvfr/react-dsfr/Notice";
 import { Prisma, Carcasse, CarcasseType } from "@prisma/client";
 import saisieSvi from "@app/data/saisie-svi.json";
 import dayjs from "dayjs";

@@ -73,7 +73,7 @@ export default function TableResponsive({ headers, data }: TableProps) {
                       {rows[3]}
                     </Link>
                   </td>
-                  <td className="flex h-full items-stretch justify-start text-left text-sm font-medium sm:pr-0">
+                  <td className="flex h-full items-stretch justify-start text-left text-sm font-medium sm:table-cell sm:pr-0">
                     <Link to={link} className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 !no-underline">
                       {rows[4]}
                     </Link>

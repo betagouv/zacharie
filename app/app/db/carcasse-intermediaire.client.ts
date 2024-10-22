@@ -20,6 +20,15 @@ export function mergeCarcasseIntermediaireToJSON(
     ...Object.fromEntries(newItem!),
   };
 
+  console.log(
+    "prise_en_charge",
+    newItem?.get("prise_en_charge") === "true"
+      ? true
+      : newItem?.get("prise_en_charge") === "false"
+        ? false
+        : oldItem.prise_en_charge || null,
+  );
+
   // Explicitly handle each field, including optional ones
   const result: SerializeFrom<CarcasseIntermediaire> = {
     fei_numero__bracelet__intermediaire_id: mergedItem.fei_numero__bracelet__intermediaire_id,
@@ -37,6 +46,12 @@ export function mergeCarcasseIntermediaireToJSON(
         : newItem?.get("prise_en_charge") === "false"
           ? false
           : oldItem.prise_en_charge || null,
+    manquante:
+      newItem?.get("manquante") === "true"
+        ? true
+        : newItem?.get("manquante") === "false"
+          ? false
+          : oldItem.manquante || null,
     refus: mergedItem.refus || null,
     commentaire: mergedItem.commentaire || null,
     carcasse_check_finished_at: mergedItem.carcasse_check_finished_at

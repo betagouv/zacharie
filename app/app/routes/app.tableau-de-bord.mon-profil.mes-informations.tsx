@@ -290,7 +290,7 @@ export default function MesInformations() {
                 {(user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ||
                   user.roles.includes(UserRoles.PREMIER_DETENTEUR)) && (
                   <AccordionEntreprise
-                    fetcherKey="onboarding-etape-2-collecteur-pro-data"
+                    fetcherKey="onboarding-etape-2-associations-data"
                     accordionLabel="Vos associations de chasse / repas associatifs"
                     addLabel="Ajouter une association de chasse"
                     selectLabel="Sélectionnez une association de chasse"
@@ -533,6 +533,7 @@ function AccordionEntreprise({
             onClick={(e) => {
               console.log("submit");
               e.preventDefault();
+              console.log(Object.entries(new FormData(e.currentTarget.form as HTMLFormElement)));
               const form = new FormData(e.currentTarget.form as HTMLFormElement);
               console.log("submitted");
               userEntityFetcher.submit(form, {

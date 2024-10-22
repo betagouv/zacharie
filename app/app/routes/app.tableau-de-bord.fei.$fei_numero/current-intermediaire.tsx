@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { clientLoader } from "./route";
 import { Prisma, CarcasseIntermediaire, Carcasse } from "@prisma/client";
@@ -8,7 +8,7 @@ import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import dayjs from "dayjs";
 import SelectNextOwner from "./select-next-owner";
-import CarcassesIntermediaire from "./carcasses-intermediaire";
+import CarcasseIntermediaireComp from "./carcasse-intermediaire";
 import type { SerializeFrom } from "@remix-run/node";
 import EntityNotEditable from "@app/components/EntityNotEditable";
 import { mergeFeiIntermediaire } from "@app/db/fei-intermediaire.client";
@@ -43,20 +43,28 @@ export default function FEICurrentIntermediaire() {
       intermediaireCheckById[intermediaireCheck.fei_numero__bracelet__intermediaire_id] = intermediaireCheck;
     }
     const carcassesApproved: Record<string, SerializeFrom<Carcasse>> = {};
-    const carcassesRefused: Record<string, SerializeFrom<Carcasse>> = {};
+    const carcassesRejetees: Record<string, SerializeFrom<Carcasse>> = {};
+    const carcassesManquantes: Record<string, SerializeFrom<Carcasse>> = {};
     // const carcassesToCheck: Record<string, SerializeFrom<Carcasse>> = {};
     for (const carcasse of carcassesUnsorted) {
       const checkId = `${fei.numero}__${carcasse.numero_bracelet}__${intermediaire.id}`;
       if (intermediaireCheckById[checkId]) {
+        // console.log("intermediaireCheckById[checkId]", intermediaireCheckById[checkId]);
         if (intermediaireCheckById[checkId].prise_en_charge) {
           carcassesApproved[checkId] = carcasse;
+        } else if (intermediaireCheckById[checkId].manquante) {
+          carcassesManquantes[checkId] = carcasse;
         } else {
-          carcassesRefused[checkId] = carcasse;
+          carcassesRejetees[checkId] = carcasse;
         }
       } else {
         if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
           if (carcasse.intermediaire_carcasse_refus_intermediaire_id === intermediaire.id) {
-            carcassesRefused[checkId] = carcasse;
+            if (carcasse.intermediaire_carcasse_manquante) {
+              carcassesManquantes[checkId] = carcasse;
+            } else {
+              carcassesRejetees[checkId] = carcasse;
+            }
           }
         } else {
           // carcassesToCheck[checkId] = carcasse;
@@ -65,7 +73,8 @@ export default function FEICurrentIntermediaire() {
     }
     return {
       carcassesApproved: Object.values(carcassesApproved),
-      carcassesRefused: Object.values(carcassesRefused),
+      carcassesRejetees: Object.values(carcassesRejetees),
+      carcassesManquantes: Object.values(carcassesManquantes),
       // carcassesToCheck: Object.values(carcassesToCheck),
     };
   }, [carcassesUnsorted, intermediaire, fei]);
@@ -89,8 +98,9 @@ export default function FEICurrentIntermediaire() {
 
   // const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
   const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(true);
-  const [carcassesAccepteesExpanded, setCarcassesAccepteesExpanded] = useState(false);
-  const [carcassesRefuseesExpanded, setCarcassesRefuseesExpanded] = useState(false);
+  // const [carcassesAccepteesExpanded, setCarcassesAccepteesExpanded] = useState(false);
+  // const [carcassesRefuseesExpanded, setCarcassesRefuseesExpanded] = useState(false);
+  // const [carcassesManquantesExpanded, setCarcassesManquantesExpanded] = useState(false);
 
   // useEffect(() => {
   //   if (prevCarcassesToCheckCount.current > 0 && carcassesSorted.carcassesToCheck.length === 0) {
@@ -151,40 +161,68 @@ export default function FEICurrentIntermediaire() {
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >
-          <CarcassesIntermediaire canEdit={canEdit} intermediaire={intermediaire} carcasses={carcasses} />
+          {carcasses.map((carcasse) => {
+            return (
+              <Fragment key={carcasse.numero_bracelet}>
+                <CarcasseIntermediaireComp intermediaire={intermediaire} canEdit={canEdit} carcasse={carcasse} />
+              </Fragment>
+            );
+          })}
         </Accordion>
       ) : (
         <>
           <Accordion
             titleAs="h3"
             label={`Carcasses acceptées (${carcassesSorted.carcassesApproved.length})`}
-            expanded={carcassesAccepteesExpanded}
-            onExpandedChange={setCarcassesAccepteesExpanded}
+            // expanded={carcassesAccepteesExpanded}
+            // onExpandedChange={setCarcassesAccepteesExpanded}
           >
             {carcassesSorted.carcassesApproved.length === 0 ? (
               <p>Pas de carcasse acceptée</p>
             ) : (
-              <CarcassesIntermediaire
-                canEdit={canEdit}
-                intermediaire={intermediaire}
-                carcasses={carcassesSorted.carcassesApproved}
-              />
+              carcassesSorted.carcassesApproved.map((carcasse) => {
+                return (
+                  <Fragment key={carcasse.numero_bracelet}>
+                    <CarcasseIntermediaireComp intermediaire={intermediaire} canEdit={canEdit} carcasse={carcasse} />
+                  </Fragment>
+                );
+              })
             )}
           </Accordion>
           <Accordion
             titleAs="h3"
-            label={`Carcasses rejetées (${carcassesSorted.carcassesRefused.length})`}
-            expanded={carcassesRefuseesExpanded}
-            onExpandedChange={setCarcassesRefuseesExpanded}
+            label={`Carcasses rejetées (${carcassesSorted.carcassesRejetees.length})`}
+            // expanded={carcassesRefuseesExpanded}
+            // onExpandedChange={setCarcassesRefuseesExpanded}
           >
-            {carcassesSorted.carcassesRefused.length === 0 ? (
+            {carcassesSorted.carcassesRejetees.length === 0 ? (
               <p>Pas de carcasse refusée</p>
             ) : (
-              <CarcassesIntermediaire
-                canEdit={canEdit}
-                intermediaire={intermediaire}
-                carcasses={carcassesSorted.carcassesRefused}
-              />
+              carcassesSorted.carcassesRejetees.map((carcasse) => {
+                return (
+                  <Fragment key={carcasse.numero_bracelet}>
+                    <CarcasseIntermediaireComp intermediaire={intermediaire} canEdit={canEdit} carcasse={carcasse} />
+                  </Fragment>
+                );
+              })
+            )}
+          </Accordion>
+          <Accordion
+            titleAs="h3"
+            label={`Carcasses manquantes (${carcassesSorted.carcassesManquantes.length})`}
+            // expanded={carcassesRefuseesExpanded}
+            // onExpandedChange={setCarcassesRefuseesExpanded}
+          >
+            {carcassesSorted.carcassesManquantes.length === 0 ? (
+              <p>Pas de carcasse manquante</p>
+            ) : (
+              carcassesSorted.carcassesManquantes.map((carcasse) => {
+                return (
+                  <Fragment key={carcasse.numero_bracelet}>
+                    <CarcasseIntermediaireComp intermediaire={intermediaire} canEdit={canEdit} carcasse={carcasse} />
+                  </Fragment>
+                );
+              })
             )}
           </Accordion>
         </>

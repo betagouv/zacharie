@@ -1,7 +1,7 @@
 // import * as zodSchemas from "prisma/generated/zod";
 import dayjs from "dayjs";
 import { SerializeFrom } from "@remix-run/node";
-import { type Fei, type User, type Carcasse, type CarcasseIntermediaire, UserRoles } from "@prisma/client";
+import { type Fei, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
 import { type FeiLoaderData } from "@api/routes/api.fei.$fei_numero";
 import { type FeiUserLoaderData } from "@api/routes/api.fei-user.$fei_numero.$user_id";
 import { type FeiEntityLoaderData } from "@api/routes/api.fei-entity.$fei_numero.$entity_id";
@@ -165,6 +165,7 @@ export async function loadFei(fei_numero: string) {
 
   const intermediaires = (await get(`/api/fei-intermediaires/${fei_numero}`)) as FeiIntermediairesLoaderData;
   const inetermediairesPopulated = [];
+
   for (const intermediaire of intermediaires.data?.intermediaires || []) {
     const intermediaireUser = intermediaire.fei_intermediaire_user_id
       ? ((await get(`/api/fei-user/${fei_numero}/${intermediaire.fei_intermediaire_user_id}`)) as FeiUserLoaderData)
@@ -179,9 +180,27 @@ export async function loadFei(fei_numero: string) {
       const intermediaireCarcasse = (await get(
         `/api/fei-carcasse-intermediaire/${fei_numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
       )) as CarcasseIntermediaireLoaderData;
-      if (intermediaireCarcasse.data?.carcasseIntermediaire) {
-        intermediaireCarcasses[carcasse.numero_bracelet] = intermediaireCarcasse.data?.carcasseIntermediaire;
+      const carcasseIntermediaire = intermediaireCarcasse.data?.carcasseIntermediaire;
+      if (!carcasseIntermediaire) {
+        continue;
       }
+      if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
+        const refusOrManquanteAt = carcasse.intermediaire_carcasse_signed_at;
+        console.log("DEBUG -----------------------" + intermediaire.id);
+        console.log("carcasse.intermediaire_carcasse_signed_at", carcasse.intermediaire_carcasse_signed_at, carcasse);
+        console.log("intermediaire.created_at", intermediaire.created_at, intermediaire);
+
+        if (refusOrManquanteAt && intermediaire.created_at > refusOrManquanteAt) {
+          console.log("NOT INCLIDED");
+          console.log("--------------------------DEBUG " + intermediaire.id);
+
+          continue;
+        }
+
+        console.log("INCLIDED");
+        console.log("--------------------------DEBUG " + intermediaire.id);
+      }
+      intermediaireCarcasses[carcasse.numero_bracelet] = carcasseIntermediaire;
     }
     inetermediairesPopulated.push({
       ...intermediaire,
@@ -206,29 +225,4 @@ export async function loadFei(fei_numero: string) {
     carcasses: carcasses.data?.carcasses || [],
     inetermediairesPopulated,
   };
-}
-
-export function createFei(user: User) {
-  return {
-    fei: {
-      numero: `ZACH-FEI-${dayjs().format("YYYYMMDD")}-${user.id}-${dayjs().format("HHmmss")}`,
-      created_by_user_id: user.id,
-      examinateur_initial_user_id: user.id,
-      fei_current_owner_user_id: user.id,
-      fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
-      date_mise_a_mort: dayjs().toISOString().split("T")[0],
-    },
-    examinateurInitialUser: user,
-    premierDetenteurUser: null,
-    premierDetenteurEntity: null,
-    premierDetenteurDepotEntity: null,
-    currentOwnerUser: user,
-    currentOwnerEntity: null,
-    nextOwnerUser: null,
-    nextOwnerEntity: null,
-    sviUser: null,
-    svi: null,
-    carcasses: [],
-    inetermediairesPopulated: [],
-  } as unknown as Awaited<ReturnType<typeof loadFei>>;
 }

@@ -4,6 +4,7 @@ import { type MainNavigationProps } from "@codegouvfr/react-dsfr/MainNavigation"
 import { clearCache } from "@app/services/indexed-db.client";
 import { useIsOnline } from "./OfflineMode";
 import type { User } from "@prisma/client";
+import { SerializeFrom } from "@remix-run/node";
 
 export default function RootDisplay({
   navigation,
@@ -11,7 +12,7 @@ export default function RootDisplay({
   hideMinistereName,
   user,
 }: {
-  user?: User;
+  user?: User | SerializeFrom<User>;
   navigation?: MainNavigationProps.Item[];
   children: React.ReactNode;
   hideMinistereName?: boolean;

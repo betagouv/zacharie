@@ -514,12 +514,10 @@ async function handlePostRequest(request: Request): Promise<Response> {
       const allFeiIntermediairesCloned = allFeiIntermediairesResponse!.clone();
       const allIntermediaires = (await allFeiIntermediairesCloned.json()) as FeiIntermediairesLoaderData;
       const newIntermediaires = [
-        ...allIntermediaires
-          .data!.intermediaires.filter((c) => c.id !== jsonIntermediaire.id)
-          // sort create_at desc
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+        ...allIntermediaires.data!.intermediaires.filter((c) => c.id !== jsonIntermediaire.id),
         jsonIntermediaire,
-      ];
+        // we want sort by latest first
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       await cache.put(
         `${import.meta.env.VITE_API_URL}/api/fei-intermediaires/${feiNumero}`,
         new Response(

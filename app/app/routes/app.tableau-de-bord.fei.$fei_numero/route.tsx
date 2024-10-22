@@ -3,9 +3,7 @@ import {
   json,
   MetaArgs,
   redirect,
-  useFetcher,
   useLoaderData,
-  useLocation,
   type ClientActionFunctionArgs,
   type ClientLoaderFunctionArgs,
 } from "@remix-run/react";
@@ -20,7 +18,7 @@ import FEI_SVI from "./svi";
 import FEIExaminateurInitial from "./examinateur-initial";
 import { type FeiActionData } from "@api/routes/api.fei.$fei_numero";
 import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
-import { loadFei, createFei, mergeFei } from "@app/db/fei.client";
+import { loadFei, mergeFei } from "@app/db/fei.client";
 import { type MyRelationsLoaderData } from "@api/routes/api.loader.my-relations";
 
 export function meta({ params }: MetaArgs) {
@@ -75,7 +73,7 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
     }),
   }).then((res) => res.json())) as MyRelationsLoaderData;
 
-  const data = params.fei_numero === "nouvelle" ? createFei(user) : await loadFei(params.fei_numero!);
+  const data = await loadFei(params.fei_numero!);
   return json({
     ...data,
     user,
@@ -94,17 +92,6 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
 
 export default function Fei() {
   const { fei, user, inetermediairesPopulated, nextOwnerEntity } = useLoaderData<typeof clientLoader>();
-  const location = useLocation();
-  const newFeiFetcher = useFetcher({ key: "new-fei" });
-
-  useEffect(() => {
-    if (location.pathname.startsWith("/app/tableau-de-bord/fei/nouvelle")) {
-      const newFeiFormData = mergeFei(fei);
-      newFeiFormData.set("route", `/api/fei/${fei.numero}`);
-      newFeiFetcher.submit(newFeiFormData, { method: "POST" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
 
   const doneEmoji = "✅ ";
 

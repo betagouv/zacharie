@@ -10,7 +10,7 @@ export default function TableauDeBordLayout() {
 
   if (!user?.activated && !location.pathname.includes("mon-profil")) {
     return (
-      <RootDisplay hideMinistereName user={user}>
+      <RootDisplay hideMinistereName user={user || undefined}>
         <main role="main" id="content">
           <div className="fr-container">
             <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center">
@@ -48,7 +48,7 @@ export default function TableauDeBordLayout() {
   }
 
   return (
-    <RootDisplay navigation={navigation} hideMinistereName user={user}>
+    <RootDisplay navigation={navigation} hideMinistereName user={user || undefined}>
       <main role="main" id="content" className="fr-background-alt--blue-france relative min-h-full overflow-auto">
         <Outlet />
       </main>
