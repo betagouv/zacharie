@@ -34,6 +34,32 @@ export async function loader({ request }: LoaderFunctionArgs) {
     });
   }
 
+  const carcasseIntermediaireCommentaire = await prisma.carcasseIntermediaire.findFirst({
+    where: {
+      commentaire: {
+        contains: searchQuery,
+      },
+    },
+  });
+
+  if (carcasseIntermediaireCommentaire) {
+    const carcasse = await prisma.carcasse.findFirst({
+      where: {
+        numero_bracelet: carcasseIntermediaireCommentaire.numero_bracelet,
+      },
+    });
+    if (carcasse) {
+      return json({
+        ok: true,
+        data: {
+          searchQuery,
+          redirectUrl: `/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.numero_bracelet}`,
+        },
+        error: "",
+      });
+    }
+  }
+
   const fei = await prisma.fei.findFirst({
     where: {
       numero: searchQuery,
