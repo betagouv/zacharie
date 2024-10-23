@@ -467,6 +467,7 @@ export default function CarcasseEditSVI() {
                                     nativeButtonProps: {
                                       onClick: () => {
                                         setMotifsSaisie([]);
+                                        setTypeSaisie([]);
                                         const form = new FormData();
                                         form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire, "");
                                         form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, "");
