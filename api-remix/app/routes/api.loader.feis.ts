@@ -2,7 +2,7 @@ import { json, SerializeFrom, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
-import type { Fei } from "@prisma/client";
+import { EntityRelationType, type Fei } from "@prisma/client";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
@@ -40,6 +40,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
                 EntityRelatedWithUser: {
                   some: {
                     owner_id: user.id,
+                    relation: EntityRelationType.WORKING_FOR,
                   },
                 },
               },
@@ -64,6 +65,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
             EntityRelatedWithUser: {
               some: {
                 owner_id: user.id,
+                relation: EntityRelationType.WORKING_FOR,
               },
             },
           },
@@ -97,6 +99,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
                 EntityRelatedWithUser: {
                   none: {
                     owner_id: user.id,
+                    relation: EntityRelationType.WORKING_FOR,
                   },
                 },
               },
@@ -125,6 +128,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
                     EntityRelatedWithUser: {
                       some: {
                         owner_id: user.id,
+                        relation: EntityRelationType.WORKING_FOR,
                       },
                     },
                   },
