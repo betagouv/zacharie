@@ -96,6 +96,9 @@ export default function CarcasseEditSVI() {
     if (fei.fei_current_owner_role !== UserRoles.SVI) {
       return false;
     }
+    if (!user.roles.includes(UserRoles.SVI)) {
+      return false;
+    }
     return true;
   }, [fei, user]);
 

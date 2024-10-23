@@ -8,7 +8,7 @@ import {
   useNavigate,
 } from "@remix-run/react";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
-import { CarcasseType, Prisma } from "@prisma/client";
+import { CarcasseType, Prisma, UserRoles } from "@prisma/client";
 import grandGibier from "@app/data/grand-gibier.json";
 import petitGibier from "@app/data/petit-gibier.json";
 import grandGibierCarcasseList from "@app/data/grand-gibier-carcasse/list.json";
@@ -106,6 +106,9 @@ export default function CarcasseReadAndWrite() {
   const { fei, carcasse, user } = useLoaderData<typeof clientLoader>();
   const navigate = useNavigate();
   const canEdit = useMemo(() => {
+    if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
+      return false;
+    }
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;
     }
@@ -123,7 +126,7 @@ export default function CarcasseReadAndWrite() {
   const saveFetcher = useFetcher({ key: "carcasse-save-fetcher" });
   const carcasseFetcher = useFetcher({ key: "carcasse-edit-fetcher" });
   const [espece, setEspece] = useState(carcasse.espece || "");
-  console.log(carcasse);
+
   const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(
     carcasse.examinateur_anomalies_abats?.filter(Boolean) || [],
   );
@@ -299,36 +302,50 @@ export default function CarcasseReadAndWrite() {
                   />
                 </div>
               )}
-              <div className="fr-fieldset__element">
-                <Select
-                  label="Sélectionnez l'espèce du gibier"
-                  className="group !mb-0 grow"
-                  nativeSelectProps={{
-                    name: Prisma.CarcasseScalarFieldEnum.espece,
-                    value: espece,
-                    onChange: (e) => {
-                      const newEspece = e.currentTarget.value;
-                      setEspece(newEspece);
-                    },
-                  }}
-                >
-                  <option value="">Sélectionnez l'espèce du gibier</option>
-                  <hr />
-                  {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
-                    return (
-                      <optgroup label={typeGibier} key={typeGibier}>
-                        {_especes.map((_espece: string) => {
-                          return (
-                            <option value={_espece} key={_espece}>
-                              {_espece}
-                            </option>
-                          );
-                        })}
-                      </optgroup>
-                    );
-                  })}
-                </Select>
-              </div>
+              {canEdit ? (
+                <div className="fr-fieldset__element">
+                  <Select
+                    label="Sélectionnez l'espèce du gibier"
+                    className="group !mb-0 grow"
+                    nativeSelectProps={{
+                      name: Prisma.CarcasseScalarFieldEnum.espece,
+                      value: espece,
+                      disabled: !canEdit,
+                      onChange: (e) => {
+                        const newEspece = e.currentTarget.value;
+                        setEspece(newEspece);
+                      },
+                    }}
+                  >
+                    <option value="">Sélectionnez l'espèce du gibier</option>
+                    <hr />
+                    {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
+                      return (
+                        <optgroup label={typeGibier} key={typeGibier}>
+                          {_especes.map((_espece: string) => {
+                            return (
+                              <option value={_espece} key={_espece}>
+                                {_espece}
+                              </option>
+                            );
+                          })}
+                        </optgroup>
+                      );
+                    })}
+                  </Select>
+                </div>
+              ) : (
+                <div className="fr-fieldset__element">
+                  <InputNotEditable
+                    label="Espèce"
+                    nativeInputProps={{
+                      type: "text",
+                      name: Prisma.CarcasseScalarFieldEnum.espece,
+                      defaultValue: carcasse.espece ?? "",
+                    }}
+                  />
+                </div>
+              )}
               <div className={carcasse.type === CarcasseType.GROS_GIBIER ? "hidden" : "fr-fieldset__element"}>
                 <Component
                   label="Nombre de carcasses"

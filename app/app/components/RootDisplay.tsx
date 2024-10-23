@@ -19,7 +19,6 @@ export default function RootDisplay({
   hideMinistereName?: boolean;
 }) {
   const isOnline = useIsOnline();
-  console.log("user", user);
   return (
     <>
       <Header
