@@ -73,6 +73,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   const data: Prisma.EntityUncheckedUpdateInput = {
     raison_sociale: formData.get(Prisma.EntityScalarFieldEnum.raison_sociale) as string,
+    nom_d_usage: formData.get(Prisma.EntityScalarFieldEnum.nom_d_usage) as string,
     address_ligne_1: formData.get(Prisma.EntityScalarFieldEnum.address_ligne_1) as string,
     address_ligne_2: formData.get(Prisma.EntityScalarFieldEnum.address_ligne_2) as string,
     code_postal: formData.get(Prisma.EntityScalarFieldEnum.code_postal) as string,

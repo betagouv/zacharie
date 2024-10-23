@@ -16,6 +16,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const createdEntity = await prisma.entity.create({
     data: {
       raison_sociale: formData.get(Prisma.EntityScalarFieldEnum.raison_sociale) as string,
+      nom_d_usage: formData.get(Prisma.EntityScalarFieldEnum.raison_sociale) as string,
       type: formData.get(Prisma.EntityScalarFieldEnum.type) as EntityTypes,
     },
   });

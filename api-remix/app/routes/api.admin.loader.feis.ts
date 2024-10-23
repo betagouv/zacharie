@@ -14,23 +14,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const feis = await prisma.fei.findMany({
     include: {
       FeiCurrentUser: { select: { email: true } }, // Fetching the current user's email
-      FeiCurrentEntity: { select: { raison_sociale: true } }, // Fetching the current entity's raison sociale
-      FeiNextEntity: { select: { raison_sociale: true } }, // Fetching the next entity's raison sociale
+      FeiCurrentEntity: { select: { nom_d_usage: true } }, // Fetching the current entity's raison sociale
+      FeiNextEntity: { select: { nom_d_usage: true } }, // Fetching the next entity's raison sociale
       FeiNextUser: { select: { email: true } }, // Fetching the next user's email
       FeiExaminateurInitialUser: { select: { email: true } }, // Fetching the examinateur's email
       FeiPremierDetenteurUser: { select: { email: true } }, // Fetching the premier detenteur's email
-      FeiPremierDetenteurEntity: { select: { raison_sociale: true } }, // Fetching the premier detenteur's raison sociale
+      FeiPremierDetenteurEntity: { select: { nom_d_usage: true } }, // Fetching the premier detenteur's raison sociale
       FeiIntermediaires: {
         include: {
           FeiIntermediaireEntity: {
             select: {
-              raison_sociale: true,
+              nom_d_usage: true,
               type: true,
             },
           },
         },
       },
-      FeiSviEntity: { select: { raison_sociale: true } },
+      FeiSviEntity: { select: { nom_d_usage: true } },
     },
   });
 
@@ -43,35 +43,35 @@ export async function loader({ request }: LoaderFunctionArgs) {
           type: "Propriétaire actuel",
           role: fei.fei_current_owner_role,
           email: fei.FeiCurrentUser?.email,
-          raison_sociale: fei.FeiCurrentEntity?.raison_sociale,
+          nom_d_usage: fei.FeiCurrentEntity?.nom_d_usage,
         },
         {
           type: "Propriétaire suivant",
           role: fei.fei_next_owner_role,
           email: fei.FeiNextUser?.email,
-          raison_sociale: fei.FeiNextEntity?.raison_sociale,
+          nom_d_usage: fei.FeiNextEntity?.nom_d_usage,
         },
       ],
       intervenants: [
         {
           type: "Examinateur Initial",
           email: fei.FeiExaminateurInitialUser?.email,
-          raison_sociale: null,
+          nom_d_usage: null,
         },
         {
           type: "Premier Detenteur",
           email: fei.FeiPremierDetenteurUser?.email,
-          raison_sociale: null,
+          nom_d_usage: null,
         },
         ...fei.FeiIntermediaires.map((inter) => ({
           type: inter.FeiIntermediaireEntity.type,
           email: null,
-          raison_sociale: inter.FeiIntermediaireEntity.raison_sociale,
+          nom_d_usage: inter.FeiIntermediaireEntity.nom_d_usage,
         })),
         {
           type: "SVI",
           email: null,
-          raison_sociale: fei.FeiSviEntity?.raison_sociale,
+          nom_d_usage: fei.FeiSviEntity?.nom_d_usage,
         },
       ],
     })),
