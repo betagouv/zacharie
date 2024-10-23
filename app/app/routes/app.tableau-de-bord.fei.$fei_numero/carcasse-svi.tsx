@@ -35,7 +35,7 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
       key={carcasse.updated_at}
       className={[
         "border-4 border-transparent",
-        !!carcasse.svi_carcasse_saisie && "!border-red-500",
+        !!carcasse.svi_carcasse_saisie?.length && "!border-red-500",
         !!canEdit && priseEnCharge && "!border-action-high-blue-france",
       ]
         .filter(Boolean)
@@ -57,7 +57,8 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
             {carcasse.type === CarcasseType.PETIT_GIBIER ? "Petit gibier" : "Grand gibier"}
           </span>
           <span className="block font-normal">
-            Numéro de bracelet&nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span>
+            {carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : "Numéro de bracelet"}&nbsp;:{" "}
+            <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span>
           </span>
           {carcasse.type === CarcasseType.PETIT_GIBIER && (
             <span className="block font-normal">
@@ -103,69 +104,84 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
               </span>
             );
           })}
-          {(!canEdit || motifsSaisie.length > 0) && (
-            <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_carcasse_saisie_motif)}>
-              Inspection SVI&nbsp;:
-              {motifsSaisie.length > 0 ? (
-                <>
-                  {motifsSaisie.map((motif, index) => {
-                    if (canEdit) {
-                      return (
-                        <span
-                          className="m-0 ml-2 flex items-center justify-between border-b border-b-gray-300 font-medium"
-                          key={motif + index}
-                        >
-                          - {motif}
-                          <button
-                            className="block px-4 py-1 font-medium"
-                            title="Supprimer"
-                            key={motif + index}
-                            onClick={() => {
-                              const nextMotifsSaisie = motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
-                              setMotifsSaisie((motifsSaisie) => {
-                                return motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
-                              });
-                              const form = new FormData();
-                              if (nextMotifsSaisie.length) {
-                                for (const motifSaisie of nextMotifsSaisie) {
-                                  form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, motifSaisie);
-                                }
-                                form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie, "true");
-                                form.append(
-                                  Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at,
-                                  dayjs().toISOString(),
-                                );
-                              } else {
-                                form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, "");
-                                form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie, "false");
-                                form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at, "");
-                              }
-                              form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at, dayjs().toISOString());
-                              form.append(Prisma.CarcasseScalarFieldEnum.fei_numero, fei.numero);
-                              form.append("route", `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`);
-                              sviCarcasseFetcher.submit(form, {
-                                method: "POST",
-                                preventScrollReset: true,
-                              });
-                            }}
-                          >
-                            {`\u0078`}
-                          </button>
-                        </span>
-                      );
-                    }
+          <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_carcasse_saisie_motif)}>
+            Inspection SVI&nbsp;:
+            {carcasse.svi_carcasse_saisie.length > 0 ? (
+              <>
+                {carcasse.svi_carcasse_saisie.map((type, index) => {
+                  if (index === 0) {
+                    // Saisie totale ou saisie partielle
                     return (
-                      <span className="m-0 ml-2 block font-medium" key={motif + index}>
-                        - {motif}
+                      <span className="m-0 ml-2 block font-medium" key={type + index}>
+                        {type}
                       </span>
                     );
-                  })}
-                </>
-              ) : (
-                <span className="m-0 ml-2 block font-medium">- Pas de saisie</span>
-              )}
-            </span>
-          )}
+                  }
+                  return (
+                    <span className="m-0 ml-2 block font-medium" key={type + index}>
+                      - {type}
+                    </span>
+                  );
+                })}
+              </>
+            ) : (
+              <span className="m-0 ml-2 block font-medium">- Pas de saisie</span>
+            )}
+            {motifsSaisie.length > 0 ? (
+              <>
+                {motifsSaisie.map((motif, index) => {
+                  if (canEdit) {
+                    return (
+                      <span
+                        className="m-0 ml-2 flex items-center justify-between border-b border-b-gray-300 font-medium"
+                        key={motif + index}
+                      >
+                        - {motif}
+                        <button
+                          className="block px-4 py-1 font-medium"
+                          title="Supprimer"
+                          key={motif + index}
+                          onClick={() => {
+                            const nextMotifsSaisie = motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
+                            setMotifsSaisie((motifsSaisie) => {
+                              return motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
+                            });
+                            const form = new FormData();
+                            if (nextMotifsSaisie.length) {
+                              for (const motifSaisie of nextMotifsSaisie) {
+                                form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, motifSaisie);
+                              }
+                              form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at, dayjs().toISOString());
+                            } else {
+                              form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, "");
+                              form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie, "");
+                              form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at, "");
+                            }
+                            form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at, dayjs().toISOString());
+                            form.append(Prisma.CarcasseScalarFieldEnum.fei_numero, fei.numero);
+                            form.append("route", `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`);
+                            sviCarcasseFetcher.submit(form, {
+                              method: "POST",
+                              preventScrollReset: true,
+                            });
+                          }}
+                        >
+                          {`\u0078`}
+                        </button>
+                      </span>
+                    );
+                  }
+                  return (
+                    <span className="m-0 ml-2 block font-medium" key={motif + index}>
+                      - {motif}
+                    </span>
+                  );
+                })}
+              </>
+            ) : (
+              <span className="m-0 ml-2 block font-medium">- Pas de saisie</span>
+            )}
+          </span>
           {!canEdit && carcasse.svi_carcasse_commentaire && (
             <>
               <br />

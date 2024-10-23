@@ -2,7 +2,8 @@ import { useFetcher, useLoaderData, useParams } from "@remix-run/react";
 import { useMemo, useState } from "react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma, CarcasseType, UserRoles } from "@prisma/client";
-import saisieSvi from "@app/data/saisie-svi.json";
+import saisieSviList from "@app/data/saisie-svi/list.json";
+import saisieSviTree from "@app/data/saisie-svi/tree.json";
 import dayjs from "dayjs";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import InputForSearchPrefilledData from "@app/components/InputForSearchPrefilledData";
@@ -14,7 +15,16 @@ import CarcasseSVI from "@app/routes/app.tableau-de-bord.fei.$fei_numero/carcass
 import { Breadcrumb } from "@codegouvfr/react-dsfr/Breadcrumb";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import InputNotEditable from "@app/components/InputNotEditable";
-import Notice from "@codegouvfr/react-dsfr/Notice";
+import { Notice } from "@codegouvfr/react-dsfr/Notice";
+import { createModal } from "@codegouvfr/react-dsfr/Modal";
+import ModalTreeDisplay from "@app/components/ModalTreeDisplay";
+import { RadioButtons } from "@codegouvfr/react-dsfr/RadioButtons";
+import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
+
+const saisieCarcasseModal = createModal({
+  isOpenedByDefault: false,
+  id: "saisie-carcasse-modal",
+});
 
 // export clientLoader being feiClientLoader
 export const clientAction = feiClientAction;
@@ -74,6 +84,7 @@ export default function CarcasseEditSVI() {
   }, [premierDetenteurEntity, premierDetenteurUser]);
 
   const [motifsSaisie, setMotifsSaisie] = useState(carcasse?.svi_carcasse_saisie_motif?.filter(Boolean) ?? []);
+  const [typeSaisie, setTypeSaisie] = useState(carcasse?.svi_carcasse_saisie?.filter(Boolean) ?? []);
 
   const canEdit = useMemo(() => {
     if (fei.fei_current_owner_user_id !== user.id) {
@@ -175,42 +186,6 @@ export default function CarcasseEditSVI() {
               </Accordion>
               {canEdit && (
                 <Accordion titleAs="h2" defaultExpanded label="Saisie">
-                  <>
-                    {motifsSaisie.map((motif, index) => {
-                      return (
-                        <Notice
-                          isClosable
-                          key={motif + index}
-                          title={motif}
-                          onClose={() => {
-                            const nextMotifsSaisie = motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
-                            setMotifsSaisie((motifsSaisie) => {
-                              return motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
-                            });
-                            const form = new FormData();
-                            if (nextMotifsSaisie.length) {
-                              for (const motifSaisie of nextMotifsSaisie) {
-                                form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, motifSaisie);
-                              }
-                              form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie, "true");
-                              form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at, dayjs().toISOString());
-                            } else {
-                              form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, "");
-                              form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie, "false");
-                              form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at, "");
-                            }
-                            form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at, dayjs().toISOString());
-                            form.append(Prisma.CarcasseScalarFieldEnum.fei_numero, fei.numero);
-                            form.append("route", `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`);
-                            sviCarcasseFetcher.submit(form, {
-                              method: "POST",
-                              preventScrollReset: true,
-                            });
-                          }}
-                        />
-                      );
-                    })}
-                  </>
                   <sviCarcasseFetcher.Form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`}>
                     <input
                       type="hidden"
@@ -229,12 +204,18 @@ export default function CarcasseEditSVI() {
                       name={Prisma.CarcasseScalarFieldEnum.numero_bracelet}
                       value={carcasse.numero_bracelet}
                     />
-                    <input
-                      form={`svi-carcasse-${carcasse.numero_bracelet}`}
-                      type="hidden"
-                      name={Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie}
-                      value="true"
-                    />
+                    {typeSaisie.map((type, index) => {
+                      return (
+                        <input
+                          key={type + index}
+                          form={`svi-carcasse-${carcasse.numero_bracelet}`}
+                          type="hidden"
+                          required
+                          name={Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie}
+                          value={type}
+                        />
+                      );
+                    })}
                     {motifsSaisie.map((motifSaisie, index) => {
                       return (
                         <input
@@ -247,24 +228,170 @@ export default function CarcasseEditSVI() {
                         />
                       );
                     })}
-                    <div className="fr-fieldset__element mt-4">
-                      <InputForSearchPrefilledData
-                        canEdit
-                        data={saisieSvi[carcasse.type ?? CarcasseType.GROS_GIBIER]}
-                        label="Motif de la saisie"
-                        hideDataWhenNoSearch
-                        clearInputOnClick
-                        placeholder={
-                          motifsSaisie.length
-                            ? "Commencez à taper un autre de saisie supplémentaire"
-                            : "Commencez à taper un motif de saisie"
-                        }
-                        onSelect={(newMotifSaisie) => {
-                          setMotifsSaisie([...motifsSaisie, newMotifSaisie]);
-                        }}
+                    <div className="fr-fieldset__element">
+                      <RadioButtons
+                        legend="Décision carcasse"
+                        options={[
+                          {
+                            nativeInputProps: {
+                              required: true,
+                              checked: typeSaisie.length === 0,
+                              onChange: () => {
+                                setTypeSaisie([]);
+                              },
+                            },
+                            label: "Pas de saisie",
+                          },
+                          {
+                            nativeInputProps: {
+                              required: true,
+                              checked: typeSaisie[0] === "Saisie totale",
+                              onChange: () => {
+                                setTypeSaisie(["Saisie totale"]);
+                              },
+                            },
+                            label: "Saisie totale",
+                          },
+                          {
+                            nativeInputProps: {
+                              required: true,
+                              checked: typeSaisie[0] === "Saisie partielle",
+                              onChange: () => {
+                                setTypeSaisie(["Saisie partielle"]);
+                              },
+                            },
+                            label: "Saisie partielle",
+                          },
+                        ]}
                       />
                     </div>
-                    <div className="fr-fieldset__element">
+                    {["Saisie partielle", "Saisie totale"].includes(typeSaisie[0]) &&
+                      carcasse.type === CarcasseType.PETIT_GIBIER && (
+                        <div className="fr-fieldset__element">
+                          <Input
+                            label="Nombre de carcasses saisies *"
+                            hintText={`Nombre d'animaux initialement prélevés\u00A0: ${carcasse.nombre_d_animaux}`}
+                            nativeInputProps={{
+                              type: "number",
+                              value: typeSaisie?.[1] ?? "",
+                              // max: Number(carcasse.nombre_d_animaux),
+                              onChange: (e) => {
+                                setTypeSaisie([typeSaisie[0], e.target.value]);
+                              },
+                            }}
+                          />
+                        </div>
+                      )}
+                    {typeSaisie[0] === "Saisie partielle" && carcasse.type === CarcasseType.GROS_GIBIER && (
+                      <div className="fr-fieldset__element">
+                        <Checkbox
+                          legend="Saisie partielle"
+                          options={[
+                            "Coffre",
+                            "Collier",
+                            "Cuisse",
+                            "Cuissot",
+                            "Épaule",
+                            "Gigot",
+                            "Filet",
+                            "Filet mignon",
+                            "Poitrine",
+                            "Quartier arrière",
+                            "Quartier avant",
+                          ].map((saisiePartielle) => {
+                            return {
+                              label: saisiePartielle,
+                              nativeInputProps: {
+                                checked: typeSaisie.includes(saisiePartielle),
+                                onChange: (e) => {
+                                  if (e.target.checked) {
+                                    setTypeSaisie([...typeSaisie, saisiePartielle]);
+                                  } else {
+                                    setTypeSaisie(typeSaisie.filter((s) => s !== saisiePartielle));
+                                  }
+                                },
+                              },
+                            };
+                          })}
+                        />
+                      </div>
+                    )}
+                    {typeSaisie.length > 0 && (
+                      <>
+                        <div className="fr-fieldset__element mt-4">
+                          <InputForSearchPrefilledData
+                            canEdit
+                            data={saisieSviList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+                            label="Motif de la saisie *"
+                            hintText={
+                              <>
+                                Voir le référentiel des saisies de carcasse en{" "}
+                                <button type="button" className="underline" onClick={() => saisieCarcasseModal.open()}>
+                                  cliquant ici
+                                </button>
+                              </>
+                            }
+                            hideDataWhenNoSearch
+                            clearInputOnClick
+                            placeholder={
+                              motifsSaisie.length
+                                ? "Commencez à taper un autre motif de saisie supplémentaire"
+                                : "Commencez à taper un motif de saisie"
+                            }
+                            onSelect={(newMotifSaisie) => {
+                              setMotifsSaisie([...motifsSaisie, newMotifSaisie]);
+                            }}
+                          />
+                          <ModalTreeDisplay
+                            data={saisieSviTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+                            modal={saisieCarcasseModal}
+                            title={`Motifs de saisie ${carcasse.type === CarcasseType.PETIT_GIBIER ? "petit gibier" : "gros gibier"}`}
+                            onItemClick={(newMotifSaisie) => {
+                              setMotifsSaisie([...motifsSaisie, newMotifSaisie]);
+                            }}
+                          />
+                        </div>
+                        {motifsSaisie.map((motif, index) => {
+                          return (
+                            <Notice
+                              isClosable
+                              key={motif + index}
+                              title={motif}
+                              onClose={() => {
+                                const nextMotifsSaisie = motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
+                                setMotifsSaisie((motifsSaisie) => {
+                                  return motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
+                                });
+                                const form = new FormData();
+                                if (nextMotifsSaisie.length) {
+                                  for (const motifSaisie of nextMotifsSaisie) {
+                                    form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, motifSaisie);
+                                  }
+                                  form.append(
+                                    Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at,
+                                    dayjs().toISOString(),
+                                  );
+                                } else {
+                                  form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, "");
+                                  form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at, "");
+                                }
+                                form.append(
+                                  Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at,
+                                  dayjs().toISOString(),
+                                );
+                                form.append(Prisma.CarcasseScalarFieldEnum.fei_numero, fei.numero);
+                                form.append("route", `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`);
+                                sviCarcasseFetcher.submit(form, {
+                                  method: "POST",
+                                  preventScrollReset: true,
+                                });
+                              }}
+                            />
+                          );
+                        })}
+                      </>
+                    )}
+                    <div className="fr-fieldset__element mt-4">
                       <Input
                         label="Commentaire"
                         hintText="Un commentaire à ajouter ?"
@@ -297,53 +424,67 @@ export default function CarcasseEditSVI() {
                     <div className="flex flex-col items-start bg-white pl-2 [&_ul]:md:min-w-96">
                       <ButtonsGroup
                         buttons={
-                          !motifsSaisie.length ||
-                          JSON.stringify(carcasse.svi_carcasse_saisie_motif) !== JSON.stringify(motifsSaisie)
+                          !motifsSaisie.length
                             ? [
                                 {
-                                  children: "Saisir",
+                                  children: typeSaisie.length === 0 ? "Enregistrer" : "Saisir",
                                   type: "submit",
                                   nativeButtonProps: {
-                                    onClick: (e) => {
-                                      if (!motifsSaisie.length) {
-                                        e.preventDefault();
-                                        alert("Veuillez ajouter au moins un motif de saisie");
-                                        return;
-                                      }
-                                    },
                                     form: `svi-carcasse-${carcasse.numero_bracelet}`,
                                     name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at,
+                                    title: typeSaisie.length > 0 ? "Vous devez remplir un motif de saisie" : "",
+                                    disabled: typeSaisie.length > 0,
                                     suppressHydrationWarning: true,
                                     value: dayjs().toISOString(),
                                   },
                                 },
                               ]
-                            : [
-                                {
-                                  children: "Annuler la saisie",
-                                  priority: "secondary",
-                                  type: "button",
-                                  nativeButtonProps: {
-                                    onClick: () => {
-                                      setMotifsSaisie([]);
-                                      const form = new FormData();
-                                      form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire, "");
-                                      form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, "");
-                                      form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie, "false");
-                                      form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at, "");
-                                      form.append(Prisma.CarcasseScalarFieldEnum.fei_numero, fei.numero);
-                                      form.append(
-                                        "route",
-                                        `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`,
-                                      );
-                                      sviCarcasseFetcher.submit(form, {
-                                        method: "POST",
-                                        preventScrollReset: true,
-                                      });
+                            : JSON.stringify(carcasse.svi_carcasse_saisie_motif) !== JSON.stringify(motifsSaisie)
+                              ? [
+                                  {
+                                    children: "Saisir",
+                                    type: "submit",
+                                    nativeButtonProps: {
+                                      onClick: (e) => {
+                                        if (!motifsSaisie.length) {
+                                          e.preventDefault();
+                                          alert("Veuillez ajouter au moins un motif de saisie");
+                                          return;
+                                        }
+                                      },
+                                      form: `svi-carcasse-${carcasse.numero_bracelet}`,
+                                      name: Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at,
+                                      suppressHydrationWarning: true,
+                                      value: dayjs().toISOString(),
                                     },
                                   },
-                                },
-                              ]
+                                ]
+                              : [
+                                  {
+                                    children: "Annuler la saisie",
+                                    priority: "secondary",
+                                    type: "button",
+                                    nativeButtonProps: {
+                                      onClick: () => {
+                                        setMotifsSaisie([]);
+                                        const form = new FormData();
+                                        form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire, "");
+                                        form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif, "");
+                                        form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie, "");
+                                        form.append(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at, "");
+                                        form.append(Prisma.CarcasseScalarFieldEnum.fei_numero, fei.numero);
+                                        form.append(
+                                          "route",
+                                          `/api/fei-carcasse/${fei.numero}/${carcasse.numero_bracelet}`,
+                                        );
+                                        sviCarcasseFetcher.submit(form, {
+                                          method: "POST",
+                                          preventScrollReset: true,
+                                        });
+                                      },
+                                    },
+                                  },
+                                ]
                         }
                       />
                     </div>

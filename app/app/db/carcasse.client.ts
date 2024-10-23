@@ -62,12 +62,9 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
       ? dayjs(mergedItem.intermediaire_carcasse_signed_at).toISOString()
       : null,
     intermediaire_carcasse_commentaire: mergedItem.intermediaire_carcasse_commentaire || null,
-    svi_carcasse_saisie:
-      newItem?.get("svi_carcasse_saisie") === "true"
-        ? true
-        : newItem?.get("svi_carcasse_saisie") === "false"
-          ? false
-          : mergedItem.svi_carcasse_saisie || null,
+    svi_carcasse_saisie: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)?.length
+      ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie).map(String).filter(Boolean)
+      : (oldItem.svi_carcasse_saisie ?? []),
     svi_carcasse_saisie_motif: newItem?.getAll?.(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)?.length
       ? newItem?.getAll(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif).map(String).filter(Boolean)
       : (oldItem.svi_carcasse_saisie_motif ?? []),

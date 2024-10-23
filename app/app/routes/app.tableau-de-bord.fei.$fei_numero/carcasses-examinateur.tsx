@@ -69,7 +69,8 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                     {carcasse.type === CarcasseType.PETIT_GIBIER ? "Petit gibier" : "Grand gibier"}
                   </span>
                   <span className="block font-normal">
-                    Numéro de bracelet&nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span>
+                    {carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : "Numéro de bracelet"}
+                    &nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span>
                   </span>
                   {carcasse.type === CarcasseType.PETIT_GIBIER && (
                     <span className="block font-normal">
@@ -116,7 +117,10 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
               ) : (
                 <>
                   <span className="block font-bold md:-mt-4">Nouveau lot de carcasse(s) à examiner</span>
-                  <span className="block font-normal">Numéro de bracelet&nbsp;: {carcasse.numero_bracelet}</span>
+                  <span className="block font-normal">
+                    {carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : "Numéro de bracelet"}
+                    &nbsp;: {carcasse.numero_bracelet}
+                  </span>
                   <span className="fr-btn mt-2 block md:-mb-4">Examiner</span>
                 </>
               )}

@@ -46,7 +46,6 @@ export async function clientAction({ request, params }: ClientActionFunctionArgs
     return json({ ok: false, data: null, error: "NUmero is required" }, { status: 400 });
   }
   const url = `${import.meta.env.VITE_API_URL}${route}`;
-  console.log("GOGOGOG", url);
   const response = (await fetch(url, {
     method: "POST",
     credentials: "include",

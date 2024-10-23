@@ -122,10 +122,6 @@ async function get(pathname: string) {
 export async function loadFei(fei_numero: string) {
   const feiData = (await get(`/api/fei/${fei_numero}`)) as FeiLoaderData;
 
-  if (!feiData.ok) {
-    return redirect("/app/tableau-de-bord");
-  }
-
   const examinateurInitialId = feiData.data?.fei.examinateur_initial_user_id;
   const examinateurInitialUser = examinateurInitialId
     ? ((await get(`/api/fei-user/${fei_numero}/${examinateurInitialId}`)) as FeiUserLoaderData)

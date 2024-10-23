@@ -90,9 +90,9 @@ export default function FEICurrentIntermediaire() {
     const nbCarcassesValidated = carcassesSorted.carcassesApproved.length;
     if (nbCarcassesValidated > 0) {
       if (nbCarcassesValidated === 1) {
-        label += " 1 carcasses/lot validé.";
+        label += " 1 carcasse/lot validé.";
       } else {
-        label += ` ${nbCarcassesValidated} carcasses/lot validés.`;
+        label += ` ${nbCarcassesValidated} carcasses/lots validés.`;
       }
     }
     const nbCarcassesRejetees = carcassesSorted.carcassesRejetees.length;
@@ -106,7 +106,7 @@ export default function FEICurrentIntermediaire() {
     const nbCarcassesManquantes = carcassesSorted.carcassesManquantes.length;
     if (nbCarcassesManquantes > 0) {
       if (nbCarcassesManquantes === 1) {
-        label += " 1 carcasses/lot manquant.";
+        label += " 1 carcasse/lot manquant.";
       } else {
         label += ` ${nbCarcassesManquantes} carcasses/lots manquants.`;
       }

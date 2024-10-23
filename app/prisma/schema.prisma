@@ -91,6 +91,7 @@ model Entity {
   id                        String                  @id @default(uuid())
   // NO EMAIL: an entity needs AT LEAST one user
   raison_sociale            String?
+  nom_d_usage               String?
   address_ligne_1           String?
   address_ligne_2           String?
   code_postal               String?
@@ -191,6 +192,7 @@ model Fei {
   heure_mise_a_mort_premiere_carcasse                     String?
   heure_evisceration_derniere_carcasse                    String?
   created_by_user_id                                      String
+  resume_nombre_de_carcasses                              String?
   fei_current_owner_user_id                               String?
   fei_current_owner_entity_id                             String?
   fei_current_owner_role                                  UserRoles?
@@ -270,7 +272,7 @@ model Carcasse {
   intermediaire_carcasse_signed_at              DateTime?
   intermediaire_carcasse_commentaire            String?
   intermediaire_carcasse_manquante              Boolean?
-  svi_carcasse_saisie                           Boolean?
+  svi_carcasse_saisie                           String[]
   svi_carcasse_saisie_motif                     String[]
   svi_carcasse_saisie_at                        DateTime?
   svi_carcasse_signed_at                        DateTime?

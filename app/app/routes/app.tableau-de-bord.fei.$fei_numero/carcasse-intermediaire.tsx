@@ -180,7 +180,8 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
             {carcasse.type === CarcasseType.PETIT_GIBIER ? "Petit gibier" : "Grand gibier"}
           </span>
           <span className="block font-normal">
-            Numéro de bracelet&nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span>
+            {carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : "Numéro de bracelet"}&nbsp;:{" "}
+            <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span>
           </span>
           {carcasse.type === CarcasseType.PETIT_GIBIER && (
             <span className="block font-normal">

@@ -244,7 +244,9 @@ export default function CarcasseReadAndWrite() {
                 <div className="fr-fieldset__element">
                   <PermanentFields form="carcasse-edit-form" />
                   <NumeroBraceletComponent
-                    label="Numéro de bracelet"
+                    label={
+                      carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : "Numéro de bracelet"
+                    }
                     hintText={
                       isOnline
                         ? ""
@@ -286,7 +288,9 @@ export default function CarcasseReadAndWrite() {
               ) : (
                 <div className="fr-fieldset__element">
                   <InputNotEditable
-                    label="Numéro de bracelet"
+                    label={
+                      carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : "Numéro de bracelet"
+                    }
                     nativeInputProps={{
                       type: "text",
                       name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,

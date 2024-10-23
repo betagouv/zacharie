@@ -126,7 +126,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
           {canEdit && depotType === EntityTypes.ETG && (
             <>
               <Select
-                label="Sélectionnez un Établissements de Transformation du Gibier sauvage"
+                label="Sélectionnez un Établissement de Transformation du Gibier sauvage"
                 hint="La fiche lui sera transmise"
                 className="!mb-0 grow"
                 nativeSelectProps={{
@@ -135,7 +135,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
                   defaultValue: etgs.length === 1 ? etgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ""),
                 }}
               >
-                <option value="">Sélectionnez un Établissements de Transformation du Gibier sauvage</option>
+                <option value="">Sélectionnez un Établissement de Transformation du Gibier sauvage</option>
                 <hr />
                 {etgs.map((entity) => {
                   return (

@@ -28,7 +28,11 @@ const renderNestedDetails = (
             <button
               type="button"
               onClick={() => {
-                onItemClick(`${parent} - ${item}`);
+                if (parent) {
+                  onItemClick(`${parent} - ${item}`);
+                } else {
+                  onItemClick(item);
+                }
               }}
               className="!inline text-left hover:underline"
             >
@@ -47,7 +51,11 @@ const renderNestedDetails = (
           <button
             type="button"
             onClick={() => {
-              onItemClick(`${parent} - ${key}`);
+              if (parent) {
+                onItemClick(`${parent} - ${key}`);
+              } else {
+                onItemClick(key);
+              }
             }}
             className="!inline text-left hover:underline"
           >
@@ -75,7 +83,7 @@ const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({ modal, data, t
 
   return (
     <modal.Component
-      title={title}
+      title={` ${title}`}
       iconId="fr-icon-information-line"
       buttons={[
         {
