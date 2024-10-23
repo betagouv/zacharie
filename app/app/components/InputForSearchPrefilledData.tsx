@@ -9,6 +9,7 @@ interface InputForSearchPrefilledDataProps<T> {
   onSelect: (selected: T) => void;
   onRemove?: (selected: T) => void;
   hintText?: InputProps["hintText"];
+  name?: string;
   placeholder?: string;
   required?: boolean;
   values?: Array<T>;
@@ -26,6 +27,7 @@ export default function InputForSearchPrefilledData<T extends string>({
   onRemove,
   hintText = "",
   placeholder = "Tapez ici...",
+  name = "input-for-search-prefilled-data",
   values = [],
   defaultValue,
   hideDataWhenNoSearch = true,
@@ -71,6 +73,7 @@ export default function InputForSearchPrefilledData<T extends string>({
         nativeInputProps={{
           type: "text",
           value: searchTerm,
+          name,
           required,
           autoComplete: "off",
           onChange: handleChange,

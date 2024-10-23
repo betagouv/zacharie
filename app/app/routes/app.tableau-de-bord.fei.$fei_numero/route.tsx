@@ -38,7 +38,7 @@ export async function clientAction({ request, params }: ClientActionFunctionArgs
   }
   const route = formData.get("route") as string;
   if (!route) {
-    console.log("Route is required");
+    console.log("Route is required", Object.fromEntries(formData));
     return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
   }
   if (!formData.get(Prisma.FeiScalarFieldEnum.numero) && !formData.get(Prisma.CarcasseScalarFieldEnum.fei_numero)) {

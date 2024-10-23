@@ -56,7 +56,7 @@ export default function FEICurrentIntermediaire() {
         if (intermediaireCheckById[checkId].prise_en_charge) {
           carcassesApproved[checkId] = carcasse;
         } else if (intermediaireCheckById[checkId].manquante) {
-          console.log("MANQUANTE ICI", intermediaireCheckById[checkId]);
+          // console.log("MANQUANTE ICI", intermediaireCheckById[checkId]);
           carcassesManquantes[checkId] = carcasse;
         } else {
           carcassesRejetees[checkId] = carcasse;

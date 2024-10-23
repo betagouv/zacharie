@@ -22,6 +22,9 @@ interface CarcasseIntermediaireProps {
 
 export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire }: CarcasseIntermediaireProps) {
   const { fei, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
+  const formFetcher = useFetcher<CarcasseIntermediaireActionData>({
+    key: `intermediaire-carcasse-form-${carcasse.numero_bracelet}`,
+  });
   const intermediaireCarcasseFetcher = useFetcher<CarcasseIntermediaireActionData>({
     key: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
   });
@@ -98,11 +101,13 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
     form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, refus);
     form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge, "false");
     form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.manquante, "false");
+    console.log("ON ESTV ICI");
     const nextIntermediaire = mergeCarcasseIntermediaire(intermediaireCarcasse, form);
     nextIntermediaire.append(
       "route",
       `/api/fei-carcasse-intermediaire/${fei.numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
     );
+    console.log("ON ESTV LA", Object.fromEntries(nextIntermediaire));
     intermediaireCarcasseFetcher.submit(nextIntermediaire, {
       method: "POST",
       preventScrollReset: true,
@@ -246,11 +251,7 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
             </>
           }
         >
-          <intermediaireCarcasseFetcher.Form
-            method="POST"
-            ref={formRef}
-            id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-          >
+          <formFetcher.Form method="POST" ref={formRef} id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}>
             <input
               form={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
               type="hidden"
@@ -299,8 +300,7 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                   {
                     nativeInputProps: {
                       required: true,
-                      name: "status",
-                      value: "false",
+                      name: "caracsse-status",
                       checked: !carcasseManquante && !carcasseRefusCheckbox,
                       onChange: () => {
                         submitCarcasseAccept();
@@ -311,8 +311,7 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                   {
                     nativeInputProps: {
                       required: true,
-                      name: "status",
-                      value: "false",
+                      name: "caracsse-status",
                       checked: !!carcasseRefusCheckbox && !carcasseManquante,
                       onChange: () => {
                         setCarcasseManquante(false);
@@ -324,8 +323,7 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                   {
                     nativeInputProps: {
                       required: true,
-                      name: "status",
-                      value: "true",
+                      name: "caracsse-status",
                       checked: carcasseManquante && !refus,
                       onChange: () => {
                         refusIntermediaireModal.current.close();
@@ -372,9 +370,10 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                 <InputForSearchPrefilledData
                   canEdit
                   data={refusIntermedaire}
-                  label="Vous refusez cette carcasse ? Indiquez le motif"
+                  label="Vous refusez cette carcasse ? Indiquez le motif *"
                   hideDataWhenNoSearch={false}
                   required
+                  hintText="Cliquez sur un bouton bleu ciel pour valider le motif"
                   placeholder="Tapez un motif de refus"
                   onSelect={setRefus}
                   defaultValue={refus ?? ""}
@@ -390,8 +389,10 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                     ? [
                         {
                           children: "Enregistrer",
+                          type: "submit",
                           nativeButtonProps: {
-                            onClick: () => {
+                            onClick: (e) => {
+                              e.preventDefault();
                               refusIntermediaireModal.current.close();
                               submitCarcasseRefus();
                             },
@@ -402,7 +403,8 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                           priority: "secondary",
                           type: "button",
                           nativeButtonProps: {
-                            onClick: () => {
+                            onClick: (e) => {
+                              e.preventDefault();
                               refusIntermediaireModal.current.close();
                               submitCarcasseAccept();
                             },
@@ -438,7 +440,7 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                 }
               />
             </div>
-          </intermediaireCarcasseFetcher.Form>
+          </formFetcher.Form>
         </refusIntermediaireModal.current.Component>
       )}
     </div>

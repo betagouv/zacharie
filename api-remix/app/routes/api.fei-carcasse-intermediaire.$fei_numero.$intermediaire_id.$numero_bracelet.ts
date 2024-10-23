@@ -133,6 +133,7 @@ export async function action(args: ActionFunctionArgs) {
 
   if (formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus)) {
     data.refus = formData.get(Prisma.CarcasseIntermediaireScalarFieldEnum.refus) as string;
+    data.manquante = false;
     data.prise_en_charge = false;
     data.carcasse_check_finished_at = new Date();
     const carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
