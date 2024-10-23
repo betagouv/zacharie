@@ -167,9 +167,9 @@ export async function action(args: ActionFunctionArgs) {
 
   if (user.roles.includes(UserRoles.SVI)) {
     if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)) {
-      nextCarcasse.svi_carcasse_saisie = stringToBoolean(
-        formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie) as string,
-      );
+      nextCarcasse.svi_carcasse_saisie = formData
+        .getAll(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)
+        .filter(Boolean) as string[];
     }
     if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)) {
       nextCarcasse.svi_carcasse_saisie_motif = formData
@@ -181,7 +181,6 @@ export async function action(args: ActionFunctionArgs) {
       if (saisieAt !== "") {
         nextCarcasse.svi_carcasse_saisie_at = dayjs(saisieAt || undefined).toISOString();
         nextCarcasse.svi_carcasse_signed_at = null;
-        nextCarcasse.svi_carcasse_saisie = true;
       }
     }
     if (formData.get(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at)) {
@@ -190,7 +189,7 @@ export async function action(args: ActionFunctionArgs) {
         nextCarcasse.svi_carcasse_signed_at = dayjs(signedAt || undefined).toISOString();
         nextCarcasse.svi_carcasse_saisie_at = null;
         nextCarcasse.svi_carcasse_saisie_motif = [];
-        nextCarcasse.svi_carcasse_saisie = false;
+        nextCarcasse.svi_carcasse_saisie = [];
       }
     }
     if (formData.has(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire)) {

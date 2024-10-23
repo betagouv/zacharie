@@ -61,6 +61,9 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
     nextFei.created_by_user_id = formData.get(Prisma.FeiScalarFieldEnum.created_by_user_id) as string;
   }
+  if (formData.has(Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses)) {
+    nextFei.resume_nombre_de_carcasses = formData.get(Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses) as string;
+  }
   if (formData.has(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
     nextFei.examinateur_initial_user_id = formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id) as string;
   }
