@@ -13,6 +13,7 @@ import dayjs from "dayjs";
 import { getUserRoleLabel } from "@app/utils/get-user-roles-label";
 import { mergeFei } from "@app/db/fei.client";
 import EntityNotEditable from "@app/components/EntityNotEditable";
+import { Alert } from "@codegouvfr/react-dsfr/Alert";
 
 export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: boolean }) {
   const {
@@ -45,9 +46,14 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
     return true;
   }, [fei, user]);
 
+  const canChangeNextOwner = user.id === fei.fei_current_owner_user_id;
+
   const Component = canEdit ? Input : InputNotEditable;
 
   const needSelectNextUser = useMemo(() => {
+    if (depotType === EntityTypes.ETG) {
+      return false;
+    }
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
@@ -58,7 +64,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
       return false;
     }
     return true;
-  }, [fei, user]);
+  }, [fei, user, depotType]);
 
   return (
     <>
@@ -123,30 +129,6 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
       >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <div className="fr-fieldset__element">
-          {canEdit && depotType === EntityTypes.ETG && (
-            <>
-              <Select
-                label="Sélectionnez un Établissement de Transformation du Gibier sauvage"
-                hint="La fiche lui sera transmise"
-                className="!mb-0 grow"
-                nativeSelectProps={{
-                  name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
-                  required: true,
-                  defaultValue: etgs.length === 1 ? etgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ""),
-                }}
-              >
-                <option value="">Sélectionnez un Établissement de Transformation du Gibier sauvage</option>
-                <hr />
-                {etgs.map((entity) => {
-                  return (
-                    <option key={entity.id} value={entity.id}>
-                      {entity.raison_sociale} - {entity.code_postal} {entity.ville} ({getUserRoleLabel(entity.type)})
-                    </option>
-                  );
-                })}
-              </Select>
-            </>
-          )}
           {canEdit && depotType === EntityTypes.CCG && (
             <Select
               label="Centre de collecte"
@@ -176,12 +158,36 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               })}
             </Select>
           )}
-          {!canEdit && (
+          {canChangeNextOwner && depotType === EntityTypes.ETG && (
+            <>
+              <Select
+                label="Sélectionnez un Établissement de Transformation du Gibier sauvage"
+                hint="La fiche lui sera transmise"
+                className="!mb-0 grow"
+                nativeSelectProps={{
+                  name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
+                  required: true,
+                  defaultValue: etgs.length === 1 ? etgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ""),
+                }}
+              >
+                <option value="">Sélectionnez un Établissement de Transformation du Gibier sauvage</option>
+                <hr />
+                {etgs.map((entity) => {
+                  return (
+                    <option key={entity.id} value={entity.id}>
+                      {entity.raison_sociale} - {entity.code_postal} {entity.ville} ({getUserRoleLabel(entity.type)})
+                    </option>
+                  );
+                })}
+              </Select>
+            </>
+          )}
+          {!canChangeNextOwner && !canEdit && (
             <InputNotEditable
-              label="Centre de collecte"
+              label={
+                depotType === EntityTypes.CCG ? "Centre de collecte" : "Établissement de Traitement du Gibier sauvage"
+              }
               nativeInputProps={{
-                id: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage,
-                name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage,
                 type: "text",
                 autoComplete: "off",
                 defaultValue: `${premierDetenteurDepotEntity?.raison_sociale} - ${premierDetenteurDepotEntity?.code_postal} ${premierDetenteurDepotEntity?.ville}`,
@@ -204,9 +210,9 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
             }}
           />
         </div>
-        {canEdit && (
+        {canChangeNextOwner && (
           <Button type="submit">
-            {depotType === EntityTypes.CCG ? "Enregistrer" : "Enregistrer et envoyer la fiche"}
+            {depotType === EntityTypes.ETG ? "Enregistrer et envoyer la fiche" : "Enregistrer"}
           </Button>
         )}
       </depotFetcher.Form>
@@ -218,6 +224,16 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
           </div>
         </>
       )}
+      {canChangeNextOwner &&
+        depotType === EntityTypes.ETG &&
+        (fei.fei_next_owner_user_id || fei.fei_next_owner_entity_id) && (
+          <Alert
+            className="mt-8"
+            severity="success"
+            description={`${premierDetenteurDepotEntity?.raison_sociale} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
+            title="Attribution effectuée"
+          />
+        )}
     </>
   );
 }
