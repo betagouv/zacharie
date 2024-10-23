@@ -187,7 +187,7 @@ export default function Fei() {
     if (!nextIntermediaireId) {
       return "Il n'y a pas encore de premier destinataire sélectionné";
     }
-    let base = `Le prochain destinataire est&nbsp;: ${nextOwnerEntity?.raison_sociale}.`;
+    let base = `Le prochain destinataire est&nbsp;: ${nextOwnerEntity?.nom_d_usage}.`;
     if (fei.fei_current_owner_user_id === user.id) {
       base += `<br />La fiche n'a pas encore été prise en charge par ce destinataire.`;
     }

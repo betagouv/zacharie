@@ -18,6 +18,7 @@ export default function EntityNotEditable({
   entity: null | SerializeFrom<{
     type: Entity["type"];
     raison_sociale: Entity["raison_sociale"];
+    nom_d_usage: Entity["nom_d_usage"];
     siret: Entity["siret"];
     numero_ddecpp: Entity["numero_ddecpp"];
     address_ligne_1: Entity["address_ligne_1"];
@@ -37,6 +38,19 @@ export default function EntityNotEditable({
               name: Prisma.EntityScalarFieldEnum.type,
               autoComplete: "off",
               defaultValue: getUserRoleLabel(entity?.type ?? ""),
+            }}
+          />
+        </div>
+      )}
+      {entity?.nom_d_usage && (
+        <div className="fr-fieldset__element">
+          <InputNotEditable
+            label="Nom d'usage"
+            nativeInputProps={{
+              id: Prisma.EntityScalarFieldEnum.nom_d_usage,
+              name: Prisma.EntityScalarFieldEnum.nom_d_usage,
+              autoComplete: "off",
+              defaultValue: entity?.nom_d_usage ?? "",
             }}
           />
         </div>

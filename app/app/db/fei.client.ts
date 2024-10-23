@@ -44,6 +44,7 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
     heure_mise_a_mort_premiere_carcasse: mergedItem.heure_mise_a_mort_premiere_carcasse || null,
     heure_evisceration_derniere_carcasse: mergedItem.heure_evisceration_derniere_carcasse || null,
     created_by_user_id: mergedItem.created_by_user_id,
+    resume_nombre_de_carcasses: mergedItem.resume_nombre_de_carcasses,
     fei_current_owner_user_id: mergedItem.fei_current_owner_user_id || null,
     fei_current_owner_entity_id: mergedItem.fei_current_owner_entity_id || null,
     fei_current_owner_role: mergedItem.fei_current_owner_role || null,

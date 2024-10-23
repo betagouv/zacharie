@@ -39,15 +39,12 @@ export default function SelectNextForExaminateur() {
     return { nextOwnerUser: null, nextOwnerEntity: null };
   }, [detenteursInitiaux, associationsDeChasse, nextValue]);
 
-  console.log("nextOwnerUser", nextOwnerUser);
-  console.log("nextOwnerEntity", nextOwnerEntity);
-
   const nextOwnerName = useMemo(() => {
     if (nextOwnerUser) {
       return `${nextOwnerUser.prenom} ${nextOwnerUser.nom_de_famille}`;
     }
     if (nextOwnerEntity) {
-      return nextOwnerEntity.raison_sociale;
+      return nextOwnerEntity.nom_d_usage;
     }
     return "";
   }, [nextOwnerUser, nextOwnerEntity]);
@@ -86,7 +83,7 @@ export default function SelectNextForExaminateur() {
             formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, user.id);
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id, nextOwnerEntity.id);
-            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache, nextOwnerEntity?.raison_sociale ?? "");
+            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache, nextOwnerEntity?.nom_d_usage ?? "");
           } else {
             console.log("nextIsSomeoneElse");
           }
@@ -214,7 +211,7 @@ const NextOwnerOption = ({ potentielOwner, nextOwnerIsEntity, nextOwnerIsUser, u
   let label = "";
   if (nextOwnerIsEntity) {
     potentielOwner = potentielOwner as unknown as SerializeFrom<Entity>;
-    label = `${potentielOwner.raison_sociale}`;
+    label = `${potentielOwner.nom_d_usage}`;
     if (potentielOwner.code_postal) {
       label += ` - ${potentielOwner.code_postal} ${potentielOwner.ville}`;
     }

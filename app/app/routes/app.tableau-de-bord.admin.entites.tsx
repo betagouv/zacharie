@@ -57,7 +57,7 @@ export default function AdminEntites() {
                     to={`/app/tableau-de-bord/admin/entite/${entity.id}`}
                     className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
                   >
-                    {entity.raison_sociale}
+                    {entity.nom_d_usage}
                     <br />
                     🏭 {entity.numero_ddecpp}
                     <br />

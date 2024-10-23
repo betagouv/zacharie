@@ -129,7 +129,7 @@ export default function SelectNextOwner() {
     }
     if (nextOwnerIsEntity) {
       nextOwner = nextOwner as unknown as SerializeFrom<Entity>;
-      return nextOwner?.raison_sociale;
+      return nextOwner?.nom_d_usage;
     }
     return undefined;
   }, [nextOwners, fei.fei_next_owner_user_id, fei.fei_next_owner_entity_id, nextOwnerIsUser, nextOwnerIsEntity]);
@@ -307,7 +307,7 @@ const NextOwnerOption = ({ potentielOwner, nextOwnerIsEntity, nextOwnerIsUser, u
   let label = "";
   if (nextOwnerIsEntity) {
     potentielOwner = potentielOwner as unknown as SerializeFrom<Entity>;
-    label = `${potentielOwner.raison_sociale} - ${potentielOwner.code_postal} ${potentielOwner.ville}`;
+    label = `${potentielOwner.nom_d_usage} - ${potentielOwner.code_postal} ${potentielOwner.ville}`;
   }
   if (nextOwnerIsUser) {
     potentielOwner = potentielOwner as unknown as SerializeFrom<User>;

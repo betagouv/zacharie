@@ -179,7 +179,7 @@ export default function FEICurrentIntermediaire() {
                       className="fr-breadcrumb__link"
                       aria-current={_intermediaire.id === intermediaire.id ? "step" : false}
                     >
-                      {_intermediaire.entity?.raison_sociale}
+                      {_intermediaire.entity?.nom_d_usage}
                     </button>
                   </li>
                 );

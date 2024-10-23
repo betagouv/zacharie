@@ -34,9 +34,9 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
     for (const _intermediaire of inetermediairesPopulated) {
       const _intermediaireCarcasse = _intermediaire.carcasses[carcasse.numero_bracelet];
       if (_intermediaireCarcasse?.commentaire) {
-        console.log("commentaire", `${_intermediaire.entity?.raison_sociale} : ${_intermediaireCarcasse?.commentaire}`);
+        console.log("commentaire", `${_intermediaire.entity?.nom_d_usage} : ${_intermediaireCarcasse?.commentaire}`);
         commentaires.push(
-          `Commentaire de ${_intermediaire.entity?.raison_sociale} : ${_intermediaireCarcasse?.commentaire}`,
+          `Commentaire de ${_intermediaire.entity?.nom_d_usage} : ${_intermediaireCarcasse?.commentaire}`,
         );
       }
     }

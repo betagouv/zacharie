@@ -22,7 +22,7 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
     for (const intermediaire of inetermediairesPopulated) {
       const intermediaireCarcasse = intermediaire.carcasses[carcasse.numero_bracelet];
       if (intermediaireCarcasse?.commentaire) {
-        commentaires.push(`${intermediaire.entity?.raison_sociale} : ${intermediaireCarcasse?.commentaire}`);
+        commentaires.push(`${intermediaire.entity?.nom_d_usage} : ${intermediaireCarcasse?.commentaire}`);
       }
     }
     return commentaires;

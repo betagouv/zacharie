@@ -411,7 +411,7 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
                     to={`/app/tableau-de-bord/admin/entite/${entity.id}`}
                     className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                   >
-                    {entity.raison_sociale}
+                    {entity.nom_d_usage}
                     <br />
                     {getUserRoleLabel(entity.type)}
                     <br />
@@ -447,7 +447,7 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
                 to={`/app/tableau-de-bord/admin/entite/${user.id}`}
                 className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
               >
-                {entity.raison_sociale}
+                {entity.nom_d_usage}
                 <br />
                 {entity.siret}
                 {entity.numero_ddecpp}

@@ -69,19 +69,19 @@ export default function AdminFeis() {
                             {responsable.type}&nbsp;:
                             <br />
                             {responsable.role ? getUserRoleLabel(responsable.role as UserRoles) : "N/A"}&nbsp;:{" "}
-                            {responsable.role ? (responsable.email! ?? responsable?.raison_sociale ?? "Inconnu") : ""}
+                            {responsable.role ? (responsable.email! ?? responsable?.nom_d_usage ?? "Inconnu") : ""}
                             <br />
                           </li>
                         );
                       }),
                       fei.intervenants!.map((intervenant, index) => {
-                        if (!intervenant.email && !intervenant.raison_sociale) {
+                        if (!intervenant.email && !intervenant.nom_d_usage) {
                           return null;
                         }
                         return (
                           <li key={index}>
                             {/* // @ts-expect-error intervenants is not null */}
-                            {intervenant.type}: {intervenant.email! ?? intervenant?.raison_sociale}
+                            {intervenant.type}: {intervenant.email! ?? intervenant?.nom_d_usage}
                             <br />
                           </li>
                         );

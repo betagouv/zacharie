@@ -152,7 +152,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               {ccgs.map((entity) => {
                 return (
                   <option key={entity.id} value={entity.id}>
-                    {entity.raison_sociale} - {entity.code_postal} {entity.ville} ({getUserRoleLabel(entity.type)})
+                    {entity.nom_d_usage} - {entity.code_postal} {entity.ville} ({getUserRoleLabel(entity.type)})
                   </option>
                 );
               })}
@@ -175,7 +175,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
                 {etgs.map((entity) => {
                   return (
                     <option key={entity.id} value={entity.id}>
-                      {entity.raison_sociale} - {entity.code_postal} {entity.ville} ({getUserRoleLabel(entity.type)})
+                      {entity.nom_d_usage} - {entity.code_postal} {entity.ville} ({getUserRoleLabel(entity.type)})
                     </option>
                   );
                 })}
@@ -190,7 +190,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               nativeInputProps={{
                 type: "text",
                 autoComplete: "off",
-                defaultValue: `${premierDetenteurDepotEntity?.raison_sociale} - ${premierDetenteurDepotEntity?.code_postal} ${premierDetenteurDepotEntity?.ville}`,
+                defaultValue: `${premierDetenteurDepotEntity?.nom_d_usage} - ${premierDetenteurDepotEntity?.code_postal} ${premierDetenteurDepotEntity?.ville}`,
               }}
             />
           )}
@@ -230,7 +230,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
           <Alert
             className="mt-8"
             severity="success"
-            description={`${premierDetenteurDepotEntity?.raison_sociale} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
+            description={`${premierDetenteurDepotEntity?.nom_d_usage} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
             title="Attribution effectuée"
           />
         )}

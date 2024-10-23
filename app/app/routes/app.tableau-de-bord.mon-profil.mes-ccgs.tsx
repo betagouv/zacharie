@@ -119,7 +119,7 @@ export default function MesCCGs() {
                         <>
                           {entity.numero_ddecpp}
                           <br />
-                          {entity.raison_sociale}
+                          {entity.nom_d_usage}
                           <br />
                           {entity.code_postal} {entity.ville}
                         </>

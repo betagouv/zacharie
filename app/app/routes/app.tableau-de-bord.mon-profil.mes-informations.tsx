@@ -485,7 +485,7 @@ function AccordionEntreprise({
                 }}
                 title={
                   <>
-                    {entity.raison_sociale}
+                    {entity.nom_d_usage}
                     <br />
                     {entity.code_postal} {entity.ville}
                   </>
@@ -522,7 +522,7 @@ function AccordionEntreprise({
             {remainingEntities.map((entity) => {
               return (
                 <option key={entity.id} value={entity.id}>
-                  {entity.raison_sociale} - {entity.code_postal} {entity.ville}
+                  {entity.nom_d_usage} - {entity.code_postal} {entity.ville}
                 </option>
               );
             })}

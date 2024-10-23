@@ -113,7 +113,7 @@ export default function AdminEntity() {
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <h1 className="fr-h2 fr-mb-2w">{entity.raison_sociale}</h1>
+          <h1 className="fr-h2 fr-mb-2w">{entity.nom_d_usage}</h1>
           <div className="p-4 pb-32 md:p-8 md:pb-0">
             <Tabs
               selectedTabId={selectedTabId}
@@ -130,6 +130,18 @@ export default function AdminEntity() {
                   preventScrollReset
                 >
                   <input type="hidden" name="route" value={`/api/admin/action/entite/${entity.id}`} />
+                  <div className="fr-fieldset__element">
+                    <Input
+                      label="Nom d'usage"
+                      nativeInputProps={{
+                        id: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                        name: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                        autoComplete: "off",
+                        required: true,
+                        defaultValue: entity.nom_d_usage ?? "",
+                      }}
+                    />
+                  </div>
                   <div className="fr-fieldset__element">
                     <Input
                       label="Raison Sociale"
@@ -416,7 +428,9 @@ function CoupledEntity() {
                 to={`/app/tableau-de-bord/admin/entite/${coupledEntity.id}`}
                 className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
               >
-                {coupledEntity.raison_sociale}
+                {coupledEntity.nom_d_usage}
+                <br />
+                Raison sociale: {coupledEntity.raison_sociale}
                 <br />
                 {coupledEntity.siret}
                 {coupledEntity.numero_ddecpp}
@@ -454,7 +468,7 @@ function CoupledEntity() {
                 >
                   {potentielCouple.type}
                   <br />
-                  {potentielCouple.raison_sociale}
+                  {potentielCouple.nom_d_usage}
                 </Link>
                 <Button
                   type="submit"

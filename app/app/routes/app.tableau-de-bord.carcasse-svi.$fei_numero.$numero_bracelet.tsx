@@ -51,7 +51,7 @@ export default function CarcasseEditSVI() {
     for (const intermediaire of inetermediairesPopulated) {
       const intermediaireCarcasse = intermediaire.carcasses[carcasse.numero_bracelet];
       if (intermediaireCarcasse?.commentaire) {
-        commentaires.push(`${intermediaire.entity?.raison_sociale} : ${intermediaireCarcasse?.commentaire}`);
+        commentaires.push(`${intermediaire.entity?.nom_d_usage} : ${intermediaireCarcasse?.commentaire}`);
       }
     }
     return commentaires;
@@ -70,7 +70,7 @@ export default function CarcasseEditSVI() {
   const premierDetenteurInput = useMemo(() => {
     const lines = [];
     if (premierDetenteurEntity) {
-      lines.push(premierDetenteurEntity.raison_sociale);
+      lines.push(premierDetenteurEntity.nom_d_usage);
       lines.push(premierDetenteurEntity.siret);
       lines.push(`${premierDetenteurEntity.code_postal} ${premierDetenteurEntity.ville}`);
       return lines;

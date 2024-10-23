@@ -131,8 +131,8 @@ export default function ConfirmCurrentOwner() {
         className="m-0 bg-white"
       >
         En tant que <b>{getUserRoleLabel(fei.fei_next_owner_role)}</b>
-        {nextOwnerEntity?.raison_sociale ? ` (${nextOwnerEntity?.raison_sociale})` : ""}, vous pouvez prendre en charge
-        cette fiche et les carcasses associées.
+        {nextOwnerEntity?.nom_d_usage ? ` (${nextOwnerEntity?.nom_d_usage})` : ""}, vous pouvez prendre en charge cette
+        fiche et les carcasses associées.
         <br />
         <Button type="submit" className="my-4 block" onClick={() => handlePriseEnCharge(false)}>
           Je prends en charge cette fiche et les carcasses associées

@@ -32,9 +32,9 @@ export default function CurrentOwner() {
       >
         Cette fiche est présentement sous la responsabilité
         <b> {getUserRoleLabelPrefixed(fei.fei_current_owner_role as UserRoles)}</b>.<br />
-        {currentOwnerEntity?.raison_sociale && (
+        {currentOwnerEntity?.nom_d_usage && (
           <>
-            <b>{currentOwnerEntity.raison_sociale}</b> - {currentOwnerEntity.code_postal} {currentOwnerEntity.ville}
+            <b>{currentOwnerEntity.nom_d_usage}</b> - {currentOwnerEntity.code_postal} {currentOwnerEntity.ville}
             <br />
           </>
         )}
