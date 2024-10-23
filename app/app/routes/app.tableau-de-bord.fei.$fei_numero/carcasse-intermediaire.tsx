@@ -124,6 +124,7 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
   const submitCarcasseAccept = () => {
     setCarcasseManquante(false);
     setCarcasseRefusCheckbox(false);
+    setRefus("");
     const form = new FormData(formRef.current!);
     form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, "");
     form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge, "true");
@@ -414,6 +415,7 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                           type: "submit",
                           nativeButtonProps: {
                             form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                            disabled: carcasseRefusCheckbox && !refus,
                             onClick: (e) => {
                               console.log("submit refus");
                               e.preventDefault();

@@ -92,7 +92,6 @@ AND HANDLE POST REQUESTS TO QUEUE WHEN OFFLINE
 
 self.addEventListener("fetch", (event: FetchEvent) => {
   if (event.request.method === "POST") {
-    console.log("AIAIAIAIE POST REQUEST", event.request.url);
     event.respondWith(handlePostRequest(event.request));
   } else {
     event.respondWith(handleFetchRequest(event.request));

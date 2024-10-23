@@ -56,6 +56,7 @@ export default function FEICurrentIntermediaire() {
         if (intermediaireCheckById[checkId].prise_en_charge) {
           carcassesApproved[checkId] = carcasse;
         } else if (intermediaireCheckById[checkId].manquante) {
+          console.log("MANQUANTE ICI", intermediaireCheckById[checkId]);
           carcassesManquantes[checkId] = carcasse;
         } else {
           carcassesRejetees[checkId] = carcasse;
@@ -118,6 +119,8 @@ export default function FEICurrentIntermediaire() {
     carcassesSorted.carcassesManquantes.length,
     intermediaire.check_finished_at,
   ]);
+
+  console.log({ carcassesSorted });
 
   const needSelectNextUser = useMemo(() => {
     if (fei.fei_current_owner_user_id !== user.id) {

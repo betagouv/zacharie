@@ -1,7 +1,6 @@
 // import * as zodSchemas from "prisma/generated/zod";
 import dayjs from "dayjs";
 import { SerializeFrom } from "@remix-run/node";
-import { redirect } from "@remix-run/react";
 import { type Fei, type Carcasse, type CarcasseIntermediaire } from "@prisma/client";
 import { type FeiLoaderData } from "@api/routes/api.fei.$fei_numero";
 import { type FeiUserLoaderData } from "@api/routes/api.fei-user.$fei_numero.$user_id";
