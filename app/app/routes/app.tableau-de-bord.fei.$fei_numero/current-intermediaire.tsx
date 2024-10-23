@@ -120,8 +120,6 @@ export default function FEICurrentIntermediaire() {
     intermediaire.check_finished_at,
   ]);
 
-  console.log({ carcassesSorted });
-
   const needSelectNextUser = useMemo(() => {
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;

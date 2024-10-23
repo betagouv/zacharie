@@ -97,8 +97,14 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
   const submitCarcasseRefus = () => {
     setCarcasseManquante(false);
     setCarcasseRefusCheckbox(true);
+    // with custom value for InputForSearchPrefilledData, sometimes the user doesnt press on the blue tag to confirm the refus
+    // so we need to get the value from the input directly
+    const refusInputValue = (document.getElementsByName("carcasse-refus")?.[0] as HTMLInputElement)?.value;
+    if (refus !== refusInputValue) {
+      setRefus(refusInputValue);
+    }
     const form = new FormData(formRef.current!);
-    form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, refus);
+    form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.refus, refusInputValue);
     form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge, "false");
     form.append(Prisma.CarcasseIntermediaireScalarFieldEnum.manquante, "false");
     console.log("ON ESTV ICI");
@@ -373,6 +379,7 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                   label="Vous refusez cette carcasse ? Indiquez le motif *"
                   hideDataWhenNoSearch={false}
                   required
+                  name="carcasse-refus"
                   hintText="Cliquez sur un bouton bleu ciel pour valider le motif"
                   placeholder="Tapez un motif de refus"
                   onSelect={setRefus}
