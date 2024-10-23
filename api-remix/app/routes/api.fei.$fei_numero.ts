@@ -206,6 +206,13 @@ export async function action(args: ActionFunctionArgs) {
       nextFei.svi_signed_at = new Date(formData.get(Prisma.FeiScalarFieldEnum.svi_signed_at) as string);
     }
   }
+  if (formData.has(Prisma.FeiScalarFieldEnum.svi_assigned_at)) {
+    if (formData.get(Prisma.FeiScalarFieldEnum.svi_assigned_at) === "") {
+      nextFei.svi_assigned_at = null;
+    } else {
+      nextFei.svi_assigned_at = new Date(formData.get(Prisma.FeiScalarFieldEnum.svi_assigned_at) as string);
+    }
+  }
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_entity_id)) {
     nextFei.svi_entity_id = (formData.get(Prisma.FeiScalarFieldEnum.svi_entity_id) as string) || null;
   }
@@ -227,6 +234,43 @@ export async function action(args: ActionFunctionArgs) {
     where: { numero: feiNumero },
     data: nextFei,
   });
+
+  if (existingFei.fei_next_owner_role !== UserRoles.SVI && savedFei.fei_next_owner_role === UserRoles.SVI) {
+    // this is the end of the FEI
+    // send notification to examinateur initial
+    const feiWithSvi = await prisma.fei.update({
+      where: { numero: feiNumero },
+      data: {
+        svi_entity_id: savedFei.fei_next_owner_entity_id,
+        svi_assigned_at: new Date(),
+      },
+    });
+    const examinateurInitial = await prisma.user.findUnique({ where: { id: feiWithSvi.examinateur_initial_user_id! } });
+    sendNotificationToUser({
+      user: examinateurInitial!,
+      title: `La fiche du ${feiWithSvi.date_mise_a_mort?.toLocaleDateString()} est prise en charge par l'ETG`,
+      body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
+      email: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
+      notificationLogAction: `FEI_ASSIGNED_TO_${feiWithSvi.fei_next_owner_role}_${feiWithSvi.numero}`,
+    });
+    if (feiWithSvi.examinateur_initial_user_id !== feiWithSvi.premier_detenteur_user_id) {
+      const premierDetenteur = await prisma.user.findUnique({ where: { id: feiWithSvi.premier_detenteur_user_id! } });
+      sendNotificationToUser({
+        user: premierDetenteur!,
+        title: `La fiche du ${feiWithSvi.date_mise_a_mort?.toLocaleDateString()} est prise en charge par l'ETG`,
+        body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
+        email: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
+        notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
+      });
+    }
+    return json({
+      ok: true,
+      data: {
+        fei: JSON.parse(JSON.stringify(feiWithSvi)) as SerializeFrom<Fei>,
+      },
+      error: "",
+    });
+  }
 
   if (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
     const nextOwnerId = formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) as string;

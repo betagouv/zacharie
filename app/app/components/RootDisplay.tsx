@@ -19,6 +19,7 @@ export default function RootDisplay({
   hideMinistereName?: boolean;
 }) {
   const isOnline = useIsOnline();
+  console.log("user", user);
   return (
     <>
       <Header
@@ -36,7 +37,7 @@ export default function RootDisplay({
           </span>
         }
         homeLinkProps={{
-          to: "/",
+          to: user?.activated ? "/app/tableau-de-bord" : "/",
           title: "Zacharie | Ministère de l'Agriculture",
         }}
         id="fr-header-header-with-quick-access-items"

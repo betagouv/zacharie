@@ -4,6 +4,7 @@ import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { CarcasseType, Prisma, UserRoles, type Carcasse } from "@prisma/client";
 import dayjs from "dayjs";
+import sendNotificationToUser from "~/services/notifications.server";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -199,14 +200,56 @@ export async function action(args: ActionFunctionArgs) {
     }
   }
 
-  console.log({ nextCarcasse });
-
   const updatedCarcasse = await prisma.carcasse.update({
     where: {
       numero_bracelet: existingCarcasse.numero_bracelet,
     },
     data: nextCarcasse,
   });
+
+  if (!existingCarcasse.svi_carcasse_saisie.length && updatedCarcasse.svi_carcasse_saisie.length) {
+    const [examinateurInitial, premierDetenteur] = await prisma.fei
+      .findUnique({
+        where: {
+          numero: existingCarcasse.fei_numero,
+        },
+        include: {
+          FeiExaminateurInitialUser: true,
+          FeiPremierDetenteurUser: true,
+        },
+      })
+      .then((fei) => {
+        return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
+      });
+
+    const email = [
+      `Carcasse de ${existingCarcasse.espece}`,
+      `Nombre d'animaux\u00A0: ${existingCarcasse.nombre_d_animaux}`,
+      `Numéro d'identification\u00A0: ${existingCarcasse.numero_bracelet}`,
+      `Décision de saisie\u00A0: ${updatedCarcasse.svi_carcasse_saisie.join(" - ")}`,
+      `Motifs de saisie\u00A0:\n${updatedCarcasse.svi_carcasse_saisie_motif.map((motif) => ` -> ${motif}`).join("\n")}`,
+      `Commentaire\u00A0:\n${updatedCarcasse.svi_carcasse_commentaire}`,
+      `Rendez-vous sur Zacharie pour consulter le détail de la carcasse : https://zacharie.agriculture.gouv.fr/carcasse-svi/${existingCarcasse.fei_numero}/${existingCarcasse.numero_bracelet}`,
+    ];
+
+    sendNotificationToUser({
+      user: examinateurInitial!,
+      title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
+      body: `Motif de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(", ")}`,
+      email: email.join("\n"),
+      notificationLogAction: `CARCASSE_SAISIE_${existingCarcasse.numero_bracelet}`,
+    });
+
+    if (premierDetenteur?.id !== examinateurInitial?.id) {
+      sendNotificationToUser({
+        user: premierDetenteur!,
+        title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
+        body: `Motif de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(", ")}`,
+        email: email.join("\n"),
+        notificationLogAction: `CARCASSE_SAISIE_${existingCarcasse.numero_bracelet}`,
+      });
+    }
+  }
 
   return json({
     ok: true,

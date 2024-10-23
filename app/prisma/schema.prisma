@@ -212,6 +212,7 @@ model Fei {
   premier_detenteur_date_depot_quelque_part               DateTime?
   premier_detenteur_depot_entity_id                       String?
   premier_detenteur_depot_sauvage                         String?
+  svi_assigned_at                                         DateTime?
   svi_entity_id                                           String?
   svi_user_id                                             String?
   svi_carcasses_saisies                                   Int?
@@ -367,4 +368,13 @@ model NotificationLog {
   User           User?             @relation(fields: [user_id], references: [id])
 
   @@index([user_id, action])
+}
+
+model CronJob {
+  id         String   @id @default(uuid())
+  unique_key String   @unique
+  name       String
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
 }

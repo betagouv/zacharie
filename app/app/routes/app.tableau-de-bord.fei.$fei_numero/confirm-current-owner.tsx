@@ -84,6 +84,9 @@ export default function ConfirmCurrentOwner() {
     if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.PREMIER_DETENTEUR) {
       formData.append(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
     }
+    if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.SVI) {
+      formData.append(Prisma.FeiScalarFieldEnum.svi_user_id, user.id);
+    }
     const nextFei = mergeFei(fei, formData);
     nextFei.append("route", `/api/fei/${fei.numero}`);
     fetcher.submit(nextFei, {
