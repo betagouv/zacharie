@@ -312,7 +312,7 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                         submitCarcasseAccept();
                       },
                     },
-                    label: "Carcasse acceptée",
+                    label: carcasse.type === CarcasseType.GROS_GIBIER ? "Carcasse acceptée" : "Lot accepté",
                   },
                   {
                     nativeInputProps: {
@@ -324,7 +324,7 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                         setCarcasseRefusCheckbox(true);
                       },
                     },
-                    label: "Carcasse refusée",
+                    label: carcasse.type === CarcasseType.GROS_GIBIER ? "Carcasse refusée" : "Lot refusé",
                   },
                   {
                     nativeInputProps: {
@@ -336,7 +336,7 @@ export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire
                         submitCarcasseManquante();
                       },
                     },
-                    label: "Carcasse manquante",
+                    label: carcasse.type === CarcasseType.GROS_GIBIER ? "Carcasse manquante" : "Lot manquant",
                   },
                 ]}
               />
