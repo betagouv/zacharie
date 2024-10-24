@@ -29,6 +29,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       data: {
         searchQuery,
         redirectUrl: `/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.numero_bracelet}`,
+        carcasse_numero_bracelet: carcasse.numero_bracelet,
+        fei_numero: "",
       },
       error: "",
     });
@@ -54,6 +56,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
         data: {
           searchQuery,
           redirectUrl: `/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.numero_bracelet}`,
+          carcasse_numero_bracelet: carcasse.numero_bracelet,
+          fei_numero: "",
         },
         error: "",
       });
@@ -72,6 +76,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       data: {
         searchQuery,
         redirectUrl: `/app/tableau-de-bord/fei/${fei.numero}`,
+        fei_numero: fei.numero,
+        carcasse_numero_bracelet: "",
       },
       error: "",
     });
@@ -82,6 +88,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     data: {
       searchQuery,
       redirectUrl: "",
+      fei_numero: "",
+      carcasse_numero_bracelet: "",
     },
     error: "Aucun élément ne correspond à votre recherche",
   });

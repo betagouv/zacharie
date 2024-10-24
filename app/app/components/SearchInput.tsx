@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import type { FeiSearchData } from "@api/routes/api.search";
-import { useLocation, useNavigate } from "@remix-run/react";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
 
 interface SearchInputProps {
@@ -14,19 +13,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
   const [value, setValue] = useState("");
   const [cachedValue, setCachedValue] = useState(value);
   const [error, setError] = useState("");
-  const [successUrl, setSuccessUrl] = useState("");
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    if (location.pathname === successUrl) {
-      setValue("");
-      setCachedValue("");
-      setError("");
-      searchRef.current?.blur();
-      document.getElementById("fr-header-header-with-quick-access-items-search-button")?.click();
-    }
-  }, [location.pathname, successUrl]);
+  const [successData, setSuccessData] = useState<FeiSearchData["data"] | null>(null);
 
   const searchDebounce = useRef<ReturnType<typeof setTimeout>>();
   const errorDebounce = useRef<ReturnType<typeof setTimeout>>();
@@ -38,7 +25,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
     searchDebounce.current = setTimeout(() => {
       if (value !== cachedValue) {
         setError("");
-        setSuccessUrl("");
+        setSuccessData(null);
         setValue(cachedValue);
         fetch(`${import.meta.env.VITE_API_URL}/api/search?q=${cachedValue}`, {
           method: "GET",
@@ -50,13 +37,12 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
           .then((response) => response.json())
           .then((data: FeiSearchData) => {
             if (data.data?.redirectUrl) {
-              setSuccessUrl(data.data.redirectUrl);
-              navigate(data.data.redirectUrl);
+              setSuccessData(data.data);
             }
             if (data.error) {
               errorDebounce.current = setTimeout(() => {
                 setError(data.error);
-                setSuccessUrl("");
+                setSuccessData(null);
               }, 3000);
             }
           });
@@ -89,7 +75,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
           />
         </div>
       )}
-      {!!successUrl && location.pathname !== successUrl && (
+      {!!successData && (
         <div className="flex w-full flex-row justify-start">
           <Alert
             onClose={() => setError("")}
@@ -97,7 +83,16 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
             closable
             id="search-success"
             severity="success"
-            title="Élément trouvé ! Redirection en cours..."
+            title={
+              <a href={successData.redirectUrl}>
+                {[
+                  successData.carcasse_numero_bracelet && `Carcasse/Lot ${successData.carcasse_numero_bracelet}`,
+                  successData.fei_numero && `Fiche trouvée ${successData.fei_numero}`,
+                ]
+                  .filter(Boolean)
+                  .join("\n")}
+              </a>
+            }
             className="w-full text-left"
           />
         </div>
