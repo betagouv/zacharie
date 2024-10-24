@@ -47,7 +47,7 @@ export async function action(args: ActionFunctionArgs) {
     },
   });
   if (!fei) {
-    return json({ ok: false, data: null, error: "La FEI n'existe pas" }, { status: 400 });
+    return json({ ok: false, data: null, error: "La fiche n'existe pas" }, { status: 400 });
   }
 
   let existingCarcasse = await prisma.carcasse.findUnique({

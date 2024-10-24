@@ -13,13 +13,13 @@ export async function action(args: ActionFunctionArgs) {
 
   const { fei_numero, intermediaire_id, numero_bracelet } = params;
   if (!fei_numero) {
-    return json({ ok: false, data: null, error: "Le numéro FEI est obligatoire" }, { status: 400 });
+    return json({ ok: false, data: null, error: "Le numéro de fiche est obligatoire" }, { status: 400 });
   }
   const existingFei = await prisma.fei.findUnique({
     where: { numero: fei_numero },
   });
   if (!existingFei) {
-    return json({ ok: false, data: null, error: "FEI not found" }, { status: 404 });
+    return json({ ok: false, data: null, error: "Fiche non trouvée" }, { status: 404 });
   }
   if (!numero_bracelet) {
     return json({ ok: false, data: null, error: "Le numéro de la carcasse est obligatoire" }, { status: 400 });
@@ -38,7 +38,7 @@ export async function action(args: ActionFunctionArgs) {
     where: { id: intermediaire_id },
   });
   if (!feiIntermediaire) {
-    return json({ ok: false, data: null, error: "FEI intermediaire not found" }, { status: 404 });
+    return json({ ok: false, data: null, error: "Intermediaire not found" }, { status: 404 });
   }
 
   const formData = await request.formData();

@@ -10,7 +10,7 @@ export async function clientLoader() {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
 
-  const newFeiNumero = `ZACH-FEI-${dayjs().format("YYYYMMDD")}-${user.id}-${dayjs().format("HHmmss")}`;
+  const newFeiNumero = `ZACH-${dayjs().format("YYYYMMDD")}-${user.id}-${dayjs().format("HHmmss")}`;
   const feiForm = new FormData();
   feiForm.set(Prisma.FeiScalarFieldEnum.numero, newFeiNumero);
   feiForm.set(Prisma.FeiScalarFieldEnum.created_by_user_id, user.id);

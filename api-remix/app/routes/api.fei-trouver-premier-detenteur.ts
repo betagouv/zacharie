@@ -18,7 +18,7 @@ export async function action(args: ActionFunctionArgs) {
     return json({ ok: false, data: null, error: "L'email est obligatoire" }, { status: 400 });
   }
   if (!formData.has(Prisma.FeiScalarFieldEnum.numero)) {
-    return json({ ok: false, data: null, error: "Le numéro de la FEI est obligatoire" }, { status: 400 });
+    return json({ ok: false, data: null, error: "Le numéro de la fiche est obligatoire" }, { status: 400 });
   }
   const fei = await prisma.fei.findUnique({
     where: {
@@ -27,7 +27,7 @@ export async function action(args: ActionFunctionArgs) {
     },
   });
   if (!fei) {
-    return json({ ok: false, data: null, error: "La FEI n'existe pas" }, { status: 400 });
+    return json({ ok: false, data: null, error: "La fiche n'existe pas" }, { status: 400 });
   }
   const nextPremierDetenteur = await prisma.user.findUnique({
     where: {
@@ -68,9 +68,9 @@ export async function action(args: ActionFunctionArgs) {
   if (nextPremierDetenteur.id !== user.id) {
     sendNotificationToUser({
       user: nextPremierDetenteur!,
-      title: "Vous avez une nouvelle FEI à traiter",
-      body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI. Rendez vous sur Zacharie pour la traiter.`,
-      email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle FEI, la ${fei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
+      title: "Vous avez une nouvelle fiche d'accompagnement du gibier sauvage à traiter",
+      body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche d'accompagnement du gibier sauvage. Rendez vous sur Zacharie pour la traiter.`,
+      email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche d'accompagnement du gibier sauvage, la ${fei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
       notificationLogAction: `FEI_ASSIGNED_TO_${UserRelationType.PREMIER_DETENTEUR}_${fei.numero}`,
     });
   }

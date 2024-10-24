@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json({ ok: false, data: null, error: "Unauthorized access" });
   }
 
-  // Fetch the FEI data along with the required intervenants
+  // Fetch the fiche data along with the required intervenants
   const feis = await prisma.fei.findMany({
     include: {
       FeiCurrentUser: { select: { email: true } }, // Fetching the current user's email

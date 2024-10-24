@@ -16,7 +16,7 @@ export async function action(args: ActionFunctionArgs) {
     return json({ ok: false, data: null, error: "L'identifiant du destinataire est obligatoire" }, { status: 400 });
   }
   if (!fei_numero) {
-    return json({ ok: false, data: null, error: "Le numéro de la FEI est obligatoire" }, { status: 400 });
+    return json({ ok: false, data: null, error: "Le numéro de la fiche est obligatoire" }, { status: 400 });
   }
   const fei = await prisma.fei.findUnique({
     where: {
@@ -24,7 +24,7 @@ export async function action(args: ActionFunctionArgs) {
     },
   });
   if (!fei) {
-    return json({ ok: false, data: null, error: "La FEI n'existe pas" }, { status: 400 });
+    return json({ ok: false, data: null, error: "La fiche n'existe pas" }, { status: 400 });
   }
 
   const formData = await request.formData();

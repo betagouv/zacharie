@@ -144,7 +144,7 @@ export default function useNavigationMenu() {
           },
         },
         {
-          text: "Liste des FEI",
+          text: "Liste des fiches",
           isActive: location.pathname === "/app/tableau-de-bord/admin/feis",
           linkProps: {
             href: "#",

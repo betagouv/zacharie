@@ -236,7 +236,7 @@ export async function action(args: ActionFunctionArgs) {
   });
 
   if (existingFei.fei_next_owner_role !== UserRoles.SVI && savedFei.fei_next_owner_role === UserRoles.SVI) {
-    // this is the end of the FEI
+    // this is the end of the fiche
     // send notification to examinateur initial
     const feiWithSvi = await prisma.fei.update({
       where: { numero: feiNumero },
@@ -275,7 +275,7 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
     const nextOwnerId = formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) as string;
     if (nextOwnerId !== user.id) {
-      console.log("need to send notification new FEI");
+      console.log("need to send notification new fiche");
       const nextOwner = await prisma.user.findUnique({ where: { id: nextOwnerId } });
       sendNotificationToUser({
         user: nextOwner!,
@@ -285,7 +285,7 @@ export async function action(args: ActionFunctionArgs) {
         notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
       });
     } else if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwnerId) {
-      console.log("need to send notification remove FEI");
+      console.log("need to send notification remove fiche");
       const exNextOwner = await prisma.user.findUnique({ where: { id: existingFei.fei_next_owner_user_id } });
       sendNotificationToUser({
         user: exNextOwner!,

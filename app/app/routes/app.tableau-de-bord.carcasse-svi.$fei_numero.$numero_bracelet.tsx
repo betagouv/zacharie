@@ -495,7 +495,7 @@ export default function CarcasseEditSVI() {
                   </sviCarcasseFetcher.Form>
                 </Accordion>
               )}
-              <Accordion titleAs="h2" defaultExpanded label="Résumé affiché dans la FEI 🔒">
+              <Accordion titleAs="h2" defaultExpanded label="Résumé affiché dans la fiche 🔒">
                 <CarcasseSVI carcasse={carcasse} canEdit={false} key={carcasse.updated_at} />
               </Accordion>
             </div>

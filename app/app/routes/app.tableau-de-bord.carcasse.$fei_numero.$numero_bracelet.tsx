@@ -589,7 +589,7 @@ export default function CarcasseReadAndWrite() {
                           {
                             label: `${
                               carcasse.examinateur_carcasse_sans_anomalie ? "J'ai certifié" : "Je certifie"
-                            } ne constater aucune anomalie sur ${Number(carcasse.nombre_d_animaux ?? 0) > 1 ? "les carcasses" : "la carcasse"}`,
+                            } ne pas constater d'anomalie sur ${Number(carcasse.nombre_d_animaux ?? 0) > 1 ? "les carcasses" : "la carcasse"}`,
                             hintText:
                               "Attention, les anomalies que vous omettez seront détectées par le collecteur et l’ETG et augmente significativement le taux de saisie. Une anomalie déclarée c’est moins de gâchis.",
                             nativeInputProps: {
