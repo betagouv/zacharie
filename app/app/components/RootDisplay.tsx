@@ -87,7 +87,7 @@ export default function RootDisplay({
       />
       {children}
       <Footer
-        accessibility="fully compliant"
+        accessibility="non compliant"
         contentDescription={`
         Zacharie est un service à destination des chasseurs et des acteurs de  la filière de valorisation des viandes de gibier sauvage (collecteurs,  ETG, SVI). Il permet de créer des fiches d’examen  initial en un format numérique unique, partagé, modifiable et traçable  par tous les acteurs.
         Dernière mise à jour le ${__VITE_BUILD_ID__}
