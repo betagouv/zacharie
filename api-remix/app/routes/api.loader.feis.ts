@@ -15,6 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         feisToTake: [],
         feisOngoing: [],
         feisDone: [],
+        feisOngoingForMyEntities: [],
       },
       {
         status: 401,
@@ -23,7 +24,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
   const feisUnderMyResponsability = await prisma.fei.findMany({
     where: {
-      svi_signed_at: null,
+      svi_assigned_at: null,
       fei_next_owner_user_id: null,
       fei_next_owner_entity_id: null,
       OR: [
@@ -55,7 +56,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
   const feisToTake = await prisma.fei.findMany({
     where: {
-      svi_signed_at: null,
+      svi_assigned_at: null,
       OR: [
         {
           fei_next_owner_user_id: user.id,
@@ -78,7 +79,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
   const feisOngoing = await prisma.fei.findMany({
     where: {
-      svi_signed_at: null,
+      svi_assigned_at: null,
       // fei_current_owner_user_id: { not: user.id },
       AND: [
         {
@@ -144,6 +145,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
+  const feisOngoingForMyEntities = await prisma.fei.findMany({
+    where: {
+      svi_assigned_at: null,
+      OR: [
+        {
+          FeiCurrentEntity: {
+            EntityRelatedWithUser: {
+              some: {
+                owner_id: user.id,
+                relation: EntityRelationType.WORKING_FOR,
+              },
+            },
+          },
+        },
+        {
+          FeiNextEntity: {
+            EntityRelatedWithUser: {
+              some: {
+                owner_id: user.id,
+                relation: EntityRelationType.WORKING_FOR,
+              },
+            },
+          },
+        },
+      ],
+    },
+    orderBy: {
+      updated_at: "desc",
+    },
+  });
   // console.log("feisUnderMyResponsability", feisUnderMyResponsability.length);
   // console.log("feisToTake", feisToTake.length);
   // console.log("feisOngoing", feisOngoing.length);
@@ -153,6 +184,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     feisUnderMyResponsability: JSON.parse(JSON.stringify(feisUnderMyResponsability)) as SerializeFrom<Array<Fei>>,
     feisToTake: JSON.parse(JSON.stringify(feisToTake)) as SerializeFrom<Array<Fei>>,
     feisOngoing: JSON.parse(JSON.stringify(feisOngoing)) as SerializeFrom<Array<Fei>>,
+    feisOngoingForMyEntities: JSON.parse(JSON.stringify(feisOngoingForMyEntities)) as SerializeFrom<Array<Fei>>,
   });
 }
 

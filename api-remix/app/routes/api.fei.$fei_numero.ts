@@ -139,6 +139,10 @@ export async function action(args: ActionFunctionArgs) {
         (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id) as string) || null;
     }
   }
+  if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache)) {
+    nextFei.fei_current_owner_user_name_cache =
+      (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache) as string) || null;
+  }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer)) {
     nextFei.fei_current_owner_wants_to_transfer =
       formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer) === "true" ? true : false;
@@ -152,6 +156,10 @@ export async function action(args: ActionFunctionArgs) {
       ) as string;
     }
   }
+  if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_name_cache)) {
+    nextFei.fei_current_owner_entity_name_cache =
+      (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_name_cache) as string) || null;
+  }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_current_owner_role)) {
     nextFei.fei_current_owner_role =
       (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) as UserRoles) || null;
@@ -159,6 +167,10 @@ export async function action(args: ActionFunctionArgs) {
   /*  Next Owner */
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
     nextFei.fei_next_owner_user_id = (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id) as string) || null;
+  }
+  if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_user_name_cache)) {
+    nextFei.fei_next_owner_user_name_cache =
+      (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_user_name_cache) as string) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
     if (!formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
@@ -175,6 +187,10 @@ export async function action(args: ActionFunctionArgs) {
         await prisma.entityRelations.create({ data: nextRelation });
       }
     }
+  }
+  if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_name_cache)) {
+    nextFei.fei_next_owner_entity_name_cache =
+      (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_name_cache) as string) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.fei_next_owner_role)) {
     nextFei.fei_next_owner_role = (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_role) as UserRoles) || null;

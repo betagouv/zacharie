@@ -20,10 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
   const feisDone = await prisma.fei.findMany({
     where: {
-      svi_assigned_at: {
-        not: null,
-      },
-
+      svi_assigned_at: { not: null },
       OR: [
         {
           examinateur_initial_user_id: user.id,
@@ -72,7 +69,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       fei_current_owner_role: true,
       fei_next_owner_role: true,
       commune_mise_a_mort: true,
-      svi_signed_at: true,
+      svi_assigned_at: true,
     },
     orderBy: {
       updated_at: "desc",
