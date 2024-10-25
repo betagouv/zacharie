@@ -84,6 +84,15 @@ export default function MesCCGs() {
             Si vous utilisez un Centre de Collecte du Gibier sauvage (CCG) pour entreposer votre gibier, vous pouvez
             l'identifier ici.
           </CallOut>
+          <CallOut colorVariant="purple-glycine" className="bg-white">
+            <strong>Attention: seuls les CCGs enregistrés par le Ministère de l'Agriculture sont disponibles.</strong>
+            <br /> Si ce n'est pas encore fait, la démarche est simple et rapide,{" "}
+            <a href="https://entreprendre.service-public.fr/vosdroits/R44572" className="fr-link fr-link--icon-right">
+              disponible ici sur https://entreprendre.service-public.fr/vosdroits/R44572.
+            </a>
+            <br />
+            Contactez-nous ensuite pour que nous l'enregistrions dans Zacharie.
+          </CallOut>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
               {!userCCGs.length && (
@@ -180,6 +189,13 @@ function InputCCG() {
       <Input
         label="Numéro du Centre de Collecte du Gibier sauvage (CCG)"
         className="!mb-0"
+        hintText={
+          <>
+            Votre CCG n'est pas encore enregistré ? Contactez-nous pour que nous l'ajoutions. Si vous ne l'avez pas
+            encore enregistré auprès du ministère,{" "}
+            <a href="https://entreprendre.service-public.fr/vosdroits/R44572">faites-le en cliquant ici</a>.
+          </>
+        }
         state={userCCGFetcher.data?.error ? "error" : "default"}
         stateRelatedMessage={userCCGFetcher.data?.error}
         nativeInputProps={{
