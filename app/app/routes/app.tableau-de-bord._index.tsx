@@ -178,7 +178,8 @@ export default function TableauDeBordIndex() {
           <section className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-0">
               <h2 className="fr-h3">
-                Fiches en cours où j'ai eu une intervention{feisOngoing.length > 0 ? ` (${feisOngoing.length})` : null}
+                Fiches en cours sur lesquelles je suis intervenu
+                {feisOngoing.length > 0 ? ` (${feisOngoing.length})` : null}
               </h2>
             </div>
             {feisOngoing.length ? (
