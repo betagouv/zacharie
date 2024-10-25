@@ -41,18 +41,18 @@ export default function LandingPage() {
                 En France, les chasseurs qui souhaitent <b>vendre ou céder</b> leurs carcasses sont dans l'
                 <b>obligation de transmettre l'ensemble des données sanitaires</b> (identification de l'animal, lésions
                 possibles comportement anormal, etc.) et les <b>données de traçabilité</b> (lieu de mise à mort, date,
-                acteurs qui prennent en charge la carcasse, etc.). Ces information sont consignées sur un document
-                papier qui suit la carcasse : c'est la fiche d'accompagnement du gibier sauvage appelée aussi la fiche
-                d'examen initial ou (FEI).
+                acteurs qui prennent en charge la carcasse, etc.) associées à ces carcasses. Ces informations sont
+                consignées sur un document papier qui suit la carcasse&nbsp;: c'est la fiche d'accompagnement du gibier
+                sauvage.
               </p>
             </div>
             <hr className="m-4 md:hidden" />
             <div className="my-8 md:col-start-2 md:row-start-2 md:m-0">
               <h3 className="fr-h3 text-center">Simplifiez vos démarches</h3>
               <p className="text-pretty text-justify font-normal text-gray-700 [&_b]:font-bold [&_b]:text-gray-900">
-                Zacharie est un <b>service public gratuit</b> pour ses utilisateurs conçu pour les chasseurs et les
+                Zacharie est un <b>service public gratuit</b> pour ses utilisateurs, conçu pour les chasseurs et les
                 acteurs de la filière de valorisation des viandes de gibier sauvage. Zacharie permet de créer des{" "}
-                <b>fiches d'examen initial (FEI)</b> en un{" "}
+                <b>fiche d'accompagnement du gibier sauvage</b> en un{" "}
                 <b>format numérique unique, partagé, modifiable et traçable</b> par tous les acteurs de la filière.
                 <br />
                 Zacharie est une <b>alternative officielle et numérique</b> à la démarche réalisée aujourd'hui sur
@@ -78,7 +78,7 @@ export default function LandingPage() {
                   <li className="ml-4 flex flex-col">
                     <h4 className="text-lg font-bold">Simplification des déclarations</h4>
                     <p className="ml-4 mt-1 text-sm md:ml-0 md:text-base">
-                      Créez et gérez vos fiches d'examen initial en quelques clics.
+                      Créez et gérez vos fiches en quelques clics.
                     </p>
                   </li>
                   <li className="ml-4 flex flex-col">
@@ -124,7 +124,7 @@ export default function LandingPage() {
                   <li className="ml-4 flex flex-col md:ml-0">
                     <h4 className="text-lg font-bold">Collaboration efficace</h4>
                     <p className="ml-4 mt-1 text-sm md:ml-0 md:text-base">
-                      Partagez et modifiez les FEI en toute simplicité.
+                      Partagez et modifiez les fiche d'accompagnement du gibier en toute simplicité.
                     </p>
                   </li>
                 </ul>
@@ -145,7 +145,7 @@ export default function LandingPage() {
                 <div className="flex flex-col">
                   <h4 className="text-lg font-bold md:text-2xl">Inscription</h4>
                   <p className="mt-1">
-                    Créez votre compte en quelques minutes et renseignez vos rôles dans la filière : chasseurs,
+                    Créez votre compte en quelques minutes et renseignez vos rôles dans la filière&nbsp;: chasseur,
                     examinateur ou encore centre de collecte.
                   </p>
                 </div>
@@ -153,10 +153,11 @@ export default function LandingPage() {
               <li className="flex items-center gap-4">
                 <p className="shrink-0 basis-20 pl-4 text-8xl font-bold text-green-600">2</p>
                 <div className="flex flex-col">
-                  <h4 className="text-lg font-bold md:text-2xl">Création d'une fiche d'examen initiale</h4>
+                  <h4 className="text-lg font-bold md:text-2xl">
+                    Création d'une fiche d'accompagnement du gibier sauvage
+                  </h4>
                   <p className="mt-1">
-                    Remplissez ou faites remplir vos fiches d'examen initial puis soumettez-les à vos partenaires en un
-                    clic.
+                    Remplissez ou faites remplir vos fiches puis soumettez-les à vos partenaires en un clic.
                   </p>
                 </div>
               </li>
@@ -193,9 +194,9 @@ export default function LandingPage() {
               <li className="flex items-center gap-4 md:flex-row-reverse md:text-right">
                 <p className="shrink-0 basis-20 pl-4 text-8xl font-bold text-green-600">2</p>
                 <div className="flex flex-col">
-                  <h4 className="text-lg font-bold md:text-2xl">Réception et validation des FEIs</h4>
+                  <h4 className="text-lg font-bold md:text-2xl">Réception et validation des fiches</h4>
                   <p className="mt-1">
-                    Vous verrez toutes les FEIs qui vous seront attribuées et pourrez les annoter suivant vos
+                    Vous verrez toutes les fiches qui vous seront attribuées et pourrez les annoter suivant vos
                     observations.
                   </p>
                 </div>
@@ -204,7 +205,7 @@ export default function LandingPage() {
                 <p className="shrink-0 basis-20 pl-4 text-8xl font-bold text-green-800">3</p>
                 <div className="flex flex-col">
                   <h4 className="text-lg font-bold md:text-2xl">Collaboration</h4>
-                  <p className="mt-1">Partagez et modifiez les FEIs avec les autres acteurs de la filière.</p>
+                  <p className="mt-1">Partagez et modifiez les fiches avec les autres acteurs de la filière.</p>
                 </div>
               </li>
             </ul>
