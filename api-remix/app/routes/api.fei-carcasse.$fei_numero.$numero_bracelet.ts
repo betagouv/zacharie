@@ -235,7 +235,7 @@ export async function action(args: ActionFunctionArgs) {
     sendNotificationToUser({
       user: examinateurInitial!,
       title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
-      body: `Motif de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(", ")}`,
+      body: `Motif${updatedCarcasse.svi_carcasse_saisie_motif.length > 1 ? "s" : ""} de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(", ")}`,
       email: email.join("\n"),
       notificationLogAction: `CARCASSE_SAISIE_${existingCarcasse.numero_bracelet}`,
     });
@@ -244,7 +244,7 @@ export async function action(args: ActionFunctionArgs) {
       sendNotificationToUser({
         user: premierDetenteur!,
         title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
-        body: `Motif de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(", ")}`,
+        body: `Motif${updatedCarcasse.svi_carcasse_saisie_motif.length > 1 ? "s" : ""} de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(", ")}`,
         email: email.join("\n"),
         notificationLogAction: `CARCASSE_SAISIE_${existingCarcasse.numero_bracelet}`,
       });

@@ -68,9 +68,9 @@ export async function action(args: ActionFunctionArgs) {
   if (nextPremierDetenteur.id !== user.id) {
     sendNotificationToUser({
       user: nextPremierDetenteur!,
-      title: "Vous avez une nouvelle fiche d'accompagnement du gibier sauvage à traiter",
-      body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche d'accompagnement du gibier sauvage. Rendez vous sur Zacharie pour la traiter.`,
-      email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche d'accompagnement du gibier sauvage, la ${fei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
+      title: "Vous avez une nouvelle fiche à traiter",
+      body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
+      email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${fei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
       notificationLogAction: `FEI_ASSIGNED_TO_${UserRelationType.PREMIER_DETENTEUR}_${fei.numero}`,
     });
   }
