@@ -1,7 +1,7 @@
 import { Button } from "@codegouvfr/react-dsfr/Button";
 import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
 import { redirect, useLoaderData } from "@remix-run/react";
-import { UserRoles } from "@prisma/client";
+import { UserRoles, type Entity } from "@prisma/client";
 import { getUserRoleLabel } from "@app/utils/get-user-roles-label";
 import dayjs from "dayjs";
 import type { FeisLoaderData } from "@api/routes/api.loader.feis";
@@ -10,6 +10,8 @@ import { useIsOnline } from "@app/components/OfflineMode";
 import { useEffect, useState } from "react";
 import ResponsiveTable from "@app/components/TableResponsive";
 import { loadFei } from "@app/db/fei.client";
+import { type MyRelationsLoaderData } from "@api/routes/api.loader.my-relations";
+import { getOngoingCellFeiUnderMyResponsability } from "@app/utils/get-ongoing-cell";
 
 export async function clientLoader() {
   try {
@@ -30,7 +32,12 @@ export async function clientLoader() {
     }
 
     const data = (await response.json()) as FeisLoaderData;
-    const allFeis = [...data.feisUnderMyResponsability, ...data.feisToTake, ...data.feisOngoing];
+    const allFeis = [
+      ...data.feisUnderMyResponsability,
+      ...data.feisToTake,
+      ...data.feisOngoing,
+      ...data.feisOngoingForMyEntities,
+    ];
     for (const fei of allFeis) {
       loadFei(fei.numero);
     }
@@ -56,18 +63,34 @@ export async function clientLoader() {
     // even if the data is not used here (it's used within a FEI, so in /api/fei/$fei_numero)
     // we want to cache the data before the user goes to the FEI page
     // for the offline mode to work properly
-    fetch(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`, {
+    const myRelationsData = (await fetch(`${import.meta.env.VITE_API_URL}/api/loader/my-relations`, {
       method: "GET",
       credentials: "include",
       headers: new Headers({
         Accept: "application/json",
         "Content-Type": "application/json",
       }),
-    });
+    }).then((res) => res.json())) as MyRelationsLoaderData;
+
+    const entities: Record<Entity["id"], Entity> = {};
+
+    for (const entity of [
+      ...(myRelationsData.data?.detenteursInitiaux || []),
+      ...(myRelationsData.data?.associationsDeChasse || []),
+      // ...myRelationsData.data?.examinateursInitiaux || [],
+      ...(myRelationsData.data?.ccgs || []),
+      ...(myRelationsData.data?.collecteursPro || []),
+      ...(myRelationsData.data?.etgs || []),
+      ...(myRelationsData.data?.svis || []),
+      ...(myRelationsData.data?.entitiesWorkingFor || []),
+    ]) {
+      entities[entity.id] = entity as Entity;
+    }
 
     return {
       ...data,
       ...doneData,
+      entities,
     };
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -79,7 +102,8 @@ export async function clientLoader() {
 export default function TableauDeBordIndex() {
   const data = useLoaderData<typeof clientLoader>()!;
   const user = data.user!;
-  const { feisDone, feisOngoing, feisToTake, feisUnderMyResponsability } = data;
+  const entities = data.entities!;
+  const { feisDone, feisOngoing, feisToTake, feisUnderMyResponsability, feisOngoingForMyEntities } = data;
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
@@ -130,11 +154,7 @@ export default function TableauDeBordIndex() {
                       dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
                       fei.premier_detenteur_name_cache!,
                       fei.commune_mise_a_mort!,
-                      getUserRoleLabel(
-                        fei.fei_next_owner_role && (fei.fei_next_owner_user_id || fei.fei_next_owner_entity_id)
-                          ? fei.fei_next_owner_role
-                          : fei.fei_current_owner_role!,
-                      ),
+                      <>{getOngoingCellFeiUnderMyResponsability(fei, entities)}</>,
                     ],
                   }))}
               />
@@ -174,7 +194,48 @@ export default function TableauDeBordIndex() {
                       dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
                       dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm"),
                       fei.commune_mise_a_mort!,
-                      getUserRoleLabel(fei.fei_next_owner_role ?? (fei.fei_current_owner_role as UserRoles)),
+                      <>{getOngoingCellFeiUnderMyResponsability(fei, entities)}</>,
+                    ],
+                  }))}
+              />
+            ) : (
+              <p className="m-8">Pas de fiche en cours</p>
+            )}
+            <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+              <Button
+                priority="tertiary"
+                iconId="ri-refresh-line"
+                disabled={!isOnline}
+                onClick={() => window.location.reload()}
+              >
+                Mettre à jour
+              </Button>
+              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                Haut de page
+              </a>
+            </div>
+          </section>
+          <section className="mb-6 bg-white md:shadow">
+            <div className="p-4 md:p-8 md:pb-0">
+              <h2 className="fr-h3">
+                Fiches en cours concernées par les sociétés pour lesquelles j'interviens{" "}
+                {feisOngoingForMyEntities.length > 0 ? ` (${feisOngoingForMyEntities.length})` : null}
+              </h2>
+            </div>
+            {feisOngoingForMyEntities.length ? (
+              <ResponsiveTable
+                headers={["Numéro", "Créée le", "Modifiée le", "Commune", "Étape en cours"]}
+                data={feisOngoingForMyEntities
+                  .filter((fei) => fei !== null)
+                  .map((fei) => ({
+                    link: `/app/tableau-de-bord/fei/${fei.numero}`,
+                    id: fei.numero,
+                    rows: [
+                      fei.numero!,
+                      dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
+                      dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm"),
+                      fei.commune_mise_a_mort!,
+                      <>{getOngoingCellFeiUnderMyResponsability(fei, entities)}</>,
                     ],
                   }))}
               />
@@ -202,12 +263,12 @@ export default function TableauDeBordIndex() {
               </p>
             )}
             <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">Fiches archivées{feisDone.length > 0 ? ` (${feisDone.length})` : null}</h2>
+              <h2 className="fr-h3">Fiches arrivées à terme{feisDone.length > 0 ? ` (${feisDone.length})` : null}</h2>
             </div>
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feisDone.length ? (
                 <ResponsiveTable
-                  headers={["Numéro", "Créée le", "Commune", "Inspection SVI le"]}
+                  headers={["Numéro", "Créée le", "Commune", "Arrivée à terme le"]}
                   data={feisDone
                     .filter((fei) => fei !== null)
                     .map((fei) => ({
@@ -217,7 +278,7 @@ export default function TableauDeBordIndex() {
                         fei.numero!,
                         dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
                         fei.commune_mise_a_mort!,
-                        dayjs(fei.svi_signed_at).format("DD/MM/YYYY à HH:mm"),
+                        dayjs(fei.svi_assigned_at).format("DD/MM/YYYY à HH:mm"),
                       ],
                     }))}
                 />

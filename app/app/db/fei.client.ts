@@ -45,6 +45,10 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
     created_by_user_id: mergedItem.created_by_user_id,
     resume_nombre_de_carcasses: mergedItem.resume_nombre_de_carcasses,
     fei_current_owner_user_id: mergedItem.fei_current_owner_user_id || null,
+    fei_current_owner_user_name_cache: mergedItem.fei_current_owner_user_name_cache || null,
+    fei_current_owner_entity_name_cache: mergedItem.fei_current_owner_entity_name_cache || null,
+    fei_next_owner_user_name_cache: mergedItem.fei_next_owner_user_name_cache || null,
+    fei_next_owner_entity_name_cache: mergedItem.fei_next_owner_entity_name_cache || null,
     fei_current_owner_entity_id: mergedItem.fei_current_owner_entity_id || null,
     fei_current_owner_role: mergedItem.fei_current_owner_role || null,
     fei_current_owner_wants_to_transfer:

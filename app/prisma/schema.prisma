@@ -194,11 +194,15 @@ model Fei {
   created_by_user_id                                      String
   resume_nombre_de_carcasses                              String?
   fei_current_owner_user_id                               String?
+  fei_current_owner_user_name_cache                       String?
   fei_current_owner_entity_id                             String?
+  fei_current_owner_entity_name_cache                     String?
   fei_current_owner_role                                  UserRoles?
   fei_current_owner_wants_to_transfer                     Boolean?
   fei_next_owner_user_id                                  String?
+  fei_next_owner_user_name_cache                          String?
   fei_next_owner_entity_id                                String?
+  fei_next_owner_entity_name_cache                        String?
   fei_next_owner_role                                     UserRoles?
   fei_prev_owner_user_id                                  String?
   fei_prev_owner_entity_id                                String?

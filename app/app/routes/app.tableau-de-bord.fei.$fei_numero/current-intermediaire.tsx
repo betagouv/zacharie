@@ -299,17 +299,25 @@ export default function FEICurrentIntermediaire() {
             value={intermediaire.id}
           />
           <div
-            className={["fr-fieldset__element", intermediaire.check_finished_at ? "pointer-events-none" : ""].join(" ")}
+            className={[
+              "fr-fieldset__element",
+              canEdit ? "" : "pointer-events-none",
+              intermediaire.check_finished_at ? "pointer-events-none" : "",
+            ].join(" ")}
           >
             <Checkbox
               options={[
                 {
                   label: labelCheckDone,
+                  hintText:
+                    !intermediaire.check_finished_at && !canEdit
+                      ? "Vous n'êtes pas en charge de cette fiche, vous ne pouvez pas modifier cette valeur"
+                      : "",
                   nativeInputProps: {
                     required: true,
                     name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
                     value: "true",
-                    disabled: !jobIsDone,
+                    disabled: !intermediaire.check_finished_at && !canEdit,
                     form: "form_intermediaire_check_finished_at",
                     readOnly: !!intermediaire.check_finished_at,
                     defaultChecked: intermediaire.check_finished_at ? true : false,
@@ -332,7 +340,7 @@ export default function FEICurrentIntermediaire() {
               />
             </div>
             {!intermediaire.check_finished_at && (
-              <Button type="submit" disabled={!jobIsDone}>
+              <Button type="submit" disabled={!canEdit}>
                 Enregistrer
               </Button>
             )}

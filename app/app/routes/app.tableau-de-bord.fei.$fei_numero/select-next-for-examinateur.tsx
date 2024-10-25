@@ -67,20 +67,36 @@ export default function SelectNextForExaminateur() {
           if (nextIsMe) {
             console.log("nextIsMe");
             formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
+            formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_user_name_cache, "");
             formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_role, "");
             formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
+            formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_name_cache, "");
             formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_role, UserRoles.PREMIER_DETENTEUR);
             formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, user.id);
+            formData.set(
+              Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache,
+              `${user.prenom} ${user.nom_de_famille}`,
+            );
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
-            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache, user.nom_de_famille ?? "");
+            formData.set(
+              Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache,
+              `${user.prenom} ${user.nom_de_famille}`,
+            );
           } else if (nextIsMyAssociation) {
-            console.log("nextIsMyAssociation");
             formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id, "");
             formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_role, "");
             formData.set(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id, "");
             formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_role, UserRoles.PREMIER_DETENTEUR);
             formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id, nextOwnerEntity.id);
+            formData.set(
+              Prisma.FeiScalarFieldEnum.fei_current_owner_entity_name_cache,
+              nextOwnerEntity.nom_d_usage ?? "",
+            );
             formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, user.id);
+            formData.set(
+              Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache,
+              `${user.prenom} ${user.nom_de_famille}`,
+            );
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id, nextOwnerEntity.id);
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache, nextOwnerEntity?.nom_d_usage ?? "");
@@ -88,7 +104,7 @@ export default function SelectNextForExaminateur() {
             console.log("nextIsSomeoneElse");
           }
           const nextFei = mergeFei(fei, formData);
-          nextFei.append("route", `/api/fei/${fei.numero}`);
+          nextFei.set("route", `/api/fei/${fei.numero}`);
           nextOwnerFetcher.submit(nextFei, {
             method: "POST",
             preventScrollReset: true,
