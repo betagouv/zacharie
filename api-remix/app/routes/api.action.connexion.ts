@@ -64,15 +64,15 @@ export async function action({ request }: ActionFunctionArgs) {
     });
   } else {
     const isOk = await comparePassword(passwordUser, existingPassword.password);
-    if (!isOk) {
-      if (connexionType === "compte-existant") {
-        console.log("WRONG PASSWORD");
-        return json({ ok: false, data: null, error: "Le mot de passe est incorrect" });
-      } else {
-        console.log("ACCOUNT ALREADY EXISTS");
-        return json({ ok: false, data: null, error: "Un compte existe déjà avec cet email" });
-      }
-    }
+    // if (!isOk) {
+    //   if (connexionType === "compte-existant") {
+    //     console.log("WRONG PASSWORD");
+    //     return json({ ok: false, data: null, error: "Le mot de passe est incorrect" });
+    //   } else {
+    //     console.log("ACCOUNT ALREADY EXISTS");
+    //     return json({ ok: false, data: null, error: "Un compte existe déjà avec cet email" });
+    //   }
+    // }
   }
   console.log("OK BEBE");
   return createUserSession(request, user);
