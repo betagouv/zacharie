@@ -260,10 +260,13 @@ async function handleFetchRequest(request: Request): Promise<Response> {
     return response.clone();
   }
 
-  return new Response(`Offline and data not available\n${JSON.stringify(request, null, 2)}`, {
-    status: 404,
-    headers: { "Content-Type": "text/plain" },
-  });
+  return new Response(
+    `Désolé, une erreur est survenue et votre requête n'a pas pu aboutir. Vous pouvez soit recharger votre page, et aussi transmettre une capture d'écran à l'équipe technique pour investiguer d'avantage.\nURL: ${request.url}\nmethod: ${request.method}\n`,
+    {
+      status: 404,
+      headers: { "Content-Type": "text/plain" },
+    },
+  );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
