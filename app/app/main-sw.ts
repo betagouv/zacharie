@@ -133,6 +133,10 @@ async function handleFetchRequest(request: Request): Promise<Response> {
     }
   }
 
+  if (request.url.startsWith("chrome-extension://")) {
+    return fetch(request);
+  }
+
   const cachedResponse = await caches.match(request);
   if (cachedResponse) {
     return cachedResponse;
