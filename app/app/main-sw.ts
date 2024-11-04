@@ -261,10 +261,24 @@ async function handleFetchRequest(request: Request): Promise<Response> {
   }
 
   return new Response(
-    `Désolé, une erreur est survenue et votre requête n'a pas pu aboutir. Vous pouvez soit recharger votre page, et aussi transmettre une capture d'écran à l'équipe technique pour investiguer d'avantage.\nURL: ${request.url}\nmethod: ${request.method}\n`,
+    `
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Erreur</title>
+    </head>
+    <body>
+        <h1>Désolé, une erreur est survenue et votre requête n'a pas pu aboutir.</h1>
+        <p>Vous pouvez soit <a href="#" onclick="window.location.reload();">recharger votre page</a>, ou transmettre une capture d'écran à l'équipe technique pour investiguer davantage.</p>
+        <p>URL: ${request.url}</p>
+        <p>Méthode: ${request.method}</p>
+    </body>
+    </html>
+    `,
     {
       status: 404,
-      headers: { "Content-Type": "text/plain" },
+      headers: { "Content-Type": "text/html" },
     },
   );
 }
