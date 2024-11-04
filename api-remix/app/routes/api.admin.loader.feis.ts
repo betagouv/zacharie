@@ -32,6 +32,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       },
       FeiSviEntity: { select: { nom_d_usage: true } },
     },
+    orderBy: { created_at: "desc" },
   });
 
   return json({
