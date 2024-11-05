@@ -454,16 +454,9 @@ export default function CarcasseReadAndWrite() {
                               clearInputOnClick
                               label="Ajouter une nouvelle anomalie"
                               hintText={
-                                <>
-                                  Voir le référentiel des anomalies de carcasse en{" "}
-                                  <button
-                                    type="button"
-                                    className="underline"
-                                    onClick={() => anomaliesCarcasseModal.open()}
-                                  >
-                                    cliquant ici
-                                  </button>
-                                </>
+                                <button type="button" onClick={() => anomaliesCarcasseModal.open()}>
+                                  Voir le référentiel des saisies de carcasse en <u className="inline">cliquant ici</u>
+                                </button>
                               }
                               hideDataWhenNoSearch
                               onSelect={(newAnomalie) => {
@@ -525,16 +518,9 @@ export default function CarcasseReadAndWrite() {
                                 label="Ajouter une nouvelle anomalie"
                                 clearInputOnClick
                                 hintText={
-                                  <>
-                                    Voir le référentiel des anomalies d'abats en{" "}
-                                    <button
-                                      type="button"
-                                      className="underline"
-                                      onClick={() => anomaliesAbatsModal.open()}
-                                    >
-                                      cliquant ici
-                                    </button>
-                                  </>
+                                  <button type="button" onClick={() => anomaliesAbatsModal.open()}>
+                                    Voir le référentiel des saisies d'abats en <u className="inline">cliquant ici</u>
+                                  </button>
                                 }
                                 hideDataWhenNoSearch
                                 onSelect={(newAnomalie) => {

@@ -133,12 +133,13 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
             <Select
               label="Centre de collecte"
               hint={
-                <>
+                <Link
+                  className="!bg-none !no-underline"
+                  to={`/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`}
+                >
                   Vous n'avez pas encore renseigné votre centre de collecte ? Vous pouvez le faire en{" "}
-                  <Link to={`/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`}>
-                    cliquant ici
-                  </Link>
-                </>
+                  <u className="inline">cliquant ici</u>
+                </Link>
               }
               className="!mb-0 grow"
               nativeSelectProps={{

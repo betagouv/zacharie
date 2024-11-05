@@ -327,12 +327,9 @@ export default function CarcasseEditSVI() {
                             data={saisieSviList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
                             label="Motif de la saisie *"
                             hintText={
-                              <>
-                                Voir le référentiel des saisies de carcasse en{" "}
-                                <button type="button" className="underline" onClick={() => saisieCarcasseModal.open()}>
-                                  cliquant ici
-                                </button>
-                              </>
+                              <button type="button" onClick={() => saisieCarcasseModal.open()}>
+                                Voir le référentiel des saisies de carcasse en <u className="inline">cliquant ici</u>
+                              </button>
                             }
                             hideDataWhenNoSearch
                             clearInputOnClick

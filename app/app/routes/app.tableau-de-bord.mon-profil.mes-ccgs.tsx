@@ -190,11 +190,10 @@ function InputCCG() {
         label="Numéro du Centre de Collecte du Gibier sauvage (CCG)"
         className="!mb-0"
         hintText={
-          <>
+          <a href="https://entreprendre.service-public.fr/vosdroits/R44572" className="bg-none">
             Votre CCG n'est pas encore enregistré ? Contactez-nous pour que nous l'ajoutions. Si vous ne l'avez pas
-            encore enregistré auprès du ministère,{" "}
-            <a href="https://entreprendre.service-public.fr/vosdroits/R44572">faites-le en cliquant ici</a>.
-          </>
+            encore enregistré auprès du ministère, <u className="inline">faites-le en cliquant ici</u>.
+          </a>
         }
         state={userCCGFetcher.data?.error ? "error" : "default"}
         stateRelatedMessage={userCCGFetcher.data?.error}

@@ -121,17 +121,14 @@ export default function NouvelleCarcasse() {
               <>
                 {!numeroBracelet &&
                   (defaultNumeroBracelet ? (
-                    <>
+                    <button
+                      type="button"
+                      className="inline text-left"
+                      onClick={() => setNumeroBracelet(defaultNumeroBracelet)}
+                    >
                       Votre chasse n'a pas de dispositif de marquage ?{" "}
-                      <button
-                        type="button"
-                        className="inline text-left underline"
-                        onClick={() => setNumeroBracelet(defaultNumeroBracelet)}
-                      >
-                        Cliquez ici pour utiliser {defaultNumeroBracelet}
-                      </button>
-                      .
-                    </>
+                      <u className="inline">Cliquez ici pour utiliser {defaultNumeroBracelet}</u>.
+                    </button>
                   ) : (
                     <>Veuillez renseigner la commune de mise à mort avant de rajouter une carcasse</>
                   ))}

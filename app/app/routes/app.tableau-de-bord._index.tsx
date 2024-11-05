@@ -134,7 +134,7 @@ export default function TableauDeBordIndex() {
               }}
               type="button"
             >
-              Vous êtes de retour en ligne. Cicquez <u>ici</u> pour rafraichir les données.
+              Vous êtes de retour en ligne. Cliquez <u>ici</u> pour rafraichir les données.
             </button>
           )}
           <h1 className="fr-h2 fr-mb-2w">Mes fiches d'accompagnement du gibier sauvage</h1>
