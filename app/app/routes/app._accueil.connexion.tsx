@@ -6,6 +6,7 @@ import type { ConnexionActionData } from "@api/routes/api.action.connexion";
 import { setCacheItem } from "@app/services/indexed-db.client";
 import { getUserOnboardingRoute } from "@app/utils/user-onboarded.client";
 import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
+import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
 
 type ConnexionType = "creation-de-compte" | "compte-existant";
 
@@ -47,16 +48,23 @@ export default function Connexion() {
   // Helper function to safely access error message
   const getErrorMessage = (field: string): string => {
     if (typeof actionData === "object" && actionData !== null && "error" in actionData) {
-      return actionData.error!.includes(field) ? actionData.error! : "";
+      if (!actionData.error) {
+        return "";
+      }
+      return actionData.error.includes?.(field) ? actionData.error! : "";
     }
     return "";
   };
+
+  const resetPasswordMessage = searchParams.get("reset-password-message");
 
   return (
     <main role="main" id="content">
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
+            {resetPasswordMessage && <CallOut>Réinitialisation de mot de passe {resetPasswordMessage}</CallOut>}
+            {actionData?.message && <CallOut>{actionData?.message}</CallOut>}
             <connexionFetcher.Form id="login_form" method="POST" className="fr-background-alt--blue-france p-4 md:p-8">
               <fieldset
                 className="fr-fieldset"
@@ -109,6 +117,25 @@ export default function Connexion() {
                     {connexionType === "creation-de-compte" ? <>Créer mon compte</> : <>Me connecter</>}
                   </Button>
                 </li>
+                {connexionType === "compte-existant" && (
+                  <li className="flex w-auto justify-start">
+                    <Button
+                      className="!text-xs text-gray-500"
+                      type="submit"
+                      priority="tertiary no outline"
+                      value="true"
+                      disabled={connexionFetcher.state !== "idle"}
+                      nativeButtonProps={{
+                        name: "reset-password",
+                      }}
+                    >
+                      <span>
+                        Mot de passe oublié ? <u className="inline">Cliquez ici</u>, vous recevrez un email avec un lien
+                        pour le réinitialiser
+                      </span>
+                    </Button>
+                  </li>
+                )}
               </ul>
               <hr />
               <p className="text-xs">

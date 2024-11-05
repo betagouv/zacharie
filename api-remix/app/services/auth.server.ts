@@ -110,7 +110,7 @@ export const createUserSession = async (request: Request, user: User) => {
   });
   const cookieValue = await commitSession(session);
   return json(
-    { ok: true, error: null, data: user },
+    { ok: true, error: null, message: null, data: user },
     {
       headers: {
         "Set-Cookie": cookieValue,

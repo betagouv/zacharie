@@ -7,23 +7,23 @@ import * as Sentry from "@sentry/remix";
 
 import { PassThrough } from "node:stream";
 
-import type { AppLoadContext, EntryContext } from "@remix-run/node";
+import type { AppLoadContext, EntryContext, ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
-export const handleError =
-  process.env.NODE_ENV === "production"
-    ? // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      Sentry.wrapHandleErrorWithSentry((error: unknown, { request }) => {
-        console.log("entry.server handleError", error);
-        // Custom handleError implementation
-      })
-    : (error: unknown) => {
-        console.log("entry.server handleError", error);
-        // Custom handleError implementation
-      };
+export const handleError = (error: unknown, rest: ActionFunctionArgs | LoaderFunctionArgs) => {
+  // @ts-expect-error 'error' is of type 'unknown'
+  if (error.status >= 500) {
+    if (process.env.NODE_ENV === "production") {
+      // @ts-expect-error Argument of type 'ActionFunctionArgs | LoaderFunctionArgs' is not assignable to parameter of type 'DataFunctionArgs'.
+      Sentry.sentryHandleError(error, rest);
+    }
+  }
+  // @ts-expect-error 'error' is of type 'unknown'
+  console.log("entry.server handleError", error.status, error);
+};
 
 const ABORT_DELAY = 5_000;
 
