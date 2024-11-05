@@ -120,13 +120,15 @@ model Entity {
 
 model Password {
   // cascade delete
-  id         String    @id @default(uuid())
-  user_id    String    @unique
-  password   String
-  created_at DateTime  @default(now())
-  updated_at DateTime  @default(now()) @updatedAt
-  deleted_at DateTime?
-  User       User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id                                String    @id @default(uuid())
+  user_id                           String    @unique
+  password                          String
+  reset_password_last_email_sent_at DateTime?
+  reset_password_token              String?
+  created_at                        DateTime  @default(now())
+  updated_at                        DateTime  @default(now()) @updatedAt
+  deleted_at                        DateTime?
+  User                              User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([user_id])
 }
