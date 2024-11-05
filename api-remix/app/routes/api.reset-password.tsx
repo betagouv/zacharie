@@ -45,7 +45,7 @@ export default function Index() {
               <b>OUVRIR L'APP</b> si vous l'avez installée
             </li>
             <li>
-              cliquer <a href={`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`}>ici</a> pour vous
+              cliquer <a href={`https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant`}>ici</a> pour vous
               connecter depuis un navigateur
             </li>
           </ul>
