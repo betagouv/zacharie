@@ -119,6 +119,8 @@ export default function TableauDeBordIndex() {
     }
   }, [user]);
 
+  const isOnlySvi = user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -136,87 +138,91 @@ export default function TableauDeBordIndex() {
             </button>
           )}
           <h1 className="fr-h2 fr-mb-2w">Mes fiches d'accompagnement du gibier sauvage</h1>
-          <section className="mb-6 bg-white md:shadow">
-            <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">
-                Fiches à compléter{feisAssigned.length > 0 ? ` (${feisAssigned.length})` : null}
-              </h2>
-            </div>
-            {feisAssigned.length ? (
-              <ResponsiveTable
-                headers={["Numéro", "Créée le", "Par la chasse", "Commune", "Étape en cours"]}
-                data={feisAssigned
-                  .filter((fei) => fei !== null)
-                  .map((fei) => ({
-                    link: `/app/tableau-de-bord/fei/${fei.numero}`,
-                    id: fei.numero,
-                    rows: [
-                      fei.numero!,
-                      dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
-                      fei.premier_detenteur_name_cache!,
-                      fei.commune_mise_a_mort!,
-                      <>{getOngoingCellFeiUnderMyResponsability(fei, entities)}</>,
-                    ],
-                  }))}
-              />
-            ) : (
-              <p className="m-8">Pas de fiche assignée</p>
-            )}
-            <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
-              <Button
-                priority="tertiary"
-                iconId="ri-refresh-line"
-                disabled={!isOnline}
-                onClick={() => window.location.reload()}
-              >
-                Mettre à jour
-              </Button>
-              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                Haut de page
-              </a>
-            </div>
-          </section>
-          <section className="mb-6 bg-white md:shadow">
-            <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">
-                Fiches en cours
-                {allFeisOngoing.length > 0 ? ` (${allFeisOngoing.length})` : null}
-              </h2>
-            </div>
-            {allFeisOngoing.length ? (
-              <ResponsiveTable
-                headers={["Numéro", "Créée le", "Modifiée le", "Commune", "Étape en cours"]}
-                data={allFeisOngoing
-                  .filter((fei) => fei !== null)
-                  .map((fei) => ({
-                    link: `/app/tableau-de-bord/fei/${fei.numero}`,
-                    id: fei.numero,
-                    rows: [
-                      fei.numero!,
-                      dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
-                      dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm"),
-                      fei.commune_mise_a_mort!,
-                      <>{getOngoingCellFeiUnderMyResponsability(fei, entities)}</>,
-                    ],
-                  }))}
-              />
-            ) : (
-              <p className="m-8">Pas de fiche en cours</p>
-            )}
-            <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
-              <Button
-                priority="tertiary"
-                iconId="ri-refresh-line"
-                disabled={!isOnline}
-                onClick={() => window.location.reload()}
-              >
-                Mettre à jour
-              </Button>
-              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                Haut de page
-              </a>
-            </div>
-          </section>
+          {!isOnlySvi && (
+            <>
+              <section className="mb-6 bg-white md:shadow">
+                <div className="p-4 md:p-8 md:pb-0">
+                  <h2 className="fr-h3">
+                    Fiches à compléter{feisAssigned.length > 0 ? ` (${feisAssigned.length})` : null}
+                  </h2>
+                </div>
+                {feisAssigned.length ? (
+                  <ResponsiveTable
+                    headers={["Numéro", "Créée le", "Par la chasse", "Commune", "Étape en cours"]}
+                    data={feisAssigned
+                      .filter((fei) => fei !== null)
+                      .map((fei) => ({
+                        link: `/app/tableau-de-bord/fei/${fei.numero}`,
+                        id: fei.numero,
+                        rows: [
+                          fei.numero!,
+                          dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
+                          fei.premier_detenteur_name_cache!,
+                          fei.commune_mise_a_mort!,
+                          <>{getOngoingCellFeiUnderMyResponsability(fei, entities)}</>,
+                        ],
+                      }))}
+                  />
+                ) : (
+                  <p className="m-8">Pas de fiche assignée</p>
+                )}
+                <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+                  <Button
+                    priority="tertiary"
+                    iconId="ri-refresh-line"
+                    disabled={!isOnline}
+                    onClick={() => window.location.reload()}
+                  >
+                    Mettre à jour
+                  </Button>
+                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                    Haut de page
+                  </a>
+                </div>
+              </section>
+              <section className="mb-6 bg-white md:shadow">
+                <div className="p-4 md:p-8 md:pb-0">
+                  <h2 className="fr-h3">
+                    Fiches en cours
+                    {allFeisOngoing.length > 0 ? ` (${allFeisOngoing.length})` : null}
+                  </h2>
+                </div>
+                {allFeisOngoing.length ? (
+                  <ResponsiveTable
+                    headers={["Numéro", "Créée le", "Modifiée le", "Commune", "Étape en cours"]}
+                    data={allFeisOngoing
+                      .filter((fei) => fei !== null)
+                      .map((fei) => ({
+                        link: `/app/tableau-de-bord/fei/${fei.numero}`,
+                        id: fei.numero,
+                        rows: [
+                          fei.numero!,
+                          dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
+                          dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm"),
+                          fei.commune_mise_a_mort!,
+                          <>{getOngoingCellFeiUnderMyResponsability(fei, entities)}</>,
+                        ],
+                      }))}
+                  />
+                ) : (
+                  <p className="m-8">Pas de fiche en cours</p>
+                )}
+                <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+                  <Button
+                    priority="tertiary"
+                    iconId="ri-refresh-line"
+                    disabled={!isOnline}
+                    onClick={() => window.location.reload()}
+                  >
+                    Mettre à jour
+                  </Button>
+                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                    Haut de page
+                  </a>
+                </div>
+              </section>
+            </>
+          )}
           <section className="mb-6 bg-white md:shadow">
             {!isOnline && (
               <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
@@ -224,12 +230,15 @@ export default function TableauDeBordIndex() {
               </p>
             )}
             <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">Fiches clôturées {feisDone.length > 0 ? ` (${feisDone.length})` : null}</h2>
+              <h2 className="fr-h3">
+                {isOnlySvi ? "Fiches sous ma responsabilité" : "Fiches clôturées"}{" "}
+                {feisDone.length > 0 ? ` (${feisDone.length})` : null}
+              </h2>
             </div>
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feisDone.length ? (
                 <ResponsiveTable
-                  headers={["Numéro", "Créée le", "Commune", "Arrivée à terme le"]}
+                  headers={["Numéro", "Créée le", "Commune", isOnlySvi ? "Réceptionnée le" : "Clôturée le"]}
                   data={feisDone
                     .filter((fei) => fei !== null)
                     .map((fei) => ({
