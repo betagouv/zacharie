@@ -38,8 +38,8 @@ export async function action({ request }: ActionFunctionArgs) {
           return json({
             ok: false,
             data: null,
-            message: null,
-            error: `Un email de réinitialisation a déjà été envoyé, veuillez patienter encore ${5 - sentMinutesAgo} minutes`,
+            message: `Un email de réinitialisation a déjà été envoyé, veuillez patienter encore ${5 - sentMinutesAgo} minutes`,
+            error: null,
           });
         }
       }

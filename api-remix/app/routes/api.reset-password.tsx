@@ -21,29 +21,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
   await prisma.password.delete({
     where: { user_id: password.user_id },
   });
-  await prisma.user.update({
-    where: { id: password.user_id },
-    data: { deleted_at: new Date() },
-  });
   return json({ ok: true });
 }
 
 export default function Index() {
   return (
-    <div>
-      <h1>Réinitialisation de mot de passe</h1>
-      <p
-        style={{
-          fontFamily: "Arial, sans-serif",
-        }}
-      >
-        Votre mot de passe a été réinitialisé avec succès.
-        <br /> Vous pouvez maintenant vous connecter avec votre nouveau mot de passe, soit en ouvrant l'app si vous
-        l'avez installée, soit en cliquant sur le lien suivant : <a href={import.meta.env.VITE_APP_URL}>
-          Se connecter
-        </a>{" "}
-        pour vous connecter depuis un navigateur
-      </p>
-    </div>
+    <>
+      <style>
+        {`
+      * {
+        font-family: Arial, sans-serif;
+      }
+    `}
+      </style>
+      <div>
+        <h1>Réinitialisation de mot de passe</h1>
+        <p>
+          Votre mot de passe a été réinitialisé avec succès.
+          <br />
+          <br /> Vous pouvez maintenant&nbsp;
+          <ul>
+            <li>
+              <b>OUVRIR L'APP</b> si vous l'avez installée
+            </li>
+            <li>
+              cliquer <a href={`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`}>ici</a> pour vous
+              connecter depuis un navigateur
+            </li>
+          </ul>
+        </p>
+      </div>
+    </>
   );
 }
