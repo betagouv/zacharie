@@ -109,12 +109,20 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
             Inspection SVI&nbsp;:
             {carcasse.svi_carcasse_saisie.length > 0 ? (
               <>
-                {carcasse.svi_carcasse_saisie.map((type, index) => {
+                {carcasse.svi_carcasse_saisie.map((type, index, svi_carcasse_saisie) => {
                   if (index === 0) {
                     // Saisie totale ou saisie partielle
                     return (
                       <span className="m-0 ml-2 block font-medium" key={type + index}>
                         {type}
+                      </span>
+                    );
+                  }
+                  if (svi_carcasse_saisie[0] === "Saisie partielle") {
+                    const nombreAnimaux = type;
+                    return (
+                      <span className="m-0 ml-2 block font-medium" key={type + index}>
+                        - {nombreAnimaux} animaux
                       </span>
                     );
                   }
