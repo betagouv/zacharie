@@ -27,7 +27,7 @@ export default function useNavigationMenu() {
   const isOnlyExaminateurInitial = isExaminateurInitial && user!.roles.length === 1;
   const isAdmin = user!.roles.includes(UserRoles.ADMIN);
 
-  const profileMenu = [
+  const profileMenu: Item[] = [
     {
       text: "Mes roles",
       isActive: location.pathname === "/app/tableau-de-bord/mon-profil/mes-roles",
@@ -64,6 +64,14 @@ export default function useNavigationMenu() {
       to: "/app/tableau-de-bord/mon-profil/mes-notifications",
     },
   });
+  profileMenu.push({
+    text: `Déconnecter ${user?.email}`,
+    linkProps: {
+      onClick: handleLogout,
+      type: "submit",
+      href: "#",
+    },
+  });
 
   const feiMenu = [
     {
@@ -73,7 +81,7 @@ export default function useNavigationMenu() {
     },
   ];
   if (isExaminateurInitial) {
-    feiMenu.push({
+    feiMenu.unshift({
       text: "Nouvelle fiche",
       isActive: location.pathname === "/app/tableau-de-bord/fei/nouvelle",
       linkProps: {
@@ -84,18 +92,23 @@ export default function useNavigationMenu() {
   }
 
   const navigationBase: MainNavigationProps.Item[] = [
+    ...feiMenu,
     {
       text: "Mon profil",
       isActive: location.pathname.startsWith("/app/tableau-de-bord/mon-profil"),
       menuLinks: profileMenu,
     },
-    ...feiMenu,
     {
-      text: `Déconnecter ${user?.email}`,
+      text: "Obtenir la dernière version de l'app",
       linkProps: {
-        onClick: handleLogout,
-        type: "submit",
         href: "#",
+        onClick: () => {
+          if (isOnline) {
+            clearCache().then(() => window.location.reload());
+          } else {
+            alert("Vous devez être connecté à internet pour effectuer cette action");
+          }
+        },
       },
     },
     {
@@ -154,20 +167,6 @@ export default function useNavigationMenu() {
       ],
     });
   }
-
-  navigationBase.push({
-    text: "Obtenir la dernière version de l'app",
-    linkProps: {
-      href: "#",
-      onClick: () => {
-        if (isOnline) {
-          clearCache().then(() => window.location.reload());
-        } else {
-          alert("Vous devez être connecté à internet pour effectuer cette action");
-        }
-      },
-    },
-  });
 
   return navigationBase;
 }
