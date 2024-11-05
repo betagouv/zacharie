@@ -9,13 +9,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!password) {
     const message = encodeURIComponent("Le lien de réinitialisation de mot de passe est invalide. Veuillez réessayer.");
     return redirect(
-      `${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant&reset-password-message=${message}`,
+      `https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant&reset-password-message=${message}`,
     );
   }
   if (dayjs().diff(password.reset_password_last_email_sent_at, "minutes") > 60) {
     const message = encodeURIComponent("Le lien de réinitialisation de mot de passe a expiré. Veuillez réessayer.");
     return redirect(
-      `${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant&reset-password-message=${message}`,
+      `https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant&reset-password-message=${message}`,
     );
   }
   await prisma.password.delete({
@@ -45,7 +45,7 @@ export default function Index() {
               <b>OUVRIR L'APP</b> si vous l'avez installée
             </li>
             <li>
-              cliquer <a href={`${import.meta.env.VITE_APP_URL}/app/connexion?type=compte-existant`}>ici</a> pour vous
+              cliquer <a href={`https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant`}>ici</a> pour vous
               connecter depuis un navigateur
             </li>
           </ul>

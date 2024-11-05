@@ -48,7 +48,7 @@ export async function action({ request }: ActionFunctionArgs) {
         where: { user_id: user.id },
         data: { reset_password_token: token, reset_password_last_email_sent_at: new Date() },
       });
-      const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : ${import.meta.env.VITE_API_URL}/api/reset-password?token=${token}`;
+      const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : https://api.zacharie.beta.gouv.fr/api/reset-password?token=${token}`;
       sendEmail({
         emails: import.meta.env.DEV ? ["arnaud@ambroselli.io"] : [user.email!],
         subject: "[Zacharie] Réinitialisation de votre mot de passe",
