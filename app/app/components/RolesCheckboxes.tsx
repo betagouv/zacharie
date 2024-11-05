@@ -39,7 +39,7 @@ export default function RolesCheckBoxes({
     },
     {
       label: "Premier Détenteur",
-      hintText: "Vous êtes un chasseur, une société de chasse, une association de chasse",
+      hintText: "Vous êtes un chasseur, une société, une association de chasse",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.PREMIER_DETENTEUR,
