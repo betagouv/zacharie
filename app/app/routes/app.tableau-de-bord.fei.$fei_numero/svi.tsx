@@ -71,7 +71,7 @@ export default function FEI_SVI() {
   // }, [carcassesSorted.carcassesToCheck.length]);
 
   const labelInspectionDone = useMemo(() => {
-    let label = "J'ai fini l'inspection de toutes les carcasses.";
+    let label = "J'ai fini l'inspection de toutes les carcasses et je clôture la fiche.";
     const nbCarcassesValidated = carcassesSorted.carcassesValidated?.length;
     if (nbCarcassesValidated > 0) {
       if (nbCarcassesValidated === 1) {
