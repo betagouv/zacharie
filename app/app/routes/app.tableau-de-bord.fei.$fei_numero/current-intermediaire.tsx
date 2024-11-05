@@ -199,6 +199,9 @@ export default function FEICurrentIntermediaire() {
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >
+          <p className="text-sm text-gray-600">
+            Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
+          </p>
           {carcassesUnsorted.map((carcasse) => {
             return (
               <Fragment key={carcasse.numero_bracelet}>

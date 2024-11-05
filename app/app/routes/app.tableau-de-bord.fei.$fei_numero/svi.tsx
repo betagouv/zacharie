@@ -104,6 +104,7 @@ export default function FEI_SVI() {
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >
+          <p className="text-sm text-gray-600">Veuillez cliquer sur une carcasse pour la saisir ou l'annoter</p>
           {carcassesUnsorted.map((carcasse) => {
             return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
           })}

@@ -20,7 +20,7 @@ interface CarcasseIntermediaireProps {
   intermediaire: SerializeFrom<typeof clientLoader>["inetermediairesPopulated"][0];
 }
 
-export default function CarcasseIntermediaire({ carcasse, canEdit, intermediaire }: CarcasseIntermediaireProps) {
+export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermediaire }: CarcasseIntermediaireProps) {
   const { fei, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
   const formFetcher = useFetcher<CarcasseIntermediaireActionData>({
     key: `intermediaire-carcasse-form-${carcasse.numero_bracelet}`,
