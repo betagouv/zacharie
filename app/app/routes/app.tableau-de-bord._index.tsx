@@ -107,6 +107,7 @@ export default function TableauDeBordIndex() {
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
+  const allFeisOngoing = [...feisOngoing, ...feisOngoingForMyEntities];
   const [showBackOnlineRefresh, setShowBackOnlineRefresh] = useState(false);
   const isOnline = useIsOnline(() => {
     setShowBackOnlineRefresh(true);
@@ -178,55 +179,14 @@ export default function TableauDeBordIndex() {
           <section className="mb-6 bg-white md:shadow">
             <div className="p-4 md:p-8 md:pb-0">
               <h2 className="fr-h3">
-                Fiches en cours sur lesquelles je suis intervenu
-                {feisOngoing.length > 0 ? ` (${feisOngoing.length})` : null}
+                Fiches en cours
+                {allFeisOngoing.length > 0 ? ` (${allFeisOngoing.length})` : null}
               </h2>
             </div>
-            {feisOngoing.length ? (
+            {allFeisOngoing.length ? (
               <ResponsiveTable
                 headers={["Numéro", "Créée le", "Modifiée le", "Commune", "Étape en cours"]}
-                data={feisOngoing
-                  .filter((fei) => fei !== null)
-                  .map((fei) => ({
-                    link: `/app/tableau-de-bord/fei/${fei.numero}`,
-                    id: fei.numero,
-                    rows: [
-                      fei.numero!,
-                      dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
-                      dayjs(fei.updated_at).format("DD/MM/YYYY à HH:mm"),
-                      fei.commune_mise_a_mort!,
-                      <>{getOngoingCellFeiUnderMyResponsability(fei, entities)}</>,
-                    ],
-                  }))}
-              />
-            ) : (
-              <p className="m-8">Pas de fiche en cours</p>
-            )}
-            <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
-              <Button
-                priority="tertiary"
-                iconId="ri-refresh-line"
-                disabled={!isOnline}
-                onClick={() => window.location.reload()}
-              >
-                Mettre à jour
-              </Button>
-              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                Haut de page
-              </a>
-            </div>
-          </section>
-          <section className="mb-6 bg-white md:shadow">
-            <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">
-                Fiches en cours concernées par les sociétés pour lesquelles j'interviens{" "}
-                {feisOngoingForMyEntities.length > 0 ? ` (${feisOngoingForMyEntities.length})` : null}
-              </h2>
-            </div>
-            {feisOngoingForMyEntities.length ? (
-              <ResponsiveTable
-                headers={["Numéro", "Créée le", "Modifiée le", "Commune", "Étape en cours"]}
-                data={feisOngoingForMyEntities
+                data={allFeisOngoing
                   .filter((fei) => fei !== null)
                   .map((fei) => ({
                     link: `/app/tableau-de-bord/fei/${fei.numero}`,
@@ -264,7 +224,7 @@ export default function TableauDeBordIndex() {
               </p>
             )}
             <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">Fiches arrivées à terme{feisDone.length > 0 ? ` (${feisDone.length})` : null}</h2>
+              <h2 className="fr-h3">Fiches clôturées {feisDone.length > 0 ? ` (${feisDone.length})` : null}</h2>
             </div>
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feisDone.length ? (
