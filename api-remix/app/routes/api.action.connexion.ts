@@ -51,7 +51,7 @@ export async function action({ request }: ActionFunctionArgs) {
       const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : ${import.meta.env.VITE_API_URL}/api/reset-password?token=${token}`;
       sendEmail({
         emails: import.meta.env.DEV ? ["arnaud@ambroselli.io"] : [user.email!],
-        subject: "Réinitialisation de votre mot de passe",
+        subject: "[Zacharie] Réinitialisation de votre mot de passe",
         text,
         html: text,
       });
