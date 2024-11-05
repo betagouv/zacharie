@@ -3,7 +3,7 @@ import { useFetcher, useLoaderData } from "@remix-run/react";
 import { Input } from "@codegouvfr/react-dsfr/Input";
 import { clientLoader } from "./route";
 import UserNotEditable from "@app/components/UserNotEditable";
-import { Prisma, UserRoles } from "@prisma/client";
+import { CarcasseType, Prisma, UserRoles } from "@prisma/client";
 import InputNotEditable from "@app/components/InputNotEditable";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
@@ -24,11 +24,9 @@ export default function FEIExaminateurInitial() {
 
   const canEdit = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
-      console.log("not examinateur");
       return false;
     }
     if (fei.examinateur_initial_approbation_mise_sur_le_marche) {
-      console.log("already approved");
       return false;
     }
     return true;
@@ -100,14 +98,23 @@ export default function FEIExaminateurInitial() {
     return notReady;
   }, [carcasses]);
 
+  const onlyPetitGibier = useMemo(() => {
+    for (const carcasse of carcasses) {
+      if (carcasse?.type !== CarcasseType.PETIT_GIBIER) {
+        return false;
+      }
+    }
+    return true;
+  }, [carcasses]);
+
   const jobIsDone = useMemo(() => {
-    if (
-      !fei.date_mise_a_mort ||
-      !fei.commune_mise_a_mort ||
-      !fei.heure_mise_a_mort_premiere_carcasse ||
-      !fei.heure_evisceration_derniere_carcasse
-    ) {
+    if (!fei.date_mise_a_mort || !fei.commune_mise_a_mort || !fei.heure_mise_a_mort_premiere_carcasse) {
       return false;
+    }
+    if (!onlyPetitGibier) {
+      if (!fei.heure_evisceration_derniere_carcasse) {
+        return false;
+      }
     }
     if (carcasses.length === 0) {
       return false;
@@ -116,7 +123,7 @@ export default function FEIExaminateurInitial() {
       return false;
     }
     return true;
-  }, [fei, carcassesNotReady, carcasses]);
+  }, [fei, carcassesNotReady, carcasses, onlyPetitGibier]);
 
   return (
     <>
@@ -186,30 +193,32 @@ export default function FEIExaminateurInitial() {
             }}
           >
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
-            <div className="fr-fieldset__element">
-              <Component
-                label="Heure d'éviscération de la dernière carcasse"
-                nativeInputProps={{
-                  id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                  name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                  type: "time",
-                  required: true,
-                  autoComplete: "off",
-                  onBlur: (e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget.form as HTMLFormElement);
-                    formData.append(Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse, e.target.value);
-                    const nextFei = mergeFei(fei, formData);
-                    nextFei.append("route", `/api/fei/${fei.numero}`);
-                    approbationFetcher.submit(nextFei, {
-                      method: "POST",
-                      preventScrollReset: true,
-                    });
-                  },
-                  defaultValue: fei?.heure_evisceration_derniere_carcasse ?? "",
-                }}
-              />
-            </div>
+            {!onlyPetitGibier && (
+              <div className="fr-fieldset__element">
+                <Component
+                  label="Heure d'éviscération de la dernière carcasse"
+                  nativeInputProps={{
+                    id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                    name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                    type: "time",
+                    required: true,
+                    autoComplete: "off",
+                    onBlur: (e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget.form as HTMLFormElement);
+                      formData.append(Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse, e.target.value);
+                      const nextFei = mergeFei(fei, formData);
+                      nextFei.append("route", `/api/fei/${fei.numero}`);
+                      approbationFetcher.submit(nextFei, {
+                        method: "POST",
+                        preventScrollReset: true,
+                      });
+                    },
+                    defaultValue: fei?.heure_evisceration_derniere_carcasse ?? "",
+                  }}
+                />
+              </div>
+            )}
             <div
               className={[
                 "fr-fieldset__element",
