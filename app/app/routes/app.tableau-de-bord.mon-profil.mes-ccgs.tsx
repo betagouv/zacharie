@@ -88,7 +88,8 @@ export default function MesCCGs() {
             <strong>Attention: seuls les CCGs enregistrés par le Ministère de l'Agriculture sont disponibles.</strong>
             <br /> Si ce n'est pas encore fait, la démarche est simple et rapide,{" "}
             <a href="https://entreprendre.service-public.fr/vosdroits/R44572" className="fr-link fr-link--icon-right">
-              disponible ici sur https://entreprendre.service-public.fr/vosdroits/R44572.
+              disponible ici sur
+              https://mesdemarches.agriculture.gouv.fr/demarches/association-ou-organisation-de/assurer-une-activite-de-76/article/declarer-la-manipulation-de.
             </a>
             <br />
             Contactez-nous ensuite pour que nous l'enregistrions dans Zacharie.

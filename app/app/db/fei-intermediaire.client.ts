@@ -24,11 +24,16 @@ export function mergeFeiIntermediaireToJSON(
   const result = {
     id: mergedItem.id,
     fei_numero: mergedItem.fei_numero,
+    fei_intermediaire_offline:
+      newItem?.get("fei_intermediaire_offline") === "true"
+        ? true
+        : newItem?.get("fei_intermediaire_offline") === "false"
+          ? false
+          : mergedItem.fei_intermediaire_offline || null,
     fei_intermediaire_user_id: mergedItem.fei_intermediaire_user_id, // not an
     fei_intermediaire_entity_id: mergedItem.fei_intermediaire_entity_id,
     created_at: mergedItem.created_at,
     updated_at: dayjs().toISOString(),
-
     /* Optional fields */
     fei_intermediaire_role: mergedItem.fei_intermediaire_role || null,
     commentaire: mergedItem.commentaire || null,

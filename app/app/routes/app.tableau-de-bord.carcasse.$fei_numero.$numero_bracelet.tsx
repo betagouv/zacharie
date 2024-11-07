@@ -545,66 +545,6 @@ export default function CarcasseReadAndWrite() {
                   </div>
                 </div>
               )}
-              {anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0 && (
-                <div className="mb-6 bg-white md:shadow">
-                  <div
-                    className="p-4 pb-8 md:p-8 md:pb-4"
-                    // method="POST"
-                    // id="no-anomalie-form"
-                    // ref={submitRef}
-                    // onSubmit={(e) => {
-                    //   e.preventDefault();
-                    //   const formData = new FormData(submitRef.current!);
-                    //   formData.append(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at, new Date().toISOString());
-                    //   const nextCarcasse = mergeCarcasse(carcasse, formData);
-                    //   noAnomalieFetcher.submit(nextCarcasse, {
-                    //     method: "POST",
-                    //     preventScrollReset: true, // Prevent scroll reset on submission
-                    //   });
-                    // }}
-                  >
-                    <div className={["fr-fieldset__element", !canEdit ? "pointer-events-none" : ""].join(" ")}>
-                      {/* <PermanentFields /> */}
-                      <input
-                        type="hidden"
-                        name={Prisma.CarcasseScalarFieldEnum.numero_bracelet}
-                        value={carcasse.numero_bracelet}
-                      />
-                      <Checkbox
-                        options={[
-                          {
-                            label: `${
-                              carcasse.examinateur_carcasse_sans_anomalie ? "J'ai certifié" : "Je certifie"
-                            } ne pas constater d'anomalie sur ${Number(carcasse.nombre_d_animaux ?? 0) > 1 ? "les carcasses" : "la carcasse"}`,
-                            hintText:
-                              "Attention, les anomalies que vous omettez seront détectées par le collecteur et l’ETG et augmente significativement le taux de saisie. Une anomalie déclarée c’est moins de gâchis.",
-                            nativeInputProps: {
-                              required: true,
-                              name: Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie,
-                              value: "true",
-                              readOnly: !canEdit,
-                              checked: !!noANomalie,
-                              onChange: (e) => {
-                                setNoAnomalie(e.target.checked);
-                              },
-                            },
-                          },
-                        ]}
-                      />
-                      {/* {canEdit && carcasse.examinateur_carcasse_sans_anomalie !== noANomalie && (
-                        <Button
-                          type="submit"
-                          onClick={() => {
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                        >
-                          Enregistrer
-                        </Button>
-                      )} */}
-                    </div>
-                  </div>
-                </div>
-              )}
             </>
           )}
           <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">

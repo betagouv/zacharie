@@ -78,6 +78,7 @@ export default function SelectNextForExaminateur() {
               `${user.prenom} ${user.nom_de_famille}`,
             );
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
+            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_offline, navigator.onLine ? "false" : "true");
             formData.set(
               Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache,
               `${user.prenom} ${user.nom_de_famille}`,
@@ -98,6 +99,7 @@ export default function SelectNextForExaminateur() {
               `${user.prenom} ${user.nom_de_famille}`,
             );
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
+            formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_offline, navigator.onLine ? "false" : "true");
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id, nextOwnerEntity.id);
             formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache, nextOwnerEntity?.nom_d_usage ?? "");
           } else {

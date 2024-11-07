@@ -82,8 +82,9 @@ export default function FEIExaminateurInitial() {
     return true;
   }, [fei, user]);
 
-  const carcassesNotReady = useMemo(() => {
+  const [carcassesNotReady, atLeastOneCarcasseWithAnomalie] = useMemo(() => {
     const notReady = [];
+    let _atLeastOneCarcasseWithAnomalie = false;
     for (const carcasse of carcasses.filter((c) => c !== null)) {
       if (
         !carcasse.examinateur_signed_at ||
@@ -94,8 +95,11 @@ export default function FEIExaminateurInitial() {
       ) {
         notReady.push(carcasse);
       }
+      if (carcasse.examinateur_anomalies_abats?.length || carcasse.examinateur_anomalies_carcasse?.length) {
+        _atLeastOneCarcasseWithAnomalie = true;
+      }
     }
-    return notReady;
+    return [notReady, _atLeastOneCarcasseWithAnomalie];
   }, [carcasses]);
 
   const onlyPetitGibier = useMemo(() => {
@@ -124,6 +128,18 @@ export default function FEIExaminateurInitial() {
     }
     return true;
   }, [fei, carcassesNotReady, carcasses, onlyPetitGibier]);
+
+  const checkboxLabel = useMemo(() => {
+    let label = fei.examinateur_initial_approbation_mise_sur_le_marche ? "J'ai certifié" : "Je certifie";
+    if (!atLeastOneCarcasseWithAnomalie) {
+      label += " qu'aucune anomalie n'a été observée lors de l'examen initial et";
+      label += " que les carcasses en peau examinées ce jour peuvent être mises sur le marché.";
+      return label;
+    } else {
+      return (label +=
+        "que les carcasses en peau examinées ce jour présentent au moins une anomalie. Toutefois, elles peuvent être mises sur le marché.");
+    }
+  }, [fei.examinateur_initial_approbation_mise_sur_le_marche, atLeastOneCarcasseWithAnomalie]);
 
   return (
     <>
@@ -228,9 +244,7 @@ export default function FEIExaminateurInitial() {
               <Checkbox
                 options={[
                   {
-                    label: `${
-                      fei.examinateur_initial_approbation_mise_sur_le_marche ? "J'ai certifié" : "Je certifie"
-                    } que les carcasses en peau examinées ce jour peuvent être mises sur le marché`,
+                    label: checkboxLabel,
                     hintText: jobIsDone
                       ? ""
                       : "Veuillez remplir au préalable la date et la commune de mise à mort, les heures de mise à mort et d'éviscération des carcasses",

@@ -63,12 +63,24 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
     fei_prev_owner_user_id: mergedItem.fei_prev_owner_user_id || null,
     fei_prev_owner_entity_id: mergedItem.fei_prev_owner_entity_id || null,
     fei_prev_owner_role: mergedItem.fei_prev_owner_role || null,
+    examinateur_initial_offline:
+      newItem?.get("examinateur_initial_offline") === "true"
+        ? true
+        : newItem?.get("examinateur_initial_offline") === "false"
+          ? false
+          : mergedItem.examinateur_initial_offline || null,
     examinateur_initial_user_id: mergedItem.examinateur_initial_user_id || null,
     examinateur_initial_date_approbation_mise_sur_le_marche:
       next_examinateur_initial_approbation_mise_sur_le_marche === true
         ? dayjs(mergedItem.examinateur_initial_date_approbation_mise_sur_le_marche || undefined).toISOString()
         : null,
     examinateur_initial_approbation_mise_sur_le_marche: next_examinateur_initial_approbation_mise_sur_le_marche,
+    premier_detenteur_offline:
+      newItem?.get("premier_detenteur_offline") === "true"
+        ? true
+        : newItem?.get("premier_detenteur_offline") === "false"
+          ? false
+          : mergedItem.premier_detenteur_offline || null,
     premier_detenteur_user_id: mergedItem.premier_detenteur_user_id || null,
     premier_detenteur_entity_id: mergedItem.premier_detenteur_entity_id || null,
     premier_detenteur_name_cache: mergedItem.premier_detenteur_name_cache || null,

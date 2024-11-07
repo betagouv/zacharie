@@ -68,7 +68,6 @@ model User {
   NotificationLog                NotificationLog[]
   CarcasseIntermediaire          CarcasseIntermediaire[] @relation("CarcasseIntermediaireUser")
   FeiNextUser                    Fei[]                   @relation("FeiNextUser")
-  InterventionOnFei              InterventionOnFei[]
 
   @@index([id]) // New: Added for faster user lookups
   @@index([email]) // Modified: Simplified from the composite index
@@ -115,7 +114,6 @@ model Entity {
   CarcasseIntermediaire     CarcasseIntermediaire[] @relation("CarcasseIntermediaireEntity")
   CoupledEntity             Entity?                 @relation("CoupledEntity", fields: [coupled_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CoupledEntity_opposite    Entity?                 @relation("CoupledEntity")
-  InterventionOnFei         InterventionOnFei[]
 }
 
 model Password {
@@ -209,9 +207,11 @@ model Fei {
   fei_prev_owner_user_id                                  String?
   fei_prev_owner_entity_id                                String?
   fei_prev_owner_role                                     UserRoles?
+  examinateur_initial_offline                             Boolean?
   examinateur_initial_user_id                             String?
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
+  premier_detenteur_offline                               Boolean?
   premier_detenteur_user_id                               String?
   premier_detenteur_entity_id                             String?
   premier_detenteur_name_cache                            String?
@@ -242,7 +242,6 @@ model Fei {
   FeiNextEntity                                           Entity?                 @relation("FeiNextEntity", fields: [fei_next_owner_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiNextUser                                             User?                   @relation("FeiNextUser", fields: [fei_next_owner_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaire                                   CarcasseIntermediaire[]
-  InterventionOnFei                                       InterventionOnFei[]
 
   @@index([created_by_user_id])
   @@index([premier_detenteur_user_id])
@@ -295,26 +294,10 @@ model Carcasse {
   @@index([fei_numero, numero_bracelet])
 }
 
-model InterventionOnFei {
-  id         String    @id @default(uuid())
-  fei_numero String
-  user_id    String
-  entity_id  String
-  role       UserRoles
-  created_at DateTime  @default(now())
-  updated_at DateTime  @default(now()) @updatedAt
-  deleted_at DateTime?
-  Fei        Fei       @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
-  User       User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  Entity     Entity    @relation(fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  @@index([fei_numero, user_id])
-  @@index([fei_numero, entity_id])
-}
-
 model FeiIntermediaire {
   id                             String                  @id // {user_id}_{fei_numero}_{HHMMSS}
   fei_numero                     String
+  fei_intermediaire_offline      Boolean?
   fei_intermediaire_user_id      String
   fei_intermediaire_entity_id    String
   fei_intermediaire_role         UserRoles?

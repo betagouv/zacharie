@@ -61,6 +61,8 @@ export async function action(args: ActionFunctionArgs) {
         Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_entity_id,
       ) as string,
       fei_intermediaire_role: formData.get(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_role) as UserRoles,
+      fei_intermediaire_offline:
+        formData.get(Prisma.FeiIntermediaireScalarFieldEnum.fei_intermediaire_offline) === "true" ? true : false,
     },
   });
 

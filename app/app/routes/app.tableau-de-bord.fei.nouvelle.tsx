@@ -15,6 +15,7 @@ export async function clientLoader() {
   feiForm.set(Prisma.FeiScalarFieldEnum.numero, newFeiNumero);
   feiForm.set(Prisma.FeiScalarFieldEnum.created_by_user_id, user.id);
   feiForm.set(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id, user.id);
+  feiForm.set(Prisma.FeiScalarFieldEnum.examinateur_initial_offline, navigator.onLine ? "false" : "true");
   feiForm.set(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, user.id);
   feiForm.set(Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache, `${user.prenom} ${user.nom_de_famille}`);
   feiForm.set(Prisma.FeiScalarFieldEnum.fei_current_owner_role, UserRoles.EXAMINATEUR_INITIAL);

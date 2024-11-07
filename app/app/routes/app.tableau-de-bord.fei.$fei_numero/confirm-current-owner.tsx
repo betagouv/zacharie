@@ -90,9 +90,11 @@ export default function ConfirmCurrentOwner() {
     formData.set(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id, fei.fei_current_owner_entity_id || "");
     if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.EXAMINATEUR_INITIAL) {
       formData.set(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id, user.id);
+      formData.set(Prisma.FeiScalarFieldEnum.examinateur_initial_offline, navigator.onLine ? "false" : "true");
     }
     if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.PREMIER_DETENTEUR) {
       formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id, user.id);
+      formData.set(Prisma.FeiScalarFieldEnum.premier_detenteur_offline, navigator.onLine ? "false" : "true");
     }
     if (formData.get(Prisma.FeiScalarFieldEnum.fei_current_owner_role) === UserRoles.SVI) {
       formData.set(Prisma.FeiScalarFieldEnum.svi_user_id, user.id);
@@ -114,6 +116,7 @@ export default function ConfirmCurrentOwner() {
       const newIntermediaire = mergeFeiIntermediaire({
         id: newId,
         fei_numero: fei.numero,
+        fei_intermediaire_offline: navigator.onLine ? false : true,
         fei_intermediaire_user_id: user.id,
         fei_intermediaire_role: fei.fei_next_owner_role!,
         fei_intermediaire_entity_id: fei.fei_next_owner_entity_id || "",

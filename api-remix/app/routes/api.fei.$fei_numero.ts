@@ -67,6 +67,10 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
     nextFei.examinateur_initial_user_id = formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id) as string;
   }
+  if (formData.has(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
+    nextFei.examinateur_initial_offline =
+      formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_offline) === "true" ? true : false;
+  }
   if (formData.get(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche) === "true") {
     nextFei.examinateur_initial_approbation_mise_sur_le_marche = true;
     nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = new Date().toISOString();
@@ -92,6 +96,10 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
     nextFei.premier_detenteur_user_id =
       (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) as string) || null;
+  }
+  if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
+    nextFei.premier_detenteur_offline =
+      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_offline) === "true" ? true : false;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
     nextFei.premier_detenteur_entity_id =
