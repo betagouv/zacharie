@@ -18,6 +18,9 @@ export default {
           dark: "#1b1b35",
           light: "#f5f5fe",
         },
+        "green-emeraude": {
+          DEFAULT: "var(--green-emeraude-main-632)",
+        },
       },
     },
   },

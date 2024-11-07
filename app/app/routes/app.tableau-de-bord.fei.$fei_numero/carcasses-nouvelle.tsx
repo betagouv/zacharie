@@ -130,7 +130,7 @@ export default function NouvelleCarcasse() {
                       <u className="inline">Cliquez ici pour utiliser {defaultNumeroBracelet}</u>.
                     </button>
                   ) : (
-                    <>Veuillez renseigner la commune de mise à mort avant de rajouter une carcasse</>
+                    <>Veuillez renseigner la commune de mise à mort avant d'enregistrer une carcasse</>
                   )}
                   {isOnline
                     ? null
