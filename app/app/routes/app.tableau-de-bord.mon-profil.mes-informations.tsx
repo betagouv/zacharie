@@ -73,6 +73,9 @@ export async function clientLoader() {
   }).then((res) => res.json())) as EntitiesLoaderData;
   const { allEntitiesByTypeAndId, userEntitiesByTypeAndId } = response.data!;
 
+  const userAssociationsChasses = user.roles.includes(UserRoles.PREMIER_DETENTEUR)
+    ? Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR])
+    : [];
   const userCentresCollectes = user.roles.includes(UserRoles.CCG)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.CCG])
     : [];
@@ -86,6 +89,7 @@ export async function clientLoader() {
     user,
     allEntitiesByTypeAndId,
     userEntitiesByTypeAndId,
+    userAssociationsChasses,
     identityDone:
       !!user.nom_de_famille &&
       !!user.prenom &&
@@ -105,6 +109,7 @@ export async function clientLoader() {
 export default function MesInformations() {
   const {
     user,
+    userAssociationsChasses,
     // for accordions
     identityDone,
     examinateurDone,
@@ -155,6 +160,7 @@ export default function MesInformations() {
   const stepCount = skipCCG ? 3 : 4;
 
   const showEntrpriseVisibilityCheckbox =
+    userAssociationsChasses.length > 0 ||
     user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
     user.roles.includes(UserRoles.ETG) ||
     user.roles.includes(UserRoles.SVI);
@@ -287,17 +293,6 @@ export default function MesInformations() {
                     </div>
                   </div>
                 </Accordion>
-                {(user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ||
-                  user.roles.includes(UserRoles.PREMIER_DETENTEUR)) && (
-                  <AccordionEntreprise
-                    fetcherKey="onboarding-etape-2-associations-data"
-                    accordionLabel="Vos associations de chasse / repas associatifs"
-                    addLabel="Ajouter une association de chasse"
-                    selectLabel="Sélectionnez une association de chasse"
-                    done
-                    entityType={EntityTypes.PREMIER_DETENTEUR}
-                  />
-                )}
                 {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
                   <Accordion
                     titleAs="h2"
@@ -325,6 +320,17 @@ export default function MesInformations() {
                   </Accordion>
                 )}
               </userFetcher.Form>
+              {(user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ||
+                user.roles.includes(UserRoles.PREMIER_DETENTEUR)) && (
+                <AccordionEntreprise
+                  fetcherKey="onboarding-etape-2-associations-data"
+                  accordionLabel="Vos associations de chasse / repas associatifs"
+                  addLabel="Ajouter une association de chasse"
+                  selectLabel="Sélectionnez une association de chasse"
+                  done
+                  entityType={EntityTypes.PREMIER_DETENTEUR}
+                />
+              )}
 
               {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
                 <AccordionEntreprise
@@ -369,7 +375,7 @@ export default function MesInformations() {
                     options={[
                       {
                         label:
-                          "J'autorise le fait que les entreprises pour lesquelles je travaille apparaissent dans les champs de transmission des fiches.",
+                          "J'autorise le fait que les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartient apparaissent dans les champs de transmission des fiches.",
                         hintText:
                           "Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les fiches ne pourront pas être attribuées à votre enreprise",
                         nativeInputProps: {
