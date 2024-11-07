@@ -96,12 +96,12 @@ export default function NouvelleCarcasse() {
             })}
           </Select>
         </div>
-        {isPetitGibier && (
+        {espece && isPetitGibier && (
           <div className="fr-fieldset__element">
             <Input
-              label="Nombre de carcasses"
+              label="Nombre de carcasses dans le lot"
               className="!mb-0 grow"
-              hintText="Optionel"
+              hintText="Optionel, seulement pour le petit gibier"
               nativeInputProps={{
                 type: "number",
                 name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
@@ -111,19 +111,19 @@ export default function NouvelleCarcasse() {
             />
           </div>
         )}
-        <div className="fr-fieldset__element">
-          <Input
-            label="Numéro de marquage (bracelet, languette)"
-            className="!mb-0 grow"
-            state={error ? "error" : "default"}
-            stateRelatedMessage={error ?? ""}
-            hintText={
-              <>
-                {!numeroBracelet &&
-                  (defaultNumeroBracelet ? (
+        {espece && (
+          <div className="fr-fieldset__element">
+            <Input
+              label="Numéro de marquage (bracelet, languette)"
+              className="!mb-0 grow"
+              state={error ? "error" : "default"}
+              stateRelatedMessage={error ?? ""}
+              hintText={
+                <>
+                  {defaultNumeroBracelet ? (
                     <button
                       type="button"
-                      className="inline text-left"
+                      className={["inline text-left", numeroBracelet ? "pointer-events-none opacity-20" : ""].join(" ")}
                       onClick={() => setNumeroBracelet(defaultNumeroBracelet)}
                     >
                       Votre chasse n'a pas de dispositif de marquage ?{" "}
@@ -131,27 +131,30 @@ export default function NouvelleCarcasse() {
                     </button>
                   ) : (
                     <>Veuillez renseigner la commune de mise à mort avant de rajouter une carcasse</>
-                  ))}
-                {isOnline
-                  ? null
-                  : " ATTENTION: en mode hors-ligne vous ne pouvez pas encore modifier ce numéro une fois renseigné"}
-              </>
-            }
-            nativeInputProps={{
-              type: "text",
-              required: true,
-              name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
-              value: numeroBracelet,
-              // replce slash and space by underscore
-              onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, "_")),
-            }}
-          />
-        </div>
-        <div className="fr-fieldset__element">
-          <Button type="submit" disabled={!fei.commune_mise_a_mort}>
-            {isPetitGibier ? "Ajouter un lot de carcasses" : "Ajouter une carcasse"}
-          </Button>
-        </div>
+                  )}
+                  {isOnline
+                    ? null
+                    : " ATTENTION: en mode hors-ligne vous ne pouvez pas encore modifier ce numéro une fois renseigné"}
+                </>
+              }
+              nativeInputProps={{
+                type: "text",
+                required: true,
+                name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
+                value: numeroBracelet,
+                // replce slash and space by underscore
+                onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, "_")),
+              }}
+            />
+          </div>
+        )}
+        {espece && (
+          <div className="fr-fieldset__element">
+            <Button type="submit" disabled={!fei.commune_mise_a_mort || !numeroBracelet}>
+              {isPetitGibier ? "Enregistrer un lot de carcasses" : "Enregistrer une carcasse"}
+            </Button>
+          </div>
+        )}
       </nouvelleCarcasseFetcher.Form>
     </>
   );

@@ -7,6 +7,7 @@ import { useMemo } from "react";
 import { CustomNotice } from "@app/components/CustomNotice";
 
 export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) {
+  // canEdit = true;
   const { fei, carcasses, user } = useLoaderData<typeof clientLoader>();
   const carcasseFetcher = useFetcher({ key: "carcasse-delete-fetcher" });
 
@@ -128,19 +129,23 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
           </CustomNotice>
         );
       })}
-      {carcasses.length > 0 && canEdit && <hr />}
-      {carcasses.length > 0 && canEdit && (
-        <p className="-mt-4 mb-4 ml-4 text-sm text-gray-500">
-          Déjà rentrés&nbsp;:
-          {Object.entries(countCarcassesByEspece).map(([espece, { carcasses, nombre_d_animaux }]) => (
-            <span className="ml-4 block" key={espece}>
-              {espece}&nbsp;: {carcasses}{" "}
-              {nombre_d_animaux > carcasses ? `lots (${nombre_d_animaux} carcasses)` : "carcasses"}
-            </span>
-          ))}
-        </p>
-      )}
-      {canEdit && <NouvelleCarcasse key={fei.commune_mise_a_mort} />}
+      <div
+        className={["transition-all duration-1000", !canEdit ? "max-h-0 overflow-hidden" : "max-h-[300vh]"].join(" ")}
+      >
+        {carcasses.length > 0 && <hr />}
+        {carcasses.length > 0 && (
+          <p className="-mt-4 mb-4 ml-4 text-sm text-gray-500">
+            Déjà rentrés&nbsp;:
+            {Object.entries(countCarcassesByEspece).map(([espece, { carcasses, nombre_d_animaux }]) => (
+              <span className="ml-4 block" key={espece}>
+                {espece}&nbsp;: {carcasses}{" "}
+                {nombre_d_animaux > carcasses ? `lots (${nombre_d_animaux} carcasses)` : "carcasses"}
+              </span>
+            ))}
+          </p>
+        )}
+        <NouvelleCarcasse key={fei.commune_mise_a_mort} />
+      </div>
     </>
   );
 }

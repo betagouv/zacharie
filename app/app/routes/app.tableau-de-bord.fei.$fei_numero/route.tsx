@@ -164,11 +164,11 @@ export default function Fei() {
             // setSelectedTabId(UserRoles.PREMIER_DETENTEUR);
             break;
           case UserRoles.SVI:
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            // window.scrollTo({ top: 0, behavior: "smooth" });
             setSelectedTabId(UserRoles.SVI);
             break;
           default:
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            // window.scrollTo({ top: 0, behavior: "smooth" });
             setSelectedTabId("Destinataires");
             break;
         }
