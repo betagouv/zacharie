@@ -133,30 +133,21 @@ export default function SelectNextForExaminateur() {
             }}
           >
             <option value="">{nextOwnerSelectLabel}</option>
-            <optgroup label="Vos associations">
-              {associationsDeChasse.map((potentielOwner) => {
-                return (
-                  <NextOwnerOption
-                    nextOwnerIsEntity
-                    key={potentielOwner.id}
-                    potentielOwner={potentielOwner}
-                    user={user}
-                  />
-                );
-              })}
-            </optgroup>
-            <optgroup label="Autres personnes">
-              {detenteursInitiaux.map((potentielOwner) => {
-                return (
-                  <NextOwnerOption
-                    nextOwnerIsUser
-                    key={potentielOwner.id}
-                    potentielOwner={potentielOwner}
-                    user={user}
-                  />
-                );
-              })}
-            </optgroup>
+            {associationsDeChasse.map((potentielOwner) => {
+              return (
+                <NextOwnerOption
+                  nextOwnerIsEntity
+                  key={potentielOwner.id}
+                  potentielOwner={potentielOwner}
+                  user={user}
+                />
+              );
+            })}
+            {detenteursInitiaux.map((potentielOwner) => {
+              return (
+                <NextOwnerOption nextOwnerIsUser key={potentielOwner.id} potentielOwner={potentielOwner} user={user} />
+              );
+            })}
           </Select>
           {!nextValue ||
             (nextValue !== fei.fei_next_owner_user_id && (
