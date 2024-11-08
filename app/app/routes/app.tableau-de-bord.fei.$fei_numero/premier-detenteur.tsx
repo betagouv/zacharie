@@ -46,7 +46,15 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
     return true;
   }, [fei, user]);
 
-  const canChangeNextOwner = user.id === fei.fei_current_owner_user_id;
+  const canChangeNextOwner = useMemo(() => {
+    if (fei.fei_current_owner_user_id !== user.id) {
+      return false;
+    }
+    if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
+      return false;
+    }
+    return true;
+  }, [fei, user]);
 
   const Component = canEdit ? Input : InputNotEditable;
 
@@ -65,6 +73,10 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
     }
     return true;
   }, [fei, user, depotType]);
+
+  if (!fei.premier_detenteur_user_id) {
+    return "Il n'y as pas encore de premier détenteur pour cette fiche";
+  }
 
   return (
     <>
