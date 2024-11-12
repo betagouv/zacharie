@@ -347,7 +347,7 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
               hintText={
                 carcasseManquante
                   ? `Un commentaire à ajouter\u00A0?`
-                  : `Un commentaire à ajouter\u00A0? Une carcasse retirée\u00A0? Indiquez le ici et précisez-en les motifs le cas échéant.`
+                  : `Un commentaire à ajouter\u00A0? Une carcasse  retirée d'un lot de petit gibier\u00A0? Indiquez le ici et précisez-en les motifs le cas échéant.`
               }
               textArea
               nativeTextAreaProps={{
