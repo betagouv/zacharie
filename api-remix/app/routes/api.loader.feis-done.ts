@@ -20,6 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
   const feisDone = await prisma.fei.findMany({
     where: {
+      deleted_at: null,
       svi_assigned_at: { not: null },
       OR: [
         {

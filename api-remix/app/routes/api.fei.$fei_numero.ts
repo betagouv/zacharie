@@ -15,8 +15,24 @@ export async function action(args: ActionFunctionArgs) {
   const feiNumero = params.fei_numero; // can also be "nouvelle"
   const formData = await request.formData();
   let existingFei = await prisma.fei.findUnique({
-    where: { numero: feiNumero, deleted_at: null },
+    where: { numero: feiNumero },
   });
+  if (existingFei?.deleted_at) {
+    return json({ ok: true, data: null, error: "" }, { status: 200 });
+  }
+
+  if (formData.get("_action") === "delete") {
+    console.log("delete fei", feiNumero);
+    if (!existingFei) {
+      return json({ ok: false, data: null, error: "Fei not found" }, { status: 404 });
+    }
+    await prisma.fei.update({
+      where: { numero: feiNumero },
+      data: { deleted_at: new Date() },
+    });
+    return json({ ok: true, data: null, error: "" });
+  }
+  
   if (!existingFei) {
     existingFei = await prisma.fei.create({
       data: {

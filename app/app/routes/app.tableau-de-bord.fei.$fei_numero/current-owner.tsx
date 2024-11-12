@@ -1,12 +1,16 @@
 import { Highlight } from "@codegouvfr/react-dsfr/Highlight";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
 import { clientLoader } from "./route";
-import { useLoaderData } from "@remix-run/react";
+import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { getUserRoleLabelPrefixed } from "@app/utils/get-user-roles-label";
 import { UserRoles } from "@prisma/client";
+import DeleteButtonAndConfirmModal from "@app/components/DeleteButtonAndConfirmModal";
 
 export default function CurrentOwner() {
-  const { fei, currentOwnerUser, currentOwnerEntity } = useLoaderData<typeof clientLoader>();
+  const { fei, currentOwnerUser, currentOwnerEntity, user } = useLoaderData<typeof clientLoader>();
+
+  const navigate = useNavigate();
+  const deleteFeiFetcher = useFetcher({ key: "delete-fei" });
 
   if (fei.svi_signed_at) {
     return (
@@ -30,8 +34,8 @@ export default function CurrentOwner() {
           root: "fr-highlight--green-emeraude",
         }}
       >
-        Cette fiche est présentement sous la responsabilité
-        <b> {getUserRoleLabelPrefixed(fei.fei_current_owner_role as UserRoles)}</b>.<br />
+        Cette fiche est présentement sous la responsabilité{" "}
+        <b>{getUserRoleLabelPrefixed(fei.fei_current_owner_role as UserRoles)}</b>.<br />
         {currentOwnerEntity?.nom_d_usage && (
           <>
             <b>{currentOwnerEntity.nom_d_usage}</b> - {currentOwnerEntity.code_postal} {currentOwnerEntity.ville}
@@ -49,6 +53,29 @@ export default function CurrentOwner() {
           </>
         )}
       </Highlight>
+      {(user.roles.includes(UserRoles.ADMIN) || user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) && (
+        <div className="mt-2 flex justify-start border-l-4 border-l-red-500 pl-8">
+          <DeleteButtonAndConfirmModal
+            title="Supprimer la fiche"
+            buttonText="Supprimer la fiche"
+            textToConfirm="SUPPRIMER LA FICHE"
+            onConfirm={() => {
+              deleteFeiFetcher.submit(
+                {
+                  _action: "delete",
+                  route: `/api/fei/${fei.numero}`,
+                  numero: fei.numero,
+                },
+                {
+                  method: "POST",
+                  preventScrollReset: true,
+                },
+              );
+              navigate(-1);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -25,6 +25,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const feisUnderMyResponsability = await prisma.fei.findMany({
     where: {
       svi_assigned_at: null,
+      deleted_at: null,
       svi_signed_at: null,
       fei_next_owner_user_id: null,
       fei_next_owner_entity_id: null,
@@ -59,6 +60,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const feisToTake = await prisma.fei.findMany({
     where: {
       svi_assigned_at: null,
+      deleted_at: null,
       OR: [
         {
           fei_next_owner_user_id: user.id,
@@ -82,6 +84,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const feisOngoing = await prisma.fei.findMany({
     where: {
       svi_assigned_at: null,
+      deleted_at: null,
       // fei_current_owner_user_id: { not: user.id },
       AND: [
         {
@@ -150,6 +153,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const feisOngoingForMyEntities = await prisma.fei.findMany({
     where: {
       svi_assigned_at: null,
+      deleted_at: null,
       OR: [
         {
           FeiCurrentEntity: {

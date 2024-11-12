@@ -12,6 +12,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   // Fetch the fiche data along with the required intervenants
   const feis = await prisma.fei.findMany({
+    where: { deleted_at: null },
     include: {
       FeiCurrentUser: { select: { email: true } }, // Fetching the current user's email
       FeiCurrentEntity: { select: { nom_d_usage: true } }, // Fetching the current entity's raison sociale
