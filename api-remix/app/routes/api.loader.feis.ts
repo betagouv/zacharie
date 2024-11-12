@@ -121,6 +121,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
               premier_detenteur_user_id: user.id,
             },
             {
+              FeiPremierDetenteurEntity: {
+                EntityRelatedWithUser: {
+                  some: {
+                    owner_id: user.id,
+                    relation: EntityRelationType.WORKING_FOR,
+                  },
+                },
+              },
+            },
+            {
               FeiIntermediaires: {
                 some: {
                   fei_intermediaire_user_id: user.id,
@@ -157,6 +167,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
       OR: [
         {
           FeiCurrentEntity: {
+            EntityRelatedWithUser: {
+              some: {
+                owner_id: user.id,
+                relation: EntityRelationType.WORKING_FOR,
+              },
+            },
+          },
+        },
+        {
+          FeiPremierDetenteurEntity: {
             EntityRelatedWithUser: {
               some: {
                 owner_id: user.id,
