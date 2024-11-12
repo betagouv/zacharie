@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Highlight } from "@codegouvfr/react-dsfr/Highlight";
 import { Alert } from "@codegouvfr/react-dsfr/Alert";
 import { clientLoader } from "./route";
@@ -11,6 +12,16 @@ export default function CurrentOwner() {
 
   const navigate = useNavigate();
   const deleteFeiFetcher = useFetcher({ key: "delete-fei" });
+
+  const canDeleteFei = useMemo(() => {
+    if (user.roles.includes(UserRoles.ADMIN)) {
+      return true;
+    }
+    if (!user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      return false;
+    }
+    return fei.fei_current_owner_user_id === user.id;
+  }, [user.roles, fei.fei_current_owner_user_id, user.id]);
 
   if (fei.svi_signed_at) {
     return (
@@ -53,7 +64,7 @@ export default function CurrentOwner() {
           </>
         )}
       </Highlight>
-      {(user.roles.includes(UserRoles.ADMIN) || user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) && (
+      {canDeleteFei && (
         <div className="mt-2 flex justify-start border-l-4 border-l-red-500 pl-8">
           <DeleteButtonAndConfirmModal
             title="Supprimer la fiche"

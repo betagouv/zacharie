@@ -22,12 +22,20 @@ export async function action(args: ActionFunctionArgs) {
   }
 
   if (formData.get("_action") === "delete") {
-    console.log("delete fei", feiNumero);
     if (!existingFei) {
       return json({ ok: false, data: null, error: "Fei not found" }, { status: 404 });
     }
+    const canDelete = user.roles.includes(UserRoles.ADMIN) || (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && existingFei.fei_current_owner_user_id === user.id);
+    if (!canDelete) {
+      return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
+    }
+    console.log("delete fei", feiNumero);
     await prisma.fei.update({
       where: { numero: feiNumero },
+      data: { deleted_at: new Date() },
+    });
+    await prisma.carcasse.updateMany({
+      where: { fei_numero: feiNumero },
       data: { deleted_at: new Date() },
     });
     return json({ ok: true, data: null, error: "" });
@@ -115,7 +123,7 @@ export async function action(args: ActionFunctionArgs) {
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
     nextFei.premier_detenteur_offline =
-      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_offline) === "true" ? true : false;
+      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_offline) === "true";
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
     nextFei.premier_detenteur_entity_id =
