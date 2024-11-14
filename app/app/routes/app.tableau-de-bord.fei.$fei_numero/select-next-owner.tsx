@@ -63,6 +63,9 @@ export default function SelectNextOwner() {
   }, [fei.fei_current_owner_role, inetermediairesPopulated]);
 
   const [nextRole, setNextRole] = useState<UserRoles | "">(() => {
+    if (showIntermediaires) {
+      return UserRoles.ETG;
+    }
     if (showSvi) {
       return UserRoles.SVI;
     }
@@ -142,6 +145,9 @@ export default function SelectNextOwner() {
     if (savedNextOwner) {
       return savedNextOwner;
     }
+    if (showIntermediaires) {
+      return etgs[0].id;
+    }
     if (showSvi) {
       return svis[0].id;
     }
@@ -180,7 +186,7 @@ export default function SelectNextOwner() {
         }}
       >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
-        <div className="fr-fieldset__element">
+        <div className="fr-fieldset__element hidden">
           <Select
             label="Qui doit désormais agir sur la fiche ?"
             className="!mb-0 grow"
@@ -221,7 +227,7 @@ export default function SelectNextOwner() {
             <hr />
             {showIntermediaires ? (
               <>
-                <option value={UserRoles.COLLECTEUR_PRO}>{getUserRoleLabel(UserRoles.COLLECTEUR_PRO)}</option>
+                {/* <option value={UserRoles.COLLECTEUR_PRO}>{getUserRoleLabel(UserRoles.COLLECTEUR_PRO)}</option> */}
                 <option value={UserRoles.ETG}>{getUserRoleLabel(UserRoles.ETG)}</option>
                 {/* <option value={UserRoles.CCG}>{getUserRoleLabel(UserRoles.CCG)}</option> */}
               </>
@@ -234,7 +240,7 @@ export default function SelectNextOwner() {
           <>
             <div className="fr-fieldset__element grow">
               <Select
-                label={`Quel ${getUserRoleLabel(nextRole)} ?`}
+                label={`Quel ${getUserRoleLabel(nextRole)} doit intervenir sur la fiche ?`}
                 className="!mb-0 grow"
                 key={fei.fei_next_owner_user_id ?? fei.fei_next_owner_entity_id ?? "no-choice-yet"}
                 nativeSelectProps={{

@@ -1,6 +1,14 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
-import { type User, type Entity, EntityTypes, EntityRelationType, UserRoles, UserRelationType } from "@prisma/client";
+import {
+  type User,
+  type Entity,
+  type ETGAndEntityRelations,
+  EntityTypes,
+  EntityRelationType,
+  UserRoles,
+  UserRelationType,
+} from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 
@@ -39,35 +47,29 @@ export async function loader({ request }: LoaderFunctionArgs) {
     })
     .then((entityRelations) => entityRelations.map((rel) => rel.EntityRelatedWithUser));
 
-  const etgsRelatedWithMyEntities = await prisma.eTGAndEntityRelations
-    .findMany({
-      where: { entity_id: { in: entitiesWorkingWith.map((entity) => entity.id) } },
-      include: {
-        ETGRelatedWithEntities: true,
-      },
-    })
-    .then((rel) => rel.map((r) => ({ ...r.ETGRelatedWithEntities, relation: EntityRelationType.WORKING_WITH })));
+  const etgsRelatedWithMyEntities = await prisma.eTGAndEntityRelations.findMany({
+    where: { entity_id: { in: entitiesWorkingWith.map((entity) => entity.id) } },
+    include: {
+      ETGRelatedWithEntities: true,
+    },
+  });
 
-  const svisRelatedWithMyETGs = await prisma.eTGAndEntityRelations
-    .findMany({
-      where: { etg_id: { in: entitiesWorkingWith.map((entity) => entity.id) }, entity_type: EntityTypes.SVI },
-      include: {
-        EntitiesRelatedWithETG: true,
-      },
-    })
-    .then((rel) => rel.map((r) => ({ ...r.EntitiesRelatedWithETG, relation: EntityRelationType.WORKING_WITH })));
+  const svisRelatedWithMyETGs = await prisma.eTGAndEntityRelations.findMany({
+    where: { etg_id: { in: entitiesWorkingWith.map((entity) => entity.id) }, entity_type: EntityTypes.SVI },
+    include: {
+      EntitiesRelatedWithETG: true,
+    },
+  });
 
-  const collecteursProsRelatedWithMyETGs = await prisma.eTGAndEntityRelations
-    .findMany({
-      where: {
-        etg_id: { in: entitiesWorkingWith.map((entity) => entity.id) },
-        entity_type: EntityTypes.COLLECTEUR_PRO,
-      },
-      include: {
-        EntitiesRelatedWithETG: true,
-      },
-    })
-    .then((rel) => rel.map((r) => ({ ...r.EntitiesRelatedWithETG, relation: EntityRelationType.WORKING_WITH })));
+  const collecteursProsRelatedWithMyETGs = await prisma.eTGAndEntityRelations.findMany({
+    where: {
+      etg_id: { in: entitiesWorkingWith.map((entity) => entity.id) },
+      entity_type: EntityTypes.COLLECTEUR_PRO,
+    },
+    include: {
+      EntitiesRelatedWithETG: true,
+    },
+  });
 
   const allOtherEntities = (
     await prisma.entity.findMany({
@@ -113,9 +115,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const allEntities = [
     ...entitiesWorkingWith,
-    ...etgsRelatedWithMyEntities,
-    ...svisRelatedWithMyETGs,
-    ...collecteursProsRelatedWithMyETGs,
+    ...etgsRelatedWithMyEntities.map((r) => ({
+      ...r.ETGRelatedWithEntities,
+      relation: EntityRelationType.WORKING_WITH,
+    })),
+    ...svisRelatedWithMyETGs.map((r) => ({ ...r.EntitiesRelatedWithETG, relation: EntityRelationType.WORKING_WITH })),
+    ...collecteursProsRelatedWithMyETGs.map((r) => ({
+      ...r.EntitiesRelatedWithETG,
+      relation: EntityRelationType.WORKING_WITH,
+    })),
     ...allOtherEntities,
   ];
 
@@ -145,6 +153,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       etgs: etgs satisfies Array<Entity>,
       svis: svis satisfies Array<Entity>,
       entitiesWorkingFor: entitiesWorkingFor satisfies Array<Entity>,
+      etgsRelatedWithMyEntities: etgsRelatedWithMyEntities satisfies Array<ETGAndEntityRelations>,
+      svisRelatedWithMyETGs: svisRelatedWithMyETGs satisfies Array<ETGAndEntityRelations>,
+      collecteursProsRelatedWithMyETGs: collecteursProsRelatedWithMyETGs satisfies Array<ETGAndEntityRelations>,
     },
     error: "",
   });

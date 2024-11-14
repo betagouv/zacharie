@@ -13,7 +13,7 @@ import { mergeFei } from "@app/db/fei.client";
 export default function ConfirmCurrentOwner() {
   const {
     user,
-    relationsCatalog: { entitiesWorkingFor },
+    relationsCatalog: { entitiesWorkingFor, collecteursProsRelatedWithMyETGs, collecteursPro },
     fei,
     nextOwnerEntity,
   } = useLoaderData<typeof clientLoader>();
@@ -65,14 +65,30 @@ export default function ConfirmCurrentOwner() {
     return null;
   }
 
-  function handlePriseEnCharge(transfer: boolean) {
+  function handlePriseEnCharge({
+    transfer,
+    forcedNextRole,
+    forceNextEntityId,
+    forceNextEntityName,
+  }: {
+    transfer: boolean;
+    forcedNextRole?: UserRoles;
+    forceNextEntityId?: string;
+    forceNextEntityName?: string;
+  }) {
     const formData = new FormData();
     formData.set(Prisma.FeiScalarFieldEnum.numero, fei.numero);
-    formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_role, fei.fei_next_owner_role as string);
-    formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id, fei.fei_next_owner_entity_id || "");
+    formData.set(
+      Prisma.FeiScalarFieldEnum.fei_current_owner_role,
+      (forcedNextRole || fei.fei_next_owner_role) as string,
+    );
+    formData.set(
+      Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id,
+      (forceNextEntityId || fei.fei_next_owner_entity_id || "") as string,
+    );
     formData.set(
       Prisma.FeiScalarFieldEnum.fei_current_owner_entity_name_cache,
-      fei.fei_next_owner_entity_name_cache || "",
+      (forceNextEntityName || fei.fei_next_owner_entity_name_cache || "") as string,
     );
     formData.set(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id, fei.fei_next_owner_user_id || user.id);
     formData.set(
@@ -118,8 +134,8 @@ export default function ConfirmCurrentOwner() {
         fei_numero: fei.numero,
         fei_intermediaire_offline: navigator.onLine ? false : true,
         fei_intermediaire_user_id: user.id,
-        fei_intermediaire_role: fei.fei_next_owner_role!,
-        fei_intermediaire_entity_id: fei.fei_next_owner_entity_id || "",
+        fei_intermediaire_role: forcedNextRole || fei.fei_next_owner_role!,
+        fei_intermediaire_entity_id: forceNextEntityId || fei.fei_next_owner_entity_id || "",
         check_finished_at: null,
         created_at: dayjs().toISOString(),
         updated_at: dayjs().toISOString(),
@@ -142,7 +158,7 @@ export default function ConfirmCurrentOwner() {
         title={
           fei.fei_next_owner_user_id
             ? "🫵  Cette fiche vous a été attribuée"
-            : "🫵  Vous pouvez prendre en charge cette fiche"
+            : "🫵  Cette fiche a été attribuée à votre société"
         }
         className="m-0 bg-white"
       >
@@ -150,14 +166,44 @@ export default function ConfirmCurrentOwner() {
         {nextOwnerEntity?.nom_d_usage ? ` (${nextOwnerEntity?.nom_d_usage})` : ""}, vous pouvez prendre en charge cette
         fiche et les carcasses associées.
         <br />
-        <Button type="submit" className="my-4 block" onClick={() => handlePriseEnCharge(false)}>
-          Je prends en charge cette fiche et les carcasses associées
-        </Button>
+        {fei.fei_next_owner_role === UserRoles.PREMIER_DETENTEUR && (
+          <Button type="submit" className="my-4 block" onClick={() => handlePriseEnCharge({ transfer: false })}>
+            <>Je prends en charge cette fiche et les carcasses associées</>
+          </Button>
+        )}
+        {fei.fei_next_owner_role === UserRoles.ETG && (
+          <>
+            <Button
+              type="submit"
+              className="my-4 block"
+              onClick={() =>
+                handlePriseEnCharge({
+                  transfer: false,
+                  forcedNextRole: UserRoles.COLLECTEUR_PRO,
+                  forceNextEntityId: collecteursProsRelatedWithMyETGs[0]?.entity_id,
+                  forceNextEntityName:
+                    collecteursPro.find((c) => c.id === collecteursProsRelatedWithMyETGs[0]?.entity_id)?.nom_d_usage ||
+                    "",
+                })
+              }
+            >
+              <>Je transporte le gibier</>
+            </Button>
+            <Button type="submit" className="my-4 block" onClick={() => handlePriseEnCharge({ transfer: false })}>
+              <>Je suis à l'atelier pour réceptionner le gibier</>
+            </Button>
+          </>
+        )}
         <span>
           Vous souhaitez la transférer à un autre acteur&nbsp;? (exemple: erreur d'attribution, assignation à un autre
           collecteur)
         </span>
-        <Button priority="tertiary" type="button" className="!mt-2 block" onClick={() => handlePriseEnCharge(true)}>
+        <Button
+          priority="tertiary"
+          type="button"
+          className="!mt-2 block"
+          onClick={() => handlePriseEnCharge({ transfer: true })}
+        >
           Transférer la fiche
         </Button>
         <span className="mt-4 inline-block text-sm">Vous souhaitez la renvoyer à l'expéditeur&nbsp;?</span>

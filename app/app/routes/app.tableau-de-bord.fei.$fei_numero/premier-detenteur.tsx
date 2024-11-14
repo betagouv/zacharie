@@ -223,7 +223,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
             }}
           />
         </div>
-        {canChangeNextOwner && (
+        {canChangeNextOwner && canEdit && (
           <Button type="submit">
             {depotType === EntityTypes.ETG ? "Enregistrer et envoyer la fiche" : "Enregistrer"}
           </Button>

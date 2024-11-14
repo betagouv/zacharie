@@ -89,6 +89,9 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
       etgs: myRelationsData.data?.etgs || [],
       svis: myRelationsData.data?.svis || [],
       entitiesWorkingFor: myRelationsData.data?.entitiesWorkingFor || [],
+      collecteursProsRelatedWithMyETGs: myRelationsData.data?.collecteursProsRelatedWithMyETGs || [],
+      etgsRelatedWithMyEntities: myRelationsData.data?.etgsRelatedWithMyEntities || [],
+      svisRelatedWithMyETGs: myRelationsData.data?.svisRelatedWithMyETGs || [],
     },
   });
 }
