@@ -120,6 +120,8 @@ export default function TableauDeBordIndex() {
   }, [user]);
 
   const isOnlySvi = user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
+  const feiActivesForSvi = feisDone.filter((fei) => dayjs(fei!.svi_assigned_at).isAfter(dayjs().subtract(10, "days")));
+  const feisDoneForSvi = feisDone.filter((fei) => dayjs(fei!.svi_assigned_at).isBefore(dayjs().subtract(10, "days")));
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -223,55 +225,156 @@ export default function TableauDeBordIndex() {
               </section>
             </>
           )}
-          <details className="mb-6 bg-white md:shadow open:[&_summary]:md:pb-0" open={isOnlySvi}>
-            {!isOnline && (
-              <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
-                Vous ne pouvez pas accéder au détail de vos fiches archivées sans connexion internet.
-              </p>
-            )}
-            <summary className="p-4 md:p-8">
-              <h2 className="fr-h3 inline">
-                {isOnlySvi ? "Fiches sous ma responsabilité" : "Fiches clôturées"}{" "}
-                {feisDone.length > 0 ? ` (${feisDone.length})` : null}
-              </h2>
-            </summary>
-            <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
-              {feisDone.length ? (
-                <ResponsiveTable
-                  headers={["Numéro", "Créée le", "Commune", isOnlySvi ? "Réceptionnée le" : "Clôturée le"]}
-                  data={feisDone
-                    .filter((fei) => fei !== null)
-                    .map((fei) => ({
-                      link: `/app/tableau-de-bord/fei/${fei.numero}`,
-                      id: fei.numero,
-                      rows: [
-                        fei.numero!,
-                        dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
-                        fei.commune_mise_a_mort!,
-                        dayjs(fei.svi_assigned_at).format("DD/MM/YYYY à HH:mm"),
-                      ],
-                    }))}
-                />
-              ) : (
-                <>
-                  <p className="m-8">Pas encore de fiche archivée</p>
-                </>
+          {!isOnlySvi && (
+            <details className="mb-6 bg-white md:shadow open:[&_summary]:md:pb-0" open={false}>
+              {!isOnline && (
+                <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
+                  Vous ne pouvez pas accéder au détail de vos fiches archivées sans connexion internet.
+                </p>
               )}
-            </div>
-            <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
-              <Button
-                priority="tertiary"
-                iconId="ri-refresh-line"
-                disabled={!isOnline}
-                onClick={() => window.location.reload()}
-              >
-                Mettre à jour
-              </Button>
-              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                Haut de page
-              </a>
-            </div>
-          </details>
+              <summary className="p-4 md:p-8">
+                <h2 className="fr-h3 inline">
+                  Fiches clôturées {feisDone.length > 0 ? ` (${feisDone.length})` : null}
+                </h2>
+              </summary>
+              <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+                {feisDone.length ? (
+                  <ResponsiveTable
+                    headers={["Numéro", "Créée le", "Commune", "Clôturée le"]}
+                    data={feisDone
+                      .filter((fei) => fei !== null)
+                      .map((fei) => ({
+                        link: `/app/tableau-de-bord/fei/${fei.numero}`,
+                        id: fei.numero,
+                        rows: [
+                          fei.numero!,
+                          dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
+                          fei.commune_mise_a_mort!,
+                          dayjs(fei.svi_assigned_at).format("DD/MM/YYYY à HH:mm"),
+                        ],
+                      }))}
+                  />
+                ) : (
+                  <>
+                    <p className="m-8">Pas encore de fiche clôturée</p>
+                  </>
+                )}
+              </div>
+              <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+                <Button
+                  priority="tertiary"
+                  iconId="ri-refresh-line"
+                  disabled={!isOnline}
+                  onClick={() => window.location.reload()}
+                >
+                  Mettre à jour
+                </Button>
+                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                  Haut de page
+                </a>
+              </div>
+            </details>
+          )}
+          {isOnlySvi && (
+            <>
+              <section className="mb-6 bg-white md:shadow">
+                {!isOnline && (
+                  <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
+                    Vous ne pouvez pas accéder au détail de vos fiches sans connexion internet.
+                  </p>
+                )}
+                <div className="p-4 md:p-8">
+                  <h2 className="fr-h3 inline">
+                    Fiches sous ma responsabilité {feiActivesForSvi.length > 0 ? ` (${feiActivesForSvi.length})` : null}
+                  </h2>
+                </div>
+                <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+                  {feiActivesForSvi.length ? (
+                    <ResponsiveTable
+                      headers={["Numéro", "Créée le", "Commune", "Réceptionnée le"]}
+                      data={feiActivesForSvi
+                        .filter((fei) => fei !== null)
+                        .map((fei) => ({
+                          link: `/app/tableau-de-bord/fei/${fei.numero}`,
+                          id: fei.numero,
+                          rows: [
+                            fei.numero!,
+                            dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
+                            fei.commune_mise_a_mort!,
+                            dayjs(fei.svi_assigned_at).format("DD/MM/YYYY à HH:mm"),
+                          ],
+                        }))}
+                    />
+                  ) : (
+                    <>
+                      <p className="m-8">Pas encore de fiche clôturée</p>
+                    </>
+                  )}
+                </div>
+                <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+                  <Button
+                    priority="tertiary"
+                    iconId="ri-refresh-line"
+                    disabled={!isOnline}
+                    onClick={() => window.location.reload()}
+                  >
+                    Mettre à jour
+                  </Button>
+                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                    Haut de page
+                  </a>
+                </div>
+              </section>
+              <section className="mb-6 bg-white md:shadow">
+                {!isOnline && (
+                  <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
+                    Vous ne pouvez pas accéder au détail de vos fiches sans connexion internet.
+                  </p>
+                )}
+                <div className="p-4 md:p-8">
+                  <h2 className="fr-h3 inline">
+                    Fiches clôturées {feisDoneForSvi.length > 0 ? ` (${feisDoneForSvi.length})` : null}
+                  </h2>
+                </div>
+                <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+                  {feisDoneForSvi.length ? (
+                    <ResponsiveTable
+                      headers={["Numéro", "Créée le", "Commune", "Clôturée le"]}
+                      data={feisDoneForSvi
+                        .filter((fei) => fei !== null)
+                        .map((fei) => ({
+                          link: `/app/tableau-de-bord/fei/${fei.numero}`,
+                          id: fei.numero,
+                          rows: [
+                            fei.numero!,
+                            dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
+                            fei.commune_mise_a_mort!,
+                            dayjs(fei.svi_assigned_at).format("DD/MM/YYYY à HH:mm"),
+                          ],
+                        }))}
+                    />
+                  ) : (
+                    <>
+                      <p className="m-8">Pas encore de fiche clôturée</p>
+                    </>
+                  )}
+                </div>
+                <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+                  <Button
+                    priority="tertiary"
+                    iconId="ri-refresh-line"
+                    disabled={!isOnline}
+                    onClick={() => window.location.reload()}
+                  >
+                    Mettre à jour
+                  </Button>
+                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                    Haut de page
+                  </a>
+                </div>
+              </section>
+            </>
+          )}
           {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
             <section className="mb-6 bg-white md:shadow">
               <div className="p-4 md:p-8 md:pb-0">
