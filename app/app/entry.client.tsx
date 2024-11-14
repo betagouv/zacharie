@@ -15,7 +15,7 @@ registerServiceWorker();
 
 if (process.env.NODE_ENV === "production") {
   Sentry.init({
-    dsn: "https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175",
+    dsn: "https://1d9011c5042e5a03ff25dec68be1be2b@sentry.incubateur.net/199",
     tracesSampleRate: 0.01,
     replaysSessionSampleRate: 0.01,
     replaysOnErrorSampleRate: 0.01,
