@@ -8,7 +8,7 @@ export const action: ActionFunction = async ({ request }) => {
     const payload = await request.json();
     console.log("payload", payload);
     // Valider et traiter les données de Sentry ici
-    if (!payload?.data?.event) {
+    if (!payload?.event) {
       return json({ message: "Invalid payload" }, { status: 400 });
     }
 
@@ -20,9 +20,17 @@ export const action: ActionFunction = async ({ request }) => {
     //   return json({ message: "Invalid signature" }, { status: 400 });
     // }
 
-    const eventData = payload.data.event;
-    // Format message
-    const message = `Nouvelle alerte Sentry: ${eventData.title}\n\nDétails: ${eventData.message}`;
+    const eventData = payload.event;
+    // Format message with more detailed information
+    const message = `🚨 *Nouvelle alerte Sentry*
+
+*Projet:* ${payload.project_name}
+*Niveau:* ${eventData.level}
+*Message:* ${eventData.logentry.formatted}
+*URL:* ${eventData.request?.url || "N/A"}
+*Utilisateur:* ${eventData.user?.email || "Inconnu"}
+
+*Lien Sentry:* ${payload.url}`;
 
     // Envoyer l'événement à Tchap
     await sendToTchap(message);
