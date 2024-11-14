@@ -445,7 +445,7 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.relation} value={relation} />
               <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.entity_id} value={entity.id} />
               <Link
-                to={`/app/tableau-de-bord/admin/entite/${user.id}`}
+                to={`/app/tableau-de-bord/admin/entite/${entity.id}`}
                 className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
               >
                 {entity.nom_d_usage}
