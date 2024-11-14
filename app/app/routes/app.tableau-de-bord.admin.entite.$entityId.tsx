@@ -125,6 +125,7 @@ export default function AdminEntity() {
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+          <small className="italic">{entity.type}</small>
           <h1 className="fr-h2 fr-mb-2w">{entity.nom_d_usage}</h1>
           <div className="p-4 pb-32 md:p-8 md:pb-0">
             <Tabs
@@ -271,9 +272,11 @@ export default function AdminEntity() {
                   fetcherKey="working-with"
                 />
               )}
-              {selectedTabId === "Collecteurs Pros associés" && <CoupledEntity entityType={EntityTypes.CCG} />}
-              {selectedTabId === "ETGs associés" && <CoupledEntity entityType={EntityTypes.ETG} />}
-              {selectedTabId === "SVIs associés" && <CoupledEntity entityType={EntityTypes.SVI} />}
+              {selectedTabId === "Collecteurs Pros associés" && (
+                <EntitiesRelatedTo entityType={EntityTypes.COLLECTEUR_PRO} />
+              )}
+              {selectedTabId === "ETGs associés" && <EntitiesRelatedTo entityType={EntityTypes.ETG} />}
+              {selectedTabId === "SVIs associés" && <EntitiesRelatedTo entityType={EntityTypes.SVI} />}
               <div className="mb-16 ml-6 mt-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
@@ -409,7 +412,7 @@ function UserWorkingWithOrFor({ relation, potentialUsers, fetcherKey }: WorkingW
   );
 }
 
-function CoupledEntity({ entityType }: { entityType: EntityTypes }) {
+function EntitiesRelatedTo({ entityType }: { entityType: EntityTypes }) {
   const {
     entity,
     collecteursRelatedToETG,
@@ -422,7 +425,7 @@ function CoupledEntity({ entityType }: { entityType: EntityTypes }) {
 
   const entitiesRelated = useMemo(() => {
     switch (entityType) {
-      case EntityTypes.CCG:
+      case EntityTypes.COLLECTEUR_PRO:
         return collecteursRelatedToETG;
       case EntityTypes.ETG:
         return etgsRelatedWithEntity;
@@ -435,7 +438,7 @@ function CoupledEntity({ entityType }: { entityType: EntityTypes }) {
 
   const potentialEntitiesRelated = useMemo(() => {
     switch (entityType) {
-      case EntityTypes.CCG:
+      case EntityTypes.COLLECTEUR_PRO:
         return potentialCollecteursRelatedToETG;
       case EntityTypes.ETG:
         return potentialEtgsRelatedWithEntity;
@@ -448,9 +451,20 @@ function CoupledEntity({ entityType }: { entityType: EntityTypes }) {
 
   const coupledEntityFetcher = useFetcher({ key: "coupled-entity-fetcher" });
 
+  console.log({
+    collecteursRelatedToETG,
+    etgsRelatedWithEntity,
+    svisRelatedToETG,
+    potentialCollecteursRelatedToETG,
+    potentialEtgsRelatedWithEntity,
+    potentialSvisRelatedToETG,
+  });
+
   return (
     <>
       {entitiesRelated.map((coupledEntity) => {
+        const etg = entity.type === EntityTypes.ETG ? entity : coupledEntity;
+        const otherEntity = entity.type === EntityTypes.ETG ? coupledEntity : entity;
         return (
           <div className="fr-fieldset__element" key={coupledEntity.id}>
             <Notice
@@ -463,6 +477,7 @@ function CoupledEntity({ entityType }: { entityType: EntityTypes }) {
                 coupledEntityFetcher.submit(
                   {
                     _action: "remove-etg-relation",
+                    etg_id_entity_id: `${etg.id}_${otherEntity.id}`,
                     route: `/api/admin/action/entite/${entity.id}`,
                   },
                   {
@@ -529,6 +544,7 @@ function CoupledEntity({ entityType }: { entityType: EntityTypes }) {
                   value={otherEntity.type}
                 />
                 <input type="hidden" name="route" value={`/api/admin/action/entite/${potentialEntityRelated.id}`} />
+                <input type="hidden" name="_action" value="add-etg-relation" />
                 <Link
                   to={`/app/tableau-de-bord/admin/entite/${otherEntity.id}`}
                   className="!inline-flex size-full items-center justify-start !bg-none !no-underline"

@@ -94,8 +94,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       : await prisma.eTGAndEntityRelations
           .findMany({
             where: {
-              entity_id: entity.id,
-              entity_type: EntityTypes.CCG,
+              etg_id: entity.id,
+              entity_type: EntityTypes.COLLECTEUR_PRO,
             },
             orderBy: {
               updated_at: "desc",
@@ -108,7 +108,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   const potentialCollecteursRelatedToETG = await prisma.entity.findMany({
     where: {
-      type: EntityTypes.CCG,
+      type: EntityTypes.COLLECTEUR_PRO,
       id: {
         notIn: collecteursRelatedToETG.map((entity) => entity.id),
       },
@@ -124,7 +124,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       : await prisma.eTGAndEntityRelations
           .findMany({
             where: {
-              entity_id: entity.id,
+              etg_id: entity.id,
               entity_type: EntityTypes.SVI,
             },
             orderBy: {
@@ -149,12 +149,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   });
 
   const etgsRelatedWithEntity =
-    entity.type !== EntityTypes.CCG && entity.type !== EntityTypes.SVI
+    entity.type !== EntityTypes.COLLECTEUR_PRO && entity.type !== EntityTypes.SVI
       ? []
       : await prisma.eTGAndEntityRelations
           .findMany({
             where: {
-              etg_id: entity.id,
+              entity_id: entity.id,
             },
             orderBy: {
               updated_at: "desc",
@@ -166,7 +166,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
           .then((data) => data.map((rel) => rel.ETGRelatedWithEntities));
 
   const potentialEtgsRelatedWithEntity =
-    entity.type !== EntityTypes.CCG && entity.type !== EntityTypes.SVI
+    entity.type !== EntityTypes.COLLECTEUR_PRO && entity.type !== EntityTypes.SVI
       ? []
       : await prisma.entity.findMany({
           where: {
