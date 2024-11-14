@@ -106,12 +106,12 @@ export default function AdminEntity() {
   ];
   if (entity.type === EntityTypes.ETG) {
     tabs.push({
-      tabId: "Collecteurs Pros associés",
-      label: `Collecteurs Pros associés (${collecteursRelatedToETG.length})`,
+      tabId: "Collecteur Pro associé",
+      label: `Collecteur Pro associé (${collecteursRelatedToETG.length})`,
     });
     tabs.push({
-      tabId: "SVIs associés",
-      label: `SVIs associés (${svisRelatedToETG.length})`,
+      tabId: "SVI associé",
+      label: `SVI associé (${svisRelatedToETG.length})`,
     });
   }
   if (entity.type === EntityTypes.SVI || entity.type === EntityTypes.COLLECTEUR_PRO) {
@@ -272,11 +272,11 @@ export default function AdminEntity() {
                   fetcherKey="working-with"
                 />
               )}
-              {selectedTabId === "Collecteurs Pros associés" && (
+              {selectedTabId === "Collecteur Pro associé" && (
                 <EntitiesRelatedTo entityType={EntityTypes.COLLECTEUR_PRO} />
               )}
               {selectedTabId === "ETGs associés" && <EntitiesRelatedTo entityType={EntityTypes.ETG} />}
-              {selectedTabId === "SVIs associés" && <EntitiesRelatedTo entityType={EntityTypes.SVI} />}
+              {selectedTabId === "SVI associé" && <EntitiesRelatedTo entityType={EntityTypes.SVI} />}
               <div className="mb-16 ml-6 mt-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
@@ -451,14 +451,12 @@ function EntitiesRelatedTo({ entityType }: { entityType: EntityTypes }) {
 
   const coupledEntityFetcher = useFetcher({ key: "coupled-entity-fetcher" });
 
-  console.log({
-    collecteursRelatedToETG,
-    etgsRelatedWithEntity,
-    svisRelatedToETG,
-    potentialCollecteursRelatedToETG,
-    potentialEtgsRelatedWithEntity,
-    potentialSvisRelatedToETG,
-  });
+  const showTable = useMemo(() => {
+    if (entityType !== EntityTypes.ETG) {
+      return entitiesRelated.length === 0;
+    }
+    return true;
+  }, [entitiesRelated, entityType]);
 
   return (
     <>
@@ -511,81 +509,83 @@ function EntitiesRelatedTo({ entityType }: { entityType: EntityTypes }) {
           </div>
         );
       })}
-      <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
-        <Table
-          fixed
-          noCaption
-          className="[&_td]:h-px"
-          data={potentialEntitiesRelated.map((potentialEntityRelated) => {
-            const etg = entity.type === EntityTypes.ETG ? entity : potentialEntityRelated;
-            const otherEntity = entity.type === EntityTypes.ETG ? potentialEntityRelated : entity;
-            return [
-              <coupledEntityFetcher.Form
-                key={potentialEntityRelated.id}
-                id="potentiel-couple-form"
-                className="fr-fieldset__element flex w-full flex-col items-start gap-4"
-                method="POST"
-                preventScrollReset
-              >
-                <input
-                  type="hidden"
-                  name={Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id_entity_id}
-                  value={`${etg.id}_${otherEntity.id}`}
-                />
-                <input type="hidden" name={Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id} value={etg.id} />
-                <input
-                  type="hidden"
-                  name={Prisma.ETGAndEntityRelationsScalarFieldEnum.entity_id}
-                  value={otherEntity.id}
-                />
-                <input
-                  type="hidden"
-                  name={Prisma.ETGAndEntityRelationsScalarFieldEnum.entity_type}
-                  value={otherEntity.type}
-                />
-                <input type="hidden" name="route" value={`/api/admin/action/entite/${potentialEntityRelated.id}`} />
-                <input type="hidden" name="_action" value="add-etg-relation" />
+      {showTable && (
+        <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+          <Table
+            fixed
+            noCaption
+            className="[&_td]:h-px"
+            data={potentialEntitiesRelated.map((potentialEntityRelated) => {
+              const etg = entity.type === EntityTypes.ETG ? entity : potentialEntityRelated;
+              const otherEntity = entity.type === EntityTypes.ETG ? potentialEntityRelated : entity;
+              return [
+                <coupledEntityFetcher.Form
+                  key={potentialEntityRelated.id}
+                  id={`potentiel-couple-form-${potentialEntityRelated.id}`}
+                  className="fr-fieldset__element flex w-full flex-col items-start gap-4"
+                  method="POST"
+                  preventScrollReset
+                >
+                  <input
+                    type="hidden"
+                    name={Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id_entity_id}
+                    value={`${etg.id}_${otherEntity.id}`}
+                  />
+                  <input type="hidden" name={Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id} value={etg.id} />
+                  <input
+                    type="hidden"
+                    name={Prisma.ETGAndEntityRelationsScalarFieldEnum.entity_id}
+                    value={otherEntity.id}
+                  />
+                  <input
+                    type="hidden"
+                    name={Prisma.ETGAndEntityRelationsScalarFieldEnum.entity_type}
+                    value={otherEntity.type}
+                  />
+                  <input type="hidden" name="route" value={`/api/admin/action/entite/${entity.id}`} />
+                  <input type="hidden" name="_action" value="add-etg-relation" />
+                  <Link
+                    to={`/app/tableau-de-bord/admin/entite/${otherEntity.id}`}
+                    className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                  >
+                    {potentialEntityRelated.type}
+                    <br />
+                    {potentialEntityRelated.nom_d_usage}
+                  </Link>
+                  <Button
+                    type="submit"
+                    nativeButtonProps={{
+                      form: `potentiel-couple-form-${potentialEntityRelated.id}`,
+                    }}
+                  >
+                    Lier
+                  </Button>
+                </coupledEntityFetcher.Form>,
                 <Link
-                  to={`/app/tableau-de-bord/admin/entite/${otherEntity.id}`}
+                  key={potentialEntityRelated.id}
+                  to={`/app/tableau-de-bord/admin/entite/${potentialEntityRelated.id}`}
                   className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                 >
-                  {potentialEntityRelated.type}
-                  <br />
                   {potentialEntityRelated.nom_d_usage}
-                </Link>
-                <Button
-                  type="submit"
-                  nativeButtonProps={{
-                    form: "potentiel-couple-form",
-                  }}
+                  {potentialEntityRelated.numero_ddecpp}
+                </Link>,
+                <Link
+                  key={potentialEntityRelated.id}
+                  to={`/app/tableau-de-bord/admin/entite/${potentialEntityRelated.id}`}
+                  className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                 >
-                  Lier
-                </Button>
-              </coupledEntityFetcher.Form>,
-              <Link
-                key={potentialEntityRelated.id}
-                to={`/app/tableau-de-bord/admin/entite/${potentialEntityRelated.id}`}
-                className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-              >
-                {potentialEntityRelated.nom_d_usage}
-                {potentialEntityRelated.numero_ddecpp}
-              </Link>,
-              <Link
-                key={potentialEntityRelated.id}
-                to={`/app/tableau-de-bord/admin/entite/${potentialEntityRelated.id}`}
-                className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-              >
-                {potentialEntityRelated.address_ligne_1}
-                <br />
-                {potentialEntityRelated.address_ligne_2}
-                <br />
-                {potentialEntityRelated.code_postal} {potentialEntityRelated.ville}
-              </Link>,
-            ];
-          })}
-          headers={["Entité", "Siret", "Adresse"]}
-        />
-      </div>
+                  {potentialEntityRelated.address_ligne_1}
+                  <br />
+                  {potentialEntityRelated.address_ligne_2}
+                  <br />
+                  {potentialEntityRelated.code_postal} {potentialEntityRelated.ville}
+                </Link>,
+              ];
+            })}
+            headers={["Entité", "Siret", "Adresse"]}
+          />
+        </div>
+      )}
     </>
   );
 }

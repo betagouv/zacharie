@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
+import { type ActionFunctionArgs, json } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import { UserRoles, Prisma, EntityTypes } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
@@ -22,6 +22,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
     return json({ ok: true });
   }
   if (formData.get("_action") === "add-etg-relation") {
+    console.log("add-etg-relation", Object.fromEntries(formData));
+
     const data: Prisma.ETGAndEntityRelationsUncheckedCreateInput = {
       etg_id_entity_id: formData.get(Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id_entity_id) as string,
       entity_id: formData.get(Prisma.ETGAndEntityRelationsScalarFieldEnum.entity_id) as string,
