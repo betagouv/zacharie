@@ -106,8 +106,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
           })
           .then((data) => data.map((rel) => rel.EntitiesRelatedWithETG));
 
-  console.log("collecteursRelatedToETG", collecteursRelatedToETG);
-
   const potentialCollecteursRelatedToETG = await prisma.entity.findMany({
     where: {
       type: EntityTypes.COLLECTEUR_PRO,

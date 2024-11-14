@@ -223,18 +223,18 @@ export default function TableauDeBordIndex() {
               </section>
             </>
           )}
-          <section className="mb-6 bg-white md:shadow">
+          <details className="mb-6 bg-white md:shadow open:[&_summary]:md:pb-0" open={isOnlySvi}>
             {!isOnline && (
               <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
                 Vous ne pouvez pas accéder au détail de vos fiches archivées sans connexion internet.
               </p>
             )}
-            <div className="p-4 md:p-8 md:pb-0">
-              <h2 className="fr-h3">
+            <summary className="p-4 md:p-8">
+              <h2 className="fr-h3 inline">
                 {isOnlySvi ? "Fiches sous ma responsabilité" : "Fiches clôturées"}{" "}
                 {feisDone.length > 0 ? ` (${feisDone.length})` : null}
               </h2>
-            </div>
+            </summary>
             <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
               {feisDone.length ? (
                 <ResponsiveTable
@@ -271,7 +271,7 @@ export default function TableauDeBordIndex() {
                 Haut de page
               </a>
             </div>
-          </section>
+          </details>
           {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
             <section className="mb-6 bg-white md:shadow">
               <div className="p-4 md:p-8 md:pb-0">
