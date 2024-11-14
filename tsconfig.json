@@ -1,0 +1,7 @@
+{
+  "references": [
+    { "path": "./api-remix" },
+    { "path": "./app" }
+  ],
+  "files": []
+} 

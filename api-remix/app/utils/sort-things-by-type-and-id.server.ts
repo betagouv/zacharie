@@ -1,6 +1,6 @@
 import {
   EntityTypes,
-  EntityRelations,
+  EntityAndUserRelations,
   UserRelations,
   UserRoles,
   type Entity,
@@ -27,8 +27,8 @@ export function sortEntitiesByTypeAndId(entities: Array<Entity>): [EntitiesById,
 }
 
 export function sortEntitiesRelationsByTypeAndId(
-  entities: Array<EntityRelations>,
-  entitiesById: EntitiesById
+  entities: Array<EntityAndUserRelations>,
+  entitiesById: EntitiesById,
 ): EntitiesByTypeAndId {
   const entitiesByTypeAndId: EntitiesByTypeAndId = Object.values(EntityTypes).reduce((acc, type) => {
     acc[type] = {};
@@ -74,7 +74,7 @@ export function sortUsersByRoleAndId(users: Array<PartialUser>): [UsersById, Use
 
 export function sortUsersRelationsByRoleAndId(
   userRelations: Array<UserRelations>,
-  usersById: UsersById
+  usersById: UsersById,
 ): UsersByRoleAndId {
   const usersByRoleAndId: UsersByRoleAndId = {
     [UserRoles.PREMIER_DETENTEUR]: {},

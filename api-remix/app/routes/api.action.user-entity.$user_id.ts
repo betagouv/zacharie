@@ -13,10 +13,10 @@ export async function action(args: ActionFunctionArgs) {
 
   const formData = await request.formData();
   console.log("formData action.user-entity.$user_id", Object.fromEntries(formData));
-  if (!formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id)) {
+  if (!formData.get(Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id)) {
     return json({ ok: false, data: null, error: "Missing owner_id" }, { status: 400 });
   }
-  let entityId: string = formData.get(Prisma.EntityRelationsScalarFieldEnum.entity_id) as string;
+  let entityId: string = formData.get(Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id) as string;
   if (formData.get(Prisma.EntityScalarFieldEnum.numero_ddecpp)) {
     const entity = await prisma.entity.findFirst({
       where: {
@@ -32,29 +32,29 @@ export async function action(args: ActionFunctionArgs) {
   if (!entityId) {
     return json({ ok: false, data: null, error: "Missing entity_id" }, { status: 400 });
   }
-  if (!isAdmin && params.user_id !== formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id)) {
+  if (!isAdmin && params.user_id !== formData.get(Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id)) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
 
   if (formData.get("_action") === "create") {
-    if (!formData.get(Prisma.EntityRelationsScalarFieldEnum.relation)) {
+    if (!formData.get(Prisma.EntityAndUserRelationsScalarFieldEnum.relation)) {
       return json({ ok: false, data: null, error: "Missing relation" }, { status: 400 });
     }
 
     const nextEntityRelation = {
-      owner_id: formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id) as User["id"],
+      owner_id: formData.get(Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id) as User["id"],
       entity_id: entityId,
-      relation: formData.get(Prisma.EntityRelationsScalarFieldEnum.relation) as EntityRelationType,
+      relation: formData.get(Prisma.EntityAndUserRelationsScalarFieldEnum.relation) as EntityRelationType,
     };
 
-    const existingEntityRelation = await prisma.entityRelations.findFirst({
+    const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
       where: nextEntityRelation,
     });
     if (existingEntityRelation) {
       return json({ ok: false, data: null, error: "EntityRelation already exists" }, { status: 409 });
     }
 
-    const relation = await prisma.entityRelations.create({
+    const relation = await prisma.entityAndUserRelations.create({
       data: nextEntityRelation,
     });
 
@@ -62,15 +62,15 @@ export async function action(args: ActionFunctionArgs) {
   }
 
   if (formData.get("_action") === "delete") {
-    const existingEntityRelation = await prisma.entityRelations.findFirst({
+    const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
       where: {
-        owner_id: formData.get(Prisma.EntityRelationsScalarFieldEnum.owner_id) as User["id"],
-        relation: formData.get(Prisma.EntityRelationsScalarFieldEnum.relation) as EntityRelationType,
+        owner_id: formData.get(Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id) as User["id"],
+        relation: formData.get(Prisma.EntityAndUserRelationsScalarFieldEnum.relation) as EntityRelationType,
         entity_id: entityId,
       },
     });
     if (existingEntityRelation) {
-      await prisma.entityRelations.delete({
+      await prisma.entityAndUserRelations.delete({
         where: {
           id: existingEntityRelation.id,
         },

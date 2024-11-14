@@ -1,6 +1,6 @@
 import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
-import { UserRoles, Prisma } from "@prisma/client";
+import { UserRoles, Prisma, EntityTypes } from "@prisma/client";
 import { prisma } from "~/db/prisma.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 
@@ -13,62 +13,29 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const formData = await request.formData();
   console.log("formData tableau-de-bord.admin.entite.$entityId", Object.fromEntries(formData));
 
-  if (formData.get("_action") === "remove-couple") {
-    const entity = await prisma.entity.findUnique({
+  if (formData.get("_action") === "remove-etg-relation") {
+    await prisma.eTGAndEntityRelations.delete({
       where: {
-        id: params.entityId,
+        etg_id_entity_id: formData.get("etg_id_entity_id") as string,
       },
     });
-    if (entity && entity.coupled_entity_id) {
-      const couple = await prisma.entity.findUnique({
-        where: {
-          id: entity.coupled_entity_id,
-        },
-      });
-      if (couple) {
-        await prisma.entity.update({
-          where: {
-            id: couple.id,
-          },
-          data: {
-            coupled_entity_id: null,
-          },
-        });
-        const updatedEntity = await prisma.entity.update({
-          where: {
-            id: params.entityId,
-          },
-          data: {
-            coupled_entity_id: null,
-          },
-        });
-        return json({ ok: true, data: updatedEntity });
-      }
-    } else {
-      throw redirect("/app/tableau-de-bord/admin/entites");
-    }
+    return json({ ok: true });
   }
-  if (formData.get(Prisma.EntityScalarFieldEnum.coupled_entity_id)) {
-    const coupledEntityId = formData.get(Prisma.EntityScalarFieldEnum.coupled_entity_id) as string;
-
-    await prisma.entity.update({
+  if (formData.get("_action") === "add-etg-relation") {
+    const data: Prisma.ETGAndEntityRelationsUncheckedCreateInput = {
+      etg_id_entity_id: formData.get(Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id_entity_id) as string,
+      entity_id: formData.get(Prisma.ETGAndEntityRelationsScalarFieldEnum.entity_id) as string,
+      etg_id: formData.get(Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id) as string,
+      entity_type: formData.get(Prisma.ETGAndEntityRelationsScalarFieldEnum.entity_type) as EntityTypes,
+    };
+    const relation = await prisma.eTGAndEntityRelations.upsert({
       where: {
-        id: coupledEntityId,
+        etg_id_entity_id: formData.get(Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id_entity_id) as string,
       },
-      data: {
-        coupled_entity_id: params.entityId,
-      },
+      create: data,
+      update: data,
     });
-
-    const updatedEntity = await prisma.entity.update({
-      where: {
-        id: params.entityId,
-      },
-      data: {
-        coupled_entity_id: coupledEntityId,
-      },
-    });
-    return json({ ok: true, data: updatedEntity });
+    return json({ ok: true, data: relation });
   }
 
   const data: Prisma.EntityUncheckedUpdateInput = {

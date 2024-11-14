@@ -25,7 +25,9 @@ export async function action(args: ActionFunctionArgs) {
     if (!existingFei) {
       return json({ ok: false, data: null, error: "Fei not found" }, { status: 404 });
     }
-    const canDelete = user.roles.includes(UserRoles.ADMIN) || (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && existingFei.fei_current_owner_user_id === user.id);
+    const canDelete =
+      user.roles.includes(UserRoles.ADMIN) ||
+      (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && existingFei.fei_current_owner_user_id === user.id);
     if (!canDelete) {
       return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
     }
@@ -40,7 +42,7 @@ export async function action(args: ActionFunctionArgs) {
     });
     return json({ ok: true, data: null, error: "" });
   }
-  
+
   if (!existingFei) {
     existingFei = await prisma.fei.create({
       data: {
@@ -122,8 +124,7 @@ export async function action(args: ActionFunctionArgs) {
       (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id) as string) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
-    nextFei.premier_detenteur_offline =
-      formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_offline) === "true";
+    nextFei.premier_detenteur_offline = formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_offline) === "true";
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
     nextFei.premier_detenteur_entity_id =
@@ -214,9 +215,9 @@ export async function action(args: ActionFunctionArgs) {
         owner_id: user.id,
         relation: EntityRelationType.WORKING_WITH,
       };
-      const existingRelation = await prisma.entityRelations.findFirst({ where: nextRelation });
+      const existingRelation = await prisma.entityAndUserRelations.findFirst({ where: nextRelation });
       if (!existingRelation) {
-        await prisma.entityRelations.create({ data: nextRelation });
+        await prisma.entityAndUserRelations.create({ data: nextRelation });
       }
     }
   }
@@ -349,7 +350,7 @@ export async function action(args: ActionFunctionArgs) {
 
   if (formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
     const usersWorkingForEntity = (
-      await prisma.entityRelations.findMany({
+      await prisma.entityAndUserRelations.findMany({
         where: {
           entity_id: formData.get(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id) as string,
           relation: EntityRelationType.WORKING_FOR,

@@ -22,7 +22,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       updated_at: "desc",
     },
   });
-  const userEntitiesRelations = await prisma.entityRelations.findMany({
+  const userEntitiesRelations = await prisma.entityAndUserRelations.findMany({
     where: {
       owner_id: user.id,
     },

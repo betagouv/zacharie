@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       updated_at: "desc",
     },
   });
-  const userEntitiesRelationsWorkingFor = await prisma.entityRelations.findMany({
+  const userEntitiesRelationsWorkingFor = await prisma.entityAndUserRelations.findMany({
     where: {
       owner_id: user.id,
       relation: EntityRelationType.WORKING_FOR,

@@ -66,15 +66,12 @@ module.exports = {
             extensions: [".ts", ".tsx"],
           },
           typescript: {
+            project: "./tsconfig.json",
             alwaysTryTypes: true,
           },
         },
       },
-      extends: [
-        "plugin:@typescript-eslint/recommended",
-        "plugin:import/recommended",
-        "plugin:import/typescript",
-      ],
+      extends: ["plugin:@typescript-eslint/recommended", "plugin:import/recommended", "plugin:import/typescript"],
     },
 
     // Node

@@ -14,7 +14,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       id: params.entityId,
     },
     include: {
-      CoupledEntity: true,
       EntityRelatedWithUser: {
         select: {
           relation: true,
@@ -89,18 +88,97 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     },
   });
 
-  const sviOrEtgPotentielCouple = await prisma.entity.findMany({
+  const collecteursRelatedToETG =
+    entity.type !== EntityTypes.ETG
+      ? []
+      : await prisma.eTGAndEntityRelations
+          .findMany({
+            where: {
+              entity_id: entity.id,
+              entity_type: EntityTypes.CCG,
+            },
+            orderBy: {
+              updated_at: "desc",
+            },
+            include: {
+              EntitiesRelatedWithETG: true,
+            },
+          })
+          .then((data) => data.map((rel) => rel.EntitiesRelatedWithETG));
+
+  const potentialCollecteursRelatedToETG = await prisma.entity.findMany({
     where: {
+      type: EntityTypes.CCG,
       id: {
-        not: entity.id,
+        notIn: collecteursRelatedToETG.map((entity) => entity.id),
       },
-      type: entity.type === EntityTypes.ETG ? EntityTypes.SVI : EntityTypes.ETG,
-      coupled_entity_id: null,
     },
     orderBy: {
       updated_at: "desc",
     },
   });
+
+  const svisRelatedToETG =
+    entity.type !== EntityTypes.ETG
+      ? []
+      : await prisma.eTGAndEntityRelations
+          .findMany({
+            where: {
+              entity_id: entity.id,
+              entity_type: EntityTypes.SVI,
+            },
+            orderBy: {
+              updated_at: "desc",
+            },
+            include: {
+              EntitiesRelatedWithETG: true,
+            },
+          })
+          .then((data) => data.map((rel) => rel.EntitiesRelatedWithETG));
+
+  const potentialSvisRelatedToETG = await prisma.entity.findMany({
+    where: {
+      type: EntityTypes.SVI,
+      id: {
+        notIn: svisRelatedToETG.map((entity) => entity.id),
+      },
+    },
+    orderBy: {
+      updated_at: "desc",
+    },
+  });
+
+  const etgsRelatedWithEntity =
+    entity.type !== EntityTypes.CCG && entity.type !== EntityTypes.SVI
+      ? []
+      : await prisma.eTGAndEntityRelations
+          .findMany({
+            where: {
+              etg_id: entity.id,
+            },
+            orderBy: {
+              updated_at: "desc",
+            },
+            include: {
+              ETGRelatedWithEntities: true,
+            },
+          })
+          .then((data) => data.map((rel) => rel.ETGRelatedWithEntities));
+
+  const potentialEtgsRelatedWithEntity =
+    entity.type !== EntityTypes.CCG && entity.type !== EntityTypes.SVI
+      ? []
+      : await prisma.entity.findMany({
+          where: {
+            type: EntityTypes.ETG,
+            id: {
+              notIn: etgsRelatedWithEntity.map((entity) => entity.id),
+            },
+          },
+          orderBy: {
+            updated_at: "desc",
+          },
+        });
 
   return json({
     ok: true,
@@ -108,7 +186,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       entity,
       usersWithEntityType,
       potentialPartenaires,
-      sviOrEtgPotentielCouple,
+      collecteursRelatedToETG,
+      potentialCollecteursRelatedToETG,
+      svisRelatedToETG,
+      potentialSvisRelatedToETG,
+      etgsRelatedWithEntity,
+      potentialEtgsRelatedWithEntity,
     },
     error: "",
   });

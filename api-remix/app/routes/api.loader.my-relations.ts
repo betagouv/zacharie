@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
   const entitiesWorkingWith = (
-    await prisma.entityRelations.findMany({
+    await prisma.entityAndUserRelations.findMany({
       where: {
         owner_id: user.id,
         relation: EntityRelationType.WORKING_WITH,
@@ -24,8 +24,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     })
   ).map((entityRelation) => ({ ...entityRelation.EntityRelatedWithUser, relation: entityRelation.relation }));
 
-  const entitiesWorkingFor = (
-    await prisma.entityRelations.findMany({
+  const entitiesWorkingFor = await prisma.entityAndUserRelations
+    .findMany({
       where: {
         owner_id: user.id,
         relation: EntityRelationType.WORKING_FOR,
@@ -37,26 +37,37 @@ export async function loader({ request }: LoaderFunctionArgs) {
         updated_at: "desc",
       },
     })
-  ).map((entityRelation) => entityRelation.EntityRelatedWithUser);
+    .then((entityRelations) => entityRelations.map((rel) => rel.EntityRelatedWithUser));
 
-  const svisOrEtgsCoupledIds = entitiesWorkingFor
-    .filter((entity) => entity.type === EntityTypes.ETG || entity.type === EntityTypes.SVI)
-    .map((etgOrSvi) => etgOrSvi.coupled_entity_id)
-    .filter((id) => id !== null);
-
-  const userCoupledEntities = (
-    await prisma.entity.findMany({
-      where: {
-        id: {
-          in: svisOrEtgsCoupledIds,
-          notIn: entitiesWorkingFor.map((entity) => entity.id),
-        },
-      },
-      orderBy: {
-        updated_at: "desc",
+  const etgsRelatedWithMyEntities = await prisma.eTGAndEntityRelations
+    .findMany({
+      where: { entity_id: { in: entitiesWorkingWith.map((entity) => entity.id) } },
+      include: {
+        ETGRelatedWithEntities: true,
       },
     })
-  ).map((entity) => ({ ...entity, relation: EntityRelationType.WORKING_WITH }));
+    .then((rel) => rel.map((r) => ({ ...r.ETGRelatedWithEntities, relation: EntityRelationType.WORKING_WITH })));
+
+  const svisRelatedWithMyETGs = await prisma.eTGAndEntityRelations
+    .findMany({
+      where: { etg_id: { in: entitiesWorkingWith.map((entity) => entity.id) }, entity_type: EntityTypes.SVI },
+      include: {
+        EntitiesRelatedWithETG: true,
+      },
+    })
+    .then((rel) => rel.map((r) => ({ ...r.EntitiesRelatedWithETG, relation: EntityRelationType.WORKING_WITH })));
+
+  const collecteursProsRelatedWithMyETGs = await prisma.eTGAndEntityRelations
+    .findMany({
+      where: {
+        etg_id: { in: entitiesWorkingWith.map((entity) => entity.id) },
+        entity_type: EntityTypes.COLLECTEUR_PRO,
+      },
+      include: {
+        EntitiesRelatedWithETG: true,
+      },
+    })
+    .then((rel) => rel.map((r) => ({ ...r.EntitiesRelatedWithETG, relation: EntityRelationType.WORKING_WITH })));
 
   const allOtherEntities = (
     await prisma.entity.findMany({
@@ -100,7 +111,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   //   examinateursInitiaux.unshift({ ...user, relation: UserRelationType.EXAMINATEUR_INITIAL });
   // }
 
-  const allEntities = [...entitiesWorkingWith, ...userCoupledEntities, ...allOtherEntities];
+  const allEntities = [
+    ...entitiesWorkingWith,
+    ...etgsRelatedWithMyEntities,
+    ...svisRelatedWithMyETGs,
+    ...collecteursProsRelatedWithMyETGs,
+    ...allOtherEntities,
+  ];
 
   const ccgs = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.CCG);
   const associationsDeChasse = entitiesWorkingFor.filter((entity) => entity.type === EntityTypes.PREMIER_DETENTEUR);

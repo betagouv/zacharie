@@ -31,8 +31,8 @@ enum UserNotifications {
 }
 
 model User {
-  id                             String                  @id // new ShortUniqueId({ length: 5, dictionary: "alphanum_upper" }).randomUUID() so that we can use it in FEI numbers (36^5 = 60M possibilities)
-  email                          String?                 @unique // email is optional, we can have users without email like the Collecteur Pro
+  id                             String                   @id // new ShortUniqueId({ length: 5, dictionary: "alphanum_upper" }).randomUUID() so that we can use it in FEI numbers (36^5 = 60M possibilities)
+  email                          String?                  @unique // email is optional, we can have users without email like the Collecteur Pro
   telephone                      String?
   prenom                         String?
   nom_de_famille                 String?
@@ -44,30 +44,30 @@ model User {
   ville                          String?
   user_entities_vivible_checkbox Boolean?
   roles                          UserRoles[]
-  created_at                     DateTime                @default(now())
-  updated_at                     DateTime                @default(now()) @updatedAt
+  created_at                     DateTime                 @default(now())
+  updated_at                     DateTime                 @default(now()) @updatedAt
   last_login_at                  DateTime?
   last_seen_at                   DateTime?
   deleted_at                     DateTime?
   onboarded_at                   DateTime?
-  notifications                  UserNotifications[]     @default([EMAIL, PUSH])
+  notifications                  UserNotifications[]      @default([EMAIL, PUSH])
   web_push_tokens                String[]
-  prefilled                      Boolean                 @default(false)
-  activated                      Boolean                 @default(false)
+  prefilled                      Boolean                  @default(false)
+  activated                      Boolean                  @default(false)
   Password                       Password?
-  UserRelationsAsOwner           UserRelations[]         @relation("UserOwnerOfUserRelation")
-  UserRelationsAsRelated         UserRelations[]         @relation("UserRelatedOfUserRelation")
-  EntitiesRelations              EntityRelations[]       @relation("UserRelatedWithEntity")
-  FeiCreatedByUser               Fei[]                   @relation("FeiCreatedByUser")
-  FeiCurrentUser                 Fei[]                   @relation("FeiCurrentUser")
-  FeiPremierDetenteurUser        Fei[]                   @relation("FeiPremierDetenteurUser")
-  FeiExaminateurInitialUser      Fei[]                   @relation("FeiExaminateurInitialUser")
-  FeiSviUser                     Fei[]                   @relation("FeiSviUser")
-  FeiIntermediaireUser           FeiIntermediaire[]      @relation("FeiIntermediaireUser")
+  UserRelationsAsOwner           UserRelations[]          @relation("UserOwnerOfUserRelation")
+  UserRelationsAsRelated         UserRelations[]          @relation("UserRelatedOfUserRelation")
+  EntityAndUserRelations         EntityAndUserRelations[] @relation("UserRelatedWithEntity")
+  FeiCreatedByUser               Fei[]                    @relation("FeiCreatedByUser")
+  FeiCurrentUser                 Fei[]                    @relation("FeiCurrentUser")
+  FeiPremierDetenteurUser        Fei[]                    @relation("FeiPremierDetenteurUser")
+  FeiExaminateurInitialUser      Fei[]                    @relation("FeiExaminateurInitialUser")
+  FeiSviUser                     Fei[]                    @relation("FeiSviUser")
+  FeiIntermediaireUser           FeiIntermediaire[]       @relation("FeiIntermediaireUser")
   Logs                           Logs[]
   NotificationLog                NotificationLog[]
-  CarcasseIntermediaire          CarcasseIntermediaire[] @relation("CarcasseIntermediaireUser")
-  FeiNextUser                    Fei[]                   @relation("FeiNextUser")
+  CarcasseIntermediaire          CarcasseIntermediaire[]  @relation("CarcasseIntermediaireUser")
+  FeiNextUser                    Fei[]                    @relation("FeiNextUser")
 
   @@index([id]) // New: Added for faster user lookups
   @@index([email]) // Modified: Simplified from the composite index
@@ -87,7 +87,7 @@ enum EntityTypes {
 }
 
 model Entity {
-  id                        String                  @id @default(uuid())
+  id                        String                   @id @default(uuid())
   // NO EMAIL: an entity needs AT LEAST one user
   raison_sociale            String?
   nom_d_usage               String?
@@ -96,24 +96,26 @@ model Entity {
   code_postal               String?
   ville                     String?
   siret                     String?
-  numero_ddecpp             String?                 @unique
+  numero_ddecpp             String?                  @unique
   type                      EntityTypes
-  created_at                DateTime                @default(now())
-  updated_at                DateTime                @default(now()) @updatedAt
+  created_at                DateTime                 @default(now())
+  updated_at                DateTime                 @default(now()) @updatedAt
   deleted_at                DateTime?
   onboarded_at              DateTime?
-  coupled_entity_id         String?                 @unique
-  prefilled                 Boolean                 @default(false)
-  EntityRelatedWithUser     EntityRelations[]       @relation("EntityRelatedWithUser")
-  FeiCurrentEntity          Fei[]                   @relation("FeiCurrentEntity")
-  FeiNextEntity             Fei[]                   @relation("FeiNextEntity")
-  FeiDepotEntity            Fei[]                   @relation("FeiDepotEntity")
-  FeiPremierDetenteurEntity Fei[]                   @relation("FeiPremierDetenteurEntity")
-  FeiSviEntity              Fei[]                   @relation("FeiSviEntity")
-  FeiIntermediaireEntity    FeiIntermediaire[]      @relation("FeiIntermediaireEntity")
-  CarcasseIntermediaire     CarcasseIntermediaire[] @relation("CarcasseIntermediaireEntity")
-  CoupledEntity             Entity?                 @relation("CoupledEntity", fields: [coupled_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  CoupledEntity_opposite    Entity?                 @relation("CoupledEntity")
+  coupled_entity_id         String?                  @unique
+  prefilled                 Boolean                  @default(false)
+  EntityRelatedWithUser     EntityAndUserRelations[] @relation("EntityRelatedWithUser")
+  FeiCurrentEntity          Fei[]                    @relation("FeiCurrentEntity")
+  FeiNextEntity             Fei[]                    @relation("FeiNextEntity")
+  FeiDepotEntity            Fei[]                    @relation("FeiDepotEntity")
+  FeiPremierDetenteurEntity Fei[]                    @relation("FeiPremierDetenteurEntity")
+  FeiSviEntity              Fei[]                    @relation("FeiSviEntity")
+  FeiIntermediaireEntity    FeiIntermediaire[]       @relation("FeiIntermediaireEntity")
+  CarcasseIntermediaire     CarcasseIntermediaire[]  @relation("CarcasseIntermediaireEntity")
+  CoupledEntity             Entity?                  @relation("CoupledEntity", fields: [coupled_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  CoupledEntity_opposite    Entity?                  @relation("CoupledEntity")
+  ETGRelatedWithEntities    ETGAndEntityRelations[]  @relation("ETGRelatedWithEntities")
+  EntitiesRelatedWithETG    ETGAndEntityRelations[]  @relation("EntitiesRelatedWithETG")
 }
 
 model Password {
@@ -155,7 +157,7 @@ enum EntityRelationType {
   WORKING_WITH // a user working with the entity
 }
 
-model EntityRelations {
+model EntityAndUserRelations {
   id                    String             @id @default(uuid())
   owner_id              String
   entity_id             String
@@ -169,6 +171,21 @@ model EntityRelations {
   @@index([owner_id, relation])
   @@index([entity_id, relation])
   @@index([owner_id, entity_id]) // Add: Used in nested queries for FeiNextEntity
+}
+
+model ETGAndEntityRelations {
+  etg_id_entity_id       String      @id @default(uuid())
+  etg_id                 String
+  entity_id              String
+  entity_type            EntityTypes
+  created_at             DateTime    @default(now())
+  updated_at             DateTime    @default(now()) @updatedAt
+  deleted_at             DateTime?
+  ETGRelatedWithEntities Entity      @relation("ETGRelatedWithEntities", fields: [etg_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  EntitiesRelatedWithETG Entity      @relation("EntitiesRelatedWithETG", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([etg_id, entity_type])
+  @@index([entity_id, entity_type])
 }
 
 model Logs {

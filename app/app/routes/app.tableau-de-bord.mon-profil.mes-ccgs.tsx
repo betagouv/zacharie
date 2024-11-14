@@ -118,8 +118,8 @@ export default function MesCCGs() {
                       onClose={() => {
                         const form = new FormData();
                         form.append("_action", "delete");
-                        form.append(Prisma.EntityRelationsScalarFieldEnum.owner_id, user.id);
-                        form.append(Prisma.EntityRelationsScalarFieldEnum.entity_id, entity.id);
+                        form.append(Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id, user.id);
+                        form.append(Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id, entity.id);
                         form.append("relation", EntityRelationType.WORKING_WITH);
                         removeCCGFetcher.submit(form, {
                           method: "POST",
@@ -180,11 +180,11 @@ function InputCCG() {
 
   return (
     <userCCGFetcher.Form method="POST" className="fr-fieldset__element flex w-full flex-row items-end gap-4">
-      <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
+      <input type="hidden" name={Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id} value={user.id} />
       <input type="hidden" name="_action" value="create" />
       <input
         type="hidden"
-        name={Prisma.EntityRelationsScalarFieldEnum.relation}
+        name={Prisma.EntityAndUserRelationsScalarFieldEnum.relation}
         value={EntityRelationType.WORKING_WITH}
       />
       <input type="hidden" name={Prisma.EntityScalarFieldEnum.type} value={EntityTypes.CCG} />

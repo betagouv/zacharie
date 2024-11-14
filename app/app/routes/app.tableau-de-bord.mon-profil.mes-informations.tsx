@@ -481,8 +481,8 @@ function AccordionEntreprise({
                 onClose={() => {
                   const form = new FormData();
                   form.append("_action", "delete");
-                  form.append(Prisma.EntityRelationsScalarFieldEnum.owner_id, user.id);
-                  form.append(Prisma.EntityRelationsScalarFieldEnum.entity_id, entity.id);
+                  form.append(Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id, user.id);
+                  form.append(Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id, entity.id);
                   form.append("relation", EntityRelationType.WORKING_FOR);
                   form.append("route", `/api/action/user-entity/${user.id}`);
                   userEntityFetcher.submit(form, {
@@ -508,12 +508,12 @@ function AccordionEntreprise({
           method="POST"
           preventScrollReset
         >
-          <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
+          <input type="hidden" name={Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id} value={user.id} />
           <input type="hidden" name="_action" value="create" />
           <input type="hidden" name="route" value={`/api/action/user-entity/${user.id}`} />
           <input
             type="hidden"
-            name={Prisma.EntityRelationsScalarFieldEnum.relation}
+            name={Prisma.EntityAndUserRelationsScalarFieldEnum.relation}
             value={EntityRelationType.WORKING_FOR}
           />
           <Select
@@ -521,7 +521,7 @@ function AccordionEntreprise({
             hint={selectLabel}
             className="!mb-0 grow"
             nativeSelectProps={{
-              name: Prisma.EntityRelationsScalarFieldEnum.entity_id,
+              name: Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id,
             }}
           >
             <option value="">{selectLabel}</option>

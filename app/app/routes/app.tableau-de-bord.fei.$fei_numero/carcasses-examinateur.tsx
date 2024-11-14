@@ -26,11 +26,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
 
   return (
     <>
-      <CustomHighlight
-        classes={{
-          root: "fr-highlight--green-emeraude",
-        }}
-      >
+      <CustomHighlight>
         {carcasses.map((carcasse) => {
           // const examinationNotFinished =
           //   !carcasse.examinateur_anomalies_abats?.length &&

@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
   const userCCGs = (
-    await prisma.entityRelations.findMany({
+    await prisma.entityAndUserRelations.findMany({
       where: {
         owner_id: user.id,
         relation: EntityRelationType.WORKING_WITH,

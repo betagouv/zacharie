@@ -439,11 +439,11 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
               method="POST"
               preventScrollReset
             >
-              <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.owner_id} value={user.id} />
+              <input type="hidden" name={Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id} value={user.id} />
               <input type="hidden" name="_action" value="create" />
               <input type="hidden" name="route" value={`/api/action/user-entity/${entity.id}`} />
-              <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.relation} value={relation} />
-              <input type="hidden" name={Prisma.EntityRelationsScalarFieldEnum.entity_id} value={entity.id} />
+              <input type="hidden" name={Prisma.EntityAndUserRelationsScalarFieldEnum.relation} value={relation} />
+              <input type="hidden" name={Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id} value={entity.id} />
               <Link
                 to={`/app/tableau-de-bord/admin/entite/${entity.id}`}
                 className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
