@@ -30,5 +30,3 @@ export async function sendToTchap(message: string) {
     throw error;
   }
 }
-
-sendToTchap();
