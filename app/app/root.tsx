@@ -26,6 +26,7 @@ import dsfrColorCss from "@codegouvfr/react-dsfr/dsfr/utility/colors/colors.min.
 // import dsfrFaviconSvg from "@codegouvfr/react-dsfr/favicon/favicon.svg?url";
 // import dsfrAppleTouchIcon from "@codegouvfr/react-dsfr/favicon/apple-touch-icon.png?url";
 import Chargement from "./components/Chargement";
+import { d } from "@vite-pwa/assets-generator/dist/shared/assets-generator.5e51fd40.mjs";
 
 export const meta: MetaFunction = () => {
   return [

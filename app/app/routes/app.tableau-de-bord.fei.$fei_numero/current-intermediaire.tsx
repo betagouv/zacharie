@@ -1,7 +1,7 @@
 import { Fragment, useMemo, useState } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { clientLoader } from "./route";
-import { Prisma, CarcasseIntermediaire, Carcasse } from "@prisma/client";
+import { Prisma, CarcasseIntermediaire, Carcasse, CarcasseType } from "@prisma/client";
 import InputNotEditable from "@app/components/InputNotEditable";
 import { Accordion } from "@codegouvfr/react-dsfr/Accordion";
 import { Checkbox } from "@codegouvfr/react-dsfr/Checkbox";
@@ -83,9 +83,6 @@ export default function FEICurrentIntermediaire() {
     };
   }, [carcassesUnsorted, intermediaire, fei]);
 
-  // const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
-  const jobIsDone = true;
-
   const labelCheckDone = useMemo(() => {
     let label = `${intermediaire.check_finished_at ? "J'ai pris" : "Je prends"} en charge les carcasses que j'ai acceptées.`;
     const nbCarcassesValidated = carcassesSorted.carcassesApproved.length;
@@ -149,6 +146,15 @@ export default function FEICurrentIntermediaire() {
   //   prevCarcassesToCheckCount.current = carcassesSorted.carcassesToCheck.length;
   // }, [carcassesSorted.carcassesToCheck.length]);
 
+  const onlyPetitGibier = useMemo(() => {
+    for (const carcasse of carcasses) {
+      if (carcasse?.type !== CarcasseType.PETIT_GIBIER) {
+        return false;
+      }
+    }
+    return true;
+  }, [carcasses]);
+
   return (
     <>
       <nav
@@ -199,6 +205,45 @@ export default function FEICurrentIntermediaire() {
           expanded={carcassesAValiderExpanded}
           onExpandedChange={setCarcassesAValiderExpanded}
         >
+          <div className="fr-fieldset__element">
+            <InputNotEditable
+              label="Date de mise à mort (et d'éviscération) *"
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                type: "text",
+                autoComplete: "off",
+                suppressHydrationWarning: true,
+                defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format("DD/MM/YYYY") : "",
+              }}
+            />
+          </div>
+          <div className="fr-fieldset__element">
+            <InputNotEditable
+              label="Heure de mise à mort de la première carcasse *"
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                type: "time",
+                autoComplete: "off",
+                defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? "",
+              }}
+            />
+          </div>
+          {!onlyPetitGibier && (
+            <div className="fr-fieldset__element">
+              <InputNotEditable
+                label="Heure d'éviscération de la dernière carcasse"
+                nativeInputProps={{
+                  id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                  name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                  type: "time",
+                  autoComplete: "off",
+                  defaultValue: fei?.heure_evisceration_derniere_carcasse ?? "",
+                }}
+              />
+            </div>
+          )}
           <p className="text-sm text-gray-600">
             Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
           </p>

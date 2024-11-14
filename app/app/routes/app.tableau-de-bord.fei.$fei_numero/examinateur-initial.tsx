@@ -111,22 +111,28 @@ export default function FEIExaminateurInitial() {
     return true;
   }, [carcasses]);
 
-  const jobIsDone = useMemo(() => {
-    if (!fei.date_mise_a_mort || !fei.commune_mise_a_mort || !fei.heure_mise_a_mort_premiere_carcasse) {
-      return false;
+  const jobIsMissing = useMemo(() => {
+    if (!fei.date_mise_a_mort) {
+      return "Il manque la date de mise à mort";
+    }
+    if (!fei.commune_mise_a_mort) {
+      return "Il manque la commune de mise à mort";
+    }
+    if (!fei.heure_mise_a_mort_premiere_carcasse) {
+      return "Il manque l'heure de mise à mort de la première carcasse";
     }
     if (!onlyPetitGibier) {
       if (!fei.heure_evisceration_derniere_carcasse) {
-        return false;
+        return "Il manque l'heure d'éviscération de la dernière carcasse";
       }
     }
     if (carcasses.length === 0) {
-      return false;
+      return "Il n'y a pas de carcasses";
     }
     if (carcassesNotReady.length > 0) {
-      return false;
+      return "Il manque des informations sur certaines carcasses";
     }
-    return true;
+    return null;
   }, [fei, carcassesNotReady, carcasses, onlyPetitGibier]);
 
   const checkboxLabel = useMemo(() => {
@@ -245,14 +251,20 @@ export default function FEIExaminateurInitial() {
                 options={[
                   {
                     label: checkboxLabel,
-                    hintText: jobIsDone
+                    hintText: !jobIsMissing
                       ? ""
                       : "Veuillez remplir au préalable la date et la commune de mise à mort, les heures de mise à mort et d'éviscération des carcasses",
                     nativeInputProps: {
                       required: true,
                       name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
                       value: "true",
-                      disabled: !jobIsDone,
+                      // disabled: !jobIsDone,
+                      onClick: (e) => {
+                        if (jobIsMissing) {
+                          e.preventDefault();
+                          alert(jobIsMissing);
+                        }
+                      },
                       readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
                       defaultChecked: fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false,
                     },
