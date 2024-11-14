@@ -118,6 +118,7 @@ export default function MesInformations() {
     etgsDone,
     svisDone,
   } = useLoaderData<typeof clientLoader>();
+  const [visibilityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
 
   const navigate = useNavigate();
 
@@ -165,7 +166,6 @@ export default function MesInformations() {
     user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
     user.roles.includes(UserRoles.ETG) ||
     user.roles.includes(UserRoles.SVI);
-  const [visiblitityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -383,8 +383,8 @@ export default function MesInformations() {
                           required: true,
                           name: Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox,
                           value: "true",
-                          onChange: () => setVisibilityChecked(!visiblitityChecked),
-                          checked: visiblitityChecked,
+                          onChange: () => setVisibilityChecked(!visibilityChecked),
+                          checked: visibilityChecked,
                         },
                       },
                     ]}
@@ -403,7 +403,7 @@ export default function MesInformations() {
                 buttons={[
                   {
                     children: "Enregistrer et Continuer",
-                    disabled: showEntrpriseVisibilityCheckbox ? !visiblitityChecked : false,
+                    disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
                     type: "button",
                     nativeButtonProps: {
                       onClick: () => navigate(nextPage),
