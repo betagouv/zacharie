@@ -13,6 +13,13 @@ import { RemixServer } from "@remix-run/react";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
+Sentry.init({
+  dsn: "https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175",
+  tracesSampleRate: 0.01,
+  autoInstrumentRemix: true,
+  enabled: !import.meta.env.DEV,
+});
+
 export const handleError = (error: unknown, rest: ActionFunctionArgs | LoaderFunctionArgs) => {
   // @ts-expect-error 'error' is of type 'unknown'
   if (error.status >= 500) {
