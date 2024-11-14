@@ -4,6 +4,7 @@ import { Input } from "@codegouvfr/react-dsfr/Input";
 import { Prisma } from "@prisma/client";
 import RolesCheckBoxes from "@app/components/RolesCheckboxes";
 import type { AdminNouveauUserLoaderData } from "@api/routes/api.admin.action.utilisateur.nouveau";
+import { getFormData } from "@app/utils/getFormData";
 
 export function meta() {
   return [
@@ -14,7 +15,7 @@ export function meta() {
 }
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const formData = await request.formData();
+  const formData = await getFormData(request);
   console.log("formData tableau-de-bord.admin.utilisateur.nouveau", Object.fromEntries(formData));
   const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/admin/action/utilisateur/nouveau`, {
     method: "POST",

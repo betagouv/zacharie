@@ -6,6 +6,7 @@ import RolesCheckBoxes from "@app/components/RolesCheckboxes";
 import { Prisma, UserRoles } from "@prisma/client";
 import { setCacheItem } from "@app/services/indexed-db.client";
 import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
+import { getFormData } from "@app/utils/getFormData";
 
 export function meta() {
   return [
@@ -23,7 +24,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/user/${user.id}`, {
     method: "POST",
     credentials: "include",
-    body: await request.formData(),
+    body: await getFormData(request),
     headers: {
       Accept: "application/json",
     },

@@ -33,13 +33,14 @@ import { createModal } from "@codegouvfr/react-dsfr/Modal";
 import ModalTreeDisplay from "@app/components/ModalTreeDisplay";
 import { useIsOnline } from "@app/components/OfflineMode";
 import { mergeCarcasse } from "@app/db/carcasse.client";
+import { getFormData } from "@app/utils/getFormData";
 
 const gibierSelect = {
   grand: grandGibier.especes,
   petit: petitGibier.especes,
 };
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
-  const formData = await request.formData();
+  const formData = await getFormData(request);
   for (const key of formData.keys()) {
     if (formData.get(key) === "null") {
       formData.set(key, "");

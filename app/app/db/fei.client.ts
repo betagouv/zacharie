@@ -117,12 +117,12 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
 export function mergeFei(oldItem: SerializeFrom<Fei>, newItem?: FormData): FormData {
   const result = mergeFeiToJSON(oldItem, newItem);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function getFormData(object: Record<string, any>) {
+  function getFeiFormData(object: Record<string, any>) {
     const formData = new FormData();
     Object.keys(object).forEach((key) => formData.append(key, object[key]));
     return formData;
   }
-  return getFormData(result) satisfies FormData;
+  return getFeiFormData(result) satisfies FormData;
 }
 
 async function get(pathname: string) {
@@ -233,7 +233,6 @@ export async function loadFei(fei_numero: string) {
             newCarcasseIntermediaire.set(key, "");
           }
         }
-        console.log("newCarcasseIntermediaire", Object.fromEntries(newCarcasseIntermediaire));
         const newCarcasseIntermediaireRes = (await fetch(
           `${import.meta.env.VITE_API_URL}/api/fei-carcasse-intermediaire/${fei_numero}/${intermediaire.id}/${carcasse.numero_bracelet}`,
           {

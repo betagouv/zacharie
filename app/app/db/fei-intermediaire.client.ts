@@ -52,10 +52,10 @@ export function mergeFeiIntermediaireToJSON(
 export function mergeFeiIntermediaire(oldItem: SerializeFrom<FeiIntermediaire>, newItem?: FormData): FormData {
   const result = mergeFeiIntermediaireToJSON(oldItem, newItem);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function getFormData(object: Record<string, any>) {
+  function getFeiIntermediaireFormData(object: Record<string, any>) {
     const formData = new FormData();
     Object.keys(object).forEach((key) => formData.append(key, object[key]));
     return formData;
   }
-  return getFormData(result) satisfies FormData;
+  return getFeiIntermediaireFormData(result) satisfies FormData;
 }

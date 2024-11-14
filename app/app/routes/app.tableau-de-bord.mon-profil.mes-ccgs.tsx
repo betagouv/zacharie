@@ -16,6 +16,7 @@ import { EntityTypes, EntityRelationType, Prisma } from "@prisma/client";
 import { type UserCCGsLoaderData } from "@api/routes/api.loader.user-ccgs";
 import { type UserEntityActionData } from "@api/routes/api.action.user-entity.$user_id";
 import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
+import { getFormData } from "@app/utils/getFormData";
 
 export function meta() {
   return [
@@ -30,7 +31,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   if (!user) {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
-  const formData = await request.formData();
+  const formData = await getFormData(request);
   const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/action/user-entity/${user.id}`, {
     method: "POST",
     credentials: "include",

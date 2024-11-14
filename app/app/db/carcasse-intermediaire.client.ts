@@ -81,10 +81,10 @@ export function mergeCarcasseIntermediaire(
 ): FormData {
   const result = mergeCarcasseIntermediaireToJSON(oldItem, newItem);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function getFormData(object: Record<string, any>) {
+  function getCarcasseIntermediaireFormData(object: Record<string, any>) {
     const formData = new FormData();
     Object.keys(object).forEach((key) => formData.append(key, object[key]));
     return formData;
   }
-  return getFormData(result) satisfies FormData;
+  return getCarcasseIntermediaireFormData(result) satisfies FormData;
 }

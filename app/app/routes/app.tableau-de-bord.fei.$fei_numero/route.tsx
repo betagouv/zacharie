@@ -20,6 +20,7 @@ import { type FeiActionData } from "@api/routes/api.fei.$fei_numero";
 import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
 import { loadFei } from "@app/db/fei.client";
 import { type MyRelationsLoaderData } from "@api/routes/api.loader.my-relations";
+import { getFormData } from "@app/utils/getFormData";
 
 export function meta({ params }: MetaArgs) {
   return [
@@ -30,7 +31,7 @@ export function meta({ params }: MetaArgs) {
 }
 
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
-  const formData = await request.formData();
+  const formData = await getFormData(request);
   for (const key of formData.keys()) {
     if (formData.get(key) === "null") {
       formData.set(key, "");

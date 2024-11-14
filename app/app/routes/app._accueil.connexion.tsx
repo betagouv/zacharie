@@ -7,6 +7,7 @@ import { setCacheItem } from "@app/services/indexed-db.client";
 import { getUserOnboardingRoute } from "@app/utils/user-onboarded.client";
 import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
 import { CallOut } from "@codegouvfr/react-dsfr/CallOut";
+import { getFormData } from "@app/utils/getFormData";
 
 type ConnexionType = "creation-de-compte" | "compte-existant";
 
@@ -14,7 +15,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/action/connexion`, {
     method: "POST",
     credentials: "include",
-    body: await request.formData(),
+    body: await getFormData(request),
     headers: {
       Accept: "application/json",
     },

@@ -18,6 +18,7 @@ import { Button } from "@codegouvfr/react-dsfr/Button";
 import { Table } from "@codegouvfr/react-dsfr/Table";
 import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
 import type { AdminEntityLoaderData } from "@api/routes/api.admin.loader.entite.$entityId";
+import { getFormData } from "@app/utils/getFormData";
 
 export function meta() {
   return [
@@ -28,7 +29,7 @@ export function meta() {
 }
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const formData = await request.formData();
+  const formData = await getFormData(request);
   console.log("formdata tableau-de-bord.admin.entity.$entityId", Object.fromEntries(formData));
   const route = formData.get("route") as string;
   if (!route) {

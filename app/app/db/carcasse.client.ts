@@ -89,7 +89,7 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
 export function mergeCarcasse(oldItem: SerializeFrom<Carcasse>, newItem?: FormData): FormData {
   const result = mergeCarcasseToJSON(oldItem, newItem);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function getFormData(object: Record<string, any>) {
+  function getCarcasseFormData(object: Record<string, any>) {
     const formData = new FormData();
     Object.keys(object).forEach((key) => {
       if (Array.isArray(object[key])) {
@@ -102,5 +102,5 @@ export function mergeCarcasse(oldItem: SerializeFrom<Carcasse>, newItem?: FormDa
     });
     return formData;
   }
-  return getFormData(result) satisfies FormData;
+  return getCarcasseFormData(result) satisfies FormData;
 }

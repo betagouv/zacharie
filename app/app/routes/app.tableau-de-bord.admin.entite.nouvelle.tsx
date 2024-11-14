@@ -5,6 +5,7 @@ import { Prisma, EntityTypes } from "@prisma/client";
 import { RadioButtons } from "@codegouvfr/react-dsfr/RadioButtons";
 import { getUserRoleLabel } from "@app/utils/get-user-roles-label";
 import type { AdminNouvelleEntiteActionData } from "@api/routes/api.admin.action.entite.nouvelle";
+import { getFormData } from "@app/utils/getFormData";
 
 export function meta() {
   return [
@@ -15,7 +16,7 @@ export function meta() {
 }
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const formData = await request.formData();
+  const formData = await getFormData(request);
   console.log("formData tableau-de-bord.admin.entite.nouvelle", Object.fromEntries(formData));
   const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/admin/action/entite/nouvelle`, {
     method: "POST",

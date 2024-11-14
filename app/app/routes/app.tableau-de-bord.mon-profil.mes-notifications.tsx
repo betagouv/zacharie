@@ -15,6 +15,7 @@ import { UserNotifications, UserRoles } from "@prisma/client";
 import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
 import { usePush } from "@app/sw/web-push-notifications";
 import { setCacheItem } from "@app/services/indexed-db.client";
+import { getFormData } from "@app/utils/getFormData";
 
 export function meta() {
   return [
@@ -29,7 +30,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   if (!user) {
     throw redirect(`/app/connexion?type=compte-existant`);
   }
-  const formData = await request.formData();
+  const formData = await getFormData(request);
   const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/user/${user.id}`, {
     method: "POST",
     credentials: "include",

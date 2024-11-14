@@ -24,6 +24,7 @@ import { SerializeFrom } from "@remix-run/node";
 import { mergeCarcasseIntermediaireToJSON } from "./db/carcasse-intermediaire.client";
 import { mergeFeiIntermediaireToJSON } from "./db/fei-intermediaire.client";
 import { mergeFeiToJSON } from "./db/fei.client";
+import { getFormData } from "./utils/getFormData";
 
 const CACHE_NAME = "zacharie-pwa-cache-v2";
 const previousCacheNames = ["zacharie-pwa-cache-v0", "zacharie-pwa-cache-v1"];
@@ -360,7 +361,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
     if (request.url.includes(`/api/fei/`)) {
       console.log("Cloning request");
       const clonedRequest = request.clone();
-      const formData = await clonedRequest.formData();
+        const formData = await getFormData(clonedRequest);
       const jsonFei = mergeFeiToJSON({} as SerializeFrom<Fei>, formData);
       /* All Feis */
       // console.log("Offline FEI", offlineFei);
@@ -376,7 +377,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       const clonedRequest = request.clone();
       const numeroBracelet = request.url.split("/").at(-1) as string;
       const feiNumero = request.url.split("/").at(-2) as string;
-      const formData = await clonedRequest.formData();
+      const formData = await getFormData(clonedRequest);
       if (formData.get("_action") === "delete") {
         const cache = await caches.open(CACHE_NAME);
         await cache.delete(request.url);
@@ -450,7 +451,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
     if (request.url.includes(`/api/fei-carcasse-intermediaire/`)) {
       console.log("Cloning request");
       const clonedRequest = request.clone();
-      const formData = await clonedRequest.formData();
+      const formData = await getFormData(clonedRequest);
       const jsonCarcasseIntermediaire = mergeCarcasseIntermediaireToJSON(
         {} as SerializeFrom<CarcasseIntermediaire>,
         formData,
@@ -477,7 +478,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
       console.log("Cloning request");
       const clonedRequest = request.clone();
       const feiNumero = request.url.split("/").at(-2) as string;
-      const formData = await clonedRequest.formData();
+      const formData = await getFormData(clonedRequest);
       const jsonIntermediaire = mergeFeiIntermediaireToJSON({} as SerializeFrom<FeiIntermediaire>, formData);
       const cache = await caches.open(CACHE_NAME);
       const newResponse = {
