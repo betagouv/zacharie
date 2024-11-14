@@ -6,6 +6,7 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     // Log headers for debugging
     const payload = await request.json();
+    console.log("payload", payload);
     // Valider et traiter les données de Sentry ici
     if (!payload?.data?.event) {
       return json({ message: "Invalid payload" }, { status: 400 });
