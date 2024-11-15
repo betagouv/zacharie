@@ -240,7 +240,8 @@ export default function SelectNextOwner() {
           <>
             <div className="fr-fieldset__element grow">
               <Select
-                label={`Quel ${getUserRoleLabel(nextRole)} doit intervenir sur la fiche ?`}
+                // label={`Quel ${getUserRoleLabel(nextRole)} doit intervenir sur la fiche ?`}
+                label={`Qui est le destinataire de mes carcasses\u00A0?`}
                 className="!mb-0 grow"
                 key={fei.fei_next_owner_user_id ?? fei.fei_next_owner_entity_id ?? "no-choice-yet"}
                 nativeSelectProps={{
@@ -254,20 +255,20 @@ export default function SelectNextOwner() {
                 <option value="">{nextOwnerSelectLabel}</option>
                 {nextOwnersWorkingWith.length > 0 && (
                   <>
-                    <optgroup label={`Mes ${getUserRoleLabelPlural(nextRole)}`}>
-                      {nextOwnersWorkingWith.map((potentielOwner) => {
-                        return (
-                          <NextOwnerOption
-                            key={potentielOwner.id}
-                            potentielOwner={potentielOwner}
-                            nextOwnerIsEntity={nextOwnerIsEntity}
-                            nextOwnerIsUser={nextOwnerIsUser}
-                            user={user}
-                          />
-                        );
-                      })}
-                    </optgroup>
-                    <hr />
+                    {/* <optgroup label={`Mes ${getUserRoleLabelPlural(nextRole)}`}> */}
+                    {nextOwnersWorkingWith.map((potentielOwner) => {
+                      return (
+                        <NextOwnerOption
+                          key={potentielOwner.id}
+                          potentielOwner={potentielOwner}
+                          nextOwnerIsEntity={nextOwnerIsEntity}
+                          nextOwnerIsUser={nextOwnerIsUser}
+                          user={user}
+                        />
+                      );
+                    })}
+                    {/* </optgroup> */}
+                    {/* <hr /> */}
                   </>
                 )}
                 {nextOwnersNotWorkingWith.map((potentielOwner) => {
