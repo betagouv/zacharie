@@ -114,8 +114,8 @@ model Entity {
   CarcasseIntermediaire     CarcasseIntermediaire[]  @relation("CarcasseIntermediaireEntity")
   CoupledEntity             Entity?                  @relation("CoupledEntity", fields: [coupled_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CoupledEntity_opposite    Entity?                  @relation("CoupledEntity")
-  ETGRelatedWithEntities    ETGAndEntityRelations[]  @relation("ETGRelatedWithEntities")
-  EntitiesRelatedWithETG    ETGAndEntityRelations[]  @relation("EntitiesRelatedWithETG")
+  ETGRelatedWithEntity      ETGAndEntityRelations[]  @relation("ETGRelatedWithEntity")
+  EntityRelatedWithETG      ETGAndEntityRelations[]  @relation("EntityRelatedWithETG")
 }
 
 model Password {
@@ -174,15 +174,15 @@ model EntityAndUserRelations {
 }
 
 model ETGAndEntityRelations {
-  etg_id_entity_id       String      @id @default(uuid())
-  etg_id                 String
-  entity_id              String
-  entity_type            EntityTypes
-  created_at             DateTime    @default(now())
-  updated_at             DateTime    @default(now()) @updatedAt
-  deleted_at             DateTime?
-  ETGRelatedWithEntities Entity      @relation("ETGRelatedWithEntities", fields: [etg_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  EntitiesRelatedWithETG Entity      @relation("EntitiesRelatedWithETG", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  etg_id_entity_id     String      @id @default(uuid())
+  etg_id               String
+  entity_id            String
+  entity_type          EntityTypes
+  created_at           DateTime    @default(now())
+  updated_at           DateTime    @default(now()) @updatedAt
+  deleted_at           DateTime?
+  ETGRelatedWithEntity Entity      @relation("ETGRelatedWithEntity", fields: [etg_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  EntityRelatedWithETG Entity      @relation("EntityRelatedWithETG", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([etg_id, entity_type])
   @@index([entity_id, entity_type])

@@ -2,7 +2,7 @@ import { json, SerializeFrom, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
-import { EntityRelationType, type Fei } from "@prisma/client";
+import { EntityRelationType, UserRoles, type Fei } from "@prisma/client";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);
@@ -34,16 +34,55 @@ export async function loader({ request }: LoaderFunctionArgs) {
           fei_current_owner_user_id: user.id,
         },
         {
+          FeiCurrentEntity: {
+            EntityRelatedWithUser: {
+              some: {
+                owner_id: user.id,
+                relation: EntityRelationType.WORKING_FOR,
+              },
+            },
+          },
+        },
+        {
           AND: [
             {
-              fei_current_owner_user_id: null,
+              fei_current_owner_role: UserRoles.ETG,
             },
             {
               FeiCurrentEntity: {
-                EntityRelatedWithUser: {
+                EntityRelatedWithETG: {
                   some: {
-                    owner_id: user.id,
-                    relation: EntityRelationType.WORKING_FOR,
+                    EntityRelatedWithETG: {
+                      EntityRelatedWithUser: {
+                        some: {
+                          owner_id: user.id,
+                          relation: EntityRelationType.WORKING_FOR,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+        {
+          AND: [
+            {
+              fei_next_owner_role: UserRoles.COLLECTEUR_PRO,
+            },
+            {
+              FeiNextEntity: {
+                ETGRelatedWithEntity: {
+                  some: {
+                    ETGRelatedWithEntity: {
+                      EntityRelatedWithUser: {
+                        some: {
+                          owner_id: user.id,
+                          relation: EntityRelationType.WORKING_FOR,
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -75,12 +114,59 @@ export async function loader({ request }: LoaderFunctionArgs) {
             },
           },
         },
+        {
+          AND: [
+            {
+              fei_next_owner_role: UserRoles.ETG,
+            },
+            {
+              FeiNextEntity: {
+                EntityRelatedWithETG: {
+                  some: {
+                    EntityRelatedWithETG: {
+                      EntityRelatedWithUser: {
+                        some: {
+                          owner_id: user.id,
+                          relation: EntityRelationType.WORKING_FOR,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+        {
+          AND: [
+            {
+              fei_next_owner_role: UserRoles.COLLECTEUR_PRO,
+            },
+            {
+              FeiNextEntity: {
+                ETGRelatedWithEntity: {
+                  some: {
+                    ETGRelatedWithEntity: {
+                      EntityRelatedWithUser: {
+                        some: {
+                          owner_id: user.id,
+                          relation: EntityRelationType.WORKING_FOR,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
       ],
     },
     orderBy: {
       updated_at: "desc",
     },
   });
+
   const feisOngoing = await prisma.fei.findMany({
     where: {
       svi_assigned_at: null,

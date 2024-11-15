@@ -51,14 +51,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const etgsRelatedWithMyEntities = await prisma.eTGAndEntityRelations.findMany({
     where: { entity_id: { in: entitiesWorkingDirectlyFor.map((entity) => entity.id) } },
     include: {
-      ETGRelatedWithEntities: true,
+      ETGRelatedWithEntity: true,
     },
   });
 
   const svisRelatedWithMyETGs = await prisma.eTGAndEntityRelations.findMany({
     where: { etg_id: { in: entitiesWorkingDirectlyFor.map((entity) => entity.id) }, entity_type: EntityTypes.SVI },
     include: {
-      EntitiesRelatedWithETG: true,
+      EntityRelatedWithETG: true,
     },
   });
 
@@ -68,7 +68,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       entity_type: EntityTypes.COLLECTEUR_PRO,
     },
     include: {
-      EntitiesRelatedWithETG: true,
+      EntityRelatedWithETG: true,
     },
   });
 
@@ -76,13 +76,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   for (const entity of entitiesWorkingDirectlyFor) {
     entitiesWorkingForObject[entity.id] = entity;
   }
-  for (const etg of etgsRelatedWithMyEntities.map((r) => r.ETGRelatedWithEntities)) {
+  for (const etg of etgsRelatedWithMyEntities.map((r) => r.ETGRelatedWithEntity)) {
     entitiesWorkingForObject[etg.id] = etg;
   }
-  for (const svi of svisRelatedWithMyETGs.map((r) => r.EntitiesRelatedWithETG)) {
+  for (const svi of svisRelatedWithMyETGs.map((r) => r.EntityRelatedWithETG)) {
     entitiesWorkingForObject[svi.id] = svi;
   }
-  for (const collecteurPro of collecteursProsRelatedWithMyETGs.map((r) => r.EntitiesRelatedWithETG)) {
+  for (const collecteurPro of collecteursProsRelatedWithMyETGs.map((r) => r.EntityRelatedWithETG)) {
     entitiesWorkingForObject[collecteurPro.id] = collecteurPro;
   }
   const entitiesWorkingFor = Object.values(entitiesWorkingForObject);

@@ -101,10 +101,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
               updated_at: "desc",
             },
             include: {
-              EntitiesRelatedWithETG: true,
+              EntityRelatedWithETG: true,
             },
           })
-          .then((data) => data.map((rel) => rel.EntitiesRelatedWithETG));
+          .then((data) => data.map((rel) => rel.EntityRelatedWithETG));
 
   const potentialCollecteursRelatedToETG = await prisma.entity.findMany({
     where: {
@@ -131,10 +131,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
               updated_at: "desc",
             },
             include: {
-              EntitiesRelatedWithETG: true,
+              EntityRelatedWithETG: true,
             },
           })
-          .then((data) => data.map((rel) => rel.EntitiesRelatedWithETG));
+          .then((data) => data.map((rel) => rel.EntityRelatedWithETG));
 
   const potentialSvisRelatedToETG = await prisma.entity.findMany({
     where: {
@@ -160,10 +160,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
               updated_at: "desc",
             },
             include: {
-              ETGRelatedWithEntities: true,
+              ETGRelatedWithEntity: true,
             },
           })
-          .then((data) => data.map((rel) => rel.ETGRelatedWithEntities));
+          .then((data) => data.map((rel) => rel.ETGRelatedWithEntity));
 
   const potentialEtgsRelatedWithEntity =
     entity.type !== EntityTypes.COLLECTEUR_PRO && entity.type !== EntityTypes.SVI
