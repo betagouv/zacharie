@@ -20,6 +20,7 @@ export default function ConfirmCurrentOwner() {
 
   const fetcher = useFetcher({ key: "confirm-current-owner" });
   const intermediaireFetcher = useFetcher({ key: "create-intermediaire-fetcher" });
+
   const nextEntity = useMemo(
     () => entitiesWorkingFor.find((entity) => entity.id === fei.fei_next_owner_entity_id),
     [entitiesWorkingFor, fei.fei_next_owner_entity_id],
@@ -35,6 +36,23 @@ export default function ConfirmCurrentOwner() {
     return false;
   }, [fei, user, nextEntity]);
 
+  const nextOwnerCollecteurProEntityId = useMemo(() => {
+    if (fei.fei_next_owner_role === UserRoles.COLLECTEUR_PRO) {
+      return fei.fei_next_owner_entity_id;
+    }
+    if (fei.fei_next_owner_role === UserRoles.ETG) {
+      if (!user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+        return "";
+      }
+      const etgId = fei.fei_next_owner_entity_id;
+      const collecteurProId = collecteursProsRelatedWithMyETGs.find((c) => c.etg_id === etgId)?.entity_id;
+      if (collecteurProId) {
+        return collecteurProId;
+      }
+    }
+    return "";
+  }, [fei, user, collecteursProsRelatedWithMyETGs]);
+
   const needNextOwnerButNotMe = useMemo(() => {
     if (!fei.fei_next_owner_user_id && !fei.fei_next_owner_entity_id) {
       return false;
@@ -48,6 +66,7 @@ export default function ConfirmCurrentOwner() {
   if (!fei.fei_next_owner_role) {
     return null;
   }
+
   if (!canConfirmCurrentOwner) {
     if (needNextOwnerButNotMe) {
       return (
@@ -173,25 +192,32 @@ export default function ConfirmCurrentOwner() {
         )}
         {fei.fei_next_owner_role === UserRoles.ETG && (
           <>
-            <Button
-              type="submit"
-              className="my-4 block"
-              onClick={() =>
-                handlePriseEnCharge({
-                  transfer: false,
-                  forcedNextRole: UserRoles.COLLECTEUR_PRO,
-                  forceNextEntityId: collecteursProsRelatedWithMyETGs[0]?.entity_id,
-                  forceNextEntityName:
-                    collecteursPro.find((c) => c.id === collecteursProsRelatedWithMyETGs[0]?.entity_id)?.nom_d_usage ||
-                    "",
-                })
-              }
-            >
-              <>Je transporte le gibier</>
-            </Button>
-            <Button type="submit" className="my-4 block" onClick={() => handlePriseEnCharge({ transfer: false })}>
-              <>Je suis à l'atelier pour réceptionner le gibier</>
-            </Button>
+            {nextOwnerCollecteurProEntityId ? (
+              <>
+                <Button
+                  type="submit"
+                  className="my-4 block"
+                  onClick={() =>
+                    handlePriseEnCharge({
+                      transfer: false,
+                      forcedNextRole: UserRoles.COLLECTEUR_PRO,
+                      forceNextEntityId: nextOwnerCollecteurProEntityId,
+                      forceNextEntityName:
+                        collecteursPro.find((c) => c.id === nextOwnerCollecteurProEntityId)?.nom_d_usage || "",
+                    })
+                  }
+                >
+                  Je transporte le gibier
+                </Button>
+                <Button type="submit" className="my-4 block" onClick={() => handlePriseEnCharge({ transfer: false })}>
+                  Je suis à l'atelier pour réceptionner le gibier
+                </Button>
+              </>
+            ) : (
+              <Button type="submit" className="my-4 block" onClick={() => handlePriseEnCharge({ transfer: false })}>
+                Je réceptionne le gibier
+              </Button>
+            )}
           </>
         )}
         <span>

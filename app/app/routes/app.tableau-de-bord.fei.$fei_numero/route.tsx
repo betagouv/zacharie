@@ -90,8 +90,6 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
       svis: myRelationsData.data?.svis || [],
       entitiesWorkingFor: myRelationsData.data?.entitiesWorkingFor || [],
       collecteursProsRelatedWithMyETGs: myRelationsData.data?.collecteursProsRelatedWithMyETGs || [],
-      etgsRelatedWithMyEntities: myRelationsData.data?.etgsRelatedWithMyEntities || [],
-      svisRelatedWithMyETGs: myRelationsData.data?.svisRelatedWithMyETGs || [],
     },
   });
 }
@@ -143,16 +141,11 @@ export default function Fei() {
   ];
 
   const [selectedTabId, setSelectedTabId] = useState<(typeof tabs)[number]["tabId"]>(() => {
-    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
-      return UserRoles.PREMIER_DETENTEUR;
-    }
-    if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
-      return UserRoles.EXAMINATEUR_INITIAL;
-    }
     if (fei.fei_current_owner_role === UserRoles.SVI) {
       return UserRoles.SVI;
     }
-    return "Destinataires";
+    return UserRoles.EXAMINATEUR_INITIAL;
+    // return "Destinataires";
   });
 
   const refCurrentRole = useRef(fei.fei_current_owner_role);

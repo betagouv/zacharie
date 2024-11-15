@@ -183,7 +183,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
                   defaultValue: etgs.length === 1 ? etgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ""),
                 }}
               >
-                <option value="">Sélectionnez un Établissement de Transformation du Gibier sauvage</option>
+                <option value="">Sélectionnez</option>
                 <hr />
                 {etgs.map((entity) => {
                   return (

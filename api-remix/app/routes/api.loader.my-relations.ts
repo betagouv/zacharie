@@ -17,22 +17,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!user) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
-  const entitiesWorkingWith = (
-    await prisma.entityAndUserRelations.findMany({
-      where: {
-        owner_id: user.id,
-        relation: EntityRelationType.WORKING_WITH,
-      },
-      include: {
-        EntityRelatedWithUser: true,
-      },
-      orderBy: {
-        updated_at: "desc",
-      },
-    })
-  ).map((entityRelation) => ({ ...entityRelation.EntityRelatedWithUser, relation: entityRelation.relation }));
 
-  const entitiesWorkingFor = await prisma.entityAndUserRelations
+  /*
+  I need to fetch
+  - the entities the user is working for (salarié, dirigeant, etc.)
+  - teh entities working with the entities the user is working for (ETG, SVI, etc.)
+  - the entities the user is working with (partnership)
+
+  I need to return
+  - the entities I work for, including the entities working with them (because it's LIKE I'm also working with them)
+  - the entities I work with  (partnership confirmed)
+  - the other entities I could work with (partnership not confirmed), which are all the rest
+
+  */
+
+  /* ENTITIES WORKING FOR */
+
+  const entitiesWorkingDirectlyFor = await prisma.entityAndUserRelations
     .findMany({
       where: {
         owner_id: user.id,
@@ -48,14 +49,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .then((entityRelations) => entityRelations.map((rel) => rel.EntityRelatedWithUser));
 
   const etgsRelatedWithMyEntities = await prisma.eTGAndEntityRelations.findMany({
-    where: { entity_id: { in: entitiesWorkingWith.map((entity) => entity.id) } },
+    where: { entity_id: { in: entitiesWorkingDirectlyFor.map((entity) => entity.id) } },
     include: {
       ETGRelatedWithEntities: true,
     },
   });
 
   const svisRelatedWithMyETGs = await prisma.eTGAndEntityRelations.findMany({
-    where: { etg_id: { in: entitiesWorkingWith.map((entity) => entity.id) }, entity_type: EntityTypes.SVI },
+    where: { etg_id: { in: entitiesWorkingDirectlyFor.map((entity) => entity.id) }, entity_type: EntityTypes.SVI },
     include: {
       EntitiesRelatedWithETG: true,
     },
@@ -63,7 +64,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const collecteursProsRelatedWithMyETGs = await prisma.eTGAndEntityRelations.findMany({
     where: {
-      etg_id: { in: entitiesWorkingWith.map((entity) => entity.id) },
+      etg_id: { in: entitiesWorkingDirectlyFor.map((entity) => entity.id) },
       entity_type: EntityTypes.COLLECTEUR_PRO,
     },
     include: {
@@ -71,11 +72,41 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
+  const entitiesWorkingForObject: Record<string, Entity> = {};
+  for (const entity of entitiesWorkingDirectlyFor) {
+    entitiesWorkingForObject[entity.id] = entity;
+  }
+  for (const etg of etgsRelatedWithMyEntities.map((r) => r.ETGRelatedWithEntities)) {
+    entitiesWorkingForObject[etg.id] = etg;
+  }
+  for (const svi of svisRelatedWithMyETGs.map((r) => r.EntitiesRelatedWithETG)) {
+    entitiesWorkingForObject[svi.id] = svi;
+  }
+  for (const collecteurPro of collecteursProsRelatedWithMyETGs.map((r) => r.EntitiesRelatedWithETG)) {
+    entitiesWorkingForObject[collecteurPro.id] = collecteurPro;
+  }
+  const entitiesWorkingFor = Object.values(entitiesWorkingForObject);
+
+  const entitiesWorkingWith = (
+    await prisma.entityAndUserRelations.findMany({
+      where: {
+        owner_id: user.id,
+        relation: EntityRelationType.WORKING_WITH,
+      },
+      include: {
+        EntityRelatedWithUser: true,
+      },
+      orderBy: {
+        updated_at: "desc",
+      },
+    })
+  ).map((entityRelation) => ({ ...entityRelation.EntityRelatedWithUser, relation: entityRelation.relation }));
+
   const allOtherEntities = (
     await prisma.entity.findMany({
       where: {
         id: {
-          notIn: entitiesWorkingWith.map((entity) => entity.id),
+          notIn: [...entitiesWorkingFor.map((entity) => entity.id), ...entitiesWorkingWith.map((entity) => entity.id)],
         },
         type: {
           not: EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
@@ -114,31 +145,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // }
 
   const allEntities = [
-    ...entitiesWorkingWith,
-    ...etgsRelatedWithMyEntities.map((r) => ({
-      ...r.ETGRelatedWithEntities,
-      relation: EntityRelationType.WORKING_WITH,
-    })),
-    ...svisRelatedWithMyETGs.map((r) => ({ ...r.EntitiesRelatedWithETG, relation: EntityRelationType.WORKING_WITH })),
-    ...collecteursProsRelatedWithMyETGs.map((r) => ({
-      ...r.EntitiesRelatedWithETG,
-      relation: EntityRelationType.WORKING_WITH,
-    })),
-    ...allOtherEntities,
+    ...entitiesWorkingWith.map((entity) => ({ ...entity, relation: EntityRelationType.WORKING_WITH })),
+    ...allOtherEntities.map((entity) => ({ ...entity, relation: null })),
   ];
 
   const ccgs = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.CCG);
-  const associationsDeChasse = entitiesWorkingFor.filter((entity) => entity.type === EntityTypes.PREMIER_DETENTEUR);
-  // const myCollecteursPros = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
-  // const collecteursPro = myCollecteursPros.length
-  //   ? myCollecteursPros
-  //   : allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
+  const associationsDeChasse = entitiesWorkingDirectlyFor.filter(
+    (entity) => entity.type === EntityTypes.PREMIER_DETENTEUR,
+  );
   const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
-  // const myEtgs = [...entitiesWorkingWith, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.ETG);
-  // const etgs = myEtgs.length ? myEtgs : allEntities.filter((entity) => entity.type === EntityTypes.ETG);
   const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
-  // const mySvis = [...entitiesWorkingWith, ...userCoupledEntities].filter((entity) => entity.type === EntityTypes.SVI);
-  // const svis = mySvis.length ? mySvis : allEntities.filter((entity) => entity.type === EntityTypes.SVI);
   const svis = allEntities.filter((entity) => entity.type === EntityTypes.SVI);
 
   return json({
@@ -152,9 +168,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       collecteursPro: collecteursPro satisfies Array<Entity>,
       etgs: etgs satisfies Array<Entity>,
       svis: svis satisfies Array<Entity>,
-      entitiesWorkingFor: entitiesWorkingFor satisfies Array<Entity>,
-      etgsRelatedWithMyEntities: etgsRelatedWithMyEntities satisfies Array<ETGAndEntityRelations>,
-      svisRelatedWithMyETGs: svisRelatedWithMyETGs satisfies Array<ETGAndEntityRelations>,
+      entitiesWorkingFor: entitiesWorkingDirectlyFor satisfies Array<Entity>,
       collecteursProsRelatedWithMyETGs: collecteursProsRelatedWithMyETGs satisfies Array<ETGAndEntityRelations>,
     },
     error: "",

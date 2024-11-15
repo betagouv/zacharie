@@ -101,11 +101,9 @@ export default function SelectNextOwner() {
   const nextOwnerSelectLabel = useMemo(() => {
     switch (nextRole) {
       case UserRoles.CCG:
-        return "Sélectionnez un CCG pour cette fiche";
       case UserRoles.COLLECTEUR_PRO:
-        return "Sélectionnez un Collecteur Pro pour cette fiche";
       case UserRoles.ETG:
-        return "Sélectionnez un ETG pour cette fiche";
+        return "Sélectionnez le destinataire";
       case UserRoles.SVI:
         return "Sélectionnez le Service Vétérinaire d'Inspection pour cette fiche";
       default:
