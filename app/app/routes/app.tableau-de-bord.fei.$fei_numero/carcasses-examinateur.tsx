@@ -5,24 +5,14 @@ import { CarcasseType } from "@prisma/client";
 import { useMemo } from "react";
 import { CustomNotice } from "@app/components/CustomNotice";
 import { CustomHighlight } from "@app/components/CustomHighlight";
+import { formatCountCarcasseByEspece } from "@app/utils/count-carcasses-by-espece";
 
 export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) {
   // canEdit = true;
   const { fei, carcasses, user } = useLoaderData<typeof clientLoader>();
   const carcasseFetcher = useFetcher({ key: "carcasse-delete-fetcher" });
 
-  const countCarcassesByEspece = useMemo(() => {
-    return carcasses.reduce(
-      (acc, carcasse) => {
-        acc[carcasse.espece!] = {
-          carcasses: (acc[carcasse.espece!]?.carcasses || 0) + 1,
-          nombre_d_animaux: (acc[carcasse.espece!]?.nombre_d_animaux || 0) + (carcasse?.nombre_d_animaux || 0),
-        };
-        return acc;
-      },
-      {} as Record<string, { carcasses: number; nombre_d_animaux: number }>,
-    );
-  }, [carcasses]);
+  const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
 
   return (
     <>
@@ -138,10 +128,9 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
         {carcasses.length > 0 && (
           <p className="-mt-4 mb-4 ml-4 text-sm text-gray-500">
             Déjà rentrés&nbsp;:
-            {Object.entries(countCarcassesByEspece).map(([espece, { carcasses, nombre_d_animaux }]) => (
-              <span className="ml-4 block" key={espece}>
-                {espece}&nbsp;: {carcasses}{" "}
-                {nombre_d_animaux > carcasses ? `lots (${nombre_d_animaux} carcasses)` : "carcasses"}
+            {countCarcassesByEspece.map((line) => (
+              <span className="ml-4 block" key={line}>
+                {line}
               </span>
             ))}
           </p>

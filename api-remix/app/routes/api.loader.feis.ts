@@ -3,6 +3,29 @@ import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
 import { EntityRelationType, UserRoles, type Fei } from "@prisma/client";
+import { formatCountCarcasseByEspece } from "~/utils/count-carcasses-by-espece";
+
+(async () => {
+  const allFeis = await prisma.fei.findMany({
+    where: {
+      deleted_at: null,
+    },
+    include: {
+      Carcasses: true,
+    },
+  });
+
+  for (const fei of allFeis) {
+    await prisma.fei.update({
+      where: {
+        numero: fei.numero,
+      },
+      data: {
+        resume_nombre_de_carcasses: formatCountCarcasseByEspece(fei.Carcasses).join("\n"),
+      },
+    });
+  }
+})();
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserFromCookie(request);

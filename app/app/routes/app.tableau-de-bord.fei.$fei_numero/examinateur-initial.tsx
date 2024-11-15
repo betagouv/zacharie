@@ -15,12 +15,15 @@ import SelectNextForExaminateur from "./select-next-for-examinateur";
 import { mergeFei } from "@app/db/fei.client";
 import FeiPremierDetenteur from "./premier-detenteur";
 import EntityNotEditable from "@app/components/EntityNotEditable";
+import { formatCountCarcasseByEspece } from "@app/utils/count-carcasses-by-espece";
 
 export default function FEIExaminateurInitial() {
   const { fei, user, carcasses, examinateurInitialUser, premierDetenteurUser, premierDetenteurEntity } =
     useLoaderData<typeof clientLoader>();
 
   const approbationFetcher = useFetcher({ key: "approbation-mise-sur-le-marche" });
+
+  const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
 
   const canEdit = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
@@ -287,6 +290,11 @@ export default function FEIExaminateurInitial() {
                 }}
               />
             </div>
+            <input
+              type="hidden"
+              name={Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses}
+              value={countCarcassesByEspece.join("\n")}
+            />
             <div className="fr-fieldset__element">
               {!fei.examinateur_initial_approbation_mise_sur_le_marche && (
                 <Button type="submit" disabled={!carcasses.length}>

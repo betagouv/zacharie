@@ -36,9 +36,11 @@ export default function TableResponsive({ headers, data }: TableProps) {
               >
                 {headers[3]}
               </th>
-              <th scope="col" className="relative py-3.5 pl-3 pr-4 text-left sm:pr-0">
-                {headers[4]}
-              </th>
+              {headers[4] && (
+                <th scope="col" className="relative py-3.5 pl-3 pr-4 text-left sm:pr-0">
+                  {headers[4]}
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
@@ -63,7 +65,7 @@ export default function TableResponsive({ headers, data }: TableProps) {
                       {rows[1]}
                     </Link>
                   </td>
-                  <td className="hidden max-w-40 text-sm text-gray-500 sm:table-cell">
+                  <td className="hidden text-sm text-gray-500 sm:table-cell">
                     <Link to={link} className="block bg-none px-3 py-4 !no-underline">
                       {rows[2]}
                     </Link>
@@ -73,11 +75,13 @@ export default function TableResponsive({ headers, data }: TableProps) {
                       {rows[3]}
                     </Link>
                   </td>
-                  <td className="flex h-full items-stretch justify-start text-left text-sm font-medium sm:table-cell sm:pr-0">
-                    <Link to={link} className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 !no-underline">
-                      {rows[4]}
-                    </Link>
-                  </td>
+                  {headers[4] && (
+                    <td className="flex h-full items-stretch justify-start text-left text-sm font-medium sm:table-cell sm:pr-0">
+                      <Link to={link} className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 !no-underline">
+                        {rows[4]}
+                      </Link>
+                    </td>
+                  )}
                 </tr>
               );
             })}

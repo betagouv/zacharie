@@ -84,6 +84,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       fei_next_owner_role: true,
       commune_mise_a_mort: true,
       svi_assigned_at: true,
+      examinateur_initial_date_approbation_mise_sur_le_marche: true,
+      premier_detenteur_name_cache: true,
+      resume_nombre_de_carcasses: true,
     },
     orderBy: {
       updated_at: "desc",
