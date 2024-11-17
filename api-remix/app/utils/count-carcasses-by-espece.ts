@@ -18,7 +18,7 @@ export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarc
   }, {} as CountCarcassesByEspece);
 }
 
-export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
+export function formatApiCountCarcasseByEspece(carcasses: Array<Carcasse>) {
   const countCarcassesByEspece = getCountCarcassesByEspece(carcasses);
 
   return Object.entries(countCarcassesByEspece).map(([espece, { carcasses, nombre_d_animaux }]) => {
