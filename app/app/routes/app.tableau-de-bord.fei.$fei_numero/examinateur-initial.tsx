@@ -25,34 +25,6 @@ export default function FEIExaminateurInitial() {
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
 
-  const canEdit = useMemo(() => {
-    if (fei.examinateur_initial_user_id !== user.id) {
-      return false;
-    }
-    if (fei.examinateur_initial_approbation_mise_sur_le_marche) {
-      return false;
-    }
-    return true;
-  }, [fei, user]);
-
-  const Component = canEdit ? Input : InputNotEditable;
-  const VilleComponent = canEdit ? InputVille : InputNotEditable;
-
-  const examFetcher = useFetcher({ key: "examination-fetcher" });
-  const examRef = useRef<HTMLFormElement>(null);
-  const handleUserFormChange = () => {
-    if (!canEdit) {
-      return;
-    }
-    const nextFei = mergeFei(fei, new FormData(examRef.current!));
-    nextFei.append("route", `/api/fei/${fei.numero}`);
-    console.log("submitting", nextFei);
-    approbationFetcher.submit(nextFei, {
-      method: "POST",
-      preventScrollReset: true,
-    });
-  };
-
   const needSelectNextUser = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;
@@ -113,6 +85,51 @@ export default function FEIExaminateurInitial() {
     }
     return true;
   }, [carcasses]);
+
+  console.log("fei.heure_evisceration_derniere_carcasse", fei.heure_evisceration_derniere_carcasse);
+
+  const canEdit = useMemo(() => {
+    if (fei.examinateur_initial_user_id !== user.id) {
+      return false;
+    }
+    if (!carcasses.length) {
+      return true;
+    }
+    if (!onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse) {
+      return true;
+    }
+    if (!fei.commune_mise_a_mort) {
+      return true;
+    }
+    if (!fei.date_mise_a_mort) {
+      return true;
+    }
+    if (!fei.heure_mise_a_mort_premiere_carcasse) {
+      return true;
+    }
+    if (fei.examinateur_initial_approbation_mise_sur_le_marche) {
+      return false;
+    }
+    return true;
+  }, [fei, user, carcasses, onlyPetitGibier]);
+
+  const Component = canEdit ? Input : InputNotEditable;
+  const VilleComponent = canEdit ? InputVille : InputNotEditable;
+
+  const examFetcher = useFetcher({ key: "examination-fetcher" });
+  const examRef = useRef<HTMLFormElement>(null);
+  const handleUserFormChange = () => {
+    if (!canEdit) {
+      return;
+    }
+    const nextFei = mergeFei(fei, new FormData(examRef.current!));
+    nextFei.append("route", `/api/fei/${fei.numero}`);
+    console.log("submitting", nextFei);
+    approbationFetcher.submit(nextFei, {
+      method: "POST",
+      preventScrollReset: true,
+    });
+  };
 
   const jobIsMissing = useMemo(() => {
     if (!fei.date_mise_a_mort) {
@@ -262,12 +279,7 @@ export default function FEIExaminateurInitial() {
                       name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
                       value: "true",
                       // disabled: !jobIsDone,
-                      onClick: (e) => {
-                        if (jobIsMissing) {
-                          e.preventDefault();
-                          alert(jobIsMissing);
-                        }
-                      },
+
                       readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
                       defaultChecked: fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false,
                     },
@@ -296,8 +308,17 @@ export default function FEIExaminateurInitial() {
               value={countCarcassesByEspece.join("\n")}
             />
             <div className="fr-fieldset__element">
-              {!fei.examinateur_initial_approbation_mise_sur_le_marche && (
-                <Button type="submit" disabled={!carcasses.length}>
+              {canEdit && (
+                <Button
+                  type="submit"
+                  disabled={!carcasses.length}
+                  onClick={(e) => {
+                    if (jobIsMissing) {
+                      e.preventDefault();
+                      alert(jobIsMissing);
+                    }
+                  }}
+                >
                   Enregistrer
                 </Button>
               )}
