@@ -190,6 +190,11 @@ export default function ConfirmCurrentOwner() {
             <>Je prends en charge cette fiche et les carcasses associées</>
           </Button>
         )}
+        {fei.fei_next_owner_role === UserRoles.SVI && (
+          <Button type="submit" className="my-4 block" onClick={() => handlePriseEnCharge({ transfer: false })}>
+            <>Je prends en charge cette fiche</>
+          </Button>
+        )}
         {fei.fei_next_owner_role === UserRoles.ETG && (
           <>
             {nextOwnerCollecteurProEntityId ? (

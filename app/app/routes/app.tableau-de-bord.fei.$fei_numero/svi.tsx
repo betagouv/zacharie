@@ -41,6 +41,8 @@ export default function FEI_SVI() {
   }, [carcassesUnsorted]);
 
   const canEdit = useMemo(() => {
+    console.log("fei", fei);
+    console.log("fei.fei_current_owner_user_id", fei.fei_current_owner_user_id);
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
@@ -69,27 +71,6 @@ export default function FEI_SVI() {
   //   }
   //   prevCarcassesToCheckCount.current = carcassesSorted.carcassesToCheck.length;
   // }, [carcassesSorted.carcassesToCheck.length]);
-
-  const labelInspectionDone = useMemo(() => {
-    const label = "J'ai fini l'inspection de toutes les carcasses et je clôture la fiche.";
-    // const nbCarcassesValidated = carcassesSorted.carcassesValidated?.length;
-    // if (nbCarcassesValidated > 0) {
-    //   if (nbCarcassesValidated === 1) {
-    //     label += " 1 carcasse validée.";
-    //   } else {
-    //     label += ` ${nbCarcassesValidated} carcasses validées.`;
-    //   }
-    // }
-    // const nbCarcassesSaisies = carcassesSorted.carcassesSaisies?.length;
-    // if (nbCarcassesSaisies > 0) {
-    //   if (nbCarcassesSaisies === 1) {
-    //     label += " 1 carcasse saisie.";
-    //   } else {
-    //     label += ` ${nbCarcassesSaisies} carcasses saisies.`;
-    //   }
-    // }
-    return label;
-  }, [carcassesSorted.carcassesValidated?.length, carcassesSorted.carcassesSaisies?.length]);
 
   return (
     <>
@@ -161,7 +142,7 @@ export default function FEI_SVI() {
             <Checkbox
               options={[
                 {
-                  label: labelInspectionDone,
+                  label: "J'ai fini l'inspection de toutes les carcasses et je clôture la fiche.",
                   nativeInputProps: {
                     required: true,
                     name: "svi_finito",

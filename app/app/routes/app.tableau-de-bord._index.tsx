@@ -120,8 +120,12 @@ export default function TableauDeBordIndex() {
   }, [user]);
 
   const isOnlySvi = user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
-  const feiActivesForSvi = feisDone.filter((fei) => dayjs(fei!.svi_assigned_at).isAfter(dayjs().subtract(10, "days")));
-  const feisDoneForSvi = feisDone.filter((fei) => dayjs(fei!.svi_assigned_at).isBefore(dayjs().subtract(10, "days")));
+  const feiActivesForSvi = feisDone.filter(
+    (fei) => !fei!.svi_signed_at && dayjs(fei!.svi_assigned_at).isAfter(dayjs().subtract(10, "days")),
+  );
+  const feisDoneForSvi = feisDone.filter(
+    (fei) => fei!.svi_signed_at || dayjs(fei!.svi_assigned_at).isBefore(dayjs().subtract(10, "days")),
+  );
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
