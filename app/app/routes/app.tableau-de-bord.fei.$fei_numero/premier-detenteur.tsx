@@ -27,6 +27,9 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
   const fetcher = useFetcher({ key: "confirm-detenteur-initial" });
   const depotFetcher = useFetcher({ key: "detenteur-initial-depot" });
   const [depotType, setDepotType] = useState(() => {
+    if (fei.premier_detenteur_depot_type) {
+      return fei.premier_detenteur_depot_type;
+    }
     if (fei.premier_detenteur_depot_entity_id) {
       return [...ccgs, ...etgs].find((entity) => entity.id === fei.premier_detenteur_depot_entity_id)?.type;
     }
@@ -112,6 +115,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
             {
               label: "J’ai déposé mes carcasses dans un centre de collecte du gibier sauvage (chambre froide)",
               nativeInputProps: {
+                defaultChecked: depotType === EntityTypes.CCG,
                 checked: depotType === EntityTypes.CCG,
                 readOnly: !canEdit,
                 onChange: () => setDepotType(EntityTypes.CCG),
@@ -143,37 +147,49 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
         <div className="fr-fieldset__element">
           {canEdit && depotType === EntityTypes.CCG && (
-            <Select
-              label="Centre de collecte"
-              hint={
-                <Link
-                  className="!bg-none !no-underline"
-                  to={`/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`}
-                >
-                  Vous n'avez pas encore renseigné votre centre de collecte ? Vous pouvez le faire en{" "}
-                  <u className="inline">cliquant ici</u>
-                </Link>
-              }
-              className="!mb-0 grow"
-              nativeSelectProps={{
-                name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
-                required: true,
-                defaultValue: ccgs.length === 1 ? ccgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ""),
-              }}
-            >
-              <option value="">Sélectionnez un centre de collecte</option>
-              <hr />
-              {ccgs.map((entity) => {
-                return (
-                  <option key={entity.id} value={entity.id}>
-                    {entity.nom_d_usage} - {entity.code_postal} {entity.ville} ({getUserRoleLabel(entity.type)})
-                  </option>
-                );
-              })}
-            </Select>
+            <>
+              <input
+                type="hidden"
+                name={Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type}
+                value={EntityTypes.CCG}
+              />
+              <Select
+                label="Centre de collecte"
+                hint={
+                  <Link
+                    className="!bg-none !no-underline"
+                    to={`/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`}
+                  >
+                    Vous n'avez pas encore renseigné votre centre de collecte ? Vous pouvez le faire en{" "}
+                    <u className="inline">cliquant ici</u>
+                  </Link>
+                }
+                className="!mb-0 grow"
+                nativeSelectProps={{
+                  name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
+                  required: true,
+                  defaultValue: ccgs.length === 1 ? ccgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ""),
+                }}
+              >
+                <option value="">Sélectionnez un centre de collecte</option>
+                <hr />
+                {ccgs.map((entity) => {
+                  return (
+                    <option key={entity.id} value={entity.id}>
+                      {entity.nom_d_usage} - {entity.code_postal} {entity.ville} ({getUserRoleLabel(entity.type)})
+                    </option>
+                  );
+                })}
+              </Select>
+            </>
           )}
           {canChangeNextOwner && depotType === EntityTypes.ETG && (
             <>
+              <input
+                type="hidden"
+                name={Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type}
+                value={EntityTypes.ETG}
+              />
               <Select
                 label="Sélectionnez un Établissement de Transformation du Gibier sauvage"
                 hint="La fiche lui sera transmise"

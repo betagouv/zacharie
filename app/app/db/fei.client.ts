@@ -87,6 +87,7 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
     premier_detenteur_date_depot_quelque_part: mergedItem.premier_detenteur_date_depot_quelque_part
       ? dayjs(mergedItem.premier_detenteur_date_depot_quelque_part).toISOString()
       : null,
+    premier_detenteur_depot_type: mergedItem.premier_detenteur_depot_type || null,
     premier_detenteur_depot_entity_id: mergedItem.premier_detenteur_depot_entity_id || null,
     premier_detenteur_depot_sauvage: mergedItem.premier_detenteur_depot_sauvage || null,
     svi_entity_id: mergedItem.svi_entity_id || null,

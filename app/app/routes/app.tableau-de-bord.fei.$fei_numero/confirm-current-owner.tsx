@@ -75,7 +75,7 @@ export default function ConfirmCurrentOwner() {
             <Alert
               severity="info"
               description={`Cette fiche a été attribuée à un intervenant que vous ne pouvez pas représenter.\u00a0C'est à elle ou lui d'intervenir.`}
-              title="Fiche en attente de prise en charge par l'intervenant suivant."
+              title={`Fiche en attente de prise en charge par\u00A0: ${nextOwnerEntity?.nom_d_usage}`}
             />
           </div>
         </div>

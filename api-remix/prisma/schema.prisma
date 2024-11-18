@@ -234,6 +234,7 @@ model Fei {
   premier_detenteur_name_cache                            String?
   premier_detenteur_date_depot_quelque_part               DateTime?
   premier_detenteur_depot_entity_id                       String?
+  premier_detenteur_depot_type                            EntityTypes?
   premier_detenteur_depot_sauvage                         String?
   svi_assigned_at                                         DateTime?
   svi_entity_id                                           String?
