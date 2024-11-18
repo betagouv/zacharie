@@ -257,6 +257,7 @@ export async function action(args: ActionFunctionArgs) {
       nextFei.svi_signed_at = null;
     } else {
       nextFei.svi_signed_at = new Date(formData.get(Prisma.FeiScalarFieldEnum.svi_signed_at) as string);
+      nextFei.svi_signed_by = user.id;
     }
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.svi_assigned_at)) {

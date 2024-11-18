@@ -63,6 +63,7 @@ model User {
   FeiPremierDetenteurUser        Fei[]                    @relation("FeiPremierDetenteurUser")
   FeiExaminateurInitialUser      Fei[]                    @relation("FeiExaminateurInitialUser")
   FeiSviUser                     Fei[]                    @relation("FeiSviUser")
+  FeiSviUserSignedBy             Fei[]                    @relation("FeiSviUserSignedBy")
   FeiIntermediaireUser           FeiIntermediaire[]       @relation("FeiIntermediaireUser")
   Logs                           Logs[]
   NotificationLog                NotificationLog[]
@@ -243,6 +244,7 @@ model Fei {
   svi_aucune_carcasse_saisie                              Boolean?
   svi_commentaire                                         String?
   svi_signed_at                                           DateTime?
+  svi_signed_by                                           String?
   created_at                                              DateTime                @default(now())
   updated_at                                              DateTime                @default(now()) @updatedAt
   deleted_at                                              DateTime?
@@ -254,6 +256,7 @@ model Fei {
   FeiDepotEntity                                          Entity?                 @relation("FeiDepotEntity", fields: [premier_detenteur_depot_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiSviEntity                                            Entity?                 @relation("FeiSviEntity", fields: [svi_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiSviUser                                              User?                   @relation("FeiSviUser", fields: [svi_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  FeiSviUserSignedBy                                      User?                   @relation("FeiSviUserSignedBy", fields: [svi_signed_by], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiIntermediaires                                       FeiIntermediaire[]
   FeiCurrentUser                                          User?                   @relation("FeiCurrentUser", fields: [fei_current_owner_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiCurrentEntity                                        Entity?                 @relation("FeiCurrentEntity", fields: [fei_current_owner_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)

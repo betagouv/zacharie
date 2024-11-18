@@ -227,7 +227,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
         </div>
         <div className="fr-fieldset__element">
           <Component
-            label="Date de dépôt"
+            label="Date de dépôt dans la chambre froide"
             nativeInputProps={{
               id: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part,
               name: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part,
