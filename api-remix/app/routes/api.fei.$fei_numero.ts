@@ -2,7 +2,7 @@ import { json, type LoaderFunctionArgs, type ActionFunctionArgs, redirect, Seria
 import { getUserFromCookie } from "~/services/auth.server";
 import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
-import { EntityRelationType, Prisma, UserRoles, type User, type Fei } from "@prisma/client";
+import { EntityRelationType, Prisma, UserRoles, type User, type Fei, EntityTypes } from "@prisma/client";
 import sendNotificationToUser from "~/services/notifications.server";
 
 export async function action(args: ActionFunctionArgs) {
@@ -149,7 +149,7 @@ export async function action(args: ActionFunctionArgs) {
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type)) {
     nextFei.premier_detenteur_depot_type =
-      (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type) as string) || null;
+      (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type) as EntityTypes) || null;
   }
   if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage)) {
     nextFei.premier_detenteur_depot_sauvage = formData.get(

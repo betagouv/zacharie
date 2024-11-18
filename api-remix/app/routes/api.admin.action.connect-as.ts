@@ -22,4 +22,4 @@ export async function action({ request }: LoaderFunctionArgs) {
   return createUserSession(request, user);
 }
 
-export type AdminConnectAsLoaderData = ExtractLoaderData<typeof loader>;
+export type AdminConnectAsLoaderData = ExtractLoaderData<typeof action>;
