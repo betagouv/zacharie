@@ -173,7 +173,7 @@ export default function FEI_SVI() {
                 },
               ]}
             />
-            {!fei.svi_signed_at && (
+            {canEdit && !fei.svi_signed_at && (
               <Button type="submit" disabled={!jobIsDone}>
                 Enregistrer
               </Button>

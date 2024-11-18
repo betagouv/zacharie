@@ -103,6 +103,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
                 </span>
               ),
               nativeInputProps: {
+                defaultChecked: depotType === EntityTypes.ETG,
                 checked: depotType === EntityTypes.ETG,
                 readOnly: !canEdit,
                 onChange: () => setDepotType(EntityTypes.ETG),
@@ -195,7 +196,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               </Select>
             </>
           )}
-          {!canChangeNextOwner && !canEdit && (
+          {!canEdit && (
             <InputNotEditable
               label={
                 depotType === EntityTypes.CCG ? "Centre de collecte" : "Établissement de Traitement du Gibier sauvage"

@@ -6,7 +6,7 @@ import { clientLoader } from "./route";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { UserRoles, Entity, User, Prisma } from "@prisma/client";
 import { useMemo, useState } from "react";
-import { getUserRoleLabel, getUserRoleLabelPlural } from "@app/utils/get-user-roles-label";
+import { getUserRoleLabel } from "@app/utils/get-user-roles-label";
 import { mergeFei } from "@app/db/fei.client";
 
 export default function SelectNextOwner() {
