@@ -90,12 +90,15 @@ export default function FEIExaminateurInitial() {
 
   const canEdit = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
+      // seul l'examinateur initial peut modifier
       return false;
     }
     if (!carcasses.length) {
+      // il faut au moins une carcasse
       return true;
     }
     if (!onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse) {
+      // il faut l'heure d'éviscération de la dernière carcasse le cas échéant
       return true;
     }
     if (!fei.commune_mise_a_mort) {
@@ -107,11 +110,16 @@ export default function FEIExaminateurInitial() {
     if (!fei.heure_mise_a_mort_premiere_carcasse) {
       return true;
     }
+    if (needSelectNextUser) {
+      // on garde la possibilité de modifier tout jusqu'à ce que le prochain utilisateur de la fiche soit en sa possession
+      // pour palier à un oubli potentiel de l'examinatuer initial mêms après avoir validé la mise sur le marché
+      return true;
+    }
     if (fei.examinateur_initial_approbation_mise_sur_le_marche) {
       return false;
     }
     return true;
-  }, [fei, user, carcasses, onlyPetitGibier]);
+  }, [fei, user, carcasses, onlyPetitGibier, needSelectNextUser]);
 
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
