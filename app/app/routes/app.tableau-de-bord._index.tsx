@@ -344,7 +344,7 @@ export default function TableauDeBordIndex() {
                 <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
                   {feiActivesForSvi.length ? (
                     <ResponsiveTable
-                      headers={["Numéro", "Créée le", "Commune", "Réceptionnée le"]}
+                      headers={["Numéro", "Chasse", "Carcasses", "Réceptionnée le"]}
                       data={feiActivesForSvi
                         .filter((fei) => fei !== null)
                         .map((fei) => ({
@@ -352,8 +352,25 @@ export default function TableauDeBordIndex() {
                           id: fei.numero,
                           rows: [
                             fei.numero!,
-                            dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
-                            fei.commune_mise_a_mort!,
+                            <>
+                              {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format(
+                                "DD/MM/YYYY à HH:mm",
+                              )}
+                              <br />
+                              {fei.premier_detenteur_name_cache!}
+                              <br />
+                              {fei.commune_mise_a_mort!}
+                              <br />
+                            </>,
+                            <>
+                              {fei.resume_nombre_de_carcasses?.split("\n").map((line) => {
+                                return (
+                                  <p className="m-0" key={line}>
+                                    {line}
+                                  </p>
+                                );
+                              })}
+                            </>,
                             dayjs(fei.svi_assigned_at).format("DD/MM/YYYY à HH:mm"),
                           ],
                         }))}
@@ -392,7 +409,7 @@ export default function TableauDeBordIndex() {
                 <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
                   {feisDoneForSvi.length ? (
                     <ResponsiveTable
-                      headers={["Numéro", "Créée le", "Commune", "Clôturée le"]}
+                      headers={["Numéro", "Chasse", "Carcasses", "Clôturée le"]}
                       data={feisDoneForSvi
                         .filter((fei) => fei !== null)
                         .map((fei) => ({
@@ -400,8 +417,25 @@ export default function TableauDeBordIndex() {
                           id: fei.numero,
                           rows: [
                             fei.numero!,
-                            dayjs(fei.created_at).format("DD/MM/YYYY à HH:mm"),
-                            fei.commune_mise_a_mort!,
+                            <>
+                              {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format(
+                                "DD/MM/YYYY à HH:mm",
+                              )}
+                              <br />
+                              {fei.premier_detenteur_name_cache!}
+                              <br />
+                              {fei.commune_mise_a_mort!}
+                              <br />
+                            </>,
+                            <>
+                              {fei.resume_nombre_de_carcasses?.split("\n").map((line) => {
+                                return (
+                                  <p className="m-0" key={line}>
+                                    {line}
+                                  </p>
+                                );
+                              })}
+                            </>,
                             dayjs(fei.svi_assigned_at).format("DD/MM/YYYY à HH:mm"),
                           ],
                         }))}
