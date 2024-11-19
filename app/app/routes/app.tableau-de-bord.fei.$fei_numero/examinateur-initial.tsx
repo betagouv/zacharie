@@ -225,7 +225,7 @@ export default function FEIExaminateurInitial() {
       <Accordion titleAs="h3" label={`Carcasses/Lots de carcasses (${carcasses.length})`} defaultExpanded>
         <CarcassesExaminateur canEdit={canEdit} />
       </Accordion>
-      <Accordion titleAs="h3" label="Identité de l'Examinateur 🔒">
+      <Accordion titleAs="h3" label="Identité de l'Examinateur 🔒" defaultExpanded={!canEdit}>
         <UserNotEditable user={examinateurInitialUser!} withCfei />
       </Accordion>
       {examinateurInitialUser && (
