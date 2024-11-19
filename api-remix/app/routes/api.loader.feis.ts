@@ -123,6 +123,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     where: {
       svi_assigned_at: null,
       deleted_at: null,
+      numero: { notIn: feisUnderMyResponsability.map((fei) => fei.numero) },
       OR: [
         {
           fei_next_owner_user_id: user.id,
@@ -194,33 +195,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
     where: {
       svi_assigned_at: null,
       deleted_at: null,
+      numero: {
+        notIn: [...feisUnderMyResponsability.map((fei) => fei.numero), ...feisToTake.map((fei) => fei.numero)],
+      },
       // fei_current_owner_user_id: { not: user.id },
       AND: [
-        {
-          AND: [
-            {
-              fei_next_owner_user_id: { not: user.id },
-            },
-            {
-              fei_next_owner_user_id: { not: null },
-            },
-          ],
-        },
-        {
-          OR: [
-            { fei_next_owner_entity_id: null },
-            {
-              FeiNextEntity: {
-                EntityRelatedWithUser: {
-                  none: {
-                    owner_id: user.id,
-                    relation: EntityRelationType.WORKING_FOR,
-                  },
-                },
-              },
-            },
-          ],
-        },
+        // {
+        //   AND: [
+        //     {
+        //       fei_next_owner_user_id: { not: user.id },
+        //     },
+        //     // {
+        //     //   fei_next_owner_user_id: { not: null },
+        //     // },
+        //   ],
+        // },
+        // {
+        //   OR: [
+        //     { fei_next_owner_entity_id: null },
+        //     {
+        //       FeiNextEntity: {
+        //         EntityRelatedWithUser: {
+        //           none: {
+        //             owner_id: user.id,
+        //             relation: EntityRelationType.WORKING_FOR,
+        //           },
+        //         },
+        //       },
+        //     },
+        //   ],
+        // },
         {
           OR: [
             {
@@ -273,6 +277,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
     where: {
       svi_assigned_at: null,
       deleted_at: null,
+      numero: {
+        notIn: [
+          ...feisUnderMyResponsability.map((fei) => fei.numero),
+          ...feisToTake.map((fei) => fei.numero),
+          ...feisOngoing.map((fei) => fei.numero),
+        ],
+      },
       OR: [
         {
           FeiCurrentEntity: {
@@ -310,6 +321,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       updated_at: "desc",
     },
   });
+
   // console.log("feisUnderMyResponsability", feisUnderMyResponsability.length);
   // console.log("feisToTake", feisToTake.length);
   // console.log("feisOngoing", feisOngoing.length);

@@ -90,7 +90,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       resume_nombre_de_carcasses: true,
     },
     orderBy: {
-      updated_at: "desc",
+      svi_assigned_at: "desc",
     },
   });
 

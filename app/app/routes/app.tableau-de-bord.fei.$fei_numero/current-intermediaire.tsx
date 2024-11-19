@@ -118,6 +118,7 @@ export default function FEICurrentIntermediaire() {
   ]);
 
   const needSelectNextUser = useMemo(() => {
+    console.log({ fei, user, intermediaire, inetermediairesPopulated });
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
@@ -125,11 +126,14 @@ export default function FEICurrentIntermediaire() {
       return false;
     }
     const latestIntermediaire = inetermediairesPopulated[0];
+    console.log({ latestIntermediaire, inetermediairesPopulated });
     if (latestIntermediaire.id !== intermediaire.id) {
       return false;
     }
     return true;
   }, [fei, user, intermediaire, inetermediairesPopulated]);
+
+  console.log({ needSelectNextUser });
 
   // const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
   const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(true);

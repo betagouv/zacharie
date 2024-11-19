@@ -155,7 +155,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   );
   const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
   const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
-  const svis = allEntities.filter((entity) => entity.type === EntityTypes.SVI);
+  const svis = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.SVI);
 
   return json({
     ok: true,

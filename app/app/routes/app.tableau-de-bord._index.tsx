@@ -276,7 +276,7 @@ export default function TableauDeBordIndex() {
               <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
                 {feisDone.length ? (
                   <ResponsiveTable
-                    headers={["Numéro", "Chasse", "Carcasses", "Clôturée le"]}
+                    headers={["Numéro", "Chasse", "Carcasses", "Transmission au service d'inspection"]}
                     data={feisDone
                       .filter((fei) => fei !== null)
                       .map((fei) => ({
@@ -436,7 +436,7 @@ export default function TableauDeBordIndex() {
                                 );
                               })}
                             </>,
-                            dayjs(fei.svi_assigned_at).format("DD/MM/YYYY à HH:mm"),
+                            dayjs(fei.svi_signed_at).format("DD/MM/YYYY à HH:mm"),
                           ],
                         }))}
                     />
