@@ -93,6 +93,7 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
     svi_entity_id: mergedItem.svi_entity_id || null,
     svi_assigned_at: mergedItem.svi_assigned_at ? dayjs(mergedItem.svi_assigned_at).toISOString() : null,
     svi_user_id: mergedItem.svi_user_id || null,
+    svi_signed_by: mergedItem.svi_signed_by || null,
     svi_carcasses_saisies: mergedItem.svi_carcasses_saisies || null,
     svi_aucune_carcasse_saisie:
       newItem?.get("svi_aucune_carcasse_saisie") === "true"
