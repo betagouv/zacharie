@@ -4,6 +4,7 @@ import type { ExtractLoaderData } from "~/services/extract-loader-data";
 import { prisma } from "~/db/prisma.server";
 import { EntityRelationType, Prisma, UserRoles, type User, type Fei, EntityTypes } from "@prisma/client";
 import sendNotificationToUser from "~/services/notifications.server";
+import dayjs from "dayjs";
 
 export async function action(args: ActionFunctionArgs) {
   const { request, params } = args;
@@ -302,7 +303,7 @@ export async function action(args: ActionFunctionArgs) {
     const examinateurInitial = await prisma.user.findUnique({ where: { id: feiWithSvi.examinateur_initial_user_id! } });
     sendNotificationToUser({
       user: examinateurInitial!,
-      title: `La fiche du ${feiWithSvi.date_mise_a_mort?.toLocaleDateString()} est prise en charge par l'ETG`,
+      title: `La fiche du ${dayjs(feiWithSvi.date_mise_a_mort).format("DD/MM/YYYY")} est prise en charge par l'ETG`,
       body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
       email: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
       notificationLogAction: `FEI_ASSIGNED_TO_${feiWithSvi.fei_next_owner_role}_${feiWithSvi.numero}`,
@@ -311,7 +312,7 @@ export async function action(args: ActionFunctionArgs) {
       const premierDetenteur = await prisma.user.findUnique({ where: { id: feiWithSvi.premier_detenteur_user_id! } });
       sendNotificationToUser({
         user: premierDetenteur!,
-        title: `La fiche du ${feiWithSvi.date_mise_a_mort?.toLocaleDateString()} est prise en charge par l'ETG`,
+        title: `La fiche du ${dayjs(feiWithSvi.date_mise_a_mort).format("DD/MM/YYYY")} est prise en charge par l'ETG`,
         body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
         email: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
         notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
