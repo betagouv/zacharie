@@ -171,7 +171,7 @@ export default function FEIExaminateurInitial() {
       return label;
     } else {
       return (label +=
-        "que les carcasses en peau examinées ce jour présentent au moins une anomalie. Toutefois, elles peuvent être mises sur le marché.");
+        " que les carcasses en peau examinées ce jour présentent au moins une anomalie. Toutefois, elles peuvent être mises sur le marché.");
     }
   }, [fei.examinateur_initial_approbation_mise_sur_le_marche, atLeastOneCarcasseWithAnomalie]);
 
