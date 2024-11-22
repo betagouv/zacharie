@@ -257,12 +257,22 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
       {canChangeNextOwner &&
         depotType === EntityTypes.ETG &&
         (fei.fei_next_owner_user_id || fei.fei_next_owner_entity_id) && (
-          <Alert
-            className="mt-8"
-            severity="success"
-            description={`${premierDetenteurDepotEntity?.nom_d_usage} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
-            title="Attribution effectuée"
-          />
+          <>
+            <Alert
+              className="mt-8"
+              severity="success"
+              description={`${premierDetenteurDepotEntity?.nom_d_usage} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
+              title="Attribution effectuée"
+            />
+            <Button
+              className="mt-2"
+              linkProps={{
+                to: `/app/tableau-de-bord/`,
+              }}
+            >
+              Voir toutes mes fiches
+            </Button>
+          </>
         )}
     </>
   );

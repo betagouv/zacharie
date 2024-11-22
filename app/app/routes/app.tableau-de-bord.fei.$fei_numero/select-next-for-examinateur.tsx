@@ -199,11 +199,21 @@ export default function SelectNextForExaminateur() {
       )}
 
       {fei.fei_next_owner_user_id && (
-        <Alert
-          severity="success"
-          description={`${nextOwnerName} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
-          title="Attribution effectuée"
-        />
+        <>
+          <Alert
+            severity="success"
+            description={`${nextOwnerName} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
+            title="Attribution effectuée"
+          />
+          <Button
+            className="mt-2"
+            linkProps={{
+              to: `/app/tableau-de-bord/`,
+            }}
+          >
+            Voir toutes mes fiches
+          </Button>
+        </>
       )}
     </>
   );
