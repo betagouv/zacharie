@@ -152,11 +152,6 @@ export async function action(args: ActionFunctionArgs) {
     nextFei.premier_detenteur_depot_type =
       (formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type) as EntityTypes) || null;
   }
-  if (formData.has(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage)) {
-    nextFei.premier_detenteur_depot_sauvage = formData.get(
-      Prisma.FeiScalarFieldEnum.premier_detenteur_depot_sauvage,
-    ) as string;
-  }
 
   /*
   *

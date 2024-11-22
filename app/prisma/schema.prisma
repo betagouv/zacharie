@@ -54,6 +54,7 @@ model User {
   web_push_tokens                String[]
   prefilled                      Boolean                  @default(false)
   activated                      Boolean                  @default(false)
+  is_synced                      Boolean                  @default(false) // just for typing purppose with zustand frontend
   Password                       Password?
   UserRelationsAsOwner           UserRelations[]          @relation("UserOwnerOfUserRelation")
   UserRelationsAsRelated         UserRelations[]          @relation("UserRelatedOfUserRelation")
@@ -105,6 +106,7 @@ model Entity {
   onboarded_at              DateTime?
   coupled_entity_id         String?                  @unique
   prefilled                 Boolean                  @default(false)
+  is_synced                 Boolean                  @default(false) // just for typing purppose with zustand frontend
   EntityRelatedWithUser     EntityAndUserRelations[] @relation("EntityRelatedWithUser")
   FeiCurrentEntity          Fei[]                    @relation("FeiCurrentEntity")
   FeiNextEntity             Fei[]                    @relation("FeiNextEntity")
@@ -147,6 +149,7 @@ model UserRelations {
   created_at                DateTime         @default(now())
   updated_at                DateTime         @default(now()) @updatedAt
   deleted_at                DateTime?
+  is_synced                 Boolean          @default(false) // just for typing purppose with zustand frontend
   UserOwnerOfUserRelation   User             @relation("UserOwnerOfUserRelation", fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   UserRelatedOfUserRelation User             @relation("UserRelatedOfUserRelation", fields: [related_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -166,6 +169,7 @@ model EntityAndUserRelations {
   created_at            DateTime           @default(now())
   updated_at            DateTime           @default(now()) @updatedAt
   deleted_at            DateTime?
+  is_synced             Boolean            @default(false) // just for typing purppose with zustand frontend
   UserRelatedWithEntity User               @relation("UserRelatedWithEntity", fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   EntityRelatedWithUser Entity             @relation("EntityRelatedWithUser", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -182,6 +186,7 @@ model ETGAndEntityRelations {
   created_at           DateTime    @default(now())
   updated_at           DateTime    @default(now()) @updatedAt
   deleted_at           DateTime?
+  is_synced            Boolean     @default(false) // just for typing purppose with zustand frontend
   ETGRelatedWithEntity Entity      @relation("ETGRelatedWithEntity", fields: [etg_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   EntityRelatedWithETG Entity      @relation("EntityRelatedWithETG", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -211,6 +216,25 @@ model Fei {
   heure_evisceration_derniere_carcasse                    String?
   created_by_user_id                                      String
   resume_nombre_de_carcasses                              String?
+  examinateur_initial_offline                             Boolean?
+  examinateur_initial_user_id                             String?
+  examinateur_initial_approbation_mise_sur_le_marche      Boolean?
+  examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
+  premier_detenteur_offline                               Boolean?
+  premier_detenteur_user_id                               String?
+  premier_detenteur_entity_id                             String?
+  premier_detenteur_name_cache                            String?
+  premier_detenteur_date_depot_quelque_part               DateTime?
+  premier_detenteur_depot_entity_id                       String?
+  premier_detenteur_depot_type                            EntityTypes?
+  svi_assigned_at                                         DateTime?
+  svi_entity_id                                           String?
+  svi_user_id                                             String?
+  svi_carcasses_saisies                                   Int?
+  svi_aucune_carcasse_saisie                              Boolean?
+  svi_commentaire                                         String?
+  svi_signed_at                                           DateTime?
+  svi_signed_by                                           String?
   fei_current_owner_user_id                               String?
   fei_current_owner_user_name_cache                       String?
   fei_current_owner_entity_id                             String?
@@ -225,29 +249,10 @@ model Fei {
   fei_prev_owner_user_id                                  String?
   fei_prev_owner_entity_id                                String?
   fei_prev_owner_role                                     UserRoles?
-  examinateur_initial_offline                             Boolean?
-  examinateur_initial_user_id                             String?
-  examinateur_initial_approbation_mise_sur_le_marche      Boolean?
-  examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
-  premier_detenteur_offline                               Boolean?
-  premier_detenteur_user_id                               String?
-  premier_detenteur_entity_id                             String?
-  premier_detenteur_name_cache                            String?
-  premier_detenteur_date_depot_quelque_part               DateTime?
-  premier_detenteur_depot_entity_id                       String?
-  premier_detenteur_depot_type                            EntityTypes?
-  premier_detenteur_depot_sauvage                         String?
-  svi_assigned_at                                         DateTime?
-  svi_entity_id                                           String?
-  svi_user_id                                             String?
-  svi_carcasses_saisies                                   Int?
-  svi_aucune_carcasse_saisie                              Boolean?
-  svi_commentaire                                         String?
-  svi_signed_at                                           DateTime?
-  svi_signed_by                                           String?
   created_at                                              DateTime                @default(now())
   updated_at                                              DateTime                @default(now()) @updatedAt
   deleted_at                                              DateTime?
+  is_synced                                               Boolean                 @default(false) // just for typing purppose with zustand frontend
   Carcasses                                               Carcasse[]
   FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiPremierDetenteurUser                                 User?                   @relation("FeiPremierDetenteurUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -307,6 +312,7 @@ model Carcasse {
   created_at                                    DateTime                @default(now())
   updated_at                                    DateTime                @default(now()) @updatedAt
   deleted_at                                    DateTime?
+  is_synced                                     Boolean                 @default(false) // just for typing purppose with zustand frontend
   Fei                                           Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
   FeiIntermediairesCarcasse                     FeiIntermediaire[]      @relation("FeiIntermediairesCarcasse")
   FeiIntermediaireCarcasseRefus                 FeiIntermediaire?       @relation("FeiIntermediaireCarcasseRefus", fields: [intermediaire_carcasse_refus_intermediaire_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -329,6 +335,7 @@ model FeiIntermediaire {
   created_at                     DateTime                @default(now())
   updated_at                     DateTime                @default(now()) @updatedAt
   deleted_at                     DateTime?
+  is_synced                      Boolean                 @default(false) // just for typing purppose with zustand frontend
   Fei                            Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
   FeiIntermediaireUser           User                    @relation("FeiIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiIntermediaireEntity         Entity                  @relation("FeiIntermediaireEntity", fields: [fei_intermediaire_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -355,6 +362,7 @@ model CarcasseIntermediaire {
   created_at                             DateTime         @default(now())
   updated_at                             DateTime         @default(now()) @updatedAt
   deleted_at                             DateTime?
+  is_synced                              Boolean          @default(false) // just for typing purppose with zustand frontend
   CarcasseIntermediaireFei               Fei              @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
   CarcasseCarcasseIntermediaire          Carcasse         @relation(fields: [numero_bracelet], references: [numero_bracelet], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaireUser              User             @relation("CarcasseIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)

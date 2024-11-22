@@ -89,7 +89,6 @@ export function mergeFeiToJSON(oldItem: SerializeFrom<Fei>, newItem: FormData = 
       : null,
     premier_detenteur_depot_type: mergedItem.premier_detenteur_depot_type || null,
     premier_detenteur_depot_entity_id: mergedItem.premier_detenteur_depot_entity_id || null,
-    premier_detenteur_depot_sauvage: mergedItem.premier_detenteur_depot_sauvage || null,
     svi_entity_id: mergedItem.svi_entity_id || null,
     svi_assigned_at: mergedItem.svi_assigned_at ? dayjs(mergedItem.svi_assigned_at).toISOString() : null,
     svi_user_id: mergedItem.svi_user_id || null,
