@@ -82,7 +82,6 @@ export async function action(args: ActionFunctionArgs) {
   if (formData.has(Prisma.CarcasseScalarFieldEnum.numero_bracelet)) {
     const numero_bracelet = formData.get(Prisma.CarcasseScalarFieldEnum.numero_bracelet) as string;
     nextCarcasse.numero_bracelet = numero_bracelet;
-    nextCarcasse.zacharie_carcasse_id = `${fei_numero}_${numero_bracelet}`;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.heure_evisceration)) {
     nextCarcasse.heure_evisceration = formData.get(Prisma.CarcasseScalarFieldEnum.heure_evisceration) as string;
