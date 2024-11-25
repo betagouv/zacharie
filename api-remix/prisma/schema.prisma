@@ -286,7 +286,8 @@ enum CarcasseType {
 }
 
 model Carcasse {
-  numero_bracelet                               String                  @id
+  zacharie_carcasse_id                          String? // {fei_numero}_{numero_bracelet}
+  numero_bracelet                               String                  @id // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
   fei_numero                                    String
   type                                          CarcasseType?
   nombre_d_animaux                              Int?
@@ -351,6 +352,7 @@ model CarcasseIntermediaire {
   fei_numero__bracelet__intermediaire_id String           @id
   fei_numero                             String
   numero_bracelet                        String
+  zacharie_carcasse_id                   String?
   fei_intermediaire_id                   String
   fei_intermediaire_user_id              String
   fei_intermediaire_entity_id            String

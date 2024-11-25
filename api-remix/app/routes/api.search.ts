@@ -1,4 +1,4 @@
-import { UserRoles } from "@prisma/client";
+import { EntityRelationType } from "@prisma/client";
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { prisma } from "~/db/prisma.server";
 import { getUserFromCookie } from "~/services/auth.server";
@@ -20,6 +20,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const carcasse = await prisma.carcasse.findFirst({
     where: {
       numero_bracelet: searchQuery,
+      Fei: {
+        FeiSviEntity: {
+          EntityRelatedWithUser: {
+            some: {
+              owner_id: user.id,
+              relation: EntityRelationType.WORKING_FOR,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -48,6 +58,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const carcasse = await prisma.carcasse.findFirst({
       where: {
         numero_bracelet: carcasseIntermediaireCommentaire.numero_bracelet,
+        Fei: {
+          FeiSviEntity: {
+            EntityRelatedWithUser: {
+              some: {
+                owner_id: user.id,
+                relation: EntityRelationType.WORKING_FOR,
+              },
+            },
+          },
+        },
       },
     });
     if (carcasse) {

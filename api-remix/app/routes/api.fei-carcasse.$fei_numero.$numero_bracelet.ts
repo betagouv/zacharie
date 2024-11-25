@@ -16,31 +16,11 @@ export async function action(args: ActionFunctionArgs) {
   if (!numero_bracelet) {
     return json({ ok: false, data: null, error: "Le numéro de la carcasse est obligatoire" }, { status: 400 });
   }
-
   const formData = await request.formData();
-
   console.log("formData action.carcasse.$numero_bracelet", Object.fromEntries(formData));
 
-  if (formData.get("_action") === "delete") {
-    const existinCarcasse = await prisma.carcasse.findUnique({
-      where: {
-        numero_bracelet,
-      },
-    });
-    if (existinCarcasse) {
-      await prisma.carcasse.update({
-        where: {
-          numero_bracelet,
-        },
-        data: {
-          deleted_at: dayjs().toISOString(),
-        },
-      });
-    }
-    return json({ ok: true, data: null, error: "" });
-  }
-
   const fei_numero = formData.get(Prisma.CarcasseScalarFieldEnum.fei_numero) as string;
+  const zacharie_carcasse_id = `${fei_numero}_${numero_bracelet}`;
   const fei = await prisma.fei.findUnique({
     where: {
       numero: fei_numero,
@@ -50,9 +30,31 @@ export async function action(args: ActionFunctionArgs) {
     return json({ ok: false, data: null, error: "La fiche n'existe pas" }, { status: 400 });
   }
 
+  if (formData.get("_action") === "delete") {
+    const existinCarcasse = await prisma.carcasse.findUnique({
+      where: {
+        numero_bracelet,
+        fei_numero,
+      },
+    });
+    if (existinCarcasse) {
+      await prisma.carcasse.update({
+        where: {
+          numero_bracelet,
+          fei_numero,
+        },
+        data: {
+          deleted_at: dayjs().toISOString(),
+        },
+      });
+    }
+    return json({ ok: true, data: null, error: "" });
+  }
+
   let existingCarcasse = await prisma.carcasse.findUnique({
     where: {
       numero_bracelet,
+      fei_numero,
     },
   });
   if (!existingCarcasse) {
@@ -60,6 +62,7 @@ export async function action(args: ActionFunctionArgs) {
       data: {
         numero_bracelet,
         fei_numero,
+        zacharie_carcasse_id,
       },
     });
   }
@@ -78,7 +81,9 @@ export async function action(args: ActionFunctionArgs) {
   };
 
   if (formData.has(Prisma.CarcasseScalarFieldEnum.numero_bracelet)) {
-    nextCarcasse.numero_bracelet = formData.get(Prisma.CarcasseScalarFieldEnum.numero_bracelet) as string;
+    const numero_bracelet = formData.get(Prisma.CarcasseScalarFieldEnum.numero_bracelet) as string;
+    nextCarcasse.numero_bracelet = numero_bracelet;
+    nextCarcasse.zacharie_carcasse_id = `${fei_numero}_${numero_bracelet}`;
   }
   if (formData.has(Prisma.CarcasseScalarFieldEnum.heure_evisceration)) {
     nextCarcasse.heure_evisceration = formData.get(Prisma.CarcasseScalarFieldEnum.heure_evisceration) as string;
@@ -203,6 +208,7 @@ export async function action(args: ActionFunctionArgs) {
   const updatedCarcasse = await prisma.carcasse.update({
     where: {
       numero_bracelet: existingCarcasse.numero_bracelet,
+      fei_numero: existingCarcasse.fei_numero,
     },
     data: nextCarcasse,
   });
@@ -237,7 +243,7 @@ export async function action(args: ActionFunctionArgs) {
       title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
       body: `Motif${updatedCarcasse.svi_carcasse_saisie_motif.length > 1 ? "s" : ""} de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(", ")}`,
       email: email.join("\n"),
-      notificationLogAction: `CARCASSE_SAISIE_${existingCarcasse.numero_bracelet}`,
+      notificationLogAction: `CARCASSE_SAISIE_${existingCarcasse.zacharie_carcasse_id}`,
     });
 
     if (premierDetenteur?.id !== examinateurInitial?.id) {
@@ -246,7 +252,7 @@ export async function action(args: ActionFunctionArgs) {
         title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
         body: `Motif${updatedCarcasse.svi_carcasse_saisie_motif.length > 1 ? "s" : ""} de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(", ")}`,
         email: email.join("\n"),
-        notificationLogAction: `CARCASSE_SAISIE_${existingCarcasse.numero_bracelet}`,
+        notificationLogAction: `CARCASSE_SAISIE_${existingCarcasse.zacharie_carcasse_id}`,
       });
     }
   }

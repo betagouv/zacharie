@@ -29,6 +29,7 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
 
   // Explicitly handle each field, including optional ones
   const result = {
+    zacharie_carcasse_id: mergedItem.zacharie_carcasse_id,
     numero_bracelet: mergedItem.numero_bracelet,
     fei_numero: mergedItem.fei_numero,
     type: mergedItem.type ?? CarcasseType.GROS_GIBIER,
@@ -78,6 +79,7 @@ export function mergeCarcasseToJSON(oldItem: SerializeFrom<Carcasse>, newItem?: 
     created_at: mergedItem.created_at,
     updated_at: dayjs().toISOString(),
     deleted_at: mergedItem.deleted_at ? dayjs(mergedItem.deleted_at).toISOString() : null,
+    is_synced: mergedItem.is_synced,
   };
 
   // const zodCarcasseResult = zodSchemas.CarcasseSchema.parse(result);

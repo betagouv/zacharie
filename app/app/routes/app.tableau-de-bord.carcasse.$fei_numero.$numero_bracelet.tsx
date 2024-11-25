@@ -184,10 +184,17 @@ export default function CarcasseReadAndWrite() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [showScroll]);
 
+  const zacharie_carcasse_id = `${fei.numero}_${carcasse.numero_bracelet}`;
   function PermanentFields({ form }: { form: string }) {
     return (
       <>
         <input form={form} type="hidden" name={Prisma.CarcasseScalarFieldEnum.fei_numero} value={fei.numero} />
+        <input
+          form={form}
+          type="hidden"
+          name={Prisma.CarcasseScalarFieldEnum.zacharie_carcasse_id}
+          value={zacharie_carcasse_id}
+        />
         <input form={form} type="hidden" name={Prisma.CarcasseScalarFieldEnum.espece} value={espece || ""} />
         <input
           type="hidden"

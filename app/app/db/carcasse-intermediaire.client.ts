@@ -42,6 +42,7 @@ export function mergeCarcasseIntermediaireToJSON(
     fei_numero__bracelet__intermediaire_id: mergedItem.fei_numero__bracelet__intermediaire_id,
     fei_numero: mergedItem.fei_numero,
     numero_bracelet: mergedItem.numero_bracelet,
+    zacharie_carcasse_id: mergedItem.zacharie_carcasse_id,
     fei_intermediaire_id: mergedItem.fei_intermediaire_id,
     fei_intermediaire_user_id: mergedItem.fei_intermediaire_user_id,
     fei_intermediaire_entity_id: mergedItem.fei_intermediaire_entity_id,
@@ -66,6 +67,7 @@ export function mergeCarcasseIntermediaireToJSON(
       ? dayjs(mergedItem.carcasse_check_finished_at).toISOString()
       : null,
     deleted_at: mergedItem.deleted_at ? dayjs(mergedItem.deleted_at).toISOString() : null,
+    is_synced: mergedItem.is_synced,
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -26,7 +26,7 @@ export async function action(args: ActionFunctionArgs) {
   }
   console.log("numero_bracelet", numero_bracelet);
   const existingCarcasse = await prisma.carcasse.findUnique({
-    where: { numero_bracelet: numero_bracelet },
+    where: { numero_bracelet: numero_bracelet, fei_numero: fei_numero },
   });
   if (!existingCarcasse) {
     return json({ ok: false, data: null, error: "Carcasse not found" }, { status: 404 });
@@ -51,6 +51,7 @@ export async function action(args: ActionFunctionArgs) {
     fei_numero__bracelet__intermediaire_id,
     fei_numero: fei_numero,
     numero_bracelet,
+    zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
     fei_intermediaire_id: intermediaire_id,
     fei_intermediaire_user_id: user.id,
     fei_intermediaire_entity_id: feiIntermediaire.fei_intermediaire_entity_id,

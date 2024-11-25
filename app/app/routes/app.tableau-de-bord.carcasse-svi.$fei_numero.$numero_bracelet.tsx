@@ -202,6 +202,12 @@ export default function CarcasseEditSVI() {
                       value={fei.numero}
                     />
                     <input
+                      form={`svi-carcasse-${carcasse.numero_bracelet}`}
+                      type="hidden"
+                      name={Prisma.CarcasseScalarFieldEnum.zacharie_carcasse_id}
+                      value={carcasse.zacharie_carcasse_id!}
+                    />
+                    <input
                       type="hidden"
                       form={`svi-carcasse-${carcasse.numero_bracelet}`}
                       name={Prisma.CarcasseScalarFieldEnum.numero_bracelet}

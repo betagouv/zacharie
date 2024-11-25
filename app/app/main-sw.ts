@@ -361,7 +361,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
     if (request.url.includes(`/api/fei/`)) {
       console.log("Cloning request");
       const clonedRequest = request.clone();
-        const formData = await getFormData(clonedRequest);
+      const formData = await getFormData(clonedRequest);
       const jsonFei = mergeFeiToJSON({} as SerializeFrom<Fei>, formData);
       /* All Feis */
       // console.log("Offline FEI", offlineFei);
@@ -506,6 +506,7 @@ async function handlePostRequest(request: Request): Promise<Response> {
               fei_numero__bracelet__intermediaire_id: `${feiNumero}__${carcasse.numero_bracelet}__${jsonIntermediaire.id}`,
               fei_numero: feiNumero,
               numero_bracelet: carcasse.numero_bracelet,
+              zacharie_carcasse_id: `${feiNumero}__${carcasse.numero_bracelet}`,
               fei_intermediaire_id: jsonIntermediaire.id,
               fei_intermediaire_user_id: jsonIntermediaire.fei_intermediaire_user_id,
               fei_intermediaire_entity_id: jsonIntermediaire.fei_intermediaire_entity_id,

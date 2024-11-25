@@ -217,6 +217,7 @@ export async function loadFei(fei_numero: string) {
           fei_numero__bracelet__intermediaire_id: `${fei_numero}__${carcasse.numero_bracelet}__${intermediaire.id}`,
           fei_numero: fei_numero,
           numero_bracelet: carcasse.numero_bracelet,
+          zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
           fei_intermediaire_id: intermediaire.id,
           fei_intermediaire_user_id: intermediaire.fei_intermediaire_user_id,
           fei_intermediaire_entity_id: intermediaire.fei_intermediaire_entity_id,
@@ -228,6 +229,7 @@ export async function loadFei(fei_numero: string) {
           commentaire: null,
           carcasse_check_finished_at: dayjs().toISOString(),
           deleted_at: null,
+          is_synced: false,
         });
         for (const key of newCarcasseIntermediaire.keys()) {
           if (newCarcasseIntermediaire.get(key) === "null") {
@@ -249,6 +251,7 @@ export async function loadFei(fei_numero: string) {
           intermediaireCarcasses[carcasse.numero_bracelet] = newCarcasseIntermediaireRes.data!.carcasseIntermediaire;
         }
       } else {
+        // FIXME: zacharie_carcasse_id
         intermediaireCarcasses[carcasse.numero_bracelet] = carcasseIntermediaire;
       }
     }
