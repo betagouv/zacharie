@@ -31,7 +31,7 @@ export async function action(args: ActionFunctionArgs) {
   }
 
   if (formData.get("_action") === "delete") {
-    const existinCarcasse = await prisma.carcasse.findUnique({
+    const existinCarcasse = await prisma.carcasse.findFirst({
       where: {
         numero_bracelet,
         fei_numero,
@@ -40,8 +40,7 @@ export async function action(args: ActionFunctionArgs) {
     if (existinCarcasse) {
       await prisma.carcasse.update({
         where: {
-          numero_bracelet,
-          fei_numero,
+          zacharie_carcasse_id: existinCarcasse.zacharie_carcasse_id,
         },
         data: {
           deleted_at: dayjs().toISOString(),
@@ -51,7 +50,7 @@ export async function action(args: ActionFunctionArgs) {
     return json({ ok: true, data: null, error: "" });
   }
 
-  let existingCarcasse = await prisma.carcasse.findUnique({
+  let existingCarcasse = await prisma.carcasse.findFirst({
     where: {
       numero_bracelet,
       fei_numero,
@@ -207,8 +206,7 @@ export async function action(args: ActionFunctionArgs) {
 
   const updatedCarcasse = await prisma.carcasse.update({
     where: {
-      numero_bracelet: existingCarcasse.numero_bracelet,
-      fei_numero: existingCarcasse.fei_numero,
+      zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
     },
     data: nextCarcasse,
   });
@@ -273,7 +271,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   if (!user) {
     return json({ ok: false, data: null, error: "Unauthorized" }, { status: 401 });
   }
-  const carcasse = await prisma.carcasse.findUnique({
+  const carcasse = await prisma.carcasse.findFirst({
     where: {
       numero_bracelet: params.numero_bracelet,
       fei_numero: params.fei_numero,

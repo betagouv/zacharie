@@ -25,7 +25,7 @@ export async function action(args: ActionFunctionArgs) {
     return json({ ok: false, data: null, error: "Le numéro de la carcasse est obligatoire" }, { status: 400 });
   }
   console.log("numero_bracelet", numero_bracelet);
-  const existingCarcasse = await prisma.carcasse.findUnique({
+  const existingCarcasse = await prisma.carcasse.findFirst({
     where: { numero_bracelet: numero_bracelet, fei_numero: fei_numero },
   });
   if (!existingCarcasse) {
@@ -75,6 +75,7 @@ export async function action(args: ActionFunctionArgs) {
     // const carcasseUpdated = await prisma.carcasse.update({
     //   where: {
     //     numero_bracelet: numero_bracelet,
+    //    fei_numero: fei_numero,
     //   },
     //   data: {
     //     intermediaire_carcasse_commentaire: null,
@@ -113,6 +114,7 @@ export async function action(args: ActionFunctionArgs) {
     // const carcasseUpdated = await prisma.carcasse.update({
     //   where: {
     //     numero_bracelet: numero_bracelet,
+    //    fei_numero: fei_numero,
     //   },
     //   data: {
     //     intermediaire_carcasse_manquante: true,
@@ -148,6 +150,7 @@ export async function action(args: ActionFunctionArgs) {
     // await prisma.carcasse.update({
     //   where: {
     //     numero_bracelet: numero_bracelet,
+    //    fei_numero: fei_numero,
     //   },
     //   data: {
     //     intermediaire_carcasse_commentaire: data.commentaire,

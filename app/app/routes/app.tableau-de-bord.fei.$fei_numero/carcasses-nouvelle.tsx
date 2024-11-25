@@ -57,6 +57,12 @@ export default function NouvelleCarcasse() {
         <input
           type="hidden"
           required
+          name={Prisma.CarcasseScalarFieldEnum.zacharie_carcasse_id}
+          value={`${fei.numero}_${numeroBracelet}`}
+        />
+        <input
+          type="hidden"
+          required
           name={Prisma.CarcasseScalarFieldEnum.examinateur_signed_at}
           value={dayjs().toISOString()}
         />

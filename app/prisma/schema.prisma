@@ -286,8 +286,8 @@ enum CarcasseType {
 }
 
 model Carcasse {
-  zacharie_carcasse_id                          String? // {fei_numero}_{numero_bracelet}
-  numero_bracelet                               String                  @id // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
+  zacharie_carcasse_id                          String                  @id // {fei_numero}_{numero_bracelet}
+  numero_bracelet                               String // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
   fei_numero                                    String
   type                                          CarcasseType?
   nombre_d_animaux                              Int?
@@ -352,7 +352,7 @@ model CarcasseIntermediaire {
   fei_numero__bracelet__intermediaire_id String           @id
   fei_numero                             String
   numero_bracelet                        String
-  zacharie_carcasse_id                   String?
+  zacharie_carcasse_id                   String
   fei_intermediaire_id                   String
   fei_intermediaire_user_id              String
   fei_intermediaire_entity_id            String
@@ -366,7 +366,7 @@ model CarcasseIntermediaire {
   deleted_at                             DateTime?
   is_synced                              Boolean          @default(false) // just for typing purppose with zustand frontend
   CarcasseIntermediaireFei               Fei              @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
-  CarcasseCarcasseIntermediaire          Carcasse         @relation(fields: [numero_bracelet], references: [numero_bracelet], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseCarcasseIntermediaire          Carcasse         @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaireUser              User             @relation("CarcasseIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaireEntity            Entity           @relation("CarcasseIntermediaireEntity", fields: [fei_intermediaire_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaireFeiIntermediaire  FeiIntermediaire @relation("FeiIntermediaireCarcasseIntermediaire", fields: [fei_intermediaire_id], references: [id], onDelete: Cascade, onUpdate: Cascade)

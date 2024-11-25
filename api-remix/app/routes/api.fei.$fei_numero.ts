@@ -41,6 +41,14 @@ export async function action(args: ActionFunctionArgs) {
       where: { fei_numero: feiNumero },
       data: { deleted_at: new Date() },
     });
+    await prisma.feiIntermediaire.updateMany({
+      where: { fei_numero: feiNumero },
+      data: { deleted_at: new Date() },
+    });
+    await prisma.carcasseIntermediaire.updateMany({
+      where: { fei_numero: feiNumero },
+      data: { deleted_at: new Date() },
+    });
     return json({ ok: true, data: null, error: "" });
   }
 
