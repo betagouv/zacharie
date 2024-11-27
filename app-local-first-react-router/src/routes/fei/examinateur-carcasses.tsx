@@ -15,7 +15,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
   const state = useZustandStore((state) => state);
   const fei = state.feis[params.fei_numero!];
   // console.log('fei', fei);
-  const carcasses = (state.carcassesByFei[params.fei_numero!] || [])
+  const carcasses = (state.carcassesIdsByFei[params.fei_numero!] || [])
     .map((cId) => state.carcasses[cId])
     .filter((c) => !c.deleted_at);
   const updateCarcasse = state.updateCarcasse;
@@ -49,7 +49,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
               }}
             >
               <Link
-                to={`/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.numero_bracelet}`}
+                to={`/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`}
                 className="block w-full bg-none p-4 text-left [&_*]:no-underline [&_*]:hover:no-underline"
               >
                 {carcasse.espece ? (

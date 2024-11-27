@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { CarcasseType, Prisma, type Fei, type Carcasse } from '@prisma/client';
-import { useIsOnline } from '@app/components/OfflineMode';
+import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import dayjs from 'dayjs';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import grandGibier from '@app/data/grand-gibier.json';
@@ -30,7 +30,6 @@ export default function NouvelleCarcasse() {
   const fei = state.feis[params.fei_numero!];
   const carcasses = state.carcasses;
   const isOnline = useIsOnline();
-  // const nouvelleCarcasseFetcher = useFetcher<typeof nouvelleCarcasseAction>({ key: "nouvelle-carcasse" });
   const [defaultNumeroBracelet, setDefaultNumeroBracelet] = useState<string>(
     getNewDefaultNumeroBracelet(fei),
   );
@@ -62,7 +61,7 @@ export default function NouvelleCarcasse() {
             }}
           >
             <option value="">Sélectionnez l'espèce du gibier</option>
-            <hr />
+            {/* <hr /> */}
             {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
               return (
                 <optgroup label={typeGibier} key={typeGibier}>
@@ -186,21 +185,7 @@ export default function NouvelleCarcasse() {
                   deleted_at: null,
                   is_synced: false,
                 };
-                useZustandStore.setState((state) => {
-                  return {
-                    ...state,
-                    carcasses: {
-                      ...state.carcasses,
-                      [zacharieCarcasseId]: newCarcasse,
-                    },
-                    carcassesByFei: {
-                      ...state.carcassesByFei,
-                      [fei.numero]: [
-                        ...new Set([...(state.carcassesByFei[fei.numero] || []), zacharieCarcasseId]),
-                      ],
-                    },
-                  };
-                });
+                useZustandStore.getState().createCarcasse(newCarcasse);
                 setDefaultNumeroBracelet(getNewDefaultNumeroBracelet(fei));
                 setNumeroBracelet('');
                 setError(null);

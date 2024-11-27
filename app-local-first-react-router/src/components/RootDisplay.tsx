@@ -3,9 +3,10 @@ import { Header } from '@codegouvfr/react-dsfr/Header';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import { UserRoles } from '@prisma/client';
 import { clearCache } from '@app/services/indexed-db';
-import { useIsOnline } from '@app/components/OfflineMode';
+import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
 import { getMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { useRef } from 'react';
 
 export default function RootDisplay({
   navigation,
@@ -20,6 +21,17 @@ export default function RootDisplay({
 }) {
   const user = getMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
+  // there is a bug on user's first connexion where user is not defined
+  // RENDER 1. user is not connected -> renderSearchInput is undefined
+  // RENDER 2. user is connected -> renderSearchInput is SearchInput -> ERROR of number of hooks somewhere
+  // Error: Rendered more hooks than during the previous render. at SearchInput
+  // Previous render            Next render
+  // ------------------------------------------------------
+  // 1. useMemo                    useMemo
+  // 2. useMemo                    useMemo
+  // 3. undefined                  useState
+  // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  const RenderedSearchInput = useRef(user?.roles.includes(UserRoles.SVI) ? SearchInput : undefined).current;
   // console.log("root display user " + id, user);
   return (
     <>
@@ -45,7 +57,7 @@ export default function RootDisplay({
         className="[&_.fr-header\_\_service-title]:flex [&_.fr-header\_\_service-title]:items-end"
         navigation={navigation}
         allowEmptySearch={false}
-        renderSearchInput={user?.roles.includes(UserRoles.SVI) ? SearchInput : undefined}
+        renderSearchInput={RenderedSearchInput}
         quickAccessItems={[
           {
             linkProps: {

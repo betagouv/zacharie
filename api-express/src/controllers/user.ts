@@ -11,7 +11,12 @@ import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
 import { comparePassword, hashPassword } from '~/service/crypto';
 import { userFeiSelect, type UserForFei } from '~/types/user';
-import type { UserMyRelationsResponse, UserForFeiResponse } from '~/types/responses';
+import type {
+  UserConnexionResponse,
+  UserMyRelationsResponse,
+  UserForFeiResponse,
+  UserEntityResponse,
+} from '~/types/responses';
 import type { EntityWithUserRelation, EntityWithUserRelationType } from '~/types/entity';
 import {
   EntityRelationType,
@@ -45,10 +50,10 @@ router.post(
     if (!email) {
       res.status(400).send({
         ok: false,
-        data: null,
-        message: null,
+        data: { user: null },
+        message: '',
         error: 'Veuillez renseigner votre email',
-      });
+      } satisfies UserConnexionResponse);
       return;
     }
     if (resetPassword === 'true') {
@@ -60,10 +65,10 @@ router.post(
         if (!password) {
           res.status(200).send({
             ok: true,
-            data: null,
-            error: null,
+            data: { user: null },
+            error: '',
             message: 'Vous pouvez désormais vous connecter avec votre email et créer un mot de passe',
-          });
+          } satisfies UserConnexionResponse);
           return;
         }
         if (password?.reset_password_last_email_sent_at) {
@@ -71,11 +76,11 @@ router.post(
           if (sentMinutesAgo < 5) {
             res.status(400).send({
               ok: false,
-              data: null,
+              data: { user: null },
+              error: '',
               message: `Un email de réinitialisation a déjà été envoyé, veuillez patienter encore ${
                 5 - sentMinutesAgo
               } minutes`,
-              error: null,
             });
             return;
           }
@@ -97,29 +102,29 @@ router.post(
         });
         res.status(200).send({
           ok: true,
-          data: null,
-          error: null,
+          data: { user: null },
+          error: '',
           message: 'Un email de réinitialisation de mot de passe a été envoyé',
-        });
+        } satisfies UserConnexionResponse);
         return;
       }
     }
     if (!passwordUser) {
       res.status(400).send({
         ok: false,
-        data: null,
-        message: null,
+        data: { user: null },
+        message: '',
         error: 'Veuillez renseigner votre mot de passe',
-      });
+      } satisfies UserConnexionResponse);
       return;
     }
     if (!connexionType) {
       res.status(400).send({
         ok: false,
-        data: null,
-        message: null,
+        data: { user: null },
+        message: '',
         error: "L'URL de connexion est incorrecte",
-      });
+      } satisfies UserConnexionResponse);
       return;
     }
 
@@ -128,10 +133,10 @@ router.post(
       if (connexionType === 'creation-de-compte') {
         res.status(400).send({
           ok: false,
-          data: null,
-          message: null,
+          data: { user: null },
+          message: '',
           error: 'Un compte existe déjà avec cet email',
-        });
+        } satisfies UserConnexionResponse);
         return;
       }
     }
@@ -139,10 +144,10 @@ router.post(
       if (connexionType === 'compte-existant') {
         res.status(400).send({
           ok: false,
-          data: null,
-          message: null,
+          data: { user: null },
+          message: '',
           error: "L'email est incorrect, ou vous n'avez pas encore de compte",
-        });
+        } satisfies UserConnexionResponse);
         return;
       }
       user = await prisma.user.create({
@@ -168,18 +173,18 @@ router.post(
         if (connexionType === 'compte-existant') {
           res.status(400).send({
             ok: false,
-            data: null,
-            message: null,
+            data: { user: null },
+            message: '',
             error: 'Le mot de passe est incorrect',
-          });
+          } satisfies UserConnexionResponse);
           return;
         } else {
           res.status(400).send({
             ok: false,
-            data: null,
-            message: null,
+            data: { user: null },
+            message: '',
             error: 'Un compte existe déjà avec cet email',
-          });
+          } satisfies UserConnexionResponse);
           return;
         }
       }
@@ -188,7 +193,9 @@ router.post(
       expiresIn: JWT_MAX_AGE,
     });
     res.cookie('zacharie_express_jwt', token, cookieOptions());
-    res.status(200).send({ ok: true, data: { user }, error: null });
+    res
+      .status(200)
+      .send({ ok: true, data: { user }, message: '', error: '' } satisfies UserConnexionResponse);
   }),
 );
 
@@ -202,7 +209,7 @@ router.post(
     const isAdmin = req.isAdmin;
 
     if (!body.owner_id) {
-      res.status(400).send({ ok: false, data: null, error: 'Missing owner_id' });
+      res.status(400).send({ ok: false, data: { relation: null, entity: null }, error: 'Missing owner_id' });
       return;
     }
 
@@ -217,28 +224,40 @@ router.post(
       if (!entity) {
         res.status(404).send({
           ok: false,
-          data: null,
+          data: { relation: null, entity: null },
           error: "Ce Centre de Collecte n'existe pas",
-        });
+        } satisfies UserEntityResponse);
         return;
       }
       entityId = entity?.id || '';
     }
 
     if (!entityId) {
-      res.status(400).send({ ok: false, data: null, error: 'Missing entity_id' });
+      res.status(400).send({
+        ok: false,
+        data: { relation: null, entity: null },
+        error: 'Missing entity_id',
+      } satisfies UserEntityResponse);
       return;
     }
 
     if (!isAdmin && userId !== body.owner_id) {
-      res.status(401).send({ ok: false, data: null, error: 'Unauthorized' });
+      res.status(401).send({
+        ok: false,
+        data: { relation: null, entity: null },
+        error: 'Unauthorized',
+      } satisfies UserEntityResponse);
       return;
     }
 
     // Handle create action
     if (body._action === 'create') {
       if (!body.relation) {
-        res.status(400).send({ ok: false, data: null, error: 'Missing relation' });
+        res.status(400).send({
+          ok: false,
+          data: { relation: null, entity: null },
+          error: 'Missing relation',
+        } satisfies UserEntityResponse);
         return;
       }
 
@@ -255,9 +274,9 @@ router.post(
       if (existingEntityRelation) {
         res.status(409).send({
           ok: false,
-          data: null,
-          error: 'EntityRelation already exists',
-        });
+          data: { relation: null, entity: null },
+          error: 'Vous avez déjà ajouté cette entité',
+        } satisfies UserEntityResponse);
         return;
       }
 
@@ -265,7 +284,13 @@ router.post(
         data: nextEntityRelation,
       });
 
-      res.status(200).send({ ok: true, data: { relation }, error: '' });
+      const entity = await prisma.entity.findUnique({
+        where: {
+          id: entityId,
+        },
+      });
+
+      res.status(200).send({ ok: true, data: { relation, entity }, error: '' } satisfies UserEntityResponse);
       return;
     }
 
@@ -285,12 +310,18 @@ router.post(
             id: existingEntityRelation.id,
           },
         });
-        res.status(200).send({ ok: true, data: null, error: '' });
-        return;
       }
+      res
+        .status(200)
+        .send({ ok: true, data: { relation: null, entity: null }, error: '' } satisfies UserEntityResponse);
+      return;
     }
 
-    res.status(400).send({ ok: false, data: null, error: 'Invalid action' });
+    res.status(400).send({
+      ok: false,
+      data: { relation: null, entity: null },
+      error: 'Invalid action',
+    } satisfies UserEntityResponse);
   }),
 );
 
@@ -502,7 +533,9 @@ router.post(
       });
     }
 
-    res.status(200).send({ ok: true, data: { user: savedUser }, error: null });
+    res
+      .status(200)
+      .send({ ok: true, data: { user: savedUser }, error: '', message: '' } satisfies UserConnexionResponse);
   }),
 );
 
@@ -684,6 +717,30 @@ router.get(
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     res.status(200).send({ ok: true, data: { user: req.user }, error: null });
+  }),
+);
+
+router.get(
+  '/my-ccgs',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user!;
+    const userCCGs = (
+      await prisma.entityAndUserRelations.findMany({
+        where: {
+          owner_id: user.id,
+          relation: EntityRelationType.WORKING_WITH,
+          EntityRelatedWithUser: {
+            type: EntityTypes.CCG,
+          },
+        },
+        include: {
+          EntityRelatedWithUser: true,
+        },
+      })
+    ).map((relation) => relation.EntityRelatedWithUser) satisfies Array<Entity>;
+
+    res.status(200).send({ ok: true, data: { userCCGs }, error: null });
   }),
 );
 

@@ -62,9 +62,6 @@ export function createNewFei(): FeiWithIntermediaires {
     is_synced: false,
     FeiIntermediaires: [],
   };
-  useZustandStore.setState((state) => ({
-    ...state,
-    feis: { ...state.feis, [newFei.numero]: newFei },
-  }));
+  useZustandStore.getState().createFei(newFei);
   return newFei;
 }

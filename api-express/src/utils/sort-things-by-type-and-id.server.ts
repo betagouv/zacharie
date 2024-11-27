@@ -7,17 +7,11 @@ import {
   type User,
   UserRelationType,
 } from '@prisma/client';
+import type { EntitiesById, EntitiesByTypeAndId } from '~/types/entity';
 
-type EntitiesById = Record<Entity['id'], Entity>;
-type EntitiesByTypeAndId = Record<EntityTypes, EntitiesById>;
-
-export function sortEntitiesByTypeAndId(
-  entities: Array<Entity>,
-): [EntitiesById, EntitiesByTypeAndId] {
+export function sortEntitiesByTypeAndId(entities: Array<Entity>): [EntitiesById, EntitiesByTypeAndId] {
   const allEntitiesIds: EntitiesById = {};
-  const allEntitiesByTypeAndId: EntitiesByTypeAndId = Object.values(
-    EntityTypes,
-  ).reduce((acc, type) => {
+  const allEntitiesByTypeAndId: EntitiesByTypeAndId = Object.values(EntityTypes).reduce((acc, type) => {
     acc[type] = {};
     return acc;
   }, {} as EntitiesByTypeAndId);
@@ -34,9 +28,7 @@ export function sortEntitiesRelationsByTypeAndId(
   entities: Array<EntityAndUserRelations>,
   entitiesById: EntitiesById,
 ): EntitiesByTypeAndId {
-  const entitiesByTypeAndId: EntitiesByTypeAndId = Object.values(
-    EntityTypes,
-  ).reduce((acc, type) => {
+  const entitiesByTypeAndId: EntitiesByTypeAndId = Object.values(EntityTypes).reduce((acc, type) => {
     acc[type] = {};
     return acc;
   }, {} as EntitiesByTypeAndId);
@@ -51,21 +43,14 @@ export function sortEntitiesRelationsByTypeAndId(
   return entitiesByTypeAndId;
 }
 
-type PartialUser = Pick<
-  User,
-  'id' | 'roles' | 'prenom' | 'nom_de_famille' | 'code_postal' | 'ville'
->;
+type PartialUser = Pick<User, 'id' | 'roles' | 'prenom' | 'nom_de_famille' | 'code_postal' | 'ville'>;
 type UsersById = Record<User['id'], PartialUser>;
-export type AllowedRoles =
-  | typeof UserRoles.PREMIER_DETENTEUR
-  | typeof UserRoles.EXAMINATEUR_INITIAL;
+export type AllowedRoles = typeof UserRoles.PREMIER_DETENTEUR | typeof UserRoles.EXAMINATEUR_INITIAL;
 type UsersByRoleAndId = {
   [K in AllowedRoles]: UsersById;
 };
 
-export function sortUsersByRoleAndId(
-  users: Array<PartialUser>,
-): [UsersById, UsersByRoleAndId] {
+export function sortUsersByRoleAndId(users: Array<PartialUser>): [UsersById, UsersByRoleAndId] {
   const allUsersIds: UsersById = {};
   const allUsersByRoleAndId: UsersByRoleAndId = {
     [UserRoles.PREMIER_DETENTEUR]: {},

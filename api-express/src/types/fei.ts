@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export const feiDoneSelect = {
   numero: true,
@@ -12,6 +12,7 @@ export const feiDoneSelect = {
   examinateur_initial_date_approbation_mise_sur_le_marche: true,
   premier_detenteur_name_cache: true,
   resume_nombre_de_carcasses: true,
+  is_synced: true,
 } as const;
 
 export type FeiDone = Prisma.FeiGetPayload<{
@@ -50,6 +51,9 @@ export const feiPopulatedInclude = {
       FeiIntermediaireEntity: true,
       FeiIntermediairesCarcasses: true,
       CarcasseIntermediaire: true,
+    },
+    orderBy: {
+      created_at: Prisma.SortOrder.desc,
     },
   },
 };

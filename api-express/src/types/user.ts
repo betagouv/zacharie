@@ -1,9 +1,4 @@
-import type {
-  Prisma,
-  User,
-  UserNotifications,
-  UserRelationType,
-} from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
 export const userFeiSelect = {
   id: true,

@@ -1,16 +1,26 @@
-import { type Fei, type User, type Entity, type ETGAndEntityRelations } from '@prisma/client';
-import { type UserForFei } from './user';
-import { type FeiDone, type FeiWithIntermediaires, type FeiPopulated } from './fei';
-import { type EntityWithUserRelation } from './entity';
+import type {
+  User,
+  ETGAndEntityRelations,
+  Entity,
+  EntityAndUserRelations,
+  Carcasse,
+  FeiIntermediaire,
+  CarcasseIntermediaire,
+} from '@prisma/client';
+import type { UserForFei } from './user';
+import type { FeiDone, FeiWithIntermediaires, FeiPopulated } from './fei';
+import type { EntityWithUserRelation, EntitiesByTypeAndId } from './entity';
 
 export interface SearchResponse {
   ok: boolean;
-  data: {
+  data: Array<{
     searchQuery: string;
     redirectUrl: string;
     carcasse_numero_bracelet: string;
     fei_numero: string;
-  };
+    fei_date_mise_a_mort: string;
+    fei_commune_mise_a_mort: string;
+  }>;
   error: string;
 }
 
@@ -27,6 +37,23 @@ export interface UserForFeiResponse {
   ok: boolean;
   data: {
     user: UserForFei | null;
+  };
+  error: string;
+}
+
+export interface UserEntityResponse {
+  ok: boolean;
+  data: {
+    entity: Entity | null;
+    relation: EntityAndUserRelations | null;
+  };
+  error: string;
+}
+
+export interface UserCCGsResponse {
+  ok: boolean;
+  data: {
+    userCCGs: Array<Entity>;
   };
   error: string;
 }
@@ -72,6 +99,39 @@ export interface FeisDoneResponse {
   data: {
     user: User;
     feisDone: Array<FeiDone>;
+  };
+  error: string;
+}
+
+export interface EntitiesWorkingForResponse {
+  ok: true;
+  data: {
+    allEntitiesByTypeAndId: EntitiesByTypeAndId;
+    userEntitiesByTypeAndId: EntitiesByTypeAndId;
+  };
+  error: '';
+}
+
+export interface CarcasseResponse {
+  ok: boolean;
+  data: {
+    carcasse: Carcasse | null;
+  };
+  error: string;
+}
+
+export interface FeiIntermediaireResponse {
+  ok: boolean;
+  data: {
+    feiIntermediaire: FeiIntermediaire | null;
+  };
+  error: string;
+}
+
+export interface CarcasseIntermediaireResponse {
+  ok: boolean;
+  data: {
+    carcasseIntermediaire: CarcasseIntermediaire | null;
   };
   error: string;
 }

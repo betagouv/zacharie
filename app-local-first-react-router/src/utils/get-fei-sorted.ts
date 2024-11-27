@@ -21,10 +21,12 @@ export function getFeisSorted(): FeiSorted {
     return feisSorted;
   }
   for (const fei of Object.values(state.feis)) {
+    if (fei.deleted_at) {
+      continue;
+    }
     // FEI UNDER MY RESPONSABILITY
     if (
       !fei.svi_assigned_at &&
-      !fei.deleted_at &&
       !fei.svi_signed_at &&
       !fei.fei_next_owner_user_id &&
       !fei.fei_next_owner_entity_id
@@ -59,7 +61,7 @@ export function getFeisSorted(): FeiSorted {
       }
     }
     // FEI TO TAKE
-    if (!fei.svi_assigned_at && !fei.deleted_at) {
+    if (!fei.svi_assigned_at) {
       if (fei.fei_next_owner_user_id === user.id) {
         feisSorted.feisToTake.push(fei);
         continue;
@@ -70,7 +72,10 @@ export function getFeisSorted(): FeiSorted {
       }
       if (fei.fei_next_owner_role === UserRoles.ETG) {
         // also collecteurs from this etg can take the lead
+        console.log('fei.fei_next_owner_entity_id', fei.fei_next_owner_entity_id);
+        console.log('entities', state.entities);
         const etg = state.entities[fei.fei_next_owner_entity_id!];
+        console.log('etg', etg);
         if (etg.relation === 'WORKING_FOR_ENTITY_RELATED_WITH') {
           if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
             feisSorted.feisToTake.push(fei);
@@ -90,7 +95,7 @@ export function getFeisSorted(): FeiSorted {
       }
     }
     // FEI ONGOING
-    if (!fei.svi_assigned_at && !fei.deleted_at) {
+    if (!fei.svi_assigned_at) {
       if (fei.examinateur_initial_user_id === user.id) {
         feisSorted.feisOngoing.push(fei);
         continue;

@@ -1,4 +1,4 @@
-import { type Carcasse } from "@prisma/client";
+import { type Carcasse } from '@prisma/client';
 
 type CountCarcassesByEspece = Record<string, { carcasses: number; nombre_d_animaux: number }>;
 
@@ -18,11 +18,11 @@ export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarc
   }, {} as CountCarcassesByEspece);
 }
 
-export function formatCountCarcasseByEspece(carcasses: Array<SerializeFrom<Carcasse>>) {
+export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
   const countCarcassesByEspece = getCountCarcassesByEspece(carcasses);
 
   return Object.entries(countCarcassesByEspece).map(([espece, { carcasses, nombre_d_animaux }]) => {
     const isLot = nombre_d_animaux >= carcasses; // look at the code above to understand this
-    return `${espece} : ${carcasses} ${isLot ? `lots (${nombre_d_animaux} carcasses)` : "carcasses"}`;
+    return `${espece} : ${carcasses} ${isLot ? `lots (${nombre_d_animaux} carcasses)` : 'carcasses'}`;
   });
 }

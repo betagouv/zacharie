@@ -7,7 +7,7 @@ type OnlyInput = Omit<InputProps, 'nativeTextAreaProps' | 'textArea'>;
 interface InputVilleProps extends OnlyInput {
   trimPostCode?: boolean;
   postCode?: string;
-  onSelect: (ville: string) => void;
+  onSelect?: (ville: string) => void;
 }
 export default function InputVille(props: InputVilleProps) {
   const { trimPostCode, postCode, onSelect, ...inputProps } = props;
@@ -174,10 +174,10 @@ export default function InputVille(props: InputVilleProps) {
                   const codePostal = ville.split(' ')[0];
                   const trimedVille = ville.replace(codePostal, '').trim();
                   setVilleSearched(trimedVille);
-                  onSelect(trimedVille);
+                  if (onSelect) onSelect(trimedVille);
                 } else {
                   setVilleSearched(ville);
-                  onSelect(ville);
+                  if (onSelect) onSelect(ville);
                 }
                 setVillesResults([]);
                 // the parent form is submitted on blur

@@ -1,42 +1,57 @@
-// import * as zodSchemas from "prisma/generated/zod";
 import dayjs from 'dayjs';
-// import { SerializeFrom } from '@remix-run/node';
-import { type Carcasse, type CarcasseIntermediaire } from '@prisma/client';
 import type { FeiResponse } from '@api/src/types/responses';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
-// import { type FeiLoaderData } from '@api/routes/api.fei.$fei_numero';
-// import { type FeiUserLoaderData } from '@api/routes/api.fei-user.$fei_numero.$user_id';
-// import { type FeiEntityLoaderData } from '@api/routes/api.fei-entity.$fei_numero.$entity_id';
-// import { type CarcassesLoaderData } from '@api/routes/api.fei-carcasses.$fei_numero';
-// import { type FeiIntermediairesLoaderData } from '@api/routes/api.fei-intermediaires.$fei_numero';
-// import {
-//   type CarcasseIntermediaireLoaderData,
-//   type CarcasseIntermediaireActionData,
-// } from '@api/routes/api.fei-carcasse-intermediaire.$fei_numero.$intermediaire_id.$numero_bracelet';
-// import { mergeCarcasseIntermediaire } from './carcasse-intermediaire.client';
 import useZustandStore from '@app/zustand/store';
 
 export async function loadFei(fei_numero: string) {
+  const isOnline = useZustandStore.getState().isOnline;
+  if (!isOnline) {
+    console.log('not loading fei because not online');
+    return;
+  }
   const feiData = await fetch(`${import.meta.env.VITE_API_URL}/fei/${fei_numero}`, {
     method: 'GET',
     credentials: 'include',
   })
     .then((res) => res.json())
     .then((res) => res as FeiResponse);
-
   if (!feiData.ok) {
     return;
   }
+  setFeiInStore(feiData);
+}
 
-  const fei = feiData.data?.fei;
-  if (!fei?.numero) {
-    useZustandStore.setState((state) => {
-      delete state.feis[fei_numero];
-      return state;
-    });
-    return;
+export async function setFeiInStore(feiResponse: FeiResponse) {
+  const fei = feiResponse.data?.fei;
+  // if (!fei?.numero) {
+  //   useZustandStore.setState((state) => {
+  //     delete state.feis[fei_numero];
+  //     return state;
+  //   });
+  //   return;
+  // }
+  const localFei = useZustandStore.getState().feis[fei.numero];
+  if (!localFei) {
+    useZustandStore.setState((state) => ({
+      feis: {
+        ...state.feis,
+        [fei.numero]: fei,
+      },
+    }));
+  } else {
+    const newestFei = dayjs(localFei.updated_at).diff(fei.updated_at) > 0 ? localFei : fei;
+    const oldestFei = dayjs(localFei.updated_at).diff(fei.updated_at) > 0 ? fei : localFei;
+
+    useZustandStore.setState((state) => ({
+      feis: {
+        ...state.feis,
+        [fei.numero]: {
+          ...oldestFei,
+          ...newestFei,
+        },
+      },
+    }));
   }
-  useZustandStore.setState((state) => ({ feis: { ...state.feis, [fei.numero]: fei } }));
 
   const examinateurInitial = fei.FeiExaminateurInitialUser;
   if (examinateurInitial) {
@@ -165,29 +180,83 @@ export async function loadFei(fei_numero: string) {
 
   const carcasses = fei.Carcasses;
   useZustandStore.setState((state) => ({
-    carcassesByFei: {
-      ...state.carcassesByFei,
+    carcassesIdsByFei: {
+      ...state.carcassesIdsByFei,
       [fei.numero]: carcasses.map((c) => c.zacharie_carcasse_id),
     },
   }));
   for (const carcasse of carcasses) {
-    useZustandStore.setState((state) => ({
-      carcasses: {
-        ...state.carcasses,
-        [carcasse.zacharie_carcasse_id]: carcasse,
-      },
-    }));
+    const localCarcasse = useZustandStore.getState().carcasses[carcasse.zacharie_carcasse_id];
+    if (!localCarcasse) {
+      useZustandStore.setState((state) => ({
+        carcasses: {
+          ...state.carcasses,
+          [carcasse.zacharie_carcasse_id]: carcasse,
+        },
+      }));
+    } else {
+      const newestCarcasse =
+        dayjs(localCarcasse.updated_at).diff(carcasse.updated_at) > 0 ? localCarcasse : carcasse;
+      const oldestCarcasse =
+        dayjs(localCarcasse.updated_at).diff(carcasse.updated_at) > 0 ? carcasse : localCarcasse;
+
+      useZustandStore.setState((state) => ({
+        carcasses: {
+          ...state.carcasses,
+          [carcasse.zacharie_carcasse_id]: {
+            ...oldestCarcasse,
+            ...newestCarcasse,
+          },
+        },
+      }));
+    }
   }
 
-  const intermediaires = fei.FeiIntermediaires;
+  const intermediaires = fei.FeiIntermediaires.sort(
+    (a, b) => dayjs(a.created_at).valueOf() - dayjs(b.created_at).valueOf(),
+  ); // newest first
 
   for (const intermediaire of intermediaires || []) {
+    const intermediaireId = intermediaire.id; // {user_id}_{fei_numero}_{HHMMSS}
+    const localIntermediaire = useZustandStore.getState().feisIntermediaires[intermediaireId];
     useZustandStore.setState((state) => ({
-      feisIntermediaires: {
-        ...state.feisIntermediaires,
-        [intermediaire.id]: intermediaire,
+      ...state,
+      feisIntermediairesIdsByFei: {
+        ...state.feisIntermediairesIdsByFei,
+        [fei.numero]: [
+          ...new Set([...(state.feisIntermediairesIdsByFei[fei.numero] || []), intermediaireId]),
+        ], // newest first
       },
     }));
+    if (!localIntermediaire) {
+      useZustandStore.setState((state) => ({
+        ...state,
+        feisIntermediaires: {
+          ...state.feisIntermediaires,
+          [intermediaireId]: intermediaire,
+        },
+      }));
+    } else {
+      const newestIntermediaire =
+        dayjs(localIntermediaire.updated_at).diff(intermediaire.updated_at) > 0
+          ? localIntermediaire
+          : intermediaire;
+      const oldestIntermediaire =
+        dayjs(localIntermediaire.updated_at).diff(intermediaire.updated_at) > 0
+          ? intermediaire
+          : localIntermediaire;
+
+      useZustandStore.setState((state) => ({
+        ...state,
+        feisIntermediaires: {
+          ...state.feisIntermediaires,
+          [intermediaireId]: {
+            ...oldestIntermediaire,
+            ...newestIntermediaire,
+          },
+        },
+      }));
+    }
 
     const intermediaireUser = intermediaire.FeiIntermediaireUser;
     if (intermediaireUser) {
@@ -214,45 +283,45 @@ export async function loadFei(fei_numero: string) {
       }
     }
 
-    const intermediaireCarcasses: Record<Carcasse['zacharie_carcasse_id'], CarcasseIntermediaire> = {};
-    for (const carcasse of carcasses || []) {
-      if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
-        const refusOrManquanteAt = carcasse.intermediaire_carcasse_signed_at;
-        if (refusOrManquanteAt && intermediaire.created_at > refusOrManquanteAt) {
-          continue;
-        }
-      }
-      const carcasseIntermediaireId = `${fei_numero}__${carcasse.numero_bracelet}__${intermediaire.id}`; // fei_numero__bracelet__intermediaire_id
-      let carcasseIntermediaire = useZustandStore.getState().carcassesIntermediaires[carcasseIntermediaireId];
-
-      if (!carcasseIntermediaire) {
-        const newCarcasseIntermediaire: CarcasseIntermediaire = {
-          fei_numero__bracelet__intermediaire_id: `${fei_numero}__${carcasse.numero_bracelet}__${intermediaire.id}`,
-          fei_numero: fei_numero,
-          numero_bracelet: carcasse.numero_bracelet,
-          zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-          fei_intermediaire_id: intermediaire.id,
-          fei_intermediaire_user_id: intermediaire.fei_intermediaire_user_id,
-          fei_intermediaire_entity_id: intermediaire.fei_intermediaire_entity_id,
-          created_at: dayjs().toDate(),
-          updated_at: dayjs().toDate(),
-          prise_en_charge: !carcasse.intermediaire_carcasse_manquante,
-          manquante: carcasse.intermediaire_carcasse_manquante,
-          refus: null,
-          commentaire: null,
-          carcasse_check_finished_at: null,
-          deleted_at: null,
-          is_synced: false,
-        };
+    const intermediaireCarcasses = intermediaire.CarcasseIntermediaire || []; // it's an array
+    useZustandStore.setState((state) => ({
+      carcassesIntermediairesByIntermediaire: {
+        ...state.carcassesIntermediairesByIntermediaire,
+        [intermediaireId]: intermediaireCarcasses.map((c) => c.fei_numero__bracelet__intermediaire_id),
+      },
+    }));
+    for (const carcasseIntermediaire of intermediaireCarcasses) {
+      const localCarcasseIntermediaire =
+        useZustandStore.getState().carcassesIntermediaires[
+          carcasseIntermediaire.fei_numero__bracelet__intermediaire_id
+        ];
+      if (!localCarcasseIntermediaire) {
         useZustandStore.setState((state) => ({
           carcassesIntermediaires: {
             ...state.carcassesIntermediaires,
-            [newCarcasseIntermediaire.fei_numero__bracelet__intermediaire_id]: newCarcasseIntermediaire,
+            [carcasseIntermediaire.fei_numero__bracelet__intermediaire_id]: carcasseIntermediaire,
           },
         }));
-        carcasseIntermediaire = newCarcasseIntermediaire;
+      } else {
+        const newestCarcasseIntermediaire =
+          dayjs(localCarcasseIntermediaire.updated_at).diff(carcasseIntermediaire.updated_at) > 0
+            ? localCarcasseIntermediaire
+            : carcasseIntermediaire;
+        const oldestCarcasseIntermediaire =
+          dayjs(localCarcasseIntermediaire.updated_at).diff(carcasseIntermediaire.updated_at) > 0
+            ? carcasseIntermediaire
+            : localCarcasseIntermediaire;
+
+        useZustandStore.setState((state) => ({
+          carcassesIntermediaires: {
+            ...state.carcassesIntermediaires,
+            [carcasseIntermediaire.fei_numero__bracelet__intermediaire_id]: {
+              ...oldestCarcasseIntermediaire,
+              ...newestCarcasseIntermediaire,
+            },
+          },
+        }));
       }
-      intermediaireCarcasses[carcasse.zacharie_carcasse_id] = carcasseIntermediaire;
     }
   }
 }

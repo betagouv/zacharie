@@ -17,7 +17,7 @@ import userRouter from './controllers/user.ts';
 import adminRouter from './controllers/admin.ts';
 import entiteRouter from './controllers/entite.ts';
 import feiRouter from './controllers/fei.ts';
-import feiCarcasseRouter from './controllers/carcasse.ts';
+import feiCarcasseRouter from './controllers/fei-carcasse.ts';
 import feiCarcasseIntermediaireRouter from './controllers/fei-carcasse-intermediaire.ts';
 import feiIntermediaireRouter from './controllers/fei-intermediaire.ts';
 import searchRouter from './controllers/search.ts';
@@ -75,9 +75,7 @@ app.get('/healthz', async (req, res) => {
 // hello world
 const now = new Date();
 app.get('/', async (req, res) => {
-  res.send(
-    `Hello World at ${now.toISOString()} version ${packageJson.version}`,
-  );
+  res.send(`Hello World at ${now.toISOString()} version ${packageJson.version}`);
 });
 
 app.get('/config.js', async (req, res) => {

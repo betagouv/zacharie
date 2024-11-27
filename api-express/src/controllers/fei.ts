@@ -28,10 +28,7 @@ router.post(
   '/:fei_numero',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    interface FeiBody extends Prisma.FeiUncheckedCreateInput {
-      _action?: string;
-    }
-    const body: FeiBody = req.body;
+    const body: Prisma.FeiUncheckedCreateInput = req.body;
     const user = req.user;
     const feiNumero = req.params.fei_numero;
     if (!feiNumero) {
@@ -54,7 +51,7 @@ router.post(
       return;
     }
 
-    if (body._action === 'delete') {
+    if (body.deleted_at) {
       if (!existingFei) {
         res.status(404).send({ ok: false, data: null, error: 'Fei not found' });
         return;
@@ -70,11 +67,19 @@ router.post(
       console.log('delete fei', feiNumero);
       await prisma.fei.update({
         where: { numero: feiNumero },
-        data: { deleted_at: new Date() },
+        data: { deleted_at: body.deleted_at },
       });
       await prisma.carcasse.updateMany({
         where: { fei_numero: feiNumero },
-        data: { deleted_at: new Date() },
+        data: { deleted_at: body.deleted_at },
+      });
+      await prisma.feiIntermediaire.updateMany({
+        where: { fei_numero: feiNumero },
+        data: { deleted_at: body.deleted_at },
+      });
+      await prisma.carcasseIntermediaire.updateMany({
+        where: { fei_numero: feiNumero },
+        data: { deleted_at: body.deleted_at },
       });
       res.status(200).send({
         ok: true,
@@ -93,29 +98,27 @@ router.post(
       });
     }
 
-    const nextFei: Prisma.FeiUncheckedUpdateInput = {};
+    const nextFei: Prisma.FeiUncheckedUpdateInput = {
+      is_synced: true,
+    };
 
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
-      if (body.date_mise_a_mort === '') {
-        nextFei.date_mise_a_mort = null;
-      } else {
-        nextFei.date_mise_a_mort = new Date(body.date_mise_a_mort as string);
-      }
+      nextFei.date_mise_a_mort = body.date_mise_a_mort || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
-      nextFei.commune_mise_a_mort = body.commune_mise_a_mort;
+      nextFei.commune_mise_a_mort = body.commune_mise_a_mort || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse)) {
-      nextFei.heure_mise_a_mort_premiere_carcasse = body.heure_mise_a_mort_premiere_carcasse;
+      nextFei.heure_mise_a_mort_premiere_carcasse = body.heure_mise_a_mort_premiere_carcasse || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse)) {
-      nextFei.heure_evisceration_derniere_carcasse = body.heure_evisceration_derniere_carcasse;
+      nextFei.heure_evisceration_derniere_carcasse = body.heure_evisceration_derniere_carcasse || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
-      nextFei.created_by_user_id = body.created_by_user_id;
+      nextFei.created_by_user_id = body.created_by_user_id || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses)) {
-      nextFei.resume_nombre_de_carcasses = body.resume_nombre_de_carcasses;
+      nextFei.resume_nombre_de_carcasses = body.resume_nombre_de_carcasses || null;
     }
 
     /*
@@ -128,26 +131,20 @@ router.post(
       */
 
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
-      nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id;
+      nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
-      nextFei.examinateur_initial_offline = body.examinateur_initial_offline;
+      nextFei.examinateur_initial_offline = body.examinateur_initial_offline || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)) {
-      nextFei.examinateur_initial_approbation_mise_sur_le_marche = true;
-      nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = new Date().toISOString();
-      nextFei.fei_next_owner_role = UserRoles.PREMIER_DETENTEUR;
+      nextFei.examinateur_initial_approbation_mise_sur_le_marche =
+        body.examinateur_initial_approbation_mise_sur_le_marche || null;
     }
     if (
       body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)
     ) {
-      if (body.examinateur_initial_date_approbation_mise_sur_le_marche === '') {
-        nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = null;
-      } else {
-        nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = new Date(
-          body.examinateur_initial_date_approbation_mise_sur_le_marche as string,
-        );
-      }
+      nextFei.examinateur_initial_date_approbation_mise_sur_le_marche =
+        body.examinateur_initial_date_approbation_mise_sur_le_marche || null;
     }
 
     /*
@@ -163,7 +160,7 @@ router.post(
       nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
-      nextFei.premier_detenteur_offline = body.premier_detenteur_offline;
+      nextFei.premier_detenteur_offline = body.premier_detenteur_offline || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
       nextFei.premier_detenteur_entity_id = body.premier_detenteur_entity_id || null;
@@ -172,13 +169,8 @@ router.post(
       nextFei.premier_detenteur_name_cache = body.premier_detenteur_name_cache || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part)) {
-      if (body.premier_detenteur_date_depot_quelque_part === '') {
-        nextFei.premier_detenteur_date_depot_quelque_part = null;
-      } else {
-        nextFei.premier_detenteur_date_depot_quelque_part = new Date(
-          body.premier_detenteur_date_depot_quelque_part as string,
-        );
-      }
+      nextFei.premier_detenteur_date_depot_quelque_part =
+        body.premier_detenteur_date_depot_quelque_part || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id)) {
       nextFei.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id || null;
@@ -199,23 +191,15 @@ router.post(
 
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id)) {
       nextFei.fei_current_owner_user_id = body.fei_current_owner_user_id || null;
-      if (body.fei_current_owner_role === UserRoles.SVI) {
-        nextFei.fei_current_owner_user_id = body.fei_current_owner_user_id || null;
-        nextFei.fei_current_owner_entity_id = body.fei_current_owner_entity_id || null;
-      }
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache)) {
       nextFei.fei_current_owner_user_name_cache = body.fei_current_owner_user_name_cache || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer)) {
-      nextFei.fei_current_owner_wants_to_transfer = body.fei_current_owner_wants_to_transfer;
+      nextFei.fei_current_owner_wants_to_transfer = body.fei_current_owner_wants_to_transfer || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
-      if (!body.fei_current_owner_entity_id) {
-        nextFei.fei_current_owner_entity_id = null;
-      } else {
-        nextFei.fei_current_owner_entity_id = body.fei_current_owner_entity_id;
-      }
+      nextFei.fei_current_owner_entity_id = body.fei_current_owner_entity_id || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_name_cache)) {
       nextFei.fei_current_owner_entity_name_cache = body.fei_current_owner_entity_name_cache || null;
@@ -231,10 +215,8 @@ router.post(
       nextFei.fei_next_owner_user_name_cache = body.fei_next_owner_user_name_cache || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
-      if (!body.fei_next_owner_entity_id) {
-        nextFei.fei_next_owner_entity_id = null;
-      } else {
-        nextFei.fei_next_owner_entity_id = body.fei_next_owner_entity_id as string;
+      nextFei.fei_next_owner_entity_id = body.fei_next_owner_entity_id || null;
+      if (body.fei_next_owner_entity_id) {
         const nextRelation = {
           entity_id: body.fei_next_owner_entity_id,
           owner_id: user.id,
@@ -274,19 +256,11 @@ router.post(
 
   */
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_signed_at)) {
-      if (body.svi_signed_at === '') {
-        nextFei.svi_signed_at = null;
-      } else {
-        nextFei.svi_signed_at = new Date(body.svi_signed_at as string);
-        nextFei.svi_signed_by = user.id;
-      }
+      nextFei.svi_signed_at = body.svi_signed_at || null;
+      if (body.svi_signed_at) nextFei.svi_signed_by = user.id;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_assigned_at)) {
-      if (body.svi_assigned_at === '') {
-        nextFei.svi_assigned_at = null;
-      } else {
-        nextFei.svi_assigned_at = new Date(body.svi_assigned_at as string);
-      }
+      nextFei.svi_assigned_at = body.svi_assigned_at || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_entity_id)) {
       nextFei.svi_entity_id = body.svi_entity_id || null;
@@ -295,10 +269,10 @@ router.post(
       nextFei.svi_user_id = body.svi_user_id || null;
     }
     if (body.svi_carcasses_saisies) {
-      nextFei.svi_carcasses_saisies = body.svi_carcasses_saisies;
+      nextFei.svi_carcasses_saisies = body.svi_carcasses_saisies || null;
     }
     if (body.svi_aucune_carcasse_saisie) {
-      nextFei.svi_aucune_carcasse_saisie = body.svi_aucune_carcasse_saisie;
+      nextFei.svi_aucune_carcasse_saisie = body.svi_aucune_carcasse_saisie || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_commentaire)) {
       nextFei.svi_commentaire = body.svi_commentaire || null;
@@ -312,32 +286,25 @@ router.post(
     if (existingFei.fei_next_owner_role !== UserRoles.SVI && savedFei.fei_next_owner_role === UserRoles.SVI) {
       // this is the end of the fiche
       // send notification to examinateur initial
-      const feiWithSvi = await prisma.fei.update({
-        where: { numero: feiNumero },
-        data: {
-          svi_entity_id: savedFei.fei_next_owner_entity_id,
-          svi_assigned_at: new Date(),
-        },
-      });
       const examinateurInitial = await prisma.user.findUnique({
-        where: { id: feiWithSvi.examinateur_initial_user_id! },
+        where: { id: savedFei.examinateur_initial_user_id! },
       });
       sendNotificationToUser({
         user: examinateurInitial!,
-        title: `La fiche du ${dayjs(feiWithSvi.date_mise_a_mort).format(
+        title: `La fiche du ${dayjs(savedFei.date_mise_a_mort).format(
           'DD/MM/YYYY',
         )} est prise en charge par l'ETG`,
         body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
         email: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
-        notificationLogAction: `FEI_ASSIGNED_TO_${feiWithSvi.fei_next_owner_role}_${feiWithSvi.numero}`,
+        notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
       });
-      if (feiWithSvi.examinateur_initial_user_id !== feiWithSvi.premier_detenteur_user_id) {
+      if (savedFei.examinateur_initial_user_id !== savedFei.premier_detenteur_user_id) {
         const premierDetenteur = await prisma.user.findUnique({
-          where: { id: feiWithSvi.premier_detenteur_user_id! },
+          where: { id: savedFei.premier_detenteur_user_id! },
         });
         sendNotificationToUser({
           user: premierDetenteur!,
-          title: `La fiche du ${dayjs(feiWithSvi.date_mise_a_mort).format(
+          title: `La fiche du ${dayjs(savedFei.date_mise_a_mort).format(
             'DD/MM/YYYY',
           )} est prise en charge par l'ETG`,
           body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
@@ -348,7 +315,7 @@ router.post(
       res.status(200).send({
         ok: true,
         data: {
-          fei: feiWithSvi,
+          fei: savedFei,
         },
         error: '',
       });
@@ -526,6 +493,7 @@ router.get(
         examinateur_initial_date_approbation_mise_sur_le_marche: true,
         premier_detenteur_name_cache: true,
         resume_nombre_de_carcasses: true,
+        is_synced: true,
       },
       orderBy: {
         svi_assigned_at: 'desc',
@@ -552,7 +520,34 @@ router.get(
       where: {
         numero: req.params.fei_numero,
       },
-      include: feiPopulatedInclude,
+      include: {
+        Carcasses: {
+          include: {
+            CarcasseIntermediaire: true,
+          },
+        },
+        FeiExaminateurInitialUser: true,
+        FeiPremierDetenteurUser: true,
+        FeiPremierDetenteurEntity: true,
+        FeiDepotEntity: true,
+        FeiCurrentUser: true,
+        FeiCurrentEntity: true,
+        FeiNextUser: true,
+        FeiNextEntity: true,
+        FeiSviUser: true,
+        FeiSviEntity: true,
+        FeiIntermediaires: {
+          include: {
+            FeiIntermediaireUser: true,
+            FeiIntermediaireEntity: true,
+            FeiIntermediairesCarcasses: true,
+            CarcasseIntermediaire: true,
+          },
+          orderBy: {
+            created_at: 'desc',
+          },
+        },
+      },
     });
     if (!fei) {
       res.status(404).send({ ok: false, data: null, error: 'Unauthorized' });

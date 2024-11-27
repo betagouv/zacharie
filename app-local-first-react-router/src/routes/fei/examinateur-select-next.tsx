@@ -9,7 +9,7 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useParams } from 'react-router';
-import { useIsOnline } from '@app/components/OfflineMode';
+import { useIsOnline } from '@app/utils-offline/use-is-offline';
 
 export default function SelectNextForExaminateur() {
   const params = useParams();
@@ -19,13 +19,14 @@ export default function SelectNextForExaminateur() {
   const detenteursInitiaux = state.detenteursInitiaux;
   const associationsDeChasse = useMemo(() => {
     const associationsDeChasse: typeof state.entities = {};
-    for (const entity of Object.values(state.entities)) {
+    for (const entityId of Object.values(state.entitiesIdsWorkingDirectlyFor)) {
+      const entity = state.entities[entityId];
       if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
-        associationsDeChasse[entity.id] = entity;
+        associationsDeChasse[entityId] = entity;
       }
     }
     return associationsDeChasse;
-  }, [state.entities]);
+  }, [state.entities, state.entitiesIdsWorkingDirectlyFor]);
 
   const updateFei = state.updateFei;
   const isOnline = useIsOnline();
@@ -76,11 +77,11 @@ export default function SelectNextForExaminateur() {
           if (nextIsMe) {
             console.log('nextIsMe');
             updateFei(fei.numero, {
-              fei_next_owner_user_id: '',
-              fei_next_owner_user_name_cache: '',
+              fei_next_owner_user_id: null,
+              fei_next_owner_user_name_cache: null,
               fei_next_owner_role: null,
-              fei_next_owner_entity_id: '',
-              fei_next_owner_entity_name_cache: '',
+              fei_next_owner_entity_id: null,
+              fei_next_owner_entity_name_cache: null,
               fei_current_owner_role: UserRoles.PREMIER_DETENTEUR,
               fei_current_owner_user_id: user.id,
               fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
@@ -90,18 +91,18 @@ export default function SelectNextForExaminateur() {
             });
           } else if (nextIsMyAssociation) {
             updateFei(fei.numero, {
-              fei_next_owner_user_id: '',
+              fei_next_owner_user_id: null,
               fei_next_owner_role: null,
-              fei_next_owner_entity_id: '',
+              fei_next_owner_entity_id: null,
               fei_current_owner_role: UserRoles.PREMIER_DETENTEUR,
               fei_current_owner_entity_id: nextOwnerEntity.id,
-              fei_current_owner_entity_name_cache: nextOwnerEntity.nom_d_usage ?? '',
+              fei_current_owner_entity_name_cache: nextOwnerEntity.nom_d_usage ?? null,
               fei_current_owner_user_id: user.id,
               fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
               premier_detenteur_user_id: user.id,
               premier_detenteur_offline: navigator.onLine ? false : true,
               premier_detenteur_entity_id: nextOwnerEntity.id,
-              premier_detenteur_name_cache: nextOwnerEntity?.nom_d_usage ?? '',
+              premier_detenteur_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
             });
           } else {
             console.log('nextIsSomeoneElse');

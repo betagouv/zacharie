@@ -2,7 +2,7 @@ import { UserRoles } from '@prisma/client';
 import { useLocation, useNavigate } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import { clearCache } from '@app/services/indexed-db';
-import { useIsOnline } from '@app/components/OfflineMode';
+import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { getMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { createNewFei } from './create-new-fei';
 
@@ -30,7 +30,7 @@ export default function useNavigationMenu() {
   const isOnlyExaminateurInitial = isExaminateurInitial && user?.roles.length === 1;
   const isAdmin = user?.roles.includes(UserRoles.ADMIN);
 
-  const profileMenu: Item[] = [
+  const profileMenu: MainNavigationProps.Item[] = [
     {
       text: 'Mes roles',
       isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-roles',
@@ -97,12 +97,15 @@ export default function useNavigationMenu() {
   }
 
   const navigationBase: MainNavigationProps.Item[] = [
+    // @ts-expect-error problem with MainNavigationProps.Item[]
     ...feiMenu,
     {
       text: 'Mon profil',
       isActive: location.pathname.startsWith('/app/tableau-de-bord/mon-profil'),
+      // @ts-expect-error problem with MainNavigationProps.Item[]
       menuLinks: profileMenu,
     },
+    // @ts-expect-error problem with MainNavigationProps.Item[]
     {
       text: "Obtenir la dernière version de l'app",
       linkProps: {
@@ -116,6 +119,7 @@ export default function useNavigationMenu() {
         },
       },
     },
+    // @ts-expect-error problem with MainNavigationProps.Item[]
     {
       text: 'Contactez-nous',
       linkProps: {

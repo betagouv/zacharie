@@ -1,124 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { UserRoles } from '@prisma/client';
-import type { UserMyRelationsResponse, FeisResponse, FeisDoneResponse } from '@api/src/types/responses';
-import type { UserForFei } from '@api/src/types/user';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import type { EntityWithUserRelation } from '@api/src/types/entity';
 import dayjs from 'dayjs';
-import { useIsOnline } from '@app/components/OfflineMode';
+import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import ResponsiveTable from '@app/components/TableResponsive';
-// import { loadFei } from "@app/db/fei.client";
 import { getOngoingCellFeiUnderMyResponsability } from '@app/utils/get-ongoing-cell';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import { getMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate } from 'react-router';
-import { loadFei } from '@app/utils/load-fei';
+import { loadFeis } from '@app/utils/load-feis';
+import { loadMyRelations } from '@app/utils/load-my-relations';
 
 async function loadData() {
-  console.log('chargement');
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/fei`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
-    })
-      .then((res) => res.json())
-      .then((res) => res as FeisResponse);
-
-    if (!response.ok) {
-      return;
-    }
-
-    const allFeis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires> =
-      useZustandStore.getState().feis;
-    for (const fei of [
-      ...response.data.feisOngoing,
-      ...response.data.feisToTake,
-      ...response.data.feisUnderMyResponsability,
-    ]) {
-      allFeis[fei.numero] = fei;
-    }
-
-    useZustandStore.setState({ feis: allFeis });
-
-    for (const fei of Object.values(allFeis)) {
-      loadFei(fei.numero);
-    }
-
-    const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/fei/done`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
-    })
-      .then((res) => res.json())
-      .then((res) => res as FeisDoneResponse);
-
-    if (!response.ok) {
-      return;
-    }
-
-    useZustandStore.setState({
-      feisDone: responseDone.data.feisDone,
-    });
-
-    // we call myRelations here because
-    // even if the data is not used here (it's used within a FEI, so in /api/fei/$fei_numero)
-    // we want to cache the data before the user goes to the FEI page
-    // for the offline mode to work properly
-    const myRelationsData = await fetch(`${import.meta.env.VITE_API_URL}/user/my-relations`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
-    })
-      .then((res) => res.json())
-      .then((res) => res as UserMyRelationsResponse);
-
-    const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};
-    const entitiesIdsWorkingDirectlyFor: Array<EntityWithUserRelation['id']> = [];
-
-    for (const entity of [
-      ...(myRelationsData.data?.associationsDeChasse || []),
-      ...(myRelationsData.data?.ccgs || []),
-      ...(myRelationsData.data?.collecteursPro || []),
-      ...(myRelationsData.data?.etgs || []),
-      ...(myRelationsData.data?.svis || []),
-      ...(myRelationsData.data?.entitiesWorkingFor || []),
-    ]) {
-      entities[entity.id] = entity;
-      if (entity.relation === 'WORKING_FOR') {
-        entitiesIdsWorkingDirectlyFor.push(entity.id);
-      }
-    }
-
-    useZustandStore.setState({ entities, entitiesIdsWorkingDirectlyFor });
-
-    const detenteursInitiaux: Record<UserForFei['id'], UserForFei> = {};
-
-    for (const detenteurInitial of [...(myRelationsData.data?.detenteursInitiaux || [])]) {
-      detenteursInitiaux[detenteurInitial.id] = detenteurInitial;
-    }
-
-    useZustandStore.setState({ detenteursInitiaux });
-
-    console.log('chargement fini');
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    // If fetch fails (e.g., offline), the service worker will handle serving cached data
-    return null;
-  }
+  await syncData();
+  await loadMyRelations();
+  await loadFeis();
 }
 
 export default function TableauDeBordIndex() {
@@ -151,7 +50,12 @@ export default function TableauDeBordIndex() {
     (fei) => fei!.svi_signed_at || dayjs(fei!.svi_assigned_at).isBefore(dayjs().subtract(10, 'days')),
   );
 
+  const hackForCounterDoubleEffectInDevMode = useRef(false);
   useEffect(() => {
+    if (hackForCounterDoubleEffectInDevMode.current) {
+      return;
+    }
+    hackForCounterDoubleEffectInDevMode.current = true;
     refreshUser('tableau-de-bord').then(loadData);
   }, []);
 
@@ -189,6 +93,7 @@ export default function TableauDeBordIndex() {
                       .map((fei) => ({
                         link: `/app/tableau-de-bord/fei/${fei.numero}`,
                         id: fei.numero,
+                        isSynced: fei.is_synced,
                         rows: [
                           fei.numero!,
                           <>
@@ -246,6 +151,7 @@ export default function TableauDeBordIndex() {
                       .map((fei) => ({
                         link: `/app/tableau-de-bord/fei/${fei.numero}`,
                         id: fei.numero,
+                        isSynced: fei.is_synced,
                         rows: [
                           fei.numero!,
                           <>
@@ -291,7 +197,19 @@ export default function TableauDeBordIndex() {
             </>
           )}
           {!isOnlySvi && (
-            <details className="mb-6 bg-white md:shadow open:[&_summary]:md:pb-0" open={false}>
+            <details
+              className="mb-6 bg-white md:shadow open:[&_summary]:md:pb-0"
+              open
+              // open={window.sessionStorage.getItem('fiches-cloturees-opened') ? true : false}
+              // onToggle={() => {
+              //   console.log('tottle');
+              //   if (window.sessionStorage.getItem('fiches-cloturees-opened')) {
+              //     window.sessionStorage.removeItem('fiches-cloturees-opened');
+              //   } else {
+              //     window.sessionStorage.setItem('fiches-cloturees-opened', 'true');
+              //   }
+              // }}
+            >
               {!isOnline && (
                 <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
                   Vous ne pouvez pas accéder au détail de vos fiches archivées sans connexion internet.
@@ -302,7 +220,7 @@ export default function TableauDeBordIndex() {
                   Fiches clôturées {feisDone.length > 0 ? ` (${feisDone.length})` : null}
                 </h2>
               </summary>
-              <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+              <div className="py-2 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
                 {feisDone.length ? (
                   <ResponsiveTable
                     headers={['Numéro', 'Chasse', 'Carcasses', "Transmission au service d'inspection"]}
@@ -311,6 +229,7 @@ export default function TableauDeBordIndex() {
                       .map((fei) => ({
                         link: `/app/tableau-de-bord/fei/${fei.numero}`,
                         id: fei.numero,
+                        isSynced: fei.is_synced,
                         rows: [
                           fei.numero!,
                           <>
@@ -375,6 +294,7 @@ export default function TableauDeBordIndex() {
                         .map((fei) => ({
                           link: `/app/tableau-de-bord/fei/${fei.numero}`,
                           id: fei.numero,
+                          isSynced: fei.is_synced,
                           rows: [
                             fei.numero!,
                             <>
@@ -440,6 +360,7 @@ export default function TableauDeBordIndex() {
                         .map((fei) => ({
                           link: `/app/tableau-de-bord/fei/${fei.numero}`,
                           id: fei.numero,
+                          isSynced: fei.is_synced,
                           rows: [
                             fei.numero!,
                             <>

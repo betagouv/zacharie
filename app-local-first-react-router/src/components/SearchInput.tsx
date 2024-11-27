@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
-import type { SearchResponse } from "@api/src/types/responses";
-import { Alert } from "@codegouvfr/react-dsfr/Alert";
+import { useState, useEffect, useRef } from 'react';
+import type { SearchResponse } from '@api/src/types/responses';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
 
 interface SearchInputProps {
   className?: string;
@@ -10,10 +10,10 @@ interface SearchInputProps {
 
 // Debounce function will be created inside the component
 export default function SearchInput({ className, id, type }: SearchInputProps) {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
   const [cachedValue, setCachedValue] = useState(value);
-  const [error, setError] = useState("");
-  const [successData, setSuccessData] = useState<SearchResponse["data"] | null>(null);
+  const [error, setError] = useState('');
+  const [successData, setSuccessData] = useState<SearchResponse['data']>([]);
 
   const searchDebounce = useRef<ReturnType<typeof setTimeout>>();
   const errorDebounce = useRef<ReturnType<typeof setTimeout>>();
@@ -24,25 +24,25 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
     clearTimeout(errorDebounce.current);
     searchDebounce.current = setTimeout(() => {
       if (value !== cachedValue) {
-        setError("");
-        setSuccessData(null);
+        setError('');
+        setSuccessData([]);
         setValue(cachedValue);
         fetch(`${import.meta.env.VITE_API_URL}/search?q=${cachedValue}`, {
-          method: "GET",
-          credentials: "include",
+          method: 'GET',
+          credentials: 'include',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         })
           .then((response) => response.json())
-          .then((data: FeiSearchData) => {
-            if (data.data?.redirectUrl) {
+          .then((data: SearchResponse) => {
+            if (data.data?.length) {
               setSuccessData(data.data);
             }
             if (data.error) {
               errorDebounce.current = setTimeout(() => {
                 setError(data.error);
-                setSuccessData(null);
+                setSuccessData([]);
               }, 3000);
             }
           });
@@ -58,14 +58,14 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
         className={className}
         id={id}
         placeholder="Rechercher (carcasse ou fiche)"
-        type={type || "search"}
+        type={type || 'search'}
         value={cachedValue}
         onChange={(event) => setCachedValue(event.target.value)}
       />
       {!!error && (
         <div className="flex w-full flex-row justify-start">
           <Alert
-            onClose={() => setError("")}
+            onClose={() => setError('')}
             description={error}
             closable
             id="search-error"
@@ -75,28 +75,30 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
           />
         </div>
       )}
-      {!!successData && (
-        <div className="flex w-full flex-row justify-start">
-          <Alert
-            onClose={() => setError("")}
-            description={error}
-            closable
-            id="search-success"
-            severity="success"
-            title={
-              <a href={successData.redirectUrl}>
-                {[
-                  successData.carcasse_numero_bracelet && `Carcasse/Lot ${successData.carcasse_numero_bracelet}`,
-                  successData.fei_numero && `Fiche trouvée ${successData.fei_numero}`,
-                ]
-                  .filter(Boolean)
-                  .join("\n")}
-              </a>
-            }
-            className="w-full text-left"
-          />
-        </div>
-      )}
+      {successData.map((data) => {
+        return (
+          <div className="flex w-full flex-row justify-start">
+            <Alert
+              onClose={() => setError('')}
+              description={error}
+              closable
+              id="search-success"
+              severity="success"
+              title={
+                <a href={data.redirectUrl}>
+                  {[
+                    data.carcasse_numero_bracelet && `Carcasse/Lot ${data.carcasse_numero_bracelet}`,
+                    data.fei_numero && `Fiche trouvée ${data.fei_numero}`,
+                  ]
+                    .filter(Boolean)
+                    .join('\n')}
+                </a>
+              }
+              className="w-full text-left"
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

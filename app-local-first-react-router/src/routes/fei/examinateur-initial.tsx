@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 import InputVille from '@app/components/InputVille';
 import CarcassesExaminateur from './examinateur-carcasses';
 import SelectNextForExaminateur from './examinateur-select-next';
-// import FeiPremierDetenteur from './premier-detenteur';
+import FeiPremierDetenteur from './premier-detenteur';
 import EntityNotEditable from '@app/components/EntityNotEditable';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
 import useZustandStore from '@app/zustand/store';
@@ -23,7 +23,7 @@ export default function FEIExaminateurInitial() {
   const state = useZustandStore((state) => state);
   const fei = state.feis[params.fei_numero!];
   // console.log('fei', fei);
-  const carcasses = (state.carcassesByFei[params.fei_numero!] || []).map((cId) => state.carcasses[cId]);
+  const carcasses = (state.carcassesIdsByFei[params.fei_numero!] || []).map((cId) => state.carcasses[cId]);
   const examinateurInitialUser = fei.examinateur_initial_user_id
     ? state.users[fei.examinateur_initial_user_id!]
     : null;
@@ -34,7 +34,9 @@ export default function FEIExaminateurInitial() {
     ? state.entities[fei.premier_detenteur_entity_id!]
     : null;
   const updateFei = state.updateFei;
-  const [approbation, setApprobation] = useState(fei.examinateur_initial_approbation_mise_sur_le_marche);
+  const [approbation, setApprobation] = useState(
+    fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false,
+  );
   // const entities = useZustandStore((state) => state.entities);
   // const nextOwnerEntity = fei.fei_next_owner_entity_id ? entities[fei.fei_next_owner_entity_id] : null;
 
@@ -106,31 +108,31 @@ export default function FEIExaminateurInitial() {
       // seul l'examinateur initial peut modifier
       return false;
     }
-    if (!carcasses.length) {
-      // il faut au moins une carcasse
-      return true;
-    }
-    if (!onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse) {
-      // il faut l'heure d'éviscération de la dernière carcasse le cas échéant
-      return true;
-    }
-    if (!fei.commune_mise_a_mort) {
-      return true;
-    }
-    if (!fei.date_mise_a_mort) {
-      return true;
-    }
-    if (!fei.heure_mise_a_mort_premiere_carcasse) {
-      return true;
-    }
-    if (needSelectNextUser) {
-      // on garde la possibilité de modifier tout jusqu'à ce que le prochain utilisateur de la fiche soit en sa possession
-      // pour palier à un oubli potentiel de l'examinatuer initial mêms après avoir validé la mise sur le marché
-      return true;
-    }
-    if (fei.examinateur_initial_approbation_mise_sur_le_marche) {
-      return false;
-    }
+    // if (!carcasses.length) {
+    // il faut au moins une carcasse
+    // return true;
+    // }
+    // if (!onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse) {
+    // il faut l'heure d'éviscération de la dernière carcasse le cas échéant
+    // return true;
+    // }
+    // if (!fei.commune_mise_a_mort) {
+    //   return true;
+    // }
+    // if (!fei.date_mise_a_mort) {
+    //   return true;
+    // }
+    // if (!fei.heure_mise_a_mort_premiere_carcasse) {
+    //   return true;
+    // }
+    // if (needSelectNextUser) {
+    // on garde la possibilité de modifier tout jusqu'à ce que le prochain utilisateur de la fiche soit en sa possession
+    // pour palier à un oubli potentiel de l'examinatuer initial mêms après avoir validé la mise sur le marché
+    // return true;
+    // }
+    // if (fei.examinateur_initial_approbation_mise_sur_le_marche) {
+    //   return false;
+    // }
     return true;
   }, [fei, user, carcasses, onlyPetitGibier, needSelectNextUser]);
 
@@ -275,7 +277,7 @@ export default function FEIExaminateurInitial() {
                       // disabled: !jobIsDone,
                       onChange: () => setApprobation(!approbation),
                       readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
-                      defaultChecked: fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false,
+                      checked: approbation,
                     },
                   },
                 ]}
@@ -343,9 +345,9 @@ export default function FEIExaminateurInitial() {
               <UserNotEditable user={premierDetenteurUser!} />
             )}
           </Accordion>
-          {/* <Accordion titleAs="h3" label="Action du Premier détenteur" defaultExpanded>
+          <Accordion titleAs="h3" label="Action du Premier détenteur" defaultExpanded>
             <FeiPremierDetenteur showIdentity={false} />
-          </Accordion> */}
+          </Accordion>
         </>
       )}
     </>

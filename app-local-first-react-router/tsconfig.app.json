@@ -9,6 +9,7 @@
 
     /* Bundler mode */
     "moduleResolution": "Bundler",
+    "allowArbitraryExtensions": true,
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "esModuleInterop": true,
@@ -16,8 +17,15 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-
     /* Linting */
+    "types": [
+        "@prisma/client",
+        "vite-plugin-pwa/info",
+        "vite-plugin-pwa/pwa-assets",
+        "vite-plugin-pwa/react",
+        "vite-plugin-pwa/client",
+        "workbox-precaching"
+      ],
     "strict": true,
     "allowJs": true,
     "noUnusedLocals": true,
@@ -30,5 +38,9 @@
       "~/*": ["../api-express/*"],
     },
   },
-  "include": ["src"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "src"
+  ],
 }

@@ -12,7 +12,14 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
-
+    "types": [
+        "@prisma/client",
+        "vite-plugin-pwa/info",
+        "vite-plugin-pwa/pwa-assets",
+        "vite-plugin-pwa/react",
+        "vite-plugin-pwa/client",
+        "workbox-precaching"
+      ],
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,

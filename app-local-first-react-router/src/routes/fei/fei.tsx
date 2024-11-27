@@ -7,13 +7,51 @@ import useUser from '@app/zustand/user';
 import { loadFei } from '@app/utils/load-fei';
 import FEIExaminateurInitial from './examinateur-initial';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { loadMyRelations } from '@app/utils/load-my-relations';
+import FeiTransfer from './current-owner-transfer';
+import CurrentOwnerConfirm from './current-owner-confirm';
+import CurrentOwner from './current-owner';
+import FeiPremierDetenteur from './premier-detenteur';
+import FEICurrentIntermediaire from './intermediaire';
+import Chargement from '@app/components/Chargement';
+import NotFound from '@app/components/NotFound';
+import FEI_SVI from './svi';
 
-export default function Fei() {
+export default function FeiLoader() {
   const params = useParams();
-  const user = useUser((state) => state.user);
-  const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
+  const state = useZustandStore((state) => state);
+  const fei = state.feis[params.fei_numero!];
+  const [hasTriedLoading, setHasTriedLoading] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    refreshUser('connexion')
+      .then(loadMyRelations)
+      .then(() => loadFei(params.fei_numero!))
+      .then(() => {
+        setHasTriedLoading(true);
+      })
+      .catch((error) => {
+        setHasTriedLoading(true);
+        console.error(error);
+      });
+  }, []);
+
+  if (!fei) {
+    return hasTriedLoading ? <NotFound /> : <Chargement />;
+  }
+  return <Fei />;
+}
+
+function Fei() {
+  const params = useParams();
+  const user = useUser((state) => state.user)!;
+  const state = useZustandStore((state) => state);
+  const fei = state.feis[params.fei_numero!];
+  const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
+
   // const entities = useZustandStore((state) => state.entities);
-  // const nextOwnerEntity = fei.fei_next_owner_entity_id ? entities[fei.fei_next_owner_entity_id] : null;
+  const nextOwnerEntity = fei.fei_next_owner_entity_id ? state.entities[fei.fei_next_owner_entity_id] : null;
 
   const doneEmoji = '✅ ';
 
@@ -93,65 +131,77 @@ export default function Fei() {
     refCurrentUserId.current = fei.fei_current_owner_user_id;
   }, [fei.fei_current_owner_role, fei.fei_current_owner_user_id, user.id]);
 
-  // const intermediaireTabDisabledText = useMemo(() => {
-  //   const intermediaire = fei?.FeiIntermediaires?.[0];
-  //   if (intermediaire) {
-  //     return '';
-  //   }
-  //   const nextIntermediaireId = fei.fei_next_owner_entity_id;
-  //   if (!nextIntermediaireId) {
-  //     return "Il n'y a pas encore de premier destinataire sélectionné";
-  //   }
-  //   let base = `Le prochain destinataire est&nbsp;: ${nextOwnerEntity?.nom_d_usage}.`;
-  //   if (fei.fei_current_owner_user_id === user.id) {
-  //     base += `<br />La fiche n'a pas encore été prise en charge par ce destinataire.`;
-  //   }
-  //   return base;
-  // }, [
-  //   inetermediairesPopulated,
-  //   fei.fei_next_owner_entity_id,
-  //   nextOwnerEntity,
-  //   user.id,
-  //   fei.fei_current_owner_user_id,
-  // ]);
+  const intermediaireTabDisabledText = useMemo(() => {
+    const intermediaire = intermediaires[0];
+    if (intermediaire) {
+      return '';
+    }
+    const nextIntermediaireId = fei.fei_next_owner_entity_id;
+    if (!nextIntermediaireId) {
+      return "Il n'y a pas encore de premier destinataire sélectionné";
+    }
+    let base = `Le prochain destinataire est&nbsp;: ${nextOwnerEntity?.nom_d_usage}.`;
+    if (fei.fei_current_owner_user_id === user.id) {
+      base += `<br />La fiche n'a pas encore été prise en charge par ce destinataire.`;
+    }
+    return base;
+  }, [
+    fei.fei_next_owner_entity_id,
+    intermediaires,
+    nextOwnerEntity,
+    user?.id,
+    fei.fei_current_owner_user_id,
+  ]);
 
-  // const sviTabDisabled = useMemo(() => {
-  //   if (fei.svi_signed_at) {
-  //     return false;
-  //   }
-  //   return !user.roles.includes(UserRoles.SVI);
-  // }, [fei.svi_signed_at, user.roles]);
-
-  useEffect(() => {
-    refreshUser('connexion').then(() => loadFei(fei.numero));
-  }, []);
+  const sviTabDisabledText = useMemo(() => {
+    if (!fei.svi_assigned_at) {
+      return "Le service vétérinaire n'a pas encore été assigné";
+    }
+    if (user.roles.includes(UserRoles.SVI)) {
+      return '';
+    }
+    if (!fei.svi_signed_at) {
+      return "Le service vétérinaire n'a pas encore terminé son inspection";
+    }
+    // if (!user.roles.includes(UserRoles.SVI)) {
+    //   return "Vous n'êtes pas le service vétérinaire";
+    // }
+    return '';
+  }, [fei.svi_assigned_at, fei.svi_signed_at, user]);
 
   return (
-    <div className="fr-container fr-container--fluid fr-my-md-14v">
-      <title>{params.fei_numero} | Zacharie | Ministère de l'Agriculture</title>
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 fr-col-md-10 m-4 bg-white md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
-          {/* <FeiTransfer /> */}
-          {/* <ConfirmCurrentOwner /> */}
-          {/* <CurrentOwner /> */}
-          <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
-            {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
-            {/* {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FEIPremierDetenteur showIdentity />} */}
-            {/* {selectedTabId === 'Destinataires' &&
-              (intermediaireTabDisabledText ? (
-                <p dangerouslySetInnerHTML={{ __html: intermediaireTabDisabledText }} />
-              ) : (
-                <FEICurrentIntermediaire />
-              ))}
-            {selectedTabId === UserRoles.SVI &&
-              (sviTabDisabled ? (
-                <p>Le service vétérinaire n'a pas encore terminé son inspection</p>
-              ) : (
-                <FEI_SVI />
-              ))} */}
-          </Tabs>
+    <>
+      {fei.deleted_at && (
+        <div className="bg-red-500 text-white py-2 text-center mb-2">
+          <p>Fiche supprimée</p>
+        </div>
+      )}
+      <div className="fr-container fr-container--fluid fr-my-md-14v">
+        <title>{params.fei_numero} | Zacharie | Ministère de l'Agriculture</title>
+        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+          <div className="fr-col-12 fr-col-md-10 m-4 bg-white md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
+            <FeiTransfer />
+            <CurrentOwnerConfirm setSelectedTabId={setSelectedTabId} />
+            <CurrentOwner />
+            <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
+              {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
+              {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FeiPremierDetenteur showIdentity />}
+              {selectedTabId === 'Destinataires' &&
+                (intermediaireTabDisabledText ? (
+                  <p dangerouslySetInnerHTML={{ __html: intermediaireTabDisabledText }} />
+                ) : (
+                  <FEICurrentIntermediaire />
+                ))}
+              {selectedTabId === UserRoles.SVI &&
+                (sviTabDisabledText ? (
+                  <p dangerouslySetInnerHTML={{ __html: sviTabDisabledText }} />
+                ) : (
+                  <FEI_SVI />
+                ))}
+            </Tabs>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

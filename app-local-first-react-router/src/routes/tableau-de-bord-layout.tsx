@@ -2,21 +2,15 @@ import { Outlet, useLocation } from 'react-router';
 import RootDisplay from '@app/components/RootDisplay';
 import useNavigationMenu from '@app/utils/get-navigation-menu';
 import { getMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
-import useZustandStore from '@app/zustand/store';
 import Chargement from '@app/components/Chargement';
 
 export default function TableauDeBordLayout() {
   const location = useLocation();
   const user = getMostFreshUser('TableauDeBordLayout');
-  const hasHydrated = useZustandStore((state) => state._hasHydrated);
   const navigation = useNavigationMenu();
 
-  if (!hasHydrated) {
-    return (
-      <RootDisplay id="tableau-de-bord-layout-loading">
-        <Chargement />
-      </RootDisplay>
-    );
+  if (!user) {
+    return <Chargement />;
   }
   if (!user?.activated && !location.pathname.includes('mon-profil')) {
     return (

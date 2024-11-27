@@ -1,4 +1,4 @@
-import { type Entity } from '@prisma/client';
+import type { Entity, EntityTypes } from '@prisma/client';
 
 export type EntityWithUserRelationType =
   | 'WORKING_FOR_ENTITY_RELATED_WITH'
@@ -16,3 +16,6 @@ export interface ETGWithEntityIdsRelated extends Entity {
     entity_type: Entity['type'];
   }>;
 }
+
+export type EntitiesById = Record<Entity['id'], Entity>;
+export type EntitiesByTypeAndId = Record<EntityTypes, EntitiesById>;

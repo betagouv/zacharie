@@ -1,9 +1,9 @@
-import { Link } from "react-router";
+import { Link } from 'react-router';
 
 type TableProps = {
   caption?: string;
   headers: string[];
-  data: Array<{ link: string; id: string; rows: Array<string | JSX.Element> }>;
+  data: Array<{ link: string; id: string; rows: Array<string | JSX.Element>; isSynced: boolean }>;
   bordered?: boolean;
   className?: string;
 };
@@ -15,7 +15,10 @@ export default function TableResponsive({ headers, data }: TableProps) {
         <table className="min-w-full divide-y divide-gray-300">
           <thead>
             <tr>
-              <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
+              <th
+                scope="col"
+                className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0"
+              >
                 {headers[0]}
               </th>
               <th
@@ -44,10 +47,14 @@ export default function TableResponsive({ headers, data }: TableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {data.map(({ link, id, rows }) => {
+            {data.map(({ link, id, rows, isSynced }) => {
+              // link = '/app/tableau-de-bord/caca';
               return (
-                <tr key={id}>
+                <tr key={id} id={id} className="relative">
                   <td className="w-full max-w-0 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-0">
+                    {!isSynced && (
+                      <div className="absolute top-0 left-0 border-l-8 border-action-high-blue-france w-8 h-full"></div>
+                    )}
                     <Link to={link} className="block bg-none py-4 pl-4 pr-3 !no-underline">
                       <span className="block max-w-24 text-xs">{rows[0]}</span>
                       <dl className="font-normal lg:hidden">
@@ -60,7 +67,7 @@ export default function TableResponsive({ headers, data }: TableProps) {
                       </dl>
                     </Link>
                   </td>
-                  <td className="hidden text-sm text-gray-500 lg:table-cell">
+                  <td className="hidden max-w-56 text-sm text-gray-500 lg:table-cell">
                     <Link to={link} className="block bg-none px-3 py-4 !no-underline">
                       {rows[1]}
                     </Link>
@@ -77,7 +84,10 @@ export default function TableResponsive({ headers, data }: TableProps) {
                   </td>
                   {headers[4] && (
                     <td className="flex h-full items-stretch justify-start text-left text-sm font-medium sm:table-cell sm:pr-0">
-                      <Link to={link} className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 !no-underline">
+                      <Link
+                        to={link}
+                        className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 !no-underline"
+                      >
                         {rows[4]}
                       </Link>
                     </td>
