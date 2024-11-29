@@ -8,11 +8,11 @@
     "prebuild": "react-dsfr update-icons",
     "typecheck": "tsc",
     "dev": "prisma generate && vite --port 3234",
-    "build": "vite build",
+    "build": "yarn prebuild && vite build && npx prisma@5.22.0 generate",
     "lint": "eslint .",
     "preview": "vite preview --port 3234",
-    "start": "yarn prebuild && yarn build && npx prisma@5.22.0 generate && NODE_ENV=production PORT=8080 node ./server-app.js",
-    "start-local": "NODE_ENV=production PORT=3232 node ./server-app.js"
+    "start": "yarn build && NODE_ENV=production PORT=8080 node ./server-app.js",
+    "start-local": "NODE_ENV=production PORT=3234 node ./server-app.js"
   },
   "dependencies": {
     "@codegouvfr/react-dsfr": "^1.14.7",
@@ -66,6 +66,5 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  },
-  "packageManager": "yarn@4.4.1"
+  }
 }

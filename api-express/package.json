@@ -6,7 +6,8 @@
   "scripts": {
     "pre:dev": "npm run prisma-setup && cross-env NODE_ENV=development npx prisma db push && node ./scripts/copy-schema-to-app-side.js && npm run format && npm run typecheck",
     "dev": "npm run pre:dev && PORT=3235 tsx watch ./src/index.ts",
-    "start": "cross-env NODE_ENV=production npm run prisma-setup && npm run prisma-deploy && tsx ./src/index.ts",
+    "start": "cross-env NODE_ENV=production npm run prisma-setup && npm run prisma-deploy && && PORT=8080 tsx ./src/index.ts",
+    "start-local": "cross-env NODE_ENV=development npm run prisma-setup && npm run prisma-deploy && PORT=3235 tsx ./src/index.ts",
     "start-cronjobs": "cross-env NODE_ENV=production npm run prisma-setup && npm run prisma-deploy && tsx ./src/cronjobs/index.ts",
     "prisma-setup": "prisma generate && prisma migrate deploy",
     "prisma-create-migration": "cross-env NODE_ENV=development npx prisma migrate dev --name",
@@ -81,6 +82,5 @@
   "pre-commit": [
     "format",
     "typecheck"
-  ],
-  "packageManager": "yarn@4.4.1"
+  ]
 }
