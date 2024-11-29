@@ -405,7 +405,7 @@ router.post(
   '/logout',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    res.clearCookie('jwt', logoutCookieOptions());
+    res.clearCookie('zacharie_express_jwt', logoutCookieOptions());
     res.status(200).send({ ok: true });
   }),
 );

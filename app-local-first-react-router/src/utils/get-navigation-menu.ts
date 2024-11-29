@@ -137,40 +137,40 @@ export default function useNavigationMenu() {
           text: 'Liste des utilisateurs',
           isActive: location.pathname === '/app/tableau-de-bord/admin/utilisateurs',
           linkProps: {
-            href: '#',
-            to: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/utilisateurs',
+            // href: '#',
+            href: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/utilisateurs',
           },
         },
         {
           text: '+ Ajouter des utilisateurs',
           isActive: location.pathname === '/app/tableau-de-bord/admin/ajouter-utilisateur',
           linkProps: {
-            href: '#',
-            to: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/utilisateur/nouveau',
+            // href: '#',
+            href: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/utilisateur/nouveau',
           },
         },
         {
           text: 'Liste des entités',
           isActive: location.pathname === '/app/tableau-de-bord/admin/entites',
           linkProps: {
-            href: '#',
-            to: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/entites',
+            // href: '#',
+            href: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/entites',
           },
         },
         {
           text: '+ Ajouter des entités (SVI, ETG, etc.)',
           isActive: location.pathname === '/app/tableau-de-bord/admin/ajouter-entite',
           linkProps: {
-            href: '#',
-            to: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/entite/nouvelle',
+            // href: '#',
+            href: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/entite/nouvelle',
           },
         },
         {
           text: 'Liste des fiches',
           isActive: location.pathname === '/app/tableau-de-bord/admin/feis',
           linkProps: {
-            href: '#',
-            to: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/feis',
+            // href: '#',
+            href: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/feis',
           },
         },
       ],
