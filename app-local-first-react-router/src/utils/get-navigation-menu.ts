@@ -138,7 +138,7 @@ export default function useNavigationMenu() {
           isActive: location.pathname === '/app/tableau-de-bord/admin/utilisateurs',
           linkProps: {
             href: '#',
-            to: '/app/tableau-de-bord/admin/utilisateurs',
+            to: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/utilisateurs',
           },
         },
         {
@@ -146,7 +146,7 @@ export default function useNavigationMenu() {
           isActive: location.pathname === '/app/tableau-de-bord/admin/ajouter-utilisateur',
           linkProps: {
             href: '#',
-            to: '/app/tableau-de-bord/admin/utilisateur/nouveau',
+            to: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/utilisateur/nouveau',
           },
         },
         {
@@ -154,7 +154,7 @@ export default function useNavigationMenu() {
           isActive: location.pathname === '/app/tableau-de-bord/admin/entites',
           linkProps: {
             href: '#',
-            to: '/app/tableau-de-bord/admin/entites',
+            to: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/entites',
           },
         },
         {
@@ -162,7 +162,7 @@ export default function useNavigationMenu() {
           isActive: location.pathname === '/app/tableau-de-bord/admin/ajouter-entite',
           linkProps: {
             href: '#',
-            to: '/app/tableau-de-bord/admin/entite/nouvelle',
+            to: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/entite/nouvelle',
           },
         },
         {
@@ -170,7 +170,7 @@ export default function useNavigationMenu() {
           isActive: location.pathname === '/app/tableau-de-bord/admin/feis',
           linkProps: {
             href: '#',
-            to: '/app/tableau-de-bord/admin/feis',
+            to: 'https://zacharie.beta.gouv.fr/app/tableau-de-bord/admin/feis',
           },
         },
       ],
