@@ -2,11 +2,9 @@ import packageJson from '../package.json';
 const version = packageJson.version;
 
 const PORT = process.env.PORT ?? 3000;
-const ENVIRONMENT =
-  process.env.ENVIRONMENT ?? process.env.NODE_ENV ?? 'development';
+const ENVIRONMENT = process.env.ENVIRONMENT ?? process.env.NODE_ENV ?? 'development';
 
-const SENTRY_KEY =
-  'https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175';
+const SENTRY_KEY = 'https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175';
 
 const VERSION = version;
 

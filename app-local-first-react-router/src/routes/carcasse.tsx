@@ -76,7 +76,9 @@ export default function CarcasseLoader() {
   const params = useParams();
   const state = useZustandStore((state) => state);
   const fei = state.feis[params.fei_numero!];
-  const carcasse = state.carcasses[`${params.fei_numero}_${params.zacharie_carcasse_id}`];
+  console.log({ params });
+  const carcasse = state.carcasses[params.zacharie_carcasse_id!];
+  console.log({ carcasse });
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
 
   useEffect(() => {
@@ -104,9 +106,10 @@ function CarcasseReadAndWrite() {
   const state = useZustandStore((state) => state);
   const user = useUser((state) => state.user)!;
   const fei = state.feis[params.fei_numero!];
-  const carcasse = state.carcasses[`${params.fei_numero}_${params.zacharie_carcasse_id}`];
+  const carcasse = state.carcasses[params.zacharie_carcasse_id!];
   const updateCarcasse = state.updateCarcasse;
-
+  console.log({ params });
+  console.log({ carcasse });
   const existingsNumeroBracelet = (state.carcassesIdsByFei[fei.numero] || []).map(
     (zacharie_carcasse_id) => state.carcasses[zacharie_carcasse_id]?.numero_bracelet,
   );

@@ -1,10 +1,6 @@
 import type express from 'express';
 
-export default function (
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction,
-) {
+export default function (req: express.Request, res: express.Response, next: express.NextFunction) {
   const {
     // appversion,
     appbuild,

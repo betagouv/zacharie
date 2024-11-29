@@ -116,9 +116,6 @@ export default function NouvelleCarcasse() {
                   ) : (
                     <>Veuillez renseigner la commune de mise à mort avant d'enregistrer une carcasse</>
                   )}
-                  {isOnline
-                    ? null
-                    : ' ATTENTION: en mode hors-ligne vous ne pouvez pas encore modifier ce numéro une fois renseigné'}
                 </>
               }
               nativeInputProps={{

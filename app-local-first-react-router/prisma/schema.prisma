@@ -54,7 +54,7 @@ model User {
   web_push_tokens                String[]
   prefilled                      Boolean                  @default(false)
   activated                      Boolean                  @default(false)
-  is_synced                      Boolean                  @default(false) // just for typing purppose with zustand frontend
+  is_synced                      Boolean                  @default(true) // just for typing purppose with zustand frontend
   Password                       Password?
   UserRelationsAsOwner           UserRelations[]          @relation("UserOwnerOfUserRelation")
   UserRelationsAsRelated         UserRelations[]          @relation("UserRelatedOfUserRelation")
@@ -106,7 +106,7 @@ model Entity {
   onboarded_at              DateTime?
   coupled_entity_id         String?                  @unique
   prefilled                 Boolean                  @default(false)
-  is_synced                 Boolean                  @default(false) // just for typing purppose with zustand frontend
+  is_synced                 Boolean                  @default(true) // just for typing purppose with zustand frontend
   EntityRelatedWithUser     EntityAndUserRelations[] @relation("EntityRelatedWithUser")
   FeiCurrentEntity          Fei[]                    @relation("FeiCurrentEntity")
   FeiNextEntity             Fei[]                    @relation("FeiNextEntity")
@@ -149,7 +149,7 @@ model UserRelations {
   created_at                DateTime         @default(now())
   updated_at                DateTime         @default(now()) @updatedAt
   deleted_at                DateTime?
-  is_synced                 Boolean          @default(false) // just for typing purppose with zustand frontend
+  is_synced                 Boolean          @default(true) // just for typing purppose with zustand frontend
   UserOwnerOfUserRelation   User             @relation("UserOwnerOfUserRelation", fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   UserRelatedOfUserRelation User             @relation("UserRelatedOfUserRelation", fields: [related_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -169,7 +169,7 @@ model EntityAndUserRelations {
   created_at            DateTime           @default(now())
   updated_at            DateTime           @default(now()) @updatedAt
   deleted_at            DateTime?
-  is_synced             Boolean            @default(false) // just for typing purppose with zustand frontend
+  is_synced             Boolean            @default(true) // just for typing purppose with zustand frontend
   UserRelatedWithEntity User               @relation("UserRelatedWithEntity", fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   EntityRelatedWithUser Entity             @relation("EntityRelatedWithUser", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -186,7 +186,7 @@ model ETGAndEntityRelations {
   created_at           DateTime    @default(now())
   updated_at           DateTime    @default(now()) @updatedAt
   deleted_at           DateTime?
-  is_synced            Boolean     @default(false) // just for typing purppose with zustand frontend
+  is_synced            Boolean     @default(true) // just for typing purppose with zustand frontend
   ETGRelatedWithEntity Entity      @relation("ETGRelatedWithEntity", fields: [etg_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   EntityRelatedWithETG Entity      @relation("EntityRelatedWithETG", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -252,7 +252,7 @@ model Fei {
   created_at                                              DateTime                @default(now())
   updated_at                                              DateTime                @default(now()) @updatedAt
   deleted_at                                              DateTime?
-  is_synced                                               Boolean                 @default(false) // just for typing purppose with zustand frontend
+  is_synced                                               Boolean                 @default(true) // just for typing purppose with zustand frontend
   Carcasses                                               Carcasse[]
   FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiPremierDetenteurUser                                 User?                   @relation("FeiPremierDetenteurUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -313,7 +313,7 @@ model Carcasse {
   created_at                                    DateTime                @default(now())
   updated_at                                    DateTime                @default(now()) @updatedAt
   deleted_at                                    DateTime?
-  is_synced                                     Boolean                 @default(false) // just for typing purppose with zustand frontend
+  is_synced                                     Boolean                 @default(true) // just for typing purppose with zustand frontend
   Fei                                           Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
   FeiIntermediairesCarcasse                     FeiIntermediaire[]      @relation("FeiIntermediairesCarcasse")
   FeiIntermediaireCarcasseRefus                 FeiIntermediaire?       @relation("FeiIntermediaireCarcasseRefus", fields: [intermediaire_carcasse_refus_intermediaire_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -336,7 +336,7 @@ model FeiIntermediaire {
   created_at                     DateTime                @default(now())
   updated_at                     DateTime                @default(now()) @updatedAt
   deleted_at                     DateTime?
-  is_synced                      Boolean                 @default(false) // just for typing purppose with zustand frontend
+  is_synced                      Boolean                 @default(true) // just for typing purppose with zustand frontend
   Fei                            Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
   FeiIntermediaireUser           User                    @relation("FeiIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiIntermediaireEntity         Entity                  @relation("FeiIntermediaireEntity", fields: [fei_intermediaire_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -364,7 +364,7 @@ model CarcasseIntermediaire {
   created_at                             DateTime         @default(now())
   updated_at                             DateTime         @default(now()) @updatedAt
   deleted_at                             DateTime?
-  is_synced                              Boolean          @default(false) // just for typing purppose with zustand frontend
+  is_synced                              Boolean          @default(true) // just for typing purppose with zustand frontend
   CarcasseIntermediaireFei               Fei              @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
   CarcasseCarcasseIntermediaire          Carcasse         @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaireUser              User             @relation("CarcasseIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)

@@ -16,11 +16,7 @@ type MiddlewareFn<T extends express.Request> = (
 ) => Promise<void> | void;
 
 function catchErrors<T extends express.Request>(fn: MiddlewareFn<T>) {
-  return (
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ) => {
+  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
     Promise.resolve(fn(req as T, res, next)).catch(next);
   };
 }

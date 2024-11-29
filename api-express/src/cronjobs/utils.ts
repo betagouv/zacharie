@@ -15,10 +15,7 @@ If a cron is already running, we don't launch it again.
 */
 type TaskFn = () => Promise<void>;
 
-export async function launchCronJob(
-  name: string,
-  job: TaskFn,
-): Promise<boolean> {
+export async function launchCronJob(name: string, job: TaskFn): Promise<boolean> {
   try {
     const cronJobAlreadyExisting = await prisma.cronJob.findUnique({
       where: {

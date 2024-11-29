@@ -2,11 +2,7 @@ import express from 'express';
 import type { User, UserRoles } from '@prisma/client';
 
 export default function validateUser(roles: Array<UserRoles> = []) {
-  return async (
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ) => {
+  return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const user: User = req.user;
     let canAccess = false;
     for (const role of roles) {

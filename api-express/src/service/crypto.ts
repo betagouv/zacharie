@@ -3,11 +3,7 @@ import bcrypt from 'bcryptjs';
 
 const algorithm = 'aes-256-ctr';
 
-const ENCRYPTION_KEY = crypto.scryptSync(
-  process.env.SECRET ?? 'not-so-secret',
-  'salt',
-  32,
-);
+const ENCRYPTION_KEY = crypto.scryptSync(process.env.SECRET ?? 'not-so-secret', 'salt', 32);
 
 const IV_LENGTH = 16;
 
@@ -27,10 +23,7 @@ export const decrypt = (text: string) => {
   const iv = Buffer.from(ivPart, 'hex');
   const encryptedText = Buffer.from(encryptedPart, 'hex');
   const decipher = crypto.createDecipheriv(algorithm, ENCRYPTION_KEY, iv);
-  const decrypted = Buffer.concat([
-    decipher.update(encryptedText),
-    decipher.final(),
-  ]);
+  const decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()]);
   return decrypted.toString();
 };
 

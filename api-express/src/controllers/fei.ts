@@ -115,7 +115,7 @@ router.post(
       nextFei.heure_evisceration_derniere_carcasse = body.heure_evisceration_derniere_carcasse || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
-      nextFei.created_by_user_id = body.created_by_user_id || null;
+      nextFei.created_by_user_id = body.created_by_user_id;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses)) {
       nextFei.resume_nombre_de_carcasses = body.resume_nombre_de_carcasses || null;
