@@ -109,9 +109,10 @@ export default function TableauDeBordIndex() {
   });
   const allFeisOngoing = [...feisOngoing, ...feisOngoingForMyEntities];
   const [showBackOnlineRefresh, setShowBackOnlineRefresh] = useState(false);
-  const isOnline = useIsOnline(() => {
+  function toggleOnline() {
     setShowBackOnlineRefresh(true);
-  });
+  }
+  const isOnline = useIsOnline(toggleOnline);
 
   useEffect(() => {
     if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {

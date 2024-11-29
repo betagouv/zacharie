@@ -27,7 +27,7 @@ export async function refreshUser(_calledFrom: string) {
       setTimeout(() => {
         controller.abort(); // Abort the fetch when the timeout occurs
         reject(new Error('Timeout'));
-      }, 2000),
+      }, 5000),
     );
 
     const fetchPromise = fetch(`${import.meta.env.VITE_API_URL}/user/me`, {
