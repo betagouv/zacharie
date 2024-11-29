@@ -1,0 +1,95 @@
+{
+  "GROS_GIBIER": {
+    "Abcès ou nodules": [],
+    "Anomalies d’altération": [
+      "Moisissures",
+      "Putréfaction superficielle",
+      "Putréfaction profonde",
+      "Autres anomalies d’altération"
+    ],
+    "Anomalies de couleur ou de consistance": [
+      "Viande à évolution anormale",
+      "Autres anomalies de couleur ou de consistance"
+    ],
+    "Anomalies d’odeur": [],
+    "Anomalies liées à la préparation des viandes": [
+      "Défaut de présentation de la venaison (parties de la carcasse manquantes)",
+      "Douchage de la carcasse",
+      "Autres anomalies liées à la préparation des viandes"
+    ],
+    "Anomalies liées à la traçabilité": [
+      "Absence d'identification de la carcasse en poils/plumes",
+      "Fiche d'accompagnement du gibier sauvage non valide",
+      "Autres anomalies liées à la traçabilité"
+    ],
+    "Cachexie": [],
+    "Infiltrations hémorragiques liées à l’action de chasse": [],
+    "Infiltrations hémorragiques non liées à l’action de chasse": [],
+    "Parasites": [
+      "Cysticercose",
+      "Œufs ou larves de mouche",
+      "Résultat positif au test trichine",
+      "Résultat non négatif au test trichine : présence de parasites autres que trichine",
+      "Varrons",
+      "Autres parasites"
+    ],
+    "Réactions inflammatoires": ["Arthrite", "Lymphadénite", "Ostéomyélite", "Péritonite", "Pleurésie", "Autres"],
+    "Souillures": [
+      "Souillures d’habillage",
+      "Souillures d’origine digestive liées à une balle d'abdomen avérée",
+      "Souillures d’origine digestive liées à une mauvaise éviscération",
+      "Souillures telluriques (exemples : terre, feuilles, sable)",
+      "Autres souillures"
+    ],
+    "Traumatisme (autres que liés à l’impact du projectile de chasse)": [
+      "Fracture",
+      "Morsure de chien",
+      "Autres lésions de traumatisme"
+    ],
+    "Viande suspecte de présenter un danger pour la santé publique": []
+  },
+  "PETIT_GIBIER": {
+    "Abcès ou nodules": [],
+    "Anomalies d’altération": [
+      "Moisissures",
+      "Putréfaction superficielle",
+      "Putréfaction profonde",
+      "Autres anomalies d’altération"
+    ],
+    "Anomalies de couleur ou de consistance": [
+      "Carcasse congestive",
+      "Carcasse saigneuse",
+      "Viande à évolution anormale",
+      "Autres anomalies de couleur ou de consistance"
+    ],
+    "Anomalies liées à la préparation des viandes": [
+      "Anomalies liées à la plumaison",
+      "Autres anomalies liées à la préparation des viandes"
+    ],
+    "Anomalies liées à la traçabilité": [
+      "Absence d'identification de la/des carcasse(s) en poils/plumes",
+      "Fiche d'accompagnement du gibier sauvage non valide",
+      "Autres anomalies liées à la traçabilité"
+    ],
+    "Anomalies d’odeur": [],
+    "Cachexie": [],
+    "Infiltrations hémorragiques liées à l’action de chasse": [],
+    "Parasites": ["Oeufs ou larves de mouche", "Poux", "Sangsues", "Tiques", "Autres parasites"],
+    "Traumatisme (autres que liés à l’impact du projectile de chasse)": [
+      "Fracture",
+      "Morsure de chien",
+      "Autres lésions de traumatisme"
+    ],
+    "Réactions inflammatoires": [
+      "Aérosacculite",
+      "Arthrite",
+      "Lymphadénite",
+      "Ostéomyélite",
+      "Péritonite",
+      "Pleurésie",
+      "Autres"
+    ],
+    "Souillures": ["Souillures d’habillage", "Souillures d’origine digestive", "Autres souillures"],
+    "Viande suspecte de présenter un danger pour la santé publique": []
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "Abcès ou nodules": ["Unique", "Multiples"],
+  "Adhérences": ["Adhérence anormale des abats à la carcasse"],
+  "Anomalies d'altération": [
+    "Moisissures",
+    "Putréfaction : anomalies de couleur à reflets verdâtres",
+    "Autres anomalies d'altération"
+  ],
+  "Anomalies d'aspect": [
+    "Excroissances cornées sur la carcasse ressemblant à des verrues",
+    "Vésicules ou pustules au niveau de la tête",
+    "Zones dépilées",
+    "Autres anomalies d'aspect"
+  ],
+  "Anomalies de conformation": [
+    "Cachexie (Animal très maigre avec fonte musculaire. Absence de graisse et aspect brillant dans la cavité abdominale)",
+    "Déformation d'une ou plusieurs articulations",
+    "Déformation de la tête ou de la mâchoire",
+    "Autres anomalies de conformation"
+  ],
+  "Anomalies de consistance": [
+    "Aspect brillant et humide",
+    "Viande molle, flasque",
+    "Rigidité cadavérique précoce : membres plus contractés et non mobiles",
+    "Épaississements blanchâtres dans la cavité interne",
+    "Autres anomalies de consistance"
+  ],
+  "Anomalies de couleur": [
+    "Viande décolorée",
+    "Présence d'hémorragies multiples de tailles variables sur les muscles",
+    "Forte coloration rouge de la viande",
+    "Coloration jaune orangée de la viande",
+    "Viande anormalement foncée",
+    "Autres anomalies de couleur"
+  ],
+  "Anomalies d'odeur": ["Odeur nauséabonde", "Odeur d'urine", "Autres anomalies d'odeur"],
+  "Anomalies liées à la préparation des viandes": [
+    "Douchage de la carcasse",
+    "Éviscération tardive",
+    "Mauvaise éviscération",
+    "Autres anomalies liées à la préparation des viandes"
+  ],
+  "Gangrène": ["Zone avec nécrose (couleur gris-violet souvent noirâtre, odeur nauséabonde)"],
+  "Parasites": {
+    "Parasites externes": ["Tiques", "Varrons", "Autres parasites externes"],
+    "Parasites internes": [
+      "Sarcosporidiose : présence de nodules parasitaires (en forme de grains de riz jaunâtres)",
+      "Oeufs ou larves de mouche",
+      "Autres parasites internes"
+    ]
+  },
+  "Souillures": {
+    "Souillures externes": ["Animal sale", "Souillures de l'arrière-train par diarrhée", "Autres souillures externes"],
+    "Souillures internes": [
+      "Souillures d'origine digestive liées à une balle d'abdomen",
+      "Souillures d'origine digestive liées à une mauvaise éviscération",
+      "Présence de débris végétaux (terre, feuilles, sable)",
+      "Présence de poils",
+      "Autres souillures internes"
+    ]
+  },
+  "Traumatisme (autres que liés à l'impact du projectile de chasse)": [
+    "Fracture",
+    "Morsure de chien",
+    "Autres lésions de traumatisme"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "types": [
+        "@prisma/client",
+        "vite-plugin-pwa/info",
+        "vite-plugin-pwa/pwa-assets",
+        "vite-plugin-pwa/react",
+        "vite-plugin-pwa/client",
+        "workbox-precaching"
+      ],
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "paths": {
+      "@app/*": ["./src/*"],
+      "@api/*": ["../api-express/*"],
+      "~/*": ["../api-express/*"],
+    },
+  },
+  "include": ["vite.config.ts"]
+}

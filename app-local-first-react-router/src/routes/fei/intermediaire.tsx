@@ -1,0 +1,436 @@
+import { Fragment, useMemo, useState } from 'react';
+import { Prisma, CarcasseIntermediaire, Carcasse, CarcasseType } from '@prisma/client';
+import InputNotEditable from '@app/components/InputNotEditable';
+import { Accordion } from '@codegouvfr/react-dsfr/Accordion';
+import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
+import { Button } from '@codegouvfr/react-dsfr/Button';
+import { Input } from '@codegouvfr/react-dsfr/Input';
+import dayjs from 'dayjs';
+import SelectNextOwner from './premier-detenteur-intermediaire-select-next';
+import CarcasseIntermediaireComp from './intermediaire-carcasse';
+import EntityNotEditable from '@app/components/EntityNotEditable';
+import { useParams } from 'react-router';
+import useUser from '@app/zustand/user';
+import useZustandStore from '@app/zustand/store';
+import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
+
+export default function FEICurrentIntermediaire() {
+  const params = useParams();
+  const user = useUser((state) => state.user)!;
+  const state = useZustandStore((state) => state);
+  const updateFeiIntermediaire = state.updateFeiIntermediaire;
+  const fei = state.feis[params.fei_numero!];
+  const originalCarcasses = (state.carcassesIdsByFei[params.fei_numero!] || []).map(
+    (cId) => state.carcasses[cId],
+  );
+  const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
+
+  const [intermediaireIndex, setIntermediaireIndex] = useState(0);
+  const intermediaire = intermediaires[intermediaireIndex];
+
+  const intermediaireCarcasses = [
+    ...new Set(state.carcassesIntermediairesByIntermediaire[intermediaire.id] || []),
+  ]
+    .map((carcInterId) => state.carcassesIntermediaires[carcInterId]) // `carcInterId` is `fei_numero__bracelet__intermediaire_id`
+    .filter((c) => c != null);
+
+  const canEdit = useMemo(() => {
+    if (fei.fei_current_owner_user_id !== user.id) {
+      return false;
+    }
+    if (!intermediaire) {
+      return false;
+    }
+    if (intermediaire.fei_intermediaire_user_id !== user.id) {
+      return false;
+    }
+    // if (intermediaire.check_finished_at) {
+    //   return false;
+    // }
+    return true;
+  }, [fei, user, intermediaire]);
+
+  const PriseEnChargeInput = canEdit ? Input : InputNotEditable;
+
+  const carcassesSorted = useMemo(() => {
+    const intermediaireCheckById: Record<
+      CarcasseIntermediaire['fei_numero__bracelet__intermediaire_id'],
+      CarcasseIntermediaire
+    > = {};
+    for (const intermediaireCheck of intermediaireCarcasses) {
+      intermediaireCheckById[intermediaireCheck.fei_numero__bracelet__intermediaire_id] = intermediaireCheck;
+    }
+    const carcassesApproved: Record<string, Carcasse> = {};
+    const carcassesRejetees: Record<string, Carcasse> = {};
+    const carcassesManquantes: Record<string, Carcasse> = {};
+    // const carcassesToCheck: Record<string, Carcasse> = {};
+    for (const intermediaireCarcasse of intermediaireCarcasses) {
+      const checkId = getCarcasseIntermediaireId(
+        fei.numero,
+        intermediaireCarcasse.numero_bracelet,
+        intermediaire.id,
+      );
+      const carcasse = state.carcasses[intermediaireCarcasse.zacharie_carcasse_id];
+      if (intermediaireCheckById[checkId]) {
+        // console.log("intermediaireCheckById[checkId]", intermediaireCheckById[checkId]);
+        if (intermediaireCheckById[checkId].prise_en_charge) {
+          carcassesApproved[checkId] = carcasse;
+        } else if (intermediaireCheckById[checkId].manquante) {
+          // console.log("MANQUANTE ICI", intermediaireCheckById[checkId]);
+          carcassesManquantes[checkId] = carcasse;
+        } else {
+          carcassesRejetees[checkId] = carcasse;
+        }
+      } else {
+        if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
+          if (carcasse.intermediaire_carcasse_refus_intermediaire_id === intermediaire.id) {
+            if (carcasse.intermediaire_carcasse_manquante) {
+              carcassesManquantes[checkId] = carcasse;
+            } else {
+              carcassesRejetees[checkId] = carcasse;
+            }
+          }
+        } else {
+          // carcassesToCheck[checkId] = carcasse;
+        }
+      }
+    }
+    return {
+      carcassesApproved: Object.values(carcassesApproved),
+      carcassesRejetees: Object.values(carcassesRejetees),
+      carcassesManquantes: Object.values(carcassesManquantes),
+      // carcassesToCheck: Object.values(carcassesToCheck),
+    };
+  }, [intermediaireCarcasses, intermediaire, fei]);
+
+  const labelCheckDone = useMemo(() => {
+    let label = `${
+      intermediaire.check_finished_at ? "J'ai pris" : 'Je prends'
+    } en charge les carcasses que j'ai acceptées.`;
+    const nbCarcassesValidated = carcassesSorted.carcassesApproved.length;
+    if (nbCarcassesValidated > 0) {
+      if (nbCarcassesValidated === 1) {
+        label += ' 1 carcasse/lot validé.';
+      } else {
+        label += ` ${nbCarcassesValidated} carcasses/lots validés.`;
+      }
+    }
+    const nbCarcassesRejetees = carcassesSorted.carcassesRejetees.length;
+    if (nbCarcassesRejetees > 0) {
+      if (nbCarcassesRejetees === 1) {
+        label += ' 1 carcasse/lot rejeté.';
+      } else {
+        label += ` ${nbCarcassesRejetees} carcasses/lots rejetés.`;
+      }
+    }
+    const nbCarcassesManquantes = carcassesSorted.carcassesManquantes.length;
+    if (nbCarcassesManquantes > 0) {
+      if (nbCarcassesManquantes === 1) {
+        label += ' 1 carcasse/lot manquant.';
+      } else {
+        label += ` ${nbCarcassesManquantes} carcasses/lots manquants.`;
+      }
+    }
+    return label;
+  }, [
+    carcassesSorted.carcassesApproved.length,
+    carcassesSorted.carcassesRejetees.length,
+    carcassesSorted.carcassesManquantes.length,
+    intermediaire.check_finished_at,
+  ]);
+
+  const needSelectNextUser = useMemo(() => {
+    if (fei.fei_current_owner_user_id !== user.id) {
+      return false;
+    }
+    if (!intermediaire.check_finished_at) {
+      return false;
+    }
+    const latestIntermediaire = intermediaires[0];
+    if (latestIntermediaire.id !== intermediaire.id) {
+      return false;
+    }
+    return true;
+  }, [fei, user, intermediaire, intermediaires]);
+
+  // const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
+  const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(true);
+  // const [carcassesAccepteesExpanded, setCarcassesAccepteesExpanded] = useState(false);
+  // const [carcassesRefuseesExpanded, setCarcassesRefuseesExpanded] = useState(false);
+  // const [carcassesManquantesExpanded, setCarcassesManquantesExpanded] = useState(false);
+
+  // useEffect(() => {
+  //   if (prevCarcassesToCheckCount.current > 0 && carcassesSorted.carcassesToCheck.length === 0) {
+  //     setCarcassesAValiderExpanded(false);
+  //     setCarcassesAccepteesExpanded(false);
+  //     setCarcassesRefuseesExpanded(false);
+  //   }
+  //   prevCarcassesToCheckCount.current = carcassesSorted.carcassesToCheck.length;
+  // }, [carcassesSorted.carcassesToCheck.length]);
+
+  const onlyPetitGibier = useMemo(() => {
+    for (const carcasse of originalCarcasses) {
+      if (carcasse?.type !== CarcasseType.PETIT_GIBIER) {
+        return false;
+      }
+    }
+    return true;
+  }, [originalCarcasses]);
+
+  return (
+    <>
+      <nav
+        id="fr-breadcrumb-:r54:"
+        role="navigation"
+        className="fr-breadcrumb"
+        aria-label="vous êtes ici :"
+        data-fr-js-breadcrumb="true"
+      >
+        <button
+          className="fr-breadcrumb__button"
+          aria-expanded="false"
+          aria-controls="breadcrumb-:r55:"
+          data-fr-js-collapse-button="true"
+        >
+          Voir les destinataires
+        </button>
+        <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
+          <ol className="fr-breadcrumb__list">
+            <li>
+              <span className="fr-breadcrumb__link !bg-none !no-underline">Premier Détenteur</span>
+            </li>
+            {intermediaires
+              .map((_intermediaire, index) => {
+                return (
+                  <li key={_intermediaire.id}>
+                    <button
+                      onClick={() => setIntermediaireIndex(index)}
+                      className="fr-breadcrumb__link"
+                      aria-current={_intermediaire.id === intermediaire.id ? 'step' : false}
+                    >
+                      {state.entities[_intermediaire.fei_intermediaire_entity_id!]?.nom_d_usage}
+                    </button>
+                  </li>
+                );
+              })
+              .reverse()}
+          </ol>
+        </div>
+      </nav>
+      <Accordion titleAs="h3" label={`Identité de l'intermédaire ${canEdit ? '🔒' : ''}`}>
+        <EntityNotEditable
+          user={state.users[intermediaire.fei_intermediaire_user_id!]!}
+          entity={state.entities[intermediaire.fei_intermediaire_entity_id!]!}
+        />
+      </Accordion>
+      {canEdit ? (
+        <Accordion
+          titleAs="h3"
+          label={`Carcasses (${intermediaireCarcasses.length})`}
+          expanded={carcassesAValiderExpanded}
+          onExpandedChange={setCarcassesAValiderExpanded}
+        >
+          <div className="fr-fieldset__element">
+            <InputNotEditable
+              label="Date de mise à mort (et d'éviscération) *"
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                type: 'text',
+                autoComplete: 'off',
+                suppressHydrationWarning: true,
+                defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY') : '',
+              }}
+            />
+          </div>
+          <div className="fr-fieldset__element">
+            <InputNotEditable
+              label="Heure de mise à mort de la première carcasse *"
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                type: 'time',
+                autoComplete: 'off',
+                defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
+              }}
+            />
+          </div>
+          {!onlyPetitGibier && (
+            <div className="fr-fieldset__element">
+              <InputNotEditable
+                label="Heure d'éviscération de la dernière carcasse"
+                nativeInputProps={{
+                  id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                  name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                  type: 'time',
+                  autoComplete: 'off',
+                  defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
+                }}
+              />
+            </div>
+          )}
+          <p className="text-sm text-gray-600">
+            Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
+          </p>
+          {intermediaireCarcasses.map((intermediaireCarcasse) => {
+            const carcasse = state.carcasses[intermediaireCarcasse.zacharie_carcasse_id];
+            return (
+              <Fragment key={carcasse.numero_bracelet}>
+                <CarcasseIntermediaireComp
+                  intermediaire={intermediaire}
+                  canEdit={canEdit}
+                  carcasse={carcasse}
+                />
+              </Fragment>
+            );
+          })}
+        </Accordion>
+      ) : (
+        <>
+          <Accordion
+            titleAs="h3"
+            label={`Carcasses acceptées (${carcassesSorted.carcassesApproved.length})`}
+            defaultExpanded={carcassesSorted.carcassesApproved.length > 0 && needSelectNextUser}
+          >
+            {carcassesSorted.carcassesApproved.length === 0 ? (
+              <p>Pas de carcasse acceptée</p>
+            ) : (
+              carcassesSorted.carcassesApproved.map((carcasse) => {
+                return (
+                  <Fragment key={carcasse.numero_bracelet}>
+                    <CarcasseIntermediaireComp
+                      intermediaire={intermediaire}
+                      canEdit={canEdit}
+                      carcasse={carcasse}
+                    />
+                  </Fragment>
+                );
+              })
+            )}
+          </Accordion>
+          <Accordion
+            titleAs="h3"
+            label={`Carcasses rejetées (${carcassesSorted.carcassesRejetees.length})`}
+            defaultExpanded={carcassesSorted.carcassesRejetees.length > 0 && needSelectNextUser}
+          >
+            {carcassesSorted.carcassesRejetees.length === 0 ? (
+              <p>Pas de carcasse refusée</p>
+            ) : (
+              carcassesSorted.carcassesRejetees.map((carcasse) => {
+                return (
+                  <Fragment key={carcasse.numero_bracelet}>
+                    <CarcasseIntermediaireComp
+                      intermediaire={intermediaire}
+                      canEdit={canEdit}
+                      carcasse={carcasse}
+                    />
+                  </Fragment>
+                );
+              })
+            )}
+          </Accordion>
+          <Accordion
+            titleAs="h3"
+            label={`Carcasses manquantes (${carcassesSorted.carcassesManquantes.length})`}
+            defaultExpanded={carcassesSorted.carcassesManquantes.length > 0 && needSelectNextUser}
+          >
+            {carcassesSorted.carcassesManquantes.length === 0 ? (
+              <p>Pas de carcasse manquante</p>
+            ) : (
+              carcassesSorted.carcassesManquantes.map((carcasse) => {
+                return (
+                  <Fragment key={carcasse.numero_bracelet}>
+                    <CarcasseIntermediaireComp
+                      intermediaire={intermediaire}
+                      canEdit={canEdit}
+                      carcasse={carcasse}
+                    />
+                  </Fragment>
+                );
+              })
+            )}
+          </Accordion>
+        </>
+      )}
+      <Accordion
+        titleAs="h3"
+        label="Prise en charge des carcasses acceptées"
+        defaultExpanded
+        key={intermediaire.id}
+      >
+        <form
+          method="POST"
+          id="form_intermediaire_check_finished_at"
+          onBlur={(e) => {
+            e.preventDefault();
+            const checkFinishedAt =
+              e.currentTarget[Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at].value;
+            updateFeiIntermediaire(intermediaire.id, {
+              check_finished_at: dayjs(checkFinishedAt).toDate(),
+            });
+          }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            const checkFinishedAt =
+              e.currentTarget[Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at].value;
+            updateFeiIntermediaire(intermediaire.id, {
+              check_finished_at: dayjs(checkFinishedAt).toDate(),
+            });
+          }}
+        >
+          <div className={['fr-fieldset__element', canEdit ? '' : 'pointer-events-none'].join(' ')}>
+            <Checkbox
+              options={[
+                {
+                  label: labelCheckDone,
+                  hintText:
+                    !intermediaire.check_finished_at && !canEdit
+                      ? "Vous n'êtes pas en charge de cette fiche, vous ne pouvez pas modifier cette valeur"
+                      : '',
+                  nativeInputProps: {
+                    required: true,
+                    name: 'check_finished_at_checked',
+                    value: 'true',
+                    disabled: !intermediaire.check_finished_at && !canEdit,
+                    form: 'form_intermediaire_check_finished_at',
+                    readOnly: !!intermediaire.check_finished_at,
+                    defaultChecked: intermediaire.check_finished_at ? true : false,
+                  },
+                },
+              ]}
+            />
+            <div className="fr-fieldset__element">
+              <PriseEnChargeInput
+                label="Date de prise en charge"
+                nativeInputProps={{
+                  id: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
+                  name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
+                  type: 'datetime-local',
+                  form: 'form_intermediaire_check_finished_at',
+                  suppressHydrationWarning: true,
+                  autoComplete: 'off',
+                  defaultValue: dayjs(intermediaire.check_finished_at || undefined).format(
+                    'YYYY-MM-DDTHH:mm',
+                  ),
+                }}
+              />
+            </div>
+            {!intermediaire.check_finished_at && (
+              <div className="fr-fieldset__element">
+                <Button type="submit" disabled={!canEdit}>
+                  Enregistrer
+                </Button>
+              </div>
+            )}
+          </div>
+        </form>
+      </Accordion>
+
+      {needSelectNextUser && (
+        <div className="z-50 mt-8 flex flex-col bg-white pt-4 md:w-auto md:items-start [&_ul]:md:min-w-96">
+          <SelectNextOwner />
+        </div>
+      )}
+    </>
+  );
+}

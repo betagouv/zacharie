@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "EntityTypes" ADD VALUE 'ASSOCIATION_DE_CHASSE';
