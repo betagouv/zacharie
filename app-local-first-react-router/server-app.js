@@ -39,4 +39,4 @@ app.get('*', (req, res, next) => {
 });
 
 const port = process.env.PORT || 8080;
-app.listen(port, () => console.log(`Express server listening at http://localhost:${port}`));
+app.listen(port, '0.0.0.0', () => console.log(`Express server listening at http://localhost:${port}`));
