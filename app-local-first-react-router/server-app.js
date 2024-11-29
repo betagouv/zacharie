@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import compression from 'compression';
 import express from 'express';
 import path from 'path';
@@ -28,15 +27,15 @@ if (viteDevServer) {
   });
 } else {
   // Vite fingerprints its assets so we can cache forever.
-  app.use('/assets', express.static('build-spa/client/assets', { immutable: true, maxAge: '1y' }));
+  app.use('/assets', express.static('build/assets', { immutable: true, maxAge: '1y' }));
 }
 
-// Serve static files from the build-spa/client directory
-app.use(express.static(path.join(process.cwd(), 'build-spa', 'client')));
+// Serve static files from the build/client directory
+app.use(express.static(path.join(process.cwd(), 'build')));
 
 // For any other routes, send the index.html file
 app.get('*', (req, res, next) => {
-  res.sendFile(path.join(process.cwd(), 'build-spa', 'client', 'index.html'), next);
+  res.sendFile(path.join(process.cwd(), 'build', 'index.html'), next);
 });
 
 const port = process.env.PORT || 8080;

@@ -11,7 +11,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview --port 3234",
-    "start": "NODE_ENV=production PORT=8080 node ./server-app.js",
+    "start": "yarn prebuild && yarn build && npx prisma@5.22.0 generate && NODE_ENV=production PORT=8080 node ./server-app.js",
     "start-local": "NODE_ENV=production PORT=3232 node ./server-app.js"
   },
   "dependencies": {
