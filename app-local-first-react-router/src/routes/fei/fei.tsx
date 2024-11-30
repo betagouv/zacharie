@@ -40,7 +40,7 @@ export default function FeiLoader() {
   if (!fei) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;
   }
-  return <Fei />;
+  return <Fei key={fei.numero} />;
 }
 
 function Fei() {

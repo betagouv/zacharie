@@ -108,6 +108,10 @@ export default function FEIExaminateurInitial() {
       // seul l'examinateur initial peut modifier
       return false;
     }
+    if (user.roles.includes(UserRoles.ADMIN)) {
+      // les admins peuvent modifier
+      return true;
+    }
     // if (!carcasses.length) {
     // il faut au moins une carcasse
     // return true;
@@ -295,6 +299,7 @@ export default function FEIExaminateurInitial() {
                   onBlur: (e) =>
                     updateFei(fei.numero, {
                       examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(e.target.value).toDate(),
+                      resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
                     }),
                   defaultValue: dayjs(
                     fei?.examinateur_initial_date_approbation_mise_sur_le_marche || undefined,
@@ -302,11 +307,6 @@ export default function FEIExaminateurInitial() {
                 }}
               />
             </div>
-            <input
-              type="hidden"
-              name={Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses}
-              value={countCarcassesByEspece.join('\n')}
-            />
             <div className="fr-fieldset__element">
               {canEdit && !needSelectNextUser && (
                 <Button

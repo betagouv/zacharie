@@ -25,6 +25,7 @@ import {
 import { capture } from '@app/services/sentry';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import dayjs from 'dayjs';
+import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
 // import { get, set, del } from 'idb-keyval'; // can use anything: IndexedDB, Ionic Storage, etc.
 
 // Custom storage object
@@ -152,10 +153,16 @@ const useZustandStore = create<State & Actions>()(
           fei_numero: FeiWithIntermediaires['numero'],
           partialFei: Partial<FeiWithIntermediaires>,
         ) => {
-          const feis = useZustandStore.getState().feis;
-          const nextFei = {
+          const state = useZustandStore.getState();
+          const feis = state.feis;
+          const carcassefeiCarcasses = (state.carcassesIdsByFei[fei_numero] || []).map(
+            (id) => state.carcasses[id],
+          );
+          const countCarcassesByEspece = formatCountCarcasseByEspece(carcassefeiCarcasses);
+          const nextFei: FeiWithIntermediaires = {
             ...feis[fei_numero],
             ...partialFei,
+            resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
             updated_at: dayjs().toDate(),
             is_synced: false,
           };
@@ -188,7 +195,8 @@ const useZustandStore = create<State & Actions>()(
               },
             };
           });
-          syncData();
+          get().updateFei(newCarcasse.fei_numero, { updated_at: dayjs().toDate() });
+          // syncData(); // no need to sync data here because it's done by syncing fei already
         },
         updateCarcasse: (
           zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
@@ -207,7 +215,8 @@ const useZustandStore = create<State & Actions>()(
               [zacharie_carcasse_id]: nextCarcasse,
             },
           });
-          syncData();
+          get().updateFei(nextCarcasse.fei_numero, { updated_at: dayjs().toDate() });
+          // syncData(); // no need to sync data here because it's done by syncing fei already
         },
         createFeiIntermediaire: (newIntermediaire: FeiIntermediaire) => {
           newIntermediaire.is_synced = false;
