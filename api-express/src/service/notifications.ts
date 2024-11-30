@@ -21,6 +21,13 @@ export default async function sendNotificationToUser({
   notificationLogAction,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: WebPushNotification) {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      'sendNotificationToUser',
+      JSON.stringify({ user, body, title, email, notificationLogAction, img }, null, 2),
+    );
+    return;
+  }
   if (user.notifications.includes(UserNotifications.PUSH)) {
     if (user.web_push_tokens?.length) {
       console.log('SENDING WEB PUSH NOTIFICATION', user.id);

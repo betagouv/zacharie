@@ -57,7 +57,9 @@ app.use(Sentry.Handlers.tracingHandler());
 
 if (process.env.NODE_ENV === 'production') {
   // regex .zacharie.beta.gouv.fr
-  app.use(cors({ credentials: true, origin: [/\.zacharie\.beta\.gouv\.fr$/] }));
+  app.use(
+    cors({ credentials: true, origin: ['https://zacharie.beta.gouv.fr', /\.zacharie\.beta\.gouv\.fr$/] }),
+  );
 } else {
   app.use(
     cors({
