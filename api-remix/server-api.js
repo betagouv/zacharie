@@ -28,7 +28,7 @@ console.log("NODE_ENV:", process.env.NODE_ENV);
 const corsOptions = {
   credentials: true,
   origin: (origin, callback) => {
-    const allowedOrigins = ["https://zacharie.beta.gouv.fr"];
+    const allowedOrigins = ["https://zacharie.beta.gouv.fr", "https://backup.zacharie.beta.gouv.fr"];
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {

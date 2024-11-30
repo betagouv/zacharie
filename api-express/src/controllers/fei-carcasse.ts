@@ -213,7 +213,7 @@ router.post(
           .map((motif) => ` -> ${motif}`)
           .join('\n')}`,
         `Commentaire\u00A0:\n${updatedCarcasse.svi_carcasse_commentaire}`,
-        `Rendez-vous sur Zacharie pour consulter le détail de la carcasse : https://zacharie.agriculture.gouv.fr/app/tableau-de-bord/carcasse-svi/${existingCarcasse.fei_numero}/${existingCarcasse.zacharie_carcasse_id}`,
+        `Rendez-vous sur Zacharie pour consulter le détail de la carcasse : https://zacharie.beta.gouv.fr/app/tableau-de-bord/carcasse-svi/${existingCarcasse.fei_numero}/${existingCarcasse.zacharie_carcasse_id}`,
       ];
 
       sendNotificationToUser({
