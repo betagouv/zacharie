@@ -928,14 +928,18 @@ router.get(
         relation: 'WORKING_WITH' as EntityWithUserRelationType,
       })),
       ...allOtherEntities.map((entity) => ({ ...entity, relation: 'NONE' as EntityWithUserRelationType })),
-    ];
+    ].filter((entity, index, array) => array.findIndex((e) => e.id === entity.id) === index); // remove duplicates
 
     const ccgs = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.CCG);
+
     const associationsDeChasse = entitiesWorkingDirectlyFor.filter(
       (entity) => entity.type === EntityTypes.PREMIER_DETENTEUR,
     );
+
     const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
+
     const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
+
     const svis = allEntities.filter(
       (entity) =>
         entity.type === EntityTypes.SVI &&

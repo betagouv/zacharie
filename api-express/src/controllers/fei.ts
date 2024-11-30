@@ -312,6 +312,31 @@ router.post(
           notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
         });
       }
+      const sviUsers = await prisma.user.findMany({
+        where: {
+          roles: { has: UserRoles.SVI },
+          EntityAndUserRelations: {
+            some: {
+              entity_id: savedFei.svi_entity_id!,
+              relation: EntityRelationType.WORKING_FOR,
+            },
+          },
+        },
+      });
+      for (const sviUser of sviUsers) {
+        sendNotificationToUser({
+          user: sviUser,
+          title: `La fiche du ${dayjs(savedFei.date_mise_a_mort).format(
+            'DD/MM/YYYY',
+          )} est assignée à votre Service Vétérinaire d'Inspection`,
+          body: `Vous avez une nouvelle fiche à traiter. Rendez-vous sur Zacharie pour la traiter.`,
+          email: [
+            `Carcasses à inspecter : ${savedFei.resume_nombre_de_carcasses}`,
+            `Rendez-vous sur Zacharie pour consulter le détail de la fiche : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
+          ].join('\n'),
+          notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
+        });
+      }
       res.status(200).send({
         ok: true,
         data: {
@@ -335,6 +360,17 @@ router.post(
           body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
           email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${savedFei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
           notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
+        });
+        sendNotificationToUser({
+          user: user,
+          title: `${nextOwner!.prenom} ${nextOwner!.nom_de_famille} a été notifié`,
+          body: `${nextOwner!.prenom} ${
+            nextOwner!.nom_de_famille
+          } a été notifié que vous lui avez attribué la fiche ${savedFei?.numero}.`,
+          email: `${nextOwner!.prenom} ${
+            nextOwner!.nom_de_famille
+          } a été notifié que vous lui avez attribué la fiche ${savedFei?.numero}.`,
+          notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}_RECEIPT`,
         });
       } else if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwnerId) {
         console.log('need to send notification remove fiche');
@@ -500,39 +536,6 @@ router.get(
         svi_assigned_at: 'desc',
       },
     });
-
-    const feisDoneSvi = await prisma.fei.findMany({
-      where: {
-        deleted_at: null,
-        FeiSviEntity: {
-          EntityRelatedWithUser: {
-            some: {
-              owner_id: user.id,
-              // relation: EntityRelationType.WORKING_FOR,
-            },
-          },
-        },
-      },
-      select: {
-        numero: true,
-        created_at: true,
-        updated_at: true,
-        fei_current_owner_role: true,
-        fei_next_owner_role: true,
-        commune_mise_a_mort: true,
-        svi_assigned_at: true,
-        svi_signed_at: true,
-        examinateur_initial_date_approbation_mise_sur_le_marche: true,
-        premier_detenteur_name_cache: true,
-        resume_nombre_de_carcasses: true,
-        is_synced: true,
-      },
-      orderBy: {
-        svi_assigned_at: 'desc',
-      },
-    });
-
-    console.log('feisDoneSvi', feisDoneSvi.length);
 
     res.status(200).send({
       ok: true,

@@ -155,6 +155,7 @@ const useZustandStore = create<State & Actions>()(
           fei_numero: FeiWithIntermediaires['numero'],
           partialFei: Partial<FeiWithIntermediaires>,
         ) => {
+          console.log('updateFei', fei_numero, partialFei);
           const state = useZustandStore.getState();
           const feis = state.feis;
           const carcassefeiCarcasses = (state.carcassesIdsByFei[fei_numero] || []).map(

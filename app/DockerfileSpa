@@ -26,8 +26,8 @@ COPY . .
 
 # Build the application
 ENV NODE_ENV=production
-ENV VITE_API_URL="https://api.zacharie.beta.gouv.fr"
-ENV VITE_APP_URL="https://zacharie.beta.gouv.fr"
+ENV VITE_API_URL="https://api-backup.zacharie.beta.gouv.fr"
+ENV VITE_APP_URL="https://backup.zacharie.beta.gouv.fr"
 RUN yarn build-spa
 
 # Expose the port the app runs on
