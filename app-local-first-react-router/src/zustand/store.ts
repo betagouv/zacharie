@@ -372,7 +372,7 @@ export async function syncFei(nextFei: FeiWithIntermediaires) {
     .then((res) => res.json())
     .then((res) => res as FeiResponse)
     .then((res) => {
-      if (res.ok && res.data.fei) {
+      if (res.ok && res.data?.fei) {
         console.log('synced fei', res.data.fei);
         useZustandStore.setState({
           feis: {

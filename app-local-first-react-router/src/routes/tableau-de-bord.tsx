@@ -59,6 +59,23 @@ export default function TableauDeBordIndex() {
     refreshUser('tableau-de-bord').then(loadData);
   }, []);
 
+  useEffect(() => {
+    function handleScrollEnd() {
+      window.sessionStorage.setItem('tableau-de-bord-scrollY', window.scrollY.toString());
+    }
+    const savedScrollY = window.sessionStorage.getItem('tableau-de-bord-scrollY');
+    if (savedScrollY) {
+      window.scrollTo({
+        top: parseInt(savedScrollY, 10),
+        behavior: 'instant',
+      });
+    }
+    window.addEventListener('scrollend', handleScrollEnd);
+    return () => {
+      window.removeEventListener('scrollend', handleScrollEnd);
+    };
+  }, []);
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <title>Mes fiches | Zacharie | Ministère de l'Agriculture</title>

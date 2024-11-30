@@ -7,6 +7,7 @@ import App from './App.tsx';
 import dsfrCss from '@codegouvfr/react-dsfr/main.css?url';
 import dsfrColorCss from '@codegouvfr/react-dsfr/dsfr/utility/colors/colors.min.css?url';
 import { registerServiceWorker } from './sw/register.ts';
+import '@af-utils/scrollend-polyfill';
 
 startReactDsfr({
   // defaultColorScheme: "system",

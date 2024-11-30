@@ -45,7 +45,7 @@ router.post(
     if (existingFei?.deleted_at) {
       res.status(200).send({
         ok: true,
-        data: null,
+        data: { fei: existingFei },
         error: '',
       });
       return;
@@ -53,7 +53,7 @@ router.post(
 
     if (body.deleted_at) {
       if (!existingFei) {
-        res.status(404).send({ ok: false, data: null, error: 'Fei not found' });
+        res.status(404).send({ ok: false, data: { fei: null }, error: 'Fei not found' });
         return;
       }
       const canDelete =
@@ -61,11 +61,11 @@ router.post(
         (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) &&
           existingFei.fei_current_owner_user_id === user.id);
       if (!canDelete) {
-        res.status(401).send({ ok: false, data: null, error: 'Unauthorized' });
+        res.status(401).send({ ok: false, data: { fei: null }, error: 'Unauthorized' });
         return;
       }
       console.log('delete fei', feiNumero);
-      await prisma.fei.update({
+      const deletedFei = await prisma.fei.update({
         where: { numero: feiNumero },
         data: { deleted_at: body.deleted_at },
       });
@@ -83,7 +83,7 @@ router.post(
       });
       res.status(200).send({
         ok: true,
-        data: null,
+        data: { fei: deletedFei },
         error: '',
       });
       return;

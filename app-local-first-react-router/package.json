@@ -15,6 +15,7 @@
     "start-local": "NODE_ENV=production PORT=3234 node ./server-app.js"
   },
   "dependencies": {
+    "@af-utils/scrollend-polyfill": "^0.0.14",
     "@codegouvfr/react-dsfr": "^1.14.7",
     "@prisma/client": "5.22.0",
     "@sentry/react": "^8.40.0",
