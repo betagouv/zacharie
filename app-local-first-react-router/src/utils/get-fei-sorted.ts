@@ -72,10 +72,7 @@ export function getFeisSorted(): FeiSorted {
       }
       if (fei.fei_next_owner_role === UserRoles.ETG) {
         // also collecteurs from this etg can take the lead
-        console.log('fei.fei_next_owner_entity_id', fei.fei_next_owner_entity_id);
-        console.log('entities', state.entities);
         const etg = state.entities[fei.fei_next_owner_entity_id!];
-        console.log('etg', etg);
         if (etg.relation === 'WORKING_FOR_ENTITY_RELATED_WITH') {
           if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
             feisSorted.feisToTake.push(fei);

@@ -54,6 +54,7 @@ export async function loadMyRelations() {
       etgsIds: myRelationsData.data?.etgs.map((etg) => etg.id) || [],
       svisIds: myRelationsData.data?.svis.map((svi) => svi.id) || [],
       collecteursProsRelatedWithMyETGs: myRelationsData.data?.collecteursProsRelatedWithMyETGs || [],
+      etgsRelatedWithMyEntities: myRelationsData.data?.etgsRelatedWithMyEntities || [],
     });
 
     const detenteursInitiaux: Record<UserForFei['id'], UserForFei> = {};

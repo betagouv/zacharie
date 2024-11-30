@@ -213,7 +213,7 @@ export async function setFeiInStore(feiResponse: FeiResponse) {
   }
 
   const intermediaires = fei.FeiIntermediaires.sort(
-    (a, b) => dayjs(a.created_at).valueOf() - dayjs(b.created_at).valueOf(),
+    (a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf(),
   ); // newest first
 
   for (const intermediaire of intermediaires || []) {

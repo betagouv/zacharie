@@ -920,6 +920,9 @@ router.get(
     // }
 
     const allEntities = [
+      ...entitiesWorkingFor.filter(
+        (entity) => entity.type !== EntityTypes.CCG && entity.relation === 'WORKING_FOR_ENTITY_RELATED_WITH',
+      ),
       ...entitiesWorkingWith.map((entity) => ({
         ...entity,
         relation: 'WORKING_WITH' as EntityWithUserRelationType,
@@ -933,7 +936,11 @@ router.get(
     );
     const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
     const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
-    const svis = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.SVI);
+    const svis = allEntities.filter(
+      (entity) =>
+        entity.type === EntityTypes.SVI &&
+        ['WORKING_WITH', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
+    );
 
     res.status(200).send({
       ok: true,
@@ -949,6 +956,7 @@ router.get(
         entitiesWorkingFor: entitiesWorkingFor satisfies Array<EntityWithUserRelation>,
         collecteursProsRelatedWithMyETGs:
           collecteursProsRelatedWithMyETGs satisfies Array<ETGAndEntityRelations>,
+        etgsRelatedWithMyEntities: etgsRelatedWithMyEntities satisfies Array<ETGAndEntityRelations>,
       },
       error: '',
     } satisfies UserMyRelationsResponse);

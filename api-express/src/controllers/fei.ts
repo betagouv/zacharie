@@ -424,6 +424,7 @@ router.get(
         error: '',
       });
     }
+
     const feisDone = await prisma.fei.findMany({
       where: {
         deleted_at: null,
@@ -499,6 +500,39 @@ router.get(
         svi_assigned_at: 'desc',
       },
     });
+
+    const feisDoneSvi = await prisma.fei.findMany({
+      where: {
+        deleted_at: null,
+        FeiSviEntity: {
+          EntityRelatedWithUser: {
+            some: {
+              owner_id: user.id,
+              // relation: EntityRelationType.WORKING_FOR,
+            },
+          },
+        },
+      },
+      select: {
+        numero: true,
+        created_at: true,
+        updated_at: true,
+        fei_current_owner_role: true,
+        fei_next_owner_role: true,
+        commune_mise_a_mort: true,
+        svi_assigned_at: true,
+        svi_signed_at: true,
+        examinateur_initial_date_approbation_mise_sur_le_marche: true,
+        premier_detenteur_name_cache: true,
+        resume_nombre_de_carcasses: true,
+        is_synced: true,
+      },
+      orderBy: {
+        svi_assigned_at: 'desc',
+      },
+    });
+
+    console.log('feisDoneSvi', feisDoneSvi.length);
 
     res.status(200).send({
       ok: true,
@@ -689,32 +723,9 @@ router.get(
               },
               {
                 FeiNextEntity: {
-                  EntityRelatedWithETG: {
-                    some: {
-                      EntityRelatedWithETG: {
-                        EntityRelatedWithUser: {
-                          some: {
-                            owner_id: user.id,
-                            relation: EntityRelationType.WORKING_FOR,
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            ],
-          },
-          {
-            AND: [
-              {
-                fei_next_owner_role: UserRoles.COLLECTEUR_PRO,
-              },
-              {
-                FeiNextEntity: {
                   ETGRelatedWithEntity: {
                     some: {
-                      ETGRelatedWithEntity: {
+                      EntityRelatedWithETG: {
                         EntityRelatedWithUser: {
                           some: {
                             owner_id: user.id,

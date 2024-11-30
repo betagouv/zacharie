@@ -63,6 +63,7 @@ export interface State {
   etgsIds: Array<EntityWithUserRelation['id']>;
   svisIds: Array<EntityWithUserRelation['id']>;
   collecteursProsRelatedWithMyETGs: Array<ETGAndEntityRelations>;
+  etgsRelatedWithMyEntities: Array<ETGAndEntityRelations>;
   detenteursInitiaux: Record<UserForFei['id'], UserForFei>;
   entityAndUserRelations: Record<EntityAndUserRelations['entity_id'], EntityAndUserRelations>;
   etgAndEntityRelations: Record<ETGAndEntityRelations['etg_id'], ETGAndEntityRelations>;
@@ -120,6 +121,7 @@ const useZustandStore = create<State & Actions>()(
         etgsIds: [],
         svisIds: [],
         collecteursProsRelatedWithMyETGs: [],
+        etgsRelatedWithMyEntities: [],
         detenteursInitiaux: {},
         entityAndUserRelations: {},
         etgAndEntityRelations: {},

@@ -149,6 +149,12 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
   const nextOwnersWorkingWith = nextOwners.filter((o) => o.relation !== 'NONE');
   const nextOwnersNotWorkingWith = nextOwners.filter((o) => o.relation === 'NONE');
 
+  console.log({
+    nextOwnersWorkingWith,
+    nextOwnersNotWorkingWith,
+    nextRole,
+  });
+
   return (
     <>
       <form
@@ -160,6 +166,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
             fei_next_owner_entity_id: nextOwnerValue,
             fei_next_owner_role: nextRole,
             svi_assigned_at: nextRole === UserRoles.SVI ? dayjs().toDate() : null,
+            svi_entity_id: nextRole === UserRoles.SVI ? nextOwnerValue : null,
           });
         }}
       >

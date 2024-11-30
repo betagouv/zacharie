@@ -71,6 +71,7 @@ export interface UserMyRelationsResponse {
     svis: Array<EntityWithUserRelation>;
     entitiesWorkingFor: Array<EntityWithUserRelation>;
     collecteursProsRelatedWithMyETGs: Array<ETGAndEntityRelations>;
+    etgsRelatedWithMyEntities: Array<ETGAndEntityRelations>;
   };
   error: '';
 }

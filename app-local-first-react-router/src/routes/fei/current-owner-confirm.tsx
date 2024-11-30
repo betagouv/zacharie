@@ -20,13 +20,12 @@ export default function CurrentOwnerConfirm({
   const state = useZustandStore((state) => state);
   const updateFei = state.updateFei;
   const fei = state.feis[params.fei_numero!];
-  const collecteursProsRelatedWithMyETGs = state.collecteursProsRelatedWithMyETGs;
+  // const collecteursProsRelatedWithMyETGs = state.collecteursProsRelatedWithMyETGs;
+  const etgsRelatedWithMyEntities = state.etgsRelatedWithMyEntities;
   const collecteursPro = state.collecteursProIds.map((id) => state.entities[id]);
 
   const nextOwnerEntity = state.entities[fei.fei_next_owner_entity_id!];
   const nextOwnerUser = state.users[fei.fei_next_owner_user_id!];
-
-  console.log(state.users, fei.fei_next_owner_user_id);
 
   const canConfirmCurrentOwner = useMemo(() => {
     if (fei.fei_next_owner_user_id === user.id) {
@@ -37,6 +36,18 @@ export default function CurrentOwnerConfirm({
       (nextOwnerEntity.relation === 'WORKING_FOR' ||
         nextOwnerEntity.relation === 'WORKING_FOR_ENTITY_RELATED_WITH')
     ) {
+      if (fei.fei_next_owner_role === UserRoles.ETG) {
+        if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && !user.roles.includes(UserRoles.ETG)) {
+          if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
+            return false;
+          }
+        }
+      }
+      if (fei.fei_next_owner_role === UserRoles.SVI) {
+        if (!user.roles.includes(UserRoles.SVI)) {
+          return false;
+        }
+      }
       return true;
     }
     return false;
@@ -47,17 +58,20 @@ export default function CurrentOwnerConfirm({
       return fei.fei_next_owner_entity_id;
     }
     if (fei.fei_next_owner_role === UserRoles.ETG) {
+      if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
+        return '';
+      }
       if (!user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
         return '';
       }
       const etgId = fei.fei_next_owner_entity_id;
-      const collecteurProId = collecteursProsRelatedWithMyETGs.find((c) => c.etg_id === etgId)?.entity_id;
+      const collecteurProId = etgsRelatedWithMyEntities.find((c) => c.etg_id === etgId)?.entity_id;
       if (collecteurProId) {
         return collecteurProId;
       }
     }
     return '';
-  }, [fei, user, collecteursProsRelatedWithMyETGs]);
+  }, [fei, user, etgsRelatedWithMyEntities]);
 
   const needNextOwnerButNotMe = useMemo(() => {
     if (!fei.fei_next_owner_user_id && !fei.fei_next_owner_entity_id) {
@@ -70,26 +84,6 @@ export default function CurrentOwnerConfirm({
   }, [fei, canConfirmCurrentOwner]);
 
   if (!fei.fei_next_owner_role) {
-    return null;
-  }
-
-  if (!canConfirmCurrentOwner) {
-    if (needNextOwnerButNotMe) {
-      console.log({ nextOwnerUser });
-      const nextName =
-        nextOwnerEntity?.nom_d_usage || `${nextOwnerUser?.prenom} ${nextOwnerUser?.nom_de_famille}`;
-      return (
-        <div className="bg-alt-blue-france pb-8">
-          <div className="bg-white">
-            <Alert
-              severity="info"
-              description={`Cette fiche a été attribuée à un intervenant que vous ne pouvez pas représenter.\u00a0C'est à elle ou lui d'intervenir.`}
-              title={`Fiche en attente de prise en charge par\u00A0: ${nextName}`}
-            />
-          </div>
-        </div>
-      );
-    }
     return null;
   }
 
@@ -162,6 +156,25 @@ export default function CurrentOwnerConfirm({
       };
       useZustandStore.getState().createFeiIntermediaire(newIntermediaire);
     }
+  }
+
+  if (!canConfirmCurrentOwner) {
+    if (needNextOwnerButNotMe) {
+      const nextName =
+        nextOwnerEntity?.nom_d_usage || `${nextOwnerUser?.prenom} ${nextOwnerUser?.nom_de_famille}`;
+      return (
+        <div className="bg-alt-blue-france pb-8">
+          <div className="bg-white">
+            <Alert
+              severity="info"
+              description={`Cette fiche a été attribuée à un intervenant que vous ne pouvez pas représenter.\u00a0C'est à elle ou lui d'intervenir.`}
+              title={`Fiche en attente de prise en charge par\u00A0: ${nextName}`}
+            />
+          </div>
+        </div>
+      );
+    }
+    return null;
   }
 
   return (

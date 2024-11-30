@@ -191,6 +191,7 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
           .then((res) => {
             setIsSubmitting(false);
             if (res.ok && res.data.entity) {
+              setError('');
               addCCG(res.data.entity);
             }
             if (res.error) {
