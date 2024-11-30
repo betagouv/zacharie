@@ -240,23 +240,25 @@ export default function SelectNextForExaminateur() {
         </>
       )}
 
-      {fei.fei_next_owner_user_id && (
-        <>
-          <Alert
-            severity="success"
-            description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
-            title="Attribution effectuée"
-          />
-          <Button
-            className="mt-2"
-            linkProps={{
-              to: `/app/tableau-de-bord/`,
-            }}
-          >
-            Voir toutes mes fiches
-          </Button>
-        </>
-      )}
+      {nextOwnerName &&
+        (fei.fei_next_owner_user_id === nextOwnerUser?.id ||
+          fei.fei_next_owner_entity_id === nextOwnerEntity?.id) && (
+          <>
+            <Alert
+              severity="success"
+              description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
+              title="Attribution effectuée"
+            />
+            <Button
+              className="mt-2"
+              linkProps={{
+                to: `/app/tableau-de-bord/`,
+              }}
+            >
+              Voir toutes mes fiches
+            </Button>
+          </>
+        )}
     </>
   );
 }
