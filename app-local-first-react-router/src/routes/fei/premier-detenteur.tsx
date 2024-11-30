@@ -273,7 +273,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
             <Alert
               className="mt-8"
               severity="success"
-              description={`${premierDetenteurDepotEntity?.nom_d_usage} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
+              description={`${premierDetenteurDepotEntity?.nom_d_usage} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
               title="Attribution effectuée"
             />
             <Button

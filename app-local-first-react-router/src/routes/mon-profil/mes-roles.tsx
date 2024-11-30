@@ -5,9 +5,11 @@ import RolesCheckBoxes from '@app/components/RolesCheckboxes';
 import { Prisma, type User, UserRoles } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import type { UserConnexionResponse } from '@api/src/types/responses';
+import { useNavigate } from 'react-router';
 
 export default function MesRoles() {
   const user = useUser((state) => state.user)!;
+  const navigate = useNavigate();
 
   return (
     <form
@@ -31,6 +33,7 @@ export default function MesRoles() {
           .then((data) => data as UserConnexionResponse);
         if (response.ok && response.data?.user?.id) {
           useUser.setState({ user: response.data.user });
+          navigate('/app/tableau-de-bord/mon-profil/mes-informations');
         }
       }}
     >

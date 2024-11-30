@@ -57,12 +57,14 @@ export async function loadMyRelations() {
     });
 
     const detenteursInitiaux: Record<UserForFei['id'], UserForFei> = {};
+    const users = useZustandStore.getState().users;
 
     for (const detenteurInitial of [...(myRelationsData.data?.detenteursInitiaux || [])]) {
       detenteursInitiaux[detenteurInitial.id] = detenteurInitial;
+      users[detenteurInitial.id] = detenteurInitial;
     }
 
-    useZustandStore.setState({ detenteursInitiaux });
+    useZustandStore.setState({ detenteursInitiaux, users });
 
     console.log('chargement relations fini');
   } catch (error) {

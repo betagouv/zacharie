@@ -24,6 +24,9 @@ export default function CurrentOwnerConfirm({
   const collecteursPro = state.collecteursProIds.map((id) => state.entities[id]);
 
   const nextOwnerEntity = state.entities[fei.fei_next_owner_entity_id!];
+  const nextOwnerUser = state.users[fei.fei_next_owner_user_id!];
+
+  console.log(state.users, fei.fei_next_owner_user_id);
 
   const canConfirmCurrentOwner = useMemo(() => {
     if (fei.fei_next_owner_user_id === user.id) {
@@ -48,8 +51,6 @@ export default function CurrentOwnerConfirm({
         return '';
       }
       const etgId = fei.fei_next_owner_entity_id;
-      console.log('etgId', etgId);
-      console.log('collecteursProsRelatedWithMyETGs', collecteursProsRelatedWithMyETGs);
       const collecteurProId = collecteursProsRelatedWithMyETGs.find((c) => c.etg_id === etgId)?.entity_id;
       if (collecteurProId) {
         return collecteurProId;
@@ -74,13 +75,16 @@ export default function CurrentOwnerConfirm({
 
   if (!canConfirmCurrentOwner) {
     if (needNextOwnerButNotMe) {
+      console.log({ nextOwnerUser });
+      const nextName =
+        nextOwnerEntity?.nom_d_usage || `${nextOwnerUser?.prenom} ${nextOwnerUser?.nom_de_famille}`;
       return (
         <div className="bg-alt-blue-france pb-8">
           <div className="bg-white">
             <Alert
               severity="info"
               description={`Cette fiche a été attribuée à un intervenant que vous ne pouvez pas représenter.\u00a0C'est à elle ou lui d'intervenir.`}
-              title={`Fiche en attente de prise en charge par\u00A0: ${nextOwnerEntity?.nom_d_usage}`}
+              title={`Fiche en attente de prise en charge par\u00A0: ${nextName}`}
             />
           </div>
         </div>

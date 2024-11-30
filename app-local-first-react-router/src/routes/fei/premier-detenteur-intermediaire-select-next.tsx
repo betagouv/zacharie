@@ -256,7 +256,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
         <>
           <Alert
             severity="success"
-            description={`${nextOwnerName} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
+            description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
             title="Attribution effectuée"
           />
           <Button

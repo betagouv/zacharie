@@ -26,7 +26,7 @@ export default function SelectNextForExaminateur() {
       }
     }
     return associationsDeChasse;
-  }, [state.entities, state.entitiesIdsWorkingDirectlyFor]);
+  }, [state]);
 
   const updateFei = state.updateFei;
   const isOnline = useIsOnline();
@@ -106,6 +106,12 @@ export default function SelectNextForExaminateur() {
             });
           } else {
             console.log('nextIsSomeoneElse');
+            updateFei(fei.numero, {
+              fei_next_owner_user_id: nextOwnerUser?.id,
+              fei_next_owner_user_name_cache: nextOwnerName,
+              fei_next_owner_role: UserRoles.PREMIER_DETENTEUR,
+              fei_next_owner_entity_id: nextOwnerEntity?.id,
+            });
           }
         }}
       >
@@ -238,7 +244,7 @@ export default function SelectNextForExaminateur() {
         <>
           <Alert
             severity="success"
-            description={`${nextOwnerName} a été notifié. Vous ne pouvez plus modifier votre fiche.`}
+            description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
             title="Attribution effectuée"
           />
           <Button
