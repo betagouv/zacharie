@@ -15,14 +15,25 @@ import MesRoles from './routes/mon-profil/mes-roles';
 import MesCCGs from './routes/mon-profil/mes-ccgs';
 import MesInformations from './routes/mon-profil/mes-informations';
 import MesNotifications from './routes/mon-profil/mes-notifications';
-// const Route = Sentry.withSentryRouting(Route);
+import * as Sentry from '@sentry/react';
+import { capture } from './services/sentry';
+
+const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
 function App() {
   return (
     <>
       <OfflineMode />
-      <Routes>
+      <SentryRoutes>
         <Route index element={<LandingPage />} />
+        <Route
+          path="test-sentry"
+          element={
+            <RootDisplay id="test-sentry">
+              <TestSentry />
+            </RootDisplay>
+          }
+        />
         <Route path="app" element={<Outlet />}>
           <Route
             path="connexion"
@@ -105,7 +116,7 @@ function App() {
             />
           </Route>
         </Route>
-      </Routes>
+      </SentryRoutes>
     </>
   );
 }
@@ -127,6 +138,13 @@ function RestrictedRoute({ children, id }: { children: ReactElement; id: string 
   }
 
   return children;
+}
+
+function TestSentry() {
+  useEffect(() => {
+    capture('Test Sentry');
+  }, []);
+  return <div>Test Sentry</div>;
 }
 
 export default App;
