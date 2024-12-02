@@ -47,7 +47,23 @@ export default function FEI_SVI() {
     };
   }, [carcassesUnsorted]);
 
+  const isSviWorkingFor = useMemo(() => {
+    if (fei.fei_current_owner_role === UserRoles.SVI && !!fei.svi_entity_id) {
+      if (user.roles.includes(UserRoles.SVI)) {
+        const svi = state.entities[fei.svi_entity_id];
+        console.log({ svi });
+        if (svi?.relation === 'WORKING_FOR') {
+          return true;
+        }
+      }
+    }
+    return false;
+  }, [fei, user, state]);
+
   const canEdit = useMemo(() => {
+    if (isSviWorkingFor) {
+      return true;
+    }
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
@@ -58,7 +74,9 @@ export default function FEI_SVI() {
       return false;
     }
     return true;
-  }, [fei, user]);
+  }, [fei, user, isSviWorkingFor]);
+
+  console.log({ isSviWorkingFor });
 
   // const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
   const DateFinInput = canEdit ? Input : InputNotEditable;

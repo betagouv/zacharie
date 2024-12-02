@@ -123,7 +123,22 @@ export function CarcasseEditSVI() {
   );
   const [typeSaisie, setTypeSaisie] = useState(carcasse?.svi_carcasse_saisie?.filter(Boolean) ?? []);
 
+  const isSviWorkingFor = useMemo(() => {
+    if (fei.fei_current_owner_role === UserRoles.SVI && !!fei.svi_entity_id) {
+      if (user.roles.includes(UserRoles.SVI)) {
+        const svi = state.entities[fei.svi_entity_id];
+        if (svi?.relation === 'WORKING_FOR') {
+          return true;
+        }
+      }
+    }
+    return false;
+  }, [fei, user, state]);
+
   const canEdit = useMemo(() => {
+    if (isSviWorkingFor) {
+      return true;
+    }
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
@@ -137,7 +152,7 @@ export function CarcasseEditSVI() {
       return false;
     }
     return true;
-  }, [fei, user]);
+  }, [fei, user, isSviWorkingFor]);
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">

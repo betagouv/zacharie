@@ -38,7 +38,7 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
       }
     }
     return commentaires;
-  }, [intermediaires, state.carcassesIntermediaires, state.entities]);
+  }, [intermediaires, state.carcassesIntermediaires, state.entities, carcasse.numero_bracelet, fei.numero]);
 
   const Component = canEdit ? Link : 'div';
 
