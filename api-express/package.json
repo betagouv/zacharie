@@ -10,7 +10,7 @@
     "start-local": "cross-env NODE_ENV=development npm run prisma-setup && npm run prisma-deploy && PORT=3235 tsx ./src/index.ts",
     "start-cronjobs": "cross-env NODE_ENV=production npm run prisma-setup && npm run prisma-deploy && tsx ./src/cronjobs/index.ts",
     "prisma-setup": "prisma generate && prisma migrate deploy",
-    "prisma-create-migration": "cross-env NODE_ENV=development npx prisma migrate dev --name",
+    "prisma-create-migration": "NODE_ENV=development POSTGRESQL_ADDON_URI=postgresql://postgres@localhost/zacharie-temp npx prisma migrate dev --name",
     "prisma-deploy": "NODE_ENV=production npx prisma migrate deploy",
     "prisma-reset-db": "rm -rf prisma/migrations && npx prisma migrate reset --force && npm run prisma-setup",
     "typecheck": "tsc",

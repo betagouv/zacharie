@@ -7,9 +7,9 @@ import type {
   FeiIntermediaire,
   CarcasseIntermediaire,
 } from '@prisma/client';
-import type { UserForFei } from './user';
+import type { UserForFei, UserForAdmin } from './user';
 import type { FeiDone, FeiWithIntermediaires, FeiPopulated } from './fei';
-import type { EntityWithUserRelation, EntitiesByTypeAndId } from './entity';
+import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId } from './entity';
 
 export interface SearchResponse {
   ok: boolean;
@@ -133,6 +133,30 @@ export interface CarcasseIntermediaireResponse {
   ok: boolean;
   data: {
     carcasseIntermediaire: CarcasseIntermediaire | null;
+  };
+  error: string;
+}
+
+export interface AdminGetEntityResponse {
+  ok: boolean;
+  data: null | {
+    entity: EntityForAdmin;
+    usersWithEntityType: Array<UserForAdmin>;
+    potentialPartenaires: Array<UserForAdmin>;
+    collecteursRelatedToETG: Array<Entity>;
+    potentialCollecteursRelatedToETG: Array<Entity>;
+    svisRelatedToETG: Array<Entity>;
+    potentialSvisRelatedToETG: Array<Entity>;
+    etgsRelatedWithEntity: Array<Entity>;
+    potentialEtgsRelatedWithEntity: Array<Entity>;
+  };
+  error: string;
+}
+
+export interface AdminActionEntityData {
+  ok: boolean;
+  data: {
+    entity: EntityForAdmin;
   };
   error: string;
 }

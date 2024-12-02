@@ -1,4 +1,4 @@
-import type { Entity, EntityTypes } from '@prisma/client';
+import type { Prisma, Entity, EntityTypes } from '@prisma/client';
 
 export type EntityWithUserRelationType =
   | 'WORKING_FOR_ENTITY_RELATED_WITH'
@@ -19,3 +19,26 @@ export interface ETGWithEntityIdsRelated extends Entity {
 
 export type EntitiesById = Record<Entity['id'], Entity>;
 export type EntitiesByTypeAndId = Record<EntityTypes, EntitiesById>;
+
+export const entityAdminInclude = {
+  EntityRelatedWithUser: {
+    select: {
+      relation: true,
+      UserRelatedWithEntity: {
+        select: {
+          id: true,
+          email: true,
+          nom_de_famille: true,
+          prenom: true,
+          code_postal: true,
+          ville: true,
+          roles: true,
+        },
+      },
+    },
+  },
+} as const;
+
+export type EntityForAdmin = Prisma.EntityGetPayload<{
+  include: typeof entityAdminInclude;
+}>;

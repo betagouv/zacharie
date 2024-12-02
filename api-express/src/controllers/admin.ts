@@ -1,30 +1,22 @@
 import express from 'express';
-import passport from 'passport';
 import { catchErrors } from '../middlewares/errors';
-import type { RequestWithUser } from '~/types/request';
 const router = express.Router();
 import prisma from '~/prisma';
 import jwt from 'jsonwebtoken';
-import dayjs from 'dayjs';
-import { sendEmail } from '~/third-parties/tipimail';
-import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
-import { comparePassword, hashPassword } from '~/service/crypto';
-import validateUser from '~/middlewares/validateUser';
-import {
-  EntityRelationType,
-  EntityTypes,
-  Prisma,
-  User,
-  UserNotifications,
-  UserRelationType,
-  UserRoles,
-} from '@prisma/client';
+import { EntityRelationType, Entity, EntityTypes, Prisma, UserRoles } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE } from '~/utils/cookie';
 import { SECRET } from '~/config';
+import { userAdminSelect } from '~/types/user';
+import type { AdminGetEntityResponse, AdminActionEntityData } from '~/types/responses';
+import passport from 'passport';
+import validateUser from '~/middlewares/validateUser';
+import { entityAdminInclude, type EntityForAdmin } from '~/types/entity';
 
 router.post(
   '/user/connect-as',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const body = req.body;
     const email = body['email-utilisateur'] as string;
@@ -57,6 +49,8 @@ router.post(
 
 router.post(
   '/user/nouveau',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const body = req.body;
 
@@ -74,6 +68,8 @@ router.post(
 
 router.get(
   '/user/:user_id',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const userId = req.params.user_id;
     const user = await prisma.user.findUnique({
@@ -124,6 +120,8 @@ router.get(
 
 router.get(
   '/users',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const users = await prisma.user.findMany({
       orderBy: {
@@ -140,32 +138,17 @@ router.get(
 
 router.get(
   '/entite/:entity_id',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const entity = await prisma.entity.findUnique({
       where: {
         id: req.params.entity_id,
       },
-      include: {
-        EntityRelatedWithUser: {
-          select: {
-            relation: true,
-            UserRelatedWithEntity: {
-              select: {
-                id: true,
-                email: true,
-                nom_de_famille: true,
-                prenom: true,
-                code_postal: true,
-                ville: true,
-                roles: true,
-              },
-            },
-          },
-        },
-      },
+      include: entityAdminInclude,
     });
     if (!entity) {
-      res.status(401).send({ ok: false, data: null, error: 'Unauthorized' });
+      res.status(401).send({ ok: false, data: null, error: 'Unauthorized' } satisfies AdminGetEntityResponse);
       return;
     }
 
@@ -188,15 +171,7 @@ router.get(
       orderBy: {
         updated_at: 'desc',
       },
-      select: {
-        id: true,
-        email: true,
-        nom_de_famille: true,
-        prenom: true,
-        code_postal: true,
-        ville: true,
-        roles: true,
-      },
+      select: userAdminSelect,
     });
 
     const potentialPartenaires = await prisma.user.findMany({
@@ -210,15 +185,7 @@ router.get(
       orderBy: {
         updated_at: 'desc',
       },
-      select: {
-        id: true,
-        email: true,
-        nom_de_famille: true,
-        prenom: true,
-        code_postal: true,
-        ville: true,
-        roles: true,
-      },
+      select: userAdminSelect,
     });
 
     const collecteursRelatedToETG =
@@ -327,28 +294,111 @@ router.get(
         potentialEtgsRelatedWithEntity,
       },
       error: '',
-    });
+    } satisfies AdminGetEntityResponse);
   }),
 );
 
-router.get(
-  '/entites',
+router.post(
+  '/nouvelle',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const entities = await prisma.entity.findMany({
-      orderBy: {
-        type: 'asc',
+    const body = req.body;
+
+    const createdEntity = await prisma.entity.create({
+      data: {
+        raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
+        nom_d_usage: body[Prisma.EntityScalarFieldEnum.raison_sociale],
+        type: body[Prisma.EntityScalarFieldEnum.type],
       },
+      include: entityAdminInclude,
     });
-    res.status(200).send({
-      ok: true,
-      data: { entities },
-      error: '',
+
+    res.status(200).send({ ok: true, data: { entity: createdEntity }, error: null });
+  }),
+);
+
+router.post(
+  '/entite/:entity_id',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const body = req.body;
+
+    if (body._action === 'remove-etg-relation') {
+      await prisma.eTGAndEntityRelations.delete({
+        where: {
+          etg_id_entity_id: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id_entity_id],
+        },
+      });
+      const entity = await prisma.entity.findUnique({
+        where: {
+          id: req.params.entity_id,
+        },
+        include: entityAdminInclude,
+      });
+
+      res
+        .status(200)
+        .send({ ok: true, data: { entity: entity! }, error: '' } satisfies AdminActionEntityData);
+      return;
+    }
+    if (body._action === 'add-etg-relation') {
+      const data: Prisma.ETGAndEntityRelationsUncheckedCreateInput = {
+        etg_id_entity_id: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id_entity_id],
+        entity_id: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.entity_id],
+        etg_id: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id],
+        entity_type: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.entity_type] as EntityTypes,
+      };
+      await prisma.eTGAndEntityRelations.upsert({
+        where: {
+          etg_id_entity_id: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id_entity_id],
+        },
+        create: data,
+        update: data,
+      });
+      const entity = await prisma.entity.findUnique({
+        where: {
+          id: req.params.entity_id,
+        },
+        include: entityAdminInclude,
+      });
+
+      res
+        .status(200)
+        .send({ ok: true, data: { entity: entity! }, error: '' } satisfies AdminActionEntityData);
+      return;
+    }
+
+    const data: Prisma.EntityUncheckedUpdateInput = {
+      raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
+      nom_d_usage: body[Prisma.EntityScalarFieldEnum.nom_d_usage],
+      address_ligne_1: body[Prisma.EntityScalarFieldEnum.address_ligne_1],
+      address_ligne_2: body[Prisma.EntityScalarFieldEnum.address_ligne_2],
+      code_postal: body[Prisma.EntityScalarFieldEnum.code_postal],
+      ville: body[Prisma.EntityScalarFieldEnum.ville],
+      siret: body[Prisma.EntityScalarFieldEnum.siret] || null,
+      numero_ddecpp: body[Prisma.EntityScalarFieldEnum.numero_ddecpp] || null,
+    };
+
+    const updatedEntity = await prisma.entity.update({
+      where: {
+        id: req.params.entity_id,
+      },
+      data,
+      include: entityAdminInclude,
     });
+
+    res
+      .status(200)
+      .send({ ok: true, data: { entity: updatedEntity }, error: '' } satisfies AdminActionEntityData);
   }),
 );
 
 router.get(
   '/feis',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // Fetch the fiche data along with the required intervenants
     const feis = await prisma.fei.findMany({

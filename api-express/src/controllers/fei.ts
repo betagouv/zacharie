@@ -1,26 +1,11 @@
 import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '../middlewares/errors';
-import type { RequestWithUser } from '~/types/request';
 import type { FeiResponse, FeisResponse, FeisDoneResponse } from '~/types/responses';
 const router = express.Router();
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
-import { sendEmail } from '~/third-parties/tipimail';
-import { capture } from '~/third-parties/sentry';
-import createUserId from '~/utils/createUserId';
-import { comparePassword, hashPassword } from '~/service/crypto';
-import validateUser from '~/middlewares/validateUser';
-import {
-  EntityRelationType,
-  EntityTypes,
-  Prisma,
-  User,
-  UserNotifications,
-  UserRelationType,
-  UserRoles,
-} from '@prisma/client';
-import { authorizeUserOrAdmin } from '~/utils/authorizeUserOrAdmin.server';
+import { EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
 import { feiPopulatedInclude } from '~/types/fei';
 

@@ -104,7 +104,6 @@ model Entity {
   updated_at                DateTime                 @default(now()) @updatedAt
   deleted_at                DateTime?
   onboarded_at              DateTime?
-  coupled_entity_id         String?                  @unique
   prefilled                 Boolean                  @default(false)
   is_synced                 Boolean                  @default(false) // just for typing purppose with zustand frontend
   EntityRelatedWithUser     EntityAndUserRelations[] @relation("EntityRelatedWithUser")
@@ -115,8 +114,6 @@ model Entity {
   FeiSviEntity              Fei[]                    @relation("FeiSviEntity")
   FeiIntermediaireEntity    FeiIntermediaire[]       @relation("FeiIntermediaireEntity")
   CarcasseIntermediaire     CarcasseIntermediaire[]  @relation("CarcasseIntermediaireEntity")
-  CoupledEntity             Entity?                  @relation("CoupledEntity", fields: [coupled_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  CoupledEntity_opposite    Entity?                  @relation("CoupledEntity")
   ETGRelatedWithEntity      ETGAndEntityRelations[]  @relation("ETGRelatedWithEntity")
   EntityRelatedWithETG      ETGAndEntityRelations[]  @relation("EntityRelatedWithETG")
 }

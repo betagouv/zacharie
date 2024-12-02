@@ -16,3 +16,17 @@ export const userFeiSelect = {
 export type UserForFei = Prisma.UserGetPayload<{
   select: typeof userFeiSelect;
 }>;
+
+export const userAdminSelect = {
+  id: true,
+  email: true,
+  nom_de_famille: true,
+  prenom: true,
+  code_postal: true,
+  ville: true,
+  roles: true,
+} as const;
+
+export type UserForAdmin = Prisma.UserGetPayload<{
+  select: typeof userAdminSelect;
+}>;
