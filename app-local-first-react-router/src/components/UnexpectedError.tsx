@@ -1,8 +1,8 @@
-import { useLocation } from "react-router";
-import technicalError from "@codegouvfr/react-dsfr/dsfr/artwork/pictograms/system/technical-error.svg?url";
-import artworkDarkSvgUrl from "@codegouvfr/react-dsfr/dsfr/artwork/background/ovoid.svg?url";
+import { useLocation } from 'react-router';
+import technicalError from '@codegouvfr/react-dsfr/dsfr/artwork/pictograms/system/technical-error.svg?url';
+import artworkDarkSvgUrl from '@codegouvfr/react-dsfr/dsfr/artwork/background/ovoid.svg?url';
 
-export default function UnexpectedError() {
+export default function UnexpectedError({ resetErrorBoundary }: { resetErrorBoundary: () => void }) {
   const location = useLocation();
   return (
     <main role="main" id="content">
@@ -12,14 +12,22 @@ export default function UnexpectedError() {
             <h1 className="fr-h1">Erreur inattendue</h1>
             <p className="fr-h2 fr-text--sm fr-mb-3w">Erreur 500</p>
             <p className="fr-text--sm fr-mb-5w">
-              Désolé, le service rencontre un problème, nous travaillons pour le résoudre le plus rapidement possible.
+              Désolé, le service rencontre un problème, nous travaillons pour le résoudre le plus rapidement
+              possible.
             </p>
-            <p className="fr-text--lead fr-mb-3w">Essayez de rafraîchir la page ou bien ressayez plus tard.</p>
+            <p className="fr-text--lead fr-mb-3w">
+              Essayez de rafraîchir la page ou bien ressayez plus tard.
+            </p>
             <ul className="fr-btns-group fr-btns-group--inline-md">
               <li>
-                <a className="fr-btn" href="/">
+                <button
+                  type="button"
+                  className="fr-btn"
+                  href="/app/tableau-de-bord"
+                  onClick={resetErrorBoundary}
+                >
                   Page d'accueil
-                </a>
+                </button>
               </li>
               <li>
                 <a

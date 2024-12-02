@@ -50,7 +50,7 @@ export default function MesNotifications() {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/user/${user.id}`, {
           method: 'POST',
           credentials: 'include',
-          body: JSON.stringify({ notifications }),
+          body: JSON.stringify({ notifications, onboarding_finished: true }),
           headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
@@ -65,7 +65,6 @@ export default function MesNotifications() {
       }}
     >
       <title>Mes notifications | Zacharie | Ministère de l'Agriculture</title>
-      <input type="hidden" name="onboarding_finished" value="true" />
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">

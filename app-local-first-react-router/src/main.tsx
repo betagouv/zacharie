@@ -10,6 +10,11 @@ import dsfrColorCss from '@codegouvfr/react-dsfr/dsfr/utility/colors/colors.min.
 import { registerServiceWorker } from './sw/register.ts';
 import '@af-utils/scrollend-polyfill';
 import { createRoutesFromChildren, matchRoutes, useLocation, useNavigationType } from 'react-router';
+import { ErrorBoundary } from 'react-error-boundary';
+import UnexpectedError from './components/UnexpectedError.tsx';
+import { capture } from './services/sentry.ts';
+import { clearCache } from './services/indexed-db.ts';
+
 startReactDsfr({
   // defaultColorScheme: "system",
   defaultColorScheme: 'light',
@@ -74,7 +79,22 @@ createRoot(document.getElementById('root')!).render(
     <link rel="stylesheet" href={tailwind} />
 
     <BrowserRouter>
-      <App />
+      <ErrorBoundary
+        FallbackComponent={UnexpectedError}
+        onError={(error, componentStack) => {
+          capture(error, { extra: { componentStack } });
+        }}
+        onReset={(details) => {
+          console.log('plouf');
+          console.log({ details });
+          clearCache().then(() => {
+            window.location.href = '/app/tableau-de-bord';
+          });
+          // Reset the state of your app so the error doesn't happen again
+        }}
+      >
+        <App />
+      </ErrorBoundary>
     </BrowserRouter>
   </StrictMode>,
 );
