@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Prisma, CarcasseType, UserRoles } from '@prisma/client';
@@ -20,13 +20,44 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { loadFei } from '@app/utils/load-fei';
+import { loadMyRelations } from '@app/utils/load-my-relations';
+import NotFound from '@app/components/NotFound';
+import Chargement from '@app/components/Chargement';
 
 const saisieCarcasseModal = createModal({
   isOpenedByDefault: false,
   id: 'saisie-carcasse-modal',
 });
 
-export default function CarcasseEditSVI() {
+export default function CarcasseSviLoader() {
+  const params = useParams();
+  const state = useZustandStore((state) => state);
+  const fei = state.feis[params.fei_numero!];
+  const [hasTriedLoading, setHasTriedLoading] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    refreshUser('connexion')
+      .then(loadMyRelations)
+      .then(() => loadFei(params.fei_numero!))
+      .then(() => {
+        setHasTriedLoading(true);
+      })
+      .catch((error) => {
+        setHasTriedLoading(true);
+        console.error(error);
+      });
+  }, []);
+
+  if (!fei) {
+    return hasTriedLoading ? <NotFound /> : <Chargement />;
+  }
+  return <CarcasseEditSVI key={fei.numero} />;
+}
+
+export function CarcasseEditSVI() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
