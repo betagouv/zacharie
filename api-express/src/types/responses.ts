@@ -153,10 +153,54 @@ export interface AdminGetEntityResponse {
   error: string;
 }
 
-export interface AdminActionEntityData {
+export interface AdminActionEntityResponse {
   ok: boolean;
   data: {
     entity: EntityForAdmin;
+  };
+  error: string;
+}
+
+export interface AdminNewEntityResponse {
+  ok: boolean;
+  data: {
+    entity: Entity;
+  };
+  error: string;
+}
+
+export interface AdminEntitiesResponse {
+  ok: boolean;
+  data: {
+    entities: Array<Entity>;
+  };
+  error: string;
+}
+
+export interface AdminUsersResponse {
+  ok: boolean;
+  data: {
+    users: Array<User>;
+  };
+  error: string;
+}
+
+export interface AdminUserDataResponse {
+  ok: boolean;
+  data: null | {
+    user: User;
+    identityDone: boolean;
+    examinateurDone: boolean;
+    allEntities: Array<Entity>;
+    userEntitiesRelations: Array<EntityWithUserRelation>;
+  };
+  error: string;
+}
+
+export interface AdminNewUserDataResponse {
+  ok: boolean;
+  data: null | {
+    user: User;
   };
   error: string;
 }

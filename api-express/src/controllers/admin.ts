@@ -4,14 +4,22 @@ const router = express.Router();
 import prisma from '~/prisma';
 import jwt from 'jsonwebtoken';
 import createUserId from '~/utils/createUserId';
-import { EntityRelationType, Entity, EntityTypes, Prisma, UserRoles } from '@prisma/client';
+import { EntityRelationType, EntityTypes, Prisma, UserRoles } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE } from '~/utils/cookie';
 import { SECRET } from '~/config';
 import { userAdminSelect } from '~/types/user';
-import type { AdminGetEntityResponse, AdminActionEntityData } from '~/types/responses';
+import type {
+  AdminGetEntityResponse,
+  AdminActionEntityResponse,
+  AdminUsersResponse,
+  AdminUserDataResponse,
+  AdminEntitiesResponse,
+  AdminNewEntityResponse,
+  AdminNewUserDataResponse,
+} from '~/types/responses';
 import passport from 'passport';
 import validateUser from '~/middlewares/validateUser';
-import { entityAdminInclude, type EntityForAdmin } from '~/types/entity';
+import { entityAdminInclude } from '~/types/entity';
 
 router.post(
   '/user/connect-as',
@@ -19,7 +27,9 @@ router.post(
   validateUser([UserRoles.ADMIN]),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const body = req.body;
-    const email = body['email-utilisateur'] as string;
+    const email = body.email;
+    console.log('body', body);
+    console.log('Email:', email);
     if (!email) {
       res.status(400).send({
         ok: false,
@@ -62,7 +72,9 @@ router.post(
       },
     });
 
-    res.status(200).send({ ok: true, data: { user: createdUser }, error: null });
+    res
+      .status(200)
+      .send({ ok: true, data: { user: createdUser }, error: '' } satisfies AdminNewUserDataResponse);
   }),
 );
 
@@ -78,7 +90,7 @@ router.get(
       },
     });
     if (!user) {
-      res.status(401).send({ ok: false, data: null, error: 'Unauthorized' });
+      res.status(401).send({ ok: false, data: null, error: 'Unauthorized' } satisfies AdminUserDataResponse);
       return;
     }
     const allEntities = await prisma.entity.findMany({
@@ -86,17 +98,24 @@ router.get(
         updated_at: 'desc',
       },
     });
-    const userEntitiesRelations = await prisma.entityAndUserRelations.findMany({
-      where: {
-        owner_id: user.id,
-      },
-      orderBy: {
-        updated_at: 'desc',
-      },
-      include: {
-        EntityRelatedWithUser: true,
-      },
-    });
+    const userEntitiesRelations = await prisma.entityAndUserRelations
+      .findMany({
+        where: {
+          owner_id: user.id,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+        include: {
+          EntityRelatedWithUser: true,
+        },
+      })
+      .then((data) =>
+        data.map((rel) => ({
+          ...rel.EntityRelatedWithUser,
+          relation: rel.relation,
+        })),
+      );
 
     res.status(200).send({
       ok: true,
@@ -114,7 +133,7 @@ router.get(
         userEntitiesRelations,
       },
       error: '',
-    });
+    } satisfies AdminUserDataResponse);
   }),
 );
 
@@ -130,14 +149,32 @@ router.get(
     });
     res.status(200).send({
       ok: true,
-      data: users,
+      data: { users },
       error: '',
-    });
+    } satisfies AdminUsersResponse);
   }),
 );
 
 router.get(
-  '/entite/:entity_id',
+  '/entities',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const entities = await prisma.entity.findMany({
+      orderBy: {
+        type: 'asc',
+      },
+    });
+    res.status(200).send({
+      ok: true,
+      data: { entities },
+      error: '',
+    } satisfies AdminEntitiesResponse);
+  }),
+);
+
+router.get(
+  '/entity/:entity_id',
   passport.authenticate('user', { session: false }),
   validateUser([UserRoles.ADMIN]),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -299,7 +336,7 @@ router.get(
 );
 
 router.post(
-  '/nouvelle',
+  '/entity/nouvelle',
   passport.authenticate('user', { session: false }),
   validateUser([UserRoles.ADMIN]),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -314,12 +351,14 @@ router.post(
       include: entityAdminInclude,
     });
 
-    res.status(200).send({ ok: true, data: { entity: createdEntity }, error: null });
+    res
+      .status(200)
+      .send({ ok: true, data: { entity: createdEntity }, error: '' } satisfies AdminNewEntityResponse);
   }),
 );
 
 router.post(
-  '/entite/:entity_id',
+  '/entity/:entity_id',
   passport.authenticate('user', { session: false }),
   validateUser([UserRoles.ADMIN]),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -340,7 +379,7 @@ router.post(
 
       res
         .status(200)
-        .send({ ok: true, data: { entity: entity! }, error: '' } satisfies AdminActionEntityData);
+        .send({ ok: true, data: { entity: entity! }, error: '' } satisfies AdminActionEntityResponse);
       return;
     }
     if (body._action === 'add-etg-relation') {
@@ -366,7 +405,7 @@ router.post(
 
       res
         .status(200)
-        .send({ ok: true, data: { entity: entity! }, error: '' } satisfies AdminActionEntityData);
+        .send({ ok: true, data: { entity: entity! }, error: '' } satisfies AdminActionEntityResponse);
       return;
     }
 
@@ -391,7 +430,7 @@ router.post(
 
     res
       .status(200)
-      .send({ ok: true, data: { entity: updatedEntity }, error: '' } satisfies AdminActionEntityData);
+      .send({ ok: true, data: { entity: updatedEntity }, error: '' } satisfies AdminActionEntityResponse);
   }),
 );
 

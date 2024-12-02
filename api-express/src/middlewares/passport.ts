@@ -48,6 +48,7 @@ export default function configurePassport(app: Express) {
           });
 
           if (user) {
+            console.log('User found:', user.email);
             // console.log('User found:', user.id);
             if (user.deleted_at) {
               // console.log('User has been deleted');
