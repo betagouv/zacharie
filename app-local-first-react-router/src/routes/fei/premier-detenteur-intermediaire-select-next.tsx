@@ -149,12 +149,6 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
   const nextOwnersWorkingWith = nextOwners.filter((o) => o.relation !== 'NONE');
   const nextOwnersNotWorkingWith = nextOwners.filter((o) => o.relation === 'NONE');
 
-  console.log({
-    nextOwnersWorkingWith,
-    nextOwnersNotWorkingWith,
-    nextRole,
-  });
-
   return (
     <>
       <form

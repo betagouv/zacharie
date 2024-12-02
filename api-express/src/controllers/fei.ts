@@ -34,20 +34,21 @@ router.post(
     if (!feiNumero) {
       res.status(400).send({
         ok: false,
-        data: null,
+        data: { fei: null },
         error: 'Le numéro de fiche est obligatoire',
-      });
+      } satisfies FeiResponse);
       return;
     }
     let existingFei = await prisma.fei.findUnique({
       where: { numero: feiNumero },
+      include: feiPopulatedInclude,
     });
     if (existingFei?.deleted_at) {
       res.status(200).send({
         ok: true,
         data: { fei: existingFei },
         error: '',
-      });
+      } satisfies FeiResponse);
       return;
     }
 
@@ -68,6 +69,7 @@ router.post(
       const deletedFei = await prisma.fei.update({
         where: { numero: feiNumero },
         data: { deleted_at: body.deleted_at },
+        include: feiPopulatedInclude,
       });
       await prisma.carcasse.updateMany({
         where: { fei_numero: feiNumero },
@@ -85,7 +87,7 @@ router.post(
         ok: true,
         data: { fei: deletedFei },
         error: '',
-      });
+      } satisfies FeiResponse);
       return;
     }
 
@@ -95,6 +97,7 @@ router.post(
           numero: feiNumero,
           created_by_user_id: user.id,
         },
+        include: feiPopulatedInclude,
       });
     }
 
@@ -281,6 +284,7 @@ router.post(
     const savedFei = await prisma.fei.update({
       where: { numero: feiNumero },
       data: nextFei,
+      include: feiPopulatedInclude,
     });
 
     if (existingFei.fei_next_owner_role !== UserRoles.SVI && savedFei.fei_next_owner_role === UserRoles.SVI) {
@@ -343,7 +347,7 @@ router.post(
           fei: savedFei,
         },
         error: '',
-      });
+      } satisfies FeiResponse);
       return;
     }
 
@@ -441,7 +445,7 @@ router.post(
         fei: savedFei,
       },
       error: '',
-    });
+    } satisfies FeiResponse);
   }),
 );
 

@@ -79,7 +79,7 @@ export interface UserMyRelationsResponse {
 export interface FeiResponse {
   ok: boolean;
   data: {
-    fei: FeiPopulated;
+    fei: FeiPopulated | null;
   };
   error: string;
 }

@@ -145,7 +145,9 @@ export default function CurrentOwnerConfirm({
         fei_intermediaire_user_id: user.id,
         fei_intermediaire_role: forcedNextRole || fei.fei_next_owner_role!,
         fei_intermediaire_entity_id: forceNextEntityId || fei.fei_next_owner_entity_id || '',
-        check_finished_at: null,
+        // on met le check fini pour que le transporteur n'ait qu'un seul clic à faire
+        check_finished_at:
+          nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO ? dayjs().toDate() : null,
         created_at: dayjs().toDate(),
         updated_at: dayjs().toDate(),
         commentaire: null,
@@ -155,7 +157,18 @@ export default function CurrentOwnerConfirm({
         is_synced: false,
       };
       useZustandStore.getState().createFeiIntermediaire(newIntermediaire);
+      if (nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
+        // on envoie directement à l'ETG
+        if (fei.fei_next_owner_role === UserRoles.ETG) {
+          nextFei.fei_next_owner_role = UserRoles.ETG;
+          nextFei.fei_next_owner_entity_id = fei.fei_next_owner_entity_id;
+          nextFei.fei_next_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
+          nextFei.fei_next_owner_user_id = null;
+          nextFei.fei_next_owner_user_name_cache = null;
+        }
+      }
     }
+    updateFei(fei.numero, nextFei);
   }
 
   if (!canConfirmCurrentOwner) {

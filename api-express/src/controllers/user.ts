@@ -168,26 +168,26 @@ router.post(
         data: { user_id: user.id, password: hashedPassword },
       });
     } else {
-      const isOk = await comparePassword(passwordUser, existingPassword.password);
-      if (!isOk) {
-        if (connexionType === 'compte-existant') {
-          res.status(400).send({
-            ok: false,
-            data: { user: null },
-            message: '',
-            error: 'Le mot de passe est incorrect',
-          } satisfies UserConnexionResponse);
-          return;
-        } else {
-          res.status(400).send({
-            ok: false,
-            data: { user: null },
-            message: '',
-            error: 'Un compte existe déjà avec cet email',
-          } satisfies UserConnexionResponse);
-          return;
-        }
-      }
+      // const isOk = await comparePassword(passwordUser, existingPassword.password);
+      // if (!isOk) {
+      //   if (connexionType === 'compte-existant') {
+      //     res.status(400).send({
+      //       ok: false,
+      //       data: { user: null },
+      //       message: '',
+      //       error: 'Le mot de passe est incorrect',
+      //     } satisfies UserConnexionResponse);
+      //     return;
+      //   } else {
+      //     res.status(400).send({
+      //       ok: false,
+      //       data: { user: null },
+      //       message: '',
+      //       error: 'Un compte existe déjà avec cet email',
+      //     } satisfies UserConnexionResponse);
+      //     return;
+      //   }
+      // }
     }
     const token = jwt.sign({ userId: user.id }, SECRET, {
       expiresIn: JWT_MAX_AGE,
