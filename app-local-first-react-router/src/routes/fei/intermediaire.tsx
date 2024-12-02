@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
-import { Prisma, CarcasseIntermediaire, Carcasse, CarcasseType } from '@prisma/client';
+import { Prisma, CarcasseIntermediaire, Carcasse, CarcasseType, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Accordion } from '@codegouvfr/react-dsfr/Accordion';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
@@ -20,6 +20,7 @@ export default function FEICurrentIntermediaire() {
   const state = useZustandStore((state) => state);
   const updateFeiIntermediaire = state.updateFeiIntermediaire;
   const fei = state.feis[params.fei_numero!];
+  const etgs = state.etgsIds.map((id) => state.entities[id]);
   const originalCarcasses = (state.carcassesIdsByFei[params.fei_numero!] || []).map(
     (cId) => state.carcasses[cId],
   );
@@ -34,7 +35,24 @@ export default function FEICurrentIntermediaire() {
     .map((carcInterId) => state.carcassesIntermediaires[carcInterId]) // `carcInterId` is `fei_numero__bracelet__intermediaire_id`
     .filter((c) => c != null);
 
+  const isEtgWorkingFor = useMemo(() => {
+    if (fei.fei_current_owner_role === UserRoles.ETG && !!fei.fei_current_owner_entity_id) {
+      if (user.roles.includes(UserRoles.ETG)) {
+        if (state.etgsIds.includes(fei.fei_current_owner_entity_id)) {
+          const etg = state.entities[fei.fei_current_owner_entity_id];
+          if (etg.relation === 'WORKING_FOR') {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }, [fei, user, state]);
+
   const canEdit = useMemo(() => {
+    if (isEtgWorkingFor) {
+      return true;
+    }
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
@@ -48,7 +66,7 @@ export default function FEICurrentIntermediaire() {
     //   return false;
     // }
     return true;
-  }, [fei, user, intermediaire]);
+  }, [fei, user, intermediaire, isEtgWorkingFor]);
 
   const PriseEnChargeInput = canEdit ? Input : InputNotEditable;
 
@@ -101,7 +119,7 @@ export default function FEICurrentIntermediaire() {
       carcassesManquantes: Object.values(carcassesManquantes),
       // carcassesToCheck: Object.values(carcassesToCheck),
     };
-  }, [intermediaireCarcasses, intermediaire, fei]);
+  }, [intermediaireCarcasses, intermediaire, fei, state.carcasses]);
 
   const labelCheckDone = useMemo(() => {
     let label = `${
@@ -140,10 +158,13 @@ export default function FEICurrentIntermediaire() {
   ]);
 
   const needSelectNextUser = useMemo(() => {
-    if (fei.fei_current_owner_user_id !== user.id) {
+    if (!intermediaire.check_finished_at) {
       return false;
     }
-    if (!intermediaire.check_finished_at) {
+    if (isEtgWorkingFor) {
+      return true;
+    }
+    if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
     const latestIntermediaire = intermediaires[0];
@@ -151,7 +172,7 @@ export default function FEICurrentIntermediaire() {
       return false;
     }
     return true;
-  }, [fei, user, intermediaire, intermediaires]);
+  }, [fei, user, intermediaire, intermediaires, isEtgWorkingFor]);
 
   // const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
   const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(true);
