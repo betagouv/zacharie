@@ -1,37 +1,43 @@
-import { Form, redirect, useNavigation, type ClientActionFunctionArgs } from '@remix-run/react';
+import { useNavigate } from 'react-router';
+import { useState } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Prisma, EntityTypes } from '@prisma/client';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
-import type { AdminNouvelleEntiteActionData } from '@api/routes/api.admin.action.entite.nouvelle';
-import { getFormData } from '@app/utils/getFormData';
+import type { AdminNewEntityResponse } from '@api/src/types/responses';
 
-export function meta() {
-  return [
-    {
-      title: "Nouvelle entité | Admin | Zacharie | Ministère de l'Agriculture",
-    },
-  ];
-}
-
-export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const formData = await getFormData(request);
-  console.log('formData tableau-de-bord.admin.entite.nouvelle', Object.fromEntries(formData));
-  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/admin/action/entite/nouvelle`, {
-    method: 'POST',
-    credentials: 'include',
-    body: formData,
-  }).then((response) => (response.json ? response.json() : response))) as AdminNouvelleEntiteActionData;
-  if (response.ok && response.data) {
-    return redirect(`/app/tableau-de-bord/admin/entite/${response.data.id}`);
-  }
-  return response;
-}
 export default function AdminNouvelleEntite() {
-  const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   return (
-    <Form className="fr-container fr-container--fluid fr-my-md-14v" method="POST">
+    <form
+      className="fr-container fr-container--fluid fr-my-md-14v"
+      method="POST"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        setIsLoading(true);
+        const formData = new FormData(event.target as HTMLFormElement);
+        fetch(`${import.meta.env.VITE_API_URL}/admin/entity/nouvelle`, {
+          method: 'POST',
+          credentials: 'include',
+          body: JSON.stringify(Object.fromEntries(formData)),
+          headers: new Headers({
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          }),
+        })
+          .then((res) => res.json())
+          .then((res) => res as AdminNewEntityResponse)
+          .then((res) => {
+            if (res.ok) {
+              navigate(`/app/tableau-de-bord/admin/entity/${res.data.entity.id}`);
+            } else {
+              setIsLoading(false);
+            }
+          });
+      }}
+    >
       <title>Nouvelle entité | Admin | Zacharie | Ministère de l'Agriculture</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
@@ -102,8 +108,8 @@ export default function AdminNouvelleEntite() {
               <ButtonsGroup
                 buttons={[
                   {
-                    children: navigation.state === 'idle' ? 'Créer' : 'Création en cours...',
-                    disabled: navigation.state !== 'idle',
+                    children: isLoading ? 'Création en cours...' : 'Créer',
+                    disabled: isLoading,
                     type: 'submit',
                   },
                 ]}
@@ -112,6 +118,6 @@ export default function AdminNouvelleEntite() {
           </div>
         </div>
       </div>
-    </Form>
+    </form>
   );
 }

@@ -1,111 +1,133 @@
-import { useState, type RefObject, useRef, useMemo } from "react";
-import {
-  json,
-  redirect,
-  Link,
-  useFetcher,
-  useLoaderData,
-  type ClientLoaderFunctionArgs,
-  type ClientActionFunctionArgs,
-} from "@remix-run/react";
-import { ButtonsGroup } from "@codegouvfr/react-dsfr/ButtonsGroup";
-import { Button } from "@codegouvfr/react-dsfr/Button";
-import { Input } from "@codegouvfr/react-dsfr/Input";
-import { Notice } from "@codegouvfr/react-dsfr/Notice";
-import { Entity, EntityRelationType, UserRoles, Prisma } from "@prisma/client";
-import InputVille from "@app/components/InputVille";
-import RolesCheckBoxes from "@app/components/RolesCheckboxes";
-import { RadioButtons } from "@codegouvfr/react-dsfr/RadioButtons";
-import { Tabs, type TabsProps } from "@codegouvfr/react-dsfr/Tabs";
-import { Table } from "@codegouvfr/react-dsfr/Table";
-import { getUserRoleLabel } from "@app/utils/get-user-roles-label";
-import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
-import type { AdminUserLoaderData } from "@api/routes/api.admin.loader.utilisateur.$userId";
-import { getFormData } from "@app/utils/getFormData";
+import { useState, type RefObject, useRef, useMemo, useEffect } from 'react';
+import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
+import { Button } from '@codegouvfr/react-dsfr/Button';
+import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Notice } from '@codegouvfr/react-dsfr/Notice';
+import { Entity, EntityRelationType, UserRoles, Prisma, UserNotifications } from '@prisma/client';
+import InputVille from '@app/components/InputVille';
+import RolesCheckBoxes from '@app/components/RolesCheckboxes';
+import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
+import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
+import { Table } from '@codegouvfr/react-dsfr/Table';
+import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
+import type { AdminUserDataResponse } from '@api/src/types/responses';
+import { Link, useParams } from 'react-router';
+import Chargement from '@app/components/Chargement';
 
-export function meta() {
-  return [
-    {
-      title: "Utilisateur | Admin | Zacharie | Ministère de l'Agriculture",
-    },
-  ];
-}
+const loadData = (userId: string): Promise<AdminUserDataResponse> =>
+  fetch(`${import.meta.env.VITE_API_URL}/admin/user/${userId}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: new Headers({
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    }),
+  })
+    .then((res) => res.json())
+    .then((res) => res as AdminUserDataResponse);
 
-export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const formData = await getFormData(request);
-  console.log("formdata tableau-de-bord.admin.utilisateur.$userId", Object.fromEntries(formData));
-  const route = formData.get("route") as string;
-  if (!route) {
-    return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
-  }
-  const url = `${import.meta.env.VITE_API_URL}${route}`;
-  const response = await fetch(url, {
-    method: "POST",
-    credentials: "include",
-    body: formData,
-    headers: {
-      Accept: "application/json",
-    },
-  }).then((response) => response.json());
-  return response;
-}
+type State = NonNullable<AdminUserDataResponse['data']>;
 
-export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
-  const admin = await getMostFreshUser();
-  if (!admin?.roles?.includes(UserRoles.ADMIN)) {
-    throw redirect(`/app/connexion?type=compte-existant`);
-  }
-  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/admin/loader/utilisateur/${params.userId}`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-    },
-  }).then((res) => res.json())) as AdminUserLoaderData;
-  if (!response.ok) {
-    throw redirect("/");
-  }
-  return response.data!;
-}
+const initialState: State = {
+  user: {
+    id: '',
+    email: '',
+    nom_de_famille: '',
+    prenom: '',
+    telephone: '',
+    addresse_ligne_1: '',
+    addresse_ligne_2: '',
+    code_postal: '',
+    ville: '',
+    activated: true,
+    roles: [],
+    numero_cfei: '',
+    user_entities_vivible_checkbox: false,
+    created_at: new Date(),
+    updated_at: new Date(),
+    last_login_at: null,
+    last_seen_at: null,
+    deleted_at: null,
+    onboarded_at: null,
+    notifications: [UserNotifications.EMAIL, UserNotifications.PUSH],
+    web_push_tokens: [],
+    prefilled: false,
+    is_synced: true,
+  },
+  identityDone: false,
+  examinateurDone: false,
+  allEntities: [],
+  userEntitiesRelations: [],
+};
 
 export default function AdminUser() {
-  const { user, identityDone, examinateurDone, userEntitiesRelations } = useLoaderData<typeof clientLoader>();
+  const params = useParams();
+  const [userResponseData, setUserResponseData] = useState<State>(initialState);
+  const { user, identityDone, examinateurDone, userEntitiesRelations } = userResponseData;
 
-  const userFetcher = useFetcher({ key: "mon-profil-mes-informations" });
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    loadData(params.userId!).then((res) => {
+      if (res.ok && res.data) {
+        setUserResponseData(res.data as State);
+      }
+    });
+  }, [params.userId]);
+
   const activeFormRef = useRef<HTMLFormElement>(null);
   const idFormRef = useRef<HTMLFormElement>(null);
   const rolesFormRef = useRef<HTMLFormElement>(null);
-  const handleUserFormSubmit = (formRef: RefObject<HTMLFormElement>) => () => {
+  const handleUserFormBlur = (formRef: RefObject<HTMLFormElement>) => () => {
     const formData = new FormData(formRef.current!);
-    formData.append("route", `/api/action/user/${user.id}`);
-    userFetcher.submit(formData, {
-      method: "POST",
-      preventScrollReset: true, // Prevent scroll reset on submission
-    });
+    fetch(`${import.meta.env.VITE_API_URL}/user/${params.userId}`, {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify(Object.fromEntries(formData)),
+      headers: new Headers({
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      }),
+    })
+      .then((res) => res.json())
+      .then(() => {
+        loadData(params.userId!).then((res) => {
+          if (res.ok && res.data) {
+            setUserResponseData(res.data as State);
+          }
+        });
+      });
   };
 
-  const [selectedTabId, setSelectedTabId] = useState("Identité");
-  const tabs: TabsProps["tabs"] = [
+  const [selectedTabId, setSelectedTabId] = useState('Identité');
+  const tabs: TabsProps['tabs'] = [
     {
-      tabId: "Roles",
-      label: (user?.roles?.length ? "✅ " : "") + "Roles",
+      tabId: 'Roles',
+      label: (user?.roles?.length ? '✅ ' : '') + 'Roles',
     },
     {
-      tabId: "Identité",
-      label: (identityDone && examinateurDone ? "✅ " : "") + "Identité",
+      tabId: 'Identité',
+      label: (identityDone && examinateurDone ? '✅ ' : '') + 'Identité',
     },
     {
-      tabId: "Salarié de / Dirigeant de / Propriétaire de",
+      tabId: 'Salarié de / Dirigeant de / Propriétaire de',
       label: `Salarié de / Dirigeant de / Propriétaire de (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
     },
     {
-      tabId: "Partenaire de",
+      tabId: 'Partenaire de',
       label: `Partenaire de (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
     },
   ];
 
+  if (!user.id) {
+    return <Chargement />;
+  }
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
+      <title>
+        {user.prenom ? `${user.prenom} ${user.nom_de_famille}` : user.email} | Admin | Zacharie | Ministère de
+        l'Agriculture
+      </title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <div className="p-4 pb-32 md:p-8 md:pb-0">
@@ -121,40 +143,45 @@ export default function AdminUser() {
                   <>{user.email}</>
                 )}
                 <br />
-                {!user.activated ? <small>❌ Utilisateur inactif</small> : <small>✅ Utilisateur activé</small>}
+                {!user.activated ? (
+                  <small>❌ Utilisateur inactif</small>
+                ) : (
+                  <small>✅ Utilisateur activé</small>
+                )}
               </h1>
-              <userFetcher.Form
+              <form
                 id="user_active_form"
                 method="POST"
                 ref={activeFormRef}
-                onBlur={handleUserFormSubmit(activeFormRef)}
-                preventScrollReset
+                onBlur={handleUserFormBlur(activeFormRef)}
+                onSubmit={(event) => event.preventDefault()}
               >
                 <input type="hidden" name="route" value={`/api/action/user/${user.id}`} />
 
                 <RadioButtons
+                  key={user.activated ? 'true' : 'false'}
                   options={[
                     {
-                      label: "Utilisateur activé",
+                      label: 'Utilisateur activé',
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.activated,
-                        value: "true",
-                        onChange: !user.activated ? handleUserFormSubmit(activeFormRef) : undefined,
+                        value: 'true',
+                        onChange: !user.activated ? handleUserFormBlur(activeFormRef) : undefined,
                         defaultChecked: user.activated,
                       },
                     },
                     {
-                      label: "Utilisateur inactif",
+                      label: 'Utilisateur inactif',
                       nativeInputProps: {
                         name: Prisma.UserScalarFieldEnum.activated,
-                        value: "false",
-                        onChange: user.activated ? handleUserFormSubmit(activeFormRef) : undefined,
+                        value: 'false',
+                        onChange: user.activated ? handleUserFormBlur(activeFormRef) : undefined,
                         defaultChecked: !user.activated,
                       },
                     },
                   ]}
                 />
-              </userFetcher.Form>
+              </form>
             </div>
             <Tabs
               selectedTabId={selectedTabId}
@@ -162,41 +189,45 @@ export default function AdminUser() {
               onTabChange={setSelectedTabId}
               className="mb-6 bg-white md:shadow [&_.fr-tabs\_\_list]:!bg-alt-blue-france [&_.fr-tabs\_\_list]:!shadow-none"
             >
-              {selectedTabId === "Roles" && (
-                <userFetcher.Form
+              {selectedTabId === 'Roles' && (
+                <form
                   id="user_roles_form"
                   method="POST"
                   ref={rolesFormRef}
-                  onBlur={handleUserFormSubmit(rolesFormRef)}
-                  preventScrollReset
+                  onBlur={handleUserFormBlur(rolesFormRef)}
+                  onSubmit={(event) => event.preventDefault()}
                 >
                   <input type="hidden" name="route" value={`/api/action/user/${user.id}`} />
                   {user.roles.includes(UserRoles.ADMIN) && (
                     <input type="hidden" name={Prisma.UserScalarFieldEnum.roles} value={UserRoles.ADMIN} />
                   )}
-                  <RolesCheckBoxes withAdmin user={user} legend="Sélectionnez tous les rôles de cet utilisateur" />
+                  <RolesCheckBoxes
+                    withAdmin
+                    user={user}
+                    legend="Sélectionnez tous les rôles de cet utilisateur"
+                  />
                   <div className="relative flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
                     <ButtonsGroup
                       buttons={[
                         {
-                          children: "Enregistrer",
-                          type: "submit",
+                          children: 'Enregistrer',
+                          type: 'submit',
                           nativeButtonProps: {
-                            form: "user_roles_form",
+                            form: 'user_roles_form',
                           },
                         },
                       ]}
                     />
                   </div>
-                </userFetcher.Form>
+                </form>
               )}
-              {selectedTabId === "Identité" && (
-                <userFetcher.Form
+              {selectedTabId === 'Identité' && (
+                <form
                   id="user_data_form"
                   method="POST"
                   ref={idFormRef}
-                  onBlur={handleUserFormSubmit(idFormRef)}
-                  preventScrollReset
+                  onBlur={handleUserFormBlur(idFormRef)}
+                  onSubmit={(event) => event.preventDefault()}
                 >
                   <input type="hidden" name="route" value={`/api/action/user/${user.id}`} />
                   <input type="hidden" name={Prisma.UserScalarFieldEnum.prefilled} value="true" />
@@ -206,9 +237,9 @@ export default function AdminUser() {
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.email,
                         name: Prisma.UserScalarFieldEnum.email,
-                        autoComplete: "off",
+                        autoComplete: 'off',
                         required: true,
-                        defaultValue: user.email ?? "",
+                        defaultValue: user.email ?? '',
                       }}
                     />
                   </div>
@@ -218,9 +249,9 @@ export default function AdminUser() {
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.nom_de_famille,
                         name: Prisma.UserScalarFieldEnum.nom_de_famille,
-                        autoComplete: "off",
+                        autoComplete: 'off',
                         required: true,
-                        defaultValue: user.nom_de_famille ?? "",
+                        defaultValue: user.nom_de_famille ?? '',
                       }}
                     />
                   </div>
@@ -230,9 +261,9 @@ export default function AdminUser() {
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.prenom,
                         name: Prisma.UserScalarFieldEnum.prenom,
-                        autoComplete: "off",
+                        autoComplete: 'off',
                         required: true,
-                        defaultValue: user.prenom ?? "",
+                        defaultValue: user.prenom ?? '',
                       }}
                     />
                   </div>
@@ -243,8 +274,8 @@ export default function AdminUser() {
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.telephone,
                         name: Prisma.UserScalarFieldEnum.telephone,
-                        autoComplete: "off",
-                        defaultValue: user.telephone ?? "",
+                        autoComplete: 'off',
+                        defaultValue: user.telephone ?? '',
                       }}
                     />
                   </div>
@@ -255,9 +286,9 @@ export default function AdminUser() {
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                         name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                        autoComplete: "off",
+                        autoComplete: 'off',
                         required: true,
-                        defaultValue: user.addresse_ligne_1 ?? "",
+                        defaultValue: user.addresse_ligne_1 ?? '',
                       }}
                     />
                   </div>
@@ -268,8 +299,8 @@ export default function AdminUser() {
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
                         name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                        autoComplete: "off",
-                        defaultValue: user.addresse_ligne_2 ?? "",
+                        autoComplete: 'off',
+                        defaultValue: user.addresse_ligne_2 ?? '',
                       }}
                     />
                   </div>
@@ -282,23 +313,24 @@ export default function AdminUser() {
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.code_postal,
                         name: Prisma.UserScalarFieldEnum.code_postal,
-                        autoComplete: "off",
+                        autoComplete: 'off',
                         required: true,
-                        defaultValue: user.code_postal ?? "",
+                        defaultValue: user.code_postal ?? '',
                       }}
                     />
                     <div className="fr-fieldset__element fr-fieldset__element--inline@md fr-fieldset__element--inline-grow">
                       <InputVille
-                        postCode={user.code_postal ?? ""}
+                        key={user.ville}
+                        postCode={user.code_postal ?? ''}
                         trimPostCode
                         label="Ville ou commune"
                         hintText="Exemple : Montpellier"
                         nativeInputProps={{
                           id: Prisma.UserScalarFieldEnum.ville,
                           name: Prisma.UserScalarFieldEnum.ville,
-                          autoComplete: "off",
+                          autoComplete: 'off',
                           required: true,
-                          defaultValue: user.ville ?? "",
+                          defaultValue: user.ville ?? '',
                         }}
                       />
                     </div>
@@ -311,9 +343,9 @@ export default function AdminUser() {
                         nativeInputProps={{
                           id: Prisma.UserScalarFieldEnum.numero_cfei,
                           name: Prisma.UserScalarFieldEnum.numero_cfei,
-                          autoComplete: "off",
+                          autoComplete: 'off',
                           required: true,
-                          defaultValue: user.numero_cfei ?? "",
+                          defaultValue: user.numero_cfei ?? '',
                         }}
                       />
                     </div>
@@ -322,22 +354,32 @@ export default function AdminUser() {
                     <ButtonsGroup
                       buttons={[
                         {
-                          children: "Enregistrer",
-                          type: "submit",
+                          children: 'Enregistrer',
+                          type: 'submit',
                           nativeButtonProps: {
-                            form: "user_data_form",
+                            form: 'user_data_form',
                           },
                         },
                       ]}
                     />
                   </div>
-                </userFetcher.Form>
+                </form>
               )}
-              {selectedTabId === "Salarié de / Dirigeant de / Propriétaire de" && (
-                <WorkingWithOrFor relation={EntityRelationType.WORKING_FOR} fetcherKey="working-for" />
+              {selectedTabId === 'Salarié de / Dirigeant de / Propriétaire de' && (
+                <WorkingWithOrFor
+                  relation={EntityRelationType.WORKING_FOR}
+                  fetcherKey="working-for"
+                  userResponseData={userResponseData}
+                  setUserResponseData={setUserResponseData}
+                />
               )}
-              {selectedTabId === "Partenaire de" && (
-                <WorkingWithOrFor relation={EntityRelationType.WORKING_WITH} fetcherKey="working-with" />
+              {selectedTabId === 'Partenaire de' && (
+                <WorkingWithOrFor
+                  userResponseData={userResponseData}
+                  setUserResponseData={setUserResponseData}
+                  relation={EntityRelationType.WORKING_WITH}
+                  fetcherKey="working-with"
+                />
               )}
               <div className="mb-16 ml-6 mt-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
@@ -355,18 +397,23 @@ export default function AdminUser() {
 interface WorkingWithOrForProps {
   relation: EntityRelationType;
   fetcherKey: string;
+  userResponseData: State;
+  setUserResponseData: (data: State) => void;
 }
 
-function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
-  const { user, userEntitiesRelations, allEntities } = useLoaderData<typeof clientLoader>();
-
-  const userEntityFetcher = useFetcher({ key: fetcherKey });
+function WorkingWithOrFor({
+  relation,
+  fetcherKey,
+  userResponseData,
+  setUserResponseData,
+}: WorkingWithOrForProps) {
+  const { user, userEntitiesRelations, allEntities } = userResponseData;
 
   const potentialEntities = useMemo(() => {
-    const userEntityIds: Record<Entity["id"], boolean> = {};
+    const userEntityIds: Record<Entity['id'], boolean> = {};
     for (const userEntityRelation of userEntitiesRelations) {
       if (userEntityRelation.relation === relation) {
-        userEntityIds[userEntityRelation.entity_id] = true;
+        userEntityIds[userEntityRelation.id] = true;
       }
     }
     const entities = [];
@@ -381,35 +428,41 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
   return (
     <>
       {userEntitiesRelations
-        .filter((entityRelation) => entityRelation.relation === relation)
-        .map((entityRelation) => {
-          const entity = entityRelation.EntityRelatedWithUser;
+        .filter((entity) => entity.relation === relation)
+        .map((entity) => {
           return (
             <div key={entity.id} className="fr-fieldset__element">
               <Notice
                 className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
                 style={{
-                  boxShadow: "inset 0 -2px 0 0 var(--border-plain-grey)",
+                  boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
                 }}
                 isClosable
                 onClose={() => {
-                  userEntityFetcher.submit(
-                    {
-                      owner_id: user.id,
-                      entity_id: entity.id,
-                      relation: relation,
-                      _action: "delete",
-                      route: `/api/action/user-entity/${entity.id}`,
+                  fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      _action: 'delete',
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+                      relation,
+                    }),
+                    headers: {
+                      Accept: 'application/json',
+                      'Content-Type': 'application/json',
                     },
-                    {
-                      method: "POST",
-                      preventScrollReset: true,
-                    },
-                  );
+                  })
+                    .then((res) => res.json())
+                    .then(() => {
+                      loadData(entity.id).then((response) => {
+                        if (response.data) setUserResponseData(response.data!);
+                      });
+                    });
                 }}
                 title={
                   <Link
-                    to={`/app/tableau-de-bord/admin/entite/${entity.id}`}
+                    to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
                     className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                   >
                     {entity.nom_d_usage}
@@ -432,20 +485,37 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
           noCaption
           className="[&_td]:h-px"
           data={potentialEntities.map((entity) => [
-            <userEntityFetcher.Form
+            <form
               key={entity.id}
               id={fetcherKey}
               className="fr-fieldset__element flex w-full flex-col items-start gap-4"
               method="POST"
-              preventScrollReset
+              onSubmit={(event) => {
+                event.preventDefault();
+                fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
+                  method: 'POST',
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    _action: 'create',
+                    [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
+                    relation,
+                    [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+                  }),
+                  headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                  },
+                })
+                  .then((res) => res.json())
+                  .then(() => {
+                    loadData(user.id).then((response) => {
+                      if (response.data) setUserResponseData(response.data!);
+                    });
+                  });
+              }}
             >
-              <input type="hidden" name={Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id} value={user.id} />
-              <input type="hidden" name="_action" value="create" />
-              <input type="hidden" name="route" value={`/api/action/user-entity/${entity.id}`} />
-              <input type="hidden" name={Prisma.EntityAndUserRelationsScalarFieldEnum.relation} value={relation} />
-              <input type="hidden" name={Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id} value={entity.id} />
               <Link
-                to={`/app/tableau-de-bord/admin/entite/${entity.id}`}
+                to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
                 className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
               >
                 {entity.nom_d_usage}
@@ -456,12 +526,15 @@ function WorkingWithOrFor({ relation, fetcherKey }: WorkingWithOrForProps) {
                 {entity.code_postal} {entity.ville}
               </Link>
               <Button type="submit">Ajouter</Button>
-            </userEntityFetcher.Form>,
-            <p key={user.id} className="!inline-flex size-full items-center justify-start !bg-none !no-underline">
+            </form>,
+            <p
+              key={user.id}
+              className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+            >
               {entity.type}
             </p>,
           ])}
-          headers={["Entité", "Type"]}
+          headers={['Entité', 'Type']}
         />
       </div>
     </>

@@ -17,6 +17,13 @@ import MesInformations from './routes/mon-profil/mes-informations';
 import MesNotifications from './routes/mon-profil/mes-notifications';
 import * as Sentry from '@sentry/react';
 import { capture } from './services/sentry';
+import { UserRoles } from '@prisma/client';
+import AdminUsers from './routes/admin/users';
+import AdminNewUser from './routes/admin/user-add';
+import AdminUser from './routes/admin/user.$userId';
+import AdminNouvelleEntite from './routes/admin/entity-nouvelle';
+import AdminEntity from './routes/admin/entity-$entityId';
+import AdminEntites from './routes/admin/entities';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -44,6 +51,7 @@ function App() {
             }
           />
           <Route
+            path="tableau-de-bord"
             element={
               <RestrictedRoute id="tableau-de-bord-layout">
                 <TableauDeBordLayout />
@@ -51,7 +59,7 @@ function App() {
             }
           >
             <Route
-              path="tableau-de-bord"
+              path="/app/tableau-de-bord"
               element={
                 <RestrictedRoute id="tableau-de-bord-path">
                   <TableauDeBordIndex />
@@ -59,7 +67,7 @@ function App() {
               }
             />
             <Route
-              path="tableau-de-bord/fei/:fei_numero"
+              path="fei/:fei_numero"
               element={
                 <RestrictedRoute id="fei_numero">
                   <Fei />
@@ -67,7 +75,7 @@ function App() {
               }
             />
             <Route
-              path="tableau-de-bord/carcasse/:fei_numero/:zacharie_carcasse_id"
+              path="carcasse/:fei_numero/:zacharie_carcasse_id"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
                   <Carcasse />
@@ -75,7 +83,7 @@ function App() {
               }
             />
             <Route
-              path="tableau-de-bord/carcasse-svi/:fei_numero/:zacharie_carcasse_id"
+              path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
                   <CarcasseEditSVI />
@@ -83,7 +91,7 @@ function App() {
               }
             />
             <Route
-              path="tableau-de-bord/mon-profil/mes-roles"
+              path="mon-profil/mes-roles"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
                   <MesRoles />
@@ -91,7 +99,7 @@ function App() {
               }
             />
             <Route
-              path="tableau-de-bord/mon-profil/mes-informations"
+              path="mon-profil/mes-informations"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
                   <MesInformations />
@@ -99,7 +107,7 @@ function App() {
               }
             />
             <Route
-              path="tableau-de-bord/mon-profil/mes-ccgs"
+              path="mon-profil/mes-ccgs"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
                   <MesCCGs />
@@ -107,13 +115,63 @@ function App() {
               }
             />
             <Route
-              path="tableau-de-bord/mon-profil/mes-notifications"
+              path="mon-profil/mes-notifications"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
                   <MesNotifications />
                 </RestrictedRoute>
               }
             />
+            <Route path="admin" element={<Outlet />}>
+              <Route
+                path="users"
+                element={
+                  <RestrictedRoute id="users" roles={[UserRoles.ADMIN]}>
+                    <AdminUsers />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="add-user"
+                element={
+                  <RestrictedRoute id="add-user" roles={[UserRoles.ADMIN]}>
+                    <AdminNewUser />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="user/:userId"
+                element={
+                  <RestrictedRoute id="user/:userId" roles={[UserRoles.ADMIN]}>
+                    <AdminUser />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="entities"
+                element={
+                  <RestrictedRoute id="entities" roles={[UserRoles.ADMIN]}>
+                    <AdminEntites />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="add-entity"
+                element={
+                  <RestrictedRoute id="add-entity" roles={[UserRoles.ADMIN]}>
+                    <AdminNouvelleEntite />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="entity/:entityId"
+                element={
+                  <RestrictedRoute id="entity/:entityId" roles={[UserRoles.ADMIN]}>
+                    <AdminEntity />
+                  </RestrictedRoute>
+                }
+              />
+            </Route>
           </Route>
         </Route>
       </SentryRoutes>
@@ -121,7 +179,15 @@ function App() {
   );
 }
 
-function RestrictedRoute({ children, id }: { children: ReactElement; id: string }) {
+function RestrictedRoute({
+  children,
+  id,
+  roles = [],
+}: {
+  children: ReactElement;
+  id: string;
+  roles?: UserRoles[];
+}) {
   const user = getMostFreshUser('RestrictedRoute ' + id);
   const navigate = useNavigate();
 
@@ -131,7 +197,10 @@ function RestrictedRoute({ children, id }: { children: ReactElement; id: string 
     if (!user?.id) {
       navigate('/app/connexion?type=compte-existant');
     }
-  }, [user, navigate]);
+    if (roles.length > 0 && !roles.some((role) => user?.roles.includes(role))) {
+      navigate('/app/connexion?type=compte-existant');
+    }
+  }, [user, navigate, roles]);
 
   if (!user?.id) {
     return <Chargement />;

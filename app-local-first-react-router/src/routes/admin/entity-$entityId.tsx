@@ -8,11 +8,11 @@ import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import InputVille from '@app/components/InputVille';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Table } from '@codegouvfr/react-dsfr/Table';
-import type { AdminGetEntityResponse, AdminActionEntityData } from '@api/src/types/responses';
+import type { AdminGetEntityResponse, AdminActionEntityResponse } from '@api/src/types/responses';
 import type { EntityForAdmin } from '@api/src/types/entity';
 
 const loadData = (entityId: string): Promise<AdminGetEntityResponse> =>
-  fetch(`${import.meta.env.VITE_API_URL}/admin/entite/${entityId}`, {
+  fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entityId}`, {
     method: 'GET',
     credentials: 'include',
     headers: new Headers({
@@ -37,6 +37,7 @@ const initialData: State = {
     address_ligne_2: '',
     code_postal: '',
     ville: '',
+    prefilled: false,
     EntityRelatedWithUser: [],
     created_at: new Date(),
     updated_at: new Date(),
@@ -129,7 +130,7 @@ export default function AdminEntity() {
                   onBlur={(event) => {
                     event.preventDefault();
                     const formData = new FormData(formRef.current!);
-                    fetch(`${import.meta.env.VITE_API_URL}/admin/entite/${params.entityId}`, {
+                    fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${params.entityId}`, {
                       method: 'POST',
                       credentials: 'include',
                       body: JSON.stringify(Object.fromEntries(formData)),
@@ -139,7 +140,7 @@ export default function AdminEntity() {
                       }),
                     })
                       .then((res) => res.json())
-                      .then((res) => res as AdminActionEntityData)
+                      .then((res) => res as AdminActionEntityResponse)
                       .then(() => {
                         loadData(params.entityId!).then((response) => {
                           if (response.data) setAdminEntityResponse(response.data!);
@@ -354,10 +355,8 @@ function UserWorkingWithOrFor({
 
   return (
     <>
-      {entity.EntityRelatedWithUser.filter(
-        (entity: State['entity']['EntityRelatedWithUser']) => entity.relation === relation,
-      ).map((entityRelation: State['entity']['EntityRelatedWithUser']) => {
-        const owner = entityRelation.EntityRelatedWithUser;
+      {entity.EntityRelatedWithUser.filter((entity) => entity.relation === relation).map((entityRelation) => {
+        const owner = entityRelation.UserRelatedWithEntity;
         return (
           <div key={owner.id} className="fr-fieldset__element">
             <Notice
@@ -390,7 +389,7 @@ function UserWorkingWithOrFor({
               }}
               title={
                 <Link
-                  to={`/app/tableau-de-bord/admin/utilisateur/${owner.id}`}
+                  to={`/app/tableau-de-bord/admin/user/${owner.id}`}
                   className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                 >
                   {owner.prenom} {owner.nom_de_famille}
@@ -442,7 +441,7 @@ function UserWorkingWithOrFor({
               }}
             >
               <Link
-                to={`/app/tableau-de-bord/admin/utilisateur/${user.id}`}
+                to={`/app/tableau-de-bord/admin/user/${user.id}`}
                 className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
               >
                 {user.prenom} {user.nom_de_famille}
@@ -542,7 +541,7 @@ function EntitiesRelatedTo({
               }}
               isClosable
               onClose={() => {
-                fetch(`${import.meta.env.VITE_API_URL}/admin/entite/${entity.id}`, {
+                fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entity.id}`, {
                   method: 'POST',
                   credentials: 'include',
                   body: JSON.stringify({
@@ -563,7 +562,7 @@ function EntitiesRelatedTo({
               }}
               title={
                 <Link
-                  to={`/app/tableau-de-bord/admin/entite/${coupledEntity.id}`}
+                  to={`/app/tableau-de-bord/admin/entity/${coupledEntity.id}`}
                   className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                 >
                   {coupledEntity.nom_d_usage}
@@ -603,7 +602,7 @@ function EntitiesRelatedTo({
                   method="POST"
                   onSubmit={(event) => {
                     event.preventDefault();
-                    fetch(`${import.meta.env.VITE_API_URL}/admin/entite/${entity.id}`, {
+                    fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entity.id}`, {
                       method: 'POST',
                       credentials: 'include',
                       body: JSON.stringify({
@@ -627,7 +626,7 @@ function EntitiesRelatedTo({
                   }}
                 >
                   <Link
-                    to={`/app/tableau-de-bord/admin/entite/${otherEntity.id}`}
+                    to={`/app/tableau-de-bord/admin/entity/${otherEntity.id}`}
                     className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                   >
                     {potentialEntityRelated.type}
@@ -645,7 +644,7 @@ function EntitiesRelatedTo({
                 </form>,
                 <Link
                   key={potentialEntityRelated.id}
-                  to={`/app/tableau-de-bord/admin/entite/${potentialEntityRelated.id}`}
+                  to={`/app/tableau-de-bord/admin/entity/${potentialEntityRelated.id}`}
                   className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                 >
                   {potentialEntityRelated.nom_d_usage}
@@ -653,7 +652,7 @@ function EntitiesRelatedTo({
                 </Link>,
                 <Link
                   key={potentialEntityRelated.id}
-                  to={`/app/tableau-de-bord/admin/entite/${potentialEntityRelated.id}`}
+                  to={`/app/tableau-de-bord/admin/entity/${potentialEntityRelated.id}`}
                   className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
                 >
                   {potentialEntityRelated.address_ligne_1}

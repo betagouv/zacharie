@@ -1,36 +1,38 @@
-import { Link, redirect, useLoaderData } from "@remix-run/react";
-import { Table } from "@codegouvfr/react-dsfr/Table";
-import dayjs from "dayjs";
-import type { AdminEntitesLoaderData } from "@api/routes/api.admin.loader.entites";
-
-export function meta() {
-  return [
-    {
-      title: "Entités | Admin | Zacharie | Ministère de l'Agriculture",
-    },
-  ];
-}
-
-export async function clientLoader() {
-  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/admin/loader/entites`, {
-    method: "GET",
-    credentials: "include",
-    headers: new Headers({
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    }),
-  }).then((res) => res.json())) as AdminEntitesLoaderData;
-  if (!response.ok) {
-    throw redirect("/");
-  }
-  return response.data!;
-}
+import { Link } from 'react-router';
+import { Table } from '@codegouvfr/react-dsfr/Table';
+import dayjs from 'dayjs';
+import type { AdminEntitiesResponse } from '@api/src/types/responses';
+import { useEffect, useState } from 'react';
+import Chargement from '@app/components/Chargement';
 
 export default function AdminEntites() {
-  const { entities } = useLoaderData<typeof clientLoader>();
+  const [entities, setUsers] = useState<NonNullable<AdminEntitiesResponse['data']['entities']>>([]);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/admin/entities`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: new Headers({
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => res as AdminEntitiesResponse)
+      .then((res) => {
+        if (res.ok) {
+          setUsers(res.data.entities);
+        }
+      });
+  }, []);
+
+  if (!entities?.length) {
+    return <Chargement />;
+  }
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
+      <title>Entités | Admin | Zacharie | Ministère de l'Agriculture</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">Entités</h1>
@@ -45,16 +47,16 @@ export default function AdminEntites() {
                     <span className="p-4">{index + 1}</span>
                     <Link
                       key={entity.id}
-                      to={`/app/tableau-de-bord/admin/entite/${entity.id}`}
+                      to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
                       className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
                       suppressHydrationWarning
                     >
-                      {dayjs(entity.created_at).format("DD/MM/YYYY à HH:mm")}
+                      {dayjs(entity.created_at).format('DD/MM/YYYY à HH:mm')}
                     </Link>
                   </div>,
                   <Link
                     key={entity.id}
-                    to={`/app/tableau-de-bord/admin/entite/${entity.id}`}
+                    to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
                     className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
                   >
                     {entity.nom_d_usage}
@@ -73,13 +75,13 @@ export default function AdminEntites() {
                   </Link>,
                   <Link
                     key={entity.id}
-                    to={`/app/tableau-de-bord/admin/entite/${entity.id}`}
+                    to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
                     className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
                   >
                     {entity.type}
                   </Link>,
                 ])}
-                headers={["Date de création", "Identité", "Type"]}
+                headers={['Date de création', 'Identité', 'Type']}
               />
             </div>
             <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">

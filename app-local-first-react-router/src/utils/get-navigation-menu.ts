@@ -135,34 +135,34 @@ export default function useNavigationMenu() {
       menuLinks: [
         {
           text: 'Liste des utilisateurs',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/utilisateurs',
+          isActive: location.pathname === '/app/tableau-de-bord/admin/users',
           linkProps: {
-            // href: '#',
-            href: 'https://backup.zacharie.beta.gouv.fr/app/tableau-de-bord/admin/utilisateurs',
+            href: '#',
+            to: '/app/tableau-de-bord/admin/users',
           },
         },
         {
           text: '+ Ajouter des utilisateurs',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/ajouter-utilisateur',
+          isActive: location.pathname === '/app/tableau-de-bord/admin/add-user',
           linkProps: {
-            // href: '#',
-            href: 'https://backup.zacharie.beta.gouv.fr/app/tableau-de-bord/admin/utilisateur/nouveau',
+            href: '#',
+            to: '/app/tableau-de-bord/admin/add-user',
           },
         },
         {
           text: 'Liste des entités',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/entites',
+          isActive: location.pathname === '/app/tableau-de-bord/admin/entities',
           linkProps: {
-            // href: '#',
-            href: 'https://backup.zacharie.beta.gouv.fr/app/tableau-de-bord/admin/entites',
+            href: '#',
+            to: '/app/tableau-de-bord/admin/entities',
           },
         },
         {
           text: '+ Ajouter des entités (SVI, ETG, etc.)',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/ajouter-entite',
+          isActive: location.pathname === '/app/tableau-de-bord/admin/add-entity',
           linkProps: {
-            // href: '#',
-            href: 'https://backup.zacharie.beta.gouv.fr/app/tableau-de-bord/admin/entite/nouvelle',
+            href: '#',
+            to: '/app/tableau-de-bord/admin/add-entity',
           },
         },
         {
@@ -170,7 +170,7 @@ export default function useNavigationMenu() {
           isActive: location.pathname === '/app/tableau-de-bord/admin/feis',
           linkProps: {
             // href: '#',
-            href: 'https://backup.zacharie.beta.gouv.fr/app/tableau-de-bord/admin/feis',
+            href: 'https://metabase.zacharie.beta.gouv.fr/question/27-fiches-creees',
           },
         },
       ],

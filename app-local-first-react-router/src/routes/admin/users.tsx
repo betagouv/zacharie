@@ -1,63 +1,40 @@
-import { Fragment } from "react";
-import { type ClientActionFunctionArgs, json, Link, redirect, useFetcher, useLoaderData } from "@remix-run/react";
-import { Table } from "@codegouvfr/react-dsfr/Table";
-import dayjs from "dayjs";
-import type { AdminUsersLoaderData } from "@api/routes/api.admin.loader.utilisateurs";
-import { UserRoles } from "@prisma/client";
-import { getFormData } from "@app/utils/getFormData";
-
-export function meta() {
-  return [
-    {
-      title: "Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture",
-    },
-  ];
-}
-
-export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const formData = await getFormData(request);
-  console.log("formdata tableau-de-bord.admin.utilisateurs", Object.fromEntries(formData));
-  const route = formData.get("route") as string;
-  if (!route) {
-    return json({ ok: false, data: null, error: "Route is required" }, { status: 400 });
-  }
-  const url = `${import.meta.env.VITE_API_URL}${route}`;
-  const response = await fetch(url, {
-    method: "POST",
-    credentials: "include",
-    body: formData,
-    headers: {
-      Accept: "application/json",
-    },
-  }).then((response) => response.json());
-  if (response.ok) {
-    return redirect("/app/tableau-de-bord");
-  }
-  return response;
-}
-
-export async function clientLoader() {
-  const response = (await fetch(`${import.meta.env.VITE_API_URL}/api/admin/loader/utilisateurs`, {
-    method: "GET",
-    credentials: "include",
-    headers: new Headers({
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    }),
-  }).then((res) => res.json())) as AdminUsersLoaderData;
-  if (!response.ok) {
-    throw redirect("/");
-  }
-  return response.data!;
-}
+import { Fragment, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { Table } from '@codegouvfr/react-dsfr/Table';
+import dayjs from 'dayjs';
+import type { AdminUsersResponse } from '@api/src/types/responses';
+import Chargement from '@app/components/Chargement';
+import { clearCache } from '@app/services/indexed-db';
 
 export default function AdminUsers() {
-  const { users } = useLoaderData<typeof clientLoader>();
+  const [users, setUsers] = useState<NonNullable<AdminUsersResponse['data']['users']>>([]);
+  const navigate = useNavigate();
 
-  const connectAsFetcher = useFetcher({ key: "connect-as" });
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/admin/users`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: new Headers({
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => res as AdminUsersResponse)
+      .then((res) => {
+        if (res.ok) {
+          setUsers(res.data.users);
+        }
+      });
+  }, []);
+
+  if (!users?.length) {
+    return <Chargement />;
+  }
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
+      <title>Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">Utilisateurs</h1>
@@ -67,25 +44,25 @@ export default function AdminUsers() {
                 fixed
                 noCaption
                 className="[&_td]:h-px"
-                headers={["Dates", "Identité", "Roles", "Actions"]}
+                headers={['Dates', 'Identité', 'Roles', 'Actions']}
                 data={users.map((user, index) => [
                   <div key={user.id} className="flex size-full flex-row items-start">
                     <span className="p-4">{index + 1}</span>
                     <Link
-                      to={`/app/tableau-de-bord/admin/utilisateur/${user.id}`}
+                      to={`/app/tableau-de-bord/admin/user/${user.id}`}
                       className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
                       suppressHydrationWarning
                     >
-                      Compte activé: {user.activated ? "✅" : "❌"}
+                      Compte activé: {user.activated ? '✅' : '❌'}
                       <br />
-                      Création: {dayjs(user.created_at).format("DD/MM/YYYY à HH:mm")}
+                      Création: {dayjs(user.created_at).format('DD/MM/YYYY à HH:mm')}
                       <br />
-                      Fin d'onboarding: {dayjs(user.onboarded_at).format("DD/MM/YYYY à HH:mm")}
+                      Fin d'onboarding: {dayjs(user.onboarded_at).format('DD/MM/YYYY à HH:mm')}
                     </Link>
                   </div>,
                   <Link
                     key={user.id}
-                    to={`/app/tableau-de-bord/admin/utilisateur/${user.id}`}
+                    to={`/app/tableau-de-bord/admin/user/${user.id}`}
                     className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
                   >
                     {user.prenom} {user.nom_de_famille}
@@ -105,7 +82,7 @@ export default function AdminUsers() {
                   </Link>,
                   <Link
                     key={user.id}
-                    to={`/app/tableau-de-bord/admin/utilisateur/${user.id}`}
+                    to={`/app/tableau-de-bord/admin/user/${user.id}`}
                     className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
                   >
                     {user.roles.map((role) => (
@@ -115,14 +92,36 @@ export default function AdminUsers() {
                       </Fragment>
                     ))}
                   </Link>,
-                  <connectAsFetcher.Form key={user.email} method="POST" preventScrollReset>
-                    <input type="hidden" name="route" value={`/api/admin/action/connect-as`} />
-                    <input type="hidden" name="email-utilisateur" value={user.email!} />
+                  <form
+                    key={user.email}
+                    method="POST"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+
+                      fetch(`${import.meta.env.VITE_API_URL}/admin/user/connect-as`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        body: JSON.stringify({
+                          email: user.email!,
+                        }),
+                        headers: new Headers({
+                          Accept: 'application/json',
+                          'Content-Type': 'application/json',
+                        }),
+                      })
+                        .then(() => {
+                          window.localStorage.clear();
+                        })
+                        .then(() => {
+                          navigate('/app/tableau-de-bord');
+                        });
+                    }}
+                  >
                     <button type="submit" className="fr-btn fr-btn--secondary fr-btn--sm">
                       Se connecter en tant que {user.email}
                     </button>
                     ,
-                  </connectAsFetcher.Form>,
+                  </form>,
                 ])}
               />
             </div>
