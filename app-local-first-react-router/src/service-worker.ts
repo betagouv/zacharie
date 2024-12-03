@@ -86,19 +86,6 @@ async function handleFetchRequest(request: Request): Promise<Response> {
       if (response.ok) {
         const cache = await caches.open(CACHE_NAME);
         cache.put(request, response.clone());
-        if (request.url === `${import.meta.env.VITE_API_URL}/api/loader/feis`) {
-          const feiResponseCloned = response.clone();
-          const feiData = await feiResponseCloned?.json();
-          // Calculate the badge count
-          const badgeCount =
-            (feiData?.feisUnderMyResponsability?.length || 0) + (feiData?.feisToTake?.length || 0);
-          if (navigator.setAppBadge) {
-            console.log('navigator.setAppBadge', badgeCount);
-            navigator.setAppBadge(badgeCount);
-          } else {
-            console.log('navigator.setAppBadge not available');
-          }
-        }
       }
       return response;
     } catch (error) {
@@ -142,29 +129,6 @@ async function handleFetchRequest(request: Request): Promise<Response> {
     },
   );
 }
-
-// async function fetchAllFeis(calledFrom: string) {
-//   if (!navigator.onLine) {
-//     return;
-//   }
-//   console.log('fetchAllFeis called from', calledFrom);
-//   const cache = await caches.open(CACHE_NAME);
-//   const response = await fetch(
-//     `${import.meta.env.VITE_API_URL}/api/loader/feis?calledFrom=sw+${calledFrom}`,
-//     {
-//       method: 'GET',
-//       credentials: 'include',
-//       headers: new Headers({
-//         Accept: 'application/json',
-//         'Content-Type': 'application/json',
-//       }),
-//     },
-//   );
-//   if (response.ok) {
-//     await cache.put(`${import.meta.env.VITE_API_URL}/api/loader/feis`, response.clone());
-//   }
-//   return response;
-// }
 
 const store = IDB.createStore('OfflineQueue', 'requests');
 
@@ -291,22 +255,22 @@ self.addEventListener('push', (event: PushEvent) => {
       // await fetchAllFeis('PUSH_NOTIFICATION');
 
       // Get the cached FEI data
-      const cache = await caches.open(CACHE_NAME);
-      const feiResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/feis`);
-      const feiResponseCloned = feiResponse?.clone();
-      const feiData = await feiResponseCloned?.json();
+      // const cache = await caches.open(CACHE_NAME);
+      // const feiResponse = await cache.match(`${import.meta.env.VITE_API_URL}/api/loader/feis`);
+      // const feiResponseCloned = feiResponse?.clone();
+      // const feiData = await feiResponseCloned?.json();
 
-      // Calculate the badge count
-      const badgeCount =
-        (feiData?.feisUnderMyResponsability?.length || 0) + (feiData?.feisToTake?.length || 0);
+      // // Calculate the badge count
+      // const badgeCount =
+      //   (feiData?.feisUnderMyResponsability?.length || 0) + (feiData?.feisToTake?.length || 0);
 
-      const options: NotificationOptions = {
-        body: data.body,
-        icon: data.img || '/favicon.svg',
-        badge: badgeCount,
-      };
+      // const options: NotificationOptions = {
+      //   body: data.body,
+      //   icon: data.img || '/favicon.svg',
+      //   badge: badgeCount,
+      // };
 
-      await self.registration.showNotification(data.title, options);
+      // await self.registration.showNotification(data.title, options);
       await processOfflineQueue('PUSH_NOTIFICATION');
     })(),
   );

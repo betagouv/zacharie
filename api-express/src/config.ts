@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import packageJson from '../package.json';
 const version = packageJson.version;
 
@@ -6,7 +7,8 @@ const ENVIRONMENT = process.env.ENVIRONMENT ?? process.env.NODE_ENV ?? 'developm
 
 const SENTRY_KEY = 'https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175';
 
-const VERSION = version;
+const buildId = JSON.stringify(`${dayjs().format('DD-MM-YYYY')} vers ${dayjs().format('HH')}:00`);
+const VERSION = buildId;
 
 const TIPIMAIL_API_USER = process.env.TIPIMAIL_API_USER;
 const TIPIMAIL_API_KEY = process.env.TIPIMAIL_API_KEY;
