@@ -204,6 +204,7 @@ export default function SelectNextForExaminateur() {
                   fei_next_owner_user_name_cache: `${nextPremierDetenteur.prenom} ${nextPremierDetenteur.nom_de_famille}`,
                   fei_next_owner_role: UserRoles.PREMIER_DETENTEUR,
                 });
+                setNextValue(nextPremierDetenteur.id);
               } else {
                 setSearchingUserError(userSearchResponse.error ?? 'Erreur inconnue');
               }
