@@ -27,7 +27,7 @@ import packageJson from '../package.json';
 // Put together a schema
 const app = express();
 
-app.use(logger('dev'));
+app.use(logger('tiny'));
 
 const sentryEnabled = ENVIRONMENT !== 'development' && ENVIRONMENT !== 'test';
 
