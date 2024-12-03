@@ -12,6 +12,7 @@ router.get(
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const searchQuery = req.query.q as string;
 
+    console.log({ searchQuery });
     if (!searchQuery) {
       res.status(200).send({ ok: false, data: [], error: '' });
       return;
@@ -32,13 +33,15 @@ router.get(
       },
     });
 
-    if (carcasses) {
+    if (carcasses?.length) {
       res.status(200).send({
         ok: true,
         data: carcasses.map((carcasse) => ({
           searchQuery,
           redirectUrl: `/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
           carcasse_numero_bracelet: carcasse.numero_bracelet,
+          carcasse_espece: carcasse.espece || '',
+          carcasse_type: carcasse.type,
           fei_numero: carcasse.fei_numero,
           fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
           fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
@@ -84,6 +87,8 @@ router.get(
             searchQuery,
             redirectUrl: `/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
             carcasse_numero_bracelet: carcasse.numero_bracelet,
+            carcasse_espece: carcasse.espece || '',
+            carcasse_type: carcasse.type,
             fei_numero: carcasse.fei_numero,
             fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
             fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
@@ -94,9 +99,12 @@ router.get(
       }
     }
 
+    console.log({ searchQuery });
     const feis = await prisma.fei.findMany({
       where: {
-        numero: searchQuery,
+        numero: {
+          contains: searchQuery,
+        },
       },
     });
 
@@ -107,6 +115,8 @@ router.get(
           searchQuery,
           redirectUrl: `/app/tableau-de-bord/fei/${fei.numero}`,
           carcasse_numero_bracelet: '',
+          carcasse_espece: '',
+          carcasse_type: '',
           fei_numero: fei.numero,
           fei_date_mise_a_mort: dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
           fei_commune_mise_a_mort: fei.commune_mise_a_mort!,

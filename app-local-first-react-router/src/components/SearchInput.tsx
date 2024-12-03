@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { SearchResponse } from '@api/src/types/responses';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
+import { CarcasseType } from '@prisma/client';
 
 interface SearchInputProps {
   className?: string;
@@ -86,12 +87,14 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
               severity="success"
               title={
                 <a href={data.redirectUrl}>
-                  {[
-                    data.carcasse_numero_bracelet && `Carcasse/Lot ${data.carcasse_numero_bracelet}`,
-                    data.fei_numero && `Fiche trouvée ${data.fei_numero}`,
-                  ]
-                    .filter(Boolean)
-                    .join('\n')}
+                  {data.carcasse_numero_bracelet && (
+                    <>
+                      {data.carcasse_type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'}{' '}
+                      {data.carcasse_numero_bracelet}: {data.carcasse_espece}
+                      <br />
+                    </>
+                  )}
+                  {data.fei_numero && <>Fiche {data.fei_numero}</>}
                 </a>
               }
               className="w-full text-left"

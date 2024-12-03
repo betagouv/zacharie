@@ -17,6 +17,8 @@ export interface SearchResponse {
     searchQuery: string;
     redirectUrl: string;
     carcasse_numero_bracelet: string;
+    carcasse_espece: string;
+    carcasse_type: Carcasse['type'] | '';
     fei_numero: string;
     fei_date_mise_a_mort: string;
     fei_commune_mise_a_mort: string;
