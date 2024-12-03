@@ -438,101 +438,14 @@ router.post(
 );
 
 router.post(
-  '/:user_id',
-  passport.authenticate('user', { session: false, failWithError: true }),
-  authorizeUserOrAdmin,
-  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
-    const user = req.user!;
-    const body = req.body;
-
-    const nextUser: Prisma.UserUpdateInput = {};
-
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
-      nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox)) {
-      nextUser.user_entities_vivible_checkbox =
-        body[Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox] === 'true' ? true : false;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prefilled)) {
-      nextUser.prefilled = body[Prisma.UserScalarFieldEnum.prefilled] === 'true' ? true : false;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.nom_de_famille)) {
-      nextUser.nom_de_famille = body[Prisma.UserScalarFieldEnum.nom_de_famille] as string;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prenom)) {
-      nextUser.prenom = body[Prisma.UserScalarFieldEnum.prenom] as string;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.telephone)) {
-      nextUser.telephone = body[Prisma.UserScalarFieldEnum.telephone] as string;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
-      nextUser.email = body[Prisma.UserScalarFieldEnum.email] as string;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_1)) {
-      nextUser.addresse_ligne_1 = body[Prisma.UserScalarFieldEnum.addresse_ligne_1] as string;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_2)) {
-      nextUser.addresse_ligne_2 = body[Prisma.UserScalarFieldEnum.addresse_ligne_2] as string;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.code_postal)) {
-      nextUser.code_postal = body[Prisma.UserScalarFieldEnum.code_postal] as string;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.ville)) {
-      nextUser.ville = body[Prisma.UserScalarFieldEnum.ville] as string;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
-      nextUser.roles = body[Prisma.UserScalarFieldEnum.roles] as Array<UserRoles>;
-    }
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.notifications)) {
-      nextUser.notifications = body[Prisma.UserScalarFieldEnum.notifications] as Array<UserNotifications>;
-    }
-    if (body.hasOwnProperty('web_push_token')) {
-      const web_push_token = body.web_push_token as string;
-      const existingSubscriptions = user.web_push_tokens || [];
-      if (!existingSubscriptions.includes(web_push_token)) {
-        nextUser.web_push_tokens = [...existingSubscriptions, web_push_token];
-      }
-    }
-
-    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
-      nextUser.numero_cfei = body[Prisma.UserScalarFieldEnum.numero_cfei] as string;
-    }
-    if (body.hasOwnProperty('onboarding_finished')) {
-      nextUser.onboarded_at = new Date();
-    }
-
-    let savedUser: User | null = null;
-    const userId = req.params.user_id;
-    if (!userId) {
-      // admin creation
-      nextUser.id = await createUserId();
-
-      savedUser = await prisma.user.create({
-        data: nextUser as Prisma.UserCreateInput,
-      });
-    } else {
-      // user update / self-update
-      savedUser = await prisma.user.update({
-        where: { id: userId },
-        data: nextUser,
-      });
-    }
-
-    res
-      .status(200)
-      .send({ ok: true, data: { user: savedUser }, error: '', message: '' } satisfies UserConnexionResponse);
-  }),
-);
-
-router.post(
-  'fei/trouver-premier-detenteur',
+  '/fei/trouver-premier-detenteur',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
     const body = req.body as Record<'email' | 'numero', string>;
     const userId = req.params.user_id;
 
+    console.log('body', body);
     if (!body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
       res.status(400).send({
         ok: false,
@@ -626,6 +539,94 @@ router.post(
     res
       .status(200)
       .send({ ok: true, data: { user: nextPremierDetenteurForFei }, error: '' } satisfies UserForFeiResponse);
+  }),
+);
+
+router.post(
+  '/:user_id',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  authorizeUserOrAdmin,
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user!;
+    const body = req.body;
+
+    const nextUser: Prisma.UserUpdateInput = {};
+
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
+      nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox)) {
+      nextUser.user_entities_vivible_checkbox =
+        body[Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox] === 'true' ? true : false;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prefilled)) {
+      nextUser.prefilled = body[Prisma.UserScalarFieldEnum.prefilled] === 'true' ? true : false;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.nom_de_famille)) {
+      nextUser.nom_de_famille = body[Prisma.UserScalarFieldEnum.nom_de_famille] as string;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prenom)) {
+      nextUser.prenom = body[Prisma.UserScalarFieldEnum.prenom] as string;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.telephone)) {
+      nextUser.telephone = body[Prisma.UserScalarFieldEnum.telephone] as string;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
+      nextUser.email = body[Prisma.UserScalarFieldEnum.email] as string;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_1)) {
+      nextUser.addresse_ligne_1 = body[Prisma.UserScalarFieldEnum.addresse_ligne_1] as string;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_2)) {
+      nextUser.addresse_ligne_2 = body[Prisma.UserScalarFieldEnum.addresse_ligne_2] as string;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.code_postal)) {
+      nextUser.code_postal = body[Prisma.UserScalarFieldEnum.code_postal] as string;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.ville)) {
+      nextUser.ville = body[Prisma.UserScalarFieldEnum.ville] as string;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
+      nextUser.roles = body[Prisma.UserScalarFieldEnum.roles] as Array<UserRoles>;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.notifications)) {
+      nextUser.notifications = body[Prisma.UserScalarFieldEnum.notifications] as Array<UserNotifications>;
+    }
+    if (body.hasOwnProperty('web_push_token')) {
+      const web_push_token = body.web_push_token as string;
+      const existingSubscriptions = user.web_push_tokens || [];
+      if (!existingSubscriptions.includes(web_push_token)) {
+        nextUser.web_push_tokens = [...existingSubscriptions, web_push_token];
+      }
+    }
+
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
+      nextUser.numero_cfei = body[Prisma.UserScalarFieldEnum.numero_cfei] as string;
+    }
+    if (body.hasOwnProperty('onboarding_finished')) {
+      nextUser.onboarded_at = new Date();
+    }
+
+    let savedUser: User | null = null;
+    const userId = req.params.user_id;
+    if (!userId) {
+      // admin creation
+      nextUser.id = await createUserId();
+
+      savedUser = await prisma.user.create({
+        data: nextUser as Prisma.UserCreateInput,
+      });
+    } else {
+      // user update / self-update
+      savedUser = await prisma.user.update({
+        where: { id: userId },
+        data: nextUser,
+      });
+    }
+
+    res
+      .status(200)
+      .send({ ok: true, data: { user: savedUser }, error: '', message: '' } satisfies UserConnexionResponse);
   }),
 );
 
