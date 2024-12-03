@@ -51,22 +51,26 @@ const sendError = (
 ) => {
   const { body, query, params, route, method, originalUrl, headers } = req;
   const { auth, appversion, appbuild, appdevice } = headers;
-  capture(err, {
-    extra: {
-      body,
-      query,
-      params,
-      route,
-      method,
-      originalUrl,
-      appversion,
-      appbuild,
-      appdevice,
-      auth,
-      headers,
-    },
-    user: (req as RequestWithUser).user,
-  });
+  if (err.status === 401) {
+    console.log(err.status, 'Unauthorized');
+  } else {
+    capture(err, {
+      extra: {
+        body,
+        query,
+        params,
+        route,
+        method,
+        originalUrl,
+        appversion,
+        appbuild,
+        appdevice,
+        auth,
+        headers,
+      },
+      user: (req as RequestWithUser).user,
+    });
+  }
 
   return res.status(err.status ?? 500).send({
     ok: false,
