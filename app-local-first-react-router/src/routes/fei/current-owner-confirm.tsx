@@ -27,6 +27,12 @@ export default function CurrentOwnerConfirm({
   const nextOwnerEntity = state.entities[fei.fei_next_owner_entity_id!];
   const nextOwnerUser = state.users[fei.fei_next_owner_user_id!];
 
+  const isTransporting = useMemo(() => {
+    return (
+      fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.fei_next_owner_role === UserRoles.ETG
+    );
+  }, [fei]);
+
   const canConfirmCurrentOwner = useMemo(() => {
     if (fei.fei_next_owner_user_id === user.id) {
       return true;
@@ -169,9 +175,25 @@ export default function CurrentOwnerConfirm({
       }
     }
     updateFei(fei.numero, nextFei);
+    setSelectedTabId('Destinataires');
   }
 
   if (!canConfirmCurrentOwner) {
+    if (isTransporting) {
+      const nextName =
+        nextOwnerEntity?.nom_d_usage || `${nextOwnerUser?.prenom} ${nextOwnerUser?.nom_de_famille}`;
+      return (
+        <div className="bg-alt-blue-france pb-8">
+          <div className="bg-white">
+            <Alert
+              severity="info"
+              title={`Vous transportez les carcasses vers\u00A0: ${nextName}`}
+              description={`Cette fiche lui a déjà été attribuée, il a déjà été notifié, il est prêt à recevoir votre chargement. Bonne route !`}
+            />
+          </div>
+        </div>
+      );
+    }
     if (needNextOwnerButNotMe) {
       const nextName =
         nextOwnerEntity?.nom_d_usage || `${nextOwnerUser?.prenom} ${nextOwnerUser?.nom_de_famille}`;

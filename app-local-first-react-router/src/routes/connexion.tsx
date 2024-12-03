@@ -87,7 +87,7 @@ export default function Connexion() {
   };
 
   const resetPasswordMessage = searchParams.get('reset-password-message');
-  const resetPasswordToken = searchParams.get('reset-password-token');
+  const resetPasswordToken = searchParams.get('reset-password-token') || '';
 
   useEffect(() => {
     refreshUser('connexion').then((user) => {
@@ -103,7 +103,7 @@ export default function Connexion() {
     if (userInitiated && user) {
       navigate(getUserOnboardingRoute(user!) ?? '/app/tableau-de-bord');
     }
-  }, [userInitiated, user]);
+  }, [userInitiated, user, navigate]);
 
   if (initialLoading) {
     return <Chargement />;
