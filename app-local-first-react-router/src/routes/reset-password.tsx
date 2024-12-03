@@ -29,10 +29,20 @@ export default function Connexion() {
   const handleSubmit =
     (resetPassword = false) =>
     async (event: React.FormEvent<HTMLFormElement>) => {
+      console.log(event.currentTarget);
+      console.log(event.target);
       event.preventDefault();
       setIsLoading(true);
       const form = event.currentTarget.closest('form') as HTMLFormElement;
       const formData = new FormData(form);
+      console.log('formData', Object.fromEntries(formData));
+      console.log({
+        email: formData.get('email-utilisateur'),
+        username: formData.get('name'),
+        passwordUser: formData.get('password-utilisateur'),
+        connexionType: formData.get('connexion-type'),
+        resetPassword: resetPassword,
+      });
       const response = await fetch(`${import.meta.env.VITE_API_URL}/user/connexion`, {
         method: 'POST',
         credentials: 'include',
@@ -41,8 +51,7 @@ export default function Connexion() {
           username: formData.get('name'),
           passwordUser: formData.get('password-utilisateur'),
           connexionType: formData.get('connexion-type'),
-          resetPasswordRequest: resetPassword,
-          resetPasswordToken: formData.get('reset-password-token'),
+          resetPassword: resetPassword,
         }),
         headers: {
           Accept: 'application/json',
@@ -61,9 +70,7 @@ export default function Connexion() {
           };
         });
       setIsLoading(false);
-      if (response.message) {
-        window.scrollTo(0, 0);
-      }
+      console.log('response', response);
       if (response.ok && response.data?.user?.id) {
         const user = response.data.user as User;
         useUser.setState({ user });
@@ -87,7 +94,6 @@ export default function Connexion() {
   };
 
   const resetPasswordMessage = searchParams.get('reset-password-message');
-  const resetPasswordToken = searchParams.get('reset-password-token');
 
   useEffect(() => {
     refreshUser('connexion').then((user) => {
@@ -118,7 +124,6 @@ export default function Connexion() {
             {resetPasswordMessage && (
               <CallOut>Réinitialisation de mot de passe {resetPasswordMessage}</CallOut>
             )}
-            {resetPasswordToken && <CallOut>Vous pouvez rentrer votre nouveau mot de passe</CallOut>}
             {userResponse?.message && <CallOut>{userResponse?.message}</CallOut>}
             <form
               onSubmit={handleSubmit()}
@@ -138,7 +143,6 @@ export default function Connexion() {
                 </legend>
               </fieldset>
               <input type="hidden" name="connexion-type" value={connexionType} />
-              <input type="hidden" name="reset-password-token" value={resetPasswordToken} />
               <input type="text" name="name" className="hidden" />
               <Input
                 hintText="Renseignez votre email ci-dessous"

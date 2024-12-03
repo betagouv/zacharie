@@ -37,7 +37,8 @@ import { SECRET } from '~/config';
 router.post(
   '/connexion',
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const { email, username, passwordUser, connexionType, resetPassword } = req.body;
+    const { email, username, passwordUser, connexionType, resetPasswordRequest, resetPasswordToken } =
+      req.body;
 
     if (username) {
       capture(new Error('Spam detected'), {
@@ -56,7 +57,7 @@ router.post(
       } satisfies UserConnexionResponse);
       return;
     }
-    if (resetPassword === 'true') {
+    if (resetPasswordRequest) {
       const user = await prisma.user.findUnique({ where: { email } });
       if (user?.email) {
         const password = await prisma.password.findFirst({
@@ -93,7 +94,7 @@ router.post(
             reset_password_last_email_sent_at: new Date(),
           },
         });
-        const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : https://api.zacharie.beta.gouv.fr/api/reset-password?token=${token}`;
+        const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : https://zacharie.beta.gouv.fr/app/connexion?reset-password-token=${token}&type=compte-existant`;
         sendEmail({
           emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
           subject: '[Zacharie] Réinitialisation de votre mot de passe',
@@ -108,6 +109,32 @@ router.post(
         } satisfies UserConnexionResponse);
         return;
       }
+    }
+    if (resetPasswordToken) {
+      const password = await prisma.password.findFirst({
+        where: { reset_password_token: resetPasswordToken },
+      });
+      if (!password) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: '',
+          message: 'Le lien de réinitialisation de mot de passe est invalide. Veuillez réessayer.',
+        });
+        return;
+      }
+      if (dayjs().diff(password.reset_password_last_email_sent_at, 'minutes') > 60) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: '',
+          message: 'Le lien de réinitialisation de mot de passe a expiré. Veuillez réessayer.',
+        });
+        return;
+      }
+      await prisma.password.delete({
+        where: { user_id: password.user_id },
+      });
     }
     if (!passwordUser) {
       res.status(400).send({
@@ -168,26 +195,26 @@ router.post(
         data: { user_id: user.id, password: hashedPassword },
       });
     } else {
-      // const isOk = await comparePassword(passwordUser, existingPassword.password);
-      // if (!isOk) {
-      //   if (connexionType === 'compte-existant') {
-      //     res.status(400).send({
-      //       ok: false,
-      //       data: { user: null },
-      //       message: '',
-      //       error: 'Le mot de passe est incorrect',
-      //     } satisfies UserConnexionResponse);
-      //     return;
-      //   } else {
-      //     res.status(400).send({
-      //       ok: false,
-      //       data: { user: null },
-      //       message: '',
-      //       error: 'Un compte existe déjà avec cet email',
-      //     } satisfies UserConnexionResponse);
-      //     return;
-      //   }
-      // }
+      const isOk = await comparePassword(passwordUser, existingPassword.password);
+      if (!isOk) {
+        if (connexionType === 'compte-existant') {
+          res.status(400).send({
+            ok: false,
+            data: { user: null },
+            message: '',
+            error: 'Le mot de passe est incorrect',
+          } satisfies UserConnexionResponse);
+          return;
+        } else {
+          res.status(400).send({
+            ok: false,
+            data: { user: null },
+            message: '',
+            error: 'Un compte existe déjà avec cet email',
+          } satisfies UserConnexionResponse);
+          return;
+        }
+      }
     }
     const token = jwt.sign({ userId: user.id }, SECRET, {
       expiresIn: JWT_MAX_AGE,
@@ -407,47 +434,6 @@ router.post(
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     res.clearCookie('zacharie_express_jwt', logoutCookieOptions());
     res.status(200).send({ ok: true });
-  }),
-);
-
-router.post(
-  '/reset-password',
-  passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const token = req.query.token;
-    if (!token) {
-      res.status(400).send({ ok: false, data: null, error: 'Missing token' });
-      return;
-    }
-    const password = await prisma.password.findFirst({
-      where: { reset_password_token: token as string },
-    });
-    if (!password) {
-      const message = encodeURIComponent(
-        'Le lien de réinitialisation de mot de passe est invalide. Veuillez réessayer.',
-      );
-      res.redirect(
-        `https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant&reset-password-message=${message}`,
-      );
-      return;
-    }
-    if (dayjs().diff(password.reset_password_last_email_sent_at, 'minutes') > 60) {
-      const message = encodeURIComponent(
-        'Le lien de réinitialisation de mot de passe a expiré. Veuillez réessayer.',
-      );
-      res.redirect(
-        `https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant&reset-password-message=${message}`,
-      );
-      return;
-    }
-    await prisma.password.delete({
-      where: { user_id: password.user_id },
-    });
-    res
-      .status(200)
-      .send(
-        `<html><head><title>Zacharie - Réinitialisation de mot de passe</title></head><body><style> * { font-family: Arial, sans-serif }</style><div><h1>Réinitialisation de mot de passe</h1><p>Votre mot de passe a été réinitialisé avec succès.<br /><br /> Vous pouvez maintenant&nbsp;<ul><li><b>OUVRIR L'APP</b> si vous l'avez installée</li><li>cliquer <a href="https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant">ici</a> pour vous connecter depuis un navigateur</li></ul></p></div></body></html>`,
-      );
   }),
 );
 
