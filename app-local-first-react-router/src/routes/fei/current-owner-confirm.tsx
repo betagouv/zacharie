@@ -71,7 +71,9 @@ export default function CurrentOwnerConfirm({
         return '';
       }
       const etgId = fei.fei_next_owner_entity_id;
-      const collecteurProId = etgsRelatedWithMyEntities.find((c) => c.etg_id === etgId)?.entity_id;
+      const collecteurProId = etgsRelatedWithMyEntities.find(
+        (c) => c.entity_type === UserRoles.COLLECTEUR_PRO && c.etg_id === etgId,
+      )?.entity_id;
       if (collecteurProId) {
         return collecteurProId;
       }
