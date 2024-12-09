@@ -186,7 +186,7 @@ export default function useExportFeis() {
             const intermediaireEntity = entities[intermediaire.fei_intermediaire_entity_id];
             const intermediaireUser = users[intermediaire.fei_intermediaire_user_id!];
             feiSheetData.push({
-              Donnée: `Destinataire ${index + 1}`,
+              Donnée: `Destinataire ${Number(index) + 1}`,
               Valeur: `${getUserRoleLabel(intermediaire.fei_intermediaire_role!)}\n${formatEntity(intermediaireEntity)}\n${formatUser(intermediaireUser)}`,
             });
           }
