@@ -23,8 +23,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
   const ccgs = state.ccgsIds.map((id) => state.entities[id]);
   const etgs = state.etgsIds.map((id) => state.entities[id]);
   const svis = state.svisIds.map((id) => state.entities[id]);
-  console.log('state.svisIds', state.svisIds);
-  console.log('state.entities', state.entities);
+
   const collecteursPro = state.collecteursProIds.map((id) => state.entities[id]);
   const feiIntermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
 

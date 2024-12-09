@@ -46,8 +46,6 @@ export async function loadMyRelations() {
       }
     }
 
-    console.log('myRelationsData', myRelationsData);
-
     useZustandStore.setState({
       entities,
       entitiesIdsWorkingDirectlyFor,

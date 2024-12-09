@@ -149,9 +149,9 @@ export function getFeisSorted(): FeiSorted {
     }
   }
   return {
-    feisUnderMyResponsability: feisSorted.feisUnderMyResponsability.sort(sortFeis),
-    feisToTake: feisSorted.feisToTake.sort(sortFeis),
-    feisOngoing: feisSorted.feisOngoing.sort(sortFeis),
+    feisUnderMyResponsability: [...feisSorted.feisUnderMyResponsability].sort(sortFeis),
+    feisToTake: [...feisSorted.feisToTake].sort(sortFeis),
+    feisOngoing: [...feisSorted.feisOngoing].sort(sortFeis),
   };
 }
 
