@@ -27,6 +27,7 @@ import { loadMyRelations } from '@app/utils/load-my-relations';
 import { loadFei } from '@app/utils/load-fei';
 import useUser from '@app/zustand/user';
 import dayjs from 'dayjs';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 const gibierSelect = {
   grand: grandGibier.especes,
@@ -105,7 +106,23 @@ function CarcasseReadAndWrite() {
   const user = useUser((state) => state.user)!;
   const fei = state.feis[params.fei_numero!];
   const carcasse = state.carcasses[params.zacharie_carcasse_id!];
-  const updateCarcasse = state.updateCarcasse;
+  const updateStateCarcasse = state.updateCarcasse;
+  const addLog = state.addLog;
+  const updateCarcasse: typeof updateStateCarcasse = (zacharie_carcasse_id, partialCarcasse) => {
+    updateStateCarcasse(zacharie_carcasse_id, partialCarcasse);
+    addLog({
+      user_id: user.id,
+      user_role: UserRoles.EXAMINATEUR_INITIAL,
+      fei_numero: fei.numero,
+      action: 'examinateur-carcasse-edit',
+      history: createHistoryInput(carcasse, partialCarcasse),
+      entity_id: null,
+      zacharie_carcasse_id,
+      fei_intermediaire_id: null,
+      carcasse_intermediaire_id: null,
+    });
+  };
+
   const existingsNumeroBracelet = (state.carcassesIdsByFei[fei.numero] || []).map(
     (zacharie_carcasse_id) => state.carcasses[zacharie_carcasse_id]?.numero_bracelet,
   );

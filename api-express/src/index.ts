@@ -21,6 +21,7 @@ import feiCarcasseRouter from './controllers/fei-carcasse.ts';
 import feiCarcasseIntermediaireRouter from './controllers/fei-carcasse-intermediaire.ts';
 import feiIntermediaireRouter from './controllers/fei-intermediaire.ts';
 import searchRouter from './controllers/search.ts';
+import logRouter from './controllers/log.ts';
 
 import packageJson from '../package.json';
 
@@ -124,6 +125,7 @@ app.use('/fei', feiRouter);
 app.use('/fei-carcasse', feiCarcasseRouter);
 app.use('/fei-carcasse-intermediaire', feiCarcasseIntermediaireRouter);
 app.use('/fei-intermediaire', feiIntermediaireRouter);
+app.use('/log', logRouter);
 app.use('/search', searchRouter);
 
 app.use(Sentry.Handlers.errorHandler());

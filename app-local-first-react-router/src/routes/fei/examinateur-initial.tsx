@@ -16,6 +16,7 @@ import EntityNotEditable from '@app/components/EntityNotEditable';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function FEIExaminateurInitial() {
   const params = useParams();
@@ -33,7 +34,23 @@ export default function FEIExaminateurInitial() {
   const premierDetenteurEntity = fei.premier_detenteur_entity_id
     ? state.entities[fei.premier_detenteur_entity_id!]
     : null;
-  const updateFei = state.updateFei;
+  const updateFeiState = state.updateFei;
+  const addLog = state.addLog;
+  const updateFei: typeof updateFeiState = (fei_numero, nextFei) => {
+    updateFeiState(fei_numero, nextFei);
+    addLog({
+      user_id: user.id,
+      user_role: UserRoles.EXAMINATEUR_INITIAL,
+      fei_numero: fei_numero,
+      action: 'examinateur-update-fei',
+      history: createHistoryInput(fei, nextFei),
+      entity_id: null,
+      zacharie_carcasse_id: null,
+      fei_intermediaire_id: null,
+      carcasse_intermediaire_id: null,
+    });
+  };
+
   const [approbation, setApprobation] = useState(
     fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false,
   );
@@ -138,7 +155,7 @@ export default function FEIExaminateurInitial() {
     //   return false;
     // }
     return true;
-  }, [fei, user, carcasses, onlyPetitGibier, needSelectNextUser]);
+  }, [fei, user]);
 
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
@@ -176,9 +193,10 @@ export default function FEIExaminateurInitial() {
       label += ' que les carcasses en peau examinées ce jour peuvent être mises sur le marché.';
       return label;
     } else {
-      return (label +=
-        ' que les carcasses en peau examinées ce jour présentent au moins une anomalie. Toutefois, elles peuvent être mises sur le marché.');
+      label +=
+        ' que les carcasses en peau examinées ce jour présentent au moins une anomalie. Toutefois, elles peuvent être mises sur le marché.';
     }
+    return label;
   }, [fei.examinateur_initial_approbation_mise_sur_le_marche, atLeastOneCarcasseWithAnomalie]);
 
   return (

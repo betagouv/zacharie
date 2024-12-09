@@ -13,14 +13,15 @@ import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function FEICurrentIntermediaire() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
   const updateFeiIntermediaire = state.updateFeiIntermediaire;
+  const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
-  const etgs = state.etgsIds.map((id) => state.entities[id]);
   const originalCarcasses = (state.carcassesIdsByFei[params.fei_numero!] || []).map(
     (cId) => state.carcasses[cId],
   );
@@ -197,6 +198,26 @@ export default function FEICurrentIntermediaire() {
     }
     return true;
   }, [originalCarcasses]);
+
+  function handleCheckFinishedAt(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const checkFinishedAt = e.currentTarget[Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at].value;
+    const nextFeiIntermediaire = {
+      check_finished_at: dayjs(checkFinishedAt).toDate(),
+    };
+    updateFeiIntermediaire(intermediaire.id, nextFeiIntermediaire);
+    addLog({
+      user_id: user.id,
+      action: 'intermediaire-check-finished-at',
+      fei_numero: fei.numero,
+      fei_intermediaire_id: intermediaire.id,
+      history: createHistoryInput(intermediaire, nextFeiIntermediaire),
+      user_role: intermediaire.fei_intermediaire_role!,
+      entity_id: intermediaire.fei_intermediaire_entity_id,
+      zacharie_carcasse_id: null,
+      carcasse_intermediaire_id: null,
+    });
+  }
 
   return (
     <>
@@ -382,22 +403,8 @@ export default function FEICurrentIntermediaire() {
         <form
           method="POST"
           id="form_intermediaire_check_finished_at"
-          onBlur={(e) => {
-            e.preventDefault();
-            const checkFinishedAt =
-              e.currentTarget[Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at].value;
-            updateFeiIntermediaire(intermediaire.id, {
-              check_finished_at: dayjs(checkFinishedAt).toDate(),
-            });
-          }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            const checkFinishedAt =
-              e.currentTarget[Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at].value;
-            updateFeiIntermediaire(intermediaire.id, {
-              check_finished_at: dayjs(checkFinishedAt).toDate(),
-            });
-          }}
+          onBlur={handleCheckFinishedAt}
+          onSubmit={handleCheckFinishedAt}
         >
           <div className={['fr-fieldset__element', canEdit ? '' : 'pointer-events-none'].join(' ')}>
             <Checkbox

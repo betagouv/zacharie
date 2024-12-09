@@ -1,5 +1,5 @@
 import NouvelleCarcasse from './examinateur-carcasses-nouvelle';
-import { CarcasseType } from '@prisma/client';
+import { CarcasseType, UserRoles } from '@prisma/client';
 import { useMemo } from 'react';
 import { CustomNotice } from '@app/components/CustomNotice';
 import { CustomHighlight } from '@app/components/CustomHighlight';
@@ -7,6 +7,8 @@ import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espec
 import { useParams, Link } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import dayjs from 'dayjs';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) {
   // canEdit = true;
@@ -19,6 +21,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
     .map((cId) => state.carcasses[cId])
     .filter((c) => !c.deleted_at);
   const updateCarcasse = state.updateCarcasse;
+  const addLog = state.addLog;
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
 
@@ -44,12 +47,30 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                 if (
                   window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')
                 ) {
-                  updateCarcasse(carcasse.zacharie_carcasse_id, { deleted_at: new Date() });
+                  const nextPartialCarcasse = {
+                    deleted_at: dayjs().toDate(),
+                  };
+                  updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+                  addLog({
+                    user_id: user.id,
+                    user_role: UserRoles.EXAMINATEUR_INITIAL,
+                    fei_numero: fei.numero,
+                    action: 'examinateur-carcasse-delete',
+                    history: createHistoryInput(carcasse, nextPartialCarcasse),
+                    entity_id: null,
+                    zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                    fei_intermediaire_id: null,
+                    carcasse_intermediaire_id: null,
+                  });
                 }
               }}
             >
               <Link
-                to={`/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`}
+                to={
+                  user.roles.includes(UserRoles.SVI)
+                    ? `/app/tableau-de-bord/carcasse-svi/${fei.numero}/${carcasse.zacharie_carcasse_id}`
+                    : `/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`
+                }
                 className="block w-full bg-none p-4 text-left [&_*]:no-underline [&_*]:hover:no-underline"
               >
                 {carcasse.espece ? (
@@ -88,9 +109,9 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                         <span className="m-0 block font-bold">Anomalies abats:</span>
                         {carcasse.examinateur_anomalies_abats.map((anomalie) => {
                           return (
-                            <>
-                              <span className="m-0 ml-2 block font-bold">{anomalie}</span>
-                            </>
+                            <span className="m-0 ml-2 block font-bold" key={anomalie}>
+                              {anomalie}
+                            </span>
                           );
                         })}
                       </>
@@ -101,9 +122,9 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                         <span className="m-0 block font-bold">Anomalies carcasse:</span>
                         {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
                           return (
-                            <>
-                              <span className="m-0 ml-2 block font-bold">{anomalie}</span>
-                            </>
+                            <span className="m-0 ml-2 block font-bold" key={anomalie}>
+                              {anomalie}
+                            </span>
                           );
                         })}
                       </>

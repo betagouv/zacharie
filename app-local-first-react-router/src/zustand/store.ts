@@ -5,7 +5,10 @@ import {
   type Carcasse,
   type FeiIntermediaire,
   type CarcasseIntermediaire,
+  type Log,
+  UserRoles,
 } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 import type { UserForFei } from '~/src/types/user';
 import type { EntityWithUserRelation } from '~/src/types/entity';
 import type {
@@ -13,42 +16,16 @@ import type {
   CarcasseResponse,
   FeiIntermediaireResponse,
   CarcasseIntermediaireResponse,
+  LogResponse,
 } from '~/src/types/responses';
 import type { FeiDone, FeiWithIntermediaires } from '~/src/types/fei';
 import { create } from 'zustand';
-import {
-  devtools,
-  persist,
-  createJSONStorage,
-  // StateStorage
-} from 'zustand/middleware';
+import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import { capture } from '@app/services/sentry';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import dayjs from 'dayjs';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
-// import { get, set, del } from 'idb-keyval'; // can use anything: IndexedDB, Ionic Storage, etc.
-
-// Custom storage object
-// const storage: StateStorage = {
-//   getItem: async (name: string): Promise<string | null> => {
-//     // console.log(name, "has been retrieved");
-//     return (await get(name)) || null;
-//   },
-//   setItem: async (name: string, value: string): Promise<void> => {
-//     // console.log(name, "with value", value, "has been saved");
-//     await set(name, value);
-//   },
-//   removeItem: async (name: string): Promise<void> => {
-//     // console.log(name, "has been deleted");
-//     await del(name);
-//   },
-// };
-
-// interface PopulatedIntermediaire extends FeiIntermediaire {
-//   user?: UserForFei;
-//   entity?: Entity;
-//   carcasses?: Array<Carcasse>;
-// }
+import type { HistoryInput } from '@app/utils/create-history-entry';
 
 export interface State {
   isOnline: boolean;
@@ -80,9 +57,22 @@ export interface State {
     FeiIntermediaire['id'],
     Array<CarcasseIntermediaire['fei_numero__bracelet__intermediaire_id']>
   >;
+  logs: Array<Log>;
   // inetermediairesPopulated: Array<PopulatedIntermediaire>; // Note: fixed typo from 'inetermediaires'
   _hasHydrated: boolean;
 }
+
+type CreateLog = {
+  user_id: UserForFei['id'];
+  user_role: UserRoles;
+  action: string;
+  history?: HistoryInput;
+  fei_numero: Fei['numero'] | null;
+  entity_id: EntityWithUserRelation['id'] | null;
+  zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'] | null;
+  fei_intermediaire_id: FeiIntermediaire['id'] | null;
+  carcasse_intermediaire_id: CarcasseIntermediaire['fei_numero__bracelet__intermediaire_id'] | null;
+};
 
 interface Actions {
   createFei: (newFei: FeiWithIntermediaires) => void;
@@ -103,6 +93,7 @@ interface Actions {
     partialCarcasseIntermediaire: Partial<CarcasseIntermediaire>,
   ) => void;
   setHasHydrated: (state: boolean) => void;
+  addLog: (log: CreateLog) => Log;
 }
 
 const useZustandStore = create<State & Actions>()(
@@ -111,6 +102,7 @@ const useZustandStore = create<State & Actions>()(
       (set, get): State & Actions => ({
         isOnline: true,
         feisDone: [],
+        logs: [],
         feis: {},
         users: {},
         entities: {},
@@ -332,6 +324,30 @@ const useZustandStore = create<State & Actions>()(
             };
           });
           syncData();
+        },
+        addLog: (newLog: CreateLog) => {
+          const log = {
+            id: uuidv4(),
+            user_id: newLog.user_id!,
+            user_role: newLog.user_role!,
+            fei_numero: newLog.fei_numero || null,
+            entity_id: newLog.entity_id || null,
+            zacharie_carcasse_id: newLog.zacharie_carcasse_id || null,
+            fei_intermediaire_id: newLog.fei_intermediaire_id || null,
+            carcasse_intermediaire_id: newLog.carcasse_intermediaire_id || null,
+            action: newLog.action!,
+            history: newLog.history!,
+            date: dayjs().toDate(),
+            is_synced: false,
+            created_at: dayjs().toDate(),
+            updated_at: dayjs().toDate(),
+            deleted_at: null,
+          };
+          useZustandStore.setState((state) => ({
+            ...state,
+            logs: [...state.logs, log],
+          }));
+          return log;
         },
         _hasHydrated: false,
         setHasHydrated: (state) => {
@@ -580,6 +596,47 @@ export async function syncCarcassesIntermediaires() {
   }
 }
 
+export async function syncLog(nextLog: Log) {
+  const isOnline = useZustandStore.getState().isOnline;
+  if (!isOnline) {
+    throw new Error('syncLog not online');
+  }
+  return fetch(`${import.meta.env.VITE_API_URL}/log`, {
+    method: 'POST',
+    credentials: 'include',
+    body: JSON.stringify(nextLog),
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((res) => res.json())
+    .then((res) => res as LogResponse)
+    .then((res) => {
+      if (res.ok) {
+        useZustandStore.setState((state) => ({
+          ...state,
+          // we don't need to store locally the logs
+          logs: state.logs.filter((log) => log.id !== nextLog.id),
+        }));
+      }
+    });
+}
+
+export async function syncLogs() {
+  const isOnline = useZustandStore.getState().logs;
+  if (!isOnline) {
+    throw new Error('syncLogs not online');
+  }
+  const logs = useZustandStore.getState().logs;
+  for (const log of Object.values(logs)) {
+    if (!log.is_synced) {
+      console.log('syncing log', log);
+      await syncLog(log);
+    }
+  }
+}
+
 export async function syncData() {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
@@ -594,6 +651,8 @@ export async function syncData() {
     .then(() => console.log('synced intermediaires finito'))
     .then(syncCarcassesIntermediaires)
     .then(() => console.log('synced carcasses intermediaires finito'))
+    .then(syncLogs)
+    .then(() => console.log('synced logs finito'))
     .then(() => console.log('synced data finito'))
     .catch((error) => {
       capture(error);

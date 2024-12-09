@@ -10,6 +10,7 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function SelectNextForExaminateur() {
   const params = useParams();
@@ -29,6 +30,8 @@ export default function SelectNextForExaminateur() {
   }, [state]);
 
   const updateFei = state.updateFei;
+  const addLog = state.addLog;
+
   const isOnline = useIsOnline();
 
   const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche';
@@ -74,9 +77,10 @@ export default function SelectNextForExaminateur() {
           event.preventDefault();
           const nextIsMe = nextOwnerUser?.id === user.id;
           const nextIsMyAssociation = !!nextOwnerEntity?.id;
+          let nextFei: Partial<typeof fei>;
           if (nextIsMe) {
             console.log('nextIsMe');
-            updateFei(fei.numero, {
+            nextFei = {
               fei_next_owner_user_id: null,
               fei_next_owner_user_name_cache: null,
               fei_next_owner_role: null,
@@ -88,9 +92,9 @@ export default function SelectNextForExaminateur() {
               premier_detenteur_user_id: user.id,
               premier_detenteur_offline: navigator.onLine ? false : true,
               premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-            });
+            };
           } else if (nextIsMyAssociation) {
-            updateFei(fei.numero, {
+            nextFei = {
               fei_next_owner_user_id: null,
               fei_next_owner_role: null,
               fei_next_owner_entity_id: null,
@@ -103,16 +107,28 @@ export default function SelectNextForExaminateur() {
               premier_detenteur_offline: navigator.onLine ? false : true,
               premier_detenteur_entity_id: nextOwnerEntity.id,
               premier_detenteur_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
-            });
+            };
           } else {
             console.log('nextIsSomeoneElse');
-            updateFei(fei.numero, {
+            nextFei = {
               fei_next_owner_user_id: nextOwnerUser?.id,
               fei_next_owner_user_name_cache: nextOwnerName,
               fei_next_owner_role: UserRoles.PREMIER_DETENTEUR,
               fei_next_owner_entity_id: nextOwnerEntity?.id,
-            });
+            };
           }
+          updateFei(fei.numero, nextFei);
+          addLog({
+            user_id: user.id,
+            user_role: UserRoles.EXAMINATEUR_INITIAL,
+            fei_numero: fei.numero,
+            action: 'examinateur-select-next',
+            history: createHistoryInput(fei, nextFei),
+            entity_id: null,
+            zacharie_carcasse_id: null,
+            fei_intermediaire_id: null,
+            carcasse_intermediaire_id: null,
+          });
         }}
       >
         <div className="fr-fieldset__element grow">
@@ -199,10 +215,22 @@ export default function SelectNextForExaminateur() {
                     },
                   },
                 }));
-                updateFei(fei.numero, {
+                const nextFei = {
                   fei_next_owner_user_id: nextPremierDetenteur.id,
                   fei_next_owner_user_name_cache: `${nextPremierDetenteur.prenom} ${nextPremierDetenteur.nom_de_famille}`,
                   fei_next_owner_role: UserRoles.PREMIER_DETENTEUR,
+                };
+                updateFei(fei.numero, nextFei);
+                addLog({
+                  user_id: user.id,
+                  user_role: UserRoles.EXAMINATEUR_INITIAL,
+                  fei_numero: fei.numero,
+                  action: 'examinateur-trouver-premier-detenteur',
+                  history: createHistoryInput(fei, nextFei),
+                  entity_id: null,
+                  zacharie_carcasse_id: null,
+                  fei_intermediaire_id: null,
+                  carcasse_intermediaire_id: null,
                 });
                 setNextValue(nextPremierDetenteur.id);
               } else {

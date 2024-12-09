@@ -46,9 +46,12 @@ export async function loadMyRelations() {
       }
     }
 
+    console.log('myRelationsData', myRelationsData);
+
     useZustandStore.setState({
       entities,
       entitiesIdsWorkingDirectlyFor,
+      entitiesIdsWorkingDirectlyAndIndirectlyFor,
       ccgsIds: myRelationsData.data?.ccgs.map((ccg) => ccg.id) || [],
       collecteursProIds: myRelationsData.data?.collecteursPro.map((collecteurPro) => collecteurPro.id) || [],
       etgsIds: myRelationsData.data?.etgs.map((etg) => etg.id) || [],

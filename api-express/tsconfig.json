@@ -1,6 +1,8 @@
 {
   "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
   "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

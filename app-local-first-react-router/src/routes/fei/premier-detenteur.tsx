@@ -14,12 +14,14 @@ import EntityNotEditable from '@app/components/EntityNotEditable';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: boolean }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
   const updateFei = state.updateFei;
+  const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
   const premierDetenteurUser = fei.premier_detenteur_user_id
     ? state.users[fei.premier_detenteur_user_id]
@@ -145,8 +147,9 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
           const premier_detenteur_depot_entity_id = formData.get(
             Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
           ) as string;
+          let nextFei: Partial<typeof fei>;
           if (depotType === EntityTypes.ETG) {
-            updateFei(fei.numero, {
+            nextFei = {
               premier_detenteur_depot_type: depotType,
               premier_detenteur_depot_entity_id,
               premier_detenteur_date_depot_quelque_part: dayjs(
@@ -154,16 +157,28 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               ).toDate(),
               fei_next_owner_entity_id: premier_detenteur_depot_entity_id,
               fei_next_owner_role: EntityTypes.ETG,
-            });
+            };
           } else {
-            updateFei(fei.numero, {
+            nextFei = {
               premier_detenteur_depot_type: depotType,
               premier_detenteur_depot_entity_id,
               premier_detenteur_date_depot_quelque_part: dayjs(
                 formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string,
               ).toDate(),
-            });
+            };
           }
+          updateFei(fei.numero, nextFei);
+          addLog({
+            user_id: user.id,
+            user_role: UserRoles.PREMIER_DETENTEUR,
+            action: 'premier-detenteur-depot',
+            fei_numero: fei.numero,
+            history: createHistoryInput(fei, nextFei),
+            entity_id: fei.premier_detenteur_entity_id,
+            zacharie_carcasse_id: null,
+            carcasse_intermediaire_id: null,
+            fei_intermediaire_id: null,
+          });
         }}
       >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />

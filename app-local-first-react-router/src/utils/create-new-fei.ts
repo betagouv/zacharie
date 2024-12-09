@@ -3,6 +3,7 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
+import { createHistoryInput } from './create-history-entry';
 
 export function createNewFei(): FeiWithIntermediaires {
   const user = useUser.getState().user;
@@ -63,5 +64,16 @@ export function createNewFei(): FeiWithIntermediaires {
     FeiIntermediaires: [],
   };
   useZustandStore.getState().createFei(newFei);
+  useZustandStore.getState().addLog({
+    user_id: user.id,
+    user_role: UserRoles.EXAMINATEUR_INITIAL,
+    fei_numero: newFei.numero,
+    action: 'examinateur-create-fei',
+    entity_id: null,
+    history: createHistoryInput(null, newFei),
+    zacharie_carcasse_id: null,
+    fei_intermediaire_id: null,
+    carcasse_intermediaire_id: null,
+  });
   return newFei;
 }
