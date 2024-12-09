@@ -13,6 +13,7 @@ import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
+import useExportFeis from '@app/utils/export-feis';
 
 async function loadData() {
   await syncData();
@@ -27,6 +28,7 @@ export default function TableauDeBordIndex() {
   const entities = data.entities!;
   const feisDone = data.feisDone!;
   const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();
+  const { onExportToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
@@ -76,6 +78,16 @@ export default function TableauDeBordIndex() {
     };
   }, []);
 
+  const [selectedFeis, setSelectedFeis] = useState<string[]>([]);
+  const handleCheckboxClick = (id: string) => {
+    setSelectedFeis((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((fei) => fei !== id);
+      }
+      return [...prev, id];
+    });
+  };
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <title>Mes fiches | Zacharie | Ministère de l'Agriculture</title>
@@ -94,6 +106,16 @@ export default function TableauDeBordIndex() {
             </button>
           )}
           <h1 className="fr-h2 fr-mb-2w">Mes fiches d'accompagnement du gibier sauvage</h1>
+          <div className="flex items-center gap-2 my-2 justify-end">
+            <Button
+              onClick={() => {
+                onExportToXlsx(selectedFeis);
+              }}
+              disabled={selectedFeis.length === 0 || isExporting}
+            >
+              Exporter les fiches sélectionnées dans un fichier Excel
+            </Button>
+          </div>
           {!isOnlySvi && (
             <>
               <section className="mb-6 bg-white md:shadow">
@@ -104,6 +126,8 @@ export default function TableauDeBordIndex() {
                 </div>
                 {feisAssigned.length ? (
                   <ResponsiveTable
+                    onCheckboxClick={handleCheckboxClick}
+                    checkedItemIds={selectedFeis}
                     headers={['Numéro', 'Chasse', 'Carcasses', 'Étape en cours']}
                     data={feisAssigned
                       .filter((fei) => fei !== null)
@@ -162,6 +186,8 @@ export default function TableauDeBordIndex() {
                 </div>
                 {feisOngoing.length ? (
                   <ResponsiveTable
+                    onCheckboxClick={handleCheckboxClick}
+                    checkedItemIds={selectedFeis}
                     headers={['Numéro', 'Chasse', 'Carcasses', 'Étape en cours']}
                     data={feisOngoing
                       .filter((fei) => fei !== null)
@@ -240,6 +266,8 @@ export default function TableauDeBordIndex() {
               <div className="py-2 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
                 {feisDone.length ? (
                   <ResponsiveTable
+                    onCheckboxClick={handleCheckboxClick}
+                    checkedItemIds={selectedFeis}
                     headers={['Numéro', 'Chasse', 'Carcasses', "Transmission au service d'inspection"]}
                     data={feisDone
                       .filter((fei) => fei !== null)
@@ -273,9 +301,7 @@ export default function TableauDeBordIndex() {
                       }))}
                   />
                 ) : (
-                  <>
-                    <p className="m-8">Pas encore de fiche clôturée</p>
-                  </>
+                  <p className="m-8">Pas encore de fiche clôturée</p>
                 )}
               </div>
               <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
@@ -305,6 +331,8 @@ export default function TableauDeBordIndex() {
                 <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
                   {feiActivesForSvi.length ? (
                     <ResponsiveTable
+                      onCheckboxClick={handleCheckboxClick}
+                      checkedItemIds={selectedFeis}
                       headers={['Numéro', 'Chasse', 'Carcasses', 'Réceptionnée le']}
                       data={feiActivesForSvi
                         .filter((fei) => fei !== null)
@@ -371,6 +399,8 @@ export default function TableauDeBordIndex() {
                 <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
                   {feisDoneForSvi.length ? (
                     <ResponsiveTable
+                      onCheckboxClick={handleCheckboxClick}
+                      checkedItemIds={selectedFeis}
                       headers={['Numéro', 'Chasse', 'Carcasses', 'Clôturée le']}
                       data={feisDoneForSvi
                         .filter((fei) => fei !== null)

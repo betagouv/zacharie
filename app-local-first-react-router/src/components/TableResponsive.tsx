@@ -1,20 +1,24 @@
+import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
 import { Link } from 'react-router';
 
 type TableProps = {
-  caption?: string;
   headers: string[];
   data: Array<{ link: string; id: string; rows: Array<string | JSX.Element>; isSynced: boolean }>;
-  bordered?: boolean;
-  className?: string;
+  onCheckboxClick: (id: string) => void;
+  checkedItemIds: string[];
 };
 
-export default function TableResponsive({ headers, data }: TableProps) {
+export default function TableResponsive({ headers, data, onCheckboxClick, checkedItemIds }: TableProps) {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="-mx-4 sm:-mx-0">
         <table className="min-w-full divide-y divide-gray-300">
           <thead>
             <tr>
+              <th
+                scope="col"
+                className="hidden w-14 text-left text-sm font-semibold text-gray-900 sm:pl-0 sm:table-cell"
+              />
               <th
                 scope="col"
                 className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0"
@@ -51,6 +55,24 @@ export default function TableResponsive({ headers, data }: TableProps) {
               // link = '/app/tableau-de-bord/caca';
               return (
                 <tr key={id} id={id} className="relative">
+                  <td className="hidden max-w-14 text-sm text-gray-500 lg:table-cell border-r border-r-gray-100">
+                    <Checkbox
+                      className="!m-0 [&_label]:before:!m-0"
+                      options={[
+                        {
+                          label: '',
+                          nativeInputProps: {
+                            name: 'fiche',
+                            value: id,
+                            onChange: () => {
+                              onCheckboxClick(id);
+                            },
+                            checked: checkedItemIds.includes(id),
+                          },
+                        },
+                      ]}
+                    />
+                  </td>
                   <td className="w-full max-w-0 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-0">
                     {!isSynced && (
                       <div className="absolute top-0 left-0 border-l-8 border-action-high-blue-france w-8 h-full"></div>

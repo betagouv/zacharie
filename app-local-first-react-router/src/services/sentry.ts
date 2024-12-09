@@ -10,9 +10,9 @@ type ErrorType = Error | string;
 export function capture(err: ErrorType, context: Context | string = {}): void {
   let parsedContext: Context;
 
-  // if (import.meta.env.DEV) {
-  //   return console.log('capture', err, context);
-  // }
+  if (import.meta.env.DEV) {
+    return console.log('capture', err, context);
+  }
   if (typeof context === 'string') {
     parsedContext = JSON.parse(context);
   } else {

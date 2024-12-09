@@ -16,9 +16,10 @@ export async function loadFei(fei_numero: string) {
     .then((res) => res.json())
     .then((res) => res as FeiResponse);
   if (!feiData.ok) {
-    return;
+    return null;
   }
   setFeiInStore(feiData!);
+  return feiData.data.fei!;
 }
 
 export async function setFeiInStore(feiResponse: FeiResponse) {
