@@ -66,7 +66,7 @@ model User {
   FeiSviUser                     Fei[]                    @relation("FeiSviUser")
   FeiSviUserSignedBy             Fei[]                    @relation("FeiSviUserSignedBy")
   FeiIntermediaireUser           FeiIntermediaire[]       @relation("FeiIntermediaireUser")
-  Logs                           Logs[]
+  Logs                           Log[]
   NotificationLog                NotificationLog[]
   CarcasseIntermediaire          CarcasseIntermediaire[]  @relation("CarcasseIntermediaireUser")
   FeiNextUser                    Fei[]                    @relation("FeiNextUser")
@@ -116,6 +116,7 @@ model Entity {
   CarcasseIntermediaire     CarcasseIntermediaire[]  @relation("CarcasseIntermediaireEntity")
   ETGRelatedWithEntity      ETGAndEntityRelations[]  @relation("ETGRelatedWithEntity")
   EntityRelatedWithETG      ETGAndEntityRelations[]  @relation("EntityRelatedWithETG")
+  Logs                      Log[]
 }
 
 model Password {
@@ -191,14 +192,28 @@ model ETGAndEntityRelations {
   @@index([entity_id, entity_type])
 }
 
-model Logs {
-  id         String    @id @default(uuid())
-  user_id    String
-  action     String // login, logout, password_change, user_update, user_create, user_delete, fei_created, etc
-  created_at DateTime  @default(now())
-  updated_at DateTime  @default(now()) @updatedAt
-  deleted_at DateTime?
-  User       User?     @relation(fields: [user_id], references: [id])
+model Log {
+  id                        String                 @id @default(uuid())
+  user_id                   String
+  user_role                 UserRoles
+  fei_numero                String?
+  entity_id                 String?
+  zacharie_carcasse_id      String?
+  fei_intermediaire_id      String?
+  carcasse_intermediaire_id String?
+  action                    String // login, logout, password_change, user_update, user_create, user_delete, fei_created, etc
+  history                   Json? // before, after, diff
+  date                      DateTime?
+  created_at                DateTime               @default(now())
+  updated_at                DateTime               @default(now()) @updatedAt
+  deleted_at                DateTime?
+  is_synced                 Boolean                @default(true) // just for typing purppose with zustand frontend
+  User                      User?                  @relation(fields: [user_id], references: [id])
+  Entity                    Entity?                @relation(fields: [entity_id], references: [id])
+  Carcasse                  Carcasse?              @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id])
+  Fei                       Fei?                   @relation(fields: [fei_numero], references: [numero])
+  FeiIntermediaire          FeiIntermediaire?      @relation(fields: [fei_intermediaire_id], references: [id])
+  CarcasseIntermediaire     CarcasseIntermediaire? @relation(fields: [carcasse_intermediaire_id], references: [fei_numero__bracelet__intermediaire_id])
 
   @@index([user_id, action])
 }
@@ -265,6 +280,7 @@ model Fei {
   FeiNextEntity                                           Entity?                 @relation("FeiNextEntity", fields: [fei_next_owner_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiNextUser                                             User?                   @relation("FeiNextUser", fields: [fei_next_owner_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaire                                   CarcasseIntermediaire[]
+  Logs                                                    Log[]
 
   @@index([created_by_user_id])
   @@index([premier_detenteur_user_id])
@@ -315,6 +331,7 @@ model Carcasse {
   FeiIntermediairesCarcasse                     FeiIntermediaire[]      @relation("FeiIntermediairesCarcasse")
   FeiIntermediaireCarcasseRefus                 FeiIntermediaire?       @relation("FeiIntermediaireCarcasseRefus", fields: [intermediaire_carcasse_refus_intermediaire_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaire                         CarcasseIntermediaire[]
+  Logs                                          Log[]
 
   @@index([fei_numero, numero_bracelet])
 }
@@ -340,6 +357,7 @@ model FeiIntermediaire {
   FeiIntermediairesCarcasses     Carcasse[]              @relation("FeiIntermediairesCarcasse")
   FeiIntermediaireCarcassesRefus Carcasse[]              @relation("FeiIntermediaireCarcasseRefus")
   CarcasseIntermediaire          CarcasseIntermediaire[] @relation("FeiIntermediaireCarcasseIntermediaire")
+  Logs                           Log[]
 
   @@index([fei_numero, fei_intermediaire_user_id]) // Modify: Focus on these two fields
   @@index([fei_intermediaire_entity_id]) // Add: Used in nested queries
@@ -367,6 +385,7 @@ model CarcasseIntermediaire {
   CarcasseIntermediaireUser              User             @relation("CarcasseIntermediaireUser", fields: [fei_intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaireEntity            Entity           @relation("CarcasseIntermediaireEntity", fields: [fei_intermediaire_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaireFeiIntermediaire  FeiIntermediaire @relation("FeiIntermediaireCarcasseIntermediaire", fields: [fei_intermediaire_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  Logs                                   Log[]
 
   @@index([fei_numero__bracelet__intermediaire_id])
 }

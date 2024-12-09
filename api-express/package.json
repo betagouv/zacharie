@@ -13,7 +13,7 @@
     "prisma-create-migration": "NODE_ENV=development POSTGRESQL_ADDON_URI=postgresql://postgres@localhost/zacharie-temp npx prisma migrate dev --name",
     "prisma-deploy": "NODE_ENV=production npx prisma migrate deploy",
     "prisma-reset-db": "rm -rf prisma/migrations && npx prisma migrate reset --force && npm run prisma-setup",
-    "typecheck": "tsc",
+    "typecheck": "tsc -b",
     "format": "prettier --write . --ignore-unknown"
   },
   "dependencies": {

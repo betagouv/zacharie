@@ -4,7 +4,6 @@ import { Table } from '@codegouvfr/react-dsfr/Table';
 import dayjs from 'dayjs';
 import type { AdminUsersResponse } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
-import { clearCache } from '@app/services/indexed-db';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<NonNullable<AdminUsersResponse['data']['users']>>([]);

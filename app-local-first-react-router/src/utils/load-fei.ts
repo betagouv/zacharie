@@ -18,11 +18,11 @@ export async function loadFei(fei_numero: string) {
   if (!feiData.ok) {
     return;
   }
-  setFeiInStore(feiData);
+  setFeiInStore(feiData!);
 }
 
 export async function setFeiInStore(feiResponse: FeiResponse) {
-  const fei = feiResponse.data?.fei;
+  const fei = feiResponse.data.fei!;
   // if (!fei?.numero) {
   //   useZustandStore.setState((state) => {
   //     delete state.feis[fei_numero];

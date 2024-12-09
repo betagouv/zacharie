@@ -9,6 +9,7 @@ import type { FeiWithIntermediaires } from '~/src/types/fei';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function CurrentOwnerConfirm({
   setSelectedTabId,
@@ -19,6 +20,8 @@ export default function CurrentOwnerConfirm({
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
   const updateFei = state.updateFei;
+  const createFeiIntermediaire = state.createFeiIntermediaire;
+  const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
   // const collecteursProsRelatedWithMyETGs = state.collecteursProsRelatedWithMyETGs;
   const etgsRelatedWithMyEntities = state.etgsRelatedWithMyEntities;
@@ -136,8 +139,6 @@ export default function CurrentOwnerConfirm({
       nextFei.svi_user_id = user.id;
     }
 
-    updateFei(fei.numero, nextFei);
-
     const intermediaireRole: (keyof typeof UserRoles)[] = [
       UserRoles.COLLECTEUR_PRO,
       UserRoles.ETG,
@@ -164,7 +165,18 @@ export default function CurrentOwnerConfirm({
         received_at: null,
         is_synced: false,
       };
-      useZustandStore.getState().createFeiIntermediaire(newIntermediaire);
+      createFeiIntermediaire(newIntermediaire);
+      addLog({
+        user_id: user.id,
+        user_role: newIntermediaire.fei_intermediaire_role!,
+        fei_numero: fei.numero,
+        action: 'intermediaire-create',
+        history: createHistoryInput(null, newIntermediaire),
+        entity_id: fei.fei_current_owner_entity_id,
+        zacharie_carcasse_id: null,
+        fei_intermediaire_id: newIntermediaireId,
+        carcasse_intermediaire_id: null,
+      });
       if (nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
         // on envoie directement à l'ETG
         if (fei.fei_next_owner_role === UserRoles.ETG) {
@@ -177,6 +189,17 @@ export default function CurrentOwnerConfirm({
       }
     }
     updateFei(fei.numero, nextFei);
+    addLog({
+      user_id: user.id,
+      user_role: nextFei.fei_current_owner_role!,
+      fei_numero: fei.numero,
+      action: 'current-owner-confirm',
+      history: createHistoryInput(fei, nextFei),
+      entity_id: fei.fei_current_owner_entity_id,
+      zacharie_carcasse_id: null,
+      fei_intermediaire_id: null,
+      carcasse_intermediaire_id: null,
+    });
     setSelectedTabId('Destinataires');
   }
 
@@ -313,11 +336,23 @@ export default function CurrentOwnerConfirm({
           type="submit"
           className="!mt-0 text-sm"
           onClick={() => {
-            updateFei(fei.numero, {
+            const nextFei = {
               fei_next_owner_entity_id: null,
               fei_next_owner_entity_name_cache: null,
               fei_next_owner_user_id: null,
               fei_next_owner_user_name_cache: null,
+            };
+            updateFei(fei.numero, nextFei);
+            addLog({
+              user_id: user.id,
+              user_role: fei.fei_next_owner_role!,
+              fei_numero: fei.numero,
+              action: 'current-owner-renvoi',
+              entity_id: fei.fei_next_owner_entity_id,
+              zacharie_carcasse_id: null,
+              fei_intermediaire_id: null,
+              carcasse_intermediaire_id: null,
+              history: createHistoryInput(fei, nextFei),
             });
           }}
         >

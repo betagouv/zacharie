@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Carcasse, CarcasseType } from '@prisma/client';
+import { Carcasse, CarcasseType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { CustomNotice } from '@app/components/CustomNotice';
 import { useParams, Link } from 'react-router';
 import useZustandStore from '@app/zustand/store';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
+import useUser from '@app/zustand/user';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 interface CarcasseAVerifierProps {
   carcasse: Carcasse;
@@ -14,11 +16,12 @@ interface CarcasseAVerifierProps {
 export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProps) {
   // const { fei, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
   const params = useParams();
+  const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
   const fei = state.feis[params.fei_numero!];
   const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
   const updateCarcasse = state.updateCarcasse;
-
+  const addLog = state.addLog;
   const [motifsSaisie, setMotifsSaisie] = useState(
     carcasse?.svi_carcasse_saisie_motif?.filter(Boolean) ?? [],
   );
@@ -172,20 +175,33 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
                               setMotifsSaisie((motifsSaisie) => {
                                 return motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
                               });
+                              let nextPartialCarcasse: Partial<Carcasse>;
                               if (nextMotifsSaisie.length) {
-                                updateCarcasse(carcasse.zacharie_carcasse_id, {
+                                nextPartialCarcasse = {
                                   svi_carcasse_saisie_motif: nextMotifsSaisie,
                                   svi_carcasse_saisie_at: dayjs().toDate(),
                                   svi_carcasse_signed_at: dayjs().toDate(),
-                                });
+                                };
                               } else {
-                                updateCarcasse(carcasse.zacharie_carcasse_id, {
+                                nextPartialCarcasse = {
                                   svi_carcasse_saisie_motif: [],
                                   svi_carcasse_saisie: [],
                                   svi_carcasse_saisie_at: dayjs().toDate(),
                                   svi_carcasse_signed_at: dayjs().toDate(),
-                                });
+                                };
                               }
+                              updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+                              addLog({
+                                user_id: user.id,
+                                user_role: UserRoles.SVI,
+                                fei_numero: fei.numero,
+                                action: 'svi-carcasse-motif-delete',
+                                history: createHistoryInput(carcasse, nextPartialCarcasse),
+                                entity_id: fei.svi_entity_id,
+                                zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                                fei_intermediaire_id: null,
+                                carcasse_intermediaire_id: null,
+                              });
                             }}
                           >
                             {`\u0078`}

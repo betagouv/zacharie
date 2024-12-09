@@ -7,12 +7,14 @@ import SelectNextOwnerForPremierDetenteurOrIntermediaire from './premier-detente
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function FeiTransfer() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
   const updateFei = state.updateFei;
+  const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
 
   if (!fei.fei_current_owner_wants_to_transfer) {
@@ -38,11 +40,23 @@ export default function FeiTransfer() {
           type="submit"
           className="text-sm"
           onClick={() => {
-            updateFei(fei.numero, {
+            const nextFei = {
               fei_current_owner_wants_to_transfer: false,
               fei_next_owner_entity_id: null,
               fei_next_owner_role: null,
               fei_next_owner_user_id: null,
+            };
+            updateFei(fei.numero, nextFei);
+            addLog({
+              user_id: user.id,
+              user_role: fei.fei_next_owner_role!,
+              fei_numero: fei.numero,
+              action: 'current-owner-transfer',
+              entity_id: fei.fei_next_owner_entity_id,
+              zacharie_carcasse_id: null,
+              fei_intermediaire_id: null,
+              carcasse_intermediaire_id: null,
+              history: createHistoryInput(fei, nextFei),
             });
           }}
         >

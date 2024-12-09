@@ -245,11 +245,11 @@ PUSH NOTIFICATIONS
 self.addEventListener('push', (event: PushEvent) => {
   event.waitUntil(
     (async () => {
-      const data = event.data?.json() ?? {
-        title: 'Zacharie Notification',
-        body: 'No payload',
-        img: '/pwa-192x192.png',
-      };
+      // const data = event.data?.json() ?? {
+      //   title: 'Zacharie Notification',
+      //   body: 'No payload',
+      //   img: '/pwa-192x192.png',
+      // };
 
       // Fetch all FEIs first
       // await fetchAllFeis('PUSH_NOTIFICATION');

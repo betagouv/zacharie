@@ -10,17 +10,21 @@ import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import dayjs from 'dayjs';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
   const updateFei = state.updateFei;
+  const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
   const entities = state.entities;
   const ccgs = state.ccgsIds.map((id) => state.entities[id]);
   const etgs = state.etgsIds.map((id) => state.entities[id]);
   const svis = state.svisIds.map((id) => state.entities[id]);
+  console.log('state.svisIds', state.svisIds);
+  console.log('state.entities', state.entities);
   const collecteursPro = state.collecteursProIds.map((id) => state.entities[id]);
   const feiIntermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
 
@@ -127,10 +131,10 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
       return savedNextOwner;
     }
     if (showIntermediaires) {
-      return etgs[0].id;
+      return etgs[0]?.id;
     }
     if (showSvi) {
-      return svis[0].id;
+      return svis[0]?.id;
     }
     if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
       return fei.premier_detenteur_depot_entity_id ?? '';
@@ -156,11 +160,23 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
         method="POST"
         onSubmit={(event) => {
           event.preventDefault();
-          updateFei(fei.numero, {
+          const nextFei = {
             fei_next_owner_entity_id: nextOwnerValue,
             fei_next_owner_role: nextRole,
             svi_assigned_at: nextRole === UserRoles.SVI ? dayjs().toDate() : null,
             svi_entity_id: nextRole === UserRoles.SVI ? nextOwnerValue : null,
+          };
+          updateFei(fei.numero, nextFei);
+          addLog({
+            user_id: user.id,
+            action: 'premier-detenteur-intermediaire-select-next',
+            fei_numero: fei.numero,
+            history: createHistoryInput(fei, nextFei),
+            user_role: UserRoles.PREMIER_DETENTEUR,
+            entity_id: fei.premier_detenteur_entity_id,
+            zacharie_carcasse_id: null,
+            carcasse_intermediaire_id: null,
+            fei_intermediaire_id: null,
           });
         }}
       >

@@ -10,6 +10,8 @@ import { CustomNotice } from '@app/components/CustomNotice';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import useZustandStore from '@app/zustand/store';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
+import { createHistoryInput } from '@app/utils/create-history-entry';
+import useUser from '@app/zustand/user';
 
 interface CarcasseIntermediaireProps {
   carcasse: Carcasse;
@@ -23,9 +25,11 @@ export default function CarcasseIntermediaireComp({
   intermediaire,
 }: CarcasseIntermediaireProps) {
   const params = useParams();
+  const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
   const updateCarcasseIntermediaire = state.updateCarcasseIntermediaire;
   const updateCarcasse = state.updateCarcasse;
+  const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
   const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
 
@@ -48,7 +52,14 @@ export default function CarcasseIntermediaireComp({
       }
     }
     return commentaires;
-  }, [intermediaires, carcasse]);
+  }, [
+    intermediaires,
+    fei.numero,
+    carcasse.numero_bracelet,
+    intermediaire.id,
+    state.carcassesIntermediaires,
+    state.entities,
+  ]);
 
   const carcasseIntermediaireId = getCarcasseIntermediaireId(
     fei.numero,
@@ -77,16 +88,40 @@ export default function CarcasseIntermediaireComp({
     setCarcasseManquante(true);
     setCarcasseRefusCheckbox(false);
     setRefus('');
-    updateCarcasseIntermediaire(carcasseIntermediaireId, {
+    const nextPartialCarcasseIntermediaire = {
       manquante: true,
       refus: null,
       prise_en_charge: false,
+    };
+    updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
+    addLog({
+      user_id: user.id,
+      user_role: intermediaire.fei_intermediaire_role!,
+      fei_numero: fei.numero,
+      action: 'carcasse-intermediaire-manquante',
+      history: createHistoryInput(intermediaireCarcasse, nextPartialCarcasseIntermediaire),
+      entity_id: intermediaire.fei_intermediaire_entity_id,
+      zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+      fei_intermediaire_id: intermediaire.id,
+      carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    updateCarcasse(carcasse.zacharie_carcasse_id, {
+    const nextPartialCarcasse = {
       intermediaire_carcasse_manquante: true,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
       intermediaire_carcasse_signed_at: new Date(),
+    };
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+    addLog({
+      user_id: user.id,
+      user_role: intermediaire.fei_intermediaire_role!,
+      fei_numero: fei.numero,
+      action: 'carcasse-manquante',
+      history: createHistoryInput(carcasse, nextPartialCarcasse),
+      entity_id: intermediaire.fei_intermediaire_entity_id,
+      zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+      fei_intermediaire_id: intermediaire.id,
+      carcasse_intermediaire_id: carcasseIntermediaireId,
     });
   };
 
@@ -99,16 +134,40 @@ export default function CarcasseIntermediaireComp({
     if (refus !== refusInputValue) {
       setRefus(refusInputValue);
     }
-    updateCarcasseIntermediaire(carcasseIntermediaireId, {
+    const nextPartialCarcasseIntermediaire = {
       manquante: false,
       refus: refusInputValue,
       prise_en_charge: false,
+    };
+    updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
+    addLog({
+      user_id: user.id,
+      user_role: intermediaire.fei_intermediaire_role!,
+      fei_numero: fei.numero,
+      action: 'carcasse-intermediaire-refus',
+      history: createHistoryInput(intermediaireCarcasse, nextPartialCarcasseIntermediaire),
+      entity_id: intermediaire.fei_intermediaire_entity_id,
+      zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+      fei_intermediaire_id: intermediaire.id,
+      carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    updateCarcasse(carcasse.zacharie_carcasse_id, {
+    const nextPartialCarcasse = {
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: refusInputValue,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
       intermediaire_carcasse_signed_at: new Date(),
+    };
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+    addLog({
+      user_id: user.id,
+      user_role: intermediaire.fei_intermediaire_role!,
+      fei_numero: fei.numero,
+      action: 'carcasse-refus',
+      history: createHistoryInput(carcasse, nextPartialCarcasse),
+      entity_id: intermediaire.fei_intermediaire_entity_id,
+      zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+      fei_intermediaire_id: intermediaire.id,
+      carcasse_intermediaire_id: carcasseIntermediaireId,
     });
   };
 
@@ -116,16 +175,40 @@ export default function CarcasseIntermediaireComp({
     setCarcasseManquante(false);
     setCarcasseRefusCheckbox(false);
     setRefus('');
-    updateCarcasseIntermediaire(carcasseIntermediaireId, {
+    const nextPartialCarcasseIntermediaire = {
       manquante: false,
       refus: null,
       prise_en_charge: true,
+    };
+    updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
+    addLog({
+      user_id: user.id,
+      user_role: intermediaire.fei_intermediaire_role!,
+      fei_numero: fei.numero,
+      action: 'carcasse-intermediaire-accept',
+      history: createHistoryInput(intermediaireCarcasse, nextPartialCarcasseIntermediaire),
+      entity_id: intermediaire.fei_intermediaire_entity_id,
+      zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+      fei_intermediaire_id: intermediaire.id,
+      carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    updateCarcasse(carcasse.zacharie_carcasse_id, {
+    const nextPartialCarcasse = {
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: null,
       intermediaire_carcasse_signed_at: new Date(),
+    };
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+    addLog({
+      user_id: user.id,
+      user_role: intermediaire.fei_intermediaire_role!,
+      fei_numero: fei.numero,
+      action: 'carcasse-accept',
+      history: createHistoryInput(carcasse, nextPartialCarcasse),
+      entity_id: intermediaire.fei_intermediaire_entity_id,
+      zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+      fei_intermediaire_id: intermediaire.id,
+      carcasse_intermediaire_id: carcasseIntermediaireId,
     });
   };
 
@@ -289,8 +372,20 @@ export default function CarcasseIntermediaireComp({
                 form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
                 defaultValue: intermediaireCarcasse.commentaire || '',
                 onBlur: (e) => {
-                  updateCarcasseIntermediaire(carcasseIntermediaireId, {
+                  const nextPartialCarcasseIntermediaire = {
                     commentaire: e.target.value,
+                  };
+                  updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
+                  addLog({
+                    user_id: user.id,
+                    user_role: intermediaire.fei_intermediaire_role!,
+                    fei_numero: fei.numero,
+                    action: 'carcasse-intermediaire-commentaire',
+                    history: createHistoryInput(intermediaireCarcasse, nextPartialCarcasseIntermediaire),
+                    entity_id: intermediaire.fei_intermediaire_entity_id,
+                    zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                    fei_intermediaire_id: intermediaire.id,
+                    carcasse_intermediaire_id: carcasseIntermediaireId,
                   });
                 },
               }}

@@ -12,6 +12,7 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import CarcasseSVI from './svi-carcasse';
 import { Input } from '@codegouvfr/react-dsfr/Input';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function FEI_SVI() {
   const params = useParams();
@@ -19,6 +20,7 @@ export default function FEI_SVI() {
   const state = useZustandStore((state) => state);
   const fei = state.feis[params.fei_numero!];
   const updateFei = state.updateFei;
+  const addLog = state.addLog;
   const sviUser = fei.svi_user_id ? state.users[fei.svi_user_id] : null;
   const svi = fei.svi_entity_id ? state.entities[fei.svi_entity_id] : null;
   const carcassesUnsorted = (state.carcassesIdsByFei[params.fei_numero!] || [])
@@ -143,8 +145,20 @@ export default function FEI_SVI() {
           id="svi_check_finished_at"
           onSubmit={(e) => {
             e.preventDefault();
-            updateFei(fei.numero, {
+            const nextFei = {
               svi_signed_at: dayjs().toDate(),
+            };
+            updateFei(fei.numero, nextFei);
+            addLog({
+              user_id: user.id,
+              action: 'svi-check-finished-at',
+              fei_numero: fei.numero,
+              history: createHistoryInput(fei, nextFei),
+              user_role: UserRoles.SVI,
+              entity_id: fei.svi_entity_id,
+              zacharie_carcasse_id: null,
+              carcasse_intermediaire_id: null,
+              fei_intermediaire_id: null,
             });
           }}
         >
@@ -177,8 +191,20 @@ export default function FEI_SVI() {
                   type: 'datetime-local',
                   autoComplete: 'off',
                   onBlur: (e) => {
-                    updateFei(fei.numero, {
+                    const nextFei = {
                       svi_signed_at: dayjs(e.target.value).toDate(),
+                    };
+                    updateFei(fei.numero, nextFei);
+                    addLog({
+                      user_id: user.id,
+                      action: 'svi-check-finished-at-update',
+                      fei_numero: fei.numero,
+                      history: createHistoryInput(fei, nextFei),
+                      user_role: UserRoles.SVI,
+                      entity_id: fei.svi_entity_id,
+                      zacharie_carcasse_id: null,
+                      carcasse_intermediaire_id: null,
+                      fei_intermediaire_id: null,
                     });
                   },
                   suppressHydrationWarning: true,

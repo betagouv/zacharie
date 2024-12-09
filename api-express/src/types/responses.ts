@@ -6,6 +6,7 @@ import type {
   Carcasse,
   FeiIntermediaire,
   CarcasseIntermediaire,
+  Log,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
 import type { FeiDone, FeiWithIntermediaires, FeiPopulated } from './fei';
@@ -203,6 +204,14 @@ export interface AdminNewUserDataResponse {
   ok: boolean;
   data: null | {
     user: User;
+  };
+  error: string;
+}
+
+export interface LogResponse {
+  ok: boolean;
+  data: {
+    log: Log | null;
   };
   error: string;
 }

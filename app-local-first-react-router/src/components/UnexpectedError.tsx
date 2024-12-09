@@ -20,12 +20,7 @@ export default function UnexpectedError({ resetErrorBoundary }: { resetErrorBoun
             </p>
             <ul className="fr-btns-group fr-btns-group--inline-md">
               <li>
-                <button
-                  type="button"
-                  className="fr-btn"
-                  href="/app/tableau-de-bord"
-                  onClick={resetErrorBoundary}
-                >
+                <button type="button" className="fr-btn" onClick={resetErrorBoundary}>
                   Page d'accueil
                 </button>
               </li>

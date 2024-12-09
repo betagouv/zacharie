@@ -25,6 +25,7 @@ import { loadFei } from '@app/utils/load-fei';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 const saisieCarcasseModal = createModal({
   isOpenedByDefault: false,
@@ -49,7 +50,7 @@ export default function CarcasseSviLoader() {
         setHasTriedLoading(true);
         console.error(error);
       });
-  }, []);
+  }, [params.fei_numero]);
 
   if (!fei) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;
@@ -73,6 +74,7 @@ export function CarcasseEditSVI() {
     : null;
   const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
   const updateCarcasse = state.updateCarcasse;
+  const addLog = state.addLog;
   const carcasse = state.carcasses[params.zacharie_carcasse_id!];
 
   const commentairesIntermediaires = useMemo(() => {
@@ -90,7 +92,7 @@ export function CarcasseEditSVI() {
       }
     }
     return commentaires;
-  }, [intermediaires, state.carcassesIntermediaires, state.entities]);
+  }, [carcasse.numero_bracelet, fei.numero, intermediaires, state.carcassesIntermediaires, state.entities]);
 
   const examinateurInitialInput = useMemo(() => {
     const lines = [];
@@ -384,19 +386,32 @@ export function CarcasseEditSVI() {
                                 setMotifsSaisie((motifsSaisie) => {
                                   return motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
                                 });
+                                let nextPartialCarcasse: Partial<typeof carcasse>;
                                 if (nextMotifsSaisie.length) {
-                                  updateCarcasse(carcasse.zacharie_carcasse_id, {
+                                  nextPartialCarcasse = {
                                     svi_carcasse_saisie_motif: nextMotifsSaisie,
                                     svi_carcasse_saisie_at: dayjs().toDate(),
                                     svi_carcasse_signed_at: dayjs().toDate(),
-                                  });
+                                  };
                                 } else {
-                                  updateCarcasse(carcasse.zacharie_carcasse_id, {
+                                  nextPartialCarcasse = {
                                     svi_carcasse_saisie_motif: [],
                                     svi_carcasse_saisie_at: null,
                                     svi_carcasse_signed_at: dayjs().toDate(),
-                                  });
+                                  };
                                 }
+                                updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+                                addLog({
+                                  user_id: user.id,
+                                  user_role: UserRoles.SVI,
+                                  fei_numero: fei.numero,
+                                  action: 'svi-remove-one-saisie-motif',
+                                  history: createHistoryInput(carcasse, nextPartialCarcasse),
+                                  entity_id: fei.fei_current_owner_entity_id,
+                                  zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                                  fei_intermediaire_id: null,
+                                  carcasse_intermediaire_id: null,
+                                });
                               }}
                             />
                           );
@@ -413,9 +428,21 @@ export function CarcasseEditSVI() {
                           form: `svi-carcasse-${carcasse.numero_bracelet}`,
                           defaultValue: carcasse?.svi_carcasse_commentaire || '',
                           onBlur: (e) => {
-                            updateCarcasse(carcasse.zacharie_carcasse_id, {
+                            const nextPartialCarcasse = {
                               svi_carcasse_commentaire: e.target.value,
                               svi_carcasse_signed_at: dayjs().toDate(),
+                            };
+                            updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+                            addLog({
+                              user_id: user.id,
+                              user_role: UserRoles.SVI,
+                              fei_numero: fei.numero,
+                              action: 'svi-commentaire',
+                              history: createHistoryInput(carcasse, nextPartialCarcasse),
+                              entity_id: fei.fei_current_owner_entity_id,
+                              zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                              fei_intermediaire_id: null,
+                              carcasse_intermediaire_id: null,
                             });
                           },
                         }}
@@ -437,11 +464,23 @@ export function CarcasseEditSVI() {
                                     disabled: typeSaisie.length > 0,
                                     onClick: (e) => {
                                       e.preventDefault();
-                                      updateCarcasse(carcasse.zacharie_carcasse_id, {
+                                      const nextPartialCarcasse = {
                                         svi_carcasse_saisie: typeSaisie,
                                         svi_carcasse_saisie_motif: motifsSaisie,
                                         svi_carcasse_saisie_at: dayjs().toDate(),
                                         svi_carcasse_signed_at: dayjs().toDate(),
+                                      };
+                                      updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+                                      addLog({
+                                        user_id: user.id,
+                                        user_role: UserRoles.SVI,
+                                        fei_numero: fei.numero,
+                                        action: 'svi-enregistrer',
+                                        history: createHistoryInput(carcasse, nextPartialCarcasse),
+                                        entity_id: fei.fei_current_owner_entity_id,
+                                        zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                                        fei_intermediaire_id: null,
+                                        carcasse_intermediaire_id: null,
                                       });
                                     },
                                     suppressHydrationWarning: true,
@@ -462,11 +501,23 @@ export function CarcasseEditSVI() {
                                           alert('Veuillez ajouter au moins un motif de saisie');
                                           return;
                                         }
-                                        updateCarcasse(carcasse.zacharie_carcasse_id, {
+                                        const nextPartialCarcasse = {
                                           svi_carcasse_saisie: typeSaisie,
                                           svi_carcasse_saisie_motif: motifsSaisie,
                                           svi_carcasse_saisie_at: dayjs().toDate(),
                                           svi_carcasse_signed_at: dayjs().toDate(),
+                                        };
+                                        updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+                                        addLog({
+                                          user_id: user.id,
+                                          user_role: UserRoles.SVI,
+                                          fei_numero: fei.numero,
+                                          action: 'svi-saisir',
+                                          history: createHistoryInput(carcasse, nextPartialCarcasse),
+                                          entity_id: fei.fei_current_owner_entity_id,
+                                          zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                                          fei_intermediaire_id: null,
+                                          carcasse_intermediaire_id: null,
                                         });
                                       },
                                       form: `svi-carcasse-${carcasse.numero_bracelet}`,
@@ -485,12 +536,24 @@ export function CarcasseEditSVI() {
                                       onClick: () => {
                                         setMotifsSaisie([]);
                                         setTypeSaisie([]);
-                                        updateCarcasse(carcasse.zacharie_carcasse_id, {
+                                        const nextPartialCarcasse = {
                                           svi_carcasse_saisie: [],
                                           svi_carcasse_saisie_motif: [],
                                           svi_carcasse_saisie_at: null,
                                           svi_carcasse_commentaire: null,
                                           svi_carcasse_signed_at: dayjs().toDate(),
+                                        };
+                                        updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+                                        addLog({
+                                          user_id: user.id,
+                                          user_role: UserRoles.SVI,
+                                          fei_numero: fei.numero,
+                                          action: 'svi-annuler',
+                                          history: createHistoryInput(carcasse, nextPartialCarcasse),
+                                          entity_id: fei.fei_current_owner_entity_id,
+                                          zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                                          fei_intermediaire_id: null,
+                                          carcasse_intermediaire_id: null,
                                         });
                                       },
                                     },

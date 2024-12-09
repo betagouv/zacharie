@@ -8,12 +8,14 @@ import { useNavigate, useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import dayjs from 'dayjs';
+import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function CurrentOwner() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
   const updateFei = state.updateFei;
+  const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
   const currentOwnerUser = fei.fei_current_owner_user_id ? state.users[fei.fei_current_owner_user_id] : null;
   const currentOwnerEntity = fei.fei_current_owner_entity_id
@@ -31,6 +33,16 @@ export default function CurrentOwner() {
     }
     return fei.fei_current_owner_user_id === user.id;
   }, [user.roles, fei.fei_current_owner_user_id, user.id]);
+
+  const currentOwnerRole = useMemo(() => {
+    if (user.roles.includes(UserRoles.ADMIN)) {
+      return UserRoles.ADMIN;
+    }
+    if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      return UserRoles.EXAMINATEUR_INITIAL;
+    }
+    return fei.fei_current_owner_role;
+  }, [user.roles, fei.fei_current_owner_role]);
 
   if (fei.svi_signed_at) {
     return (
@@ -81,8 +93,18 @@ export default function CurrentOwner() {
             buttonText="Supprimer la fiche"
             textToConfirm="SUPPRIMER LA FICHE"
             onConfirm={() => {
-              updateFei(fei.numero, {
-                deleted_at: dayjs().toDate(),
+              const nextFei = { deleted_at: dayjs().toDate() };
+              updateFei(fei.numero, nextFei);
+              addLog({
+                user_id: user.id,
+                user_role: currentOwnerRole!,
+                fei_numero: fei.numero,
+                action: 'current-owner-delete',
+                entity_id: currentOwnerEntity?.id || null,
+                zacharie_carcasse_id: null,
+                fei_intermediaire_id: null,
+                carcasse_intermediaire_id: null,
+                history: createHistoryInput(fei, nextFei),
               });
               setTimeout(() => {
                 navigate(-1);
