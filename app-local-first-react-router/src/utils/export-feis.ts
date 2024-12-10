@@ -27,7 +27,7 @@ function createSheet(data: Array<Record<string, unknown>>) {
     }, []),
   ];
 
-  const rowHeights: Array<{ hpt: number }> = [];
+  const rowHeights: Array<{ hpx: number }> = [{ hpx: 20 }]; // first line is header
   const sheet = data.reduce(
     (xlsxData: Array<Array<string | null>>, item: Record<string, unknown>, index: number) => {
       const row = [];
@@ -49,7 +49,10 @@ function createSheet(data: Array<Record<string, unknown>>) {
         }
         row.push(JSON.stringify(value).substring(0, 32766));
       }
-      rowHeights.push({ hpt: Math.max(...row.map((content) => (content || '').split('\n').length)) * 20 });
+
+      rowHeights.push({
+        hpx: Math.max(...row.map((content) => (content || '').split('\n').filter(Boolean).length)) * 20,
+      });
       return [...xlsxData, row];
     },
     [header],
@@ -84,6 +87,18 @@ function createSheet(data: Array<Record<string, unknown>>) {
     }
   });
   worksheet['!cols'] = wscols;
+
+  // Add cell styling for all cells
+  // const range = utils.decode_range(worksheet['!ref'] || 'A1');
+  // for (let R = range.s.r; R <= range.e.r; ++R) {
+  //   for (let C = range.s.c; C <= range.e.c; ++C) {
+  //     const cell_address = utils.encode_cell({ r: R, c: C });
+  //     if (!worksheet[cell_address]) continue;
+  //     worksheet[cell_address].s = {
+  //       alignment: { wrapText: true },
+  //     };
+  //   }
+  // }
 
   return worksheet;
 }
@@ -267,10 +282,10 @@ export default function useExportFeis() {
         const fileName = `Fiche ${fei.numero} - ${dayjs(fei.updated_at).format('YYYY-MM-DD-HH-mm')}.xlsx`;
 
         if (feiNumbers.length > 1) {
-          const buffer = write(workbook, { type: 'buffer', cellStyles: true });
+          const buffer = write(workbook, { type: 'buffer', cellStyles: true, bookSST: true });
           zip.file(fileName, buffer);
         } else {
-          writeFile(workbook, fileName, { cellStyles: true });
+          writeFile(workbook, fileName, { cellStyles: true, bookSST: true });
           return setIsExporting(false);
         }
       }
