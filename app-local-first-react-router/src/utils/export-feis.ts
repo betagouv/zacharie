@@ -66,9 +66,9 @@ const createSheet = (data: Array<Record<string, unknown>>) => {
       case 'Donnée':
       case 'Valeur':
       case 'SVI - Commentaire':
-      case 'Eaxamen initial - Anomalies carcasse':
-      case 'Eaxamen initial - Anomalies abats':
-      case 'Eaxamen initial - Commentaire':
+      case 'Examen initial - Anomalies carcasse':
+      case 'Examen initial - Anomalies abats':
+      case 'Examen initial - Commentaire':
       case 'SVI - Saisie':
       case 'SVI - Saisie motif':
         return { wch: 40 }; // wider columns for comments
@@ -97,11 +97,17 @@ function formatUser(user: UserForFei | null) {
 
 function formatEntity(entity: EntityWithUserRelation | null) {
   if (!entity) return null;
-  return `${entity?.nom_d_usage}\n${entity?.address_ligne_1} ${entity?.address_ligne_2}\n${entity?.code_postal} ${entity?.ville}\n`;
+  let line1 = `${entity?.nom_d_usage}`;
+  let line2 = entity?.address_ligne_1;
+  if (entity?.address_ligne_2) {
+    line2 += `\n${entity?.address_ligne_2}`;
+  }
+  let line3 = `${entity?.code_postal} ${entity?.ville}`;
+  return `${line1}\n${line2}\n${line3}`;
 }
 
 export default function useExportFeis() {
-  const [isExporting, setIsExporting] = useState(false);
+  let [isExporting, setIsExporting] = useState(false);
   const state = useZustandStore((state) => state);
   const feis = state.feis;
   const entities = state.entities;
@@ -128,9 +134,9 @@ export default function useExportFeis() {
           Éspèce: string | null;
           'Type de gibier': string;
           "Nombre d'animaux": number | null;
-          'Eaxamen initial - Anomalies carcasse': string;
-          'Eaxamen initial - Anomalies abats': string;
-          'Eaxamen initial - Commentaire': string | null;
+          'Examen initial - Anomalies carcasse': string;
+          'Examen initial - Anomalies abats': string;
+          'Examen initial - Commentaire': string | null;
           Manquante: string;
           'Refusée par un destinataire': string;
           Commentaires: string;
@@ -154,7 +160,10 @@ export default function useExportFeis() {
         const workbook = utils.book_new();
 
         const feiSheetData = [
-          { Donnée: 'Date de la chasse', Valeur: dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY') },
+          {
+            Donnée: 'Date de la chasse',
+            Valeur: dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY'),
+          },
           {
             Donnée: 'Heure de première mise à mort',
             Valeur: fei.heure_mise_a_mort_premiere_carcasse,
@@ -229,16 +238,20 @@ export default function useExportFeis() {
               Éspèce: carcasse.espece,
               'Type de gibier': carcasse.type === CarcasseType.PETIT_GIBIER ? 'Petit gibier' : 'Gros gibier',
               "Nombre d'animaux": carcasse.nombre_d_animaux,
-              'Eaxamen initial - Anomalies carcasse': carcasse.examinateur_anomalies_carcasse.join(', '),
-              'Eaxamen initial - Anomalies abats': carcasse.examinateur_anomalies_abats.join(', '),
-              'Eaxamen initial - Commentaire': carcasse.examinateur_commentaire,
+              'Premier détenteur':
+                premierDetenteurEntity?.nom_d_usage || premierDetenteur?.nom_de_famille
+                  ? `${premierDetenteur?.prenom} ${premierDetenteur?.nom_de_famille}`
+                  : '',
               Manquante: carcasse.intermediaire_carcasse_manquante ? 'Oui' : '',
               'Refusée par un destinataire': carcasse.intermediaire_carcasse_refus_motif || '',
-              Commentaires: commentaires.join('\n'),
               'SVI - Saisie': carcasse.svi_carcasse_saisie.join(' - '),
               'SVI - Saisie motif': carcasse.svi_carcasse_saisie_motif.join('\n'),
               'SVI - Commentaire': carcasse.svi_carcasse_commentaire,
               'SVI - Date de signature': carcasse.svi_carcasse_signed_at,
+              'Examen initial - Anomalies carcasse': carcasse.examinateur_anomalies_carcasse.join(', '),
+              'Examen initial - Anomalies abats': carcasse.examinateur_anomalies_abats.join(', '),
+              'Examen initial - Commentaire': carcasse.examinateur_commentaire,
+              Commentaires: commentaires.join('\n'),
             };
             allCarcasses.push({
               ...toReturn,
