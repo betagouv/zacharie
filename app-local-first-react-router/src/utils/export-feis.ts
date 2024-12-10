@@ -7,11 +7,10 @@ import { getUserRoleLabel } from './get-user-roles-label';
 import dayjs from 'dayjs';
 import JSZip from 'jszip';
 import { getCarcasseIntermediaireId } from './get-carcasse-intermediaire-id';
-import { CarcasseType } from '@prisma/client';
 import { loadFei } from './load-fei';
 import { capture } from '@app/services/sentry';
 
-const createSheet = (data: Array<Record<string, unknown>>) => {
+function createSheet(data: Array<Record<string, unknown>>) {
   /*
   [
     [the, first, array, is, the, header],
@@ -28,9 +27,11 @@ const createSheet = (data: Array<Record<string, unknown>>) => {
     }, []),
   ];
 
+  const rowHeights: Array<{ hpt: number }> = [];
   const sheet = data.reduce(
-    (xlsxData: Array<Array<string | null>>, item: Record<string, unknown>) => {
+    (xlsxData: Array<Array<string | null>>, item: Record<string, unknown>, index: number) => {
       const row = [];
+
       for (let column of header) {
         const value = item[column];
         if (!value) {
@@ -48,16 +49,13 @@ const createSheet = (data: Array<Record<string, unknown>>) => {
         }
         row.push(JSON.stringify(value).substring(0, 32766));
       }
+      rowHeights.push({ hpt: Math.max(...row.map((content) => (content || '').split('\n').length)) * 20 });
       return [...xlsxData, row];
     },
     [header],
   );
   const worksheet = utils.aoa_to_sheet(sheet);
-  for (let cell in worksheet) {
-    if (cell[0] === '!') continue; // skip special keys
-    if (!worksheet[cell]) continue;
-    worksheet[cell].s = { alignment: { wrapText: true } };
-  }
+  worksheet['!rows'] = rowHeights;
 
   // Set column widths
   const wscols = header.map((col) => {
@@ -88,11 +86,11 @@ const createSheet = (data: Array<Record<string, unknown>>) => {
   worksheet['!cols'] = wscols;
 
   return worksheet;
-};
+}
 
 function formatUser(user: UserForFei | null) {
   if (!user) return null;
-  return `${user?.prenom} ${user?.nom_de_famille}\r\n${user?.email}\r\n${user?.telephone}`;
+  return `${user?.prenom} ${user?.nom_de_famille}\n${user?.email}\n${user?.telephone}`;
 }
 
 function formatEntity(entity: EntityWithUserRelation | null) {
@@ -100,10 +98,10 @@ function formatEntity(entity: EntityWithUserRelation | null) {
   let line1 = `${entity?.nom_d_usage}`;
   let line2 = entity?.address_ligne_1;
   if (entity?.address_ligne_2) {
-    line2 += `\r\n${entity?.address_ligne_2}`;
+    line2 += `\n${entity?.address_ligne_2}`;
   }
   let line3 = `${entity?.code_postal} ${entity?.ville}`;
-  return `${line1}\r\n${line2}\r\n${line3}`;
+  return `${line1}\n${line2}\n${line3}`;
 }
 
 export default function useExportFeis() {
@@ -183,7 +181,7 @@ export default function useExportFeis() {
         if (premierDetenteur && premierDetenteurEntity) {
           feiSheetData.push({
             Donnée: 'Premier détenteur',
-            Valeur: `${formatEntity(premierDetenteurEntity)}\r\n${formatUser(premierDetenteur)}`,
+            Valeur: `${formatEntity(premierDetenteurEntity)}\n${formatUser(premierDetenteur)}`,
           });
         } else if (premierDetenteur) {
           feiSheetData.push({ Donnée: 'Premier détenteur', Valeur: formatUser(premierDetenteur) });
@@ -196,7 +194,7 @@ export default function useExportFeis() {
             const intermediaireUser = users[intermediaire.fei_intermediaire_user_id!];
             feiSheetData.push({
               Donnée: `Destinataire ${Number(index) + 1}`,
-              Valeur: `${getUserRoleLabel(intermediaire.fei_intermediaire_role!)}\r\n${formatEntity(intermediaireEntity)}\r\n${formatUser(intermediaireUser)}`,
+              Valeur: `${getUserRoleLabel(intermediaire.fei_intermediaire_role!)}\n${formatEntity(intermediaireEntity)}\n${formatUser(intermediaireUser)}`,
             });
           }
         } else {
@@ -245,13 +243,13 @@ export default function useExportFeis() {
               Manquante: carcasse.intermediaire_carcasse_manquante ? 'Oui' : '',
               'Refusée par un destinataire': carcasse.intermediaire_carcasse_refus_motif || '',
               'SVI - Saisie': carcasse.svi_carcasse_saisie.join(' - '),
-              'SVI - Saisie motif': carcasse.svi_carcasse_saisie_motif.join('\r\n'),
+              'SVI - Saisie motif': carcasse.svi_carcasse_saisie_motif.join('\n'),
               'SVI - Commentaire': carcasse.svi_carcasse_commentaire,
               'SVI - Date de signature': carcasse.svi_carcasse_signed_at,
               'Examen initial - Anomalies carcasse': carcasse.examinateur_anomalies_carcasse.join(', '),
               'Examen initial - Anomalies abats': carcasse.examinateur_anomalies_abats.join(', '),
               'Examen initial - Commentaire': carcasse.examinateur_commentaire,
-              Commentaires: commentaires.join('\r\n'),
+              Commentaires: commentaires.join('\n'),
             };
             allCarcasses.push({
               ...toReturn,
@@ -269,10 +267,10 @@ export default function useExportFeis() {
         const fileName = `Fiche ${fei.numero} - ${dayjs(fei.updated_at).format('YYYY-MM-DD-HH-mm')}.xlsx`;
 
         if (feiNumbers.length > 1) {
-          const buffer = write(workbook, { type: 'buffer' });
+          const buffer = write(workbook, { type: 'buffer', cellStyles: true });
           zip.file(fileName, buffer);
         } else {
-          writeFile(workbook, fileName);
+          writeFile(workbook, fileName, { cellStyles: true });
           return setIsExporting(false);
         }
       }

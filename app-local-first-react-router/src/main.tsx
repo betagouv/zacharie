@@ -14,6 +14,9 @@ import { ErrorBoundary } from 'react-error-boundary';
 import UnexpectedError from './components/UnexpectedError.tsx';
 import { capture } from './services/sentry.ts';
 import { clearCache } from './services/indexed-db.ts';
+import 'dayjs/locale/fr';
+import dayjs from 'dayjs';
+dayjs.locale('fr');
 
 startReactDsfr({
   // defaultColorScheme: "system",
