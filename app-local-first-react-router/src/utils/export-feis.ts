@@ -129,10 +129,10 @@ export default function useExportFeis() {
           'Heure de première mise à mort': string | null;
           'Heure de dernière éviscération': string | null;
           Commune: string | null;
-          zacharie_carcasse_id: string;
+          // zacharie_carcasse_id: string;
           'Numéro de bracelet': string;
           Éspèce: string | null;
-          'Type de gibier': string;
+          // 'Type de gibier': string;
           "Nombre d'animaux": number | null;
           'Examen initial - Anomalies carcasse': string;
           'Examen initial - Anomalies abats': string;
@@ -233,10 +233,10 @@ export default function useExportFeis() {
               }
             }
             const toReturn = {
-              zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+              // zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
               'Numéro de bracelet': carcasse.numero_bracelet,
               Éspèce: carcasse.espece,
-              'Type de gibier': carcasse.type === CarcasseType.PETIT_GIBIER ? 'Petit gibier' : 'Gros gibier',
+              // 'Type de gibier': carcasse.type === CarcasseType.PETIT_GIBIER ? 'Petit gibier' : 'Gros gibier',
               "Nombre d'animaux": carcasse.nombre_d_animaux,
               'Premier détenteur':
                 premierDetenteurEntity?.nom_d_usage || premierDetenteur?.nom_de_famille
