@@ -2,7 +2,7 @@ import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '../middlewares/errors';
 import type { RequestWithUser } from '~/types/request';
-const router = express.Router();
+const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import jwt from 'jsonwebtoken';
 import dayjs from 'dayjs';

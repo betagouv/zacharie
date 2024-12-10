@@ -1,7 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '../middlewares/errors';
-const router = express.Router();
+const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import type { SearchResponse } from '~/types/responses';
 import dayjs from 'dayjs';

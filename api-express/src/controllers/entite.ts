@@ -3,7 +3,7 @@ import passport from 'passport';
 import { catchErrors } from '../middlewares/errors';
 import type { RequestWithUser } from '~/types/request';
 import type { EntitiesWorkingForResponse } from '~/types/responses';
-const router = express.Router();
+const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { EntityRelationType, EntityTypes, Prisma, UserRoles } from '@prisma/client';
 import {

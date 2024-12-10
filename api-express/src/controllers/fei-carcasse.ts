@@ -2,7 +2,7 @@ import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '../middlewares/errors';
 import type { CarcasseResponse } from '~/types/responses';
-const router = express.Router();
+const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import { Prisma, UserRoles } from '@prisma/client';

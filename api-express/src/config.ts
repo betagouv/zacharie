@@ -12,8 +12,8 @@ const VERSION = buildId;
 
 const TIPIMAIL_API_USER = process.env.TIPIMAIL_API_USER;
 const TIPIMAIL_API_KEY = process.env.TIPIMAIL_API_KEY;
-const TIPIMAIL_EMAIL_TO = 'contact@recosante.beta.gouv.fr';
-const TIPIMAIL_EMAIL_FROM = 'contact@recosante.fabrique.social.gouv.fr';
+const TIPIMAIL_EMAIL_TO = 'contact@zacharie.beta.gouv.fr';
+const TIPIMAIL_EMAIL_FROM = 'contact@zacharie.beta.gouv.fr';
 
 const SECRET = process.env.VITE_SECRET ?? 'not-so-secret';
 
