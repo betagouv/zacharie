@@ -106,7 +106,7 @@ export default function TableauDeBordIndex() {
             </button>
           )}
           <h1 className="fr-h2 fr-mb-2w">Mes fiches d'accompagnement du gibier sauvage</h1>
-          <div className="flex items-center gap-2 my-2 justify-end">
+          <div className="items-center gap-2 my-2 justify-end hidden sm:flex">
             <Button
               onClick={() => {
                 onExportToXlsx(selectedFeis);
