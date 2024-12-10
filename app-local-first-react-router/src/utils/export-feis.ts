@@ -60,6 +60,20 @@ function createSheet(data: Array<Record<string, unknown>>) {
   const worksheet = utils.aoa_to_sheet(sheet);
   worksheet['!rows'] = rowHeights;
 
+  // Add cell styling for all cells
+  const range = utils.decode_range(worksheet['!ref'] || 'A1');
+  for (let R = range.s.r; R <= range.e.r; ++R) {
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cell_address = utils.encode_cell({ r: R, c: C });
+      if (!worksheet[cell_address]) continue;
+      worksheet[cell_address].s = {
+        alignment: { wrapText: true, vertical: 'top' },
+      };
+      // Force text format
+      worksheet[cell_address].z = '@';
+    }
+  }
+
   // Set column widths
   const wscols = header.map((col) => {
     switch (col) {
