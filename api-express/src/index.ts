@@ -23,6 +23,8 @@ import feiIntermediaireRouter from './controllers/fei-intermediaire.ts';
 import searchRouter from './controllers/search.ts';
 import logRouter from './controllers/log.ts';
 
+import './cronjobs/index.ts';
+
 import packageJson from '../package.json';
 
 // Put together a schema
