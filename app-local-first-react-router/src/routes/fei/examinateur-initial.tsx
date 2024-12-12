@@ -338,6 +338,9 @@ export default function FEIExaminateurInitial() {
                     } else {
                       updateFei(fei.numero, {
                         examinateur_initial_approbation_mise_sur_le_marche: approbation,
+                        examinateur_initial_date_approbation_mise_sur_le_marche: approbation
+                          ? dayjs().toDate()
+                          : null,
                       });
                     }
                   }}
