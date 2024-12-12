@@ -93,8 +93,13 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
                         Nombre de carcasses dans le lot&nbsp;: {carcasse.nombre_d_animaux || 'À REMPLIR'}
                       </span>
                     )}
+                    {fei?.date_mise_a_mort && (
+                      <span className="block font-normal mt-2 text-sm italic opacity-50">
+                        Mise à mort&nbsp;: {dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY')}
+                      </span>
+                    )}
                     {carcasse.heure_mise_a_mort && (
-                      <span className="block font-normal">
+                      <span className="block font-normal ">
                         Mise à mort&nbsp;: {carcasse.heure_mise_a_mort || 'À REMPLIR'}
                       </span>
                     )}

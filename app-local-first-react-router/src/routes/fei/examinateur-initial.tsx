@@ -183,6 +183,9 @@ export default function FEIExaminateurInitial() {
     if (carcassesNotReady.length > 0) {
       return 'Il manque des informations sur certaines carcasses';
     }
+    if (!fei.examinateur_initial_date_approbation_mise_sur_le_marche) {
+      return "Il manque la date d'approbation de mise sur le marché";
+    }
     return null;
   }, [fei, carcassesNotReady, carcasses, onlyPetitGibier]);
 
@@ -319,9 +322,11 @@ export default function FEIExaminateurInitial() {
                       examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(e.target.value).toDate(),
                       resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
                     }),
-                  defaultValue: dayjs(
-                    fei?.examinateur_initial_date_approbation_mise_sur_le_marche || undefined,
-                  ).format('YYYY-MM-DDTHH:mm'),
+                  defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
+                    ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
+                        'YYYY-MM-DDTHH:mm',
+                      )
+                    : undefined,
                 }}
               />
             </div>
@@ -338,9 +343,9 @@ export default function FEIExaminateurInitial() {
                     } else {
                       updateFei(fei.numero, {
                         examinateur_initial_approbation_mise_sur_le_marche: approbation,
-                        examinateur_initial_date_approbation_mise_sur_le_marche: approbation
-                          ? dayjs().toDate()
-                          : null,
+                        // examinateur_initial_date_approbation_mise_sur_le_marche: approbation
+                        //   ? dayjs().toDate()
+                        //   : null,
                       });
                     }
                   }}

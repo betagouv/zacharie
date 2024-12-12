@@ -261,9 +261,9 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               type: 'datetime-local',
               autoComplete: 'off',
               suppressHydrationWarning: true,
-              defaultValue: dayjs(fei?.premier_detenteur_date_depot_quelque_part || undefined).format(
-                'YYYY-MM-DDTHH:mm',
-              ),
+              defaultValue: fei?.premier_detenteur_date_depot_quelque_part
+                ? dayjs(fei?.premier_detenteur_date_depot_quelque_part).format('YYYY-MM-DDTHH:mm')
+                : undefined,
             }}
           />
         </div>
