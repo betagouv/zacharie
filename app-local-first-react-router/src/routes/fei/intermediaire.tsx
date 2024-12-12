@@ -430,6 +430,20 @@ export default function FEICurrentIntermediaire() {
             <div className="fr-fieldset__element">
               <PriseEnChargeInput
                 label="Date de prise en charge"
+                // hintText={
+                //   <button
+                //     className="inline-block"
+                //     type="button"
+                //     onClick={() => {
+                //       updateFeiIntermediaire(intermediaire.id, {
+                //         check_finished_at: dayjs().toDate(),
+                //       });
+                //     }}
+                //   >
+                //     Vous les prenez en charge à l'instant ? <u className="inline">Cliquez ici</u> pour remplir
+                //     le champ ci-dessous automatiquement
+                //   </button>
+                // }
                 nativeInputProps={{
                   id: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
                   name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,

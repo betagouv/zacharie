@@ -265,6 +265,7 @@ model Fei {
   updated_at                                              DateTime                @default(now()) @updatedAt
   deleted_at                                              DateTime?
   is_synced                                               Boolean                 @default(true) // just for typing purppose with zustand frontend
+  automatic_closed_at                                     DateTime?
   Carcasses                                               Carcasse[]
   FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiPremierDetenteurUser                                 User?                   @relation("FeiPremierDetenteurUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)

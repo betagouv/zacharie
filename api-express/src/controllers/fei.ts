@@ -284,8 +284,8 @@ router.post(
         title: `La fiche du ${dayjs(savedFei.date_mise_a_mort).format(
           'DD/MM/YYYY',
         )} est prise en charge par l'ETG`,
-        body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
-        email: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
+        body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié.`,
+        email: `Les carcasses vont être inspectées par le Service Vétérinaire.\nSi une carcasse est saisie, vous serez notifié.\nSi aucune n'est saisie, vous serez notifié de la clôture automatique de la fiche au bout de 10 jours.`,
         notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
       });
       if (savedFei.examinateur_initial_user_id !== savedFei.premier_detenteur_user_id) {
@@ -297,8 +297,8 @@ router.post(
           title: `La fiche du ${dayjs(savedFei.date_mise_a_mort).format(
             'DD/MM/YYYY',
           )} est prise en charge par l'ETG`,
-          body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
-          email: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié. Vous ne serez pas notifié pour les carcasses acceptées.`,
+          body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié.`,
+          email: `Les carcasses vont être inspectées par le Service Vétérinaire.\nSi une carcasse est saisie, vous serez notifié.\nSi aucune n'est saisie, vous serez notifié de la clôture automatique de la fiche au bout de 10 jours.`,
           notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
         });
       }
@@ -321,8 +321,8 @@ router.post(
           )} est assignée à votre Service Vétérinaire d'Inspection`,
           body: `Vous avez une nouvelle fiche à traiter. Rendez-vous sur Zacharie pour la traiter.`,
           email: [
-            `Carcasses à inspecter : ${savedFei.resume_nombre_de_carcasses}`,
-            `Rendez-vous sur Zacharie pour consulter le détail de la fiche : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
+            `Carcasses à inspecter :\n${savedFei.resume_nombre_de_carcasses}`,
+            `Rendez-vous sur Zacharie pour consulter le détail de la fiche\u00A0:\nhttps://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
           ].join('\n'),
           notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
         });
@@ -347,8 +347,8 @@ router.post(
         sendNotificationToUser({
           user: nextOwner!,
           title: 'Vous avez une nouvelle fiche à traiter',
-          body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
-          email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${savedFei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
+          body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche.\nRendez vous sur Zacharie pour la traiter.`,
+          email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${savedFei?.numero}.\nRendez vous sur Zacharie pour la traiter.`,
           notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
         });
         sendNotificationToUser({
@@ -406,7 +406,7 @@ router.post(
             user: nextOwner as User,
             title: 'Vous avez une nouvelle fiche à traiter',
             body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
-            email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${savedFei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
+            email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${savedFei?.numero}.\nRendez vous sur Zacharie pour la traiter.`,
             notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
           });
         }

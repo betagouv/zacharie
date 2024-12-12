@@ -114,7 +114,11 @@ function Fei() {
             setSelectedTabId(UserRoles.EXAMINATEUR_INITIAL);
             break;
           case UserRoles.PREMIER_DETENTEUR:
-            // setSelectedTabId(UserRoles.PREMIER_DETENTEUR);
+            if (fei.examinateur_initial_user_id === user.id) {
+              setSelectedTabId(UserRoles.EXAMINATEUR_INITIAL);
+            } else {
+              setSelectedTabId(UserRoles.PREMIER_DETENTEUR);
+            }
             break;
           case UserRoles.SVI:
             // window.scrollTo({ top: 0, behavior: "smooth" });
@@ -129,7 +133,7 @@ function Fei() {
     }
     refCurrentRole.current = fei.fei_current_owner_role;
     refCurrentUserId.current = fei.fei_current_owner_user_id;
-  }, [fei.fei_current_owner_role, fei.fei_current_owner_user_id, user.id]);
+  }, [fei.examinateur_initial_user_id, fei.fei_current_owner_role, fei.fei_current_owner_user_id, user.id]);
 
   const intermediaireTabDisabledText = useMemo(() => {
     const intermediaire = intermediaires[0];

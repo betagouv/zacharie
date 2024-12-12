@@ -3,6 +3,8 @@ import '~/prisma';
 import * as Sentry from '@sentry/node';
 
 import { ENVIRONMENT, SENTRY_KEY, VERSION } from '~/config';
+import { initFeisCron } from './feis';
+import { capture } from '~/third-parties/sentry';
 const sentryEnabled = process.env.NODE_ENV !== 'development';
 
 if (sentryEnabled) {
@@ -26,8 +28,10 @@ const isLocalDevelopment = process.env.NODE_ENV === 'development';
 const isReviewBranch = ENVIRONMENT === 'development';
 
 if (isLocalDevelopment || !isReviewBranch) {
-  Promise.resolve();
-  // .then(initIndicatorsCleaning) //
+  Promise.resolve()
+    .then(initFeisCron)
+    .then(() => console.log('All feis cronjobs are set up'))
+    .catch(capture);
   // .then(initMunicipalities) //
   // .then(initRecommandations) //
   // .then(initAggregators) //
