@@ -128,15 +128,15 @@ export default function TableauDeBordIndex() {
                   <ResponsiveTable
                     onCheckboxClick={handleCheckboxClick}
                     checkedItemIds={selectedFeis}
-                    headers={['Numéro', 'Chasse', 'Carcasses', 'Étape en cours']}
+                    headers={['Chasse', 'Dates clés', 'Carcasses', 'Étape en cours']}
                     data={feisAssigned
                       .filter((fei) => fei !== null)
                       .map((fei) => ({
                         link: `/app/tableau-de-bord/fei/${fei.numero}`,
                         id: fei.numero,
                         isSynced: fei.is_synced,
-                        rows: [
-                          fei.numero!,
+                        cols: [
+                          // fei.numero!,
                           <>
                             {dayjs(
                               fei.examinateur_initial_date_approbation_mise_sur_le_marche || fei.created_at,
@@ -146,6 +146,23 @@ export default function TableauDeBordIndex() {
                             <br />
                             {fei.commune_mise_a_mort!}
                             <br />
+                          </>,
+                          <>
+                            Mise à mort :{' '}
+                            {fei.date_mise_a_mort
+                              ? dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')
+                              : 'À remplir'}
+                            <br />
+                            Dernière éviscération : {fei.heure_evisceration_derniere_carcasse ?? 'À remplir'}
+                            {fei.premier_detenteur_date_depot_quelque_part && (
+                              <>
+                                <br />
+                                Dépôt en chambre froide :{' '}
+                                {dayjs(fei.premier_detenteur_date_depot_quelque_part).format(
+                                  'DD/MM/YYYY à HH:mm',
+                                )}
+                              </>
+                            )}
                           </>,
                           <>
                             {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
@@ -188,15 +205,15 @@ export default function TableauDeBordIndex() {
                   <ResponsiveTable
                     onCheckboxClick={handleCheckboxClick}
                     checkedItemIds={selectedFeis}
-                    headers={['Numéro', 'Chasse', 'Carcasses', 'Étape en cours']}
+                    headers={['Chasse', 'Carcasses', 'Étape en cours']}
                     data={feisOngoing
                       .filter((fei) => fei !== null)
                       .map((fei) => ({
                         link: `/app/tableau-de-bord/fei/${fei.numero}`,
                         id: fei.numero,
                         isSynced: fei.is_synced,
-                        rows: [
-                          fei.numero!,
+                        cols: [
+                          // fei.numero!,
                           <>
                             {dayjs(
                               fei.examinateur_initial_date_approbation_mise_sur_le_marche || fei.created_at,
@@ -268,15 +285,15 @@ export default function TableauDeBordIndex() {
                   <ResponsiveTable
                     onCheckboxClick={handleCheckboxClick}
                     checkedItemIds={selectedFeis}
-                    headers={['Numéro', 'Chasse', 'Carcasses', "Transmission au service d'inspection"]}
+                    headers={['Chasse', 'Carcasses', "Transmission au service d'inspection"]}
                     data={feisDone
                       .filter((fei) => fei !== null)
                       .map((fei) => ({
                         link: `/app/tableau-de-bord/fei/${fei.numero}`,
                         id: fei.numero,
                         isSynced: fei.is_synced,
-                        rows: [
-                          fei.numero!,
+                        cols: [
+                          // fei.numero!,
                           <>
                             {dayjs(
                               fei.examinateur_initial_date_approbation_mise_sur_le_marche || fei.created_at,
@@ -340,7 +357,7 @@ export default function TableauDeBordIndex() {
                           link: `/app/tableau-de-bord/fei/${fei.numero}`,
                           id: fei.numero,
                           isSynced: fei.is_synced,
-                          rows: [
+                          cols: [
                             fei.numero!,
                             <>
                               {dayjs(
@@ -366,9 +383,7 @@ export default function TableauDeBordIndex() {
                         }))}
                     />
                   ) : (
-                    <>
-                      <p className="m-8">Pas encore de fiche clôturée</p>
-                    </>
+                    <p className="m-8">Pas encore de fiche clôturée</p>
                   )}
                 </div>
                 <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
@@ -401,15 +416,15 @@ export default function TableauDeBordIndex() {
                     <ResponsiveTable
                       onCheckboxClick={handleCheckboxClick}
                       checkedItemIds={selectedFeis}
-                      headers={['Numéro', 'Chasse', 'Carcasses', 'Clôturée le']}
+                      headers={['Chasse', 'Carcasses', 'Clôturée le']}
                       data={feisDoneForSvi
                         .filter((fei) => fei !== null)
                         .map((fei) => ({
                           link: `/app/tableau-de-bord/fei/${fei.numero}`,
                           id: fei.numero,
                           isSynced: fei.is_synced,
-                          rows: [
-                            fei.numero!,
+                          cols: [
+                            // fei.numero!,
                             <>
                               {dayjs(
                                 fei.examinateur_initial_date_approbation_mise_sur_le_marche || fei.created_at,
