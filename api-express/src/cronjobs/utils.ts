@@ -17,9 +17,11 @@ type TaskFn = () => Promise<void>;
 
 export async function launchCronJob(name: string, job: TaskFn): Promise<boolean> {
   try {
+    const uniqueKey = `${dayjs().utc().format('YYYY-MM-DD:HH:mm')}_${name}`;
+    console.log('uniqueKey', uniqueKey);
     const cronJobAlreadyExisting = await prisma.cronJob.findUnique({
       where: {
-        unique_key: `${dayjs().utc().format('YYYY-MM-DD:HH:mm')}_${name}`,
+        unique_key: uniqueKey,
       },
     });
     if (cronJobAlreadyExisting) {
@@ -30,7 +32,7 @@ export async function launchCronJob(name: string, job: TaskFn): Promise<boolean>
     }
     const cronJob = await prisma.cronJob.create({
       data: {
-        unique_key: `${dayjs().utc().format('YYYY-MM-DD:HH:mm')}_${name}`,
+        unique_key: uniqueKey,
         name,
         active: true,
       },

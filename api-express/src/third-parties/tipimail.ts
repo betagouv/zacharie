@@ -17,6 +17,7 @@ export async function sendEmail({
     console.log({ emails, text, html, subject, from });
     return Promise.resolve({ status: 'success' });
   }
+
   return fetch('https://api.tipimail.com/v1/messages/send', {
     method: 'POST',
     headers: {
@@ -34,7 +35,7 @@ export async function sendEmail({
         },
         subject,
         text,
-        html,
+        // html,
       },
       headers: {
         'X-TM-TRACKING': { html: { open: 0, click: 0, text: { click: 0 } } },
