@@ -333,7 +333,7 @@ export default function TableauDeBordIndex() {
                     <ResponsiveTable
                       onCheckboxClick={handleCheckboxClick}
                       checkedItemIds={selectedFeis}
-                      headers={['Numéro', 'Chasse', 'Carcasses', 'Réceptionnée le']}
+                      headers={['Numéro', 'Chasse', 'Carcasses', "RéceptionnéeEnvoyée par l'ETG le"]}
                       data={feiActivesForSvi
                         .filter((fei) => fei !== null)
                         .map((fei) => ({
