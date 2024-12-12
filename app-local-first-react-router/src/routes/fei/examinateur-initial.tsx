@@ -310,7 +310,8 @@ export default function FEIExaminateurInitial() {
             </div>
             <div className="fr-fieldset__element">
               <Component
-                label="Date d'approbation de mise sur le marché"
+                label="Date de l’examen initial"
+                hintText="Cette date vaut date d'approbation de mise sur le marché"
                 nativeInputProps={{
                   id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
                   name: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
