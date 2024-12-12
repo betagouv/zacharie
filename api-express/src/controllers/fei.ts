@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import { EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
 import { feiPopulatedInclude } from '~/types/fei';
-import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
+// import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 router.post(
   '/:fei_numero',
@@ -425,7 +425,7 @@ router.post(
       }
     }
 
-    refreshMaterializedViews();
+    // refreshMaterializedViews();
 
     res.status(200).send({
       ok: true,

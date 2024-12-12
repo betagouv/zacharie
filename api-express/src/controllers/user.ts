@@ -33,7 +33,7 @@ import { authorizeUserOrAdmin } from '~/utils/authorizeUserOrAdmin.server';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
 import sendNotificationToUser from '~/service/notifications';
 import { SECRET } from '~/config';
-import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
+// import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 router.post(
   '/connexion',
@@ -220,7 +220,7 @@ router.post(
     const token = jwt.sign({ userId: user.id }, SECRET, {
       expiresIn: JWT_MAX_AGE,
     });
-    refreshMaterializedViews();
+    // refreshMaterializedViews();
     res.cookie('zacharie_express_jwt', token, cookieOptions());
     res
       .status(200)
