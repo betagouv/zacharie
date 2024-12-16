@@ -3,8 +3,8 @@ export default function ModalitesDutilisation() {
     <article className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div>
-          <title>Modalités d&#x27;utilisation | Zacharie | Ministère de l'Agriculture</title>
-          <h1 className="text-2xl font-bold mb-3 mt-0">Modalités d&#x27;utilisation de « Zacharie »</h1>
+          <title>Modalités d’utilisation | Zacharie | Ministère de l'Agriculture</title>
+          <h1 className="text-2xl font-bold mb-3 mt-0">Modalités d’utilisation de « Zacharie »</h1>
           <p>
             <h2 className="text-xl font-semibold mb-2 mt-6">Article 1 - Champ d’application </h2>
           </p>
@@ -18,7 +18,7 @@ export default function ModalitesDutilisation() {
             <h2 className="text-xl font-semibold mb-2 mt-6">Article 2 - Présentation de la Plateforme</h2>
           </p>
           <p>
-            Zacharie (ci-après la “Plateforme”) est un service numérique mis en œuvre par l a Direction
+            Zacharie (ci-après la “Plateforme”) est un service numérique mis en œuvre par la Direction
             générale de l’Alimentation (DGAL) du ministère de l’Agriculture, de la Souveraineté alimentaire et
             de la Forêt (MASAF).
           </p>
@@ -56,7 +56,7 @@ export default function ModalitesDutilisation() {
             L’Utilisateur se connecte à la Plateforme en renseignant son courriel et son mot de passe. Pour
             s’inscrire sur la Plateforme, il doit prendre attache avec l’équipe habilitée de la Plateforme par
             voie électronique. Lors de la création de son compte, l’Utilisateur renseigne les informations
-            suivantes&nbsp;: nom, prénom, courriel, numéro de téléphone.
+            suivantes&nbsp;: nom, prénom, courriel, numéro de téléphone et adresse postale.
           </p>
           <p>
             Chaque Utilisateur sélectionne le ou les rôles qu’il peut juridiquement endosser sur la Plateforme
@@ -74,14 +74,14 @@ export default function ModalitesDutilisation() {
           <p>
             L’Examinateur initial possède et communique un numéro de formateur référent ou de personne formée
             valide et délivré par la Fédération Nationale des Chasseurs ou par une Fédération Départementale
-            des Chasseurs. Ce rôle ouvre le droit d ’usage aux fonctionnalités de création d’une fiche
+            des Chasseurs. Ce rôle ouvre le droit d’usage aux fonctionnalités de création d’une fiche
             d’accompagnement du gibier sauvage sous format numérique et d’enregistrement du compte-rendu de
             l’examen initial sur la fiche d’accompagnement du gibier sauvage sous format numérique.
           </p>
           <p>
             En créant une fiche d’accompagnement du gibier sauvage, l’Examinateur initial doit renseigner
             l’ensemble des données de traçabilité et sanitaires liées aux carcasses (grand gibier) ou au lot
-            de carcasse (petit gibier).
+            de carcasses (petit gibier).
           </p>
           <p>
             Pour valider la réalisation de l’examen initial et la transmission de la fiche, l’Examinateur
@@ -105,23 +105,23 @@ export default function ModalitesDutilisation() {
           </p>
           {/* <p>
             Ce rôle ouvre le droit d’usage à la fonctionnalité de déclaration du Centre de Collecte de Gibier
-            sauvage (CCG) ainsi que l’attribution du gibier à un Intermédiaire qu’il soit Intermédiaire
-            Collecteur Professionnel ou Intermédiaire Établissement de Traitement du Gibier sauvage qui
+            sauvage (CCG) ainsi que l’attribution du gibier à un Destinataire qu’il soit Destinataire
+            Collecteur Professionnel ou Destinataire Établissement de Traitement du Gibier sauvage qui
             assurera le transport ou le traitement du gibier sauvage.
           </p> */}
           <p>
             Ce rôle engage le Premier détenteur à réaliser l’examen initial du gibier sauvage et à reporter
-            l&#x27;ensemble des observations relevées avec exactitude sur la fiche d’accompagnement du gibier
+            l’ensemble des observations relevées avec exactitude sur la fiche d’accompagnement du gibier
             sauvage numérique. Il atteste que l’examen initial n’a pas révélé d’anomalie incompatible à la
             mise sur le marché des carcasses en poils/plumes.
           </p>
           <p>
-            <h3 className="text-lg font-bold mb-3 mt-3">4.3 Intermédiaire collecteur professionnel</h3>
+            <h3 className="text-lg font-bold mb-3 mt-3">4.3 Destinataire collecteur professionnel</h3>
           </p>
           <p>
-            L’Intermédiaire collecteur professionnel possède et communique un numéro de SIRET affilié à
+            Le Destinataire collecteur professionnel possède et communique un numéro de SIRET affilié à
             l’activité de collecteur professionnel de gibier sauvage valide et délivré suite à
-            l&#x27;immatriculation de l&#x27;entreprise <em>via</em> le
+            l’immatriculation de l’entreprise <em>via</em> le
             <a href="https://procedures.inpi.fr/?/">Guichet des formalités des entreprises</a>
             en application des
             <a href="https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000005634379/LEGISCTA000006178890/#LEGISCTA000006178890">
@@ -131,27 +131,27 @@ export default function ModalitesDutilisation() {
           </p>
           <p>
             Il peut enregistrer les constats et décisions établis lors de la prise en charge des carcasses
-            (rejet d’une carcasse ou absence sur le lieu de prise en charge par exemple).
+            (rejet d’une carcasse ou absence sur le lieu de prise en charge, les cas échéants).
           </p>
           <p>
             Ce rôle ouvre le droit à l’usage de la fonctionnalité d’annotation de la fiche d’accompagnement du
-            gibier sauvage ainsi que le droit à l’usage de la fonctionnalité d’attribution d’un «
-            Intermédiaire » qu’il soit « Intermédiaire Collecteur Professionnel » ou « Intermédiaire
-            Établissement de Traitement du Gibier sauvage ».
+            gibier sauvage ainsi que le droit à l’usage de la fonctionnalité d’attribution d’un « Destinataire
+            » qu’il soit un « Destinataire Établissement de Traitement du Gibier sauvage » ou un autre «
+            Destinataire Collecteur Professionnel ».
           </p>
           <p>
             <h3 className="text-lg font-bold mb-3 mt-3">
-              4.4 Intermédiaire établissement de traitement du gibier sauvage
+              4.4 Destinataire établissement de traitement du gibier sauvage
             </h3>
           </p>
           <p>
-            L’Intermédiaire établissement de traitement du gibier sauvage possède et communique sur la
+            Le Destinataire établissement de traitement du gibier sauvage possède et communique sur la
             Plateforme&nbsp;:
           </p>
           <ul>
             <li className="list-inside list-disc">
               un numéro de SIRET affilié à l’activité d’Établissement de Traitement du Gibier sauvage valide
-              et délivré suite à l&#x27;immatriculation de l&#x27;entreprise <em>via </em>le
+              et délivré suite à l’immatriculation de l’entreprise <em>via </em>le
               <a href="https://procedures.inpi.fr/?/">Guichet des formalités des entreprises</a> en
               application des
               <a href="https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000005634379/LEGISCTA000006178890/#LEGISCTA000006178890">
@@ -168,7 +168,7 @@ export default function ModalitesDutilisation() {
           </ul>
           <p>
             Il peut enregistrer les constats et décisions établis lors de la prise en charge des carcasses
-            (rejet d’une carcasse ou absence sur le lieu de prise en charge par exemple).
+            (rejet d’une carcasse ou absence sur le lieu de prise en charge, les cas échéants).
           </p>
           <p>
             Ce rôle ouvre le droit à l’usage de la fonctionnalité d’annotation de la fiche d’accompagnement du
@@ -222,7 +222,7 @@ export default function ModalitesDutilisation() {
             peuvent se faire que sur la partie de la fiche créée par l’Utilisateur et non sur les parties
             créées par d’autres. Une exception existe pour l'Utilisateur Établissement de Traitement du Gibier
             Sauvage qui est en mesure d’apporter des modifications sur les ajouts d’un Utilisateur
-            Intermédiaire Collecteur qui travaille à son service.
+            Destinataire Collecteur qui travaille à son service.
           </p>
           <p></p>
           <p>
@@ -251,7 +251,7 @@ export default function ModalitesDutilisation() {
           <p>
             En cas de manquement à une ou plusieurs des stipulations des présentes modalités d’utilisation,
             l’Éditeur se réserve le droit de rendre indisponibles les contenus illicites, suspendre ou
-            supprimer le compte de l&#x27;Utilisateur responsable.
+            supprimer le compte de l’Utilisateur responsable.
           </p>
           <p>
             <h3 className="text-lg font-bold mb-3 mt-3">5.2 L’Utilisateur de la Plateforme</h3>
