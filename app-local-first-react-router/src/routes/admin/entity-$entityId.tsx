@@ -248,6 +248,7 @@ export default function AdminEntity() {
                     <div className="fr-fieldset__element fr-fieldset__element--inline@md fr-fieldset__element--inline-grow">
                       <InputVille
                         postCode={entity.code_postal ?? ''}
+                        key={entity.ville}
                         trimPostCode
                         label="Ville ou commune"
                         hintText="Exemple : Montpellier"
@@ -312,9 +313,14 @@ export default function AdminEntity() {
                   buttons={[
                     {
                       children: 'Rafraichir',
-                      type: 'submit',
+                      type: 'button',
                       nativeButtonProps: {
                         form: 'entity_data_form',
+                      },
+                      onClick: () => {
+                        loadData(params.entityId!).then((response) => {
+                          if (response.data) setAdminEntityResponse(response.data!);
+                        });
                       },
                     },
                   ]}

@@ -90,6 +90,17 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
     return true;
   }, [fei, user, depotType]);
 
+  const entityDisplay = useMemo(() => {
+    let entityDisplay = premierDetenteurDepotEntity?.nom_d_usage;
+    if (premierDetenteurDepotEntity?.numero_ddecpp) {
+      entityDisplay += ` - ${premierDetenteurDepotEntity?.numero_ddecpp}`;
+    }
+    if (premierDetenteurDepotEntity?.code_postal) {
+      entityDisplay += ` - ${premierDetenteurDepotEntity?.code_postal} ${premierDetenteurDepotEntity?.ville}`;
+    }
+    return entityDisplay;
+  }, [premierDetenteurDepotEntity]);
+
   if (!fei.premier_detenteur_user_id) {
     return "Il n'y as pas encore de premier détenteur pour cette fiche";
   }
@@ -247,7 +258,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               nativeInputProps={{
                 type: 'text',
                 autoComplete: 'off',
-                defaultValue: `${premierDetenteurDepotEntity?.nom_d_usage} - ${premierDetenteurDepotEntity?.code_postal} ${premierDetenteurDepotEntity?.ville}`,
+                defaultValue: entityDisplay,
               }}
             />
           )}
