@@ -132,6 +132,20 @@ export default function RootDisplay({
                 },
                 text: 'Accéder à mon compte',
               },
+              {
+                linkProps: {
+                  to: '/modalites-d-utilisation',
+                  href: '#',
+                },
+                text: "Modalités d'utilisation",
+              },
+              {
+                linkProps: {
+                  to: '/mentions-legales',
+                  href: '#',
+                },
+                text: 'Mentions légales',
+              },
             ],
           },
           {
