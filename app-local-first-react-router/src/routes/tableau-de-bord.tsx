@@ -139,14 +139,9 @@ export default function TableauDeBordIndex() {
                         cols: [
                           // fei.numero!,
                           <>
-                            {dayjs(
-                              fei.examinateur_initial_date_approbation_mise_sur_le_marche || fei.created_at,
-                            ).format('DD/MM/YYYY à HH:mm')}
-                            <br />
                             {fei.premier_detenteur_name_cache!}
                             <br />
                             {fei.commune_mise_a_mort!}
-                            <br />
                           </>,
                           getFeiKeyDates(fei),
                           <>
@@ -200,14 +195,9 @@ export default function TableauDeBordIndex() {
                         cols: [
                           // fei.numero!,
                           <>
-                            {dayjs(
-                              fei.examinateur_initial_date_approbation_mise_sur_le_marche || fei.created_at,
-                            ).format('DD/MM/YYYY à HH:mm')}
-                            <br />
                             {fei.premier_detenteur_name_cache!}
                             <br />
                             {fei.commune_mise_a_mort!}
-                            <br />
                           </>,
                           getFeiKeyDates(fei),
                           <>
@@ -281,14 +271,9 @@ export default function TableauDeBordIndex() {
                         cols: [
                           // fei.numero!,
                           <>
-                            {dayjs(
-                              fei.examinateur_initial_date_approbation_mise_sur_le_marche || fei.created_at,
-                            ).format('DD/MM/YYYY à HH:mm')}
-                            <br />
                             {fei.premier_detenteur_name_cache!}
                             <br />
                             {fei.commune_mise_a_mort!}
-                            <br />
                           </>,
                           getFeiKeyDates(fei),
                           <>
@@ -350,7 +335,6 @@ export default function TableauDeBordIndex() {
                               {fei.premier_detenteur_name_cache!}
                               <br />
                               {fei.commune_mise_a_mort!}
-                              <br />
                             </>,
                             getFeiKeyDates(fei),
                             <>
@@ -410,14 +394,9 @@ export default function TableauDeBordIndex() {
                           cols: [
                             // fei.numero!,
                             <>
-                              {dayjs(
-                                fei.examinateur_initial_date_approbation_mise_sur_le_marche || fei.created_at,
-                              ).format('DD/MM/YYYY à HH:mm')}
-                              <br />
                               {fei.premier_detenteur_name_cache!}
                               <br />
                               {fei.commune_mise_a_mort!}
-                              <br />
                             </>,
                             getFeiKeyDates(fei),
                             <>
