@@ -103,12 +103,11 @@ export default function ModalitesDutilisation() {
             chasse, déclarées et listées dans la fiche d’accompagnement du gibier sauvage numérique créée par
             l’Examinateur initial.
           </p>
-          {/* <p>
-            Ce rôle ouvre le droit d’usage à la fonctionnalité de déclaration du Centre de Collecte de Gibier
-            sauvage (CCG) ainsi que l’attribution du gibier à un Destinataire qu’il soit Destinataire
+          <p>
+            Ce rôle ouvre le droit d’attribution du gibier à un Destinataire qu’il soit Destinataire
             Collecteur Professionnel ou Destinataire Établissement de Traitement du Gibier sauvage qui
             assurera le transport ou le traitement du gibier sauvage.
-          </p> */}
+          </p>
           <p>
             Ce rôle engage le Premier détenteur à réaliser l’examen initial du gibier sauvage et à reporter
             l’ensemble des observations relevées avec exactitude sur la fiche d’accompagnement du gibier
