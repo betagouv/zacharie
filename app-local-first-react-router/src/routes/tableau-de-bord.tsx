@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
+import { getFeiKeyDates } from '@app/utils/gert-fei-key-dates';
 
 async function loadData() {
   await syncData();
@@ -147,23 +148,7 @@ export default function TableauDeBordIndex() {
                             {fei.commune_mise_a_mort!}
                             <br />
                           </>,
-                          <>
-                            Mise à mort :{' '}
-                            {fei.date_mise_a_mort
-                              ? dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')
-                              : 'À remplir'}
-                            <br />
-                            Dernière éviscération : {fei.heure_evisceration_derniere_carcasse ?? 'À remplir'}
-                            {fei.premier_detenteur_date_depot_quelque_part && (
-                              <>
-                                <br />
-                                Dépôt en chambre froide :{' '}
-                                {dayjs(fei.premier_detenteur_date_depot_quelque_part).format(
-                                  'DD/MM/YYYY à HH:mm',
-                                )}
-                              </>
-                            )}
-                          </>,
+                          getFeiKeyDates(fei),
                           <>
                             {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                               return (
@@ -173,7 +158,7 @@ export default function TableauDeBordIndex() {
                               );
                             })}
                           </>,
-                          <>{getOngoingCellFeiUnderMyResponsability(fei, entities)}</>,
+                          getOngoingCellFeiUnderMyResponsability(fei, entities),
                         ],
                       }))}
                   />
@@ -205,7 +190,7 @@ export default function TableauDeBordIndex() {
                   <ResponsiveTable
                     onCheckboxClick={handleCheckboxClick}
                     checkedItemIds={selectedFeis}
-                    headers={['Chasse', 'Carcasses', 'Étape en cours']}
+                    headers={['Chasse', 'Dates clés', 'Carcasses', 'Étape en cours']}
                     data={feisOngoing
                       .filter((fei) => fei !== null)
                       .map((fei) => ({
@@ -224,6 +209,7 @@ export default function TableauDeBordIndex() {
                             {fei.commune_mise_a_mort!}
                             <br />
                           </>,
+                          getFeiKeyDates(fei),
                           <>
                             {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                               return (
@@ -233,7 +219,7 @@ export default function TableauDeBordIndex() {
                               );
                             })}
                           </>,
-                          <>{getOngoingCellFeiUnderMyResponsability(fei, entities)}</>,
+                          getOngoingCellFeiUnderMyResponsability(fei, entities),
                         ],
                       }))}
                   />
@@ -285,7 +271,7 @@ export default function TableauDeBordIndex() {
                   <ResponsiveTable
                     onCheckboxClick={handleCheckboxClick}
                     checkedItemIds={selectedFeis}
-                    headers={['Chasse', 'Carcasses', "Transmission au service d'inspection"]}
+                    headers={['Chasse', 'Dates clés', 'Carcasses', "Transmission au service d'inspection"]}
                     data={feisDone
                       .filter((fei) => fei !== null)
                       .map((fei) => ({
@@ -304,6 +290,7 @@ export default function TableauDeBordIndex() {
                             {fei.commune_mise_a_mort!}
                             <br />
                           </>,
+                          getFeiKeyDates(fei),
                           <>
                             {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                               return (
@@ -350,7 +337,8 @@ export default function TableauDeBordIndex() {
                     <ResponsiveTable
                       onCheckboxClick={handleCheckboxClick}
                       checkedItemIds={selectedFeis}
-                      headers={['Numéro', 'Chasse', 'Carcasses', "Envoyée par l'ETG le"]}
+                      strongId
+                      headers={['Chasse', 'Dates clés', 'Carcasses', "Envoyée par l'ETG le"]}
                       data={feiActivesForSvi
                         .filter((fei) => fei !== null)
                         .map((fei) => ({
@@ -358,17 +346,13 @@ export default function TableauDeBordIndex() {
                           id: fei.numero,
                           isSynced: fei.is_synced,
                           cols: [
-                            fei.numero!,
                             <>
-                              {dayjs(
-                                fei.examinateur_initial_date_approbation_mise_sur_le_marche || fei.created_at,
-                              ).format('DD/MM/YYYY à HH:mm')}
-                              <br />
                               {fei.premier_detenteur_name_cache!}
                               <br />
                               {fei.commune_mise_a_mort!}
                               <br />
                             </>,
+                            getFeiKeyDates(fei),
                             <>
                               {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                                 return (
@@ -416,7 +400,7 @@ export default function TableauDeBordIndex() {
                     <ResponsiveTable
                       onCheckboxClick={handleCheckboxClick}
                       checkedItemIds={selectedFeis}
-                      headers={['Chasse', 'Carcasses', 'Clôturée le']}
+                      headers={['Chasse', 'Dates clés', 'Carcasses', 'Clôturée le']}
                       data={feisDoneForSvi
                         .filter((fei) => fei !== null)
                         .map((fei) => ({
@@ -435,6 +419,7 @@ export default function TableauDeBordIndex() {
                               {fei.commune_mise_a_mort!}
                               <br />
                             </>,
+                            getFeiKeyDates(fei),
                             <>
                               {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                                 return (
@@ -449,9 +434,7 @@ export default function TableauDeBordIndex() {
                         }))}
                     />
                   ) : (
-                    <>
-                      <p className="m-8">Pas encore de fiche clôturée</p>
-                    </>
+                    <p className="m-8">Pas encore de fiche clôturée</p>
                   )}
                 </div>
                 <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">

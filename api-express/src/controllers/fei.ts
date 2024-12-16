@@ -7,7 +7,7 @@ import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import { EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
-import { feiPopulatedInclude } from '~/types/fei';
+import { feiDoneSelect, feiPopulatedInclude } from '~/types/fei';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 router.post(
@@ -510,20 +510,7 @@ router.get(
           },
         ],
       },
-      select: {
-        numero: true,
-        created_at: true,
-        updated_at: true,
-        fei_current_owner_role: true,
-        fei_next_owner_role: true,
-        commune_mise_a_mort: true,
-        svi_assigned_at: true,
-        svi_signed_at: true,
-        examinateur_initial_date_approbation_mise_sur_le_marche: true,
-        premier_detenteur_name_cache: true,
-        resume_nombre_de_carcasses: true,
-        is_synced: true,
-      },
+      select: feiDoneSelect,
       orderBy: {
         svi_assigned_at: 'desc',
       },

@@ -7,11 +7,18 @@ type TableProps = {
   data: Array<{ link: string; id: string; cols: Array<string | JSX.Element>; isSynced: boolean }>;
   onCheckboxClick: (id: string) => void;
   checkedItemIds: string[];
+  strongId?: boolean;
 };
 
-export default function TableResponsive({ headers, data, onCheckboxClick, checkedItemIds }: TableProps) {
+export default function TableResponsive({
+  headers,
+  data,
+  strongId,
+  onCheckboxClick,
+  checkedItemIds,
+}: TableProps) {
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
+    <div className="px-4 sm:px-0">
       <div className="-mx-4 sm:-mx-0">
         <table className="min-w-full divide-y divide-gray-300">
           <thead>
@@ -56,7 +63,7 @@ export default function TableResponsive({ headers, data, onCheckboxClick, checke
               // link = '/app/tableau-de-bord/caca';
               return (
                 <Fragment key={id}>
-                  <tr id={id} className="relative">
+                  <tr id={id} className="relative w-full">
                     <td className="hidden max-w-14 text-sm text-gray-500 lg:table-cell border-r border-r-gray-100">
                       <Checkbox
                         className="!m-0 [&_label]:before:!m-0"
@@ -75,18 +82,22 @@ export default function TableResponsive({ headers, data, onCheckboxClick, checke
                         ]}
                       />
                     </td>
-                    {/* <td className="w-full max-w-0 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-0">
+                    <td className="w-full max-w-0 text-sm font-medium text-gray-900 sm:hidden">
                       <Link to={link} className="block bg-none py-4 pl-4 pr-3 !no-underline">
                         <dl className="font-normal lg:hidden">
-                          <dt className="mt-2">{headers[1]}</dt>
+                          <dt className="mt-2">{headers[0]}</dt>
                           <dd className="truncate text-gray-700">{cols[0]}</dd>
-                          <dt className="mt-1 sm:hidden">{headers[2]}</dt>
+                          <dt className="mt-1 sm:hidden">{headers[1]}</dt>
                           <dd className="truncate text-gray-500 sm:hidden">{cols[1]}</dd>
-                          <dt className="mt-1 sm:hidden">{headers[3]}</dt>
+                          <dt className="mt-1 sm:hidden">{headers[2]}</dt>
                           <dd className="truncate text-gray-500 sm:hidden">{cols[2]}</dd>
+                          <dt className="mt-1 sm:hidden">{headers[3]}</dt>
+                          <dd className="truncate text-gray-500 sm:hidden">{cols[3]}</dd>
+                          <dt className="mt-1 sm:hidden">Numéro de fiche</dt>
+                          <dd className="truncate text-gray-500 sm:hidden">{id}</dd>
                         </dl>
                       </Link>
-                    </td> */}
+                    </td>
                     <td className="hidden max-w-56 text-sm text-gray-500 lg:table-cell">
                       {!isSynced && (
                         <div className="absolute top-0 left-0 border-l-8 border-action-high-blue-france w-8 h-full"></div>
@@ -113,21 +124,29 @@ export default function TableResponsive({ headers, data, onCheckboxClick, checke
                         {cols[2]}
                       </Link>
                     </td>
-                    {headers[4] && (
+                    {headers[3] && (
                       <td className="flex h-full items-stretch justify-start text-left text-sm font-medium sm:table-cell sm:pr-0">
                         <Link
                           to={link}
                           className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 !no-underline"
                         >
-                          {cols[4]}
+                          {cols[3]}
                         </Link>
                       </td>
                     )}
                   </tr>
                   <tr className="w-full border-b border-b-gray-300">
-                    <td colSpan={1} className="text-sm text-gray-400" />
-                    <td colSpan={cols.length - 1} className="text-sm text-gray-200">
-                      {id}
+                    <td colSpan={1} className="text-sm text-gray-400 hidden sm:table-cell" />
+                    <td
+                      colSpan={cols.length - 1}
+                      className={[
+                        'text-sm hidden sm:table-cell',
+                        strongId ? 'text-gray-900' : 'text-gray-200',
+                      ].join(' ')}
+                    >
+                      <Link to={link} className="block bg-none !p-0 !m-0 !no-underline">
+                        {id}
+                      </Link>
                     </td>
                   </tr>
                 </Fragment>
