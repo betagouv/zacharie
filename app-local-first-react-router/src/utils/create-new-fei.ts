@@ -18,7 +18,7 @@ export function createNewFei(): FeiWithIntermediaires {
   const newFei: FeiWithIntermediaires = {
     id: Date.now(),
     numero: newFeiNumero,
-    date_mise_a_mort: dayjs().toDate(),
+    date_mise_a_mort: null,
     commune_mise_a_mort: null,
     heure_mise_a_mort_premiere_carcasse: null,
     heure_evisceration_derniere_carcasse: null,
