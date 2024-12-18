@@ -258,7 +258,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               nativeInputProps={{
                 type: 'text',
                 autoComplete: 'off',
-                defaultValue: entityDisplay,
+                defaultValue: entityDisplay ?? '',
               }}
             />
           )}
@@ -285,6 +285,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               id: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part,
               name: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part,
               type: 'datetime-local',
+              required: true,
               autoComplete: 'off',
               suppressHydrationWarning: true,
               defaultValue: fei?.premier_detenteur_date_depot_quelque_part
