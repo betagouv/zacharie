@@ -120,14 +120,18 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
 
       <div className={['fr-fieldset__element', canEdit ? '' : 'pointer-events-none'].join(' ')}>
         <RadioButtons
-          legend="Dans quelle chambre froide sont déposées les carcasses ?"
+          legend="Où sont entreposées les carcasses ?"
           hintText={canEdit ? 'Étape requise pour la suite du processus' : ''}
           options={[
             {
               label: (
                 <span className="inline-block">
-                  Je transporte mes carcasses dans la chambre froide d'un Établissement de Traitement du
-                  Gibier sauvage
+                  Je transporte mes carcasses à un Établissement de Traitement du Gibier sauvage
+                </span>
+              ),
+              hintText: (
+                <span>
+                  Elle doivent être transportées <b>le jour-même</b>
                 </span>
               ),
               nativeInputProps: {
