@@ -79,10 +79,16 @@ export default function AdminUser() {
   const rolesFormRef = useRef<HTMLFormElement>(null);
   const handleUserFormBlur = (formRef: RefObject<HTMLFormElement>) => () => {
     const formData = new FormData(formRef.current!);
+
+    let body =
+      formRef.current!.id === 'user_roles_form'
+        ? { roles: formData.getAll('roles') }
+        : Object.fromEntries(formData);
+
     fetch(`${import.meta.env.VITE_API_URL}/user/${params.userId}`, {
       method: 'POST',
       credentials: 'include',
-      body: JSON.stringify(Object.fromEntries(formData)),
+      body: JSON.stringify(body),
       headers: new Headers({
         Accept: 'application/json',
         'Content-Type': 'application/json',
