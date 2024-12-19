@@ -46,7 +46,8 @@ export default function CurrentOwnerConfirm({
         nextOwnerEntity.relation === 'WORKING_FOR_ENTITY_RELATED_WITH')
     ) {
       if (fei.fei_next_owner_role === UserRoles.ETG) {
-        if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && !user.roles.includes(UserRoles.ETG)) {
+        // if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && !user.roles.includes(UserRoles.ETG)) {
+        if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
           if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
             return false;
           }
@@ -257,7 +258,7 @@ export default function CurrentOwnerConfirm({
             className="my-4 block"
             onClick={() => handlePriseEnCharge({ transfer: false })}
           >
-            <>Je prends en charge cette fiche et les carcasses associées</>
+            Je prends en charge cette fiche et les carcasses associées
           </Button>
         )}
         {fei.fei_next_owner_role === UserRoles.SVI && (
@@ -269,7 +270,7 @@ export default function CurrentOwnerConfirm({
               setSelectedTabId(UserRoles.SVI);
             }}
           >
-            <>Je prends en charge cette fiche</>
+            Je prends en charge cette fiche
           </Button>
         )}
         {fei.fei_next_owner_role === UserRoles.ETG && (
