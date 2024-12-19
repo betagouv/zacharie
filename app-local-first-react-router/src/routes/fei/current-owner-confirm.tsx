@@ -208,13 +208,29 @@ export default function CurrentOwnerConfirm({
     if (isTransporting) {
       const nextName =
         nextOwnerEntity?.nom_d_usage || `${nextOwnerUser?.prenom} ${nextOwnerUser?.nom_de_famille}`;
+      const canReception = user.roles.includes(UserRoles.ETG);
+      let description = canReception ? (
+        <button
+          onClick={() => {
+            handlePriseEnCharge({ transfer: false });
+            setSelectedTabId('Destinataires');
+          }}
+          type="button"
+        >
+          Bonne route ! Vous êtes arrivé à destination et souhaitez réceptionner le gibier ?{' '}
+          <u>Cliquez ici</u>
+        </button>
+      ) : (
+        `Cette fiche lui a déjà été attribuée, il a déjà été notifié, il est prêt à recevoir votre chargement. Bonne route !`
+      );
+
       return (
         <div className="bg-alt-blue-france pb-8">
           <div className="bg-white">
             <Alert
               severity="info"
               title={`Vous transportez les carcasses vers\u00A0: ${nextName}`}
-              description={`Cette fiche lui a déjà été attribuée, il a déjà été notifié, il est prêt à recevoir votre chargement. Bonne route !`}
+              description={description}
             />
           </div>
         </div>
