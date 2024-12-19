@@ -186,7 +186,7 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
                                 nextPartialCarcasse = {
                                   svi_carcasse_saisie_motif: [],
                                   svi_carcasse_saisie: [],
-                                  svi_carcasse_saisie_at: dayjs().toDate(),
+                                  svi_carcasse_saisie_at: null,
                                   svi_carcasse_signed_at: dayjs().toDate(),
                                 };
                               }
