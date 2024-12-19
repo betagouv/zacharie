@@ -67,7 +67,7 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
             >
               <Link
                 to={
-                  user.roles.includes(UserRoles.SVI)
+                  !user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && user.roles.includes(UserRoles.SVI)
                     ? `/app/tableau-de-bord/carcasse-svi/${fei.numero}/${carcasse.zacharie_carcasse_id}`
                     : `/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`
                 }
