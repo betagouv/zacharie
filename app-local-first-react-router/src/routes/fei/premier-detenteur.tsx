@@ -120,14 +120,14 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
 
       <div className={['fr-fieldset__element', canEdit ? '' : 'pointer-events-none'].join(' ')}>
         <RadioButtons
-          legend="Qui prend en charge mes carcasses ?"
+          legend="Dans quelle chambre froide sont déposées les carcasses ?"
           hintText={canEdit ? 'Étape requise pour la suite du processus' : ''}
           options={[
             {
               label: (
                 <span className="inline-block">
-                  Je transporte <b>le jour-même</b> mes carcasses à un Établissement de Traitement du Gibier
-                  sauvage
+                  Je transporte mes carcasses dans la chambre froide d'un Établissement de Traitement du
+                  Gibier sauvage
                 </span>
               ),
               nativeInputProps: {
@@ -137,8 +137,8 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               },
             },
             {
-              label:
-                'J’ai déposé mes carcasses dans un centre de collecte du gibier sauvage (chambre froide)',
+              label: 'J’ai déposé mes carcasses dans une autre chambre froide',
+              hintText: `On appelle ce type de chambre froide un "centre de collecte du gibier sauvage"`,
               nativeInputProps: {
                 checked: depotType === EntityTypes.CCG,
                 readOnly: !canEdit,
@@ -196,7 +196,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
         <div className="fr-fieldset__element">
           {canChangeNextOwner && depotType === EntityTypes.CCG && (
             <Select
-              label="Centre de collecte"
+              label="Sélectionnez la chambre froide, qui doit être un centre de collecte préalablement enregistré"
               hint={
                 <Link
                   className="!bg-none !no-underline"
@@ -227,7 +227,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
           )}
           {canChangeNextOwner && depotType === EntityTypes.ETG && (
             <Select
-              label="Sélectionnez un Établissement de Transformation du Gibier sauvage"
+              label="Sélectionnez l'Établissement de Transformation du Gibier sauvage qui prendra en charge les carcasses"
               hint="La fiche lui sera transmise"
               className="!mb-0 grow"
               nativeSelectProps={{
