@@ -17,6 +17,7 @@ import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espec
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import Alert from '@codegouvfr/react-dsfr/Alert';
 
 export default function FEIExaminateurInitial() {
   const params = useParams();
@@ -282,35 +283,10 @@ export default function FEIExaminateurInitial() {
                 />
               </div>
             )}
-            <div
-              className={[
-                'fr-fieldset__element',
-                fei.examinateur_initial_approbation_mise_sur_le_marche ? 'pointer-events-none' : '',
-              ].join(' ')}
-            >
-              <Checkbox
-                options={[
-                  {
-                    label: checkboxLabel,
-                    hintText: !jobIsMissing
-                      ? ''
-                      : "Veuillez remplir au préalable la date et la commune de mise à mort, les heures de mise à mort et d'éviscération des carcasses",
-                    nativeInputProps: {
-                      required: true,
-                      name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
-                      value: 'true',
-                      // disabled: !jobIsDone,
-                      onChange: () => setApprobation(!approbation),
-                      readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
-                      checked: approbation,
-                    },
-                  },
-                ]}
-              />
-            </div>
+
             <div className="fr-fieldset__element">
               <Component
-                label="Date de l’examen initial"
+                label="Date de validation de l’examen initial"
                 hintText="Cette date vaut date d'approbation de mise sur le marché"
                 nativeInputProps={{
                   id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
@@ -331,6 +307,30 @@ export default function FEIExaminateurInitial() {
                 }}
               />
             </div>
+            <div
+              className={[
+                'fr-fieldset__element',
+                fei.examinateur_initial_approbation_mise_sur_le_marche ? 'pointer-events-none' : '',
+              ].join(' ')}
+            >
+              <Checkbox
+                options={[
+                  {
+                    label: checkboxLabel,
+                    hintText: jobIsMissing,
+                    nativeInputProps: {
+                      required: true,
+                      name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
+                      value: 'true',
+                      // disabled: !jobIsDone,
+                      onChange: () => setApprobation(!approbation),
+                      readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
+                      checked: approbation,
+                    },
+                  },
+                ]}
+              />
+            </div>
             <div className="fr-fieldset__element">
               {canEdit && !needSelectNextUser && (
                 <Button
@@ -341,6 +341,8 @@ export default function FEIExaminateurInitial() {
                     if (jobIsMissing) {
                       e.preventDefault();
                       alert(jobIsMissing);
+                    } else if (!approbation) {
+                      alert('Vous devez cocher la case pour valider la mise sur le marché');
                     } else {
                       updateFei(fei.numero, {
                         examinateur_initial_approbation_mise_sur_le_marche: approbation,
@@ -355,6 +357,11 @@ export default function FEIExaminateurInitial() {
                 </Button>
               )}
             </div>
+            {!!jobIsMissing?.length && (
+              <div className="fr-fieldset__element">
+                <Alert title="Attention" severity="error" description={jobIsMissing} />
+              </div>
+            )}
           </form>
         </Accordion>
       )}
