@@ -23,7 +23,7 @@ export default function CurrentOwnerConfirm({
   const createFeiIntermediaire = state.createFeiIntermediaire;
   const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
-  // const collecteursProsRelatedWithMyETGs = state.collecteursProsRelatedWithMyETGs;
+  const collecteursProsRelatedWithMyETGs = state.collecteursProsRelatedWithMyETGs;
   const etgsRelatedWithMyEntities = state.etgsRelatedWithMyEntities;
   const collecteursPro = state.collecteursProIds.map((id) => state.entities[id]);
 
@@ -46,7 +46,8 @@ export default function CurrentOwnerConfirm({
         nextOwnerEntity.relation === 'WORKING_FOR_ENTITY_RELATED_WITH')
     ) {
       if (fei.fei_next_owner_role === UserRoles.ETG) {
-        if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && !user.roles.includes(UserRoles.ETG)) {
+        // if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && !user.roles.includes(UserRoles.ETG)) {
+        if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
           if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
             return false;
           }
@@ -74,7 +75,13 @@ export default function CurrentOwnerConfirm({
         return '';
       }
       const etgId = fei.fei_next_owner_entity_id;
-      const collecteurProId = etgsRelatedWithMyEntities.find(
+      let collecteurProId = etgsRelatedWithMyEntities.find(
+        (c) => c.entity_type === UserRoles.COLLECTEUR_PRO && c.etg_id === etgId,
+      )?.entity_id;
+      if (collecteurProId) {
+        return collecteurProId;
+      }
+      collecteurProId = collecteursProsRelatedWithMyETGs.find(
         (c) => c.entity_type === UserRoles.COLLECTEUR_PRO && c.etg_id === etgId,
       )?.entity_id;
       if (collecteurProId) {
@@ -82,7 +89,7 @@ export default function CurrentOwnerConfirm({
       }
     }
     return '';
-  }, [fei, user, etgsRelatedWithMyEntities]);
+  }, [fei, user, etgsRelatedWithMyEntities, collecteursProsRelatedWithMyETGs]);
 
   const needNextOwnerButNotMe = useMemo(() => {
     if (!fei.fei_next_owner_user_id && !fei.fei_next_owner_entity_id) {
@@ -207,13 +214,29 @@ export default function CurrentOwnerConfirm({
     if (isTransporting) {
       const nextName =
         nextOwnerEntity?.nom_d_usage || `${nextOwnerUser?.prenom} ${nextOwnerUser?.nom_de_famille}`;
+      const canReception = user.roles.includes(UserRoles.ETG);
+      let description = canReception ? (
+        <button
+          onClick={() => {
+            handlePriseEnCharge({ transfer: false });
+            setSelectedTabId('Destinataires');
+          }}
+          type="button"
+        >
+          Bonne route ! Vous êtes arrivé à destination et souhaitez réceptionner le gibier ?{' '}
+          <u>Cliquez ici</u>
+        </button>
+      ) : (
+        `Cette fiche lui a déjà été attribuée, il a déjà été notifié, il est prêt à recevoir votre chargement. Bonne route !`
+      );
+
       return (
         <div className="bg-alt-blue-france pb-8">
           <div className="bg-white">
             <Alert
               severity="info"
               title={`Vous transportez les carcasses vers\u00A0: ${nextName}`}
-              description={`Cette fiche lui a déjà été attribuée, il a déjà été notifié, il est prêt à recevoir votre chargement. Bonne route !`}
+              description={description}
             />
           </div>
         </div>
@@ -257,7 +280,7 @@ export default function CurrentOwnerConfirm({
             className="my-4 block"
             onClick={() => handlePriseEnCharge({ transfer: false })}
           >
-            <>Je prends en charge cette fiche et les carcasses associées</>
+            Je prends en charge cette fiche et les carcasses associées
           </Button>
         )}
         {fei.fei_next_owner_role === UserRoles.SVI && (
@@ -269,7 +292,7 @@ export default function CurrentOwnerConfirm({
               setSelectedTabId(UserRoles.SVI);
             }}
           >
-            <>Je prends en charge cette fiche</>
+            Je prends en charge cette fiche
           </Button>
         )}
         {fei.fei_next_owner_role === UserRoles.ETG && (
@@ -293,16 +316,18 @@ export default function CurrentOwnerConfirm({
                 >
                   Je transporte le gibier
                 </Button>
-                <Button
-                  type="submit"
-                  className="my-4 block"
-                  onClick={() => {
-                    handlePriseEnCharge({ transfer: false });
-                    setSelectedTabId('Destinataires');
-                  }}
-                >
-                  Je suis à l'atelier pour réceptionner le gibier
-                </Button>
+                {user.roles.includes(UserRoles.ETG) && (
+                  <Button
+                    type="submit"
+                    className="my-4 block"
+                    onClick={() => {
+                      handlePriseEnCharge({ transfer: false });
+                      setSelectedTabId('Destinataires');
+                    }}
+                  >
+                    Je suis à l'atelier pour réceptionner le gibier
+                  </Button>
+                )}
               </>
             ) : (
               <Button
