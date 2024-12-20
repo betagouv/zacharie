@@ -23,7 +23,7 @@ export default function CurrentOwnerConfirm({
   const createFeiIntermediaire = state.createFeiIntermediaire;
   const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
-  // const collecteursProsRelatedWithMyETGs = state.collecteursProsRelatedWithMyETGs;
+  const collecteursProsRelatedWithMyETGs = state.collecteursProsRelatedWithMyETGs;
   const etgsRelatedWithMyEntities = state.etgsRelatedWithMyEntities;
   const collecteursPro = state.collecteursProIds.map((id) => state.entities[id]);
 
@@ -75,7 +75,13 @@ export default function CurrentOwnerConfirm({
         return '';
       }
       const etgId = fei.fei_next_owner_entity_id;
-      const collecteurProId = etgsRelatedWithMyEntities.find(
+      let collecteurProId = etgsRelatedWithMyEntities.find(
+        (c) => c.entity_type === UserRoles.COLLECTEUR_PRO && c.etg_id === etgId,
+      )?.entity_id;
+      if (collecteurProId) {
+        return collecteurProId;
+      }
+      collecteurProId = collecteursProsRelatedWithMyETGs.find(
         (c) => c.entity_type === UserRoles.COLLECTEUR_PRO && c.etg_id === etgId,
       )?.entity_id;
       if (collecteurProId) {
@@ -83,7 +89,7 @@ export default function CurrentOwnerConfirm({
       }
     }
     return '';
-  }, [fei, user, etgsRelatedWithMyEntities]);
+  }, [fei, user, etgsRelatedWithMyEntities, collecteursProsRelatedWithMyETGs]);
 
   const needNextOwnerButNotMe = useMemo(() => {
     if (!fei.fei_next_owner_user_id && !fei.fei_next_owner_entity_id) {
@@ -310,16 +316,18 @@ export default function CurrentOwnerConfirm({
                 >
                   Je transporte le gibier
                 </Button>
-                <Button
-                  type="submit"
-                  className="my-4 block"
-                  onClick={() => {
-                    handlePriseEnCharge({ transfer: false });
-                    setSelectedTabId('Destinataires');
-                  }}
-                >
-                  Je suis à l'atelier pour réceptionner le gibier
-                </Button>
+                {user.roles.includes(UserRoles.ETG) && (
+                  <Button
+                    type="submit"
+                    className="my-4 block"
+                    onClick={() => {
+                      handlePriseEnCharge({ transfer: false });
+                      setSelectedTabId('Destinataires');
+                    }}
+                  >
+                    Je suis à l'atelier pour réceptionner le gibier
+                  </Button>
+                )}
               </>
             ) : (
               <Button
