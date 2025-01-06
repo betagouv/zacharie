@@ -130,9 +130,9 @@ function CarcasseReadAndWrite() {
 
   const navigate = useNavigate();
   const canEdit = useMemo(() => {
-    if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
-      return false;
-    }
+    // if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
+    //   return false;
+    // }
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;
     }
