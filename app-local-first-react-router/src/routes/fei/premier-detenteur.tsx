@@ -272,18 +272,20 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
             label="Date de dépôt dans la chambre froide"
             // click here to set now
             hintText={
-              <button
-                className="inline-block"
-                type="button"
-                onClick={() => {
-                  updateFei(fei.numero, {
-                    premier_detenteur_date_depot_quelque_part: dayjs().toDate(),
-                  });
-                }}
-              >
-                Vous les déposez à l'instant ? <u className="inline">Cliquez ici</u> pour définir la date du
-                jour
-              </button>
+              canEdit ? (
+                <button
+                  className="inline-block"
+                  type="button"
+                  onClick={() => {
+                    updateFei(fei.numero, {
+                      premier_detenteur_date_depot_quelque_part: dayjs().toDate(),
+                    });
+                  }}
+                >
+                  Vous les déposez à l'instant ? <u className="inline">Cliquez ici</u> pour définir la date du
+                  jour
+                </button>
+              ) : null
             }
             nativeInputProps={{
               id: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part,
