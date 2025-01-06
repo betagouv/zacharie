@@ -25,7 +25,7 @@ export default function FEI_SVI() {
   const svi = fei.svi_entity_id ? state.entities[fei.svi_entity_id] : null;
   const carcassesUnsorted = (state.carcassesIdsByFei[params.fei_numero!] || [])
     .map((cId) => state.carcasses[cId])
-    .filter((carcasse) => !carcasse.intermediaire_carcasse_refus_intermediaire_id);
+    .filter((carcasse) => !carcasse.deleted_at && !carcasse.intermediaire_carcasse_refus_intermediaire_id);
 
   const carcassesSorted = useMemo(() => {
     const carcassesValidated: Record<Carcasse['zacharie_carcasse_id'], Carcasse> = {};

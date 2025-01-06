@@ -25,7 +25,9 @@ export default function FEIExaminateurInitial() {
   const state = useZustandStore((state) => state);
   const fei = state.feis[params.fei_numero!];
   // console.log('fei', fei);
-  const carcasses = (state.carcassesIdsByFei[params.fei_numero!] || []).map((cId) => state.carcasses[cId]);
+  const carcasses = (state.carcassesIdsByFei[params.fei_numero!] || [])
+    .map((cId) => state.carcasses[cId])
+    .filter((c) => !c.deleted_at);
   const examinateurInitialUser = fei.examinateur_initial_user_id
     ? state.users[fei.examinateur_initial_user_id!]
     : null;
