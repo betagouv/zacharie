@@ -218,11 +218,13 @@ export default function FEIExaminateurInitial() {
                 autoComplete: 'off',
                 required: true,
                 suppressHydrationWarning: true,
-                onBlur: (e) => updateFei(fei.numero, { date_mise_a_mort: dayjs(e.target.value).toDate() }),
-                defaultValue: fei?.date_mise_a_mort
-                  ? dayjs(fei?.date_mise_a_mort).toISOString().split('T')[0]
-                  : // ? new Date(fei?.date_mise_a_mort).toISOString().split('T')[0]
-                    '',
+                onBlur: (e) => {
+                  const date = dayjs.utc(e.target.value).startOf('day').toDate();
+                  updateFei(fei.numero, {
+                    date_mise_a_mort: date,
+                  });
+                },
+                defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('YYYY-MM-DD') : '',
               }}
             />
           </div>

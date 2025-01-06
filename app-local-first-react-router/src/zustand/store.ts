@@ -24,6 +24,8 @@ import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import { capture } from '@app/services/sentry';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
 import type { HistoryInput } from '@app/utils/create-history-entry';
 
