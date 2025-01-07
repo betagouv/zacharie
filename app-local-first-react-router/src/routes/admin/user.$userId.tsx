@@ -43,6 +43,7 @@ const initialState: State = {
     roles: [],
     numero_cfei: '',
     user_entities_vivible_checkbox: false,
+    prochain_bracelet_a_utiliser: 1,
     created_at: new Date(),
     updated_at: new Date(),
     last_login_at: null,

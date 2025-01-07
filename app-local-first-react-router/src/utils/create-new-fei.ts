@@ -60,6 +60,7 @@ export function createNewFei(): FeiWithIntermediaires {
     created_at: dayjs().toDate(),
     updated_at: dayjs().toDate(),
     deleted_at: null,
+    automatic_closed_at: null,
     is_synced: false,
     FeiIntermediaires: [],
   };

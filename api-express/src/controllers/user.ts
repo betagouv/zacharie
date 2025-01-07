@@ -570,6 +570,11 @@ router.post(
     if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prenom)) {
       nextUser.prenom = body[Prisma.UserScalarFieldEnum.prenom] as string;
     }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser)) {
+      nextUser.prochain_bracelet_a_utiliser = body[
+        Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser
+      ] as number;
+    }
     if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.telephone)) {
       nextUser.telephone = body[Prisma.UserScalarFieldEnum.telephone] as string;
     }

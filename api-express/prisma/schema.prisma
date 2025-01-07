@@ -38,6 +38,7 @@ model User {
   nom_de_famille                 String?
   numero_cfei                    String? // Chasseur Formé à l'Examen Initial (de la forme CFEI-DEP-YY-001)
   // numero_frei               String? // Formateur Référent Examen Initial (de la forme DEP-FREI-YY-001)
+  prochain_bracelet_a_utiliser   Int?                     @default(1)
   addresse_ligne_1               String?
   addresse_ligne_2               String?
   code_postal                    String?

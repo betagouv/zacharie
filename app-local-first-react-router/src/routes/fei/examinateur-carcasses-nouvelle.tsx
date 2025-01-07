@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { CarcasseType, Prisma, type Fei, type Carcasse, UserRoles } from '@prisma/client';
+import { CarcasseType, Prisma, type User, type Carcasse, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import grandGibier from '@app/data/grand-gibier.json';
@@ -15,27 +15,31 @@ const gibierSelect = {
   petit: petitGibier.especes,
 };
 
-function getNewDefaultNumeroBracelet(fei: Fei) {
-  if (!fei.commune_mise_a_mort) {
+function getNewDefaultNumeroBracelet(user: User) {
+  if (!user.numero_cfei) {
     return '';
   }
-  return `ZACH-${fei.commune_mise_a_mort?.split(' ')[0].slice(0, -3).padStart(2, '0')}-${
-    fei.examinateur_initial_user_id
-  }-${dayjs().format('DDMMYY-HHmmss')}`;
+  const prenom = user.prenom?.slice(0, 1).toUpperCase();
+  const nom = user.nom_de_famille?.slice(0, 1).toUpperCase();
+  // 4 derniers chiffres du numero cfei
+  const numeroCfei = user.numero_cfei?.slice(-4);
+  // denier bracelet utilise + pad start 0 sur 3 chiffres
+  const prochain_bracelet_a_utiliser = (user.prochain_bracelet_a_utiliser || 1).toString().padStart(3, '0');
+  return `${prenom}${nom}${numeroCfei}-${prochain_bracelet_a_utiliser}`;
 }
 
 export default function NouvelleCarcasse() {
   const params = useParams();
-  const user = useUser((state) => state.user)!;
+  const userState = useUser((state) => state);
+  const user = userState.user!;
+  const incProchainBraceletAUtiliser = userState.incProchainBraceletAUtiliser;
 
   const state = useZustandStore((state) => state);
   const createCarcasse = state.createCarcasse;
   const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
   const carcasses = state.carcasses;
-  const [defaultNumeroBracelet, setDefaultNumeroBracelet] = useState<string>(
-    getNewDefaultNumeroBracelet(fei),
-  );
+  const defaultNumeroBracelet = getNewDefaultNumeroBracelet(user);
   const [numeroBracelet, setNumeroBracelet] = useState<string>('');
   const [nombreDAnimaux, setNombreDAnimaux] = useState<string>('1');
   const [espece, setEspece] = useState<string>('');
@@ -110,7 +114,10 @@ export default function NouvelleCarcasse() {
                       'inline text-left',
                       numeroBracelet ? 'pointer-events-none opacity-20' : '',
                     ].join(' ')}
-                    onClick={() => setNumeroBracelet(defaultNumeroBracelet)}
+                    onClick={() => {
+                      incProchainBraceletAUtiliser();
+                      setNumeroBracelet(defaultNumeroBracelet);
+                    }}
                   >
                     Votre chasse n'a pas de dispositif de marquage ?{' '}
                     <u className="inline">Cliquez ici pour utiliser {defaultNumeroBracelet}</u>.
@@ -196,9 +203,8 @@ export default function NouvelleCarcasse() {
                 fei_intermediaire_id: null,
                 carcasse_intermediaire_id: null,
               });
-              setDefaultNumeroBracelet(getNewDefaultNumeroBracelet(fei));
-
               setNumeroBracelet('');
+
               setError(null);
             }}
           >

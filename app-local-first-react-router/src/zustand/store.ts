@@ -28,6 +28,7 @@ import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
 import type { HistoryInput } from '@app/utils/create-history-entry';
+import { syncProchainBraceletAUtiliser } from './user';
 
 export interface State {
   isOnline: boolean;
@@ -338,7 +339,7 @@ const useZustandStore = create<State & Actions>()(
             fei_intermediaire_id: newLog.fei_intermediaire_id || null,
             carcasse_intermediaire_id: newLog.carcasse_intermediaire_id || null,
             action: newLog.action!,
-            history: newLog.history!,
+            history: JSON.stringify(newLog.history!),
             date: dayjs().toDate(),
             is_synced: false,
             created_at: dayjs().toDate(),
@@ -645,7 +646,9 @@ export async function syncData() {
     console.log('not syncing data because not online');
     return;
   }
-  return syncFeis()
+  return syncProchainBraceletAUtiliser()
+    .then(() => console.log('synced dernier bracelet utilise'))
+    .then(syncFeis)
     .then(() => console.log('synced feis finito'))
     .then(syncCarcasses)
     .then(() => console.log('synced carcasses finito'))

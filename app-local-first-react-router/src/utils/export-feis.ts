@@ -29,7 +29,7 @@ function createSheet(data: Array<Record<string, unknown>>) {
 
   const rowHeights: Array<{ hpx: number }> = [{ hpx: 20 }]; // first line is header
   const sheet = data.reduce(
-    (xlsxData: Array<Array<string | null>>, item: Record<string, unknown>, index: number) => {
+    (xlsxData: Array<Array<string | null>>, item: Record<string, unknown>) => {
       const row = [];
 
       for (let column of header) {
