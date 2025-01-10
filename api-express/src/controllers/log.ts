@@ -21,8 +21,22 @@ router.post(
       return;
     }
 
-    const log = await prisma.log.create({
-      data: {
+    const log = await prisma.log.upsert({
+      where: { id: body.id },
+      update: {
+        user_id: body.user_id,
+        user_role: body.user_role,
+        fei_numero: body.fei_numero,
+        entity_id: body.entity_id,
+        zacharie_carcasse_id: body.zacharie_carcasse_id,
+        fei_intermediaire_id: body.fei_intermediaire_id,
+        carcasse_intermediaire_id: body.carcasse_intermediaire_id,
+        action: body.action,
+        history: body.history,
+        date: body.date,
+        is_synced: true,
+      },
+      create: {
         id: body.id,
         user_id: body.user_id,
         user_role: body.user_role,
