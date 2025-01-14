@@ -50,6 +50,10 @@ export async function initFeisCron() {
 
 async function automaticClosingOfFeis() {
   console.log('Automatic closing of feis');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Skipping feis closing in development mode');
+    return;
+  }
   const feisUnderSvi = await prisma.fei.findMany({
     where: {
       svi_assigned_at: {

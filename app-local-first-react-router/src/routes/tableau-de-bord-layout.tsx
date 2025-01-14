@@ -19,7 +19,7 @@ export default function TableauDeBordLayout() {
   }
   if (!user?.activated && !location.pathname.includes('mon-profil')) {
     return (
-      <RootDisplay hideMinistereName id="tableau-de-bord-layout-not-activated">
+      <RootDisplay hideMinistereName navigation={navigation} id="tableau-de-bord-layout-not-activated">
         <main role="main" id="content">
           <title>Compte en cours d'activation | Zacharie | Ministère de l'Agriculture</title>
           <div className="fr-container">

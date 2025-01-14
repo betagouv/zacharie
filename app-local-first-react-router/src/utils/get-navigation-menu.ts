@@ -9,6 +9,8 @@ import { createNewFei } from './create-new-fei';
 export default function useNavigationMenu() {
   const location = useLocation();
   const user = getMostFreshUser('useNavigationMenu');
+  const isNotActivated = !user?.activated;
+
   const navigate = useNavigate();
 
   const isOnline = useIsOnline();
@@ -76,14 +78,16 @@ export default function useNavigationMenu() {
     },
   });
 
-  const feiMenu: MainNavigationProps.Item[] = [
-    {
-      text: 'Mes fiches',
-      isActive: location.pathname === '/app/tableau-de-bord',
-      linkProps: { to: '/app/tableau-de-bord', href: '#' },
-    },
-  ];
-  if (isExaminateurInitial) {
+  const feiMenu: MainNavigationProps.Item[] = isNotActivated
+    ? []
+    : [
+        {
+          text: 'Mes fiches',
+          isActive: location.pathname === '/app/tableau-de-bord',
+          linkProps: { to: '/app/tableau-de-bord', href: '#' },
+        },
+      ];
+  if (isExaminateurInitial && !isNotActivated) {
     feiMenu.unshift({
       text: 'Nouvelle fiche',
       linkProps: {
