@@ -107,11 +107,13 @@ export default function CurrentOwnerConfirm({
 
   function handlePriseEnCharge({
     transfer,
+    action,
     forcedNextRole,
     forceNextEntityId,
     forceNextEntityName,
   }: {
     transfer: boolean;
+    action?: string;
     forcedNextRole?: UserRoles;
     forceNextEntityId?: string;
     forceNextEntityName?: string;
@@ -200,7 +202,7 @@ export default function CurrentOwnerConfirm({
       user_id: user.id,
       user_role: nextFei.fei_current_owner_role!,
       fei_numero: fei.numero,
-      action: 'current-owner-confirm',
+      action: action || 'current-owner-confirm',
       history: createHistoryInput(fei, nextFei),
       entity_id: fei.fei_current_owner_entity_id,
       zacharie_carcasse_id: null,
@@ -278,7 +280,9 @@ export default function CurrentOwnerConfirm({
           <Button
             type="submit"
             className="my-4 block"
-            onClick={() => handlePriseEnCharge({ transfer: false })}
+            onClick={() =>
+              handlePriseEnCharge({ transfer: false, action: 'current-owner-confirm-premier-detenteur' })
+            }
           >
             Je prends en charge cette fiche et les carcasses associées
           </Button>
@@ -288,7 +292,7 @@ export default function CurrentOwnerConfirm({
             type="submit"
             className="my-4 block"
             onClick={() => {
-              handlePriseEnCharge({ transfer: false });
+              handlePriseEnCharge({ transfer: false, action: 'current-owner-confirm-svi' });
               setSelectedTabId(UserRoles.SVI);
             }}
           >
@@ -305,6 +309,7 @@ export default function CurrentOwnerConfirm({
                   onClick={() => {
                     handlePriseEnCharge({
                       transfer: false,
+                      action: 'current-owner-confirm-etg-and-transporteur-transporte',
                       forcedNextRole: UserRoles.COLLECTEUR_PRO,
                       forceNextEntityId: nextOwnerCollecteurProEntityId,
                       forceNextEntityName:
@@ -321,7 +326,10 @@ export default function CurrentOwnerConfirm({
                     type="submit"
                     className="my-4 block"
                     onClick={() => {
-                      handlePriseEnCharge({ transfer: false });
+                      handlePriseEnCharge({
+                        transfer: false,
+                        action: 'current-owner-confirm-etg-and-transporteur-receptionne',
+                      });
                       setSelectedTabId('Destinataires');
                     }}
                   >
@@ -334,7 +342,7 @@ export default function CurrentOwnerConfirm({
                 type="submit"
                 className="my-4 block"
                 onClick={() => {
-                  handlePriseEnCharge({ transfer: false });
+                  handlePriseEnCharge({ transfer: false, action: 'current-owner-confirm-etg-reception' });
                   setSelectedTabId('Destinataires');
                 }}
               >
@@ -351,7 +359,7 @@ export default function CurrentOwnerConfirm({
           priority="tertiary"
           type="button"
           className="!mt-2 block"
-          onClick={() => handlePriseEnCharge({ transfer: true })}
+          onClick={() => handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer' })}
         >
           Transférer la fiche
         </Button>

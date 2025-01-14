@@ -12,7 +12,11 @@ import useZustandStore from '@app/zustand/store';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 
-export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
+export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
+  calledFrom,
+}: {
+  calledFrom: 'premier-detenteur-need-select-next' | 'current-owner-transfer';
+}) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
@@ -168,11 +172,11 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
           updateFei(fei.numero, nextFei);
           addLog({
             user_id: user.id,
-            action: 'premier-detenteur-intermediaire-select-next',
+            action: calledFrom,
             fei_numero: fei.numero,
             history: createHistoryInput(fei, nextFei),
-            user_role: UserRoles.PREMIER_DETENTEUR,
-            entity_id: fei.premier_detenteur_entity_id,
+            user_role: fei.fei_current_owner_role!,
+            entity_id: fei.fei_current_owner_entity_id,
             zacharie_carcasse_id: null,
             carcasse_intermediaire_id: null,
             fei_intermediaire_id: null,

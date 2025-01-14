@@ -31,7 +31,7 @@ export default function FeiTransfer() {
           {fei.fei_prev_owner_role === UserRoles.EXAMINATEUR_INITIAL ? (
             <SelectNextForExaminateur />
           ) : (
-            <SelectNextOwnerForPremierDetenteurOrIntermediaire />
+            <SelectNextOwnerForPremierDetenteurOrIntermediaire calledFrom="current-owner-transfer" />
           )}
         </div>
         <span className="text-sm">Vous avez changé d'avis&nbsp;?</span>
