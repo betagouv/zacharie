@@ -6,6 +6,7 @@ const PORT = process.env.PORT ?? 3000;
 const ENVIRONMENT = process.env.ENVIRONMENT ?? process.env.NODE_ENV ?? 'development';
 
 const SENTRY_KEY = 'https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175';
+const SENTRY_SECRET = process.env.SENTRY_SECRET;
 
 const buildId = JSON.stringify(`${dayjs().format('DD-MM-YYYY')} vers ${dayjs().format('HH')}:00`);
 const VERSION = buildId;
@@ -21,6 +22,7 @@ export {
   PORT,
   ENVIRONMENT,
   SENTRY_KEY,
+  SENTRY_SECRET,
   VERSION,
   SECRET,
   TIPIMAIL_API_USER,
