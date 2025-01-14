@@ -213,6 +213,23 @@ export default function FEIExaminateurInitial() {
           <div className="fr-fieldset__element">
             <Component
               label="Date de mise à mort (et d'éviscération) *"
+              hintText={
+                canEdit ? (
+                  <button
+                    className="inline-block"
+                    type="button"
+                    onClick={() => {
+                      const date = dayjs.utc().startOf('day').toDate();
+                      updateFei(fei.numero, {
+                        date_mise_a_mort: date,
+                      });
+                    }}
+                  >
+                    La chasse est aujourd'hui ? <u className="inline">Cliquez ici</u> pour définir la date du
+                    jour
+                  </button>
+                ) : null
+              }
               nativeInputProps={{
                 id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
                 name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
@@ -291,7 +308,26 @@ export default function FEIExaminateurInitial() {
             <div className="fr-fieldset__element">
               <Component
                 label="Date de validation de l’examen initial"
-                hintText="Cette date vaut date d'approbation de mise sur le marché"
+                hintText={
+                  canEdit ? (
+                    <button
+                      className="inline-block"
+                      type="button"
+                      onClick={() => {
+                        updateFei(fei.numero, {
+                          examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
+                          resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
+                        });
+                      }}
+                    >
+                      Cette date vaut date d'approbation de mise sur le marché.{' '}
+                      <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
+                      maintenant
+                    </button>
+                  ) : (
+                    "Cette date vaut date d'approbation de mise sur le marché"
+                  )
+                }
                 nativeInputProps={{
                   id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
                   name: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
@@ -370,7 +406,7 @@ export default function FEIExaminateurInitial() {
         </Accordion>
       )}
       {needSelectNextUser && (
-        <div className="z-50 mt-4 flex flex-col bg-white pt-4 md:w-auto md:items-start [&_ul]:md:min-w-96">
+        <div className="z-50 mt-4 flex flex-col bg-white pt-4 md:px-3 md:w-auto md:items-start [&_ul]:md:min-w-96">
           <SelectNextForExaminateur />
         </div>
       )}

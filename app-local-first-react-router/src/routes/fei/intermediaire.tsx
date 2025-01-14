@@ -427,49 +427,47 @@ export default function FEICurrentIntermediaire() {
                 },
               ]}
             />
-            <div className="fr-fieldset__element">
-              <PriseEnChargeInput
-                label="Date de prise en charge"
-                // hintText={
-                //   <button
-                //     className="inline-block"
-                //     type="button"
-                //     onClick={() => {
-                //       updateFeiIntermediaire(intermediaire.id, {
-                //         check_finished_at: dayjs().toDate(),
-                //       });
-                //     }}
-                //   >
-                //     Vous les prenez en charge à l'instant ? <u className="inline">Cliquez ici</u> pour remplir
-                //     le champ ci-dessous automatiquement
-                //   </button>
-                // }
-                nativeInputProps={{
-                  id: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
-                  name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
-                  type: 'datetime-local',
-                  form: 'form_intermediaire_check_finished_at',
-                  suppressHydrationWarning: true,
-                  autoComplete: 'off',
-                  defaultValue: dayjs(intermediaire.check_finished_at || undefined).format(
-                    'YYYY-MM-DDTHH:mm',
-                  ),
-                }}
-              />
-            </div>
-            {!intermediaire.check_finished_at && (
-              <div className="fr-fieldset__element">
-                <Button type="submit" disabled={!canEdit}>
-                  Enregistrer
-                </Button>
-              </div>
-            )}
           </div>
+          <div className={['fr-fieldset__element', canEdit ? '' : 'pointer-events-none'].join(' ')}>
+            <PriseEnChargeInput
+              label="Date de prise en charge"
+              // hintText={
+              //   <button
+              //     className="inline-block"
+              //     type="button"
+              //     onClick={() => {
+              //       updateFeiIntermediaire(intermediaire.id, {
+              //         check_finished_at: dayjs().toDate(),
+              //       });
+              //     }}
+              //   >
+              //     Vous les prenez en charge à l'instant ? <u className="inline">Cliquez ici</u> pour remplir
+              //     le champ ci-dessous automatiquement
+              //   </button>
+              // }
+              nativeInputProps={{
+                id: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
+                name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
+                type: 'datetime-local',
+                form: 'form_intermediaire_check_finished_at',
+                suppressHydrationWarning: true,
+                autoComplete: 'off',
+                defaultValue: dayjs(intermediaire.check_finished_at || undefined).format('YYYY-MM-DDTHH:mm'),
+              }}
+            />
+          </div>
+          {!intermediaire.check_finished_at && (
+            <div className="fr-fieldset__element">
+              <Button type="submit" disabled={!canEdit}>
+                Enregistrer
+              </Button>
+            </div>
+          )}
         </form>
       </Accordion>
 
       {needSelectNextUser && (
-        <div className="z-50 mt-8 flex flex-col bg-white pt-4 md:w-auto md:items-start [&_ul]:md:min-w-96">
+        <div className="z-50 mt-8 flex flex-col bg-white pt-4 md:px-3 md:w-auto md:items-start [&_ul]:md:min-w-96">
           <SelectNextOwner />
         </div>
       )}

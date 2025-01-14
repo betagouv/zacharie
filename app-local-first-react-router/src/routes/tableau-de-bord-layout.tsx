@@ -17,7 +17,7 @@ export default function TableauDeBordLayout() {
   if (!user) {
     return <Chargement />;
   }
-  if (!user?.activated && !location.pathname.includes('mon-profil')) {
+  if (!user?.activated && !location.pathname.includes('mon-profil') && !location.pathname.includes('admin')) {
     return (
       <RootDisplay hideMinistereName navigation={navigation} id="tableau-de-bord-layout-not-activated">
         <main role="main" id="content">

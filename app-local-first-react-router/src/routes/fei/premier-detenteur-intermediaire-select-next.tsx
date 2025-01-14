@@ -260,7 +260,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
                 })}
               </Select>
               {(!nextOwnerValue || nextOwnerValue !== savedNextOwner) && (
-                <Button type="submit" className="mt-2" disabled={!nextOwnerValue}>
+                <Button type="submit" className="mt-4" disabled={!nextOwnerValue}>
                   Envoyer
                 </Button>
               )}
@@ -269,21 +269,21 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire() {
         )}
       </form>
       {fei.fei_next_owner_entity_id && (
-        <>
+        <div className="fr-fieldset__element">
           <Alert
             severity="success"
             description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
             title="Attribution effectuée"
           />
           <Button
-            className="mt-2"
+            className="mt-4"
             linkProps={{
               to: `/app/tableau-de-bord/`,
             }}
           >
             Voir toutes mes fiches
           </Button>
-        </>
+        </div>
       )}
     </>
   );

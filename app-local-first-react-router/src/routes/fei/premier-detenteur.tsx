@@ -301,9 +301,11 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
           />
         </div>
         {canChangeNextOwner && canEdit && (
-          <Button type="submit">
-            {depotType === EntityTypes.ETG ? 'Enregistrer et envoyer la fiche' : 'Enregistrer'}
-          </Button>
+          <div className="fr-fieldset__element">
+            <Button type="submit">
+              {depotType === EntityTypes.ETG ? 'Enregistrer et envoyer la fiche' : 'Enregistrer'}
+            </Button>
+          </div>
         )}
       </form>
       {needSelectNextUser && (
@@ -325,7 +327,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
               title="Attribution effectuée"
             />
             <Button
-              className="mt-2"
+              className="mt-4"
               linkProps={{
                 to: `/app/tableau-de-bord/`,
               }}

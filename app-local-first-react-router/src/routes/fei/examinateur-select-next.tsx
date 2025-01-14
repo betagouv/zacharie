@@ -168,7 +168,7 @@ export default function SelectNextForExaminateur() {
           </Select>
           {!nextValue ||
             (nextValue !== fei.fei_next_owner_user_id && (
-              <Button className="mt-2" type="submit" disabled={!nextValue}>
+              <Button className="mt-4" type="submit" disabled={!nextValue}>
                 Envoyer
               </Button>
             ))}
@@ -279,7 +279,7 @@ export default function SelectNextForExaminateur() {
               title="Attribution effectuée"
             />
             <Button
-              className="mt-2"
+              className="mt-4"
               linkProps={{
                 to: `/app/tableau-de-bord/`,
               }}
