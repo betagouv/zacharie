@@ -21,6 +21,10 @@ export default async function sendNotificationToUser({
   notificationLogAction,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: WebPushNotification) {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('NOT SENDING NOTIFICATION IN DEV', user.id);
+    return;
+  }
   if (user.notifications.includes(UserNotifications.PUSH)) {
     if (user.web_push_tokens?.length) {
       const existingNotification = await prisma.notificationLog.findFirst({

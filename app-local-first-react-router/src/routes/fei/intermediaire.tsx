@@ -6,7 +6,7 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import dayjs from 'dayjs';
-import SelectNextOwner from './premier-detenteur-intermediaire-select-next';
+import SelectNextOwnerForPremierDetenteurOrIntermediaire from './premier-detenteur-intermediaire-select-next';
 import CarcasseIntermediaireComp from './intermediaire-carcasse';
 import EntityNotEditable from '@app/components/EntityNotEditable';
 import { useParams } from 'react-router';
@@ -468,7 +468,7 @@ export default function FEICurrentIntermediaire() {
 
       {needSelectNextUser && (
         <div className="z-50 mt-8 flex flex-col bg-white pt-4 md:px-3 md:w-auto md:items-start [&_ul]:md:min-w-96">
-          <SelectNextOwner />
+          <SelectNextOwnerForPremierDetenteurOrIntermediaire calledFrom="intermediaire-next-owner" />
         </div>
       )}
     </>

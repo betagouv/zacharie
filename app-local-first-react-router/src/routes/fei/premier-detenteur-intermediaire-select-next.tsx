@@ -15,7 +15,7 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
   calledFrom,
 }: {
-  calledFrom: 'premier-detenteur-need-select-next' | 'current-owner-transfer';
+  calledFrom: 'premier-detenteur-need-select-next' | 'current-owner-transfer' | 'intermediaire-next-owner';
 }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
@@ -145,11 +145,34 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
     return '';
   });
 
-  if (user.id !== fei.fei_current_owner_user_id) {
-    return null;
-  }
+  const isEtgWorkingFor = useMemo(() => {
+    if (fei.fei_current_owner_role === UserRoles.ETG && !!fei.fei_current_owner_entity_id) {
+      if (user.roles.includes(UserRoles.ETG)) {
+        if (state.etgsIds.includes(fei.fei_current_owner_entity_id)) {
+          const etg = state.entities[fei.fei_current_owner_entity_id];
+          if (etg.relation === 'WORKING_FOR') {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }, [fei, user, state]);
 
-  if (fei.svi_signed_at) {
+  const canSelectNextOwner = useMemo(() => {
+    if (isEtgWorkingFor) {
+      return true;
+    }
+    if (fei.fei_current_owner_user_id !== user.id) {
+      return false;
+    }
+    if (fei.svi_signed_at) {
+      return false;
+    }
+    return true;
+  }, [fei, user, isEtgWorkingFor]);
+
+  if (!canSelectNextOwner) {
     return null;
   }
 

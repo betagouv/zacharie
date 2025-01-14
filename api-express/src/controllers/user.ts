@@ -919,7 +919,9 @@ router.get(
 
     const allEntities = [
       ...entitiesWorkingFor.filter(
-        (entity) => entity.type !== EntityTypes.CCG && entity.relation === 'WORKING_FOR_ENTITY_RELATED_WITH',
+        (entity) =>
+          entity.type !== EntityTypes.CCG &&
+          ['WORKING_FOR', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
       ),
       ...entitiesWorkingWith.map((entity) => ({
         ...entity,
