@@ -401,7 +401,10 @@ export default function CarcasseIntermediaireComp({
                   name="carcasse-refus"
                   hintText="Cliquez sur un bouton bleu ciel pour valider le motif"
                   placeholder="Tapez un motif de refus"
-                  onSelect={setRefus}
+                  onSelect={(refus) => {
+                    setRefus(refus);
+                    submitCarcasseRefus();
+                  }}
                   defaultValue={refus ?? ''}
                   key={refus ?? ''}
                 />
@@ -454,14 +457,14 @@ export default function CarcasseIntermediaireComp({
                             },
                           },
                         },
-                        {
-                          children: 'Fermer',
-                          priority: 'secondary',
-                          type: 'button',
-                          nativeButtonProps: {
-                            onClick: () => refusIntermediaireModal.current.close(),
-                          },
-                        },
+                        // {
+                        //   children: 'Fermer',
+                        //   priority: 'secondary',
+                        //   type: 'button',
+                        //   nativeButtonProps: {
+                        //     onClick: () => refusIntermediaireModal.current.close(),
+                        //   },
+                        // },
                       ]
                 }
               />
