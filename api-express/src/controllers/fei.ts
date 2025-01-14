@@ -442,16 +442,17 @@ router.get(
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
-    if (!user.onboarded_at) {
-      res.status(200).send({
-        ok: true,
-        data: {
-          user: null,
-          feisDone: [],
-        },
-        error: '',
-      });
-    }
+    // if (!user.onboarded_at) {
+    //   res.status(200).send({
+    //     ok: true,
+    //     data: {
+    //       user: null,
+    //       feisDone: [],
+    //     },
+    //     error: '',
+    //   });
+    //   return;
+    // }
 
     const feisDone = await prisma.fei.findMany({
       where: {
@@ -524,6 +525,7 @@ router.get(
       },
       error: '',
     } satisfies FeisDoneResponse);
+    return;
   }),
 );
 
@@ -585,19 +587,20 @@ router.get(
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
-    if (!user?.onboarded_at) {
-      res.status(200).send({
-        ok: true,
-        data: {
-          user: null,
-          feisUnderMyResponsability: [],
-          feisToTake: [],
-          feisOngoing: [],
-          feisDone: [],
-        },
-        error: 'Not onboarded',
-      });
-    }
+    // if (!user?.onboarded_at) {
+    //   res.status(200).send({
+    //     ok: true,
+    //     data: {
+    //       user: null,
+    //       feisUnderMyResponsability: [],
+    //       feisToTake: [],
+    //       feisOngoing: [],
+    //       feisDone: [],
+    //     },
+    //     error: 'Not onboarded',
+    //   });
+    //   return;
+    // }
     const feisUnderMyResponsability = await prisma.fei.findMany({
       where: {
         svi_assigned_at: null,
