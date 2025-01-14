@@ -7,7 +7,6 @@ import { SENTRY_SECRET } from '~/config';
 
 router.post(
   '/sentry',
-  passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // verify the signature
     console.log({ body: req.body, headers: req.headers });
