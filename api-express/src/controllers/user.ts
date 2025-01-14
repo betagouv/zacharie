@@ -220,6 +220,10 @@ router.post(
     const token = jwt.sign({ userId: user.id }, SECRET, {
       expiresIn: JWT_MAX_AGE,
     });
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { last_login_at: new Date() },
+    });
     // refreshMaterializedViews();
     res.cookie('zacharie_express_jwt', token, cookieOptions());
     res
