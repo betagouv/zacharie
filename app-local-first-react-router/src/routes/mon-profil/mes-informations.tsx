@@ -138,6 +138,8 @@ export default function MesInformations() {
     user.roles.includes(UserRoles.ETG) ||
     user.roles.includes(UserRoles.SVI);
 
+  const canChange = user.roles.includes(UserRoles.ADMIN);
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <title>Mes informations | Zacharie | Ministère de l'Agriculture</title>
@@ -303,8 +305,12 @@ export default function MesInformations() {
                   fetcherKey="onboarding-etape-2-associations-data"
                   setRefreshKey={setRefreshKey}
                   accordionLabel="Vos associations de chasse / repas associatifs"
-                  addLabel="Ajouter une association de chasse"
-                  selectLabel="Sélectionnez une association de chasse"
+                  addLabel={
+                    canChange
+                      ? 'Ajouter une association de chasse'
+                      : 'Vos associations de chasse / repas associatifs'
+                  }
+                  selectLabel={canChange ? 'Sélectionnez une association de chasse' : ''}
                   done
                   entityType={EntityTypes.PREMIER_DETENTEUR}
                   allEntitiesByTypeAndId={allEntitiesByTypeAndId}
@@ -317,8 +323,8 @@ export default function MesInformations() {
                   fetcherKey="onboarding-etape-2-collecteur-pro-data"
                   setRefreshKey={setRefreshKey}
                   accordionLabel="Vous êtes/travaillez pour un Collecteur Professionnel"
-                  addLabel="Ajouter un Collecteur Professionnel"
-                  selectLabel="Sélectionnez un Collecteur Professionnel"
+                  addLabel={canChange ? 'Ajouter un Collecteur Professionnel' : 'Vos entreprises'}
+                  selectLabel={canChange ? 'Sélectionnez un Collecteur Professionnel' : ''}
                   done={collecteursProDone}
                   entityType={EntityTypes.COLLECTEUR_PRO}
                   allEntitiesByTypeAndId={allEntitiesByTypeAndId}
@@ -330,8 +336,8 @@ export default function MesInformations() {
                   fetcherKey="onboarding-etape-2-etg-data"
                   setRefreshKey={setRefreshKey}
                   accordionLabel="Vous êtes/travaillez pour un Établissements de Traitement du Gibier sauvage (ETG)"
-                  addLabel="Ajouter un ETG"
-                  selectLabel="Sélectionnez un ETG"
+                  addLabel={canChange ? 'Ajouter un ETG' : 'Vos entreprises'}
+                  selectLabel={canChange ? 'Sélectionnez un ETG' : ''}
                   done={etgsDone}
                   entityType={EntityTypes.ETG}
                   allEntitiesByTypeAndId={allEntitiesByTypeAndId}
@@ -422,7 +428,6 @@ interface AccordionEntrepriseProps {
   selectLabel: string;
   accordionLabel: string;
   fetcherKey: string;
-  children?: React.ReactNode;
   description?: React.ReactNode;
   allEntitiesByTypeAndId: EntitiesByTypeAndId;
   userEntitiesByTypeAndId: EntitiesByTypeAndId;
@@ -436,13 +441,12 @@ function AccordionEntreprise({
   selectLabel,
   accordionLabel,
   fetcherKey,
-  children,
   description,
   allEntitiesByTypeAndId,
   userEntitiesByTypeAndId,
 }: AccordionEntrepriseProps) {
   const user = useUser((state) => state.user)!;
-
+  const canChange = user.roles.includes(UserRoles.ADMIN);
   // const userEntityFetcher = useFetcher({ key: fetcherKey });
   const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
   const remainingEntities = Object.values(allEntitiesByTypeAndId[entityType]).filter(
@@ -470,7 +474,7 @@ function AccordionEntreprise({
                 style={{
                   boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
                 }}
-                isClosable
+                isClosable={canChange ? true : false}
                 onClose={() => {
                   fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
                     method: 'POST',
@@ -504,7 +508,7 @@ function AccordionEntreprise({
             </div>
           );
         })}
-      {children ?? (
+      {canChange && (
         <form
           id={fetcherKey}
           className="fr-fieldset__element flex w-full flex-row items-end gap-4"
@@ -522,6 +526,7 @@ function AccordionEntreprise({
             label={addLabel}
             hint={selectLabel}
             className="!mb-0 grow"
+            disabled={!user?.roles.includes(UserRoles.ADMIN)}
             nativeSelectProps={{
               name: Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id,
             }}
@@ -538,7 +543,7 @@ function AccordionEntreprise({
           </Select>
           <Button
             type="submit"
-            nativeButtonProps={{ form: fetcherKey }}
+            nativeButtonProps={{ form: fetcherKey, disabled: !user?.roles.includes(UserRoles.ADMIN) }}
             onClick={(e) => {
               e.preventDefault();
               console.log(
