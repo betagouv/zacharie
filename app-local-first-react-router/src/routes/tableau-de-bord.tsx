@@ -174,62 +174,64 @@ export default function TableauDeBordIndex() {
                   </a>
                 </div>
               </section>
-              <section className="mb-6 bg-white md:shadow">
-                <div className="p-4 md:p-8 md:pb-0">
-                  <h2 className="fr-h3">
-                    Fiches en cours
-                    {feisOngoing.length > 0 ? ` (${feisOngoing.length})` : null}
-                  </h2>
-                </div>
-                {feisOngoing.length ? (
-                  <ResponsiveTable
-                    onCheckboxClick={handleCheckboxClick}
-                    checkedItemIds={selectedFeis}
-                    headers={['Chasse', 'Dates clés', 'Carcasses', 'Étape en cours']}
-                    data={feisOngoing
-                      .filter((fei) => fei !== null)
-                      .map((fei) => ({
-                        link: `/app/tableau-de-bord/fei/${fei.numero}`,
-                        id: fei.numero,
-                        isSynced: fei.is_synced,
-                        cols: [
-                          // fei.numero!,
-                          <>
-                            {fei.premier_detenteur_name_cache!}
-                            <br />
-                            {fei.commune_mise_a_mort!}
-                          </>,
-                          getFeiKeyDates(fei),
-                          <>
-                            {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
-                              return (
-                                <p className="m-0" key={line}>
-                                  {line}
-                                </p>
-                              );
-                            })}
-                          </>,
-                          getOngoingCellFeiUnderMyResponsability(fei, entities),
-                        ],
-                      }))}
-                  />
-                ) : (
-                  <p className="m-8">Pas de fiche en cours</p>
-                )}
-                <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
-                  <Button
-                    priority="tertiary"
-                    iconId="ri-refresh-line"
-                    disabled={!isOnline}
-                    onClick={loadData}
-                  >
-                    Mettre à jour
-                  </Button>
-                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                    Haut de page
-                  </a>
-                </div>
-              </section>
+              {feisOngoing.length > 0 && (
+                <section className="mb-6 bg-white md:shadow">
+                  <div className="p-4 md:p-8 md:pb-0">
+                    <h2 className="fr-h3">
+                      Fiches en cours
+                      {feisOngoing.length > 0 ? ` (${feisOngoing.length})` : null}
+                    </h2>
+                  </div>
+                  {feisOngoing.length ? (
+                    <ResponsiveTable
+                      onCheckboxClick={handleCheckboxClick}
+                      checkedItemIds={selectedFeis}
+                      headers={['Chasse', 'Dates clés', 'Carcasses', 'Étape en cours']}
+                      data={feisOngoing
+                        .filter((fei) => fei !== null)
+                        .map((fei) => ({
+                          link: `/app/tableau-de-bord/fei/${fei.numero}`,
+                          id: fei.numero,
+                          isSynced: fei.is_synced,
+                          cols: [
+                            // fei.numero!,
+                            <>
+                              {fei.premier_detenteur_name_cache!}
+                              <br />
+                              {fei.commune_mise_a_mort!}
+                            </>,
+                            getFeiKeyDates(fei),
+                            <>
+                              {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
+                                return (
+                                  <p className="m-0" key={line}>
+                                    {line}
+                                  </p>
+                                );
+                              })}
+                            </>,
+                            getOngoingCellFeiUnderMyResponsability(fei, entities),
+                          ],
+                        }))}
+                    />
+                  ) : (
+                    <p className="m-8">Pas de fiche en cours</p>
+                  )}
+                  <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+                    <Button
+                      priority="tertiary"
+                      iconId="ri-refresh-line"
+                      disabled={!isOnline}
+                      onClick={loadData}
+                    >
+                      Mettre à jour
+                    </Button>
+                    <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                      Haut de page
+                    </a>
+                  </div>
+                </section>
+              )}
             </>
           )}
           {!isOnlySvi && (
