@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Prisma, CarcasseType, UserRoles } from '@prisma/client';
 import saisieSviList from '@app/data/saisie-svi/list.json';
@@ -62,6 +62,7 @@ export function CarcasseEditSVI() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
+  const navigate = useNavigate();
   const fei = state.feis[params.fei_numero!];
   const examinateurInitialUser = fei.examinateur_initial_user_id
     ? state.users[fei.examinateur_initial_user_id]
@@ -258,6 +259,7 @@ export function CarcasseEditSVI() {
                               checked: typeSaisie.length === 0,
                               onChange: () => {
                                 setTypeSaisie([]);
+                                setMotifsSaisie([]);
                               },
                             },
                             label: 'Pas de saisie',
@@ -277,6 +279,9 @@ export function CarcasseEditSVI() {
                               required: true,
                               checked: typeSaisie[0] === 'Saisie partielle',
                               onChange: () => {
+                                if (typeSaisie[0] !== 'Saisie partielle') {
+                                  setMotifsSaisie([]);
+                                }
                                 setTypeSaisie(['Saisie partielle']);
                               },
                             },
@@ -454,7 +459,8 @@ export function CarcasseEditSVI() {
                           !motifsSaisie.length
                             ? [
                                 {
-                                  children: typeSaisie.length === 0 ? 'Enregistrer' : 'Saisir',
+                                  children:
+                                    typeSaisie.length === 0 ? 'Enregistrer et retour à la fiche' : 'Saisir',
                                   type: 'submit',
                                   nativeButtonProps: {
                                     form: `svi-carcasse-${carcasse.numero_bracelet}`,
@@ -482,6 +488,9 @@ export function CarcasseEditSVI() {
                                         fei_intermediaire_id: null,
                                         carcasse_intermediaire_id: null,
                                       });
+                                      if (typeSaisie.length === 0) {
+                                        navigate(`/app/tableau-de-bord/fei/${fei.numero}`);
+                                      }
                                     },
                                     suppressHydrationWarning: true,
                                     value: dayjs().toISOString(),

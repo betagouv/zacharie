@@ -1,14 +1,14 @@
-import React, { useRef, useState } from "react";
-import { Input, InputProps } from "@codegouvfr/react-dsfr/Input";
-import { Tag } from "@codegouvfr/react-dsfr/Tag";
-import InputNotEditable from "./InputNotEditable";
+import React, { useRef, useState } from 'react';
+import { Input, InputProps } from '@codegouvfr/react-dsfr/Input';
+import { Tag } from '@codegouvfr/react-dsfr/Tag';
+import InputNotEditable from './InputNotEditable';
 
 interface InputForSearchPrefilledDataProps<T> {
-  label: InputProps["label"];
+  label: InputProps['label'];
   data: Array<T>;
   onSelect: (selected: T) => void;
   onRemove?: (selected: T) => void;
-  hintText?: InputProps["hintText"];
+  hintText?: InputProps['hintText'];
   name?: string;
   placeholder?: string;
   required?: boolean;
@@ -25,9 +25,9 @@ export default function InputForSearchPrefilledData<T extends string>({
   onSelect,
   data,
   onRemove,
-  hintText = "",
-  placeholder = "Tapez ici...",
-  name = "input-for-search-prefilled-data",
+  hintText = '',
+  placeholder = 'Tapez ici...',
+  name = 'input-for-search-prefilled-data',
   values = [],
   defaultValue,
   hideDataWhenNoSearch = true,
@@ -36,7 +36,7 @@ export default function InputForSearchPrefilledData<T extends string>({
   canEdit = true,
   required = false,
 }: InputForSearchPrefilledDataProps<T>) {
-  const [searchTerm, setSearchTerm] = useState<T>((defaultValue ?? "") as T);
+  const [searchTerm, setSearchTerm] = useState<T>((defaultValue ?? '') as T);
   const showTags = useRef(!defaultValue);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +44,7 @@ export default function InputForSearchPrefilledData<T extends string>({
     setSearchTerm(event.target.value as T);
   };
 
-  const searchWords = searchTerm.toLowerCase().split(" ");
+  const searchWords = searchTerm.toLowerCase().split(' ');
   const filteredData = !searchTerm?.length
     ? hideDataWhenNoSearch
       ? []
@@ -71,11 +71,11 @@ export default function InputForSearchPrefilledData<T extends string>({
         label={label}
         hintText={hintText}
         nativeInputProps={{
-          type: "text",
+          type: 'text',
           value: searchTerm,
           name,
           required,
-          autoComplete: "off",
+          autoComplete: 'off',
           onChange: handleChange,
           placeholder,
         }}
@@ -108,7 +108,7 @@ export default function InputForSearchPrefilledData<T extends string>({
                     showTags.current = false;
                     onSelect(item);
                     if (clearInputOnClick) {
-                      setSearchTerm("" as T);
+                      setSearchTerm('' as T);
                     } else {
                       setSearchTerm(item);
                     }
