@@ -265,6 +265,15 @@ router.post(
       entityId = entity?.id || '';
     }
 
+    if (!isAdmin) {
+      res.status(401).send({
+        ok: false,
+        data: { relation: null, entity: null },
+        error: 'Unauthorized',
+      } satisfies UserEntityResponse);
+      return;
+    }
+
     if (!entityId) {
       res.status(400).send({
         ok: false,
