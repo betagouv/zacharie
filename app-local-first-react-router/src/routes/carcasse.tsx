@@ -35,7 +35,7 @@ const gibierSelect = {
 };
 
 // export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
-//   const user = await getMostFreshUser();
+//   const user = await useMostFreshUser();
 //   if (!user) {
 //     throw redirect(`/app/connexion?type=compte-existant`);
 //   }

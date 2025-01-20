@@ -3,12 +3,12 @@ import { useLocation, useNavigate } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import { clearCache } from '@app/services/indexed-db';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
-import { getMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { createNewFei } from './create-new-fei';
 
 export default function useNavigationMenu() {
   const location = useLocation();
-  const user = getMostFreshUser('useNavigationMenu');
+  const user = useMostFreshUser('useNavigationMenu');
   const isNotActivated = !user?.activated;
 
   const navigate = useNavigate();

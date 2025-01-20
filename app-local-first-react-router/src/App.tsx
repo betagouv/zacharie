@@ -6,7 +6,7 @@ import { useEffect, type ReactElement } from 'react';
 import Chargement from './components/Chargement';
 import TableauDeBordIndex from './routes/tableau-de-bord';
 import TableauDeBordLayout from './routes/tableau-de-bord-layout';
-import { getMostFreshUser } from './utils-offline/get-most-fresh-user';
+import { useMostFreshUser } from './utils-offline/get-most-fresh-user';
 import Fei from './routes/fei/fei';
 import OfflineMode from './components/OfflineMode';
 import Carcasse from './routes/carcasse';
@@ -206,7 +206,7 @@ function RestrictedRoute({
   id: string;
   roles?: UserRoles[];
 }) {
-  const user = getMostFreshUser('RestrictedRoute ' + id);
+  const user = useMostFreshUser('RestrictedRoute ' + id);
   const navigate = useNavigate();
 
   // console.log(id, 'restricted route user', user);

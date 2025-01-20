@@ -5,7 +5,7 @@ import { UserRoles } from '@prisma/client';
 import { clearCache } from '@app/services/indexed-db';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
-import { getMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef } from 'react';
 
 export default function RootDisplay({
@@ -19,7 +19,7 @@ export default function RootDisplay({
   hideMinistereName?: boolean;
   id: string;
 }) {
-  const user = getMostFreshUser('RootDisplay ' + id);
+  const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
   // there is a bug on user's first connexion where user is not defined
   // RENDER 1. user is not connected -> renderSearchInput is undefined

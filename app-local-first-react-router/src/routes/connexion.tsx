@@ -22,7 +22,7 @@ export default function Connexion() {
   const [isLoading, setIsLoading] = useState(false);
   const [userInitiated, setUserInitiated] = useState(false);
   const [userResponse, setUserResponse] = useState<UserConnexionResponse | null>(null);
-  // we don't user   getMostFreshUser() here on purpose to avoid infinite loop
+  // we don't user   useMostFreshUser() here on purpose to avoid infinite loop
   const user = useUser((state) => state.user);
   const navigate = useNavigate();
 

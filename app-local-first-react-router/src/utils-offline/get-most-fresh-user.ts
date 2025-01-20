@@ -3,8 +3,8 @@ import * as Sentry from '@sentry/react';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 
-export function getMostFreshUser(_calledFrom: string) {
-  // console.log('getMostFreshUser called from', calledFrom);
+export function useMostFreshUser(_calledFrom: string) {
+  // console.log('useMostFreshUser called from', calledFrom);
   const cachedUser = useUser((state) => state.user);
   if (!window.navigator.onLine) {
     if (cachedUser) {

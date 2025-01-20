@@ -7,7 +7,7 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import ResponsiveTable from '@app/components/TableResponsive';
 import { getOngoingCellFeiUnderMyResponsability } from '@app/utils/get-ongoing-cell';
 import useZustandStore, { syncData } from '@app/zustand/store';
-import { getMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate } from 'react-router';
@@ -25,7 +25,7 @@ async function loadData() {
 export default function TableauDeBordIndex() {
   const navigate = useNavigate();
   const data = useZustandStore((state) => state);
-  const user = getMostFreshUser('tableau de bord index')!;
+  const user = useMostFreshUser('tableau de bord index')!;
   const entities = data.entities!;
   const feisDone = data.feisDone!;
   const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();

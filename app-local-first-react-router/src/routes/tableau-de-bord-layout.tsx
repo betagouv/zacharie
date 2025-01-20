@@ -1,13 +1,13 @@
 import { Outlet, useLocation } from 'react-router';
 import RootDisplay from '@app/components/RootDisplay';
 import useNavigationMenu from '@app/utils/get-navigation-menu';
-import { getMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import Chargement from '@app/components/Chargement';
 import { useEffect } from 'react';
 
 export default function TableauDeBordLayout() {
   const location = useLocation();
-  const user = getMostFreshUser('TableauDeBordLayout');
+  const user = useMostFreshUser('TableauDeBordLayout');
   const navigation = useNavigationMenu();
 
   useEffect(() => {

@@ -1,6 +1,6 @@
-import { Button } from "@codegouvfr/react-dsfr/Button";
-import RootDisplay from "@app/components/RootDisplay";
-import { getMostFreshUser } from "@app/utils-offline/get-most-fresh-user";
+import { Button } from '@codegouvfr/react-dsfr/Button';
+import RootDisplay from '@app/components/RootDisplay';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 
 export default function LandingPage() {
   return (
@@ -23,24 +23,25 @@ export default function LandingPage() {
               <h3 className="fr-h3 text-center">Obligation de tracer</h3>
               <p className="text-pretty text-justify font-normal text-gray-700 [&_b]:font-bold [&_b]:text-gray-900">
                 En France, les chasseurs qui souhaitent <b>vendre ou céder</b> leurs carcasses sont dans l'
-                <b>obligation de transmettre l'ensemble des données sanitaires</b> (identification de l'animal, lésions
-                possibles comportement anormal, etc.) et les <b>données de traçabilité</b> (lieu de mise à mort, date,
-                acteurs qui prennent en charge la carcasse, etc.) associées à ces carcasses. Ces informations sont
-                consignées sur un document papier qui suit la carcasse&nbsp;: c'est la fiche d'accompagnement du gibier
-                sauvage.
+                <b>obligation de transmettre l'ensemble des données sanitaires</b> (identification de
+                l'animal, lésions possibles comportement anormal, etc.) et les <b>données de traçabilité</b>{' '}
+                (lieu de mise à mort, date, acteurs qui prennent en charge la carcasse, etc.) associées à ces
+                carcasses. Ces informations sont consignées sur un document papier qui suit la carcasse&nbsp;:
+                c'est la fiche d'accompagnement du gibier sauvage.
               </p>
             </div>
             <hr className="m-4 md:hidden" />
             <div className="my-8 md:col-start-2 md:row-start-2 md:m-0">
               <h3 className="fr-h3 text-center">Simplifiez vos démarches</h3>
               <p className="text-pretty text-justify font-normal text-gray-700 [&_b]:font-bold [&_b]:text-gray-900">
-                Zacharie est un <b>service public gratuit</b> pour ses utilisateurs, conçu pour les chasseurs et les
-                acteurs de la filière de valorisation des viandes de gibier sauvage. Zacharie permet de créer des{" "}
-                <b>fiche d'accompagnement du gibier sauvage</b> en un{" "}
-                <b>format numérique unique, partagé, modifiable et traçable</b> par tous les acteurs de la filière.
+                Zacharie est un <b>service public gratuit</b> pour ses utilisateurs, conçu pour les chasseurs
+                et les acteurs de la filière de valorisation des viandes de gibier sauvage. Zacharie permet de
+                créer des <b>fiche d'accompagnement du gibier sauvage</b> en un{' '}
+                <b>format numérique unique, partagé, modifiable et traçable</b> par tous les acteurs de la
+                filière.
                 <br />
-                Zacharie est une <b>alternative officielle et numérique</b> à la démarche réalisée aujourd'hui sur
-                papier.
+                Zacharie est une <b>alternative officielle et numérique</b> à la démarche réalisée aujourd'hui
+                sur papier.
               </p>
             </div>
           </section>
@@ -68,13 +69,15 @@ export default function LandingPage() {
                   <li className="ml-4 flex flex-col">
                     <h4 className="text-lg font-bold">Suivi de vos carcasses</h4>
                     <p className="ml-4 mt-1 text-sm md:ml-0 md:text-base">
-                      Suivez la prise en charge de vos carcasses et soyez informé en cas de saisies sanitaires.
+                      Suivez la prise en charge de vos carcasses et soyez informé en cas de saisies
+                      sanitaires.
                     </p>
                   </li>
                   <li className="ml-4 flex flex-col">
                     <h4 className="text-lg font-bold">Conformité et sécurité</h4>
                     <p className="ml-4 mt-1 text-sm md:ml-0 md:text-base">
-                      Assurez-vous de transmettre les informations sanitaires utiles à la sécurité des viandes.
+                      Assurez-vous de transmettre les informations sanitaires utiles à la sécurité des
+                      viandes.
                     </p>
                   </li>
                 </ul>
@@ -91,7 +94,9 @@ export default function LandingPage() {
                 />
               </div>
               <div className="my-8 md:col-span-1 md:col-start-2 md:row-start-1">
-                <h3 className="fr-h3 text-balance text-center md:text-left">Pour les acteurs pros de la filière</h3>
+                <h3 className="fr-h3 text-balance text-center md:text-left">
+                  Pour les acteurs pros de la filière
+                </h3>
                 <ul className="flex flex-col gap-2 md:gap-6">
                   <li className="ml-4 flex flex-col md:ml-0">
                     <h4 className="text-lg font-bold">Meilleure maîtrise du risque</h4>
@@ -129,8 +134,8 @@ export default function LandingPage() {
                 <div className="flex flex-col">
                   <h4 className="text-lg font-bold md:text-2xl">Inscription</h4>
                   <p className="mt-1">
-                    Créez votre compte en quelques minutes et renseignez vos rôles dans la filière&nbsp;: chasseur,
-                    examinateur ou encore centre de collecte.
+                    Créez votre compte en quelques minutes et renseignez vos rôles dans la filière&nbsp;:
+                    chasseur, examinateur ou encore centre de collecte.
                   </p>
                 </div>
               </li>
@@ -150,8 +155,8 @@ export default function LandingPage() {
                 <div className="flex flex-col">
                   <h4 className="text-lg font-bold md:text-2xl">Retours et confirmation</h4>
                   <p className="mt-1">
-                    Vous verrez la bonne réception de vos carcasses chez vos partenaires et le bilan du contrôle des
-                    services vétérinaires d'inspection.
+                    Vous verrez la bonne réception de vos carcasses chez vos partenaires et le bilan du
+                    contrôle des services vétérinaires d'inspection.
                   </p>
                 </div>
               </li>
@@ -180,8 +185,8 @@ export default function LandingPage() {
                 <div className="flex flex-col">
                   <h4 className="text-lg font-bold md:text-2xl">Réception et validation des fiches</h4>
                   <p className="mt-1">
-                    Vous verrez toutes les fiches qui vous seront attribuées et pourrez les annoter suivant vos
-                    observations.
+                    Vous verrez toutes les fiches qui vous seront attribuées et pourrez les annoter suivant
+                    vos observations.
                   </p>
                 </div>
               </li>
@@ -189,7 +194,9 @@ export default function LandingPage() {
                 <p className="shrink-0 basis-20 pl-4 text-8xl font-bold text-green-800">3</p>
                 <div className="flex flex-col">
                   <h4 className="text-lg font-bold md:text-2xl">Collaboration</h4>
-                  <p className="mt-1">Partagez et modifiez les fiches avec les autres acteurs de la filière.</p>
+                  <p className="mt-1">
+                    Partagez et modifiez les fiches avec les autres acteurs de la filière.
+                  </p>
                 </div>
               </li>
             </ul>
@@ -218,15 +225,15 @@ export default function LandingPage() {
                 <li className="ml-4 flex flex-col md:ml-0">
                   <h4 className="text-lg font-bold">Réduction du gaspillage alimentaire</h4>
                   <p className="ml-4 mt-1 text-sm md:ml-0 md:text-base">
-                    Une meilleure traçabilité des carcasses pour limiter les saisies en établissements de traitement du
-                    gibier sauvage.
+                    Une meilleure traçabilité des carcasses pour limiter les saisies en établissements de
+                    traitement du gibier sauvage.
                   </p>
                 </li>
                 <li className="ml-4 flex flex-col md:ml-0">
                   <h4 className="text-lg font-bold">Une confiance restaurée</h4>
                   <p className="ml-4 mt-1 text-sm md:ml-0 md:text-base">
-                    Des données sanitaires plus fiables c'est aussi des professionnels de la filière plus confiants dans
-                    la qualité des viandes.
+                    Des données sanitaires plus fiables c'est aussi des professionnels de la filière plus
+                    confiants dans la qualité des viandes.
                   </p>
                 </li>
               </ul>
@@ -259,29 +266,29 @@ export default function LandingPage() {
 }
 
 function CTA({ mobile, desktop }: { mobile?: boolean; desktop?: boolean }) {
-  const user = getMostFreshUser("landing CTA");
+  const user = useMostFreshUser('landing CTA');
   const isLoggedIn = !!user?.id;
 
   return (
     <div
       className={[
-        "my-4 items-center justify-center md:my-16",
-        mobile && !desktop && "flex md:hidden",
-        !mobile && desktop && "hidden md:flex",
-        mobile && desktop && "flex",
+        'my-4 items-center justify-center md:my-16',
+        mobile && !desktop && 'flex md:hidden',
+        !mobile && desktop && 'hidden md:flex',
+        mobile && desktop && 'flex',
       ]
         .filter(Boolean)
-        .join(" ")}
+        .join(' ')}
     >
       <Button
         className="m-0"
         linkProps={{
           // to: "/app/connexion?type=creation-de-compte",
-          to: isLoggedIn ? "/app/connexion?type=compte-existant" : "/beta-testeurs",
-          href: "#",
+          to: isLoggedIn ? '/app/connexion?type=compte-existant' : '/beta-testeurs',
+          href: '#',
         }}
       >
-        {isLoggedIn ? "Accéder à mon compte" : "Découvrir le service"}
+        {isLoggedIn ? 'Accéder à mon compte' : 'Découvrir le service'}
       </Button>
     </div>
   );
