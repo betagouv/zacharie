@@ -58,7 +58,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
         ref={searchRef}
         className={className}
         id={id}
-        placeholder="Rechercher (carcasse ou fiche)"
+        placeholder="Rechercher (carcasse ou fiche en cours)"
         type={type || 'search'}
         value={cachedValue}
         onChange={(event) => setCachedValue(event.target.value)}

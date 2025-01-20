@@ -5,22 +5,56 @@ const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import type { SearchResponse } from '~/types/responses';
 import dayjs from 'dayjs';
+import { RequestWithUser } from '~/types/request';
+import { UserRoles } from '@prisma/client';
 
 router.get(
   '/',
   passport.authenticate('user', { session: false }),
-  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const searchQuery = req.query.q as string;
+    const user = req.user!;
 
-    console.log({ searchQuery });
     if (!searchQuery) {
       res.status(200).send({ ok: false, data: [], error: '' });
       return;
     }
 
+    if (!user.roles.includes(UserRoles.SVI)) {
+      res.status(200).send({ ok: false, data: [], error: '' });
+      return;
+    }
+
+    const svi_entity_id = await prisma.entityAndUserRelations
+      .findFirst({
+        where: {
+          owner_id: user.id,
+          EntityRelatedWithUser: {
+            type: UserRoles.SVI,
+          },
+        },
+      })
+      .then((relation) => relation?.entity_id);
+
     const carcasses = await prisma.carcasse.findMany({
       where: {
         numero_bracelet: searchQuery,
+        deleted_at: null,
+        intermediaire_carcasse_refus_intermediaire_id: null,
+        OR: [
+          {
+            intermediaire_carcasse_manquante: false,
+          },
+          {
+            intermediaire_carcasse_manquante: null,
+          },
+        ],
+        Fei: {
+          svi_entity_id,
+          svi_assigned_at: {
+            lte: dayjs().subtract(20, 'days').toDate(),
+          },
+        },
       },
       include: {
         Fei: {
@@ -99,7 +133,6 @@ router.get(
       }
     }
 
-    console.log({ searchQuery });
     const feis = await prisma.fei.findMany({
       where: {
         numero: {
