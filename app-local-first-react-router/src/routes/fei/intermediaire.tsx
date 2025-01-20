@@ -123,11 +123,12 @@ export default function FEICurrentIntermediaire() {
   }, [intermediaireCarcasses, intermediaire, fei, state.carcasses]);
 
   const labelCheckDone = useMemo(() => {
-    let label = `${
-      intermediaire.check_finished_at ? "J'ai pris" : 'Je prends'
-    } en charge les carcasses que j'ai acceptées.`;
+    let label = '';
     const nbCarcassesValidated = carcassesSorted.carcassesApproved.length;
     if (nbCarcassesValidated > 0) {
+      label += `${
+        intermediaire.check_finished_at ? "J'ai pris" : 'Je prends'
+      } en charge les carcasses que j'ai acceptées.`;
       if (nbCarcassesValidated === 1) {
         label += ' 1 carcasse/lot validé.';
       } else {
@@ -430,7 +431,9 @@ export default function FEICurrentIntermediaire() {
           </div>
           <div className={['fr-fieldset__element', canEdit ? '' : 'pointer-events-none'].join(' ')}>
             <PriseEnChargeInput
-              label="Date de prise en charge"
+              label={
+                carcassesSorted.carcassesApproved.length > 0 ? 'Date de prise en charge' : 'Date de décision'
+              }
               // hintText={
               //   <button
               //     className="inline-block"
