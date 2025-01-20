@@ -268,7 +268,9 @@ export default function CurrentOwnerConfirm({
         title={
           fei.fei_next_owner_user_id
             ? '🫵  Cette fiche vous a été attribuée'
-            : '🫵  Cette fiche a été attribuée à votre société'
+            : fei.fei_next_owner_role === UserRoles.SVI
+              ? '🫵  Cette fiche a été attribuée à votre service'
+              : '🫵  Cette fiche a été attribuée à votre société'
         }
         className="m-0 bg-white"
       >
