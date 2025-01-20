@@ -19,6 +19,11 @@ export function getMostFreshUser(_calledFrom: string) {
 }
 
 export async function refreshUser(_calledFrom: string) {
+  if (!navigator.onLine) {
+    // we need this because if offLine then the service worker return the latest GET /user/me
+    // and it makes the prochain_bracelet_a_utiliser stale
+    return null;
+  }
   const controller = new AbortController();
   const { signal } = controller;
 
