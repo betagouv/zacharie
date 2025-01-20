@@ -100,6 +100,12 @@ function Fei() {
     if (fei.fei_current_owner_role === UserRoles.SVI) {
       return UserRoles.SVI;
     }
+    if (
+      fei.fei_current_owner_role &&
+      (['COLLECTEUR_PRO', 'ETG'] as UserRoles[]).includes(fei.fei_current_owner_role)
+    ) {
+      return 'Destinataires';
+    }
     return UserRoles.EXAMINATEUR_INITIAL;
     // return "Destinataires";
   });

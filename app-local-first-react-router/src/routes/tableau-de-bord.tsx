@@ -52,7 +52,7 @@ export default function TableauDeBordIndex() {
         acc.feisDoneForSvi.push(fei);
       } else if (fei.svi_signed_at) {
         acc.feisDoneForSvi.push(fei);
-      } else if (dayjs(fei!.svi_assigned_at).isAfter(dayjs().subtract(10, 'days'))) {
+      } else if (dayjs(fei!.svi_assigned_at).isBefore(dayjs().subtract(10, 'days'))) {
         acc.feisDoneForSvi.push(fei);
       } else {
         acc.feiActivesForSvi.push(fei);
@@ -64,6 +64,11 @@ export default function TableauDeBordIndex() {
       feisDoneForSvi: [] as typeof feisDone,
     },
   );
+
+  console.log({
+    feiActivesForSvi,
+    feisDoneForSvi,
+  });
 
   const hackForCounterDoubleEffectInDevMode = useRef(false);
   useEffect(() => {
