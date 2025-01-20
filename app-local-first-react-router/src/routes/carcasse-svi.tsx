@@ -127,7 +127,9 @@ export function CarcasseEditSVI() {
   const [typeSaisie, setTypeSaisie] = useState(carcasse?.svi_carcasse_saisie?.filter(Boolean) ?? []);
 
   const isSviWorkingFor = useMemo(() => {
-    if (fei.fei_current_owner_role === UserRoles.SVI && !!fei.svi_entity_id) {
+    // if (fei.fei_current_owner_role === UserRoles.SVI && !!fei.svi_entity_id) {
+    // fix: pas besoin d'avoir pris en charge la fiche pour les SVI, elle est prise en charge automatiquement
+    if (fei.svi_entity_id) {
       if (user.roles.includes(UserRoles.SVI)) {
         const svi = state.entities[fei.svi_entity_id];
         if (svi?.relation === 'WORKING_FOR') {

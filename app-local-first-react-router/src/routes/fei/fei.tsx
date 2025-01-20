@@ -97,7 +97,7 @@ function Fei() {
   ];
 
   const [selectedTabId, setSelectedTabId] = useState<(typeof tabs)[number]['tabId']>(() => {
-    if (fei.fei_current_owner_role === UserRoles.SVI) {
+    if (user.roles.includes(UserRoles.SVI) || fei.fei_current_owner_role === UserRoles.SVI) {
       return UserRoles.SVI;
     }
     if (
