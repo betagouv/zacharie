@@ -187,7 +187,7 @@ export default function FEIExaminateurInitial() {
       return 'Il manque des informations sur certaines carcasses';
     }
     if (!fei.examinateur_initial_date_approbation_mise_sur_le_marche) {
-      return "Il manque la date d'approbation de mise sur le marché";
+      return 'Il manque la date de validation de l’examen initial';
     }
     return null;
   }, [fei, carcassesNotReady, carcasses, onlyPetitGibier]);
