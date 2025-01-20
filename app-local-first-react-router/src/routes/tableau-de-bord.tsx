@@ -46,11 +46,23 @@ export default function TableauDeBordIndex() {
 
   const isOnlySvi =
     user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
-  const feiActivesForSvi = feisDone.filter(
-    (fei) => !fei!.svi_signed_at && dayjs(fei!.svi_assigned_at).isAfter(dayjs().subtract(10, 'days')),
-  );
-  const feisDoneForSvi = feisDone.filter(
-    (fei) => fei!.svi_signed_at || dayjs(fei!.svi_assigned_at).isBefore(dayjs().subtract(10, 'days')),
+  const { feiActivesForSvi, feisDoneForSvi } = feisDone.reduce(
+    (acc, fei) => {
+      if (fei.automatic_closed_at) {
+        acc.feisDoneForSvi.push(fei);
+      } else if (fei.svi_signed_at) {
+        acc.feisDoneForSvi.push(fei);
+      } else if (dayjs(fei!.svi_assigned_at).isAfter(dayjs().subtract(10, 'days'))) {
+        acc.feisDoneForSvi.push(fei);
+      } else {
+        acc.feiActivesForSvi.push(fei);
+      }
+      return acc;
+    },
+    {
+      feiActivesForSvi: [] as typeof feisDone,
+      feisDoneForSvi: [] as typeof feisDone,
+    },
   );
 
   const hackForCounterDoubleEffectInDevMode = useRef(false);
@@ -410,7 +422,7 @@ export default function TableauDeBordIndex() {
                                 );
                               })}
                             </>,
-                            dayjs(fei.svi_signed_at).format('DD/MM/YYYY à HH:mm'),
+                            dayjs(fei.svi_signed_at || fei.automatic_closed_at).format('DD/MM/YYYY à HH:mm'),
                           ],
                         }))}
                     />

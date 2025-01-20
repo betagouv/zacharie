@@ -148,6 +148,9 @@ export function CarcasseEditSVI() {
     // if (fei.svi_signed_at) {
     //   return false;
     // }
+    // if (fei.automatic_closed_at) {
+    //   return false;
+    // }
     if (fei.fei_current_owner_role !== UserRoles.SVI) {
       return false;
     }

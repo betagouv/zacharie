@@ -605,6 +605,7 @@ router.get(
       where: {
         svi_assigned_at: null,
         deleted_at: null,
+        automatic_closed_at: null,
         svi_signed_at: null,
         fei_next_owner_user_id: null,
         fei_next_owner_entity_id: null,

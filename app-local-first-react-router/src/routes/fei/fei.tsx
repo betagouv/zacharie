@@ -164,14 +164,14 @@ function Fei() {
     if (user.roles.includes(UserRoles.SVI)) {
       return '';
     }
-    if (!fei.svi_signed_at) {
+    if (!fei.svi_signed_at && !fei.automatic_closed_at) {
       return "Le service vétérinaire n'a pas encore terminé son inspection";
     }
     // if (!user.roles.includes(UserRoles.SVI)) {
     //   return "Vous n'êtes pas le service vétérinaire";
     // }
     return '';
-  }, [fei.svi_assigned_at, fei.svi_signed_at, user]);
+  }, [fei.svi_assigned_at, fei.svi_signed_at, fei.automatic_closed_at, user]);
 
   return (
     <>

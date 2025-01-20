@@ -26,6 +26,7 @@ export function getFeisSorted(): FeiSorted {
     }
     // FEI UNDER MY RESPONSABILITY
     if (
+      !fei.automatic_closed_at &&
       !fei.svi_assigned_at &&
       !fei.svi_signed_at &&
       !fei.fei_next_owner_user_id &&

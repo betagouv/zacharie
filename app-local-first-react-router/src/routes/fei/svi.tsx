@@ -72,13 +72,14 @@ export default function FEI_SVI() {
     // if (fei.svi_signed_at) {
     //   return false;
     // }
+    if (fei.automatic_closed_at) {
+      return false;
+    }
     if (fei.fei_current_owner_role !== UserRoles.SVI) {
       return false;
     }
     return true;
   }, [fei, user, isSviWorkingFor]);
-
-  console.log({ isSviWorkingFor });
 
   // const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
   const DateFinInput = canEdit ? Input : InputNotEditable;
@@ -171,7 +172,7 @@ export default function FEI_SVI() {
                     required: true,
                     name: 'svi_finito',
                     value: 'true',
-                    readOnly: !!fei.svi_signed_at,
+                    readOnly: !!fei.svi_signed_at || !!fei.automatic_closed_at,
                     defaultChecked: fei.svi_signed_at ? true : false,
                   },
                 },
@@ -213,9 +214,25 @@ export default function FEI_SVI() {
               />
             </div>
           )}
+          {!!fei.automatic_closed_at && (
+            <div className="fr-fieldset__element">
+              <DateFinInput
+                label="Date de clôture automatique"
+                hintText="La fiche a été clôturée automatiquement par le système 10 jours après la date d'assignation au SVI"
+                nativeInputProps={{
+                  id: Prisma.FeiScalarFieldEnum.automatic_closed_at,
+                  name: Prisma.FeiScalarFieldEnum.automatic_closed_at,
+                  type: 'datetime-local',
+                  autoComplete: 'off',
+                  suppressHydrationWarning: true,
+                  defaultValue: dayjs(fei.automatic_closed_at).format('YYYY-MM-DDTHH:mm'),
+                }}
+              />
+            </div>
+          )}
         </form>
       </Accordion>
-      {fei.svi_signed_at && (
+      {(fei.svi_signed_at || fei.automatic_closed_at) && (
         <Alert
           severity="success"
           description="L'inspection des carcasses est terminée, cette fiche est clôturée. Merci !"

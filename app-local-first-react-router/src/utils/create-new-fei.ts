@@ -42,6 +42,7 @@ export function createNewFei(): FeiWithIntermediaires {
     svi_aucune_carcasse_saisie: null,
     svi_commentaire: null,
     svi_signed_at: null,
+    automatic_closed_at: null,
     svi_signed_by: null,
     fei_current_owner_user_id: user.id,
     fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
@@ -60,7 +61,6 @@ export function createNewFei(): FeiWithIntermediaires {
     created_at: dayjs().toDate(),
     updated_at: dayjs().toDate(),
     deleted_at: null,
-    automatic_closed_at: null,
     is_synced: false,
     FeiIntermediaires: [],
   };

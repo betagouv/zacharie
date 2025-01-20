@@ -169,6 +169,9 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
     if (fei.svi_signed_at) {
       return false;
     }
+    if (fei.automatic_closed_at) {
+      return false;
+    }
     return true;
   }, [fei, user, isEtgWorkingFor]);
 
