@@ -125,18 +125,20 @@ export default function CarcasseIntermediaireComp({
     });
   };
 
-  const submitCarcasseRefus = () => {
+  const submitCarcasseRefus = (refusToRemember?: string) => {
     setCarcasseManquante(false);
     setCarcasseRefusCheckbox(true);
     // with custom value for InputForSearchPrefilledData, sometimes the user doesnt press on the blue tag to confirm the refus
     // so we need to get the value from the input directly
     const refusInputValue = (document.getElementsByName('carcasse-refus')?.[0] as HTMLInputElement)?.value;
-    if (refus !== refusInputValue) {
+
+    if (!refus && refus !== refusInputValue) {
       setRefus(refusInputValue);
     }
+    if (!refusToRemember) refusToRemember = refus || refusInputValue;
     const nextPartialCarcasseIntermediaire = {
       manquante: false,
-      refus: refusInputValue,
+      refus: refusToRemember,
       prise_en_charge: false,
     };
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
@@ -153,7 +155,7 @@ export default function CarcasseIntermediaireComp({
     });
     const nextPartialCarcasse = {
       intermediaire_carcasse_manquante: false,
-      intermediaire_carcasse_refus_motif: refusInputValue,
+      intermediaire_carcasse_refus_motif: refusToRemember,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
       intermediaire_carcasse_signed_at: new Date(),
     };
@@ -403,7 +405,7 @@ export default function CarcasseIntermediaireComp({
                   placeholder="Tapez un motif de refus"
                   onSelect={(refus) => {
                     setRefus(refus);
-                    submitCarcasseRefus();
+                    submitCarcasseRefus(refus);
                   }}
                   defaultValue={refus ?? ''}
                   key={refus ?? ''}
