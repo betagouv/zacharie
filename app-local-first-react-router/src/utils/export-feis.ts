@@ -39,6 +39,7 @@ type CarcasseExcelData = {
   // Plus d'infos
   'Heure de première mise à mort': string | null;
   'Heure de dernière éviscération': string | null;
+  Réceptionnée: string | null;
   // zacharie_carcasse_id: string;
   // 'Type de gibier': string;
   // 'Examen initial - Anomalies carcasse': string;
@@ -181,6 +182,16 @@ function formatEntity(entity: EntityWithUserRelation | null) {
   }
   let line3 = `${entity?.code_postal} ${entity?.ville}`;
   return `${line1}\n${line2}\n${line3}`;
+}
+
+function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: CarcasseExcelData) {
+  if (carcasseA.Réceptionnée && carcasseB.Réceptionnée) {
+    return carcasseA.Réceptionnée.localeCompare(carcasseB.Réceptionnée);
+  }
+  if (carcasseA.Éspèce === carcasseB.Éspèce) {
+    return carcasseA['Numéro de bracelet'].localeCompare(carcasseB['Numéro de bracelet']);
+  }
+  return carcasseA.Éspèce!.localeCompare(carcasseB.Éspèce!);
 }
 
 export default function useExportFeis() {
@@ -335,6 +346,9 @@ export default function useExportFeis() {
             'Numéro de fiche': fei.numero,
             // Observations ETG
             'Commentaires ETG / Transporteurs': commentaires.join('\n'),
+            Réceptionnée: carcasse.intermediaire_carcasse_signed_at
+              ? dayjs(carcasse.intermediaire_carcasse_signed_at).format('DD/MM/YYYY HH:mm')
+              : null,
             // Plus d'infos
             'Heure de première mise à mort': fei.heure_mise_a_mort_premiere_carcasse,
             'Heure de dernière éviscération': fei.heure_evisceration_derniere_carcasse,
@@ -348,7 +362,12 @@ export default function useExportFeis() {
         }
       }
 
-      utils.book_append_sheet(carcassesWorkbook, createSheet(allCarcasses), 'Carcasses', true);
+      utils.book_append_sheet(
+        carcassesWorkbook,
+        createSheet(allCarcasses.sort(sortCarcassesApprovedForExcel)),
+        'Carcasses',
+        true,
+      );
 
       for (const [feiNumero, feiSheetData] of Object.entries(feiSheets)) {
         utils.book_append_sheet(carcassesWorkbook, createSheet(feiSheetData), feiNumero, true);
