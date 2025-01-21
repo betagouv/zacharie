@@ -79,9 +79,9 @@ export default function CurrentOwnerConfirm({
   }, [fei, canConfirmCurrentOwner]);
 
   const nextOwnerCollecteurProEntityId = useNextOwnerCollecteurProEntityId(fei, user);
-  const asRole = useGetMyNextRoleForThisFei(fei, user);
+  const myNextRoleForThisFei = useGetMyNextRoleForThisFei(fei, user);
 
-  const isCollecteurPro = asRole === UserRoles.COLLECTEUR_PRO;
+  const myNextRoleForThisFeiIsCollecteurPro = myNextRoleForThisFei === UserRoles.COLLECTEUR_PRO;
 
   if (!fei.fei_next_owner_role) {
     return null;
@@ -256,7 +256,7 @@ export default function CurrentOwnerConfirm({
         }
         className="m-0 bg-white"
       >
-        En tant que <b>{getUserRoleLabel(asRole!)}</b>
+        En tant que <b>{getUserRoleLabel(myNextRoleForThisFei!)}</b>
         {nextOwnerEntity?.nom_d_usage ? ` (${nextOwnerEntity?.nom_d_usage})` : ''}, vous pouvez prendre en
         charge cette fiche et les carcasses associées.
         <br />
@@ -335,7 +335,7 @@ export default function CurrentOwnerConfirm({
             )}
           </>
         )}
-        {!isCollecteurPro && (
+        {!myNextRoleForThisFeiIsCollecteurPro && (
           <>
             <span>
               Vous souhaitez la transférer à un autre acteur&nbsp;? (exemple: erreur d'attribution,

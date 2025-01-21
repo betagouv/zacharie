@@ -23,7 +23,7 @@ export default function CurrentOwner() {
     ? state.entities[fei.fei_current_owner_entity_id]
     : null;
 
-  const asRole = useGetMyNextRoleForThisFei(fei, user);
+  const myNextRoleForThisFei = useGetMyNextRoleForThisFei(fei, user);
 
   const navigate = useNavigate();
 
@@ -61,7 +61,7 @@ export default function CurrentOwner() {
     );
   }
 
-  if (asRole === UserRoles.COLLECTEUR_PRO) {
+  if (myNextRoleForThisFei === UserRoles.COLLECTEUR_PRO) {
     return null;
   }
   if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
