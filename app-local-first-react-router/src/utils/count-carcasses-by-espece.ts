@@ -27,6 +27,6 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
   return Object.entries(countCarcassesByEspece).map(([espece, { carcasses, nombre_d_animaux }]) => {
     const isLot = nombre_d_animaux >= carcasses; // look at the code above to understand this
     const withS = carcasses === 1 ? '' : 's';
-    return `${espece}\u00A0:\u00A0${carcasses}\u00A0${isLot ? `lot${withS} (${nombre_d_animaux} carcasses)` : 'carcasse'}${withS}`;
+    return `${espece}\u00A0:\u00A0${carcasses}\u00A0${isLot ? `lot${withS} (${nombre_d_animaux} carcasses)` : `carcasse${withS}`}`;
   });
 }
