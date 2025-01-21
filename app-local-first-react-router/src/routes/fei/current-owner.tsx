@@ -9,6 +9,7 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { useGetMyNextRoleForThisFei } from '@app/utils/collecteurs-pros';
 
 export default function CurrentOwner() {
   const params = useParams();
@@ -21,6 +22,8 @@ export default function CurrentOwner() {
   const currentOwnerEntity = fei.fei_current_owner_entity_id
     ? state.entities[fei.fei_current_owner_entity_id]
     : null;
+
+  const myNextRoleForThisFei = useGetMyNextRoleForThisFei(fei, user);
 
   const navigate = useNavigate();
 
@@ -56,6 +59,13 @@ export default function CurrentOwner() {
         </div>
       </div>
     );
+  }
+
+  if (myNextRoleForThisFei === UserRoles.COLLECTEUR_PRO) {
+    return null;
+  }
+  if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
+    return null;
   }
 
   return (
