@@ -14,6 +14,7 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { sortCarcassesApproved } from '@app/utils/sort';
 
 export default function FEICurrentIntermediaire() {
   const params = useParams();
@@ -30,11 +31,31 @@ export default function FEICurrentIntermediaire() {
   const [intermediaireIndex, setIntermediaireIndex] = useState(0);
   const intermediaire = intermediaires[intermediaireIndex];
 
-  const intermediaireCarcasses = [
-    ...new Set(state.carcassesIntermediairesByIntermediaire[intermediaire.id] || []),
-  ]
-    .map((carcInterId) => state.carcassesIntermediaires[carcInterId]) // `carcInterId` is `fei_numero__bracelet__intermediaire_id`
-    .filter((c) => c != null);
+  const intermediaireCarcasses = useMemo(() => {
+    return [...new Set(state.carcassesIntermediairesByIntermediaire[intermediaire.id] || [])]
+      .map(
+        (fei_numero__bracelet__intermediaire_id) =>
+          state.carcassesIntermediaires[fei_numero__bracelet__intermediaire_id],
+      )
+      .sort((carcasseIntermediaireA, carcasseIntermediaireB) => {
+        // sort by espece then by numero_bracelet
+        const carcasseA = state.carcasses[carcasseIntermediaireA.zacharie_carcasse_id]!;
+        const carcasseB = state.carcasses[carcasseIntermediaireB.zacharie_carcasse_id]!;
+        if (carcasseA.espece === carcasseB.espece) {
+          return carcasseA.numero_bracelet.localeCompare(carcasseB.numero_bracelet);
+        }
+        if (carcasseA.type === carcasseB.type) {
+          return carcasseA.espece!.localeCompare(carcasseB.espece!);
+        }
+        return carcasseA.type!.localeCompare(carcasseB.type!);
+      })
+      .filter((c) => c != null);
+  }, [
+    intermediaire,
+    state.carcassesIntermediairesByIntermediaire,
+    state.carcassesIntermediaires,
+    state.carcasses,
+  ]);
 
   const isEtgWorkingFor = useMemo(() => {
     if (fei.fei_current_owner_role === UserRoles.ETG && !!fei.fei_current_owner_entity_id) {
@@ -121,6 +142,10 @@ export default function FEICurrentIntermediaire() {
       // carcassesToCheck: Object.values(carcassesToCheck),
     };
   }, [intermediaireCarcasses, intermediaire, fei, state.carcasses]);
+
+  const carcassesApprovedSorted = useMemo(() => {
+    return carcassesSorted.carcassesApproved.sort(sortCarcassesApproved);
+  }, [carcassesSorted.carcassesApproved]);
 
   const labelCheckDone = useMemo(() => {
     let label = '';
@@ -222,44 +247,46 @@ export default function FEICurrentIntermediaire() {
 
   return (
     <>
-      <nav
-        id="fr-breadcrumb-:r54:"
-        role="navigation"
-        className="fr-breadcrumb"
-        aria-label="vous êtes ici :"
-        data-fr-js-breadcrumb="true"
-      >
-        <button
-          className="fr-breadcrumb__button"
-          aria-expanded="false"
-          aria-controls="breadcrumb-:r55:"
-          data-fr-js-collapse-button="true"
+      {fei.fei_current_owner_role !== UserRoles.COLLECTEUR_PRO && (
+        <nav
+          id="fr-breadcrumb-:r54:"
+          role="navigation"
+          className="fr-breadcrumb"
+          aria-label="vous êtes ici :"
+          data-fr-js-breadcrumb="true"
         >
-          Voir les destinataires
-        </button>
-        <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
-          <ol className="fr-breadcrumb__list">
-            <li>
-              <span className="fr-breadcrumb__link !bg-none !no-underline">Premier Détenteur</span>
-            </li>
-            {intermediaires
-              .map((_intermediaire, index) => {
-                return (
-                  <li key={_intermediaire.id}>
-                    <button
-                      onClick={() => setIntermediaireIndex(index)}
-                      className="fr-breadcrumb__link"
-                      aria-current={_intermediaire.id === intermediaire.id ? 'step' : false}
-                    >
-                      {state.entities[_intermediaire.fei_intermediaire_entity_id!]?.nom_d_usage}
-                    </button>
-                  </li>
-                );
-              })
-              .reverse()}
-          </ol>
-        </div>
-      </nav>
+          <button
+            className="fr-breadcrumb__button"
+            aria-expanded="false"
+            aria-controls="breadcrumb-:r55:"
+            data-fr-js-collapse-button="true"
+          >
+            Voir les destinataires
+          </button>
+          <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
+            <ol className="fr-breadcrumb__list">
+              <li>
+                <span className="fr-breadcrumb__link !bg-none !no-underline">Premier Détenteur</span>
+              </li>
+              {intermediaires
+                .map((_intermediaire, index) => {
+                  return (
+                    <li key={_intermediaire.id}>
+                      <button
+                        onClick={() => setIntermediaireIndex(index)}
+                        className="fr-breadcrumb__link"
+                        aria-current={_intermediaire.id === intermediaire.id ? 'step' : false}
+                      >
+                        {state.entities[_intermediaire.fei_intermediaire_entity_id!]?.nom_d_usage}
+                      </button>
+                    </li>
+                  );
+                })
+                .reverse()}
+            </ol>
+          </div>
+        </nav>
+      )}
       <Accordion titleAs="h3" label={`Identité de l'intermédaire ${canEdit ? '🔒' : ''}`}>
         <EntityNotEditable
           user={state.users[intermediaire.fei_intermediaire_user_id!]!}
@@ -312,9 +339,11 @@ export default function FEICurrentIntermediaire() {
               />
             </div>
           )}
-          <p className="text-sm text-gray-600">
-            Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
-          </p>
+          <div className="fr-fieldset__element mb-8">
+            <p className="text-sm text-gray-600">
+              Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
+            </p>
+          </div>
           {intermediaireCarcasses.map((intermediaireCarcasse) => {
             const carcasse = state.carcasses[intermediaireCarcasse.zacharie_carcasse_id];
             return (
@@ -332,13 +361,13 @@ export default function FEICurrentIntermediaire() {
         <>
           <Accordion
             titleAs="h3"
-            label={`Carcasses acceptées (${carcassesSorted.carcassesApproved.length})`}
-            defaultExpanded={carcassesSorted.carcassesApproved.length > 0 && needSelectNextUser}
+            label={`Carcasses acceptées (${carcassesApprovedSorted.length})`}
+            defaultExpanded={carcassesApprovedSorted.length > 0 && needSelectNextUser}
           >
-            {carcassesSorted.carcassesApproved.length === 0 ? (
+            {carcassesApprovedSorted.length === 0 ? (
               <p>Pas de carcasse acceptée</p>
             ) : (
-              carcassesSorted.carcassesApproved.map((carcasse) => {
+              carcassesApprovedSorted.map((carcasse) => {
                 return (
                   <Fragment key={carcasse.numero_bracelet}>
                     <CarcasseIntermediaireComp

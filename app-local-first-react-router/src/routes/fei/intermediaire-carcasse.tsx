@@ -12,6 +12,7 @@ import useZustandStore from '@app/zustand/store';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
+import dayjs from 'dayjs';
 
 interface CarcasseIntermediaireProps {
   carcasse: Carcasse;
@@ -92,6 +93,8 @@ export default function CarcasseIntermediaireComp({
       manquante: true,
       refus: null,
       prise_en_charge: false,
+      check_manuel: false,
+      carcasse_check_finished_at: dayjs().toDate(),
     };
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
@@ -109,7 +112,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_manquante: true,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
-      intermediaire_carcasse_signed_at: new Date(),
+      intermediaire_carcasse_signed_at: dayjs().toDate(),
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
     addLog({
@@ -140,6 +143,8 @@ export default function CarcasseIntermediaireComp({
       manquante: false,
       refus: refusToRemember,
       prise_en_charge: false,
+      check_manuel: false,
+      carcasse_check_finished_at: dayjs().toDate(),
     };
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
@@ -157,7 +162,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: refusToRemember,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
-      intermediaire_carcasse_signed_at: new Date(),
+      intermediaire_carcasse_signed_at: dayjs().toDate(),
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
     addLog({
@@ -181,6 +186,8 @@ export default function CarcasseIntermediaireComp({
       manquante: false,
       refus: null,
       prise_en_charge: true,
+      check_manuel: true,
+      carcasse_check_finished_at: dayjs().toDate(),
     };
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
@@ -198,7 +205,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: null,
-      intermediaire_carcasse_signed_at: new Date(),
+      intermediaire_carcasse_signed_at: dayjs().toDate(),
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
     addLog({
@@ -220,31 +227,39 @@ export default function CarcasseIntermediaireComp({
       className={[
         'mb-2 border-4 border-transparent',
         !!refus && '!border-red-500',
-        carcasseManquante && '!border-red-500',
-        // intermediaireCarcasse.prise_en_charge && "!border-action-high-blue-france",
+        carcasseManquante && '!border-red-300',
+        intermediaireCarcasse.check_manuel && '!border-action-high-blue-france',
       ]
         .filter(Boolean)
         .join(' ')}
     >
       <CustomNotice
         key={carcasse.numero_bracelet}
-        className={`${carcasse.type === CarcasseType.PETIT_GIBIER ? '!bg-gray-300' : ''}`}
+        className={[
+          `${carcasse.type === CarcasseType.PETIT_GIBIER ? '!bg-gray-300' : ''}`,
+          !!refus && ' !bg-red-500 text-white',
+          carcasseManquante && ' !bg-red-300 text-white',
+          !!intermediaireCarcasse.check_manuel && '!bg-action-high-blue-france text-white',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         <Component
-          className="block w-full p-4 text-left [&_*]:no-underline [&_*]:hover:no-underline"
+          className="block w-full p-8 text-left [&_*]:no-underline [&_*]:hover:no-underline"
           type={canEdit ? 'button' : undefined}
           onClick={canEdit ? () => refusIntermediaireModal.current.open() : undefined}
         >
-          <span className="block font-bold">
+          <span className="block font-bold text-3xl mb-4">
+            {/* {carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : 'Numéro de bracelet'} */}
+            {/* &nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span> */}
+            {carcasse.numero_bracelet}
+          </span>
+          <span className="block font-bold text-2xl">
             {carcasse.espece}
             {carcasse.categorie && ` - ${carcasse.categorie}`}
           </span>
-          <span className="absolute right-8 top-2.5 block text-sm font-normal italic opacity-50">
+          <span className="block text-sm font-normal italic opacity-50">
             {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Petit gibier' : 'Grand gibier'}
-          </span>
-          <span className="block font-normal">
-            {carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : 'Numéro de bracelet'}
-            &nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span>
           </span>
           {carcasse.type === CarcasseType.PETIT_GIBIER && (
             <span className="block font-normal">
@@ -253,6 +268,9 @@ export default function CarcasseIntermediaireComp({
           )}
           {carcasse.intermediaire_carcasse_manquante && (
             <span className="ml-4 mt-4 block font-bold">Carcasse manquante</span>
+          )}
+          {intermediaireCarcasse.check_manuel && (
+            <span className="ml-4 mt-4 block font-bold">Carcasse acceptée</span>
           )}
           {carcasse.heure_evisceration && (
             <span className="block font-normal">
@@ -304,12 +322,16 @@ export default function CarcasseIntermediaireComp({
         <refusIntermediaireModal.current.Component
           title={
             <>
-              {carcasse.espece}
+              {carcasse.numero_bracelet}
               <br />
-              <small>
-                {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot ' : 'Carcasse '}{' '}
-                {carcasse.numero_bracelet}
-              </small>
+              <span className="text-sm">
+                {carcasse.espece}
+                {carcasse.categorie && ` - ${carcasse.categorie}`}
+              </span>
+              <br />
+              <span className="text-sm font-normal italic opacity-50">
+                {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Petit gibier' : 'Grand gibier'}
+              </span>
             </>
           }
         >
@@ -325,9 +347,10 @@ export default function CarcasseIntermediaireComp({
                   {
                     nativeInputProps: {
                       required: true,
-                      name: 'caracsse-status',
-                      checked: !carcasseManquante && !carcasseRefusCheckbox,
+                      name: 'carcasse-status',
+                      checked: intermediaireCarcasse.check_manuel ? true : false,
                       onChange: () => {
+                        refusIntermediaireModal.current.close();
                         submitCarcasseAccept();
                       },
                     },
@@ -336,7 +359,7 @@ export default function CarcasseIntermediaireComp({
                   {
                     nativeInputProps: {
                       required: true,
-                      name: 'caracsse-status',
+                      name: 'carcasse-status',
                       checked: !!carcasseRefusCheckbox && !carcasseManquante,
                       onChange: () => {
                         setCarcasseManquante(false);
@@ -348,7 +371,7 @@ export default function CarcasseIntermediaireComp({
                   {
                     nativeInputProps: {
                       required: true,
-                      name: 'caracsse-status',
+                      name: 'carcasse-status',
                       checked: carcasseManquante && !refus,
                       onChange: () => {
                         refusIntermediaireModal.current.close();
@@ -360,6 +383,26 @@ export default function CarcasseIntermediaireComp({
                 ]}
               />
             </div>
+            {!!carcasseRefusCheckbox && (
+              <div className="mb-4">
+                <InputForSearchPrefilledData
+                  canEdit
+                  data={refusIntermedaire}
+                  label="Vous refusez cette carcasse ? Indiquez le motif *"
+                  hideDataWhenNoSearch={false}
+                  required
+                  name="carcasse-refus"
+                  hintText="Cliquez sur un bouton bleu ciel pour valider le motif"
+                  placeholder="Tapez un motif de refus"
+                  onSelect={(refus) => {
+                    setRefus(refus);
+                    submitCarcasseRefus(refus);
+                  }}
+                  defaultValue={refus ?? ''}
+                  key={refus ?? ''}
+                />
+              </div>
+            )}
             <Input
               label="Commentaire"
               className="mt-2"
@@ -392,26 +435,6 @@ export default function CarcasseIntermediaireComp({
                 },
               }}
             />
-            {!!carcasseRefusCheckbox && (
-              <div className="mb-2">
-                <InputForSearchPrefilledData
-                  canEdit
-                  data={refusIntermedaire}
-                  label="Vous refusez cette carcasse ? Indiquez le motif *"
-                  hideDataWhenNoSearch={false}
-                  required
-                  name="carcasse-refus"
-                  hintText="Cliquez sur un bouton bleu ciel pour valider le motif"
-                  placeholder="Tapez un motif de refus"
-                  onSelect={(refus) => {
-                    setRefus(refus);
-                    submitCarcasseRefus(refus);
-                  }}
-                  defaultValue={refus ?? ''}
-                  key={refus ?? ''}
-                />
-              </div>
-            )}
 
             <div className="mt-8 flex flex-col items-start bg-white [&_ul]:md:min-w-96">
               <ButtonsGroup

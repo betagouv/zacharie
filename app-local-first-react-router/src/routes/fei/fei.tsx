@@ -193,22 +193,28 @@ function Fei() {
             <FeiTransfer />
             <CurrentOwnerConfirm setSelectedTabId={setSelectedTabId} />
             <CurrentOwner />
-            <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
-              {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
-              {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FeiPremierDetenteur showIdentity />}
-              {selectedTabId === 'Destinataires' &&
-                (intermediaireTabDisabledText ? (
-                  <p dangerouslySetInnerHTML={{ __html: intermediaireTabDisabledText }} />
-                ) : (
-                  <FEICurrentIntermediaire />
-                ))}
-              {selectedTabId === UserRoles.SVI &&
-                (sviTabDisabledText ? (
-                  <p dangerouslySetInnerHTML={{ __html: sviTabDisabledText }} />
-                ) : (
-                  <FEI_SVI />
-                ))}
-            </Tabs>
+            {fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO ? (
+              <div className="p-4 md:p-8">
+                <FEICurrentIntermediaire />
+              </div>
+            ) : (
+              <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
+                {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
+                {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FeiPremierDetenteur showIdentity />}
+                {selectedTabId === 'Destinataires' &&
+                  (intermediaireTabDisabledText ? (
+                    <p dangerouslySetInnerHTML={{ __html: intermediaireTabDisabledText }} />
+                  ) : (
+                    <FEICurrentIntermediaire />
+                  ))}
+                {selectedTabId === UserRoles.SVI &&
+                  (sviTabDisabledText ? (
+                    <p dangerouslySetInnerHTML={{ __html: sviTabDisabledText }} />
+                  ) : (
+                    <FEI_SVI />
+                  ))}
+              </Tabs>
+            )}
           </div>
         </div>
       </div>

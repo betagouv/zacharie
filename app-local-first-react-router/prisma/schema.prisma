@@ -374,6 +374,7 @@ model CarcasseIntermediaire {
   fei_intermediaire_user_id              String
   fei_intermediaire_entity_id            String
   prise_en_charge                        Boolean?
+  check_manuel                           Boolean?
   manquante                              Boolean?
   refus                                  String?
   commentaire                            String?
