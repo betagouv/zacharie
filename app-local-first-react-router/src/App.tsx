@@ -26,6 +26,7 @@ import AdminEntity from './routes/admin/entity-$entityId';
 import AdminEntites from './routes/admin/entities';
 import MentionsLegales from './routes/mentions-legales';
 import ModalitesDutilisation from './routes/modalites-d-utilisation';
+import BetaTesteurs from './routes/beta-testeurs';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -40,6 +41,14 @@ function App() {
           element={
             <RootDisplay id="test-sentry">
               <TestSentry />
+            </RootDisplay>
+          }
+        />
+        <Route
+          path="beta-testeurs"
+          element={
+            <RootDisplay id="beta-testeurs">
+              <BetaTesteurs />
             </RootDisplay>
           }
         />
