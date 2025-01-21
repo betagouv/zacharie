@@ -16,11 +16,13 @@ router.get(
     const user = req.user!;
 
     if (!searchQuery) {
+      // console.log('no search query');
       res.status(200).send({ ok: false, data: [], error: '' });
       return;
     }
 
     if (!user.roles.includes(UserRoles.SVI)) {
+      // console.log('user is not svi');
       res.status(200).send({ ok: false, data: [], error: '' });
       return;
     }
@@ -52,7 +54,7 @@ router.get(
         Fei: {
           svi_entity_id,
           svi_assigned_at: {
-            lte: dayjs().subtract(20, 'days').toDate(),
+            gte: dayjs().subtract(20, 'days').toDate(),
           },
         },
       },
@@ -62,6 +64,8 @@ router.get(
             numero: true,
             date_mise_a_mort: true,
             commune_mise_a_mort: true,
+            svi_entity_id: true,
+            svi_assigned_at: true,
           },
         },
       },
@@ -78,6 +82,7 @@ router.get(
           carcasse_type: carcasse.type,
           fei_numero: carcasse.fei_numero,
           fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
+          fei_svi_assigned_at: dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY'),
           fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
         })),
         error: '',
@@ -99,6 +104,12 @@ router.get(
         const carcassesFound = await prisma.carcasse.findMany({
           where: {
             numero_bracelet: carcasseIntermediaire.numero_bracelet,
+            Fei: {
+              svi_entity_id,
+              svi_assigned_at: {
+                gte: dayjs().subtract(20, 'days').toDate(),
+              },
+            },
           },
           include: {
             Fei: {
@@ -106,6 +117,8 @@ router.get(
                 numero: true,
                 date_mise_a_mort: true,
                 commune_mise_a_mort: true,
+                svi_entity_id: true,
+                svi_assigned_at: true,
               },
             },
           },
@@ -125,6 +138,7 @@ router.get(
             carcasse_type: carcasse.type,
             fei_numero: carcasse.fei_numero,
             fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
+            fei_svi_assigned_at: dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY'),
             fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
           })),
           error: '',
@@ -137,6 +151,10 @@ router.get(
       where: {
         numero: {
           contains: searchQuery,
+        },
+        svi_entity_id: svi_entity_id,
+        svi_assigned_at: {
+          gte: dayjs().subtract(20, 'days').toDate(),
         },
       },
     });
@@ -152,6 +170,7 @@ router.get(
           carcasse_type: '',
           fei_numero: fei.numero,
           fei_date_mise_a_mort: dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
+          fei_svi_assigned_at: dayjs(fei.svi_assigned_at).format('DD/MM/YYYY'),
           fei_commune_mise_a_mort: fei.commune_mise_a_mort!,
         })),
         error: '',

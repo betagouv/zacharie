@@ -22,6 +22,7 @@ export interface SearchResponse {
     carcasse_type: Carcasse['type'] | '';
     fei_numero: string;
     fei_date_mise_a_mort: string;
+    fei_svi_assigned_at: string;
     fei_commune_mise_a_mort: string;
   }>;
   error: string;

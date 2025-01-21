@@ -67,7 +67,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
         <div className="flex w-full flex-row justify-start">
           <Alert
             onClose={() => setError('')}
-            description={error}
+            description="La recherche s'effectue sur les fiches transmises au SVI dans les 20 derniers jours."
             closable
             id="search-error"
             severity="warning"
@@ -86,15 +86,24 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
               id="search-success"
               severity="success"
               title={
-                <a href={data.redirectUrl}>
+                <a href={data.redirectUrl} className="flex flex-col">
                   {data.carcasse_numero_bracelet && (
-                    <>
+                    <span className="text-base font-bold">
                       {data.carcasse_type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'}{' '}
                       {data.carcasse_numero_bracelet}: {data.carcasse_espece}
-                      <br />
-                    </>
+                    </span>
                   )}
-                  {data.fei_numero && <>Fiche {data.fei_numero}</>}
+                  {data.fei_numero && <span className="text-base font-normal">Fiche {data.fei_numero}</span>}
+                  {data.fei_svi_assigned_at && (
+                    <span className="text-base font-sm italic opacity-50 font-normal">
+                      Fiche transmise le {data.fei_svi_assigned_at}
+                    </span>
+                  )}
+                  {data.fei_date_mise_a_mort && (
+                    <span className="text-base font-sm italic opacity-50 font-normal">
+                      Chasse du {data.fei_date_mise_a_mort}
+                    </span>
+                  )}
                 </a>
               }
               className="w-full text-left"
