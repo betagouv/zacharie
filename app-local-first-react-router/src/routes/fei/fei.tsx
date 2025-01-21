@@ -193,7 +193,8 @@ function Fei() {
             <FeiTransfer />
             <CurrentOwnerConfirm setSelectedTabId={setSelectedTabId} />
             <CurrentOwner />
-            {fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO ? (
+            {fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO &&
+            fei.fei_current_owner_user_id === user.id ? (
               <div className="p-4 md:p-8">
                 <FEICurrentIntermediaire />
               </div>
