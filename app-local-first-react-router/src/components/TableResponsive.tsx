@@ -119,13 +119,13 @@ export default function TableResponsive({
                         {cols[1]}
                       </Link>
                     </td>
-                    <td className="hidden max-w-96 text-sm text-gray-500 sm:table-cell">
+                    <td className="hidden max-w-40 text-sm text-gray-500 sm:table-cell">
                       <Link to={link} className="block bg-none px-3 py-4 !no-underline">
                         {cols[2]}
                       </Link>
                     </td>
                     {headers[3] && (
-                      <td className="flex h-full max-w-56 items-stretch justify-start text-left text-sm font-medium sm:table-cell sm:pr-0">
+                      <td className="hidden flex h-full items-stretch justify-start text-left text-sm font-medium sm:table-cell sm:pr-0">
                         <Link
                           to={link}
                           className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 !no-underline"

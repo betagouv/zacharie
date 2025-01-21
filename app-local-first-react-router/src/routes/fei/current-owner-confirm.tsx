@@ -10,7 +10,6 @@ import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import { useGetMyNextRoleForThisFei, useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
 
 export default function CurrentOwnerConfirm({
   setSelectedTabId,
@@ -19,17 +18,17 @@ export default function CurrentOwnerConfirm({
 }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const updateFei = useZustandStore((state) => state.updateFei);
-  const createFeiIntermediaire = useZustandStore((state) => state.createFeiIntermediaire);
-  const addLog = useZustandStore((state) => state.addLog);
-  const feis = useZustandStore((state) => state.feis);
-  const fei = feis[params.fei_numero!];
-  const collecteursProIds = useZustandStore((state) => state.collecteursProIds);
-  const entities = useZustandStore((state) => state.entities);
-  const collecteursPro = collecteursProIds.map((id) => entities[id]);
+  const state = useZustandStore((state) => state);
+  const updateFei = state.updateFei;
+  const createFeiIntermediaire = state.createFeiIntermediaire;
+  const addLog = state.addLog;
+  const fei = state.feis[params.fei_numero!];
+  const collecteursProsRelatedWithMyETGs = state.collecteursProsRelatedWithMyETGs;
+  const etgsRelatedWithMyEntities = state.etgsRelatedWithMyEntities;
+  const collecteursPro = state.collecteursProIds.map((id) => state.entities[id]);
 
-  const nextOwnerEntity = entities[fei.fei_next_owner_entity_id!];
-  const nextOwnerUser = entities[fei.fei_next_owner_user_id!];
+  const nextOwnerEntity = state.entities[fei.fei_next_owner_entity_id!];
+  const nextOwnerUser = state.users[fei.fei_next_owner_user_id!];
 
   const isTransporting = useMemo(() => {
     return (
@@ -41,32 +40,56 @@ export default function CurrentOwnerConfirm({
     if (fei.fei_next_owner_user_id === user.id) {
       return true;
     }
-    if (!nextOwnerEntity) {
-      return false;
-    }
     if (
-      nextOwnerEntity.relation !== 'WORKING_FOR' &&
-      nextOwnerEntity.relation !== 'WORKING_FOR_ENTITY_RELATED_WITH'
+      nextOwnerEntity &&
+      (nextOwnerEntity.relation === 'WORKING_FOR' ||
+        nextOwnerEntity.relation === 'WORKING_FOR_ENTITY_RELATED_WITH')
     ) {
-      return false;
-    }
-    if (fei.fei_next_owner_role === UserRoles.SVI) {
-      if (!user.roles.includes(UserRoles.SVI)) {
-        return false;
+      if (fei.fei_next_owner_role === UserRoles.ETG) {
+        // if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && !user.roles.includes(UserRoles.ETG)) {
+        if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+          if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
+            return false;
+          }
+        }
       }
-    }
-
-    if (fei.fei_next_owner_role === UserRoles.ETG) {
-      // if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && !user.roles.includes(UserRoles.ETG)) {
-      // FIXME: il ne peut y avoir pour le moment qu'un seul collecteur pro pour une fiche
-      if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
-        if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
+      if (fei.fei_next_owner_role === UserRoles.SVI) {
+        if (!user.roles.includes(UserRoles.SVI)) {
           return false;
         }
       }
+      return true;
     }
-    return true;
+    return false;
   }, [fei, user, nextOwnerEntity]);
+
+  const nextOwnerCollecteurProEntityId = useMemo(() => {
+    if (fei.fei_next_owner_role === UserRoles.COLLECTEUR_PRO) {
+      return fei.fei_next_owner_entity_id;
+    }
+    if (fei.fei_next_owner_role === UserRoles.ETG) {
+      if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
+        return '';
+      }
+      if (!user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+        return '';
+      }
+      const etgId = fei.fei_next_owner_entity_id;
+      let collecteurProId = etgsRelatedWithMyEntities.find(
+        (c) => c.entity_type === UserRoles.COLLECTEUR_PRO && c.etg_id === etgId,
+      )?.entity_id;
+      if (collecteurProId) {
+        return collecteurProId;
+      }
+      collecteurProId = collecteursProsRelatedWithMyETGs.find(
+        (c) => c.entity_type === UserRoles.COLLECTEUR_PRO && c.etg_id === etgId,
+      )?.entity_id;
+      if (collecteurProId) {
+        return collecteurProId;
+      }
+    }
+    return '';
+  }, [fei, user, etgsRelatedWithMyEntities, collecteursProsRelatedWithMyETGs]);
 
   const needNextOwnerButNotMe = useMemo(() => {
     if (!fei.fei_next_owner_user_id && !fei.fei_next_owner_entity_id) {
@@ -77,11 +100,6 @@ export default function CurrentOwnerConfirm({
     }
     return true;
   }, [fei, canConfirmCurrentOwner]);
-
-  const nextOwnerCollecteurProEntityId = useNextOwnerCollecteurProEntityId(fei, user);
-  const asRole = useGetMyNextRoleForThisFei(fei, user);
-
-  const isCollecteurPro = asRole === UserRoles.COLLECTEUR_PRO;
 
   if (!fei.fei_next_owner_role) {
     return null;
@@ -256,7 +274,7 @@ export default function CurrentOwnerConfirm({
         }
         className="m-0 bg-white"
       >
-        En tant que <b>{getUserRoleLabel(asRole!)}</b>
+        En tant que <b>{getUserRoleLabel(fei.fei_next_owner_role)}</b>
         {nextOwnerEntity?.nom_d_usage ? ` (${nextOwnerEntity?.nom_d_usage})` : ''}, vous pouvez prendre en
         charge cette fiche et les carcasses associées.
         <br />
@@ -335,52 +353,46 @@ export default function CurrentOwnerConfirm({
             )}
           </>
         )}
-        {!isCollecteurPro && (
-          <>
-            <span>
-              Vous souhaitez la transférer à un autre acteur&nbsp;? (exemple: erreur d'attribution,
-              assignation à un autre collecteur)
-            </span>
-            <Button
-              priority="tertiary"
-              type="button"
-              className="!mt-2 block"
-              onClick={() => handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer' })}
-            >
-              Transférer la fiche
-            </Button>
-            <span className="mt-4 inline-block text-sm">
-              Vous souhaitez la renvoyer à l'expéditeur&nbsp;?
-            </span>
-            <Button
-              priority="tertiary no outline"
-              type="submit"
-              className="!mt-0 text-sm"
-              onClick={() => {
-                const nextFei = {
-                  fei_next_owner_entity_id: null,
-                  fei_next_owner_entity_name_cache: null,
-                  fei_next_owner_user_id: null,
-                  fei_next_owner_user_name_cache: null,
-                };
-                updateFei(fei.numero, nextFei);
-                addLog({
-                  user_id: user.id,
-                  user_role: fei.fei_next_owner_role!,
-                  fei_numero: fei.numero,
-                  action: 'current-owner-renvoi',
-                  entity_id: fei.fei_next_owner_entity_id,
-                  zacharie_carcasse_id: null,
-                  fei_intermediaire_id: null,
-                  carcasse_intermediaire_id: null,
-                  history: createHistoryInput(fei, nextFei),
-                });
-              }}
-            >
-              Renvoyer la fiche
-            </Button>
-          </>
-        )}
+        <span>
+          Vous souhaitez la transférer à un autre acteur&nbsp;? (exemple: erreur d'attribution, assignation à
+          un autre collecteur)
+        </span>
+        <Button
+          priority="tertiary"
+          type="button"
+          className="!mt-2 block"
+          onClick={() => handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer' })}
+        >
+          Transférer la fiche
+        </Button>
+        <span className="mt-4 inline-block text-sm">Vous souhaitez la renvoyer à l'expéditeur&nbsp;?</span>
+        <Button
+          priority="tertiary no outline"
+          type="submit"
+          className="!mt-0 text-sm"
+          onClick={() => {
+            const nextFei = {
+              fei_next_owner_entity_id: null,
+              fei_next_owner_entity_name_cache: null,
+              fei_next_owner_user_id: null,
+              fei_next_owner_user_name_cache: null,
+            };
+            updateFei(fei.numero, nextFei);
+            addLog({
+              user_id: user.id,
+              user_role: fei.fei_next_owner_role!,
+              fei_numero: fei.numero,
+              action: 'current-owner-renvoi',
+              entity_id: fei.fei_next_owner_entity_id,
+              zacharie_carcasse_id: null,
+              fei_intermediaire_id: null,
+              carcasse_intermediaire_id: null,
+              history: createHistoryInput(fei, nextFei),
+            });
+          }}
+        >
+          Renvoyer la fiche
+        </Button>
       </CallOut>
     </div>
   );

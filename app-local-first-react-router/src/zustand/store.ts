@@ -255,7 +255,6 @@ const useZustandStore = create<State & Actions>()(
               fei_intermediaire_user_id: newIntermediaire.fei_intermediaire_user_id,
               fei_intermediaire_entity_id: newIntermediaire.fei_intermediaire_entity_id,
               prise_en_charge: true,
-              check_manuel: null,
               manquante: null,
               refus: null,
               commentaire: null,

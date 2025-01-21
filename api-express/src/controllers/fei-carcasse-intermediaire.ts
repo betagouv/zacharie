@@ -100,9 +100,6 @@ router.post(
     if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge)) {
       data.prise_en_charge = body[Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge];
     }
-    if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.check_manuel)) {
-      data.check_manuel = body[Prisma.CarcasseIntermediaireScalarFieldEnum.check_manuel];
-    }
     if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.manquante)) {
       data.manquante = body[Prisma.CarcasseIntermediaireScalarFieldEnum.manquante];
     }
