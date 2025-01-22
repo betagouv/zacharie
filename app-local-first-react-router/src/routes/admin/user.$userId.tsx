@@ -116,12 +116,12 @@ export default function AdminUser() {
       label: (identityDone && examinateurDone ? '✅ ' : '') + 'Identité',
     },
     {
-      tabId: 'Salarié de / Dirigeant de / Propriétaire de',
-      label: `Salarié de / Dirigeant de / Propriétaire de (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
+      tabId: 'Peut traiter des fiches au nom de',
+      label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
     },
     {
-      tabId: 'Partenaire de',
-      label: `Partenaire de (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
+      tabId: 'Peut envoyer des fiches à',
+      label: `Peut envoyer des fiches à (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
     },
   ];
 
@@ -372,7 +372,7 @@ export default function AdminUser() {
                   </div>
                 </form>
               )}
-              {selectedTabId === 'Salarié de / Dirigeant de / Propriétaire de' && (
+              {selectedTabId === 'Peut traiter des fiches au nom de' && (
                 <WorkingWithOrFor
                   relation={EntityRelationType.WORKING_FOR}
                   fetcherKey="working-for"
@@ -380,7 +380,7 @@ export default function AdminUser() {
                   setUserResponseData={setUserResponseData}
                 />
               )}
-              {selectedTabId === 'Partenaire de' && (
+              {selectedTabId === 'Peut envoyer des fiches à' && (
                 <WorkingWithOrFor
                   userResponseData={userResponseData}
                   setUserResponseData={setUserResponseData}

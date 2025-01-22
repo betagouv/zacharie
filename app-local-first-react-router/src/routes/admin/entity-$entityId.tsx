@@ -10,7 +10,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import type { AdminGetEntityResponse, AdminActionEntityResponse } from '@api/src/types/responses';
 import type { EntityForAdmin } from '@api/src/types/entity';
-
+import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 const loadData = (entityId: string): Promise<AdminGetEntityResponse> =>
   fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entityId}`, {
     method: 'GET',
@@ -81,12 +81,12 @@ export default function AdminEntity() {
       label: 'Raison Sociale',
     },
     {
-      tabId: 'Salariés / Propriétaires / Dirigeants',
-      label: `Salariés / Propriétaires / Dirigeants (${entity.EntityRelatedWithUser.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
+      tabId: 'Utilisateurs pouvant traiter des fiches pour cette entité',
+      label: `Utilisateurs pouvant traiter des fiches pour cette entité (${entity.EntityRelatedWithUser.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
     },
     {
-      tabId: 'Utilisateurs Partenaires',
-      label: `Utilisateurs Partenaires (${entity.EntityRelatedWithUser.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
+      tabId: 'Utilisateurs pouvant envoyer des fiches à cette entité',
+      label: `Utilisateurs pouvant envoyer des fiches à cette entité (${entity.EntityRelatedWithUser.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
     },
   ];
   if (entity.type === EntityTypes.ETG) {
@@ -111,7 +111,7 @@ export default function AdminEntity() {
       <title>
         {entity.nom_d_usage} ({entity.type}) | Admin | Zacharie | Ministère de l'Agriculture
       </title>
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center" key={entity.id}>
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <small className="italic">{entity.type}</small>
           <h1 className="fr-h2 fr-mb-2w">{entity.nom_d_usage}</h1>
@@ -264,7 +264,7 @@ export default function AdminEntity() {
                   </div>
                 </form>
               )}
-              {selectedTabId === 'Salariés / Propriétaires / Dirigeants' && (
+              {selectedTabId === 'Utilisateurs pouvant traiter des fiches pour cette entité' && (
                 <UserWorkingWithOrFor
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
@@ -273,7 +273,7 @@ export default function AdminEntity() {
                   fetcherKey="working-for"
                 />
               )}
-              {selectedTabId === 'Utilisateurs Partenaires' && (
+              {selectedTabId === 'Utilisateurs pouvant envoyer des fiches à cette entité' && (
                 <UserWorkingWithOrFor
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
@@ -287,6 +287,7 @@ export default function AdminEntity() {
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
                   entityType={EntityTypes.COLLECTEUR_PRO}
+                  description="Si une fiche est envoyée à cet ETG, un Collecteur Pro associé sera aussi en capacité de la traiter"
                 />
               )}
               {selectedTabId === 'ETGs associés' && (
@@ -294,6 +295,7 @@ export default function AdminEntity() {
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
                   entityType={EntityTypes.ETG}
+                  description="Si une fiche est envoyée à un ETG associé listé ci-dessous, le Collecteur Pro sera aussi en capacité de la traiter"
                 />
               )}
               {selectedTabId === 'SVI associé' && (
@@ -301,6 +303,7 @@ export default function AdminEntity() {
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
                   entityType={EntityTypes.SVI}
+                  description="Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous"
                 />
               )}
               <div className="mb-16 ml-6 mt-6">
@@ -480,10 +483,12 @@ function EntitiesRelatedTo({
   adminEntityResponse,
   setAdminEntityResponse,
   entityType,
+  description,
 }: {
   entityType: EntityTypes;
   adminEntityResponse: State;
   setAdminEntityResponse: (state: State) => void;
+  description: string;
 }) {
   const {
     entity,
@@ -535,6 +540,14 @@ function EntitiesRelatedTo({
 
   return (
     <>
+      <Highlight
+        className="m-0 mb-8"
+        classes={{
+          root: 'fr-highlight--green-emeraude',
+        }}
+      >
+        {description}
+      </Highlight>
       {entitiesRelated.map((coupledEntity) => {
         const etg = entity.type === EntityTypes.ETG ? entity : coupledEntity;
         const otherEntity = entity.type === EntityTypes.ETG ? coupledEntity : entity;
