@@ -13,6 +13,7 @@ import useZustandStore from '@app/zustand/store';
 import CarcasseSVI from './svi-carcasse';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { sortCarcassesApproved } from '@app/utils/sort';
 
 export default function FEI_SVI() {
   const params = useParams();
@@ -25,6 +26,7 @@ export default function FEI_SVI() {
   const svi = fei.svi_entity_id ? state.entities[fei.svi_entity_id] : null;
   const carcassesUnsorted = (state.carcassesIdsByFei[params.fei_numero!] || [])
     .map((cId) => state.carcasses[cId])
+    .sort(sortCarcassesApproved)
     .filter((carcasse) => !carcasse.deleted_at && !carcasse.intermediaire_carcasse_refus_intermediaire_id);
 
   const carcassesSorted = useMemo(() => {
@@ -63,8 +65,6 @@ export default function FEI_SVI() {
     }
     return false;
   }, [fei, user, state]);
-
-  console.log();
 
   const canEdit = useMemo(() => {
     if (isSviWorkingFor) {
