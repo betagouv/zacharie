@@ -42,7 +42,7 @@ export default function CarcasseIntermediaireComp({
       const carcasseIntermediaireId = getCarcasseIntermediaireId(
         fei.numero,
         carcasse.numero_bracelet,
-        intermediaire.id,
+        _intermediaire.id,
       );
       const _carcasseIntermediaire = state.carcassesIntermediaires[carcasseIntermediaireId];
       const _intermediaireEntity = state.entities[_intermediaire.fei_intermediaire_entity_id];
@@ -53,14 +53,7 @@ export default function CarcasseIntermediaireComp({
       }
     }
     return commentaires;
-  }, [
-    intermediaires,
-    fei.numero,
-    carcasse.numero_bracelet,
-    intermediaire.id,
-    state.carcassesIntermediaires,
-    state.entities,
-  ]);
+  }, [intermediaires, fei.numero, carcasse.numero_bracelet, state.carcassesIntermediaires, state.entities]);
 
   const carcasseIntermediaireId = getCarcasseIntermediaireId(
     fei.numero,

@@ -282,8 +282,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
                     });
                   }}
                 >
-                  Vous les déposez à l'instant ? <u className="inline">Cliquez ici</u> pour définir la date du
-                  jour
+                  <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
                 </button>
               ) : null
             }

@@ -18,6 +18,8 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import Alert from '@codegouvfr/react-dsfr/Alert';
+import PENCILSTRIKETHROUGI from '@app/components/PENCILSTRIKETHROUGJ';
+import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 
 export default function FEIExaminateurInitial() {
   const params = useParams();
@@ -207,6 +209,17 @@ export default function FEIExaminateurInitial() {
 
   return (
     <>
+      <Accordion
+        titleAs="h3"
+        label={
+          <>
+            Identité de l'Examinateur <PencilStrikeThrough />
+          </>
+        }
+        defaultExpanded={!canEdit}
+      >
+        <UserNotEditable user={examinateurInitialUser!} withCfei />
+      </Accordion>
       <Accordion titleAs="h3" label="Données de chasse" defaultExpanded>
         <form method="POST" onSubmit={(e) => e.preventDefault()} ref={examRef}>
           <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
@@ -225,8 +238,7 @@ export default function FEIExaminateurInitial() {
                       });
                     }}
                   >
-                    La chasse est aujourd'hui ? <u className="inline">Cliquez ici</u> pour définir la date du
-                    jour
+                    <u className="inline">Cliquez ici</u> pour définir la date du jour
                   </button>
                 ) : null
               }
@@ -280,9 +292,7 @@ export default function FEIExaminateurInitial() {
       <Accordion titleAs="h3" label={`Carcasses/Lots de carcasses (${carcasses.length})`} defaultExpanded>
         <CarcassesExaminateur canEdit={canEdit} />
       </Accordion>
-      <Accordion titleAs="h3" label="Identité de l'Examinateur 🔒" defaultExpanded={!canEdit}>
-        <UserNotEditable user={examinateurInitialUser!} withCfei />
-      </Accordion>
+
       {examinateurInitialUser && (
         <Accordion titleAs="h3" label="Approbation de mise sur le marché" defaultExpanded>
           <form method="POST" onSubmit={(e) => e.preventDefault()}>
@@ -412,7 +422,15 @@ export default function FEIExaminateurInitial() {
       )}
       {examinateurIsAlsoPremierDetenteur && (
         <>
-          <Accordion titleAs="h3" label="Identité du Premier détenteur 🔒" defaultExpanded={false}>
+          <Accordion
+            titleAs="h3"
+            label={
+              <>
+                Identité du Premier détenteur <PencilStrikeThrough />
+              </>
+            }
+            defaultExpanded={false}
+          >
             {premierDetenteurEntity ? (
               <EntityNotEditable hideType entity={premierDetenteurEntity} user={premierDetenteurUser!} />
             ) : (

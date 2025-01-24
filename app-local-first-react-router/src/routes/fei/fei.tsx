@@ -16,6 +16,7 @@ import FEICurrentIntermediaire from './intermediaire';
 import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
 import FEI_SVI from './svi';
+import { useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
 
 export default function FeiLoader() {
   const params = useParams();
@@ -52,6 +53,8 @@ function Fei() {
 
   // const entities = useZustandStore((state) => state.entities);
   const nextOwnerEntity = fei.fei_next_owner_entity_id ? state.entities[fei.fei_next_owner_entity_id] : null;
+
+  const nextOwnerCollecteurProEntityId = useNextOwnerCollecteurProEntityId(fei, user);
 
   const doneEmoji = '✅ ';
 
@@ -179,6 +182,25 @@ function Fei() {
     return '';
   }, [fei.svi_assigned_at, fei.svi_signed_at, fei.automatic_closed_at, user]);
 
+  const showCollecteurInterface = useMemo(() => {
+    if (
+      fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO &&
+      fei.fei_current_owner_user_id === user.id
+    ) {
+      return true;
+    }
+    if (nextOwnerCollecteurProEntityId && fei.fei_next_owner_role === UserRoles.ETG) {
+      return true;
+    }
+    return false;
+  }, [
+    fei.fei_current_owner_role,
+    fei.fei_current_owner_user_id,
+    user.id,
+    nextOwnerCollecteurProEntityId,
+    fei.fei_next_owner_role,
+  ]);
+
   return (
     <>
       {fei.deleted_at && (
@@ -193,8 +215,7 @@ function Fei() {
             <FeiTransfer />
             <CurrentOwnerConfirm setSelectedTabId={setSelectedTabId} />
             <CurrentOwner />
-            {fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO &&
-            fei.fei_current_owner_user_id === user.id ? (
+            {showCollecteurInterface ? (
               <div className="p-4 md:p-8">
                 <FEICurrentIntermediaire />
               </div>

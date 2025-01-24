@@ -26,6 +26,7 @@ import { loadMyRelations } from '@app/utils/load-my-relations';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 
 const saisieCarcasseModal = createModal({
   isOpenedByDefault: false,
@@ -196,7 +197,13 @@ export function CarcasseEditSVI() {
               <Accordion
                 titleAs="h2"
                 defaultExpanded={false}
-                label={`Infos sur la chasse et ${carcasse.type === CarcasseType.PETIT_GIBIER ? 'le lot de carcasses' : 'la carcasse'} 🔒`}
+                label={
+                  <>
+                    Infos sur la chasse et{' '}
+                    {carcasse.type === CarcasseType.PETIT_GIBIER ? 'le lot de carcasses' : 'la carcasse'}{' '}
+                    <PencilStrikeThrough />
+                  </>
+                }
               >
                 <>
                   <div className="fr-fieldset__element">
@@ -579,7 +586,15 @@ export function CarcasseEditSVI() {
                   </form>
                 </Accordion>
               )}
-              <Accordion titleAs="h2" defaultExpanded label="Résumé affiché dans la fiche 🔒">
+              <Accordion
+                titleAs="h2"
+                defaultExpanded
+                label={
+                  <>
+                    Résumé affiché dans la fiche <PencilStrikeThrough />
+                  </>
+                }
+              >
                 <CarcasseSVI
                   carcasse={carcasse}
                   canEdit={false}
