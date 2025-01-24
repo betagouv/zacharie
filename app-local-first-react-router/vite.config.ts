@@ -19,8 +19,8 @@ export default defineConfig({
   plugins: [
     react(),
     sentryVitePlugin({
-      org: 'mano-20',
-      project: 'mano-espace',
+      org: 'betagouv',
+      project: 'zacharie-vite-react-router-spa',
       telemetry: false,
       disable: !process.env.CI,
     }),
