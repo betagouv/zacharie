@@ -250,10 +250,13 @@ export default function FEICurrentIntermediaire() {
     });
   }
 
+  const showCollecteurInterface =
+    fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.fei_current_owner_user_id === user.id;
+
   if (intermediaire) {
     return (
       <>
-        {fei.fei_current_owner_role !== UserRoles.COLLECTEUR_PRO && (
+        {!showCollecteurInterface && (
           <nav
             id="fr-breadcrumb-:r54:"
             role="navigation"
@@ -310,7 +313,7 @@ export default function FEICurrentIntermediaire() {
             expanded={carcassesAValiderExpanded}
             onExpandedChange={setCarcassesAValiderExpanded}
           >
-            {fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.premier_detenteur_name_cache && (
+            {showCollecteurInterface && fei.premier_detenteur_name_cache && (
               <>
                 <div className="fr-fieldset__element">
                   <InputNotEditable
@@ -340,7 +343,7 @@ export default function FEICurrentIntermediaire() {
                 </div>
               </>
             )}
-            {fei.fei_current_owner_role !== UserRoles.COLLECTEUR_PRO && (
+            {!showCollecteurInterface && (
               <>
                 <div className="fr-fieldset__element">
                   <div className="fr-fieldset__element">
@@ -564,7 +567,7 @@ export default function FEICurrentIntermediaire() {
         expanded={carcassesAValiderExpanded}
         onExpandedChange={setCarcassesAValiderExpanded}
       >
-        {fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.premier_detenteur_name_cache && (
+        {showCollecteurInterface && fei.premier_detenteur_name_cache && (
           <div className="fr-fieldset__element">
             <InputNotEditable
               label="Détenteur des carcasses"
@@ -577,7 +580,7 @@ export default function FEICurrentIntermediaire() {
             />
           </div>
         )}
-        {fei.fei_current_owner_role !== UserRoles.COLLECTEUR_PRO && (
+        {!showCollecteurInterface && (
           <>
             <div className="fr-fieldset__element">
               <div className="fr-fieldset__element">
