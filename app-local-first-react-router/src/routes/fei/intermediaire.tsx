@@ -113,6 +113,9 @@ export default function FEICurrentIntermediaire() {
         intermediaire.id,
       );
       const carcasse = state.carcasses[intermediaireCarcasse.zacharie_carcasse_id];
+      if (carcasse.deleted_at) {
+        continue;
+      }
       if (intermediaireCheckById[checkId]) {
         // console.log("intermediaireCheckById[checkId]", intermediaireCheckById[checkId]);
         if (intermediaireCheckById[checkId].prise_en_charge) {
