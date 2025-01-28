@@ -229,7 +229,12 @@ export default function CarcasseIntermediaireComp({
       <CustomNotice
         key={carcasse.numero_bracelet}
         className={[
-          `${carcasse.type === CarcasseType.PETIT_GIBIER ? '!bg-gray-300' : ''}`,
+          carcasse.type === CarcasseType.PETIT_GIBIER &&
+          !refus &&
+          !carcasseManquante &&
+          !intermediaireCarcasse.check_manuel
+            ? '!bg-gray-300'
+            : '',
           !!refus && ' !bg-red-500 text-white',
           carcasseManquante && ' !bg-red-300 text-white',
           !!intermediaireCarcasse.check_manuel && '!bg-action-high-blue-france text-white',
@@ -259,12 +264,7 @@ export default function CarcasseIntermediaireComp({
               Nombre de carcasses dans le lot&nbsp;: {carcasse.nombre_d_animaux || 'À REMPLIR'}
             </span>
           )}
-          {carcasse.intermediaire_carcasse_manquante && (
-            <span className="ml-4 mt-4 block font-bold">Carcasse manquante</span>
-          )}
-          {intermediaireCarcasse.check_manuel && (
-            <span className="ml-4 mt-4 block font-bold">Carcasse acceptée</span>
-          )}
+
           {carcasse.heure_evisceration && (
             <span className="block font-normal">
               Éviscération&nbsp;: {carcasse.heure_evisceration || 'À REMPLIR'}
@@ -303,7 +303,21 @@ export default function CarcasseIntermediaireComp({
               </span>
             );
           })}
-          {intermediaireCarcasse.refus && <span className="ml-4 mt-4 block font-bold">Carcasse refusée</span>}
+          {carcasse.intermediaire_carcasse_manquante && (
+            <span className="ml-4 mt-4 block font-bold">
+              {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot manquant' : 'Carcasse manquante'}
+            </span>
+          )}
+          {intermediaireCarcasse.check_manuel && (
+            <span className="ml-4 mt-4 block font-bold">
+              {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot accepté' : 'Carcasse acceptée'}
+            </span>
+          )}
+          {intermediaireCarcasse.refus && (
+            <span className="ml-4 mt-4 block font-bold">
+              {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot refusé' : 'Carcasse refusée'}
+            </span>
+          )}
           {!!intermediaireCarcasse.refus && (
             <span className="mt-2 block font-normal">
               Motif de refus&nbsp;: {intermediaireCarcasse.refus}
