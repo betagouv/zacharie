@@ -109,7 +109,7 @@ export default function RootDisplay({
         Dernière mise à jour le ${__VITE_BUILD_ID__}
         `}
         termsLinkProps={{
-          href: '#',
+          to: '/mentions-legales',
         }}
         websiteMapLinkProps={{
           href: '#',
