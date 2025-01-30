@@ -471,8 +471,7 @@ export function CarcasseEditSVI() {
                           !motifsSaisie.length
                             ? [
                                 {
-                                  children:
-                                    typeSaisie.length === 0 ? 'Enregistrer et retour à la fiche' : 'Saisir',
+                                  children: typeSaisie.length === 0 ? 'Enregistrer et retour' : 'Saisir',
                                   type: 'submit',
                                   nativeButtonProps: {
                                     form: `svi-carcasse-${carcasse.numero_bracelet}`,
@@ -501,7 +500,7 @@ export function CarcasseEditSVI() {
                                         carcasse_intermediaire_id: null,
                                       });
                                       if (typeSaisie.length === 0) {
-                                        navigate(`/app/tableau-de-bord/fei/${fei.numero}`);
+                                        navigate(-1);
                                       }
                                     },
                                     suppressHydrationWarning: true,
@@ -602,8 +601,14 @@ export function CarcasseEditSVI() {
                 />
               </Accordion>
               <div className="fr-fieldset__element mt-4">
-                <Button linkProps={{ to: `/app/tableau-de-bord/fei/${fei.numero}` }}>
-                  Retour à la fiche
+                <Button
+                  nativeButtonProps={{
+                    onClick: () => {
+                      navigate(-1);
+                    },
+                  }}
+                >
+                  Retour
                 </Button>
               </div>
             </div>

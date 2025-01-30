@@ -50,10 +50,6 @@ export async function initFeisCron() {
 
 async function automaticClosingOfFeis() {
   console.log('Automatic closing of feis');
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Skipping feis closing in development mode');
-    return;
-  }
   const feisUnderSvi = await prisma.fei.findMany({
     where: {
       svi_assigned_at: {
@@ -80,7 +76,10 @@ async function automaticClosingOfFeis() {
         automatic_closed_at: dayjs().toDate(),
       },
     });
-
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Skipping feis closing notif in development mode');
+      continue;
+    }
     const email = [
       `La fiche ${fei.numero} a été réceptionnée par le Service Vétérinaire il y a plus de 10 jours, elle est donc automatiquement clôturée.`,
       `Rendez-vous sur Zacharie pour consulter le détail de la fiche\u00A0:`,

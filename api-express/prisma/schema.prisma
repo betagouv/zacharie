@@ -300,6 +300,17 @@ enum CarcasseType {
   GROS_GIBIER
 }
 
+enum CarcasseStatus {
+  SANS_DECISION
+  ACCEPTE
+  CONSIGNE
+  MANQUANTE
+  SAISIE_TOTALE
+  SAISIE_PARTIELLE
+  LEVEE_DE_CONSIGNE
+  TRAITEMENT_ASSAINISSANT
+}
+
 model Carcasse {
   zacharie_carcasse_id                          String                  @id // {fei_numero}_{numero_bracelet}
   numero_bracelet                               String // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
@@ -320,11 +331,21 @@ model Carcasse {
   intermediaire_carcasse_signed_at              DateTime?
   intermediaire_carcasse_commentaire            String?
   intermediaire_carcasse_manquante              Boolean?
+  svi_assigned_to_fei_at                        DateTime? // same as svi_assigned_at in fei
+  svi_carcasse_manquante                        Boolean?
+  svi_carcasse_consigne                         Boolean?
+  svi_carcasse_consigne_at                      DateTime?
+  svi_carcasse_consigne_motif                   String[]
+  svi_carcasse_consigne_levee                   Boolean?
+  svi_carcasse_consigne_levee_at                DateTime?
   svi_carcasse_saisie                           String[]
-  svi_carcasse_saisie_motif                     String[]
   svi_carcasse_saisie_at                        DateTime?
+  svi_carcasse_saisie_motif                     String[]
+  svi_carcasse_traitement_assainissant          String[]
   svi_carcasse_signed_at                        DateTime?
   svi_carcasse_commentaire                      String?
+  svi_carcasse_status                           CarcasseStatus?
+  svi_carcasse_status_set_at                    DateTime?
   created_at                                    DateTime                @default(now())
   updated_at                                    DateTime                @default(now()) @updatedAt
   deleted_at                                    DateTime?

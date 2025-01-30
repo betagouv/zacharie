@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { CarcasseType, Prisma, type User, type Carcasse, UserRoles } from '@prisma/client';
+import { CarcasseType, Prisma, type User, type Carcasse, UserRoles, CarcasseStatus } from '@prisma/client';
 import dayjs from 'dayjs';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import grandGibier from '@app/data/grand-gibier.json';
@@ -181,11 +181,21 @@ export default function NouvelleCarcasse() {
                 intermediaire_carcasse_signed_at: null,
                 intermediaire_carcasse_commentaire: null,
                 intermediaire_carcasse_manquante: null,
+                svi_assigned_to_fei_at: null,
+                svi_carcasse_manquante: null,
+                svi_carcasse_consigne: null,
+                svi_carcasse_consigne_at: null,
+                svi_carcasse_consigne_motif: [],
+                svi_carcasse_traitement_assainissant: [],
+                svi_carcasse_consigne_levee: null,
+                svi_carcasse_consigne_levee_at: null,
                 svi_carcasse_saisie: [],
                 svi_carcasse_saisie_motif: [],
                 svi_carcasse_saisie_at: null,
                 svi_carcasse_signed_at: null,
                 svi_carcasse_commentaire: null,
+                svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+                svi_carcasse_status_set_at: null,
                 created_at: dayjs().toDate(),
                 updated_at: dayjs().toDate(),
                 deleted_at: null,

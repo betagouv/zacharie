@@ -1,13 +1,16 @@
 import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '../middlewares/errors';
-import type { CarcasseResponse } from '~/types/responses';
+import type { CarcasseResponse, CarcassesGetForRegistryResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
-import { Prisma, UserRoles } from '@prisma/client';
+import { EntityRelationType, Prisma, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
 import { formatCarcasseEmail } from '~/utils/formatCarcasseEmail';
+import { RequestWithUser } from '~/types/request';
+import { carcasseForRegistrySelect } from '~/types/carcasse';
+import updateCarcasseStatus from '~/utils/get-carcasse-status';
 
 router.post(
   '/:fei_numero/:zacharie_carcasse_id',
@@ -164,8 +167,36 @@ router.post(
       nextCarcasse.intermediaire_carcasse_commentaire =
         body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire];
     }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_assigned_to_fei_at)) {
+      nextCarcasse.svi_assigned_to_fei_at = body.svi_assigned_to_fei_at;
+    }
 
     if (user.roles.includes(UserRoles.SVI)) {
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_consigne)) {
+        nextCarcasse.svi_carcasse_consigne = body.svi_carcasse_consigne;
+      }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_manquante)) {
+        nextCarcasse.svi_carcasse_manquante = body.svi_carcasse_manquante;
+      }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_consigne_at)) {
+        nextCarcasse.svi_carcasse_consigne_at = body.svi_carcasse_consigne_at;
+      }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_consigne_motif)) {
+        nextCarcasse.svi_carcasse_consigne_motif = (body.svi_carcasse_consigne_motif as string[]).filter(
+          Boolean,
+        );
+      }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_traitement_assainissant)) {
+        nextCarcasse.svi_carcasse_traitement_assainissant = (
+          body.svi_carcasse_traitement_assainissant as string[]
+        ).filter(Boolean);
+      }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_consigne_levee)) {
+        nextCarcasse.svi_carcasse_consigne_levee = body.svi_carcasse_consigne_levee;
+      }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_consigne_levee_at)) {
+        nextCarcasse.svi_carcasse_consigne_levee_at = body.svi_carcasse_consigne_levee_at;
+      }
       if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)) {
         nextCarcasse.svi_carcasse_saisie = (body.svi_carcasse_saisie as string[]).filter(Boolean);
       }
@@ -180,6 +211,13 @@ router.post(
       }
       if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire)) {
         nextCarcasse.svi_carcasse_commentaire = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire];
+      }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status)) {
+        nextCarcasse.svi_carcasse_status = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_status];
+      }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status_set_at)) {
+        nextCarcasse.svi_carcasse_status_set_at =
+          body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_status_set_at];
       }
     }
 
@@ -316,6 +354,89 @@ router.post(
 );
 
 router.get(
+  '/svi',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+    // Parse and validate query parameters
+    const { page = '0', after, limit = '100', withDeleted = 'false' } = req.query as Record<string, string>;
+
+    const parsedPage = Math.max(0, parseInt(page, 10) || 0);
+    const parsedLimit = parseInt(limit, 10) || 10000;
+    const includeDeleted = withDeleted === 'true';
+    const afterDate = after && !isNaN(Number(after)) ? new Date(Number(after)) : null;
+
+    console.log('afterDate', afterDate);
+    // Base query conditions
+    const where: Prisma.CarcasseWhereInput = {
+      Fei: {
+        svi_assigned_at: { not: null },
+        FeiSviEntity: {
+          EntityRelatedWithUser: {
+            some: {
+              owner_id: req.user!.id,
+              relation: EntityRelationType.WORKING_FOR,
+            },
+          },
+        },
+      },
+    };
+    if (!includeDeleted) {
+      where.deleted_at = null;
+    }
+
+    if (afterDate) {
+      if (includeDeleted) {
+        where.OR = [
+          // If we include deleted, we want to get all the carcasses updated after the date
+          { updated_at: { gte: afterDate } },
+          // And all the carcasses deleted after the date
+          { deleted_at: { gte: afterDate } },
+        ];
+      } else {
+        where.updated_at = { gte: afterDate };
+      }
+    }
+
+    // Execute count and findMany in parallel
+    const [total, data] = await Promise.all([
+      prisma.carcasse.count({ where }),
+      prisma.carcasse.findMany({
+        where,
+        select: carcasseForRegistrySelect,
+        orderBy: { created_at: 'desc' },
+        skip: parsedPage * parsedLimit,
+        take: parsedLimit,
+      }),
+    ]);
+
+    const now = dayjs();
+
+    res.status(200).json({
+      ok: true,
+      data: {
+        carcasses: data.map((carcasse) => {
+          const fei = carcasse.Fei;
+          return {
+            ...carcasse,
+            svi_carcasse_status: carcasse.svi_carcasse_status || updateCarcasseStatus(carcasse),
+            svi_carcasse_status_set_at:
+              carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_signed_at,
+            svi_assigned_to_fei_at: carcasse.svi_assigned_to_fei_at || fei.svi_assigned_at,
+            premier_detenteur_name_cache: fei.premier_detenteur_name_cache,
+            // svi_carcasse_archived: fei.automatic_closed_at || fei.svi_signed_at,
+            svi_carcasse_archived:
+              !!fei.automatic_closed_at || dayjs(now).diff(fei.svi_assigned_at, 'day') > 10,
+          };
+        }),
+        hasMore: data.length === parsedLimit,
+        total,
+      },
+      error: '',
+    } satisfies CarcassesGetForRegistryResponse);
+  }),
+);
+
+router.get(
   '/:fei_numero/:numero_bracelet',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -360,6 +481,9 @@ router.get(
       where: {
         zacharie_carcasse_id: req.params.zacharie_carcasse_id,
       },
+      include: {
+        Fei: true,
+      },
     });
     if (!carcasse) {
       res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
@@ -370,7 +494,7 @@ router.get(
       ok: true,
       data: { carcasse },
       error: '',
-    });
+    } satisfies CarcasseResponse);
   }),
 );
 

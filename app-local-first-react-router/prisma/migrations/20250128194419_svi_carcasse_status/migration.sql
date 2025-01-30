@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "CarcasseStatus" AS ENUM ('SANS_DECISION', 'CONSIGNE', 'MANQUANTE', 'SAISIE_TOTALE', 'SAISIE_PARTIELLE', 'LEVEE_DE_CONSIGNE', 'TRAITEMENT_ASSAINISSANT');
+
+-- AlterTable
+ALTER TABLE "Carcasse" ADD COLUMN     "svi_carcasse_status" "CarcasseStatus";

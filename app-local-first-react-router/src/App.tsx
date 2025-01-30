@@ -27,6 +27,7 @@ import AdminEntites from './routes/admin/entities';
 import MentionsLegales from './routes/mentions-legales';
 import ModalitesDutilisation from './routes/modalites-d-utilisation';
 import BetaTesteurs from './routes/beta-testeurs';
+import RegistreCarcasses from './routes/registre-carcasses';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -98,6 +99,14 @@ function App() {
               element={
                 <RestrictedRoute id="fei_numero">
                   <Fei />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="registre-carcasses"
+              element={
+                <RestrictedRoute id="registre-carcasses">
+                  <RegistreCarcasses />
                 </RestrictedRoute>
               }
             />

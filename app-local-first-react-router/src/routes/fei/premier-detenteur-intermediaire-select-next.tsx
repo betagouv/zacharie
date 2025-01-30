@@ -21,8 +21,10 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
   const updateFei = state.updateFei;
+  const updateCarcasse = state.updateCarcasse;
   const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
+  const carcasses = state.carcassesIdsByFei[fei.numero];
   const entities = state.entities;
   const ccgs = state.ccgsIds.map((id) => state.entities[id]);
   const etgs = state.etgsIds.map((id) => state.entities[id]);
@@ -196,6 +198,14 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
             svi_entity_id: nextRole === UserRoles.SVI ? nextOwnerValue : null,
           };
           updateFei(fei.numero, nextFei);
+          if (nextRole === UserRoles.SVI) {
+            const nextCarcasse = {
+              svi_assigned_to_fei_at: nextRole === UserRoles.SVI ? dayjs().toDate() : null,
+            };
+            for (const zacharie_carcasse_id of carcasses) {
+              updateCarcasse(zacharie_carcasse_id, nextCarcasse);
+            }
+          }
           addLog({
             user_id: user.id,
             action: calledFrom,

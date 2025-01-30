@@ -233,6 +233,12 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
       event.waitUntil(syncBackOnline('TABLEAU_DE_BORD_OPEN'));
     }
   }
+
+  if (event.data.type === 'REGISTRE_CARCASSES_OPEN') {
+    if (navigator.onLine) {
+      event.waitUntil(syncBackOnline('REGISTRE_CARCASSES_OPEN'));
+    }
+  }
 });
 
 /*

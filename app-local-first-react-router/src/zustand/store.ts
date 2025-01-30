@@ -29,6 +29,8 @@ dayjs.extend(utc);
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
 import type { HistoryInput } from '@app/utils/create-history-entry';
 import { syncProchainBraceletAUtiliser } from './user';
+import updateCarcasseStatus from '@app/utils/get-carcasse-status';
+import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 
 export interface State {
   isOnline: boolean;
@@ -60,6 +62,8 @@ export interface State {
     FeiIntermediaire['id'],
     Array<CarcasseIntermediaire['fei_numero__bracelet__intermediaire_id']>
   >;
+  lastUpdateCarcassesRegistry: number;
+  carcassesRegistry: Array<CarcasseForResponseForRegistry>;
   logs: Array<Log>;
   // inetermediairesPopulated: Array<PopulatedIntermediaire>; // Note: fixed typo from 'inetermediaires'
   _hasHydrated: boolean;
@@ -104,6 +108,8 @@ const useZustandStore = create<State & Actions>()(
     persist(
       (set, get): State & Actions => ({
         isOnline: true,
+        carcassesRegistry: [],
+        lastUpdateCarcassesRegistry: 0,
         feisDone: [],
         logs: [],
         feis: {},
@@ -207,6 +213,11 @@ const useZustandStore = create<State & Actions>()(
             updated_at: dayjs().toDate(),
             is_synced: false,
           };
+          const nextSviStatus = updateCarcasseStatus(nextCarcasse);
+          if (nextSviStatus !== nextCarcasse.svi_carcasse_status) {
+            nextCarcasse.svi_carcasse_status = nextSviStatus;
+            nextCarcasse.svi_carcasse_status_set_at = dayjs().toDate();
+          }
           useZustandStore.setState({
             carcasses: {
               ...carcasses,

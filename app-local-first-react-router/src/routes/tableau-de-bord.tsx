@@ -15,6 +15,7 @@ import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
 import { getFeiKeyDates } from '@app/utils/gert-fei-key-dates';
+import { useSaveScroll } from '@app/services/useSaveScroll';
 
 async function loadData() {
   await syncData();
@@ -79,22 +80,7 @@ export default function TableauDeBordIndex() {
     refreshUser('tableau-de-bord').then(loadData);
   }, []);
 
-  useEffect(() => {
-    function handleScrollEnd() {
-      window.sessionStorage.setItem('tableau-de-bord-scrollY', window.scrollY.toString());
-    }
-    const savedScrollY = window.sessionStorage.getItem('tableau-de-bord-scrollY');
-    if (savedScrollY) {
-      window.scrollTo({
-        top: parseInt(savedScrollY, 10),
-        behavior: 'instant',
-      });
-    }
-    window.addEventListener('scrollend', handleScrollEnd);
-    return () => {
-      window.removeEventListener('scrollend', handleScrollEnd);
-    };
-  }, []);
+  useSaveScroll('tableau-de-bord-scrollY');
 
   const [selectedFeis, setSelectedFeis] = useState<string[]>([]);
   const handleCheckboxClick = (id: string) => {

@@ -324,7 +324,7 @@ export default function useExportFeis() {
             'Numéro suivi trichine': '',
             Estampille: '',
             // infos de SVI
-            'SVI - Consigne': '',
+            'SVI - Consigne': carcasse.svi_carcasse_consigne ? 'Oui' : '',
             'SVI - Motif Consigne': 'BA P S OA CA pap',
             'SVI - Commentaire': carcasse.svi_carcasse_commentaire,
             'SVI - Saisie partielle':

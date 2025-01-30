@@ -31,6 +31,7 @@ export default function useNavigationMenu() {
   const isExaminateurInitial = user?.roles.includes(UserRoles.EXAMINATEUR_INITIAL);
   const isOnlyExaminateurInitial = isExaminateurInitial && user?.roles.length === 1;
   const isAdmin = user?.roles.includes(UserRoles.ADMIN);
+  const isSvi = user?.roles.includes(UserRoles.SVI);
 
   const profileMenu: MainNavigationProps.Item[] = [
     {
@@ -82,11 +83,12 @@ export default function useNavigationMenu() {
     ? []
     : [
         {
-          text: 'Mes fiches',
+          text: isSvi ? 'Fiches' : 'Mes fiches',
           isActive: location.pathname === '/app/tableau-de-bord',
           linkProps: { to: '/app/tableau-de-bord', href: '#' },
         },
       ];
+
   if (isExaminateurInitial && !isNotActivated) {
     feiMenu.unshift({
       text: 'Nouvelle fiche',
@@ -97,6 +99,14 @@ export default function useNavigationMenu() {
           navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
         },
       },
+    });
+  }
+
+  if (isSvi && isAdmin) {
+    feiMenu.push({
+      text: 'Carcasses',
+      isActive: location.pathname === '/app/tableau-de-bord/registre-carcasses',
+      linkProps: { to: '/app/tableau-de-bord/registre-carcasses', href: '#' },
     });
   }
 

@@ -11,6 +11,7 @@ import type {
 import type { UserForFei, UserForAdmin } from './user';
 import type { FeiDone, FeiWithIntermediaires, FeiPopulated } from './fei';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId } from './entity';
+import { CarcasseForResponseForRegistry } from './carcasse';
 
 export interface SearchResponse {
   ok: boolean;
@@ -117,14 +118,6 @@ export interface EntitiesWorkingForResponse {
   error: '';
 }
 
-export interface CarcasseResponse {
-  ok: boolean;
-  data: {
-    carcasse: Carcasse | null;
-  };
-  error: string;
-}
-
 export interface FeiIntermediaireResponse {
   ok: boolean;
   data: {
@@ -213,6 +206,24 @@ export interface LogResponse {
   ok: boolean;
   data: {
     log: Log | null;
+  };
+  error: string;
+}
+
+export interface CarcasseResponse {
+  ok: boolean;
+  data: {
+    carcasse: Carcasse | null;
+  };
+  error: string;
+}
+
+export interface CarcassesGetForRegistryResponse {
+  ok: boolean;
+  data: {
+    carcasses: Array<CarcasseForResponseForRegistry>;
+    hasMore: boolean;
+    total: number;
   };
   error: string;
 }
