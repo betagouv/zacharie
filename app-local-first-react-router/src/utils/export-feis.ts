@@ -19,7 +19,7 @@ type CarcasseExcelData = {
   Éspèce: string | null;
   "Nombre d'animaux": number | null | undefined;
   'Numéro suivi trichine': string | null;
-  Estampille: string | null;
+  // Estampille: string | null;
   // infos de SVI
   'SVI - Consigne': string | null;
   'SVI - Motif Consigne': string | null;
@@ -133,7 +133,7 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       // case 'Numéro de bracelet':
       case 'SVI - Saisie totale':
       case 'SVI - Certificat de saisie OK':
-      case 'Estampille':
+      // case 'Estampille':
       case "Nombre d'animaux":
       case 'SVI - Consigne':
       case 'Date de la chasse':
@@ -318,11 +318,17 @@ export default function useExportFeis() {
             }
           }
           allCarcasses.push({
+            'Premier détenteur':
+              premierDetenteurEntity?.nom_d_usage ||
+              (premierDetenteur?.nom_de_famille
+                ? `${premierDetenteur?.prenom} ${premierDetenteur?.nom_de_famille}`
+                : ''),
+            'Date de la chasse': dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
             'Numéro de bracelet': carcasse.numero_bracelet,
             Éspèce: carcasse.espece,
             "Nombre d'animaux": carcasse.nombre_d_animaux || 1,
             'Numéro suivi trichine': '',
-            Estampille: '',
+            // Estampille: '',
             // infos de SVI
             'SVI - Consigne': carcasse.svi_carcasse_consigne ? 'Oui' : '',
             'SVI - Motif Consigne': 'BA P S OA CA pap',
@@ -336,12 +342,6 @@ export default function useExportFeis() {
             'SVI - Certificat de saisie OK': '',
             "SVI - Date d'examen": carcasse.svi_carcasse_signed_at,
             // infos de chasse
-            'Premier détenteur':
-              premierDetenteurEntity?.nom_d_usage ||
-              (premierDetenteur?.nom_de_famille
-                ? `${premierDetenteur?.prenom} ${premierDetenteur?.nom_de_famille}`
-                : ''),
-            'Date de la chasse': dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
             'Commune de la chasse': fei.commune_mise_a_mort,
             'Numéro de fiche': fei.numero,
             // Observations ETG
