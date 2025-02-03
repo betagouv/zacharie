@@ -164,7 +164,18 @@ export const filterCarcassesInRegistre =
     for (const filter of filters) {
       if (debug) console.log('filter', filter);
       if (!filter.field || !filter.value) continue;
-      const itemValue = item[filter.field];
+      let itemValue = item[filter.field];
+
+      if (filter.field === 'svi_carcasse_saisie') {
+        itemValue = item.svi_carcasse_status;
+        const itemIsSaisie =
+          itemValue === CarcasseStatus.SAISIE_PARTIELLE || itemValue === CarcasseStatus.SAISIE_TOTALE;
+        if (filter.value === 'Oui') {
+          return itemIsSaisie;
+        } else {
+          return !itemIsSaisie;
+        }
+      }
 
       if (['number'].includes(filter.type)) {
         const itemNumber = Number(itemValue);
