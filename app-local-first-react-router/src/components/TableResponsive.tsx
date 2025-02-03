@@ -67,6 +67,7 @@ export default function TableResponsive({
                     <td className="hidden max-w-14 text-sm text-gray-500 lg:table-cell border-r border-r-gray-100">
                       <Checkbox
                         className="!m-0 [&_label]:before:!m-0"
+                        small
                         options={[
                           {
                             label: '',

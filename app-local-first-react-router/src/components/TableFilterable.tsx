@@ -68,7 +68,7 @@ export default function TableFilterable<T>({
     onSort?.(newOrder, data);
   }, [onSort, data, isSortable]);
 
-  const onToggleCheckbox = (event: React.MouseEvent<HTMLInputElement>) => {
+  const onToggleCheckbox = (event: React.ChangeEvent<HTMLInputElement>) => {
     const id = event.currentTarget.id;
     if (checked.includes(id)) {
       onCheck?.(checked.filter((i) => i !== id));
@@ -125,9 +125,9 @@ export default function TableFilterable<T>({
               <td className="whitespace-nowrap cursor-default">
                 <input
                   type="checkbox"
-                  className="border-2 mx-2"
+                  className="border-2 mx-2 checked:accent-action-high-blue-france"
                   checked={checked.length === data.length}
-                  onClick={() => {
+                  onChange={() => {
                     if (checked.length === data.length) {
                       onCheck?.([]);
                     } else {
@@ -210,10 +210,10 @@ export default function TableFilterable<T>({
                     <td className="whitespace-nowrap cursor-default">
                       <input
                         type="checkbox"
-                        className="border-2 mx-2"
+                        className="border-2 mx-2  checked:accent-action-high-blue-france"
                         checked={checked.includes(item[rowKey] as string)}
                         id={item[rowKey] as string}
-                        onClick={onToggleCheckbox}
+                        onChange={onToggleCheckbox}
                       />
                     </td>
                   )}

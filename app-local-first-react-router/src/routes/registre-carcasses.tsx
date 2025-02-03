@@ -16,13 +16,17 @@ import {
 } from '@app/utils/filter-carcasse';
 import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
-
+import Button from '@codegouvfr/react-dsfr/Button';
+import useExportCarcasses from '@app/utils/export-carcasses';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function RegistreCarcasses() {
   const user = useMostFreshUser('tableau de bord index')!;
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
+
+  const { onExportToXlsx, isExporting } = useExportCarcasses();
 
   const [searchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
@@ -123,34 +127,56 @@ export default function RegistreCarcasses() {
               saveInURLParams={false}
             />
           </section>
-          <p className="text-sm opacity-50 mb-6">
-            {filteredData.length !== carcassesRegistry.length ? (
-              <>
-                Nombre d'éléments filtrés: {filteredData.length}
-                <br />
-                (total: {carcassesRegistry.length})
-                <br />
-              </>
-            ) : (
-              <>Total: {carcassesRegistry.length}</>
-            )}
-            <br />
-            Nombre d'éléments par page:
-            {itemsPerPageOptions.map((option) => {
-              return (
-                <button
-                  className={['px-4 py-2', itemsPerPage === option ? 'underline' : ''].join(' ')}
-                  onClick={() => setItemsPerPage(option)}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </p>
+          <section className="flex flex-row justify-between">
+            <p className="text-sm opacity-50 mb-6">
+              {filteredData.length !== carcassesRegistry.length ? (
+                <>
+                  Nombre d'éléments filtrés: {filteredData.length}
+                  <br />
+                  (total: {carcassesRegistry.length})
+                  <br />
+                </>
+              ) : (
+                <>Total: {carcassesRegistry.length}</>
+              )}
+              <br />
+              Nombre d'éléments par page:
+              {itemsPerPageOptions.map((option) => {
+                return (
+                  <button
+                    className={['px-4 py-2', itemsPerPage === option ? 'underline' : ''].join(' ')}
+                    onClick={() => setItemsPerPage(option)}
+                    key={option}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </p>
+            <div className="items-center gap-2 my-2 justify-end hidden sm:flex">
+              <Button
+                onClick={() => {
+                  const selectedCarcassesObject: Record<string, boolean> = {};
+                  for (const carcasseId of selectedCarcassesIds) {
+                    selectedCarcassesObject[carcasseId] = true;
+                  }
+                  onExportToXlsx(
+                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id]),
+                  );
+                }}
+                disabled={selectedCarcassesIds.length === 0 || isExporting}
+              >
+                Exporter les carcasses sélectionnées dans un fichier Excel ({selectedCarcassesIds.length})
+              </Button>
+            </div>
+          </section>
           <section className="mb-6 bg-white md:shadow">
             <TableFilterable
               data={paginatedData}
               rowKey="zacharie_carcasse_id"
+              withCheckbox
+              onCheck={setSelectedCarcassesIds}
+              checked={selectedCarcassesIds}
               columns={[
                 {
                   dataKey: 'zacharie_carcasse_id',
