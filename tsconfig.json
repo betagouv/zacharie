@@ -1,6 +1,6 @@
 {
   "references": [
-    { "path": "./api-remix" },
+    { "path": "./api-express" },
     { "path": "./app-local-first-react-router" }
   ],
   "files": []

@@ -9,7 +9,7 @@ import { EntityRelationType, Prisma, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
 import { formatCarcasseEmail } from '~/utils/formatCarcasseEmail';
 import { RequestWithUser } from '~/types/request';
-import { carcasseForRegistrySelect } from '~/types/carcasse';
+import { carcasseForRegistrySelect, CarcasseForResponseForRegistry } from '~/types/carcasse';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 
 router.post(
@@ -414,19 +414,27 @@ router.get(
     res.status(200).json({
       ok: true,
       data: {
-        carcasses: data.map((carcasse) => {
+        carcasses: data.map((carcasse): CarcasseForResponseForRegistry => {
           const fei = carcasse.Fei;
-          return {
-            ...carcasse,
-            svi_carcasse_status: carcasse.svi_carcasse_status || updateCarcasseStatus(carcasse),
-            svi_carcasse_status_set_at:
-              carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_signed_at,
-            svi_assigned_to_fei_at: carcasse.svi_assigned_to_fei_at || fei.svi_assigned_at,
-            premier_detenteur_name_cache: fei.premier_detenteur_name_cache,
-            // svi_carcasse_archived: fei.automatic_closed_at || fei.svi_signed_at,
-            svi_carcasse_archived:
-              !!fei.automatic_closed_at || dayjs(now).diff(fei.svi_assigned_at, 'day') > 10,
-          };
+          const toReturn = {} as CarcasseForResponseForRegistry;
+          for (const key of Object.keys(carcasse)) {
+            if (key === 'Fei') continue;
+            // @ts-expect-error cannot guess fei_* fields
+            toReturn[key] = carcasse[key];
+          }
+          toReturn.svi_carcasse_status = carcasse.svi_carcasse_status || updateCarcasseStatus(carcasse);
+          toReturn.svi_carcasse_status_set_at =
+            carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_signed_at;
+          toReturn.svi_assigned_to_fei_at = carcasse.svi_assigned_to_fei_at || fei.svi_assigned_at;
+          // svi_carcasse_archived = fei.automatic_closed_at || fei.svi_signed_at,
+          toReturn.svi_carcasse_archived =
+            !!fei.automatic_closed_at || dayjs(now).diff(fei.svi_assigned_at, 'day') > 10;
+          for (const key of Object.keys(fei)) {
+            // @ts-expect-error cannot guess fei_* fields
+            toReturn[`fei_${key}`] = fei[key];
+          }
+          // console.log('svi_carcasse_status', toReturn.svi_carcasse_status, updateCarcasseStatus(carcasse));
+          return toReturn as CarcasseForResponseForRegistry;
         }),
         hasMore: data.length === parsedLimit,
         total,

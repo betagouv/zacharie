@@ -1,4 +1,4 @@
-import { CarcasseStatus, EntityRelationType, Prisma } from '@prisma/client';
+import { CarcasseStatus, Fei, Prisma } from '@prisma/client';
 
 export const carcasseForRegistrySelect = {
   zacharie_carcasse_id: true,
@@ -10,11 +10,11 @@ export const carcasseForRegistrySelect = {
   heure_evisceration: true,
   espece: true,
   categorie: true,
-  examinateur_carcasse_sans_anomalie: false,
-  examinateur_anomalies_carcasse: false,
-  examinateur_anomalies_abats: false,
-  examinateur_commentaire: false,
-  examinateur_signed_at: false,
+  // examinateur_carcasse_sans_anomalie: false,
+  // examinateur_anomalies_carcasse: false,
+  // examinateur_anomalies_abats: false,
+  // examinateur_commentaire: false,
+  // examinateur_signed_at: false,
   intermediaire_carcasse_refus_intermediaire_id: true,
   intermediaire_carcasse_refus_motif: true,
   intermediaire_carcasse_signed_at: true,
@@ -41,24 +41,23 @@ export const carcasseForRegistrySelect = {
   is_synced: true,
   Fei: {
     select: {
-      numero: true,
       date_mise_a_mort: true,
       commune_mise_a_mort: true,
       heure_mise_a_mort_premiere_carcasse: true,
       heure_evisceration_derniere_carcasse: true,
-      created_by_user_id: false,
-      resume_nombre_de_carcasses: true,
-      examinateur_initial_offline: false,
-      examinateur_initial_user_id: false,
-      examinateur_initial_approbation_mise_sur_le_marche: false,
+      // created_by_user_id: false,
+      // resume_nombre_de_carcasses: true,
+      // examinateur_initial_offline: false,
+      // examinateur_initial_user_id: false,
+      // examinateur_initial_approbation_mise_sur_le_marche: false,
       examinateur_initial_date_approbation_mise_sur_le_marche: true,
-      premier_detenteur_offline: false,
-      premier_detenteur_user_id: false,
-      premier_detenteur_entity_id: false,
+      // premier_detenteur_offline: false,
+      // premier_detenteur_user_id: false,
+      // premier_detenteur_entity_id: false,
       premier_detenteur_name_cache: true,
       premier_detenteur_date_depot_quelque_part: true,
-      premier_detenteur_depot_entity_id: false,
-      premier_detenteur_depot_type: false,
+      // premier_detenteur_depot_entity_id: false,
+      // premier_detenteur_depot_type: false,
       svi_assigned_at: true,
       svi_entity_id: true,
       svi_user_id: true,
@@ -67,20 +66,20 @@ export const carcasseForRegistrySelect = {
       svi_commentaire: true,
       svi_signed_at: true,
       svi_signed_by: true,
-      fei_current_owner_user_id: false,
-      fei_current_owner_user_name_cache: false,
-      fei_current_owner_entity_id: false,
-      fei_current_owner_entity_name_cache: false,
-      fei_current_owner_role: false,
-      fei_current_owner_wants_to_transfer: false,
-      fei_next_owner_user_id: false,
-      fei_next_owner_user_name_cache: false,
-      fei_next_owner_entity_id: false,
-      fei_next_owner_entity_name_cache: false,
-      fei_next_owner_role: false,
-      fei_prev_owner_user_id: false,
-      fei_prev_owner_entity_id: false,
-      fei_prev_owner_role: false,
+      // fei_current_owner_user_id: false,
+      // fei_current_owner_user_name_cache: false,
+      // fei_current_owner_entity_id: false,
+      // fei_current_owner_entity_name_cache: false,
+      // fei_current_owner_role: false,
+      // fei_current_owner_wants_to_transfer: false,
+      // fei_next_owner_user_id: false,
+      // fei_next_owner_user_name_cache: false,
+      // fei_next_owner_entity_id: false,
+      // fei_next_owner_entity_name_cache: false,
+      // fei_next_owner_role: false,
+      // fei_prev_owner_user_id: false,
+      // fei_prev_owner_entity_id: false,
+      // fei_prev_owner_role: false,
       created_at: true,
       updated_at: true,
       deleted_at: true,
@@ -94,10 +93,29 @@ export type CarcasseGetForRegistry = Prisma.CarcasseGetPayload<{
   select: typeof carcasseForRegistrySelect;
 }>;
 
-export type CarcasseForResponseForRegistry = CarcasseGetForRegistry & {
+export type CarcasseForResponseForRegistry = Omit<CarcasseGetForRegistry, 'Fei'> & {
   svi_carcasse_status: CarcasseStatus;
   svi_carcasse_status_set_at: Date | null;
   svi_assigned_to_fei_at: Date | null;
-  premier_detenteur_name_cache: string | null;
   svi_carcasse_archived: boolean | null;
+  fei_date_mise_a_mort: Fei['date_mise_a_mort'];
+  fei_commune_mise_a_mort: Fei['commune_mise_a_mort'];
+  fei_heure_mise_a_mort_premiere_carcasse: Fei['heure_mise_a_mort_premiere_carcasse'];
+  fei_heure_evisceration_derniere_carcasse: Fei['heure_evisceration_derniere_carcasse'];
+  // fei_resume_nombre_de_carcasses: Fei['resume_nombre_de_carcasses'];
+  fei_examinateur_initial_date_approbation_mise_sur_le_marche: Fei['examinateur_initial_date_approbation_mise_sur_le_marche'];
+  fei_premier_detenteur_name_cache: Fei['premier_detenteur_name_cache'];
+  fei_premier_detenteur_date_depot_quelque_part: Fei['premier_detenteur_date_depot_quelque_part'];
+  fei_svi_assigned_at: Fei['svi_assigned_at'];
+  fei_svi_entity_id: Fei['svi_entity_id'];
+  fei_svi_user_id: Fei['svi_user_id'];
+  fei_svi_carcasses_saisies: Fei['svi_carcasses_saisies'];
+  fei_svi_aucune_carcasse_saisie: Fei['svi_aucune_carcasse_saisie'];
+  fei_svi_commentaire: Fei['svi_commentaire'];
+  fei_svi_signed_at: Fei['svi_signed_at'];
+  fei_svi_signed_by: Fei['svi_signed_by'];
+  fei_created_at: Fei['created_at'];
+  fei_updated_at: Fei['updated_at'];
+  fei_deleted_at: Fei['deleted_at'];
+  fei_automatic_closed_at: Fei['automatic_closed_at'];
 };
