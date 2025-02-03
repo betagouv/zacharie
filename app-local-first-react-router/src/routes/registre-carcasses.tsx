@@ -34,7 +34,14 @@ export default function RegistreCarcasses() {
   const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('registre-carcasses-sort-order', 'ASC');
 
   const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('registre-carcasses-items-per-page', 50);
-  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('registre-carcasses-filters', []);
+  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('registre-carcasses-filters-preset', [
+    {
+      field: 'svi_carcasse_archived',
+      value: 'Non',
+      type: 'boolean',
+      label: 'Archivé(e)',
+    },
+  ]);
 
   const filteredData = useMemo(() => {
     return carcassesRegistry
@@ -84,8 +91,6 @@ export default function RegistreCarcasses() {
   }, []);
 
   useSaveScroll('registre-carcasses-scrollY');
-
-  // console.log(filters);
 
   if (loading) {
     return <Chargement />;

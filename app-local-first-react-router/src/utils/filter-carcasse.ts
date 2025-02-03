@@ -100,6 +100,7 @@ export const carcasseFilterableFields: Array<CarcasseFilterableField> = [
   { name: 'svi_carcasse_saisie_at', label: 'Date de saisie', type: 'date-with-time' },
   { name: 'svi_carcasse_saisie_motif', label: 'Motif saisie', type: 'text' },
   { name: 'svi_carcasse_traitement_assainissant', label: 'Traitement assainissant', type: 'boolean' },
+  { name: 'svi_carcasse_archived', label: 'Archivé(e)', type: 'boolean' },
   { name: 'svi_carcasse_signed_at', label: 'Date de signature', type: 'date-with-time' },
   { name: 'svi_carcasse_commentaire', label: 'Commentaire', type: 'text' },
   { name: 'svi_carcasse_status', label: 'Statut', type: 'enum', options: carcasseStatusOptions },
