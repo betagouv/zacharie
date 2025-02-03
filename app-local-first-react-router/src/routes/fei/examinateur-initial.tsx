@@ -18,7 +18,6 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import Alert from '@codegouvfr/react-dsfr/Alert';
-import PENCILSTRIKETHROUGI from '@app/components/PENCILSTRIKETHROUGJ';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 
 export default function FEIExaminateurInitial() {

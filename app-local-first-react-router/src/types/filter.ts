@@ -18,9 +18,9 @@ export interface FilterableField {
 }
 
 export type Filter = {
-  field?: string;
+  field: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value?: any;
+  value: any;
   type: FieldType;
-  label?: string;
+  label: string;
 };

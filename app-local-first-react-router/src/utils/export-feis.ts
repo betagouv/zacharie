@@ -64,7 +64,7 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
     //   const wscols = header.map((col: keyof CarcasseExcelData | keyof FeiExcelData) => {
     ...data.reduce((columns: Array<T>, item: Record<T, unknown>) => {
       for (let key of Object.keys(item)) {
-        if (!columns.find((col) => col === key)) columns.push(key);
+        if (!columns.find((col) => col === key)) columns.push(key as T);
       }
       return columns;
     }, []),

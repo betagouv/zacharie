@@ -1,8 +1,10 @@
 import { Carcasse, CarcasseStatus, CarcasseType } from '@prisma/client';
-import { CarcasseGetForRegistry } from '@api/src/types/carcasse';
+import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 import dayjs from 'dayjs';
 
-export default function updateCarcasseStatus<T extends Carcasse | CarcasseGetForRegistry>(carcasse: T) {
+export default function updateCarcasseStatus<T extends Carcasse | CarcasseForResponseForRegistry>(
+  carcasse: T,
+) {
   if (carcasse.svi_carcasse_manquante) {
     return CarcasseStatus.MANQUANTE;
   }
@@ -22,16 +24,13 @@ export default function updateCarcasseStatus<T extends Carcasse | CarcasseGetFor
     }
     return CarcasseStatus.CONSIGNE;
   }
-  if (carcasse.svi_carcasse_status_set_at) {
-    return CarcasseStatus.ACCEPTE;
-  }
-  if (dayjs(carcasse.svi_assigned_to_fei_at).diff(dayjs(), 'day') > 10) {
+  if (dayjs().diff(dayjs(carcasse.svi_assigned_to_fei_at), 'day') > 10) {
     return CarcasseStatus.ACCEPTE;
   }
   return CarcasseStatus.SANS_DECISION;
 }
 
-export function getCarcasseStatusLabel<T extends Carcasse | CarcasseGetForRegistry>(carcasse: T) {
+export function getCarcasseStatusLabel<T extends CarcasseForResponseForRegistry>(carcasse: T) {
   switch (carcasse.svi_carcasse_status) {
     case CarcasseStatus.MANQUANTE:
       if (carcasse.type === CarcasseType.PETIT_GIBIER) {
@@ -51,29 +50,17 @@ export function getCarcasseStatusLabel<T extends Carcasse | CarcasseGetForRegist
         return 'Consigné';
       }
       return 'Consignée';
+    default:
     case CarcasseStatus.SANS_DECISION:
-      if (carcasse.svi_carcasse_status_set_at) {
+      if (carcasse.svi_carcasse_status_set_at || carcasse.svi_carcasse_archived) {
         if (carcasse.type === CarcasseType.PETIT_GIBIER) {
           return 'Accepté';
         }
         return 'Acceptée';
       }
       return 'Sans décision';
-    default:
-      return 'Inconnu';
   }
 }
-
-export const CarcasseStatusOptions = [
-  'Manquant(e)',
-  'En traitement assainissant',
-  'Saisie totale',
-  'Saisie partielle',
-  'Levée de consigne',
-  'Consigné(e)',
-  'Accepté(e)',
-  'Sans décision',
-];
 
 type CarcasseSaisie = {
   totale: boolean;
@@ -81,7 +68,7 @@ type CarcasseSaisie = {
   partie: string[]; // Nombre d'animaux || Coffre Collier Cuisse Cuissot Épaule Gigot Filet Filet mignon Poitrine Quartier arrière Quartier avant
 };
 
-function getCarcasseSaisie<T extends Carcasse | CarcasseGetForRegistry>(carcasse: T): CarcasseSaisie {
+function getCarcasseSaisie<T extends Carcasse | CarcasseForResponseForRegistry>(carcasse: T): CarcasseSaisie {
   const saisie = carcasse.svi_carcasse_saisie;
   const [type, ...partie] = saisie;
   if (!type) {

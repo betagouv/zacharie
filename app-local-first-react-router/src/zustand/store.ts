@@ -380,7 +380,17 @@ const useZustandStore = create<State & Actions>()(
           return () => state.setHasHydrated(true);
         },
         partialize: (state) =>
-          Object.fromEntries(Object.entries(state).filter(([key]) => !['feiDone'].includes(key))),
+          Object.fromEntries(
+            Object.entries(state).filter(
+              ([key]) =>
+                ![
+                  'feiDone',
+                  // fix the carcasses registry
+                  'carcassesRegistry',
+                  'lastUpdateCarcassesRegistry',
+                ].includes(key),
+            ),
+          ),
       },
     ),
   ),

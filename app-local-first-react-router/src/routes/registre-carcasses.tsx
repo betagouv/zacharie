@@ -9,50 +9,59 @@ import { Link, useSearchParams } from 'react-router';
 import { loadCarcasses } from '@app/utils/load-carcasses';
 import { UserRoles } from '@prisma/client';
 import Filters from '@app/components/Filters';
-import { carcasseFilterableFields } from '@app/utils/filter-carcasse';
-import { Filter } from '@app/types/filter';
+import {
+  CarcasseFilter,
+  carcasseFilterableFields,
+  filterCarcassesInRegistre,
+} from '@app/utils/filter-carcasse';
+import { useLocalStorage } from '@uidotdev/usehooks';
+import Chargement from '@app/components/Chargement';
 
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function RegistreCarcasses() {
   const user = useMostFreshUser('tableau de bord index')!;
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const [loading, setLoading] = useState(true);
 
   const [searchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
 
-  const [sortBy, setSortBy] = useState<keyof (typeof carcassesRegistry)[number]>('numero_bracelet');
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>(
+    'registre-carcasses-sort-by',
+    'numero_bracelet',
+  );
+  const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('registre-carcasses-sort-order', 'ASC');
 
-  const [itemsPerPage, setItemsPerPage] = useState(50);
-
-  const [filters, setFilters] = useState<Array<Filter>>([]);
-
-  const sortedData = useMemo(() => {
-    // Sort the carcassesArray based on the selected sortBy and sortOrder
-    return [...carcassesRegistry].sort((a, b) => {
-      const aValue = a[sortBy];
-      const bValue = b[sortBy];
-      if (!aValue) {
-        if (bValue) return sortOrder === 'ASC' ? 1 : -1;
-        return 0;
-      }
-      if (!bValue) {
-        if (aValue) return sortOrder === 'ASC' ? -1 : 1;
-        return 0;
-      }
-      if (aValue === bValue) return 0;
-      if (aValue < bValue) return sortOrder === 'ASC' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'ASC' ? 1 : -1;
-      return 0;
-    });
-  }, [carcassesRegistry, sortBy, sortOrder]);
+  const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('registre-carcasses-items-per-page', 50);
+  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('registre-carcasses-filters', []);
 
   const filteredData = useMemo(() => {
+    return carcassesRegistry
+      .filter((carcasse) => filterCarcassesInRegistre(filters)(carcasse))
+      .sort((a, b) => {
+        const aValue = a[sortBy];
+        const bValue = b[sortBy];
+        if (!aValue) {
+          if (bValue) return sortOrder === 'ASC' ? 1 : -1;
+          return 0;
+        }
+        if (!bValue) {
+          if (aValue) return sortOrder === 'ASC' ? -1 : 1;
+          return 0;
+        }
+        if (aValue === bValue) return 0;
+        if (aValue < bValue) return sortOrder === 'ASC' ? -1 : 1;
+        if (aValue > bValue) return sortOrder === 'ASC' ? 1 : -1;
+        return 0;
+      });
+  }, [carcassesRegistry, filters, sortBy, sortOrder]);
+
+  const paginatedData = useMemo(() => {
     const start = (page - 1) * itemsPerPage;
     const end = start + itemsPerPage;
-    return sortedData.slice(start, end);
-  }, [sortedData, page, itemsPerPage]);
+    return filteredData.slice(start, end);
+  }, [filteredData, page, itemsPerPage]);
 
   const [showBackOnlineRefresh, setShowBackOnlineRefresh] = useState(false);
 
@@ -68,12 +77,19 @@ export default function RegistreCarcasses() {
       return;
     }
     hackForCounterDoubleEffectInDevMode.current = true;
-    refreshUser('registre-carcasses').then(() => loadCarcasses(UserRoles.SVI));
+    refreshUser('registre-carcasses')
+      .then(() => setLoading(true))
+      .then(() => loadCarcasses(UserRoles.SVI))
+      .then(() => setLoading(false));
   }, []);
 
   useSaveScroll('registre-carcasses-scrollY');
 
   // console.log(filters);
+
+  if (loading) {
+    return <Chargement />;
+  }
 
   return (
     <div className="fr-container--fluid fr-my-md-14v">
@@ -103,7 +119,16 @@ export default function RegistreCarcasses() {
             />
           </section>
           <p className="text-sm opacity-50 mb-6">
-            Total: {sortedData.length}
+            {filteredData.length !== carcassesRegistry.length ? (
+              <>
+                Nombre d'éléments filtrés: {filteredData.length}
+                <br />
+                (total: {carcassesRegistry.length})
+                <br />
+              </>
+            ) : (
+              <>Total: {carcassesRegistry.length}</>
+            )}
             <br />
             Nombre d'éléments par page:
             {itemsPerPageOptions.map((option) => {
@@ -119,7 +144,7 @@ export default function RegistreCarcasses() {
           </p>
           <section className="mb-6 bg-white md:shadow">
             <TableFilterable
-              data={filteredData}
+              data={paginatedData}
               rowKey="zacharie_carcasse_id"
               columns={[
                 {
@@ -152,7 +177,7 @@ export default function RegistreCarcasses() {
                   },
                 },
                 {
-                  dataKey: 'premier_detenteur_name_cache',
+                  dataKey: 'fei_premier_detenteur_name_cache',
                   title: 'Premier détenteur',
                   onSortOrder: setSortOrder,
                   onSortBy: setSortBy,
@@ -160,7 +185,7 @@ export default function RegistreCarcasses() {
                   sortOrder: sortOrder,
                 },
                 {
-                  dataKey: 'svi_assigned_at',
+                  dataKey: 'fei_svi_assigned_at',
                   title: 'Date de transmission au SVI',
                   type: 'datetime',
                   onSortOrder: setSortOrder,
@@ -213,7 +238,7 @@ export default function RegistreCarcasses() {
             <div className="flex justify-evenly py-6">
               <Pagination
                 className="mt-6 flex justify-start"
-                count={Math.ceil(sortedData.length / itemsPerPage)}
+                count={Math.ceil(filteredData.length / itemsPerPage)}
                 defaultPage={page}
                 getPageLinkProps={(pageNumber) => {
                   return {

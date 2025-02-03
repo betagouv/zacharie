@@ -93,3 +93,22 @@ table.table-custom {
     background-color: #e6f4fe;
   }
 }
+
+/* inspired from https://tailwindui.com/components/application-ui/forms/input-groups#component-2607d970262ada86428f063c72b1e7bd */
+div.tailwindui,
+input.tailwindui,
+textarea.tailwindui {
+  @apply relative block w-full appearance-none rounded-[4px] border border-gray-300 border-solid px-2 py-2 text-base shadow-sm focus:border-action-high-blue-france focus:ring-action-high-blue-france focus:outline-action-high-blue-france sm:text-sm !-outline-offset-1 ;
+}
+label.tailwindui {
+  @apply mb-2 block text-gray-700;
+}
+
+.input-focus-helper {
+  outline: 1px dashed #eee !important;
+  min-width: 50px !important;
+}
+.input-focus-helper:focus,
+.input-focus-helper:active {
+  outline: auto !important;
+}

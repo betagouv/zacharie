@@ -1,141 +1,28 @@
 import { useState } from 'react';
-import { Input } from '@codegouvfr/react-dsfr/Input';
 import dayjs from 'dayjs';
-import { Select } from '@codegouvfr/react-dsfr/Select';
-import { mapCarcasseStatusLabelToValue } from '@app/utils/filter-carcasse';
+import { components } from 'react-select';
 import type { Filter, FilterableField } from '@app/types/filter';
+import SelectCustom from './SelectCustom';
 
-// const filterItem =
-//   (filters: Array<Filter>, debug = false) =>
-//   (item: { [x: string]: any }) => {
-//     // for now an item needs to fulfill ALL items to be displayed
-//     if (!filters?.filter((f) => Boolean(f?.value)).length) return item;
-//     for (const filter of filters) {
-//       if (debug) console.log('filter', filter);
-//       if (!filter.field || !filter.value) continue;
-//       const itemValue = item[filter.field];
-//       if (['number'].includes(filter.type)) {
-//         const itemNumber = Number(itemValue);
-//         const { number, number2, comparator } = filter.value;
-//         if (comparator === 'unfilled') {
-//           if (typeof itemNumber === 'number') return false;
-//           continue;
-//         }
-//         // be careful:
-//         // now we want to exclude everything that is not a number
-//         // BUT we can't use `isNaN` here because if itemValue is `null`, isNaN(null) === false, because `Number(null) === 0`
-//         if (typeof itemNumber !== 'number') return false;
-//         if (comparator === 'between') {
-//           if (Number(number) < Number(number2)) {
-//             if (Number(itemNumber) >= Number(number) && Number(itemNumber) <= Number(number2)) continue;
-//             return false;
-//           } else {
-//             if (Number(itemNumber) >= Number(number2) && Number(itemNumber) <= Number(number)) continue;
-//             return false;
-//           }
-//         }
-//         if (comparator === 'equals') {
-//           if (Number(itemNumber) === Number(number)) continue;
-//           return false;
-//         }
-//         if (comparator === 'lower') {
-//           if (Number(itemNumber) < Number(number)) continue;
-//           return false;
-//         }
-//         if (comparator === 'greater') {
-//           if (Number(itemNumber) > Number(number)) continue;
-//           return false;
-//         }
-//       }
-//       if (['boolean'].includes(filter.type)) {
-//         if (filter.value === 'Oui' && !!itemValue) continue;
-//         if (filter.value === 'Non' && !itemValue) continue;
-//         return false;
-//       }
-//       if (['date-with-time', 'date', 'duration'].includes(filter.type)) {
-//         const { date, comparator } = filter.value;
-//         if (comparator === 'unfilled') {
-//           if (!itemValue) continue;
-//           return false;
-//         }
-//         if (!itemValue) return false;
-//         if (comparator === 'before') {
-//           if (dayjs(itemValue).isBefore(date)) continue;
-//           return false;
-//         }
-//         if (comparator === 'after') {
-//           if (dayjs(itemValue).isAfter(date)) continue;
-//           return false;
-//         }
-//         if (comparator === 'equals') {
-//           if (dayjs(itemValue).isSame(dayjs(date), 'day')) continue;
-//           return false;
-//         }
-//       }
-
-//       if (typeof itemValue === 'boolean') {
-//         if (!itemValue) {
-//           if (filter.value === 'Non renseigné') continue;
-//           return false;
-//         }
-//         if (itemValue === (filter.value === 'Oui')) continue;
-//         return false;
-//       }
-
-//       const arrayFilterValue = Array.isArray(filter.value) ? filter.value : [filter.value];
-//       if (!arrayFilterValue.length) continue;
-//       // here the item needs to fulfill at least one filter value
-//       let isSelected = false;
-//       for (const filterValue of arrayFilterValue) {
-//         if (!itemValue?.length && filterValue === 'Non renseigné') {
-//           isSelected = true;
-//           break;
-//         }
-//         if (typeof itemValue === 'string') {
-//           // For type text we trim and lower case the value.
-//           if (filter.type === 'text') {
-//             const trimmedItemValue = (itemValue || '').trim().toLowerCase();
-//             const trimmedFilterValue = (filterValue || '').trim().toLowerCase();
-//             if (trimmedItemValue.includes(trimmedFilterValue)) {
-//               isSelected = true;
-//               break;
-//             }
-//           }
-//           if (itemValue === filterValue) {
-//             isSelected = true;
-//             break;
-//           }
-//         } else {
-//           if (itemValue?.includes?.(filterValue)) {
-//             isSelected = true;
-//           }
-//         }
-//       }
-//       if (!isSelected) return false;
-//     }
-//     return item;
-//   };
-
-const emptyFilter: Filter = { field: undefined, type: 'text', value: undefined };
-
-export default function Filters({
+export default function Filters<T extends Filter = Filter>({
   onChange,
   base,
   filters,
-  title = 'Filtres :',
+  title,
   saveInURLParams = false,
 }: {
-  onChange: (filters: Array<Filter>, saveInURLParams: boolean) => void;
+  onChange: (filters: Array<T>, saveInURLParams: boolean) => void;
   base: Array<FilterableField>;
-  filters: Array<Filter>;
+  filters: Array<T>;
   title?: string;
   saveInURLParams?: boolean;
 }) {
+  const emptyFilter: T = { field: '', type: 'text', value: undefined } as T;
   filters = filters.length ? filters : [emptyFilter];
   const onAddFilter = () => onChange([...filters, emptyFilter], saveInURLParams);
   const filterFields = base
     .filter((_filter) => _filter.name !== 'alertness')
-    .map((f) => ({ label: f.label, field: f.name, type: f.type }));
+    .map((f) => ({ label: f.label!, field: f.name!, type: f.type!, value: null }));
 
   function getFilterOptionsByField(
     fieldName: FilterableField['name'],
@@ -157,7 +44,7 @@ export default function Filters({
     return ['Non renseigné'];
   }
 
-  function getFilterValue(filterValue: Filter['value']) {
+  function getFilterValue(filterValue: T['value']) {
     if (typeof filterValue === 'object') {
       if (filterValue?.date != null) {
         if (filterValue.comparator === 'unfilled') return 'Non renseigné';
@@ -186,7 +73,7 @@ export default function Filters({
       <div className="hidden print:flex gap-2">
         {title ? <p>{title}</p> : null}
         <ul>
-          {filters.map((filter: Filter, index: number) => {
+          {filters.map((filter: T, index: number) => {
             if (!filter?.field) return null;
             const current = base.find((filterableField) => filterableField.name === filter.field);
             if (!current) return null;
@@ -200,33 +87,37 @@ export default function Filters({
           })}
         </ul>
       </div>
-      <div className="border-b print:hidden z-10 mb-4 flex w-full flex-col justify-center gap-2 self-center border-gray-300">
+      <div className="border-b print:hidden z-10 pb-2 mb-4 flex w-full flex-col justify-center gap-2 self-center border-gray-300">
         <div className="flex flex-wrap">
           <p className="m-0">{title}</p>
         </div>
         <div className="w-full">
-          {filters.map((filter: Filter, index: number) => {
+          {filters.map((filter: T, index: number) => {
             // filter: field, value, type
             const filterValues = getFilterOptionsByField(filter.field!, base, index);
-            const onChangeField = (newField: FilterableField) => {
-              onChange(
-                filters.map((_filter, i) =>
-                  i === index ? { field: newField?.name, value: null, type: newField?.type } : _filter,
-                ),
-                saveInURLParams,
-              );
+            const onChangeField = (newField: (typeof filterFields)[number] | null) => {
+              if (newField) {
+                onChange(
+                  filters.map((_filter, i) =>
+                    i === index
+                      ? ({ field: newField?.field, value: null, type: newField?.type } as T)
+                      : _filter,
+                  ),
+                  saveInURLParams,
+                );
+              }
             };
-            const onChangeValue = (newValue: Filter['value']) => {
+            const onChangeValue = (newValue: T['value']) => {
               onChange(
-                filters.map((f: Filter, i: number) =>
-                  i === index ? { field: filter.field, value: newValue, type: filter.type } : f,
+                filters.map((f: T, i: number) =>
+                  i === index ? ({ field: filter.field, value: newValue, type: filter.type } as T) : f,
                 ),
                 saveInURLParams,
               );
             };
             const onRemoveFilter = () => {
               onChange(
-                filters.filter((_f: Filter, i: number) => i !== index),
+                filters.filter((_f: T, i: number) => i !== index),
                 saveInURLParams,
               );
             };
@@ -241,7 +132,7 @@ export default function Filters({
                   <p className="m-0 w-full pr-2 text-right">{index === 0 ? 'Filtrer par' : 'ET'}</p>
                 </div>
                 <div className="w-96 min-w-[384px]">
-                  <Select
+                  {/* <Select
                     label=""
                     nativeSelectProps={{
                       id: `filter-field-${index}`,
@@ -262,7 +153,23 @@ export default function Filters({
                         </option>
                       );
                     })}
-                  </Select>
+                  </Select> */}
+                  <div className="tw-w-96 tw-min-w-[384px]">
+                    <SelectCustom
+                      // @ts-expect-error: The expected type comes from property 'options' which is declared here on type 'IntrinsicAttributes & SelectCustomProps<T, false, GroupBase<T>>'
+                      options={filterFields}
+                      value={filter.field ? filter : null}
+                      onChange={onChangeField}
+                      getOptionLabel={(_option) =>
+                        filterFields.find((_filter) => _filter.field === _option.field)?.label || ''
+                      }
+                      getOptionValue={(_option) => _option.field || ''}
+                      isClearable={true}
+                      isMulti={false}
+                      inputId={`filter-field-${index}`}
+                      classNamePrefix={`filter-field-${index}`}
+                    />
+                  </div>
                 </div>
                 <div className="grow">
                   <ValueSelector
@@ -275,7 +182,7 @@ export default function Filters({
                   />
                 </div>
                 <div className="shrink-0">
-                  {!!filters.filter((_filter: Filter) => Boolean(_filter.field)).length && (
+                  {!!filters.filter((_filter: T) => Boolean(_filter.field)).length && (
                     <button
                       type="button"
                       className="h-full w-full rounded border border-gray-300 bg-white px-2.5 py-2 text-sm text-red-500 hover:bg-red-100"
@@ -347,16 +254,16 @@ const numberOptions = [
   },
 ];
 
-type ValueSelectorProps = {
+type ValueSelectorProps<T extends Filter = Filter> = {
   index: number;
   field?: string;
   filterValues: string[];
-  value: Filter['value'];
-  onChangeValue: (value: Filter['value']) => void;
+  value: T['value'];
+  onChangeValue: (value: T['value']) => void;
   base: Array<FilterableField>;
 };
 
-function ValueSelector({ field, filterValues, value, onChangeValue, base }: ValueSelectorProps) {
+function ValueSelector({ index, field, filterValues, value, onChangeValue, base }: ValueSelectorProps) {
   const [comparator, setComparator] = useState('');
   const [unfilledChecked, setUnfilledChecked] = useState(value === 'Non renseigné');
   if (!field) return <></>;
@@ -369,7 +276,7 @@ function ValueSelector({ field, filterValues, value, onChangeValue, base }: Valu
       <div className="flex">
         <input
           name={name}
-          className={`tailwindui !mt-0 grow ${unfilledChecked ? '!text-gray-400' : ''}`}
+          className={`tailwindui grow ${unfilledChecked ? '!text-gray-400' : ''}`}
           disabled={unfilledChecked}
           type="text"
           value={value || ''}
@@ -389,7 +296,7 @@ function ValueSelector({ field, filterValues, value, onChangeValue, base }: Valu
               onChangeValue(unfilledChecked ? '' : 'Non renseigné');
             }}
           />
-          <label htmlFor="unfilled" className="pt-2 text-xs">
+          <label htmlFor="unfilled" className="text-xs">
             Non renseigné
           </label>
         </div>
@@ -399,13 +306,14 @@ function ValueSelector({ field, filterValues, value, onChangeValue, base }: Valu
 
   if (['date-with-time', 'date', 'duration'].includes(type)) {
     return (
-      <div className="-mx-4 flex flex-wrap">
+      <div className="-mx-4 flex flex-wrap items-stretch">
         <div
-          className={['pl-4', value?.comparator !== 'unfilled' ? 'basis-1/2 pr-2' : 'basis-full pr-4'].join(
-            ' ',
-          )}
+          className={[
+            'pl-4 h-full',
+            value?.comparator !== 'unfilled' ? 'basis-1/2 pr-2' : 'basis-full pr-4',
+          ].join(' ')}
         >
-          <Select
+          {/* <Select
             label=""
             nativeSelectProps={{
               id: name,
@@ -423,18 +331,26 @@ function ValueSelector({ field, filterValues, value, onChangeValue, base }: Valu
                 {opt.label}
               </option>
             ))}
-          </Select>
+          </Select> */}
+          <SelectCustom
+            options={dateOptions}
+            value={dateOptions.find((opt) => opt.value === value?.comparator)}
+            isClearable={!value}
+            onChange={(e) => {
+              if (!e) return setComparator('');
+              setComparator(e.value);
+              onChangeValue({ date: value?.date, comparator: e.value });
+            }}
+          />
         </div>
         {value?.comparator !== 'unfilled' && (
           <div className="basis-1/2 pr-4">
-            <Input
+            <input
               id={name}
-              label=""
-              nativeInputProps={{
-                type: 'date',
-                value: value?.date ? new Date(value?.date).toString() : '',
-                onChange: (e) => onChangeValue({ date: e.target.value, comparator }),
-              }}
+              className="tailwindui"
+              type="date"
+              value={value?.date ? new Date(value?.date).toString() : ''}
+              onChange={(e) => onChangeValue({ date: e.target.value, comparator })}
             />
           </div>
         )}
@@ -453,7 +369,7 @@ function ValueSelector({ field, filterValues, value, onChangeValue, base }: Valu
             !['unfilled', 'between'].includes(value?.comparator) ? 'basis-1/2' : '',
           ].join(' ')}
         >
-          <Select
+          {/* <Select
             label=""
             nativeSelectProps={{
               id: name,
@@ -471,13 +387,23 @@ function ValueSelector({ field, filterValues, value, onChangeValue, base }: Valu
                 {opt.label}
               </option>
             ))}
-          </Select>
+          </Select> */}
+          <SelectCustom
+            options={numberOptions}
+            value={numberOptions.find((opt) => opt.value === value?.comparator)}
+            isClearable={!value}
+            onChange={(e) => {
+              if (!e) return setComparator('');
+              setComparator(e.value);
+              onChangeValue({ number: value?.number, comparator: e.value });
+            }}
+          />
         </div>
         {value?.comparator !== 'unfilled' && (
           <div className={['pr-4', value?.comparator === 'between' ? 'basis-3/12' : 'basis-1/2'].join(' ')}>
             <input
               name={name}
-              className="tailwindui !mt-0"
+              className="tailwindui"
               type="number"
               min="0"
               value={value?.number || ''}
@@ -493,7 +419,7 @@ function ValueSelector({ field, filterValues, value, onChangeValue, base }: Valu
             <div className="basis-3/12 px-4">
               <input
                 name={name}
-                className="tailwindui !mt-0"
+                className="tailwindui"
                 type="number"
                 min="0"
                 value={value?.number2 || ''}
@@ -510,45 +436,86 @@ function ValueSelector({ field, filterValues, value, onChangeValue, base }: Valu
 
   if (['enum', 'multi-choice'].includes(type)) {
     try {
-      return (
-        <Select
-          label=""
-          nativeSelectProps={{
-            id: name,
-            name: name,
-            value: value,
-            // multiple: true,
-            onChange: (e) => onChangeValue(e.target.value),
-          }}
-        >
-          {filterValues.map((_value) => (
-            <option key={_value} value={_value}>
-              {_value}
-            </option>
-          ))}
-        </Select>
-      );
+      // return (
+      //   <Select
+      //     label=""
+      //     nativeSelectProps={{
+      //       id: name,
+      //       name: name,
+      //       value: value,
+      //       // multiple: true,
+      //       onChange: (e) => onChangeValue(e.target.value),
+      //     }}
+      //   >
+      //     {filterValues.map((_value) => (
+      //       <option key={_value} value={_value}>
+      //         {_value}
+      //       </option>
+      //     ))}
+      //   </Select>
+      // );
 
-      // eslint-disable-next-line no-empty
-    } catch (_e) {}
+      return (
+        <SelectCustom
+          options={filterValues.map((_value: string) => ({ label: _value, value: _value }))}
+          value={value?.map((_value: string) => ({ label: _value, value: _value })) || []}
+          getOptionLabel={(f) => f.label}
+          getOptionValue={(f) => f.value}
+          onChange={(newValue) => onChangeValue(newValue?.map((option) => option.value))}
+          isClearable={!value?.length}
+          isMulti
+          inputId={`filter-value-${index}`}
+          classNamePrefix={`filter-value-${index}`}
+          components={{
+            MultiValueContainer: (props) => {
+              if (props.selectProps?.value?.length <= 1) {
+                return <components.MultiValueContainer {...props} />;
+              }
+              const lastValue = props.selectProps?.value?.[props.selectProps?.value?.length - 1]?.value;
+              const isLastValue = props?.data?.value === lastValue;
+              return (
+                <>
+                  <components.MultiValueLabel {...props} />
+                  {!isLastValue && <span className="tw-ml-1 tw-mr-2 tw-inline-block">OU</span>}
+                </>
+              );
+            },
+          }}
+        />
+      );
+    } catch (_e) {
+      console.error(_e);
+    }
     return null;
   }
 
+  // return (
+  //   <Select
+  //     label=""
+  //     nativeSelectProps={{
+  //       id: name,
+  //       name: name,
+  //       value: value,
+  //       onChange: (e) => onChangeValue(e.target.value),
+  //     }}
+  //   >
+  //     {filterValues.map((_value) => (
+  //       <option key={_value} value={_value}>
+  //         {_value}
+  //       </option>
+  //     ))}
+  //   </Select>
+  // );
   return (
-    <Select
-      label=""
-      nativeSelectProps={{
-        id: name,
-        name: name,
-        value: value,
-        onChange: (e) => onChangeValue(e.target.value),
-      }}
-    >
-      {filterValues.map((_value) => (
-        <option key={_value} value={_value}>
-          {_value}
-        </option>
-      ))}
-    </Select>
+    <SelectCustom
+      options={filterValues.map((_value) => ({ label: _value, value: _value }))}
+      value={value ? { label: value, value } : null}
+      getOptionLabel={(f) => f.label}
+      getOptionValue={(f) => f.value}
+      onChange={(f) => onChangeValue(f?.value)}
+      isClearable={!value}
+      inputId={`filter-value-${index}`}
+      classNamePrefix={`filter-value-${index}`}
+    />
   );
 }

@@ -26,10 +26,11 @@ export default function CurrentOwnerConfirm({
   const fei = feis[params.fei_numero!];
   const collecteursProIds = useZustandStore((state) => state.collecteursProIds);
   const entities = useZustandStore((state) => state.entities);
+  const users = useZustandStore((state) => state.users);
   const collecteursPro = collecteursProIds.map((id) => entities[id]);
 
   const nextOwnerEntity = entities[fei.fei_next_owner_entity_id!];
-  const nextOwnerUser = entities[fei.fei_next_owner_user_id!];
+  const nextOwnerUser = users[fei.fei_next_owner_user_id!];
 
   const isTransporting = useMemo(() => {
     return (

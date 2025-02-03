@@ -469,6 +469,7 @@ function AccordionEntreprise({
         .map((entity) => {
           return (
             <div key={entity.id} className="fr-fieldset__element">
+              {/* @ts-expect-error Type 'boolean' is not assignable to type 'true' */}
               <Notice
                 className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
                 style={{
