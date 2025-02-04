@@ -38,7 +38,7 @@ const initialData: State = {
     code_postal: '',
     ville: '',
     prefilled: false,
-    EntityRelatedWithUser: [],
+    EntityRelationsWithUsers: [],
     created_at: new Date(),
     updated_at: new Date(),
     deleted_at: null,
@@ -82,11 +82,11 @@ export default function AdminEntity() {
     },
     {
       tabId: 'Utilisateurs pouvant traiter des fiches pour cette entité',
-      label: `Utilisateurs pouvant traiter des fiches pour cette entité (${entity.EntityRelatedWithUser.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
+      label: `Utilisateurs pouvant traiter des fiches pour cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
     },
     {
       tabId: 'Utilisateurs pouvant envoyer des fiches à cette entité',
-      label: `Utilisateurs pouvant envoyer des fiches à cette entité (${entity.EntityRelatedWithUser.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
+      label: `Utilisateurs pouvant envoyer des fiches à cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
     },
   ];
   if (entity.type === EntityTypes.ETG) {
@@ -364,56 +364,58 @@ function UserWorkingWithOrFor({
 
   return (
     <>
-      {entity.EntityRelatedWithUser.filter((entity) => entity.relation === relation).map((entityRelation) => {
-        const owner = entityRelation.UserRelatedWithEntity;
-        return (
-          <div key={owner.id} className="fr-fieldset__element">
-            <Notice
-              className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
-              style={{
-                boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
-              }}
-              isClosable
-              onClose={() => {
-                fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${owner.id}`, {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: JSON.stringify({
-                    _action: 'delete',
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: owner.id,
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                    relation,
-                  }),
-                  headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                  },
-                })
-                  .then((res) => res.json())
-                  .then(() => {
-                    loadData(entity.id).then((response) => {
-                      if (response.data) setAdminEntityResponse(response.data!);
+      {entity.EntityRelationsWithUsers.filter((entity) => entity.relation === relation).map(
+        (entityRelation) => {
+          const owner = entityRelation.UserRelatedWithEntity;
+          return (
+            <div key={owner.id} className="fr-fieldset__element">
+              <Notice
+                className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
+                style={{
+                  boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
+                }}
+                isClosable
+                onClose={() => {
+                  fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${owner.id}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      _action: 'delete',
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: owner.id,
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+                      relation,
+                    }),
+                    headers: {
+                      Accept: 'application/json',
+                      'Content-Type': 'application/json',
+                    },
+                  })
+                    .then((res) => res.json())
+                    .then(() => {
+                      loadData(entity.id).then((response) => {
+                        if (response.data) setAdminEntityResponse(response.data!);
+                      });
                     });
-                  });
-              }}
-              title={
-                <Link
-                  to={`/app/tableau-de-bord/admin/user/${owner.id}`}
-                  className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                >
-                  {owner.prenom} {owner.nom_de_famille}
-                  <br />
-                  {owner.email}
-                  <br />
-                  {owner.roles.join(', ')}
-                  <br />
-                  {owner.code_postal} {owner.ville}
-                </Link>
-              }
-            />
-          </div>
-        );
-      })}
+                }}
+                title={
+                  <Link
+                    to={`/app/tableau-de-bord/admin/user/${owner.id}`}
+                    className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                  >
+                    {owner.prenom} {owner.nom_de_famille}
+                    <br />
+                    {owner.email}
+                    <br />
+                    {owner.roles.join(', ')}
+                    <br />
+                    {owner.code_postal} {owner.ville}
+                  </Link>
+                }
+              />
+            </div>
+          );
+        },
+      )}
       <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
         <Table
           fixed

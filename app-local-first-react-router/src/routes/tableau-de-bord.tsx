@@ -65,11 +65,6 @@ export default function TableauDeBordIndex() {
     },
   );
 
-  console.log({
-    feiActivesForSvi,
-    feisDoneForSvi,
-  });
-
   const hackForCounterDoubleEffectInDevMode = useRef(false);
   useEffect(() => {
     if (hackForCounterDoubleEffectInDevMode.current) {

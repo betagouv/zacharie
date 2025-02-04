@@ -60,8 +60,6 @@ export async function loadFeis() {
 
     useZustandStore.setState({ feis: allFeis });
 
-    console.log('feisNumerosToLoadAgain', feisNumerosToLoadAgain);
-
     const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/fei/done`, {
       method: 'GET',
       credentials: 'include',
@@ -76,8 +74,6 @@ export async function loadFeis() {
     if (!response.ok) {
       return;
     }
-
-    console.log('responseDone', responseDone);
 
     useZustandStore.setState({
       feisDone: responseDone.data.feisDone,
