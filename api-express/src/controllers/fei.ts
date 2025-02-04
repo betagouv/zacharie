@@ -647,70 +647,65 @@ router.get(
         svi_signed_at: null,
         fei_next_owner_user_id: null,
         fei_next_owner_entity_id: null,
-        AND: [
+        svi_assigned_at: null,
+        intermediaire_closed_at: null,
+        OR: [
           {
-            OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
+            fei_current_owner_user_id: user.id,
           },
           {
-            OR: [
+            FeiCurrentEntity: {
+              EntityRelationsWithUsers: {
+                some: {
+                  owner_id: user.id,
+                  relation: EntityRelationType.WORKING_FOR,
+                },
+              },
+            },
+          },
+          {
+            AND: [
               {
-                fei_current_owner_user_id: user.id,
+                fei_current_owner_role: UserRoles.ETG,
               },
               {
                 FeiCurrentEntity: {
-                  EntityRelationsWithUsers: {
+                  AsEtgRelationsWithOtherEntities: {
                     some: {
-                      owner_id: user.id,
-                      relation: EntityRelationType.WORKING_FOR,
+                      EntityRelatedWithETG: {
+                        EntityRelationsWithUsers: {
+                          some: {
+                            owner_id: user.id,
+                            relation: EntityRelationType.WORKING_FOR,
+                          },
+                        },
+                      },
                     },
                   },
                 },
               },
+            ],
+          },
+          {
+            AND: [
               {
-                AND: [
-                  {
-                    fei_current_owner_role: UserRoles.ETG,
-                  },
-                  {
-                    FeiCurrentEntity: {
-                      AsEtgRelationsWithOtherEntities: {
-                        some: {
-                          EntityRelatedWithETG: {
-                            EntityRelationsWithUsers: {
-                              some: {
-                                owner_id: user.id,
-                                relation: EntityRelationType.WORKING_FOR,
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                ],
+                fei_next_owner_role: UserRoles.COLLECTEUR_PRO,
               },
               {
-                AND: [
-                  {
-                    fei_next_owner_role: UserRoles.COLLECTEUR_PRO,
-                  },
-                  {
-                    FeiNextEntity: {
-                      RelationsWithEtgs: {
-                        some: {
-                          ETGRelatedWithEntity: {
-                            EntityRelationsWithUsers: {
-                              some: {
-                                owner_id: user.id,
-                                relation: EntityRelationType.WORKING_FOR,
-                              },
-                            },
+                FeiNextEntity: {
+                  RelationsWithEtgs: {
+                    some: {
+                      ETGRelatedWithEntity: {
+                        EntityRelationsWithUsers: {
+                          some: {
+                            owner_id: user.id,
+                            relation: EntityRelationType.WORKING_FOR,
                           },
                         },
                       },
                     },
                   },
-                ],
+                },
               },
             ],
           },
@@ -732,47 +727,42 @@ router.get(
       where: {
         deleted_at: null,
         numero: { notIn: feisUnderMyResponsability.map((fei) => fei.numero) },
-        AND: [
+        svi_assigned_at: null,
+        intermediaire_closed_at: null,
+        OR: [
           {
-            OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
+            fei_next_owner_user_id: user.id,
           },
           {
-            OR: [
+            FeiNextEntity: {
+              EntityRelationsWithUsers: {
+                some: {
+                  owner_id: user.id,
+                  relation: EntityRelationType.WORKING_FOR,
+                },
+              },
+            },
+          },
+          {
+            AND: [
               {
-                fei_next_owner_user_id: user.id,
+                fei_next_owner_role: UserRoles.ETG,
               },
               {
                 FeiNextEntity: {
-                  EntityRelationsWithUsers: {
+                  RelationsWithEtgs: {
                     some: {
-                      owner_id: user.id,
-                      relation: EntityRelationType.WORKING_FOR,
-                    },
-                  },
-                },
-              },
-              {
-                AND: [
-                  {
-                    fei_next_owner_role: UserRoles.ETG,
-                  },
-                  {
-                    FeiNextEntity: {
-                      RelationsWithEtgs: {
-                        some: {
-                          EntityRelatedWithETG: {
-                            EntityRelationsWithUsers: {
-                              some: {
-                                owner_id: user.id,
-                                relation: EntityRelationType.WORKING_FOR,
-                              },
-                            },
+                      EntityRelatedWithETG: {
+                        EntityRelationsWithUsers: {
+                          some: {
+                            owner_id: user.id,
+                            relation: EntityRelationType.WORKING_FOR,
                           },
                         },
                       },
                     },
                   },
-                ],
+                },
               },
             ],
           },
@@ -793,6 +783,8 @@ router.get(
     const feisOngoing = await prisma.fei.findMany({
       where: {
         deleted_at: null,
+        svi_assigned_at: null,
+        intermediaire_closed_at: null,
         numero: {
           notIn: [
             ...feisUnderMyResponsability.map((fei) => fei.numero),
@@ -801,9 +793,6 @@ router.get(
         },
         // fei_current_owner_user_id: { not: user.id },
         AND: [
-          {
-            OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
-          },
           // {
           //   AND: [
           //     {
