@@ -555,13 +555,6 @@ router.get(
       },
     });
 
-    console.log(
-      'feisDone',
-      JSON.stringify(feisDone, null, 2),
-      feisDone.map((fei) => fei.numero).length,
-      feisDone.map((fei) => fei.numero),
-    );
-
     res.status(200).send({
       ok: true,
       data: {
@@ -578,7 +571,6 @@ router.get(
   '/:fei_numero',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.log('get fei', req.params.fei_numero);
     const now = Date.now();
     const fei = await prisma.fei.findUnique({
       where: {
@@ -613,7 +605,7 @@ router.get(
         },
       },
     });
-    console.log('duration', Date.now() - now);
+
     if (!fei) {
       res.status(404).send({ ok: false, data: null, error: 'Unauthorized' });
       return;
