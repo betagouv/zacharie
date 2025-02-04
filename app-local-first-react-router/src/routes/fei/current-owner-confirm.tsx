@@ -88,6 +88,10 @@ export default function CurrentOwnerConfirm({
     return null;
   }
 
+  if (fei.intermediaire_closed_at || fei.svi_assigned_at) {
+    return null;
+  }
+
   function handlePriseEnCharge({
     transfer,
     action,
