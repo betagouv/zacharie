@@ -516,6 +516,26 @@ router.get(
                 },
               },
               {
+                FeiIntermediaires: {
+                  some: {
+                    FeiIntermediaireEntity: {
+                      ETGRelatedWithEntity: {
+                        some: {
+                          ETGRelatedWithEntity: {
+                            EntityRelatedWithUser: {
+                              some: {
+                                owner_id: user.id,
+                                relation: EntityRelationType.WORKING_FOR,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              {
                 FeiSviEntity: {
                   EntityRelatedWithUser: {
                     some: {
