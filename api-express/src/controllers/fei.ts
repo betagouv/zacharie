@@ -472,88 +472,122 @@ router.get(
     //   return;
     // }
 
+    // const feisDone = await prisma.fei.findMany({
+    //   where: {
+    //     deleted_at: null,
+    //     AND: [
+    //       {
+    //         OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
+    //       },
+    //       {
+    //         OR: [
+    //           { examinateur_initial_user_id: user.id },
+    //           { premier_detenteur_user_id: user.id },
+    //           {
+    //             FeiPremierDetenteurEntity: {
+    //               EntityRelatedWithUsers: {
+    //                 some: {
+    //                   owner_id: user.id,
+    //                   relation: EntityRelationType.WORKING_FOR,
+    //                 },
+    //               },
+    //             },
+    //           },
+    //           { svi_user_id: user.id },
+    //           {
+    //             FeiIntermediaires: {
+    //               some: {
+    //                 fei_intermediaire_user_id: user.id,
+    //               },
+    //             },
+    //           },
+    //           {
+    //             FeiIntermediaires: {
+    //               some: {
+    //                 FeiIntermediaireEntity: {
+    //                   EntityRelatedWithUsers: {
+    //                     some: {
+    //                       owner_id: user.id,
+    //                       relation: EntityRelationType.WORKING_FOR,
+    //                     },
+    //                   },
+    //                 },
+    //               },
+    //             },
+    //           },
+    //           {
+    //             FeiIntermediaires: {
+    //               some: {
+    //                 FeiIntermediaireEntity: {
+    //                   ETGRelatedWithEntity: {
+    //                     some: {
+    //                       ETGRelatedWithEntity: {
+    //                         EntityRelatedWithUsers: {
+    //                           some: {
+    //                             owner_id: user.id,
+    //                             relation: EntityRelationType.WORKING_FOR,
+    //                           },
+    //                         },
+    //                       },
+    //                     },
+    //                   },
+    //                 },
+    //               },
+    //             },
+    //           },
+    //           {
+    //             FeiSviEntity: {
+    //               EntityRelatedWithUsers: {
+    //                 some: {
+    //                   owner_id: user.id,
+    //                   relation: EntityRelationType.WORKING_FOR,
+    //                 },
+    //               },
+    //             },
+    //           },
+    //         ],
+    //       },
+    //     ],
+    //   },
+    //   select: feiDoneSelect,
+    //   orderBy: {
+    //     svi_assigned_at: 'desc',
+    //   },
+    // });
+
     const feisDone = await prisma.fei.findMany({
       where: {
-        deleted_at: null,
-        AND: [
-          {
-            OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
-          },
-          {
-            OR: [
-              { examinateur_initial_user_id: user.id },
-              { premier_detenteur_user_id: user.id },
-              {
-                FeiPremierDetenteurEntity: {
-                  EntityRelatedWithUser: {
-                    some: {
-                      owner_id: user.id,
-                      relation: EntityRelationType.WORKING_FOR,
-                    },
-                  },
-                },
-              },
-              { svi_user_id: user.id },
-              {
-                FeiIntermediaires: {
-                  some: {
-                    fei_intermediaire_user_id: user.id,
-                  },
-                },
-              },
-              {
-                FeiIntermediaires: {
-                  some: {
-                    FeiIntermediaireEntity: {
-                      EntityRelatedWithUser: {
-                        some: {
-                          owner_id: user.id,
-                          relation: EntityRelationType.WORKING_FOR,
-                        },
+        FeiIntermediaires: {
+          some: {
+            FeiIntermediaireEntity: {
+              ETGsRelatedWithMeAsEntity: {
+                some: {
+                  ETGRelatedWithEntity: {
+                    EntityRelatedWithUsers: {
+                      some: {
+                        owner_id: user.id,
+                        relation: EntityRelationType.WORKING_FOR,
                       },
                     },
                   },
                 },
               },
-              {
-                FeiIntermediaires: {
-                  some: {
-                    FeiIntermediaireEntity: {
-                      ETGRelatedWithEntity: {
-                        some: {
-                          ETGRelatedWithEntity: {
-                            EntityRelatedWithUser: {
-                              some: {
-                                owner_id: user.id,
-                                relation: EntityRelationType.WORKING_FOR,
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-              {
-                FeiSviEntity: {
-                  EntityRelatedWithUser: {
-                    some: {
-                      owner_id: user.id,
-                      relation: EntityRelationType.WORKING_FOR,
-                    },
-                  },
-                },
-              },
-            ],
+            },
           },
-        ],
+        },
       },
+
       select: feiDoneSelect,
       orderBy: {
         svi_assigned_at: 'desc',
       },
     });
+
+    console.log(
+      'feisDone',
+      feisDone.map((fei) => fei.numero).length,
+      feisDone.map((fei) => fei.numero),
+    );
 
     res.status(200).send({
       ok: true,
@@ -572,6 +606,7 @@ router.get(
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.log('get fei', req.params.fei_numero);
+    const now = Date.now();
     const fei = await prisma.fei.findUnique({
       where: {
         numero: req.params.fei_numero,
@@ -605,6 +640,7 @@ router.get(
         },
       },
     });
+    console.log('duration', Date.now() - now);
     if (!fei) {
       res.status(404).send({ ok: false, data: null, error: 'Unauthorized' });
       return;
@@ -657,7 +693,7 @@ router.get(
               },
               {
                 FeiCurrentEntity: {
-                  EntityRelatedWithUser: {
+                  EntityRelatedWithUsers: {
                     some: {
                       owner_id: user.id,
                       relation: EntityRelationType.WORKING_FOR,
@@ -672,10 +708,10 @@ router.get(
                   },
                   {
                     FeiCurrentEntity: {
-                      EntityRelatedWithETG: {
+                      EntitiesRelatedWithMeAsETG: {
                         some: {
                           EntityRelatedWithETG: {
-                            EntityRelatedWithUser: {
+                            EntityRelatedWithUsers: {
                               some: {
                                 owner_id: user.id,
                                 relation: EntityRelationType.WORKING_FOR,
@@ -695,10 +731,10 @@ router.get(
                   },
                   {
                     FeiNextEntity: {
-                      ETGRelatedWithEntity: {
+                      ETGsRelatedWithMeAsEntity: {
                         some: {
                           ETGRelatedWithEntity: {
-                            EntityRelatedWithUser: {
+                            EntityRelatedWithUsers: {
                               some: {
                                 owner_id: user.id,
                                 relation: EntityRelationType.WORKING_FOR,
@@ -742,7 +778,7 @@ router.get(
               },
               {
                 FeiNextEntity: {
-                  EntityRelatedWithUser: {
+                  EntityRelatedWithUsers: {
                     some: {
                       owner_id: user.id,
                       relation: EntityRelationType.WORKING_FOR,
@@ -757,10 +793,10 @@ router.get(
                   },
                   {
                     FeiNextEntity: {
-                      ETGRelatedWithEntity: {
+                      ETGsRelatedWithMeAsEntity: {
                         some: {
                           EntityRelatedWithETG: {
-                            EntityRelatedWithUser: {
+                            EntityRelatedWithUsers: {
                               some: {
                                 owner_id: user.id,
                                 relation: EntityRelationType.WORKING_FOR,
@@ -818,7 +854,7 @@ router.get(
           //     { fei_next_owner_entity_id: null },
           //     {
           //       FeiNextEntity: {
-          //         EntityRelatedWithUser: {
+          //         EntityRelatedWithUsers: {
           //           none: {
           //             owner_id: user.id,
           //             relation: EntityRelationType.WORKING_FOR,
@@ -838,7 +874,7 @@ router.get(
               },
               {
                 FeiPremierDetenteurEntity: {
-                  EntityRelatedWithUser: {
+                  EntityRelatedWithUsers: {
                     some: {
                       owner_id: user.id,
                       relation: EntityRelationType.WORKING_FOR,
@@ -857,7 +893,7 @@ router.get(
                 FeiIntermediaires: {
                   some: {
                     FeiIntermediaireEntity: {
-                      EntityRelatedWithUser: {
+                      EntityRelatedWithUsers: {
                         some: {
                           owner_id: user.id,
                           relation: EntityRelationType.WORKING_FOR,

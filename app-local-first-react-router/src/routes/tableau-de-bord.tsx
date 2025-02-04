@@ -25,10 +25,9 @@ async function loadData() {
 
 export default function TableauDeBordIndex() {
   const navigate = useNavigate();
-  const data = useZustandStore((state) => state);
   const user = useMostFreshUser('tableau de bord index')!;
-  const entities = data.entities!;
-  const feisDone = data.feisDone!;
+  const entities = useZustandStore((state) => state.entities);
+  const feisDone = useZustandStore((state) => state.feisDone);
   const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();
   const { onExportToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {

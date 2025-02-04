@@ -24,7 +24,7 @@ export const entityAdminInclude = {
   EntityRelatedWithUser: {
     select: {
       relation: true,
-      UserRelatedWithEntity: {
+      EntityRelatedWithUsers: {
         select: {
           id: true,
           email: true,

@@ -371,7 +371,7 @@ router.get(
       Fei: {
         svi_assigned_at: { not: null },
         FeiSviEntity: {
-          EntityRelatedWithUser: {
+          EntityRelatedWithUsers: {
             some: {
               owner_id: req.user!.id,
               relation: EntityRelationType.WORKING_FOR,

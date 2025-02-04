@@ -30,6 +30,8 @@ export async function loadFeis() {
 
     const allFeis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires> =
       useZustandStore.getState().feis;
+    const feisNumerosToLoadAgain: Array<FeiWithIntermediaires['numero']> = [];
+
     for (const fei of [
       ...response.data.feisOngoing,
       ...response.data.feisToTake,
@@ -38,8 +40,15 @@ export async function loadFeis() {
       const localFei = useZustandStore.getState().feis[fei.numero];
       if (!localFei) {
         allFeis[fei.numero] = fei;
+        feisNumerosToLoadAgain.push(fei.numero);
         continue;
       }
+      // optimize loading the feis
+
+      if (dayjs(localFei.updated_at).diff(fei.updated_at) > 0) {
+        feisNumerosToLoadAgain.push(fei.numero);
+      }
+
       const newestFei = dayjs(localFei.updated_at).diff(fei.updated_at) > 0 ? localFei : fei;
       const oldestFei = dayjs(localFei.updated_at).diff(fei.updated_at) > 0 ? fei : localFei;
 
@@ -51,10 +60,7 @@ export async function loadFeis() {
 
     useZustandStore.setState({ feis: allFeis });
 
-    for (const fei of Object.values(allFeis)) {
-      await new Promise((resolve) => setTimeout(resolve, 100)); // to avoid block main thread
-      loadFei(fei.numero);
-    }
+    console.log('feisNumerosToLoadAgain', feisNumerosToLoadAgain);
 
     const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/fei/done`, {
       method: 'GET',
@@ -71,9 +77,16 @@ export async function loadFeis() {
       return;
     }
 
+    console.log('responseDone', responseDone);
+
     useZustandStore.setState({
       feisDone: responseDone.data.feisDone,
     });
+
+    for (const fei_numero of feisNumerosToLoadAgain) {
+      await new Promise((resolve) => setTimeout(resolve, 100)); // to avoid block main thread
+      loadFei(fei_numero);
+    }
 
     console.log('chargement feis fini');
   } catch (error) {
