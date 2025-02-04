@@ -17,32 +17,44 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import CollecteurCarcassePreview from './collecteur-carcasse-preview';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
 
 export default function FEICurrentIntermediaire() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const state = useZustandStore((state) => state);
-  const updateFeiIntermediaire = state.updateFeiIntermediaire;
-  const addLog = state.addLog;
-  const fei = state.feis[params.fei_numero!];
-  const originalCarcasses = (state.carcassesIdsByFei[params.fei_numero!] || [])
-    .map((cId) => state.carcasses[cId])
+  const updateFeiIntermediaire = useZustandStore((state) => state.updateFeiIntermediaire);
+  const updateFei = useZustandStore((state) => state.updateFei);
+  const addLog = useZustandStore((state) => state.addLog);
+  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
+  const feis = useZustandStore((state) => state.feis);
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const carcasses = useZustandStore((state) => state.carcasses);
+  const carcassesIntermediaires = useZustandStore((state) => state.carcassesIntermediaires);
+  const carcassesIntermediairesByIntermediaire = useZustandStore(
+    (state) => state.carcassesIntermediairesByIntermediaire,
+  );
+  const entities = useZustandStore((state) => state.entities);
+  const etgsIds = useZustandStore((state) => state.etgsIds);
+  const users = useZustandStore((state) => state.users);
+  const fei = feis[params.fei_numero!];
+  const originalCarcasses = (carcassesIdsByFei[params.fei_numero!] || [])
+    .map((cId) => carcasses[cId])
     .filter((c) => !c.deleted_at);
-  const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
+  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
 
   const [intermediaireIndex, setIntermediaireIndex] = useState(0);
   const intermediaire = intermediaires[intermediaireIndex];
 
   const intermediaireCarcasses = useMemo(() => {
-    return [...new Set(state.carcassesIntermediairesByIntermediaire[intermediaire?.id] || [])]
+    return [...new Set(carcassesIntermediairesByIntermediaire[intermediaire?.id] || [])]
       .map(
         (fei_numero__bracelet__intermediaire_id) =>
-          state.carcassesIntermediaires[fei_numero__bracelet__intermediaire_id],
+          carcassesIntermediaires[fei_numero__bracelet__intermediaire_id],
       )
       .sort((carcasseIntermediaireA, carcasseIntermediaireB) => {
         // sort by espece then by numero_bracelet
-        const carcasseA = state.carcasses[carcasseIntermediaireA.zacharie_carcasse_id]!;
-        const carcasseB = state.carcasses[carcasseIntermediaireB.zacharie_carcasse_id]!;
+        const carcasseA = carcasses[carcasseIntermediaireA.zacharie_carcasse_id]!;
+        const carcasseB = carcasses[carcasseIntermediaireB.zacharie_carcasse_id]!;
         if (carcasseA.espece === carcasseB.espece) {
           return carcasseA.numero_bracelet.localeCompare(carcasseB.numero_bracelet);
         }
@@ -52,18 +64,13 @@ export default function FEICurrentIntermediaire() {
         return carcasseA.type!.localeCompare(carcasseB.type!);
       })
       .filter((c) => c != null);
-  }, [
-    intermediaire,
-    state.carcassesIntermediairesByIntermediaire,
-    state.carcassesIntermediaires,
-    state.carcasses,
-  ]);
+  }, [intermediaire, carcassesIntermediairesByIntermediaire, carcassesIntermediaires, carcasses]);
 
   const isEtgWorkingFor = useMemo(() => {
     if (fei.fei_current_owner_role === UserRoles.ETG && !!fei.fei_current_owner_entity_id) {
       if (user.roles.includes(UserRoles.ETG)) {
-        if (state.etgsIds.includes(fei.fei_current_owner_entity_id)) {
-          const etg = state.entities[fei.fei_current_owner_entity_id];
+        if (etgsIds.includes(fei.fei_current_owner_entity_id)) {
+          const etg = entities[fei.fei_current_owner_entity_id];
           if (etg.relation === 'WORKING_FOR') {
             return true;
           }
@@ -71,7 +78,7 @@ export default function FEICurrentIntermediaire() {
       }
     }
     return false;
-  }, [fei, user, state]);
+  }, [fei, user, etgsIds, entities]);
 
   const canEdit = useMemo(() => {
     if (isEtgWorkingFor) {
@@ -112,7 +119,7 @@ export default function FEICurrentIntermediaire() {
         intermediaireCarcasse.numero_bracelet,
         intermediaire.id,
       );
-      const carcasse = state.carcasses[intermediaireCarcasse.zacharie_carcasse_id];
+      const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
       if (carcasse.deleted_at) {
         continue;
       }
@@ -146,7 +153,7 @@ export default function FEICurrentIntermediaire() {
       carcassesManquantes: Object.values(carcassesManquantes),
       // carcassesToCheck: Object.values(carcassesToCheck),
     };
-  }, [intermediaireCarcasses, intermediaire, fei, state.carcasses]);
+  }, [intermediaireCarcasses, intermediaire, fei, carcasses]);
 
   const carcassesApprovedSorted = useMemo(() => {
     return carcassesSorted.carcassesApproved.sort(sortCarcassesApproved);
@@ -193,6 +200,9 @@ export default function FEICurrentIntermediaire() {
     if (!intermediaire?.check_finished_at) {
       return false;
     }
+    if (carcassesSorted.carcassesApproved.length === 0) {
+      return false;
+    }
     if (isEtgWorkingFor) {
       return true;
     }
@@ -204,7 +214,7 @@ export default function FEICurrentIntermediaire() {
       return false;
     }
     return true;
-  }, [fei, user, intermediaire, intermediaires, isEtgWorkingFor]);
+  }, [fei, user, intermediaire, intermediaires, isEtgWorkingFor, carcassesSorted.carcassesApproved.length]);
 
   // const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
   const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(true);
@@ -230,12 +240,10 @@ export default function FEICurrentIntermediaire() {
     return true;
   }, [originalCarcasses]);
 
-  function handleCheckFinishedAt(e: React.FormEvent<HTMLFormElement>) {
+  function handleCheckFinishedAt(checkFinishedAt: Date) {
     if (!intermediaire) {
       return;
     }
-    e.preventDefault();
-    const checkFinishedAt = e.currentTarget[Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at].value;
     const nextFeiIntermediaire = {
       check_finished_at: dayjs(checkFinishedAt).toDate(),
     };
@@ -251,6 +259,33 @@ export default function FEICurrentIntermediaire() {
       zacharie_carcasse_id: null,
       carcasse_intermediaire_id: null,
     });
+    if (!carcassesSorted.carcassesApproved.length) {
+      updateFei(fei.numero, {
+        intermediaire_closed_at: checkFinishedAt,
+        intermediaire_closed_by_entity_id: intermediaire.fei_intermediaire_entity_id,
+        intermediaire_closed_by_user_id: intermediaire.fei_intermediaire_user_id,
+      });
+    } else {
+      updateFei(fei.numero, {
+        intermediaire_closed_at: null,
+        intermediaire_closed_by_entity_id: null,
+        intermediaire_closed_by_user_id: null,
+      });
+    }
+  }
+
+  function handleBlurCheckFinishedAt(e: React.FormEvent<HTMLFormElement>) {
+    if (!intermediaire) {
+      return;
+    }
+    e.preventDefault();
+    const checkFinishedAt = e.currentTarget[Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at].value;
+    handleCheckFinishedAt(dayjs(checkFinishedAt).toDate());
+  }
+
+  function handleSubmitCheckFinishedAt(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    handleCheckFinishedAt(dayjs().toDate());
   }
 
   const showCollecteurInterface =
@@ -289,7 +324,7 @@ export default function FEICurrentIntermediaire() {
                           className="fr-breadcrumb__link"
                           aria-current={_intermediaire.id === intermediaire?.id ? 'step' : false}
                         >
-                          {state.entities[_intermediaire.fei_intermediaire_entity_id!]?.nom_d_usage}
+                          {entities[_intermediaire.fei_intermediaire_entity_id!]?.nom_d_usage}
                         </button>
                       </li>
                     );
@@ -305,8 +340,8 @@ export default function FEICurrentIntermediaire() {
           label={<>Identité de l'intermédaire {canEdit ? <PencilStrikeThrough /> : ''}</>}
         >
           <EntityNotEditable
-            user={state.users[intermediaire.fei_intermediaire_user_id!]!}
-            entity={state.entities[intermediaire.fei_intermediaire_entity_id!]!}
+            user={users[intermediaire.fei_intermediaire_user_id!]!}
+            entity={entities[intermediaire.fei_intermediaire_entity_id!]!}
           />
         </Accordion>
         {canEdit ? (
@@ -397,7 +432,7 @@ export default function FEICurrentIntermediaire() {
               </p>
             </div>
             {intermediaireCarcasses.map((intermediaireCarcasse) => {
-              const carcasse = state.carcasses[intermediaireCarcasse.zacharie_carcasse_id];
+              const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
               return (
                 <Fragment key={carcasse.numero_bracelet}>
                   <CarcasseIntermediaireComp
@@ -485,8 +520,8 @@ export default function FEICurrentIntermediaire() {
           <form
             method="POST"
             id="form_intermediaire_check_finished_at"
-            onBlur={handleCheckFinishedAt}
-            onSubmit={handleCheckFinishedAt}
+            onBlur={handleBlurCheckFinishedAt}
+            onSubmit={handleSubmitCheckFinishedAt}
           >
             <div className={['fr-fieldset__element', canEdit ? '' : 'pointer-events-none'].join(' ')}>
               <Checkbox
@@ -512,6 +547,23 @@ export default function FEICurrentIntermediaire() {
             </div>
             <div className={['fr-fieldset__element', canEdit ? '' : 'pointer-events-none'].join(' ')}>
               <PriseEnChargeInput
+                key={JSON.stringify(intermediaire.check_finished_at || '')}
+                hintText={
+                  canEdit ? (
+                    <button
+                      className="inline-block"
+                      type="button"
+                      onClick={() => {
+                        handleCheckFinishedAt(dayjs().toDate());
+                      }}
+                    >
+                      <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
+                      maintenant
+                    </button>
+                  ) : (
+                    "Cette date vaut date d'approbation de mise sur le marché"
+                  )
+                }
                 label={
                   carcassesSorted.carcassesApproved.length > 0
                     ? 'Date de prise en charge'
@@ -544,24 +596,44 @@ export default function FEICurrentIntermediaire() {
                 }}
               />
             </div>
-            {!intermediaire.check_finished_at && (
+            <div className="fr-fieldset__element">
+              <Button type="submit" disabled={!canEdit}>
+                Enregistrer
+              </Button>
+            </div>
+            {!carcassesApprovedSorted.length && fei.intermediaire_closed_at && (
               <div className="fr-fieldset__element">
-                <Button type="submit" disabled={!canEdit}>
-                  Enregistrer
+                <Alert
+                  severity="info"
+                  description="Vous n'avez pas pris en charge de carcasse acceptée, la fiche est donc clôturée."
+                  title="Aucune carcasse acceptée"
+                />
+                <Button
+                  className="mt-4"
+                  linkProps={{
+                    to: `/app/tableau-de-bord/`,
+                  }}
+                >
+                  Voir toutes mes fiches
                 </Button>
               </div>
             )}
           </form>
         </Accordion>
-        {needSelectNextUser && (
-          <div className="z-50 mt-8 flex flex-col bg-white pt-4 md:px-3 md:w-auto md:items-start [&_ul]:md:min-w-96">
-            <SelectNextOwnerForPremierDetenteurOrIntermediaire calledFrom="intermediaire-next-owner" />
-          </div>
-        )}
+        <Accordion
+          titleAs="h3"
+          label={`Sélection du prochain destinataire`}
+          defaultExpanded
+          key={intermediaire?.id + needSelectNextUser}
+        >
+          <SelectNextOwnerForPremierDetenteurOrIntermediaire
+            calledFrom="intermediaire-next-owner"
+            disabled={!needSelectNextUser}
+          />
+        </Accordion>
       </>
     );
   }
-
   return (
     <>
       <Accordion

@@ -14,8 +14,10 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
   calledFrom,
+  disabled,
 }: {
   calledFrom: 'premier-detenteur-need-select-next' | 'current-owner-transfer' | 'intermediaire-next-owner';
+  disabled?: boolean;
 }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
@@ -189,8 +191,12 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
       <form
         id="select-next-owner"
         method="POST"
+        className={disabled ? 'opacity-50 pointer-events-none' : ''}
         onSubmit={(event) => {
           event.preventDefault();
+          if (disabled) {
+            return;
+          }
           const nextFei = {
             fei_next_owner_entity_id: nextOwnerValue,
             fei_next_owner_role: nextRole,

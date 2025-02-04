@@ -27,6 +27,7 @@ export function getFeisSorted(): FeiSorted {
     // FEI UNDER MY RESPONSABILITY
     if (
       !fei.automatic_closed_at &&
+      !fei.intermediaire_closed_at &&
       !fei.svi_assigned_at &&
       !fei.svi_signed_at &&
       !fei.fei_next_owner_user_id &&
@@ -66,7 +67,7 @@ export function getFeisSorted(): FeiSorted {
       }
     }
     // FEI TO TAKE
-    if (!fei.svi_assigned_at) {
+    if (!fei.svi_assigned_at && !fei.intermediaire_closed_at) {
       if (fei.fei_next_owner_user_id === user.id) {
         feisSorted.feisToTake.push(fei);
         // if (debug) console.log('5');
@@ -108,7 +109,7 @@ export function getFeisSorted(): FeiSorted {
       }
     }
     // FEI ONGOING
-    if (!fei.svi_assigned_at) {
+    if (!fei.svi_assigned_at && !fei.intermediaire_closed_at) {
       if (fei.examinateur_initial_user_id === user.id) {
         feisSorted.feisOngoing.push(fei);
         // if (debug) console.log('9');

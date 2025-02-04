@@ -290,7 +290,7 @@ export default function TableauDeBordIndex() {
                               );
                             })}
                           </>,
-                          dayjs(fei.svi_assigned_at).format('DD/MM/YYYY à HH:mm'),
+                          fei.svi_assigned_at ? dayjs(fei.svi_assigned_at).format('DD/MM/YYYY à HH:mm') : '',
                         ],
                       }))}
                   />

@@ -24,6 +24,10 @@ export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarc
 export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
   const countCarcassesByEspece = getCountCarcassesByEspece(carcasses);
 
+  if (!Object.keys(countCarcassesByEspece).length) {
+    return ['Pas de carcasse acceptée'];
+  }
+
   return Object.entries(countCarcassesByEspece).map(([espece, { carcasses, nombre_d_animaux }]) => {
     const isLot = nombre_d_animaux >= carcasses; // look at the code above to understand this
     const withS = carcasses === 1 ? '' : 's';

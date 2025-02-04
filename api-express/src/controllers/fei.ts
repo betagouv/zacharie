@@ -241,6 +241,24 @@ router.post(
   *
   * *
 
+  Intermédiaire
+
+  */
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_at)) {
+      nextFei.intermediaire_closed_at = body.intermediaire_closed_at || null;
+    }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_user_id)) {
+      nextFei.intermediaire_closed_by_user_id = body.intermediaire_closed_by_user_id || null;
+    }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_entity_id)) {
+      nextFei.intermediaire_closed_by_entity_id = body.intermediaire_closed_by_entity_id || null;
+    }
+
+    /*
+  *
+  *
+  * *
+
   SVI
 
   */
@@ -457,38 +475,16 @@ router.get(
     const feisDone = await prisma.fei.findMany({
       where: {
         deleted_at: null,
-        svi_assigned_at: { not: null },
-        OR: [
+        AND: [
           {
-            examinateur_initial_user_id: user.id,
+            OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
           },
           {
-            premier_detenteur_user_id: user.id,
-          },
-          {
-            FeiPremierDetenteurEntity: {
-              EntityRelatedWithUser: {
-                some: {
-                  owner_id: user.id,
-                  relation: EntityRelationType.WORKING_FOR,
-                },
-              },
-            },
-          },
-          {
-            svi_user_id: user.id,
-          },
-          {
-            FeiIntermediaires: {
-              some: {
-                fei_intermediaire_user_id: user.id,
-              },
-            },
-          },
-          {
-            FeiIntermediaires: {
-              some: {
-                FeiIntermediaireEntity: {
+            OR: [
+              { examinateur_initial_user_id: user.id },
+              { premier_detenteur_user_id: user.id },
+              {
+                FeiPremierDetenteurEntity: {
                   EntityRelatedWithUser: {
                     some: {
                       owner_id: user.id,
@@ -497,17 +493,39 @@ router.get(
                   },
                 },
               },
-            },
-          },
-          {
-            FeiSviEntity: {
-              EntityRelatedWithUser: {
-                some: {
-                  owner_id: user.id,
-                  relation: EntityRelationType.WORKING_FOR,
+              { svi_user_id: user.id },
+              {
+                FeiIntermediaires: {
+                  some: {
+                    fei_intermediaire_user_id: user.id,
+                  },
                 },
               },
-            },
+              {
+                FeiIntermediaires: {
+                  some: {
+                    FeiIntermediaireEntity: {
+                      EntityRelatedWithUser: {
+                        some: {
+                          owner_id: user.id,
+                          relation: EntityRelationType.WORKING_FOR,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              {
+                FeiSviEntity: {
+                  EntityRelatedWithUser: {
+                    some: {
+                      owner_id: user.id,
+                      relation: EntityRelationType.WORKING_FOR,
+                    },
+                  },
+                },
+              },
+            ],
           },
         ],
       },
@@ -603,69 +621,75 @@ router.get(
     // }
     const feisUnderMyResponsability = await prisma.fei.findMany({
       where: {
-        svi_assigned_at: null,
         deleted_at: null,
         automatic_closed_at: null,
         svi_signed_at: null,
         fei_next_owner_user_id: null,
         fei_next_owner_entity_id: null,
-        OR: [
+        AND: [
           {
-            fei_current_owner_user_id: user.id,
+            OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
           },
           {
-            FeiCurrentEntity: {
-              EntityRelatedWithUser: {
-                some: {
-                  owner_id: user.id,
-                  relation: EntityRelationType.WORKING_FOR,
-                },
-              },
-            },
-          },
-          {
-            AND: [
+            OR: [
               {
-                fei_current_owner_role: UserRoles.ETG,
+                fei_current_owner_user_id: user.id,
               },
               {
                 FeiCurrentEntity: {
-                  EntityRelatedWithETG: {
+                  EntityRelatedWithUser: {
                     some: {
+                      owner_id: user.id,
+                      relation: EntityRelationType.WORKING_FOR,
+                    },
+                  },
+                },
+              },
+              {
+                AND: [
+                  {
+                    fei_current_owner_role: UserRoles.ETG,
+                  },
+                  {
+                    FeiCurrentEntity: {
                       EntityRelatedWithETG: {
-                        EntityRelatedWithUser: {
-                          some: {
-                            owner_id: user.id,
-                            relation: EntityRelationType.WORKING_FOR,
+                        some: {
+                          EntityRelatedWithETG: {
+                            EntityRelatedWithUser: {
+                              some: {
+                                owner_id: user.id,
+                                relation: EntityRelationType.WORKING_FOR,
+                              },
+                            },
                           },
                         },
                       },
                     },
                   },
-                },
-              },
-            ],
-          },
-          {
-            AND: [
-              {
-                fei_next_owner_role: UserRoles.COLLECTEUR_PRO,
+                ],
               },
               {
-                FeiNextEntity: {
-                  ETGRelatedWithEntity: {
-                    some: {
+                AND: [
+                  {
+                    fei_next_owner_role: UserRoles.COLLECTEUR_PRO,
+                  },
+                  {
+                    FeiNextEntity: {
                       ETGRelatedWithEntity: {
-                        EntityRelatedWithUser: {
-                          some: {
-                            owner_id: user.id,
-                            relation: EntityRelationType.WORKING_FOR,
+                        some: {
+                          ETGRelatedWithEntity: {
+                            EntityRelatedWithUser: {
+                              some: {
+                                owner_id: user.id,
+                                relation: EntityRelationType.WORKING_FOR,
+                              },
+                            },
                           },
                         },
                       },
                     },
                   },
-                },
+                ],
               },
             ],
           },
@@ -685,43 +709,49 @@ router.get(
 
     const feisToTake = await prisma.fei.findMany({
       where: {
-        svi_assigned_at: null,
         deleted_at: null,
         numero: { notIn: feisUnderMyResponsability.map((fei) => fei.numero) },
-        OR: [
+        AND: [
           {
-            fei_next_owner_user_id: user.id,
+            OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
           },
           {
-            FeiNextEntity: {
-              EntityRelatedWithUser: {
-                some: {
-                  owner_id: user.id,
-                  relation: EntityRelationType.WORKING_FOR,
-                },
-              },
-            },
-          },
-          {
-            AND: [
+            OR: [
               {
-                fei_next_owner_role: UserRoles.ETG,
+                fei_next_owner_user_id: user.id,
               },
               {
                 FeiNextEntity: {
-                  ETGRelatedWithEntity: {
+                  EntityRelatedWithUser: {
                     some: {
-                      EntityRelatedWithETG: {
-                        EntityRelatedWithUser: {
-                          some: {
-                            owner_id: user.id,
-                            relation: EntityRelationType.WORKING_FOR,
+                      owner_id: user.id,
+                      relation: EntityRelationType.WORKING_FOR,
+                    },
+                  },
+                },
+              },
+              {
+                AND: [
+                  {
+                    fei_next_owner_role: UserRoles.ETG,
+                  },
+                  {
+                    FeiNextEntity: {
+                      ETGRelatedWithEntity: {
+                        some: {
+                          EntityRelatedWithETG: {
+                            EntityRelatedWithUser: {
+                              some: {
+                                owner_id: user.id,
+                                relation: EntityRelationType.WORKING_FOR,
+                              },
+                            },
                           },
                         },
                       },
                     },
                   },
-                },
+                ],
               },
             ],
           },
@@ -741,7 +771,6 @@ router.get(
 
     const feisOngoing = await prisma.fei.findMany({
       where: {
-        svi_assigned_at: null,
         deleted_at: null,
         numero: {
           notIn: [
@@ -751,6 +780,9 @@ router.get(
         },
         // fei_current_owner_user_id: { not: user.id },
         AND: [
+          {
+            OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
+          },
           // {
           //   AND: [
           //     {

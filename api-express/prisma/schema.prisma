@@ -240,6 +240,9 @@ model Fei {
   premier_detenteur_date_depot_quelque_part               DateTime?
   premier_detenteur_depot_entity_id                       String?
   premier_detenteur_depot_type                            EntityTypes?
+  intermediaire_closed_at                                 DateTime? // si toutes les carcasses sont rejetées/manquantes
+  intermediaire_closed_by_user_id                         String?
+  intermediaire_closed_by_entity_id                       String?
   svi_assigned_at                                         DateTime?
   svi_entity_id                                           String?
   svi_user_id                                             String?
