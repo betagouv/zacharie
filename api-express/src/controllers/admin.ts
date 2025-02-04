@@ -200,7 +200,7 @@ router.get(
                 has: entity.type,
               },
         id: {
-          notIn: entity.EntityRelatedWithUser.filter(
+          notIn: entity.EntityRelationsWithUsers.filter(
             (entityRelation) => entityRelation.relation === EntityRelationType.WORKING_FOR,
           ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
         },
@@ -214,7 +214,7 @@ router.get(
     const potentialPartenaires = await prisma.user.findMany({
       where: {
         id: {
-          notIn: entity.EntityRelatedWithUser.filter(
+          notIn: entity.EntityRelationsWithUsers.filter(
             (entityRelation) => entityRelation.relation === EntityRelationType.WORKING_WITH,
           ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
         },

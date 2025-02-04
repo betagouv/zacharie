@@ -485,7 +485,7 @@ router.get(
               { premier_detenteur_user_id: user.id },
               {
                 FeiPremierDetenteurEntity: {
-                  EntityRelatedWithUser: {
+                  EntityRelationsWithUsers: {
                     some: {
                       owner_id: user.id,
                       relation: EntityRelationType.WORKING_FOR,
@@ -505,7 +505,7 @@ router.get(
                 FeiIntermediaires: {
                   some: {
                     FeiIntermediaireEntity: {
-                      EntityRelatedWithUser: {
+                      EntityRelationsWithUsers: {
                         some: {
                           owner_id: user.id,
                           relation: EntityRelationType.WORKING_FOR,
@@ -519,10 +519,10 @@ router.get(
                 FeiIntermediaires: {
                   some: {
                     FeiIntermediaireEntity: {
-                      ETGRelatedWithEntity: {
+                      RelationsWithEtgs: {
                         some: {
                           ETGRelatedWithEntity: {
-                            EntityRelatedWithUser: {
+                            EntityRelationsWithUsers: {
                               some: {
                                 owner_id: user.id,
                                 relation: EntityRelationType.WORKING_FOR,
@@ -537,7 +537,7 @@ router.get(
               },
               {
                 FeiSviEntity: {
-                  EntityRelatedWithUser: {
+                  EntityRelationsWithUsers: {
                     some: {
                       owner_id: user.id,
                       relation: EntityRelationType.WORKING_FOR,
@@ -571,7 +571,7 @@ router.get(
   '/:fei_numero',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.log('get fei', req.params.fei_numero);
+    const now = Date.now();
     const fei = await prisma.fei.findUnique({
       where: {
         numero: req.params.fei_numero,
@@ -605,6 +605,7 @@ router.get(
         },
       },
     });
+
     if (!fei) {
       res.status(404).send({ ok: false, data: null, error: 'Unauthorized' });
       return;
@@ -657,7 +658,7 @@ router.get(
               },
               {
                 FeiCurrentEntity: {
-                  EntityRelatedWithUser: {
+                  EntityRelationsWithUsers: {
                     some: {
                       owner_id: user.id,
                       relation: EntityRelationType.WORKING_FOR,
@@ -672,10 +673,10 @@ router.get(
                   },
                   {
                     FeiCurrentEntity: {
-                      EntityRelatedWithETG: {
+                      AsEtgRelationsWithOtherEntities: {
                         some: {
                           EntityRelatedWithETG: {
-                            EntityRelatedWithUser: {
+                            EntityRelationsWithUsers: {
                               some: {
                                 owner_id: user.id,
                                 relation: EntityRelationType.WORKING_FOR,
@@ -695,10 +696,10 @@ router.get(
                   },
                   {
                     FeiNextEntity: {
-                      ETGRelatedWithEntity: {
+                      RelationsWithEtgs: {
                         some: {
                           ETGRelatedWithEntity: {
-                            EntityRelatedWithUser: {
+                            EntityRelationsWithUsers: {
                               some: {
                                 owner_id: user.id,
                                 relation: EntityRelationType.WORKING_FOR,
@@ -742,7 +743,7 @@ router.get(
               },
               {
                 FeiNextEntity: {
-                  EntityRelatedWithUser: {
+                  EntityRelationsWithUsers: {
                     some: {
                       owner_id: user.id,
                       relation: EntityRelationType.WORKING_FOR,
@@ -757,10 +758,10 @@ router.get(
                   },
                   {
                     FeiNextEntity: {
-                      ETGRelatedWithEntity: {
+                      RelationsWithEtgs: {
                         some: {
                           EntityRelatedWithETG: {
-                            EntityRelatedWithUser: {
+                            EntityRelationsWithUsers: {
                               some: {
                                 owner_id: user.id,
                                 relation: EntityRelationType.WORKING_FOR,
@@ -818,7 +819,7 @@ router.get(
           //     { fei_next_owner_entity_id: null },
           //     {
           //       FeiNextEntity: {
-          //         EntityRelatedWithUser: {
+          //         EntityRelationsWithUsers: {
           //           none: {
           //             owner_id: user.id,
           //             relation: EntityRelationType.WORKING_FOR,
@@ -838,7 +839,7 @@ router.get(
               },
               {
                 FeiPremierDetenteurEntity: {
-                  EntityRelatedWithUser: {
+                  EntityRelationsWithUsers: {
                     some: {
                       owner_id: user.id,
                       relation: EntityRelationType.WORKING_FOR,
@@ -857,10 +858,30 @@ router.get(
                 FeiIntermediaires: {
                   some: {
                     FeiIntermediaireEntity: {
-                      EntityRelatedWithUser: {
+                      EntityRelationsWithUsers: {
                         some: {
                           owner_id: user.id,
                           relation: EntityRelationType.WORKING_FOR,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              {
+                FeiIntermediaires: {
+                  some: {
+                    FeiIntermediaireEntity: {
+                      RelationsWithEtgs: {
+                        some: {
+                          ETGRelatedWithEntity: {
+                            EntityRelationsWithUsers: {
+                              some: {
+                                owner_id: user.id,
+                                relation: EntityRelationType.WORKING_FOR,
+                              },
+                            },
+                          },
                         },
                       },
                     },

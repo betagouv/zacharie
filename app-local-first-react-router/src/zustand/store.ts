@@ -373,7 +373,7 @@ const useZustandStore = create<State & Actions>()(
       }),
       {
         name: 'zacharie-zustand-store',
-        version: 1,
+        version: 2,
         // storage: createJSONStorage(() => storage),
         storage: createJSONStorage(() => window.localStorage),
         onRehydrateStorage: (state) => {

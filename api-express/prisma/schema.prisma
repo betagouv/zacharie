@@ -90,34 +90,34 @@ enum EntityTypes {
 }
 
 model Entity {
-  id                        String                   @id @default(uuid())
+  id                              String                   @id @default(uuid())
   // NO EMAIL: an entity needs AT LEAST one user
-  raison_sociale            String?
-  nom_d_usage               String?
-  address_ligne_1           String?
-  address_ligne_2           String?
-  code_postal               String?
-  ville                     String?
-  siret                     String?
-  numero_ddecpp             String?                  @unique
-  type                      EntityTypes
-  created_at                DateTime                 @default(now())
-  updated_at                DateTime                 @default(now()) @updatedAt
-  deleted_at                DateTime?
-  onboarded_at              DateTime?
-  prefilled                 Boolean                  @default(false)
-  is_synced                 Boolean                  @default(true) // just for typing purppose with zustand frontend
-  EntityRelatedWithUser     EntityAndUserRelations[] @relation("EntityRelatedWithUser")
-  FeiCurrentEntity          Fei[]                    @relation("FeiCurrentEntity")
-  FeiNextEntity             Fei[]                    @relation("FeiNextEntity")
-  FeiDepotEntity            Fei[]                    @relation("FeiDepotEntity")
-  FeiPremierDetenteurEntity Fei[]                    @relation("FeiPremierDetenteurEntity")
-  FeiSviEntity              Fei[]                    @relation("FeiSviEntity")
-  FeiIntermediaireEntity    FeiIntermediaire[]       @relation("FeiIntermediaireEntity")
-  CarcasseIntermediaire     CarcasseIntermediaire[]  @relation("CarcasseIntermediaireEntity")
-  ETGRelatedWithEntity      ETGAndEntityRelations[]  @relation("ETGRelatedWithEntity")
-  EntityRelatedWithETG      ETGAndEntityRelations[]  @relation("EntityRelatedWithETG")
-  Logs                      Log[]
+  raison_sociale                  String?
+  nom_d_usage                     String?
+  address_ligne_1                 String?
+  address_ligne_2                 String?
+  code_postal                     String?
+  ville                           String?
+  siret                           String?
+  numero_ddecpp                   String?                  @unique
+  type                            EntityTypes
+  created_at                      DateTime                 @default(now())
+  updated_at                      DateTime                 @default(now()) @updatedAt
+  deleted_at                      DateTime?
+  onboarded_at                    DateTime?
+  prefilled                       Boolean                  @default(false)
+  is_synced                       Boolean                  @default(true) // just for typing purppose with zustand frontend
+  EntityRelationsWithUsers        EntityAndUserRelations[] @relation("EntityRelatedWithUser")
+  FeisCurrentEntity               Fei[]                    @relation("FeiCurrentEntity")
+  FeisNextEntity                  Fei[]                    @relation("FeiNextEntity")
+  FeisDepotEntity                 Fei[]                    @relation("FeiDepotEntity")
+  FeisPremierDetenteurEntity      Fei[]                    @relation("FeiPremierDetenteurEntity")
+  FeisSviEntity                   Fei[]                    @relation("FeiSviEntity")
+  FeiIntermediairesEntity         FeiIntermediaire[]       @relation("FeiIntermediaireEntity")
+  CarcasseIntermediaires          CarcasseIntermediaire[]  @relation("CarcasseIntermediaireEntity")
+  AsEtgRelationsWithOtherEntities ETGAndEntityRelations[]  @relation("ETGRelatedWithEntity")
+  RelationsWithEtgs               ETGAndEntityRelations[]  @relation("EntityRelatedWithETG")
+  Logs                            Log[]
 }
 
 model Password {

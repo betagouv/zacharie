@@ -21,7 +21,7 @@ export type EntitiesById = Record<Entity['id'], Entity>;
 export type EntitiesByTypeAndId = Record<EntityTypes, EntitiesById>;
 
 export const entityAdminInclude = {
-  EntityRelatedWithUser: {
+  EntityRelationsWithUsers: {
     select: {
       relation: true,
       UserRelatedWithEntity: {
