@@ -200,6 +200,21 @@ router.post(
       if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)) {
         nextCarcasse.svi_carcasse_saisie = (body.svi_carcasse_saisie as string[]).filter(Boolean);
       }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_partielle)) {
+        nextCarcasse.svi_carcasse_saisie_partielle = body.svi_carcasse_saisie_partielle;
+      }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_partielle_morceaux)) {
+        nextCarcasse.svi_carcasse_saisie_partielle_morceaux = (
+          body.svi_carcasse_saisie_partielle_morceaux as string[]
+        ).filter(Boolean);
+      }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_totale)) {
+        nextCarcasse.svi_carcasse_saisie_totale = body.svi_carcasse_saisie_totale;
+      }
+      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_partielle_nombre_animaux)) {
+        nextCarcasse.svi_carcasse_saisie_partielle_nombre_animaux =
+          body.svi_carcasse_saisie_partielle_nombre_animaux;
+      }
       if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)) {
         nextCarcasse.svi_carcasse_saisie_motif = (body.svi_carcasse_saisie_motif as string[]).filter(Boolean);
       }

@@ -126,7 +126,14 @@ export function CarcasseEditSVI() {
     carcasse?.svi_carcasse_saisie_motif?.filter(Boolean) ?? [],
   );
   const [typeSaisie, setTypeSaisie] = useState(carcasse?.svi_carcasse_saisie?.filter(Boolean) ?? []);
-
+  const [saisiePartielle, setSaisiePartielle] = useState(carcasse?.svi_carcasse_saisie_partielle ?? false);
+  const [saisiePartielleMorceaux, setSaisiePartielleMorceaux] = useState(
+    carcasse?.svi_carcasse_saisie_partielle_morceaux?.filter(Boolean) ?? [],
+  );
+  const [saisieTotale, setSaisieTotale] = useState(carcasse?.svi_carcasse_saisie_totale ?? false);
+  const [saisiePartielleNombreAnimaux, setSaisiePartielleNombreAnimaux] = useState(
+    carcasse?.svi_carcasse_saisie_partielle_nombre_animaux ?? null,
+  );
   const isSviWorkingFor = useMemo(() => {
     // if (fei.fei_current_owner_role === UserRoles.SVI && !!fei.svi_entity_id) {
     // fix: pas besoin d'avoir pris en charge la fiche pour les SVI, elle est prise en charge automatiquement
@@ -272,6 +279,10 @@ export function CarcasseEditSVI() {
                               onChange: () => {
                                 setTypeSaisie([]);
                                 setMotifsSaisie([]);
+                                setSaisiePartielle(false);
+                                setSaisiePartielleMorceaux([]);
+                                setSaisieTotale(false);
+                                setSaisiePartielleNombreAnimaux(null);
                               },
                             },
                             label: 'Pas de saisie',
@@ -282,6 +293,10 @@ export function CarcasseEditSVI() {
                               checked: typeSaisie[0] === 'Saisie totale',
                               onChange: () => {
                                 setTypeSaisie(['Saisie totale']);
+                                setSaisiePartielle(false);
+                                setSaisiePartielleMorceaux([]);
+                                setSaisieTotale(true);
+                                setSaisiePartielleNombreAnimaux(null);
                               },
                             },
                             label: 'Saisie totale',
@@ -295,6 +310,10 @@ export function CarcasseEditSVI() {
                                   setMotifsSaisie([]);
                                 }
                                 setTypeSaisie(['Saisie partielle']);
+                                setSaisiePartielle(true);
+                                setSaisiePartielleMorceaux([]);
+                                setSaisieTotale(false);
+                                setSaisiePartielleNombreAnimaux(null);
                               },
                             },
                             label: 'Saisie partielle',
@@ -314,6 +333,7 @@ export function CarcasseEditSVI() {
                               // max: Number(carcasse.nombre_d_animaux),
                               onChange: (e) => {
                                 setTypeSaisie([typeSaisie[0], e.target.value]);
+                                setSaisiePartielleNombreAnimaux(Number(e.target.value));
                               },
                             }}
                           />
@@ -335,18 +355,22 @@ export function CarcasseEditSVI() {
                             'Poitrine',
                             'Quartier arrière',
                             'Quartier avant',
-                          ].map((saisiePartielle) => {
+                          ].map((morceau) => {
                             return {
-                              label: saisiePartielle,
+                              label: morceau,
                               nativeInputProps: {
-                                checked: typeSaisie.includes(saisiePartielle),
+                                checked: typeSaisie.includes(morceau),
                                 onChange: (e) => {
                                   if (e.target.checked) {
-                                    const nextTypeSaisie = [...typeSaisie, saisiePartielle];
+                                    const nextTypeSaisie = [...typeSaisie, morceau];
                                     setTypeSaisie(nextTypeSaisie);
+                                    setSaisiePartielleMorceaux([...saisiePartielleMorceaux, morceau]);
                                   } else {
-                                    const nextTypeSaisie = typeSaisie.filter((s) => s !== saisiePartielle);
+                                    const nextTypeSaisie = typeSaisie.filter((s) => s !== morceau);
                                     setTypeSaisie(nextTypeSaisie);
+                                    setSaisiePartielleMorceaux(
+                                      saisiePartielleMorceaux.filter((s) => s !== morceau),
+                                    );
                                   }
                                 },
                               },
@@ -483,6 +507,11 @@ export function CarcasseEditSVI() {
                                       e.preventDefault();
                                       const nextPartialCarcasse = {
                                         svi_carcasse_saisie: typeSaisie,
+                                        svi_carcasse_saisie_partielle: saisiePartielle,
+                                        svi_carcasse_saisie_partielle_morceaux: saisiePartielleMorceaux,
+                                        svi_carcasse_saisie_partielle_nombre_animaux:
+                                          saisiePartielleNombreAnimaux,
+                                        svi_carcasse_saisie_totale: saisieTotale,
                                         svi_carcasse_saisie_motif: motifsSaisie,
                                         svi_carcasse_saisie_at: dayjs().toDate(),
                                         svi_carcasse_signed_at: dayjs().toDate(),
@@ -523,6 +552,11 @@ export function CarcasseEditSVI() {
                                         }
                                         const nextPartialCarcasse = {
                                           svi_carcasse_saisie: typeSaisie,
+                                          svi_carcasse_saisie_partielle: saisiePartielle,
+                                          svi_carcasse_saisie_partielle_morceaux: saisiePartielleMorceaux,
+                                          svi_carcasse_saisie_partielle_nombre_animaux:
+                                            saisiePartielleNombreAnimaux,
+                                          svi_carcasse_saisie_totale: saisieTotale,
                                           svi_carcasse_saisie_motif: motifsSaisie,
                                           svi_carcasse_saisie_at: dayjs().toDate(),
                                           svi_carcasse_signed_at: dayjs().toDate(),
@@ -556,8 +590,16 @@ export function CarcasseEditSVI() {
                                       onClick: () => {
                                         setMotifsSaisie([]);
                                         setTypeSaisie([]);
+                                        setSaisiePartielle(false);
+                                        setSaisiePartielleMorceaux([]);
+                                        setSaisieTotale(false);
+                                        setSaisiePartielleNombreAnimaux(null);
                                         const nextPartialCarcasse = {
                                           svi_carcasse_saisie: [],
+                                          svi_carcasse_saisie_partielle: false,
+                                          svi_carcasse_saisie_partielle_morceaux: [],
+                                          svi_carcasse_saisie_partielle_nombre_animaux: null,
+                                          svi_carcasse_saisie_totale: false,
                                           svi_carcasse_saisie_motif: [],
                                           svi_carcasse_saisie_at: null,
                                           svi_carcasse_commentaire: null,
