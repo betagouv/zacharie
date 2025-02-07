@@ -62,18 +62,59 @@ type CarcasseFilterableField = FilterableField & {
 };
 
 export const carcasseFilterableFields: Array<CarcasseFilterableField> = [
-  { name: 'numero_bracelet', label: 'Numéro de bracelet', type: 'text' },
+  { name: 'numero_bracelet', label: "Numéro de bracelet ou d'identification", type: 'text' },
   { name: 'fei_numero', label: 'Numéro FEI', type: 'text' },
-  { name: 'type', label: 'Type de gibier', type: 'enum', options: carcasseTypeOptions },
-  { name: 'nombre_d_animaux', label: "Nombre d'animaux", type: 'number' },
-  { name: 'heure_mise_a_mort', label: 'Heure de mise à mort', type: 'date-with-time' },
-  { name: 'heure_evisceration', label: "Heure d'éviscération", type: 'date-with-time' },
+  { name: 'svi_assigned_to_fei_at', label: 'Date de transmission de la FEI au SVI', type: 'date-with-time' },
+  { name: 'svi_carcasse_status_set_at', label: 'Date de dernière décision SVI', type: 'date-with-time' },
+  {
+    name: 'svi_carcasse_status',
+    label: 'Dernière décision SVI',
+    type: 'enum',
+    options: carcasseStatusOptions,
+  },
+  { name: 'svi_carcasse_saisie_motif', label: 'Motif de la dernière décision SVI', type: 'text' },
+  { name: 'svi_carcasse_archived', label: 'Carcasse(s) archivée(s)', type: 'boolean' },
+  { name: 'svi_carcasse_commentaire', label: 'Commentaire SVI', type: 'text' },
+  { name: 'type', label: 'Catégorie de gibier', type: 'enum', options: carcasseTypeOptions },
   {
     name: 'espece',
     label: 'Espèce',
     type: 'enum',
     options: [...grandGibier.especes, ...petitGibier.especes],
   },
+  { name: 'fei_date_mise_a_mort', label: 'Date de mise à mort', type: 'date-with-time' },
+  { name: 'fei_commune_mise_a_mort', label: 'Commune de mise à mort', type: 'text' },
+  { name: 'fei_premier_detenteur_name_cache', label: 'Nom du premier détenteur', type: 'text' },
+  {
+    name: 'fei_examinateur_initial_date_approbation_mise_sur_le_marche',
+    label: "Date d'approbation de la mise sur le marché",
+    type: 'date-with-time',
+  },
+  { name: 'heure_mise_a_mort', label: 'Heure de mise à mort', type: 'date-with-time' },
+  { name: 'heure_evisceration', label: "Heure d'éviscération", type: 'date-with-time' },
+  {
+    name: 'intermediaire_carcasse_signed_at',
+    label: 'Date décision destinataire',
+    type: 'date-with-time',
+  },
+  // TODO: Décision destinataire
+  { name: 'intermediaire_carcasse_refus_motif', label: 'Motif de refus d’un destinataire', type: 'text' },
+  { name: 'fei_svi_signed_at', label: 'Date de clôture manuelle de la fiche', type: 'date-with-time' },
+  {
+    name: 'fei_automatic_closed_at',
+    label: 'Date de clôture automatique de la fiche',
+    type: 'date-with-time',
+  },
+  /* 
+  
+  SELECT FUCKING FILTERS
+  
+  
+  
+  */
+
+  // { name: 'nombre_d_animaux', label: "Nombre d'animaux", type: 'number' },
+
   // { name: 'categorie', label: 'Catégorie', type: 'enum', options: ['open', 'closed'] },
   // { name: 'examinateur_carcasse_sans_anomalie', label: 'Examinateur sans anomalie', type: 'boolean' },
   // { name: 'examinateur_anomalies_carcasse', label: 'Anomalies carcasse', type: 'multi-choice', options: ['open', 'closed'] },
@@ -81,88 +122,64 @@ export const carcasseFilterableFields: Array<CarcasseFilterableField> = [
   // { name: 'examinateur_commentaire', label: 'Commentaire examinateur', type: 'text' },
   // { name: 'examin', label: 'Date de signature examinateur', type: 'date-with-time' },
   // { name: 'intermediaire_carcasse_refus_intermediaire_id', label: 'ID intermédiaire refus', type: 'text' },
-  { name: 'intermediaire_carcasse_refus_motif', label: 'Motif de refus d’un destinataire', type: 'text' },
-  // {
-  //   name: 'intermediaire_carcasse_signed_at',
-  //   label: 'Date de validation par l’intermédiaire',
-  //   type: 'date-with-time',
-  // },
   // { name: 'intermediaire_carcasse_commentaire', label: 'Commentaire intermédiaire', type: 'text' },
   // { name: 'intermediaire_carcasse_manquante', label: 'Manquante', type: 'boolean' },
-  { name: 'svi_assigned_to_fei_at', label: "Date de transmission de l'ETG au SVI", type: 'date-with-time' },
-  { name: 'svi_carcasse_manquante', label: 'Carcasse manquante', type: 'boolean' },
-  { name: 'svi_carcasse_consigne', label: 'Carcasse consignée', type: 'boolean' },
-  {
-    name: 'svi_carcasse_consigne_at',
-    label: 'Date de mise en consigne de la carcasse',
-    type: 'date-with-time',
-  },
-  { name: 'svi_carcasse_consigne_motif', label: 'Motif consigne de la carcasse', type: 'text' },
-  { name: 'svi_carcasse_consigne_levee', label: 'Levée de consigne de la carcasse', type: 'boolean' },
-  {
-    name: 'svi_carcasse_consigne_levee_at',
-    label: 'Date de levée de consigne de la carcasse',
-    type: 'date-with-time',
-  },
+  // { name: 'svi_carcasse_manquante', label: 'Carcasse manquante', type: 'boolean' },
+  // { name: 'svi_carcasse_consigne', label: 'Carcasse consignée', type: 'boolean' },
+  // {
+  //   name: 'svi_carcasse_consigne_at',
+  //   label: 'Date de mise en consigne de la carcasse',
+  //   type: 'date-with-time',
+  // },
+  // { name: 'svi_carcasse_consigne_motif', label: 'Motif consigne de la carcasse', type: 'text' },
+  // { name: 'svi_carcasse_consigne_levee', label: 'Levée de consigne de la carcasse', type: 'boolean' },
+  // {
+  //   name: 'svi_carcasse_consigne_levee_at',
+  //   label: 'Date de levée de consigne de la carcasse',
+  //   type: 'date-with-time',
+  // },
   // { name: 'svi_carcasse_saisie', label: 'Saisie', type: 'boolean' },
-  { name: 'svi_carcasse_saisie_at', label: 'Date de saisie', type: 'date-with-time' },
-  { name: 'svi_carcasse_saisie_motif', label: 'Motif saisie', type: 'text' },
+  // { name: 'svi_carcasse_saisie_at', label: 'Date de saisie', type: 'date-with-time' },
   // { name: 'svi_carcasse_traitement_assainissant', label: 'Traitement assainissant', type: 'boolean' },
-  { name: 'svi_carcasse_archived', label: 'Archivé(e)', type: 'boolean' },
-  { name: 'svi_carcasse_signed_at', label: 'Date d’examen SVI', type: 'date-with-time' },
-  { name: 'svi_carcasse_commentaire', label: 'Commentaire SVI', type: 'text' },
-  {
-    name: 'svi_carcasse_status',
-    label: 'Statut del a carcasse',
-    type: 'enum',
-    options: carcasseStatusOptions,
-  },
-  { name: 'svi_carcasse_status_set_at', label: 'Date de décision sur la carcasse', type: 'date-with-time' },
-  { name: 'created_at', label: 'Date de création de la carcasse', type: 'date-with-time' },
-  { name: 'updated_at', label: 'Date de mise à jour de la carcasse', type: 'date-with-time' },
+  // { name: 'svi_carcasse_signed_at', label: 'Date d’examen SVI', type: 'date-with-time' },
+  // {
+  //   name: 'svi_carcasse_status',
+  //   label: 'Statut del a carcasse',
+  //   type: 'enum',
+  //   options: carcasseStatusOptions,
+  // },
+  // { name: 'created_at', label: 'Date de création de la carcasse', type: 'date-with-time' },
+  // { name: 'updated_at', label: 'Date de mise à jour de la carcasse', type: 'date-with-time' },
   // { name: 'zacharie_carcasse_id', label: 'ID Zacharie', type: 'text' },
-  { name: 'fei_date_mise_a_mort', label: 'Date de mise à mort', type: 'date-with-time' },
-  { name: 'fei_commune_mise_a_mort', label: 'Commune de mise à mort', type: 'text' },
-  {
-    name: 'fei_heure_mise_a_mort_premiere_carcasse',
-    label: 'Heure de mise à mort de la première carcasse de la fiche',
-    type: 'date-with-time',
-  },
-  {
-    name: 'fei_heure_evisceration_derniere_carcasse',
-    label: "Heure d'éviscération de la dernière carcasse de la fiche",
-    type: 'date-with-time',
-  },
+  // {
+  //   name: 'fei_heure_mise_a_mort_premiere_carcasse',
+  //   label: 'Heure de mise à mort de la première carcasse de la fiche',
+  //   type: 'date-with-time',
+  // },
+  // {
+  //   name: 'fei_heure_evisceration_derniere_carcasse',
+  //   label: "Heure d'éviscération de la dernière carcasse de la fiche",
+  //   type: 'date-with-time',
+  // },
   // {
   //   name: 'fei_resume_nombre_de_carcasses',
   //   label: 'Nombre de carcasses ou de lots de la fiche',
   //   type: 'number',
   // },
-  {
-    name: 'fei_examinateur_initial_date_approbation_mise_sur_le_marche',
-    label: "Date d'approbation de la mise sur le marché",
-    type: 'date-with-time',
-  },
-  { name: 'fei_premier_detenteur_name_cache', label: 'Nom du premier détenteur', type: 'text' },
-  {
-    name: 'fei_premier_detenteur_date_depot_quelque_part',
-    label: 'Date de dépôt des carcasses de la fiche',
-    type: 'date-with-time',
-  },
-  { name: 'fei_svi_assigned_at', label: 'Date de transmission au SVI', type: 'date-with-time' },
+
+  // {
+  //   name: 'fei_premier_detenteur_date_depot_quelque_part',
+  //   label: 'Date de dépôt des carcasses de la fiche',
+  //   type: 'date-with-time',
+  // },
+  // { name: 'fei_svi_assigned_at', label: 'Date de transmission au SVI', type: 'date-with-time' },
   // { name: 'fei_svi_carcasses_saisies', label: 'Nombre de carcasses saisies', type: 'number' },
   // { name: 'fei_svi_aucune_carcasse_saisie', label: 'Aucune carcasse saisie', type: 'boolean' },
-  { name: 'fei_svi_commentaire', label: 'Commentaire du SVI sur la fiche', type: 'text' },
-  { name: 'fei_svi_signed_at', label: 'Date de clôture manuelle de la fiche', type: 'date-with-time' },
+  // { name: 'fei_svi_commentaire', label: 'Commentaire du SVI sur la fiche', type: 'text' },
   // { name: 'fei_svi_signed_by', label: 'Signé par', type: 'text' },
-  { name: 'fei_created_at', label: 'Date de création de la fiche', type: 'date-with-time' },
+  // { name: 'fei_created_at', label: 'Date de création de la fiche', type: 'date-with-time' },
   // { name: 'fei_updated_at', label: 'Date de mise à jour de la fiche', type: 'date-with-time' },
   // { name: 'fei_deleted_at', label: 'Date de suppression de la fiche', type: 'date-with-time' },
-  {
-    name: 'fei_automatic_closed_at',
-    label: 'Date de clôture automatique de la fiche',
-    type: 'date-with-time',
-  },
 ];
 
 export type CarcasseFilter = Filter & {
