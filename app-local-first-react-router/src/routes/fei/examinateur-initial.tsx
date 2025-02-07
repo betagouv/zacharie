@@ -320,7 +320,7 @@ export default function FEIExaminateurInitial() {
                 hintText={
                   canEdit ? (
                     <button
-                      className="inline-block"
+                      className="inline-block text-left"
                       type="button"
                       onClick={() => {
                         updateFei(fei.numero, {
