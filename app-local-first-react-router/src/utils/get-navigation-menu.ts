@@ -102,7 +102,7 @@ export default function useNavigationMenu() {
     });
   }
 
-  if (isSvi && isAdmin) {
+  if (isSvi) {
     feiMenu.push({
       text: 'Carcasses',
       isActive: location.pathname === '/app/tableau-de-bord/registre-carcasses',
