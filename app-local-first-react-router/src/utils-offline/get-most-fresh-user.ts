@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function useMostFreshUser(_calledFrom: string) {
   // console.log('useMostFreshUser called from', calledFrom);
   const cachedUser = useUser((state) => state.user);
@@ -18,6 +19,7 @@ export function useMostFreshUser(_calledFrom: string) {
   return cachedUser;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function refreshUser(_calledFrom: string) {
   if (!navigator.onLine) {
     // we need this because if offLine then the service worker return the latest GET /user/me
