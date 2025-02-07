@@ -38,13 +38,16 @@ export async function loadFeis() {
       ...response.data.feisUnderMyResponsability,
     ]) {
       const localFei = useZustandStore.getState().feis[fei.numero];
-      if (!localFei) {
+      if (!localFei && !fei.deleted_at) {
         allFeis[fei.numero] = fei;
         feisNumerosToLoadAgain.push(fei.numero);
         continue;
       }
       // optimize loading the feis
-
+      if (fei.deleted_at || localFei.deleted_at) {
+        delete allFeis[fei.numero];
+        continue;
+      }
       if (dayjs(localFei.updated_at).diff(fei.updated_at) > 0) {
         feisNumerosToLoadAgain.push(fei.numero);
       }

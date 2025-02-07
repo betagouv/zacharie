@@ -642,7 +642,7 @@ router.get(
     // }
     const feisUnderMyResponsability = await prisma.fei.findMany({
       where: {
-        deleted_at: null,
+        // deleted_at: null,
         automatic_closed_at: null,
         svi_signed_at: null,
         fei_next_owner_user_id: null,
@@ -650,9 +650,11 @@ router.get(
         svi_assigned_at: null,
         intermediaire_closed_at: null,
         OR: [
+          // Case 1: I am the current owner of the FEI
           {
             fei_current_owner_user_id: user.id,
           },
+          // Case 2: I work for the current owner entity.
           {
             FeiCurrentEntity: {
               EntityRelationsWithUsers: {
@@ -663,33 +665,11 @@ router.get(
               },
             },
           },
+          // Case 3: The FEI is assigned to a COLLECTEUR_PRO working for my ETG
           {
             AND: [
               {
-                fei_current_owner_role: UserRoles.ETG,
-              },
-              {
-                FeiCurrentEntity: {
-                  AsEtgRelationsWithOtherEntities: {
-                    some: {
-                      EntityRelatedWithETG: {
-                        EntityRelationsWithUsers: {
-                          some: {
-                            owner_id: user.id,
-                            relation: EntityRelationType.WORKING_FOR,
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            ],
-          },
-          {
-            AND: [
-              {
-                fei_next_owner_role: UserRoles.COLLECTEUR_PRO,
+                fei_current_owner_role: UserRoles.COLLECTEUR_PRO,
               },
               {
                 FeiNextEntity: {
@@ -725,14 +705,14 @@ router.get(
 
     const feisToTake = await prisma.fei.findMany({
       where: {
-        deleted_at: null,
+        // deleted_at: null,
         numero: { notIn: feisUnderMyResponsability.map((fei) => fei.numero) },
         svi_assigned_at: null,
         intermediaire_closed_at: null,
         OR: [
-          {
-            fei_next_owner_user_id: user.id,
-          },
+          // If the user is directly set as the next owner
+          { fei_next_owner_user_id: user.id },
+          // Or if the user works for the next owner entity directly (for non-ETG next owners)
           {
             FeiNextEntity: {
               EntityRelationsWithUsers: {
@@ -743,14 +723,14 @@ router.get(
               },
             },
           },
+          // Or if the next owner is an ETG and the current user works for a collecteur
+          // linked to that ETG (via the ETG relations), then include the FEI.
           {
             AND: [
-              {
-                fei_next_owner_role: UserRoles.ETG,
-              },
+              { fei_next_owner_role: UserRoles.ETG },
               {
                 FeiNextEntity: {
-                  RelationsWithEtgs: {
+                  AsEtgRelationsWithOtherEntities: {
                     some: {
                       EntityRelatedWithETG: {
                         EntityRelationsWithUsers: {
@@ -782,7 +762,7 @@ router.get(
 
     const feisOngoing = await prisma.fei.findMany({
       where: {
-        deleted_at: null,
+        // deleted_at: null,
         svi_assigned_at: null,
         intermediaire_closed_at: null,
         numero: {
