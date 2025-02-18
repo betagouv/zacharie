@@ -563,6 +563,12 @@ router.get(
       },
       error: '',
     } satisfies FeisDoneResponse);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { last_seen_at: new Date() },
+    });
+
     return;
   }),
 );

@@ -144,7 +144,7 @@ router.get(
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const users = await prisma.user.findMany({
       orderBy: {
-        updated_at: 'desc',
+        last_seen_at: 'desc',
       },
     });
     res.status(200).send({

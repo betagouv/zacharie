@@ -221,14 +221,16 @@ export function CarcasseEditSVI() {
                       }}
                     />
                   </div>
-                  <div className="fr-fieldset__element">
-                    <InputNotEditable
-                      label="Nombre d'animaux initialement prélevés"
-                      nativeInputProps={{
-                        defaultValue: carcasse.nombre_d_animaux!,
-                      }}
-                    />
-                  </div>
+                  {carcasse.type === CarcasseType.PETIT_GIBIER && (
+                    <div className="fr-fieldset__element">
+                      <InputNotEditable
+                        label="Nombre d'animaux initialement prélevés"
+                        nativeInputProps={{
+                          defaultValue: carcasse.nombre_d_animaux!,
+                        }}
+                      />
+                    </div>
+                  )}
                   <div className="fr-fieldset__element">
                     <InputNotEditable
                       label="Commentaires des destinataires"
@@ -262,7 +264,7 @@ export function CarcasseEditSVI() {
                 </>
               </Accordion>
               {canEdit && (
-                <Accordion titleAs="h2" defaultExpanded label="Saisie">
+                <Accordion titleAs="h2" defaultExpanded label="Décision SVI">
                   <form
                     method="POST"
                     id={`svi-carcasse-${carcasse.numero_bracelet}`}

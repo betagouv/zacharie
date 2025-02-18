@@ -26,6 +26,8 @@ export function useIsOnline(callback?: () => void) {
       }
       setIsOnline(false);
     }
+    console.log('veryBadConnection.current', veryBadConnection.current);
+    console.log('navigator.onLine', navigator.onLine);
     setIsOnline(veryBadConnection.current ? false : navigator.onLine);
     window.addEventListener('online', handleOnline);
     window.addEventListener('good-connection', handleOnline);
