@@ -24,6 +24,7 @@
     "@uidotdev/usehooks": "^2.4.1",
     "compression": "^1.7.5",
     "dayjs": "^1.11.13",
+    "dedent": "^1.5.3",
     "express": "^4.21.1",
     "idb-keyval": "^6.2.1",
     "isbot": "^5.1.17",

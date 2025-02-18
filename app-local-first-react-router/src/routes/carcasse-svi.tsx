@@ -27,6 +27,7 @@ import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
+import dedent from 'dedent';
 
 const saisieCarcasseModal = createModal({
   isOpenedByDefault: false,
@@ -172,6 +173,10 @@ export function CarcasseEditSVI() {
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
+      <title>
+        {`${carcasse.numero_bracelet} - ${carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot de carcasses de petit gibier' : 'Carcasse de grand gibier'}`}{' '}
+        - Zacharie
+      </title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">{carcasse.numero_bracelet}</h1>
@@ -221,6 +226,22 @@ export function CarcasseEditSVI() {
                       }}
                     />
                   </div>
+                  <div className="fr-fieldset__element">
+                    <InputNotEditable
+                      label="Dates clés"
+                      textArea
+                      nativeTextAreaProps={{
+                        rows: 5,
+                        defaultValue:
+                          dedent(`Date de mise à mort: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}
+              Heure de mise à mort de la première carcasse de la fiche: ${fei.heure_mise_a_mort_premiere_carcasse!}
+              Heure d'éviscération de la dernière carcasse de la fiche: ${fei.heure_evisceration_derniere_carcasse!}
+              Date et heure de dépôt dans le CCG le cas échéant: ${fei.premier_detenteur_depot_type === 'CCG' ? dayjs(fei.premier_detenteur_date_depot_quelque_part).format('dddd DD MMMM YYYY à HH:mm') : 'N/A'}
+              Date et heure de prise en charge par l'ETG: ${dayjs(intermediaires[intermediaires.length - 1].check_finished_at).format('dddd DD MMMM YYYY à HH:mm')}`),
+                      }}
+                    />
+                  </div>
+                  <div className="fr-fieldset__element"></div>
                   {carcasse.type === CarcasseType.PETIT_GIBIER && (
                     <div className="fr-fieldset__element">
                       <InputNotEditable
