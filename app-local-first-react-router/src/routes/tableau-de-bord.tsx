@@ -111,7 +111,7 @@ export default function TableauDeBordIndex() {
               }}
               disabled={selectedFeis.length === 0 || isExporting}
             >
-              Exporter les fiches sélectionnées dans un fichier Excel
+              Télécharger un fichier Excel avec les fiches sélectionnées
             </Button>
           </div>
           {!isOnlySvi && (

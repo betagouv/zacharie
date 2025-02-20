@@ -166,7 +166,7 @@ export default function RegistreCarcasses() {
                 }}
                 disabled={selectedCarcassesIds.length === 0 || isExporting}
               >
-                Exporter les carcasses sélectionnées dans un fichier Excel ({selectedCarcassesIds.length})
+                Télécharger un fichier Excel avec les carcasses sélectionnées ({selectedCarcassesIds.length})
               </Button>
             </div>
           </section>
