@@ -28,6 +28,7 @@ import MentionsLegales from './routes/mentions-legales';
 import ModalitesDutilisation from './routes/modalites-d-utilisation';
 import BetaTesteurs from './routes/beta-testeurs';
 import RegistreCarcasses from './routes/registre-carcasses';
+import Accessibility from './routes/accessibility';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -58,6 +59,14 @@ function App() {
           element={
             <RootDisplay id="mentions-legales">
               <MentionsLegales />
+            </RootDisplay>
+          }
+        />
+        <Route
+          path="accessibilite"
+          element={
+            <RootDisplay id="accessibilite">
+              <Accessibility />
             </RootDisplay>
           }
         />
