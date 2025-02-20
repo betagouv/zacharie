@@ -71,6 +71,7 @@ model User {
   NotificationLog                NotificationLog[]
   CarcasseIntermediaire          CarcasseIntermediaire[]  @relation("CarcasseIntermediaireUser")
   FeiNextUser                    Fei[]                    @relation("FeiNextUser")
+  CarcassesIpm1                  Carcasse[]               @relation("SviIpm1User")
 
   @@index([id]) // New: Added for faster user lookups
   @@index([email]) // Modified: Simplified from the composite index
@@ -315,7 +316,7 @@ enum CarcasseStatus {
 }
 
 model Carcasse {
-  zacharie_carcasse_id                          String                  @id // {fei_numero}_{numero_bracelet}
+  zacharie_carcasse_id                          String          @id // {fei_numero}_{numero_bracelet}
   numero_bracelet                               String // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
   fei_numero                                    String
   type                                          CarcasseType?
@@ -353,15 +354,28 @@ model Carcasse {
   svi_carcasse_commentaire                      String?
   svi_carcasse_status                           CarcasseStatus?
   svi_carcasse_status_set_at                    DateTime?
-  created_at                                    DateTime                @default(now())
-  updated_at                                    DateTime                @default(now()) @updatedAt
+  created_at                                    DateTime        @default(now())
+  updated_at                                    DateTime        @default(now()) @updatedAt
   deleted_at                                    DateTime?
-  is_synced                                     Boolean                 @default(true) // just for typing purppose with zustand frontend
-  Fei                                           Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
-  FeiIntermediairesCarcasse                     FeiIntermediaire[]      @relation("FeiIntermediairesCarcasse")
-  FeiIntermediaireCarcasseRefus                 FeiIntermediaire?       @relation("FeiIntermediaireCarcasseRefus", fields: [intermediaire_carcasse_refus_intermediaire_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  CarcasseIntermediaire                         CarcasseIntermediaire[]
-  Logs                                          Log[]
+  is_synced                                     Boolean         @default(true) // just for typing purppose with zustand frontend
+
+  // Nouveaux champs IPM1
+  svi_ipm1_presentee_inspection Boolean?
+  svi_ipm1_user_id              String?
+  svi_ipm1_piece                String?
+  svi_ipm1_lesion_ou_motif      String[]
+  svi_ipm1_nombre_animaux       Int?
+  svi_ipm1_commentaire          String?
+  svi_ipm1_decision             String? // "Non renseigné" | "Mise en consigne"
+  svi_ipm1_duree_consigne       Int? // en heures
+  svi_ipm1_poids_consigne       Float? // en kg
+  svi_ipm1_signed_at            DateTime?
+  Fei                           Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
+  FeiIntermediairesCarcasse     FeiIntermediaire[]      @relation("FeiIntermediairesCarcasse")
+  FeiIntermediaireCarcasseRefus FeiIntermediaire?       @relation("FeiIntermediaireCarcasseRefus", fields: [intermediaire_carcasse_refus_intermediaire_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseIntermediaire         CarcasseIntermediaire[]
+  Logs                          Log[]
+  SviIpm1User                   User?                   @relation("SviIpm1User", fields: [svi_ipm1_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([fei_numero, numero_bracelet])
 }
