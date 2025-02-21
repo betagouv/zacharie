@@ -324,7 +324,8 @@ router.post(
 
     if (
       !existingCarcasse.intermediaire_carcasse_refus_intermediaire_id &&
-      updatedCarcasse.intermediaire_carcasse_refus_intermediaire_id
+      updatedCarcasse.intermediaire_carcasse_refus_intermediaire_id &&
+      updatedCarcasse.intermediaire_carcasse_refus_motif
     ) {
       const [examinateurInitial, premierDetenteur] = await prisma.fei
         .findUnique({
