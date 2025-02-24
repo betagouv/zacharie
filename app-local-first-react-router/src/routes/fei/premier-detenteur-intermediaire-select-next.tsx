@@ -4,7 +4,6 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import type { EntityWithUserRelation } from '~/src/types/entity';
 import { UserRoles, Prisma } from '@prisma/client';
 import { useMemo, useState } from 'react';
-import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
 // import { mergeFei } from '@app/db/fei.client';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
@@ -77,7 +76,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
     return true;
   }, [fei.fei_current_owner_role, feiIntermediaires]);
 
-  const [nextRole, setNextRole] = useState<UserRoles | null>(() => {
+  const [nextRole] = useState<UserRoles | null>(() => {
     if (showIntermediaires) {
       return UserRoles.ETG;
     }
@@ -226,110 +225,58 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
         }}
       >
         <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
-        <div className="fr-fieldset__element hidden">
-          <Select
-            label="Qui doit désormais agir sur la fiche ?"
-            className="!mb-0 grow"
-            nativeSelectProps={{
-              name: Prisma.FeiScalarFieldEnum.fei_next_owner_role,
-              value: nextRole || '',
-              onChange: (e) => {
-                const _nextRole = e.target.value as UserRoles;
-                setNextRole(_nextRole);
-                switch (_nextRole) {
-                  case UserRoles.CCG:
-                    if (ccgs.length === 1) {
-                      setNextOwnerValue(ccgs[0].id);
-                    }
-                    break;
-                  case UserRoles.COLLECTEUR_PRO:
-                    if (collecteursPro.length === 1) {
-                      setNextOwnerValue(collecteursPro[0].id);
-                    }
-                    break;
-                  case UserRoles.ETG:
-                    if (etgs.length === 1) {
-                      setNextOwnerValue(etgs[0].id);
-                    }
-                    break;
-                  case UserRoles.SVI:
-                    if (svis.length === 1) {
-                      setNextOwnerValue(svis[0].id);
-                    }
-                    break;
-                  default:
-                    break;
-                }
-              },
-            }}
-          >
-            <option value="">Sélectionnez le prochain type d'acteur à agir sur la fiche</option>
-            {/* <hr /> */}
-            {showIntermediaires ? (
-              <>
-                {/* <option value={UserRoles.COLLECTEUR_PRO}>{getUserRoleLabel(UserRoles.COLLECTEUR_PRO)}</option> */}
-                <option value={UserRoles.ETG}>{getUserRoleLabel(UserRoles.ETG)}</option>
-                {/* <option value={UserRoles.CCG}>{getUserRoleLabel(UserRoles.CCG)}</option> */}
-              </>
-            ) : showSvi ? (
-              <option value={UserRoles.SVI}>{getUserRoleLabel(UserRoles.SVI)}</option>
-            ) : null}
-          </Select>
-        </div>
         {nextRole && (
           <>
-            <div className="fr-fieldset__element grow">
-              <Select
-                // label={`Quel ${getUserRoleLabel(nextRole)} doit intervenir sur la fiche ?`}
-                label={`Qui est le destinataire de mes carcasses\u00A0?`}
-                className="!mb-0 grow"
-                key={fei.fei_next_owner_entity_id ?? 'no-choice-yet'}
-                nativeSelectProps={{
-                  name: Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id,
-                  value: nextOwnerValue,
-                  onChange: (e) => setNextOwnerValue(e.target.value),
-                }}
-              >
-                <option value="">{nextOwnerSelectLabel}</option>
-                {nextOwnersWorkingWith.length > 0 && (
-                  <>
-                    {/* <optgroup label={`Mes ${getUserRoleLabelPlural(nextRole)}`}> */}
-                    {nextOwnersWorkingWith.map((potentielOwner) => {
-                      return <NextOwnerOption key={potentielOwner.id} potentielOwner={potentielOwner} />;
-                    })}
-                    {/* </optgroup> */}
-                    {/* <hr /> */}
-                  </>
-                )}
-                {nextOwnersNotWorkingWith.map((potentielOwner) => {
-                  return <NextOwnerOption key={potentielOwner.id} potentielOwner={potentielOwner} />;
-                })}
-              </Select>
-              {(!nextOwnerValue || nextOwnerValue !== savedNextOwner) && (
-                <Button type="submit" className="mt-4" disabled={!nextOwnerValue}>
-                  Envoyer
-                </Button>
+            <Select
+              // label={`Quel ${getUserRoleLabel(nextRole)} doit intervenir sur la fiche ?`}
+              label={`Qui est le destinataire de mes carcasses\u00A0?`}
+              key={fei.fei_next_owner_entity_id ?? 'no-choice-yet'}
+              nativeSelectProps={{
+                name: Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id,
+                value: nextOwnerValue,
+                onChange: (e) => setNextOwnerValue(e.target.value),
+              }}
+            >
+              <option value="">{nextOwnerSelectLabel}</option>
+              {nextOwnersWorkingWith.length > 0 && (
+                <>
+                  {/* <optgroup label={`Mes ${getUserRoleLabelPlural(nextRole)}`}> */}
+                  {nextOwnersWorkingWith.map((potentielOwner) => {
+                    return <NextOwnerOption key={potentielOwner.id} potentielOwner={potentielOwner} />;
+                  })}
+                  {/* </optgroup> */}
+                  {/* <hr /> */}
+                </>
               )}
-            </div>
+              {nextOwnersNotWorkingWith.map((potentielOwner) => {
+                return <NextOwnerOption key={potentielOwner.id} potentielOwner={potentielOwner} />;
+              })}
+            </Select>
+            {(!nextOwnerValue || nextOwnerValue !== savedNextOwner) && (
+              <Button type="submit" disabled={!nextOwnerValue}>
+                Envoyer
+              </Button>
+            )}
           </>
         )}
       </form>
       {fei.fei_next_owner_entity_id && (
-        <div className="fr-fieldset__element">
+        <>
           <Alert
             severity="success"
+            className="mt-6"
             description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
             title="Attribution effectuée"
           />
           <Button
-            className="mt-4"
+            className="mt-6"
             linkProps={{
               to: `/app/tableau-de-bord/`,
             }}
           >
             Voir toutes mes fiches
           </Button>
-        </div>
+        </>
       )}
     </>
   );

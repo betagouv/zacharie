@@ -233,23 +233,21 @@ function CarcasseReadAndWrite() {
               className="mb-6 bg-white py-2 md:shadow"
             >
               <div className="p-4 pb-8 md:p-8 md:pb-4">
-                <div className="fr-fieldset__element">
-                  <Input
-                    label={
-                      carcasse.type === CarcasseType.PETIT_GIBIER
-                        ? "Numéro d'identification"
-                        : 'Numéro de bracelet'
-                    }
-                    state={numeroError ? 'error' : 'default'}
-                    stateRelatedMessage={numeroError ?? ''}
-                    nativeInputProps={{
-                      type: 'text',
-                      name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
-                      defaultValue: carcasse.numero_bracelet,
-                    }}
-                  />
-                </div>
-                <div className="fr-fieldset__element m-0 flex justify-end">
+                <Input
+                  label={
+                    carcasse.type === CarcasseType.PETIT_GIBIER
+                      ? "Numéro d'identification"
+                      : 'Numéro de bracelet'
+                  }
+                  state={numeroError ? 'error' : 'default'}
+                  stateRelatedMessage={numeroError ?? ''}
+                  nativeInputProps={{
+                    type: 'text',
+                    name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
+                    defaultValue: carcasse.numero_bracelet,
+                  }}
+                />
+                <div className="flex justify-end">
                   <Button type="submit">Modifier</Button>
                 </div>
               </div>
@@ -263,170 +261,247 @@ function CarcasseReadAndWrite() {
           >
             <div className="p-4 pb-8 md:p-8 md:pb-4">
               {!canEdit && (
-                <div className="fr-fieldset__element">
-                  <InputNotEditable
-                    label={
-                      carcasse.type === CarcasseType.PETIT_GIBIER
-                        ? "Numéro d'identification"
-                        : 'Numéro de bracelet'
-                    }
-                    nativeInputProps={{
-                      type: 'text',
-                      name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
-                      defaultValue: carcasse.numero_bracelet,
-                    }}
-                  />
-                </div>
+                <InputNotEditable
+                  label={
+                    carcasse.type === CarcasseType.PETIT_GIBIER
+                      ? "Numéro d'identification"
+                      : 'Numéro de bracelet'
+                  }
+                  nativeInputProps={{
+                    type: 'text',
+                    name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
+                    defaultValue: carcasse.numero_bracelet,
+                  }}
+                />
               )}
               {canEdit ? (
-                <div className="fr-fieldset__element">
-                  <Select
-                    label="Sélectionnez l'espèce du gibier"
-                    className="group !mb-0 grow"
-                    nativeSelectProps={{
-                      name: Prisma.CarcasseScalarFieldEnum.espece,
-                      value: espece,
-                      disabled: !canEdit,
-                      onChange: (e) => {
-                        const newEspece = e.currentTarget.value;
-                        setEspece(newEspece);
-                        updateCarcasse(carcasse.zacharie_carcasse_id, {
-                          espece: newEspece,
-                          type: petitGibier.especes.includes(espece)
-                            ? CarcasseType.PETIT_GIBIER
-                            : CarcasseType.GROS_GIBIER,
-                          examinateur_signed_at: dayjs().toDate(),
-                        });
-                      },
-                    }}
-                  >
-                    <option value="">Sélectionnez l'espèce du gibier</option>
-                    <hr />
-                    {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
-                      return (
-                        <optgroup label={typeGibier} key={typeGibier}>
-                          {_especes.map((_espece: string) => {
-                            return (
-                              <option value={_espece} key={_espece}>
-                                {_espece}
-                              </option>
-                            );
-                          })}
-                        </optgroup>
-                      );
-                    })}
-                  </Select>
-                </div>
-              ) : (
-                <div className="fr-fieldset__element">
-                  <InputNotEditable
-                    label="Espèce"
-                    nativeInputProps={{
-                      type: 'text',
-                      name: Prisma.CarcasseScalarFieldEnum.espece,
-                      defaultValue: carcasse.espece ?? '',
-                    }}
-                  />
-                </div>
-              )}
-              <div className={carcasse.type === CarcasseType.GROS_GIBIER ? 'hidden' : 'fr-fieldset__element'}>
-                <Component
-                  label="Nombre de carcasses"
-                  className="!mb-0 grow"
-                  hintText="Optionel"
-                  nativeInputProps={{
-                    type: 'number',
-                    name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
-                    defaultValue:
-                      carcasse.type === CarcasseType.GROS_GIBIER ? '1' : (carcasse.nombre_d_animaux ?? ''),
-                    disabled: carcasse.type === CarcasseType.GROS_GIBIER,
+                <Select
+                  label="Sélectionnez l'espèce du gibier"
+                  className="group !mb-0 grow"
+                  nativeSelectProps={{
+                    name: Prisma.CarcasseScalarFieldEnum.espece,
+                    value: espece,
+                    disabled: !canEdit,
                     onChange: (e) => {
+                      const newEspece = e.currentTarget.value;
+                      setEspece(newEspece);
                       updateCarcasse(carcasse.zacharie_carcasse_id, {
-                        nombre_d_animaux: Number(e.currentTarget.value),
+                        espece: newEspece,
+                        type: petitGibier.especes.includes(espece)
+                          ? CarcasseType.PETIT_GIBIER
+                          : CarcasseType.GROS_GIBIER,
                         examinateur_signed_at: dayjs().toDate(),
                       });
                     },
                   }}
+                >
+                  <option value="">Sélectionnez l'espèce du gibier</option>
+                  <hr />
+                  {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
+                    return (
+                      <optgroup label={typeGibier} key={typeGibier}>
+                        {_especes.map((_espece: string) => {
+                          return (
+                            <option value={_espece} key={_espece}>
+                              {_espece}
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                    );
+                  })}
+                </Select>
+              ) : (
+                <InputNotEditable
+                  label="Espèce"
+                  nativeInputProps={{
+                    type: 'text',
+                    name: Prisma.CarcasseScalarFieldEnum.espece,
+                    defaultValue: carcasse.espece ?? '',
+                  }}
                 />
-              </div>
+              )}
+              <Component
+                label="Nombre de carcasses"
+                className={['!mb-0 grow', carcasse.type === CarcasseType.GROS_GIBIER ? 'hidden' : ''].join(
+                  ' ',
+                )}
+                hintText="Optionel"
+                nativeInputProps={{
+                  type: 'number',
+                  name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
+                  defaultValue:
+                    carcasse.type === CarcasseType.GROS_GIBIER ? '1' : (carcasse.nombre_d_animaux ?? ''),
+                  disabled: carcasse.type === CarcasseType.GROS_GIBIER,
+                  onChange: (e) => {
+                    updateCarcasse(carcasse.zacharie_carcasse_id, {
+                      nombre_d_animaux: Number(e.currentTarget.value),
+                      examinateur_signed_at: dayjs().toDate(),
+                    });
+                  },
+                }}
+              />
             </div>
           </form>
           {espece && (
             <>
               <div className="mb-6 bg-white md:shadow">
                 <div className="p-4 pb-8 md:p-8 md:pb-4">
-                  <div className="fr-fieldset__element">
-                    <h3 className="fr-h4 fr-mb-2w">
-                      Anomalies carcasse<span className="fr-hint-text"></span>
-                    </h3>
-                    <div className="mt-4">
-                      {anomaliesCarcasse.map((anomalie, index) => {
-                        return (
-                          // @ts-expect-error isClosable is of type `true` but we expect `boolean`
-                          <Notice
-                            className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey p-2 [&_p.fr-notice\\_\\_title]:before:hidden"
-                            title={anomalie}
-                            isClosable={canEdit}
-                            onClose={() => {
-                              const nextAnomalies = anomaliesCarcasse
-                                .filter((a) => a !== anomalie)
-                                .filter(Boolean);
+                  <h3 className="fr-h4 fr-mb-2w">
+                    Anomalies carcasse<span className="fr-hint-text"></span>
+                  </h3>
+                  <div className="mt-4">
+                    {anomaliesCarcasse.map((anomalie, index) => {
+                      return (
+                        // @ts-expect-error isClosable is of type `true` but we expect `boolean`
+                        <Notice
+                          className="mb-4 fr-text-default--grey fr-background-contrast--grey p-2 [&_p.fr-notice\\_\\_title]:before:hidden"
+                          title={anomalie}
+                          isClosable={canEdit}
+                          onClose={() => {
+                            const nextAnomalies = anomaliesCarcasse
+                              .filter((a) => a !== anomalie)
+                              .filter(Boolean);
+                            setAnomaliesCarcasse(nextAnomalies);
+                            updateCarcasse(carcasse.zacharie_carcasse_id, {
+                              examinateur_anomalies_carcasse: nextAnomalies,
+                              examinateur_signed_at: dayjs().toDate(),
+                              examinateur_carcasse_sans_anomalie:
+                                nextAnomalies.length === 0 && !anomaliesAbats.length,
+                            });
+                          }}
+                          key={anomalie + index}
+                        />
+                      );
+                    })}
+                    {!anomaliesCarcasse.length && <p className="fr-text--sm">Aucune anomalie carcasse.</p>}
+                  </div>
+                  {canEdit && (
+                    <>
+                      {/* <div className="mt-2">
+                          <Button onClick={() => setAddAnomalieCarcasse(true)} type="button" iconId="ri-add-box-fill">
+                            Ajouter une anomalie carcasse
+                          </Button>
+                        </div> */}
+                      {addAnomalieCarcasse && (
+                        <>
+                          <InputForSearchPrefilledData
+                            canEdit={canEdit}
+                            data={referentielAnomaliesCarcasseList}
+                            clearInputOnClick
+                            label="Ajouter une nouvelle anomalie"
+                            hintText={
+                              <button type="button" onClick={() => anomaliesCarcasseModal.open()}>
+                                Voir le référentiel des saisies de carcasse en{' '}
+                                <u className="inline">cliquant ici</u>
+                              </button>
+                            }
+                            hideDataWhenNoSearch
+                            onSelect={(newAnomalie) => {
+                              // setAddAnomalieCarcasse(false);
+                              const nextAnomalies = [...anomaliesCarcasse, newAnomalie].filter(Boolean);
                               setAnomaliesCarcasse(nextAnomalies);
                               updateCarcasse(carcasse.zacharie_carcasse_id, {
                                 examinateur_anomalies_carcasse: nextAnomalies,
                                 examinateur_signed_at: dayjs().toDate(),
+                                examinateur_carcasse_sans_anomalie: false,
+                              });
+                            }}
+                          />
+                          <ModalTreeDisplay
+                            data={referentielAnomaliesCarcasseTree}
+                            modal={anomaliesCarcasseModal}
+                            title="Anomalies carcasse"
+                            onItemClick={(newAnomalie) => {
+                              // setAddAnomalieCarcasse(false);
+                              const nextAnomalies = [...anomaliesCarcasse, newAnomalie].filter(Boolean);
+                              setAnomaliesCarcasse(nextAnomalies);
+                              updateCarcasse(carcasse.zacharie_carcasse_id, {
+                                examinateur_anomalies_carcasse: nextAnomalies,
+                                examinateur_signed_at: dayjs().toDate(),
+                                examinateur_carcasse_sans_anomalie: false,
+                              });
+                            }}
+                          />
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+              {carcasse.type === CarcasseType.GROS_GIBIER && (
+                <div className="mb-6 bg-white md:shadow">
+                  <div className="p-4 pb-8 md:p-8 md:pb-4">
+                    <h3 className="fr-h4 fr-mb-2w">
+                      Anomalies abat<span className="fr-hint-text"></span>
+                    </h3>
+                    <div className="mt-4">
+                      {anomaliesAbats.map((anomalie, index) => {
+                        return (
+                          // @ts-expect-error isClosable is of type `true` but we expect `boolean`
+                          <Notice
+                            className="mb-4 fr-text-default--grey fr-background-contrast--grey p-2 [&_p.fr-notice\\_\\_title]:before:hidden"
+                            title={anomalie}
+                            isClosable={canEdit}
+                            onClose={() => {
+                              const nextAnomalies = anomaliesAbats
+                                .filter((a) => a !== anomalie)
+                                .filter(Boolean);
+                              setAnomaliesAbats(nextAnomalies);
+                              updateCarcasse(carcasse.zacharie_carcasse_id, {
+                                examinateur_anomalies_abats: nextAnomalies,
+                                examinateur_signed_at: dayjs().toDate(),
                                 examinateur_carcasse_sans_anomalie:
-                                  nextAnomalies.length === 0 && !anomaliesAbats.length,
+                                  nextAnomalies.length === 0 && !anomaliesCarcasse.length,
                               });
                             }}
                             key={anomalie + index}
                           />
                         );
                       })}
-                      {!anomaliesCarcasse.length && <p className="fr-text--sm">Aucune anomalie carcasse.</p>}
+                      {!anomaliesAbats.length && <p className="fr-text--sm">Aucune anomalie abat.</p>}
                     </div>
                     {canEdit && (
                       <>
                         {/* <div className="mt-2">
-                          <Button onClick={() => setAddAnomalieCarcasse(true)} type="button" iconId="ri-add-box-fill">
-                            Ajouter une anomalie carcasse
+                          <Button onClick={() => setAddAnomalieAbats(true)} type="button" iconId="ri-add-box-fill">
+                            Ajouter une anomalie abat
                           </Button>
                         </div> */}
-                        {addAnomalieCarcasse && (
-                          <div className="fr-fieldset__element mt-4">
+                        {addAnomalieAbats && (
+                          <div className="mt-4">
                             <InputForSearchPrefilledData
-                              canEdit={canEdit}
-                              data={referentielAnomaliesCarcasseList}
-                              clearInputOnClick
+                              data={grandGibierAbatsList}
                               label="Ajouter une nouvelle anomalie"
+                              clearInputOnClick
                               hintText={
-                                <button type="button" onClick={() => anomaliesCarcasseModal.open()}>
-                                  Voir le référentiel des saisies de carcasse en{' '}
+                                <button type="button" onClick={() => anomaliesAbatsModal.open()}>
+                                  Voir le référentiel des saisies d'abats en{' '}
                                   <u className="inline">cliquant ici</u>
                                 </button>
                               }
                               hideDataWhenNoSearch
                               onSelect={(newAnomalie) => {
-                                // setAddAnomalieCarcasse(false);
-                                const nextAnomalies = [...anomaliesCarcasse, newAnomalie].filter(Boolean);
-                                setAnomaliesCarcasse(nextAnomalies);
+                                // setAddAnomalieAbats(false);
+                                const nextAnomalies = [...anomaliesAbats, newAnomalie].filter(Boolean);
+                                setAnomaliesAbats(nextAnomalies);
                                 updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                  examinateur_anomalies_carcasse: nextAnomalies,
+                                  examinateur_anomalies_abats: nextAnomalies,
                                   examinateur_signed_at: dayjs().toDate(),
                                   examinateur_carcasse_sans_anomalie: false,
                                 });
                               }}
                             />
                             <ModalTreeDisplay
-                              data={referentielAnomaliesCarcasseTree}
-                              modal={anomaliesCarcasseModal}
-                              title="Anomalies carcasse"
+                              data={grandGibierAbatstree}
+                              modal={anomaliesAbatsModal}
+                              title="Anomalies abats"
                               onItemClick={(newAnomalie) => {
-                                // setAddAnomalieCarcasse(false);
-                                const nextAnomalies = [...anomaliesCarcasse, newAnomalie].filter(Boolean);
-                                setAnomaliesCarcasse(nextAnomalies);
+                                // setAddAnomalieAbats(false);
+                                const nextAnomalies = [...anomaliesAbats, newAnomalie].filter(Boolean);
+                                setAnomaliesAbats(nextAnomalies);
                                 updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                  examinateur_anomalies_carcasse: nextAnomalies,
+                                  examinateur_anomalies_abats: nextAnomalies,
                                   examinateur_signed_at: dayjs().toDate(),
                                   examinateur_carcasse_sans_anomalie: false,
                                 });
@@ -436,93 +511,6 @@ function CarcasseReadAndWrite() {
                         )}
                       </>
                     )}
-                  </div>
-                </div>
-              </div>
-              {carcasse.type === CarcasseType.GROS_GIBIER && (
-                <div className="mb-6 bg-white md:shadow">
-                  <div className="p-4 pb-8 md:p-8 md:pb-4">
-                    <div className="fr-fieldset__element">
-                      <h3 className="fr-h4 fr-mb-2w">
-                        Anomalies abat<span className="fr-hint-text"></span>
-                      </h3>
-                      <div className="mt-4">
-                        {anomaliesAbats.map((anomalie, index) => {
-                          return (
-                            // @ts-expect-error isClosable is of type `true` but we expect `boolean`
-                            <Notice
-                              className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey p-2 [&_p.fr-notice\\_\\_title]:before:hidden"
-                              title={anomalie}
-                              isClosable={canEdit}
-                              onClose={() => {
-                                const nextAnomalies = anomaliesAbats
-                                  .filter((a) => a !== anomalie)
-                                  .filter(Boolean);
-                                setAnomaliesAbats(nextAnomalies);
-                                updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                  examinateur_anomalies_abats: nextAnomalies,
-                                  examinateur_signed_at: dayjs().toDate(),
-                                  examinateur_carcasse_sans_anomalie:
-                                    nextAnomalies.length === 0 && !anomaliesCarcasse.length,
-                                });
-                              }}
-                              key={anomalie + index}
-                            />
-                          );
-                        })}
-                        {!anomaliesAbats.length && <p className="fr-text--sm">Aucune anomalie abat.</p>}
-                      </div>
-                      {canEdit && (
-                        <>
-                          {/* <div className="mt-2">
-                          <Button onClick={() => setAddAnomalieAbats(true)} type="button" iconId="ri-add-box-fill">
-                            Ajouter une anomalie abat
-                          </Button>
-                        </div> */}
-                          {addAnomalieAbats && (
-                            <div className="fr-fieldset__element mt-4">
-                              <InputForSearchPrefilledData
-                                data={grandGibierAbatsList}
-                                label="Ajouter une nouvelle anomalie"
-                                clearInputOnClick
-                                hintText={
-                                  <button type="button" onClick={() => anomaliesAbatsModal.open()}>
-                                    Voir le référentiel des saisies d'abats en{' '}
-                                    <u className="inline">cliquant ici</u>
-                                  </button>
-                                }
-                                hideDataWhenNoSearch
-                                onSelect={(newAnomalie) => {
-                                  // setAddAnomalieAbats(false);
-                                  const nextAnomalies = [...anomaliesAbats, newAnomalie].filter(Boolean);
-                                  setAnomaliesAbats(nextAnomalies);
-                                  updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                    examinateur_anomalies_abats: nextAnomalies,
-                                    examinateur_signed_at: dayjs().toDate(),
-                                    examinateur_carcasse_sans_anomalie: false,
-                                  });
-                                }}
-                              />
-                              <ModalTreeDisplay
-                                data={grandGibierAbatstree}
-                                modal={anomaliesAbatsModal}
-                                title="Anomalies abats"
-                                onItemClick={(newAnomalie) => {
-                                  // setAddAnomalieAbats(false);
-                                  const nextAnomalies = [...anomaliesAbats, newAnomalie].filter(Boolean);
-                                  setAnomaliesAbats(nextAnomalies);
-                                  updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                    examinateur_anomalies_abats: nextAnomalies,
-                                    examinateur_signed_at: dayjs().toDate(),
-                                    examinateur_carcasse_sans_anomalie: false,
-                                  });
-                                }}
-                              />
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
                   </div>
                 </div>
               )}

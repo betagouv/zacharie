@@ -168,78 +168,75 @@ export default function FEI_SVI() {
             });
           }}
         >
-          <div className={['fr-fieldset__element', !canEdit ? 'pointer-events-none' : ''].join(' ')}>
-            <Checkbox
-              options={[
-                {
-                  label: "J'ai fini l'inspection de toutes les carcasses et je clôture la fiche.",
-                  nativeInputProps: {
-                    required: true,
-                    name: 'svi_finito',
-                    value: 'true',
-                    readOnly: !!fei.svi_signed_at || !!fei.automatic_closed_at,
-                    defaultChecked: fei.svi_signed_at ? true : false,
-                  },
+          <Checkbox
+            className={!canEdit ? 'pointer-events-none' : ''}
+            options={[
+              {
+                label: "J'ai fini l'inspection de toutes les carcasses et je clôture la fiche.",
+                nativeInputProps: {
+                  required: true,
+                  name: 'svi_finito',
+                  value: 'true',
+                  readOnly: !!fei.svi_signed_at || !!fei.automatic_closed_at,
+                  defaultChecked: fei.svi_signed_at ? true : false,
                 },
-              ]}
-            />
-            <Button type="submit" disabled={!canEdit}>
-              Enregistrer
-            </Button>
-          </div>
+              },
+            ]}
+          />
+          <Button type="submit" className="mb-4" disabled={!canEdit}>
+            Enregistrer
+          </Button>
+
           {!!fei.svi_signed_at && (
-            <div className="fr-fieldset__element">
-              <DateFinInput
-                label="Date de fin d'inspection"
-                nativeInputProps={{
-                  id: Prisma.FeiScalarFieldEnum.svi_signed_at,
-                  name: Prisma.FeiScalarFieldEnum.svi_signed_at,
-                  type: 'datetime-local',
-                  autoComplete: 'off',
-                  onBlur: (e) => {
-                    const nextFei = {
-                      svi_signed_at: dayjs(e.target.value).toDate(),
-                    };
-                    updateFei(fei.numero, nextFei);
-                    addLog({
-                      user_id: user.id,
-                      action: 'svi-check-finished-at-update',
-                      fei_numero: fei.numero,
-                      history: createHistoryInput(fei, nextFei),
-                      user_role: UserRoles.SVI,
-                      entity_id: fei.svi_entity_id,
-                      zacharie_carcasse_id: null,
-                      carcasse_intermediaire_id: null,
-                      fei_intermediaire_id: null,
-                    });
-                  },
-                  suppressHydrationWarning: true,
-                  defaultValue: dayjs(fei.svi_signed_at).format('YYYY-MM-DDTHH:mm'),
-                }}
-              />
-            </div>
+            <DateFinInput
+              label="Date de fin d'inspection"
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.svi_signed_at,
+                name: Prisma.FeiScalarFieldEnum.svi_signed_at,
+                type: 'datetime-local',
+                autoComplete: 'off',
+                onBlur: (e) => {
+                  const nextFei = {
+                    svi_signed_at: dayjs(e.target.value).toDate(),
+                  };
+                  updateFei(fei.numero, nextFei);
+                  addLog({
+                    user_id: user.id,
+                    action: 'svi-check-finished-at-update',
+                    fei_numero: fei.numero,
+                    history: createHistoryInput(fei, nextFei),
+                    user_role: UserRoles.SVI,
+                    entity_id: fei.svi_entity_id,
+                    zacharie_carcasse_id: null,
+                    carcasse_intermediaire_id: null,
+                    fei_intermediaire_id: null,
+                  });
+                },
+                suppressHydrationWarning: true,
+                defaultValue: dayjs(fei.svi_signed_at).format('YYYY-MM-DDTHH:mm'),
+              }}
+            />
           )}
           {!!fei.automatic_closed_at && (
-            <div className="fr-fieldset__element">
-              <DateFinInput
-                label="Date de clôture automatique"
-                hintText="La fiche a été clôturée automatiquement par le système 10 jours après la date d'assignation au SVI"
-                nativeInputProps={{
-                  id: Prisma.FeiScalarFieldEnum.automatic_closed_at,
-                  name: Prisma.FeiScalarFieldEnum.automatic_closed_at,
-                  type: 'datetime-local',
-                  autoComplete: 'off',
-                  suppressHydrationWarning: true,
-                  defaultValue: dayjs(fei.automatic_closed_at).format('YYYY-MM-DDTHH:mm'),
-                }}
-              />
-            </div>
+            <DateFinInput
+              label="Date de clôture automatique"
+              hintText="La fiche a été clôturée automatiquement par le système 10 jours après la date d'assignation au SVI"
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.automatic_closed_at,
+                name: Prisma.FeiScalarFieldEnum.automatic_closed_at,
+                type: 'datetime-local',
+                autoComplete: 'off',
+                suppressHydrationWarning: true,
+                defaultValue: dayjs(fei.automatic_closed_at).format('YYYY-MM-DDTHH:mm'),
+              }}
+            />
           )}
         </form>
       </Accordion>
       {(fei.svi_signed_at || fei.automatic_closed_at) && (
         <Alert
           severity="success"
+          className="mt-4 md:mx-3"
           description="L'inspection des carcasses est terminée, cette fiche est clôturée. Merci !"
           title="Fiche clôturée"
         />

@@ -127,8 +127,9 @@ export default function AdminEntity() {
                   id="entity_data_form"
                   method="POST"
                   ref={formRef}
-                  onBlur={(event) => {
+                  onBlur={async (event) => {
                     event.preventDefault();
+                    await new Promise((resolve) => setTimeout(resolve, 300));
                     const formData = new FormData(formRef.current!);
                     fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${params.entityId}`, {
                       method: 'POST',
@@ -148,54 +149,46 @@ export default function AdminEntity() {
                       });
                   }}
                 >
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Nom d'usage"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                        name: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                        autoComplete: 'off',
-                        required: true,
-                        defaultValue: entity.nom_d_usage ?? '',
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Raison Sociale"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.raison_sociale,
-                        name: Prisma.EntityScalarFieldEnum.raison_sociale,
-                        autoComplete: 'off',
-                        required: true,
-                        defaultValue: entity.raison_sociale ?? '',
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="SIRET"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.siret,
-                        name: Prisma.EntityScalarFieldEnum.siret,
-                        autoComplete: 'off',
-                        defaultValue: entity.siret ?? '',
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Numéro DD(ec)PP"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
-                        name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
-                        autoComplete: 'off',
-                        defaultValue: entity.numero_ddecpp ?? '',
-                      }}
-                    />
-                  </div>
-                  {/* <div className="fr-fieldset__element">
-                    <Input
+                  <Input
+                    label="Nom d'usage"
+                    nativeInputProps={{
+                      id: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                      name: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                      autoComplete: 'off',
+                      required: true,
+                      defaultValue: entity.nom_d_usage ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Raison Sociale"
+                    nativeInputProps={{
+                      id: Prisma.EntityScalarFieldEnum.raison_sociale,
+                      name: Prisma.EntityScalarFieldEnum.raison_sociale,
+                      autoComplete: 'off',
+                      required: true,
+                      defaultValue: entity.raison_sociale ?? '',
+                    }}
+                  />
+                  <Input
+                    label="SIRET"
+                    nativeInputProps={{
+                      id: Prisma.EntityScalarFieldEnum.siret,
+                      name: Prisma.EntityScalarFieldEnum.siret,
+                      autoComplete: 'off',
+                      defaultValue: entity.siret ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Numéro DD(ec)PP"
+                    nativeInputProps={{
+                      id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+                      name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+                      autoComplete: 'off',
+                      defaultValue: entity.numero_ddecpp ?? '',
+                    }}
+                  />
+
+                  {/*  <Input
                       label="Téléphone"
                       hintText="Format attendu : 01 22 33 44 55"
                       nativeInputProps={{
@@ -204,39 +197,34 @@ export default function AdminEntity() {
                         autoComplete: "off",
                         defaultValue: entity.telephone ?? "",
                       }}
-                    />
-                  </div> */}
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Adresse"
-                      hintText="Indication : numéro et voie"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                        name: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                        autoComplete: 'off',
-                        required: true,
-                        defaultValue: entity.address_ligne_1 ?? '',
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Complément d'adresse (optionnel)"
-                      hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                        name: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                        autoComplete: 'off',
-                        defaultValue: entity.address_ligne_2 ?? '',
-                      }}
-                    />
-                  </div>
+                    /> */}
+                  <Input
+                    label="Adresse"
+                    hintText="Indication : numéro et voie"
+                    nativeInputProps={{
+                      id: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                      name: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                      autoComplete: 'off',
+                      required: true,
+                      defaultValue: entity.address_ligne_1 ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Complément d'adresse (optionnel)"
+                    hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                    nativeInputProps={{
+                      id: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                      name: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                      autoComplete: 'off',
+                      defaultValue: entity.address_ligne_2 ?? '',
+                    }}
+                  />
 
-                  <div className="fr-fieldset__element fr-fieldset__element--inline fr-fieldset__element--postal flex">
+                  <div className="flex flex-col md:flex-row w-full gap-x-4">
                     <Input
                       label="Code postal"
                       hintText="Format attendu : 5 chiffres"
-                      className="shrink-0"
+                      className="shrink-0 md:basis-1/5"
                       nativeInputProps={{
                         id: Prisma.EntityScalarFieldEnum.code_postal,
                         name: Prisma.EntityScalarFieldEnum.code_postal,
@@ -245,7 +233,7 @@ export default function AdminEntity() {
                         defaultValue: entity.code_postal ?? '',
                       }}
                     />
-                    <div className="fr-fieldset__element fr-fieldset__element--inline@md fr-fieldset__element--inline-grow">
+                    <div className="basis-4/5">
                       <InputVille
                         postCode={entity.code_postal ?? ''}
                         key={entity.ville}
@@ -368,51 +356,50 @@ function UserWorkingWithOrFor({
         (entityRelation) => {
           const owner = entityRelation.UserRelatedWithEntity;
           return (
-            <div key={owner.id} className="fr-fieldset__element">
-              <Notice
-                className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
-                style={{
-                  boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
-                }}
-                isClosable
-                onClose={() => {
-                  fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${owner.id}`, {
-                    method: 'POST',
-                    credentials: 'include',
-                    body: JSON.stringify({
-                      _action: 'delete',
-                      [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: owner.id,
-                      [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                      relation,
-                    }),
-                    headers: {
-                      Accept: 'application/json',
-                      'Content-Type': 'application/json',
-                    },
-                  })
-                    .then((res) => res.json())
-                    .then(() => {
-                      loadData(entity.id).then((response) => {
-                        if (response.data) setAdminEntityResponse(response.data!);
-                      });
+            <Notice
+              key={owner.id}
+              className="mb-4 fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
+              style={{
+                boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
+              }}
+              isClosable
+              onClose={() => {
+                fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${owner.id}`, {
+                  method: 'POST',
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    _action: 'delete',
+                    [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: owner.id,
+                    [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+                    relation,
+                  }),
+                  headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                  },
+                })
+                  .then((res) => res.json())
+                  .then(() => {
+                    loadData(entity.id).then((response) => {
+                      if (response.data) setAdminEntityResponse(response.data!);
                     });
-                }}
-                title={
-                  <Link
-                    to={`/app/tableau-de-bord/admin/user/${owner.id}`}
-                    className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                  >
-                    {owner.prenom} {owner.nom_de_famille}
-                    <br />
-                    {owner.email}
-                    <br />
-                    {owner.roles.join(', ')}
-                    <br />
-                    {owner.code_postal} {owner.ville}
-                  </Link>
-                }
-              />
-            </div>
+                  });
+              }}
+              title={
+                <Link
+                  to={`/app/tableau-de-bord/admin/user/${owner.id}`}
+                  className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                >
+                  {owner.prenom} {owner.nom_de_famille}
+                  <br />
+                  {owner.email}
+                  <br />
+                  {owner.roles.join(', ')}
+                  <br />
+                  {owner.code_postal} {owner.ville}
+                </Link>
+              }
+            />
           );
         },
       )}
@@ -425,7 +412,7 @@ function UserWorkingWithOrFor({
             <form
               key={user.id}
               id={fetcherKey}
-              className="fr-fieldset__element flex w-full flex-col items-start gap-4"
+              className="flex w-full flex-col items-start gap-4"
               method="POST"
               onSubmit={(event) => {
                 event.preventDefault();
@@ -460,7 +447,9 @@ function UserWorkingWithOrFor({
                 <br />
                 🏡 {user.code_postal} {user.ville}
               </Link>
-              <Button type="submit">Ajouter</Button>
+              <Button type="submit" className="m-2">
+                Ajouter
+              </Button>
             </form>,
             <p
               key={user.id}
@@ -554,56 +543,55 @@ function EntitiesRelatedTo({
         const etg = entity.type === EntityTypes.ETG ? entity : coupledEntity;
         const otherEntity = entity.type === EntityTypes.ETG ? coupledEntity : entity;
         return (
-          <div className="fr-fieldset__element" key={coupledEntity.id}>
-            <Notice
-              className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
-              style={{
-                boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
-              }}
-              isClosable
-              onClose={() => {
-                fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entity.id}`, {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: JSON.stringify({
-                    _action: 'remove-etg-relation',
-                    etg_id_entity_id: `${etg.id}_${otherEntity.id}`,
-                  }),
-                  headers: new Headers({
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                  }),
-                })
-                  .then((res) => res.json())
-                  .then(() => {
-                    loadData(entity.id).then((response) => {
-                      if (response.data) setAdminEntityResponse(response.data!);
-                    });
+          <Notice
+            key={coupledEntity.id}
+            className="mb-4 fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
+            style={{
+              boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
+            }}
+            isClosable
+            onClose={() => {
+              fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entity.id}`, {
+                method: 'POST',
+                credentials: 'include',
+                body: JSON.stringify({
+                  _action: 'remove-etg-relation',
+                  etg_id_entity_id: `${etg.id}_${otherEntity.id}`,
+                }),
+                headers: new Headers({
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                }),
+              })
+                .then((res) => res.json())
+                .then(() => {
+                  loadData(entity.id).then((response) => {
+                    if (response.data) setAdminEntityResponse(response.data!);
                   });
-              }}
-              title={
-                <Link
-                  to={`/app/tableau-de-bord/admin/entity/${coupledEntity.id}`}
-                  className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-                >
-                  {coupledEntity.nom_d_usage}
-                  <br />
-                  Raison sociale: {coupledEntity.raison_sociale}
-                  <br />
-                  {coupledEntity.siret}
-                  {coupledEntity.numero_ddecpp}
-                  <br />
-                  {coupledEntity.type}
-                  <br />
-                  {coupledEntity.address_ligne_1}
-                  <br />
-                  {coupledEntity.address_ligne_2}
-                  <br />
-                  {coupledEntity.code_postal} {coupledEntity.ville}
-                </Link>
-              }
-            />
-          </div>
+                });
+            }}
+            title={
+              <Link
+                to={`/app/tableau-de-bord/admin/entity/${coupledEntity.id}`}
+                className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+              >
+                {coupledEntity.nom_d_usage}
+                <br />
+                Raison sociale: {coupledEntity.raison_sociale}
+                <br />
+                {coupledEntity.siret}
+                {coupledEntity.numero_ddecpp}
+                <br />
+                {coupledEntity.type}
+                <br />
+                {coupledEntity.address_ligne_1}
+                <br />
+                {coupledEntity.address_ligne_2}
+                <br />
+                {coupledEntity.code_postal} {coupledEntity.ville}
+              </Link>
+            }
+          />
         );
       })}
       {showTable && (
@@ -619,7 +607,7 @@ function EntitiesRelatedTo({
                 <form
                   key={potentialEntityRelated.id}
                   id={`potentiel-couple-form-${potentialEntityRelated.id}`}
-                  className="fr-fieldset__element flex w-full flex-col items-start gap-4"
+                  className="flex w-full flex-col items-start gap-4"
                   method="POST"
                   onSubmit={(event) => {
                     event.preventDefault();
@@ -656,6 +644,7 @@ function EntitiesRelatedTo({
                   </Link>
                   <Button
                     type="submit"
+                    className="m-2"
                     nativeButtonProps={{
                       form: `potentiel-couple-form-${potentialEntityRelated.id}`,
                     }}

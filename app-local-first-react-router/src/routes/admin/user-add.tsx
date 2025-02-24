@@ -48,17 +48,15 @@ export default function AdminNewUser() {
           <h1 className="fr-h2 fr-mb-2w">Nouvel Utilisateur</h1>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
-              <div className="fr-fieldset__element">
-                <Input
-                  label="Email"
-                  nativeInputProps={{
-                    id: Prisma.UserScalarFieldEnum.email,
-                    name: Prisma.UserScalarFieldEnum.email,
-                    required: true,
-                    autoComplete: 'off',
-                  }}
-                />
-              </div>
+              <Input
+                label="Email"
+                nativeInputProps={{
+                  id: Prisma.UserScalarFieldEnum.email,
+                  name: Prisma.UserScalarFieldEnum.email,
+                  required: true,
+                  autoComplete: 'off',
+                }}
+              />
               <RolesCheckBoxes withAdmin legend="Sélectionnez tous les rôles du nouvel utilisateur" />
             </div>
             <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">

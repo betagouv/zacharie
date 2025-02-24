@@ -353,80 +353,70 @@ export default function FEICurrentIntermediaire() {
           >
             {showCollecteurInterface && fei.premier_detenteur_name_cache && (
               <>
-                <div className="fr-fieldset__element">
-                  <InputNotEditable
-                    label="Détenteur des carcasses"
-                    nativeInputProps={{
-                      id: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                      name: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                      autoComplete: 'off',
-                      defaultValue: fei.premier_detenteur_name_cache || '',
-                    }}
-                  />
-                </div>
-                <div className="fr-fieldset__element">
-                  <InputNotEditable
-                    label="Date de la chasse"
-                    nativeInputProps={{
-                      id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                      name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                      type: 'text',
-                      autoComplete: 'off',
-                      suppressHydrationWarning: true,
-                      defaultValue: fei?.date_mise_a_mort
-                        ? dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY')
-                        : '',
-                    }}
-                  />
-                </div>
+                <InputNotEditable
+                  label="Détenteur des carcasses"
+                  nativeInputProps={{
+                    id: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                    name: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                    autoComplete: 'off',
+                    defaultValue: fei.premier_detenteur_name_cache || '',
+                  }}
+                />
+                <InputNotEditable
+                  label="Date de la chasse"
+                  nativeInputProps={{
+                    id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                    name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                    type: 'text',
+                    autoComplete: 'off',
+                    suppressHydrationWarning: true,
+                    defaultValue: fei?.date_mise_a_mort
+                      ? dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY')
+                      : '',
+                  }}
+                />
               </>
             )}
             {!showCollecteurInterface && (
               <>
-                <div className="fr-fieldset__element">
-                  <div className="fr-fieldset__element">
-                    <InputNotEditable
-                      label="Date de mise à mort (et d'éviscération) *"
-                      nativeInputProps={{
-                        id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                        name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                        type: 'text',
-                        autoComplete: 'off',
-                        suppressHydrationWarning: true,
-                        defaultValue: fei?.date_mise_a_mort
-                          ? dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY')
-                          : '',
-                      }}
-                    />
-                  </div>
+                <InputNotEditable
+                  label="Date de mise à mort (et d'éviscération) *"
+                  nativeInputProps={{
+                    id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                    name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                    type: 'text',
+                    autoComplete: 'off',
+                    suppressHydrationWarning: true,
+                    defaultValue: fei?.date_mise_a_mort
+                      ? dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY')
+                      : '',
+                  }}
+                />
+                <InputNotEditable
+                  label="Heure de mise à mort de la première carcasse *"
+                  nativeInputProps={{
+                    id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                    name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                    type: 'time',
+                    autoComplete: 'off',
+                    defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
+                  }}
+                />
+                {!onlyPetitGibier && (
                   <InputNotEditable
-                    label="Heure de mise à mort de la première carcasse *"
+                    label="Heure d'éviscération de la dernière carcasse"
                     nativeInputProps={{
-                      id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-                      name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                      id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                      name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
                       type: 'time',
                       autoComplete: 'off',
-                      defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
+                      defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
                     }}
                   />
-                </div>
-                {!onlyPetitGibier && (
-                  <div className="fr-fieldset__element">
-                    <InputNotEditable
-                      label="Heure d'éviscération de la dernière carcasse"
-                      nativeInputProps={{
-                        id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                        name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                        type: 'time',
-                        autoComplete: 'off',
-                        defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
-                      }}
-                    />
-                  </div>
                 )}
               </>
             )}
-            <div className="fr-fieldset__element mb-8">
+            <div className="mb-8">
               <p className="text-sm text-gray-600">
                 Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
               </p>
@@ -523,100 +513,93 @@ export default function FEICurrentIntermediaire() {
             onBlur={handleBlurCheckFinishedAt}
             onSubmit={handleSubmitCheckFinishedAt}
           >
-            <div className={['fr-fieldset__element', canEdit ? '' : 'pointer-events-none'].join(' ')}>
-              <Checkbox
-                options={[
-                  {
-                    label: labelCheckDone,
-                    hintText:
-                      !intermediaire.check_finished_at && !canEdit
-                        ? "Vous n'êtes pas en charge de cette fiche, vous ne pouvez pas modifier cette valeur"
-                        : '',
-                    nativeInputProps: {
-                      required: true,
-                      name: 'check_finished_at_checked',
-                      value: 'true',
-                      disabled: !intermediaire.check_finished_at && !canEdit,
-                      form: 'form_intermediaire_check_finished_at',
-                      readOnly: !!intermediaire.check_finished_at,
-                      defaultChecked: intermediaire.check_finished_at ? true : false,
-                    },
+            <Checkbox
+              className={canEdit ? '' : 'pointer-events-none'}
+              options={[
+                {
+                  label: labelCheckDone,
+                  hintText:
+                    !intermediaire.check_finished_at && !canEdit
+                      ? "Vous n'êtes pas en charge de cette fiche, vous ne pouvez pas modifier cette valeur"
+                      : '',
+                  nativeInputProps: {
+                    required: true,
+                    name: 'check_finished_at_checked',
+                    value: 'true',
+                    disabled: !intermediaire.check_finished_at && !canEdit,
+                    form: 'form_intermediaire_check_finished_at',
+                    readOnly: !!intermediaire.check_finished_at,
+                    defaultChecked: intermediaire.check_finished_at ? true : false,
                   },
-                ]}
-              />
-            </div>
-            <div className={['fr-fieldset__element', canEdit ? '' : 'pointer-events-none'].join(' ')}>
-              <PriseEnChargeInput
-                key={JSON.stringify(intermediaire.check_finished_at || '')}
-                hintText={
-                  canEdit ? (
-                    <button
-                      className="inline-block"
-                      type="button"
-                      onClick={() => {
-                        handleCheckFinishedAt(dayjs().toDate());
-                      }}
-                    >
-                      <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
-                      maintenant
-                    </button>
-                  ) : (
-                    "Cette date vaut date d'approbation de mise sur le marché"
-                  )
-                }
-                label={
-                  carcassesSorted.carcassesApproved.length > 0
-                    ? 'Date de prise en charge'
-                    : 'Date de décision'
-                }
-                // hintText={
-                //   <button
-                //     className="inline-block"
-                //     type="button"
-                //     onClick={() => {
-                //       updateFeiIntermediaire(intermediaire.id, {
-                //         check_finished_at: dayjs().toDate(),
-                //       });
-                //     }}
-                //   >
-                //     Vous les prenez en charge à l'instant ? <u className="inline">Cliquez ici</u> pour remplir
-                //     le champ ci-dessous automatiquement
-                //   </button>
-                // }
-                nativeInputProps={{
-                  id: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
-                  name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
-                  type: 'datetime-local',
-                  form: 'form_intermediaire_check_finished_at',
-                  suppressHydrationWarning: true,
-                  autoComplete: 'off',
-                  defaultValue: dayjs(intermediaire.check_finished_at || undefined).format(
-                    'YYYY-MM-DDTHH:mm',
-                  ),
-                }}
-              />
-            </div>
-            <div className="fr-fieldset__element">
-              <Button type="submit" disabled={!canEdit}>
-                Enregistrer
-              </Button>
-            </div>
+                },
+              ]}
+            />
+            <PriseEnChargeInput
+              key={JSON.stringify(intermediaire.check_finished_at || '')}
+              className={canEdit ? '' : 'pointer-events-none'}
+              hintText={
+                canEdit ? (
+                  <button
+                    className="inline-block"
+                    type="button"
+                    onClick={() => {
+                      handleCheckFinishedAt(dayjs().toDate());
+                    }}
+                  >
+                    <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
+                    maintenant
+                  </button>
+                ) : (
+                  "Cette date vaut date d'approbation de mise sur le marché"
+                )
+              }
+              label={
+                carcassesSorted.carcassesApproved.length > 0 ? 'Date de prise en charge' : 'Date de décision'
+              }
+              // hintText={
+              //   <button
+              //     className="inline-block"
+              //     type="button"
+              //     onClick={() => {
+              //       updateFeiIntermediaire(intermediaire.id, {
+              //         check_finished_at: dayjs().toDate(),
+              //       });
+              //     }}
+              //   >
+              //     Vous les prenez en charge à l'instant ? <u className="inline">Cliquez ici</u> pour remplir
+              //     le champ ci-dessous automatiquement
+              //   </button>
+              // }
+              nativeInputProps={{
+                id: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
+                name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
+                type: 'datetime-local',
+                form: 'form_intermediaire_check_finished_at',
+                suppressHydrationWarning: true,
+                autoComplete: 'off',
+                defaultValue: dayjs(intermediaire.check_finished_at || undefined).format('YYYY-MM-DDTHH:mm'),
+              }}
+            />
+            <Button type="submit" disabled={!canEdit}>
+              Enregistrer
+            </Button>
             {!carcassesApprovedSorted.length && fei.intermediaire_closed_at && (
-              <div className="fr-fieldset__element">
+              <>
                 <Alert
                   severity="info"
+                  className="mt-6"
                   description="Vous n'avez pas pris en charge de carcasse acceptée, la fiche est donc clôturée."
                   title="Aucune carcasse acceptée"
                 />
                 <Button
-                  className="mt-4"
+                  className="mt-6"
                   linkProps={{
                     to: `/app/tableau-de-bord/`,
                   }}
                 >
                   Voir toutes mes fiches
                 </Button>
-              </div>
+              </>
             )}
           </form>
         </Accordion>
@@ -643,64 +626,54 @@ export default function FEICurrentIntermediaire() {
         onExpandedChange={setCarcassesAValiderExpanded}
       >
         {showCollecteurInterface && fei.premier_detenteur_name_cache && (
-          <div className="fr-fieldset__element">
-            <InputNotEditable
-              label="Détenteur des carcasses"
-              nativeInputProps={{
-                id: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                name: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                autoComplete: 'off',
-                defaultValue: fei.premier_detenteur_name_cache || '',
-              }}
-            />
-          </div>
+          <InputNotEditable
+            label="Détenteur des carcasses"
+            nativeInputProps={{
+              id: Prisma.EntityScalarFieldEnum.nom_d_usage,
+              name: Prisma.EntityScalarFieldEnum.nom_d_usage,
+              autoComplete: 'off',
+              defaultValue: fei.premier_detenteur_name_cache || '',
+            }}
+          />
         )}
         {!showCollecteurInterface && (
           <>
-            <div className="fr-fieldset__element">
-              <div className="fr-fieldset__element">
-                <InputNotEditable
-                  label="Date de mise à mort (et d'éviscération) *"
-                  nativeInputProps={{
-                    id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                    name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                    type: 'text',
-                    autoComplete: 'off',
-                    suppressHydrationWarning: true,
-                    defaultValue: fei?.date_mise_a_mort
-                      ? dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY')
-                      : '',
-                  }}
-                />
-              </div>
+            <InputNotEditable
+              label="Date de mise à mort (et d'éviscération) *"
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+                type: 'text',
+                autoComplete: 'off',
+                suppressHydrationWarning: true,
+                defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY') : '',
+              }}
+            />
+            <InputNotEditable
+              label="Heure de mise à mort de la première carcasse *"
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                type: 'time',
+                autoComplete: 'off',
+                defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
+              }}
+            />
+            {!onlyPetitGibier && (
               <InputNotEditable
-                label="Heure de mise à mort de la première carcasse *"
+                label="Heure d'éviscération de la dernière carcasse"
                 nativeInputProps={{
-                  id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-                  name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                  id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                  name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
                   type: 'time',
                   autoComplete: 'off',
-                  defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
+                  defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
                 }}
               />
-            </div>
-            {!onlyPetitGibier && (
-              <div className="fr-fieldset__element">
-                <InputNotEditable
-                  label="Heure d'éviscération de la dernière carcasse"
-                  nativeInputProps={{
-                    id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                    name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                    type: 'time',
-                    autoComplete: 'off',
-                    defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
-                  }}
-                />
-              </div>
             )}
           </>
         )}
-        <div className="fr-fieldset__element py-20">
+        <div className="py-20">
           <p className="text-sm text-gray-600">
             Quand vous aurez pris en charge la fiche, vous pourrez sur une carcasse pour la refuser, la
             signaler, l'annoter

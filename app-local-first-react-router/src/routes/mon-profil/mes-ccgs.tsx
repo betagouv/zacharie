@@ -70,7 +70,7 @@ export default function MesCCGs() {
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
               {!userCCGs.length && (
-                <p className="fr-fieldset__element mb-4 text-lg font-bold">
+                <p className="mb-4 text-lg font-bold">
                   Cette étape est facultative.
                   <br />
                   Vous pouvez la passer si vous n'avez aucun lien avec un CCG.
@@ -80,46 +80,44 @@ export default function MesCCGs() {
               )}
               {userCCGs.map((entity) => {
                 return (
-                  <div key={entity.id} className="fr-fieldset__element">
-                    <Notice
-                      className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice__title]:before:hidden"
-                      style={{
-                        boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
-                      }}
-                      isClosable
-                      onClose={() => {
-                        fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
-                          method: 'POST',
-                          credentials: 'include',
-                          body: JSON.stringify({
-                            _action: 'delete',
-                            [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                            [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                            relation: EntityRelationType.WORKING_WITH,
-                          }),
-                          headers: {
-                            Accept: 'application/json',
-                            'Content-Type': 'application/json',
-                          },
-                        })
-                          .then((res) => res.json())
-                          .then((res) => {
-                            if (res.ok) {
-                              setUserCCGs((prev) => prev.filter((ccg) => ccg.id !== entity.id));
-                            }
-                          });
-                      }}
-                      title={
-                        <>
-                          {entity.numero_ddecpp}
-                          <br />
-                          {entity.nom_d_usage}
-                          <br />
-                          {entity.code_postal} {entity.ville}
-                        </>
-                      }
-                    />
-                  </div>
+                  <Notice
+                    className="mb-4 fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice__title]:before:hidden"
+                    style={{
+                      boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
+                    }}
+                    isClosable
+                    onClose={() => {
+                      fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        body: JSON.stringify({
+                          _action: 'delete',
+                          [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
+                          [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+                          relation: EntityRelationType.WORKING_WITH,
+                        }),
+                        headers: {
+                          Accept: 'application/json',
+                          'Content-Type': 'application/json',
+                        },
+                      })
+                        .then((res) => res.json())
+                        .then((res) => {
+                          if (res.ok) {
+                            setUserCCGs((prev) => prev.filter((ccg) => ccg.id !== entity.id));
+                          }
+                        });
+                    }}
+                    title={
+                      <>
+                        {entity.numero_ddecpp}
+                        <br />
+                        {entity.nom_d_usage}
+                        <br />
+                        {entity.code_postal} {entity.ville}
+                      </>
+                    }
+                  />
                 );
               })}
               <InputCCG addCCG={(ccg) => setUserCCGs([...userCCGs, ccg])} />
@@ -165,7 +163,7 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
   return (
     <form
       method="POST"
-      className="fr-fieldset__element flex w-full flex-row items-end gap-4"
+      className="flex w-full flex-row items-end gap-4"
       onSubmit={(e) => {
         e.preventDefault();
         setIsSubmitting(true);

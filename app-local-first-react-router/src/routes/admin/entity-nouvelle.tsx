@@ -44,65 +44,61 @@ export default function AdminNouvelleEntite() {
           <h1 className="fr-h2 fr-mb-2w">Nouvelle Entité</h1>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
-              <div className="fr-fieldset__element">
-                <Input
-                  label="Raison Sociale"
-                  nativeInputProps={{
-                    id: Prisma.EntityScalarFieldEnum.raison_sociale,
-                    name: Prisma.EntityScalarFieldEnum.raison_sociale,
-                    placeholder: 'ETG de la Garenne',
-                    required: true,
-                    autoComplete: 'off',
-                  }}
-                />
-              </div>
-              <div className="fr-fieldset__element">
-                <RadioButtons
-                  legend="Type d'entité"
-                  options={[
-                    {
-                      nativeInputProps: {
-                        required: true,
-                        name: Prisma.EntityScalarFieldEnum.type,
-                        value: EntityTypes.PREMIER_DETENTEUR,
-                      },
-                      label: 'Premier détenteur (association de chasse, repas associatif, etc.)',
+              <Input
+                label="Raison Sociale"
+                nativeInputProps={{
+                  id: Prisma.EntityScalarFieldEnum.raison_sociale,
+                  name: Prisma.EntityScalarFieldEnum.raison_sociale,
+                  placeholder: 'ETG de la Garenne',
+                  required: true,
+                  autoComplete: 'off',
+                }}
+              />
+              <RadioButtons
+                legend="Type d'entité"
+                options={[
+                  {
+                    nativeInputProps: {
+                      required: true,
+                      name: Prisma.EntityScalarFieldEnum.type,
+                      value: EntityTypes.PREMIER_DETENTEUR,
                     },
-                    {
-                      nativeInputProps: {
-                        required: true,
-                        name: Prisma.EntityScalarFieldEnum.type,
-                        value: EntityTypes.CCG,
-                      },
-                      label: getUserRoleLabel(EntityTypes.CCG),
+                    label: 'Premier détenteur (association de chasse, repas associatif, etc.)',
+                  },
+                  {
+                    nativeInputProps: {
+                      required: true,
+                      name: Prisma.EntityScalarFieldEnum.type,
+                      value: EntityTypes.CCG,
                     },
-                    {
-                      nativeInputProps: {
-                        required: true,
-                        name: Prisma.EntityScalarFieldEnum.type,
-                        value: EntityTypes.COLLECTEUR_PRO,
-                      },
-                      label: getUserRoleLabel(EntityTypes.COLLECTEUR_PRO),
+                    label: getUserRoleLabel(EntityTypes.CCG),
+                  },
+                  {
+                    nativeInputProps: {
+                      required: true,
+                      name: Prisma.EntityScalarFieldEnum.type,
+                      value: EntityTypes.COLLECTEUR_PRO,
                     },
-                    {
-                      nativeInputProps: {
-                        required: true,
-                        name: Prisma.EntityScalarFieldEnum.type,
-                        value: EntityTypes.ETG,
-                      },
-                      label: getUserRoleLabel(EntityTypes.ETG),
+                    label: getUserRoleLabel(EntityTypes.COLLECTEUR_PRO),
+                  },
+                  {
+                    nativeInputProps: {
+                      required: true,
+                      name: Prisma.EntityScalarFieldEnum.type,
+                      value: EntityTypes.ETG,
                     },
-                    {
-                      nativeInputProps: {
-                        required: true,
-                        name: Prisma.EntityScalarFieldEnum.type,
-                        value: EntityTypes.SVI,
-                      },
-                      label: getUserRoleLabel(EntityTypes.SVI),
+                    label: getUserRoleLabel(EntityTypes.ETG),
+                  },
+                  {
+                    nativeInputProps: {
+                      required: true,
+                      name: Prisma.EntityScalarFieldEnum.type,
+                      value: EntityTypes.SVI,
                     },
-                  ]}
-                />
-              </div>
+                    label: getUserRoleLabel(EntityTypes.SVI),
+                  },
+                ]}
+              />
             </div>
             <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
               <ButtonsGroup

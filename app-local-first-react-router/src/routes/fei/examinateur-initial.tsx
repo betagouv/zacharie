@@ -222,70 +222,64 @@ export default function FEIExaminateurInitial() {
       <Accordion titleAs="h3" label="Données de chasse" defaultExpanded>
         <form method="POST" onSubmit={(e) => e.preventDefault()} ref={examRef}>
           <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
-          <div className="fr-fieldset__element">
-            <Component
-              label="Date de mise à mort (et d'éviscération) *"
-              hintText={
-                canEdit ? (
-                  <button
-                    className="inline-block"
-                    type="button"
-                    onClick={() => {
-                      const date = dayjs.utc().startOf('day').toDate();
-                      updateFei(fei.numero, {
-                        date_mise_a_mort: date,
-                      });
-                    }}
-                  >
-                    <u className="inline">Cliquez ici</u> pour définir la date du jour
-                  </button>
-                ) : null
-              }
-              nativeInputProps={{
-                id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                type: 'date',
-                autoComplete: 'off',
-                required: true,
-                suppressHydrationWarning: true,
-                onBlur: (e) => {
-                  const date = dayjs.utc(e.target.value).startOf('day').toDate();
-                  updateFei(fei.numero, {
-                    date_mise_a_mort: date,
-                  });
-                },
-                defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('YYYY-MM-DD') : '',
-              }}
-            />
-          </div>
-          <div className="fr-fieldset__element">
-            <VilleComponent
-              label="Commune de mise à mort *"
-              onSelect={(commune_mise_a_mort) => updateFei(fei.numero, { commune_mise_a_mort })}
-              nativeInputProps={{
-                id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
-                name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
-                type: 'text',
-                required: true,
-                autoComplete: 'off',
-                defaultValue: fei?.commune_mise_a_mort ?? '',
-              }}
-            />
-          </div>
-          <div className="fr-fieldset__element">
-            <Component
-              label="Heure de mise à mort de la première carcasse *"
-              nativeInputProps={{
-                id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-                name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-                type: 'time',
-                required: true,
-                onBlur: (e) => updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: e.target.value }),
-                autoComplete: 'off',
-                defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
-              }}
-            />
-          </div>
+          <Component
+            label="Date de mise à mort (et d'éviscération) *"
+            hintText={
+              canEdit ? (
+                <button
+                  className="inline-block"
+                  type="button"
+                  onClick={() => {
+                    const date = dayjs.utc().startOf('day').toDate();
+                    updateFei(fei.numero, {
+                      date_mise_a_mort: date,
+                    });
+                  }}
+                >
+                  <u className="inline">Cliquez ici</u> pour définir la date du jour
+                </button>
+              ) : null
+            }
+            nativeInputProps={{
+              id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+              name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+              type: 'date',
+              autoComplete: 'off',
+              required: true,
+              suppressHydrationWarning: true,
+              onBlur: (e) => {
+                const date = dayjs.utc(e.target.value).startOf('day').toDate();
+                updateFei(fei.numero, {
+                  date_mise_a_mort: date,
+                });
+              },
+              defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('YYYY-MM-DD') : '',
+            }}
+          />
+          <VilleComponent
+            label="Commune de mise à mort *"
+            onSelect={(commune_mise_a_mort) => updateFei(fei.numero, { commune_mise_a_mort })}
+            nativeInputProps={{
+              id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
+              name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
+              type: 'text',
+              required: true,
+              autoComplete: 'off',
+              defaultValue: fei?.commune_mise_a_mort ?? '',
+            }}
+          />
+          <Component
+            label="Heure de mise à mort de la première carcasse *"
+            nativeInputProps={{
+              id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+              name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+              type: 'time',
+              required: true,
+              onBlur: (e) => updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: e.target.value }),
+              autoComplete: 'off',
+              defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
+            }}
+          />
         </form>
       </Accordion>
       <Accordion titleAs="h3" label={`Carcasses/Lots de carcasses (${carcasses.length})`} defaultExpanded>
@@ -297,68 +291,63 @@ export default function FEIExaminateurInitial() {
           <form method="POST" onSubmit={(e) => e.preventDefault()}>
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             {!onlyPetitGibier && (
-              <div className="fr-fieldset__element">
-                <Component
-                  label="Heure d'éviscération de la dernière carcasse"
-                  nativeInputProps={{
-                    id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                    name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                    type: 'time',
-                    required: true,
-                    autoComplete: 'off',
-                    onBlur: (e) =>
-                      updateFei(fei.numero, { heure_evisceration_derniere_carcasse: e.target.value }),
-                    defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
-                  }}
-                />
-              </div>
-            )}
-
-            <div className="fr-fieldset__element">
               <Component
-                label="Date de validation de l’examen initial"
-                hintText={
-                  canEdit ? (
-                    <button
-                      className="inline-block text-left"
-                      type="button"
-                      onClick={() => {
-                        updateFei(fei.numero, {
-                          examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
-                          resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
-                        });
-                      }}
-                    >
-                      Cette date vaut date d'approbation de mise sur le marché.{' '}
-                      <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
-                      maintenant
-                    </button>
-                  ) : (
-                    "Cette date vaut date d'approbation de mise sur le marché"
-                  )
-                }
+                label="Heure d'éviscération de la dernière carcasse"
                 nativeInputProps={{
-                  id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
-                  name: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
-                  type: 'datetime-local',
+                  id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                  name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                  type: 'time',
+                  required: true,
                   autoComplete: 'off',
-                  suppressHydrationWarning: true,
                   onBlur: (e) =>
-                    updateFei(fei.numero, {
-                      examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(e.target.value).toDate(),
-                      resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
-                    }),
-                  defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
-                    ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                        'YYYY-MM-DDTHH:mm',
-                      )
-                    : undefined,
+                    updateFei(fei.numero, { heure_evisceration_derniere_carcasse: e.target.value }),
+                  defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
                 }}
               />
-            </div>
+            )}
+
+            <Component
+              label="Date de validation de l’examen initial"
+              hintText={
+                canEdit ? (
+                  <button
+                    className="inline-block text-left"
+                    type="button"
+                    onClick={() => {
+                      updateFei(fei.numero, {
+                        examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
+                        resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
+                      });
+                    }}
+                  >
+                    Cette date vaut date d'approbation de mise sur le marché.{' '}
+                    <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
+                    maintenant
+                  </button>
+                ) : (
+                  "Cette date vaut date d'approbation de mise sur le marché"
+                )
+              }
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
+                name: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
+                type: 'datetime-local',
+                autoComplete: 'off',
+                suppressHydrationWarning: true,
+                onBlur: (e) =>
+                  updateFei(fei.numero, {
+                    examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(e.target.value).toDate(),
+                    resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
+                  }),
+                defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
+                  ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
+                      'YYYY-MM-DDTHH:mm',
+                    )
+                  : undefined,
+              }}
+            />
             <div
               className={[
-                'fr-fieldset__element',
                 fei.examinateur_initial_approbation_mise_sur_le_marche ? 'pointer-events-none' : '',
               ].join(' ')}
             >
@@ -380,36 +369,32 @@ export default function FEIExaminateurInitial() {
                 ]}
               />
             </div>
-            <div className="fr-fieldset__element">
-              {canEdit && !needSelectNextUser && (
-                <Button
-                  type="submit"
-                  disabled={!carcasses.length}
-                  onClick={(e) => {
+            {canEdit && !needSelectNextUser && (
+              <Button
+                type="submit"
+                disabled={!carcasses.length}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (jobIsMissing) {
                     e.preventDefault();
-                    if (jobIsMissing) {
-                      e.preventDefault();
-                      alert(jobIsMissing);
-                    } else if (!approbation) {
-                      alert('Vous devez cocher la case pour valider la mise sur le marché');
-                    } else {
-                      updateFei(fei.numero, {
-                        examinateur_initial_approbation_mise_sur_le_marche: approbation,
-                        // examinateur_initial_date_approbation_mise_sur_le_marche: approbation
-                        //   ? dayjs().toDate()
-                        //   : null,
-                      });
-                    }
-                  }}
-                >
-                  Enregistrer
-                </Button>
-              )}
-            </div>
+                    alert(jobIsMissing);
+                  } else if (!approbation) {
+                    alert('Vous devez cocher la case pour valider la mise sur le marché');
+                  } else {
+                    updateFei(fei.numero, {
+                      examinateur_initial_approbation_mise_sur_le_marche: approbation,
+                      // examinateur_initial_date_approbation_mise_sur_le_marche: approbation
+                      //   ? dayjs().toDate()
+                      //   : null,
+                    });
+                  }
+                }}
+              >
+                Enregistrer
+              </Button>
+            )}
             {!!jobIsMissing?.length && (
-              <div className="fr-fieldset__element">
-                <Alert title="Attention" severity="error" description={jobIsMissing} />
-              </div>
+              <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
             )}
           </form>
         </Accordion>
