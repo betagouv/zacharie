@@ -123,6 +123,8 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
       fei_intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
+    // TODO: vérifier qu'elles sont réellement bien enregistrées
+    alert('IPM1 enregistrée');
   }
 
   const canDoIPM1 = useMemo(() => {
