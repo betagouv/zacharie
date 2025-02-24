@@ -18,6 +18,7 @@ import Chargement from '@app/components/Chargement';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 import dedent from 'dedent';
 import { CarcasseIPM1 } from './ipm1';
+import { CarcasseIPM2 } from './ipm2';
 
 export default function CarcasseSviLoader() {
   const params = useParams();
@@ -251,8 +252,12 @@ export function CarcasseEditSVI() {
                   >
                     <CarcasseIPM1 canEdit={canEdit} />
                   </Accordion>
-                  <Accordion titleAs="h3" defaultExpanded label="Inspection Post-Mortem 2 (IPM2)">
-                    <div />
+                  <Accordion
+                    titleAs="h3"
+                    defaultExpanded
+                    label={`Inspection Post-Mortem 2 (IPM2)${carcasse.svi_ipm2_date ? ` - ${dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}` : ''}`}
+                  >
+                    <CarcasseIPM2 canEdit={canEdit} />
                   </Accordion>
                 </Accordion>
               )}

@@ -325,71 +325,106 @@ enum IPM1Decision {
   MISE_EN_CONSIGNE
 }
 
+enum IPM2Decision {
+  LEVEE_DE_LA_CONSIGNE
+  SAISIE_TOTALE
+  SAISIE_PARTIELLE
+  TRAITEMENT_ASSAINISSANT
+}
+
+enum IPM2Traitement {
+  CUISSON
+  CONGELATION
+  AUTRE
+}
+
 model Carcasse {
-  zacharie_carcasse_id                          String                  @id // {fei_numero}_{numero_bracelet}
-  numero_bracelet                               String // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
-  fei_numero                                    String
-  type                                          CarcasseType?
-  nombre_d_animaux                              Int?
-  heure_mise_a_mort                             String?
-  heure_evisceration                            String?
-  espece                                        String? // Sanglier, Cerf, etc.
-  categorie                                     String? // Laie, MArcassin, etc.
-  examinateur_carcasse_sans_anomalie            Boolean?
-  examinateur_anomalies_carcasse                String[]
-  examinateur_anomalies_abats                   String[]
-  examinateur_commentaire                       String?
-  examinateur_signed_at                         DateTime?
-  intermediaire_carcasse_refus_intermediaire_id String?
-  intermediaire_carcasse_refus_motif            String?
-  intermediaire_carcasse_signed_at              DateTime?
-  intermediaire_carcasse_commentaire            String?
-  intermediaire_carcasse_manquante              Boolean?
-  svi_assigned_to_fei_at                        DateTime? // same as svi_assigned_at in fei
-  svi_carcasse_manquante                        Boolean?
-  svi_carcasse_consigne                         Boolean?
-  svi_carcasse_consigne_at                      DateTime?
-  svi_carcasse_consigne_motif                   String[]
-  svi_carcasse_consigne_levee                   Boolean?
-  svi_carcasse_consigne_levee_at                DateTime?
-  svi_carcasse_saisie                           String[] // deprecated, use svi_carcasse_saisie_motif instead
-  svi_carcasse_saisie_partielle                 Boolean?
-  svi_carcasse_saisie_partielle_morceaux        String[]
-  svi_carcasse_saisie_partielle_nombre_animaux  Int?
-  svi_carcasse_saisie_totale                    Boolean?
-  svi_carcasse_saisie_at                        DateTime?
-  svi_carcasse_saisie_motif                     String[]
-  svi_carcasse_traitement_assainissant          String[]
-  svi_carcasse_signed_at                        DateTime?
-  svi_carcasse_commentaire                      String?
-  svi_carcasse_status                           CarcasseStatus?
-  svi_carcasse_status_set_at                    DateTime?
+  zacharie_carcasse_id                               String                  @id // {fei_numero}_{numero_bracelet}
+  numero_bracelet                                    String // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
+  fei_numero                                         String
+  type                                               CarcasseType?
+  nombre_d_animaux                                   Int?
+  heure_mise_a_mort                                  String?
+  heure_evisceration                                 String?
+  espece                                             String? // Sanglier, Cerf, etc.
+  categorie                                          String? // Laie, MArcassin, etc.
+  examinateur_carcasse_sans_anomalie                 Boolean?
+  examinateur_anomalies_carcasse                     String[]
+  examinateur_anomalies_abats                        String[]
+  examinateur_commentaire                            String?
+  examinateur_signed_at                              DateTime?
+  intermediaire_carcasse_refus_intermediaire_id      String?
+  intermediaire_carcasse_refus_motif                 String?
+  intermediaire_carcasse_signed_at                   DateTime?
+  intermediaire_carcasse_commentaire                 String?
+  intermediaire_carcasse_manquante                   Boolean?
+  svi_assigned_to_fei_at                             DateTime? // same as svi_assigned_at in fei
+  svi_carcasse_manquante                             Boolean?
+  svi_carcasse_consigne                              Boolean?
+  svi_carcasse_consigne_at                           DateTime?
+  svi_carcasse_consigne_motif                        String[]
+  svi_carcasse_consigne_levee                        Boolean?
+  svi_carcasse_consigne_levee_at                     DateTime?
+  svi_carcasse_saisie                                String[] // deprecated, use svi_carcasse_saisie_motif instead
+  svi_carcasse_saisie_partielle                      Boolean?
+  svi_carcasse_saisie_partielle_morceaux             String[]
+  svi_carcasse_saisie_partielle_nombre_animaux       Int?
+  svi_carcasse_saisie_totale                         Boolean?
+  svi_carcasse_saisie_at                             DateTime?
+  svi_carcasse_saisie_motif                          String[]
+  svi_carcasse_traitement_assainissant               String[]
+  svi_carcasse_signed_at                             DateTime?
+  svi_carcasse_commentaire                           String?
+  svi_carcasse_status                                CarcasseStatus?
+  svi_carcasse_status_set_at                         DateTime?
   // Nouveaux champs IPM1
-  svi_ipm1_date                                 DateTime?
-  svi_ipm1_presentee_inspection                 Boolean?
-  svi_ipm1_user_id                              String?
-  svi_ipm1_user_name_cache                      String?
-  svi_ipm1_protocole                            IPM1Protocole? // standard (default)
-  svi_ipm1_pieces                               String[]
-  svi_ipm1_lesions_ou_motifs                    String[]
-  svi_ipm1_nombre_animaux                       Int?
-  svi_ipm1_commentaire                          String?
-  svi_ipm1_decision                             IPM1Decision? // "Non renseigné" | "Mise en consigne"
-  svi_ipm1_duree_consigne                       Int? // en heures
-  svi_ipm1_poids_consigne                       Float? // en kg
-  svi_ipm1_signed_at                            DateTime?
+  svi_ipm1_date                                      DateTime?
+  svi_ipm1_presentee_inspection                      Boolean?
+  svi_ipm1_user_id                                   String?
+  svi_ipm1_user_name_cache                           String?
+  svi_ipm1_protocole                                 IPM1Protocole? // standard (default)
+  svi_ipm1_pieces                                    String[]
+  svi_ipm1_lesions_ou_motifs                         String[]
+  svi_ipm1_nombre_animaux                            Int?
+  svi_ipm1_commentaire                               String?
+  svi_ipm1_decision                                  IPM1Decision? // "Non renseigné" | "Mise en consigne"
+  svi_ipm1_duree_consigne                            Int? // en heures
+  svi_ipm1_poids_consigne                            Float? // en kg
+  svi_ipm1_signed_at                                 DateTime?
+  // Nouveaux champs IPM2
+  svi_ipm2_date                                      DateTime?
+  svi_ipm2_presentee_inspection                      Boolean?
+  svi_ipm2_user_id                                   String?
+  svi_ipm2_user_name_cache                           String?
+  svi_ipm2_protocole                                 IPM1Protocole? // standard (default)
+  svi_ipm2_pieces                                    String[]
+  svi_ipm2_lesions_ou_motifs                         String[]
+  svi_ipm2_nombre_animaux                            Int?
+  svi_ipm2_commentaire                               String?
+  svi_ipm2_decision                                  IPM2Decision? // "Non renseigné" | "Mise en consigne"
+  svi_ipm2_traitement_assainissant                   IPM2Traitement[]
+  svi_ipm2_traitement_assainissant_cuisson_temps     String?
+  svi_ipm2_traitement_assainissant_cuisson_temp      String?
+  svi_ipm2_traitement_assainissant_congelation_temps String?
+  svi_ipm2_traitement_assainissant_congelation_temp  String?
+  svi_ipm2_traitement_assainissant_type              String?
+  svi_ipm2_traitement_assainissant_paramètres       String?
+  svi_ipm2_traitement_assainissant_etablissement     String?
+  svi_ipm2_traitement_assainissant_poids             Float?
+  svi_ipm2_poids_saisie                              Float?
+  svi_ipm2_signed_at                                 DateTime?
   // technical fields
-  created_at                                    DateTime                @default(now())
-  updated_at                                    DateTime                @default(now()) @updatedAt
-  deleted_at                                    DateTime?
-  is_synced                                     Boolean                 @default(true) // just for typing purppose with zustand frontend
+  created_at                                         DateTime                @default(now())
+  updated_at                                         DateTime                @default(now()) @updatedAt
+  deleted_at                                         DateTime?
+  is_synced                                          Boolean                 @default(true) // just for typing purppose with zustand frontend
   // relations
-  Fei                                           Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
-  FeiIntermediairesCarcasse                     FeiIntermediaire[]      @relation("FeiIntermediairesCarcasse")
-  FeiIntermediaireCarcasseRefus                 FeiIntermediaire?       @relation("FeiIntermediaireCarcasseRefus", fields: [intermediaire_carcasse_refus_intermediaire_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  CarcasseIntermediaire                         CarcasseIntermediaire[]
-  Logs                                          Log[]
-  SviIpm1User                                   User?                   @relation("SviIpm1User", fields: [svi_ipm1_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  Fei                                                Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
+  FeiIntermediairesCarcasse                          FeiIntermediaire[]      @relation("FeiIntermediairesCarcasse")
+  FeiIntermediaireCarcasseRefus                      FeiIntermediaire?       @relation("FeiIntermediaireCarcasseRefus", fields: [intermediaire_carcasse_refus_intermediaire_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseIntermediaire                              CarcasseIntermediaire[]
+  Logs                                               Log[]
+  SviIpm1User                                        User?                   @relation("SviIpm1User", fields: [svi_ipm1_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([fei_numero, numero_bracelet])
 }

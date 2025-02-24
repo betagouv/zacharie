@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Carcasse, CarcasseType, IPM1Decision, IPM1Protocole } from '@prisma/client';
+import { Carcasse, CarcasseType, IPM1Decision, IPM1Protocole, IPM2Decision } from '@prisma/client';
 import dayjs from 'dayjs';
 import { CustomNotice } from '@app/components/CustomNotice';
 import { useParams, Link } from 'react-router';
@@ -121,7 +121,7 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
           })}
           <br />
           {carcasse.svi_ipm1_date && (
-            <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_carcasse_saisie_motif)}>
+            <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_ipm1_signed_at)}>
               SVI Inspection Post Mortem 1 du {dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}&nbsp;:
               <br />
               <span className="m-0 ml-2 block font-medium">
@@ -171,6 +171,95 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
                     - Poids de la consigne : {carcasse.svi_ipm1_poids_consigne}kg
                   </span>
                 )}
+            </span>
+          )}
+          <br />
+          {carcasse.svi_ipm2_date && (
+            <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_ipm2_signed_at)}>
+              SVI Inspection Post Mortem 2 du {dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}&nbsp;:
+              <br />
+              <span className="m-0 ml-2 block font-medium">
+                - Protocole :{' '}
+                {carcasse.svi_ipm2_protocole === IPM1Protocole.RENFORCE ? 'Renforcé' : 'Standard'}
+              </span>
+              {carcasse.type === CarcasseType.PETIT_GIBIER && (
+                <span className="m-0 ml-2 block font-medium">
+                  - Nombre d'animaux : {carcasse.svi_ipm2_nombre_animaux}
+                </span>
+              )}
+              {carcasse.svi_ipm2_commentaire && (
+                <span className="m-0 ml-2 block font-medium">
+                  - Commentaire : {carcasse.svi_ipm2_commentaire}
+                </span>
+              )}
+              <span className="m-0 ml-2 block font-medium">- Pièces observées&nbsp;:</span>
+              {carcasse.svi_ipm2_pieces.map((piece, index) => {
+                return (
+                  <span className="m-0 ml-6 block font-medium" key={piece + index}>
+                    - {piece}
+                  </span>
+                );
+              })}
+              <span className="m-0 ml-2 block font-medium">- Lésions ou motifs de consigne&nbsp;:</span>
+              {carcasse.svi_ipm2_lesions_ou_motifs.map((type, index) => {
+                return (
+                  <span className="m-0 ml-6 block font-medium" key={type + index}>
+                    - {type}
+                  </span>
+                );
+              })}
+              <span className="m-0 ml-2 block font-medium">
+                - Décision IPM2 :{' '}
+                {carcasse.svi_ipm2_decision === IPM2Decision.LEVEE_DE_LA_CONSIGNE && 'Levée de la consigne'}
+                {carcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE && 'Saisie totale'}
+                {carcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE && 'Saisie partielle'}
+                {carcasse.svi_ipm2_decision === IPM2Decision.TRAITEMENT_ASSAINISSANT &&
+                  'Traitement assainissant'}
+              </span>
+              {carcasse.svi_ipm2_traitement_assainissant_cuisson_temps && (
+                <span className="m-0 ml-6 block font-medium">
+                  - Temps de cuisson : {carcasse.svi_ipm2_traitement_assainissant_cuisson_temps}
+                </span>
+              )}
+              {carcasse.svi_ipm2_traitement_assainissant_cuisson_temp && (
+                <span className="m-0 ml-6 block font-medium">
+                  - Température de cuisson : {carcasse.svi_ipm2_traitement_assainissant_cuisson_temp}
+                </span>
+              )}
+              {carcasse.svi_ipm2_traitement_assainissant_congelation_temps && (
+                <span className="m-0 ml-6 block font-medium">
+                  - Temps de congélation : {carcasse.svi_ipm2_traitement_assainissant_congelation_temps}
+                </span>
+              )}
+              {carcasse.svi_ipm2_traitement_assainissant_congelation_temp && (
+                <span className="m-0 ml-6 block font-medium">
+                  - Température de congélation : {carcasse.svi_ipm2_traitement_assainissant_congelation_temp}
+                </span>
+              )}
+              {carcasse.svi_ipm2_traitement_assainissant_type && (
+                <span className="m-0 ml-6 block font-medium">
+                  - Type de traitement : {carcasse.svi_ipm2_traitement_assainissant_type}
+                </span>
+              )}
+              {carcasse.svi_ipm2_traitement_assainissant_paramètres && (
+                <span className="m-0 ml-6 block font-medium">
+                  - Paramètres : {carcasse.svi_ipm2_traitement_assainissant_paramètres}
+                </span>
+              )}
+              {carcasse.svi_ipm2_traitement_assainissant_etablissement && (
+                <span className="m-0 ml-6 block font-medium">
+                  - Établissement désigné pour réaliser le traitement assainissant :{' '}
+                  {carcasse.svi_ipm2_traitement_assainissant_etablissement}
+                </span>
+              )}
+              {carcasse.svi_ipm2_traitement_assainissant_poids && (
+                <span className="m-0 ml-6 block font-medium">
+                  - Poids : {carcasse.svi_ipm2_traitement_assainissant_poids}
+                </span>
+              )}
+              {carcasse.svi_ipm2_poids_saisie && (
+                <span className="m-0 ml-6 block font-medium">- Poids : {carcasse.svi_ipm2_poids_saisie}</span>
+              )}
             </span>
           )}
           {carcasse.svi_carcasse_commentaire && (
