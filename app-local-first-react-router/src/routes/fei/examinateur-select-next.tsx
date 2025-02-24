@@ -131,53 +131,50 @@ export default function SelectNextForExaminateur() {
           });
         }}
       >
-        <div className="fr-fieldset__element grow">
-          <Select
-            label="Quel Premier Détenteur doit désormais agir sur la fiche ?"
-            className="!mb-0 grow"
-            key={fei.fei_next_owner_user_id ?? 'no-choice-yet'}
-            nativeSelectProps={{
-              name: 'next_owner',
-              value: nextValue,
-              onChange: (event) => {
-                setNextValue(event.target.value);
-              },
-            }}
-          >
-            <option value="">{nextOwnerSelectLabel}</option>
-            {Object.values(associationsDeChasse).map((potentielOwner) => {
-              return (
-                <NextOwnerOption
-                  nextOwnerIsEntity
-                  key={potentielOwner.id}
-                  potentielOwner={potentielOwner}
-                  user={user}
-                />
-              );
-            })}
-            {Object.values(detenteursInitiaux).map((potentielOwner) => {
-              return (
-                <NextOwnerOption
-                  nextOwnerIsUser
-                  key={potentielOwner.id}
-                  potentielOwner={potentielOwner}
-                  user={user}
-                />
-              );
-            })}
-          </Select>
-          {!nextValue ||
-            (nextValue !== fei.fei_next_owner_user_id && (
-              <Button className="mt-4" type="submit" disabled={!nextValue}>
-                Envoyer
-              </Button>
-            ))}
-        </div>
+        <Select
+          label="Quel Premier Détenteur doit désormais agir sur la fiche ?"
+          key={fei.fei_next_owner_user_id ?? 'no-choice-yet'}
+          nativeSelectProps={{
+            name: 'next_owner',
+            value: nextValue,
+            onChange: (event) => {
+              setNextValue(event.target.value);
+            },
+          }}
+        >
+          <option value="">{nextOwnerSelectLabel}</option>
+          {Object.values(associationsDeChasse).map((potentielOwner) => {
+            return (
+              <NextOwnerOption
+                nextOwnerIsEntity
+                key={potentielOwner.id}
+                potentielOwner={potentielOwner}
+                user={user}
+              />
+            );
+          })}
+          {Object.values(detenteursInitiaux).map((potentielOwner) => {
+            return (
+              <NextOwnerOption
+                nextOwnerIsUser
+                key={potentielOwner.id}
+                potentielOwner={potentielOwner}
+                user={user}
+              />
+            );
+          })}
+        </Select>
+        {!nextValue ||
+          (nextValue !== fei.fei_next_owner_user_id && (
+            <Button className="mt-4" type="submit" disabled={!nextValue}>
+              Envoyer
+            </Button>
+          ))}
       </form>
       {!fei.fei_next_owner_user_id && !nextValue && (
         <>
           <form
-            className="fr-fieldset__element relative flex w-full flex-row items-end gap-4"
+            className="relative flex w-full flex-row items-end gap-4 mt-4"
             method="POST"
             onSubmit={async (event) => {
               event.preventDefault();
@@ -275,11 +272,12 @@ export default function SelectNextForExaminateur() {
           <>
             <Alert
               severity="success"
+              className="mt-6"
               description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
               title="Attribution effectuée"
             />
             <Button
-              className="mt-4"
+              className="mt-6"
               linkProps={{
                 to: `/app/tableau-de-bord/`,
               }}

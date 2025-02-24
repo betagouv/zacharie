@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, Fragment } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -170,83 +170,72 @@ export default function MesInformations() {
                     </div>
                   }
                 >
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Nom"
-                      nativeInputProps={{
-                        id: Prisma.UserScalarFieldEnum.nom_de_famille,
-                        name: Prisma.UserScalarFieldEnum.nom_de_famille,
-                        autoComplete: 'family-name',
-                        required: true,
-                        defaultValue: user.nom_de_famille ?? '',
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Prénom"
-                      nativeInputProps={{
-                        id: Prisma.UserScalarFieldEnum.prenom,
-                        name: Prisma.UserScalarFieldEnum.prenom,
-                        autoComplete: 'given-name',
-                        required: true,
-                        defaultValue: user.prenom ?? '',
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <InputNotEditable
-                      label="Email"
-                      nativeInputProps={{
-                        id: Prisma.UserScalarFieldEnum.email,
-                        name: Prisma.UserScalarFieldEnum.email,
-                        required: true,
-                        defaultValue: user.email ?? '',
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Téléphone"
-                      hintText="Format attendu : 01 22 33 44 55"
-                      nativeInputProps={{
-                        id: Prisma.UserScalarFieldEnum.telephone,
-                        name: Prisma.UserScalarFieldEnum.telephone,
-                        autoComplete: 'tel',
-                        required: true,
-                        defaultValue: user.telephone ?? '',
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Adresse"
-                      hintText="Indication : numéro et voie"
-                      nativeInputProps={{
-                        id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                        name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                        autoComplete: 'address-line1',
-                        required: true,
-                        defaultValue: user.addresse_ligne_1 ?? '',
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element">
-                    <Input
-                      label="Complément d'adresse (optionnel)"
-                      hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                      nativeInputProps={{
-                        id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                        name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                        autoComplete: 'address-line2',
-                        defaultValue: user.addresse_ligne_2 ?? '',
-                      }}
-                    />
-                  </div>
-                  <div className="fr-fieldset__element fr-fieldset__element--inline fr-fieldset__element--postal flex flex-col md:flex-row">
+                  <Input
+                    label="Nom"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.nom_de_famille,
+                      name: Prisma.UserScalarFieldEnum.nom_de_famille,
+                      autoComplete: 'family-name',
+                      required: true,
+                      defaultValue: user.nom_de_famille ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Prénom"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.prenom,
+                      name: Prisma.UserScalarFieldEnum.prenom,
+                      autoComplete: 'given-name',
+                      required: true,
+                      defaultValue: user.prenom ?? '',
+                    }}
+                  />
+                  <InputNotEditable
+                    label="Email"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.email,
+                      name: Prisma.UserScalarFieldEnum.email,
+                      required: true,
+                      defaultValue: user.email ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Téléphone"
+                    hintText="Format attendu : 01 22 33 44 55"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.telephone,
+                      name: Prisma.UserScalarFieldEnum.telephone,
+                      autoComplete: 'tel',
+                      required: true,
+                      defaultValue: user.telephone ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Adresse"
+                    hintText="Indication : numéro et voie"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
+                      name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
+                      autoComplete: 'address-line1',
+                      required: true,
+                      defaultValue: user.addresse_ligne_1 ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Complément d'adresse (optionnel)"
+                    hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
+                      name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
+                      autoComplete: 'address-line2',
+                      defaultValue: user.addresse_ligne_2 ?? '',
+                    }}
+                  />
+                  <div className="flex flex-col md:flex-row w-full gap-x-4">
                     <Input
                       label="Code postal"
                       hintText="Format attendu : 5 chiffres"
+                      className="shrink-0 md:basis-1/5"
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.code_postal,
                         name: Prisma.UserScalarFieldEnum.code_postal,
@@ -255,7 +244,7 @@ export default function MesInformations() {
                         defaultValue: user.code_postal ?? '',
                       }}
                     />
-                    <div className="fr-fieldset__element fr-fieldset__element--inline@md fr-fieldset__element--inline-grow">
+                    <div className="basis-4/5">
                       <InputVille
                         postCode={user.code_postal ?? ''}
                         trimPostCode
@@ -283,19 +272,17 @@ export default function MesInformations() {
                       </div>
                     }
                   >
-                    <div className="fr-fieldset__element">
-                      <Input
-                        label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                        hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
-                        nativeInputProps={{
-                          id: Prisma.UserScalarFieldEnum.numero_cfei,
-                          name: Prisma.UserScalarFieldEnum.numero_cfei,
-                          autoComplete: 'off',
-                          required: true,
-                          defaultValue: user.numero_cfei ?? '',
-                        }}
-                      />
-                    </div>
+                    <Input
+                      label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
+                      hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
+                      nativeInputProps={{
+                        id: Prisma.UserScalarFieldEnum.numero_cfei,
+                        name: Prisma.UserScalarFieldEnum.numero_cfei,
+                        autoComplete: 'off',
+                        required: true,
+                        defaultValue: user.numero_cfei ?? '',
+                      }}
+                    />
                   </Accordion>
                 )}
               </form>
@@ -363,7 +350,7 @@ export default function MesInformations() {
                   method="POST"
                   onChange={handleUserFormBlur}
                   onSubmit={(e) => e.preventDefault()}
-                  className="fr-fieldset__element p-8"
+                  className="p-8"
                 >
                   <Checkbox
                     options={[
@@ -468,10 +455,10 @@ function AccordionEntreprise({
         .filter((entity) => entity.type === entityType)
         .map((entity) => {
           return (
-            <div key={entity.id} className="fr-fieldset__element">
+            <Fragment key={entity.id}>
               {/* @ts-expect-error Type 'boolean' is not assignable to type 'true' */}
               <Notice
-                className="fr-fieldset__element fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
+                className="mb-4 fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
                 style={{
                   boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
                 }}
@@ -506,15 +493,11 @@ function AccordionEntreprise({
                   </>
                 }
               />
-            </div>
+            </Fragment>
           );
         })}
       {canChange && (
-        <form
-          id={fetcherKey}
-          className="fr-fieldset__element flex w-full flex-row items-end gap-4"
-          method="POST"
-        >
+        <form id={fetcherKey} className="flex w-full flex-row items-end gap-4" method="POST">
           <input type="hidden" name={Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id} value={user.id} />
           <input type="hidden" name="_action" value="create" />
           <input type="hidden" name="route" value={`/api/action/user-entity/${user.id}`} />
@@ -526,7 +509,6 @@ function AccordionEntreprise({
           <Select
             label={addLabel}
             hint={selectLabel}
-            className="!mb-0 grow"
             disabled={!user?.roles.includes(UserRoles.ADMIN)}
             nativeSelectProps={{
               name: Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id,

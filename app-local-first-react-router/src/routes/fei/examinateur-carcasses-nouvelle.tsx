@@ -53,178 +53,168 @@ export default function NouvelleCarcasse() {
 
   return (
     <form method="POST" className="flex w-full flex-col items-stretch">
-      <div className="fr-fieldset__element">
-        <Select
-          label="Sélectionnez l'espèce du gibier"
-          className="group !mb-0 grow"
-          nativeSelectProps={{
-            name: Prisma.CarcasseScalarFieldEnum.espece,
-            value: espece,
-            onChange: (e) => {
-              const newEspece = e.currentTarget.value;
-              setEspece(newEspece);
-            },
+      <Select
+        label="Sélectionnez l'espèce du gibier"
+        className="group grow"
+        nativeSelectProps={{
+          name: Prisma.CarcasseScalarFieldEnum.espece,
+          value: espece,
+          onChange: (e) => {
+            const newEspece = e.currentTarget.value;
+            setEspece(newEspece);
+          },
+        }}
+      >
+        <option value="">Sélectionnez l'espèce du gibier</option>
+        {/* <hr /> */}
+        {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
+          return (
+            <optgroup label={typeGibier} key={typeGibier}>
+              {_especes.map((_espece: string) => {
+                return (
+                  <option value={_espece} key={_espece}>
+                    {_espece}
+                  </option>
+                );
+              })}
+            </optgroup>
+          );
+        })}
+      </Select>
+      {espece && isPetitGibier && (
+        <Input
+          label="Nombre de carcasses dans le lot"
+          hintText="Optionel, seulement pour le petit gibier"
+          nativeInputProps={{
+            type: 'number',
+            name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
+            value: nombreDAnimaux,
+            onChange: (e) => setNombreDAnimaux(e.target.value),
+          }}
+        />
+      )}
+      {espece && (
+        <Input
+          label="Numéro de marquage (bracelet, languette)"
+          state={error ? 'error' : 'default'}
+          stateRelatedMessage={error ?? ''}
+          hintText={
+            <>
+              {defaultNumeroBracelet ? (
+                <button
+                  type="button"
+                  className={[
+                    'inline text-left',
+                    numeroBracelet ? 'pointer-events-none opacity-20' : '',
+                  ].join(' ')}
+                  onClick={() => {
+                    incProchainBraceletAUtiliser();
+                    setNumeroBracelet(defaultNumeroBracelet);
+                  }}
+                >
+                  Votre chasse n'a pas de dispositif de marquage ?{' '}
+                  <u className="inline">Cliquez ici pour utiliser {defaultNumeroBracelet}</u>.
+                </button>
+              ) : (
+                <>Veuillez renseigner la commune de mise à mort avant d'enregistrer une carcasse</>
+              )}
+            </>
+          }
+          nativeInputProps={{
+            type: 'text',
+            required: true,
+            name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
+            value: numeroBracelet,
+            // replce slash and space by underscore
+            onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, '_')),
+          }}
+        />
+      )}
+      {espece && (
+        <Button
+          type="submit"
+          disabled={!fei.commune_mise_a_mort || !numeroBracelet}
+          onClick={(e) => {
+            e.preventDefault();
+            if (!fei.commune_mise_a_mort) {
+              setError("Veuillez renseigner la commune de mise à mort avant d'enregistrer une carcasse");
+              return;
+            }
+            if (!numeroBracelet) {
+              setError("Veuillez renseigner le numéro de marquage avant d'enregistrer une carcasse");
+              return;
+            }
+            if (!espece) {
+              setError("Veuillez renseigner l'espèce du gibier avant d'enregistrer une carcasse");
+              return;
+            }
+            if (carcasses[zacharieCarcasseId] && !carcasses[zacharieCarcasseId].deleted_at) {
+              setError('Le numéro de marquage est déjà utilisé pour cette fiche');
+              return;
+            }
+            const newCarcasse: Carcasse = {
+              zacharie_carcasse_id: zacharieCarcasseId,
+              numero_bracelet: numeroBracelet,
+              fei_numero: fei.numero,
+              type: isPetitGibier ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER,
+              nombre_d_animaux: isPetitGibier ? Number(nombreDAnimaux) : null,
+              heure_mise_a_mort: null,
+              heure_evisceration: null,
+              espece: espece,
+              categorie: null,
+              examinateur_carcasse_sans_anomalie: null,
+              examinateur_anomalies_carcasse: [],
+              examinateur_anomalies_abats: [],
+              examinateur_commentaire: null,
+              examinateur_signed_at: dayjs().toDate(),
+              intermediaire_carcasse_refus_intermediaire_id: null,
+              intermediaire_carcasse_refus_motif: null,
+              intermediaire_carcasse_signed_at: null,
+              intermediaire_carcasse_commentaire: null,
+              intermediaire_carcasse_manquante: null,
+              svi_assigned_to_fei_at: null,
+              svi_carcasse_manquante: null,
+              svi_carcasse_consigne: null,
+              svi_carcasse_consigne_at: null,
+              svi_carcasse_consigne_motif: [],
+              svi_carcasse_traitement_assainissant: [],
+              svi_carcasse_consigne_levee: null,
+              svi_carcasse_consigne_levee_at: null,
+              svi_carcasse_saisie: [],
+              svi_carcasse_saisie_partielle: false,
+              svi_carcasse_saisie_partielle_morceaux: [],
+              svi_carcasse_saisie_partielle_nombre_animaux: null,
+              svi_carcasse_saisie_totale: false,
+              svi_carcasse_saisie_motif: [],
+              svi_carcasse_saisie_at: null,
+              svi_carcasse_signed_at: null,
+              svi_carcasse_commentaire: null,
+              svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+              svi_carcasse_status_set_at: null,
+              created_at: dayjs().toDate(),
+              updated_at: dayjs().toDate(),
+              deleted_at: null,
+              is_synced: false,
+            };
+            createCarcasse(newCarcasse);
+            addLog({
+              user_id: user.id,
+              user_role: UserRoles.EXAMINATEUR_INITIAL,
+              fei_numero: fei.numero,
+              action: 'examinateur-carcasse-create',
+              history: createHistoryInput(null, newCarcasse),
+              entity_id: fei.fei_current_owner_entity_id,
+              zacharie_carcasse_id: newCarcasse.zacharie_carcasse_id,
+              fei_intermediaire_id: null,
+              carcasse_intermediaire_id: null,
+            });
+            setNumeroBracelet('');
+
+            setError(null);
           }}
         >
-          <option value="">Sélectionnez l'espèce du gibier</option>
-          {/* <hr /> */}
-          {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
-            return (
-              <optgroup label={typeGibier} key={typeGibier}>
-                {_especes.map((_espece: string) => {
-                  return (
-                    <option value={_espece} key={_espece}>
-                      {_espece}
-                    </option>
-                  );
-                })}
-              </optgroup>
-            );
-          })}
-        </Select>
-      </div>
-      {espece && isPetitGibier && (
-        <div className="fr-fieldset__element">
-          <Input
-            label="Nombre de carcasses dans le lot"
-            className="!mb-0 grow"
-            hintText="Optionel, seulement pour le petit gibier"
-            nativeInputProps={{
-              type: 'number',
-              name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
-              value: nombreDAnimaux,
-              onChange: (e) => setNombreDAnimaux(e.target.value),
-            }}
-          />
-        </div>
-      )}
-      {espece && (
-        <div className="fr-fieldset__element">
-          <Input
-            label="Numéro de marquage (bracelet, languette)"
-            className="!mb-0 grow"
-            state={error ? 'error' : 'default'}
-            stateRelatedMessage={error ?? ''}
-            hintText={
-              <>
-                {defaultNumeroBracelet ? (
-                  <button
-                    type="button"
-                    className={[
-                      'inline text-left',
-                      numeroBracelet ? 'pointer-events-none opacity-20' : '',
-                    ].join(' ')}
-                    onClick={() => {
-                      incProchainBraceletAUtiliser();
-                      setNumeroBracelet(defaultNumeroBracelet);
-                    }}
-                  >
-                    Votre chasse n'a pas de dispositif de marquage ?{' '}
-                    <u className="inline">Cliquez ici pour utiliser {defaultNumeroBracelet}</u>.
-                  </button>
-                ) : (
-                  <>Veuillez renseigner la commune de mise à mort avant d'enregistrer une carcasse</>
-                )}
-              </>
-            }
-            nativeInputProps={{
-              type: 'text',
-              required: true,
-              name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
-              value: numeroBracelet,
-              // replce slash and space by underscore
-              onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, '_')),
-            }}
-          />
-        </div>
-      )}
-      {espece && (
-        <div className="fr-fieldset__element">
-          <Button
-            type="submit"
-            disabled={!fei.commune_mise_a_mort || !numeroBracelet}
-            onClick={(e) => {
-              e.preventDefault();
-              if (!fei.commune_mise_a_mort) {
-                setError("Veuillez renseigner la commune de mise à mort avant d'enregistrer une carcasse");
-                return;
-              }
-              if (!numeroBracelet) {
-                setError("Veuillez renseigner le numéro de marquage avant d'enregistrer une carcasse");
-                return;
-              }
-              if (!espece) {
-                setError("Veuillez renseigner l'espèce du gibier avant d'enregistrer une carcasse");
-                return;
-              }
-              if (carcasses[zacharieCarcasseId] && !carcasses[zacharieCarcasseId].deleted_at) {
-                setError('Le numéro de marquage est déjà utilisé pour cette fiche');
-                return;
-              }
-              const newCarcasse: Carcasse = {
-                zacharie_carcasse_id: zacharieCarcasseId,
-                numero_bracelet: numeroBracelet,
-                fei_numero: fei.numero,
-                type: isPetitGibier ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER,
-                nombre_d_animaux: isPetitGibier ? Number(nombreDAnimaux) : null,
-                heure_mise_a_mort: null,
-                heure_evisceration: null,
-                espece: espece,
-                categorie: null,
-                examinateur_carcasse_sans_anomalie: null,
-                examinateur_anomalies_carcasse: [],
-                examinateur_anomalies_abats: [],
-                examinateur_commentaire: null,
-                examinateur_signed_at: dayjs().toDate(),
-                intermediaire_carcasse_refus_intermediaire_id: null,
-                intermediaire_carcasse_refus_motif: null,
-                intermediaire_carcasse_signed_at: null,
-                intermediaire_carcasse_commentaire: null,
-                intermediaire_carcasse_manquante: null,
-                svi_assigned_to_fei_at: null,
-                svi_carcasse_manquante: null,
-                svi_carcasse_consigne: null,
-                svi_carcasse_consigne_at: null,
-                svi_carcasse_consigne_motif: [],
-                svi_carcasse_traitement_assainissant: [],
-                svi_carcasse_consigne_levee: null,
-                svi_carcasse_consigne_levee_at: null,
-                svi_carcasse_saisie: [],
-                svi_carcasse_saisie_partielle: false,
-                svi_carcasse_saisie_partielle_morceaux: [],
-                svi_carcasse_saisie_partielle_nombre_animaux: null,
-                svi_carcasse_saisie_totale: false,
-                svi_carcasse_saisie_motif: [],
-                svi_carcasse_saisie_at: null,
-                svi_carcasse_signed_at: null,
-                svi_carcasse_commentaire: null,
-                svi_carcasse_status: CarcasseStatus.SANS_DECISION,
-                svi_carcasse_status_set_at: null,
-                created_at: dayjs().toDate(),
-                updated_at: dayjs().toDate(),
-                deleted_at: null,
-                is_synced: false,
-              };
-              createCarcasse(newCarcasse);
-              addLog({
-                user_id: user.id,
-                user_role: UserRoles.EXAMINATEUR_INITIAL,
-                fei_numero: fei.numero,
-                action: 'examinateur-carcasse-create',
-                history: createHistoryInput(null, newCarcasse),
-                entity_id: fei.fei_current_owner_entity_id,
-                zacharie_carcasse_id: newCarcasse.zacharie_carcasse_id,
-                fei_intermediaire_id: null,
-                carcasse_intermediaire_id: null,
-              });
-              setNumeroBracelet('');
-
-              setError(null);
-            }}
-          >
-            {isPetitGibier ? 'Enregistrer un lot de carcasses' : 'Enregistrer une carcasse'}
-          </Button>
-        </div>
+          {isPetitGibier ? 'Enregistrer un lot de carcasses' : 'Enregistrer une carcasse'}
+        </Button>
       )}
     </form>
   );

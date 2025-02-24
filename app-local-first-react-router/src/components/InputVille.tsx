@@ -146,10 +146,13 @@ export default function InputVille(props: InputVilleProps) {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     canSearch.current = true;
+    console.log('BOUM', { ville: e.target.value });
     setVilleSearched(e.target.value);
   };
 
   const ref = useRef<HTMLInputElement>(null);
+
+  console.log({ villeSearched, postCode });
 
   return (
     <>
@@ -164,7 +167,12 @@ export default function InputVille(props: InputVilleProps) {
           onChange: handleChange,
         }}
       />
-      <div className="-mt-6 flex w-full flex-col border border-gray-200">
+      <div
+        className={[
+          'flex w-full flex-col border border-gray-200',
+          villesResults.length > 0 ? '-mt-6' : 'hidden',
+        ].join(' ')}
+      >
         {villesResults.map((ville) => {
           return (
             <button
@@ -173,9 +181,11 @@ export default function InputVille(props: InputVilleProps) {
                 if (trimPostCode) {
                   const codePostal = ville.split(' ')[0];
                   const trimedVille = ville.replace(codePostal, '').trim();
+                  console.log('BIM', { trimedVille });
                   setVilleSearched(trimedVille);
                   if (onSelect) onSelect(trimedVille);
                 } else {
+                  console.log('BAM', { ville });
                   setVilleSearched(ville);
                   if (onSelect) onSelect(ville);
                 }
