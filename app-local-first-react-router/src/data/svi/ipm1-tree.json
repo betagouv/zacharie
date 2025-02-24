@@ -1,0 +1,182 @@
+{
+  "GROS_GIBIER": {
+    "Abcès ou nodules": [
+      "Abcès non spécifiques à localisation unique",
+      "Abcès non spécifiques à localisations multiples",
+      "Calcinose",
+      "Kyste"
+    ],
+    "Accumulation de liquide": ["Infiltration séreuse du tissu conjonctif", "Œdème"],
+    "Amyotrophie": ["Amyotrophie localisée", "Cachexie"],
+    "Anomalies d’altération": [
+      "Moisissures",
+      "Putréfaction superficielle",
+      "Putréfaction profonde",
+      "Tiquetage musculaire"
+    ],
+    "Anomalies de couleur ou de consistance": {
+      "Couleur anormale": [],
+      "Couleur anormale : mélanose": [],
+      "Ictère": [],
+      "Sclérose musculaire": [],
+      "Viande à évolution anormale": [
+        "Myopathie exsudative dépigmentaire",
+        "Viande fiévreuse",
+        "Viande surmenée"
+      ]
+    },
+    "Anomalies liées à la préparation des viandes": [
+      "Conditions de préparation des viandes par le producteur primaire non conformes aux dispositions réglementaires en matières d’hygiène",
+      "Conditions de préparation des viandes à l’établissement de traitement du gibier sauvage non conformes aux dispositions réglementaires en matière d’hygiène"
+    ],
+    "Anomalies liées à la traçabilité": [
+      "Viandes provenant d’une carcasse non identifiée",
+      "Viandes provenant d’une carcasse dont l’examen initial n’est pas valide"
+    ],
+    "Anomalies d’odeur": [],
+    "Anomalies traumatiques": ["Fracture", "Morsure de chien"],
+    "Congestion": ["Congestion généralisée", "Congestion généralisée avec hémorragies multiples"],
+    "Infiltration hémorragique": [
+      "Infiltration hémorragique",
+      "Infiltration hémorragique liée à l’action de chasse",
+      "Infiltration hémorragique liée à une fracture",
+      "Infiltration hémorragique liée à une morsure de chien"
+    ],
+    "Infection": {
+      "Brucellose": [],
+      "Charbon": [],
+      "Gangrène": [],
+      "Lymphadénite caséeuse des petits ruminants": [],
+      "Lymphadénite généralisée": [],
+      "Pestes porcines": [],
+      "Rouget": [],
+      "Tuberculose": ["Tuberculose généralisée", "Tuberculose localisée"]
+    },
+    "Inspection *post mortem*": [
+      "Carcasse non présentée à l’inspection *post mortem*",
+      "Carcasse dont certaines pièces n’ont pas été soumises à l’inspection *post mortem*"
+    ],
+    "Lésions de la peau": ["Dermite non parasitaire", "Escarres et autres plaies cutanées", "Gale", "Teigne"],
+    "Ostéodystrophie": [],
+    "Parasites et nécrophages": {
+      "Cysticercose": [
+        "Cysticercose musculaire localisée : forme dégénérée",
+        "Cysticercose musculaire localisée : forme vivante",
+        "Cysticercose musculaire généralisée"
+      ],
+      "Œufs ou larves de mouche": [],
+      "Sarcosporidiose": [],
+      "Trichinellose": [
+        "Viandes issues d’un suidé n’ayant pas fait l’objet d’une recherche de trichinellose selon la réglementation en vigueur",
+        "Viandes issues d’un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du laboratoire agréé n’a pas été communiqué",
+        "Viandes issues d’un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du laboratoire agréé est non négatif"
+      ],
+      "Varrons": [],
+      "Autres parasites": []
+    },
+    "Processus tumoral": ["Processus tumoral généralisé", "Processus tumoral localisé", "Schwannome"],
+    "Réaction inflammatoire": {
+      "Arthrite": ["Arthrite unique", "Arthrites multiples"],
+      "Mammite": [],
+      "Lymphadénite": [],
+      "Myosite localisée": [],
+      "Ostéomyélite": [],
+      "Péritonite": ["Congestive", "Fibreuse", "Fibrineuse", "Gangreneuse", "Purulente"],
+      "Phlegmon": [],
+      "Pleurésie": ["Congestive", "Fibreuse", "Fibrineuse", "Purulente"]
+    },
+    "Souillures": [
+      "Souillures d’habillage",
+      "Souillures d’origine digestive liées à une balle d'abdomen avérée",
+      "Souillures d’origine digestive liées à une mauvaise éviscération",
+      "Souillures telluriques (exemples : terre, feuilles, sable)",
+      "Souillures autres que liées au contenu digestif"
+    ],
+    "Viande suspecte de présenter un danger pour la santé publique": []
+  },
+  "PETIT_GIBIER": {
+    "Abcès ou nodules": [
+      "Abcès non spécifiques à localisation unique",
+      "Abcès non spécifiques à localisations multiples",
+      "Kyste"
+    ],
+    "Accumulation de liquide": ["Ascite", "Œdème"],
+    "Amyotrophie": ["Amyotrophie localisée", "Cachexie"],
+    "Anomalies d’altération": ["Moisissures", "Putréfaction superficielle", "Putréfaction profonde"],
+    "Anomalies de couleur ou de consistance": [
+      "Couleur anormale",
+      "Consistance anormale",
+      "Ictère",
+      "Viande à évolution anormale : viande surmenée"
+    ],
+    "Anomalies liées à la préparation des viandes": [
+      "Conditions de préparation des viandes par le producteur primaire non conformes aux dispositions réglementaires en matières d’hygiène",
+      "Conditions de préparation des viandes à l’établissement de traitement du gibier sauvage non conformes aux dispositions réglementaires en matière d’hygiène"
+    ],
+    "Anomalies liées à la traçabilité": [
+      "Viandes provenant d’un lot de carcasses non identifié",
+      "Viandes provenant d’un lot de carcasses dont l’examen initial n’est pas valide"
+    ],
+    "Anomalies d’odeur": [],
+    "Anomalies traumatiques": ["Fracture", "Morsure de chien"],
+    "Congestion généralisée": [],
+    "Emphysème sous-cutané": [],
+    "Infiltration hémorragique": [
+      "Infiltration hémorragique",
+      "Infiltration hémorragique liée à l’action de chasse"
+    ],
+    "Infection": [
+      "Entéropathie Épizootique du Lapin (EEL)",
+      "Gangrène",
+      "Influenza aviaire",
+      "Maladie hémorragique virale (VHD)",
+      "Maladie de Newcastle",
+      "Myxomatose",
+      "Pasteurellose",
+      "Pseudotuberculose",
+      "Tuberculose",
+      "Tularémie"
+    ],
+    "Inspection *post mortem*": [
+      "Viandes dont au moins 5% du lot n’a pas été présenté à l’inspection *post mortem*"
+    ],
+    "Lésions de la peau": [
+      "Dermatite",
+      "Dermite non parasitaire",
+      "Escarres et autres plaies cutanées",
+      "Gale",
+      "Teigne"
+    ],
+    "Myodystrophie": [],
+    "Ostéodystrophie": [],
+    "Parasites et nécrophages": [
+      "Coccidiose",
+      "Cysticercose",
+      "Echinococcose",
+      "Œufs ou larves de mouche",
+      "Autres parasites"
+    ],
+    "Processus tumoral": ["Processus tumoral généralisé", "Processus tumoral localisé"],
+    "Réaction inflammatoire": {
+      "Aérosacculite": [],
+      "Arthrite": ["Arthrite unique", "Arthrites multiples"],
+
+      "Entérite": [],
+      "Hépatite": [],
+      "Ingluvite": [],
+      "Lymphadénite": [],
+      "Mammite": [],
+      "Métrite": [],
+      "Myosite localisée": [],
+      "Néphrite": [],
+      "Ostéomyélite": [],
+      "Péricardite": [],
+      "Péritonite": [],
+      "Phlegmon": [],
+      "Pleurésie": [],
+      "Sinusite": []
+    },
+    "Souillures": ["Souillures d’origine digestive", "Souillures autres que liées au contenu digestif"],
+    "Viande suspecte de présenter un danger pour la santé publique": []
+  }
+}

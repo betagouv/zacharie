@@ -1,0 +1,28 @@
+{
+  "GROS_GIBIER": [
+    "Carcasse entière",
+    "Demi-carcasse",
+    "Coffre",
+    "Collier",
+    "Cuisse",
+    "Cuissot",
+    "Épaule",
+    "Gigot",
+    "Filet",
+    "Filet mignon",
+    "Poitrine",
+    "Quartier arrière",
+    "Quartier avant"
+  ],
+  "PETIT_GIBIER": [
+    "Abats - Appareil génital",
+    "Abats - Coeur",
+    "Abats - Foie",
+    "Abats - Poumon",
+    "Abats - Rate",
+    "Abats - Reins",
+    "Abats - Sacs aériens",
+    "Abats - Tube digestif",
+    "Carcasse"
+  ]
+}

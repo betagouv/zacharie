@@ -10,7 +10,7 @@ import { useMostFreshUser } from './utils-offline/get-most-fresh-user';
 import Fei from './routes/fei/fei';
 import OfflineMode from './components/OfflineMode';
 import Carcasse from './routes/carcasse';
-import CarcasseEditSVI from './routes/carcasse-svi';
+import CarcasseEditSVI from './routes/carcasse-svi/carcasse-svi';
 import MesRoles from './routes/mon-profil/mes-roles';
 import MesCCGs from './routes/mon-profil/mes-ccgs';
 import MesInformations from './routes/mon-profil/mes-informations';

@@ -320,6 +320,11 @@ enum IPM1Protocole {
   RENFORCE
 }
 
+enum IPM1Decision {
+  NON_RENSEIGNEE
+  MISE_EN_CONSIGNE
+}
+
 model Carcasse {
   zacharie_carcasse_id                          String                  @id // {fei_numero}_{numero_bracelet}
   numero_bracelet                               String // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
@@ -360,14 +365,16 @@ model Carcasse {
   svi_carcasse_status                           CarcasseStatus?
   svi_carcasse_status_set_at                    DateTime?
   // Nouveaux champs IPM1
+  svi_ipm1_date                                 DateTime?
   svi_ipm1_presentee_inspection                 Boolean?
   svi_ipm1_user_id                              String?
+  svi_ipm1_user_name_cache                      String?
   svi_ipm1_protocole                            IPM1Protocole? // standard (default)
   svi_ipm1_pieces                               String[]
   svi_ipm1_lesions_ou_motifs                    String[]
   svi_ipm1_nombre_animaux                       Int?
   svi_ipm1_commentaire                          String?
-  svi_ipm1_decision                             String? // "Non renseigné" | "Mise en consigne"
+  svi_ipm1_decision                             IPM1Decision? // "Non renseigné" | "Mise en consigne"
   svi_ipm1_duree_consigne                       Int? // en heures
   svi_ipm1_poids_consigne                       Float? // en kg
   svi_ipm1_signed_at                            DateTime?

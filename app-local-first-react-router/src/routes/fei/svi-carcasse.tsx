@@ -1,12 +1,10 @@
-import { useMemo, useState } from 'react';
-import { Carcasse, CarcasseType, UserRoles } from '@prisma/client';
+import { useMemo } from 'react';
+import { Carcasse, CarcasseType, IPM1Decision, IPM1Protocole } from '@prisma/client';
 import dayjs from 'dayjs';
 import { CustomNotice } from '@app/components/CustomNotice';
 import { useParams, Link } from 'react-router';
 import useZustandStore from '@app/zustand/store';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
-import useUser from '@app/zustand/user';
-import { createHistoryInput } from '@app/utils/create-history-entry';
 
 interface CarcasseAVerifierProps {
   carcasse: Carcasse;
@@ -16,15 +14,11 @@ interface CarcasseAVerifierProps {
 export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProps) {
   // const { fei, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
   const params = useParams();
-  const user = useUser((state) => state.user)!;
+
   const state = useZustandStore((state) => state);
   const fei = state.feis[params.fei_numero!];
   const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
-  const updateCarcasse = state.updateCarcasse;
-  const addLog = state.addLog;
-  const [motifsSaisie, setMotifsSaisie] = useState(
-    carcasse?.svi_carcasse_saisie_motif?.filter(Boolean) ?? [],
-  );
+
   const priseEnCharge = !carcasse.svi_carcasse_saisie;
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];
@@ -126,101 +120,59 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
             );
           })}
           <br />
-          <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_carcasse_saisie_motif)}>
-            Inspection SVI&nbsp;:
-            {carcasse.svi_carcasse_saisie.length > 0 ? (
-              <>
-                {carcasse.svi_carcasse_saisie.map((type, index, svi_carcasse_saisie) => {
-                  if (index === 0) {
-                    // Saisie totale ou saisie partielle
-                    return (
-                      <span className="m-0 ml-2 block font-medium" key={type + index}>
-                        {type}
-                      </span>
-                    );
-                  }
-                  if (svi_carcasse_saisie[0] === 'Saisie partielle') {
-                    if (carcasse.type === CarcasseType.PETIT_GIBIER) {
-                      const nombreAnimaux = type;
-                      return (
-                        <span className="m-0 ml-2 block font-medium" key={type + index}>
-                          - {nombreAnimaux} animaux
-                        </span>
-                      );
-                    }
-                  }
-                  return (
-                    <span className="m-0 ml-2 block font-medium" key={type + index}>
-                      - {type}
-                    </span>
-                  );
-                })}
-                <>
-                  {motifsSaisie.map((motif, index) => {
-                    if (canEdit) {
-                      return (
-                        <span
-                          className="m-0 ml-2 flex items-center justify-between border-b border-b-gray-300 font-medium"
-                          key={motif + index}
-                        >
-                          - {motif}
-                          <button
-                            className="block px-4 py-1 font-medium"
-                            title="Supprimer"
-                            key={motif + index}
-                            onClick={() => {
-                              const nextMotifsSaisie = motifsSaisie.filter(
-                                (motifSaisie) => motifSaisie !== motif,
-                              );
-                              setMotifsSaisie((motifsSaisie) => {
-                                return motifsSaisie.filter((motifSaisie) => motifSaisie !== motif);
-                              });
-                              let nextPartialCarcasse: Partial<Carcasse>;
-                              if (nextMotifsSaisie.length) {
-                                nextPartialCarcasse = {
-                                  svi_carcasse_saisie_motif: nextMotifsSaisie,
-                                  svi_carcasse_saisie_at: dayjs().toDate(),
-                                  svi_carcasse_signed_at: dayjs().toDate(),
-                                };
-                              } else {
-                                nextPartialCarcasse = {
-                                  svi_carcasse_saisie_motif: [],
-                                  svi_carcasse_saisie: [],
-                                  svi_carcasse_saisie_at: null,
-                                  svi_carcasse_signed_at: dayjs().toDate(),
-                                };
-                              }
-                              updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
-                              addLog({
-                                user_id: user.id,
-                                user_role: UserRoles.SVI,
-                                fei_numero: fei.numero,
-                                action: 'svi-carcasse-motif-delete',
-                                history: createHistoryInput(carcasse, nextPartialCarcasse),
-                                entity_id: fei.svi_entity_id,
-                                zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-                                fei_intermediaire_id: null,
-                                carcasse_intermediaire_id: null,
-                              });
-                            }}
-                          >
-                            {`\u0078`}
-                          </button>
-                        </span>
-                      );
-                    }
-                    return (
-                      <span className="m-0 ml-2 block font-medium" key={motif + index}>
-                        - {motif}
-                      </span>
-                    );
-                  })}
-                </>
-              </>
-            ) : (
-              <span className="m-0 ml-2 block font-medium">- Pas de saisie</span>
-            )}
-          </span>
+          {carcasse.svi_ipm1_date && (
+            <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_carcasse_saisie_motif)}>
+              SVI Inspection Post Mortem 1 du {dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}&nbsp;:
+              <br />
+              <span className="m-0 ml-2 block font-medium">
+                - Protocole :{' '}
+                {carcasse.svi_ipm1_protocole === IPM1Protocole.RENFORCE ? 'Renforcé' : 'Standard'}
+              </span>
+              {carcasse.type === CarcasseType.PETIT_GIBIER && (
+                <span className="m-0 ml-2 block font-medium">
+                  - Nombre d'animaux : {carcasse.svi_ipm1_nombre_animaux}
+                </span>
+              )}
+              {carcasse.svi_ipm1_commentaire && (
+                <span className="m-0 ml-2 block font-medium">
+                  - Commentaire : {carcasse.svi_ipm1_commentaire}
+                </span>
+              )}
+              <span className="m-0 ml-2 block font-medium">- Pièces observées&nbsp;:</span>
+              {carcasse.svi_ipm1_pieces.map((piece, index) => {
+                return (
+                  <span className="m-0 ml-6 block font-medium" key={piece + index}>
+                    - {piece}
+                  </span>
+                );
+              })}
+              <span className="m-0 ml-2 block font-medium">- Lésions ou motifs de consigne&nbsp;:</span>
+              {carcasse.svi_ipm1_lesions_ou_motifs.map((type, index) => {
+                return (
+                  <span className="m-0 ml-6 block font-medium" key={type + index}>
+                    - {type}
+                  </span>
+                );
+              })}
+              <span className="m-0 ml-2 block font-medium">
+                - Décision IPM1 :{' '}
+                {carcasse.svi_ipm1_decision === IPM1Decision.NON_RENSEIGNEE
+                  ? 'Non renseigné'
+                  : 'Mise en consigne'}
+              </span>
+              {carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE && (
+                <span className="m-0 ml-2 block font-medium">
+                  - Durée de la consigne : {carcasse.svi_ipm1_duree_consigne} heures
+                </span>
+              )}
+              {carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE &&
+                carcasse.svi_ipm1_poids_consigne && (
+                  <span className="m-0 ml-2 block font-medium">
+                    - Poids de la consigne : {carcasse.svi_ipm1_poids_consigne}kg
+                  </span>
+                )}
+            </span>
+          )}
           {carcasse.svi_carcasse_commentaire && (
             <>
               <br />
