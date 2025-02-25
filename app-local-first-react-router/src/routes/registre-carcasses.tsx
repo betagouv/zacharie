@@ -186,7 +186,7 @@ export default function RegistreCarcasses() {
                 },
                 {
                   dataKey: 'numero_bracelet',
-                  title: 'Numéro de bracelet',
+                  title: 'Identification',
                   onSortOrder: setSortOrder,
                   onSortBy: setSortBy,
                   sortBy: sortBy,
@@ -200,6 +200,7 @@ export default function RegistreCarcasses() {
                         >
                           {carcasse.numero_bracelet}
                         </Link>
+                        <small className="text-xs text-gray-400">{carcasse.espece}</small>
                         {/* <span className="opacity-30 !no-underline text-xs italic">
                           ID Zacharie: {carcasse.zacharie_carcasse_id}
                         </span> */}
