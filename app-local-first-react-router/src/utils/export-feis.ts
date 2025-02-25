@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import { getCarcasseIntermediaireId } from './get-carcasse-intermediaire-id';
 import { loadFei } from './load-fei';
 import { capture } from '@app/services/sentry';
+import { IPM1Decision, IPM2Decision } from '@prisma/client';
 
 type FeiExcelData = {
   Donnée: string;
@@ -133,7 +134,6 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       // case 'Numéro de bracelet':
       case 'SVI - Saisie totale':
       case 'SVI - Certificat de saisie OK':
-      // case 'Estampille':
       case "Nombre d'animaux":
       case 'SVI - Consigne':
       case 'Date de la chasse':
@@ -330,15 +330,18 @@ export default function useExportFeis() {
             'Numéro suivi trichine': '',
             // Estampille: '',
             // infos de SVI
-            'SVI - Consigne': carcasse.svi_carcasse_consigne ? 'Oui' : '',
+            'SVI - Consigne': carcasse.svi_ipm1_decision?.includes(IPM1Decision.MISE_EN_CONSIGNE)
+              ? 'Oui'
+              : '',
             'SVI - Motif Consigne': 'BA P S OA CA pap',
             'SVI - Commentaire': carcasse.svi_carcasse_commentaire,
-            'SVI - Saisie partielle':
-              carcasse.svi_carcasse_saisie?.[0] === 'Saisie partielle'
-                ? carcasse.svi_carcasse_saisie.filter((_s, i) => i > 0).join(' - ')
-                : '',
-            'SVI - Saisie totale': carcasse.svi_carcasse_saisie?.[0] === 'Saisie totale' ? 'Oui' : '',
-            'SVI - Saisie motif': carcasse.svi_carcasse_saisie_motif.join('\n'),
+            'SVI - Saisie partielle': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_PARTIELLE)
+              ? carcasse.svi_ipm2_pieces.join(' - ')
+              : '',
+            'SVI - Saisie totale': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_TOTALE)
+              ? 'Oui'
+              : '',
+            'SVI - Saisie motif': carcasse.svi_ipm2_lesions_ou_motifs.join('\n'),
             'SVI - Certificat de saisie OK': '',
             "SVI - Date d'examen": carcasse.svi_carcasse_signed_at,
             // infos de chasse

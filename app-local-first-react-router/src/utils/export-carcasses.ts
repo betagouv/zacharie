@@ -3,6 +3,7 @@ import { utils, writeFile } from '@e965/xlsx';
 import dayjs from 'dayjs';
 import { capture } from '@app/services/sentry';
 import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
+import { IPM1Decision, IPM2Decision } from '@prisma/client';
 
 type FeiExcelData = {
   Donnée: string;
@@ -193,17 +194,18 @@ export default function useExportCarcasses() {
           // Estampille: '',
           // infos de SVI
           'Archivé(e)': carcasse.svi_carcasse_archived ? 'Oui' : '',
-          'SVI - Consigne': carcasse.svi_carcasse_consigne ? 'Oui' : '',
+          'SVI - Consigne': carcasse.svi_ipm1_decision?.includes(IPM1Decision.MISE_EN_CONSIGNE) ? 'Oui' : '',
           'SVI - Motif Consigne': 'BA P S OA CA pap',
           'SVI - Commentaire': carcasse.svi_carcasse_commentaire,
-          'SVI - Saisie partielle':
-            carcasse.svi_carcasse_saisie?.[0] === 'Saisie partielle'
-              ? carcasse.svi_carcasse_saisie.filter((_s, i) => i > 0).join(' - ')
-              : '',
-          'SVI - Saisie totale': carcasse.svi_carcasse_saisie?.[0] === 'Saisie totale' ? 'Oui' : '',
-          'SVI - Saisie motif': carcasse.svi_carcasse_saisie_motif.join('\n'),
+          'SVI - Saisie partielle': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_PARTIELLE)
+            ? carcasse.svi_ipm2_pieces.join(' - ')
+            : '',
+          'SVI - Saisie totale': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_TOTALE)
+            ? 'Oui'
+            : '',
+          'SVI - Saisie motif': carcasse.svi_ipm2_lesions_ou_motifs.join('\n'),
           'SVI - Certificat de saisie OK': '',
-          "SVI - Date d'examen": carcasse.svi_carcasse_signed_at,
+          "SVI - Date d'examen": carcasse.svi_ipm2_date || carcasse.svi_ipm1_date,
           // infos de chasse
           'Commune de la chasse': carcasse.fei_commune_mise_a_mort,
           'Numéro de fiche': carcasse.fei_numero,

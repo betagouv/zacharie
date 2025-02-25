@@ -1,27 +1,35 @@
-import { Carcasse, CarcasseStatus, CarcasseType } from '@prisma/client';
+import { Carcasse, CarcasseStatus, CarcasseType, IPM1Decision, IPM2Decision } from '@prisma/client';
 import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 import dayjs from 'dayjs';
 
 export default function updateCarcasseStatus<T extends Carcasse | CarcasseForResponseForRegistry>(
   carcasse: T,
 ) {
-  if (carcasse.svi_carcasse_manquante) {
+  if (!carcasse.svi_ipm1_date && !carcasse.svi_ipm2_date) {
+    if (dayjs().diff(dayjs(carcasse.svi_assigned_to_fei_at), 'day') > 10) {
+      return CarcasseStatus.ACCEPTE;
+    }
+    return CarcasseStatus.SANS_DECISION;
+  }
+  if (!carcasse.svi_ipm1_presentee_inspection && !carcasse.svi_ipm2_presentee_inspection) {
     return CarcasseStatus.MANQUANTE;
   }
-  if (carcasse.svi_carcasse_traitement_assainissant?.length > 0) {
+  if (carcasse.svi_ipm2_traitement_assainissant?.length > 0) {
     return CarcasseStatus.TRAITEMENT_ASSAINISSANT;
   }
-  const carcasseSaisie = getCarcasseSaisie<T>(carcasse);
-  if (carcasseSaisie.totale) {
+  if (carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_TOTALE)) {
     return CarcasseStatus.SAISIE_TOTALE;
   }
-  if (carcasseSaisie.partielle) {
+  if (carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_PARTIELLE)) {
     return CarcasseStatus.SAISIE_PARTIELLE;
   }
-  if (carcasse.svi_carcasse_consigne) {
-    if (carcasse.svi_carcasse_consigne_levee) {
-      return CarcasseStatus.LEVEE_DE_CONSIGNE;
-    }
+  if (carcasse.svi_ipm2_decision?.includes(IPM2Decision.LEVEE_DE_LA_CONSIGNE)) {
+    return CarcasseStatus.LEVEE_DE_CONSIGNE;
+  }
+  if (carcasse.svi_ipm2_decision?.includes(IPM2Decision.TRAITEMENT_ASSAINISSANT)) {
+    return CarcasseStatus.TRAITEMENT_ASSAINISSANT;
+  }
+  if (carcasse.svi_ipm1_decision?.includes(IPM1Decision.MISE_EN_CONSIGNE)) {
     return CarcasseStatus.CONSIGNE;
   }
   if (dayjs().diff(dayjs(carcasse.svi_assigned_to_fei_at), 'day') > 10) {
@@ -60,34 +68,4 @@ export function getCarcasseStatusLabel<T extends CarcasseForResponseForRegistry>
       }
       return 'Sans décision';
   }
-}
-
-type CarcasseSaisie = {
-  totale: boolean;
-  partielle: boolean;
-  partie: string[]; // Nombre d'animaux || Coffre Collier Cuisse Cuissot Épaule Gigot Filet Filet mignon Poitrine Quartier arrière Quartier avant
-};
-
-function getCarcasseSaisie<T extends Carcasse | CarcasseForResponseForRegistry>(carcasse: T): CarcasseSaisie {
-  const saisie = carcasse.svi_carcasse_saisie;
-  const [type, ...partie] = saisie;
-  if (!type) {
-    return {
-      totale: false,
-      partielle: false,
-      partie: [],
-    };
-  }
-  if (type === 'Saisie partielle') {
-    return {
-      totale: false,
-      partielle: true,
-      partie,
-    };
-  }
-  return {
-    totale: true,
-    partielle: false,
-    partie: [],
-  };
 }
