@@ -349,7 +349,7 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
               id={name}
               className="tailwindui"
               type="date"
-              value={value?.date ? new Date(value?.date).toString() : ''}
+              value={value?.date ? dayjs(value?.date).format('YYYY-MM-DD') : ''}
               onChange={(e) => onChangeValue({ date: e.target.value, comparator })}
             />
           </div>
