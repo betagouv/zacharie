@@ -244,17 +244,17 @@ export function CarcasseEditSVI() {
                 </>
               </Accordion>
               {canEdit && (
-                <Accordion titleAs="h2" defaultExpanded label="Décision SVI">
+                <Accordion titleAs="h2" defaultExpanded={false} label="Décision SVI">
                   <Accordion
                     titleAs="h3"
-                    defaultExpanded
+                    defaultExpanded={false}
                     label={`Inspection Post-Mortem 1 (IPM1)${carcasse.svi_ipm1_date ? ` - ${dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}` : ''}`}
                   >
                     <CarcasseIPM1 canEdit={canEdit} />
                   </Accordion>
                   <Accordion
                     titleAs="h3"
-                    defaultExpanded
+                    defaultExpanded={false}
                     label={`Inspection Post-Mortem 2 (IPM2)${carcasse.svi_ipm2_date ? ` - ${dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}` : ''}`}
                   >
                     <CarcasseIPM2 canEdit={canEdit} />
@@ -276,6 +276,17 @@ export function CarcasseEditSVI() {
                   key={dayjs(carcasse.updated_at).toISOString()}
                 />
               </Accordion>
+              <div className="mt-4">
+                <Button
+                  nativeButtonProps={{
+                    onClick: () => {
+                      navigate(-1);
+                    },
+                  }}
+                >
+                  Obtenir le certificat de consigne
+                </Button>
+              </div>
               <div className="mt-4">
                 <Button
                   nativeButtonProps={{

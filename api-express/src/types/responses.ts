@@ -227,3 +227,11 @@ export interface CarcassesGetForRegistryResponse {
   };
   error: string;
 }
+
+export interface CertificatResponse {
+  ok: boolean;
+  data: {
+    certificat: string | null;
+  };
+  error: string;
+}
