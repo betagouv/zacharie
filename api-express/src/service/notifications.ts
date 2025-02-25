@@ -1,8 +1,23 @@
 import webpush from 'web-push';
 import { type User, UserNotifications } from '@prisma/client';
 import * as Sentry from '@sentry/node';
+import PQueue from 'p-queue';
 import { sendEmail } from '../third-parties/tipimail';
 import prisma from '../prisma';
+
+const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 1000 });
+let count = 0;
+queue.on('active', () => {
+  console.log(`Working on item #${++count}.  Size: ${queue.size}  Pending: ${queue.pending}`);
+});
+
+queue.on('add', () => {
+  console.log(`Task is added.  Size: ${queue.size}  Pending: ${queue.pending}`);
+});
+
+queue.on('next', () => {
+  console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
+});
 
 type WebPushNotification = {
   user: User;
@@ -13,7 +28,7 @@ type WebPushNotification = {
   img?: string;
 };
 
-export default async function sendNotificationToUser({
+export default async function queueSendNotificationToUser({
   user,
   body,
   title,
@@ -21,10 +36,19 @@ export default async function sendNotificationToUser({
   notificationLogAction,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: WebPushNotification) {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('NOT SENDING NOTIFICATION IN DEV', user.id);
-    return;
-  }
+  await queue.add(async () => {
+    await sendNotificationToUser({ user, body, title, email, notificationLogAction, img });
+  });
+}
+
+async function sendNotificationToUser({
+  user,
+  body,
+  title,
+  email,
+  notificationLogAction,
+  img = 'https://zacharie.beta.gouv.fr/favicon.svg',
+}: WebPushNotification) {
   if (user.notifications.includes(UserNotifications.PUSH)) {
     if (user.web_push_tokens?.length) {
       const existingNotification = await prisma.notificationLog.findFirst({

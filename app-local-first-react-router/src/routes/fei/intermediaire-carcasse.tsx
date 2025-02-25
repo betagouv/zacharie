@@ -276,9 +276,9 @@ export default function CarcasseIntermediaireComp({
               <span className="m-0 block font-bold">Anomalies abats:</span>
               {carcasse.examinateur_anomalies_abats.map((anomalie) => {
                 return (
-                  <>
-                    <span className="m-0 ml-2 block font-bold">{anomalie}</span>
-                  </>
+                  <span className="m-0 ml-2 block font-bold" key={anomalie}>
+                    {anomalie}
+                  </span>
                 );
               })}
             </>
@@ -289,9 +289,9 @@ export default function CarcasseIntermediaireComp({
               <span className="m-0 block font-bold">Anomalies carcasse:</span>
               {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
                 return (
-                  <>
-                    <span className="m-0 ml-2 block font-bold">{anomalie}</span>
-                  </>
+                  <span className="m-0 ml-2 block font-bold" key={anomalie}>
+                    {anomalie}
+                  </span>
                 );
               })}
             </>

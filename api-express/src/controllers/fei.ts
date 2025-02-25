@@ -297,7 +297,7 @@ router.post(
       const examinateurInitial = await prisma.user.findUnique({
         where: { id: savedFei.examinateur_initial_user_id! },
       });
-      sendNotificationToUser({
+      await sendNotificationToUser({
         user: examinateurInitial!,
         title: `La fiche du ${dayjs(savedFei.date_mise_a_mort).format(
           'DD/MM/YYYY',
@@ -310,7 +310,7 @@ router.post(
         const premierDetenteur = await prisma.user.findUnique({
           where: { id: savedFei.premier_detenteur_user_id! },
         });
-        sendNotificationToUser({
+        await sendNotificationToUser({
           user: premierDetenteur!,
           title: `La fiche du ${dayjs(savedFei.date_mise_a_mort).format(
             'DD/MM/YYYY',
@@ -332,7 +332,7 @@ router.post(
         },
       });
       for (const sviUser of sviUsers) {
-        sendNotificationToUser({
+        await sendNotificationToUser({
           user: sviUser,
           title: `La fiche du ${dayjs(savedFei.date_mise_a_mort).format(
             'DD/MM/YYYY',
@@ -362,14 +362,14 @@ router.post(
         const nextOwner = await prisma.user.findUnique({
           where: { id: nextOwnerId },
         });
-        sendNotificationToUser({
+        await sendNotificationToUser({
           user: nextOwner!,
           title: 'Vous avez une nouvelle fiche à traiter',
           body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche.\nRendez vous sur Zacharie pour la traiter.`,
           email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${savedFei?.numero}.\nRendez vous sur Zacharie pour la traiter.`,
           notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
         });
-        sendNotificationToUser({
+        await sendNotificationToUser({
           user: user,
           title: `${nextOwner!.prenom} ${nextOwner!.nom_de_famille} a été notifié`,
           body: `${nextOwner!.prenom} ${
@@ -385,7 +385,7 @@ router.post(
         const exNextOwner = await prisma.user.findUnique({
           where: { id: existingFei.fei_next_owner_user_id },
         });
-        sendNotificationToUser({
+        await sendNotificationToUser({
           user: exNextOwner!,
           title: 'Une fiche ne vous est plus attribuée',
           body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une fiche, mais elle a finalement été attribuée à quelqu'un d'autre.`,
@@ -420,7 +420,7 @@ router.post(
       ).map((relation) => relation.UserRelatedWithEntity);
       for (const nextOwner of usersWorkingForEntity) {
         if (nextOwner.id !== user.id) {
-          sendNotificationToUser({
+          await sendNotificationToUser({
             user: nextOwner as User,
             title: 'Vous avez une nouvelle fiche à traiter',
             body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
@@ -432,7 +432,7 @@ router.post(
           const exNextOwner = await prisma.user.findUnique({
             where: { id: existingFei.fei_next_owner_user_id },
           });
-          sendNotificationToUser({
+          await sendNotificationToUser({
             user: exNextOwner!,
             title: 'Une fiche ne vous est plus attribuée',
             body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une fiche, mais elle a finalement été attribuée à quelqu'un d'autre.`,

@@ -343,7 +343,7 @@ router.post(
 
       const email = formatCarcasseEmail(updatedCarcasse);
 
-      sendNotificationToUser({
+      await sendNotificationToUser({
         user: examinateurInitial!,
         title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
         body: `Motif${
@@ -354,7 +354,7 @@ router.post(
       });
 
       if (premierDetenteur?.id !== examinateurInitial?.id) {
-        sendNotificationToUser({
+        await sendNotificationToUser({
           user: premierDetenteur!,
           title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
           body: `Motif${
@@ -386,7 +386,7 @@ router.post(
 
       const email = formatCarcasseEmail(updatedCarcasse);
 
-      sendNotificationToUser({
+      await sendNotificationToUser({
         user: examinateurInitial!,
         title: `Une carcasse de ${existingCarcasse.espece} est manquante`,
         body: '',
@@ -395,7 +395,7 @@ router.post(
       });
 
       if (premierDetenteur?.id !== examinateurInitial?.id) {
-        sendNotificationToUser({
+        await sendNotificationToUser({
           user: premierDetenteur!,
           title: `Une carcasse de ${existingCarcasse.espece} est manquante`,
           body: '',
@@ -425,7 +425,7 @@ router.post(
         });
 
       const email = formatCarcasseEmail(updatedCarcasse);
-      sendNotificationToUser({
+      await sendNotificationToUser({
         user: examinateurInitial!,
         title: `Une carcasse de ${existingCarcasse.espece} est refusée`,
         body: `Motif de refus: ${updatedCarcasse.intermediaire_carcasse_refus_motif}`,
@@ -434,7 +434,7 @@ router.post(
       });
 
       if (premierDetenteur?.id !== examinateurInitial?.id) {
-        sendNotificationToUser({
+        await sendNotificationToUser({
           user: premierDetenteur!,
           title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
           body: `Motif de refus: ${updatedCarcasse.intermediaire_carcasse_refus_motif}`,

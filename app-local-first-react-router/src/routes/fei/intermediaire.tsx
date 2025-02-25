@@ -274,15 +274,6 @@ export default function FEICurrentIntermediaire() {
     }
   }
 
-  function handleBlurCheckFinishedAt(e: React.FormEvent<HTMLFormElement>) {
-    if (!intermediaire) {
-      return;
-    }
-    e.preventDefault();
-    const checkFinishedAt = e.currentTarget[Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at].value;
-    handleCheckFinishedAt(dayjs(checkFinishedAt).toDate());
-  }
-
   function handleSubmitCheckFinishedAt(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     handleCheckFinishedAt(dayjs().toDate());
@@ -510,7 +501,6 @@ export default function FEICurrentIntermediaire() {
           <form
             method="POST"
             id="form_intermediaire_check_finished_at"
-            onBlur={handleBlurCheckFinishedAt}
             onSubmit={handleSubmitCheckFinishedAt}
           >
             <Checkbox

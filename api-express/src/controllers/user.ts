@@ -535,7 +535,7 @@ router.post(
     });
 
     if (nextPremierDetenteur.id !== user.id) {
-      sendNotificationToUser({
+      await sendNotificationToUser({
         user: nextPremierDetenteur!,
         title: 'Vous avez une nouvelle fiche à traiter',
         body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,

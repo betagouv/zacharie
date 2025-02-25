@@ -31,7 +31,11 @@ import packageJson from '../package.json';
 // Put together a schema
 const app = express();
 
-app.use(logger('tiny'));
+app.use(
+  logger('tiny', {
+    skip: (req) => req.method === 'OPTIONS',
+  }),
+);
 
 const sentryEnabled = ENVIRONMENT !== 'development' && ENVIRONMENT !== 'test';
 

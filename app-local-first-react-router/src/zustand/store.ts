@@ -21,7 +21,6 @@ import type {
 import type { FeiDone, FeiWithIntermediaires } from '~/src/types/fei';
 import { create } from 'zustand';
 import { devtools, persist, createJSONStorage } from 'zustand/middleware';
-import { capture } from '@app/services/sentry';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -31,6 +30,7 @@ import type { HistoryInput } from '@app/utils/create-history-entry';
 import { syncProchainBraceletAUtiliser } from './user';
 import updateCarcasseStatus from '@app/utils/get-carcasse-status';
 import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
+import PQueue from 'p-queue';
 
 export interface State {
   isOnline: boolean;
@@ -150,13 +150,12 @@ const useZustandStore = create<State & Actions>()(
             carcassesIdsByFei: { ...state.carcassesIdsByFei, [newFei.numero]: [] },
             feisIntermediairesIdsByFei: { ...state.feisIntermediairesIdsByFei, [newFei.numero]: [] },
           }));
-          syncData();
+          syncData(`create-fei-${newFei.numero}`);
         },
         updateFei: (
           fei_numero: FeiWithIntermediaires['numero'],
           partialFei: Partial<FeiWithIntermediaires>,
         ) => {
-          console.log('updateFei', fei_numero, partialFei);
           const state = useZustandStore.getState();
           const feis = state.feis;
           const carcassefeiCarcasses = (state.carcassesIdsByFei[fei_numero] || []).map(
@@ -176,7 +175,7 @@ const useZustandStore = create<State & Actions>()(
               [fei_numero]: nextFei,
             },
           });
-          syncData();
+          syncData(`update-fei-${fei_numero}`);
         },
         createCarcasse: (newCarcasse: Carcasse) => {
           newCarcasse.is_synced = false;
@@ -200,7 +199,6 @@ const useZustandStore = create<State & Actions>()(
             };
           });
           get().updateFei(newCarcasse.fei_numero, { updated_at: dayjs().toDate() });
-          // syncData(); // no need to sync data here because it's done by syncing fei already
         },
         updateCarcasse: (
           zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
@@ -225,7 +223,6 @@ const useZustandStore = create<State & Actions>()(
             },
           });
           get().updateFei(nextCarcasse.fei_numero, { updated_at: dayjs().toDate() });
-          // syncData(); // no need to sync data here because it's done by syncing fei already
         },
         createFeiIntermediaire: (newIntermediaire: FeiIntermediaire) => {
           newIntermediaire.is_synced = false;
@@ -298,7 +295,6 @@ const useZustandStore = create<State & Actions>()(
               },
             };
           });
-          // syncData(); // no need to sync data here because it's done by syncing fei already
         },
         updateFeiIntermediaire: (
           feiIntermediaireId: FeiIntermediaire['id'],
@@ -318,7 +314,6 @@ const useZustandStore = create<State & Actions>()(
               },
             };
           });
-          syncData();
         },
         updateCarcasseIntermediaire: (
           fei_numero__bracelet__intermediaire_id: CarcasseIntermediaire['fei_numero__bracelet__intermediaire_id'],
@@ -338,7 +333,6 @@ const useZustandStore = create<State & Actions>()(
               },
             };
           });
-          syncData();
         },
         addLog: (newLog: CreateLog) => {
           const log = {
@@ -399,6 +393,22 @@ const useZustandStore = create<State & Actions>()(
 export default useZustandStore;
 
 // SYNC DATA
+
+const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 1000 });
+let debug = false;
+let count = 0;
+queue.on('active', () => {
+  if (debug) console.log(`Working on item #${++count}.  Size: ${queue.size}  Pending: ${queue.pending}`);
+});
+
+queue.on('add', () => {
+  if (debug) console.log(`Task is added.  Size: ${queue.size}  Pending: ${queue.pending}`);
+});
+
+queue.on('next', () => {
+  if (debug) console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
+});
+
 export async function syncFei(nextFei: FeiWithIntermediaires) {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
@@ -417,7 +427,7 @@ export async function syncFei(nextFei: FeiWithIntermediaires) {
     .then((res) => res as FeiResponse)
     .then((res) => {
       if (res.ok && res.data?.fei) {
-        console.log('synced fei', res.data.fei);
+        if (debug) console.log('synced fei', res.data.fei);
         useZustandStore.setState({
           feis: {
             ...useZustandStore.getState().feis,
@@ -436,7 +446,7 @@ export async function syncFeis() {
   const feis = useZustandStore.getState().feis;
   for (const fei of Object.values(feis)) {
     if (!fei.is_synced) {
-      console.log('syncing fei', fei);
+      if (debug) console.log('syncing fei', fei);
       await syncFei(fei);
     }
   }
@@ -491,7 +501,7 @@ export async function syncCarcasses() {
   const carcasses = useZustandStore.getState().carcasses;
   for (const carcasse of Object.values(carcasses)) {
     if (!carcasse.is_synced) {
-      console.log('syncing carcasse', carcasse);
+      if (debug) console.log('syncing carcasse', carcasse);
       await syncCarcasse(carcasse);
     }
   }
@@ -519,7 +529,7 @@ export async function syncFeiIntermediaire(nextFeiIntermediaire: FeiIntermediair
     .then((res) => {
       if (res.ok && res.data.feiIntermediaire) {
         nextFeiIntermediaire = res.data.feiIntermediaire!;
-        console.log('nextFeiIntermediaire', nextFeiIntermediaire);
+        if (debug) console.log('nextFeiIntermediaire', nextFeiIntermediaire);
         const nextIntermediairesByFei =
           useZustandStore.getState().feisIntermediairesIdsByFei[nextFeiIntermediaire.fei_numero] || [];
         if (!nextIntermediairesByFei.includes(nextFeiIntermediaire.id)) {
@@ -548,7 +558,7 @@ export async function syncFeiIntermediaires() {
   const feisIntermediaires = useZustandStore.getState().feisIntermediaires;
   for (const feiIntermediaire of Object.values(feisIntermediaires)) {
     if (!feiIntermediaire.is_synced) {
-      console.log('syncing fei intermediaire', feiIntermediaire);
+      if (debug) console.log('syncing fei intermediaire', feiIntermediaire);
       await syncFeiIntermediaire(feiIntermediaire);
     }
   }
@@ -615,7 +625,7 @@ export async function syncCarcassesIntermediaires() {
   const carcassesIntermediaires = useZustandStore.getState().carcassesIntermediaires;
   for (const carcassesIntermediaire of Object.values(carcassesIntermediaires)) {
     if (!carcassesIntermediaire.is_synced) {
-      console.log('syncing carcasse intermediaire', carcassesIntermediaire);
+      if (debug) console.log('syncing carcasse intermediaire', carcassesIntermediaire);
       await syncCarcasseIntermediaire(carcassesIntermediaire);
     }
   }
@@ -656,32 +666,41 @@ export async function syncLogs() {
   const logs = useZustandStore.getState().logs;
   for (const log of Object.values(logs)) {
     if (!log.is_synced) {
-      console.log('syncing log', log);
+      if (debug) console.log('syncing log', log);
       await syncLog(log);
     }
   }
 }
 
-export async function syncData() {
+export async function syncData(calledFrom: string) {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
     console.log('not syncing data because not online');
     return;
   }
-  return syncProchainBraceletAUtiliser()
-    .then(() => console.log('synced dernier bracelet utilise'))
-    .then(syncFeis)
-    .then(() => console.log('synced feis finito'))
-    .then(syncCarcasses)
-    .then(() => console.log('synced carcasses finito'))
-    .then(syncFeiIntermediaires)
-    .then(() => console.log('synced intermediaires finito'))
-    .then(syncCarcassesIntermediaires)
-    .then(() => console.log('synced carcasses intermediaires finito'))
-    .then(syncLogs)
-    .then(() => console.log('synced logs finito'))
-    .then(() => console.log('synced data finito'))
-    .catch((error) => {
-      capture(error);
-    });
+  queue.add(async () => {
+    if (debug) {
+      console.log('------------------------------------------');
+      console.log('------------------------------------------');
+      console.log('------------------------------------------');
+      console.log('------------------------------------------');
+      console.log(`--------SYNCING DATA called from ${calledFrom}----------------------`);
+      console.log('------------------------------------------');
+      console.log('------------------------------------------');
+      console.log('------------------------------------------');
+    }
+    await syncProchainBraceletAUtiliser();
+    if (debug) console.log('synced dernier bracelet utilise');
+    await syncFeis();
+    if (debug) console.log('synced feis finito');
+    await syncCarcasses();
+    if (debug) console.log('synced carcasses finito');
+    await syncFeiIntermediaires();
+    if (debug) console.log('synced intermediaires finito');
+    await syncCarcassesIntermediaires();
+    if (debug) console.log('synced carcasses intermediaires finito');
+    await syncLogs();
+    if (debug) console.log('synced logs finito');
+    if (debug) console.log('synced data finito');
+  });
 }
