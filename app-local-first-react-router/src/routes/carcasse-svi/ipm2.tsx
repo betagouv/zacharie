@@ -328,11 +328,15 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             <InputForSearchPrefilledData
               label="Pièces inspectées nécessitant une observation *"
               hintText={
-                <button type="button" onClick={() => piecesGibier.open()}>
-                  Voir le référentiel des pièces en <u className="inline">cliquant ici</u>
-                </button>
+                <>
+                  Rappel IPM1: {carcasse.svi_ipm1_pieces.join('; ')}
+                  <br />
+                  <button type="button" onClick={() => piecesGibier.open()}>
+                    Voir le référentiel des pièces en <u className="inline">cliquant ici</u>
+                  </button>
+                </>
               }
-              canEdit={canDoIPM2}
+              // canEdit={canDoIPM2}
               data={piecesList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               hideDataWhenNoSearch
               clearInputOnClick
@@ -352,7 +356,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
           </div>
-          <div className="mb-4">
+          <div className="mb-4 mx-4">
             {sviIpm2Pieces.map((piece, index) => {
               return (
                 <Notice
@@ -373,9 +377,13 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               data={ipmObservationsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               label="Observations (lésions ou motifs de consignes) *"
               hintText={
-                <button type="button" onClick={() => lesionsOuMotifsConsigneModal.open()}>
-                  Voir le référentiel des lésions de carcasse en <u className="inline">cliquant ici</u>
-                </button>
+                <>
+                  Rappel IPM1: {carcasse.svi_ipm1_lesions_ou_motifs.join('; ')}
+                  <br />
+                  <button type="button" onClick={() => lesionsOuMotifsConsigneModal.open()}>
+                    Voir le référentiel des lésions de carcasse en <u className="inline">cliquant ici</u>
+                  </button>
+                </>
               }
               hideDataWhenNoSearch
               clearInputOnClick
@@ -402,7 +410,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
           </div>
-          <div className="mb-4">
+          <div className="mb-4 mx-4">
             {sviIpm2LesionsOuMotifs.map((lom, index) => {
               return (
                 <Notice

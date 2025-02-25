@@ -270,7 +270,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                   Voir le référentiel des pièces en <u className="inline">cliquant ici</u>
                 </button>
               }
-              canEdit={canDoIPM1}
+              // canEdit={canDoIPM1}
               data={piecesList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               hideDataWhenNoSearch
               clearInputOnClick
@@ -290,7 +290,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
           </div>
-          <div className="mb-4">
+          <div className="mb-4 mx-4">
             {sviIpm1Pieces.map((piece, index) => {
               return (
                 <Notice
@@ -340,7 +340,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
           </div>
-          <div className="mb-4">
+          <div className="mb-4 mx-4">
             {sviIpm1LesionsOuMotifs.map((lom, index) => {
               return (
                 <Notice

@@ -68,8 +68,10 @@
       "Sarcosporidiose": [],
       "Trichinellose": [
         "Viandes issues d’un suidé n’ayant pas fait l’objet d’une recherche de trichinellose selon la réglementation en vigueur",
-        "Viandes issues d’un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du laboratoire agréé n’a pas été communiqué",
-        "Viandes issues d’un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du laboratoire agréé est non négatif"
+        "Viandes issues d’un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du laboratoire agréé n’a pas été communiqué (IPM1)",
+        "Viandes issues d’un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du laboratoire agréé est non négatif (IPM1)",
+        "Viandes issues d'un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du LNR est non négatif (IPM2)",
+        "Viandes issues d’un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du LNR est positif (IPM2)"
       ],
       "Varrons": [],
       "Autres parasites": []
