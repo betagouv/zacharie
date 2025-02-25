@@ -93,11 +93,13 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     if (!sviIpm2Pieces?.length) {
       return 'Il manque les pièces inspectées nécessitant une observation';
     }
-    if (!sviIpm2LesionsOuMotifs?.length) {
-      return "Il manque les lésions ou motifs d'inspection";
-    }
     if (!sviIpm2Decision) {
       return 'Il manque la décision IPM2';
+    }
+    if (sviIpm2Decision !== IPM2Decision.LEVEE_DE_LA_CONSIGNE) {
+      if (!sviIpm2LesionsOuMotifs?.length) {
+        return "Il manque les lésions ou motifs d'inspection";
+      }
     }
     if (sviIpm2Decision === IPM2Decision.TRAITEMENT_ASSAINISSANT) {
       if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.CUISSON)) {
