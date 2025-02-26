@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import dayjs from 'dayjs';
-import { Prisma, Carcasse, UserRoles } from '@prisma/client';
+import { Prisma, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Accordion } from '@codegouvfr/react-dsfr/Accordion';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
@@ -25,32 +25,10 @@ export default function FEI_SVI() {
   const addLog = state.addLog;
   const sviUser = fei.svi_user_id ? state.users[fei.svi_user_id] : null;
   const svi = fei.svi_entity_id ? state.entities[fei.svi_entity_id] : null;
-  const carcassesUnsorted = (state.carcassesIdsByFei[params.fei_numero!] || [])
+  const carcassesSorted = (state.carcassesIdsByFei[params.fei_numero!] || [])
     .map((cId) => state.carcasses[cId])
     .sort(sortCarcassesApproved)
     .filter((carcasse) => !carcasse.deleted_at && !carcasse.intermediaire_carcasse_refus_intermediaire_id);
-
-  const carcassesSorted = useMemo(() => {
-    const carcassesValidated: Record<Carcasse['zacharie_carcasse_id'], Carcasse> = {};
-    const carcassesSaisies: Record<Carcasse['zacharie_carcasse_id'], Carcasse> = {};
-    // const carcassesToCheck: Record<Carcasse['zacharie_carcasse_id'], Carcasse> = {};
-    for (const carcasse of carcassesUnsorted) {
-      if (carcasse.svi_carcasse_saisie_motif?.filter(Boolean)?.length) {
-        carcassesSaisies[carcasse.zacharie_carcasse_id] = carcasse;
-        continue;
-      }
-      // if (carcasse.svi_carcasse_signed_at) {
-      carcassesValidated[carcasse.zacharie_carcasse_id] = carcasse;
-      // continue;
-      // }
-      // carcassesToCheck[carcasse.zacharie_carcasse_id] = carcasse;
-    }
-    return {
-      carcassesValidated: Object.values(carcassesValidated),
-      carcassesSaisies: Object.values(carcassesSaisies),
-      // carcassesToCheck: Object.values(carcassesToCheck),
-    };
-  }, [carcassesUnsorted]);
 
   const isSviWorkingFor = useMemo(() => {
     // if (fei.fei_current_owner_role === UserRoles.SVI && !!fei.svi_entity_id) {
@@ -89,62 +67,19 @@ export default function FEI_SVI() {
   // const jobIsDone = carcassesSorted.carcassesToCheck.length === 0;
   const DateFinInput = canEdit ? Input : InputNotEditable;
 
-  const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(true);
-  const [carcassesAccepteesExpanded, setCarcassesAccepteesExpanded] = useState(true);
-  const [carcassesRefuseesExpanded, setCarcassesRefuseesExpanded] = useState(true);
-
   return (
     <>
       <Accordion titleAs="h3" label={<>Identité du SVI{canEdit ? <PencilStrikeThrough /> : ''}</>}>
         <EntityNotEditable user={sviUser!} entity={svi!} />
       </Accordion>
-      {canEdit ? (
-        <Accordion
-          titleAs="h3"
-          // label={`Carcasses à vérifier (${carcassesSorted.carcassesToCheck.length})`}
-          label={`Carcasses à vérifier (${carcassesUnsorted.length})`}
-          expanded={carcassesAValiderExpanded}
-          onExpandedChange={setCarcassesAValiderExpanded}
-        >
-          <p className="text-sm text-gray-600">
-            Veuillez cliquer sur une carcasse pour la saisir ou l'annoter
-          </p>
-          {carcassesUnsorted.map((carcasse) => {
-            return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
-          })}
-        </Accordion>
-      ) : (
-        <>
-          <Accordion
-            titleAs="h3"
-            label={`Carcasses validées (${carcassesSorted.carcassesValidated.length})`}
-            expanded={carcassesAccepteesExpanded}
-            onExpandedChange={setCarcassesAccepteesExpanded}
-          >
-            {carcassesSorted.carcassesValidated.length === 0 ? (
-              <p>Pas de carcasse acceptée</p>
-            ) : (
-              carcassesSorted.carcassesValidated.map((carcasse) => {
-                return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
-              })
-            )}
-          </Accordion>
-          <Accordion
-            titleAs="h3"
-            label={`Carcasses saisies (${carcassesSorted.carcassesSaisies.length})`}
-            expanded={carcassesRefuseesExpanded}
-            onExpandedChange={setCarcassesRefuseesExpanded}
-          >
-            {carcassesSorted.carcassesSaisies.length === 0 ? (
-              <p>Pas de carcasse refusée</p>
-            ) : (
-              carcassesSorted.carcassesSaisies.map((carcasse) => {
-                return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
-              })
-            )}
-          </Accordion>
-        </>
-      )}
+
+      <Accordion titleAs="h3" label={`Carcasses (${carcassesSorted.length})`} defaultExpanded>
+        <p className="text-sm text-gray-600">Veuillez cliquer sur une carcasse pour la saisir ou l'annoter</p>
+        {carcassesSorted.map((carcasse) => {
+          return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
+        })}
+      </Accordion>
+
       <Accordion titleAs="h3" label="Validation de la fiche" defaultExpanded>
         <form
           method="POST"

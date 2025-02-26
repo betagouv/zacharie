@@ -276,17 +276,39 @@ export function CarcasseEditSVI() {
                   key={dayjs(carcasse.updated_at).toISOString()}
                 />
               </Accordion>
-              <div className="mt-4">
+              {/* <div className="mt-4">
                 <Button
                   nativeButtonProps={{
                     onClick: () => {
-                      navigate(-1);
+                      fetch(
+                        `${import.meta.env.VITE_API_URL}/certificat/consigne/${carcasse.zacharie_carcasse_id}`,
+                        {
+                          method: 'GET',
+                          credentials: 'include',
+                          headers: {
+                            Accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'Content-Type':
+                              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                          },
+                        },
+                      )
+                        .then((res) => res.blob())
+                        .then((blob) => {
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `consigne-${carcasse.zacharie_carcasse_id}.docx`;
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+                          window.URL.revokeObjectURL(url);
+                        });
                     },
                   }}
                 >
                   Obtenir le certificat de consigne
                 </Button>
-              </div>
+              </div> */}
               <div className="mt-4">
                 <Button
                   nativeButtonProps={{

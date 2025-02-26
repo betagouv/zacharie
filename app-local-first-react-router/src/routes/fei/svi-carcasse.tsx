@@ -1,5 +1,12 @@
 import { useMemo } from 'react';
-import { Carcasse, CarcasseType, IPM1Decision, IPM1Protocole, IPM2Decision } from '@prisma/client';
+import {
+  Carcasse,
+  CarcasseStatus,
+  CarcasseType,
+  IPM1Decision,
+  IPM1Protocole,
+  IPM2Decision,
+} from '@prisma/client';
 import dayjs from 'dayjs';
 import { CustomNotice } from '@app/components/CustomNotice';
 import { useParams, Link } from 'react-router';
@@ -19,7 +26,6 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
   const fei = state.feis[params.fei_numero!];
   const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
 
-  const priseEnCharge = !carcasse.svi_carcasse_saisie;
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];
     for (const intermediaire of intermediaires) {
@@ -39,13 +45,17 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
 
   const Component = canEdit ? Link : 'div';
 
+  const saisie = (
+    [CarcasseStatus.SAISIE_PARTIELLE, CarcasseStatus.SAISIE_TOTALE] as CarcasseStatus[]
+  ).includes(carcasse.svi_carcasse_status!);
+
   return (
     <div
       key={carcasse?.updated_at ? dayjs(carcasse.updated_at).toISOString() : carcasse?.zacharie_carcasse_id}
       className={[
         'border-4 border-transparent',
-        !!carcasse.svi_carcasse_saisie?.length && '!border-red-500',
-        !!canEdit && priseEnCharge && '!border-action-high-blue-france',
+        saisie && '!border-red-500',
+        // priseEnCharge && '!border-action-high-blue-france',
       ]
         .filter(Boolean)
         .join(' ')}
