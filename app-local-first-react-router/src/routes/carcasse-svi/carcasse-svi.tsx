@@ -180,6 +180,7 @@ export function CarcasseEditSVI() {
             <div className="p-4 pb-8 md:p-8 md:pb-4">
               <Accordion
                 titleAs="h2"
+                defaultExpanded
                 label={
                   <>
                     Infos sur la chasse et{' '}
