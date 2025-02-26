@@ -180,7 +180,6 @@ export function CarcasseEditSVI() {
             <div className="p-4 pb-8 md:p-8 md:pb-4">
               <Accordion
                 titleAs="h2"
-                defaultExpanded={false}
                 label={
                   <>
                     Infos sur la chasse et{' '}
@@ -244,7 +243,7 @@ export function CarcasseEditSVI() {
                 </>
               </Accordion>
               {canEdit && (
-                <Accordion titleAs="h2" defaultExpanded={false} label="Décision SVI">
+                <Accordion titleAs="h2" defaultExpanded={!carcasse.svi_ipm2_decision} label="Décision SVI">
                   <Accordion
                     titleAs="h3"
                     defaultExpanded={false}

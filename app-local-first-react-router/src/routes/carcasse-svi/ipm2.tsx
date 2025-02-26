@@ -87,49 +87,52 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     if (!sviIpm2Protocole) {
       return "Il manque le protocole d'inspection";
     }
-    if (carcasse.type === CarcasseType.PETIT_GIBIER && !sviIpm2NombreAnimaux) {
-      return "Il manque le nombre d'animaux inspectés";
-    }
-    if (!sviIpm2Pieces?.length) {
-      return 'Il manque les pièces inspectées nécessitant une observation';
-    }
     if (!sviIpm2Decision) {
       return 'Il manque la décision IPM2';
     }
-    if (sviIpm2Decision !== IPM2Decision.LEVEE_DE_LA_CONSIGNE) {
-      if (!sviIpm2LesionsOuMotifs?.length) {
-        return "Il manque les lésions ou motifs d'inspection";
+    if (sviIpm2PresenteeInspection) {
+      if (carcasse.type === CarcasseType.PETIT_GIBIER && !sviIpm2NombreAnimaux) {
+        return "Il manque le nombre d'animaux inspectés";
       }
-    }
-    if (sviIpm2Decision === IPM2Decision.TRAITEMENT_ASSAINISSANT) {
-      if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.CUISSON)) {
-        if (!sviIpm2TraitementAssainissantCuissonTemps) {
-          return 'Il manque le temps de cuisson';
-        }
-        if (!sviIpm2TraitementAssainissantCuissonTemp) {
-          return 'Il manque la température de cuisson';
+      if (!sviIpm2Pieces?.length) {
+        return 'Il manque les pièces inspectées nécessitant une observation';
+      }
+      if (sviIpm2Decision !== IPM2Decision.LEVEE_DE_LA_CONSIGNE) {
+        if (!sviIpm2LesionsOuMotifs?.length) {
+          return "Il manque les lésions ou motifs d'inspection";
         }
       }
-      if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.CONGELATION)) {
-        if (!sviIpm2TraitementAssainissantCongelationTemps) {
-          return 'Il manque le temps de congélation';
+      if (sviIpm2Decision === IPM2Decision.TRAITEMENT_ASSAINISSANT) {
+        if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.CUISSON)) {
+          if (!sviIpm2TraitementAssainissantCuissonTemps) {
+            return 'Il manque le temps de cuisson';
+          }
+          if (!sviIpm2TraitementAssainissantCuissonTemp) {
+            return 'Il manque la température de cuisson';
+          }
         }
-        if (!sviIpm2TraitementAssainissantCongelationTemp) {
-          return 'Il manque la température de congélation';
+        if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.CONGELATION)) {
+          if (!sviIpm2TraitementAssainissantCongelationTemps) {
+            return 'Il manque le temps de congélation';
+          }
+          if (!sviIpm2TraitementAssainissantCongelationTemp) {
+            return 'Il manque la température de congélation';
+          }
         }
-      }
-      if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.AUTRE)) {
-        if (!sviIpm2TraitementAssainissantType) {
-          return 'Il manque le type de traitement';
-        }
-        if (!sviIpm2TraitementAssainissantParamètres) {
-          return 'Il manque les paramètres du traitement';
+        if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.AUTRE)) {
+          if (!sviIpm2TraitementAssainissantType) {
+            return 'Il manque le type de traitement';
+          }
+          if (!sviIpm2TraitementAssainissantParamètres) {
+            return 'Il manque les paramètres du traitement';
+          }
         }
       }
     }
     return null;
   }, [
     sviIpm2Date,
+    sviIpm2PresenteeInspection,
     sviIpm2Protocole,
     sviIpm2Pieces,
     sviIpm2LesionsOuMotifs,
@@ -443,7 +446,21 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       <RadioButtons
         legend="Décision IPM2 *"
         orientation="horizontal"
+        // @ts-expect-error Type 'null' is not assignable to type
         options={[
+          !sviIpm2PresenteeInspection
+            ? {
+                nativeInputProps: {
+                  className: 'non-renseigne',
+                  required: true,
+                  checked: sviIpm2Decision === IPM2Decision.NON_RENSEIGNEE,
+                  onChange: () => {
+                    setSviIpm2Decision(IPM2Decision.NON_RENSEIGNEE);
+                  },
+                },
+                label: 'Non renseigné',
+              }
+            : null,
           {
             nativeInputProps: {
               required: true,
@@ -484,7 +501,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             },
             label: 'Traitement assainissant',
           },
-        ]}
+        ].filter(Boolean)}
       />
       {sviIpm2Decision === IPM2Decision.TRAITEMENT_ASSAINISSANT && (
         <>

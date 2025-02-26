@@ -64,31 +64,34 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
     if (!sviIpm1Protocole) {
       return "Il manque le protocole d'inspection";
     }
-    if (carcasse.type === CarcasseType.PETIT_GIBIER && !sviIpm1NombreAnimaux) {
-      return "Il manque le nombre d'animaux inspectés";
-    }
-    if (!sviIpm1Pieces?.length) {
-      return 'Il manque les pièces inspectées nécessitant une observation';
-    }
-    if (!sviIpm1LesionsOuMotifs?.length) {
-      return "Il manque les lésions ou motifs d'inspection";
-    }
     if (!sviIpm1Decision) {
       return 'Il manque la décision IPM1';
     }
-    if (sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE && !sviIpm1DureeConsigne) {
-      return 'Il manque la durée de la consigne';
+    if (carcasse.svi_ipm1_presentee_inspection) {
+      if (carcasse.type === CarcasseType.PETIT_GIBIER && !sviIpm1NombreAnimaux) {
+        return "Il manque le nombre d'animaux inspectés";
+      }
+      if (!sviIpm1Pieces?.length) {
+        return 'Il manque les pièces inspectées nécessitant une observation';
+      }
+      if (!sviIpm1LesionsOuMotifs?.length) {
+        return "Il manque les lésions ou motifs d'inspection";
+      }
+      if (sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE && !sviIpm1DureeConsigne) {
+        return 'Il manque la durée de la consigne';
+      }
     }
     return null;
   }, [
     sviIpm1Date,
     sviIpm1Protocole,
-    sviIpm1Pieces,
-    sviIpm1LesionsOuMotifs,
-    sviIpm1NombreAnimaux,
     sviIpm1Decision,
-    sviIpm1DureeConsigne,
+    carcasse.svi_ipm1_presentee_inspection,
     carcasse.type,
+    sviIpm1NombreAnimaux,
+    sviIpm1Pieces?.length,
+    sviIpm1LesionsOuMotifs?.length,
+    sviIpm1DureeConsigne,
   ]);
 
   function handleSave() {
@@ -151,6 +154,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               checked: sviIpm1PresenteeInspection,
               onChange: () => {
                 setSviIpm1PresenteeInspection(true);
+                setSviIpm1Decision(IPM1Decision.MISE_EN_CONSIGNE);
               },
             },
             label:
@@ -164,6 +168,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               checked: !sviIpm1PresenteeInspection,
               onChange: () => {
                 setSviIpm1PresenteeInspection(false);
+                setSviIpm1Decision(IPM1Decision.NON_RENSEIGNEE);
               },
             },
             label:
