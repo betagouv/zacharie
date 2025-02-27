@@ -145,7 +145,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   return (
     <form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`} onSubmit={(e) => e.preventDefault()}>
       <RadioButtons
-        // legend="Protocole d'inspection"
+        legend={
+          carcasse.type === CarcasseType.PETIT_GIBIER
+            ? "Lot présenté à l'inspection *"
+            : "Carcasse présentée à l'inspection *"
+        }
         orientation="horizontal"
         options={[
           {
@@ -157,10 +161,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                 setSviIpm1Decision(IPM1Decision.MISE_EN_CONSIGNE);
               },
             },
-            label:
-              carcasse.type === CarcasseType.PETIT_GIBIER
-                ? "Lot présenté à l'inspection"
-                : "Carcasse présentée à l'inspection",
+            label: 'Oui',
           },
           {
             nativeInputProps: {
@@ -171,10 +172,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                 setSviIpm1Decision(IPM1Decision.NON_RENSEIGNEE);
               },
             },
-            label:
-              carcasse.type === CarcasseType.PETIT_GIBIER
-                ? "Lot non présenté à l'inspection"
-                : "Carcasse non présentée à l'inspection",
+            label: 'Non, carcasse manquante',
           },
         ]}
       />
@@ -206,7 +204,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             const date = dayjs.utc(e.target.value).startOf('day').toDate();
             setSviIpm1Date(date);
           },
-          defaultValue: sviIpm1Date ? dayjs(sviIpm1Date).format('YYYY-MM-DD') : '',
+          onChange: (e) => {
+            const date = dayjs.utc(e.target.value).startOf('day').toDate();
+            setSviIpm1Date(date);
+          },
+          value: sviIpm1Date ? dayjs(sviIpm1Date).format('YYYY-MM-DD') : '',
         }}
       />
       <InputNotEditable
@@ -288,7 +290,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             <ModalTreeDisplay
               data={piecesTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               modal={piecesGibier}
-              title="Observations de saisie de gros gibier"
+              title={
+                carcasse.type === CarcasseType.PETIT_GIBIER
+                  ? 'Pièces de petits gibiers'
+                  : 'Pièces de gros gibiers'
+              }
               onItemClick={(newPiece) => {
                 const nextPieces = [...sviIpm1Pieces.filter((p) => p !== newPiece), newPiece];
                 setSviIpm1Pieces(nextPieces);
@@ -314,7 +320,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             <InputForSearchPrefilledData
               canEdit
               data={ipm1ObservationsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
-              label="Observations (lésions ou motifs de consignes) *"
+              label="Observations (lésions) *"
               hintText={
                 <button type="button" onClick={() => lesionsOuMotifsConsigneModal.open()}>
                   Voir le référentiel des lésions de carcasse en <u className="inline">cliquant ici</u>
@@ -324,8 +330,8 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               clearInputOnClick
               placeholder={
                 sviIpm1LesionsOuMotifs.length
-                  ? 'Commencez à taper une lésion ou un motif de consigne supplémentaire'
-                  : 'Commencez à taper une lésion ou un motif de consigne'
+                  ? 'Commencez à taper une lésion supplémentaire'
+                  : 'Commencez à taper une lésion'
               }
               onSelect={(newLom) => {
                 const nextLesionsOuMotifsSaisie = [
@@ -376,32 +382,34 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
           },
         }}
       />
-      <RadioButtons
-        legend="Décision IPM1 *"
-        orientation="horizontal"
-        options={[
-          {
-            nativeInputProps: {
-              required: true,
-              checked: sviIpm1Decision === IPM1Decision.NON_RENSEIGNEE,
-              onChange: () => {
-                setSviIpm1Decision(IPM1Decision.NON_RENSEIGNEE);
+      {/* {sviIpm1PresenteeInspection && (
+        <RadioButtons
+          legend="Décision IPM1 *"
+          orientation="horizontal"
+          options={[
+            {
+              nativeInputProps: {
+                required: true,
+                checked: sviIpm1Decision === IPM1Decision.NON_RENSEIGNEE,
+                onChange: () => {
+                  setSviIpm1Decision(IPM1Decision.NON_RENSEIGNEE);
+                },
               },
+              label: 'Non renseignée',
             },
-            label: 'Non renseignée',
-          },
-          {
-            nativeInputProps: {
-              required: true,
-              checked: sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE,
-              onChange: () => {
-                setSviIpm1Decision(IPM1Decision.MISE_EN_CONSIGNE);
+            {
+              nativeInputProps: {
+                required: true,
+                checked: sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE,
+                onChange: () => {
+                  setSviIpm1Decision(IPM1Decision.MISE_EN_CONSIGNE);
+                },
               },
+              label: 'Mise en consigne',
             },
-            label: 'Mise en consigne',
-          },
-        ]}
-      />
+          ]}
+        />
+      )} */}
       {sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE && (
         <>
           <Input

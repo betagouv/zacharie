@@ -207,7 +207,11 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   return (
     <form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`} onSubmit={(e) => e.preventDefault()}>
       <RadioButtons
-        // legend="Protocole d'inspection"
+        legend={
+          carcasse.type === CarcasseType.PETIT_GIBIER
+            ? "Lot présenté à l'inspection *"
+            : "Carcasse présentée à l'inspection *"
+        }
         orientation="horizontal"
         options={[
           {
@@ -218,10 +222,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                 setSviIpm2PresenteeInspection(true);
               },
             },
-            label:
-              carcasse.type === CarcasseType.PETIT_GIBIER
-                ? "Lot présenté à l'inspection"
-                : "Carcasse présentée à l'inspection",
+            label: 'Oui',
           },
           {
             nativeInputProps: {
@@ -231,10 +232,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                 setSviIpm2PresenteeInspection(false);
               },
             },
-            label:
-              carcasse.type === CarcasseType.PETIT_GIBIER
-                ? "Lot non présenté à l'inspection"
-                : "Carcasse non présentée à l'inspection",
+            label: 'Non, carcasse manquante',
           },
         ]}
       />
@@ -266,7 +264,11 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             const date = dayjs.utc(e.target.value).startOf('day').toDate();
             setSviIpm2Date(date);
           },
-          defaultValue: sviIpm2Date ? dayjs(sviIpm2Date).format('YYYY-MM-DD') : '',
+          onChange: (e) => {
+            const date = dayjs.utc(e.target.value).startOf('day').toDate();
+            setSviIpm2Date(date);
+          },
+          value: sviIpm2Date ? dayjs(sviIpm2Date).format('YYYY-MM-DD') : '',
         }}
       />
       <InputNotEditable
@@ -352,7 +354,11 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             <ModalTreeDisplay
               data={piecesTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               modal={piecesGibier}
-              title="Observations de saisie de gros gibier"
+              title={
+                carcasse.type === CarcasseType.PETIT_GIBIER
+                  ? 'Pièces de petits gibiers'
+                  : 'Pièces de gros gibiers'
+              }
               onItemClick={(newPiece) => {
                 const nextPieces = [...sviIpm2Pieces.filter((p) => p !== newPiece), newPiece];
                 setSviIpm2Pieces(nextPieces);

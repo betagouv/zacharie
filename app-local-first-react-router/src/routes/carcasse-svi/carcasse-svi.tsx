@@ -266,7 +266,7 @@ export function CarcasseEditSVI() {
                 defaultExpanded
                 label={
                   <>
-                    Résumé affiché dans la fiche <PencilStrikeThrough />
+                    Résumé de la décision <PencilStrikeThrough />
                   </>
                 }
               >
