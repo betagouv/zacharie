@@ -67,7 +67,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
     if (!sviIpm1Decision) {
       return 'Il manque la décision IPM1';
     }
-    if (carcasse.svi_ipm1_presentee_inspection) {
+    if (sviIpm1PresenteeInspection) {
       if (carcasse.type === CarcasseType.PETIT_GIBIER && !sviIpm1NombreAnimaux) {
         return "Il manque le nombre d'animaux inspectés";
       }
@@ -86,7 +86,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
     sviIpm1Date,
     sviIpm1Protocole,
     sviIpm1Decision,
-    carcasse.svi_ipm1_presentee_inspection,
+    sviIpm1PresenteeInspection,
     carcasse.type,
     sviIpm1NombreAnimaux,
     sviIpm1Pieces?.length,
