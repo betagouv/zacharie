@@ -148,7 +148,7 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
                   - Commentaire : {carcasse.svi_ipm1_commentaire}
                 </span>
               )}
-              {carcasse.svi_ipm1_pieces.length && (
+              {!!carcasse.svi_ipm1_pieces.length && (
                 <span className="m-0 ml-2 block font-medium">- Pièces observées&nbsp;:</span>
               )}
               {carcasse.svi_ipm1_pieces.map((piece, index) => {
@@ -158,7 +158,7 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
                   </span>
                 );
               })}
-              {carcasse.svi_ipm1_lesions_ou_motifs.length && (
+              {!!carcasse.svi_ipm1_lesions_ou_motifs.length && (
                 <span className="m-0 ml-2 block font-medium">- Lésions ou motifs de consigne&nbsp;:</span>
               )}
               {carcasse.svi_ipm1_lesions_ou_motifs.map((type, index) => {
@@ -206,7 +206,7 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
                   - Commentaire : {carcasse.svi_ipm2_commentaire}
                 </span>
               )}
-              {carcasse.svi_ipm2_pieces.length && (
+              {!!carcasse.svi_ipm2_pieces.length && (
                 <span className="m-0 ml-2 block font-medium">- Pièces observées&nbsp;:</span>
               )}
               {carcasse.svi_ipm2_pieces.map((piece, index) => {
@@ -216,7 +216,7 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
                   </span>
                 );
               })}
-              {carcasse.svi_ipm2_lesions_ou_motifs.length && (
+              {!!carcasse.svi_ipm2_lesions_ou_motifs.length && (
                 <span className="m-0 ml-2 block font-medium">- Lésions ou motifs de consigne&nbsp;:</span>
               )}
               {carcasse.svi_ipm2_lesions_ou_motifs.map((type, index) => {
