@@ -88,7 +88,7 @@ export default function CurrentOwnerConfirm({
     return null;
   }
 
-  function handlePriseEnCharge({
+  async function handlePriseEnCharge({
     transfer,
     action,
     forcedNextRole,
@@ -157,7 +157,7 @@ export default function CurrentOwnerConfirm({
         received_at: null,
         is_synced: false,
       };
-      createFeiIntermediaire(newIntermediaire);
+      await createFeiIntermediaire(newIntermediaire);
       addLog({
         user_id: user.id,
         user_role: newIntermediaire.fei_intermediaire_role!,

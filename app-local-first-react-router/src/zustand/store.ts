@@ -90,7 +90,7 @@ interface Actions {
     carcasse: Partial<Carcasse>,
   ) => void;
   getFeiIntermediairesForFeiNumero: (fei_numero: Fei['numero']) => Array<FeiIntermediaire>;
-  createFeiIntermediaire: (newFeiIntermediaire: FeiIntermediaire) => void;
+  createFeiIntermediaire: (newFeiIntermediaire: FeiIntermediaire) => Promise<void>;
   updateFeiIntermediaire: (
     feiIntermediaireId: FeiIntermediaire['id'],
     partialFeiIntermediaire: Partial<FeiIntermediaire>,
@@ -224,76 +224,79 @@ const useZustandStore = create<State & Actions>()(
           });
           get().updateFei(nextCarcasse.fei_numero, { updated_at: dayjs().toDate() });
         },
-        createFeiIntermediaire: (newIntermediaire: FeiIntermediaire) => {
-          newIntermediaire.is_synced = false;
-          newIntermediaire.updated_at = dayjs().toDate();
-          const feiCarcassesIds =
-            useZustandStore.getState().carcassesIdsByFei[newIntermediaire.fei_numero] || [];
-          useZustandStore.setState((state) => {
-            return {
-              ...state,
-              feisIntermediaires: {
-                ...state.feisIntermediaires,
-                [newIntermediaire.id]: newIntermediaire,
-              },
-              feisIntermediairesIdsByFei: {
-                ...state.feisIntermediairesIdsByFei,
-                [newIntermediaire.fei_numero]: [
-                  ...new Set([
-                    newIntermediaire.id,
-                    ...(state.feisIntermediairesIdsByFei[newIntermediaire.fei_numero] || []),
-                  ]), // newest first
-                ],
-              },
-            };
-          });
-          const carcasses = feiCarcassesIds.map((id) => useZustandStore.getState().carcasses[id]);
-          const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses
-            .filter((c) => !c.intermediaire_carcasse_refus_intermediaire_id)
-            .map((c) => ({
-              fei_numero__bracelet__intermediaire_id: getCarcasseIntermediaireId(
-                c.fei_numero,
-                c.numero_bracelet,
-                newIntermediaire.id,
-              ),
-              fei_numero: c.fei_numero,
-              numero_bracelet: c.numero_bracelet,
-              zacharie_carcasse_id: c.zacharie_carcasse_id,
-              fei_intermediaire_id: newIntermediaire.id,
-              fei_intermediaire_user_id: newIntermediaire.fei_intermediaire_user_id,
-              fei_intermediaire_entity_id: newIntermediaire.fei_intermediaire_entity_id,
-              prise_en_charge: true,
-              check_manuel: null,
-              manquante: null,
-              refus: null,
-              commentaire: null,
-              carcasse_check_finished_at: dayjs().toDate(),
-              created_at: dayjs().toDate(),
-              updated_at: dayjs().toDate(),
-              deleted_at: null,
-              is_synced: false,
-            }));
-          const carcassesIntermediairesObj: Record<
-            CarcasseIntermediaire['fei_numero__bracelet__intermediaire_id'],
-            CarcasseIntermediaire
-          > = {};
-          for (const ci of carcassesIntermediaires) {
-            carcassesIntermediairesObj[ci.fei_numero__bracelet__intermediaire_id] = ci;
-          }
-          useZustandStore.setState((state) => {
-            return {
-              ...state,
-              carcassesIntermediaires: {
-                ...state.carcassesIntermediaires,
-                ...carcassesIntermediairesObj,
-              },
-              carcassesIntermediairesByIntermediaire: {
-                ...state.carcassesIntermediairesByIntermediaire,
-                [newIntermediaire.id]: carcassesIntermediaires.map(
-                  (c) => c.fei_numero__bracelet__intermediaire_id,
+        createFeiIntermediaire: async (newIntermediaire: FeiIntermediaire) => {
+          return new Promise((resolve) => {
+            newIntermediaire.is_synced = false;
+            newIntermediaire.updated_at = dayjs().toDate();
+            const feiCarcassesIds =
+              useZustandStore.getState().carcassesIdsByFei[newIntermediaire.fei_numero] || [];
+            useZustandStore.setState((state) => {
+              return {
+                ...state,
+                feisIntermediaires: {
+                  ...state.feisIntermediaires,
+                  [newIntermediaire.id]: newIntermediaire,
+                },
+                feisIntermediairesIdsByFei: {
+                  ...state.feisIntermediairesIdsByFei,
+                  [newIntermediaire.fei_numero]: [
+                    ...new Set([
+                      newIntermediaire.id,
+                      ...(state.feisIntermediairesIdsByFei[newIntermediaire.fei_numero] || []),
+                    ]), // newest first
+                  ],
+                },
+              };
+            });
+            const carcasses = feiCarcassesIds.map((id) => useZustandStore.getState().carcasses[id]);
+            const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses
+              .filter((c) => !c.intermediaire_carcasse_refus_intermediaire_id)
+              .map((c) => ({
+                fei_numero__bracelet__intermediaire_id: getCarcasseIntermediaireId(
+                  c.fei_numero,
+                  c.numero_bracelet,
+                  newIntermediaire.id,
                 ),
-              },
-            };
+                fei_numero: c.fei_numero,
+                numero_bracelet: c.numero_bracelet,
+                zacharie_carcasse_id: c.zacharie_carcasse_id,
+                fei_intermediaire_id: newIntermediaire.id,
+                fei_intermediaire_user_id: newIntermediaire.fei_intermediaire_user_id,
+                fei_intermediaire_entity_id: newIntermediaire.fei_intermediaire_entity_id,
+                prise_en_charge: true,
+                check_manuel: null,
+                manquante: null,
+                refus: null,
+                commentaire: null,
+                carcasse_check_finished_at: dayjs().toDate(),
+                created_at: dayjs().toDate(),
+                updated_at: dayjs().toDate(),
+                deleted_at: null,
+                is_synced: false,
+              }));
+            const carcassesIntermediairesObj: Record<
+              CarcasseIntermediaire['fei_numero__bracelet__intermediaire_id'],
+              CarcasseIntermediaire
+            > = {};
+            for (const ci of carcassesIntermediaires) {
+              carcassesIntermediairesObj[ci.fei_numero__bracelet__intermediaire_id] = ci;
+            }
+            useZustandStore.setState((state) => {
+              return {
+                ...state,
+                carcassesIntermediaires: {
+                  ...state.carcassesIntermediaires,
+                  ...carcassesIntermediairesObj,
+                },
+                carcassesIntermediairesByIntermediaire: {
+                  ...state.carcassesIntermediairesByIntermediaire,
+                  [newIntermediaire.id]: carcassesIntermediaires.map(
+                    (c) => c.fei_numero__bracelet__intermediaire_id,
+                  ),
+                },
+              };
+            });
+            resolve();
           });
         },
         updateFeiIntermediaire: (
