@@ -167,7 +167,9 @@ export async function generateDBCertificat(
       where: {
         zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
         ...(afterConsigne
-          ? {}
+          ? {
+              type: { not: CarcasseCertificatType.CC },
+            }
           : {
               type: certificatType,
             }),
