@@ -4,7 +4,7 @@ import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
-import ResponsiveTable from '@app/components/TableResponsive';
+import TableResponsive from '@app/components/TableResponsive';
 import { getOngoingCellFeiUnderMyResponsability } from '@app/utils/get-ongoing-cell';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
@@ -18,7 +18,7 @@ import { getFeiKeyDates } from '@app/utils/gert-fei-key-dates';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 
 async function loadData() {
-  await syncData();
+  await syncData('tableau-de-bord');
   await loadMyRelations();
   await loadFeis();
 }
@@ -123,7 +123,7 @@ export default function TableauDeBordIndex() {
                   </h2>
                 </div>
                 {feisAssigned.length ? (
-                  <ResponsiveTable
+                  <TableResponsive
                     onCheckboxClick={handleCheckboxClick}
                     checkedItemIds={selectedFeis}
                     headers={['Chasse', 'Dates clés', 'Carcasses', 'Étape en cours']}
@@ -180,7 +180,7 @@ export default function TableauDeBordIndex() {
                     </h2>
                   </div>
                   {feisOngoing.length ? (
-                    <ResponsiveTable
+                    <TableResponsive
                       onCheckboxClick={handleCheckboxClick}
                       checkedItemIds={selectedFeis}
                       headers={['Chasse', 'Dates clés', 'Carcasses', 'Étape en cours']}
@@ -257,7 +257,7 @@ export default function TableauDeBordIndex() {
               </summary>
               <div className="py-2 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
                 {feisDone.length ? (
-                  <ResponsiveTable
+                  <TableResponsive
                     onCheckboxClick={handleCheckboxClick}
                     checkedItemIds={selectedFeis}
                     headers={['Chasse', 'Dates clés', 'Carcasses', "Transmission au service d'inspection"]}
@@ -318,7 +318,7 @@ export default function TableauDeBordIndex() {
                 </div>
                 <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
                   {feiActivesForSvi.length ? (
-                    <ResponsiveTable
+                    <TableResponsive
                       onCheckboxClick={handleCheckboxClick}
                       checkedItemIds={selectedFeis}
                       strongId
@@ -380,7 +380,7 @@ export default function TableauDeBordIndex() {
                 </div>
                 <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
                   {feisDoneForSvi.length ? (
-                    <ResponsiveTable
+                    <TableResponsive
                       onCheckboxClick={handleCheckboxClick}
                       checkedItemIds={selectedFeis}
                       headers={['Chasse', 'Dates clés', 'Carcasses', 'Clôturée le']}

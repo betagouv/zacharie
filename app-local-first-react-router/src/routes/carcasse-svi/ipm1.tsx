@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Prisma, CarcasseType, UserRoles, IPM1Protocole, IPM1Decision } from '@prisma/client';
-import ipm1ObservationsList from '@app/data/svi/ipm-list.json';
-import ipm1ObservationsTree from '@app/data/svi/ipm-tree.json';
+import { lesionsList, lesionsTree } from '@app/utils/lesions';
 import piecesList from '@app/data/svi/pieces-list.json';
 import piecesTree from '@app/data/svi/pieces-tree.json';
 import dayjs from 'dayjs';
@@ -319,7 +318,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
           <div>
             <InputForSearchPrefilledData
               canEdit
-              data={ipm1ObservationsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+              data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               label="Observations (lésions) *"
               hintText={
                 <button type="button" onClick={() => lesionsOuMotifsConsigneModal.open()}>
@@ -342,7 +341,8 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
             <ModalTreeDisplay
-              data={ipm1ObservationsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+              data={lesionsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+              skipParent
               modal={lesionsOuMotifsConsigneModal}
               title={`Lésions de carcasse ${carcasse.type === CarcasseType.GROS_GIBIER ? 'de gros gibier' : 'de petit gibier'}`}
               onItemClick={(newLesionsOuMotifSaisie) => {

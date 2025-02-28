@@ -7,6 +7,7 @@ import type {
   FeiIntermediaire,
   CarcasseIntermediaire,
   Log,
+  CarcasseCertificat,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
 import type { FeiDone, FeiWithIntermediaires, FeiPopulated } from './fei';
@@ -231,7 +232,7 @@ export interface CarcassesGetForRegistryResponse {
 export interface CertificatResponse {
   ok: boolean;
   data: {
-    certificat: string | null;
+    certificat: CarcasseCertificat | null;
   };
   error: string;
 }

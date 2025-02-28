@@ -5,77 +5,93 @@ import type { CertificatResponse, CarcassesGetForRegistryResponse } from '~/type
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
-import { Prisma } from '@prisma/client';
-import path from 'path';
-import fs from 'fs/promises';
-import { Document, Patcher } from 'docx';
+import { CarcasseCertificatType, EntityTypes, IPM1Decision, Prisma } from '@prisma/client';
+import { generateConsigneDocx } from '~/templates/get-consigne-docx';
+import { generateCertficatId, generateDBCertificat, generateDecisionId } from '~/utils/generate-certificats';
+import { generateSaisieDocx } from '~/templates/get-saisie-docx';
 
-async function patchDocument(templatePath: string, replacements: Record<string, string>): Promise<Buffer> {
-  const content = await fs.readFile(templatePath);
-
-  const patcher = new Patcher(content);
-
-  // Apply all replacements
-  Object.entries(replacements).forEach(([search, replace]) => {
-    patcher.replace(search, replace);
-  });
-
-  return patcher.getBuffer();
-}
-
-router.post(
-  '/consigne/:zacharie_carcasse_id',
+router.get(
+  '/:zacharie_carcasse_id/all',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const body: Prisma.CarcasseUncheckedCreateInput = req.body;
-    const user = req.user;
     const { zacharie_carcasse_id } = req.params;
-
-    if (!zacharie_carcasse_id) {
-      res.status(400).send({
-        ok: false,
-        data: { certificat: null },
-        error: 'Le numéro de la carcasse est obligatoire',
-      } satisfies CertificatResponse);
-      return;
-    }
-    let existingCarcasse = await prisma.carcasse.findFirst({
+    const certificats = await prisma.carcasseCertificat.findMany({
       where: {
         zacharie_carcasse_id: zacharie_carcasse_id,
       },
+      orderBy: {
+        created_at: 'desc',
+      },
     });
-    if (!existingCarcasse) {
-      res.status(404).send({
-        ok: false,
-        data: { certificat: null },
-        error: 'Carcasse non trouvée',
-      } satisfies CertificatResponse);
+    res.send(certificats);
+  }),
+);
+
+router.get(
+  '/carcasse/:zacharie_carcasse_id/:certificat',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const { zacharie_carcasse_id } = req.params;
+    const certificatType = req.params.certificat as CarcasseCertificatType;
+
+    const certificatResponse = await generateDBCertificat(certificatType, zacharie_carcasse_id);
+    if (!certificatResponse.ok) {
+      res.status(400).send(certificatResponse);
       return;
     }
 
-    const templatePath = path.join(__dirname, '../templates/20241230_certificat de consigne.docx');
+    if (req.query.download !== 'true') {
+      res.status(200).send(certificatResponse);
+      return;
+    }
 
-    try {
-      const docBuffer = await patchDocument(templatePath, {
-        '[Nom du département du SVI]': 'Département Test',
-        // Add more replacements as needed:
-        // '[Another placeholder]': 'replacement value',
-      });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', 'attachment; filename=consigne.docx');
 
-      res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      );
-      res.setHeader('Content-Disposition', 'attachment; filename=certificat-consigne.docx');
-
+    if (certificatType === CarcasseCertificatType.CC) {
+      const docBuffer = await generateConsigneDocx(certificatResponse.data.certificat);
       res.send(docBuffer);
-    } catch (error) {
-      console.error('Document generation error:', error);
-      res.status(500).send({
+    }
+
+    if (certificatType === CarcasseCertificatType.CSP || certificatType === CarcasseCertificatType.CST) {
+      const docBuffer = await generateSaisieDocx(certificatResponse.data.certificat);
+      res.send(docBuffer);
+    }
+  }),
+);
+
+router.get(
+  '/:certificat_id',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const { certificat_id } = req.params;
+
+    const certificat = await prisma.carcasseCertificat.findUnique({
+      where: {
+        certificat_id: certificat_id,
+      },
+    });
+
+    if (!certificat) {
+      res.status(404).send({
         ok: false,
-        data: { certificat: null },
-        error: 'Erreur lors de la génération du document',
-      } satisfies CertificatResponse);
+        data: null,
+        error: 'Certificat non trouvé',
+      });
+      return;
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', 'attachment; filename=consigne.docx');
+
+    if (certificat.type === CarcasseCertificatType.CC) {
+      const docBuffer = await generateConsigneDocx(certificat);
+      res.send(docBuffer);
+    }
+
+    if (certificat.type === CarcasseCertificatType.CSP || certificat.type === CarcasseCertificatType.CST) {
+      const docBuffer = await generateSaisieDocx(certificat);
+      res.send(docBuffer);
     }
   }),
 );

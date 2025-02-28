@@ -103,6 +103,7 @@ export default function InputForSearchPrefilledData<T extends string>({
             <li key={item}>
               <Tag
                 // iconId="fr-icon-checkbox-circle-line"
+                className="text-left"
                 nativeButtonProps={{
                   onClick: () => {
                     showTags.current = false;

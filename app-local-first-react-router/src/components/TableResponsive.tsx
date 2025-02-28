@@ -4,7 +4,7 @@ import { Fragment } from 'react/jsx-runtime';
 
 type TableProps = {
   headers: string[];
-  data: Array<{ link: string; id: string; cols: Array<string | JSX.Element>; isSynced: boolean }>;
+  data: Array<{ link?: string; id: string; cols: Array<string | JSX.Element>; isSynced: boolean }>;
   onCheckboxClick: (id: string) => void;
   checkedItemIds: string[];
   strongId?: boolean;

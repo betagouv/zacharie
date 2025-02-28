@@ -37,7 +37,6 @@ model User {
   prenom                         String?
   nom_de_famille                 String?
   numero_cfei                    String? // Chasseur Formé à l'Examen Initial (de la forme CFEI-DEP-YY-001)
-  // numero_frei               String? // Formateur Référent Examen Initial (de la forme DEP-FREI-YY-001)
   prochain_bracelet_a_utiliser   Int?                     @default(1)
   addresse_ligne_1               String?
   addresse_ligne_2               String?
@@ -100,7 +99,12 @@ model Entity {
   code_postal                     String?
   ville                           String?
   siret                           String?
+  nom_prenom_responsable          String?
+  prefecture_svi                  String?
   numero_ddecpp                   String?                  @unique
+  inc_certificat                  Int?                     @default(0)
+  inc_decision                    Int?                     @default(0)
+  code_etbt_certificat            String?                  @unique // Il pourrait s'agir d'un code court unique qui identifie l’établissement (exemple : 01 pour Villette viandes, 02 pour Nemrod et 03 pour Guellier).
   type                            EntityTypes
   created_at                      DateTime                 @default(now())
   updated_at                      DateTime                 @default(now()) @updatedAt
@@ -326,6 +330,7 @@ enum IPM1Decision {
 }
 
 enum IPM2Decision {
+  NON_RENSEIGNEE
   LEVEE_DE_LA_CONSIGNE
   SAISIE_TOTALE
   SAISIE_PARTIELLE
@@ -414,8 +419,54 @@ model Carcasse {
   CarcasseIntermediaire                              CarcasseIntermediaire[]
   Logs                                               Log[]
   SviIpm1User                                        User?                   @relation("SviIpm1User", fields: [svi_ipm1_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseCertificats                                CarcasseCertificat[]
 
   @@index([fei_numero, numero_bracelet])
+}
+
+enum CarcasseCertificatType {
+  CC // Certificat de consigne
+  CSP // Certificat de saisie partielle
+  CST // Certificat de saisie totale
+  LC // Certificat de levée de consigne
+  LPS // Certificat de laisser passer sanitaire
+}
+
+model CarcasseCertificat {
+  certificat_id             String                  @id // {inc_certificat}-{type-notification}-{code_etbt_certificat}
+  zacharie_carcasse_id      String
+  remplace_certificat_id    String?
+  numero_decision           String?
+  numero_decision_ipm1      String?
+  type                      CarcasseCertificatType?
+  prefecture_svi            String?
+  commune_etg               String?
+  date_consigne             String?
+  lieu_consigne             String?
+  nom_etg_personne_physique String?
+  nom_etg_personne_morale   String?
+  fei_numero                String?
+  numero_bracelet           String?
+  espece                    String?
+  carcasse_type             CarcasseType?
+  nombre_d_animaux          Int?
+  date_mise_a_mort          String?
+  commune_mise_a_mort       String?
+  examinateur_initial       String?
+  premier_detenteur         String?
+  collecteur_pro            String?
+  pieces                    String[]
+  motifs                    String[]
+  commentaire               String?
+  poids                     Float?
+  svi_ipm1_signed_at        DateTime?
+  svi_ipm2_signed_at        DateTime?
+  duree_consigne            Int?
+  created_at                DateTime                @default(now())
+  updated_at                DateTime                @default(now()) @updatedAt
+  Carcasse                  Carcasse                @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([zacharie_carcasse_id])
 }
 
 model FeiIntermediaire {

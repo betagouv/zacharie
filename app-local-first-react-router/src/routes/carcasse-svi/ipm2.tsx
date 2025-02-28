@@ -2,10 +2,7 @@ import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Prisma, CarcasseType, UserRoles, IPM1Protocole, IPM2Decision, IPM2Traitement } from '@prisma/client';
-import ipmObservationsList from '@app/data/svi/ipm-list.json';
-import ipmObservationsTree from '@app/data/svi/ipm-tree.json';
-import piecesList from '@app/data/svi/pieces-list.json';
-import piecesTree from '@app/data/svi/pieces-tree.json';
+import { lesionsList, lesionsTree } from '@app/utils/lesions';
 import dayjs from 'dayjs';
 import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
 import InputNotEditable from '@app/components/InputNotEditable';
@@ -342,7 +339,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                 </>
               }
               // canEdit={canDoIPM2}
-              data={piecesList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+              data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               hideDataWhenNoSearch
               clearInputOnClick
               placeholder="Commencez à taper une pièce"
@@ -352,7 +349,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
             <ModalTreeDisplay
-              data={piecesTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+              data={lesionsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               modal={piecesGibier}
               title={
                 carcasse.type === CarcasseType.PETIT_GIBIER
@@ -383,7 +380,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           <div>
             <InputForSearchPrefilledData
               canEdit
-              data={ipmObservationsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+              data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               label="Observations (lésions ou motifs de consignes) *"
               hintText={
                 <>
@@ -410,7 +407,8 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
             <ModalTreeDisplay
-              data={ipmObservationsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+              data={lesionsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+              skipParent
               modal={lesionsOuMotifsConsigneModal}
               title={`Lésions de carcasse ${carcasse.type === CarcasseType.GROS_GIBIER ? 'de gros gibier' : 'de petit gibier'}`}
               onItemClick={(newLesionsOuMotifSaisie) => {

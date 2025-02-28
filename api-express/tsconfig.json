@@ -6,6 +6,7 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "strictNullChecks": false,
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "target": "ES2019",

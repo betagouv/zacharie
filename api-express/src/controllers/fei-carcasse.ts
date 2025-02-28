@@ -5,12 +5,13 @@ import type { CarcasseResponse, CarcassesGetForRegistryResponse } from '~/types/
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
-import { EntityRelationType, Prisma, UserRoles } from '@prisma/client';
+import { EntityRelationType, IPM2Decision, Prisma, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
 import { formatCarcasseEmail } from '~/utils/formatCarcasseEmail';
 import { RequestWithUser } from '~/types/request';
 import { carcasseForRegistrySelect, CarcasseForResponseForRegistry } from '~/types/carcasse';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
+import { checkGenerateCertificat } from '~/utils/generate-certificats';
 
 router.post(
   '/:fei_numero/:zacharie_carcasse_id',
@@ -326,7 +327,11 @@ router.post(
       data: nextCarcasse,
     });
 
-    if (!existingCarcasse.svi_carcasse_saisie.length && updatedCarcasse.svi_carcasse_saisie.length) {
+    if (
+      existingCarcasse.svi_ipm2_decision !== updatedCarcasse.svi_ipm2_decision &&
+      (updatedCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE ||
+        updatedCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE)
+    ) {
       const [examinateurInitial, premierDetenteur] = await prisma.fei
         .findUnique({
           where: {
@@ -443,6 +448,8 @@ router.post(
         });
       }
     }
+
+    checkGenerateCertificat(existingCarcasse, updatedCarcasse);
 
     res.status(200).send({
       ok: true,

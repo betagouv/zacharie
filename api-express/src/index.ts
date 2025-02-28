@@ -131,7 +131,7 @@ app.use('/admin', adminRouter);
 app.use('/entite', entiteRouter);
 app.use('/fei', feiRouter);
 app.use('/fei-carcasse', feiCarcasseRouter);
-app.use('/certificats', certificatsRouter);
+app.use('/certificat', certificatsRouter);
 app.use('/fei-carcasse-intermediaire', feiCarcasseIntermediaireRouter);
 app.use('/fei-intermediaire', feiIntermediaireRouter);
 app.use('/log', logRouter);

@@ -19,6 +19,7 @@ import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 import dedent from 'dedent';
 import { CarcasseIPM1 } from './ipm1';
 import { CarcasseIPM2 } from './ipm2';
+import CarcasseSVICertificats from './certificats';
 
 export default function CarcasseSviLoader() {
   const params = useParams();
@@ -276,39 +277,17 @@ export function CarcasseEditSVI() {
                   key={dayjs(carcasse.updated_at).toISOString()}
                 />
               </Accordion>
-              {/* <div className="mt-4">
-                <Button
-                  nativeButtonProps={{
-                    onClick: () => {
-                      fetch(
-                        `${import.meta.env.VITE_API_URL}/certificat/consigne/${carcasse.zacharie_carcasse_id}`,
-                        {
-                          method: 'GET',
-                          credentials: 'include',
-                          headers: {
-                            Accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                            'Content-Type':
-                              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                          },
-                        },
-                      )
-                        .then((res) => res.blob())
-                        .then((blob) => {
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `consigne-${carcasse.zacharie_carcasse_id}.docx`;
-                          document.body.appendChild(a);
-                          a.click();
-                          a.remove();
-                          window.URL.revokeObjectURL(url);
-                        });
-                    },
-                  }}
-                >
-                  Obtenir le certificat de consigne
-                </Button>
-              </div> */}
+              <Accordion
+                titleAs="h2"
+                defaultExpanded
+                label={
+                  <>
+                    Certificats <PencilStrikeThrough />
+                  </>
+                }
+              >
+                <CarcasseSVICertificats />
+              </Accordion>
               <div className="mt-4">
                 <Button
                   nativeButtonProps={{

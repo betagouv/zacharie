@@ -1,7 +1,7 @@
-import React from "react";
-import { createModal } from "@codegouvfr/react-dsfr/Modal";
+import React from 'react';
+import { createModal } from '@codegouvfr/react-dsfr/Modal';
 
-type TreeNode = {
+export type TreeNode = {
   [key: string]: string[] | TreeNode;
 };
 
@@ -10,12 +10,14 @@ interface HierarchicalDataModalProps {
   modal: ReturnType<typeof createModal>;
   title: string;
   onItemClick: (item: string) => void;
+  skipParent?: boolean;
 }
 
 const renderNestedDetails = (
   data: TreeNode | string[],
   onItemClick: (item: string) => void,
-  parent: string = "",
+  skipParent: boolean = false,
+  parent: string = '',
 ): React.ReactNode => {
   if (Array.isArray(data)) {
     if (data.length === 0) {
@@ -28,7 +30,7 @@ const renderNestedDetails = (
             <button
               type="button"
               onClick={() => {
-                if (parent) {
+                if (parent && !skipParent) {
                   onItemClick(`${parent} - ${item}`);
                 } else {
                   onItemClick(item);
@@ -69,13 +71,19 @@ const renderNestedDetails = (
         <summary className="cursor-pointer font-semibold hover:text-action-high-blue-france focus:outline-none">
           {key}
         </summary>
-        <div className="ml-4 mt-2">{renderNestedDetails(value, onItemClick, key)}</div>
+        <div className="ml-4 mt-2">{renderNestedDetails(value, onItemClick, skipParent, key)}</div>
       </details>
     );
   });
 };
 
-const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({ modal, data, title, onItemClick }) => {
+const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({
+  modal,
+  data,
+  title,
+  skipParent,
+  onItemClick,
+}) => {
   const _onItemClick = (item: string) => {
     onItemClick(item);
     modal.close();
@@ -88,11 +96,13 @@ const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({ modal, data, t
       buttons={[
         {
           doClosesModal: true,
-          children: "Fermer",
+          children: 'Fermer',
         },
       ]}
     >
-      <div className="max-h-[70vh] overflow-y-auto p-4">{renderNestedDetails(data, _onItemClick, "")}</div>
+      <div className="max-h-[70vh] overflow-y-auto p-4">
+        {renderNestedDetails(data, _onItemClick, skipParent, '')}
+      </div>
     </modal.Component>
   );
 };
