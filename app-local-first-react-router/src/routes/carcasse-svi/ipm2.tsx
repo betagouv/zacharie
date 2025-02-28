@@ -3,6 +3,8 @@ import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Prisma, CarcasseType, UserRoles, IPM1Protocole, IPM2Decision, IPM2Traitement } from '@prisma/client';
 import { lesionsList, lesionsTree } from '@app/utils/lesions';
+import piecesTree from '@app/data/svi/pieces-tree.json';
+import piecesList from '@app/data/svi/pieces-list.json';
 import dayjs from 'dayjs';
 import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
 import InputNotEditable from '@app/components/InputNotEditable';
@@ -339,7 +341,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                 </>
               }
               // canEdit={canDoIPM2}
-              data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+              data={piecesList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               hideDataWhenNoSearch
               clearInputOnClick
               placeholder="Commencez à taper une pièce"
@@ -349,7 +351,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
             <ModalTreeDisplay
-              data={lesionsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+              data={piecesTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               modal={piecesGibier}
               title={
                 carcasse.type === CarcasseType.PETIT_GIBIER
