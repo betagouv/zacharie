@@ -178,7 +178,7 @@ export async function generateDBCertificat(
         created_at: 'desc',
       },
     });
-    const newCertificatId = await generateCertficatId(etg, CarcasseCertificatType.CC);
+    const newCertificatId = await generateCertficatId(etg, certificatType);
     certificat = await prisma.carcasseCertificat.create({
       data: {
         certificat_id: newCertificatId,
