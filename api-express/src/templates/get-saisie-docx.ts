@@ -177,7 +177,7 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
               }),
             ],
           }),
-          // Deuxième tableau
+          // Deuxième tableau: Signalement de la carcasse ou du lot de carcasses
           new Table({
             columnWidths: [4000, 3500, 3000],
             margins: {
@@ -367,7 +367,8 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
           }),
           // Troisième tableau: Désignation des denrées consignées
           new Table({
-            columnWidths: [1500, 1500, 3500, 4000],
+            columnWidths:
+              data.type === CarcasseCertificatType.CSP ? [1500, 1500, 3500, 4000] : [1500, 3500, 5500],
             margins: {
               top: 50,
             },
@@ -378,19 +379,21 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                   rule: 'atLeast',
                 },
                 children: [
-                  new TableCell({
-                    columnSpan: 1,
-                    children: [
-                      new Paragraph({
+                  data.type === CarcasseCertificatType.CSP
+                    ? new TableCell({
+                        columnSpan: 1,
                         children: [
-                          new TextRun({
-                            text: `Denrées`,
-                            font: 'Marianne',
+                          new Paragraph({
+                            children: [
+                              new TextRun({
+                                text: `Denrées`,
+                                font: 'Marianne',
+                              }),
+                            ],
                           }),
                         ],
-                      }),
-                    ],
-                  }),
+                      })
+                    : null,
                   new TableCell({
                     columnSpan: 1,
                     children: [
@@ -417,24 +420,26 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                       }),
                     ],
                   }),
-                ],
+                ].filter((cell) => cell !== null),
               }),
               new TableRow({
                 children: [
-                  new TableCell({
-                    columnSpan: 1,
-                    rowSpan: data.motifs.length,
-                    children: [
-                      new Paragraph({
+                  data.type === CarcasseCertificatType.CSP
+                    ? new TableCell({
+                        columnSpan: 1,
+                        rowSpan: data.motifs.length,
                         children: [
-                          new TextRun({
-                            text: data.pieces.join('\n'),
-                            font: 'Marianne',
+                          new Paragraph({
+                            children: [
+                              new TextRun({
+                                text: data.pieces.join('\n'),
+                                font: 'Marianne',
+                              }),
+                            ],
                           }),
                         ],
-                      }),
-                    ],
-                  }),
+                      })
+                    : null,
                   new TableCell({
                     columnSpan: 1,
                     rowSpan: data.motifs.length,
@@ -475,7 +480,7 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                       }),
                     ],
                   }),
-                ],
+                ].filter((cell) => cell !== null),
               }),
               ...data.motifs.slice(1).map((motif) => {
                 return new TableRow({
