@@ -17,9 +17,18 @@ import { CarcasseCertificat, CarcasseType } from '@prisma/client';
 import lesions from '../assets/lesions.json';
 
 function getMotivationDroit(motif: string, carcasseType: CarcasseType) {
-  return lesions[carcasseType].find((l) => l['MOTIVATION EN FAIT (CERTIFICAT)'] === motif)?.[
-    'MOTIVATION EN DROIT (CERTIFICAT)'
-  ];
+  return lesions[carcasseType]
+    .map((l) => {
+      return {
+        ...l,
+        'MOTIVATION EN FAIT (CERTIFICAT) + CODE ZACHARIE': `${l['CODE ZACHARIE']}. ${l['MOTIVATION EN FAIT (CERTIFICAT)']}`,
+      };
+    })
+    .find((l) => {
+      if (l['MOTIVATION EN FAIT (CERTIFICAT) + CODE ZACHARIE'] === motif) return true;
+      if (l['MOTIVATION EN FAIT (CERTIFICAT)'] === motif) return true;
+      return false;
+    })?.['MOTIVATION EN DROIT (CERTIFICAT)'];
 }
 
 export async function generateConsigneDocx(data: CarcasseCertificat): Promise<Buffer> {

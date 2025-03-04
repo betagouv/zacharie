@@ -5,7 +5,7 @@ import { TreeNode } from '@app/components/ModalTreeDisplay';
 export const lesionsList = Object.keys(lesions).reduce(
   (groupedByType, type) => {
     groupedByType[type as CarcasseType] = lesions[type as CarcasseType].map(
-      (item) => item['MOTIVATION EN FAIT (CERTIFICAT)'],
+      (item) => `${item['CODE ZACHARIE']}. ${item['MOTIVATION EN FAIT (CERTIFICAT)']}`,
     );
     return groupedByType;
   },
@@ -18,7 +18,9 @@ export const lesionsTree = Object.keys(lesions).reduce(
       if (!tree[item['FAMILLES DE LESIONS']]) {
         tree[item['FAMILLES DE LESIONS']] = [];
       }
-      (tree[item['FAMILLES DE LESIONS']] as string[]).push(item['MOTIVATION EN FAIT (CERTIFICAT)']);
+      (tree[item['FAMILLES DE LESIONS']] as string[]).push(
+        `${item['CODE ZACHARIE']}. ${item['MOTIVATION EN FAIT (CERTIFICAT)']}`,
+      );
       return tree;
     }, {} as TreeNode);
     return groupedByType;
