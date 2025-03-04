@@ -109,17 +109,19 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
           // L'agent des services vétérinaires soussigné certifie que les denrées désignées ci-dessous sont consignées, en l'attente d'informations complémentaires :
           new Paragraph({
             children: [
-              new TextRun({
-                text: `Considérant la décision de consigne N° ${data.numero_decision_ipm1}`,
-                font: 'Marianne',
-                break: 3,
-              }),
+              data.numero_decision_ipm1
+                ? new TextRun({
+                    text: `Considérant la décision de consigne N° ${data.numero_decision_ipm1}`,
+                    font: 'Marianne',
+                    break: 3,
+                  })
+                : null,
               new TextRun({
                 text: 'Le vétérinaire officiel soussigné certifie que les denrées désignées ci-dessous sont retirées de la consommation :',
                 font: 'Marianne',
                 break: 1,
               }),
-            ],
+            ].filter((textRun) => textRun !== null),
           }),
           // Premier tableau: Le vétérinaire officiel soussigné certifie que les denrées désignées ci-dessous sont retirées de la consommation :
           new Table({
