@@ -342,11 +342,23 @@ router.post(
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const body = req.body;
 
+    const type = body[Prisma.EntityScalarFieldEnum.type] as EntityTypes;
+    let code_etbt_certificat;
+    if (type === EntityTypes.ETG) {
+      const existingEtgs = await prisma.entity.count({
+        where: {
+          type: EntityTypes.ETG,
+        },
+      });
+      code_etbt_certificat = existingEtgs + 1;
+    }
+
     const createdEntity = await prisma.entity.create({
       data: {
         raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
         nom_d_usage: body[Prisma.EntityScalarFieldEnum.raison_sociale],
         type: body[Prisma.EntityScalarFieldEnum.type],
+        code_etbt_certificat: code_etbt_certificat.toString().padStart(2, '0'),
       },
       include: entityAdminInclude,
     });
@@ -415,6 +427,8 @@ router.post(
       address_ligne_1: body[Prisma.EntityScalarFieldEnum.address_ligne_1],
       address_ligne_2: body[Prisma.EntityScalarFieldEnum.address_ligne_2],
       code_postal: body[Prisma.EntityScalarFieldEnum.code_postal],
+      prefecture_svi: body[Prisma.EntityScalarFieldEnum.prefecture_svi],
+      nom_prenom_responsable: body[Prisma.EntityScalarFieldEnum.nom_prenom_responsable],
       ville: body[Prisma.EntityScalarFieldEnum.ville],
       siret: body[Prisma.EntityScalarFieldEnum.siret] || null,
       numero_ddecpp: body[Prisma.EntityScalarFieldEnum.numero_ddecpp] || null,

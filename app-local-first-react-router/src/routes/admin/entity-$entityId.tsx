@@ -1,6 +1,5 @@
 import { useState, useRef, Fragment, useMemo, useEffect } from 'react';
 import { Link, useParams } from 'react-router';
-import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import { EntityRelationType, EntityTypes, UserRoles, Prisma } from '@prisma/client';
@@ -11,6 +10,7 @@ import { Table } from '@codegouvfr/react-dsfr/Table';
 import type { AdminGetEntityResponse, AdminActionEntityResponse } from '@api/src/types/responses';
 import type { EntityForAdmin } from '@api/src/types/entity';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
+import InputNotEditable from '@app/components/InputNotEditable';
 const loadData = (entityId: string): Promise<AdminGetEntityResponse> =>
   fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entityId}`, {
     method: 'GET',
@@ -57,6 +57,7 @@ const initialData: State = {
 export default function AdminEntity() {
   const params = useParams();
   const [adminEntityResponse, setAdminEntityResponse] = useState<State>(initialData);
+  const [isSaving, setIsSaving] = useState(false);
   const {
     // entity,
     usersWithEntityType,
@@ -107,10 +108,15 @@ export default function AdminEntity() {
   }
 
   return (
-    <div className="fr-container fr-container--fluid fr-my-md-14v">
+    <div className="relative fr-container fr-container--fluid fr-my-md-14v">
       <title>
         {entity.nom_d_usage} ({entity.type}) | Admin | Zacharie | Ministère de l'Agriculture
       </title>
+      {isSaving && (
+        <div className="fixed top-0 right-0 bg-action-high-blue-france">
+          <span className="text-white p-4">Enregistrement en cours</span>
+        </div>
+      )}
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center" key={entity.id}>
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <small className="italic">{entity.type}</small>
@@ -131,6 +137,7 @@ export default function AdminEntity() {
                     event.preventDefault();
                     await new Promise((resolve) => setTimeout(resolve, 300));
                     const formData = new FormData(formRef.current!);
+                    setIsSaving(true);
                     fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${params.entityId}`, {
                       method: 'POST',
                       credentials: 'include',
@@ -146,6 +153,9 @@ export default function AdminEntity() {
                         loadData(params.entityId!).then((response) => {
                           if (response.data) setAdminEntityResponse(response.data!);
                         });
+                      })
+                      .finally(() => {
+                        setIsSaving(false);
                       });
                   }}
                 >
@@ -250,6 +260,42 @@ export default function AdminEntity() {
                       />
                     </div>
                   </div>
+                  {entity.type === EntityTypes.ETG && (
+                    <>
+                      <Input
+                        label="Préfecture du Service Vétérinaire d'Inspection attaché à l'ETG"
+                        hintText="Pour générer des certificats et des consignes. Ce que vous indiquerez s'affichera tel quel, donc notez bien en entier 'Préfecture d'Eure-et-Loire' par exemple, il n'y a aucune intelligence derrière"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.prefecture_svi,
+                          name: Prisma.EntityScalarFieldEnum.prefecture_svi,
+                          autoComplete: 'off',
+                          placeholder: "Préfecture d'Eure-et-Loire",
+                          defaultValue: entity.prefecture_svi ?? '',
+                        }}
+                      />
+                      <Input
+                        label="Prénom et Nom du responsable de l'ETG"
+                        hintText="Pour générer des certificats et des consignes. 'Jean Dupont', par exemple"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.nom_prenom_responsable,
+                          name: Prisma.EntityScalarFieldEnum.nom_prenom_responsable,
+                          autoComplete: 'off',
+                          placeholder: 'M. Jean Dupont',
+                          defaultValue: entity.nom_prenom_responsable ?? '',
+                        }}
+                      />
+                      <InputNotEditable
+                        label="Code Établissement"
+                        hintText="Pour générer des numéros de certificats et de consignes. Généré automatiquement lors de la création de l'ETG. Ne peut pas être modifié"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.code_etbt_certificat,
+                          name: Prisma.EntityScalarFieldEnum.code_etbt_certificat,
+                          autoComplete: 'off',
+                          defaultValue: entity.code_etbt_certificat ?? '',
+                        }}
+                      />
+                    </>
+                  )}
                 </form>
               )}
               {selectedTabId === 'Utilisateurs pouvant traiter des fiches pour cette entité' && (
@@ -259,6 +305,7 @@ export default function AdminEntity() {
                   potentialUsers={usersWithEntityType}
                   relation={EntityRelationType.WORKING_FOR}
                   fetcherKey="working-for"
+                  setIsSaving={setIsSaving}
                 />
               )}
               {selectedTabId === 'Utilisateurs pouvant envoyer des fiches à cette entité' && (
@@ -268,6 +315,7 @@ export default function AdminEntity() {
                   potentialUsers={potentialPartenaires}
                   relation={EntityRelationType.WORKING_WITH}
                   fetcherKey="working-with"
+                  setIsSaving={setIsSaving}
                 />
               )}
               {selectedTabId === 'Collecteur Pro associé' && (
@@ -276,6 +324,7 @@ export default function AdminEntity() {
                   setAdminEntityResponse={setAdminEntityResponse}
                   entityType={EntityTypes.COLLECTEUR_PRO}
                   description="Si une fiche est envoyée à cet ETG, un Collecteur Pro associé sera aussi en capacité de la traiter"
+                  setIsSaving={setIsSaving}
                 />
               )}
               {selectedTabId === 'ETGs associés' && (
@@ -284,6 +333,7 @@ export default function AdminEntity() {
                   setAdminEntityResponse={setAdminEntityResponse}
                   entityType={EntityTypes.ETG}
                   description="Si une fiche est envoyée à un ETG associé listé ci-dessous, le Collecteur Pro sera aussi en capacité de la traiter"
+                  setIsSaving={setIsSaving}
                 />
               )}
               {selectedTabId === 'SVI associé' && (
@@ -292,30 +342,13 @@ export default function AdminEntity() {
                   setAdminEntityResponse={setAdminEntityResponse}
                   entityType={EntityTypes.SVI}
                   description="Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous"
+                  setIsSaving={setIsSaving}
                 />
               )}
               <div className="mb-16 ml-6 mt-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>
-              </div>
-              <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
-                <ButtonsGroup
-                  buttons={[
-                    {
-                      children: 'Rafraichir',
-                      type: 'button',
-                      nativeButtonProps: {
-                        form: 'entity_data_form',
-                      },
-                      onClick: () => {
-                        loadData(params.entityId!).then((response) => {
-                          if (response.data) setAdminEntityResponse(response.data!);
-                        });
-                      },
-                    },
-                  ]}
-                />
               </div>
             </Tabs>
           </div>
@@ -339,6 +372,7 @@ interface WorkingWithOrForProps {
     roles: UserRoles[];
   }>;
   fetcherKey: string;
+  setIsSaving: (isSaving: boolean) => void;
 }
 
 function UserWorkingWithOrFor({
@@ -347,6 +381,7 @@ function UserWorkingWithOrFor({
   relation,
   potentialUsers,
   fetcherKey,
+  setIsSaving,
 }: WorkingWithOrForProps) {
   const { entity } = adminEntityResponse;
 
@@ -364,6 +399,7 @@ function UserWorkingWithOrFor({
               }}
               isClosable
               onClose={() => {
+                setIsSaving(true);
                 fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${owner.id}`, {
                   method: 'POST',
                   credentials: 'include',
@@ -383,6 +419,9 @@ function UserWorkingWithOrFor({
                     loadData(entity.id).then((response) => {
                       if (response.data) setAdminEntityResponse(response.data!);
                     });
+                  })
+                  .finally(() => {
+                    setIsSaving(false);
                   });
               }}
               title={
@@ -416,6 +455,7 @@ function UserWorkingWithOrFor({
               method="POST"
               onSubmit={(event) => {
                 event.preventDefault();
+                setIsSaving(true);
                 fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
                   method: 'POST',
                   credentials: 'include',
@@ -435,6 +475,9 @@ function UserWorkingWithOrFor({
                     loadData(entity.id).then((response) => {
                       if (response.data) setAdminEntityResponse(response.data!);
                     });
+                  })
+                  .finally(() => {
+                    setIsSaving(false);
                   });
               }}
             >
@@ -475,11 +518,13 @@ function EntitiesRelatedTo({
   setAdminEntityResponse,
   entityType,
   description,
+  setIsSaving,
 }: {
   entityType: EntityTypes;
   adminEntityResponse: State;
   setAdminEntityResponse: (state: State) => void;
   description: string;
+  setIsSaving: (isSaving: boolean) => void;
 }) {
   const {
     entity,
@@ -551,6 +596,7 @@ function EntitiesRelatedTo({
             }}
             isClosable
             onClose={() => {
+              setIsSaving(true);
               fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entity.id}`, {
                 method: 'POST',
                 credentials: 'include',
@@ -568,6 +614,9 @@ function EntitiesRelatedTo({
                   loadData(entity.id).then((response) => {
                     if (response.data) setAdminEntityResponse(response.data!);
                   });
+                })
+                .finally(() => {
+                  setIsSaving(false);
                 });
             }}
             title={
@@ -611,6 +660,7 @@ function EntitiesRelatedTo({
                   method="POST"
                   onSubmit={(event) => {
                     event.preventDefault();
+                    setIsSaving(true);
                     fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entity.id}`, {
                       method: 'POST',
                       credentials: 'include',
@@ -631,6 +681,9 @@ function EntitiesRelatedTo({
                         loadData(entity.id).then((response) => {
                           if (response.data) setAdminEntityResponse(response.data!);
                         });
+                      })
+                      .finally(() => {
+                        setIsSaving(false);
                       });
                   }}
                 >
