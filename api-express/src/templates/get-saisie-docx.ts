@@ -230,7 +230,7 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: `Espèce : ${data.lieu_consigne}`,
+                            text: `Espèce : ${data.espece}`,
                             font: 'Marianne',
                           }),
                         ],

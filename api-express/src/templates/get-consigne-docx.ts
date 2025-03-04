@@ -231,7 +231,7 @@ export async function generateConsigneDocx(data: CarcasseCertificat): Promise<Bu
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: `Espèce : ${data.lieu_consigne}`,
+                            text: `Espèce : ${data.espece}`,
                             font: 'Marianne',
                           }),
                         ],
