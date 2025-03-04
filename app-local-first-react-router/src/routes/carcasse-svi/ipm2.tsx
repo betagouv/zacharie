@@ -98,7 +98,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       }
       if (sviIpm2Decision !== IPM2Decision.LEVEE_DE_LA_CONSIGNE) {
         if (!sviIpm2LesionsOuMotifs?.length) {
-          return "Il manque les lésions ou motifs d'inspection";
+          return 'Il manque les lésions';
         }
       }
       if (sviIpm2Decision === IPM2Decision.TRAITEMENT_ASSAINISSANT) {
@@ -356,7 +356,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               title={
                 carcasse.type === CarcasseType.PETIT_GIBIER
                   ? 'Pièces de petits gibiers'
-                  : 'Pièces de gros gibiers'
+                  : 'Pièces de grands gibiers'
               }
               onItemClick={(newPiece) => {
                 const nextPieces = [...sviIpm2Pieces.filter((p) => p !== newPiece), newPiece];
@@ -383,7 +383,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             <InputForSearchPrefilledData
               canEdit
               data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
-              label="Observations (lésions ou motifs de consignes) *"
+              label="Observations (lésions) *"
               hintText={
                 <>
                   Rappel IPM1: {carcasse.svi_ipm1_lesions_ou_motifs.join('; ')}
@@ -412,7 +412,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               data={lesionsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               skipParent
               modal={lesionsOuMotifsConsigneModal}
-              title={`Lésions de carcasse ${carcasse.type === CarcasseType.GROS_GIBIER ? 'de gros gibier' : 'de petit gibier'}`}
+              title={`Lésions de carcasse ${carcasse.type === CarcasseType.GROS_GIBIER ? 'de grands gibier' : 'de petit gibier'}`}
               onItemClick={(newLesionsOuMotifSaisie) => {
                 const nextLesionsOuMotifsSaisie = [...sviIpm2LesionsOuMotifs, newLesionsOuMotifSaisie];
                 setSviIpm2LesionsOuMotifs(nextLesionsOuMotifsSaisie);

@@ -74,7 +74,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
         return 'Il manque les pièces inspectées nécessitant une observation';
       }
       if (!sviIpm1LesionsOuMotifs?.length) {
-        return "Il manque les lésions ou motifs d'inspection";
+        return 'Il manque les lésions';
       }
       if (sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE && !sviIpm1DureeConsigne) {
         return 'Il manque la durée de la consigne';
@@ -255,7 +255,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
           />
           {carcasse.type === CarcasseType.PETIT_GIBIER && (
             <Input
-              label="Nombre de carcasses saisies *"
+              label="Nombre de carcasses consignées *"
               hintText={`Nombre d'animaux initialement prélevés\u00A0: ${carcasse.nombre_d_animaux}`}
               nativeInputProps={{
                 type: 'number',
@@ -292,7 +292,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               title={
                 carcasse.type === CarcasseType.PETIT_GIBIER
                   ? 'Pièces de petits gibiers'
-                  : 'Pièces de gros gibiers'
+                  : 'Pièces de grands gibiers'
               }
               onItemClick={(newPiece) => {
                 const nextPieces = [...sviIpm1Pieces.filter((p) => p !== newPiece), newPiece];
@@ -344,7 +344,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               data={lesionsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               skipParent
               modal={lesionsOuMotifsConsigneModal}
-              title={`Lésions de carcasse ${carcasse.type === CarcasseType.GROS_GIBIER ? 'de gros gibier' : 'de petit gibier'}`}
+              title={`Observations (lésions)`}
               onItemClick={(newLesionsOuMotifSaisie) => {
                 const nextLesionsOuMotifsSaisie = [...sviIpm1LesionsOuMotifs, newLesionsOuMotifSaisie];
                 setSviIpm1LesionsOuMotifs(nextLesionsOuMotifsSaisie);
@@ -382,21 +382,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
           },
         }}
       />
-      {/* {sviIpm1PresenteeInspection && (
+      {sviIpm1PresenteeInspection && (
         <RadioButtons
           legend="Décision IPM1 *"
           orientation="horizontal"
           options={[
-            {
-              nativeInputProps: {
-                required: true,
-                checked: sviIpm1Decision === IPM1Decision.NON_RENSEIGNEE,
-                onChange: () => {
-                  setSviIpm1Decision(IPM1Decision.NON_RENSEIGNEE);
-                },
-              },
-              label: 'Non renseignée',
-            },
             {
               nativeInputProps: {
                 required: true,
@@ -409,7 +399,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             },
           ]}
         />
-      )} */}
+      )}
       {sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE && (
         <>
           <Input
