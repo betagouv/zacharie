@@ -46,12 +46,20 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const [sviIpm2Protocole, setSviIpm2Protocole] = useState(
     carcasse.svi_ipm2_protocole ?? IPM1Protocole.STANDARD,
   );
-  const [sviIpm2Pieces, setSviIpm2Pieces] = useState(carcasse.svi_ipm2_pieces);
-  const [sviIpm2LesionsOuMotifs, setSviIpm2LesionsOuMotifs] = useState(carcasse.svi_ipm2_lesions_ou_motifs);
-  const [sviIpm2NombreAnimaux, setSviIpm2NombreAnimaux] = useState(carcasse.svi_ipm2_nombre_animaux);
+  const [sviIpm2Pieces, setSviIpm2Pieces] = useState(
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_pieces : carcasse.svi_ipm1_pieces,
+  );
+  const [sviIpm2LesionsOuMotifs, setSviIpm2LesionsOuMotifs] = useState(
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_lesions_ou_motifs : carcasse.svi_ipm1_lesions_ou_motifs,
+  );
+  const [sviIpm2NombreAnimaux, setSviIpm2NombreAnimaux] = useState(
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_nombre_animaux : carcasse.svi_ipm1_nombre_animaux,
+  );
   const [sviIpm2Commentaire, setSviIpm2Commentaire] = useState(carcasse.svi_ipm2_commentaire);
   const [sviIpm2Decision, setSviIpm2Decision] = useState(carcasse.svi_ipm2_decision);
-  const [sviIpm2PoidsSaisie, setSviIpm2PoidsSaisie] = useState(carcasse.svi_ipm2_poids_saisie);
+  const [sviIpm2PoidsSaisie, setSviIpm2PoidsSaisie] = useState(
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_poids_saisie : carcasse.svi_ipm1_poids_consigne,
+  );
   const [sviIpm2TraitementAssainissant, setSviIpm2TraitementAssainissant] = useState(
     carcasse.svi_ipm2_traitement_assainissant || [],
   );
@@ -102,6 +110,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
         }
       }
       if (sviIpm2Decision === IPM2Decision.TRAITEMENT_ASSAINISSANT) {
+        if (!sviIpm2TraitementAssainissant?.length) {
+          return 'Il manque le traitement assainissant';
+        }
         if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.CUISSON)) {
           if (!sviIpm2TraitementAssainissantCuissonTemps) {
             return 'Il manque le temps de cuisson';
@@ -126,6 +137,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             return 'Il manque les paramètres du traitement';
           }
         }
+        if (!sviIpm2TraitementAssainissantEtablissement) {
+          return "Il manque l'établissement";
+        }
       }
     }
     return null;
@@ -144,6 +158,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     sviIpm2TraitementAssainissantCongelationTemp,
     sviIpm2TraitementAssainissantType,
     sviIpm2TraitementAssainissantParamètres,
+    sviIpm2TraitementAssainissantEtablissement,
     carcasse.type,
   ]);
 
@@ -344,6 +359,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               data={piecesList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               hideDataWhenNoSearch
               clearInputOnClick
+              addSearchToClickableLabel={false}
               placeholder="Commencez à taper une pièce"
               onSelect={(newPiece) => {
                 const nextPieces = [...sviIpm2Pieces.filter((p) => p !== newPiece), newPiece];
@@ -384,6 +400,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               canEdit
               data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               label="Observations (lésions) *"
+              addSearchToClickableLabel={false}
               hintText={
                 <>
                   Rappel IPM1: {carcasse.svi_ipm1_lesions_ou_motifs.join('; ')}
@@ -674,7 +691,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
         sviIpm2Decision === IPM2Decision.SAISIE_PARTIELLE) && (
         <>
           <Input
-            label="Poids de la consigne"
+            label="Poids de la saisie"
             hintText="En kg, facultatif"
             nativeInputProps={{
               type: 'number',

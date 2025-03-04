@@ -280,6 +280,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               data={piecesList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               hideDataWhenNoSearch
               clearInputOnClick
+              addSearchToClickableLabel={false}
               placeholder="Commencez à taper une pièce"
               onSelect={(newPiece) => {
                 const nextPieces = [...sviIpm1Pieces.filter((p) => p !== newPiece), newPiece];
@@ -327,6 +328,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               }
               hideDataWhenNoSearch
               clearInputOnClick
+              addSearchToClickableLabel={false}
               placeholder={
                 sviIpm1LesionsOuMotifs.length
                   ? 'Commencez à taper une lésion supplémentaire'
