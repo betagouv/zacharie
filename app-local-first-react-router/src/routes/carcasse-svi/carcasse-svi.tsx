@@ -16,7 +16,6 @@ import { loadMyRelations } from '@app/utils/load-my-relations';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
-import dedent from 'dedent';
 import { CarcasseIPM1 } from './ipm1';
 import { CarcasseIPM2 } from './ipm2';
 import CarcasseSVICertificats from './certificats';
