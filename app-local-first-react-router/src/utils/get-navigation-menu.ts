@@ -32,7 +32,7 @@ export default function useNavigationMenu() {
   const isOnlyExaminateurInitial = isExaminateurInitial && user?.roles.length === 1;
   const isAdmin = user?.roles.includes(UserRoles.ADMIN);
   const isSvi = user?.roles.includes(UserRoles.SVI);
-
+  const isEtg = user?.roles.includes(UserRoles.ETG);
   const profileMenu: MainNavigationProps.Item[] = [
     {
       text: 'Mes roles',
@@ -83,7 +83,7 @@ export default function useNavigationMenu() {
     ? []
     : [
         {
-          text: isSvi ? 'Fiches' : 'Mes fiches',
+          text: 'Fiches',
           isActive: location.pathname === '/app/tableau-de-bord',
           linkProps: { to: '/app/tableau-de-bord', href: '#' },
         },
@@ -102,7 +102,7 @@ export default function useNavigationMenu() {
     });
   }
 
-  if (isSvi) {
+  if (isSvi || isEtg) {
     feiMenu.push({
       text: 'Carcasses',
       isActive: location.pathname === '/app/tableau-de-bord/registre-carcasses',

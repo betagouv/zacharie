@@ -126,9 +126,9 @@ export function CarcasseEditSVI() {
     if (isSviWorkingFor) {
       return true;
     }
-    if (fei.fei_current_owner_user_id !== user.id) {
-      return false;
-    }
+    // if (fei.fei_current_owner_user_id !== user.id) {
+    //   return false;
+    // }
     // if (fei.svi_signed_at) {
     //   return false;
     // }
@@ -206,7 +206,7 @@ export function CarcasseEditSVI() {
                         `Date de mise à mort: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
                         `Heure de mise à mort de la première carcasse de la fiche: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
                         carcasse.type === CarcasseType.GROS_GIBIER
-                          ? `\nHeure d'éviscération de la dernière carcasse de la fiche: ${fei.heure_evisceration_derniere_carcasse!}`
+                          ? `Heure d'éviscération de la dernière carcasse de la fiche: ${fei.heure_evisceration_derniere_carcasse!}`
                           : '',
                         `Date et heure de dépôt dans le CCG le cas échéant: ${fei.premier_detenteur_depot_type === 'CCG' ? dayjs(fei.premier_detenteur_date_depot_quelque_part).format('dddd DD MMMM YYYY à HH:mm') : 'N/A'}`,
                         `Date et heure de prise en charge par l'ETG: ${dayjs(intermediaires[intermediaires.length - 1].check_finished_at).format('dddd DD MMMM YYYY à HH:mm')}`,
@@ -282,17 +282,19 @@ export function CarcasseEditSVI() {
                   key={dayjs(carcasse.updated_at).toISOString()}
                 />
               </Accordion>
-              <Accordion
-                titleAs="h2"
-                defaultExpanded
-                label={
-                  <>
-                    Certificats <PencilStrikeThrough />
-                  </>
-                }
-              >
-                <CarcasseSVICertificats />
-              </Accordion>
+              {user.roles.includes(UserRoles.SVI) && (
+                <Accordion
+                  titleAs="h2"
+                  defaultExpanded
+                  label={
+                    <>
+                      Certificats <PencilStrikeThrough />
+                    </>
+                  }
+                >
+                  <CarcasseSVICertificats />
+                </Accordion>
+              )}
               <div className="mt-4">
                 <Button
                   nativeButtonProps={{

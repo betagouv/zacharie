@@ -463,6 +463,12 @@ router.get(
   '/svi',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
+    const userIsSvi = req.user?.roles.includes(UserRoles.SVI);
+    if (!userIsSvi) {
+      res.status(403).send({ ok: false, data: null, error: 'Unauthorized' });
+      return;
+    }
+
     // Parse and validate query parameters
     const { page = '0', after, limit = '100', withDeleted = 'false' } = req.query as Record<string, string>;
 
@@ -471,7 +477,6 @@ router.get(
     const includeDeleted = withDeleted === 'true';
     const afterDate = after && !isNaN(Number(after)) ? new Date(Number(after)) : null;
 
-    console.log('afterDate', afterDate);
     // Base query conditions
     const where: Prisma.CarcasseWhereInput = {
       Fei: {
@@ -481,6 +486,105 @@ router.get(
             some: {
               owner_id: req.user!.id,
               relation: EntityRelationType.WORKING_FOR,
+            },
+          },
+        },
+      },
+    };
+    if (!includeDeleted) {
+      where.deleted_at = null;
+    }
+
+    if (afterDate) {
+      if (includeDeleted) {
+        where.OR = [
+          // If we include deleted, we want to get all the carcasses updated after the date
+          { updated_at: { gte: afterDate } },
+          // And all the carcasses deleted after the date
+          { deleted_at: { gte: afterDate } },
+        ];
+      } else {
+        where.updated_at = { gte: afterDate };
+      }
+    }
+
+    // Execute count and findMany in parallel
+    const [total, data] = await Promise.all([
+      prisma.carcasse.count({ where }),
+      prisma.carcasse.findMany({
+        where,
+        select: carcasseForRegistrySelect,
+        orderBy: { created_at: 'desc' },
+        skip: parsedPage * parsedLimit,
+        take: parsedLimit,
+      }),
+    ]);
+
+    const now = dayjs();
+
+    res.status(200).json({
+      ok: true,
+      data: {
+        carcasses: data.map((carcasse): CarcasseForResponseForRegistry => {
+          const fei = carcasse.Fei;
+          const toReturn = {} as CarcasseForResponseForRegistry;
+          for (const key of Object.keys(carcasse)) {
+            if (key === 'Fei') continue;
+            // @ts-expect-error cannot guess fei_* fields
+            toReturn[key] = carcasse[key];
+          }
+          toReturn.svi_carcasse_status = carcasse.svi_carcasse_status || updateCarcasseStatus(carcasse);
+          toReturn.svi_carcasse_status_set_at =
+            carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_signed_at;
+          toReturn.svi_assigned_to_fei_at = carcasse.svi_assigned_to_fei_at || fei.svi_assigned_at;
+          // svi_carcasse_archived = fei.automatic_closed_at || fei.svi_signed_at,
+          toReturn.svi_carcasse_archived =
+            !!fei.automatic_closed_at || dayjs(now).diff(fei.svi_assigned_at, 'day') > 10;
+          for (const key of Object.keys(fei)) {
+            // @ts-expect-error cannot guess fei_* fields
+            toReturn[`fei_${key}`] = fei[key];
+          }
+          // console.log('svi_carcasse_status', toReturn.svi_carcasse_status, updateCarcasseStatus(carcasse));
+          return toReturn as CarcasseForResponseForRegistry;
+        }),
+        hasMore: data.length === parsedLimit,
+        total,
+      },
+      error: '',
+    } satisfies CarcassesGetForRegistryResponse);
+  }),
+);
+
+router.get(
+  '/etg',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+    // Parse and validate query parameters
+    const userIsEtg = req.user?.roles.includes(UserRoles.ETG);
+    if (!userIsEtg) {
+      res.status(403).send({ ok: false, data: null, error: 'Unauthorized' });
+      return;
+    }
+
+    const { page = '0', after, limit = '100', withDeleted = 'false' } = req.query as Record<string, string>;
+
+    const parsedPage = Math.max(0, parseInt(page, 10) || 0);
+    const parsedLimit = parseInt(limit, 10) || 10000;
+    const includeDeleted = withDeleted === 'true';
+    const afterDate = after && !isNaN(Number(after)) ? new Date(Number(after)) : null;
+
+    // Base query conditions
+    const where: Prisma.CarcasseWhereInput = {
+      Fei: {
+        FeiIntermediaires: {
+          some: {
+            FeiIntermediaireEntity: {
+              EntityRelationsWithUsers: {
+                some: {
+                  owner_id: req.user.id,
+                  relation: EntityRelationType.WORKING_FOR,
+                },
+              },
             },
           },
         },

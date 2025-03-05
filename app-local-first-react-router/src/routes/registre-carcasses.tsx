@@ -21,7 +21,7 @@ import useExportCarcasses from '@app/utils/export-carcasses';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function RegistreCarcasses() {
-  const user = useMostFreshUser('tableau de bord index')!;
+  const user = useMostFreshUser('registre-carcasses')!;
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
@@ -38,14 +38,10 @@ export default function RegistreCarcasses() {
   const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('registre-carcasses-sort-order', 'ASC');
 
   const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('registre-carcasses-items-per-page', 50);
-  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('registre-carcasses-filters-preset', [
-    {
-      field: 'svi_carcasse_archived',
-      value: 'Non',
-      type: 'boolean',
-      label: 'Archivé(e)',
-    },
-  ]);
+  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>(
+    'registre-carcasses-filters-preset',
+    [],
+  );
 
   const filteredData = useMemo(() => {
     return carcassesRegistry
@@ -88,9 +84,17 @@ export default function RegistreCarcasses() {
       return;
     }
     hackForCounterDoubleEffectInDevMode.current = true;
+    let role = user.roles.includes(UserRoles.SVI)
+      ? UserRoles.SVI
+      : user.roles.includes(UserRoles.ETG)
+        ? UserRoles.ETG
+        : null;
+    if (!role) {
+      throw new Error('User has no role');
+    }
     refreshUser('registre-carcasses')
       .then(() => setLoading(true))
-      .then(() => loadCarcasses(UserRoles.SVI))
+      .then(() => loadCarcasses(role))
       .then(() => setLoading(false));
   }, []);
 
