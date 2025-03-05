@@ -4,7 +4,7 @@ CREATE MATERIALIZED VIEW fei_stats AS
 WITH base_stats AS (
   SELECT 
     f.numero as fei_numero,
-    COUNT(c.zacharie_carcasse_id) as total_carcasses,
+    (SELECT COUNT(*) FROM "Carcasse" c WHERE c.fei_numero = f.numero AND c.deleted_at IS NULL) as total_carcasses,
     COALESCE(SUM(CASE WHEN ci.refus IS NOT NULL THEN 1 ELSE 0 END), 0) as destinataires_number_of_carcasses_refusees_total,
     COALESCE(SUM(CASE WHEN ci.manquante = true THEN 1 ELSE 0 END), 0) as destinataires_number_of_carcasses_manquantes_total,
     COALESCE(f.svi_carcasses_saisies, 0) as svi_carcasses_saisies,
@@ -35,7 +35,7 @@ WITH base_stats AS (
     f.created_at,
     f.updated_at
   FROM "Fei" f
-  LEFT JOIN "Carcasse" c ON c.fei_numero = f.numero
+  LEFT JOIN "Carcasse" c ON c.fei_numero = f.numero AND c.deleted_at IS NULL
   LEFT JOIN "CarcasseIntermediaire" ci ON ci.zacharie_carcasse_id = c.zacharie_carcasse_id
   WHERE f.deleted_at IS NULL
   GROUP BY f.numero, f.svi_signed_at, f.svi_assigned_at, f.examinateur_initial_user_id,
@@ -49,3 +49,5 @@ FROM base_stats
 WITH DATA;
 
 CREATE UNIQUE INDEX fei_stats_fei_numero_idx ON fei_stats(fei_numero);
+
+-- 
