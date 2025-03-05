@@ -214,12 +214,12 @@ model Log {
   updated_at                DateTime               @default(now()) @updatedAt
   deleted_at                DateTime?
   is_synced                 Boolean                @default(true) // just for typing purppose with zustand frontend
-  User                      User?                  @relation(fields: [user_id], references: [id])
-  Entity                    Entity?                @relation(fields: [entity_id], references: [id])
-  Carcasse                  Carcasse?              @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id])
-  Fei                       Fei?                   @relation(fields: [fei_numero], references: [numero])
-  FeiIntermediaire          FeiIntermediaire?      @relation(fields: [fei_intermediaire_id], references: [id])
-  CarcasseIntermediaire     CarcasseIntermediaire? @relation(fields: [carcasse_intermediaire_id], references: [fei_numero__bracelet__intermediaire_id])
+  User                      User?                  @relation(fields: [user_id], references: [id], onDelete: NoAction)
+  Entity                    Entity?                @relation(fields: [entity_id], references: [id], onDelete: NoAction)
+  Carcasse                  Carcasse?              @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: NoAction)
+  Fei                       Fei?                   @relation(fields: [fei_numero], references: [numero], onDelete: NoAction)
+  FeiIntermediaire          FeiIntermediaire?      @relation(fields: [fei_intermediaire_id], references: [id], onDelete: NoAction)
+  CarcasseIntermediaire     CarcasseIntermediaire? @relation(fields: [carcasse_intermediaire_id], references: [fei_numero__bracelet__intermediaire_id], onDelete: NoAction)
 
   @@index([user_id, action])
 }
@@ -535,7 +535,7 @@ model NotificationLog {
   created_at     DateTime          @default(now())
   updated_at     DateTime          @default(now()) @updatedAt
   deleted_at     DateTime?
-  User           User?             @relation(fields: [user_id], references: [id])
+  User           User?             @relation(fields: [user_id], references: [id], onDelete: NoAction)
 
   @@index([user_id, action])
 }
