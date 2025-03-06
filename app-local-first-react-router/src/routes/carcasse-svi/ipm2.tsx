@@ -304,6 +304,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
         <>
           <RadioButtons
             legend="Protocole d'inspection *"
+            hintText="Le protocole d'inspection «Renforcé » est utilisé lorsqu’une analyse de risque locale le juge nécessaire (exemple : animal provenant de zone réglementée vis-à-vis d’une maladie animale)."
             orientation="horizontal"
             options={[
               {
