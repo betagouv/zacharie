@@ -325,6 +325,7 @@ export default function useExportFeis() {
                 : ''),
             'Date de la chasse': dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
             'Numéro de bracelet': carcasse.numero_bracelet,
+            'Commentaires ETG / Transporteurs': commentaires.join('\n'),
             Éspèce: carcasse.espece,
             "Nombre d'animaux": carcasse.nombre_d_animaux || 1,
             'Numéro suivi trichine': '',
@@ -348,7 +349,6 @@ export default function useExportFeis() {
             'Commune de la chasse': fei.commune_mise_a_mort,
             'Numéro de fiche': fei.numero,
             // Observations ETG
-            'Commentaires ETG / Transporteurs': commentaires.join('\n'),
             Réceptionnée: carcasse.intermediaire_carcasse_signed_at
               ? dayjs(carcasse.intermediaire_carcasse_signed_at).format('DD/MM/YYYY HH:mm')
               : null,

@@ -481,6 +481,7 @@ router.get(
     const where: Prisma.CarcasseWhereInput = {
       Fei: {
         svi_assigned_at: { not: null },
+        deleted_at: null,
         FeiSviEntity: {
           EntityRelationsWithUsers: {
             some: {
@@ -576,6 +577,7 @@ router.get(
     // Base query conditions
     const where: Prisma.CarcasseWhereInput = {
       Fei: {
+        deleted_at: null,
         FeiIntermediaires: {
           some: {
             FeiIntermediaireEntity: {

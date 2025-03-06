@@ -4,6 +4,8 @@ import dayjs from 'dayjs';
 import { capture } from '@app/services/sentry';
 import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 import { IPM1Decision, IPM2Decision } from '@prisma/client';
+import useZustandStore from '@app/zustand/store';
+import { getCarcasseIntermediaireId } from './get-carcasse-intermediaire-id';
 
 type FeiExcelData = {
   Donnée: string;
@@ -168,6 +170,7 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
 
 export default function useExportCarcasses() {
   let [isExporting, setIsExporting] = useState(false);
+  const state = useZustandStore((state) => state);
 
   async function onExportToXlsx(carcasses: Array<CarcasseForResponseForRegistry>) {
     setIsExporting(true);
@@ -183,11 +186,28 @@ export default function useExportCarcasses() {
           console.error('carcasse deleted', carcasse.zacharie_carcasse_id);
           continue;
         }
+        const intermediaires = state.getFeiIntermediairesForFeiNumero(carcasse.fei_numero);
+
+        const commentaires = [];
+        for (const intermediaire of intermediaires) {
+          if (intermediaire.deleted_at) continue;
+          const carcassesIntermediairesId = getCarcasseIntermediaireId(
+            carcasse.fei_numero,
+            carcasse.numero_bracelet,
+            intermediaire.id,
+          );
+          const intermediaireCarcasse = state.carcassesIntermediaires[carcassesIntermediairesId];
+          if (intermediaireCarcasse?.commentaire) {
+            const intermediaireEntity = state.entities[intermediaire.fei_intermediaire_entity_id];
+            commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${intermediaireCarcasse?.commentaire}`);
+          }
+        }
 
         allCarcasses.push({
           'Premier détenteur': carcasse.fei_premier_detenteur_name_cache || '',
           'Date de la chasse': dayjs(carcasse.fei_date_mise_a_mort).format('DD/MM/YYYY'),
           'Numéro de bracelet': carcasse.numero_bracelet,
+          'Commentaires ETG / Transporteurs': commentaires.join('\n'),
           Éspèce: carcasse.espece,
           "Nombre d'animaux": carcasse.nombre_d_animaux || 1,
           'Numéro suivi trichine': '',
@@ -210,7 +230,6 @@ export default function useExportCarcasses() {
           'Commune de la chasse': carcasse.fei_commune_mise_a_mort,
           'Numéro de fiche': carcasse.fei_numero,
           // Observations ETG
-          'Commentaires ETG / Transporteurs': '',
           Réceptionnée: carcasse.intermediaire_carcasse_signed_at
             ? dayjs(carcasse.intermediaire_carcasse_signed_at).format('DD/MM/YYYY HH:mm')
             : null,
