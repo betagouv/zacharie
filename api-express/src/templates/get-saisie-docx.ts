@@ -526,23 +526,25 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                   ],
                 });
               }),
-              new TableRow({
-                children: [
-                  new TableCell({
-                    columnSpan: 3,
+              data.commentaire
+                ? new TableRow({
                     children: [
-                      new Paragraph({
+                      new TableCell({
+                        columnSpan: 3,
                         children: [
-                          new TextRun({
-                            text: `Informations complémentaires : ${data.commentaire || ''}`,
-                            font: 'Marianne',
+                          new Paragraph({
+                            children: [
+                              new TextRun({
+                                text: `Informations complémentaires : ${data.commentaire}`,
+                                font: 'Marianne',
+                              }),
+                            ],
                           }),
                         ],
                       }),
                     ],
-                  }),
-                ],
-              }),
+                  })
+                : null,
               data.poids
                 ? new TableRow({
                     children: [

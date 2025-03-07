@@ -484,23 +484,25 @@ export async function generateConsigneDocx(data: CarcasseCertificat): Promise<Bu
                   ],
                 });
               }),
-              new TableRow({
-                children: [
-                  new TableCell({
-                    columnSpan: 3,
+              data.commentaire
+                ? new TableRow({
                     children: [
-                      new Paragraph({
+                      new TableCell({
+                        columnSpan: 3,
                         children: [
-                          new TextRun({
-                            text: `Informations complémentaires : ${data.commentaire}`,
-                            font: 'Marianne',
+                          new Paragraph({
+                            children: [
+                              new TextRun({
+                                text: `Informations complémentaires : ${data.commentaire}`,
+                                font: 'Marianne',
+                              }),
+                            ],
                           }),
                         ],
                       }),
                     ],
-                  }),
-                ],
-              }),
+                  })
+                : null,
               data.poids
                 ? new TableRow({
                     children: [
