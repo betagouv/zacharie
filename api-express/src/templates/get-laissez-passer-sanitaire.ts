@@ -32,6 +32,50 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
             },
           },
         },
+        {
+          id: 'subtitle-before-table',
+          name: 'Subtitle before table',
+          run: {
+            font: {
+              name: 'Marianne',
+            },
+            bold: true,
+            color: 'FFFFFF', // White text color
+          },
+          paragraph: {
+            spacing: {
+              before: 480, // 12pt spacing before (240 twips = 12pt)
+              after: 240, // 12pt spacing after
+            },
+            alignment: AlignmentType.CENTER, // Center text
+            shading: {
+              type: 'solid',
+              color: '7B7B7B', // Gray background
+            },
+            border: {
+              top: {
+                color: '000000', // Black border
+                style: 'single',
+                size: 1,
+              },
+              bottom: {
+                color: '000000',
+                style: 'single',
+                size: 1,
+              },
+              left: {
+                color: '000000',
+                style: 'single',
+                size: 1,
+              },
+              right: {
+                color: '000000',
+                style: 'single',
+                size: 1,
+              },
+            },
+          },
+        },
       ],
     },
     sections: [
@@ -87,9 +131,9 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
             children: [
               'Vu le Règlement (CE) n°1069/2009 du Parlement européen et du Conseil du 21 octobre 2009.',
               'Vu le règlement (UE) 2017/625 du Parlement européen et du Conseil du 15 mars 2017.',
-              'Vu le règlement d’exécution (UE) 2019/627 de la Commission du 15 mars 2019.',
+              "Vu le règlement d'exécution (UE) 2019/627 de la Commission du 15 mars 2019.",
               'Vu les articles L 231-1, L 231-2 et R 231-7 du Code rural et de la pêche maritime.',
-              "Vu l’arrêté du 18 décembre 2009 relatif aux règles sanitaires applicables aux produits d'origine animale et aux denrées alimentaires en contenant.",
+              "Vu l'arrêté du 18 décembre 2009 relatif aux règles sanitaires applicables aux produits d'origine animale et aux denrées alimentaires en contenant.",
             ].map((text) => new TextRun({ text, break: 1, font: 'Marianne' })),
           }),
           // L'agent des services vétérinaires soussigné certifie que les denrées désignées ci-dessous sont consignées, en l'attente d'informations complémentaires :
@@ -99,24 +143,23 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
                 ? new TextRun({
                     text: `Considérant la décision de consigne N° ${data.numero_decision_ipm1}`,
                     font: 'Marianne',
-                    break: 3,
+                    break: 1,
                   })
                 : null,
               new TextRun({
-                text: 'Le vétérinaire officiel soussigné certifie que les denrées désignées ci-dessous doivent faire l’objet d’un traitement assainissant obligatoire dans les conditions détaillées dans la présente notification :',
+                text: "Le vétérinaire officiel soussigné certifie que les denrées désignées ci-dessous doivent faire l'objet d'un traitement assainissant obligatoire dans les conditions détaillées dans la présente notification :",
                 font: 'Marianne',
                 break: 1,
               }),
             ].filter((textRun) => textRun !== null),
           }),
-          // Premier tableau: Le vétérinaire officiel soussigné certifie que les denrées désignées ci-dessous doivent faire l’objet d’un traitement assainissant obligatoire dans les conditions détaillées dans la présente notification :
+          // Premier tableau: Le vétérinaire officiel soussigné certifie que les denrées désignées ci-dessous doivent faire l'objet d'un traitement assainissant obligatoire dans les conditions détaillées dans la présente notification :
           new Paragraph({
+            style: 'subtitle-before-table',
             children: [
               new TextRun({
-                text: 'Établissement de traitement du gibier sauvage',
+                text: 'ÉTABLISSEMENT DE TRAITEMENT DU GIBIER SAUVAGE',
                 font: 'Marianne',
-                bold: true,
-                break: 2,
               }),
             ],
           }),
@@ -199,7 +242,7 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
                 text: 'Signalement de la carcasse ou du lot de carcasses :',
                 font: 'Marianne',
                 bold: true,
-                break: 2,
+                break: 1,
               }),
             ],
           }),
@@ -218,7 +261,7 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: `Numéro de la fiche d’accompagnement du gibier sauvage : ${data.fei_numero}`,
+                            text: `Numéro de la fiche d'accompagnement du gibier sauvage : ${data.fei_numero}`,
                             font: 'Marianne',
                           }),
                         ],
@@ -261,7 +304,7 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
                           new Paragraph({
                             children: [
                               new TextRun({
-                                text: `Nombre d’animaux : ${data.nombre_d_animaux}`,
+                                text: `Nombre d'animaux : ${data.nombre_d_animaux}`,
                                 font: 'Marianne',
                               }),
                             ],
@@ -375,7 +418,7 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
           new Paragraph({
             children: [
               new TextRun({
-                text: `Référence de la décision de réalisation d’un traitement assainissant : : ${data.numero_decision}`,
+                text: `Référence de la décision de réalisation d'un traitement assainissant : : ${data.numero_decision}`,
                 font: 'Marianne',
               }),
             ],
@@ -387,7 +430,7 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
                 text: 'Désignation des pièces et des motifs pour lesquels un traitement assainissant est obligatoire :',
                 font: 'Marianne',
                 bold: true,
-                break: 2,
+                break: 1,
               }),
             ],
           }),
@@ -523,12 +566,11 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
           }),
           // Établissement destinataire
           new Paragraph({
+            style: 'subtitle-before-table',
             children: [
               new TextRun({
-                text: 'Établissement destinataire',
+                text: 'ÉTABLISSEMENT DESTINATAIRE',
                 font: 'Marianne',
-                bold: true,
-                break: 2,
               }),
             ],
           }),
@@ -607,12 +649,11 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
           }),
           // Traitement assainissant
           new Paragraph({
+            style: 'subtitle-before-table',
             children: [
               new TextRun({
-                text: 'Traitement assainissant à appliquer',
+                text: 'TRAITEMENT ASSAINISSANT À APPLIQUER',
                 font: 'Marianne',
-                bold: true,
-                break: 2,
               }),
             ],
           }),
@@ -685,7 +726,7 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
                         alignment: AlignmentType.CENTER,
                         children: [
                           new TextRun({
-                            text: "Le vétérinaire officiel autorise le mouvement des produits décrits dans le présent document entre l'établissement expéditeur et l'établissement destinataire identifiés dans le document pour la réalisation d’un traitement assainissant.",
+                            text: "Le vétérinaire officiel autorise le mouvement des produits décrits dans le présent document entre l'établissement expéditeur et l'établissement destinataire identifiés dans le document pour la réalisation d'un traitement assainissant.",
                             font: 'Marianne',
                             bold: true,
                           }),
@@ -718,7 +759,7 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
           new Paragraph({
             children: [
               new TextRun({
-                text: 'La présente décision peut faire l’objet, dans un délai de deux mois à compter de sa notification, d’un recours contentieux par courrier adressé au tribunal administratif territorialement compétent, ou par l’application Télérecours citoyens accessible à partir du site www.telerecours.fr.',
+                text: "La présente décision peut faire l'objet, dans un délai de deux mois à compter de sa notification, d'un recours contentieux par courrier adressé au tribunal administratif territorialement compétent, ou par l'application Télérecours citoyens accessible à partir du site www.telerecours.fr.",
                 font: 'Marianne',
                 break: 3,
               }),
