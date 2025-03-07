@@ -10,6 +10,7 @@ import { generateConsigneDocx } from '~/templates/get-consigne-docx';
 import { generateCertficatId, generateDBCertificat, generateDecisionId } from '~/utils/generate-certificats';
 import { generateSaisieDocx } from '~/templates/get-saisie-docx';
 import { generateLeveeSaisieDocx } from '~/templates/get-levee-saisie-docx';
+import { generateLaissezPasserSanitaireDocx } from '~/templates/get-laissez-passer-sanitaire';
 
 router.get(
   '/:zacharie_carcasse_id/all',
@@ -63,6 +64,11 @@ router.get(
       const docBuffer = await generateLeveeSaisieDocx(certificatResponse.data.certificat);
       res.send(docBuffer);
     }
+
+    if (certificatType === CarcasseCertificatType.LPS) {
+      const docBuffer = await generateLaissezPasserSanitaireDocx(certificatResponse.data.certificat);
+      res.send(docBuffer);
+    }
   }),
 );
 
@@ -102,6 +108,11 @@ router.get(
 
     if (certificat.type === CarcasseCertificatType.LC) {
       const docBuffer = await generateLeveeSaisieDocx(certificat);
+      res.send(docBuffer);
+    }
+
+    if (certificat.type === CarcasseCertificatType.LPS) {
+      const docBuffer = await generateLaissezPasserSanitaireDocx(certificat);
       res.send(docBuffer);
     }
   }),

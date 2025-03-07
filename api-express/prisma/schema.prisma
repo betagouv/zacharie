@@ -433,38 +433,42 @@ enum CarcasseCertificatType {
 }
 
 model CarcasseCertificat {
-  certificat_id             String                  @id // {inc_certificat}-{type-notification}-{code_etbt_certificat}
-  zacharie_carcasse_id      String
-  remplace_certificat_id    String?
-  numero_decision           String?
-  numero_decision_ipm1      String?
-  type                      CarcasseCertificatType?
-  prefecture_svi            String?
-  commune_etg               String?
-  date_consigne             String?
-  lieu_consigne             String?
-  nom_etg_personne_physique String?
-  nom_etg_personne_morale   String?
-  fei_numero                String?
-  numero_bracelet           String?
-  espece                    String?
-  carcasse_type             CarcasseType?
-  nombre_d_animaux          Int?
-  date_mise_a_mort          String?
-  commune_mise_a_mort       String?
-  examinateur_initial       String?
-  premier_detenteur         String?
-  collecteur_pro            String?
-  pieces                    String[]
-  motifs                    String[]
-  commentaire               String?
-  poids                     Float?
-  svi_ipm1_signed_at        DateTime?
-  svi_ipm2_signed_at        DateTime?
-  duree_consigne            Int?
-  created_at                DateTime                @default(now())
-  updated_at                DateTime                @default(now()) @updatedAt
-  Carcasse                  Carcasse                @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
+  certificat_id                         String                  @id // {inc_certificat}-{type-notification}-{code_etbt_certificat}
+  zacharie_carcasse_id                  String
+  remplace_certificat_id                String?
+  numero_decision                       String?
+  numero_decision_ipm1                  String?
+  type                                  CarcasseCertificatType?
+  prefecture_svi                        String?
+  commune_etg                           String?
+  date_consigne                         String?
+  lieu_consigne                         String?
+  nom_etg_personne_physique             String?
+  nom_etg_personne_morale               String?
+  siret_etg                             String?
+  traitement_assainissant_etablissement String?
+  traitement_type                       String?
+  traitement_parametre                  String?
+  fei_numero                            String?
+  numero_bracelet                       String?
+  espece                                String?
+  carcasse_type                         CarcasseType?
+  nombre_d_animaux                      Int?
+  date_mise_a_mort                      String?
+  commune_mise_a_mort                   String?
+  examinateur_initial                   String?
+  premier_detenteur                     String?
+  collecteur_pro                        String?
+  pieces                                String[]
+  motifs                                String[]
+  commentaire                           String?
+  poids                                 Float?
+  svi_ipm1_signed_at                    DateTime?
+  svi_ipm2_signed_at                    DateTime?
+  duree_consigne                        Int?
+  created_at                            DateTime                @default(now())
+  updated_at                            DateTime                @default(now()) @updatedAt
+  Carcasse                              Carcasse                @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([zacharie_carcasse_id])
 }

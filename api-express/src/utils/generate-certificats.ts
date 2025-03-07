@@ -5,6 +5,7 @@ import {
   EntityTypes,
   IPM1Decision,
   IPM2Decision,
+  IPM2Traitement,
 } from '@prisma/client';
 import dayjs from 'dayjs';
 import prisma from '~/prisma';
@@ -24,14 +25,11 @@ function checkDatesAreEqual(oldDate: Date, newDate: Date) {
 }
 
 export function checkGenerateCertificat(oldCarcasse: Carcasse, newCarcasse: Carcasse) {
-  console.log('checkGenerateCertificat', oldCarcasse.svi_ipm1_signed_at, newCarcasse.svi_ipm1_signed_at);
   if (!checkDatesAreEqual(oldCarcasse.svi_ipm1_signed_at, newCarcasse.svi_ipm1_signed_at)) {
-    console.log('newCarcasse.svi_ipm1_decision', newCarcasse.svi_ipm1_decision);
     if (newCarcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE) {
       generateDBCertificat(CarcasseCertificatType.CC, newCarcasse.zacharie_carcasse_id);
     }
   } else if (!checkDatesAreEqual(oldCarcasse.svi_ipm2_signed_at, newCarcasse.svi_ipm2_signed_at)) {
-    console.log('newCarcasse.svi_ipm2_decision', newCarcasse.svi_ipm2_decision);
     if (newCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE) {
       generateDBCertificat(CarcasseCertificatType.CSP, newCarcasse.zacharie_carcasse_id);
     } else if (newCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE) {
@@ -66,6 +64,31 @@ export async function generateDecisionId(entity: Entity) {
     data: { inc_decision: inc },
   });
   return id;
+}
+
+function getTraitementAssainissant(existingCarcasse: Carcasse) {
+  let types = [];
+  let parametres = [];
+  if (existingCarcasse.svi_ipm2_traitement_assainissant.includes(IPM2Traitement.CUISSON)) {
+    types.push('Cuisson');
+    parametres.push(
+      `${existingCarcasse.svi_ipm2_traitement_assainissant_cuisson_temp}°C ${existingCarcasse.svi_ipm2_traitement_assainissant_cuisson_temps} min`,
+    );
+  }
+  if (existingCarcasse.svi_ipm2_traitement_assainissant.includes(IPM2Traitement.CONGELATION)) {
+    types.push('Congélation');
+    parametres.push(
+      `${existingCarcasse.svi_ipm2_traitement_assainissant_congelation_temp}°C ${existingCarcasse.svi_ipm2_traitement_assainissant_congelation_temps} min`,
+    );
+  }
+  if (existingCarcasse.svi_ipm2_traitement_assainissant.includes(IPM2Traitement.AUTRE)) {
+    types.push(existingCarcasse.svi_ipm2_traitement_assainissant_type);
+    parametres.push(existingCarcasse.svi_ipm2_traitement_assainissant_paramètres);
+  }
+  return {
+    type: types.join(' | '),
+    parametre: parametres.join(' | '),
+  };
 }
 
 export async function generateDBCertificat(
@@ -193,6 +216,9 @@ export async function generateDBCertificat(
         lieu_consigne: `${etg.nom_d_usage} sis ${etg.address_ligne_1} ${etg.address_ligne_2} ${etg.code_postal} ${etg.ville}`,
         nom_etg_personne_physique: etg.nom_prenom_responsable,
         nom_etg_personne_morale: etg.raison_sociale,
+        siret_etg: etg.siret,
+        traitement_assainissant_etablissement:
+          existingCarcasse.svi_ipm2_traitement_assainissant_etablissement,
         fei_numero: existingCarcasse.fei_numero,
         numero_bracelet: existingCarcasse.numero_bracelet,
         espece: existingCarcasse.espece,
@@ -224,6 +250,15 @@ export async function generateDBCertificat(
             : existingCarcasse.svi_ipm2_poids_saisie,
         duree_consigne:
           certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_duree_consigne : null,
+        traitement_type:
+          certificatType === CarcasseCertificatType.LPS
+            ? getTraitementAssainissant(existingCarcasse).type
+            : null,
+        traitement_parametre:
+          certificatType === CarcasseCertificatType.LPS
+            ? getTraitementAssainissant(existingCarcasse).parametre
+            : null,
+
         svi_ipm1_signed_at: existingCarcasse.svi_ipm1_signed_at,
         svi_ipm2_signed_at: existingCarcasse.svi_ipm2_signed_at,
         carcasse_type: existingCarcasse.type,

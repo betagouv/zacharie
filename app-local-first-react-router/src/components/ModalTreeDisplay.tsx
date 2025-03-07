@@ -6,7 +6,7 @@ export type TreeNode = {
 };
 
 interface HierarchicalDataModalProps {
-  data: TreeNode;
+  data: TreeNode | string[];
   modal: ReturnType<typeof createModal>;
   title: string;
   onItemClick: (item: string) => void;

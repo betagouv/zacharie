@@ -5,6 +5,10 @@ import { Prisma, CarcasseType, UserRoles, IPM1Protocole, IPM2Decision, IPM2Trait
 import { lesionsList, lesionsTree } from '@app/utils/lesions';
 import piecesTree from '@app/data/svi/pieces-tree.json';
 import piecesList from '@app/data/svi/pieces-list.json';
+import {
+  etablissementsTree,
+  retrieveEtablissementAgremenet,
+} from '@app/utils/etablissementsTraitementSaintaire';
 import dayjs from 'dayjs';
 import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
 import InputNotEditable from '@app/components/InputNotEditable';
@@ -26,6 +30,10 @@ const lesionsOuMotifsConsigneModal = createModal({
 const piecesGibier = createModal({
   isOpenedByDefault: false,
   id: 'pieces-ipm2-gors-gibier-modal',
+});
+const etablissementsTraitementSanitaireModal = createModal({
+  isOpenedByDefault: false,
+  id: 'etablissements-traitement-sanitaire-modal',
 });
 
 export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
@@ -665,13 +673,28 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             </>
           )}
           <Input
-            label="Établissement désigné pour réaliser le traitement assainissant *"
+            label="N° d'agrément de l'établissement désigné pour réaliser le traitement assainissant *"
+            hintText={
+              <button type="button" onClick={() => etablissementsTraitementSanitaireModal.open()}>
+                Voir les établissements de traitement sanitaire en <u className="inline">cliquant ici</u>
+              </button>
+            }
             nativeInputProps={{
               name: Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_etablissement,
               value: sviIpm2TraitementAssainissantEtablissement || '',
               onChange: (e) => {
                 setSviIpm2TraitementAssainissantEtablissement(e.target.value);
               },
+            }}
+          />
+          <ModalTreeDisplay
+            data={etablissementsTree}
+            modal={etablissementsTraitementSanitaireModal}
+            title="Etablissements de traitement sanitaire"
+            onItemClick={(etablissementDisplay) => {
+              setSviIpm2TraitementAssainissantEtablissement(
+                retrieveEtablissementAgremenet(etablissementDisplay),
+              );
             }}
           />
           <Input
