@@ -9,6 +9,7 @@ import { CarcasseCertificatType, EntityTypes, IPM1Decision, Prisma } from '@pris
 import { generateConsigneDocx } from '~/templates/get-consigne-docx';
 import { generateCertficatId, generateDBCertificat, generateDecisionId } from '~/utils/generate-certificats';
 import { generateSaisieDocx } from '~/templates/get-saisie-docx';
+import { generateLeveeSaisieDocx } from '~/templates/get-levee-saisie-docx';
 
 router.get(
   '/:zacharie_carcasse_id/all',
@@ -57,6 +58,11 @@ router.get(
       const docBuffer = await generateSaisieDocx(certificatResponse.data.certificat);
       res.send(docBuffer);
     }
+
+    if (certificatType === CarcasseCertificatType.LC) {
+      const docBuffer = await generateLeveeSaisieDocx(certificatResponse.data.certificat);
+      res.send(docBuffer);
+    }
   }),
 );
 
@@ -91,6 +97,11 @@ router.get(
 
     if (certificat.type === CarcasseCertificatType.CSP || certificat.type === CarcasseCertificatType.CST) {
       const docBuffer = await generateSaisieDocx(certificat);
+      res.send(docBuffer);
+    }
+
+    if (certificat.type === CarcasseCertificatType.LC) {
+      const docBuffer = await generateLeveeSaisieDocx(certificat);
       res.send(docBuffer);
     }
   }),
