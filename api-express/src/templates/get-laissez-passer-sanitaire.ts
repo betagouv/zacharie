@@ -378,23 +378,25 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
                   }),
                 ],
               }),
-              new TableRow({
-                children: [
-                  new TableCell({
-                    columnSpan: 3,
+              data.collecteur_pro
+                ? new TableRow({
                     children: [
-                      new Paragraph({
+                      new TableCell({
+                        columnSpan: 3,
                         children: [
-                          new TextRun({
-                            text: `Collecteur professionnel : ${data.collecteur_pro}`,
-                            font: 'Marianne',
+                          new Paragraph({
+                            children: [
+                              new TextRun({
+                                text: `Collecteur professionnel : ${data.collecteur_pro}`,
+                                font: 'Marianne',
+                              }),
+                            ],
                           }),
                         ],
                       }),
                     ],
-                  }),
-                ],
-              }),
+                  })
+                : null,
               new TableRow({
                 children: [
                   new TableCell({
@@ -412,7 +414,7 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
                   }),
                 ],
               }),
-            ],
+            ].filter((row) => row !== null),
           }),
           // Référence de la décision de saisie
           new Paragraph({

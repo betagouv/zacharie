@@ -319,23 +319,25 @@ export async function generateConsigneDocx(data: CarcasseCertificat): Promise<Bu
                   }),
                 ],
               }),
-              new TableRow({
-                children: [
-                  new TableCell({
-                    columnSpan: 3,
+              data.collecteur_pro
+                ? new TableRow({
                     children: [
-                      new Paragraph({
+                      new TableCell({
+                        columnSpan: 3,
                         children: [
-                          new TextRun({
-                            text: `Collecteur professionnel : ${data.collecteur_pro}`,
-                            font: 'Marianne',
+                          new Paragraph({
+                            children: [
+                              new TextRun({
+                                text: `Collecteur professionnel : ${data.collecteur_pro}`,
+                                font: 'Marianne',
+                              }),
+                            ],
                           }),
                         ],
                       }),
                     ],
-                  }),
-                ],
-              }),
+                  })
+                : null,
               new TableRow({
                 children: [
                   new TableCell({
@@ -353,7 +355,7 @@ export async function generateConsigneDocx(data: CarcasseCertificat): Promise<Bu
                   }),
                 ],
               }),
-            ],
+            ].filter((row) => row !== null),
           }),
           // Désignation des denrées consignées
           new Paragraph({

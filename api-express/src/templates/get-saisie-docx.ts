@@ -31,6 +31,21 @@ function getMotivationDroit(motif: string, carcasseType: CarcasseType) {
     })?.['MOTIVATION EN DROIT (CERTIFICAT)'];
 }
 
+function getDestinationAutorisee(motif: string, carcasseType: CarcasseType) {
+  return lesions[carcasseType]
+    .map((l) => {
+      return {
+        ...l,
+        'MOTIVATION EN FAIT (CERTIFICAT) + CODE ZACHARIE': `${l['CODE ZACHARIE']}. ${l['MOTIVATION EN FAIT (CERTIFICAT)']}`,
+      };
+    })
+    .find((l) => {
+      if (l['MOTIVATION EN FAIT (CERTIFICAT) + CODE ZACHARIE'] === motif) return true;
+      if (l['MOTIVATION EN FAIT (CERTIFICAT)'] === motif) return true;
+      return false;
+    })?.['DESTINATION AUTORISEE'];
+}
+
 export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buffer> {
   const doc = new Document({
     styles: {
@@ -320,23 +335,25 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                   }),
                 ],
               }),
-              new TableRow({
-                children: [
-                  new TableCell({
-                    columnSpan: 3,
+              data.collecteur_pro
+                ? new TableRow({
                     children: [
-                      new Paragraph({
+                      new TableCell({
+                        columnSpan: 3,
                         children: [
-                          new TextRun({
-                            text: `Collecteur professionnel : ${data.collecteur_pro}`,
-                            font: 'Marianne',
+                          new Paragraph({
+                            children: [
+                              new TextRun({
+                                text: `Collecteur professionnel : ${data.collecteur_pro}`,
+                                font: 'Marianne',
+                              }),
+                            ],
                           }),
                         ],
                       }),
                     ],
-                  }),
-                ],
-              }),
+                  })
+                : null,
               new TableRow({
                 children: [
                   new TableCell({
@@ -354,7 +371,7 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                   }),
                 ],
               }),
-            ],
+            ].filter((row) => row !== null),
           }),
           // Référence de la décision de saisie
           new Paragraph({
@@ -379,7 +396,7 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
           // Troisième tableau: Désignation des denrées consignées
           new Table({
             columnWidths:
-              data.type === CarcasseCertificatType.CSP ? [1500, 1500, 3500, 4000] : [1500, 3500, 5500],
+              data.type === CarcasseCertificatType.CSP ? [1500, 3500, 4000, 1500] : [3500, 5500, 1500],
             margins: {
               top: 50,
             },
@@ -406,12 +423,12 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                       })
                     : null,
                   new TableCell({
-                    columnSpan: 1,
+                    columnSpan: 2,
                     children: [
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: `Destination autorisée`,
+                            text: `Motifs`,
                             font: 'Marianne',
                           }),
                         ],
@@ -419,12 +436,12 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                     ],
                   }),
                   new TableCell({
-                    columnSpan: 2,
+                    columnSpan: 1,
                     children: [
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: `Motifs`,
+                            text: `Destination autorisée`,
                             font: 'Marianne',
                           }),
                         ],
@@ -451,20 +468,7 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                         ],
                       })
                     : null,
-                  new TableCell({
-                    columnSpan: 1,
-                    rowSpan: data.motifs.length,
-                    children: [
-                      new Paragraph({
-                        children: [
-                          new TextRun({
-                            text: '',
-                            font: 'Marianne',
-                          }),
-                        ],
-                      }),
-                    ],
-                  }),
+
                   new TableCell({
                     columnSpan: 1,
                     children: [
@@ -485,6 +489,21 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                         children: [
                           new TextRun({
                             text: getMotivationDroit(data.motifs[0], data.carcasse_type),
+                            font: 'Marianne',
+                            size: 14,
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                  new TableCell({
+                    columnSpan: 1,
+                    rowSpan: data.motifs.length,
+                    children: [
+                      new Paragraph({
+                        children: [
+                          new TextRun({
+                            text: getDestinationAutorisee(data.motifs[0], data.carcasse_type),
                             font: 'Marianne',
                           }),
                         ],
@@ -518,6 +537,7 @@ export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buff
                             new TextRun({
                               text: getMotivationDroit(motif, data.carcasse_type),
                               font: 'Marianne',
+                              size: 14,
                             }),
                           ],
                         }),
