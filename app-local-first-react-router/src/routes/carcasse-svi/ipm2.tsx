@@ -675,9 +675,15 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           <Input
             label="N° d'agrément de l'établissement désigné pour réaliser le traitement assainissant *"
             hintText={
-              <button type="button" onClick={() => etablissementsTraitementSanitaireModal.open()}>
-                Voir les établissements de traitement sanitaire en <u className="inline">cliquant ici</u>
-              </button>
+              <>
+                <button type="button" onClick={() => etablissementsTraitementSanitaireModal.open()}>
+                  Voir les établissements de traitement sanitaire en <u className="inline">cliquant ici.</u>
+                </button>{' '}
+                Source: section IV de la page{' '}
+                <a href="https://agriculture.gouv.fr/liste-des-etablissements-agrees-ce-conformement-au-reglement-ce-ndeg8532004-lists-ue-approved">
+                  Liste des établissements agréés CE conformément au règlement (CE) n°853/2004
+                </a>
+              </>
             }
             nativeInputProps={{
               name: Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_etablissement,
