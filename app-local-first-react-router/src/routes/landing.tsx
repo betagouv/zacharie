@@ -284,11 +284,12 @@ function CTA({ mobile, desktop }: { mobile?: boolean; desktop?: boolean }) {
         className="m-0"
         linkProps={{
           // to: "/app/connexion?type=creation-de-compte",
-          to: isLoggedIn ? '/app/connexion?type=compte-existant' : '/beta-testeurs',
+          // to: isLoggedIn ? '/app/connexion?type=compte-existant' : '/beta-testeurs',
+          to: '/app/connexion?type=compte-existant',
           href: '#',
         }}
       >
-        {isLoggedIn ? 'Accéder à mon compte' : 'Découvrir le service'}
+        {isLoggedIn ? 'Accéder à mon compte' : 'Se connecter'}
       </Button>
     </div>
   );
