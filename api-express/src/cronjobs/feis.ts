@@ -13,6 +13,7 @@ import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import sendNotificationToUser from '~/service/notifications';
 import { formatCarcasseEmail } from '~/utils/formatCarcasseEmail';
+import updateCarcasseStatus from '~/utils/get-carcasse-status';
 
 // /*
 // *
@@ -86,7 +87,19 @@ async function automaticClosingOfFeis() {
       `https://zacharie.beta.gouv.fr/app/tableau-de-bord/${fei.numero}\n\n\n\n\n`,
       `Carcasses :\n\n\n`,
     ];
-    for (const carcasse of fei.Carcasses) {
+    for (let carcasse of fei.Carcasses) {
+      const newStatus = updateCarcasseStatus(carcasse);
+      if (newStatus !== carcasse.svi_carcasse_status) {
+        carcasse = await prisma.carcasse.update({
+          where: {
+            zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+          },
+          data: {
+            svi_carcasse_status: newStatus,
+            svi_carcasse_status_set_at: dayjs().toDate(),
+          },
+        });
+      }
       email.push(`${formatCarcasseEmail(carcasse)}\n\n`);
     }
     // auto close and notify examinateur and premier detenteut
