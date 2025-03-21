@@ -29,6 +29,7 @@ import ModalitesDutilisation from './routes/modalites-d-utilisation';
 import BetaTesteurs from './routes/beta-testeurs';
 import RegistreCarcasses from './routes/registre-carcasses';
 import Accessibility from './routes/accessibility';
+import Stats from './routes/stats';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -75,6 +76,14 @@ function App() {
           element={
             <RootDisplay id="modalites-d-utilisation">
               <ModalitesDutilisation />
+            </RootDisplay>
+          }
+        />
+        <Route
+          path="stats"
+          element={
+            <RootDisplay id="stats">
+              <Stats />
             </RootDisplay>
           }
         />
