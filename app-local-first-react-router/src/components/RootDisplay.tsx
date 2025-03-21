@@ -149,6 +149,13 @@ export default function RootDisplay({
                 },
                 text: 'Mentions légales',
               },
+              {
+                linkProps: {
+                  to: '/stats',
+                  href: '#',
+                },
+                text: 'Statistiques',
+              },
             ],
           },
           {
