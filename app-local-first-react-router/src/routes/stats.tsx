@@ -17,6 +17,7 @@ export default function Stats() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      <title>Statistiques | Zacharie | Ministère de l'Agriculture</title>
       <h1 className="text-3xl font-bold mb-6">Statistiques</h1>
 
       <section className="space-y-4">
