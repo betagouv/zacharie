@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
 
 export default function Stats() {
-  const [carcassesCumulIframeUrl, setCarcassesCumulIframeUrl] = useState('');
+  const [carcassesCumuleUrl, setCarcassesCumuleUrl] = useState('');
+  const [especesUrl, setEspecesUrl] = useState('');
+  const [saisiesUrl, setSaisiesUrl] = useState('');
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/stats/nombre-de-carcasses-cumule`)
       .then((res) => res.json())
-      .then((data) => setCarcassesCumulIframeUrl(data.data.iframeUrl));
+      .then((data) => {
+        setCarcassesCumuleUrl(data.data.carcassesCumuleUrl);
+        setEspecesUrl(data.data.especesUrl);
+        setSaisiesUrl(data.data.saisiesUrl);
+      });
   }, []);
 
   return (
@@ -14,15 +20,11 @@ export default function Stats() {
       <h1 className="text-3xl font-bold mb-6">Statistiques</h1>
 
       <section className="space-y-4">
-        {carcassesCumulIframeUrl && (
-          <iframe
-            src={carcassesCumulIframeUrl}
-            frameBorder={0}
-            className="w-full"
-            height={600}
-            allowTransparency
-          />
+        {carcassesCumuleUrl && (
+          <iframe src={carcassesCumuleUrl} className="w-full" height={600} allowTransparency={true} />
         )}
+        {saisiesUrl && <iframe src={saisiesUrl} className="w-full" height={600} allowTransparency={true} />}
+        {especesUrl && <iframe src={especesUrl} className="w-full" height={600} allowTransparency={true} />}
       </section>
     </main>
   );
