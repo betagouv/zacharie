@@ -17,6 +17,7 @@ const TIPIMAIL_EMAIL_TO = 'contact@zacharie.beta.gouv.fr';
 const TIPIMAIL_EMAIL_FROM = 'contact@zacharie.beta.gouv.fr';
 
 const SECRET = process.env.VITE_SECRET ?? 'not-so-secret';
+const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
 export {
   PORT,
@@ -29,4 +30,5 @@ export {
   TIPIMAIL_API_KEY,
   TIPIMAIL_EMAIL_TO,
   TIPIMAIL_EMAIL_FROM,
+  METABASE_SECRET_KEY,
 };

@@ -13,10 +13,14 @@ import {
   BorderStyle,
 } from 'docx';
 import { generateHeaderDocx } from './get-header-docx';
-import { CarcasseCertificat } from '@prisma/client';
+import { CarcasseCertificat, User } from '@prisma/client';
 import etablissements from '../assets/etablissements-traitement-sanitaire.json';
+import dayjs from 'dayjs';
 
-export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertificat): Promise<Buffer> {
+export async function generateLaissezPasserSanitaireDocx(
+  data: CarcasseCertificat,
+  user: User,
+): Promise<Buffer> {
   const etablissementDeTraitementAssainissant = etablissements.data.find(
     (e) => e['Numéro agrément/Approval number'] === data.traitement_assainissant_etablissement,
   );
@@ -743,7 +747,7 @@ export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertifica
                             bold: true,
                           }),
                           new TextRun({
-                            text: `Fait à ............................................., le ...............................`,
+                            text: `Fait à ${user.ville}, le ${dayjs().format('DD/MM/YYYY')}`,
                             font: 'Marianne',
                             break: 3,
                           }),

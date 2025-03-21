@@ -69,12 +69,13 @@ async function automaticClosingOfFeis() {
 
   console.log(`Found ${feisUnderSvi.length} feis under svi that need to be closed`);
   for (const fei of feisUnderSvi) {
+    const automaticClosedAt = dayjs().toDate();
     await prisma.fei.update({
       where: {
         id: fei.id,
       },
       data: {
-        automatic_closed_at: dayjs().toDate(),
+        automatic_closed_at: automaticClosedAt,
       },
     });
     if (process.env.NODE_ENV === 'development') {
@@ -96,7 +97,7 @@ async function automaticClosingOfFeis() {
           },
           data: {
             svi_carcasse_status: newStatus,
-            svi_carcasse_status_set_at: dayjs().toDate(),
+            svi_carcasse_status_set_at: automaticClosedAt,
           },
         });
       }

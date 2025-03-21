@@ -13,8 +13,9 @@ import {
   BorderStyle,
 } from 'docx';
 import { generateHeaderDocx } from './get-header-docx';
-import { CarcasseCertificat, CarcasseCertificatType, CarcasseType } from '@prisma/client';
+import { CarcasseCertificat, CarcasseCertificatType, CarcasseType, User } from '@prisma/client';
 import lesions from '../assets/lesions.json';
+import dayjs from 'dayjs';
 
 function getMotivationDroit(motif: string, carcasseType: CarcasseType) {
   return lesions[carcasseType]
@@ -46,7 +47,7 @@ function getDestinationAutorisee(motif: string, carcasseType: CarcasseType) {
     })?.['DESTINATION AUTORISEE'];
 }
 
-export async function generateSaisieDocx(data: CarcasseCertificat): Promise<Buffer> {
+export async function generateSaisieDocx(data: CarcasseCertificat, user: User): Promise<Buffer> {
   const doc = new Document({
     styles: {
       paragraphStyles: [
@@ -645,7 +646,7 @@ Se déclarant détenteur-propriétaire (1) ou son mandataire, responsable de la 
                         alignment: AlignmentType.CENTER,
                         children: [
                           new TextRun({
-                            text: `Fait à ............................................., le ...............................`,
+                            text: `Fait à ${user.ville}, le ${dayjs().format('DD/MM/YYYY')}`,
                             font: 'Marianne',
                           }),
                           new TextRun({

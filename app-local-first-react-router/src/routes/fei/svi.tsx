@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import dayjs from 'dayjs';
-import { Prisma, UserRoles } from '@prisma/client';
+import { CarcasseStatus, Prisma, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Accordion } from '@codegouvfr/react-dsfr/Accordion';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
@@ -22,6 +22,7 @@ export default function FEI_SVI() {
   const state = useZustandStore((state) => state);
   const fei = state.feis[params.fei_numero!];
   const updateFei = state.updateFei;
+  const updateCarcasse = state.updateCarcasse;
   const addLog = state.addLog;
   const sviUser = fei.svi_user_id ? state.users[fei.svi_user_id] : null;
   const svi = fei.svi_entity_id ? state.entities[fei.svi_entity_id] : null;
@@ -101,6 +102,14 @@ export default function FEI_SVI() {
               carcasse_intermediaire_id: null,
               fei_intermediaire_id: null,
             });
+            for (const carcasse of carcassesSorted) {
+              if (!carcasse.svi_carcasse_status) {
+                updateCarcasse(carcasse.zacharie_carcasse_id, {
+                  svi_carcasse_status: CarcasseStatus.ACCEPTE,
+                  svi_carcasse_status_set_at: dayjs().toDate(),
+                });
+              }
+            }
           }}
         >
           <Checkbox
@@ -146,6 +155,14 @@ export default function FEI_SVI() {
                     carcasse_intermediaire_id: null,
                     fei_intermediaire_id: null,
                   });
+                  for (const carcasse of carcassesSorted) {
+                    if (!carcasse.svi_carcasse_status) {
+                      updateCarcasse(carcasse.zacharie_carcasse_id, {
+                        svi_carcasse_status: CarcasseStatus.ACCEPTE,
+                        svi_carcasse_status_set_at: dayjs(e.target.value).toDate(),
+                      });
+                    }
+                  }
                 },
                 suppressHydrationWarning: true,
                 defaultValue: dayjs(fei.svi_signed_at).format('YYYY-MM-DDTHH:mm'),

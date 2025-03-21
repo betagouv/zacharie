@@ -25,6 +25,7 @@ import searchRouter from './controllers/search.ts';
 import logRouter from './controllers/log.ts';
 import webhooksRouter from './controllers/webhooks.ts';
 import utilsRouter from './controllers/utils.ts';
+import statsRouter from './controllers/stats.ts';
 import './cronjobs/index.ts';
 
 import packageJson from '../package.json';
@@ -137,6 +138,7 @@ app.use('/fei-intermediaire', feiIntermediaireRouter);
 app.use('/log', logRouter);
 app.use('/search', searchRouter);
 app.use('/webhooks', webhooksRouter);
+app.use('/stats', statsRouter);
 app.use('/', utilsRouter);
 
 app.use(Sentry.Handlers.errorHandler());

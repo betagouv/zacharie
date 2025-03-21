@@ -5,6 +5,9 @@ import dayjs from 'dayjs';
 export default function updateCarcasseStatus<T extends Carcasse | CarcasseForResponseForRegistry>(
   carcasse: T,
 ) {
+  if (carcasse.intermediaire_carcasse_manquante) {
+    return CarcasseStatus.MANQUANTE;
+  }
   if (!carcasse.svi_ipm1_date && !carcasse.svi_ipm2_date) {
     if (dayjs().diff(dayjs(carcasse.svi_assigned_to_fei_at), 'day') > 10) {
       return CarcasseStatus.ACCEPTE;
