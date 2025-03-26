@@ -2,1253 +2,1409 @@
   "GROS_GIBIER": [
     {
       "CODE ZACHARIE": "G1",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Abcès ou nodules",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Abcès non spécifiques à localisation unique",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Abcès unique"
     },
     {
       "CODE ZACHARIE": "G2",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Abcès ou nodules",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Abcès non spécifiques à localisations multiples",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Abcès multiples"
     },
     {
       "CODE ZACHARIE": "G3",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Calcification des tissus",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Abcès ou nodules",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Calcinose",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Calcinose"
     },
     {
       "CODE ZACHARIE": "G4",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Abcès ou nodules",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […] ou une saignée insuffisante",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Kyste",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Kyste"
     },
     {
       "CODE ZACHARIE": "G5",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Viande humide, molle, décolorée",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Accumulation de liquide",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […]",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Infiltration séreuse du tissu conjonctif",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Infiltration séreuse du tissu conjonctif"
     },
     {
       "CODE ZACHARIE": "G6",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Accumulation anormale de liquides",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Accumulation de liquide",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Œdème",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Œdème"
     },
     {
       "CODE ZACHARIE": "G7",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Diminution du volume musculaire",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Amyotrophie",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Amyotrophie localisée",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Amyotrophie localisée"
     },
     {
       "CODE ZACHARIE": "G8",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maigreur extrême",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Amyotrophie",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa p)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles\nproviennent d'animaux émaciés;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa p)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux émaciés",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Cachexie",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Cachexie"
     },
     {
       "CODE ZACHARIE": "G9",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Tâches de couleur blanche, verte, bleue ou noire apparaissant sous forme de \"duvet\".Les moisissures apparaissent notamment lorsque les conditions de stockage ne sont pas satisfaisantes.",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies d'altération ",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […] ou une saignée insuffisante",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : moisissures",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Moisissures"
     },
     {
       "CODE ZACHARIE": "G10",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Dégradation de la viande en surface liée à l'absence de respect des bonnes pratiques d'hygiène et à un défaut de maîtrise des températures. La viande peut avoir une couleur dégradée, une texture molle et visqueuse et une odeur anormale souvent acide ou aigre",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies d'altération ",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […]",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : putréfaction superficielle",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Putréfaction superficielle"
     },
     {
       "CODE ZACHARIE": "G11",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Dégradation de la viande affectant les tissus internes liée à l'absence de respect des bonnes pratiques d'hygiène et à un défaut de maîtrise des températures. La viande peut avoir une couleur anormale (gris-vert), une texture molle et visqueuse sur toute la surface et une odeur nauséabonde.",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies d'altération ",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […]",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : putréfaction profonde ",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Putréfaction profonde"
     },
     {
       "CODE ZACHARIE": "G12",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Micro-hérmorragies musculaires",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies d'altération ",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […]",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : tiquetage musculaire",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Tiquetage musculaire"
     },
     {
       "CODE ZACHARIE": "G13",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies de couleur ou de consistance",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Couleur anormale",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Couleur anormale"
     },
     {
       "CODE ZACHARIE": "G14",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Pathologie provoquant des tâches noires",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies de couleur ou de consistance",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Couleur anormale : mélanose",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Mélanose"
     },
     {
       "CODE ZACHARIE": "G15",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Coloration jaune de la carcasse d'origine infectieuse",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies de couleur ou de consistance",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Ictère",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Ictère"
     },
     {
       "CODE ZACHARIE": "G16",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Pathologie pouvant entraîner des lésions musculaires irréversibles",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies de couleur ou de consistance",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Sclérose musculaire",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Sclérose musculaire"
     },
     {
       "CODE ZACHARIE": "G17",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Myopathie exsudative dépigmentaire : viande à évolution anormale caractérisée par une décoloration intense du muscle, une exsudation marquée et une rigidité cadavérique précoce et fugace ",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies de couleur ou de consistance",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viande à évolution anormale : myopathie exsudative dépigmentaire",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Viande à évolution anormale"
     },
     {
       "CODE ZACHARIE": "G18",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Viande fiévreuse : viande à évolution anormale caractérisée par une décoloration, une viande flasque, une exsudation exagérée et une odeur anormale",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies de couleur ou de consistance",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viande à évolution anormale : viande fiévreuse",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Viande à évolution anormale"
     },
     {
       "CODE ZACHARIE": "G19",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Viande surmenée : viande à évolution anormale caractérisée par un aspect général anormalement foncé, ainsi que par une rigidité cadavérique précoce, intense et durable",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies de couleur ou de consistance",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viande à évolution anormale : viande surmenée",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Viande à évolution anormale"
     },
     {
       "CODE ZACHARIE": "G20",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Lors du transport, de l'entreposage et de la manipulation du gibier, les chasseurs doivent respecter les prérequis indispensables à la valorisation en alimentation humaine des viandes de gibier sauvage. Ces mesures comprennent notamment : \n- le respect des bonnes pratiques d'hygiène lors de l'éviscération ;\n- la réfrigération rapide des viandes et le respect de la chaîne du froid.",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies liées à la préparation des viandes",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Conditions de préparation des viandes par le producteur primaire non conformes aux dispositions réglementaires en matières d’hygiène",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Non respect des règles d'hygiène par le chasseur"
     },
     {
       "CODE ZACHARIE": "G21",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies liées à la préparation des viandes",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Conditions de préparation des viandes à l’établissement de traitement du gibier sauvage non conformes aux dispositions réglementaires en matière d’hygiène",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Non respect des règles d'hygiène par l'établissement de traitement du gibier sauvage"
     },
     {
       "CODE ZACHARIE": "G22",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "La traçabilité des denrées alimentaires est un des principes fondateurs de la sécurité des denrées alimentaires. Le sysème de traçabilité doit permettre de procéder rapidement à des retraits ciblés et précis, de limiter les risques de diffusion de maladies aux animaux et à l'homme et d'informer le cas échéant les consommateurs en cas de problèmes. Aussi, toutes les carcasses de grand gibier doivent être correctement identifiées",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies liées à la traçabilité",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la Commission du 15 mars 2019 Titre III - Chapitre III - Article 45– alinéa t) : Le vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles […] peuvent, selon l’avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viandes provenant d’une carcasse non identifiée",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Carcasse non identifiée"
     },
     {
       "CODE ZACHARIE": "G23",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "L'examen initial est la première étape incontournable permettant d’évaluer la sécurité des viandes en sachant que certains symptômes ou lésions susceptibles de présenter un danger pour la santé des consommateurs ou pour la santé animale ne seront plus ou peu visibles après réception des carcasses dans les établissements du secteur alimentaire. Un examen initial non reconnu valide conduit à écarter la viande de la consommation humaine",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies liées à la traçabilité",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la Commission du 15 mars 2019 Titre III - Chapitre III - Article 45– alinéa t) : Le vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles […] peuvent, selon l’avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viandes provenant d’une carcasse dont l'examen initial n'est pas valide",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Examen initial non valide"
     },
     {
       "CODE ZACHARIE": "G24",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies d'odeur",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations […] organoleptiques",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Odeur anormale",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Odeur anormale"
     },
     {
       "CODE ZACHARIE": "G25",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies traumatiques",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques […]",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Fracture",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Fracture"
     },
     {
       "CODE ZACHARIE": "G26",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies traumatiques",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques […]",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Morsure de chien",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Morsure de chien"
     },
     {
       "CODE ZACHARIE": "G27",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Accumulation anormale de sang dans la viande",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Congestion",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Congestion généralisée",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Congestion généralisée"
     },
     {
       "CODE ZACHARIE": "G28",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Présence d'hémorragies disséminées dans l'ensemble de la viande",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Congestion",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Congestion généralisée avec hémorragies multiples",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Congestion généralisée avec hémorragies multiples"
     },
     {
       "CODE ZACHARIE": "G29",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Accumulation anormale de liquide et de sang dans la viande",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Infiltration hémorragique",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Infiltration hémorragique  ",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Infiltration hémorragique"
     },
     {
       "CODE ZACHARIE": "G30",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Accumulation anormale de liquide et de sang dans la viande à cause de l'action de chasse",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Infiltration hémorragique",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Infiltration hémorragique liée à l'action de chasse",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Infiltration hémorragique liée à l'action de chasse"
     },
     {
       "CODE ZACHARIE": "G31",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Accumulation anormale de liquide et de sang dans la viande à cause d'une fracture",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Infiltration hémorragique",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Infiltration hémorragique liée à une fracture",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Infiltration hémorragique liée à une fracture"
     },
     {
       "CODE ZACHARIE": "G32",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Accumulation anormale de liquide et de sang dans la viande à cause d'une morsure de chien",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Infiltration hémorragique",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Infiltration hémorragique liée à une morsure de chien",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Infiltration hémorragique liée à une morsure de chien"
     },
     {
       "CODE ZACHARIE": "G33",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie contagieuse des animaux due aux bactéries du genre Brucella. C'est une zoonose (maladie transmissible à l'homme)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 34 §2\nLes viandes provenant d'animaux chez lesquels l'inspection post mortem a mis en évidence des lésions indiquant une brucellose aiguë sont déclarées impropres à la consommation humaine. En ce qui concerne les animaux présentant une réaction positive ou douteuse au test de dépistage de la brucellose, les mamelles, le tractus génital et le sang sont déclarés impropres à la consommation humaine, même si aucune lésion de ce type n'est détectée.",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 34 §2\nLes viandes provenant d'animaux chez lesquels l'inspection post mortem a mis en évidence des lésions indiquant une brucellose aiguë sont déclarées impropres à la consommation humaine. [...]",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Brucellose aigüe (Lésions de)",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Brucellose"
     },
     {
       "CODE ZACHARIE": "G34",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie infectieuse aiguë causée par la bactérie Bacillus anthracis. C'est une anthropozoonose, c'est-à-dire commune aux animaux et à l'homme",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Charbon (Lésions de)",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Charbon"
     },
     {
       "CODE ZACHARIE": "G35",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Nécrose des tissus causée par des infections bactériennes. La viande affectée par la gangrène présente souvent une décoloration noire ou verdâtre et une très forte odeur nauséabonde",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Gangrène",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Gangrène"
     },
     {
       "CODE ZACHARIE": "G36",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie due à une bactérie Corynebacterium pseudotuberculosis",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Lymphadénite caséeuse des petits ruminants",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Lymphadénite caséeuse des petits ruminants"
     },
     {
       "CODE ZACHARIE": "G37",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Infection des ganglions",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Lymphadénite généralisée",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Lymphadénite généralisée"
     },
     {
       "CODE ZACHARIE": "G38",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladies virales hémorragiques qui touchent les porcs et les sangliers. Elle n'est pas contagieuse pour l'homme mais représentent une menace pour les filières concernées",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa e)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie pour laquelle des règles relatives à la santé des animaux sont établies dans les actes de l'Union [...]",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Pestes porcines (Lésions de)",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Pestes porcines"
     },
     {
       "CODE ZACHARIE": "G39",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie bactérienne causée par le bacille Erysipelothrix rhusiopathiae. C'est une zoonose (maladie transmissible à l'homme)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Rouget (Lésions de)",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Rouget "
     },
     {
       "CODE ZACHARIE": "G40",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie contagieuse causée par des bactéries du genre Mycobacterium. C'est une zoonose (maladie transmissible à l'homme)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 33 §2\nToutes les viandes provenant d'animaux chez lesquels l'inspection post mortem a permis de mettre en évidence des lésions locales semblables à des lésions tuberculoïdes dans plusieurs organes ou parties de la carcasse sont déclarées impropres à la consommation humaine. Toutefois, lorsqu'une lésion tuberculoïde a été découverte dans les ganglions lymphatiques d'un seul organe ou d'une seule partie de la carcasse, seul cet organe ou cette partie de la carcasse et les ganglions lymphatiques connexes sont déclarés impropres à la consommation humaine",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 33 §2\nToutes les viandes provenant d'animaux chez lesquels l'inspection post mortem a permis de mettre en évidence des lésions locales semblables à des lésions tuberculoïdes dans plusieurs organes ou parties de la carcasse sont déclarées impropres à la consommation humaine. [...]",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Tuberculose généralisée (Lésion fortement évocatrice de)",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Tuberculose"
     },
     {
       "CODE ZACHARIE": "G41",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie contagieuse causée par des bactéries du genre Mycobacterium. C'est une zoonose (maladie transmissible à l'homme)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 33 §2\nToutes les viandes provenant d'animaux chez lesquels l'inspection post mortem a permis de mettre en évidence des lésions locales semblables à des lésions tuberculoïdes dans plusieurs organes ou parties de la carcasse sont déclarées impropres à la consommation humaine. Toutefois, lorsqu'une lésion tuberculoïde a été découverte dans les ganglions lymphatiques d'un seul organe ou d'une seule partie de la carcasse, seul cet organe ou cette partie de la carcasse et les ganglions lymphatiques connexes sont déclarés impropres à la consommation humaine.",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 33 §2\nToutes les viandes provenant d'animaux chez lesquels l'inspection post mortem a permis de mettre en évidence des lésions locales semblables à des lésions tuberculoïdes dans plusieurs organes ou parties de la carcasse sont déclarées impropres à la consommation humaine. [...]",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Tuberculose localisée (Lésion fortement évocatrice de)",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Tuberculose"
     },
     {
       "CODE ZACHARIE": "G42",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3 ou C2",
       "FAMILLES DE LESIONS": "Inspection post mortem",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Carcasse non présentée à l’inspection post mortem",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Carcasse manquante à l'inspection"
     },
     {
       "CODE ZACHARIE": "G43",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Lorsque certaines parties de la carcasse ne sont pas acheminées jusqu'à l'établissement de traitement du gibier, le service vétérinaire d'inspection ne peut pas réaliser une inspection exhaustive. Il ne peut donc pas se prononcer sur la salubrité de la viande réceptionnée",
       "DESTINATION AUTORISEE": "C3 ou C2",
       "FAMILLES DE LESIONS": "Inspection post mortem",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Carcasse dont certaines pièces n’ont pas été soumises à l’inspection post mortem",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Carcasse dont certaines pièces non pas été présentées à l'inspection"
     },
     {
       "CODE ZACHARIE": "G44",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Lésions de la peau non causées par un parasite",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Lésions de la peau",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Dermite non parasitaire (ou lésions de)",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Dermite non parasitaire"
     },
     {
       "CODE ZACHARIE": "G45",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Lésions de la peau",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Escarres et autres plaies cutanées",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Escarres et autres plaies cutanées"
     },
     {
       "CODE ZACHARIE": "G46",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Lésions de la peau causées par un acarien",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Lésions de la peau",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Gale (Lésions de)",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Gale"
     },
     {
       "CODE ZACHARIE": "G47",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Lésions de la peau causées par des chamignons microscopiques",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Lésions de la peau",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Teigne (ou lésions de )",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Teigne"
     },
     {
       "CODE ZACHARIE": "G48",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Difformité osseuse",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Ostéodystrophie",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Ostéodystrophie",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Ostéodystrophie"
     },
     {
       "CODE ZACHARIE": "G49",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Infestation parasitaire de tissus par les larves de ténia. Le parasite peut être transmis à l'homme par consommation de viande",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30 ;\n\nRèglement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 30 § 2\nLes viandes présentant une infestation par la cysticercose sont déclarées impropres à la consommation humaine. Toutefois, lorsque cette infestation n'est pas généralisée, les parties non infectées de l'animal peuvent être déclarées propres à la consommation humaine après avoir été soumises à un traitement par le froid.",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Cysticercose musculaire localisée forme dégénérée",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Cysticercose"
     },
     {
       "CODE ZACHARIE": "G50",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Infestation parasitaire de tissus par les larves de ténia. Le parasite peut être transmis à l'homme par consommation de viande",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30 ;\n\nRèglement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 30 § 2\nLes viandes présentant une infestation par la cysticercose sont déclarées impropres à la consommation humaine. Toutefois, lorsque cette infestation n'est pas généralisée, les parties non infectées de l'animal peuvent être déclarées propres à la consommation humaine après avoir été soumises à un traitement par le froid.",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Cysticercose musculaire localisée forme vivante",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Cysticercose"
     },
     {
       "CODE ZACHARIE": "G51",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Infestation parasitaire de tissus par les larves de ténia. Le parasite peut être transmis à l'homme par consommation de viande",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30 ;\n\nRèglement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 30 § 2\nLes viandes présentant une infestation par la cysticercose sont déclarées impropres à la consommation humaine. Toutefois, lorsque cette infestation n'est pas généralisée, les parties non infectées de l'animal peuvent être déclarées propres à la consommation humaine après avoir été soumises à un traitement par le froid.",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Cysticercose musculaire généralisée",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Cysticercose"
     },
     {
       "CODE ZACHARIE": "G52",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "La présence d'oeufs ou de larves de mouches indique un défaut d'hygiène",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la Commission du 15 mars 2019 Titre III - Chapitre III - Article 45– alinéa t) : Le vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles […] peuvent, selon l’avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Œufs ou larves de mouche",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Œufs ou larves de mouches"
     },
     {
       "CODE ZACHARIE": "G53",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie parasitaire transmissible aux carnivores par ingestion de viande",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30 ;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Sarcosporidiose (Lésions de)",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Sarcosporidiose"
     },
     {
       "CODE ZACHARIE": "G54",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "La trichine est un parasite microscopique susceptible d’infester la quasi totalité des mammifères y compris l'homme. Cette parasitose peut provoquer des complications parfois graves et laisser des séquelles. ",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viandes issues d’un suidé n’ayant pas fait l’objet d’une recherche de trichinellose selon la réglementation en vigueur",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Absence d'analyses trichine"
     },
     {
       "CODE ZACHARIE": "G55",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "La trichine est un parasite microscopique susceptible d’infester la quasi totalité des mammifères y compris l'homme. Cette parasitose peut provoquer des complications parfois graves et laisser des séquelles. ",
       "DESTINATION AUTORISEE": "-",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30 ;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viandes issues d’un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du laboratoire agréé n’a pas été communiqué",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Absence de résultat aux analyses trichine"
     },
     {
       "CODE ZACHARIE": "G56",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "-",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30 ;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viandes issues d’un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du laboratoire agréé est non négatif",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Présence de parasites"
     },
     {
       "CODE ZACHARIE": "G57",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "La trichine est un parasite microscopique susceptible d’infester la quasi totalité des mammifères y compris l'homme. Cette parasitose peut provoquer des complications parfois graves et laisser des séquelles. ",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 31 §2\nLes viandes provenant d'animaux infectés par les trichines sont déclarées impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viandes issues d'un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du LNR est positif",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Présence de larves de trichine"
     },
     {
       "CODE ZACHARIE": "G58",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d’exécution (UE) 2019/627 de la Commission du 15 mars 2019 - article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l’article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viandes issues d'un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du LNR est non négatif",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Présence de parasites"
     },
     {
       "CODE ZACHARIE": "G59",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie parasitaire due au développement de larves de mouches du genre Hypoderma",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Hypodermose (ou lésions d’)",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Varrons"
     },
     {
       "CODE ZACHARIE": "G60",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d’exécution (UE) 2019/627 de la Commission du 15 mars 2019 - article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l’article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Parasites",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Présence de parasites"
     },
     {
       "CODE ZACHARIE": "G61",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Processus tumoral",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Processus tumoral généralisé",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Tumeur généralisée"
     },
     {
       "CODE ZACHARIE": "G62",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Processus tumoral",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Processus tumoral localisé",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Tumeur localisée"
     },
     {
       "CODE ZACHARIE": "G63",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Tumeur bénigne",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Processus tumoral",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Schwannome",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Schwannome"
     },
     {
       "CODE ZACHARIE": "G64",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation d'une articulation",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Arthrite unique",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Arthrite unique"
     },
     {
       "CODE ZACHARIE": "G65",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation de plusieurs articulations",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Arthrites multiples",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Arthrites multiples"
     },
     {
       "CODE ZACHARIE": "G66",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation du système lymphatique. Les ganglions lymphatiques sont des structures qui font partie du système immunitaire et aident à filtrer les infections et à lutter contre les maladies",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Lymphadénite",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Lymphadénite"
     },
     {
       "CODE ZACHARIE": "G67",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation de la mamelle",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Mammite",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Mammite"
     },
     {
       "CODE ZACHARIE": "G68",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation musculaire",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Myosite localisée",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Myosite localisée"
     },
     {
       "CODE ZACHARIE": "G69",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation des os",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Ostéomyélite",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Ostéomyélite"
     },
     {
       "CODE ZACHARIE": "G70",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation active du péritoine (membrane qui recouvre les organes de l'abdomen)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Péritonite congestive",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Péritonite congestive"
     },
     {
       "CODE ZACHARIE": "G71",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Ancienne inflammation du péritoine (membrane qui recouvre les organes de l'abdomen)",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Péritonite fibreuse",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Péritonite fibreuse"
     },
     {
       "CODE ZACHARIE": "G72",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation active du péritoine (membrane qui recouvre les organes de l'abdomen)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Péritonite fibrineuse",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Péritonite fibrineuse"
     },
     {
       "CODE ZACHARIE": "G73",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation active du péritoine (membrane qui recouvre les organes de l'abdomen)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Péritonite gangreneuse",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Péritonite gangreneuse"
     },
     {
       "CODE ZACHARIE": "G74",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation active du péritoine (membrane qui recouvre les organes de l'abdomen)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Péritonite purulente",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Péritonite purulente"
     },
     {
       "CODE ZACHARIE": "G75",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation purulente",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Phlegmon",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Phlegmon"
     },
     {
       "CODE ZACHARIE": "G76",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation active de la plèvre (membrane qui enveloppe les poumons et tapisse la cavité thoracique)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Pleurésie congestive",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Pleurésie congestive"
     },
     {
       "CODE ZACHARIE": "G77",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Ancienne inflammation de la plèvre (membrane qui enveloppe les poumons et tapisse la cavité thoracique)",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Pleurésie fibreuse",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Pleurésie fibreuse"
     },
     {
       "CODE ZACHARIE": "G78",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation active de la plèvre (membrane qui enveloppe les poumons et tapisse la cavité thoracique)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Pleurésie fibrineuse",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Pleurésie fibreuse"
     },
     {
       "CODE ZACHARIE": "G79",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation active de la plèvre (membrane qui enveloppe les poumons et tapisse la cavité thoracique)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Pleurésie purulente",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Pleurésie purulente"
     },
     {
       "CODE ZACHARIE": "G80",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Souillures générées lors des opérations de préparation de la carcasse",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Souillures",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […] ou une saignée insuffisante",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : souillures autres que liées au contenu digestif : souillures d'habillage",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Souillures d'habillage"
     },
     {
       "CODE ZACHARIE": "G81",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Les balles d'abdomen se caractérisent par une perforation de l'appareil digestif liée à l'action de chasse. Lors d'une blessure avec perforation de l'appareil digestif, le contenu stomacal ou intestinal s'écoule dans la cavité abdominale par la perforation engendrée par le projectile. Les balles d'abdomen peuvent conduire à une contamination bactérienne importante des carcasses et à un risque accru pour la santé humaine",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Souillures",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa r)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles\nprésentent une contamination fécale, par souillure ou autre;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa r)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une contamination fécale, par souillure ou autre",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : souillures d’origine digestive liées à une balle d'abdomen",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Souillures liées à une balle d'abdomen"
     },
     {
       "CODE ZACHARIE": "G82",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Souillures d'origine digestive observées lorsque les bonnes pratiques d'éviscération ne sont pas respectées ou que des adhérences n'ont pas permis un retrait aisé de l'appareil digestif",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Souillures",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa r)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles\nprésentent une contamination fécale, par souillure ou autre;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa r)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une contamination fécale, par souillure ou autre",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : souillures d’origine digestive",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Souillures d’origine digestive"
     },
     {
       "CODE ZACHARIE": "G83",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Présence, sur la carcasse, d'éléments présents dans le milieu naturel tels que de la terre, des feuilles, des branches, du sable. Les souillures telluriques observées à l'intérieur d'une carcasse témoignent de l'absence de respect des bonnes pratiques d'hygiène lors du transport et du stockage du gibier",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Souillures",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […] ou une saignée insuffisante",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : souillures autres que liées au contenu digestif : souillures telluriques",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Souillures telluriques"
     },
     {
       "CODE ZACHARIE": "G84",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Souillures",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […] ou une saignée insuffisante",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : souillures autres que liées au contenu digestif",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Souillures"
     },
     {
       "CODE ZACHARIE": "G85",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Viande suspecte de présenter un danger pour la santé publique",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine\n\nRèglement (CE) 178/2002 du 28 janvier 2002, Article 14 point 8\nLa conformité d’une denrée alimentaire à des dispositions spécifiques applicables à cette denrée n’interdit pas aux autorités compétentes de prendre des mesures appropriées pour imposer des restrictions à sa mise sur le marché ou pour exiger son retrait du marché s’il existe des raisons de soupçonner que, malgré cette conformité, cette denrée alimentaire est dangereuse",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viande suspecte de présenter un danger pour la santé publique ou animale",
-      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Viande suspecte de présenter un danger pour la santé publique"
     }
   ],
   "PETIT_GIBIER": [
     {
       "CODE ZACHARIE": "P1",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Abcès ou nodules",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Abcès non spécifiques à localisation unique",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Abcès unique"
     },
     {
       "CODE ZACHARIE": "P2",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Abcès ou nodules",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Abcès non spécifiques à localisations multiples",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Abcès multiples"
     },
     {
       "CODE ZACHARIE": "P3",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Abcès ou nodules",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […] ou une saignée insuffisante",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Kyste",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Kyste"
     },
     {
       "CODE ZACHARIE": "P4",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Accumulation de liquide dans l’abdomen",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Accumulation de liquide",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […]",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Ascite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Ascite"
     },
     {
       "CODE ZACHARIE": "P5",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Accumulation anormale de liquides",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Accumulation de liquide",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Œdème",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Œdème"
     },
     {
       "CODE ZACHARIE": "P6",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Diminution du volume musculaire",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Amyotrophie",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Amyotrophie localisée",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Amyotrophie localisée"
     },
     {
       "CODE ZACHARIE": "P7",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maigreur extrême",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Amyotrophie",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa p)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles\nproviennent d'animaux émaciés;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa p)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux émaciés",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Cachexie",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Cachexie"
     },
     {
       "CODE ZACHARIE": "P8",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Tâches de couleur blanche, verte, bleue ou noire apparaissant sous forme de \"duvet\".Les moisissures apparaissent notamment lorsque les conditions de stockage ne sont pas satisfaisantes",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies d'altération ",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […] ou une saignée insuffisante",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : moisissures",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Moisissures"
     },
     {
       "CODE ZACHARIE": "P9",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Dégradation de la viande en surface liée à l'absence de respect des bonnes pratiques d'hygiène et à un défaut de maîtrise des températures. La viande peut avoir une couleur dégradée, une texture molle et visqueuse et une odeur anormale souvent acide ou aigre",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies d'altération ",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […]",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : putréfaction superficielle",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Putréfaction superficielle"
     },
     {
       "CODE ZACHARIE": "P10",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Dégradation de la viande affectant les tissus internes iée à l'absence de respect des bonnes pratiques d'hygiène et à un défaut de maîtrise des températures. La viande peut avoir une couleur anormale (gris-vert), une texture molle et visqueuse sur toute la surface et une odeur nauséabonde",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies d'altération ",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […]",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : putréfaction profonde ",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Putréfaction profonde"
     },
     {
       "CODE ZACHARIE": "P11",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies de couleur ou de consistance",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Couleur anormale",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Couleur anormale"
     },
     {
       "CODE ZACHARIE": "P12",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies de couleur ou de consistance",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Consistance anormale",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Consistance anormale"
     },
     {
       "CODE ZACHARIE": "P13",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Coloration jaune de la carcasse d'origine infectieuse",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies de couleur ou de consistance",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Ictère",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Ictère"
     },
     {
       "CODE ZACHARIE": "P14",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Viande surmenée : viande à évolution anormale caractérisée par un aspect général anormalement foncé, ainsi que par une rigidité cadavérique précoce, intense et durable",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies de couleur ou de consistance",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viande à évolution anormale : viande surmenée",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Viande à évolution anormale"
     },
     {
       "CODE ZACHARIE": "P15",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Lors du transport, de l'entreposage et de la manipulation du gibier, les chasseurs doivent respecter les prérequis indispensables à la valorisation en alimentation humaine des viandes de gibier sauvage. Ces mesures comprennent notamment : \n- le respect des bonnes pratiques d'hygiène lors de l'éviscération ;\n- la réfrigération rapide des viandes et le respect de la chaîne du froid.",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies liées à la préparation des viandes",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Conditions de préparation des viandes par le producteur primaire non conformes aux dispositions réglementaires en matières d’hygiène",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Non respect des règles d'hygiène par le chasseur"
     },
     {
       "CODE ZACHARIE": "P16",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies liées à la préparation des viandes",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Conditions de préparation des viandes à l’établissement de traitement du gibier sauvage non conformes aux dispositions réglementaires en matière d’hygiène",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Non respect des règles d'hygiène par l'établissement de traitement du gibier sauvage"
     },
     {
       "CODE ZACHARIE": "P17",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "La traçabilité des denrées alimentaires est un des principes fondateurs de la sécurité des denrées alimentaires. Le sysème doit permettre de procéder rapidement à des retraits ciblés et précis, de limiter les risques de diffusion de maladies aux animaux et à l'homme et d'informer le cas échéant les consommateurs en cas de problèmes. Aussi, tous les lots de carcasses de petit gibier doivent être correctement identifiés",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies liées à la traçabilité",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la Commission du 15 mars 2019 Titre III - Chapitre III - Article 45– alinéa t) : Le vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles […] peuvent, selon l’avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viandes provenant d’un lot de carcasses non identifié",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Lot de carcasses non identifié"
     },
     {
       "CODE ZACHARIE": "P18",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "L'examen initial est la première étape incontournable permettant d’évaluer la sécurité des viandes en sachant que certains symptômes ou lésions susceptibles de présenter un danger pour la santé des consommateurs ou pour la santé animale ne seront plus ou peu visibles après réception des carcasses dans les établissements du secteur alimentaire. Un examen initial non reconnu valide conduit à écarter la viande de la consommation humaine",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Anomalies liées à la traçabilité",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la Commission du 15 mars 2019 Titre III - Chapitre III - Article 45– alinéa t) : Le vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles […] peuvent, selon l’avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viandes provenant d’un lot de carcasses dont l'examen initial n'est pas valide",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Examen initial non valide"
     },
     {
       "CODE ZACHARIE": "P19",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies d'odeur",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations […] organoleptiques",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Odeur anormale",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Odeur anormale"
     },
     {
       "CODE ZACHARIE": "P20",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies traumatiques",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques […]",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Fracture",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Fracture"
     },
     {
       "CODE ZACHARIE": "P21",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Anomalies traumatiques",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques […]",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Morsure de chien",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Morsure de chien"
     },
     {
       "CODE ZACHARIE": "P22",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Accumulation anormale de sang dans la viande",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Congestion",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Congestion généralisée",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Congestion généralisée"
     },
     {
       "CODE ZACHARIE": "P23",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Diffusion sous la peau d'air ou de gaz divers",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Emphysème sous-cutané",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Emphysème sous-cutané",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Emphysème sous-cutané"
     },
     {
       "CODE ZACHARIE": "P24",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Accumulation anormale de liquide et de sang dans la viande",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Infiltration hémorragique",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Infiltration hémorragique  ",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Infiltration hémorragique"
     },
     {
       "CODE ZACHARIE": "P25",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Accumulation anormale de liquide et de sang dans la viande à cause de l'action de chasse",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Infiltration hémorragique",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Infiltration hémorragique liée à l'action de chasse",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Infiltration hémorragique liée à l'action de chasse"
     },
     {
       "CODE ZACHARIE": "P26",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie infectieuse du lapin caractérisée par une importante entérite provoquant souvent la mort de l'animal",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Entéropathie Épizootique du Lapin (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Entéropathie Épizootique du Lapin"
     },
     {
       "CODE ZACHARIE": "P27",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Nécrose des tissus causée par des infections bactériennes. La viande affectée par la gangrène présente souvent une décoloration noire ou verdâtre et une très forte odeur nauséabonde",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Gangrène",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Gangrène"
     },
     {
       "CODE ZACHARIE": "P28",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": " Infection virale hautement contagieuse des oiseaux. Cette maladie se propage très rapidement chez les oiseaux et peut provoquer une mortalité très élevée chez certaines espèces. L’influenza aviaire est une maladie à potentiel zoonotique, le virus peut donc, dans certaines conditions, se transmettre à l’être humain",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa e)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie pour laquelle des règles relatives à la santé des animaux sont établies dans les actes de l'Union [...]",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Influenza aviaire (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Influenza aviaire"
     },
     {
       "CODE ZACHARIE": "P29",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie infectieuse hautement contagieuse qui affecte les lapins domestiques et sauvages dit « de garenne ». Elle est provoquée par un calicivirus du genre lagovirus et constitue la première cause de mortalité du lapin de garenne",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Maladie hémorragique virale (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Maladie hémorragique virale"
     },
     {
       "CODE ZACHARIE": "P30",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie virale présente partout dans le monde, très contagieuse et souvent grave, qui affecte les oiseaux. La maladie de Newcastle est une zoonose très bénigne (maladie animale qui peut également toucher l’homme)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa e)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie pour laquelle des règles relatives à la santé des animaux sont établies dans les actes de l'Union [...]",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Maladie de Newcastle (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Maladie de Newcastle"
     },
     {
       "CODE ZACHARIE": "P31",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie virale des lagomorphes très souvent mortelle. Elle atteint tout particulièrement les lapins de garenne. Elle n'est transmissible ni aux humains ni aux autres animaux",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Myxomatose (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Myxomatose"
     },
     {
       "CODE ZACHARIE": "P32",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie infectieuse très contagieuse causée par une bactérie",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Pasteurellose (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Pasteurellose"
     },
     {
       "CODE ZACHARIE": "P33",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie infectieuse due à une bactérie, mortelle chez les oiseaux",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Pseudotuberculose (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Pseudotuberculose"
     },
     {
       "CODE ZACHARIE": "P34",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie infectieuse, contagieuse, commune à l‘homme et à de nombreuses espèces animales",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 33 §2\nToutes les viandes provenant d'animaux chez lesquels l'inspection post mortem a permis de mettre en évidence des lésions locales semblables à des lésions tuberculoïdes dans plusieurs organes ou parties de la carcasse sont déclarées impropres à la consommation humaine. Toutefois, lorsqu'une lésion tuberculoïde a été découverte dans les ganglions lymphatiques d'un seul organe ou d'une seule partie de la carcasse, seul cet organe ou cette partie de la carcasse et les ganglions lymphatiques connexes sont déclarés impropres à la consommation humaine.",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 33 §2\nToutes les viandes provenant d'animaux chez lesquels l'inspection post mortem a permis de mettre en évidence des lésions locales semblables à des lésions tuberculoïdes dans plusieurs organes ou parties de la carcasse sont déclarées impropres à la consommation humaine. [...]",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Tuberculose (Lésion fortement évocatrice de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Tuberculose"
     },
     {
       "CODE ZACHARIE": "P35",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie infectieuse provoquée par une bactérie. La tularémie est une maladie zoonotique. Elle peut donc se transmettre à l'être humain",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Infection",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Tularémie (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Tularémie"
     },
     {
       "CODE ZACHARIE": "P36",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3 ou C2",
       "FAMILLES DE LESIONS": "Inspection post mortem",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viandes dont au moins 5% du lot n’a pas été présenté à l’inspection post mortem",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Lot de petit gibier non présenté à l'inspection"
     },
     {
       "CODE ZACHARIE": "P37",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation cutanée",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Lésions de la peau",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Dermatite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Dermatite"
     },
     {
       "CODE ZACHARIE": "P38",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Lésions de la peau non causées par un parasite",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Lésions de la peau",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Dermite non parasitaire (ou lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Dermite non parasitaire"
     },
     {
       "CODE ZACHARIE": "P39",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Lésions de la peau",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Escarres et autres plaies cutanées",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Escarres et autres plaies cutanées"
     },
     {
       "CODE ZACHARIE": "P40",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Lésions de la peau causées par un acarien",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Lésions de la peau",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Gale (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Gale"
     },
     {
       "CODE ZACHARIE": "P41",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Lésions de la peau causées par des chamignons microscopiques",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Lésions de la peau",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Teigne (ou lésions de )",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Teigne"
     },
     {
       "CODE ZACHARIE": "P42",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Dégénérescence musculaire pouvant se manifester par des zones atrophiées, décolorées et plus lâches",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Myodystrophie",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Myodystrophie",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Myodystrophie"
     },
     {
       "CODE ZACHARIE": "P43",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Difformité osseuse",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Ostéodystrophie",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Ostéodystrophie",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Ostéodystrophie"
     },
     {
       "CODE ZACHARIE": "P44",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Parasitose fréquente et cosmopolite causée par des coccidies. La coccidiose est très contiagieuse et peut se transmettre à l'homme",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30 ;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Coccidiose (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Coccidiose"
     },
     {
       "CODE ZACHARIE": "P45",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Infestation parasitaire de tissus par les larves de ténia. Le parasite peut être transmis à l'homme par consommation de viande",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30 ;\n\nRèglement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 30 § 2\nLes viandes présentant une infestation par la cysticercose sont déclarées impropres à la consommation humaine. Toutefois, lorsque cette infestation n'est pas généralisée, les parties non infectées de l'animal peuvent être déclarées propres à la consommation humaine après avoir été soumises à un traitement par le froid.",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Cysticercose (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Cysticercose"
     },
     {
       "CODE ZACHARIE": "P46",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie zoonotique (maladie transmissible à l'homme) provoquée par un ver plat, l’échinocoque",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30 ;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Echinococcose (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Echinococcose"
     },
     {
       "CODE ZACHARIE": "P47",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "La présence d'oeufs ou de larves de mouches indique un défaut d'hygiène",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la Commission du 15 mars 2019 Titre III - Chapitre III - Article 45– alinéa t) : Le vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles […] peuvent, selon l’avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Œufs ou larves de mouche",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Œufs ou larves de mouches"
     },
     {
       "CODE ZACHARIE": "P48",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Maladie parasitaire transmissible aux carnivores par ingestion de viande",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la Commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30 ;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la Commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l'article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Sarcosporidiose (Lésions de)",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Sarcosporidiose"
     },
     {
       "CODE ZACHARIE": "P49",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Parasites et nécrophages",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d’exécution (UE) 2019/627 de la Commission du 15 mars 2019 - article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l’article 30",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d’exécution (UE) 2019/627 de la Commission du 15 mars 2019 – Article 45 alinéa h)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une infestation parasitaire, sauf indication contraire des exigences relatives aux contrôles officiels en ce qui concerne la cysticercose visées à l’article 30",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Parasites",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Présence de parasites"
     },
     {
       "CODE ZACHARIE": "P50",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Processus tumoral",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Processus tumoral généralisé",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Tumeur généralisée"
     },
     {
       "CODE ZACHARIE": "P51",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Processus tumoral",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Processus tumoral localisé",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Tumeur localisée"
     },
     {
       "CODE ZACHARIE": "P52",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation bactérienne des sacs aériens chez les oiseaux",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Aérosacculite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Aérosacculite"
     },
     {
       "CODE ZACHARIE": "P53",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation d'une articulation",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Arthrite unique",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Arthrite unique"
     },
     {
       "CODE ZACHARIE": "P54",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation de plusieurs articulations",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Arthrites multiples",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Arthrites multiples"
     },
     {
       "CODE ZACHARIE": "P55",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation intestinale",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Entérite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Entérite"
     },
     {
       "CODE ZACHARIE": "P56",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation du foie",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Hépatite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Hépatite"
     },
     {
       "CODE ZACHARIE": "P57",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation du jabot (organe digestif des oiseaux qui permet de stocker et d'humidifier la nourriture)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Ingluvite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Ingluvite"
     },
     {
       "CODE ZACHARIE": "P58",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation du système lymphatique. Les ganglions lymphatiques sont des structures qui font partie du système immunitaire et aident à filtrer les infections et à lutter contre les maladies",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Lymphadénite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Lymphadénite"
     },
     {
       "CODE ZACHARIE": "P59",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation de la mamelle",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Mammite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Mammite"
     },
     {
       "CODE ZACHARIE": "P60",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation de la muqueuse utérine",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Métrite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Métrite"
     },
     {
       "CODE ZACHARIE": "P61",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation musculaire",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Myosite localisée",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Myosite localisée"
     },
     {
       "CODE ZACHARIE": "P62",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation du rein",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Néphrite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Néphrite"
     },
     {
       "CODE ZACHARIE": "P63",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation des os",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Ostéomyélite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Ostéomyélite"
     },
     {
       "CODE ZACHARIE": "P64",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation du péricarde (membrane recouvrant le cœur)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Péricardite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Péricardite"
     },
     {
       "CODE ZACHARIE": "P65",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation du péritoine (membrane qui recouvre les organes de l'abdomen)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Péritonite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Péritonite"
     },
     {
       "CODE ZACHARIE": "P66",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation purulente",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Phlegmon",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Phlegmon"
     },
     {
       "CODE ZACHARIE": "P67",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation de la plèvre (membrane qui enveloppe les poumons et tapisse la cavité thoracique)",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Pleurésie",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Pleurésie"
     },
     {
       "CODE ZACHARIE": "P68",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Inflammation des sinus",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Réaction inflammatoire",
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa f)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles proviennent d'animaux atteints d'une maladie généralisée, telle que la septicémie, la pyohémie, la toxémie ou la virémie généralisée",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Sinusite",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Sinusite"
     },
     {
       "CODE ZACHARIE": "P69",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Souillures d'origine digestive observées lorsque les bonnes pratiques d'éviscération ne sont pas respectées ou que des adhérences n'ont pas permis un retrait aisé de l'appareil digestif",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Souillures",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa r)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles\nprésentent une contamination fécale, par souillure ou autre;",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa r)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent une contamination fécale, par souillure ou autre",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : souillures d’origine digestive",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Souillures d’origine digestive"
     },
     {
       "CODE ZACHARIE": "P70",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
       "FAMILLES DE LESIONS": "Souillures",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques […] ou une saignée insuffisante",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa o)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles présentent des altérations pathologiques ou organoleptiques",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Altérations et anomalies : souillures autres que liées au contenu digestif",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Souillures"
     },
     {
       "CODE ZACHARIE": "P71",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C2",
       "FAMILLES DE LESIONS": "Viande suspecte de présenter un danger pour la santé publique",
-      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine\n\nRèglement (CE) 178/2002 du 28 janvier 2002, Article 14 point 8\nLa conformité d’une denrée alimentaire à des dispositions spécifiques applicables à cette denrée n’interdit pas aux autorités compétentes de prendre des mesures appropriées pour imposer des restrictions à sa mise sur le marché ou pour exiger son retrait du marché s’il existe des raisons de soupçonner que, malgré cette conformité, cette denrée alimentaire est dangereuse",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Viande suspecte de présenter un danger pour la santé publique ou animale",
-      "VULGARISATION": ""
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Viande suspecte de présenter un danger pour la santé publique"
     }
   ]
 }
