@@ -350,23 +350,23 @@ router.post(
 
       await sendNotificationToUser({
         user: examinateurInitial!,
-        title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
+        title: `Une carcasse de ${updatedCarcasse.espece} a été saisie`,
         body: `Motif${
           updatedCarcasse.svi_carcasse_saisie_motif.length > 1 ? 's' : ''
         } de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(', ')}`,
         email: email,
-        notificationLogAction: `CARCASSE_SAISIE_${existingCarcasse.zacharie_carcasse_id}`,
+        notificationLogAction: `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`,
       });
 
       if (premierDetenteur?.id !== examinateurInitial?.id) {
         await sendNotificationToUser({
           user: premierDetenteur!,
-          title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
+          title: `Une carcasse de ${updatedCarcasse.espece} a été saisie`,
           body: `Motif${
             updatedCarcasse.svi_carcasse_saisie_motif.length > 1 ? 's' : ''
           } de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(', ')}`,
           email: email,
-          notificationLogAction: `CARCASSE_SAISIE_${existingCarcasse.zacharie_carcasse_id}`,
+          notificationLogAction: `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`,
         });
       }
     }
