@@ -32,6 +32,11 @@ type CarcasseExcelData = {
   "SVI - Date d'examen": Date | null;
   // infos de chasse
   'Premier détenteur': string;
+  'Premier détenteur téléphone': string | null;
+  'Premier détenteur email': string | null;
+  'Examinateur initial': string;
+  'Examinateur initial téléphone': string | null;
+  'Examinateur initial email': string | null;
   'Date de la chasse': string;
   'Commune de la chasse': string | null;
   'Numéro de fiche': string;
@@ -128,6 +133,11 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       case 'SVI - Commentaire':
       case 'SVI - Saisie motif':
       case 'Premier détenteur':
+      case 'Premier détenteur téléphone':
+      case 'Premier détenteur email':
+      case 'Examinateur initial':
+      case 'Examinateur initial téléphone':
+      case 'Examinateur initial email':
       case 'Commune de la chasse':
       case 'Numéro de fiche':
         return { wch: 40 }; // wider columns for comments
@@ -348,6 +358,13 @@ export default function useExportFeis() {
             // infos de chasse
             'Commune de la chasse': fei.commune_mise_a_mort,
             'Numéro de fiche': fei.numero,
+            'Premier détenteur téléphone': premierDetenteur?.telephone || '',
+            'Premier détenteur email': premierDetenteur?.email || '',
+            'Examinateur initial': examinateurInitial
+              ? `${examinateurInitial.prenom} ${examinateurInitial.nom_de_famille}`
+              : '',
+            'Examinateur initial téléphone': examinateurInitial?.telephone || '',
+            'Examinateur initial email': examinateurInitial?.email || '',
             // Observations ETG
             Réceptionnée: carcasse.intermediaire_carcasse_signed_at
               ? dayjs(carcasse.intermediaire_carcasse_signed_at).format('DD/MM/YYYY HH:mm')

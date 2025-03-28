@@ -6,6 +6,7 @@ import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 import { IPM1Decision, IPM2Decision } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import { getCarcasseIntermediaireId } from './get-carcasse-intermediaire-id';
+import { loadFei } from './load-fei';
 
 type FeiExcelData = {
   Donnée: string;
@@ -30,6 +31,11 @@ type CarcasseExcelData = {
   "SVI - Date d'examen": Date | null;
   // infos de chasse
   'Premier détenteur': string;
+  'Premier détenteur téléphone': string | null;
+  'Premier détenteur email': string | null;
+  'Examinateur initial': string;
+  'Examinateur initial téléphone': string | null;
+  'Examinateur initial email': string | null;
   'Date de la chasse': string;
   'Commune de la chasse': string | null;
   'Numéro de fiche': string;
@@ -126,6 +132,11 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       case 'SVI - Commentaire':
       case 'SVI - Saisie motif':
       case 'Premier détenteur':
+      case 'Examinateur initial':
+      case 'Premier détenteur téléphone':
+      case 'Premier détenteur email':
+      case 'Examinateur initial téléphone':
+      case 'Examinateur initial email':
       case 'Commune de la chasse':
       case 'Numéro de fiche':
         return { wch: 40 }; // wider columns for comments
@@ -187,6 +198,18 @@ export default function useExportCarcasses() {
           continue;
         }
         const intermediaires = state.getFeiIntermediairesForFeiNumero(carcasse.fei_numero);
+        let fei = state.feis[carcasse.fei_numero];
+        if (!fei) {
+          await loadFei(carcasse.fei_numero);
+        }
+        fei = state.feis[carcasse.fei_numero];
+
+        const premierDetenteur = fei?.premier_detenteur_user_id
+          ? state.users[fei.premier_detenteur_user_id]
+          : null;
+        const examinateur = fei?.examinateur_initial_user_id
+          ? state.users[fei.examinateur_initial_user_id]
+          : null;
 
         const commentaires = [];
         for (const intermediaire of intermediaires) {
@@ -229,6 +252,11 @@ export default function useExportCarcasses() {
           // infos de chasse
           'Commune de la chasse': carcasse.fei_commune_mise_a_mort,
           'Numéro de fiche': carcasse.fei_numero,
+          'Premier détenteur téléphone': premierDetenteur?.telephone || '',
+          'Premier détenteur email': premierDetenteur?.email || '',
+          'Examinateur initial': examinateur ? `${examinateur.prenom} ${examinateur.nom_de_famille}` : '',
+          'Examinateur initial téléphone': examinateur?.telephone || '',
+          'Examinateur initial email': examinateur?.email || '',
           // Observations ETG
           Réceptionnée: carcasse.intermediaire_carcasse_signed_at
             ? dayjs(carcasse.intermediaire_carcasse_signed_at).format('DD/MM/YYYY HH:mm')

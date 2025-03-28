@@ -3,7 +3,7 @@ import passport from 'passport';
 import { catchErrors } from '../middlewares/errors';
 const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
-import { getIframeUrl, iframeUrl } from '~/service/metabase-embed';
+import { getIframeUrl } from '~/service/metabase-embed';
 
 router.get(
   '/nombre-de-carcasses-cumule',
