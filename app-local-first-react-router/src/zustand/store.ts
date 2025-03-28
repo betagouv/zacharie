@@ -570,7 +570,7 @@ export async function syncFeiIntermediaires() {
 export async function syncCarcasseIntermediaire(nextCarcasseIntermediaire: CarcasseIntermediaire) {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
-    throw new Error('syncFeiIntermediaire not online');
+    throw new Error('syncCarcasseIntermediaire not online');
   }
   const feiNumero = nextCarcasseIntermediaire.fei_numero;
   const intermedaireId = nextCarcasseIntermediaire.fei_intermediaire_id;

@@ -7,6 +7,7 @@ import prisma from '~/prisma';
 import { Prisma } from '@prisma/client';
 import { getCarcasseIntermediaireId } from '~/utils/get-carcasse-intermediaire-id';
 import dayjs from 'dayjs';
+import { capture } from '~/third-parties/sentry';
 
 router.post(
   '/:fei_numero/:intermediaire_id/:numero_bracelet',
@@ -69,6 +70,13 @@ router.post(
       where: { id: intermediaire_id },
     });
     if (!feiIntermediaire) {
+      capture(new Error('Intermediaire not found yet on fei carcasse intermediaire creation'), {
+        extra: {
+          fei_numero,
+          intermediaire_id,
+          numero_bracelet,
+        },
+      });
       res.status(400).send({
         ok: false,
         data: { carcasseIntermediaire: null },
