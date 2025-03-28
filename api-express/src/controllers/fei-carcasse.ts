@@ -393,19 +393,19 @@ router.post(
 
       await sendNotificationToUser({
         user: examinateurInitial!,
-        title: `Une carcasse de ${existingCarcasse.espece} est manquante`,
+        title: `Une carcasse de ${updatedCarcasse.espece} est manquante`,
         body: '',
         email: email,
-        notificationLogAction: `CARCASSE_MANQUANTE_${existingCarcasse.zacharie_carcasse_id}`,
+        notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
       });
 
       if (premierDetenteur?.id !== examinateurInitial?.id) {
         await sendNotificationToUser({
           user: premierDetenteur!,
-          title: `Une carcasse de ${existingCarcasse.espece} est manquante`,
+          title: `Une carcasse de ${updatedCarcasse.espece} est manquante`,
           body: '',
           email: email,
-          notificationLogAction: `CARCASSE_MANQUANTE_${existingCarcasse.zacharie_carcasse_id}`,
+          notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
         });
       }
     }
@@ -432,19 +432,19 @@ router.post(
       const email = formatCarcasseChasseurEmail(updatedCarcasse);
       await sendNotificationToUser({
         user: examinateurInitial!,
-        title: `Une carcasse de ${existingCarcasse.espece} est refusée`,
+        title: `Une carcasse de ${updatedCarcasse.espece} est refusée`,
         body: `Motif de refus: ${updatedCarcasse.intermediaire_carcasse_refus_motif}`,
         email: email,
-        notificationLogAction: `CARCASSE_REFUS_${existingCarcasse.zacharie_carcasse_id}`,
+        notificationLogAction: `CARCASSE_REFUS_${updatedCarcasse.zacharie_carcasse_id}`,
       });
 
       if (premierDetenteur?.id !== examinateurInitial?.id) {
         await sendNotificationToUser({
           user: premierDetenteur!,
-          title: `Une carcasse de ${existingCarcasse.espece} est refusée`,
+          title: `Une carcasse de ${updatedCarcasse.espece} est refusée`,
           body: `Motif de refus: ${updatedCarcasse.intermediaire_carcasse_refus_motif}`,
           email: email,
-          notificationLogAction: `CARCASSE_MANQUANTE_${existingCarcasse.zacharie_carcasse_id}`,
+          notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
         });
       }
     }
