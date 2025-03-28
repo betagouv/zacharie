@@ -1,5 +1,7 @@
 import { type Carcasse } from '@prisma/client';
 
+import petitGibier from '@app/data/petit-gibier.json';
+
 type CountCarcassesByEspece = Record<string, { carcasses: number; nombre_d_animaux: number }>;
 
 export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarcassesByEspece {
@@ -15,7 +17,7 @@ export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarc
     }
     acc[carcasse.espece!] = {
       carcasses: (acc[carcasse.espece!]?.carcasses || 0) + 1,
-      nombre_d_animaux: (acc[carcasse.espece!]?.nombre_d_animaux || 0) + (carcasse?.nombre_d_animaux || 0),
+      nombre_d_animaux: (acc[carcasse.espece!]?.nombre_d_animaux || 1) + (carcasse?.nombre_d_animaux || 1),
     };
     return acc;
   }, {} as CountCarcassesByEspece);
@@ -29,7 +31,7 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
   }
 
   return Object.entries(countCarcassesByEspece).map(([espece, { carcasses, nombre_d_animaux }]) => {
-    const isLot = nombre_d_animaux >= carcasses; // look at the code above to understand this
+    const isLot = petitGibier.especes.includes(espece);
     const withS = carcasses === 1 ? '' : 's';
     return `${espece}\u00A0:\u00A0${carcasses}\u00A0${isLot ? `lot${withS} (${nombre_d_animaux} carcasses)` : `carcasse${withS}`}`;
   });

@@ -157,7 +157,7 @@ export default function NouvelleCarcasse() {
               numero_bracelet: numeroBracelet,
               fei_numero: fei.numero,
               type: isPetitGibier ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER,
-              nombre_d_animaux: isPetitGibier ? Number(nombreDAnimaux) : null,
+              nombre_d_animaux: isPetitGibier ? Number(nombreDAnimaux) : 1,
               heure_mise_a_mort: null,
               heure_evisceration: null,
               espece: espece,
