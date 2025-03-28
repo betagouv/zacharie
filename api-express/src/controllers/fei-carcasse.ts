@@ -7,7 +7,7 @@ import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import { EntityRelationType, IPM2Decision, Prisma, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
-import { formatCarcasseEmail } from '~/utils/formatCarcasseEmail';
+import { formatCarcasseChasseurEmail } from '~/utils/formatCarcasseEmail';
 import { RequestWithUser } from '~/types/request';
 import { carcasseForRegistrySelect, CarcasseForResponseForRegistry } from '~/types/carcasse';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
@@ -346,7 +346,7 @@ router.post(
           return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
         });
 
-      const email = formatCarcasseEmail(updatedCarcasse);
+      const email = formatCarcasseChasseurEmail(updatedCarcasse);
 
       await sendNotificationToUser({
         user: examinateurInitial!,
@@ -389,7 +389,7 @@ router.post(
           return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
         });
 
-      const email = formatCarcasseEmail(updatedCarcasse);
+      const email = formatCarcasseChasseurEmail(updatedCarcasse);
 
       await sendNotificationToUser({
         user: examinateurInitial!,
@@ -429,7 +429,7 @@ router.post(
           return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
         });
 
-      const email = formatCarcasseEmail(updatedCarcasse);
+      const email = formatCarcasseChasseurEmail(updatedCarcasse);
       await sendNotificationToUser({
         user: examinateurInitial!,
         title: `Une carcasse de ${existingCarcasse.espece} est refusée`,
@@ -441,7 +441,7 @@ router.post(
       if (premierDetenteur?.id !== examinateurInitial?.id) {
         await sendNotificationToUser({
           user: premierDetenteur!,
-          title: `Une carcasse de ${existingCarcasse.espece} a été saisie`,
+          title: `Une carcasse de ${existingCarcasse.espece} est refusée`,
           body: `Motif de refus: ${updatedCarcasse.intermediaire_carcasse_refus_motif}`,
           email: email,
           notificationLogAction: `CARCASSE_MANQUANTE_${existingCarcasse.zacharie_carcasse_id}`,

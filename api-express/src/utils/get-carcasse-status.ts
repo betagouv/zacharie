@@ -1,6 +1,6 @@
 import { Carcasse, CarcasseStatus, CarcasseType, IPM1Decision, IPM2Decision } from '@prisma/client';
 import dayjs from 'dayjs';
-import { CarcasseGetForRegistry } from '~/types/carcasse';
+import { CarcasseForResponseForRegistry, CarcasseGetForRegistry } from '~/types/carcasse';
 
 export default function updateCarcasseStatus<T extends Carcasse | CarcasseGetForRegistry>(carcasse: T) {
   if (carcasse.intermediaire_carcasse_manquante) {
@@ -39,35 +39,34 @@ export default function updateCarcasseStatus<T extends Carcasse | CarcasseGetFor
   return CarcasseStatus.SANS_DECISION;
 }
 
-// export function getCarcasseStatusLabel<T extends Carcasse | CarcasseForResponseForRegistry>(carcasse: T) {
-//   switch (carcasse.svi_carcasse_status) {
-//     case CarcasseStatus.MANQUANTE:
-//       if (carcasse.type === CarcasseType.PETIT_GIBIER) {
-//         return 'Manquant';
-//       }
-//       return 'Manquante';
-//     case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
-//       return 'En traitement assainissant';
-//     case CarcasseStatus.SAISIE_TOTALE:
-//       return 'Saisie totale';
-//     case CarcasseStatus.SAISIE_PARTIELLE:
-//       return 'Saisie partielle';
-//     case CarcasseStatus.LEVEE_DE_CONSIGNE:
-//       return 'Levée de consigne';
-//     case CarcasseStatus.CONSIGNE:
-//       if (carcasse.type === CarcasseType.PETIT_GIBIER) {
-//         return 'Consigné';
-//       }
-//       return 'Consignée';
-//     case CarcasseStatus.SANS_DECISION:
-//       if (carcasse.svi_carcasse_status_set_at) {
-//         if (carcasse.type === CarcasseType.PETIT_GIBIER) {
-//           return 'Accepté';
-//         }
-//         return 'Acceptée';
-//       }
-//       return 'Sans décision';
-//     default:
-//       return 'Inconnu';
-//   }
-// }
+export function getCarcasseStatusLabelForEmail<T extends Carcasse>(carcasse: T) {
+  switch (carcasse.svi_carcasse_status) {
+    case CarcasseStatus.MANQUANTE:
+      if (carcasse.type === CarcasseType.PETIT_GIBIER) {
+        return 'Manquant';
+      }
+      return 'Manquante';
+    case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
+      return 'En traitement assainissant';
+    case CarcasseStatus.SAISIE_TOTALE:
+      return 'Saisie totale';
+    case CarcasseStatus.SAISIE_PARTIELLE:
+      return 'Saisie partielle';
+    case CarcasseStatus.LEVEE_DE_CONSIGNE:
+      return 'Levée de consigne';
+    case CarcasseStatus.CONSIGNE:
+      if (carcasse.type === CarcasseType.PETIT_GIBIER) {
+        return 'Consigné';
+      }
+      return 'Consignée';
+    default:
+    case CarcasseStatus.SANS_DECISION:
+      if (carcasse.svi_carcasse_status_set_at) {
+        if (carcasse.type === CarcasseType.PETIT_GIBIER) {
+          return 'Accepté';
+        }
+        return 'Acceptée';
+      }
+      return 'Sans décision';
+  }
+}

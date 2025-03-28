@@ -355,10 +355,10 @@ router.post(
       return;
     }
 
-    if (body.fei_next_owner_user_id) {
+    if (body.fei_next_owner_user_id !== existingFei.fei_next_owner_user_id) {
       const nextOwnerId = body.fei_next_owner_user_id as string;
+
       if (nextOwnerId !== user.id) {
-        console.log('need to send notification new fiche');
         const nextOwner = await prisma.user.findUnique({
           where: { id: nextOwnerId },
         });
@@ -380,7 +380,8 @@ router.post(
           } a été notifié que vous lui avez attribué la fiche ${savedFei?.numero}.`,
           notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}_RECEIPT`,
         });
-      } else if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwnerId) {
+      }
+      if (existingFei.fei_next_owner_user_id) {
         console.log('need to send notification remove fiche');
         const exNextOwner = await prisma.user.findUnique({
           where: { id: existingFei.fei_next_owner_user_id },
@@ -392,12 +393,13 @@ router.post(
           email: `${user.prenom} ${user.nom_de_famille} vous avait attribué la fiche ${savedFei?.numero}, mais elle a finalement été attribuée à quelqu'un d'autre.`,
           notificationLogAction: `FEI_REMOVED_FROM_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
         });
-      } else {
-        console.log('no need to send notification');
       }
     }
 
-    if (body.fei_next_owner_entity_id) {
+    if (
+      body.fei_next_owner_entity_id &&
+      body.fei_next_owner_entity_id !== existingFei.fei_next_owner_entity_id
+    ) {
       const usersWorkingForEntity = (
         await prisma.entityAndUserRelations.findMany({
           where: {
@@ -426,18 +428,6 @@ router.post(
             body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
             email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${savedFei?.numero}.\nRendez vous sur Zacharie pour la traiter.`,
             notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
-          });
-        }
-        if (existingFei.fei_next_owner_user_id && existingFei.fei_next_owner_user_id !== nextOwner.id) {
-          const exNextOwner = await prisma.user.findUnique({
-            where: { id: existingFei.fei_next_owner_user_id },
-          });
-          await sendNotificationToUser({
-            user: exNextOwner!,
-            title: 'Une fiche ne vous est plus attribuée',
-            body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une fiche, mais elle a finalement été attribuée à quelqu'un d'autre.`,
-            email: `${user.prenom} ${user.nom_de_famille} vous avait attribué la fiche ${savedFei?.numero}, mais elle a finalement été attribuée à quelqu'un d'autre.`,
-            notificationLogAction: `FEI_REMOVED_FROM_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
           });
         }
       }

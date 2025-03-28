@@ -12,7 +12,7 @@ import { setupCronJob } from './utils';
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import sendNotificationToUser from '~/service/notifications';
-import { formatCarcasseEmail } from '~/utils/formatCarcasseEmail';
+import { formatCarcasseChasseurEmail } from '~/utils/formatCarcasseEmail';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 
 // /*
@@ -101,7 +101,7 @@ async function automaticClosingOfFeis() {
           },
         });
       }
-      email.push(`${formatCarcasseEmail(carcasse)}\n\n`);
+      email.push(`${formatCarcasseChasseurEmail(carcasse)}\n\n`);
     }
     // auto close and notify examinateur and premier detenteut
     const notification = {
@@ -119,7 +119,7 @@ async function automaticClosingOfFeis() {
         });
       }
     }
-    if (fei.FeiPremierDetenteurUser) {
+    if (fei.FeiPremierDetenteurUser && fei.FeiPremierDetenteurUser.id !== fei.FeiExaminateurInitialUser?.id) {
       const premierDetenteur = fei.FeiPremierDetenteurUser;
       if (premierDetenteur) {
         await sendNotificationToUser({

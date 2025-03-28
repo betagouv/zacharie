@@ -1,15 +1,46 @@
-import { Carcasse } from '@prisma/client';
+import { Carcasse, CarcasseStatus, CarcasseType, IPM2Decision } from '@prisma/client';
+import { getCarcasseStatusLabelForEmail } from './get-carcasse-status';
+import lesions from '../assets/lesions.json';
 
-export function formatCarcasseEmail(carcasse: Carcasse) {
-  console.log('carcasse.svi_carcasse_saisie', carcasse.svi_carcasse_saisie);
-  if (carcasse.svi_carcasse_saisie?.length) {
+function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
+  const lesion = lesions[carcasseType]
+    .map((l) => {
+      return {
+        ...l,
+        'MOTIVATION EN FAIT (CERTIFICAT) + CODE ZACHARIE': `${l['CODE ZACHARIE']}. ${l['MOTIVATION EN FAIT (CERTIFICAT)']}`,
+      };
+    })
+    .find((l) => {
+      if (l['MOTIVATION EN FAIT (CERTIFICAT) + CODE ZACHARIE'] === motif) return true;
+      if (l['MOTIVATION EN FAIT (CERTIFICAT)'] === motif) return true;
+      return false;
+    });
+  if (!lesion) {
+    return motif;
+  }
+  const vulgarisation = lesion['VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL'];
+  const complement = lesion["COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL"];
+  if (vulgarisation && complement) {
+    return `${vulgarisation}\n${complement}`;
+  }
+  if (vulgarisation) {
+    return vulgarisation;
+  }
+  return motif;
+}
+
+export function formatCarcasseChasseurEmail(carcasse: Carcasse) {
+  if (
+    carcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE ||
+    carcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE
+  ) {
     const email = [
       `Carcasse de ${carcasse.espece}`,
       `Nombre d'animaux\u00A0: ${carcasse.nombre_d_animaux || 1}`,
       `Numéro d'identification\u00A0: ${carcasse.numero_bracelet}`,
-      `Décision de saisie\u00A0: ${carcasse.svi_carcasse_saisie.join(' - ')}`,
-      `Motifs de saisie\u00A0:\n${carcasse.svi_carcasse_saisie_motif
-        .map((motif) => ` -> ${motif}`)
+      `Décision du service vétérinaire\u00A0: ${getCarcasseStatusLabelForEmail(carcasse)}`,
+      `Motifs de saisie\u00A0:\n${carcasse.svi_ipm2_lesions_ou_motifs
+        .map((motif) => ` -> ${getMotifForChasseur(motif, carcasse.type)}`)
         .join('\n')}`,
       carcasse.svi_carcasse_commentaire ? `Commentaire\u00A0:\n${carcasse.svi_carcasse_commentaire}` : null,
       `Rendez-vous sur Zacharie pour consulter le détail de la carcasse : https://zacharie.beta.gouv.fr/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
