@@ -4,7 +4,10 @@ import { CarcasseForResponseForRegistry, CarcasseGetForRegistry } from '~/types/
 
 export default function updateCarcasseStatus<T extends Carcasse | CarcasseGetForRegistry>(carcasse: T) {
   if (carcasse.intermediaire_carcasse_manquante) {
-    return CarcasseStatus.MANQUANTE;
+    return CarcasseStatus.MANQUANTE_ETG_COLLECTEUR;
+  }
+  if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
+    return CarcasseStatus.REFUS_ETG_COLLECTEUR;
   }
   if (!carcasse.svi_ipm1_date && !carcasse.svi_ipm2_date) {
     if (dayjs().diff(dayjs(carcasse.svi_assigned_to_fei_at), 'day') > 10) {
@@ -13,7 +16,7 @@ export default function updateCarcasseStatus<T extends Carcasse | CarcasseGetFor
     return CarcasseStatus.SANS_DECISION;
   }
   if (!carcasse.svi_ipm1_presentee_inspection && !carcasse.svi_ipm2_presentee_inspection) {
-    return CarcasseStatus.MANQUANTE;
+    return CarcasseStatus.MANQUANTE_SVI;
   }
   if (carcasse.svi_ipm2_traitement_assainissant?.length > 0) {
     return CarcasseStatus.TRAITEMENT_ASSAINISSANT;
@@ -41,7 +44,8 @@ export default function updateCarcasseStatus<T extends Carcasse | CarcasseGetFor
 
 export function getCarcasseStatusLabelForEmail<T extends Carcasse>(carcasse: T) {
   switch (carcasse.svi_carcasse_status) {
-    case CarcasseStatus.MANQUANTE:
+    case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
+    case CarcasseStatus.MANQUANTE_SVI:
       if (carcasse.type === CarcasseType.PETIT_GIBIER) {
         return 'Manquant';
       }

@@ -171,7 +171,7 @@ export default function NouvelleCarcasse() {
               intermediaire_carcasse_refus_motif: null,
               intermediaire_carcasse_signed_at: null,
               intermediaire_carcasse_commentaire: null,
-              intermediaire_carcasse_manquante: null,
+              intermediaire_carcasse_manquante: false,
               svi_assigned_to_fei_at: null,
               svi_carcasse_saisie: [],
               svi_carcasse_saisie_motif: [],

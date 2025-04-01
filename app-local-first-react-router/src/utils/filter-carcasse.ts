@@ -19,7 +19,7 @@ const carcasseStatusOptions = [
 export function mapCarcasseStatusLabelToValue(label: (typeof carcasseStatusOptions)[number]): string {
   switch (label) {
     case 'Manquante':
-      return CarcasseStatus.MANQUANTE;
+      return CarcasseStatus.MANQUANTE_SVI;
     case 'En traitement assainissant':
       return CarcasseStatus.TRAITEMENT_ASSAINISSANT;
     case 'Saisie totale':
