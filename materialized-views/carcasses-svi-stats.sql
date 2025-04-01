@@ -24,9 +24,8 @@ JOIN "Fei" f ON c.fei_numero = f.numero
 WHERE 
     c.deleted_at IS NULL 
     AND f.svi_assigned_at IS NOT NULL
-    AND c.intermediaire_carcasse_refus_intermediaire_id IS NULL
-    AND (c.intermediaire_carcasse_manquante IS NULL OR c.intermediaire_carcasse_manquante = false)
-    AND c.svi_carcasse_status NOT IN ('MANQUANTE', 'SANS_DECISION')
+    AND NOT (f.created_by_user_id LIKE '%GLOP%')
+    AND c.svi_carcasse_status NOT IN ('MANQUANTE_ETG_COLLECTEUR', 'REFUS_ETG_COLLECTEUR', 'SANS_DECISION', 'CONSIGNE', 'MANQUANTE_SVI')
 GROUP BY 
     CASE 
         WHEN c.svi_carcasse_status IN ('SAISIE_TOTALE', 'SAISIE_PARTIELLE', 'TRAITEMENT_ASSAINISSANT') THEN

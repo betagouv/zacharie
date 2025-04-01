@@ -18,6 +18,10 @@ const carcasseStatusOptions = [
 
 export function mapCarcasseStatusLabelToValue(label: (typeof carcasseStatusOptions)[number]): string {
   switch (label) {
+    case 'Refusée par l’ETG ou le collecteur':
+      return CarcasseStatus.REFUS_ETG_COLLECTEUR;
+    case 'Manquante pour l’ETG ou le collecteur':
+      return CarcasseStatus.MANQUANTE_ETG_COLLECTEUR;
     case 'Manquante':
       return CarcasseStatus.MANQUANTE_SVI;
     case 'En traitement assainissant':
