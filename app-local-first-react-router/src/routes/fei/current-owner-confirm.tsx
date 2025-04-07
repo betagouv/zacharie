@@ -12,11 +12,7 @@ import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useGetMyNextRoleForThisFei, useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
 
-export default function CurrentOwnerConfirm({
-  setSelectedTabId,
-}: {
-  setSelectedTabId: (id: string) => void;
-}) {
+export default function CurrentOwnerConfirm() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateFei = useZustandStore((state) => state.updateFei);
@@ -33,10 +29,13 @@ export default function CurrentOwnerConfirm({
   const nextOwnerUser = users[fei.fei_next_owner_user_id!];
 
   const isTransporting = useMemo(() => {
+    if (!user.roles.includes(UserRoles.ETG) && !user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+      return false;
+    }
     return (
       fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.fei_next_owner_role === UserRoles.ETG
     );
-  }, [fei]);
+  }, [fei, user]);
 
   const canConfirmCurrentOwner = useMemo(() => {
     if (fei.fei_next_owner_user_id === user.id) {
@@ -50,6 +49,11 @@ export default function CurrentOwnerConfirm({
       nextOwnerEntity.relation !== 'WORKING_FOR_ENTITY_RELATED_WITH'
     ) {
       return false;
+    }
+    if (user.roles.includes(UserRoles.SVI)) {
+      if (fei.fei_next_owner_role !== UserRoles.SVI) {
+        return false;
+      }
     }
     if (fei.fei_next_owner_role === UserRoles.SVI) {
       if (!user.roles.includes(UserRoles.SVI)) {
@@ -192,7 +196,6 @@ export default function CurrentOwnerConfirm({
       fei_intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
-    setSelectedTabId('Destinataires');
   }
 
   if (!canConfirmCurrentOwner) {
@@ -204,7 +207,6 @@ export default function CurrentOwnerConfirm({
         <button
           onClick={() => {
             handlePriseEnCharge({ transfer: false });
-            setSelectedTabId('Destinataires');
           }}
           type="button"
         >
@@ -278,7 +280,6 @@ export default function CurrentOwnerConfirm({
             className="my-4 block"
             onClick={() => {
               handlePriseEnCharge({ transfer: false, action: 'current-owner-confirm-svi' });
-              setSelectedTabId(UserRoles.SVI);
             }}
           >
             Je prends en charge cette fiche
@@ -301,7 +302,6 @@ export default function CurrentOwnerConfirm({
                         collecteursPro.find((c) => c.id === nextOwnerCollecteurProEntityId)?.nom_d_usage ||
                         '',
                     });
-                    setSelectedTabId('Destinataires');
                   }}
                 >
                   Je transporte le gibier
@@ -315,7 +315,6 @@ export default function CurrentOwnerConfirm({
                         transfer: false,
                         action: 'current-owner-confirm-etg-and-transporteur-receptionne',
                       });
-                      setSelectedTabId('Destinataires');
                     }}
                   >
                     Je suis à l'atelier pour réceptionner le gibier
@@ -328,7 +327,6 @@ export default function CurrentOwnerConfirm({
                 className="my-4 block"
                 onClick={() => {
                   handlePriseEnCharge({ transfer: false, action: 'current-owner-confirm-etg-reception' });
-                  setSelectedTabId('Destinataires');
                 }}
               >
                 Je réceptionne le gibier

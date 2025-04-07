@@ -20,6 +20,8 @@ router.post(
     const body: Prisma.CarcasseUncheckedCreateInput = req.body;
     const user = req.user;
     const { fei_numero, zacharie_carcasse_id } = req.params;
+    console.log('body.svi_carcasse_status', body.svi_carcasse_status);
+    console.log('body', body);
     if (!fei_numero) {
       res.status(400).send({
         ok: false,
@@ -171,6 +173,14 @@ router.post(
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_assigned_to_fei_at)) {
       nextCarcasse.svi_assigned_to_fei_at = body.svi_assigned_to_fei_at;
     }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status)) {
+      nextCarcasse.svi_carcasse_status = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_status];
+      console.log('nextCarcasse.svi_carcasse_status', nextCarcasse.svi_carcasse_status);
+    }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status_set_at)) {
+      nextCarcasse.svi_carcasse_status_set_at =
+        body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_status_set_at];
+    }
 
     if (user.roles.includes(UserRoles.SVI)) {
       if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)) {
@@ -187,13 +197,6 @@ router.post(
       }
       if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire)) {
         nextCarcasse.svi_carcasse_commentaire = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire];
-      }
-      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status)) {
-        nextCarcasse.svi_carcasse_status = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_status];
-      }
-      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status_set_at)) {
-        nextCarcasse.svi_carcasse_status_set_at =
-          body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_status_set_at];
       }
       if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm1_date)) {
         nextCarcasse.svi_ipm1_date = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_date];
@@ -319,6 +322,9 @@ router.post(
         nextCarcasse.svi_ipm2_signed_at = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_signed_at];
       }
     }
+
+    console.log('nextCarcasse', nextCarcasse);
+    console.log('nextCarcasse.svi_carcasse_status', nextCarcasse.svi_carcasse_status);
 
     const updatedCarcasse = await prisma.carcasse.update({
       where: {

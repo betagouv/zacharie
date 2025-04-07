@@ -2,7 +2,7 @@ import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import type { EntityWithUserRelation } from '~/src/types/entity';
-import { UserRoles, Prisma } from '@prisma/client';
+import { UserRoles, Prisma, Carcasse } from '@prisma/client';
 import { useMemo, useState } from 'react';
 // import { mergeFei } from '@app/db/fei.client';
 import { useParams } from 'react-router';
@@ -70,13 +70,13 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
     if (latestIntermediaire.fei_intermediaire_role !== UserRoles.ETG) {
       return false;
     }
-    if (!latestIntermediaire.check_finished_at) {
-      return false;
-    }
+    // if (!latestIntermediaire.check_finished_at) {
+    //   return false;
+    // }
     return true;
   }, [fei.fei_current_owner_role, feiIntermediaires]);
 
-  const [nextRole] = useState<UserRoles | null>(() => {
+  const nextRole = useMemo(() => {
     if (showIntermediaires) {
       return UserRoles.ETG;
     }
@@ -98,7 +98,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
       }
     }
     return fei.fei_next_owner_role ?? null;
-  });
+  }, [fei, showIntermediaires, showSvi, collecteursPro, etgs]);
 
   const nextOwners = useMemo(() => {
     switch (nextRole) {
@@ -159,6 +159,20 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
         }
       }
     }
+    if (
+      fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO &&
+      fei.fei_next_owner_role === UserRoles.ETG &&
+      !!fei.fei_next_owner_entity_id
+    ) {
+      if (user.roles.includes(UserRoles.ETG)) {
+        if (state.etgsIds.includes(fei.fei_next_owner_entity_id)) {
+          const etg = state.entities[fei.fei_next_owner_entity_id];
+          if (etg.relation === 'WORKING_FOR') {
+            return true;
+          }
+        }
+      }
+    }
     return false;
   }, [fei, user, state]);
 
@@ -204,7 +218,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
           };
           updateFei(fei.numero, nextFei);
           if (nextRole === UserRoles.SVI) {
-            const nextCarcasse = {
+            const nextCarcasse: Partial<Carcasse> = {
               svi_assigned_to_fei_at: nextRole === UserRoles.SVI ? dayjs().toDate() : null,
             };
             for (const zacharie_carcasse_id of carcasses) {
@@ -253,7 +267,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
               })}
             </Select>
             {(!nextOwnerValue || nextOwnerValue !== savedNextOwner) && (
-              <Button type="submit" disabled={!nextOwnerValue}>
+              <Button type="submit" disabled={disabled || !nextOwnerValue}>
                 Envoyer
               </Button>
             )}

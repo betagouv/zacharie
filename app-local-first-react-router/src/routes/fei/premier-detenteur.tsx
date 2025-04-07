@@ -78,6 +78,9 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
     if (depotType === EntityTypes.ETG) {
       return false;
     }
+    if (!fei.premier_detenteur_depot_entity_id) {
+      return false;
+    }
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
