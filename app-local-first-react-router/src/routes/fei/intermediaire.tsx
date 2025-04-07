@@ -42,7 +42,15 @@ export default function FEICurrentIntermediaire() {
     .filter((c) => !c.deleted_at);
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
 
-  const [intermediaireIndex, setIntermediaireIndex] = useState(0);
+  const [intermediaireIndex, setIntermediaireIndex] = useState(() => {
+    const userWasIntermediaire = intermediaires.find(
+      (intermediaire) => intermediaire.fei_intermediaire_user_id === user.id,
+    );
+    if (userWasIntermediaire) {
+      return intermediaires.indexOf(userWasIntermediaire);
+    }
+    return 0;
+  });
   const intermediaire = intermediaires[intermediaireIndex];
 
   const intermediaireCarcasses = useMemo(() => {
@@ -71,6 +79,20 @@ export default function FEICurrentIntermediaire() {
       if (user.roles.includes(UserRoles.ETG)) {
         if (etgsIds.includes(fei.fei_current_owner_entity_id)) {
           const etg = entities[fei.fei_current_owner_entity_id];
+          if (etg.relation === 'WORKING_FOR') {
+            return true;
+          }
+        }
+      }
+    }
+    if (
+      fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO &&
+      fei.fei_next_owner_role === UserRoles.ETG &&
+      !!fei.fei_next_owner_entity_id
+    ) {
+      if (user.roles.includes(UserRoles.ETG)) {
+        if (etgsIds.includes(fei.fei_next_owner_entity_id)) {
+          const etg = entities[fei.fei_next_owner_entity_id];
           if (etg.relation === 'WORKING_FOR') {
             return true;
           }
@@ -196,11 +218,8 @@ export default function FEICurrentIntermediaire() {
     intermediaire?.check_finished_at,
   ]);
 
-  const needSelectNextUser = useMemo(() => {
-    if (!intermediaire?.check_finished_at) {
-      return false;
-    }
-    if (carcassesSorted.carcassesApproved.length === 0) {
+  const couldSelectNextUser = useMemo(() => {
+    if (intermediaireIndex !== 0) {
       return false;
     }
     if (isEtgWorkingFor) {
@@ -214,7 +233,20 @@ export default function FEICurrentIntermediaire() {
       return false;
     }
     return true;
-  }, [fei, user, intermediaire, intermediaires, isEtgWorkingFor, carcassesSorted.carcassesApproved.length]);
+  }, [fei, user, intermediaire, intermediaires, isEtgWorkingFor, intermediaireIndex]);
+
+  const needSelectNextUser = useMemo(() => {
+    if (!couldSelectNextUser) {
+      return false;
+    }
+    if (carcassesSorted.carcassesApproved.length === 0) {
+      return false;
+    }
+    if (!intermediaire?.check_finished_at) {
+      return false;
+    }
+    return true;
+  }, [couldSelectNextUser, carcassesSorted.carcassesApproved.length, intermediaire?.check_finished_at]);
 
   // const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
   const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(true);
@@ -504,14 +536,10 @@ export default function FEICurrentIntermediaire() {
             onSubmit={handleSubmitCheckFinishedAt}
           >
             <Checkbox
-              className={canEdit ? '' : 'pointer-events-none'}
+              className={!intermediaire?.check_finished_at ? '' : 'pointer-events-none'}
               options={[
                 {
                   label: labelCheckDone,
-                  hintText:
-                    !intermediaire.check_finished_at && !canEdit
-                      ? "Vous n'êtes pas en charge de cette fiche, vous ne pouvez pas modifier cette valeur"
-                      : '',
                   nativeInputProps: {
                     required: true,
                     name: 'check_finished_at_checked',
@@ -539,9 +567,7 @@ export default function FEICurrentIntermediaire() {
                     <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
                     maintenant
                   </button>
-                ) : (
-                  "Cette date vaut date d'approbation de mise sur le marché"
-                )
+                ) : null
               }
               label={
                 carcassesSorted.carcassesApproved.length > 0 ? 'Date de prise en charge' : 'Date de décision'
@@ -593,17 +619,19 @@ export default function FEICurrentIntermediaire() {
             )}
           </form>
         </Accordion>
-        <Accordion
-          titleAs="h3"
-          label={`Sélection du prochain destinataire`}
-          defaultExpanded
-          key={intermediaire?.id + needSelectNextUser}
-        >
-          <SelectNextOwnerForPremierDetenteurOrIntermediaire
-            calledFrom="intermediaire-next-owner"
-            disabled={!needSelectNextUser}
-          />
-        </Accordion>
+        {couldSelectNextUser && (
+          <Accordion
+            titleAs="h3"
+            label={`Sélection du prochain destinataire`}
+            defaultExpanded
+            key={intermediaire?.id + needSelectNextUser}
+          >
+            <SelectNextOwnerForPremierDetenteurOrIntermediaire
+              calledFrom="intermediaire-next-owner"
+              disabled={!needSelectNextUser}
+            />
+          </Accordion>
+        )}
       </>
     );
   }

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import dayjs from 'dayjs';
-import { CarcasseStatus, Prisma, UserRoles } from '@prisma/client';
+import { CarcasseStatus, Fei, Prisma, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Accordion } from '@codegouvfr/react-dsfr/Accordion';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
@@ -87,9 +87,27 @@ export default function FEI_SVI() {
           id="svi_check_finished_at"
           onSubmit={(e) => {
             e.preventDefault();
-            const nextFei = {
+            const nextFei: Partial<Fei> = {
               svi_signed_at: dayjs().toDate(),
+              svi_assigned_at: fei.svi_assigned_at ?? dayjs().toDate(),
             };
+            if (fei.fei_current_owner_role !== UserRoles.SVI) {
+              nextFei.fei_current_owner_role = UserRoles.SVI;
+              nextFei.fei_current_owner_entity_id = fei.fei_next_owner_entity_id;
+              nextFei.fei_current_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
+              nextFei.fei_current_owner_user_id = user.id;
+              nextFei.fei_current_owner_user_name_cache =
+                fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`;
+              nextFei.fei_next_owner_role = null;
+              nextFei.fei_next_owner_user_id = null;
+              nextFei.fei_next_owner_user_name_cache = null;
+              nextFei.fei_next_owner_entity_id = null;
+              nextFei.fei_next_owner_entity_name_cache = null;
+              nextFei.fei_prev_owner_role = fei.fei_current_owner_role || null;
+              nextFei.fei_prev_owner_user_id = fei.fei_current_owner_user_id || null;
+              nextFei.fei_prev_owner_entity_id = fei.fei_current_owner_entity_id || null;
+              nextFei.svi_user_id = user.id;
+            }
             updateFei(fei.numero, nextFei);
             addLog({
               user_id: user.id,
@@ -103,7 +121,10 @@ export default function FEI_SVI() {
               fei_intermediaire_id: null,
             });
             for (const carcasse of carcassesSorted) {
-              if (!carcasse.svi_carcasse_status) {
+              if (
+                !carcasse.svi_carcasse_status ||
+                carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
+              ) {
                 updateCarcasse(carcasse.zacharie_carcasse_id, {
                   svi_carcasse_status: CarcasseStatus.ACCEPTE,
                   svi_carcasse_status_set_at: dayjs().toDate(),
@@ -140,9 +161,27 @@ export default function FEI_SVI() {
                 type: 'datetime-local',
                 autoComplete: 'off',
                 onBlur: (e) => {
-                  const nextFei = {
+                  const nextFei: Partial<Fei> = {
                     svi_signed_at: dayjs(e.target.value).toDate(),
+                    svi_assigned_at: fei.svi_assigned_at ?? dayjs(e.target.value).toDate(),
                   };
+                  if (fei.fei_current_owner_role !== UserRoles.SVI) {
+                    nextFei.fei_current_owner_role = UserRoles.SVI;
+                    nextFei.fei_current_owner_entity_id = fei.fei_next_owner_entity_id;
+                    nextFei.fei_current_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
+                    nextFei.fei_current_owner_user_id = user.id;
+                    nextFei.fei_current_owner_user_name_cache =
+                      fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`;
+                    nextFei.fei_next_owner_role = null;
+                    nextFei.fei_next_owner_user_id = null;
+                    nextFei.fei_next_owner_user_name_cache = null;
+                    nextFei.fei_next_owner_entity_id = null;
+                    nextFei.fei_next_owner_entity_name_cache = null;
+                    nextFei.fei_prev_owner_role = fei.fei_current_owner_role || null;
+                    nextFei.fei_prev_owner_user_id = fei.fei_current_owner_user_id || null;
+                    nextFei.fei_prev_owner_entity_id = fei.fei_current_owner_entity_id || null;
+                    nextFei.svi_user_id = user.id;
+                  }
                   updateFei(fei.numero, nextFei);
                   addLog({
                     user_id: user.id,
@@ -156,7 +195,10 @@ export default function FEI_SVI() {
                     fei_intermediaire_id: null,
                   });
                   for (const carcasse of carcassesSorted) {
-                    if (!carcasse.svi_carcasse_status) {
+                    if (
+                      !carcasse.svi_carcasse_status ||
+                      carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
+                    ) {
                       updateCarcasse(carcasse.zacharie_carcasse_id, {
                         svi_carcasse_status: CarcasseStatus.ACCEPTE,
                         svi_carcasse_status_set_at: dayjs(e.target.value).toDate(),

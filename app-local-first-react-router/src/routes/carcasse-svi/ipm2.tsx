@@ -1,7 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Prisma, CarcasseType, UserRoles, IPM1Protocole, IPM2Decision, IPM2Traitement } from '@prisma/client';
+import {
+  Prisma,
+  CarcasseType,
+  UserRoles,
+  IPM1Protocole,
+  IPM2Decision,
+  IPM2Traitement,
+  Carcasse,
+  Fei,
+} from '@prisma/client';
 import { lesionsList, lesionsTree } from '@app/utils/lesions';
 import piecesTree from '@app/data/svi/pieces-tree.json';
 import piecesList from '@app/data/svi/pieces-list.json';
@@ -43,6 +52,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const fei = feis[params.fei_numero!];
 
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
+  const updateFei = useZustandStore((state) => state.updateFei);
   const addLog = useZustandStore((state) => state.addLog);
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id!];
@@ -175,7 +185,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     if (missingFields) {
       return;
     }
-    const partialCarcasse = {
+    const partialCarcasse: Partial<Carcasse> = {
       svi_ipm2_date: sviIpm2Date,
       svi_ipm2_presentee_inspection: sviIpm2PresenteeInspection,
       svi_ipm2_protocole: sviIpm2Protocole,
@@ -197,8 +207,29 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       svi_ipm2_user_id: carcasse.svi_ipm2_user_id ?? user.id,
       svi_ipm2_user_name_cache: carcasse.svi_ipm2_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,
       svi_ipm2_signed_at: dayjs.utc().toDate(),
+      svi_assigned_to_fei_at: carcasse.svi_assigned_to_fei_at ?? dayjs.utc().toDate(),
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse);
+    if (fei.fei_current_owner_role !== UserRoles.SVI) {
+      const nextFei: Partial<Fei> = {
+        fei_current_owner_role: UserRoles.SVI,
+        fei_current_owner_entity_id: fei.fei_next_owner_entity_id,
+        fei_current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache,
+        fei_current_owner_user_id: user.id,
+        fei_current_owner_user_name_cache:
+          fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+        fei_next_owner_role: null,
+        fei_next_owner_user_id: null,
+        fei_next_owner_user_name_cache: null,
+        fei_next_owner_entity_id: null,
+        fei_next_owner_entity_name_cache: null,
+        fei_prev_owner_role: fei.fei_current_owner_role || null,
+        fei_prev_owner_user_id: fei.fei_current_owner_user_id || null,
+        fei_prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
+        svi_user_id: user.id,
+      };
+      updateFei(fei.numero, nextFei);
+    }
     addLog({
       user_id: user.id,
       user_role: UserRoles.SVI,

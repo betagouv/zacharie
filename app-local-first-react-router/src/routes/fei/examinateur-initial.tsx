@@ -79,12 +79,9 @@ export default function FEIExaminateurInitial() {
     return true;
   }, [fei, user]);
 
-  const examinateurIsAlsoPremierDetenteur = useMemo(() => {
-    if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
-      return false;
-    }
-    if (fei.fei_current_owner_user_id !== user.id) {
-      return false;
+  const showPremierDetenteur = useMemo(() => {
+    if (premierDetenteurEntity) {
+      return true;
     }
     if (fei.premier_detenteur_user_id !== user.id) {
       return false;
@@ -93,7 +90,7 @@ export default function FEIExaminateurInitial() {
       return false;
     }
     return true;
-  }, [fei, user]);
+  }, [fei, user, premierDetenteurEntity]);
 
   const [carcassesNotReady, atLeastOneCarcasseWithAnomalie] = useMemo(() => {
     const notReady = [];
@@ -125,6 +122,9 @@ export default function FEIExaminateurInitial() {
   }, [carcasses]);
 
   const canEdit = useMemo(() => {
+    if (fei.svi_signed_at || fei.automatic_closed_at) {
+      return false;
+    }
     if (fei.examinateur_initial_user_id !== user.id) {
       // seul l'examinateur initial peut modifier
       return false;
@@ -404,7 +404,7 @@ export default function FEIExaminateurInitial() {
           <SelectNextForExaminateur />
         </div>
       )}
-      {examinateurIsAlsoPremierDetenteur && (
+      {showPremierDetenteur && (
         <>
           <Accordion
             titleAs="h3"

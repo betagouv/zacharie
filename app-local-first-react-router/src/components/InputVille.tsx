@@ -146,13 +146,10 @@ export default function InputVille(props: InputVilleProps) {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     canSearch.current = true;
-    console.log('BOUM', { ville: e.target.value });
     setVilleSearched(e.target.value);
   };
 
   const ref = useRef<HTMLInputElement>(null);
-
-  console.log({ villeSearched, postCode });
 
   return (
     <>

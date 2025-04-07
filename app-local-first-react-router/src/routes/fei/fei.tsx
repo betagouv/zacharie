@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, /* useRef, */ useState } from 'react';
 import { useParams } from 'react-router';
-import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { UserRoles } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
@@ -36,6 +35,7 @@ export default function FeiLoader() {
         setHasTriedLoading(true);
         console.error(error);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!fei) {
@@ -52,154 +52,92 @@ function Fei() {
   const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
 
   // const entities = useZustandStore((state) => state.entities);
-  const nextOwnerEntity = fei.fei_next_owner_entity_id ? state.entities[fei.fei_next_owner_entity_id] : null;
+  // const nextOwnerEntity = fei.fei_next_owner_entity_id ? state.entities[fei.fei_next_owner_entity_id] : null;
 
   const nextOwnerCollecteurProEntityId = useNextOwnerCollecteurProEntityId(fei, user);
 
-  const doneEmoji = '✅ ';
+  // const refCurrentRole = useRef(fei.fei_current_owner_role);
+  // const refCurrentUserId = useRef(fei.fei_current_owner_user_id);
 
-  const tabs: TabsProps['tabs'] = [
-    {
-      tabId: UserRoles.EXAMINATEUR_INITIAL,
-      label: (
-        <>
-          <span className="hidden md:inline">
-            {fei.examinateur_initial_approbation_mise_sur_le_marche ? doneEmoji : ''}Examinateur Initial
-          </span>
-          <span className="inline md:hidden">
-            {fei.examinateur_initial_approbation_mise_sur_le_marche ? doneEmoji : ''}Examinateur
-          </span>
-        </>
-      ),
-    },
-    {
-      tabId: UserRoles.PREMIER_DETENTEUR,
-      label: (
-        <>
-          <span className="hidden md:inline">
-            {fei.premier_detenteur_date_depot_quelque_part ? doneEmoji : ''}Premier Détenteur
-          </span>
-          <span className="inline md:hidden">
-            {fei.premier_detenteur_date_depot_quelque_part ? doneEmoji : ''}Détenteur
-          </span>
-        </>
-      ),
-    },
-    { tabId: 'Destinataires', label: <>{fei.svi_entity_id ? doneEmoji : ''}Destinataires</> },
-    {
-      tabId: UserRoles.SVI,
-      label: (
-        <>
-          <span className="hidden md:inline">
-            {fei.svi_user_id ? doneEmoji : ''}Service Vétérinaire d'Inspection (SVI)
-          </span>
-          <span className="inline md:hidden">{fei.svi_user_id ? doneEmoji : ''}SVI</span>
-        </>
-      ),
-    },
-  ];
-
-  const [selectedTabId, setSelectedTabId] = useState<(typeof tabs)[number]['tabId']>(() => {
-    if (user.roles.includes(UserRoles.SVI) || fei.fei_current_owner_role === UserRoles.SVI) {
-      return UserRoles.SVI;
-    }
-    if (
-      fei.fei_current_owner_role &&
-      (['COLLECTEUR_PRO', 'ETG'] as UserRoles[]).includes(fei.fei_current_owner_role)
-    ) {
-      return 'Destinataires';
-    }
-    return UserRoles.EXAMINATEUR_INITIAL;
-    // return "Destinataires";
-  });
-
-  const refCurrentRole = useRef(fei.fei_current_owner_role);
-  const refCurrentUserId = useRef(fei.fei_current_owner_user_id);
-  useEffect(() => {
+  const showInterface = useMemo(() => {
+    /* 
+    deprecated - was good when tabs in a useEffect, but now I dont think so
     if (fei.fei_current_owner_role !== refCurrentRole.current) {
       if (fei.fei_current_owner_user_id === user.id) {
         switch (fei.fei_current_owner_role) {
           case UserRoles.EXAMINATEUR_INITIAL:
-            setSelectedTabId(UserRoles.EXAMINATEUR_INITIAL);
-            break;
+            return UserRoles.EXAMINATEUR_INITIAL;
           case UserRoles.PREMIER_DETENTEUR:
             if (fei.examinateur_initial_user_id === user.id) {
-              setSelectedTabId(UserRoles.EXAMINATEUR_INITIAL);
+              return UserRoles.EXAMINATEUR_INITIAL;
             } else {
-              setSelectedTabId(UserRoles.PREMIER_DETENTEUR);
+              return UserRoles.PREMIER_DETENTEUR;
             }
-            break;
           case UserRoles.SVI:
-            // window.scrollTo({ top: 0, behavior: "smooth" });
-            setSelectedTabId(UserRoles.SVI);
-            break;
-          default:
-            // window.scrollTo({ top: 0, behavior: "smooth" });
-            setSelectedTabId('Destinataires');
-            break;
+            return UserRoles.SVI;
+          // default:
+          //   return UserRoles.ETG;
         }
       }
+    } */
+    if (fei.fei_current_owner_role === UserRoles.SVI || fei.fei_next_owner_role === UserRoles.SVI) {
+      if (user.roles.includes(UserRoles.SVI)) return UserRoles.SVI;
+      if (user.roles.includes(UserRoles.ETG)) return UserRoles.ETG;
+      if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) return UserRoles.COLLECTEUR_PRO;
+      if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) return UserRoles.EXAMINATEUR_INITIAL;
+      // if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) return UserRoles.PREMIER_DETENTEUR;
+      if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) return UserRoles.EXAMINATEUR_INITIAL;
+      return null;
     }
-    refCurrentRole.current = fei.fei_current_owner_role;
-    refCurrentUserId.current = fei.fei_current_owner_user_id;
-  }, [fei.examinateur_initial_user_id, fei.fei_current_owner_role, fei.fei_current_owner_user_id, user.id]);
-
-  const intermediaireTabDisabledText = useMemo(() => {
-    const intermediaire = intermediaires[0];
-    if (intermediaire) {
-      return '';
-    }
-    const nextIntermediaireId = fei.fei_next_owner_entity_id;
-    if (!nextIntermediaireId) {
-      return "Il n'y a pas encore de premier destinataire sélectionné";
-    }
-    let base = `Le prochain destinataire est&nbsp;: ${nextOwnerEntity?.nom_d_usage}.`;
-    if (fei.fei_current_owner_user_id === user.id) {
-      base += `<br />La fiche n'a pas encore été prise en charge par ce destinataire.`;
-    }
-    return base;
-  }, [
-    fei.fei_next_owner_entity_id,
-    intermediaires,
-    nextOwnerEntity,
-    user?.id,
-    fei.fei_current_owner_user_id,
-  ]);
-
-  const sviTabDisabledText = useMemo(() => {
-    if (!fei.svi_assigned_at) {
-      return "Le service vétérinaire n'a pas encore été assigné";
-    }
-    if (user.roles.includes(UserRoles.SVI)) {
-      return '';
-    }
-    if (!fei.svi_signed_at && !fei.automatic_closed_at) {
-      return "Le service vétérinaire n'a pas encore terminé son inspection";
-    }
-    // if (!user.roles.includes(UserRoles.SVI)) {
-    //   return "Vous n'êtes pas le service vétérinaire";
-    // }
-    return '';
-  }, [fei.svi_assigned_at, fei.svi_signed_at, fei.automatic_closed_at, user]);
-
-  const showCollecteurInterface = useMemo(() => {
     if (
       fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO &&
       fei.fei_current_owner_user_id === user.id
     ) {
-      return true;
+      return UserRoles.COLLECTEUR_PRO;
     }
-    if (nextOwnerCollecteurProEntityId && fei.fei_next_owner_role === UserRoles.ETG) {
-      return true;
+    if (
+      nextOwnerCollecteurProEntityId &&
+      fei.fei_next_owner_role === UserRoles.ETG &&
+      (user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.COLLECTEUR_PRO))
+    ) {
+      return UserRoles.COLLECTEUR_PRO;
     }
-    return false;
+    if (
+      user.roles.includes(UserRoles.ETG) &&
+      (fei.fei_current_owner_role === UserRoles.ETG || fei.fei_next_owner_role === UserRoles.ETG)
+    ) {
+      return UserRoles.ETG;
+    }
+    if (fei.examinateur_initial_user_id === user.id) {
+      return UserRoles.EXAMINATEUR_INITIAL;
+    }
+    if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+      return UserRoles.PREMIER_DETENTEUR;
+    }
+    if (intermediaires.length > 0) {
+      const userWasIntermediaire = intermediaires.find(
+        (intermediaire) => intermediaire.fei_intermediaire_user_id === user.id,
+      );
+      if (userWasIntermediaire) {
+        return userWasIntermediaire.fei_intermediaire_role;
+      }
+    }
+    return null;
   }, [
+    fei.examinateur_initial_user_id,
     fei.fei_current_owner_role,
     fei.fei_current_owner_user_id,
     user.id,
     nextOwnerCollecteurProEntityId,
+    user.roles,
     fei.fei_next_owner_role,
+    intermediaires,
   ]);
+
+  // useEffect(() => {
+  //   refCurrentRole.current = fei.fei_current_owner_role;
+  //   refCurrentUserId.current = fei.fei_current_owner_user_id;
+  // }, [fei.examinateur_initial_user_id, fei.fei_current_owner_role, fei.fei_current_owner_user_id, user.id]);
 
   return (
     <>
@@ -213,30 +151,15 @@ function Fei() {
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 m-4 bg-white md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
             <FeiTransfer />
-            <CurrentOwnerConfirm setSelectedTabId={setSelectedTabId} />
+            <CurrentOwnerConfirm />
             <CurrentOwner />
-            {showCollecteurInterface ? (
-              <div className="p-4 md:p-8">
-                <FEICurrentIntermediaire />
-              </div>
-            ) : (
-              <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId}>
-                {selectedTabId === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
-                {selectedTabId === UserRoles.PREMIER_DETENTEUR && <FeiPremierDetenteur showIdentity />}
-                {selectedTabId === 'Destinataires' &&
-                  (intermediaireTabDisabledText ? (
-                    <p dangerouslySetInnerHTML={{ __html: intermediaireTabDisabledText }} />
-                  ) : (
-                    <FEICurrentIntermediaire />
-                  ))}
-                {selectedTabId === UserRoles.SVI &&
-                  (sviTabDisabledText ? (
-                    <p dangerouslySetInnerHTML={{ __html: sviTabDisabledText }} />
-                  ) : (
-                    <FEI_SVI />
-                  ))}
-              </Tabs>
-            )}
+            <div className="p-4 md:p-8">
+              {showInterface === UserRoles.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
+              {showInterface === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
+              {showInterface === UserRoles.PREMIER_DETENTEUR && <FeiPremierDetenteur showIdentity />}
+              {showInterface === UserRoles.ETG && <FEICurrentIntermediaire />}
+              {showInterface === UserRoles.SVI && <FEI_SVI />}
+            </div>
           </div>
         </div>
       </div>
