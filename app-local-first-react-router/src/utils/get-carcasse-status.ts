@@ -79,3 +79,22 @@ export function getCarcasseStatusLabel<T extends CarcasseForResponseForRegistry>
       return 'Sans décision';
   }
 }
+
+export function getSimplifiedCarcasseStatus(carcasse: Carcasse) {
+  switch (carcasse.svi_carcasse_status) {
+    case CarcasseStatus.SANS_DECISION:
+    case CarcasseStatus.CONSIGNE:
+    default:
+      return 'en cours';
+    case CarcasseStatus.ACCEPTE:
+    case CarcasseStatus.LEVEE_DE_CONSIGNE:
+    case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
+      return 'accepté';
+    case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
+    case CarcasseStatus.REFUS_ETG_COLLECTEUR:
+    case CarcasseStatus.MANQUANTE_SVI:
+    case CarcasseStatus.SAISIE_TOTALE:
+    case CarcasseStatus.SAISIE_PARTIELLE:
+      return 'refusé';
+  }
+}

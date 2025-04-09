@@ -25,7 +25,7 @@ import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediair
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
-import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
+import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import type { HistoryInput } from '@app/utils/create-history-entry';
 import { syncProchainBraceletAUtiliser } from './user';
 import updateCarcasseStatus from '@app/utils/get-carcasse-status';

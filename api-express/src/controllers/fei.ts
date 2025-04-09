@@ -8,7 +8,28 @@ import dayjs from 'dayjs';
 import { EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
 import { feiDoneSelect, feiPopulatedInclude } from '~/types/fei';
+import { formatCountCarcasseByEspece } from '~/utils/count-carcasses';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
+
+prisma.fei
+  .findMany({
+    where: {
+      // numero: 'ZACH-20250114-EVHMN-154237',
+    },
+    include: {
+      Carcasses: true,
+    },
+  })
+  .then(async (feis) => {
+    for (const fei of feis) {
+      const nombreDAnimaux = formatCountCarcasseByEspece(fei.Carcasses).filter(Boolean).join('\n');
+      await prisma.fei.update({
+        where: { numero: fei.numero },
+        data: { resume_nombre_de_carcasses: nombreDAnimaux },
+      });
+    }
+    console.log('done');
+  });
 
 router.post(
   '/:fei_numero',
