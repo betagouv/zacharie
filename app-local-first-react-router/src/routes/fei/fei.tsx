@@ -157,7 +157,7 @@ function Fei() {
             <div className="p-4 md:p-8 bg-white">
               {showInterface === UserRoles.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
               {showInterface === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
-              {showInterface === UserRoles.PREMIER_DETENTEUR && <FeiPremierDetenteur showIdentity />}
+              {showInterface === UserRoles.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
               {showInterface === UserRoles.ETG && <FEICurrentIntermediaire />}
               {showInterface === UserRoles.SVI && <FEI_SVI />}
             </div>
