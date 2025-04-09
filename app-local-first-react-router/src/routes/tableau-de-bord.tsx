@@ -128,7 +128,7 @@ export default function TableauDeBordIndex() {
               </div>
             </section>
           )}
-          <div className="items-center gap-2 my-2 justify-end hidden sm:flex">
+          <div className="items-center gap-2 my-2 justify-end hidden lg:flex">
             <Button
               onClick={() => {
                 onExportToXlsx(selectedFeis);
