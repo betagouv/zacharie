@@ -311,7 +311,7 @@ export default function FEIExaminateurInitial() {
             )}
 
             <Component
-              label="Date de validation de l’examen initial"
+              label="Date de validation de l’examen initial et de mise sur le marché"
               hintText={
                 canEdit ? (
                   <button
@@ -324,9 +324,7 @@ export default function FEIExaminateurInitial() {
                       });
                     }}
                   >
-                    Cette date vaut date d'approbation de mise sur le marché.{' '}
-                    <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
-                    maintenant
+                    <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
                   </button>
                 ) : (
                   "Cette date vaut date d'approbation de mise sur le marché"
