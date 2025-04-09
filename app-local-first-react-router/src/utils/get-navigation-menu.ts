@@ -121,20 +121,6 @@ export default function useNavigationMenu() {
     },
     // @ts-expect-error problem with MainNavigationProps.Item[]
     {
-      text: "Obtenir la dernière version de l'app",
-      linkProps: {
-        href: '#',
-        onClick: () => {
-          if (isOnline) {
-            clearCache().then(() => window.location.reload());
-          } else {
-            alert('Vous devez être connecté à internet pour effectuer cette action');
-          }
-        },
-      },
-    },
-    // @ts-expect-error problem with MainNavigationProps.Item[]
-    {
       text: 'Contactez-nous',
       linkProps: {
         href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de mon tableau de bord à Zacharie`,
