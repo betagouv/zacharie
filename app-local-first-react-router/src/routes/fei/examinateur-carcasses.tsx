@@ -3,13 +3,14 @@ import { Carcasse, CarcasseStatus, CarcasseType, UserRoles } from '@prisma/clien
 import { useMemo } from 'react';
 import { CustomNotice } from '@app/components/CustomNotice';
 import { CustomHighlight } from '@app/components/CustomHighlight';
-import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
+import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useParams, Link } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { getVulgarisationSaisie } from '@app/utils/get-vulgarisation-saisie';
+import { getSimplifiedCarcasseStatus } from '@app/utils/get-carcasse-status';
 
 export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) {
   // canEdit = true;
@@ -83,63 +84,49 @@ function CarcasseExaminateur({ carcasse }: { carcasse: Carcasse }) {
         return null;
       }
     }
-    switch (carcasse.svi_carcasse_status) {
-      case CarcasseStatus.SANS_DECISION:
-      case CarcasseStatus.CONSIGNE:
-      default:
-        return 'en cours';
-      case CarcasseStatus.ACCEPTE:
-      case CarcasseStatus.LEVEE_DE_CONSIGNE:
-      case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
-        return 'accepté';
-      case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
-      case CarcasseStatus.REFUS_ETG_COLLECTEUR:
-      case CarcasseStatus.MANQUANTE_SVI:
-      case CarcasseStatus.SAISIE_TOTALE:
-      case CarcasseStatus.SAISIE_PARTIELLE:
-        return 'refusé';
-    }
-  }, [carcasse.svi_carcasse_status, fei.fei_current_owner_role, fei.fei_next_owner_role]);
+    return getSimplifiedCarcasseStatus(carcasse);
+  }, [carcasse, fei.fei_current_owner_role, fei.fei_next_owner_role]);
 
   const motifRefus: string = useMemo(() => {
-    if (!status || status === 'en cours' || status === 'accepté') {
-      return '';
-    }
-    if (status === 'refusé') {
-      switch (carcasse.svi_carcasse_status) {
-        case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR: {
-          const carcasseIntermediaire =
-            feisIntermediaires[carcasse.intermediaire_carcasse_refus_intermediaire_id!];
-          const entity = entities[carcasseIntermediaire.fei_intermediaire_entity_id!];
-          return `Manquant(e) au moment de la collecte par ${entity?.nom_d_usage}`;
+    switch (carcasse.svi_carcasse_status) {
+      default:
+        return '';
+      case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR: {
+        const carcasseIntermediaire =
+          feisIntermediaires[carcasse.intermediaire_carcasse_refus_intermediaire_id!];
+        const entity = entities[carcasseIntermediaire.fei_intermediaire_entity_id!];
+        const manquant = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Manquant' : 'Manquante';
+        return `${manquant} au moment de la collecte par ${entity?.nom_d_usage}`;
+      }
+      case CarcasseStatus.MANQUANTE_SVI:
+        return "Manquant(e) au moment de l'inspection par le service vétérinaire";
+      case CarcasseStatus.REFUS_ETG_COLLECTEUR: {
+        const carcasseIntermediaire =
+          feisIntermediaires[carcasse.intermediaire_carcasse_refus_intermediaire_id!];
+        const entity = entities[carcasseIntermediaire.fei_intermediaire_entity_id!];
+        const refusé = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Refusé' : 'Refusée';
+        let refus = `${refusé} par ${entity.nom_d_usage}`;
+        if (carcasse.intermediaire_carcasse_refus_motif) {
+          refus += ` : ${carcasse.intermediaire_carcasse_refus_motif}`;
         }
-        case CarcasseStatus.MANQUANTE_SVI:
-          return "Manquant(e) au moment de l'inspection par le service vétérinaire";
-        case CarcasseStatus.REFUS_ETG_COLLECTEUR: {
-          const carcasseIntermediaire =
-            feisIntermediaires[carcasse.intermediaire_carcasse_refus_intermediaire_id!];
-          const entity = entities[carcasseIntermediaire.fei_intermediaire_entity_id!];
-          let refus = `Refusé(e) par ${entity.nom_d_usage}`;
-          if (carcasse.intermediaire_carcasse_refus_motif) {
-            refus += ` : ${carcasse.intermediaire_carcasse_refus_motif}`;
-          }
-          return refus;
-        }
-        case CarcasseStatus.SAISIE_TOTALE:
-        case CarcasseStatus.SAISIE_PARTIELLE:
-          return carcasse.svi_ipm2_lesions_ou_motifs
-            .map((motif) => getVulgarisationSaisie(motif, carcasse.type!))
-            .join(', ');
+        return refus;
+      }
+      case CarcasseStatus.SAISIE_TOTALE:
+      case CarcasseStatus.SAISIE_PARTIELLE: {
+        const refusé = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Refusé' : 'Refusée';
+        return `${refusé} par le service vétérinaire : ${carcasse.svi_ipm2_lesions_ou_motifs
+          .map((motif) => getVulgarisationSaisie(motif, carcasse.type!))
+          .join(', ')}`;
       }
     }
-    return '';
   }, [
-    status,
     carcasse.svi_carcasse_status,
     carcasse.svi_ipm2_lesions_ou_motifs,
     carcasse.type,
     carcasse.intermediaire_carcasse_refus_motif,
     carcasse.intermediaire_carcasse_refus_intermediaire_id,
+    entities,
+    feisIntermediaires,
   ]);
 
   return (

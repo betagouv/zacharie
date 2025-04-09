@@ -13,7 +13,7 @@ import CarcassesExaminateur from './examinateur-carcasses';
 import SelectNextForExaminateur from './examinateur-select-next';
 import FeiPremierDetenteur from './premier-detenteur';
 import EntityNotEditable from '@app/components/EntityNotEditable';
-import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
+import { formatCountCarcasseByEspece, formatSummaryCount } from '@app/utils/count-carcasses';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { createHistoryInput } from '@app/utils/create-history-entry';
@@ -282,7 +282,11 @@ export default function FEIExaminateurInitial() {
           />
         </form>
       </Accordion>
-      <Accordion titleAs="h3" label={`Carcasses/Lots de carcasses (${carcasses.length})`} defaultExpanded>
+      <Accordion
+        titleAs="h3"
+        label={`Carcasses/Lots de carcasses (${formatSummaryCount(carcasses)})`}
+        defaultExpanded
+      >
         <CarcassesExaminateur canEdit={canEdit} />
       </Accordion>
 
