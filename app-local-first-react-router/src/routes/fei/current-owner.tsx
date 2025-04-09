@@ -97,7 +97,7 @@ export default function CurrentOwner() {
         )}
       </Highlight>
       {canDeleteFei && (
-        <div className="mt-2 flex justify-start border-l-4 border-l-red-500 pl-8">
+        <div className="mt-2">
           <DeleteButtonAndConfirmModal
             title="Supprimer la fiche"
             buttonText="Supprimer la fiche"
