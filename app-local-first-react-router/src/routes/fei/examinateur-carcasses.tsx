@@ -28,6 +28,25 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
 
   return (
     <>
+      <div
+        className={[
+          'transition-all duration-1000 mb-2',
+          !canEdit ? 'max-h-0 overflow-hidden' : 'max-h-[300vh]',
+        ].join(' ')}
+      >
+        <NouvelleCarcasse key={fei.commune_mise_a_mort} />
+      </div>
+      {carcasses.length > 0 && <hr />}
+      {carcasses.length > 0 && (
+        <p className="-mt-4 mb-4 ml-4 text-sm text-gray-500">
+          Déjà rentrés&nbsp;:
+          {countCarcassesByEspece.map((line) => (
+            <span className="ml-4 block" key={line}>
+              {line}
+            </span>
+          ))}
+        </p>
+      )}
       {canEdit ? (
         <CustomHighlight>
           {carcasses.map((carcasse) => {
@@ -41,25 +60,6 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
           })}
         </>
       )}
-      <div
-        className={[
-          'transition-all duration-1000',
-          !canEdit ? 'max-h-0 overflow-hidden' : 'max-h-[300vh]',
-        ].join(' ')}
-      >
-        {carcasses.length > 0 && <hr />}
-        {carcasses.length > 0 && (
-          <p className="-mt-4 mb-4 ml-4 text-sm text-gray-500">
-            Déjà rentrés&nbsp;:
-            {countCarcassesByEspece.map((line) => (
-              <span className="ml-4 block" key={line}>
-                {line}
-              </span>
-            ))}
-          </p>
-        )}
-        <NouvelleCarcasse key={fei.commune_mise_a_mort} />
-      </div>
     </>
   );
 }

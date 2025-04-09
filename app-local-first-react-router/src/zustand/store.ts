@@ -185,14 +185,14 @@ const useZustandStore = create<State & Actions>()(
           const nextCarcassesIdsByFei =
             useZustandStore.getState().carcassesIdsByFei[newCarcasse.fei_numero] || [];
           if (!nextCarcassesIdsByFei.includes(newCarcasse.zacharie_carcasse_id)) {
-            nextCarcassesIdsByFei.push(newCarcasse.zacharie_carcasse_id);
+            nextCarcassesIdsByFei.unshift(newCarcasse.zacharie_carcasse_id);
           }
           useZustandStore.setState((state) => {
             return {
               ...state,
               carcasses: {
-                ...state.carcasses,
                 [newCarcasse.zacharie_carcasse_id]: newCarcasse,
+                ...state.carcasses,
               },
               carcassesIdsByFei: {
                 ...state.carcassesIdsByFei,
