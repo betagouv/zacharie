@@ -77,6 +77,9 @@ export default function CurrentOwnerConfirm() {
     if (!fei.fei_next_owner_user_id && !fei.fei_next_owner_entity_id) {
       return false;
     }
+    if (fei.automatic_closed_at || fei.svi_signed_at) {
+      return false;
+    }
     if (canConfirmCurrentOwner) {
       return false;
     }

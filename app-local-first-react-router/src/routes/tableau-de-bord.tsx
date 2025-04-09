@@ -168,7 +168,10 @@ export default function TableauDeBordIndex() {
                           <>
                             {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                               return (
-                                <p className="m-0" key={line}>
+                                <p
+                                  className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
+                                  key={line}
+                                >
                                   {line}
                                 </p>
                               );
@@ -225,7 +228,10 @@ export default function TableauDeBordIndex() {
                             <>
                               {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                                 return (
-                                  <p className="m-0" key={line}>
+                                  <p
+                                    className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
+                                    key={line}
+                                  >
                                     {line}
                                   </p>
                                 );
@@ -302,7 +308,10 @@ export default function TableauDeBordIndex() {
                           <>
                             {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                               return (
-                                <p className="m-0" key={line}>
+                                <p
+                                  className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
+                                  key={line}
+                                >
                                   {line}
                                 </p>
                               );
@@ -363,7 +372,10 @@ export default function TableauDeBordIndex() {
                             <>
                               {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                                 return (
-                                  <p className="m-0" key={line}>
+                                  <p
+                                    className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
+                                    key={line}
+                                  >
                                     {line}
                                   </p>
                                 );
@@ -425,7 +437,10 @@ export default function TableauDeBordIndex() {
                             <>
                               {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                                 return (
-                                  <p className="m-0" key={line}>
+                                  <p
+                                    className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
+                                    key={line}
+                                  >
                                     {line}
                                   </p>
                                 );

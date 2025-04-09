@@ -48,6 +48,7 @@ export async function loadFeis() {
         delete allFeis[fei.numero];
         continue;
       }
+
       if (dayjs(localFei.updated_at).diff(fei.updated_at) > 0) {
         feisNumerosToLoadAgain.push(fei.numero);
       }
