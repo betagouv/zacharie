@@ -403,10 +403,15 @@ export default function FEIExaminateurInitial() {
           </form>
         </Accordion>
       )}
-      {needSelectNextUser && (
-        <div className="z-50 mt-4 flex flex-col bg-white pt-4 md:px-3 md:w-auto md:items-start [&_ul]:md:min-w-96">
-          <SelectNextForExaminateur />
-        </div>
+      {!showPremierDetenteur && (
+        <Accordion
+          titleAs="h3"
+          label="Sélection du premier détenteur"
+          defaultExpanded={needSelectNextUser || showPremierDetenteur}
+          key={needSelectNextUser ? 'true' : 'false'}
+        >
+          <SelectNextForExaminateur disabled={!needSelectNextUser} />
+        </Accordion>
       )}
       {showPremierDetenteur && (
         <>
