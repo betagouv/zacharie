@@ -12,7 +12,9 @@ import { useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 
-export default function SelectNextForExaminateur() {
+export default function SelectNextForExaminateur({ disabled }: { disabled: boolean }) {
+  console.log({ disabled });
+
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
@@ -73,6 +75,7 @@ export default function SelectNextForExaminateur() {
       <form
         id="select-next-owner"
         method="POST"
+        aria-disabled={disabled}
         onSubmit={(event) => {
           event.preventDefault();
           const nextIsMe = nextOwnerUser?.id === user.id;
@@ -134,9 +137,11 @@ export default function SelectNextForExaminateur() {
         <Select
           label="Quel Premier Détenteur doit désormais agir sur la fiche ?"
           key={fei.fei_next_owner_user_id ?? 'no-choice-yet'}
+          disabled={disabled}
           nativeSelectProps={{
             name: 'next_owner',
             value: nextValue,
+            disabled,
             onChange: (event) => {
               setNextValue(event.target.value);
             },
@@ -166,7 +171,7 @@ export default function SelectNextForExaminateur() {
         </Select>
         {!nextValue ||
           (nextValue !== fei.fei_next_owner_user_id && (
-            <Button className="mt-4" type="submit" disabled={!nextValue}>
+            <Button className="mt-4" type="submit" disabled={!nextValue || disabled}>
               Envoyer
             </Button>
           ))}
@@ -238,6 +243,7 @@ export default function SelectNextForExaminateur() {
             <Input
               label="...ou saisissez l'email du Premier Détenteur si vous ne le trouvez pas"
               className="!mb-0"
+              disabled={disabled}
               hintText="Nous l'ajouterons automatiquement à la liste de vos partenaires pour la prochaine fois"
               nativeInputProps={{
                 id: Prisma.UserScalarFieldEnum.email,
@@ -245,7 +251,7 @@ export default function SelectNextForExaminateur() {
                 autoComplete: 'off',
               }}
             />
-            <Button type="submit" disabled={isSearchingUser}>
+            <Button type="submit" disabled={isSearchingUser || disabled}>
               {!isSearchingUser ? 'Envoyer' : 'Recherche en cours...'}
             </Button>
             {!isOnline && (

@@ -8,15 +8,12 @@ import FEIExaminateurInitial from './examinateur-initial';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import FeiTransfer from './current-owner-transfer';
-import CurrentOwnerConfirm from './current-owner-confirm';
-import CurrentOwner from './current-owner';
 import FeiPremierDetenteur from './premier-detenteur';
 import FEICurrentIntermediaire from './intermediaire';
 import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
 import FEI_SVI from './svi';
 import { useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
-import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import FeiStepper from '@app/components/FeiStepper';
 
 export default function FeiLoader() {
