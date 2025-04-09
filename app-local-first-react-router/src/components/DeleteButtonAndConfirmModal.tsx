@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
-import { createModal } from "@codegouvfr/react-dsfr/Modal";
-import { Button } from "@codegouvfr/react-dsfr/Button";
-import { Input } from "@codegouvfr/react-dsfr/Input";
+import { useState, useRef } from 'react';
+import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { Button } from '@codegouvfr/react-dsfr/Button';
+import { Input } from '@codegouvfr/react-dsfr/Input';
 
 interface DeleteButtonAndConfirmModalProps {
   title: string;
@@ -19,9 +19,9 @@ const DeleteButtonAndConfirmModal = ({
   children,
   textToConfirm,
   onConfirm,
-  buttonText = "Supprimer",
+  buttonText = 'Supprimer',
   disabled = false,
-  className = "",
+  className = '',
   disabledTitle = "Vous n'avez pas le droit de supprimer cet élément",
 }: DeleteButtonAndConfirmModalProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -38,13 +38,14 @@ const DeleteButtonAndConfirmModal = ({
     <>
       <Button
         title={disabled ? disabledTitle : title}
-        className={className}
         onClick={() => {
           setResetKey(resetKey + 1);
           modal.open();
         }}
         disabled={disabled}
+        iconId="fr-icon-delete-line"
         priority="tertiary"
+        className={['bg-red-500 text-white', className].join(' ')}
       >
         {buttonText}
       </Button>
@@ -54,14 +55,14 @@ const DeleteButtonAndConfirmModal = ({
         title={<span className="fr-text--red-marianne">{title}</span>}
         buttons={[
           {
-            children: "Annuler",
+            children: 'Annuler',
             disabled: isDeleting,
             onClick: () => modal.close(),
           },
           {
-            children: "Supprimer",
+            children: 'Supprimer',
             disabled: isDeleting,
-            type: "submit",
+            type: 'submit',
             nativeButtonProps: {
               form: `delete-${textToConfirm}`,
             },
@@ -84,16 +85,16 @@ const DeleteButtonAndConfirmModal = ({
             e.preventDefault();
             const _textToConfirm = String(Object.fromEntries(new FormData(e.currentTarget))?.textToConfirm);
             if (!_textToConfirm) {
-              return alert("Veuillez rentrer le texte demandé");
+              return alert('Veuillez rentrer le texte demandé');
             }
             if (_textToConfirm.trim().toLocaleLowerCase() !== textToConfirm.trim().toLocaleLowerCase()) {
-              return alert("Le texte renseigné est incorrect");
+              return alert('Le texte renseigné est incorrect');
             }
             if (_textToConfirm.trim() !== textToConfirm.trim()) {
-              return alert("Veuillez respecter les minuscules/majuscules");
+              return alert('Veuillez respecter les minuscules/majuscules');
             }
             setIsDeleting(true);
-            await onConfirm();
+            onConfirm();
             modal.close();
             setIsDeleting(false);
           }}
@@ -102,8 +103,8 @@ const DeleteButtonAndConfirmModal = ({
             className="fr-col-6"
             label=" " // empty label to maintain spacing
             nativeInputProps={{
-              name: "textToConfirm",
-              autoComplete: "off",
+              name: 'textToConfirm',
+              autoComplete: 'off',
               placeholder: textToConfirm,
             }}
           />
