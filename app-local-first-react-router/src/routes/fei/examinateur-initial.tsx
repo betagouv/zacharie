@@ -161,6 +161,19 @@ export default function FEIExaminateurInitial() {
     return true;
   }, [fei, user]);
 
+  const canEditAsPremierDetenteur = useMemo(() => {
+    if (fei.svi_signed_at || fei.automatic_closed_at || fei.svi_assigned_at) {
+      return false;
+    }
+    if (fei.examinateur_initial_user_id === user.id) {
+      return true;
+    }
+    if (premierDetenteurEntity?.relation === 'WORKING_FOR') {
+      return true;
+    }
+    return false;
+  }, [fei, user, premierDetenteurEntity]);
+
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
@@ -215,11 +228,15 @@ export default function FEIExaminateurInitial() {
             Identité de l'Examinateur <PencilStrikeThrough />
           </>
         }
-        defaultExpanded={!canEdit}
+        defaultExpanded={false}
       >
         <UserNotEditable user={examinateurInitialUser!} withCfei />
       </Accordion>
-      <Accordion titleAs="h3" label="Données de chasse" defaultExpanded={!showPremierDetenteur}>
+      <Accordion
+        titleAs="h3"
+        label={<>Données de chasse {canEdit ? null : <PencilStrikeThrough />}</>}
+        defaultExpanded={!showPremierDetenteur}
+      >
         <form method="POST" onSubmit={(e) => e.preventDefault()} ref={examRef}>
           <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
           <Component
@@ -287,13 +304,13 @@ export default function FEIExaminateurInitial() {
         label={`Carcasses/Lots de carcasses (${formatSummaryCount(carcasses)})`}
         defaultExpanded={!showPremierDetenteur}
       >
-        <CarcassesExaminateur canEdit={canEdit} />
+        <CarcassesExaminateur canEdit={canEdit} canEditAsPremierDetenteur={canEditAsPremierDetenteur} />
       </Accordion>
 
       {examinateurInitialUser && (
         <Accordion
           titleAs="h3"
-          label="Approbation de mise sur le marché"
+          label={<>Approbation de mise sur le marché {canEdit ? null : <PencilStrikeThrough />}</>}
           defaultExpanded={!showPremierDetenteur}
         >
           <form method="POST" onSubmit={(e) => e.preventDefault()}>

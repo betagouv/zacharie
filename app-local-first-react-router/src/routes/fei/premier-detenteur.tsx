@@ -49,6 +49,9 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
   });
 
   const canEdit = useMemo(() => {
+    if (premierDetenteurEntity?.relation === 'WORKING_FOR') {
+      return true;
+    }
     if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
       return false;
     }
@@ -59,9 +62,12 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
     //   return false;
     // }
     return true;
-  }, [fei, user]);
+  }, [fei, user, premierDetenteurEntity]);
 
   const canChangeNextOwner = useMemo(() => {
+    if (premierDetenteurEntity?.relation === 'WORKING_FOR') {
+      return true;
+    }
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
@@ -72,7 +78,7 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
       return false;
     }
     return true;
-  }, [fei, user]);
+  }, [fei, user, premierDetenteurEntity]);
 
   const Component = canEdit ? Input : InputNotEditable;
 
