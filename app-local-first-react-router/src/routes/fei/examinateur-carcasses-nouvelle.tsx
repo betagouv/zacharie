@@ -141,11 +141,11 @@ export default function NouvelleCarcasse() {
               return;
             }
             if (!numeroBracelet) {
-              setError("Veuillez renseigner le numéro de marquage avant d'enregistrer une carcasse");
+              setError("Veuillez renseigner le numéro de marquage avant d'enregistrer la carcasse");
               return;
             }
             if (!espece) {
-              setError("Veuillez renseigner l'espèce du gibier avant d'enregistrer une carcasse");
+              setError("Veuillez renseigner l'espèce du gibier avant d'enregistrer la carcasse");
               return;
             }
             if (carcasses[zacharieCarcasseId] && !carcasses[zacharieCarcasseId].deleted_at) {
@@ -236,7 +236,7 @@ export default function NouvelleCarcasse() {
             setError(null);
           }}
         >
-          {isPetitGibier ? 'Enregistrer un lot de carcasses' : 'Enregistrer une carcasse'}
+          {isPetitGibier ? 'Enregistrer le lot de carcasses' : 'Enregistrer la carcasse'}
         </Button>
       )}
     </form>
