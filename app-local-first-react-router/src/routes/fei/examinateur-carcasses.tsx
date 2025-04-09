@@ -12,7 +12,13 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { getVulgarisationSaisie } from '@app/utils/get-vulgarisation-saisie';
 import { getSimplifiedCarcasseStatus } from '@app/utils/get-carcasse-status';
 
-export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) {
+export default function CarcassesExaminateur({
+  canEdit,
+  canEditAsPremierDetenteur,
+}: {
+  canEdit: boolean;
+  canEditAsPremierDetenteur: boolean;
+}) {
   // canEdit = true;
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
@@ -47,10 +53,16 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
           ))}
         </p>
       )}
-      {canEdit ? (
+      {canEdit || canEditAsPremierDetenteur ? (
         <CustomHighlight>
           {carcasses.map((carcasse) => {
-            return <CarcasseExaminateur key={carcasse.numero_bracelet} carcasse={carcasse} />;
+            return (
+              <CarcasseExaminateur
+                key={carcasse.numero_bracelet}
+                carcasse={carcasse}
+                canEditAsPremierDetenteur={canEditAsPremierDetenteur}
+              />
+            );
           })}
         </CustomHighlight>
       ) : (
@@ -64,7 +76,13 @@ export default function CarcassesExaminateur({ canEdit }: { canEdit: boolean }) 
   );
 }
 
-function CarcasseExaminateur({ carcasse }: { carcasse: Carcasse }) {
+function CarcasseExaminateur({
+  carcasse,
+  canEditAsPremierDetenteur,
+}: {
+  carcasse: Carcasse;
+  canEditAsPremierDetenteur?: boolean;
+}) {
   // canEdit = true;
   const params = useParams();
   const user = useUser((state) => state.user)!;
@@ -149,7 +167,7 @@ function CarcasseExaminateur({ carcasse }: { carcasse: Carcasse }) {
         ]
           .filter(Boolean)
           .join(' ')}
-        isClosable={user.id === fei.examinateur_initial_user_id || user.id === fei.premier_detenteur_user_id}
+        isClosable={canEditAsPremierDetenteur}
         onClose={() => {
           if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
             const nextPartialCarcasse: Partial<Carcasse> = {

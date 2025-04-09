@@ -21,15 +21,19 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
-  const updateFei = state.updateFei;
-  const updateCarcasse = state.updateCarcasse;
-  const addLog = state.addLog;
-  const fei = state.feis[params.fei_numero!];
-  const carcasses = state.carcassesIdsByFei[fei.numero];
-  const entities = state.entities;
-  const ccgs = state.ccgsIds.map((id) => state.entities[id]);
-  const etgs = state.etgsIds.map((id) => state.entities[id]);
-  const svis = state.svisIds.map((id) => state.entities[id]);
+  const updateFei = useZustandStore((state) => state.updateFei);
+  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
+  const addLog = useZustandStore((state) => state.addLog);
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+  const carcasses = useZustandStore((state) => state.carcassesIdsByFei[fei.numero]);
+  const entities = useZustandStore((state) => state.entities);
+  const ccgs = useZustandStore((state) => state.ccgsIds).map((id) => entities[id]);
+  const etgs = useZustandStore((state) => state.etgsIds).map((id) => entities[id]);
+  const svis = useZustandStore((state) => state.svisIds).map((id) => entities[id]);
+  const premierDetenteurEntity = fei.premier_detenteur_entity_id
+    ? entities[fei.premier_detenteur_entity_id]
+    : null;
 
   const collecteursPro = state.collecteursProIds.map((id) => state.entities[id]);
   const feiIntermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
@@ -47,19 +51,18 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
     //   return false;
     // }
     if (
-      UserRoles.PREMIER_DETENTEUR !== fei.fei_current_owner_role &&
-      UserRoles.CCG !== fei.fei_current_owner_role &&
-      UserRoles.COLLECTEUR_PRO !== fei.fei_current_owner_role
+      UserRoles.PREMIER_DETENTEUR === fei.fei_current_owner_role ||
+      UserRoles.CCG === fei.fei_current_owner_role ||
+      UserRoles.COLLECTEUR_PRO === fei.fei_current_owner_role
     ) {
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }, [
     fei.premier_detenteur_user_id,
     fei.fei_current_owner_role,
     fei.examinateur_initial_user_id,
     fei.examinateur_initial_approbation_mise_sur_le_marche,
-    fei.premier_detenteur_date_depot_quelque_part,
   ]);
 
   const showSvi = useMemo(() => {
@@ -177,6 +180,12 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
   }, [fei, user, state]);
 
   const canSelectNextOwner = useMemo(() => {
+    if (
+      premierDetenteurEntity?.relation === 'WORKING_FOR' &&
+      fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR
+    ) {
+      return true;
+    }
     if (isEtgWorkingFor) {
       return true;
     }
