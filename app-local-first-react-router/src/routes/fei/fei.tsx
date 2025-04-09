@@ -15,6 +15,7 @@ import NotFound from '@app/components/NotFound';
 import FEI_SVI from './svi';
 import { useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
 import FeiStepper from '@app/components/FeiStepper';
+import CurrentOwnerConfirm from './current-owner-confirm';
 
 export default function FeiLoader() {
   const params = useParams();
@@ -150,7 +151,7 @@ function Fei() {
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 m-4 bg-alt-blue-france md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
             <FeiTransfer />
-            {/* <CurrentOwnerConfirm /> */}
+            <CurrentOwnerConfirm />
             {/* <CurrentOwner /> */}
             <FeiStepper />
             <div className="p-4 md:p-8 bg-white">
