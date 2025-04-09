@@ -43,9 +43,9 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
         return true;
       }
     }
-    if (!fei.premier_detenteur_date_depot_quelque_part) {
-      return false;
-    }
+    // if (!fei.premier_detenteur_date_depot_quelque_part) {
+    //   return false;
+    // }
     if (
       UserRoles.PREMIER_DETENTEUR !== fei.fei_current_owner_role &&
       UserRoles.CCG !== fei.fei_current_owner_role &&

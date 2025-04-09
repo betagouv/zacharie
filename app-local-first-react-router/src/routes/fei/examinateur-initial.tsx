@@ -219,7 +219,7 @@ export default function FEIExaminateurInitial() {
       >
         <UserNotEditable user={examinateurInitialUser!} withCfei />
       </Accordion>
-      <Accordion titleAs="h3" label="Données de chasse" defaultExpanded>
+      <Accordion titleAs="h3" label="Données de chasse" defaultExpanded={!showPremierDetenteur}>
         <form method="POST" onSubmit={(e) => e.preventDefault()} ref={examRef}>
           <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
           <Component
@@ -285,13 +285,17 @@ export default function FEIExaminateurInitial() {
       <Accordion
         titleAs="h3"
         label={`Carcasses/Lots de carcasses (${formatSummaryCount(carcasses)})`}
-        defaultExpanded
+        defaultExpanded={!showPremierDetenteur}
       >
         <CarcassesExaminateur canEdit={canEdit} />
       </Accordion>
 
       {examinateurInitialUser && (
-        <Accordion titleAs="h3" label="Approbation de mise sur le marché" defaultExpanded>
+        <Accordion
+          titleAs="h3"
+          label="Approbation de mise sur le marché"
+          defaultExpanded={!showPremierDetenteur}
+        >
           <form method="POST" onSubmit={(e) => e.preventDefault()}>
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             {!onlyPetitGibier && (
@@ -428,9 +432,7 @@ export default function FEIExaminateurInitial() {
               <UserNotEditable user={premierDetenteurUser!} />
             )}
           </Accordion>
-          <Accordion titleAs="h3" label="Action du Premier détenteur" defaultExpanded>
-            <FeiPremierDetenteur showIdentity={false} />
-          </Accordion>
+          <FeiPremierDetenteur showIdentity={false} />
         </>
       )}
     </>

@@ -15,6 +15,8 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { Accordion } from '@codegouvfr/react-dsfr/Accordion';
+import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 
 export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: boolean }) {
   const params = useParams();
@@ -111,202 +113,217 @@ export default function FeiPremierDetenteur({ showIdentity }: { showIdentity: bo
   return (
     <>
       {showIdentity && (
-        <>
+        <Accordion
+          titleAs="h3"
+          label={
+            <>
+              Identité du Premier détenteur <PencilStrikeThrough />
+            </>
+          }
+          defaultExpanded={false}
+        >
           {premierDetenteurEntity ? (
             <EntityNotEditable hideType entity={premierDetenteurEntity} user={premierDetenteurUser!} />
           ) : (
             <UserNotEditable user={premierDetenteurUser!} />
           )}
           <hr />
-        </>
+        </Accordion>
       )}
-
-      <RadioButtons
-        legend="Où sont entreposées les carcasses ?"
-        hintText={canEdit ? 'Étape requise pour la suite du processus' : ''}
-        className={canEdit ? '' : 'pointer-events-none'}
-        options={[
-          {
-            label: (
-              <span className="inline-block">
-                Je transporte mes carcasses à un Établissement de Traitement du Gibier sauvage
-              </span>
-            ),
-            hintText: (
-              <span>
-                Elle doivent être transportées <b>le jour-même</b>
-              </span>
-            ),
-            nativeInputProps: {
-              checked: depotType === EntityTypes.ETG,
-              readOnly: !canEdit,
-              onChange: () => setDepotType(EntityTypes.ETG),
+      <Accordion titleAs="h3" label="Action du Premier détenteur" defaultExpanded>
+        <RadioButtons
+          legend="Où sont entreposées les carcasses ? *"
+          className={canEdit ? '' : 'pointer-events-none'}
+          options={[
+            {
+              label: (
+                <span className="inline-block">
+                  Je transporte mes carcasses à un Établissement de Traitement du Gibier sauvage
+                </span>
+              ),
+              hintText: (
+                <span>
+                  Elle doivent être transportées <b>le jour-même</b>
+                </span>
+              ),
+              nativeInputProps: {
+                checked: depotType === EntityTypes.ETG,
+                readOnly: !canEdit,
+                onChange: () => setDepotType(EntityTypes.ETG),
+              },
             },
-          },
-          {
-            label: 'J’ai déposé mes carcasses dans une autre chambre froide',
-            hintText: `On appelle ce type de chambre froide un "centre de collecte du gibier sauvage"`,
-            nativeInputProps: {
-              checked: depotType === EntityTypes.CCG,
-              readOnly: !canEdit,
-              onChange: () => setDepotType(EntityTypes.CCG),
+            {
+              label: 'J’ai déposé mes carcasses dans une autre chambre froide',
+              hintText: `On appelle ce type de chambre froide un "centre de collecte du gibier sauvage"`,
+              nativeInputProps: {
+                checked: depotType === EntityTypes.CCG,
+                readOnly: !canEdit,
+                onChange: () => setDepotType(EntityTypes.CCG),
+              },
             },
-          },
-        ]}
-      />
-      <form
-        method="POST"
-        onSubmit={(event) => {
-          event.preventDefault();
-          const formData = new FormData(event.currentTarget);
-          // if the depot is ETG then the next role is ETG
-          // if the depot is CCG then the next role is we don't know yet
-          const premier_detenteur_depot_entity_id = formData.get(
-            Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
-          ) as string;
-          let nextFei: Partial<typeof fei>;
-          if (depotType === EntityTypes.ETG) {
-            nextFei = {
-              premier_detenteur_depot_type: depotType,
-              premier_detenteur_depot_entity_id,
-              premier_detenteur_date_depot_quelque_part: dayjs(
-                formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string,
-              ).toDate(),
-              fei_next_owner_entity_id: premier_detenteur_depot_entity_id,
-              fei_next_owner_role: EntityTypes.ETG,
-            };
-          } else {
-            nextFei = {
-              premier_detenteur_depot_type: depotType,
-              premier_detenteur_depot_entity_id,
-              premier_detenteur_date_depot_quelque_part: dayjs(
-                formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string,
-              ).toDate(),
-            };
-          }
-          updateFei(fei.numero, nextFei);
-          addLog({
-            user_id: user.id,
-            user_role: UserRoles.PREMIER_DETENTEUR,
-            action: 'premier-detenteur-depot',
-            fei_numero: fei.numero,
-            history: createHistoryInput(fei, nextFei),
-            entity_id: fei.premier_detenteur_entity_id,
-            zacharie_carcasse_id: null,
-            carcasse_intermediaire_id: null,
-            fei_intermediaire_id: null,
-          });
-        }}
-      >
-        <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
-        {canChangeNextOwner && depotType === EntityTypes.CCG && (
-          <Select
-            label="Sélectionnez la chambre froide, qui doit être un centre de collecte préalablement enregistré"
-            hint={
-              <Link
-                className="!bg-none !no-underline"
-                to={`/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`}
-              >
-                Vous n'avez pas encore renseigné votre centre de collecte ? Vous pouvez le faire en{' '}
-                <u className="inline">cliquant ici</u>
-              </Link>
+          ]}
+        />
+        <form
+          method="POST"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            // if the depot is ETG then the next role is ETG
+            // if the depot is CCG then the next role is we don't know yet
+            const premier_detenteur_depot_entity_id = formData.get(
+              Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
+            ) as string;
+            let nextFei: Partial<typeof fei>;
+            if (depotType === EntityTypes.ETG) {
+              nextFei = {
+                premier_detenteur_depot_type: depotType,
+                premier_detenteur_depot_entity_id,
+                premier_detenteur_date_depot_quelque_part: dayjs(
+                  formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string,
+                ).toDate(),
+                fei_next_owner_entity_id: premier_detenteur_depot_entity_id,
+                fei_next_owner_role: EntityTypes.ETG,
+              };
+            } else {
+              nextFei = {
+                premier_detenteur_depot_type: depotType,
+                premier_detenteur_depot_entity_id,
+                premier_detenteur_date_depot_quelque_part: dayjs(
+                  formData.get(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part) as string,
+                ).toDate(),
+              };
             }
-            nativeSelectProps={{
-              name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
-              required: true,
-              defaultValue: ccgs.length === 1 ? ccgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ''),
-            }}
-          >
-            <option value="">Sélectionnez un centre de collecte</option>
-            {/* <hr /> */}
-            {ccgs.map((entity) => {
-              return (
-                <option key={entity.id} value={entity.id}>
-                  {entity.nom_d_usage} - {entity.code_postal} {entity.ville} ({getUserRoleLabel(entity.type)})
-                </option>
-              );
-            })}
-          </Select>
-        )}
-        {canChangeNextOwner && depotType === EntityTypes.ETG && (
-          <Select
-            label="Sélectionnez l'Établissement de Transformation du Gibier sauvage qui prendra en charge les carcasses"
-            hint="La fiche lui sera transmise"
-            nativeSelectProps={{
-              name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
-              required: true,
-              defaultValue: etgs.length === 1 ? etgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ''),
-            }}
-          >
-            <option value="">Sélectionnez</option>
-            {/* <hr /> */}
-            {etgs.map((entity) => {
-              return (
-                <option key={entity.id} value={entity.id}>
-                  {entity.nom_d_usage} - {entity.code_postal} {entity.ville} ({getUserRoleLabel(entity.type)})
-                </option>
-              );
-            })}
-          </Select>
-        )}
-        {!canChangeNextOwner && (
-          <InputNotEditable
-            label={
-              depotType === EntityTypes.CCG
-                ? 'Centre de collecte'
-                : 'Établissement de Traitement du Gibier sauvage'
+            updateFei(fei.numero, nextFei);
+            addLog({
+              user_id: user.id,
+              user_role: UserRoles.PREMIER_DETENTEUR,
+              action: 'premier-detenteur-depot',
+              fei_numero: fei.numero,
+              history: createHistoryInput(fei, nextFei),
+              entity_id: fei.premier_detenteur_entity_id,
+              zacharie_carcasse_id: null,
+              carcasse_intermediaire_id: null,
+              fei_intermediaire_id: null,
+            });
+          }}
+        >
+          <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
+          {canChangeNextOwner && depotType === EntityTypes.CCG && (
+            <Select
+              label="Sélectionnez la chambre froide, qui doit être un centre de collecte préalablement enregistré"
+              hint={
+                <Link
+                  className="!bg-none !no-underline"
+                  to={`/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`}
+                >
+                  Vous n'avez pas encore renseigné votre centre de collecte ? Vous pouvez le faire en{' '}
+                  <u className="inline">cliquant ici</u>
+                </Link>
+              }
+              nativeSelectProps={{
+                name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
+                required: true,
+                defaultValue: ccgs.length === 1 ? ccgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ''),
+              }}
+            >
+              <option value="">Sélectionnez un centre de collecte</option>
+              {/* <hr /> */}
+              {ccgs.map((entity) => {
+                return (
+                  <option key={entity.id} value={entity.id}>
+                    {entity.nom_d_usage} - {entity.code_postal} {entity.ville} (
+                    {getUserRoleLabel(entity.type)})
+                  </option>
+                );
+              })}
+            </Select>
+          )}
+          {canChangeNextOwner && depotType === EntityTypes.ETG && (
+            <Select
+              label="Sélectionnez l'Établissement de Transformation du Gibier sauvage qui prendra en charge les carcasses"
+              hint="La fiche lui sera transmise"
+              nativeSelectProps={{
+                name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
+                required: true,
+                defaultValue: etgs.length === 1 ? etgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ''),
+              }}
+            >
+              <option value="">Sélectionnez</option>
+              {/* <hr /> */}
+              {etgs.map((entity) => {
+                return (
+                  <option key={entity.id} value={entity.id}>
+                    {entity.nom_d_usage} - {entity.code_postal} {entity.ville} (
+                    {getUserRoleLabel(entity.type)})
+                  </option>
+                );
+              })}
+            </Select>
+          )}
+          {!canChangeNextOwner && (
+            <InputNotEditable
+              label={
+                depotType === EntityTypes.CCG
+                  ? 'Centre de collecte'
+                  : 'Établissement de Traitement du Gibier sauvage'
+              }
+              nativeInputProps={{
+                type: 'text',
+                autoComplete: 'off',
+                defaultValue: entityDisplay ?? '',
+              }}
+            />
+          )}
+          <Component
+            label="Date de dépôt dans la chambre froide"
+            // click here to set now
+            hintText={
+              canEdit ? (
+                <button
+                  className="inline-block"
+                  type="button"
+                  onClick={() => {
+                    updateFei(fei.numero, {
+                      premier_detenteur_date_depot_quelque_part: dayjs().toDate(),
+                    });
+                  }}
+                >
+                  <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
+                </button>
+              ) : null
             }
             nativeInputProps={{
-              type: 'text',
+              id: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part,
+              name: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part,
+              type: 'datetime-local',
+              required: true,
               autoComplete: 'off',
-              defaultValue: entityDisplay ?? '',
+              suppressHydrationWarning: true,
+              defaultValue: fei?.premier_detenteur_date_depot_quelque_part
+                ? dayjs(fei?.premier_detenteur_date_depot_quelque_part).format('YYYY-MM-DDTHH:mm')
+                : undefined,
             }}
           />
-        )}
-        <Component
-          label="Date de dépôt dans la chambre froide"
-          // click here to set now
-          hintText={
-            canEdit ? (
-              <button
-                className="inline-block"
-                type="button"
-                onClick={() => {
-                  updateFei(fei.numero, {
-                    premier_detenteur_date_depot_quelque_part: dayjs().toDate(),
-                  });
-                }}
-              >
-                <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
-              </button>
-            ) : null
-          }
-          nativeInputProps={{
-            id: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part,
-            name: Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part,
-            type: 'datetime-local',
-            required: true,
-            autoComplete: 'off',
-            suppressHydrationWarning: true,
-            defaultValue: fei?.premier_detenteur_date_depot_quelque_part
-              ? dayjs(fei?.premier_detenteur_date_depot_quelque_part).format('YYYY-MM-DDTHH:mm')
-              : undefined,
-          }}
-        />
-        {canChangeNextOwner && canEdit && (
-          <Button type="submit">
-            {depotType === EntityTypes.ETG ? 'Enregistrer et envoyer la fiche' : 'Enregistrer'}
-          </Button>
-        )}
-      </form>
-      {needSelectNextUser && (
-        <>
-          <hr className="mt-8" />
-          <div className="z-50 flex flex-col bg-white pt-4 md:w-auto md:items-start [&_ul]:md:min-w-96">
-            <SelectNextOwnerForPremierDetenteurOrIntermediaire calledFrom="premier-detenteur-need-select-next" />
-          </div>
-        </>
-      )}
+          {canChangeNextOwner && canEdit && (
+            <Button type="submit">
+              {depotType === EntityTypes.ETG ? 'Enregistrer et envoyer la fiche' : 'Enregistrer'}
+            </Button>
+          )}
+        </form>
+      </Accordion>
+      <Accordion
+        titleAs="h3"
+        label="Sélection du destinataire"
+        defaultExpanded={needSelectNextUser}
+        key={needSelectNextUser ? 'true' : 'false'}
+      >
+        <div className="z-50 flex flex-col bg-white md:w-auto md:items-start [&_ul]:md:min-w-96">
+          <SelectNextOwnerForPremierDetenteurOrIntermediaire
+            calledFrom="premier-detenteur-need-select-next"
+            disabled={!needSelectNextUser}
+          />
+        </div>
+      </Accordion>
       {canChangeNextOwner &&
         depotType === EntityTypes.ETG &&
         (fei.fei_next_owner_user_id || fei.fei_next_owner_entity_id) && (
