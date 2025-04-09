@@ -73,19 +73,6 @@ export default function CurrentOwnerConfirm() {
     return true;
   }, [fei, user, nextOwnerEntity]);
 
-  const needNextOwnerButNotMe = useMemo(() => {
-    if (!fei.fei_next_owner_user_id && !fei.fei_next_owner_entity_id) {
-      return false;
-    }
-    if (fei.automatic_closed_at || fei.svi_signed_at) {
-      return false;
-    }
-    if (canConfirmCurrentOwner) {
-      return false;
-    }
-    return true;
-  }, [fei, canConfirmCurrentOwner]);
-
   const nextOwnerCollecteurProEntityId = useNextOwnerCollecteurProEntityId(fei, user);
   const myNextRoleForThisFei = useGetMyNextRoleForThisFei(fei, user);
 
@@ -227,21 +214,6 @@ export default function CurrentOwnerConfirm() {
               severity="info"
               title={`Vous transportez les carcasses vers\u00A0: ${nextName}`}
               description={description}
-            />
-          </div>
-        </div>
-      );
-    }
-    if (needNextOwnerButNotMe) {
-      const nextName =
-        nextOwnerEntity?.nom_d_usage || `${nextOwnerUser?.prenom} ${nextOwnerUser?.nom_de_famille}`;
-      return (
-        <div className="bg-alt-blue-france pb-8">
-          <div className="bg-white">
-            <Alert
-              severity="info"
-              description={`Cette fiche a été attribuée à un intervenant que vous ne pouvez pas représenter.\u00a0C'est à elle ou lui d'intervenir.`}
-              title={`Fiche en attente de prise en charge par\u00A0: ${nextName}`}
             />
           </div>
         </div>
