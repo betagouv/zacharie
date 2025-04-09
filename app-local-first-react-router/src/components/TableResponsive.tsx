@@ -25,7 +25,7 @@ export default function TableResponsive({
             <tr>
               <th
                 scope="col"
-                className="hidden w-14 text-left text-sm font-semibold text-gray-900 sm:pl-0 sm:table-cell"
+                className="hidden w-14 text-left text-sm font-semibold text-gray-900 sm:pl-0 lg:table-cell"
               />
               <th
                 scope="col"
@@ -83,19 +83,19 @@ export default function TableResponsive({
                         ]}
                       />
                     </td>
-                    <td className="w-full max-w-0 text-sm font-medium text-gray-900 sm:hidden">
-                      <Link to={link} className="block bg-none py-4 pl-4 pr-3 !no-underline">
+                    <td className="w-full max-w-0 text-sm font-medium text-gray-900 sm:hidden overflow-hidden">
+                      <Link to={link!} className="block bg-none py-4 pl-4 pr-3 !no-underline">
                         <dl className="font-normal lg:hidden">
                           <dt className="mt-2">{headers[0]}</dt>
-                          <dd className="truncate text-gray-700">{cols[0]}</dd>
+                          <dd className="text-ellipsis text-gray-700">{cols[0]}</dd>
                           <dt className="mt-1 sm:hidden">{headers[1]}</dt>
-                          <dd className="truncate text-gray-500 sm:hidden">{cols[1]}</dd>
+                          <dd className="text-ellipsis text-gray-500 sm:hidden">{cols[1]}</dd>
                           <dt className="mt-1 sm:hidden">{headers[2]}</dt>
-                          <dd className="truncate text-gray-500 sm:hidden">{cols[2]}</dd>
+                          <dd className="text-ellipsis text-gray-500 sm:hidden">{cols[2]}</dd>
                           <dt className="mt-1 sm:hidden">{headers[3]}</dt>
-                          <dd className="truncate text-gray-500 sm:hidden">{cols[3]}</dd>
+                          <dd className="text-ellipsis text-gray-500 sm:hidden">{cols[3]}</dd>
                           <dt className="mt-1 sm:hidden">Numéro de fiche</dt>
-                          <dd className="truncate text-gray-500 sm:hidden">{id}</dd>
+                          <dd className="text-ellipsis text-gray-500 sm:hidden">{id}</dd>
                         </dl>
                       </Link>
                     </td>
@@ -103,7 +103,7 @@ export default function TableResponsive({
                       {!isSynced && (
                         <div className="absolute top-0 left-0 border-l-8 border-action-high-blue-france w-8 h-full"></div>
                       )}
-                      <Link to={link} className="block bg-none !no-underline">
+                      <Link to={link!} className="block bg-none !no-underline">
                         <span className="hidden lg:block">{cols[0]}</span>
                         <dl className="font-normal lg:hidden px-3 py-4">
                           <dt className="mt-2">{headers[1]}</dt>
@@ -116,19 +116,19 @@ export default function TableResponsive({
                       </Link>
                     </td>
                     <td className="hidden text-sm text-gray-500 sm:table-cell">
-                      <Link to={link} className="block bg-none px-3 py-4 !no-underline">
+                      <Link to={link!} className="block bg-none px-3 py-4 !no-underline">
                         {cols[1]}
                       </Link>
                     </td>
                     <td className="hidden max-w-96 text-sm text-gray-500 sm:table-cell">
-                      <Link to={link} className="block bg-none px-3 py-4 !no-underline">
+                      <Link to={link!} className="block bg-none px-3 py-4 !no-underline">
                         {cols[2]}
                       </Link>
                     </td>
                     {headers[3] && (
-                      <td className="flex h-full max-w-56 items-stretch justify-start text-left text-sm font-medium sm:table-cell sm:pr-0">
+                      <td className="h-full max-w-56 items-stretch justify-start text-left text-sm font-medium hidden sm:table-cell sm:pr-0">
                         <Link
-                          to={link}
+                          to={link!}
                           className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 !no-underline"
                         >
                           {cols[3]}
@@ -145,7 +145,7 @@ export default function TableResponsive({
                         strongId ? 'text-gray-900' : 'text-gray-200',
                       ].join(' ')}
                     >
-                      <Link to={link} className="block bg-none !p-0 !m-0 !no-underline">
+                      <Link to={link!} className="block bg-none !p-0 !m-0 !no-underline">
                         {id}
                       </Link>
                     </td>
