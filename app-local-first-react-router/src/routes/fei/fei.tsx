@@ -16,6 +16,8 @@ import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
 import FEI_SVI from './svi';
 import { useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
+import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
+import FeiStepper from '@app/components/FeiStepper';
 
 export default function FeiLoader() {
   const params = useParams();
@@ -149,11 +151,12 @@ function Fei() {
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <title>{params.fei_numero} | Zacharie | Ministère de l'Agriculture</title>
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-          <div className="fr-col-12 fr-col-md-10 m-4 bg-white md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
+          <div className="fr-col-12 fr-col-md-10 m-4 bg-alt-blue-france md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
             <FeiTransfer />
-            <CurrentOwnerConfirm />
-            <CurrentOwner />
-            <div className="p-4 md:p-8">
+            {/* <CurrentOwnerConfirm /> */}
+            {/* <CurrentOwner /> */}
+            <FeiStepper />
+            <div className="p-4 md:p-8 bg-white">
               {showInterface === UserRoles.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
               {showInterface === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
               {showInterface === UserRoles.PREMIER_DETENTEUR && <FeiPremierDetenteur showIdentity />}
