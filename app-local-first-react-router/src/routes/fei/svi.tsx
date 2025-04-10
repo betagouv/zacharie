@@ -38,7 +38,6 @@ export default function FEI_SVI() {
     if (fei.svi_entity_id) {
       if (user.roles.includes(UserRoles.SVI)) {
         const svi = state.entities[fei.svi_entity_id];
-        console.log({ svi });
         if (svi?.relation === 'WORKING_FOR') {
           return true;
         }
@@ -72,7 +71,14 @@ export default function FEI_SVI() {
   return (
     <>
       <FEIDonneesDeChasse />
-      <Accordion titleAs="h3" label={<>Identité du SVI{!canEdit ? <PencilStrikeThrough /> : ''}</>}>
+      <Accordion
+        titleAs="h3"
+        label={
+          <>
+            Identité du SVI <PencilStrikeThrough />
+          </>
+        }
+      >
         <EntityNotEditable user={sviUser!} entity={svi!} />
       </Accordion>
 
