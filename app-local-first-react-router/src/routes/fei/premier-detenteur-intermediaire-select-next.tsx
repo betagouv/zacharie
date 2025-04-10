@@ -2,7 +2,7 @@ import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import type { EntityWithUserRelation } from '~/src/types/entity';
-import { UserRoles, Prisma } from '@prisma/client';
+import { UserRoles, Prisma, Carcasse } from '@prisma/client';
 import { useMemo, useState } from 'react';
 // import { mergeFei } from '@app/db/fei.client';
 import { useParams } from 'react-router';
@@ -21,15 +21,19 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
-  const updateFei = state.updateFei;
-  const updateCarcasse = state.updateCarcasse;
-  const addLog = state.addLog;
-  const fei = state.feis[params.fei_numero!];
-  const carcasses = state.carcassesIdsByFei[fei.numero];
-  const entities = state.entities;
-  const ccgs = state.ccgsIds.map((id) => state.entities[id]);
-  const etgs = state.etgsIds.map((id) => state.entities[id]);
-  const svis = state.svisIds.map((id) => state.entities[id]);
+  const updateFei = useZustandStore((state) => state.updateFei);
+  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
+  const addLog = useZustandStore((state) => state.addLog);
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+  const carcasses = useZustandStore((state) => state.carcassesIdsByFei[fei.numero]);
+  const entities = useZustandStore((state) => state.entities);
+  const ccgs = useZustandStore((state) => state.ccgsIds).map((id) => entities[id]);
+  const etgs = useZustandStore((state) => state.etgsIds).map((id) => entities[id]);
+  const svis = useZustandStore((state) => state.svisIds).map((id) => entities[id]);
+  const premierDetenteurEntity = fei.premier_detenteur_entity_id
+    ? entities[fei.premier_detenteur_entity_id]
+    : null;
 
   const collecteursPro = state.collecteursProIds.map((id) => state.entities[id]);
   const feiIntermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
@@ -43,23 +47,22 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
         return true;
       }
     }
-    if (!fei.premier_detenteur_date_depot_quelque_part) {
-      return false;
-    }
+    // if (!fei.premier_detenteur_date_depot_quelque_part) {
+    //   return false;
+    // }
     if (
-      UserRoles.PREMIER_DETENTEUR !== fei.fei_current_owner_role &&
-      UserRoles.CCG !== fei.fei_current_owner_role &&
-      UserRoles.COLLECTEUR_PRO !== fei.fei_current_owner_role
+      UserRoles.PREMIER_DETENTEUR === fei.fei_current_owner_role ||
+      UserRoles.CCG === fei.fei_current_owner_role ||
+      UserRoles.COLLECTEUR_PRO === fei.fei_current_owner_role
     ) {
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }, [
     fei.premier_detenteur_user_id,
     fei.fei_current_owner_role,
     fei.examinateur_initial_user_id,
     fei.examinateur_initial_approbation_mise_sur_le_marche,
-    fei.premier_detenteur_date_depot_quelque_part,
   ]);
 
   const showSvi = useMemo(() => {
@@ -70,13 +73,13 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
     if (latestIntermediaire.fei_intermediaire_role !== UserRoles.ETG) {
       return false;
     }
-    if (!latestIntermediaire.check_finished_at) {
-      return false;
-    }
+    // if (!latestIntermediaire.check_finished_at) {
+    //   return false;
+    // }
     return true;
   }, [fei.fei_current_owner_role, feiIntermediaires]);
 
-  const [nextRole] = useState<UserRoles | null>(() => {
+  const nextRole = useMemo(() => {
     if (showIntermediaires) {
       return UserRoles.ETG;
     }
@@ -98,7 +101,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
       }
     }
     return fei.fei_next_owner_role ?? null;
-  });
+  }, [fei, showIntermediaires, showSvi, collecteursPro, etgs]);
 
   const nextOwners = useMemo(() => {
     switch (nextRole) {
@@ -159,10 +162,30 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
         }
       }
     }
+    if (
+      fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO &&
+      fei.fei_next_owner_role === UserRoles.ETG &&
+      !!fei.fei_next_owner_entity_id
+    ) {
+      if (user.roles.includes(UserRoles.ETG)) {
+        if (state.etgsIds.includes(fei.fei_next_owner_entity_id)) {
+          const etg = state.entities[fei.fei_next_owner_entity_id];
+          if (etg.relation === 'WORKING_FOR') {
+            return true;
+          }
+        }
+      }
+    }
     return false;
   }, [fei, user, state]);
 
   const canSelectNextOwner = useMemo(() => {
+    if (
+      premierDetenteurEntity?.relation === 'WORKING_FOR' &&
+      fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR
+    ) {
+      return true;
+    }
     if (isEtgWorkingFor) {
       return true;
     }
@@ -204,7 +227,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
           };
           updateFei(fei.numero, nextFei);
           if (nextRole === UserRoles.SVI) {
-            const nextCarcasse = {
+            const nextCarcasse: Partial<Carcasse> = {
               svi_assigned_to_fei_at: nextRole === UserRoles.SVI ? dayjs().toDate() : null,
             };
             for (const zacharie_carcasse_id of carcasses) {
@@ -253,7 +276,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
               })}
             </Select>
             {(!nextOwnerValue || nextOwnerValue !== savedNextOwner) && (
-              <Button type="submit" disabled={!nextOwnerValue}>
+              <Button type="submit" disabled={disabled || !nextOwnerValue}>
                 Envoyer
               </Button>
             )}

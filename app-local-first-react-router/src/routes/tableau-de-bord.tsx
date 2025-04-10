@@ -103,32 +103,24 @@ export default function TableauDeBordIndex() {
               Vous êtes de retour en ligne. Cliquez <u>ici</u> pour rafraichir les données.
             </button>
           )}
-          <h1 className="fr-h2 fr-mb-2w">Mes fiches d'accompagnement du gibier sauvage</h1>
 
           {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
-            <section className="mb-6 bg-white md:shadow">
-              <div className="p-4 md:p-8 md:pb-0">
-                <h2 className="fr-h3 fr-mb-2w">Nouvelle fiche</h2>
-                <p className="fr-text--regular mb-4">Pour créer une nouvelle fiche, c'est par ici 👇</p>
-                <div className="flex flex-col items-start bg-white [&_ul]:md:min-w-96">
-                  <ButtonsGroup
-                    buttons={[
-                      {
-                        children: 'Nouvelle fiche',
-                        nativeButtonProps: {
-                          onClick: () => {
-                            const newFei = createNewFei();
-                            navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
-                          },
-                        },
-                      },
-                    ]}
-                  />
-                </div>
-              </div>
-            </section>
+            <ButtonsGroup
+              className="block sm:hidden"
+              buttons={[
+                {
+                  children: 'Nouvelle fiche',
+                  nativeButtonProps: {
+                    onClick: () => {
+                      const newFei = createNewFei();
+                      navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+                    },
+                  },
+                },
+              ]}
+            />
           )}
-          <div className="items-center gap-2 my-2 justify-end hidden sm:flex">
+          <div className="items-center gap-2 my-2 justify-end hidden lg:flex">
             <Button
               onClick={() => {
                 onExportToXlsx(selectedFeis);
@@ -168,7 +160,10 @@ export default function TableauDeBordIndex() {
                           <>
                             {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                               return (
-                                <p className="m-0" key={line}>
+                                <p
+                                  className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
+                                  key={line}
+                                >
                                   {line}
                                 </p>
                               );
@@ -225,7 +220,10 @@ export default function TableauDeBordIndex() {
                             <>
                               {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                                 return (
-                                  <p className="m-0" key={line}>
+                                  <p
+                                    className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
+                                    key={line}
+                                  >
                                     {line}
                                   </p>
                                 );
@@ -302,7 +300,10 @@ export default function TableauDeBordIndex() {
                           <>
                             {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                               return (
-                                <p className="m-0" key={line}>
+                                <p
+                                  className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
+                                  key={line}
+                                >
                                   {line}
                                 </p>
                               );
@@ -363,7 +364,10 @@ export default function TableauDeBordIndex() {
                             <>
                               {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                                 return (
-                                  <p className="m-0" key={line}>
+                                  <p
+                                    className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
+                                    key={line}
+                                  >
                                     {line}
                                   </p>
                                 );
@@ -425,7 +429,10 @@ export default function TableauDeBordIndex() {
                             <>
                               {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
                                 return (
-                                  <p className="m-0" key={line}>
+                                  <p
+                                    className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
+                                    key={line}
+                                  >
                                     {line}
                                   </p>
                                 );

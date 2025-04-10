@@ -15,6 +15,9 @@ export default function updateCarcasseStatus<T extends Carcasse | CarcasseForRes
     if (dayjs().diff(dayjs(carcasse.svi_assigned_to_fei_at), 'day') > 10) {
       return CarcasseStatus.ACCEPTE;
     }
+    if (carcasse.svi_carcasse_status === CarcasseStatus.ACCEPTE) {
+      return CarcasseStatus.ACCEPTE;
+    }
     return CarcasseStatus.SANS_DECISION;
   }
   if (!carcasse.svi_ipm1_presentee_inspection && !carcasse.svi_ipm2_presentee_inspection) {
@@ -74,5 +77,24 @@ export function getCarcasseStatusLabel<T extends CarcasseForResponseForRegistry>
         return 'Acceptée';
       }
       return 'Sans décision';
+  }
+}
+
+export function getSimplifiedCarcasseStatus(carcasse: Carcasse) {
+  switch (carcasse.svi_carcasse_status) {
+    case CarcasseStatus.SANS_DECISION:
+    case CarcasseStatus.CONSIGNE:
+    default:
+      return 'en cours';
+    case CarcasseStatus.ACCEPTE:
+    case CarcasseStatus.LEVEE_DE_CONSIGNE:
+    case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
+      return 'accepté';
+    case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
+    case CarcasseStatus.REFUS_ETG_COLLECTEUR:
+    case CarcasseStatus.MANQUANTE_SVI:
+    case CarcasseStatus.SAISIE_TOTALE:
+    case CarcasseStatus.SAISIE_PARTIELLE:
+      return 'refusé';
   }
 }

@@ -12,11 +12,7 @@ import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useGetMyNextRoleForThisFei, useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
 
-export default function CurrentOwnerConfirm({
-  setSelectedTabId,
-}: {
-  setSelectedTabId: (id: string) => void;
-}) {
+export default function CurrentOwnerConfirm() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateFei = useZustandStore((state) => state.updateFei);
@@ -33,10 +29,13 @@ export default function CurrentOwnerConfirm({
   const nextOwnerUser = users[fei.fei_next_owner_user_id!];
 
   const isTransporting = useMemo(() => {
+    if (!user.roles.includes(UserRoles.ETG) && !user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+      return false;
+    }
     return (
       fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.fei_next_owner_role === UserRoles.ETG
     );
-  }, [fei]);
+  }, [fei, user]);
 
   const canConfirmCurrentOwner = useMemo(() => {
     if (fei.fei_next_owner_user_id === user.id) {
@@ -50,6 +49,11 @@ export default function CurrentOwnerConfirm({
       nextOwnerEntity.relation !== 'WORKING_FOR_ENTITY_RELATED_WITH'
     ) {
       return false;
+    }
+    if (user.roles.includes(UserRoles.SVI)) {
+      if (fei.fei_next_owner_role !== UserRoles.SVI) {
+        return false;
+      }
     }
     if (fei.fei_next_owner_role === UserRoles.SVI) {
       if (!user.roles.includes(UserRoles.SVI)) {
@@ -68,16 +72,6 @@ export default function CurrentOwnerConfirm({
     }
     return true;
   }, [fei, user, nextOwnerEntity]);
-
-  const needNextOwnerButNotMe = useMemo(() => {
-    if (!fei.fei_next_owner_user_id && !fei.fei_next_owner_entity_id) {
-      return false;
-    }
-    if (canConfirmCurrentOwner) {
-      return false;
-    }
-    return true;
-  }, [fei, canConfirmCurrentOwner]);
 
   const nextOwnerCollecteurProEntityId = useNextOwnerCollecteurProEntityId(fei, user);
   const myNextRoleForThisFei = useGetMyNextRoleForThisFei(fei, user);
@@ -192,7 +186,6 @@ export default function CurrentOwnerConfirm({
       fei_intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
-    setSelectedTabId('Destinataires');
   }
 
   if (!canConfirmCurrentOwner) {
@@ -204,7 +197,6 @@ export default function CurrentOwnerConfirm({
         <button
           onClick={() => {
             handlePriseEnCharge({ transfer: false });
-            setSelectedTabId('Destinataires');
           }}
           type="button"
         >
@@ -222,21 +214,6 @@ export default function CurrentOwnerConfirm({
               severity="info"
               title={`Vous transportez les carcasses vers\u00A0: ${nextName}`}
               description={description}
-            />
-          </div>
-        </div>
-      );
-    }
-    if (needNextOwnerButNotMe) {
-      const nextName =
-        nextOwnerEntity?.nom_d_usage || `${nextOwnerUser?.prenom} ${nextOwnerUser?.nom_de_famille}`;
-      return (
-        <div className="bg-alt-blue-france pb-8">
-          <div className="bg-white">
-            <Alert
-              severity="info"
-              description={`Cette fiche a été attribuée à un intervenant que vous ne pouvez pas représenter.\u00a0C'est à elle ou lui d'intervenir.`}
-              title={`Fiche en attente de prise en charge par\u00A0: ${nextName}`}
             />
           </div>
         </div>
@@ -278,7 +255,6 @@ export default function CurrentOwnerConfirm({
             className="my-4 block"
             onClick={() => {
               handlePriseEnCharge({ transfer: false, action: 'current-owner-confirm-svi' });
-              setSelectedTabId(UserRoles.SVI);
             }}
           >
             Je prends en charge cette fiche
@@ -301,7 +277,6 @@ export default function CurrentOwnerConfirm({
                         collecteursPro.find((c) => c.id === nextOwnerCollecteurProEntityId)?.nom_d_usage ||
                         '',
                     });
-                    setSelectedTabId('Destinataires');
                   }}
                 >
                   Je transporte le gibier
@@ -315,7 +290,6 @@ export default function CurrentOwnerConfirm({
                         transfer: false,
                         action: 'current-owner-confirm-etg-and-transporteur-receptionne',
                       });
-                      setSelectedTabId('Destinataires');
                     }}
                   >
                     Je suis à l'atelier pour réceptionner le gibier
@@ -328,7 +302,6 @@ export default function CurrentOwnerConfirm({
                 className="my-4 block"
                 onClick={() => {
                   handlePriseEnCharge({ transfer: false, action: 'current-owner-confirm-etg-reception' });
-                  setSelectedTabId('Destinataires');
                 }}
               >
                 Je réceptionne le gibier
@@ -338,48 +311,44 @@ export default function CurrentOwnerConfirm({
         )}
         {!myNextRoleForThisFeiIsCollecteurPro && (
           <>
-            <span>
-              Vous souhaitez la transférer à un autre acteur&nbsp;? (exemple: erreur d'attribution,
-              assignation à un autre collecteur)
-            </span>
-            <Button
-              priority="tertiary"
-              type="button"
-              className="!mt-2 block"
-              onClick={() => handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer' })}
-            >
-              Transférer la fiche
-            </Button>
-            <span className="mt-4 inline-block text-sm">
-              Vous souhaitez la renvoyer à l'expéditeur&nbsp;?
-            </span>
-            <Button
-              priority="tertiary no outline"
-              type="submit"
-              className="!mt-0 text-sm"
-              onClick={() => {
-                const nextFei = {
-                  fei_next_owner_entity_id: null,
-                  fei_next_owner_entity_name_cache: null,
-                  fei_next_owner_user_id: null,
-                  fei_next_owner_user_name_cache: null,
-                };
-                updateFei(fei.numero, nextFei);
-                addLog({
-                  user_id: user.id,
-                  user_role: fei.fei_next_owner_role!,
-                  fei_numero: fei.numero,
-                  action: 'current-owner-renvoi',
-                  entity_id: fei.fei_next_owner_entity_id,
-                  zacharie_carcasse_id: null,
-                  fei_intermediaire_id: null,
-                  carcasse_intermediaire_id: null,
-                  history: createHistoryInput(fei, nextFei),
-                });
-              }}
-            >
-              Renvoyer la fiche
-            </Button>
+            <div>
+              <span>Il y a une erreur ?</span>
+              <div className="flex gap-2 items-center">
+                <Button
+                  priority="tertiary"
+                  type="button"
+                  onClick={() => handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer' })}
+                >
+                  Transférer la fiche
+                </Button>
+                <Button
+                  priority="tertiary no outline"
+                  type="submit"
+                  onClick={() => {
+                    const nextFei = {
+                      fei_next_owner_entity_id: null,
+                      fei_next_owner_entity_name_cache: null,
+                      fei_next_owner_user_id: null,
+                      fei_next_owner_user_name_cache: null,
+                    };
+                    updateFei(fei.numero, nextFei);
+                    addLog({
+                      user_id: user.id,
+                      user_role: fei.fei_next_owner_role!,
+                      fei_numero: fei.numero,
+                      action: 'current-owner-renvoi',
+                      entity_id: fei.fei_next_owner_entity_id,
+                      zacharie_carcasse_id: null,
+                      fei_intermediaire_id: null,
+                      carcasse_intermediaire_id: null,
+                      history: createHistoryInput(fei, nextFei),
+                    });
+                  }}
+                >
+                  Renvoyer la fiche à l'expéditeur
+                </Button>
+              </div>
+            </div>
           </>
         )}
       </CallOut>

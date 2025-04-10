@@ -1,12 +1,5 @@
 import { useMemo } from 'react';
-import {
-  Carcasse,
-  CarcasseStatus,
-  CarcasseType,
-  IPM1Decision,
-  IPM1Protocole,
-  IPM2Decision,
-} from '@prisma/client';
+import { Carcasse, CarcasseStatus, CarcasseType, IPM1Decision, IPM2Decision } from '@prisma/client';
 import dayjs from 'dayjs';
 import { CustomNotice } from '@app/components/CustomNotice';
 import { useParams, Link } from 'react-router';
@@ -60,10 +53,7 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
         .filter(Boolean)
         .join(' ')}
     >
-      <CustomNotice
-        key={carcasse.numero_bracelet}
-        className={`${carcasse.type === CarcasseType.PETIT_GIBIER ? '!bg-gray-300' : ''}`}
-      >
+      <CustomNotice key={carcasse.numero_bracelet}>
         <Component
           className="block w-full p-4 text-left [&_*]:no-underline [&_*]:hover:no-underline"
           to={

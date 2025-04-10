@@ -13,12 +13,14 @@ import CarcassesExaminateur from './examinateur-carcasses';
 import SelectNextForExaminateur from './examinateur-select-next';
 import FeiPremierDetenteur from './premier-detenteur';
 import EntityNotEditable from '@app/components/EntityNotEditable';
-import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
+import { formatCountCarcasseByEspece, formatSummaryCount } from '@app/utils/count-carcasses';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import Alert from '@codegouvfr/react-dsfr/Alert';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
+import useGetCommunesDeChasseFavorites from '@app/utils/useGetCommunesDeChasseFavorites';
+import { Tag } from '@codegouvfr/react-dsfr/Tag';
 
 export default function FEIExaminateurInitial() {
   const params = useParams();
@@ -79,12 +81,9 @@ export default function FEIExaminateurInitial() {
     return true;
   }, [fei, user]);
 
-  const examinateurIsAlsoPremierDetenteur = useMemo(() => {
-    if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
-      return false;
-    }
-    if (fei.fei_current_owner_user_id !== user.id) {
-      return false;
+  const showPremierDetenteur = useMemo(() => {
+    if (premierDetenteurEntity) {
+      return true;
     }
     if (fei.premier_detenteur_user_id !== user.id) {
       return false;
@@ -93,7 +92,7 @@ export default function FEIExaminateurInitial() {
       return false;
     }
     return true;
-  }, [fei, user]);
+  }, [fei, user, premierDetenteurEntity]);
 
   const [carcassesNotReady, atLeastOneCarcasseWithAnomalie] = useMemo(() => {
     const notReady = [];
@@ -125,6 +124,9 @@ export default function FEIExaminateurInitial() {
   }, [carcasses]);
 
   const canEdit = useMemo(() => {
+    if (fei.svi_signed_at || fei.automatic_closed_at) {
+      return false;
+    }
     if (fei.examinateur_initial_user_id !== user.id) {
       // seul l'examinateur initial peut modifier
       return false;
@@ -161,6 +163,19 @@ export default function FEIExaminateurInitial() {
     return true;
   }, [fei, user]);
 
+  const canEditAsPremierDetenteur = useMemo(() => {
+    if (fei.svi_signed_at || fei.automatic_closed_at || fei.svi_assigned_at) {
+      return false;
+    }
+    if (fei.examinateur_initial_user_id === user.id) {
+      return true;
+    }
+    if (premierDetenteurEntity?.relation === 'WORKING_FOR') {
+      return true;
+    }
+    return false;
+  }, [fei, user, premierDetenteurEntity]);
+
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
@@ -194,7 +209,9 @@ export default function FEIExaminateurInitial() {
   }, [fei, carcassesNotReady, carcasses, onlyPetitGibier]);
 
   const checkboxLabel = useMemo(() => {
-    let label = fei.examinateur_initial_approbation_mise_sur_le_marche ? "J'ai certifié" : 'Je certifie';
+    let label = fei.examinateur_initial_approbation_mise_sur_le_marche
+      ? "J'ai certifié"
+      : `Je, ${examinateurInitialUser?.nom_de_famille} ${examinateurInitialUser?.prenom}, certifie`;
     if (!atLeastOneCarcasseWithAnomalie) {
       label += " qu'aucune anomalie n'a été observée lors de l'examen initial et";
       label += ' que les carcasses en peau examinées ce jour peuvent être mises sur le marché.';
@@ -206,224 +223,209 @@ export default function FEIExaminateurInitial() {
     return label;
   }, [fei.examinateur_initial_approbation_mise_sur_le_marche, atLeastOneCarcasseWithAnomalie]);
 
+  const communesDeChasseFavorites = useGetCommunesDeChasseFavorites(!fei?.commune_mise_a_mort);
+
   return (
     <>
-      <Accordion
-        titleAs="h3"
-        label={
-          <>
-            Identité de l'Examinateur <PencilStrikeThrough />
-          </>
-        }
-        defaultExpanded={!canEdit}
-      >
-        <UserNotEditable user={examinateurInitialUser!} withCfei />
-      </Accordion>
-      <Accordion titleAs="h3" label="Données de chasse" defaultExpanded>
-        <form method="POST" onSubmit={(e) => e.preventDefault()} ref={examRef}>
-          <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
-          <Component
-            label="Date de mise à mort (et d'éviscération) *"
-            hintText={
-              canEdit ? (
-                <button
-                  className="inline-block"
-                  type="button"
-                  onClick={() => {
-                    const date = dayjs.utc().startOf('day').toDate();
-                    updateFei(fei.numero, {
-                      date_mise_a_mort: date,
-                    });
-                  }}
-                >
-                  <u className="inline">Cliquez ici</u> pour définir la date du jour
-                </button>
-              ) : null
-            }
-            nativeInputProps={{
-              id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-              name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-              type: 'date',
-              autoComplete: 'off',
-              required: true,
-              suppressHydrationWarning: true,
-              onBlur: (e) => {
-                const date = dayjs.utc(e.target.value).startOf('day').toDate();
+      <Component
+        label="Date de mise à mort (et d'éviscération)&nbsp;*"
+        hintText={
+          canEdit ? (
+            <button
+              className="inline-block"
+              type="button"
+              onClick={() => {
+                const date = dayjs.utc().startOf('day').toDate();
                 updateFei(fei.numero, {
                   date_mise_a_mort: date,
                 });
-              },
-              defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('YYYY-MM-DD') : '',
-            }}
-          />
-          <VilleComponent
-            label="Commune de mise à mort *"
-            onSelect={(commune_mise_a_mort) => updateFei(fei.numero, { commune_mise_a_mort })}
-            nativeInputProps={{
-              id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
-              name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
-              type: 'text',
-              required: true,
-              autoComplete: 'off',
-              defaultValue: fei?.commune_mise_a_mort ?? '',
-            }}
-          />
-          <Component
-            label="Heure de mise à mort de la première carcasse *"
-            nativeInputProps={{
-              id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-              name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-              type: 'time',
-              required: true,
-              onBlur: (e) => updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: e.target.value }),
-              autoComplete: 'off',
-              defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
-            }}
-          />
-        </form>
-      </Accordion>
-      <Accordion titleAs="h3" label={`Carcasses/Lots de carcasses (${carcasses.length})`} defaultExpanded>
-        <CarcassesExaminateur canEdit={canEdit} />
-      </Accordion>
+              }}
+            >
+              <u className="inline">Cliquez ici</u> pour définir la date du jour
+            </button>
+          ) : null
+        }
+        nativeInputProps={{
+          id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+          name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
+          type: 'date',
+          autoComplete: 'off',
+          required: true,
+          suppressHydrationWarning: true,
+          onBlur: (e) => {
+            const date = dayjs.utc(e.target.value).startOf('day').toDate();
+            updateFei(fei.numero, {
+              date_mise_a_mort: date,
+            });
+          },
+          defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('YYYY-MM-DD') : '',
+        }}
+      />
+      <VilleComponent
+        label="Commune de mise à mort&nbsp;*"
+        key={fei?.commune_mise_a_mort}
+        onSelect={(commune_mise_a_mort) => updateFei(fei.numero, { commune_mise_a_mort })}
+        hintText={
+          <>
+            {communesDeChasseFavorites.map((commune) => {
+              return (
+                <Tag
+                  key={commune}
+                  iconId="fr-icon-checkbox-circle-line"
+                  className="mr-2"
+                  nativeButtonProps={{
+                    onClick: () => updateFei(fei.numero, { commune_mise_a_mort: commune }),
+                  }}
+                >
+                  {commune}
+                </Tag>
+              );
+            })}
+          </>
+        }
+        nativeInputProps={{
+          id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
+          name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
+          type: 'text',
+          required: true,
+          autoComplete: 'off',
+          defaultValue: fei?.commune_mise_a_mort ?? '',
+        }}
+      />
+      <Component
+        label="Heure de mise à mort de la première carcasse&nbsp;*"
+        nativeInputProps={{
+          id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+          name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+          type: 'time',
+          required: true,
+          onBlur: (e) => updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: e.target.value }),
+          autoComplete: 'off',
+          defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
+        }}
+      />
+      <CarcassesExaminateur canEdit={canEdit} canEditAsPremierDetenteur={canEditAsPremierDetenteur} />
 
       {examinateurInitialUser && (
-        <Accordion titleAs="h3" label="Approbation de mise sur le marché" defaultExpanded>
-          <form method="POST" onSubmit={(e) => e.preventDefault()}>
-            <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
-            {!onlyPetitGibier && (
-              <Component
-                label="Heure d'éviscération de la dernière carcasse"
-                nativeInputProps={{
-                  id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                  name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                  type: 'time',
-                  required: true,
-                  autoComplete: 'off',
-                  onBlur: (e) =>
-                    updateFei(fei.numero, { heure_evisceration_derniere_carcasse: e.target.value }),
-                  defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
-                }}
-              />
-            )}
-
+        <>
+          <hr className="mt-8" />
+          <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
+          {!onlyPetitGibier && (
             <Component
-              label="Date de validation de l’examen initial"
-              hintText={
-                canEdit ? (
-                  <button
-                    className="inline-block text-left"
-                    type="button"
-                    onClick={() => {
-                      updateFei(fei.numero, {
-                        examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
-                        resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
-                      });
-                    }}
-                  >
-                    Cette date vaut date d'approbation de mise sur le marché.{' '}
-                    <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
-                    maintenant
-                  </button>
-                ) : (
-                  "Cette date vaut date d'approbation de mise sur le marché"
-                )
-              }
+              label="Heure d'éviscération de la dernière carcasse&nbsp;*"
               nativeInputProps={{
-                id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
-                name: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
-                type: 'datetime-local',
+                id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                type: 'time',
+                required: true,
                 autoComplete: 'off',
-                suppressHydrationWarning: true,
                 onBlur: (e) =>
-                  updateFei(fei.numero, {
-                    examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(e.target.value).toDate(),
-                    resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
-                  }),
-                defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
-                  ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                      'YYYY-MM-DDTHH:mm',
-                    )
-                  : undefined,
+                  updateFei(fei.numero, { heure_evisceration_derniere_carcasse: e.target.value }),
+                defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
               }}
             />
-            <div
-              className={[
-                fei.examinateur_initial_approbation_mise_sur_le_marche ? 'pointer-events-none' : '',
-              ].join(' ')}
-            >
-              <Checkbox
-                options={[
-                  {
-                    label: checkboxLabel,
-                    hintText: jobIsMissing,
-                    nativeInputProps: {
-                      required: true,
-                      name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
-                      value: 'true',
-                      // disabled: !jobIsDone,
-                      onChange: () => setApprobation(!approbation),
-                      readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
-                      checked: approbation,
-                    },
-                  },
-                ]}
-              />
-            </div>
-            {canEdit && !needSelectNextUser && (
-              <Button
-                type="submit"
-                disabled={!carcasses.length}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (jobIsMissing) {
-                    e.preventDefault();
-                    alert(jobIsMissing);
-                  } else if (!approbation) {
-                    alert('Vous devez cocher la case pour valider la mise sur le marché');
-                  } else {
+          )}
+
+          <Component
+            label="Date de validation de l’examen initial et de mise sur le marché"
+            hintText={
+              canEdit ? (
+                <button
+                  className="inline-block text-left"
+                  type="button"
+                  onClick={() => {
                     updateFei(fei.numero, {
-                      examinateur_initial_approbation_mise_sur_le_marche: approbation,
-                      // examinateur_initial_date_approbation_mise_sur_le_marche: approbation
-                      //   ? dayjs().toDate()
-                      //   : null,
+                      examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
+                      resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
                     });
-                  }
-                }}
-              >
-                Enregistrer
-              </Button>
-            )}
-            {!!jobIsMissing?.length && (
-              <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
-            )}
-          </form>
-        </Accordion>
-      )}
-      {needSelectNextUser && (
-        <div className="z-50 mt-4 flex flex-col bg-white pt-4 md:px-3 md:w-auto md:items-start [&_ul]:md:min-w-96">
-          <SelectNextForExaminateur />
-        </div>
-      )}
-      {examinateurIsAlsoPremierDetenteur && (
-        <>
-          <Accordion
-            titleAs="h3"
-            label={
-              <>
-                Identité du Premier détenteur <PencilStrikeThrough />
-              </>
+                  }}
+                >
+                  <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
+                </button>
+              ) : (
+                "Cette date vaut date d'approbation de mise sur le marché"
+              )
             }
-            defaultExpanded={false}
+            nativeInputProps={{
+              id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
+              name: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
+              type: 'datetime-local',
+              autoComplete: 'off',
+              suppressHydrationWarning: true,
+              onBlur: (e) =>
+                updateFei(fei.numero, {
+                  examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(e.target.value).toDate(),
+                  resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
+                }),
+              defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
+                ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
+                    'YYYY-MM-DDTHH:mm',
+                  )
+                : undefined,
+            }}
+          />
+          <div
+            className={[
+              fei.examinateur_initial_approbation_mise_sur_le_marche ? 'pointer-events-none' : '',
+            ].join(' ')}
           >
-            {premierDetenteurEntity ? (
-              <EntityNotEditable hideType entity={premierDetenteurEntity} user={premierDetenteurUser!} />
-            ) : (
-              <UserNotEditable user={premierDetenteurUser!} />
-            )}
-          </Accordion>
-          <Accordion titleAs="h3" label="Action du Premier détenteur" defaultExpanded>
-            <FeiPremierDetenteur showIdentity={false} />
-          </Accordion>
+            <Checkbox
+              options={[
+                {
+                  label: checkboxLabel,
+                  hintText: jobIsMissing,
+                  nativeInputProps: {
+                    required: true,
+                    name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
+                    value: 'true',
+                    // disabled: !jobIsDone,
+                    onChange: () => setApprobation(!approbation),
+                    readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
+                    checked: approbation,
+                  },
+                },
+              ]}
+            />
+          </div>
+          {canEdit && !needSelectNextUser && (
+            <Button
+              type="submit"
+              disabled={!carcasses.length}
+              onClick={(e) => {
+                e.preventDefault();
+                if (jobIsMissing) {
+                  e.preventDefault();
+                  alert(jobIsMissing);
+                } else if (!approbation) {
+                  alert('Vous devez cocher la case pour valider la mise sur le marché');
+                } else {
+                  updateFei(fei.numero, {
+                    examinateur_initial_approbation_mise_sur_le_marche: approbation,
+                    // examinateur_initial_date_approbation_mise_sur_le_marche: approbation
+                    //   ? dayjs().toDate()
+                    //   : null,
+                  });
+                }
+              }}
+            >
+              Enregistrer
+            </Button>
+          )}
+          {!!jobIsMissing?.length && (
+            <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
+          )}
+        </>
+      )}
+      <hr className="mt-8" />
+      {!showPremierDetenteur && <SelectNextForExaminateur disabled={!needSelectNextUser} />}
+      {showPremierDetenteur && (
+        <>
+          {premierDetenteurEntity ? (
+            <EntityNotEditable hideType entity={premierDetenteurEntity} user={premierDetenteurUser!} />
+          ) : (
+            <UserNotEditable user={premierDetenteurUser!} />
+          )}
+          <FeiPremierDetenteur showIdentity={false} />
         </>
       )}
     </>

@@ -25,7 +25,7 @@ import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediair
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
-import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses-by-espece';
+import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import type { HistoryInput } from '@app/utils/create-history-entry';
 import { syncProchainBraceletAUtiliser } from './user';
 import updateCarcasseStatus from '@app/utils/get-carcasse-status';
@@ -137,7 +137,9 @@ const useZustandStore = create<State & Actions>()(
             return [];
           }
           const uniqueIds = new Set(feiIntermediairesIds);
-          return [...uniqueIds].map((id) => get().feisIntermediaires[id]);
+          return [...uniqueIds]
+            .map((id) => get().feisIntermediaires[id])
+            .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
         },
         carcassesIntermediaires: {},
         carcassesIntermediairesByIntermediaire: {},
@@ -183,14 +185,14 @@ const useZustandStore = create<State & Actions>()(
           const nextCarcassesIdsByFei =
             useZustandStore.getState().carcassesIdsByFei[newCarcasse.fei_numero] || [];
           if (!nextCarcassesIdsByFei.includes(newCarcasse.zacharie_carcasse_id)) {
-            nextCarcassesIdsByFei.push(newCarcasse.zacharie_carcasse_id);
+            nextCarcassesIdsByFei.unshift(newCarcasse.zacharie_carcasse_id);
           }
           useZustandStore.setState((state) => {
             return {
               ...state,
               carcasses: {
-                ...state.carcasses,
                 [newCarcasse.zacharie_carcasse_id]: newCarcasse,
+                ...state.carcasses,
               },
               carcassesIdsByFei: {
                 ...state.carcassesIdsByFei,
@@ -211,9 +213,9 @@ const useZustandStore = create<State & Actions>()(
             updated_at: dayjs().toDate(),
             is_synced: false,
           };
-          const nextSviStatus = updateCarcasseStatus(nextCarcasse);
-          if (nextSviStatus !== nextCarcasse.svi_carcasse_status) {
-            nextCarcasse.svi_carcasse_status = nextSviStatus;
+          const nextStatus = updateCarcasseStatus(nextCarcasse);
+          if (nextStatus !== nextCarcasse.svi_carcasse_status) {
+            nextCarcasse.svi_carcasse_status = nextStatus;
             nextCarcasse.svi_carcasse_status_set_at = dayjs().toDate();
           }
           useZustandStore.setState({
@@ -370,7 +372,7 @@ const useZustandStore = create<State & Actions>()(
       }),
       {
         name: 'zacharie-zustand-store',
-        version: 2,
+        version: 3,
         // storage: createJSONStorage(() => storage),
         storage: createJSONStorage(() => window.localStorage),
         onRehydrateStorage: (state) => {

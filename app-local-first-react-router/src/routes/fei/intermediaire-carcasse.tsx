@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { CarcasseType, Prisma, type Carcasse, type FeiIntermediaire } from '@prisma/client';
+import { CarcasseStatus, CarcasseType, Prisma, type Carcasse, type FeiIntermediaire } from '@prisma/client';
 import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
@@ -13,6 +13,8 @@ import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediair
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
 import dayjs from 'dayjs';
+import { getVulgarisationSaisie } from '@app/utils/get-vulgarisation-saisie';
+import { getSimplifiedCarcasseStatus } from '@app/utils/get-carcasse-status';
 
 interface CarcasseIntermediaireProps {
   carcasse: Carcasse;
@@ -27,12 +29,15 @@ export default function CarcasseIntermediaireComp({
 }: CarcasseIntermediaireProps) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const state = useZustandStore((state) => state);
-  const updateCarcasseIntermediaire = state.updateCarcasseIntermediaire;
-  const updateCarcasse = state.updateCarcasse;
-  const addLog = state.addLog;
-  const fei = state.feis[params.fei_numero!];
-  const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
+  const updateCarcasseIntermediaire = useZustandStore((state) => state.updateCarcasseIntermediaire);
+  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
+  const addLog = useZustandStore((state) => state.addLog);
+  const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
+  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
+  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+  const carcassesIntermediaires = useZustandStore((state) => state.carcassesIntermediaires);
+  const feisIntermediaires = useZustandStore((state) => state.feisIntermediaires);
+  const entities = useZustandStore((state) => state.entities);
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -44,8 +49,8 @@ export default function CarcasseIntermediaireComp({
         carcasse.numero_bracelet,
         _intermediaire.id,
       );
-      const _carcasseIntermediaire = state.carcassesIntermediaires[carcasseIntermediaireId];
-      const _intermediaireEntity = state.entities[_intermediaire.fei_intermediaire_entity_id];
+      const _carcasseIntermediaire = carcassesIntermediaires[carcasseIntermediaireId];
+      const _intermediaireEntity = entities[_intermediaire.fei_intermediaire_entity_id];
       if (_carcasseIntermediaire?.commentaire) {
         commentaires.push(
           `Commentaire de ${_intermediaireEntity?.nom_d_usage} : ${_carcasseIntermediaire?.commentaire}`,
@@ -53,7 +58,7 @@ export default function CarcasseIntermediaireComp({
       }
     }
     return commentaires;
-  }, [intermediaires, fei.numero, carcasse.numero_bracelet, state.carcassesIntermediaires, state.entities]);
+  }, [intermediaires, fei.numero, carcasse.numero_bracelet, carcassesIntermediaires, entities]);
 
   const carcasseIntermediaireId = getCarcasseIntermediaireId(
     fei.numero,
@@ -61,7 +66,7 @@ export default function CarcasseIntermediaireComp({
     intermediaire.id,
   );
 
-  const intermediaireCarcasse = state.carcassesIntermediaires[carcasseIntermediaireId];
+  const intermediaireCarcasse = carcassesIntermediaires[carcasseIntermediaireId];
 
   const refusIntermediaireModal = useRef(
     createModal({
@@ -75,6 +80,65 @@ export default function CarcasseIntermediaireComp({
   const [refus, setRefus] = useState(
     carcasse.intermediaire_carcasse_refus_motif ?? intermediaireCarcasse.refus ?? '',
   );
+
+  const status: 'en cours' | 'refusé' | 'accepté' | '' = useMemo(() => {
+    const simplifiedStatus = getSimplifiedCarcasseStatus(carcasse);
+    if (simplifiedStatus === 'en cours') {
+      if (!canEdit) {
+        // si l'intermédiaire ne peut plus modifier, la carcasse est à l'étape suivante, donc vraiment "en cours"
+        return 'en cours';
+      }
+      // s'il peut modifier encore, il peut l'avoir manuellement acceptée - on l'affiche le cas échéant
+      if (intermediaireCarcasse.check_manuel) {
+        return 'accepté';
+      }
+      // sinon, elle est à traiter, on n'affiche rien
+      return '';
+    }
+    return simplifiedStatus;
+  }, [carcasse, canEdit, intermediaireCarcasse.check_manuel]);
+
+  const motifCarcasseNotAccepted: string = useMemo(() => {
+    switch (carcasse.svi_carcasse_status) {
+      default:
+        return '';
+      case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR: {
+        const carcasseIntermediaire =
+          feisIntermediaires[carcasse.intermediaire_carcasse_refus_intermediaire_id!];
+        const entity = entities[carcasseIntermediaire.fei_intermediaire_entity_id!];
+        const manquant = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Manquant' : 'Manquante';
+        return `${manquant} au moment de la collecte par ${entity?.nom_d_usage}`;
+      }
+      case CarcasseStatus.MANQUANTE_SVI:
+        return "Manquant(e) au moment de l'inspection par le service vétérinaire";
+      case CarcasseStatus.REFUS_ETG_COLLECTEUR: {
+        const carcasseIntermediaire =
+          feisIntermediaires[carcasse.intermediaire_carcasse_refus_intermediaire_id!];
+        const entity = entities[carcasseIntermediaire.fei_intermediaire_entity_id!];
+        const refusé = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Refusé' : 'Refusée';
+        let refus = `${refusé} par ${entity.nom_d_usage}`;
+        if (carcasse.intermediaire_carcasse_refus_motif) {
+          refus += ` : ${carcasse.intermediaire_carcasse_refus_motif}`;
+        }
+        return refus;
+      }
+      case CarcasseStatus.SAISIE_TOTALE:
+      case CarcasseStatus.SAISIE_PARTIELLE: {
+        const refusé = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Refusé' : 'Refusée';
+        return `${refusé} par le service vétérinaire : ${carcasse.svi_ipm2_lesions_ou_motifs
+          .map((motif) => getVulgarisationSaisie(motif, carcasse.type!))
+          .join(', ')}`;
+      }
+    }
+  }, [
+    carcasse.svi_carcasse_status,
+    carcasse.svi_ipm2_lesions_ou_motifs,
+    carcasse.type,
+    carcasse.intermediaire_carcasse_refus_motif,
+    feisIntermediaires,
+    entities,
+    carcasse.intermediaire_carcasse_refus_intermediaire_id,
+  ]);
 
   const Component = canEdit ? 'button' : 'div';
 
@@ -101,7 +165,7 @@ export default function CarcasseIntermediaireComp({
       fei_intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse = {
+    const nextPartialCarcasse: Partial<Carcasse> = {
       intermediaire_carcasse_manquante: true,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
@@ -128,10 +192,11 @@ export default function CarcasseIntermediaireComp({
     // so we need to get the value from the input directly
     const refusInputValue = (document.getElementsByName('carcasse-refus')?.[0] as HTMLInputElement)?.value;
 
-    if (!refus && refus !== refusInputValue) {
+    if (!refusToRemember && !refus && refus !== refusInputValue) {
       setRefus(refusInputValue);
     }
     if (!refusToRemember) refusToRemember = refus || refusInputValue;
+
     const nextPartialCarcasseIntermediaire = {
       manquante: false,
       refus: refusToRemember,
@@ -139,6 +204,7 @@ export default function CarcasseIntermediaireComp({
       check_manuel: false,
       carcasse_check_finished_at: dayjs().toDate(),
     };
+
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
       user_id: user.id,
@@ -151,7 +217,7 @@ export default function CarcasseIntermediaireComp({
       fei_intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse = {
+    const nextPartialCarcasse: Partial<Carcasse> = {
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: refusToRemember,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
@@ -194,7 +260,7 @@ export default function CarcasseIntermediaireComp({
       fei_intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse = {
+    const nextPartialCarcasse: Partial<Carcasse> = {
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: null,
@@ -222,6 +288,8 @@ export default function CarcasseIntermediaireComp({
         !!refus && '!border-red-500',
         carcasseManquante && '!border-red-300',
         intermediaireCarcasse.check_manuel && '!border-action-high-blue-france',
+        !canEdit && status === 'refusé' && '!border-red-500',
+        !canEdit && status === 'accepté' && '!border-action-high-blue-france',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -229,15 +297,11 @@ export default function CarcasseIntermediaireComp({
       <CustomNotice
         key={carcasse.numero_bracelet}
         className={[
-          carcasse.type === CarcasseType.PETIT_GIBIER &&
-          !refus &&
-          !carcasseManquante &&
-          !intermediaireCarcasse.check_manuel
-            ? '!bg-gray-300'
-            : '',
           !!refus && ' !bg-red-500 text-white',
           carcasseManquante && ' !bg-red-300 text-white',
           !!intermediaireCarcasse.check_manuel && '!bg-action-high-blue-france text-white',
+          !canEdit && status === 'refusé' && '!bg-red-500 text-white',
+          !canEdit && status === 'accepté' && '!bg-action-high-blue-france text-white',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -303,25 +367,14 @@ export default function CarcasseIntermediaireComp({
               </span>
             );
           })}
-          {carcasse.intermediaire_carcasse_manquante && (
+          {status && (
             <span className="ml-4 mt-4 block font-bold">
-              {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot manquant' : 'Carcasse manquante'}
+              {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'} {status}
+              {status !== 'en cours' && (carcasse.type === CarcasseType.PETIT_GIBIER ? '' : 'e')}
             </span>
           )}
-          {intermediaireCarcasse.check_manuel && (
-            <span className="ml-4 mt-4 block font-bold">
-              {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot accepté' : 'Carcasse acceptée'}
-            </span>
-          )}
-          {intermediaireCarcasse.refus && (
-            <span className="ml-4 mt-4 block font-bold">
-              {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot refusé' : 'Carcasse refusée'}
-            </span>
-          )}
-          {!!intermediaireCarcasse.refus && (
-            <span className="mt-2 block font-normal">
-              Motif de refus&nbsp;: {intermediaireCarcasse.refus}
-            </span>
+          {motifCarcasseNotAccepted && (
+            <span className="mt-2 block font-normal">{motifCarcasseNotAccepted}</span>
           )}
         </Component>
       </CustomNotice>
@@ -355,7 +408,10 @@ export default function CarcasseIntermediaireComp({
                     nativeInputProps: {
                       required: true,
                       name: 'carcasse-status',
-                      checked: intermediaireCarcasse.check_manuel ? true : false,
+                      checked:
+                        !carcasseRefusCheckbox &&
+                        !carcasseManquante &&
+                        (intermediaireCarcasse.check_manuel ? true : false),
                       onChange: () => {
                         refusIntermediaireModal.current.close();
                         submitCarcasseAccept();
