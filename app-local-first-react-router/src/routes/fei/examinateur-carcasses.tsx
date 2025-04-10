@@ -42,9 +42,8 @@ export default function CarcassesExaminateur({
       >
         <NouvelleCarcasse key={fei.commune_mise_a_mort} />
       </div>
-      {carcasses.length > 0 && <hr />}
       {carcasses.length > 0 && (
-        <p className="-mt-4 mb-4 ml-4 text-sm text-gray-500">
+        <p className="mb-4 ml-4 text-sm text-gray-500">
           Déjà rentrés&nbsp;:
           {countCarcassesByEspece.map((line) => (
             <span className="ml-4 block" key={line}>
