@@ -62,53 +62,19 @@ const DeleteButtonAndConfirmModal = ({
           {
             children: 'Supprimer',
             disabled: isDeleting,
-            type: 'submit',
+            type: 'button',
             nativeButtonProps: {
-              form: `delete-${textToConfirm}`,
+              onClick: () => {
+                setIsDeleting(true);
+                onConfirm();
+                modal.close();
+                setIsDeleting(false);
+              },
             },
           },
         ]}
       >
         {children}
-        <p className="fr-text--center fr-mb-3w">
-          Veuillez taper le texte ci-dessous pour confirmer
-          <br />
-          en respectant les majuscules, minuscules ou accents
-        </p>
-        <p className="fr-text--center">
-          <span className="fr-text--red-marianne fr-text--bold">{textToConfirm}</span>
-        </p>
-        <form
-          key={resetKey}
-          id={`delete-${textToConfirm}`}
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const _textToConfirm = String(Object.fromEntries(new FormData(e.currentTarget))?.textToConfirm);
-            if (!_textToConfirm) {
-              return alert('Veuillez rentrer le texte demandé');
-            }
-            if (_textToConfirm.trim().toLocaleLowerCase() !== textToConfirm.trim().toLocaleLowerCase()) {
-              return alert('Le texte renseigné est incorrect');
-            }
-            if (_textToConfirm.trim() !== textToConfirm.trim()) {
-              return alert('Veuillez respecter les minuscules/majuscules');
-            }
-            setIsDeleting(true);
-            onConfirm();
-            modal.close();
-            setIsDeleting(false);
-          }}
-        >
-          <Input
-            className="fr-col-6"
-            label=" " // empty label to maintain spacing
-            nativeInputProps={{
-              name: 'textToConfirm',
-              autoComplete: 'off',
-              placeholder: textToConfirm,
-            }}
-          />
-        </form>
       </modal.Component>
     </>
   );
