@@ -131,13 +131,9 @@ export default function NouvelleCarcasse() {
       />
       <Button
         type="submit"
-        disabled={!espece || !fei.commune_mise_a_mort || !numeroBracelet}
+        disabled={!espece || !numeroBracelet}
         onClick={(e) => {
           e.preventDefault();
-          if (!fei.commune_mise_a_mort) {
-            setError("Veuillez renseigner la commune de mise à mort avant d'enregistrer une carcasse");
-            return;
-          }
           if (!numeroBracelet) {
             setError("Veuillez renseigner le numéro de marquage avant d'enregistrer la carcasse");
             return;
