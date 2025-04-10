@@ -157,11 +157,6 @@ function Fei() {
           <div className="fr-col-12 fr-col-md-10 m-4 bg-alt-blue-france md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
             {showInterface === UserRoles.SVI && <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>}
             <FeiTransfer />
-            {user.roles.includes(UserRoles.ADMIN) && (
-              <div className="mb-2 flex justify-end">
-                <DeleteFei />
-              </div>
-            )}
             {showInterface !== UserRoles.SVI && <CurrentOwnerConfirm />}
             {showInterface !== UserRoles.SVI && <FeiStepper />}
             {showInterface === UserRoles.ETG && (
@@ -184,11 +179,9 @@ function Fei() {
                 (switchEtgSviInterface === 'etg' ? <FEICurrentIntermediaire /> : <FEI_ETGInspectionSvi />)}
               {showInterface === UserRoles.SVI && <FEI_SVI />}
             </div>
-            {!user.roles.includes(UserRoles.ADMIN) && (
-              <div className="mt-2 flex justify-start">
-                <DeleteFei />
-              </div>
-            )}
+            <div className="mt-2 flex justify-start">
+              <DeleteFei />
+            </div>
           </div>
         </div>
       </div>

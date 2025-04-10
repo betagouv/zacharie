@@ -6,7 +6,6 @@ export default function useGetCommunesDeChasseFavorites(compute: boolean = true)
   const feis = useZustandStore((state) => state.feis);
 
   const villesFavorites = useMemo(() => {
-    console.log('COMPUTE VILLES FAVORITES');
     if (!compute) {
       return [];
     }

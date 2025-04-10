@@ -283,7 +283,7 @@ export function CarcasseExaminateur({
               {status !== 'en cours' && (carcasse.type === CarcasseType.PETIT_GIBIER ? '' : 'e')}
             </span>
           )}
-          {motifRefus && <span className="mt-2 block font-normal">Motif de refus&nbsp;: {motifRefus}</span>}
+          {motifRefus && <span className="mt-2 block font-normal">{motifRefus}</span>}
         </button>
       </CustomNotice>
     </div>
