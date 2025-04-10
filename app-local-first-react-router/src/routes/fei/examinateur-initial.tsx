@@ -317,7 +317,7 @@ export default function FEIExaminateurInitial() {
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             {!onlyPetitGibier && (
               <Component
-                label="Heure d'éviscération de la dernière carcasse"
+                label="Heure d'éviscération de la dernière carcasse *"
                 nativeInputProps={{
                   id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
                   name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,

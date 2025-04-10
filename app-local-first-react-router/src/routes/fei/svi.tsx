@@ -15,6 +15,7 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
+import FEIDonneesDeChasse from './donnees-de-chasse';
 
 export default function FEI_SVI() {
   const params = useParams();
@@ -70,6 +71,7 @@ export default function FEI_SVI() {
 
   return (
     <>
+      <FEIDonneesDeChasse />
       <Accordion titleAs="h3" label={<>Identité du SVI{!canEdit ? <PencilStrikeThrough /> : ''}</>}>
         <EntityNotEditable user={sviUser!} entity={svi!} />
       </Accordion>
