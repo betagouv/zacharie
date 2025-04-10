@@ -360,7 +360,15 @@ export default function FEICurrentIntermediaire() {
 
         <Accordion
           titleAs="h3"
-          label={<>Identité de l'intermédaire {canEdit ? <PencilStrikeThrough /> : ''}</>}
+          label={
+            <>
+              Identité{' '}
+              {intermediaire.fei_intermediaire_role === UserRoles.ETG
+                ? 'du destinataire'
+                : "de l'intermédaire"}{' '}
+              {canEdit ? <PencilStrikeThrough /> : ''}
+            </>
+          }
         >
           <EntityNotEditable
             user={users[intermediaire.fei_intermediaire_user_id!]!}
