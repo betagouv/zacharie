@@ -25,10 +25,10 @@ export default function FeiStepper() {
 
   const currentStep = useMemo(() => {
     // find role equal to fei.fei_current_owner_role but in reverse order
-    if (fei.fei_next_owner_role) {
-      return steps.findIndex((role) => role === fei.fei_next_owner_role) + 1;
-    } else if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
+    if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
       return steps.length - 2;
+    } else if (fei.fei_next_owner_role) {
+      return steps.findIndex((role) => role === fei.fei_next_owner_role) + 1;
     } else {
       return steps.findIndex((role) => role === fei.fei_current_owner_role) + 1;
     }
@@ -37,14 +37,14 @@ export default function FeiStepper() {
   const currentStepLabel = useMemo(() => {
     switch (steps[currentStep - 1]) {
       case UserRoles.EXAMINATEUR_INITIAL:
-        return 'Création de la fiche';
+        return 'Examen initial';
       case UserRoles.PREMIER_DETENTEUR:
         return 'Validation par le premier détenteur';
       case UserRoles.COLLECTEUR_PRO:
         return "Transport vers l'établissement de traitement";
       case UserRoles.ETG: {
         if (fei.fei_next_owner_role === UserRoles.ETG) {
-          return "En attente de traitement par l'établissement de traitement";
+          return 'Fiche envoyée, pas encore traitée';
         } else {
           return "Réception par l'établissement de traitement";
         }
@@ -59,7 +59,7 @@ export default function FeiStepper() {
   const nextStepLabel = useMemo(() => {
     switch (steps[currentStep]) {
       case UserRoles.EXAMINATEUR_INITIAL:
-        return 'Création de la fiche';
+        return 'Examen initial';
       case UserRoles.PREMIER_DETENTEUR:
         return 'Validation par le premier détenteur';
       case UserRoles.COLLECTEUR_PRO:
