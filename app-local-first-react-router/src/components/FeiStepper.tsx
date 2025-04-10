@@ -74,7 +74,7 @@ export default function FeiStepper() {
   }, [currentStep, steps]);
 
   return (
-    <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+    <div className="w-full px-4 md:px-0">
       <Stepper
         currentStep={currentStep}
         stepCount={steps.length}
