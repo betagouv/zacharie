@@ -18,6 +18,7 @@ import { sortCarcassesApproved } from '@app/utils/sort';
 import CollecteurCarcassePreview from './collecteur-carcasse-preview';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
+import FEIDonneesDeChasse from './donnees-de-chasse';
 
 export default function FEICurrentIntermediaire() {
   const params = useParams();
@@ -358,6 +359,7 @@ export default function FEICurrentIntermediaire() {
           </nav>
         )}
 
+        <FEIDonneesDeChasse />
         <Accordion
           titleAs="h3"
           label={
@@ -416,11 +418,7 @@ export default function FEICurrentIntermediaire() {
                     id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
                     name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
                     type: 'text',
-                    autoComplete: 'off',
-                    suppressHydrationWarning: true,
-                    defaultValue: fei?.date_mise_a_mort
-                      ? dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY')
-                      : '',
+                    defaultValue: dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY'),
                   }}
                 />
                 <InputNotEditable
@@ -670,9 +668,7 @@ export default function FEICurrentIntermediaire() {
                 id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
                 name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
                 type: 'text',
-                autoComplete: 'off',
-                suppressHydrationWarning: true,
-                defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY') : '',
+                defaultValue: dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY'),
               }}
             />
             <InputNotEditable
