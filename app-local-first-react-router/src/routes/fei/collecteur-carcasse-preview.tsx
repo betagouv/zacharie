@@ -42,12 +42,7 @@ export default function CollecteurCarcassePreview({ carcasse }: CarcasseIntermed
       key={carcasse.numero_bracelet}
       className={['mb-2 border-4 border-transparent'].filter(Boolean).join(' ')}
     >
-      <CustomNotice
-        key={carcasse.numero_bracelet}
-        className={[`${carcasse.type === CarcasseType.PETIT_GIBIER ? '!bg-gray-300' : ''}`]
-          .filter(Boolean)
-          .join(' ')}
-      >
+      <CustomNotice key={carcasse.numero_bracelet}>
         <div className="block w-full p-8 text-left [&_*]:no-underline [&_*]:hover:no-underline">
           <span className="block font-bold text-3xl mb-4">
             {/* {carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : 'Numéro de bracelet'} */}

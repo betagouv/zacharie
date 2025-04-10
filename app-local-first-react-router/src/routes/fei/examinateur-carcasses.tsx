@@ -164,7 +164,6 @@ export function CarcasseExaminateur({
       <CustomNotice
         key={carcasse.numero_bracelet}
         className={[
-          carcasse.type === CarcasseType.PETIT_GIBIER ? '!bg-gray-300' : '',
           status === 'refusé' && '!bg-red-500 text-white',
           status === 'accepté' && '!bg-action-high-blue-france text-white',
         ]
