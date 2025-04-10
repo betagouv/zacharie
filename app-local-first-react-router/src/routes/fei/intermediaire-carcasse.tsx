@@ -380,7 +380,7 @@ export default function CarcasseIntermediaireComp({
             </span>
           )}
           {motifCarcasseNotAccepted && (
-            <span className="mt-2 block font-normal">Motif de refus&nbsp;: {motifCarcasseNotAccepted}</span>
+            <span className="mt-2 block font-normal">{motifCarcasseNotAccepted}</span>
           )}
         </Component>
       </CustomNotice>
