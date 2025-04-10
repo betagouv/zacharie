@@ -13,8 +13,6 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function SelectNextForExaminateur({ disabled }: { disabled: boolean }) {
-  console.log({ disabled });
-
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
