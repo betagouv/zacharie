@@ -46,7 +46,7 @@ export default function DeleteFei() {
 
   return (
     <DeleteButtonAndConfirmModal
-      title="Supprimer la fiche"
+      title="Voulez-vous vraiment supprimer la fiche ?"
       buttonText="Supprimer la fiche"
       textToConfirm="SUPPRIMER LA FICHE"
       onConfirm={() => {

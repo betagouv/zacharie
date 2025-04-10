@@ -179,7 +179,7 @@ function Fei() {
                 (switchEtgSviInterface === 'etg' ? <FEICurrentIntermediaire /> : <FEI_ETGInspectionSvi />)}
               {showInterface === UserRoles.SVI && <FEI_SVI />}
             </div>
-            <div className="mt-2 flex justify-start">
+            <div className="m-8 flex justify-start">
               <DeleteFei />
             </div>
           </div>
