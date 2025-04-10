@@ -53,10 +53,7 @@ export default function CarcasseSVI({ carcasse, canEdit }: CarcasseAVerifierProp
         .filter(Boolean)
         .join(' ')}
     >
-      <CustomNotice
-        key={carcasse.numero_bracelet}
-        className={`${carcasse.type === CarcasseType.PETIT_GIBIER ? '!bg-gray-300' : ''}`}
-      >
+      <CustomNotice key={carcasse.numero_bracelet}>
         <Component
           className="block w-full p-4 text-left [&_*]:no-underline [&_*]:hover:no-underline"
           to={
