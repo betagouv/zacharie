@@ -154,9 +154,10 @@ function Fei() {
         <title>{params.fei_numero} | Zacharie | Ministère de l'Agriculture</title>
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 m-4 bg-alt-blue-france md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
+            {showInterface === UserRoles.SVI && <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>}
             <FeiTransfer />
-            <CurrentOwnerConfirm />
-            <FeiStepper />
+            {showInterface !== UserRoles.SVI && <CurrentOwnerConfirm />}
+            {showInterface !== UserRoles.SVI && <FeiStepper />}
             {showInterface === UserRoles.ETG && (
               <div className="w-full flex justify-end mb-2">
                 <ToggleSwitch
@@ -173,11 +174,8 @@ function Fei() {
               {showInterface === UserRoles.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
               {showInterface === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
               {showInterface === UserRoles.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
-              {showInterface === UserRoles.ETG && switchEtgSviInterface === 'etg' ? (
-                <FEICurrentIntermediaire />
-              ) : (
-                <FEI_ETGInspectionSvi />
-              )}
+              {showInterface === UserRoles.ETG &&
+                (switchEtgSviInterface === 'etg' ? <FEICurrentIntermediaire /> : <FEI_ETGInspectionSvi />)}
               {showInterface === UserRoles.SVI && <FEI_SVI />}
             </div>
           </div>
