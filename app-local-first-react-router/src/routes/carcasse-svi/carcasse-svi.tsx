@@ -151,17 +151,15 @@ export function CarcasseEditSVI() {
       </title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <h1 className="fr-h2 fr-mb-2w">{carcasse.numero_bracelet}</h1>
-          <p>
-            {carcasse.type === CarcasseType.PETIT_GIBIER
-              ? 'Lot de carcasses de petit gibier'
-              : 'Carcasse de grand gibier'}
-          </p>
+          <h1 className="fr-h3 fr-mb-2w">
+            {carcasse.numero_bracelet} - {carcasse.espece}
+          </h1>
           <Breadcrumb
+            className="[&_a]:!text-base"
             currentPageLabel={`Carcasse ${carcasse.numero_bracelet}`}
             segments={[
               {
-                label: 'Mon tableau de bord',
+                label: 'Fiches',
                 linkProps: {
                   to: '/app/tableau-de-bord',
                   href: '#',
