@@ -14,6 +14,7 @@ import { sortCarcassesApproved } from '@app/utils/sort';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 import { CarcasseExaminateur } from './examinateur-carcasses';
 import { formatSummaryCount } from '@app/utils/count-carcasses';
+import FEIDonneesDeChasse from './donnees-de-chasse';
 
 export default function FEI_ETGInspectionSvi() {
   const params = useParams();
@@ -36,7 +37,6 @@ export default function FEI_ETGInspectionSvi() {
     if (fei.svi_entity_id) {
       if (user.roles.includes(UserRoles.SVI)) {
         const svi = state.entities[fei.svi_entity_id];
-        console.log({ svi });
         if (svi?.relation === 'WORKING_FOR') {
           return true;
         }
@@ -69,6 +69,7 @@ export default function FEI_ETGInspectionSvi() {
 
   return (
     <>
+      <FEIDonneesDeChasse />
       <Accordion
         titleAs="h3"
         label={
