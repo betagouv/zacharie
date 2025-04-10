@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { Input } from '@codegouvfr/react-dsfr/Input';
 
 interface DeleteButtonAndConfirmModalProps {
   title: string;
