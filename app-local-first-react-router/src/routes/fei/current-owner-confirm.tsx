@@ -311,48 +311,44 @@ export default function CurrentOwnerConfirm() {
         )}
         {!myNextRoleForThisFeiIsCollecteurPro && (
           <>
-            <span>
-              Vous souhaitez la transférer à un autre acteur&nbsp;? (exemple: erreur d'attribution,
-              assignation à un autre collecteur)
-            </span>
-            <Button
-              priority="tertiary"
-              type="button"
-              className="!mt-2 block"
-              onClick={() => handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer' })}
-            >
-              Transférer la fiche
-            </Button>
-            <span className="mt-4 inline-block text-sm">
-              Vous souhaitez la renvoyer à l'expéditeur&nbsp;?
-            </span>
-            <Button
-              priority="tertiary no outline"
-              type="submit"
-              className="!mt-0 text-sm"
-              onClick={() => {
-                const nextFei = {
-                  fei_next_owner_entity_id: null,
-                  fei_next_owner_entity_name_cache: null,
-                  fei_next_owner_user_id: null,
-                  fei_next_owner_user_name_cache: null,
-                };
-                updateFei(fei.numero, nextFei);
-                addLog({
-                  user_id: user.id,
-                  user_role: fei.fei_next_owner_role!,
-                  fei_numero: fei.numero,
-                  action: 'current-owner-renvoi',
-                  entity_id: fei.fei_next_owner_entity_id,
-                  zacharie_carcasse_id: null,
-                  fei_intermediaire_id: null,
-                  carcasse_intermediaire_id: null,
-                  history: createHistoryInput(fei, nextFei),
-                });
-              }}
-            >
-              Renvoyer la fiche
-            </Button>
+            <div>
+              <span>Il y a une erreur ?</span>
+              <div className="flex gap-2 items-center">
+                <Button
+                  priority="tertiary"
+                  type="button"
+                  onClick={() => handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer' })}
+                >
+                  Transférer la fiche
+                </Button>
+                <Button
+                  priority="tertiary no outline"
+                  type="submit"
+                  onClick={() => {
+                    const nextFei = {
+                      fei_next_owner_entity_id: null,
+                      fei_next_owner_entity_name_cache: null,
+                      fei_next_owner_user_id: null,
+                      fei_next_owner_user_name_cache: null,
+                    };
+                    updateFei(fei.numero, nextFei);
+                    addLog({
+                      user_id: user.id,
+                      user_role: fei.fei_next_owner_role!,
+                      fei_numero: fei.numero,
+                      action: 'current-owner-renvoi',
+                      entity_id: fei.fei_next_owner_entity_id,
+                      zacharie_carcasse_id: null,
+                      fei_intermediaire_id: null,
+                      carcasse_intermediaire_id: null,
+                      history: createHistoryInput(fei, nextFei),
+                    });
+                  }}
+                >
+                  Renvoyer la fiche à l'expéditeur
+                </Button>
+              </div>
+            </div>
           </>
         )}
       </CallOut>

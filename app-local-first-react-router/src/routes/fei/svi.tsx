@@ -70,12 +70,25 @@ export default function FEI_SVI() {
 
   return (
     <>
-      <Accordion titleAs="h3" label={<>Identité du SVI{canEdit ? <PencilStrikeThrough /> : ''}</>}>
+      <Accordion titleAs="h3" label={<>Identité du SVI{!canEdit ? <PencilStrikeThrough /> : ''}</>}>
         <EntityNotEditable user={sviUser!} entity={svi!} />
       </Accordion>
 
-      <Accordion titleAs="h3" label={`Carcasses (${carcassesSorted.length})`} defaultExpanded>
-        <p className="text-sm text-gray-600">Veuillez cliquer sur une carcasse pour la saisir ou l'annoter</p>
+      <Accordion
+        titleAs="h3"
+        label={
+          <>
+            {`Carcasses (${carcassesSorted.length})`}
+            {!canEdit ? <PencilStrikeThrough /> : ''}
+          </>
+        }
+        defaultExpanded
+      >
+        {canEdit && (
+          <p className="text-sm text-gray-600">
+            Veuillez cliquer sur une carcasse pour la saisir ou l'annoter
+          </p>
+        )}
         {carcassesSorted.map((carcasse) => {
           return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
         })}

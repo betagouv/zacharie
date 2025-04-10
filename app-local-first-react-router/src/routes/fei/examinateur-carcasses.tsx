@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { CustomNotice } from '@app/components/CustomNotice';
 import { CustomHighlight } from '@app/components/CustomHighlight';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
-import { useParams, Link } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import dayjs from 'dayjs';
@@ -76,12 +76,14 @@ export default function CarcassesExaminateur({
   );
 }
 
-function CarcasseExaminateur({
+export function CarcasseExaminateur({
   carcasse,
   canEditAsPremierDetenteur,
+  canEditAsExaminateurInitial,
 }: {
   carcasse: Carcasse;
   canEditAsPremierDetenteur?: boolean;
+  canEditAsExaminateurInitial?: boolean;
 }) {
   // canEdit = true;
   const params = useParams();
@@ -92,6 +94,7 @@ function CarcasseExaminateur({
   const fei = feis[params.fei_numero!];
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
+  const navigate = useNavigate();
 
   const status: 'en cours' | 'refusé' | 'accepté' | null = useMemo(() => {
     if (
@@ -167,7 +170,7 @@ function CarcasseExaminateur({
         ]
           .filter(Boolean)
           .join(' ')}
-        isClosable={canEditAsPremierDetenteur}
+        isClosable={canEditAsPremierDetenteur || canEditAsExaminateurInitial}
         onClose={() => {
           if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
             const nextPartialCarcasse: Partial<Carcasse> = {
@@ -188,13 +191,17 @@ function CarcasseExaminateur({
           }
         }}
       >
-        <Link
-          to={
-            !user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && user.roles.includes(UserRoles.SVI)
-              ? `/app/tableau-de-bord/carcasse-svi/${fei.numero}/${carcasse.zacharie_carcasse_id}`
-              : `/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`
-          }
-          className="block w-full bg-none p-4 text-left [&_*]:no-underline [&_*]:hover:no-underline"
+        <button
+          type="button"
+          onClick={() => {
+            if (canEditAsExaminateurInitial || canEditAsPremierDetenteur) {
+              navigate(`/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
+            }
+          }}
+          className={[
+            'block w-full bg-none p-4 text-left [&_*]:no-underline [&_*]:hover:no-underline',
+            canEditAsExaminateurInitial || canEditAsPremierDetenteur ? '' : 'pointer-events-none',
+          ].join(' ')}
         >
           {carcasse.espece ? (
             <>
@@ -277,7 +284,7 @@ function CarcasseExaminateur({
             </span>
           )}
           {motifRefus && <span className="mt-2 block font-normal">Motif de refus&nbsp;: {motifRefus}</span>}
-        </Link>
+        </button>
       </CustomNotice>
     </div>
   );

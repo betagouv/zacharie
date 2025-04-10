@@ -8,7 +8,6 @@ import FEIExaminateurInitial from './examinateur-initial';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import FeiTransfer from './current-owner-transfer';
-import FeiPremierDetenteur from './premier-detenteur';
 import FEICurrentIntermediaire from './intermediaire';
 import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
@@ -16,6 +15,8 @@ import FEI_SVI from './svi';
 import { useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
 import FeiStepper from '@app/components/FeiStepper';
 import CurrentOwnerConfirm from './current-owner-confirm';
+import { ToggleSwitch } from '@codegouvfr/react-dsfr/ToggleSwitch';
+import FEI_ETGInspectionSvi from './etg-inspection-svi';
 
 export default function FeiLoader() {
   const params = useParams();
@@ -59,6 +60,8 @@ function Fei() {
   // const refCurrentRole = useRef(fei.fei_current_owner_role);
   // const refCurrentUserId = useRef(fei.fei_current_owner_user_id);
 
+  const [switchEtgSviInterface, setSwitchEtgSviInterface] = useState<'etg' | 'svi'>('etg');
+
   const showInterface = useMemo(() => {
     /* 
     deprecated - was good when tabs in a useEffect, but now I dont think so
@@ -79,7 +82,8 @@ function Fei() {
           //   return UserRoles.ETG;
         }
       }
-    } */
+    } 
+    */
     if (fei.fei_current_owner_role === UserRoles.SVI || fei.fei_next_owner_role === UserRoles.SVI) {
       if (user.roles.includes(UserRoles.SVI)) return UserRoles.SVI;
       if (user.roles.includes(UserRoles.ETG)) return UserRoles.ETG;
@@ -152,13 +156,28 @@ function Fei() {
           <div className="fr-col-12 fr-col-md-10 m-4 bg-alt-blue-france md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
             <FeiTransfer />
             <CurrentOwnerConfirm />
-            {/* <CurrentOwner /> */}
             <FeiStepper />
+            {showInterface === UserRoles.ETG && (
+              <div className="w-full flex justify-end mb-2">
+                <ToggleSwitch
+                  label="Afficher l'inspection SVI"
+                  labelPosition="left"
+                  inputTitle="Afficher l'inspection SVI"
+                  showCheckedHint={false}
+                  checked={switchEtgSviInterface === 'svi'}
+                  onChange={(checked) => setSwitchEtgSviInterface(checked ? 'svi' : 'etg')}
+                />
+              </div>
+            )}
             <div className="p-4 md:p-8 bg-white">
               {showInterface === UserRoles.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
               {showInterface === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
               {showInterface === UserRoles.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
-              {showInterface === UserRoles.ETG && <FEICurrentIntermediaire />}
+              {showInterface === UserRoles.ETG && switchEtgSviInterface === 'etg' ? (
+                <FEICurrentIntermediaire />
+              ) : (
+                <FEI_ETGInspectionSvi />
+              )}
               {showInterface === UserRoles.SVI && <FEI_SVI />}
             </div>
           </div>
