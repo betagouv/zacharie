@@ -209,7 +209,9 @@ export default function FEIExaminateurInitial() {
   }, [fei, carcassesNotReady, carcasses, onlyPetitGibier]);
 
   const checkboxLabel = useMemo(() => {
-    let label = fei.examinateur_initial_approbation_mise_sur_le_marche ? "J'ai certifié" : 'Je certifie';
+    let label = fei.examinateur_initial_approbation_mise_sur_le_marche
+      ? "J'ai certifié"
+      : `Je, ${examinateurInitialUser?.nom_de_famille} ${examinateurInitialUser?.prenom}, certifie`;
     if (!atLeastOneCarcasseWithAnomalie) {
       label += " qu'aucune anomalie n'a été observée lors de l'examen initial et";
       label += ' que les carcasses en peau examinées ce jour peuvent être mises sur le marché.';
@@ -227,24 +229,13 @@ export default function FEIExaminateurInitial() {
     <>
       <Accordion
         titleAs="h3"
-        label={
-          <>
-            Identité de l'Examinateur <PencilStrikeThrough />
-          </>
-        }
-        defaultExpanded={false}
-      >
-        <UserNotEditable user={examinateurInitialUser!} withCfei />
-      </Accordion>
-      <Accordion
-        titleAs="h3"
         label={<>Données de chasse {canEdit ? null : <PencilStrikeThrough />}</>}
         defaultExpanded={!showPremierDetenteur}
       >
         <form method="POST" onSubmit={(e) => e.preventDefault()} ref={examRef}>
           <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
           <Component
-            label="Date de mise à mort (et d'éviscération) *"
+            label="Date de mise à mort (et d'éviscération)&nbsp;*"
             hintText={
               canEdit ? (
                 <button
@@ -278,7 +269,7 @@ export default function FEIExaminateurInitial() {
             }}
           />
           <VilleComponent
-            label="Commune de mise à mort *"
+            label="Commune de mise à mort&nbsp;*"
             key={fei?.commune_mise_a_mort}
             onSelect={(commune_mise_a_mort) => updateFei(fei.numero, { commune_mise_a_mort })}
             hintText={
@@ -309,7 +300,7 @@ export default function FEIExaminateurInitial() {
             }}
           />
           <Component
-            label="Heure de mise à mort de la première carcasse *"
+            label="Heure de mise à mort de la première carcasse&nbsp;*"
             nativeInputProps={{
               id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
               name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
@@ -340,7 +331,7 @@ export default function FEIExaminateurInitial() {
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             {!onlyPetitGibier && (
               <Component
-                label="Heure d'éviscération de la dernière carcasse *"
+                label="Heure d'éviscération de la dernière carcasse&nbsp;*"
                 nativeInputProps={{
                   id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
                   name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
