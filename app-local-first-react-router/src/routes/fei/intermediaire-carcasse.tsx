@@ -297,12 +297,6 @@ export default function CarcasseIntermediaireComp({
       <CustomNotice
         key={carcasse.numero_bracelet}
         className={[
-          carcasse.type === CarcasseType.PETIT_GIBIER &&
-          !refus &&
-          !carcasseManquante &&
-          !intermediaireCarcasse.check_manuel
-            ? '!bg-gray-300'
-            : '',
           !!refus && ' !bg-red-500 text-white',
           carcasseManquante && ' !bg-red-300 text-white',
           !!intermediaireCarcasse.check_manuel && '!bg-action-high-blue-france text-white',
