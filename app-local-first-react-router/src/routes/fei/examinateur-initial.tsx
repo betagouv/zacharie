@@ -19,6 +19,8 @@ import useUser from '@app/zustand/user';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import Alert from '@codegouvfr/react-dsfr/Alert';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
+import useGetCommunesDeChasseFavorites from '@app/utils/useGetCommunesDeChasseFavorites';
+import { Tag } from '@codegouvfr/react-dsfr/Tag';
 
 export default function FEIExaminateurInitial() {
   const params = useParams();
@@ -219,6 +221,8 @@ export default function FEIExaminateurInitial() {
     return label;
   }, [fei.examinateur_initial_approbation_mise_sur_le_marche, atLeastOneCarcasseWithAnomalie]);
 
+  const communesDeChasseFavorites = useGetCommunesDeChasseFavorites(!fei?.commune_mise_a_mort);
+
   return (
     <>
       <Accordion
@@ -275,7 +279,26 @@ export default function FEIExaminateurInitial() {
           />
           <VilleComponent
             label="Commune de mise à mort *"
+            key={fei?.commune_mise_a_mort}
             onSelect={(commune_mise_a_mort) => updateFei(fei.numero, { commune_mise_a_mort })}
+            hintText={
+              <>
+                {communesDeChasseFavorites.map((commune) => {
+                  return (
+                    <Tag
+                      key={commune}
+                      iconId="fr-icon-checkbox-circle-line"
+                      className="mr-2"
+                      nativeButtonProps={{
+                        onClick: () => updateFei(fei.numero, { commune_mise_a_mort: commune }),
+                      }}
+                    >
+                      {commune}
+                    </Tag>
+                  );
+                })}
+              </>
+            }
             nativeInputProps={{
               id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
               name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
