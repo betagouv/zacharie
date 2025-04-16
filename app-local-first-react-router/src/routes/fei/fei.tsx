@@ -85,13 +85,18 @@ function Fei() {
       }
     } 
     */
+    if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      if (fei.examinateur_initial_user_id === user.id) {
+        return UserRoles.EXAMINATEUR_INITIAL;
+      }
+    }
+    if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+      return UserRoles.PREMIER_DETENTEUR;
+    }
     if (fei.fei_current_owner_role === UserRoles.SVI || fei.fei_next_owner_role === UserRoles.SVI) {
       if (user.roles.includes(UserRoles.SVI)) return UserRoles.SVI;
       if (user.roles.includes(UserRoles.ETG)) return UserRoles.ETG;
       if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) return UserRoles.COLLECTEUR_PRO;
-      if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) return UserRoles.EXAMINATEUR_INITIAL;
-      // if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) return UserRoles.PREMIER_DETENTEUR;
-      if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) return UserRoles.EXAMINATEUR_INITIAL;
       return null;
     }
     if (
@@ -143,6 +148,8 @@ function Fei() {
   //   refCurrentRole.current = fei.fei_current_owner_role;
   //   refCurrentUserId.current = fei.fei_current_owner_user_id;
   // }, [fei.examinateur_initial_user_id, fei.fei_current_owner_role, fei.fei_current_owner_user_id, user.id]);
+
+  console.log({ showInterface, fei, user });
 
   return (
     <>
