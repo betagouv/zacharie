@@ -81,14 +81,11 @@ export default function FEIExaminateurInitial() {
     if (premierDetenteurEntity) {
       return true;
     }
-    if (fei.premier_detenteur_user_id !== user.id) {
-      return false;
+    if (premierDetenteurUser) {
+      return true;
     }
-    if (fei.examinateur_initial_user_id !== user.id) {
-      return false;
-    }
-    return true;
-  }, [fei, user, premierDetenteurEntity]);
+    return false;
+  }, [premierDetenteurEntity, premierDetenteurUser]);
 
   const [carcassesNotReady, atLeastOneCarcasseWithAnomalie] = useMemo(() => {
     const notReady = [];
@@ -120,7 +117,7 @@ export default function FEIExaminateurInitial() {
   }, [carcasses]);
 
   const canEdit = useMemo(() => {
-    if (fei.svi_signed_at || fei.automatic_closed_at) {
+    if (fei.automatic_closed_at || fei.svi_signed_at || fei.svi_assigned_at) {
       return false;
     }
     if (fei.examinateur_initial_user_id !== user.id) {
@@ -203,9 +200,21 @@ export default function FEIExaminateurInitial() {
   }, [fei, carcassesNotReady, carcasses, onlyPetitGibier]);
 
   const checkboxLabel = useMemo(() => {
-    let label = fei.examinateur_initial_approbation_mise_sur_le_marche
-      ? "J'ai certifié"
-      : `Je, ${examinateurInitialUser?.nom_de_famille} ${examinateurInitialUser?.prenom}, certifie`;
+    let label = '';
+    if (fei.examinateur_initial_approbation_mise_sur_le_marche) {
+      if (fei.examinateur_initial_user_id === user.id) {
+        label = "J'ai certifié";
+      } else {
+        label = `${examinateurInitialUser?.nom_de_famille} ${examinateurInitialUser?.prenom} a certifié`;
+      }
+    } else {
+      if (fei.examinateur_initial_user_id === user.id) {
+        label = `Je, ${examinateurInitialUser?.nom_de_famille} ${examinateurInitialUser?.prenom}, certifie`;
+      } else {
+        // impossible case
+        return '';
+      }
+    }
     if (!atLeastOneCarcasseWithAnomalie) {
       label += " qu'aucune anomalie n'a été observée lors de l'examen initial et";
       label += ' que les carcasses en peau examinées ce jour peuvent être mises sur le marché.';
@@ -220,13 +229,18 @@ export default function FEIExaminateurInitial() {
     examinateurInitialUser?.nom_de_famille,
     examinateurInitialUser?.prenom,
     atLeastOneCarcasseWithAnomalie,
+    user.id,
+    fei.examinateur_initial_user_id,
   ]);
 
   const communesDeChasseFavorites = useGetCommunesDeChasseFavorites(!fei?.commune_mise_a_mort);
 
   return (
     <>
-      <h3 className="text-lg font-semibold text-gray-900">Action de l'Examinateur Initial</h3>
+      <h3 className="text-lg font-semibold text-gray-900">
+        Action de l'Examinateur Initial | {examinateurInitialUser?.prenom}{' '}
+        {examinateurInitialUser?.nom_de_famille}
+      </h3>
       <p className="text-sm text-gray-500 mb-5">* Les champs marqués d'une étoile sont obligatoires.</p>
       <Component
         label="Date de mise à mort (et d'éviscération)&nbsp;*"
@@ -393,29 +407,25 @@ export default function FEIExaminateurInitial() {
                 : undefined,
             }}
           />
-          <div
-            className={[
-              fei.examinateur_initial_approbation_mise_sur_le_marche ? 'pointer-events-none' : '',
-            ].join(' ')}
-          >
-            <Checkbox
-              options={[
-                {
-                  label: checkboxLabel,
-                  hintText: jobIsMissing,
-                  nativeInputProps: {
-                    required: true,
-                    name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
-                    value: 'true',
-                    // disabled: !jobIsDone,
-                    onChange: () => setApprobation(!approbation),
-                    readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
-                    checked: approbation,
-                  },
+          <Checkbox
+            // check css file for styling
+            className={canEdit ? '' : 'checkbox-black'}
+            options={[
+              {
+                label: checkboxLabel,
+                hintText: jobIsMissing,
+                nativeInputProps: {
+                  required: true,
+                  name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
+                  value: 'true',
+                  disabled: !canEdit,
+                  onChange: () => setApprobation(!approbation),
+                  readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
+                  checked: approbation,
                 },
-              ]}
-            />
-          </div>
+              },
+            ]}
+          />
           {canEdit && !needSelectNextUser && (
             <Button
               type="submit"

@@ -60,8 +60,9 @@ export default function Card({ fei }: CardProps) {
   return (
     <Link
       to={`/app/tableau-de-bord/fei/${fei.numero}`}
-      className="p-6 bg-white rounded cursor-pointer border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0"
+      className="p-6 bg-white relative rounded border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0"
     >
+      <div className="absolute text-transparent selection:text-gray-200 top-0 right-0">{fei.numero}</div>
       <Tag
         className={[
           'px-3 py-1 rounded-full text-xs items-center',
@@ -109,6 +110,7 @@ export default function Card({ fei }: CardProps) {
           </div>
         )}
       </div>
+      <div className="absolute text-transparent selection:text-gray-200 bottom-0 right-0">{fei.numero}</div>
     </Link>
   );
 }

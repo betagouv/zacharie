@@ -120,3 +120,25 @@ label.tailwindui {
     padding-right: 0.5rem;
     margin-bottom: 1rem;
 } */
+
+.checkbox-black .fr-checkbox-group input[type=checkbox]:checked + label::before {
+  @apply !text-gray-900 !bg-gray-900;
+}
+
+.checkbox-black *  {
+  @apply !cursor-not-allowed !opacity-100 !text-gray-900;
+}
+
+.radio-black .fr-radio-group input[type=radio] + label {
+  /* @apply !text-gray-900 !opacity-100; */
+  /* @apply !cursor-not-allowed !border-red-500; */
+      background-image: radial-gradient(transparent 10px, #000 11px, transparent 12px);
+}
+
+.radio-black .fr-radio-group input[type=radio]:checked + label {
+  background-image: radial-gradient(transparent 10px, #000 11px, transparent 12px), radial-gradient(#000 5px, transparent 6px);
+}
+
+.radio-black * {
+  @apply !cursor-not-allowed pointer-events-none;
+}
