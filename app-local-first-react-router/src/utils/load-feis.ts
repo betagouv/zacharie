@@ -28,8 +28,7 @@ export async function loadFeis() {
 
     // await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    const allFeis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires> =
-      useZustandStore.getState().feis;
+    const allFeis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires> = {};
     const feisNumerosToLoadAgain: Array<FeiWithIntermediaires['numero']> = [];
 
     for (const fei of [
@@ -62,6 +61,7 @@ export async function loadFeis() {
       };
     }
 
+    console.log('allFeis', Object.keys(allFeis));
     useZustandStore.setState({ feis: allFeis });
 
     const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/fei/done`, {
@@ -79,6 +79,10 @@ export async function loadFeis() {
       return;
     }
 
+    console.log(
+      'feisDone',
+      responseDone.data.feisDone.map((f) => f.numero),
+    );
     useZustandStore.setState({
       feisDone: responseDone.data.feisDone,
     });
