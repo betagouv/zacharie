@@ -64,6 +64,7 @@ export default function FeiStepper() {
         return "Transport vers l'établissement de traitement";
       case 'Fiche envoyée, pas encore traitée':
       case "Transport vers l'établissement de traitement":
+        return "Transport vers / réception par l'établissement de traitement";
         return "Réception par l'établissement de traitement";
       case "Réception par l'établissement de traitement":
         return '';
@@ -71,7 +72,7 @@ export default function FeiStepper() {
       case 'Inspection par le SVI':
       default:
     }
-  }, [currentStep, currentStepLabel]);
+  }, [currentStepLabel]);
 
   return (
     <div className="w-full px-4 md:px-0">
