@@ -542,7 +542,7 @@ export default function FEICurrentIntermediaire() {
             onSubmit={handleSubmitCheckFinishedAt}
           >
             <Checkbox
-              className={!intermediaire?.check_finished_at ? '' : 'pointer-events-none'}
+              className={!intermediaire?.check_finished_at ? '' : 'checkbox-black'}
               options={[
                 {
                   label: labelCheckDone,

@@ -155,7 +155,7 @@ export default function FEI_SVI() {
           }}
         >
           <Checkbox
-            className={!canEdit ? 'pointer-events-none' : ''}
+            className={!canEdit ? 'checkbox-black' : ''}
             options={[
               {
                 label: "J'ai fini l'inspection de toutes les carcasses et je clôture la fiche.",
