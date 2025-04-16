@@ -493,17 +493,23 @@ router.get(
           {
             OR: [
               { examinateur_initial_user_id: user.id },
-              { premier_detenteur_user_id: user.id },
-              {
-                FeiPremierDetenteurEntity: {
-                  EntityRelationsWithUsers: {
-                    some: {
-                      owner_id: user.id,
-                      relation: EntityRelationType.WORKING_FOR,
+              ...(user.roles.includes(UserRoles.PREMIER_DETENTEUR)
+                ? [
+                    {
+                      premier_detenteur_user_id: user.id,
                     },
-                  },
-                },
-              },
+                    {
+                      FeiPremierDetenteurEntity: {
+                        EntityRelationsWithUsers: {
+                          some: {
+                            owner_id: user.id,
+                            relation: EntityRelationType.WORKING_FOR,
+                          },
+                        },
+                      },
+                    },
+                  ]
+                : []),
               { svi_user_id: user.id },
               {
                 FeiIntermediaires: {
@@ -893,10 +899,6 @@ router.get(
         updated_at: 'desc',
       },
     });
-
-    // console.log("feisUnderMyResponsability", feisUnderMyResponsability.length);
-    // console.log("feisToTake", feisToTake.length);
-    // console.log("feisOngoing", feisOngoing.length);
 
     res.status(200).send({
       ok: true,
