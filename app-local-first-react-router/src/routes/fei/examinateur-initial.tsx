@@ -221,12 +221,18 @@ export default function FEIExaminateurInitial() {
         ' que les carcasses en peau examinées ce jour présentent au moins une anomalie. Toutefois, elles peuvent être mises sur le marché.';
     }
     return label;
-  }, [fei.examinateur_initial_approbation_mise_sur_le_marche, atLeastOneCarcasseWithAnomalie]);
+  }, [
+    fei.examinateur_initial_approbation_mise_sur_le_marche,
+    examinateurInitialUser?.nom_de_famille,
+    examinateurInitialUser?.prenom,
+    atLeastOneCarcasseWithAnomalie,
+  ]);
 
   const communesDeChasseFavorites = useGetCommunesDeChasseFavorites(!fei?.commune_mise_a_mort);
 
   return (
     <>
+      <p className="text-sm text-gray-500 mb-5">* Les champs marqués d'une étoile sont obligatoires.</p>
       <Component
         label="Date de mise à mort (et d'éviscération)&nbsp;*"
         hintText={
@@ -317,6 +323,7 @@ export default function FEIExaminateurInitial() {
           defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
         }}
       />
+      <hr className="mt-8" />
       <CarcassesExaminateur canEdit={canEdit} canEditAsPremierDetenteur={canEditAsPremierDetenteur} />
 
       {examinateurInitialUser && (

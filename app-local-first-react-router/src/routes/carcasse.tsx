@@ -433,7 +433,7 @@ function CarcasseReadAndWrite() {
                 <div className="mb-6 bg-white md:shadow">
                   <div className="p-4 pb-8 md:p-8 md:pb-4">
                     <h3 className="fr-h4 fr-mb-2w">
-                      Anomalies abat<span className="fr-hint-text"></span>
+                      Anomalies abats<span className="fr-hint-text"></span>
                     </h3>
                     <div className="mt-4">
                       {anomaliesAbats.map((anomalie, index) => {
@@ -459,13 +459,13 @@ function CarcasseReadAndWrite() {
                           />
                         );
                       })}
-                      {!anomaliesAbats.length && <p className="fr-text--sm">Aucune anomalie abat.</p>}
+                      {!anomaliesAbats.length && <p className="fr-text--sm">Aucune anomalie abats.</p>}
                     </div>
                     {canEdit && (
                       <>
                         {/* <div className="mt-2">
                           <Button onClick={() => setAddAnomalieAbats(true)} type="button" iconId="ri-add-box-fill">
-                            Ajouter une anomalie abat
+                            Ajouter une anomalie abats
                           </Button>
                         </div> */}
                         {addAnomalieAbats && (
