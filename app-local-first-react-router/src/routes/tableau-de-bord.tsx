@@ -140,7 +140,14 @@ export default function TableauDeBordIndex() {
                     {feisAssigned
                       .filter((fei) => fei !== null)
                       .map((fei) => {
-                        return <Card key={fei.numero} fei={fei} />;
+                        return (
+                          <Card
+                            key={fei.numero}
+                            fei={fei}
+                            onPrintSelect={handleCheckboxClick}
+                            isPrintSelected={selectedFeis.includes(fei.numero)}
+                          />
+                        );
                       })}
                   </div>
                 ) : (
@@ -176,7 +183,14 @@ export default function TableauDeBordIndex() {
                       {feisOngoing
                         .filter((fei) => fei !== null)
                         .map((fei) => {
-                          return <Card key={fei.numero} fei={fei} />;
+                          return (
+                            <Card
+                              key={fei.numero}
+                              fei={fei}
+                              onPrintSelect={handleCheckboxClick}
+                              isPrintSelected={selectedFeis.includes(fei.numero)}
+                            />
+                          );
                         })}
                     </div>
                   ) : (
@@ -232,7 +246,14 @@ export default function TableauDeBordIndex() {
                     {feisDone
                       .filter((fei) => fei !== null)
                       .map((fei) => {
-                        return <Card key={fei.numero} fei={fei} />;
+                        return (
+                          <Card
+                            key={fei.numero}
+                            fei={fei}
+                            onPrintSelect={handleCheckboxClick}
+                            isPrintSelected={selectedFeis.includes(fei.numero)}
+                          />
+                        );
                       })}
                   </div>
                 ) : (
@@ -277,7 +298,14 @@ export default function TableauDeBordIndex() {
                       {feiActivesForSvi
                         .filter((fei) => fei !== null)
                         .map((fei) => {
-                          return <Card key={fei.numero} fei={fei} />;
+                          return (
+                            <Card
+                              key={fei.numero}
+                              fei={fei}
+                              onPrintSelect={handleCheckboxClick}
+                              isPrintSelected={selectedFeis.includes(fei.numero)}
+                            />
+                          );
                         })}
                     </div>
                   ) : (
@@ -318,7 +346,14 @@ export default function TableauDeBordIndex() {
                       {feisDoneForSvi
                         .filter((fei) => fei !== null)
                         .map((fei) => {
-                          return <Card key={fei.numero} fei={fei} />;
+                          return (
+                            <Card
+                              key={fei.numero}
+                              fei={fei}
+                              onPrintSelect={handleCheckboxClick}
+                              isPrintSelected={selectedFeis.includes(fei.numero)}
+                            />
+                          );
                         })}
                     </div>
                   ) : (
