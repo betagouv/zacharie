@@ -21,7 +21,10 @@ export default function TableauDeBordLayout() {
     return (
       <RootDisplay hideMinistereName navigation={navigation} id="tableau-de-bord-layout-not-activated">
         <main role="main" id="content">
-          <title>Compte en cours d'activation | Zacharie | Ministère de l'Agriculture</title>
+          <title>
+            Compte en cours d'activation | Zacharie | Ministère de l'Agriculture et de la Souveraineté
+            Alimentaire
+          </title>
           <div className="fr-container">
             <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center">
               <div className="fr-py-0 fr-col-12 fr-col-md-6">

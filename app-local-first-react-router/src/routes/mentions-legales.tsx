@@ -6,7 +6,9 @@ export default function MentionsLegales() {
     <article className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <header>
-          <title>Mentions Légales | Zacharie | Ministère de l'Agriculture</title>
+          <title>
+            Mentions Légales | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+          </title>
           <h1 className="text-2xl font-bold mb-3 mt-0">Mentions Légales</h1>
         </header>
         <div>

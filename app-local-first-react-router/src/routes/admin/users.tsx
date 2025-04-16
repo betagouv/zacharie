@@ -33,7 +33,9 @@ export default function AdminUsers() {
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
-      <title>Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture</title>
+      <title>
+        Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">Utilisateurs</h1>
