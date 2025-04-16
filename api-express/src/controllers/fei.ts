@@ -72,7 +72,6 @@ router.post(
         res.status(401).send({ ok: false, data: { fei: null }, error: 'Unauthorized' });
         return;
       }
-      console.log('delete fei', feiNumero);
       const deletedFei = await prisma.fei.update({
         where: { numero: feiNumero },
         data: { deleted_at: body.deleted_at },

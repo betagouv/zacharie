@@ -4,8 +4,6 @@ import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
-import TableResponsive from '@app/components/TableResponsive';
-import { getOngoingCellFeiUnderMyResponsability } from '@app/utils/get-ongoing-cell';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
@@ -14,8 +12,8 @@ import { useNavigate } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
-import { getFeiKeyDates } from '@app/utils/gert-fei-key-dates';
 import { useSaveScroll } from '@app/services/useSaveScroll';
+import Card from '@app/components/Card';
 
 async function loadData() {
   await syncData('tableau-de-bord');
@@ -26,7 +24,6 @@ async function loadData() {
 export default function TableauDeBordIndex() {
   const navigate = useNavigate();
   const user = useMostFreshUser('tableau de bord index')!;
-  const entities = useZustandStore((state) => state.entities);
   const feisDone = useZustandStore((state) => state.feisDone);
   const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();
   const { onExportToXlsx, isExporting } = useExportFeis();
@@ -132,53 +129,29 @@ export default function TableauDeBordIndex() {
           </div>
           {!isOnlySvi && (
             <>
-              <section className="mb-6 bg-white md:shadow">
+              <section className="mb-6">
                 <div className="p-4 md:p-8 md:pb-0">
                   <h2 className="fr-h3">
                     Fiches à compléter{feisAssigned.length > 0 ? ` (${feisAssigned.length})` : null}
                   </h2>
                 </div>
                 {feisAssigned.length ? (
-                  <TableResponsive
-                    onCheckboxClick={handleCheckboxClick}
-                    checkedItemIds={selectedFeis}
-                    headers={['Chasse', 'Dates clés', 'Carcasses', 'Étape en cours']}
-                    data={feisAssigned
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {feisAssigned
                       .filter((fei) => fei !== null)
-                      .map((fei) => ({
-                        link: `/app/tableau-de-bord/fei/${fei.numero}`,
-                        id: fei.numero,
-                        isSynced: fei.is_synced,
-                        cols: [
-                          // fei.numero!,
-                          <>
-                            {fei.premier_detenteur_name_cache!}
-                            <br />
-                            {fei.commune_mise_a_mort!}
-                          </>,
-                          getFeiKeyDates(fei),
-                          <>
-                            {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
-                              return (
-                                <p
-                                  className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
-                                  key={line}
-                                >
-                                  {line}
-                                </p>
-                              );
-                            })}
-                          </>,
-                          getOngoingCellFeiUnderMyResponsability(fei, entities),
-                        ],
-                      }))}
-                  />
+                      .map((fei) => {
+                        return <Card key={fei.numero} fei={fei} />;
+                      })}
+                  </div>
                 ) : (
-                  <p className="m-8">Pas de fiche assignée</p>
+                  <p className="p-6 bg-white rounded cursor-pointer border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0">
+                    Pas de fiche assignée
+                  </p>
                 )}
-                <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+                <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
                   <Button
                     priority="tertiary"
+                    className="bg-white"
                     iconId="ri-refresh-line"
                     disabled={!isOnline}
                     onClick={loadData}
@@ -191,7 +164,7 @@ export default function TableauDeBordIndex() {
                 </div>
               </section>
               {feisOngoing.length > 0 && (
-                <section className="mb-6 bg-white md:shadow">
+                <section className="mb-6">
                   <div className="p-4 md:p-8 md:pb-0">
                     <h2 className="fr-h3">
                       Fiches en cours
@@ -199,46 +172,22 @@ export default function TableauDeBordIndex() {
                     </h2>
                   </div>
                   {feisOngoing.length ? (
-                    <TableResponsive
-                      onCheckboxClick={handleCheckboxClick}
-                      checkedItemIds={selectedFeis}
-                      headers={['Chasse', 'Dates clés', 'Carcasses', 'Étape en cours']}
-                      data={feisOngoing
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {feisOngoing
                         .filter((fei) => fei !== null)
-                        .map((fei) => ({
-                          link: `/app/tableau-de-bord/fei/${fei.numero}`,
-                          id: fei.numero,
-                          isSynced: fei.is_synced,
-                          cols: [
-                            // fei.numero!,
-                            <>
-                              {fei.premier_detenteur_name_cache!}
-                              <br />
-                              {fei.commune_mise_a_mort!}
-                            </>,
-                            getFeiKeyDates(fei),
-                            <>
-                              {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
-                                return (
-                                  <p
-                                    className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
-                                    key={line}
-                                  >
-                                    {line}
-                                  </p>
-                                );
-                              })}
-                            </>,
-                            getOngoingCellFeiUnderMyResponsability(fei, entities),
-                          ],
-                        }))}
-                    />
+                        .map((fei) => {
+                          return <Card key={fei.numero} fei={fei} />;
+                        })}
+                    </div>
                   ) : (
-                    <p className="m-8">Pas de fiche en cours</p>
+                    <p className="p-6 bg-white rounded cursor-pointer border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0">
+                      Pas de fiche en cours
+                    </p>
                   )}
-                  <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+                  <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
                     <Button
                       priority="tertiary"
+                      className="bg-white"
                       iconId="ri-refresh-line"
                       disabled={!isOnline}
                       onClick={loadData}
@@ -255,7 +204,7 @@ export default function TableauDeBordIndex() {
           )}
           {!isOnlySvi && (
             <details
-              className="mb-6 bg-white md:shadow open:[&_summary]:md:pb-0"
+              className="mb-6 open:[&_summary]:md:pb-0"
               open
               // open={window.sessionStorage.getItem('fiches-cloturees-opened') ? true : false}
               // onToggle={() => {
@@ -277,48 +226,29 @@ export default function TableauDeBordIndex() {
                   Fiches clôturées {feisDone.length > 0 ? ` (${feisDone.length})` : null}
                 </h2>
               </summary>
-              <div className="py-2 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+              <div className="py-2 md:pb-0 md:pt-2">
                 {feisDone.length ? (
-                  <TableResponsive
-                    onCheckboxClick={handleCheckboxClick}
-                    checkedItemIds={selectedFeis}
-                    headers={['Chasse', 'Dates clés', 'Carcasses', "Transmission au service d'inspection"]}
-                    data={feisDone
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {feisDone
                       .filter((fei) => fei !== null)
-                      .map((fei) => ({
-                        link: `/app/tableau-de-bord/fei/${fei.numero}`,
-                        id: fei.numero,
-                        isSynced: fei.is_synced,
-                        cols: [
-                          // fei.numero!,
-                          <>
-                            {fei.premier_detenteur_name_cache!}
-                            <br />
-                            {fei.commune_mise_a_mort!}
-                          </>,
-                          getFeiKeyDates(fei),
-                          <>
-                            {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
-                              return (
-                                <p
-                                  className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
-                                  key={line}
-                                >
-                                  {line}
-                                </p>
-                              );
-                            })}
-                          </>,
-                          fei.svi_assigned_at ? dayjs(fei.svi_assigned_at).format('DD/MM/YYYY à HH:mm') : '',
-                        ],
-                      }))}
-                  />
+                      .map((fei) => {
+                        return <Card key={fei.numero} fei={fei} />;
+                      })}
+                  </div>
                 ) : (
-                  <p className="m-8">Pas encore de fiche clôturée</p>
+                  <p className="p-6 bg-white rounded cursor-pointer border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0">
+                    Pas encore de fiche clôturée
+                  </p>
                 )}
               </div>
-              <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
-                <Button priority="tertiary" iconId="ri-refresh-line" disabled={!isOnline} onClick={loadData}>
+              <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
+                <Button
+                  priority="tertiary"
+                  className="bg-white"
+                  iconId="ri-refresh-line"
+                  disabled={!isOnline}
+                  onClick={loadData}
+                >
                   Mettre à jour
                 </Button>
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
@@ -329,7 +259,7 @@ export default function TableauDeBordIndex() {
           )}
           {isOnlySvi && (
             <>
-              <section className="mb-6 bg-white md:shadow">
+              <section className="mb-6">
                 {!isOnline && (
                   <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
                     Vous ne pouvez pas accéder au détail de vos fiches sans connexion internet.
@@ -341,49 +271,25 @@ export default function TableauDeBordIndex() {
                     {feiActivesForSvi.length > 0 ? ` (${feiActivesForSvi.length})` : null}
                   </h2>
                 </div>
-                <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+                <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2">
                   {feiActivesForSvi.length ? (
-                    <TableResponsive
-                      onCheckboxClick={handleCheckboxClick}
-                      checkedItemIds={selectedFeis}
-                      strongId
-                      headers={['Chasse', 'Dates clés', 'Carcasses', "Envoyée par l'ETG le"]}
-                      data={feiActivesForSvi
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {feiActivesForSvi
                         .filter((fei) => fei !== null)
-                        .map((fei) => ({
-                          link: `/app/tableau-de-bord/fei/${fei.numero}`,
-                          id: fei.numero,
-                          isSynced: fei.is_synced,
-                          cols: [
-                            <>
-                              {fei.premier_detenteur_name_cache!}
-                              <br />
-                              {fei.commune_mise_a_mort!}
-                            </>,
-                            getFeiKeyDates(fei),
-                            <>
-                              {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
-                                return (
-                                  <p
-                                    className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
-                                    key={line}
-                                  >
-                                    {line}
-                                  </p>
-                                );
-                              })}
-                            </>,
-                            dayjs(fei.svi_assigned_at).format('DD/MM/YYYY à HH:mm'),
-                          ],
-                        }))}
-                    />
+                        .map((fei) => {
+                          return <Card key={fei.numero} fei={fei} />;
+                        })}
+                    </div>
                   ) : (
-                    <p className="m-8">Pas encore de fiche clôturée</p>
+                    <p className="p-6 bg-white rounded cursor-pointer border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0">
+                      Pas encore de fiche clôturée
+                    </p>
                   )}
                 </div>
-                <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+                <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
                   <Button
                     priority="tertiary"
+                    className="bg-white"
                     iconId="ri-refresh-line"
                     disabled={!isOnline}
                     onClick={loadData}
@@ -395,7 +301,7 @@ export default function TableauDeBordIndex() {
                   </a>
                 </div>
               </section>
-              <section className="mb-6 bg-white md:shadow">
+              <section className="mb-6">
                 {!isOnline && (
                   <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
                     Vous ne pouvez pas accéder au détail de vos fiches sans connexion internet.
@@ -406,49 +312,25 @@ export default function TableauDeBordIndex() {
                     Fiches clôturées {feisDoneForSvi.length > 0 ? ` (${feisDoneForSvi.length})` : null}
                   </h2>
                 </div>
-                <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+                <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2">
                   {feisDoneForSvi.length ? (
-                    <TableResponsive
-                      onCheckboxClick={handleCheckboxClick}
-                      checkedItemIds={selectedFeis}
-                      headers={['Chasse', 'Dates clés', 'Carcasses', 'Clôturée le']}
-                      data={feisDoneForSvi
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {feisDoneForSvi
                         .filter((fei) => fei !== null)
-                        .map((fei) => ({
-                          link: `/app/tableau-de-bord/fei/${fei.numero}`,
-                          id: fei.numero,
-                          isSynced: fei.is_synced,
-                          cols: [
-                            // fei.numero!,
-                            <>
-                              {fei.premier_detenteur_name_cache!}
-                              <br />
-                              {fei.commune_mise_a_mort!}
-                            </>,
-                            getFeiKeyDates(fei),
-                            <>
-                              {fei.resume_nombre_de_carcasses?.split('\n').map((line) => {
-                                return (
-                                  <p
-                                    className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'}
-                                    key={line}
-                                  >
-                                    {line}
-                                  </p>
-                                );
-                              })}
-                            </>,
-                            dayjs(fei.svi_signed_at || fei.automatic_closed_at).format('DD/MM/YYYY à HH:mm'),
-                          ],
-                        }))}
-                    />
+                        .map((fei) => {
+                          return <Card key={fei.numero} fei={fei} />;
+                        })}
+                    </div>
                   ) : (
-                    <p className="m-8">Pas encore de fiche clôturée</p>
+                    <p className="p-6 bg-white rounded cursor-pointer border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0">
+                      Pas encore de fiche clôturée
+                    </p>
                   )}
                 </div>
-                <div className="my-4 flex flex-col items-start justify-between gap-4 bg-white px-8">
+                <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
                   <Button
                     priority="tertiary"
+                    className="bg-white"
                     iconId="ri-refresh-line"
                     disabled={!isOnline}
                     onClick={loadData}
