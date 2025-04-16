@@ -106,7 +106,9 @@ export default function RegistreCarcasses() {
 
   return (
     <div className="fr-container--fluid fr-my-md-14v">
-      <title>Registre de carcasses | Zacharie | Ministère de l'Agriculture</title>
+      <title>
+        Registre de carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
 
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 p-4">

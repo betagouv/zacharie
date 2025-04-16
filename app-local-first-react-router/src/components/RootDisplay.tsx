@@ -44,14 +44,12 @@ export default function RootDisplay({
             <br />
             de la Souveraineté
             <br />
-            Alimentaire et
-            <br />
-            de la Forêt
+            Alimentaire
           </span>
         }
         homeLinkProps={{
           to: user?.activated ? '/app/tableau-de-bord' : '/',
-          title: "Zacharie | Ministère de l'Agriculture",
+          title: "Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire",
         }}
         id="fr-header-header-with-quick-access-items"
         className="[&_.fr-header\_\_service-title]:flex [&_.fr-header\_\_service-title]:items-end"
