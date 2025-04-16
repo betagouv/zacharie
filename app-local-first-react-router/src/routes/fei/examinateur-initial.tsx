@@ -1,10 +1,8 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import UserNotEditable from '@app/components/UserNotEditable';
 import { CarcasseType, Prisma, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
-import { Accordion } from '@codegouvfr/react-dsfr/Accordion';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import dayjs from 'dayjs';
@@ -12,13 +10,11 @@ import InputVille from '@app/components/InputVille';
 import CarcassesExaminateur from './examinateur-carcasses';
 import SelectNextForExaminateur from './examinateur-select-next';
 import FeiPremierDetenteur from './premier-detenteur';
-import EntityNotEditable from '@app/components/EntityNotEditable';
-import { formatCountCarcasseByEspece, formatSummaryCount } from '@app/utils/count-carcasses';
+import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import Alert from '@codegouvfr/react-dsfr/Alert';
-import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 import useGetCommunesDeChasseFavorites from '@app/utils/useGetCommunesDeChasseFavorites';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 
@@ -179,8 +175,6 @@ export default function FEIExaminateurInitial() {
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
-  const examRef = useRef<HTMLFormElement>(null);
-
   const jobIsMissing = useMemo(() => {
     if (!fei.date_mise_a_mort) {
       return 'Il manque la date de mise à mort';
@@ -232,6 +226,7 @@ export default function FEIExaminateurInitial() {
 
   return (
     <>
+      <h3 className="text-lg font-semibold text-gray-900">Action de l'Examinateur Initial</h3>
       <p className="text-sm text-gray-500 mb-5">* Les champs marqués d'une étoile sont obligatoires.</p>
       <Component
         label="Date de mise à mort (et d'éviscération)&nbsp;*"
@@ -452,16 +447,7 @@ export default function FEIExaminateurInitial() {
       )}
       <hr className="mt-8" />
       {!showPremierDetenteur && <SelectNextForExaminateur disabled={!needSelectNextUser} />}
-      {showPremierDetenteur && (
-        <>
-          {premierDetenteurEntity ? (
-            <EntityNotEditable hideType entity={premierDetenteurEntity} user={premierDetenteurUser!} />
-          ) : (
-            <UserNotEditable user={premierDetenteurUser!} />
-          )}
-          <FeiPremierDetenteur showIdentity={false} />
-        </>
-      )}
+      {showPremierDetenteur && <FeiPremierDetenteur />}
     </>
   );
 }

@@ -57,21 +57,21 @@ export default function FeiStepper() {
   }, [currentStep, steps, fei.fei_next_owner_role]);
 
   const nextStepLabel = useMemo(() => {
-    switch (steps[currentStep]) {
-      case UserRoles.EXAMINATEUR_INITIAL:
-        return 'Examen initial';
-      case UserRoles.PREMIER_DETENTEUR:
+    switch (currentStepLabel) {
+      case 'Examen initial':
         return 'Validation par le premier détenteur';
-      case UserRoles.COLLECTEUR_PRO:
+      case 'Validation par le premier détenteur':
         return "Transport vers l'établissement de traitement";
-      case UserRoles.ETG:
-        return "Transport vers ou réception par l'établissement de traitement";
-      case UserRoles.SVI:
-        return 'Inspection par le SVI';
-      default:
+      case 'Fiche envoyée, pas encore traitée':
+      case "Transport vers l'établissement de traitement":
+        return "Réception par l'établissement de traitement";
+      case "Réception par l'établissement de traitement":
         return '';
+      // return 'Inspection par le SVI';
+      case 'Inspection par le SVI':
+      default:
     }
-  }, [currentStep, steps]);
+  }, [currentStep, currentStepLabel]);
 
   return (
     <div className="w-full px-4 md:px-0">
