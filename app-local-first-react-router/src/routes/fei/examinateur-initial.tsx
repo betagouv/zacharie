@@ -299,7 +299,20 @@ export default function FEIExaminateurInitial() {
           name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
           type: 'time',
           required: true,
-          onBlur: (e) => updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: e.target.value }),
+          onBlur: (e) => {
+            const heure_mise_a_mort_premiere_carcasse = e.target.value;
+            if (!fei.heure_evisceration_derniere_carcasse) {
+              updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse });
+            } else if (fei.heure_evisceration_derniere_carcasse <= heure_mise_a_mort_premiere_carcasse) {
+              alert(
+                "L'heure de mise à mort de la première carcasse doit être inférieure à l'heure d'éviscération de la dernière carcasse",
+              );
+              // reset input
+              e.target.value = '';
+            } else {
+              updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse });
+            }
+          },
           autoComplete: 'off',
           defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
         }}
@@ -319,8 +332,22 @@ export default function FEIExaminateurInitial() {
                 type: 'time',
                 required: true,
                 autoComplete: 'off',
-                onBlur: (e) =>
-                  updateFei(fei.numero, { heure_evisceration_derniere_carcasse: e.target.value }),
+                onBlur: (e) => {
+                  const heure_evisceration_derniere_carcasse = e.target.value;
+                  if (!fei.heure_mise_a_mort_premiere_carcasse) {
+                    updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
+                  } else if (
+                    fei.heure_mise_a_mort_premiere_carcasse >= heure_evisceration_derniere_carcasse
+                  ) {
+                    alert(
+                      "L'heure d'éviscération de la dernière carcasse doit être supérieure à l'heure de mise à mort de la première carcasse",
+                    );
+                    // reset input
+                    e.target.value = '';
+                  } else {
+                    updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
+                  }
+                },
                 defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
               }}
             />
