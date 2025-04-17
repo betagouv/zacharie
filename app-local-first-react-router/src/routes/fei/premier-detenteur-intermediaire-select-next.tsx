@@ -213,7 +213,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
       <form
         id="select-next-owner"
         method="POST"
-        className={disabled ? 'opacity-50 pointer-events-none' : ''}
+        className={disabled ? 'pointer-events-none opacity-50' : ''}
         onSubmit={(event) => {
           event.preventDefault();
           if (disabled) {
@@ -291,14 +291,6 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
             description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
             title="Attribution effectuée"
           />
-          <Button
-            className="mt-6"
-            linkProps={{
-              to: `/app/tableau-de-bord/`,
-            }}
-          >
-            Voir toutes mes fiches
-          </Button>
         </>
       )}
     </>
