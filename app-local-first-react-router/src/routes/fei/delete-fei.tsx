@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { UserRoles } from '@prisma/client';
-import DeleteButtonAndConfirmModal from '@app/components/DeleteButtonAndConfirmModal';
+import ConfirmModal from '@app/components/ConfirmModal';
 import { useNavigate, useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
@@ -45,7 +45,7 @@ export default function DeleteFei() {
   }
 
   return (
-    <DeleteButtonAndConfirmModal
+    <ConfirmModal
       title="Voulez-vous vraiment supprimer la fiche ?"
       buttonText="Supprimer la fiche"
       textToConfirm="SUPPRIMER LA FICHE"

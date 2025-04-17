@@ -3,7 +3,7 @@ import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { getUserRoleLabelPrefixed } from '@app/utils/get-user-roles-label';
 import { UserRoles } from '@prisma/client';
-import DeleteButtonAndConfirmModal from '@app/components/DeleteButtonAndConfirmModal';
+import ConfirmModal from '@app/components/ConfirmModal';
 import { useNavigate, useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
@@ -98,7 +98,7 @@ export default function CurrentOwner() {
       </Highlight>
       {canDeleteFei && (
         <div className="mt-2">
-          <DeleteButtonAndConfirmModal
+          <ConfirmModal
             title="Supprimer la fiche"
             buttonText="Supprimer la fiche"
             textToConfirm="SUPPRIMER LA FICHE"

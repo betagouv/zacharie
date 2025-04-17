@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 
-interface DeleteButtonAndConfirmModalProps {
+interface ConfirmModalProps {
   title: string;
   buttonText?: string;
   children?: React.ReactNode;
@@ -13,7 +13,7 @@ interface DeleteButtonAndConfirmModalProps {
   disabledTitle?: string;
 }
 
-const DeleteButtonAndConfirmModal = ({
+export default function ConfirmModal({
   title,
   children,
   textToConfirm,
@@ -22,7 +22,7 @@ const DeleteButtonAndConfirmModal = ({
   disabled = false,
   className = '',
   disabledTitle = "Vous n'avez pas le droit de supprimer cet élément",
-}: DeleteButtonAndConfirmModalProps) => {
+}: ConfirmModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [resetKey, setResetKey] = useState(0);
 
@@ -77,6 +77,4 @@ const DeleteButtonAndConfirmModal = ({
       </modal.Component>
     </>
   );
-};
-
-export default DeleteButtonAndConfirmModal;
+}
