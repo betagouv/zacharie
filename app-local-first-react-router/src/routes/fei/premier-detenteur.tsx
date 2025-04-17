@@ -13,6 +13,7 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 
 export default function FeiPremierDetenteur() {
   const params = useParams();
@@ -21,6 +22,8 @@ export default function FeiPremierDetenteur() {
   const updateFei = state.updateFei;
   const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
+  const prefilledInfos = usePrefillPremierDétenteurInfos();
+
   const premierDetenteurUser = fei.premier_detenteur_user_id
     ? state.users[fei.premier_detenteur_user_id]
     : null;
@@ -29,7 +32,9 @@ export default function FeiPremierDetenteur() {
     : null;
   const premierDetenteurDepotEntity = fei.premier_detenteur_depot_entity_id
     ? state.entities[fei.premier_detenteur_depot_entity_id]
-    : null;
+    : prefilledInfos?.premier_detenteur_depot_entity_id
+      ? state.entities[prefilledInfos.premier_detenteur_depot_entity_id]
+      : null;
   const ccgs = state.ccgsIds.map((id) => state.entities[id]);
   const etgs = state.etgsIds.map((id) => state.entities[id]);
 
@@ -47,6 +52,9 @@ export default function FeiPremierDetenteur() {
     }
     if (fei.premier_detenteur_depot_entity_id) {
       return state.entities[fei.premier_detenteur_depot_entity_id]?.type;
+    }
+    if (prefilledInfos?.premier_detenteur_depot_type) {
+      return prefilledInfos.premier_detenteur_depot_type;
     }
     return EntityTypes.ETG;
   });
@@ -156,7 +164,7 @@ export default function FeiPremierDetenteur() {
       <h3 className="text-lg font-semibold text-gray-900">
         Action du Premier détenteur | {premierDetenteurInput}
       </h3>
-      <p className="text-sm text-gray-500 mb-5">* Les champs marqués d'une étoile sont obligatoires.</p>
+      <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'une étoile sont obligatoires.</p>
       {showAsDisabled && (
         <Alert
           severity="success"
@@ -165,7 +173,7 @@ export default function FeiPremierDetenteur() {
           className="mb-5"
         />
       )}
-      <div className={showAsDisabled ? 'opacity-50 cursor-not-allowed' : canEdit ? '' : 'cursor-not-allowed'}>
+      <div className={showAsDisabled ? 'cursor-not-allowed opacity-50' : canEdit ? '' : 'cursor-not-allowed'}>
         <RadioButtons
           legend="Où sont entreposées les carcasses ? *"
           className={canEdit ? '' : 'radio-black'}
@@ -262,7 +270,9 @@ export default function FeiPremierDetenteur() {
                 name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
                 required: true,
                 disabled: !canEdit,
-                defaultValue: ccgs.length === 1 ? ccgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ''),
+                defaultValue:
+                  prefilledInfos?.premier_detenteur_depot_entity_id ??
+                  (ccgs.length === 1 ? ccgs[0].id : (fei.premier_detenteur_depot_entity_id ?? '')),
               }}
             >
               <option value="">Sélectionnez un centre de collecte</option>
@@ -284,7 +294,9 @@ export default function FeiPremierDetenteur() {
               nativeSelectProps={{
                 name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id,
                 required: true,
-                defaultValue: etgs.length === 1 ? etgs[0].id : (fei.premier_detenteur_depot_entity_id ?? ''),
+                defaultValue:
+                  prefilledInfos?.premier_detenteur_depot_entity_id ??
+                  (etgs.length === 1 ? etgs[0].id : (fei.premier_detenteur_depot_entity_id ?? '')),
               }}
             >
               <option value="">Sélectionnez</option>
@@ -352,7 +364,7 @@ export default function FeiPremierDetenteur() {
         {depotType === EntityTypes.CCG && (
           <div
             key={needSelectNextUser ? 'true' : 'false'}
-            className="mt-5 z-50 flex flex-col bg-white md:w-auto md:items-start [&_ul]:md:min-w-96"
+            className="z-50 mt-5 flex flex-col bg-white md:w-auto md:items-start [&_ul]:md:min-w-96"
           >
             <SelectNextOwnerForPremierDetenteurOrIntermediaire
               calledFrom="premier-detenteur-need-select-next"
