@@ -154,7 +154,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
 
         <div className="flex flex-col">
           <div className="text-gray-600">
-            {fei.premier_detenteur_name_cache || 'Nom du premier détenteur non renseigné'}
+            {fei.premier_detenteur_name_cache || 'Premier détenteur en attente de validation'}
           </div>
           <div className="text-gray-600">{fei.commune_mise_a_mort || 'Commune de chasse non renseignée'}</div>
         </div>
