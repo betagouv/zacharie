@@ -241,7 +241,7 @@ export default function FEIExaminateurInitial() {
         Action de l'Examinateur Initial | {examinateurInitialUser?.prenom}{' '}
         {examinateurInitialUser?.nom_de_famille}
       </h3>
-      <p className="text-sm text-gray-500 mb-5">* Les champs marqués d'une étoile sont obligatoires.</p>
+      <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'une étoile sont obligatoires.</p>
       <Component
         label="Date de mise à mort (et d'éviscération)&nbsp;*"
         hintText={

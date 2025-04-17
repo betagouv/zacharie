@@ -177,7 +177,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled: boole
       {!fei.fei_next_owner_user_id && !nextValue && (
         <>
           <form
-            className="relative flex w-full flex-row items-end gap-4 mt-4"
+            className="relative mt-4 flex w-full flex-row items-end gap-4"
             method="POST"
             onSubmit={async (event) => {
               event.preventDefault();
@@ -280,14 +280,6 @@ export default function SelectNextForExaminateur({ disabled }: { disabled: boole
               description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
               title="Attribution effectuée"
             />
-            <Button
-              className="mt-6"
-              linkProps={{
-                to: `/app/tableau-de-bord/`,
-              }}
-            >
-              Voir toutes mes fiches
-            </Button>
           </>
         )}
     </>

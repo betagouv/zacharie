@@ -375,14 +375,6 @@ export default function FeiPremierDetenteur() {
                 description={`${premierDetenteurDepotEntity?.nom_d_usage} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
                 title="Attribution effectuée"
               />
-              <Button
-                className="mt-6"
-                linkProps={{
-                  to: `/app/tableau-de-bord/`,
-                }}
-              >
-                Voir toutes mes fiches
-              </Button>
             </>
           )}
       </div>

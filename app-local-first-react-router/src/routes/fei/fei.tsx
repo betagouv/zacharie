@@ -18,6 +18,7 @@ import CurrentOwnerConfirm from './current-owner-confirm';
 import { ToggleSwitch } from '@codegouvfr/react-dsfr/ToggleSwitch';
 import FEI_ETGInspectionSvi from './etg-inspection-svi';
 import DeleteFei from './delete-fei';
+import { Button } from '@codegouvfr/react-dsfr/Button';
 
 export default function FeiLoader() {
   const params = useParams();
@@ -186,7 +187,14 @@ function Fei() {
                 (switchEtgSviInterface === 'etg' ? <FEICurrentIntermediaire /> : <FEI_ETGInspectionSvi />)}
               {showInterface === UserRoles.SVI && <FEI_SVI />}
             </div>
-            <div className="m-8 flex justify-start">
+            <div className="m-8 flex flex-col justify-start gap-4">
+              <Button
+                linkProps={{
+                  to: `/app/tableau-de-bord/`,
+                }}
+              >
+                Voir toutes mes fiches
+              </Button>
               <DeleteFei />
             </div>
           </div>
