@@ -189,7 +189,7 @@ router.get(
       return;
     }
 
-    const usersWithEntityType = await prisma.user.findMany({
+    const canTakeFichesForEntity = await prisma.user.findMany({
       where: {
         roles:
           entity.type === EntityTypes.PREMIER_DETENTEUR
@@ -211,12 +211,22 @@ router.get(
       select: userAdminSelect,
     });
 
-    const potentialPartenaires = await prisma.user.findMany({
+    const canSendFichesToEntity = await prisma.user.findMany({
       where: {
         id: {
           notIn: entity.EntityRelationsWithUsers.filter(
             (entityRelation) => entityRelation.relation === EntityRelationType.WORKING_WITH,
           ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
+        },
+        roles: {
+          hasSome:
+            entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
+              ? [UserRoles.PREMIER_DETENTEUR]
+              : entity.type === EntityTypes.PREMIER_DETENTEUR
+              ? [UserRoles.EXAMINATEUR_INITIAL]
+              : entity.type === EntityTypes.SVI
+              ? [UserRoles.ETG]
+              : [],
         },
       },
       orderBy: {
@@ -321,8 +331,8 @@ router.get(
       ok: true,
       data: {
         entity,
-        usersWithEntityType,
-        potentialPartenaires,
+        canTakeFichesForEntity,
+        canSendFichesToEntity,
         collecteursRelatedToETG,
         potentialCollecteursRelatedToETG,
         svisRelatedToETG,
@@ -502,21 +512,21 @@ router.get(
             {
               type: 'Examinateur Initial',
               email: fei.FeiExaminateurInitialUser?.email,
-              nom_d_usage: null,
+              nom_d_usage: '',
             },
             {
               type: 'Premier Detenteur',
               email: fei.FeiPremierDetenteurUser?.email,
-              nom_d_usage: null,
+              nom_d_usage: '',
             },
             ...fei.FeiIntermediaires.map((inter) => ({
               type: inter.FeiIntermediaireEntity.type,
-              email: null,
+              email: '',
               nom_d_usage: inter.FeiIntermediaireEntity.nom_d_usage,
             })),
             {
               type: 'SVI',
-              email: null,
+              email: '',
               nom_d_usage: fei.FeiSviEntity?.nom_d_usage,
             },
           ],

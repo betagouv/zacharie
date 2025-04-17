@@ -44,9 +44,14 @@ const initialData: State = {
     deleted_at: null,
     onboarded_at: null,
     is_synced: true,
+    nom_prenom_responsable: null,
+    prefecture_svi: null,
+    inc_certificat: 0,
+    inc_decision: 0,
+    code_etbt_certificat: null,
   },
-  usersWithEntityType: [],
-  potentialPartenaires: [],
+  canTakeFichesForEntity: [],
+  canSendFichesToEntity: [],
   svisRelatedToETG: [],
   collecteursRelatedToETG: [],
   etgsRelatedWithEntity: [],
@@ -60,8 +65,8 @@ export default function AdminEntity() {
   const [isSaving, setIsSaving] = useState(false);
   const {
     // entity,
-    usersWithEntityType,
-    potentialPartenaires,
+    canTakeFichesForEntity,
+    canSendFichesToEntity,
     svisRelatedToETG,
     collecteursRelatedToETG,
     etgsRelatedWithEntity,
@@ -81,15 +86,19 @@ export default function AdminEntity() {
       tabId: 'Raison Sociale',
       label: 'Raison Sociale',
     },
-    {
+  ];
+  if (entity.type !== EntityTypes.CCG) {
+    tabs.push({
       tabId: 'Utilisateurs pouvant traiter des fiches pour cette entité',
       label: `Utilisateurs pouvant traiter des fiches pour cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
-    },
-    {
-      tabId: 'Utilisateurs pouvant envoyer des fiches à cette entité',
-      label: `Utilisateurs pouvant envoyer des fiches à cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
-    },
-  ];
+    });
+    if (entity.type !== EntityTypes.SVI) {
+      tabs.push({
+        tabId: 'Utilisateurs pouvant envoyer des fiches à cette entité',
+        label: `Utilisateurs pouvant envoyer des fiches à cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
+      });
+    }
+  }
   if (entity.type === EntityTypes.ETG) {
     tabs.push({
       tabId: 'Collecteur Pro associé',
@@ -108,13 +117,13 @@ export default function AdminEntity() {
   }
 
   return (
-    <div className="relative fr-container fr-container--fluid fr-my-md-14v">
+    <div className="fr-container fr-container--fluid fr-my-md-14v relative">
       <title>
         {entity.nom_d_usage} ({entity.type}) | Admin | Zacharie | Ministère de l'Agriculture
       </title>
       {isSaving && (
-        <div className="fixed top-0 right-0 bg-action-high-blue-france">
-          <span className="text-white p-4">Enregistrement en cours</span>
+        <div className="fixed right-0 top-0 bg-action-high-blue-france">
+          <span className="p-4 text-white">Enregistrement en cours</span>
         </div>
       )}
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center" key={entity.id}>
@@ -230,7 +239,7 @@ export default function AdminEntity() {
                     }}
                   />
 
-                  <div className="flex flex-col md:flex-row w-full gap-x-4">
+                  <div className="flex w-full flex-col gap-x-4 md:flex-row">
                     <Input
                       label="Code postal"
                       hintText="Format attendu : 5 chiffres"
@@ -302,7 +311,7 @@ export default function AdminEntity() {
                 <UserWorkingWithOrFor
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
-                  potentialUsers={usersWithEntityType}
+                  potentialUsers={canTakeFichesForEntity}
                   relation={EntityRelationType.WORKING_FOR}
                   fetcherKey="working-for"
                   setIsSaving={setIsSaving}
@@ -312,7 +321,7 @@ export default function AdminEntity() {
                 <UserWorkingWithOrFor
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
-                  potentialUsers={potentialPartenaires}
+                  potentialUsers={canSendFichesToEntity}
                   relation={EntityRelationType.WORKING_WITH}
                   fetcherKey="working-with"
                   setIsSaving={setIsSaving}
@@ -393,7 +402,7 @@ function UserWorkingWithOrFor({
           return (
             <Notice
               key={owner.id}
-              className="mb-4 fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
+              className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice\\\\_\\\\_title]:before:hidden"
               style={{
                 boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
               }}
@@ -590,7 +599,7 @@ function EntitiesRelatedTo({
         return (
           <Notice
             key={coupledEntity.id}
-            className="mb-4 fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
+            className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice\\\\_\\\\_title]:before:hidden"
             style={{
               boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
             }}

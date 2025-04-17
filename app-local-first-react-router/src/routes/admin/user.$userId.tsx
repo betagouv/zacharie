@@ -3,7 +3,14 @@ import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
-import { Entity, EntityRelationType, UserRoles, Prisma, UserNotifications } from '@prisma/client';
+import {
+  Entity,
+  EntityRelationType,
+  UserRoles,
+  Prisma,
+  UserNotifications,
+  EntityTypes,
+} from '@prisma/client';
 import InputVille from '@app/components/InputVille';
 import RolesCheckBoxes from '@app/components/RolesCheckboxes';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
@@ -119,11 +126,21 @@ export default function AdminUser() {
       tabId: 'Peut traiter des fiches au nom de',
       label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
     },
-    {
+  ];
+
+  if (
+    user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) &&
+    user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1
+  ) {
+    tabs.pop();
+  }
+
+  if (!user.roles.includes(UserRoles.SVI)) {
+    tabs.push({
       tabId: 'Peut envoyer des fiches à',
       label: `Peut envoyer des fiches à (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
-    },
-  ];
+    });
+  }
 
   if (!user.id) {
     return <Chargement />;
@@ -299,7 +316,7 @@ export default function AdminUser() {
                     }}
                   />
 
-                  <div className="flex flex-col md:flex-row w-full gap-x-4">
+                  <div className="flex w-full flex-col gap-x-4 md:flex-row">
                     <Input
                       label="Code postal"
                       hintText="Format attendu : 5 chiffres"
@@ -410,12 +427,46 @@ function WorkingWithOrFor({
     }
     const entities = [];
     for (const entity of allEntities) {
-      if (!userEntityIds[entity.id]) {
-        entities.push(entity);
+      if (userEntityIds[entity.id]) continue;
+      if (relation === EntityRelationType.WORKING_WITH) {
+        if (
+          user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ||
+          user.roles.includes(UserRoles.PREMIER_DETENTEUR)
+        ) {
+          if (entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO) {
+            entities.push(entity);
+          }
+        } else if (user.roles.includes(UserRoles.ETG)) {
+          if (entity.type === EntityTypes.SVI) {
+            entities.push(entity);
+          }
+        } else if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+          if (entity.type === EntityTypes.ETG) {
+            entities.push(entity);
+          }
+        }
+      } else if (relation === EntityRelationType.WORKING_FOR) {
+        if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+          if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
+            entities.push(entity);
+          }
+        } else if (user.roles.includes(UserRoles.ETG)) {
+          if (entity.type === EntityTypes.ETG) {
+            entities.push(entity);
+          }
+        } else if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+          if (entity.type === EntityTypes.COLLECTEUR_PRO || entity.type === EntityTypes.ETG) {
+            entities.push(entity);
+          }
+        } else if (user.roles.includes(UserRoles.SVI)) {
+          if (entity.type === EntityTypes.SVI) {
+            entities.push(entity);
+          }
+        }
       }
     }
     return entities;
-  }, [allEntities, userEntitiesRelations, relation]);
+  }, [allEntities, userEntitiesRelations, relation, user.roles]);
 
   return (
     <>
@@ -425,7 +476,7 @@ function WorkingWithOrFor({
           return (
             <Notice
               key={entity.id}
-              className="mb-4 fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
+              className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice\\\\_\\\\_title]:before:hidden"
               style={{
                 boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
               }}

@@ -139,8 +139,8 @@ export interface AdminGetEntityResponse {
   ok: boolean;
   data: null | {
     entity: EntityForAdmin;
-    usersWithEntityType: Array<UserForAdmin>;
-    potentialPartenaires: Array<UserForAdmin>;
+    canTakeFichesForEntity: Array<UserForAdmin>;
+    canSendFichesToEntity: Array<UserForAdmin>;
     collecteursRelatedToETG: Array<Entity>;
     potentialCollecteursRelatedToETG: Array<Entity>;
     svisRelatedToETG: Array<Entity>;
