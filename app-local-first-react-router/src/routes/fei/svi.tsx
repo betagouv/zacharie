@@ -100,6 +100,9 @@ export default function FEI_SVI() {
         {carcassesSorted.map((carcasse) => {
           return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
         })}
+        {/* <Button type="submit" className="mt-4" disabled={!canEdit}>
+          Saisir toutes les carcasses
+        </Button> */}
       </Accordion>
 
       <Accordion titleAs="h3" label="Validation de la fiche" defaultExpanded>
