@@ -1,5 +1,5 @@
 import type { FeisResponse, FeisDoneResponse } from '@api/src/types/responses';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
+import type { FeiDone, FeiWithIntermediaires } from '@api/src/types/fei';
 import useZustandStore from '@app/zustand/store';
 import { loadFei } from '@app/utils/load-fei';
 import dayjs from 'dayjs';
@@ -61,7 +61,6 @@ export async function loadFeis() {
       };
     }
 
-    console.log('allFeis', Object.keys(allFeis));
     useZustandStore.setState({ feis: allFeis });
 
     const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/fei/done`, {
@@ -79,12 +78,17 @@ export async function loadFeis() {
       return;
     }
 
-    console.log(
-      'feisDone',
-      responseDone.data.feisDone.map((f) => f.numero),
+    const feisDone = responseDone.data.feisDone.reduce(
+      (acc, fei) => {
+        acc[fei.numero] = fei;
+        return acc;
+      },
+      {} as Record<FeiDone['numero'], FeiDone>,
     );
+
     useZustandStore.setState({
-      feisDone: responseDone.data.feisDone,
+      feisDone,
+      feisDoneNumeros: Object.keys(feisDone),
     });
 
     for (const fei_numero of feisNumerosToLoadAgain) {
