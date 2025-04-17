@@ -34,7 +34,8 @@ import PQueue from 'p-queue';
 
 export interface State {
   isOnline: boolean;
-  feisDone: Array<FeiDone>;
+  feisDoneNumeros: Array<FeiDone['numero']>;
+  feisDone: Record<FeiDone['numero'], FeiDone>;
   feis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires>;
   users: Record<UserForFei['id'], UserForFei>;
   entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
@@ -110,7 +111,8 @@ const useZustandStore = create<State & Actions>()(
         isOnline: true,
         carcassesRegistry: [],
         lastUpdateCarcassesRegistry: 0,
-        feisDone: [],
+        feisDoneNumeros: [],
+        feisDone: {},
         logs: [],
         feis: {},
         users: {},

@@ -149,12 +149,10 @@ function Fei() {
   //   refCurrentUserId.current = fei.fei_current_owner_user_id;
   // }, [fei.examinateur_initial_user_id, fei.fei_current_owner_role, fei.fei_current_owner_user_id, user.id]);
 
-  console.log({ showInterface, fei, user });
-
   return (
     <>
       {fei.deleted_at && (
-        <div className="bg-red-500 text-white py-2 text-center mb-2">
+        <div className="mb-2 bg-red-500 py-2 text-center text-white">
           <p>Fiche supprimée</p>
         </div>
       )}
@@ -169,7 +167,7 @@ function Fei() {
             {showInterface !== UserRoles.SVI && <CurrentOwnerConfirm />}
             {showInterface !== UserRoles.SVI && <FeiStepper />}
             {showInterface === UserRoles.ETG && (
-              <div className="w-full flex justify-end mb-2">
+              <div className="mb-2 flex w-full justify-end">
                 <ToggleSwitch
                   label="Afficher l'inspection SVI"
                   labelPosition="left"
@@ -180,7 +178,7 @@ function Fei() {
                 />
               </div>
             )}
-            <div className="p-4 md:p-8 bg-white">
+            <div className="bg-white p-4 md:p-8">
               {showInterface === UserRoles.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
               {showInterface === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
               {showInterface === UserRoles.PREMIER_DETENTEUR && <FEIExaminateurInitial />}

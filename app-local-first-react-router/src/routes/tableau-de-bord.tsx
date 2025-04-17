@@ -24,6 +24,7 @@ async function loadData() {
 export default function TableauDeBordIndex() {
   const navigate = useNavigate();
   const user = useMostFreshUser('tableau de bord index')!;
+  const feisDoneNumeros = useZustandStore((state) => state.feisDoneNumeros);
   const feisDone = useZustandStore((state) => state.feisDone);
   const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();
   const { onExportToXlsx, isExporting } = useExportFeis();
@@ -43,8 +44,9 @@ export default function TableauDeBordIndex() {
 
   const isOnlySvi =
     user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
-  const { feiActivesForSvi, feisDoneForSvi } = feisDone.reduce(
-    (acc, fei) => {
+  const { feiActivesForSvi, feisDoneForSvi } = feisDoneNumeros.reduce(
+    (acc, feiNumero) => {
+      const fei = feisDone[feiNumero]!;
       if (fei.automatic_closed_at) {
         acc.feisDoneForSvi.push(fei);
       } else if (fei.svi_signed_at) {
@@ -57,8 +59,8 @@ export default function TableauDeBordIndex() {
       return acc;
     },
     {
-      feiActivesForSvi: [] as typeof feisDone,
-      feisDoneForSvi: [] as typeof feisDone,
+      feiActivesForSvi: [] as Array<(typeof feisDone)[string]>,
+      feisDoneForSvi: [] as Array<(typeof feisDone)[string]>,
     },
   );
 
@@ -117,7 +119,7 @@ export default function TableauDeBordIndex() {
               ]}
             />
           )}
-          <div className="items-center gap-2 my-2 justify-end hidden lg:flex">
+          <div className="my-2 hidden items-center justify-end gap-2 lg:flex">
             <Button
               onClick={() => {
                 onExportToXlsx(selectedFeis);
@@ -136,7 +138,7 @@ export default function TableauDeBordIndex() {
                   </h2>
                 </div>
                 {feisAssigned.length ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {feisAssigned
                       .filter((fei) => fei !== null)
                       .map((fei) => {
@@ -151,7 +153,7 @@ export default function TableauDeBordIndex() {
                       })}
                   </div>
                 ) : (
-                  <p className="p-6 bg-white rounded cursor-pointer border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0">
+                  <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
                     Pas de fiche assignée
                   </p>
                 )}
@@ -179,7 +181,7 @@ export default function TableauDeBordIndex() {
                     </h2>
                   </div>
                   {feisOngoing.length ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                       {feisOngoing
                         .filter((fei) => fei !== null)
                         .map((fei) => {
@@ -194,7 +196,7 @@ export default function TableauDeBordIndex() {
                         })}
                     </div>
                   ) : (
-                    <p className="p-6 bg-white rounded cursor-pointer border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0">
+                    <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
                       Pas de fiche en cours
                     </p>
                   )}
@@ -237,27 +239,29 @@ export default function TableauDeBordIndex() {
               )}
               <summary className="p-4 md:p-8">
                 <h2 className="fr-h3 inline">
-                  Fiches clôturées {feisDone.length > 0 ? ` (${feisDone.length})` : null}
+                  Fiches clôturées {feisDoneNumeros.length > 0 ? ` (${feisDoneNumeros.length})` : null}
                 </h2>
               </summary>
               <div className="py-2 md:pb-0 md:pt-2">
-                {feisDone.length ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {feisDone
-                      .filter((fei) => fei !== null)
-                      .map((fei) => {
-                        return (
-                          <Card
-                            key={fei.numero}
-                            fei={fei}
-                            onPrintSelect={handleCheckboxClick}
-                            isPrintSelected={selectedFeis.includes(fei.numero)}
-                          />
-                        );
-                      })}
+                {feisDoneNumeros.length ? (
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {feisDoneNumeros.map((feiNumero) => {
+                      const fei = feisDone[feiNumero]!;
+                      if (!fei) {
+                        return null;
+                      }
+                      return (
+                        <Card
+                          key={fei.numero}
+                          fei={fei}
+                          onPrintSelect={handleCheckboxClick}
+                          isPrintSelected={selectedFeis.includes(fei.numero)}
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
-                  <p className="p-6 bg-white rounded cursor-pointer border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0">
+                  <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
                     Pas encore de fiche clôturée
                   </p>
                 )}
@@ -294,7 +298,7 @@ export default function TableauDeBordIndex() {
                 </div>
                 <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2">
                   {feiActivesForSvi.length ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                       {feiActivesForSvi
                         .filter((fei) => fei !== null)
                         .map((fei) => {
@@ -309,7 +313,7 @@ export default function TableauDeBordIndex() {
                         })}
                     </div>
                   ) : (
-                    <p className="p-6 bg-white rounded cursor-pointer border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0">
+                    <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
                       Pas encore de fiche clôturée
                     </p>
                   )}
@@ -342,7 +346,7 @@ export default function TableauDeBordIndex() {
                 </div>
                 <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2">
                   {feisDoneForSvi.length ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                       {feisDoneForSvi
                         .filter((fei) => fei !== null)
                         .map((fei) => {
@@ -357,7 +361,7 @@ export default function TableauDeBordIndex() {
                         })}
                     </div>
                   ) : (
-                    <p className="p-6 bg-white rounded cursor-pointer border border-gray-200 !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0">
+                    <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
                       Pas encore de fiche clôturée
                     </p>
                   )}
