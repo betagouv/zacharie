@@ -9,6 +9,8 @@ export const feiDoneSelect = {
   date_mise_a_mort: true,
   heure_evisceration_derniere_carcasse: true,
   premier_detenteur_date_depot_quelque_part: true,
+  premier_detenteur_depot_type: true,
+  premier_detenteur_depot_entity_id: true,
   commune_mise_a_mort: true,
   svi_assigned_at: true,
   svi_signed_at: true,
