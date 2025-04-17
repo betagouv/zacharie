@@ -13,7 +13,7 @@ export function usePrefillPremierDétenteurInfos(): PrefillPremierDétenteurInfo
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const feisDone = useZustandStore((state) => state.feisDone);
-  const feiNumero = params.feiNumero as Fei['numero'];
+  const feiNumero = params.fei_numero as Fei['numero'];
 
   const fei = feis[feiNumero];
 
@@ -24,18 +24,28 @@ export function usePrefillPremierDétenteurInfos(): PrefillPremierDétenteurInfo
         premier_detenteur_depot_entity_id: null,
       };
     }
-    const latestFei = Object.values(feisDone).find(
+    const latestFeiDone = Object.values(feisDone).find(
       (feiDone) => feiDone.commune_mise_a_mort === fei.commune_mise_a_mort,
     );
-    if (!latestFei) {
+    if (latestFeiDone) {
       return {
-        premier_detenteur_depot_type: null,
-        premier_detenteur_depot_entity_id: null,
+        premier_detenteur_depot_type: latestFeiDone.premier_detenteur_depot_type,
+        premier_detenteur_depot_entity_id: latestFeiDone.premier_detenteur_depot_entity_id,
+      };
+    }
+    const latestFei = Object.values(feis).find(
+      (fei) => fei.commune_mise_a_mort === fei.commune_mise_a_mort && fei.numero !== feiNumero,
+    );
+    console.log('latestFei', latestFei);
+    if (latestFei) {
+      return {
+        premier_detenteur_depot_type: latestFei.premier_detenteur_depot_type,
+        premier_detenteur_depot_entity_id: latestFei.premier_detenteur_depot_entity_id,
       };
     }
     return {
-      premier_detenteur_depot_type: latestFei.premier_detenteur_depot_type,
-      premier_detenteur_depot_entity_id: latestFei.premier_detenteur_depot_entity_id,
+      premier_detenteur_depot_type: null,
+      premier_detenteur_depot_entity_id: null,
     };
   });
 
