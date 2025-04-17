@@ -120,23 +120,18 @@ export default function FeiPremierDetenteur() {
 
   const needSelectNextUser = useMemo(() => {
     if (depotType === EntityTypes.ETG) {
-      console.log('depotType === EntityTypes.ETG');
       return false;
     }
     if (!fei.premier_detenteur_depot_entity_id) {
-      console.log('!fei.premier_detenteur_depot_entity_id');
       return false;
     }
     if (fei.fei_current_owner_user_id !== user.id && premierDetenteurEntity?.relation !== 'WORKING_FOR') {
-      console.log('fei.fei_current_owner_user_id !== user.id');
       return false;
     }
     if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
-      console.log('fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR');
       return false;
     }
     if (!fei.premier_detenteur_date_depot_quelque_part) {
-      console.log('!fei.premier_detenteur_date_depot_quelque_part');
       return false;
     }
     return true;
@@ -156,8 +151,6 @@ export default function FeiPremierDetenteur() {
   if (!fei.premier_detenteur_user_id) {
     return "Il n'y as pas encore de premier détenteur pour cette fiche";
   }
-
-  console.log({ showAsDisabled, canEdit });
 
   return (
     <>
