@@ -1,26 +1,27 @@
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss';
 
 export default {
-  content: ["./src/**/{**,.client,.server}/**/*.{js,jsx,ts,tsx}"],
+  content: ['./src/**/{**,.client,.server}/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
       borderColor: {
-        DEFAULT: "#000",
+        DEFAULT: '#000',
       },
       colors: {
-        "action-high-blue-france": {
-          DEFAULT: "var(--text-action-high-blue-france)",
-          dark: "#8585f6",
-          light: "#000091",
+        'action-high-blue-france': {
+          DEFAULT: 'var(--text-action-high-blue-france)',
+          dark: '#8585f6',
+          light: '#000091',
         },
-        "alt-blue-france": {
-          DEFAULT: "var(--background-alt-blue-france)",
-          dark: "#1b1b35",
-          light: "#f5f5fe",
+        'alt-blue-france': {
+          DEFAULT: 'var(--background-alt-blue-france)',
+          dark: '#1b1b35',
+          light: '#f5f5fe',
         },
-        "green-emeraude": {
-          DEFAULT: "var(--green-emeraude-main-632)",
+        'green-emeraude': {
+          DEFAULT: 'var(--green-emeraude-main-632)',
         },
+        'active-tint': 'var(--active-tint)',
       },
     },
   },

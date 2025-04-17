@@ -77,64 +77,69 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
 
   return (
     <div
-      className={`relative ${isPrintSelected ? 'border-2 border-action-high-blue-france' : 'border border-gray-200'} rounded bg-white`}
+      className={[
+        'relative rounded bg-white',
+        'w-full max-w-96',
+        isPrintSelected ? 'border-2 border-action-high-blue-france' : 'border border-gray-200',
+        menuOpen ? 'bg-active-tint' : '',
+      ].join(' ')}
     >
-      <Link
-        to={`/app/tableau-de-bord/fei/${fei.numero}`}
-        className="p-6 relative rounded !no-underline hover:!no-underline max-w-96 flex flex-col gap-3 bg-none shrink-0"
-      >
-        {/* Print selection checkbox */}
-        {isPrintSelected && (
-          <div className="absolute top-2 left-2 z-10">
-            <Checkbox
-              classes={{ root: 'mt-0' }}
-              options={[
-                {
-                  label: '',
-                  nativeInputProps: {
-                    checked: isPrintSelected,
-                    onChange: () => onPrintSelect?.(fei.numero, !isPrintSelected),
-                  },
+      {/* Print selection checkbox */}
+      {isPrintSelected && (
+        <div className="absolute left-2 top-2 z-10">
+          <Checkbox
+            classes={{ root: 'mt-0' }}
+            options={[
+              {
+                label: '',
+                nativeInputProps: {
+                  checked: isPrintSelected,
+                  onChange: () => onPrintSelect?.(fei.numero, !isPrintSelected),
                 },
-              ]}
-            />
+              },
+            ]}
+          />
+        </div>
+      )}
+
+      {/* Custom dropdown menu */}
+      <div className="absolute right-2 top-2 z-20" ref={menuRef}>
+        <Button
+          iconId="fr-icon-more-line"
+          priority="tertiary no outline"
+          title="Menu"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenuOpen(!menuOpen);
+          }}
+        />
+        {menuOpen && (
+          <div className="absolute right-0 mt-1 w-64 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                onPrintSelect?.(fei.numero, !isPrintSelected);
+                setMenuOpen(false);
+              }}
+              className="flex w-full items-center gap-2 px-4 py-2 text-left text-[var(--text-title-grey)] hover:bg-[var(--background-action-low-blue-france)]"
+            >
+              <i className="fr-icon-printer-line" aria-hidden="true" />
+              <span>
+                {isPrintSelected ? 'Désélectionner pour impression' : 'Sélectionner pour impression'}
+              </span>
+            </button>
           </div>
         )}
-
-        {/* Custom dropdown menu */}
-        <div className="absolute top-2 right-2 z-20" ref={menuRef}>
-          <Button
-            iconId="fr-icon-more-line"
-            priority="tertiary no outline"
-            onClick={(e) => {
-              e.preventDefault();
-              setMenuOpen(!menuOpen);
-            }}
-            className="!p-2"
-          />
-          {menuOpen && (
-            <div className="absolute right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onPrintSelect?.(fei.numero, !isPrintSelected);
-                  setMenuOpen(false);
-                }}
-                className="w-full px-4 py-2 text-left hover:bg-[var(--background-action-low-blue-france)] flex items-center gap-2 text-[var(--text-title-grey)]"
-              >
-                <i className="fr-icon-printer-line" aria-hidden="true" />
-                <span>
-                  {isPrintSelected ? 'Désélectionner pour impression' : 'Sélectionner pour impression'}
-                </span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="absolute text-transparent selection:text-gray-200 top-0 right-0">{fei.numero}</div>
+      </div>
+      <Link
+        to={`/app/tableau-de-bord/fei/${fei.numero}`}
+        className="hover:!bg-active-tint flex size-full shrink-0 flex-col gap-3 bg-none p-6 !no-underline hover:!no-underline"
+      >
+        <div className="absolute right-0 top-0 text-transparent selection:text-gray-200">{fei.numero}</div>
         <Tag
           className={[
-            'px-3 py-1 rounded-full text-xs items-center',
+            'items-center rounded-full px-3 py-1 text-xs',
             statusColors[currentStepLabel].bg,
             statusColors[currentStepLabel].text,
           ].join(' ')}
@@ -157,7 +162,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
         <div>
           {carcassesAcceptées.map((line) => {
             return (
-              <p className={line.includes('refus') ? 'font-semibold m-0' : 'm-0'} key={line}>
+              <p className={line.includes('refus') ? 'm-0 font-semibold' : 'm-0'} key={line}>
                 {line}
               </p>
             );
@@ -166,11 +171,11 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
         <div>
           {carcassesRefusées.length > 0 && (
             <div className="flex flex-row gap-x-2">
-              <p className="font-semibold m-0 text-red-700">↳</p>
+              <p className="m-0 font-semibold text-red-700">↳</p>
               <div>
                 {carcassesRefusées.map((line) => {
                   return (
-                    <p className="font-semibold m-0 text-red-700" key={line}>
+                    <p className="m-0 font-semibold text-red-700" key={line}>
                       {line}
                     </p>
                   );
@@ -179,7 +184,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
             </div>
           )}
         </div>
-        <div className="absolute text-transparent selection:text-gray-200 bottom-0 right-0">{fei.numero}</div>
+        <div className="absolute bottom-0 right-0 text-transparent selection:text-gray-200">{fei.numero}</div>
       </Link>
     </div>
   );
