@@ -358,7 +358,7 @@ router.post(
         raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
         nom_d_usage: body[Prisma.EntityScalarFieldEnum.raison_sociale],
         type: body[Prisma.EntityScalarFieldEnum.type],
-        code_etbt_certificat: code_etbt_certificat.toString().padStart(2, '0'),
+        code_etbt_certificat: code_etbt_certificat ? code_etbt_certificat.toString().padStart(2, '0') : '',
       },
       include: entityAdminInclude,
     });
