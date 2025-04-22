@@ -153,7 +153,7 @@ function Fei() {
   return (
     <>
       {fei.deleted_at && (
-        <div className="mb-2 bg-red-500 py-2 text-center text-white">
+        <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
           <p>Fiche supprimée</p>
         </div>
       )}

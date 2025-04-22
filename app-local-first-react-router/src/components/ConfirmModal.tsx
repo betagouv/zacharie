@@ -44,7 +44,7 @@ export default function ConfirmModal({
         disabled={disabled}
         iconId="fr-icon-delete-line"
         priority="tertiary"
-        className={['bg-red-500 text-white', className].join(' ')}
+        className={['bg-error-main-525 text-white', className].join(' ')}
       >
         {buttonText}
       </Button>

@@ -79,11 +79,9 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
         return `${lots}\u00A0lot${withS} refusé${withS} (${nombre_d_animaux} carcasses)`;
       }
       if (lots) {
-        return `${espece}\u00A0:\u00A0${lots}\u00A0lot${
-          lots === 1 ? '' : 's'
-        } (${nombre_d_animaux} carcasses)`;
+        return `${nombre_d_animaux} ${espece}`;
       }
-      return `${espece}\u00A0:\u00A0${carcasses}\u00A0carcasse${carcasses === 1 ? '' : 's'}`;
+      return `${nombre_d_animaux} ${espece}${nombre_d_animaux === 1 ? '' : 's'}`;
     })
     .filter(Boolean);
   return formatted;

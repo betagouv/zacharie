@@ -70,7 +70,7 @@ export default function Filters<T extends Filter = Filter>({
 
   return (
     <>
-      <div className="hidden print:flex gap-2">
+      <div className="hidden gap-2 print:flex">
         {title ? <p>{title}</p> : null}
         <ul>
           {filters.map((filter: T, index: number) => {
@@ -87,7 +87,7 @@ export default function Filters<T extends Filter = Filter>({
           })}
         </ul>
       </div>
-      <div className="border-b print:hidden z-10 pb-2 mb-4 flex w-full flex-col justify-center gap-2 self-center border-gray-300">
+      <div className="z-10 mb-4 flex w-full flex-col justify-center gap-2 self-center border-b border-gray-300 pb-2 print:hidden">
         <div className="flex flex-wrap">
           <p className="m-0">{title}</p>
         </div>
@@ -185,7 +185,7 @@ export default function Filters<T extends Filter = Filter>({
                   {!!filters.filter((_filter: T) => Boolean(_filter.field)).length && (
                     <button
                       type="button"
-                      className="h-full w-full rounded border border-gray-300 bg-white px-2.5 py-2 text-sm text-red-500 hover:bg-red-100"
+                      className="text-error-main-525 hover:bg-error-850 h-full w-full rounded border border-gray-300 bg-white px-2.5 py-2 text-sm"
                       onClick={onRemoveFilter}
                     >
                       Retirer
@@ -200,7 +200,7 @@ export default function Filters<T extends Filter = Filter>({
           <div className="basis-1/12" />
           <button
             type="button"
-            className="h-full rounded text-main disabled:opacity-20 hover:underline text-sm"
+            className="text-main h-full rounded text-sm hover:underline disabled:opacity-20"
             onClick={onAddFilter}
             disabled={!!filters.find((f) => !f.field)}
           >
@@ -309,7 +309,7 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
       <div className="-mx-4 flex flex-wrap items-stretch">
         <div
           className={[
-            'pl-4 h-full',
+            'h-full pl-4',
             value?.comparator !== 'unfilled' ? 'basis-1/2 pr-2' : 'basis-full pr-4',
           ].join(' ')}
         >

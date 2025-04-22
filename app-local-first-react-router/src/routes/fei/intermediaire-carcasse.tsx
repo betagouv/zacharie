@@ -297,10 +297,10 @@ export default function CarcasseIntermediaireComp({
       <CustomNotice
         key={carcasse.numero_bracelet}
         className={[
-          !!refus && ' !bg-red-500 text-white',
-          carcasseManquante && ' !bg-red-300 text-white',
+          !!refus && '!bg-error-main-525 text-white',
+          carcasseManquante && '!bg-error-850 text-white',
           !!intermediaireCarcasse.check_manuel && '!bg-action-high-blue-france text-white',
-          !canEdit && status === 'refusé' && '!bg-red-500 text-white',
+          !canEdit && status === 'refusé' && '!bg-error-main-525 text-white',
           !canEdit && status === 'accepté' && '!bg-action-high-blue-france text-white',
         ]
           .filter(Boolean)
@@ -311,12 +311,12 @@ export default function CarcasseIntermediaireComp({
           type={canEdit ? 'button' : undefined}
           onClick={canEdit ? () => refusIntermediaireModal.current.open() : undefined}
         >
-          <span className="block font-bold text-3xl mb-4">
+          <span className="mb-4 block text-3xl font-bold">
             {/* {carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : 'Numéro de bracelet'} */}
             {/* &nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span> */}
             {carcasse.numero_bracelet}
           </span>
-          <span className="block font-bold text-2xl">
+          <span className="block text-2xl font-bold">
             {carcasse.espece}
             {carcasse.categorie && ` - ${carcasse.categorie}`}
           </span>

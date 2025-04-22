@@ -1,12 +1,14 @@
 import { FeiDone } from '@api/src/types/fei';
-import { FeiStep } from '@app/types/fei-steps';
+import { FeiStep, FeiStepSimpleStatus } from '@app/types/fei-steps';
 import useZustandStore from '@app/zustand/store';
+import useUser from '@app/zustand/user';
 import { UserRoles } from '@prisma/client';
 import { useMemo } from 'react';
 
 export function useFeiSteps(fei: FeiDone) {
   const state = useZustandStore((state) => state);
   const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
+  const user = useUser((state) => state.user);
 
   const steps = useMemo(
     () => [
@@ -65,8 +67,8 @@ export function useFeiSteps(fei: FeiDone) {
         return "Transport vers l'établissement de traitement";
       case 'Fiche envoyée, pas encore traitée':
       case "Transport vers l'établissement de traitement":
+        // return "Réception par l'établissement de traitement";
         return "Transport vers / réception par l'établissement de traitement";
-        return "Réception par l'établissement de traitement";
       case "Réception par l'établissement de traitement":
         return '';
       // return 'Inspection par le SVI';
@@ -75,10 +77,59 @@ export function useFeiSteps(fei: FeiDone) {
     }
   }, [currentStepLabel]);
 
+  const simpleStatus: FeiStepSimpleStatus = useMemo(() => {
+    if (
+      user?.roles.includes(UserRoles.PREMIER_DETENTEUR) ||
+      user?.roles.includes(UserRoles.EXAMINATEUR_INITIAL)
+    ) {
+      switch (currentStepLabel) {
+        case 'Examen initial':
+        case 'Validation par le premier détenteur':
+          return 'À compléter';
+        case 'Clôturée':
+          return 'Clôturée';
+        default:
+          return 'En cours';
+      }
+    }
+    if (user?.roles.includes(UserRoles.SVI)) {
+      switch (currentStepLabel) {
+        case 'Inspection par le SVI':
+          return 'À compléter';
+        case 'Clôturée':
+          return 'Clôturée';
+        default:
+          return 'En cours';
+      }
+    }
+    if (user?.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+      switch (currentStepLabel) {
+        case 'Fiche envoyée, pas encore traitée':
+        case "Transport vers l'établissement de traitement":
+          return 'À compléter';
+        case 'Clôturée':
+          return 'Clôturée';
+        default:
+          return 'En cours';
+      }
+    }
+    // now we are in the ETG or COLLECTEUR_PRO role
+    switch (currentStepLabel) {
+      case 'Fiche envoyée, pas encore traitée':
+      case "Réception par l'établissement de traitement":
+        return 'À compléter';
+      case 'Clôturée':
+        return 'Clôturée';
+      default:
+        return 'En cours';
+    }
+  }, [currentStepLabel, user?.roles]);
+
   return {
     currentStep,
     currentStepLabel,
     nextStepLabel,
+    simpleStatus,
     steps,
   };
 }
