@@ -131,7 +131,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
         >
           {simpleStatus}
         </Tag>
-        <div className="text-2xl font-bold">
+        <div className="text-xl font-bold">
           {dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}
         </div>
 
@@ -139,11 +139,11 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
           <div className="flex flex-row gap-x-2">
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <CommuneIcon />
-              <p className="text-gray-600">{fei.commune_mise_a_mort?.split(' ').slice(1).join(' ')}</p>
+              <p className="text-sm text-black">{fei.commune_mise_a_mort?.split(' ').slice(1).join(' ')}</p>
             </div>
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <ChasseIcon />
-              <p className="text-gray-600">{fei.premier_detenteur_name_cache}</p>
+              <p className="text-sm text-black">{fei.premier_detenteur_name_cache}</p>
             </div>
           </div>
         </div>
@@ -154,7 +154,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
               <div>
                 {carcassesAcceptées.map((line) => {
                   return (
-                    <p className={line.includes('refus') ? 'm-0 font-semibold' : 'm-0'} key={line}>
+                    <p className="m-0 text-xl text-neutral-700" key={line}>
                       {line}
                     </p>
                   );
@@ -168,7 +168,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
                   <div>
                     {carcassesRefusées.map((line) => {
                       return (
-                        <p className="text-error-main-525 m-0 font-semibold" key={line}>
+                        <p className="text-error-main-525 m-0 text-xl font-semibold" key={line}>
                           {line}
                         </p>
                       );
