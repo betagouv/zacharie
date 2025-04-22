@@ -36,7 +36,7 @@ export default function CarcassesExaminateur({
     <>
       <div
         className={[
-          'transition-all duration-1000 mb-2',
+          'mb-2 transition-all duration-1000',
           !canEdit ? 'max-h-0 overflow-hidden' : 'max-h-[300vh]',
         ].join(' ')}
       >
@@ -163,7 +163,7 @@ export function CarcasseExaminateur({
       <CustomNotice
         key={carcasse.numero_bracelet}
         className={[
-          status === 'refusé' && '!bg-red-500 text-white',
+          status === 'refusé' && '!bg-error-main-525 text-white',
           status === 'accepté' && '!bg-action-high-blue-france text-white',
         ]
           .filter(Boolean)
@@ -222,12 +222,12 @@ export function CarcasseExaminateur({
                 </span>
               )}
               {fei?.date_mise_a_mort && (
-                <span className="block font-normal mt-2 text-sm italic opacity-50">
+                <span className="mt-2 block text-sm font-normal italic opacity-50">
                   Mise à mort&nbsp;: {dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY')}
                 </span>
               )}
               {carcasse.heure_mise_a_mort && (
-                <span className="block font-normal ">
+                <span className="block font-normal">
                   Mise à mort&nbsp;: {carcasse.heure_mise_a_mort || 'À REMPLIR'}
                 </span>
               )}

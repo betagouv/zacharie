@@ -18,6 +18,16 @@ export default {
           dark: '#1b1b35',
           light: '#f5f5fe',
         },
+        'error-main-525': {
+          DEFAULT: '#f60700',
+          dark: '#f60700',
+          light: '#f60700',
+        },
+        'error-850': {
+          DEFAULT: '#ffbdbd',
+          dark: '#ffbdbd',
+          light: '#ffbdbd',
+        },
         'green-emeraude': {
           DEFAULT: 'var(--green-emeraude-main-632)',
         },

@@ -6,3 +6,5 @@ export type FeiStep =
   | "Réception par l'établissement de traitement"
   | 'Inspection par le SVI'
   | 'Clôturée';
+
+export type FeiStepSimpleStatus = 'À compléter' | 'Clôturée' | 'En cours';
