@@ -19,7 +19,7 @@ import CollecteurCarcassePreview from './collecteur-carcasse-preview';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import FEIDonneesDeChasse from './donnees-de-chasse';
-import { addAnSToWord } from '@app/utils/count-carcasses';
+import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 
 export default function FEICurrentIntermediaire() {
   const params = useParams();
@@ -183,31 +183,37 @@ export default function FEICurrentIntermediaire() {
     return carcassesSorted.carcassesApproved.sort(sortCarcassesApproved);
   }, [carcassesSorted.carcassesApproved]);
 
-  const [carcassesAcceptées, carcassesRefusées] = useMemo(() => {
-    const _carcassesAcceptées = [];
-    const _carcassesRefusées = [];
-    for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
-      if (carcasse.includes('refusé')) {
-        _carcassesRefusées.push(carcasse);
-      } else {
-        _carcassesAcceptées.push(carcasse);
-      }
-    }
-    return [_carcassesAcceptées, _carcassesRefusées];
-  }, [fei.resume_nombre_de_carcasses]);
+  // const [carcassesAcceptées, carcassesRefusées] = useMemo(() => {
+  //   const _carcassesAcceptées = [];
+  //   const _carcassesRefusées = [];
+  //   for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
+  //     if (carcasse.includes('refusé')) {
+  //       _carcassesRefusées.push(carcasse);
+  //     } else {
+  //       _carcassesAcceptées.push(carcasse);
+  //     }
+  //   }
+  //   return [_carcassesAcceptées, _carcassesRefusées];
+  // }, [fei.resume_nombre_de_carcasses]);
+
+  console.log(fei.resume_nombre_de_carcasses);
 
   const labelCheckDone = useMemo(() => {
     let label = [];
-    if (carcassesAcceptées.length > 0) {
+    if (carcassesApprovedSorted.length > 0) {
       label.push(
         `${
           intermediaire?.check_finished_at ? "J'ai pris" : 'Je prends'
-        } en charge les carcasses que j'ai acceptées (${carcassesAcceptées.join(', ')}).`,
+        } en charge les carcasses que j'ai acceptées (${formatCountCarcasseByEspece(carcassesApprovedSorted)
+          .filter((c) => !c?.includes('refus'))
+          .join(', ')}).`,
       );
     }
-    if (carcassesRefusées.length > 0) {
+    if (carcassesSorted.carcassesRejetees.length > 0) {
       label.push(
-        `J'ai refusé ${carcassesRefusées
+        `J'ai refusé ${formatCountCarcasseByEspece(carcassesSorted.carcassesRejetees)
+          .filter((c) => c?.includes('refus'))
+          .filter((c) => c != null)
           .map((c) =>
             c
               .split(' ')
@@ -225,9 +231,9 @@ export default function FEICurrentIntermediaire() {
     }
     return label;
   }, [
-    carcassesAcceptées,
-    carcassesRefusées,
+    carcassesApprovedSorted,
     carcassesSorted.carcassesManquantes.length,
+    carcassesSorted.carcassesRejetees,
     intermediaire?.check_finished_at,
   ]);
 

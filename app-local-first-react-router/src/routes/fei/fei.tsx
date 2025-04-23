@@ -172,6 +172,7 @@ function Fei() {
                 <ToggleSwitch
                   label="Afficher l'inspection SVI"
                   labelPosition="left"
+                  disabled={!fei.svi_assigned_at}
                   inputTitle="Afficher l'inspection SVI"
                   showCheckedHint={false}
                   checked={switchEtgSviInterface === 'svi'}
