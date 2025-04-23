@@ -28,6 +28,11 @@ export default {
           dark: '#ffbdbd',
           light: '#ffbdbd',
         },
+        'success-main-525': {
+          DEFAULT: '#1f8d49',
+          dark: '#1f8d49',
+          light: '#1f8d49',
+        },
         'green-emeraude': {
           DEFAULT: 'var(--green-emeraude-main-632)',
         },
