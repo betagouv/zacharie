@@ -154,7 +154,7 @@ const useZustandStore = create<State & Actions>()(
             carcassesIdsByFei: { ...state.carcassesIdsByFei, [newFei.numero]: [] },
             feisIntermediairesIdsByFei: { ...state.feisIntermediairesIdsByFei, [newFei.numero]: [] },
           }));
-          // syncData(`create-fei-${newFei.numero}`);
+          syncData(`create-fei-${newFei.numero}`);
         },
         updateFei: (
           fei_numero: FeiWithIntermediaires['numero'],
