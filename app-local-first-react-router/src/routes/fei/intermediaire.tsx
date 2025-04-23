@@ -339,6 +339,12 @@ export default function FEICurrentIntermediaire(props: Props) {
   const showCollecteurInterface =
     fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.fei_current_owner_user_id === user.id;
 
+  console.log(
+    '!intermediaire.check_finished_at && !effectiveCanEdit',
+    !intermediaire.check_finished_at && !effectiveCanEdit,
+  );
+  console.log(intermediaire.check_finished_at, !effectiveCanEdit);
+
   if (intermediaire) {
     return (
       <>
@@ -585,7 +591,7 @@ export default function FEICurrentIntermediaire(props: Props) {
                     required: true,
                     name: 'check_finished_at_checked',
                     value: 'true',
-                    disabled: !intermediaire.check_finished_at && !effectiveCanEdit,
+                    disabled: !!intermediaire.check_finished_at,
                     form: 'form_intermediaire_check_finished_at',
                     readOnly: !!intermediaire.check_finished_at || props.readOnly,
                     defaultChecked: intermediaire.check_finished_at ? true : false,
