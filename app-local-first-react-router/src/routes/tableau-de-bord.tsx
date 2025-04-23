@@ -239,7 +239,8 @@ export default function TableauDeBordIndex() {
               )}
               <summary className="p-4 md:p-8">
                 <h2 className="fr-h3 inline">
-                  Fiches clôturées {feisDoneNumeros.length > 0 ? ` (${feisDoneNumeros.length})` : null}
+                  Fiches clôturées ou en cours d'inspection par le service vétérinaire{' '}
+                  {feisDoneNumeros.length > 0 ? ` (${feisDoneNumeros.length})` : null}
                 </h2>
               </summary>
               <div className="py-2 md:pb-0 md:pt-2">

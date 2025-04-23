@@ -488,6 +488,7 @@ router.get(
         AND: [
           {
             OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
+            // OR: [{ automatic_closed_at: { not: null } }, { svi_signed_at: { not: null } }],
           },
           {
             OR: [
