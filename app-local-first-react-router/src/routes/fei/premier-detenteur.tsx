@@ -319,7 +319,7 @@ export default function FeiPremierDetenteur() {
             />
           )}
           <Component
-            label="Date de dépôt dans la chambre froide"
+            label={depotType === EntityTypes.CCG ? 'Date de dépôt dans la chambre froide' : 'Date de dépôt'}
             // click here to set now
             hintText={
               canEdit ? (
