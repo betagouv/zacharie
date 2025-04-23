@@ -81,8 +81,21 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
       if (lots) {
         return `${nombre_d_animaux} ${espece}`;
       }
-      return `${nombre_d_animaux} ${espece}${nombre_d_animaux === 1 ? '' : 's'}`;
+      return `${nombre_d_animaux} ${espece
+        .split(' ')
+        .map((e) => addAnSToWord(e, nombre_d_animaux))
+        .join(' ')}`;
     })
     .filter(Boolean);
   return formatted;
+}
+
+export function addAnSToWord(word: string, count: number) {
+  if (count === 1) {
+    return word;
+  }
+  if (word.endsWith('s')) {
+    return word;
+  }
+  return `${word}s`;
 }

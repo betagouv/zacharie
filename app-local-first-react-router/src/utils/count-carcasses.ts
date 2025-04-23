@@ -58,12 +58,11 @@ export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarc
         } else {
           acc.refus_carcasses.carcasses++;
         }
-        return acc;
       }
       acc[carcasse.espece!] = {
         carcasses:
           carcasse.type === CarcasseType.PETIT_GIBIER ? 0 : (acc[carcasse.espece!]?.carcasses || 0) + 1,
-        nombre_d_animaux: (acc[carcasse.espece!]?.nombre_d_animaux || 1) + (carcasse?.nombre_d_animaux || 1),
+        nombre_d_animaux: (acc[carcasse.espece!]?.nombre_d_animaux || 0) + (carcasse?.nombre_d_animaux || 1),
         lots: carcasse.type === CarcasseType.PETIT_GIBIER ? (acc[carcasse.espece!]?.lots || 0) + 1 : 0,
       };
       return acc;
@@ -114,8 +113,21 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
       if (lots) {
         return `${nombre_d_animaux} ${espece}`;
       }
-      return `${nombre_d_animaux} ${espece}${nombre_d_animaux === 1 ? '' : 's'}`;
+      return `${nombre_d_animaux} ${espece
+        .split(' ')
+        .map((e) => addAnSToWord(e, nombre_d_animaux))
+        .join(' ')}`;
     })
     .filter(Boolean);
   return formatted;
+}
+
+export function addAnSToWord(word: string, count: number) {
+  if (count === 1) {
+    return word;
+  }
+  if (word.endsWith('s')) {
+    return word;
+  }
+  return `${word}s`;
 }
