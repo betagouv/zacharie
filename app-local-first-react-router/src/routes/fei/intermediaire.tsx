@@ -339,12 +339,6 @@ export default function FEICurrentIntermediaire(props: Props) {
   const showCollecteurInterface =
     fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.fei_current_owner_user_id === user.id;
 
-  console.log(
-    '!intermediaire.check_finished_at && !effectiveCanEdit',
-    !intermediaire.check_finished_at && !effectiveCanEdit,
-  );
-  console.log(intermediaire.check_finished_at, !effectiveCanEdit);
-
   if (intermediaire) {
     return (
       <>
