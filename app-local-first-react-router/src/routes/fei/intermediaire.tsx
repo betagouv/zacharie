@@ -21,7 +21,11 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import FEIDonneesDeChasse from './donnees-de-chasse';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 
-export default function FEICurrentIntermediaire() {
+interface Props {
+  readOnly?: boolean;
+}
+
+export default function FEICurrentIntermediaire(props: Props) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateFeiIntermediaire = useZustandStore((state) => state.updateFeiIntermediaire);
@@ -123,7 +127,9 @@ export default function FEICurrentIntermediaire() {
     return true;
   }, [fei, user, intermediaire, isEtgWorkingFor]);
 
-  const PriseEnChargeInput = canEdit ? Input : InputNotEditable;
+  const effectiveCanEdit = canEdit && !props.readOnly;
+
+  const PriseEnChargeInput = effectiveCanEdit ? Input : InputNotEditable;
 
   const carcassesSorted = useMemo(() => {
     const intermediaireCheckById: Record<
@@ -365,6 +371,7 @@ export default function FEICurrentIntermediaire() {
                           onClick={() => setIntermediaireIndex(index)}
                           className="fr-breadcrumb__link"
                           aria-current={_intermediaire.id === intermediaire?.id ? 'step' : false}
+                          disabled={props.readOnly}
                         >
                           {entities[_intermediaire.fei_intermediaire_entity_id!]?.nom_d_usage}
                         </button>
@@ -386,7 +393,7 @@ export default function FEICurrentIntermediaire() {
               {intermediaire.fei_intermediaire_role === UserRoles.ETG
                 ? 'du destinataire'
                 : "de l'intermédaire"}{' '}
-              {canEdit ? <PencilStrikeThrough /> : ''}
+              {effectiveCanEdit ? <PencilStrikeThrough /> : ''}
             </>
           }
         >
@@ -395,7 +402,7 @@ export default function FEICurrentIntermediaire() {
             entity={entities[intermediaire.fei_intermediaire_entity_id!]!}
           />
         </Accordion>
-        {canEdit ? (
+        {effectiveCanEdit ? (
           <Accordion
             titleAs="h3"
             label={`Carcasses (${intermediaireCarcasses.length})`}
@@ -474,7 +481,7 @@ export default function FEICurrentIntermediaire() {
                 <Fragment key={carcasse.numero_bracelet}>
                   <CarcasseIntermediaireComp
                     intermediaire={intermediaire}
-                    canEdit={canEdit}
+                    canEdit={effectiveCanEdit}
                     carcasse={carcasse}
                   />
                 </Fragment>
@@ -496,7 +503,7 @@ export default function FEICurrentIntermediaire() {
                     <Fragment key={carcasse.numero_bracelet}>
                       <CarcasseIntermediaireComp
                         intermediaire={intermediaire}
-                        canEdit={canEdit}
+                        canEdit={effectiveCanEdit}
                         carcasse={carcasse}
                       />
                     </Fragment>
@@ -517,7 +524,7 @@ export default function FEICurrentIntermediaire() {
                     <Fragment key={carcasse.numero_bracelet}>
                       <CarcasseIntermediaireComp
                         intermediaire={intermediaire}
-                        canEdit={canEdit}
+                        canEdit={effectiveCanEdit}
                         carcasse={carcasse}
                       />
                     </Fragment>
@@ -538,7 +545,7 @@ export default function FEICurrentIntermediaire() {
                     <Fragment key={carcasse.numero_bracelet}>
                       <CarcasseIntermediaireComp
                         intermediaire={intermediaire}
-                        canEdit={canEdit}
+                        canEdit={effectiveCanEdit}
                         carcasse={carcasse}
                       />
                     </Fragment>
@@ -578,9 +585,9 @@ export default function FEICurrentIntermediaire() {
                     required: true,
                     name: 'check_finished_at_checked',
                     value: 'true',
-                    disabled: !intermediaire.check_finished_at && !canEdit,
+                    disabled: !intermediaire.check_finished_at && !effectiveCanEdit,
                     form: 'form_intermediaire_check_finished_at',
-                    readOnly: !!intermediaire.check_finished_at,
+                    readOnly: !!intermediaire.check_finished_at || props.readOnly,
                     defaultChecked: intermediaire.check_finished_at ? true : false,
                   },
                 },
@@ -588,9 +595,9 @@ export default function FEICurrentIntermediaire() {
             />
             <PriseEnChargeInput
               key={JSON.stringify(intermediaire.check_finished_at || '')}
-              className={canEdit ? '' : 'pointer-events-none'}
+              className={effectiveCanEdit ? '' : 'pointer-events-none'}
               hintText={
-                canEdit ? (
+                effectiveCanEdit ? (
                   <button
                     className="inline-block"
                     type="button"
@@ -606,20 +613,6 @@ export default function FEICurrentIntermediaire() {
               label={
                 carcassesSorted.carcassesApproved.length > 0 ? 'Date de prise en charge' : 'Date de décision'
               }
-              // hintText={
-              //   <button
-              //     className="inline-block"
-              //     type="button"
-              //     onClick={() => {
-              //       updateFeiIntermediaire(intermediaire.id, {
-              //         check_finished_at: dayjs().toDate(),
-              //       });
-              //     }}
-              //   >
-              //     Vous les prenez en charge à l'instant ? <u className="inline">Cliquez ici</u> pour remplir
-              //     le champ ci-dessous automatiquement
-              //   </button>
-              // }
               nativeInputProps={{
                 id: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
                 name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
@@ -630,7 +623,7 @@ export default function FEICurrentIntermediaire() {
                 defaultValue: dayjs(intermediaire.check_finished_at || undefined).format('YYYY-MM-DDTHH:mm'),
               }}
             />
-            <Button type="submit" disabled={!canEdit}>
+            <Button type="submit" disabled={!effectiveCanEdit}>
               Enregistrer
             </Button>
             {!carcassesApprovedSorted.length && fei.intermediaire_closed_at && (
@@ -662,7 +655,7 @@ export default function FEICurrentIntermediaire() {
           >
             <SelectNextOwnerForPremierDetenteurOrIntermediaire
               calledFrom="intermediaire-next-owner"
-              disabled={!needSelectNextUser}
+              disabled={!needSelectNextUser || props.readOnly}
             />
           </Accordion>
         )}
