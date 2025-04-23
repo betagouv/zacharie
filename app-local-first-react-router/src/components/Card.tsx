@@ -30,7 +30,7 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
 };
 
 export default function Card({ fei, onPrintSelect, isPrintSelected = false }: CardProps) {
-  const { simpleStatus } = useFeiSteps(fei);
+  const { simpleStatus, currentStepLabel } = useFeiSteps(fei);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -187,6 +187,11 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
             )}
           </div>
         </div>
+        {simpleStatus === 'En cours' && (
+          <div className="-mb-2 mt-2 flex grow flex-row items-end gap-x-2">
+            <p className="text-sm italic text-neutral-700 opacity-50">{currentStepLabel}</p>
+          </div>
+        )}
         <div className="absolute bottom-0 right-0 text-transparent selection:text-gray-200">{fei.numero}</div>
       </Link>
     </div>
