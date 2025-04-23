@@ -2,7 +2,6 @@ import { UserRoles } from '@prisma/client';
 import { useLocation, useNavigate } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import { clearCache } from '@app/services/indexed-db';
-import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { createNewFei } from './create-new-fei';
 
@@ -12,8 +11,6 @@ export default function useNavigationMenu() {
   const isNotActivated = !user?.activated;
 
   const navigate = useNavigate();
-
-  const isOnline = useIsOnline();
 
   const handleLogout = async () => {
     fetch(`${import.meta.env.VITE_API_URL}/user/logout`, {
