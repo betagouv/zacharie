@@ -19,6 +19,7 @@ import CollecteurCarcassePreview from './collecteur-carcasse-preview';
 import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import FEIDonneesDeChasse from './donnees-de-chasse';
+import { addAnSToWord } from '@app/utils/count-carcasses';
 
 export default function FEICurrentIntermediaire() {
   const params = useParams();
@@ -182,39 +183,50 @@ export default function FEICurrentIntermediaire() {
     return carcassesSorted.carcassesApproved.sort(sortCarcassesApproved);
   }, [carcassesSorted.carcassesApproved]);
 
-  const labelCheckDone = useMemo(() => {
-    let label = '';
-    const nbCarcassesValidated = carcassesSorted.carcassesApproved.length;
-    if (nbCarcassesValidated > 0) {
-      label += `${
-        intermediaire?.check_finished_at ? "J'ai pris" : 'Je prends'
-      } en charge les carcasses que j'ai acceptées.`;
-      if (nbCarcassesValidated === 1) {
-        label += ' 1 carcasse/lot validé.';
+  const [carcassesAcceptées, carcassesRefusées] = useMemo(() => {
+    const _carcassesAcceptées = [];
+    const _carcassesRefusées = [];
+    for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
+      if (carcasse.includes('refusé')) {
+        _carcassesRefusées.push(carcasse);
       } else {
-        label += ` ${nbCarcassesValidated} carcasses/lots validés.`;
+        _carcassesAcceptées.push(carcasse);
       }
     }
-    const nbCarcassesRejetees = carcassesSorted.carcassesRejetees.length;
-    if (nbCarcassesRejetees > 0) {
-      if (nbCarcassesRejetees === 1) {
-        label += ' 1 carcasse/lot rejeté.';
-      } else {
-        label += ` ${nbCarcassesRejetees} carcasses/lots rejetés.`;
-      }
+    return [_carcassesAcceptées, _carcassesRefusées];
+  }, [fei.resume_nombre_de_carcasses]);
+
+  const labelCheckDone = useMemo(() => {
+    let label = [];
+    if (carcassesAcceptées.length > 0) {
+      label.push(
+        `${
+          intermediaire?.check_finished_at ? "J'ai pris" : 'Je prends'
+        } en charge les carcasses que j'ai acceptées (${carcassesAcceptées.join(', ')}).`,
+      );
+    }
+    if (carcassesRefusées.length > 0) {
+      label.push(
+        `J'ai refusé ${carcassesRefusées
+          .map((c) =>
+            c
+              .split(' ')
+              .filter((w) => !w.includes('refus'))
+              .join(' '),
+          )
+          .join(' et ')}.`,
+      );
     }
     const nbCarcassesManquantes = carcassesSorted.carcassesManquantes.length;
     if (nbCarcassesManquantes > 0) {
-      if (nbCarcassesManquantes === 1) {
-        label += ' 1 carcasse/lot manquant.';
-      } else {
-        label += ` ${nbCarcassesManquantes} carcasses/lots manquants.`;
-      }
+      label.push(
+        `J'ai signalé ${nbCarcassesManquantes} ${addAnSToWord('carcasse', nbCarcassesManquantes)} ${addAnSToWord('manquante', nbCarcassesManquantes)}.`,
+      );
     }
     return label;
   }, [
-    carcassesSorted.carcassesApproved.length,
-    carcassesSorted.carcassesRejetees.length,
+    carcassesAcceptées,
+    carcassesRefusées,
     carcassesSorted.carcassesManquantes.length,
     intermediaire?.check_finished_at,
   ]);
@@ -545,7 +557,17 @@ export default function FEICurrentIntermediaire() {
               className={!intermediaire?.check_finished_at ? '' : 'checkbox-black'}
               options={[
                 {
-                  label: labelCheckDone,
+                  label: (
+                    <>
+                      {labelCheckDone.map((line) => {
+                        return (
+                          <span className="block basis-full" key={line}>
+                            {line}
+                          </span>
+                        );
+                      })}
+                    </>
+                  ),
                   nativeInputProps: {
                     required: true,
                     name: 'check_finished_at_checked',
