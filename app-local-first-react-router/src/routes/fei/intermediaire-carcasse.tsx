@@ -416,6 +416,7 @@ export default function CarcasseIntermediaireComp({
                         refusIntermediaireModal.current.close();
                         submitCarcasseAccept();
                       },
+                      disabled: !canEdit,
                     },
                     label: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse acceptée' : 'Lot accepté',
                   },
@@ -428,6 +429,7 @@ export default function CarcasseIntermediaireComp({
                         setCarcasseManquante(false);
                         setCarcasseRefusCheckbox(true);
                       },
+                      disabled: !canEdit,
                     },
                     label: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé',
                   },
@@ -440,6 +442,7 @@ export default function CarcasseIntermediaireComp({
                         refusIntermediaireModal.current.close();
                         submitCarcasseManquante();
                       },
+                      disabled: !canEdit,
                     },
                     label: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse manquante' : 'Lot manquant',
                   },
@@ -449,7 +452,7 @@ export default function CarcasseIntermediaireComp({
             {!!carcasseRefusCheckbox && (
               <div className="mb-4">
                 <InputForSearchPrefilledData
-                  canEdit
+                  canEdit={canEdit}
                   data={refusIntermedaire}
                   label="Vous refusez cette carcasse ? Indiquez le motif *"
                   hideDataWhenNoSearch={false}
@@ -479,7 +482,9 @@ export default function CarcasseIntermediaireComp({
                 name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
                 form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
                 defaultValue: intermediaireCarcasse.commentaire || '',
+                disabled: !canEdit,
                 onBlur: (e) => {
+                  if (!canEdit) return;
                   const nextPartialCarcasseIntermediaire = {
                     commentaire: e.target.value,
                   };
@@ -507,6 +512,7 @@ export default function CarcasseIntermediaireComp({
                         {
                           children: 'Enregistrer',
                           type: 'submit',
+                          disabled: !canEdit,
                           nativeButtonProps: {
                             onClick: (e) => {
                               e.preventDefault();
@@ -519,6 +525,7 @@ export default function CarcasseIntermediaireComp({
                           children: 'Annuler',
                           priority: 'secondary',
                           type: 'button',
+                          disabled: !canEdit,
                           nativeButtonProps: {
                             onClick: (e) => {
                               e.preventDefault();
@@ -532,6 +539,7 @@ export default function CarcasseIntermediaireComp({
                         {
                           children: carcasseRefusCheckbox ? 'Refuser' : 'Enregistrer',
                           type: 'submit',
+                          disabled: !canEdit,
                           nativeButtonProps: {
                             form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
                             disabled: carcasseRefusCheckbox && !refus,

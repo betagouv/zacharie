@@ -63,6 +63,7 @@ function Fei() {
   // const refCurrentUserId = useRef(fei.fei_current_owner_user_id);
 
   const [switchEtgSviInterface, setSwitchEtgSviInterface] = useState<'etg' | 'svi'>('etg');
+  const [sviViewMode, setSviViewMode] = useState<'svi' | 'etg'>('svi');
 
   const showInterface = useMemo(() => {
     /* 
@@ -153,7 +154,7 @@ function Fei() {
   return (
     <>
       {fei.deleted_at && (
-        <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
+        <div className="mb-2 bg-error-main-525 py-2 text-center text-white">
           <p>Fiche supprimée</p>
         </div>
       )}
@@ -180,13 +181,26 @@ function Fei() {
                 />
               </div>
             )}
+            {showInterface === UserRoles.SVI && (
+              <div className="mb-2 flex w-full justify-end gap-4">
+                <ToggleSwitch
+                  label="Afficher le transport et la réception"
+                  labelPosition="left"
+                  inputTitle="Afficher le transport et la réception"
+                  showCheckedHint={false}
+                  checked={sviViewMode === 'etg'}
+                  onChange={(checked) => setSviViewMode(checked ? 'etg' : 'svi')}
+                />
+              </div>
+            )}
             <div className="bg-white p-4 md:p-8">
               {showInterface === UserRoles.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
               {showInterface === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
               {showInterface === UserRoles.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
               {showInterface === UserRoles.ETG &&
                 (switchEtgSviInterface === 'etg' ? <FEICurrentIntermediaire /> : <FEI_ETGInspectionSvi />)}
-              {showInterface === UserRoles.SVI && <FEI_SVI />}
+              {showInterface === UserRoles.SVI &&
+                (sviViewMode === 'svi' ? <FEI_SVI /> : <FEICurrentIntermediaire readOnly={true} />)}
             </div>
             <div className="m-8 flex flex-col justify-start gap-4">
               <Button
