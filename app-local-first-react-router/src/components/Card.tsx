@@ -118,7 +118,15 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
       </div>
       <Link
         to={`/app/tableau-de-bord/fei/${fei.numero}`}
-        className="flex size-full shrink-0 flex-col gap-3 bg-none p-6 !no-underline hover:!bg-active-tint hover:!no-underline"
+        className={[
+          'flex size-full shrink-0 flex-col gap-3 bg-none p-6 !no-underline hover:!bg-active-tint hover:!no-underline',
+
+          carcassesRefusées.length > 0
+            ? 'border-error-main-525 border-l-2'
+            : simpleStatus === 'Clôturée'
+              ? 'border-success-main-525 border-l-2'
+              : '',
+        ].join(' ')}
       >
         <div className="absolute right-0 top-0 text-transparent selection:text-gray-200">{fei.numero}</div>
         <Tag
