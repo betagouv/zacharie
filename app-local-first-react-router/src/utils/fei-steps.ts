@@ -70,8 +70,8 @@ export function useFeiSteps(fei: FeiDone) {
         // return "Réception par l'établissement de traitement";
         return "Transport vers / réception par l'établissement de traitement";
       case "Réception par l'établissement de traitement":
-        return '';
-      // return 'Inspection par le SVI';
+        // return '';
+        return 'Inspection par le SVI';
       case 'Inspection par le SVI':
       default:
     }

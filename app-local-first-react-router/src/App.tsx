@@ -26,7 +26,6 @@ import AdminEntity from './routes/admin/entity-$entityId';
 import AdminEntites from './routes/admin/entities';
 import MentionsLegales from './routes/mentions-legales';
 import ModalitesDutilisation from './routes/modalites-d-utilisation';
-import BetaTesteurs from './routes/beta-testeurs';
 import RegistreCarcasses from './routes/registre-carcasses';
 import Accessibility from './routes/accessibility';
 import Stats from './routes/stats';

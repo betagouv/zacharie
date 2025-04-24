@@ -70,7 +70,17 @@ export default function FEI_SVI() {
 
   return (
     <>
-      <FEIDonneesDeChasse />
+      <Accordion
+        titleAs="h3"
+        label={
+          <>
+            Données de chasse <PencilStrikeThrough />
+          </>
+        }
+        defaultExpanded={false}
+      >
+        <FEIDonneesDeChasse />
+      </Accordion>
       <Accordion
         titleAs="h3"
         label={

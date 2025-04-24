@@ -15,8 +15,6 @@ import FEI_SVI from './svi';
 import { useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
 import FeiStepper from '@app/components/FeiStepper';
 import CurrentOwnerConfirm from './current-owner-confirm';
-import { ToggleSwitch } from '@codegouvfr/react-dsfr/ToggleSwitch';
-import FEI_ETGInspectionSvi from './etg-inspection-svi';
 import DeleteFei from './delete-fei';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 
@@ -61,9 +59,6 @@ function Fei() {
 
   // const refCurrentRole = useRef(fei.fei_current_owner_role);
   // const refCurrentUserId = useRef(fei.fei_current_owner_user_id);
-
-  const [switchEtgSviInterface, setSwitchEtgSviInterface] = useState<'etg' | 'svi'>('etg');
-  const [sviViewMode, setSviViewMode] = useState<'svi' | 'etg'>('svi');
 
   const showInterface = useMemo(() => {
     /* 
@@ -168,39 +163,12 @@ function Fei() {
             <FeiTransfer />
             {showInterface !== UserRoles.SVI && <CurrentOwnerConfirm />}
             {showInterface !== UserRoles.SVI && <FeiStepper />}
-            {showInterface === UserRoles.ETG && (
-              <div className="mb-2 flex w-full justify-end">
-                <ToggleSwitch
-                  label="Afficher l'inspection SVI"
-                  labelPosition="left"
-                  disabled={!fei.svi_assigned_at}
-                  inputTitle="Afficher l'inspection SVI"
-                  showCheckedHint={false}
-                  checked={switchEtgSviInterface === 'svi'}
-                  onChange={(checked) => setSwitchEtgSviInterface(checked ? 'svi' : 'etg')}
-                />
-              </div>
-            )}
-            {showInterface === UserRoles.SVI && (
-              <div className="mb-2 flex w-full justify-end gap-4">
-                <ToggleSwitch
-                  label="Afficher le transport et la réception"
-                  labelPosition="left"
-                  inputTitle="Afficher le transport et la réception"
-                  showCheckedHint={false}
-                  checked={sviViewMode === 'etg'}
-                  onChange={(checked) => setSviViewMode(checked ? 'etg' : 'svi')}
-                />
-              </div>
-            )}
             <div className="bg-white p-4 md:p-8">
               {showInterface === UserRoles.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
               {showInterface === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
               {showInterface === UserRoles.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
-              {showInterface === UserRoles.ETG &&
-                (switchEtgSviInterface === 'etg' ? <FEICurrentIntermediaire /> : <FEI_ETGInspectionSvi />)}
-              {showInterface === UserRoles.SVI &&
-                (sviViewMode === 'svi' ? <FEI_SVI /> : <FEICurrentIntermediaire readOnly={true} />)}
+              {showInterface === UserRoles.ETG && <FEICurrentIntermediaire />}
+              {showInterface === UserRoles.SVI && <FEI_SVI />}
             </div>
             <div className="m-8 flex flex-col justify-start gap-4">
               <Button
