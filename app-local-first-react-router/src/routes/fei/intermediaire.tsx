@@ -1,14 +1,12 @@
 import { Fragment, useMemo, useState } from 'react';
-import { Prisma, CarcasseIntermediaire, Carcasse, CarcasseType, UserRoles } from '@prisma/client';
+import { Prisma, CarcasseIntermediaire, Carcasse, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
-import { Accordion } from '@codegouvfr/react-dsfr/Accordion';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import dayjs from 'dayjs';
 import SelectNextOwnerForPremierDetenteurOrIntermediaire from './premier-detenteur-intermediaire-select-next';
 import CarcasseIntermediaireComp from './intermediaire-carcasse';
-import EntityNotEditable from '@app/components/EntityNotEditable';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
@@ -16,7 +14,6 @@ import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediair
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import CollecteurCarcassePreview from './collecteur-carcasse-preview';
-import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import FEIDonneesDeChasse from './donnees-de-chasse';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
@@ -121,7 +118,7 @@ export default function FEICurrentIntermediaire(props: Props) {
     if (intermediaire.fei_intermediaire_user_id !== user.id) {
       return false;
     }
-    // if (intermediaire.check_finished_at) {
+    // if (intermediaire?.check_finished_at) {
     //   return false;
     // }
     return true;
@@ -274,7 +271,6 @@ export default function FEICurrentIntermediaire(props: Props) {
   }, [couldSelectNextUser, carcassesSorted.carcassesApproved.length, intermediaire?.check_finished_at]);
 
   // const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
-  const [carcassesAValiderExpanded, setCarcassesAValiderExpanded] = useState(true);
   // const [carcassesAccepteesExpanded, setCarcassesAccepteesExpanded] = useState(false);
   // const [carcassesRefuseesExpanded, setCarcassesRefuseesExpanded] = useState(false);
   // const [carcassesManquantesExpanded, setCarcassesManquantesExpanded] = useState(false);
@@ -287,15 +283,6 @@ export default function FEICurrentIntermediaire(props: Props) {
   //   }
   //   prevCarcassesToCheckCount.current = carcassesSorted.carcassesToCheck.length;
   // }, [carcassesSorted.carcassesToCheck.length]);
-
-  const onlyPetitGibier = useMemo(() => {
-    for (const carcasse of originalCarcasses) {
-      if (carcasse?.type !== CarcasseType.PETIT_GIBIER) {
-        return false;
-      }
-    }
-    return true;
-  }, [originalCarcasses]);
 
   function handleCheckFinishedAt(checkFinishedAt: Date) {
     if (!intermediaire) {
@@ -339,142 +326,74 @@ export default function FEICurrentIntermediaire(props: Props) {
   const showCollecteurInterface =
     fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.fei_current_owner_user_id === user.id;
 
-  if (intermediaire) {
-    return (
-      <>
-        {!showCollecteurInterface && (
-          <nav
-            id="fr-breadcrumb-:r54:"
-            role="navigation"
-            className="fr-breadcrumb"
-            aria-label="vous êtes ici :"
-            data-fr-js-breadcrumb="true"
-          >
-            <button
-              className="fr-breadcrumb__button"
-              aria-expanded="false"
-              aria-controls="breadcrumb-:r55:"
-              data-fr-js-collapse-button="true"
-            >
-              Voir les destinataires
-            </button>
-            <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
-              <ol className="fr-breadcrumb__list">
-                <li>
-                  <span className="fr-breadcrumb__link !bg-none !no-underline">Premier Détenteur</span>
-                </li>
-                {intermediaires
-                  .map((_intermediaire, index) => {
-                    return (
-                      <li key={_intermediaire.id}>
-                        <button
-                          onClick={() => setIntermediaireIndex(index)}
-                          className="fr-breadcrumb__link"
-                          aria-current={_intermediaire.id === intermediaire?.id ? 'step' : false}
-                          disabled={props.readOnly}
-                        >
-                          {entities[_intermediaire.fei_intermediaire_entity_id!]?.nom_d_usage}
-                        </button>
-                      </li>
-                    );
-                  })
-                  .reverse()}
-              </ol>
-            </div>
-          </nav>
-        )}
-
-        <FEIDonneesDeChasse />
-        <Accordion
-          titleAs="h3"
-          label={
-            <>
-              Identité{' '}
-              {intermediaire.fei_intermediaire_role === UserRoles.ETG
-                ? 'du destinataire'
-                : "de l'intermédaire"}{' '}
-              {effectiveCanEdit ? <PencilStrikeThrough /> : ''}
-            </>
-          }
+  return (
+    <>
+      {!showCollecteurInterface && intermediaires.length > 1 && effectiveCanEdit && (
+        <nav
+          id="fr-breadcrumb-:r54:"
+          role="navigation"
+          className="fr-breadcrumb"
+          aria-label="vous êtes ici :"
+          data-fr-js-breadcrumb="true"
         >
-          <EntityNotEditable
-            user={users[intermediaire.fei_intermediaire_user_id!]!}
-            entity={entities[intermediaire.fei_intermediaire_entity_id!]!}
-          />
-        </Accordion>
-        {effectiveCanEdit ? (
-          <Accordion
-            titleAs="h3"
-            label={`Carcasses (${intermediaireCarcasses.length})`}
-            expanded={carcassesAValiderExpanded}
-            onExpandedChange={setCarcassesAValiderExpanded}
+          <button
+            className="fr-breadcrumb__button"
+            aria-expanded="false"
+            aria-controls="breadcrumb-:r55:"
+            data-fr-js-collapse-button="true"
           >
-            {showCollecteurInterface && fei.premier_detenteur_name_cache && (
-              <>
-                <InputNotEditable
-                  label="Détenteur des carcasses"
-                  nativeInputProps={{
-                    id: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                    name: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                    autoComplete: 'off',
-                    defaultValue: fei.premier_detenteur_name_cache || '',
-                  }}
-                />
-                <InputNotEditable
-                  label="Date de la chasse"
-                  nativeInputProps={{
-                    id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                    name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                    type: 'text',
-                    autoComplete: 'off',
-                    suppressHydrationWarning: true,
-                    defaultValue: fei?.date_mise_a_mort
-                      ? dayjs(fei?.date_mise_a_mort).format('DD/MM/YYYY')
-                      : '',
-                  }}
-                />
-              </>
+            Voir les destinataires
+          </button>
+          <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
+            <ol className="fr-breadcrumb__list">
+              <li>
+                <span className="fr-breadcrumb__link !bg-none !no-underline">Premier Détenteur</span>
+              </li>
+              {intermediaires
+                .map((_intermediaire, index) => {
+                  return (
+                    <li key={_intermediaire.id}>
+                      <button
+                        onClick={() => setIntermediaireIndex(index)}
+                        className="fr-breadcrumb__link"
+                        aria-current={_intermediaire.id === intermediaire?.id ? 'step' : false}
+                        disabled={props.readOnly}
+                      >
+                        {entities[_intermediaire.fei_intermediaire_entity_id!]?.nom_d_usage}
+                      </button>
+                    </li>
+                  );
+                })
+                .reverse()}
+            </ol>
+          </div>
+        </nav>
+      )}
+
+      <details open={!!intermediaires.length}>
+        <summary>
+          <h3 className="ml-2 inline text-lg font-semibold text-gray-900">Données de chasse</h3>
+        </summary>
+        <div className="p-5">
+          <FEIDonneesDeChasse />
+        </div>
+      </details>
+      <hr className="mt-8" />
+      {intermediaire ? (
+        <details open>
+          <summary>
+            <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
+              Carcasses ({intermediaireCarcasses.length})
+            </h3>
+          </summary>
+          <div className="p-5">
+            {effectiveCanEdit && (
+              <div className="mb-8">
+                <p className="text-sm text-gray-600">
+                  Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
+                </p>
+              </div>
             )}
-            {!showCollecteurInterface && (
-              <>
-                <InputNotEditable
-                  label="Date de mise à mort (et d'éviscération) *"
-                  nativeInputProps={{
-                    id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                    name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                    type: 'text',
-                    defaultValue: dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY'),
-                  }}
-                />
-                <InputNotEditable
-                  label="Heure de mise à mort de la première carcasse *"
-                  nativeInputProps={{
-                    id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-                    name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-                    type: 'time',
-                    autoComplete: 'off',
-                    defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
-                  }}
-                />
-                {!onlyPetitGibier && (
-                  <InputNotEditable
-                    label="Heure d'éviscération de la dernière carcasse"
-                    nativeInputProps={{
-                      id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                      name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                      type: 'time',
-                      autoComplete: 'off',
-                      defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
-                    }}
-                  />
-                )}
-              </>
-            )}
-            <div className="mb-8">
-              <p className="text-sm text-gray-600">
-                Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
-              </p>
-            </div>
             {intermediaireCarcasses.map((intermediaireCarcasse) => {
               const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
               return (
@@ -487,81 +406,31 @@ export default function FEICurrentIntermediaire(props: Props) {
                 </Fragment>
               );
             })}
-          </Accordion>
-        ) : (
-          <>
-            <Accordion
-              titleAs="h3"
-              label={`Carcasses acceptées (${carcassesApprovedSorted.length})`}
-              defaultExpanded={carcassesApprovedSorted.length > 0 && needSelectNextUser}
-            >
-              {carcassesApprovedSorted.length === 0 ? (
-                <p>Pas de carcasse acceptée</p>
-              ) : (
-                carcassesApprovedSorted.map((carcasse) => {
-                  return (
-                    <Fragment key={carcasse.numero_bracelet}>
-                      <CarcasseIntermediaireComp
-                        intermediaire={intermediaire}
-                        canEdit={effectiveCanEdit}
-                        carcasse={carcasse}
-                      />
-                    </Fragment>
-                  );
-                })
-              )}
-            </Accordion>
-            <Accordion
-              titleAs="h3"
-              label={`Carcasses rejetées (${carcassesSorted.carcassesRejetees.length})`}
-              defaultExpanded={carcassesSorted.carcassesRejetees.length > 0 && needSelectNextUser}
-            >
-              {carcassesSorted.carcassesRejetees.length === 0 ? (
-                <p>Pas de carcasse refusée</p>
-              ) : (
-                carcassesSorted.carcassesRejetees.map((carcasse) => {
-                  return (
-                    <Fragment key={carcasse.numero_bracelet}>
-                      <CarcasseIntermediaireComp
-                        intermediaire={intermediaire}
-                        canEdit={effectiveCanEdit}
-                        carcasse={carcasse}
-                      />
-                    </Fragment>
-                  );
-                })
-              )}
-            </Accordion>
-            <Accordion
-              titleAs="h3"
-              label={`Carcasses manquantes (${carcassesSorted.carcassesManquantes.length})`}
-              defaultExpanded={carcassesSorted.carcassesManquantes.length > 0 && needSelectNextUser}
-            >
-              {carcassesSorted.carcassesManquantes.length === 0 ? (
-                <p>Pas de carcasse manquante</p>
-              ) : (
-                carcassesSorted.carcassesManquantes.map((carcasse) => {
-                  return (
-                    <Fragment key={carcasse.numero_bracelet}>
-                      <CarcasseIntermediaireComp
-                        intermediaire={intermediaire}
-                        canEdit={effectiveCanEdit}
-                        carcasse={carcasse}
-                      />
-                    </Fragment>
-                  );
-                })
-              )}
-            </Accordion>
-          </>
-        )}
-        <Accordion
-          titleAs="h3"
-          label="Prise en charge des carcasses acceptées"
-          defaultExpanded
-          key={intermediaire?.id}
-        >
+          </div>
+        </details>
+      ) : (
+        <details open>
+          <summary>
+            <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
+              Carcasses ({originalCarcasses.length})
+            </h3>
+          </summary>
+          <div className="p-5">
+            {originalCarcasses.map((carcasse) => {
+              return <CollecteurCarcassePreview carcasse={carcasse} key={carcasse.numero_bracelet} />;
+            })}
+          </div>
+        </details>
+      )}
+
+      {!!labelCheckDone.length && (
+        <>
+          <hr className="mt-8" />
+          <h3 className="ml-4 inline text-lg font-semibold text-gray-900">
+            Prise en charge des carcasses acceptées
+          </h3>
           <form
+            className="p-5"
             method="POST"
             id="form_intermediaire_check_finished_at"
             onSubmit={handleSubmitCheckFinishedAt}
@@ -585,16 +454,16 @@ export default function FEICurrentIntermediaire(props: Props) {
                     required: true,
                     name: 'check_finished_at_checked',
                     value: 'true',
-                    disabled: !!intermediaire.check_finished_at,
+                    disabled: !!intermediaire?.check_finished_at,
                     form: 'form_intermediaire_check_finished_at',
-                    readOnly: !!intermediaire.check_finished_at || props.readOnly,
-                    defaultChecked: intermediaire.check_finished_at ? true : false,
+                    readOnly: !!intermediaire?.check_finished_at || props.readOnly,
+                    defaultChecked: intermediaire?.check_finished_at ? true : false,
                   },
                 },
               ]}
             />
             <PriseEnChargeInput
-              key={JSON.stringify(intermediaire.check_finished_at || '')}
+              key={JSON.stringify(intermediaire?.check_finished_at || '')}
               className={effectiveCanEdit ? '' : 'pointer-events-none'}
               hintText={
                 effectiveCanEdit ? (
@@ -620,12 +489,14 @@ export default function FEICurrentIntermediaire(props: Props) {
                 form: 'form_intermediaire_check_finished_at',
                 suppressHydrationWarning: true,
                 autoComplete: 'off',
-                defaultValue: dayjs(intermediaire.check_finished_at || undefined).format('YYYY-MM-DDTHH:mm'),
+                defaultValue: dayjs(intermediaire?.check_finished_at || undefined).format('YYYY-MM-DDTHH:mm'),
               }}
             />
-            <Button type="submit" disabled={!effectiveCanEdit}>
-              Enregistrer
-            </Button>
+            {!!canEdit && (
+              <Button type="submit" disabled={!effectiveCanEdit}>
+                Enregistrer
+              </Button>
+            )}
             {!carcassesApprovedSorted.length && fei.intermediaire_closed_at && (
               <>
                 <Alert
@@ -645,87 +516,23 @@ export default function FEICurrentIntermediaire(props: Props) {
               </>
             )}
           </form>
-        </Accordion>
-        {couldSelectNextUser && (
-          <Accordion
-            titleAs="h3"
-            label={`Sélection du prochain destinataire`}
-            defaultExpanded
-            key={intermediaire?.id + needSelectNextUser}
-          >
-            <SelectNextOwnerForPremierDetenteurOrIntermediaire
-              calledFrom="intermediaire-next-owner"
-              disabled={!needSelectNextUser || props.readOnly}
-            />
-          </Accordion>
-        )}
-      </>
-    );
-  }
-  return (
-    <>
-      <Accordion
-        titleAs="h3"
-        label={`Carcasses (${originalCarcasses.length})`}
-        expanded={carcassesAValiderExpanded}
-        onExpandedChange={setCarcassesAValiderExpanded}
-      >
-        {showCollecteurInterface && fei.premier_detenteur_name_cache && (
-          <InputNotEditable
-            label="Détenteur des carcasses"
-            nativeInputProps={{
-              id: Prisma.EntityScalarFieldEnum.nom_d_usage,
-              name: Prisma.EntityScalarFieldEnum.nom_d_usage,
-              autoComplete: 'off',
-              defaultValue: fei.premier_detenteur_name_cache || '',
-            }}
-          />
-        )}
-        {!showCollecteurInterface && (
-          <>
-            <InputNotEditable
-              label="Date de mise à mort (et d'éviscération) *"
-              nativeInputProps={{
-                id: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                name: Prisma.FeiScalarFieldEnum.date_mise_a_mort,
-                type: 'text',
-                defaultValue: dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY'),
-              }}
-            />
-            <InputNotEditable
-              label="Heure de mise à mort de la première carcasse *"
-              nativeInputProps={{
-                id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-                name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-                type: 'time',
-                autoComplete: 'off',
-                defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
-              }}
-            />
-            {!onlyPetitGibier && (
-              <InputNotEditable
-                label="Heure d'éviscération de la dernière carcasse"
-                nativeInputProps={{
-                  id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                  name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                  type: 'time',
-                  autoComplete: 'off',
-                  defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
-                }}
-              />
-            )}
-          </>
-        )}
-        <div className="py-20">
-          <p className="text-sm text-gray-600">
-            Quand vous aurez pris en charge la fiche, vous pourrez sur une carcasse pour la refuser, la
-            signaler, l'annoter
-          </p>
-        </div>
-        {originalCarcasses.map((carcasse) => {
-          return <CollecteurCarcassePreview carcasse={carcasse} key={carcasse.numero_bracelet} />;
-        })}
-      </Accordion>
+
+          {couldSelectNextUser && (
+            <>
+              <hr className="mt-8" />
+              <h3 className="ml-4 inline text-lg font-semibold text-gray-900">
+                Sélection du prochain destinataire
+              </h3>
+              <div className="p-5" key={intermediaire?.id + needSelectNextUser}>
+                <SelectNextOwnerForPremierDetenteurOrIntermediaire
+                  calledFrom="intermediaire-next-owner"
+                  disabled={!needSelectNextUser || props.readOnly}
+                />
+              </div>
+            </>
+          )}
+        </>
+      )}
     </>
   );
 }

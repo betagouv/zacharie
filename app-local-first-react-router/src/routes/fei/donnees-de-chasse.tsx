@@ -2,10 +2,8 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import { CarcasseType, Prisma } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
-import { Accordion } from '@codegouvfr/react-dsfr/Accordion';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
-import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 
 export default function FEIDonneesDeChasse() {
   const params = useParams();
@@ -61,15 +59,7 @@ export default function FEIDonneesDeChasse() {
   }, [premierDetenteurEntity, premierDetenteurUser]);
 
   return (
-    <Accordion
-      titleAs="h3"
-      label={
-        <>
-          Données de chasse <PencilStrikeThrough />
-        </>
-      }
-      defaultExpanded={false}
-    >
+    <>
       <InputNotEditable
         label="Examinateur Initial"
         textArea
@@ -136,6 +126,6 @@ export default function FEIDonneesDeChasse() {
           ),
         }}
       />
-    </Accordion>
+    </>
   );
 }
