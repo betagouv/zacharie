@@ -65,15 +65,14 @@ export default function RootDisplay({
             iconId: 'ri-account-box-line',
             text: user?.email ?? 'Se connecter',
           },
-          {
-            linkProps: {
-              // to: "/app/connexion?type=creation-de-compte",
-              to: '/beta-testeurs',
-              href: '#',
-            },
-            iconId: 'fr-icon-add-circle-line',
-            text: 'Créer un compte',
-          },
+          // {
+          //   linkProps: {
+          //     to: "/app/connexion?type=creation-de-compte",
+          //     href: '#',
+          //   },
+          //   iconId: 'fr-icon-add-circle-line',
+          //   text: 'Créer un compte',
+          // },
           {
             iconId: 'fr-icon-mail-fill',
             linkProps: {

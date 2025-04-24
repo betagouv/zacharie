@@ -1,7 +1,7 @@
 export default function Accessibility() {
   return (
-    <main className="max-w-prose mx-auto px-4 py-8 space-y-8">
-      <h1 className="text-3xl font-bold mb-6">Déclaration d'accessibilité</h1>
+    <main className="mx-auto max-w-prose space-y-8 px-4 py-8">
+      <h1 className="mb-6 text-3xl font-bold">Déclaration d'accessibilité</h1>
 
       <section className="space-y-4">
         <p className="text-gray-700">
@@ -22,7 +22,7 @@ export default function Accessibility() {
 
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-gray-900">Actions réalisées en 2024-2025 :</h2>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
+            <ul className="list-disc space-y-2 pl-5 text-gray-700">
               <li>Utilisation du DSFR</li>
               <li>Ajout des descriptions textuelles pour les images (balises alt)</li>
             </ul>
@@ -30,14 +30,14 @@ export default function Accessibility() {
 
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-gray-900">Actions réalisées en 2025 :</h2>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
+            <ul className="list-disc space-y-2 pl-5 text-gray-700">
               <li>Établissement de la déclaration d'accessibilité</li>
             </ul>
           </div>
 
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-gray-900">Plan d'actions 2025-2026 :</h2>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
+            <ul className="list-disc space-y-2 pl-5 text-gray-700">
               <li>Semestre 1 : lecture audio des titres mise en français, test avec le logiciel NVDA</li>
               <li>
                 Semestre 2 : Ajout d'un plan du site vitrine, ajout des liens d'évitements sur l'en-têtre de
@@ -48,7 +48,7 @@ export default function Accessibility() {
 
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-gray-900">Plan d'actions 2026-2027 :</h2>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
+            <ul className="list-disc space-y-2 pl-5 text-gray-700">
               <li>Nouvel audit</li>
             </ul>
           </div>
@@ -145,12 +145,12 @@ export default function Accessibility() {
                 zacharie.beta.gouv.fr
               </a>
             </li>
-            <li>
+            {/* <li>
               page création de compte{' '}
-              <a href="zacharie.beta.gouv.fr/beta-testeurs" className="text-blue-600 hover:underline">
-                zacharie.beta.gouv.fr/beta-testeurs
+              <a href="zacharie.beta.gouv.fr/app/connexion?type=creation-de-compte" className="text-blue-600 hover:underline">
+                zacharie.beta.gouv.fr/app/connexion?type=creation-de-compte
               </a>
-            </li>
+            </li> */}
             <li>
               page connexion{' '}
               <a href="http://zacharie.beta.gouv.fr/app/connexion" className="text-blue-600 hover:underline">

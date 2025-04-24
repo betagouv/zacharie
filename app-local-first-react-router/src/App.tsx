@@ -48,14 +48,6 @@ function App() {
           }
         />
         <Route
-          path="beta-testeurs"
-          element={
-            <RootDisplay id="beta-testeurs">
-              <BetaTesteurs />
-            </RootDisplay>
-          }
-        />
-        <Route
           path="mentions-legales"
           element={
             <RootDisplay id="mentions-legales">
