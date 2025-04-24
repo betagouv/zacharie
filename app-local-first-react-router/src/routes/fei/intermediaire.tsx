@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
-import { Prisma, CarcasseIntermediaire, Carcasse, UserRoles } from '@prisma/client';
+import { Prisma, CarcasseIntermediaire, Carcasse, UserRoles, CarcasseStatus } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -38,12 +38,23 @@ export default function FEICurrentIntermediaire(props: Props) {
   );
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useZustandStore((state) => state.etgsIds);
-  const users = useZustandStore((state) => state.users);
   const fei = feis[params.fei_numero!];
   const originalCarcasses = (carcassesIdsByFei[params.fei_numero!] || [])
     .map((cId) => carcasses[cId])
+    .sort((a, b) => {
+      if (a.svi_carcasse_status === CarcasseStatus.SANS_DECISION) {
+        return -1;
+      }
+      if (b.svi_carcasse_status === CarcasseStatus.SANS_DECISION) {
+        return 1;
+      }
+      return a.numero_bracelet.localeCompare(b.numero_bracelet);
+    })
     .filter((c) => !c.deleted_at);
+
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+
+  const [showRefusedCarcasses, setShowRefusedCarcasses] = useState(false);
 
   const [intermediaireIndex, setIntermediaireIndex] = useState(() => {
     const userWasIntermediaire = intermediaires.find(
@@ -76,6 +87,15 @@ export default function FEICurrentIntermediaire(props: Props) {
       })
       .filter((c) => c != null);
   }, [intermediaire, carcassesIntermediairesByIntermediaire, carcassesIntermediaires, carcasses]);
+
+  const carcassesDejaRefusees = useMemo(() => {
+    const intermediaireCarcassesIds = intermediaireCarcasses.map((c) => c.zacharie_carcasse_id);
+    return originalCarcasses.filter(
+      (c) =>
+        !intermediaireCarcassesIds.includes(c.zacharie_carcasse_id) &&
+        c.svi_carcasse_status !== CarcasseStatus.SANS_DECISION,
+    );
+  }, [originalCarcasses, intermediaireCarcasses]);
 
   const isEtgWorkingFor = useMemo(() => {
     if (fei.fei_current_owner_role === UserRoles.ETG && !!fei.fei_current_owner_entity_id) {
@@ -198,8 +218,6 @@ export default function FEICurrentIntermediaire(props: Props) {
   //   }
   //   return [_carcassesAcceptées, _carcassesRefusées];
   // }, [fei.resume_nombre_de_carcasses]);
-
-  console.log(fei.resume_nombre_de_carcasses);
 
   const labelCheckDone = useMemo(() => {
     let label = [];
@@ -406,20 +424,35 @@ export default function FEICurrentIntermediaire(props: Props) {
                 </Fragment>
               );
             })}
+            <div className="my-8 flex justify-center">
+              <Button
+                onClick={() => {
+                  setShowRefusedCarcasses(!showRefusedCarcasses);
+                }}
+                priority="secondary"
+              >
+                {showRefusedCarcasses ? 'Masquer' : 'Afficher'} les carcasses déjà refusées (
+                {carcassesDejaRefusees.length})
+              </Button>
+            </div>
+            {showRefusedCarcasses && (
+              <>
+                {carcassesDejaRefusees.map((carcasse) => {
+                  return <CollecteurCarcassePreview carcasse={carcasse} key={carcasse.numero_bracelet} />;
+                })}
+              </>
+            )}
           </div>
         </details>
       ) : (
         <details open>
           <summary>
             <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
-              Carcasses ({originalCarcasses.length})
+              Carcasses (
+              {originalCarcasses.filter((c) => c.svi_carcasse_status === CarcasseStatus.SANS_DECISION).length}
+              )
             </h3>
           </summary>
-          <div className="p-5">
-            {originalCarcasses.map((carcasse) => {
-              return <CollecteurCarcassePreview carcasse={carcasse} key={carcasse.numero_bracelet} />;
-            })}
-          </div>
         </details>
       )}
 
