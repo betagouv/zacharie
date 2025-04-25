@@ -33,7 +33,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-error-boundary": "^4.1.2",
-    "react-router": "^7.0.1",
+    "react-router": "^7.5.2",
     "react-select": "^5.10.0",
     "sortablejs": "^1.15.6",
     "uuid": "^11.0.3",
