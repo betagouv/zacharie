@@ -6,7 +6,6 @@ import InputNotEditable from '@app/components/InputNotEditable';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import EntityNotEditable from '@app/components/EntityNotEditable';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import CarcasseSVI from './svi-carcasse';

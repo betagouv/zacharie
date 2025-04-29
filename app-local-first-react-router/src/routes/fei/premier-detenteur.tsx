@@ -63,14 +63,14 @@ export default function FeiPremierDetenteur() {
     if (fei.automatic_closed_at || fei.svi_signed_at || fei.svi_assigned_at) {
       return false;
     }
+    if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
+      return false;
+    }
     if (!user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
       return false;
     }
     if (premierDetenteurEntity?.relation === 'WORKING_FOR') {
       return true;
-    }
-    if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
-      return false;
     }
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
@@ -85,16 +85,16 @@ export default function FeiPremierDetenteur() {
     if (fei.automatic_closed_at || fei.svi_signed_at || fei.svi_assigned_at) {
       return false;
     }
-    if (premierDetenteurEntity?.relation === 'WORKING_FOR') {
-      return true;
-    }
-    if (fei.fei_current_owner_user_id !== user.id) {
-      return false;
-    }
     if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
       return false;
     }
     if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
+      return false;
+    }
+    if (premierDetenteurEntity?.relation === 'WORKING_FOR') {
+      return true;
+    }
+    if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
     return true;
