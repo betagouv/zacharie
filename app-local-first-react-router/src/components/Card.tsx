@@ -235,7 +235,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
                   <div>
                     {carcassesRefusées.map((line) => {
                       return (
-                        <p className="text-warning-main-525 m-0 text-xl font-semibold" key={line}>
+                        <p className="text-warning-main-525 m-0 text-xl" key={line}>
                           {line}
                         </p>
                       );
