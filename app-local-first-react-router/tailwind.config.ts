@@ -23,6 +23,11 @@ export default {
           dark: '#f60700',
           light: '#f60700',
         },
+        'warning-main-525': {
+          DEFAULT: '#d64d00',
+          dark: '#d64d00',
+          light: '#d64d00',
+        },
         'error-850': {
           DEFAULT: '#ffbdbd',
           dark: '#ffbdbd',
@@ -32,6 +37,11 @@ export default {
           DEFAULT: '#1f8d49',
           dark: '#1f8d49',
           light: '#1f8d49',
+        },
+        'success-main-625': {
+          DEFAULT: '#27A658',
+          dark: '#27A658',
+          light: '#27A658',
         },
         'green-emeraude': {
           DEFAULT: 'var(--green-emeraude-main-632)',

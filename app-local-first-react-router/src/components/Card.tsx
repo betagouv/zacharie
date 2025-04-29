@@ -29,6 +29,7 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
   },
 };
 
+const maxDetailedLines = 2;
 export default function Card({ fei, onPrintSelect, isPrintSelected = false }: CardProps) {
   const { simpleStatus, currentStepLabel } = useFeiSteps(fei);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -47,17 +48,46 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
   }, []);
 
   const [carcassesAcceptées, carcassesRefusées] = useMemo(() => {
+    if (!fei.resume_nombre_de_carcasses) {
+      return [[], []];
+    }
     const _carcassesAcceptées = [];
     const _carcassesRefusées = [];
     for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
       if (carcasse.includes('refusé')) {
         _carcassesRefusées.push(carcasse);
-      } else {
+      } else if (carcasse) {
         _carcassesAcceptées.push(carcasse);
       }
     }
     return [_carcassesAcceptées, _carcassesRefusées];
   }, [fei.resume_nombre_de_carcasses]);
+
+  const formattedCarcassesAcceptées = useMemo(() => {
+    if (!carcassesAcceptées.length) {
+      return ['À renseigner'];
+    }
+    const lines = [];
+    let nombreDEspecesApres3Lignes = 0;
+    for (const line of carcassesAcceptées) {
+      if (lines.length >= maxDetailedLines) {
+        nombreDEspecesApres3Lignes++;
+      } else {
+        lines.push(line);
+      }
+    }
+    for (let i = 0; i < maxDetailedLines; i++) {
+      if (!lines[i]) {
+        lines.push('fin de liste'); // juste pour garder la bonne hauteur de carte
+      }
+    }
+    if (nombreDEspecesApres3Lignes) {
+      lines.push(`+ ${nombreDEspecesApres3Lignes} éspèce${nombreDEspecesApres3Lignes > 1 ? 's' : ''}`);
+    } else {
+      lines.push('fin de liste'); // juste pour garder la bonne hauteur de carte
+    }
+    return lines;
+  }, [carcassesAcceptées]);
 
   return (
     <div
@@ -119,12 +149,12 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
       <Link
         to={`/app/tableau-de-bord/fei/${fei.numero}`}
         className={[
-          'flex size-full shrink-0 flex-col gap-3 bg-none p-6 !no-underline hover:!bg-active-tint hover:!no-underline',
+          'flex size-full shrink-0 flex-col gap-y-2 bg-none p-5 !no-underline hover:!bg-active-tint hover:!no-underline',
 
           carcassesRefusées.length > 0
-            ? 'border-l-2 border-error-main-525'
+            ? 'border-warning-main-525 border-l-2'
             : simpleStatus === 'Clôturée'
-              ? 'border-l-2 border-success-main-525'
+              ? 'border-success-main-625 border-l-2'
               : '',
         ].join(' ')}
       >
@@ -132,7 +162,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
         <Tag
           small
           className={[
-            'items-center font-semibold uppercase',
+            'items-center rounded-[4px] font-semibold uppercase',
             statusColors[simpleStatus].bg,
             statusColors[simpleStatus].text,
           ].join(' ')}
@@ -147,11 +177,29 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
           <div className="flex flex-row gap-x-2">
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <CommuneIcon />
-              <p className="text-sm text-black">{fei.commune_mise_a_mort?.split(' ').slice(1).join(' ')}</p>
+              <p
+                className={[
+                  'line-clamp-2 text-sm capitalize',
+                  fei.commune_mise_a_mort ? 'text-black' : 'text-white',
+                ].join(' ')}
+              >
+                {fei.commune_mise_a_mort
+                  ?.split(' ')
+                  .slice(1)
+                  .map((w) => w.toLocaleLowerCase())
+                  .join(' ') || 'À renseigner'}
+              </p>
             </div>
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <ChasseIcon />
-              <p className="text-sm text-black">{fei.premier_detenteur_name_cache}</p>
+              <p
+                className={[
+                  'line-clamp-2 text-sm',
+                  fei.premier_detenteur_name_cache ? 'text-black' : 'text-neutral-400',
+                ].join(' ')}
+              >
+                {fei.premier_detenteur_name_cache || 'À renseigner'}
+              </p>
             </div>
           </div>
         </div>
@@ -160,9 +208,20 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <CarcassesIcon />
               <div>
-                {carcassesAcceptées.map((line) => {
+                {formattedCarcassesAcceptées.map((line, index) => {
                   return (
-                    <p className="m-0 text-xl text-neutral-700" key={line}>
+                    <p
+                      className={[
+                        'm-0 line-clamp-1',
+                        index >= maxDetailedLines ? 'text-sm' : 'text-xl',
+                        line === 'À renseigner'
+                          ? 'text-neutral-400'
+                          : line === 'fin de liste'
+                            ? 'text-white'
+                            : 'text-neutral-700',
+                      ].join(' ')}
+                      key={line + index}
+                    >
                       {line}
                     </p>
                   );
@@ -176,7 +235,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
                   <div>
                     {carcassesRefusées.map((line) => {
                       return (
-                        <p className="m-0 text-xl font-semibold text-error-main-525" key={line}>
+                        <p className="text-warning-main-525 m-0 text-xl font-semibold" key={line}>
                           {line}
                         </p>
                       );
@@ -236,7 +295,7 @@ function RefusIcon() {
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M8 16C3.58172 16 0 12.4182 0 8C0 3.58172 3.58172 0 8 0C12.4182 0 16 3.58172 16 8C16 12.4182 12.4182 16 8 16ZM8 6.86864L5.73726 4.60589L4.60589 5.73726L6.86864 8L4.60589 10.2627L5.73726 11.3941L8 9.13136L10.2627 11.3941L11.3941 10.2627L9.13136 8L11.3941 5.73726L10.2627 4.60589L8 6.86864Z"
-        className="fill-error-main-525"
+        className="fill-warning-main-525"
       />
     </svg>
   );

@@ -58,13 +58,19 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
   }
 
   const formatted = Object.entries(countCarcassesByEspece)
-    .sort(([especeA], [especeB]) => {
-      if (especeA.includes('refus')) {
+    .sort(([especeA, countA], [especeB, countB]) => {
+      // Put refus entries at the end
+      if (especeA.includes('refus') && !especeB.includes('refus')) {
         return 1;
       }
-      if (especeB.includes('refus')) {
+      if (!especeA.includes('refus') && especeB.includes('refus')) {
         return -1;
       }
+      // For non-refus entries, sort by nombre_d_animaux in descending order
+      if (!especeA.includes('refus') && !especeB.includes('refus')) {
+        return countB.nombre_d_animaux - countA.nombre_d_animaux;
+      }
+      // Keep the original order for refus entries relative to each other
       return 0;
     })
     .map(([espece, { carcasses, nombre_d_animaux, lots }]) => {
@@ -78,10 +84,7 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
         const withS = lots <= 1 ? '' : 's';
         return `${lots}\u00A0lot${withS} refusé${withS} (${nombre_d_animaux} carcasses)`;
       }
-      if (lots) {
-        return `${nombre_d_animaux} ${espece}`;
-      }
-      return `${nombre_d_animaux} ${espece
+      return `${nombre_d_animaux} ${abbreviations[espece]
         .split(' ')
         .map((e) => addAnSToWord(e, nombre_d_animaux))
         .join(' ')}`;
@@ -91,11 +94,29 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
 }
 
 export function addAnSToWord(word: string, count: number) {
-  if (count === 1) {
-    return word;
-  }
-  if (word.endsWith('s')) {
+  if (count === 1 || word.endsWith('s') || word.endsWith('x') || word.endsWith('z') || word.endsWith('.')) {
     return word;
   }
   return `${word}s`;
 }
+
+export const abbreviations: Record<NonNullable<Carcasse['espece']>, string> = {
+  'Cerf élaphe': 'cerf ela.',
+  'Cerf sika': 'cerf sikas',
+  Chevreuil: 'chevreuil',
+  Daim: 'daim',
+  Sanglier: 'sanglier',
+  Chamois: 'chamois',
+  Isard: 'isard',
+  'Mouflon méditerranéen': 'mouflon',
+  Cailles: 'cailles',
+  Canards: 'canard',
+  Oies: 'oie',
+  'Faisans de chasse': 'faisan',
+  Perdrix: 'perdrix',
+  Pigeons: 'pigeon',
+  'Autres oiseaux': 'aut. ois.',
+  Lapins: 'lapin',
+  Lièvres: 'lièvre',
+  'Autres petits gibiers à poils': 'pt. gib.',
+};
