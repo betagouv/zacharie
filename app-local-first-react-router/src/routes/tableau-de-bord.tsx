@@ -285,7 +285,7 @@ export default function TableauDeBordIndex() {
                   </div>
                 ) : (
                   <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
-                    Pas encore de fiche clôturée
+                    Pas encore de fiche
                   </p>
                 )}
               </div>
@@ -337,7 +337,7 @@ export default function TableauDeBordIndex() {
                     </div>
                   ) : (
                     <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
-                      Pas encore de fiche clôturée
+                      Pas encore de fiche sous ma responsabilité
                     </p>
                   )}
                 </div>

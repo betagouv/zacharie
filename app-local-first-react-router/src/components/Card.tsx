@@ -81,7 +81,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
       }
     }
     if (nombreDEspecesApres3Lignes) {
-      lines.push(`+ ${nombreDEspecesApres3Lignes} éspèce${nombreDEspecesApres3Lignes > 1 ? 's' : ''}`);
+      lines.push(`+ ${nombreDEspecesApres3Lignes} espèce${nombreDEspecesApres3Lignes > 1 ? 's' : ''}`);
     } else {
       lines.push('fin de liste'); // juste pour garder la bonne hauteur de carte
     }
