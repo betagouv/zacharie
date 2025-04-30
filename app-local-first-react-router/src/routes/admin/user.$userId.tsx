@@ -135,10 +135,17 @@ export default function AdminUser() {
     tabs.pop();
   }
 
+  if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+    tabs.push({
+      tabId: 'CCGs',
+      label: `CCGs (${userEntitiesRelations.filter((rel) => rel.type === EntityTypes.CCG).length})`,
+    });
+  }
+
   if (!user.roles.includes(UserRoles.SVI)) {
     tabs.push({
       tabId: 'Peut envoyer des fiches à',
-      label: `Peut envoyer des fiches à (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
+      label: `Peut envoyer des fiches à (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH && rel.type !== EntityTypes.CCG).length})`,
     });
   }
 
@@ -382,11 +389,26 @@ export default function AdminUser() {
                   setUserResponseData={setUserResponseData}
                 />
               )}
+              {selectedTabId === 'CCGs' && (
+                <WorkingWithOrFor
+                  userResponseData={userResponseData}
+                  setUserResponseData={setUserResponseData}
+                  relation={EntityRelationType.WORKING_WITH}
+                  types={[EntityTypes.CCG]}
+                  fetcherKey="working-with"
+                />
+              )}
               {selectedTabId === 'Peut envoyer des fiches à' && (
                 <WorkingWithOrFor
                   userResponseData={userResponseData}
                   setUserResponseData={setUserResponseData}
                   relation={EntityRelationType.WORKING_WITH}
+                  types={[
+                    EntityTypes.ETG,
+                    EntityTypes.COLLECTEUR_PRO,
+                    EntityTypes.SVI,
+                    EntityTypes.PREMIER_DETENTEUR,
+                  ]}
                   fetcherKey="working-with"
                 />
               )}
@@ -408,6 +430,7 @@ interface WorkingWithOrForProps {
   fetcherKey: string;
   userResponseData: State;
   setUserResponseData: (data: State) => void;
+  types?: Array<EntityTypes>;
 }
 
 function WorkingWithOrFor({
@@ -415,6 +438,7 @@ function WorkingWithOrFor({
   fetcherKey,
   userResponseData,
   setUserResponseData,
+  types,
 }: WorkingWithOrForProps) {
   const { user, userEntitiesRelations, allEntities } = userResponseData;
 
@@ -422,18 +446,29 @@ function WorkingWithOrFor({
     const userEntityIds: Record<Entity['id'], boolean> = {};
     for (const userEntityRelation of userEntitiesRelations) {
       if (userEntityRelation.relation === relation) {
+        if (!!types?.length && !types?.includes(userEntityRelation.type)) {
+          console.log('SKIIP', userEntityRelation);
+          continue;
+        }
         userEntityIds[userEntityRelation.id] = true;
       }
     }
     const entities = [];
     for (const entity of allEntities) {
       if (userEntityIds[entity.id]) continue;
+      if (!!types?.length && !types?.includes(entity.type)) {
+        continue;
+      }
       if (relation === EntityRelationType.WORKING_WITH) {
         if (
           user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ||
           user.roles.includes(UserRoles.PREMIER_DETENTEUR)
         ) {
-          if (entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO) {
+          if (
+            entity.type === EntityTypes.ETG ||
+            entity.type === EntityTypes.COLLECTEUR_PRO ||
+            entity.type === EntityTypes.CCG
+          ) {
             entities.push(entity);
           }
         } else if (user.roles.includes(UserRoles.ETG)) {
@@ -466,12 +501,16 @@ function WorkingWithOrFor({
       }
     }
     return entities;
-  }, [allEntities, userEntitiesRelations, relation, user.roles]);
+  }, [allEntities, userEntitiesRelations, types, relation, user.roles]);
 
   return (
     <>
       {userEntitiesRelations
-        .filter((entity) => entity.relation === relation)
+        .filter((entity) => {
+          if (entity.relation !== relation) return false;
+          if (!!types?.length && !types?.includes(entity.type)) return false;
+          return true;
+        })
         .map((entity) => {
           return (
             <Notice
