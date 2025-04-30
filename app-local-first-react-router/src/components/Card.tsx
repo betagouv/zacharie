@@ -4,7 +4,6 @@ import { useFeiSteps } from '@app/utils/fei-steps';
 import dayjs from 'dayjs';
 import { Link } from 'react-router';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { useMemo, useState, useRef, useEffect } from 'react';
 

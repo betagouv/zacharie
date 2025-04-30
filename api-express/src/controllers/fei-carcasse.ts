@@ -13,20 +13,20 @@ import { carcasseForRegistrySelect, CarcasseForResponseForRegistry } from '~/typ
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { checkGenerateCertificat } from '~/utils/generate-certificats';
 
-// prisma.carcasse
-//   .findMany({
-//     where: {},
-//   })
-//   .then(async (carcasses) => {
-//     for (const carcasse of carcasses) {
-//       const status = updateCarcasseStatus(carcasse);
-//       await prisma.carcasse.update({
-//         where: { zacharie_carcasse_id: carcasse.zacharie_carcasse_id },
-//         data: { svi_carcasse_status: status },
-//       });
-//     }
-//     console.log('done');
-//   });
+prisma.carcasse
+  .findMany({
+    where: {},
+  })
+  .then(async (carcasses) => {
+    for (const carcasse of carcasses) {
+      const status = updateCarcasseStatus(carcasse);
+      await prisma.carcasse.update({
+        where: { zacharie_carcasse_id: carcasse.zacharie_carcasse_id },
+        data: { svi_carcasse_status: status },
+      });
+    }
+    console.log('done');
+  });
 
 router.post(
   '/:fei_numero/:zacharie_carcasse_id',
