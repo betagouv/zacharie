@@ -186,7 +186,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
                         line === 'À renseigner'
                           ? 'text-neutral-400'
                           : line === 'fin de liste'
-                            ? 'text-white'
+                            ? 'text-transparent'
                             : 'text-neutral-700',
                       ].join(' ')}
                       key={line + index}
