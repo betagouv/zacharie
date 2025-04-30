@@ -142,3 +142,23 @@ label.tailwindui {
 .radio-black * {
   @apply !cursor-not-allowed pointer-events-none;
 }
+
+.card-checkbox {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.card-checkbox * {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.card-checkbox label::before {
+  top: 0 !important;
+  left: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}

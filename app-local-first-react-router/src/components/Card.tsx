@@ -99,62 +99,31 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
       ].join(' ')}
     >
       {/* Print selection checkbox */}
-      {isPrintSelected && (
-        <div className="absolute left-2 top-2 z-10">
-          <Checkbox
-            classes={{ root: 'mt-0' }}
-            options={[
-              {
-                label: '',
-                nativeInputProps: {
-                  checked: isPrintSelected,
-                  onChange: () => onPrintSelect?.(fei.numero, !isPrintSelected),
-                },
+      <div className="absolute right-6 top-2 z-20 hidden lg:block">
+        <Checkbox
+          small
+          className="card-checkbox"
+          options={[
+            {
+              label: '',
+              nativeInputProps: {
+                checked: isPrintSelected,
+                onChange: () => onPrintSelect?.(fei.numero, !isPrintSelected),
               },
-            ]}
-          />
-        </div>
-      )}
-
-      {/* Custom dropdown menu */}
-      <div className="absolute right-2 top-2 z-20" ref={menuRef}>
-        <Button
-          iconId="fr-icon-more-line"
-          priority="tertiary no outline"
-          title="Menu"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setMenuOpen(!menuOpen);
-          }}
+            },
+          ]}
         />
-        {menuOpen && (
-          <div className="absolute right-0 mt-1 w-64 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                onPrintSelect?.(fei.numero, !isPrintSelected);
-                setMenuOpen(false);
-              }}
-              className="flex w-full items-center gap-2 px-4 py-2 text-left text-[var(--text-title-grey)] hover:bg-[var(--background-action-low-blue-france)]"
-            >
-              <i className="fr-icon-printer-line" aria-hidden="true" />
-              <span>
-                {isPrintSelected ? 'Désélectionner pour impression' : 'Sélectionner pour impression'}
-              </span>
-            </button>
-          </div>
-        )}
       </div>
+
       <Link
         to={`/app/tableau-de-bord/fei/${fei.numero}`}
         className={[
           'flex size-full shrink-0 flex-col gap-y-2 bg-none p-5 !no-underline hover:!bg-active-tint hover:!no-underline',
 
           carcassesRefusées.length > 0
-            ? 'border-warning-main-525 border-l-2'
+            ? 'border-l-2 border-warning-main-525'
             : simpleStatus === 'Clôturée'
-              ? 'border-success-main-625 border-l-2'
+              ? 'border-l-2 border-success-main-625'
               : '',
         ].join(' ')}
       >
@@ -235,7 +204,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
                   <div>
                     {carcassesRefusées.map((line) => {
                       return (
-                        <p className="text-warning-main-525 m-0 text-xl" key={line}>
+                        <p className="m-0 text-xl text-warning-main-525" key={line}>
                           {line}
                         </p>
                       );

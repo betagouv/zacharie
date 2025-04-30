@@ -125,10 +125,32 @@ export default function TableauDeBordIndex() {
                 onExportToXlsx(selectedFeis);
               }}
               disabled={selectedFeis.length === 0 || isExporting}
+              title={
+                selectedFeis.length === 0
+                  ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                  : ''
+              }
             >
               Télécharger un fichier Excel avec les fiches sélectionnées
             </Button>
           </div>
+          {!!selectedFeis.length && (
+            <div className="fixed bottom-0 left-0 right-0 z-50 flex w-screen items-center justify-center bg-white py-4 shadow">
+              <Button
+                onClick={() => {
+                  onExportToXlsx(selectedFeis);
+                }}
+                disabled={selectedFeis.length === 0 || isExporting}
+                title={
+                  selectedFeis.length === 0
+                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                    : ''
+                }
+              >
+                Télécharger un fichier Excel avec les fiches sélectionnées
+              </Button>
+            </div>
+          )}
           {!isOnlySvi && (
             <>
               <section className="mb-6">
