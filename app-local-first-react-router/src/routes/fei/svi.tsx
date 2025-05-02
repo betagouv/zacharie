@@ -12,7 +12,6 @@ import CarcasseSVI from './svi-carcasse';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
-import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 import FEIDonneesDeChasse from './donnees-de-chasse';
 import CollecteurCarcassePreview from './collecteur-carcasse-preview';
 
@@ -92,7 +91,6 @@ export default function FEI_SVI() {
         <summary>
           <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
             {`Carcasses à inspecter (${carcassesAAfficher.length})`}
-            {!canEdit ? <PencilStrikeThrough /> : ''}
           </h3>
         </summary>
         <div className="p-5">
