@@ -98,7 +98,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
       ].join(' ')}
     >
       {/* Print selection checkbox */}
-      <div className="absolute right-6 top-2 z-20 hidden lg:block">
+      <div className="absolute top-5 z-20 hidden w-full justify-end pr-5 lg:flex">
         <Checkbox
           small
           className="card-checkbox"

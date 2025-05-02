@@ -151,6 +151,9 @@ label.tailwindui {
   margin: 0 !important;
   padding: 0 !important;
 }
+.card-checkbox .fr-fieldset__content {
+  @apply size-4;
+}
 
 .card-checkbox label::before {
   top: 0 !important;
