@@ -196,12 +196,12 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
                 })}
               </div>
             </div>
-            {simpleStatus === 'Clôturée' && !carcassesRefusées.length && (
+            {/* {simpleStatus === 'Clôturée' && !carcassesRefusées.length && (
               <div className="flex shrink basis-1/2 flex-col gap-y-1">
                 <CheckIcon />
-                {/* <p className="m-0 text-xl text-success-main-625">0 carcasse refusée</p> */}
+                // <p className="m-0 text-xl text-success-main-625">0 carcasse refusée</p>
               </div>
-            )}
+            )} */}
             {carcassesRefusées.length > 0 && (
               <div className="flex shrink basis-1/2 flex-col gap-y-1">
                 <>
