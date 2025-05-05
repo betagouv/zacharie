@@ -13,44 +13,45 @@ interface SearchInputProps {
 export default function SearchInput({ className, id, type }: SearchInputProps) {
   const [value, setValue] = useState('');
   const [cachedValue, setCachedValue] = useState(value);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successData, setSuccessData] = useState<SearchResponse['data']>([]);
 
   const searchDebounce = useRef<ReturnType<typeof setTimeout>>();
-  const errorDebounce = useRef<ReturnType<typeof setTimeout>>();
+
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     clearTimeout(searchDebounce.current);
-    clearTimeout(errorDebounce.current);
+
     searchDebounce.current = setTimeout(() => {
-      if (value !== cachedValue) {
-        setError('');
-        setSuccessData([]);
-        setValue(cachedValue);
-        fetch(`${import.meta.env.VITE_API_URL}/search?q=${cachedValue}`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-          .then((response) => response.json())
-          .then((data: SearchResponse) => {
-            if (data.data?.length) {
-              setSuccessData(data.data);
-            }
-            if (data.error) {
-              errorDebounce.current = setTimeout(() => {
-                setError(data.error);
-                setSuccessData([]);
-              }, 3000);
-            }
-          });
-      }
+      console.log('value', value, cachedValue);
+      if (value === cachedValue) return;
+      setError('');
+      setSuccessData([]);
+      setValue(cachedValue);
+      setIsLoading(true);
+      fetch(`${import.meta.env.VITE_API_URL}/search?q=${cachedValue}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+        .then((response) => response.json())
+        .then((data: SearchResponse) => {
+          console.log('data', data);
+          setIsLoading(false);
+          if (data.data?.length) {
+            setSuccessData(data.data);
+          }
+          if (data.error) {
+            setError(data.error);
+            setSuccessData([]);
+          }
+        });
     }, 500);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cachedValue]);
+  }, [cachedValue, value]);
 
   return (
     <div className="flex w-full flex-col">
@@ -76,6 +77,19 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
           />
         </div>
       )}
+      {isLoading && (
+        <div className="flex w-full flex-row justify-start">
+          <Alert
+            onClose={() => setError('')}
+            description="La recherche s'effectue sur les fiches transmises au SVI dans les 20 derniers jours."
+            closable
+            id="search-loading"
+            severity="info"
+            title="Recherche en cours..."
+            className="w-full text-left"
+          />
+        </div>
+      )}
       {successData.map((data) => {
         return (
           <div className="flex w-full flex-row justify-start">
@@ -95,12 +109,12 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
                   )}
                   {data.fei_numero && <span className="text-base font-normal">Fiche {data.fei_numero}</span>}
                   {data.fei_svi_assigned_at && (
-                    <span className="text-base font-sm italic opacity-50 font-normal">
+                    <span className="font-sm text-base font-normal italic opacity-50">
                       Fiche transmise le {data.fei_svi_assigned_at}
                     </span>
                   )}
                   {data.fei_date_mise_a_mort && (
-                    <span className="text-base font-sm italic opacity-50 font-normal">
+                    <span className="font-sm text-base font-normal italic opacity-50">
                       Chasse du {data.fei_date_mise_a_mort}
                     </span>
                   )}
