@@ -196,6 +196,12 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
                 })}
               </div>
             </div>
+            {simpleStatus === 'Clôturée' && !carcassesRefusées.length && (
+              <div className="flex shrink basis-1/2 flex-col gap-y-1">
+                <CheckIcon />
+                {/* <p className="m-0 text-xl text-success-main-625">0 carcasse refusée</p> */}
+              </div>
+            )}
             {carcassesRefusées.length > 0 && (
               <div className="flex shrink basis-1/2 flex-col gap-y-1">
                 <>
@@ -264,6 +270,17 @@ function RefusIcon() {
       <path
         d="M8 16C3.58172 16 0 12.4182 0 8C0 3.58172 3.58172 0 8 0C12.4182 0 16 3.58172 16 8C16 12.4182 12.4182 16 8 16ZM8 6.86864L5.73726 4.60589L4.60589 5.73726L6.86864 8L4.60589 10.2627L5.73726 11.3941L8 9.13136L10.2627 11.3941L11.3941 10.2627L9.13136 8L11.3941 5.73726L10.2627 4.60589L8 6.86864Z"
         className="fill-warning-main-525"
+      />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M8 16C12.4182 16 16 12.4182 16 8C16 3.58172 12.4182 0 8 0C3.58172 0 0 3.58172 0 8C0 12.4182 3.58172 16 8 16ZM12.3657 5.96569L7.2 11.1314L3.83431 7.76568L4.96569 6.63432L7.2 8.86864L11.2343 4.83431L12.3657 5.96569Z"
+        className="fill-success-main-625"
       />
     </svg>
   );
