@@ -187,7 +187,7 @@ export default function Connexion() {
                 {connexionType === 'compte-existant' && (
                   <li className="flex w-auto justify-start">
                     <button
-                      className="!text-xs text-gray-500 py-1 text-center w-full"
+                      className="w-full py-1 text-center !text-xs text-gray-500"
                       type="submit"
                       value="true"
                       name="reset-password"
@@ -216,12 +216,12 @@ export default function Connexion() {
                 ) : (
                   <>
                     Vous n'avez pas encore de compte ? <br />
-                    {/* <Link to="/app/connexion?type=creation-de-compte">Cliquez ici pour en créer un</Link> */}
-                    <Link
+                    <Link to="/app/connexion?type=creation-de-compte">Cliquez ici pour en créer un</Link>
+                    {/* <Link
                       to={`mailto:contact@zacharie.beta.gouv.fr?subject=Je souhaite devenir utilisateur-testeur de Zacharie`}
                     >
                       Contactez-nous pour devenir utilisateur-testeur de Zacharie
-                    </Link>
+                    </Link> */}
                   </>
                 )}
               </p>

@@ -116,27 +116,22 @@ export default function MesInformations() {
   }, [examinateurDone, user.onboarded_at]);
 
   const skipCCG = useMemo(() => {
-    if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-      if (user.roles.length === 1) {
-        return true;
-      }
-    }
-    if (user.roles.includes(UserRoles.SVI)) {
+    if (!user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
       return true;
     }
     return false;
   }, [user.roles]);
   const nextTitle = skipCCG ? 'Vos notifications' : 'Vos Centres de Collectes du Gibier sauvage';
-  const nextPage = skipCCG
-    ? '/app/tableau-de-bord/mon-profil/mes-notifications'
-    : '/app/tableau-de-bord/mon-profil/mes-ccgs';
+  // const nextPage = skipCCG
+  //   ? '/app/tableau-de-bord/mon-profil/mes-notifications'
+  //   : '/app/tableau-de-bord/mon-profil/mes-ccgs';
+  const nextPage = skipCCG ? '/app/tableau-de-bord' : '/app/tableau-de-bord/mon-profil/mes-ccgs';
   const stepCount = skipCCG ? 3 : 4;
 
   const showEntrpriseVisibilityCheckbox =
     userAssociationsChasses.length > 0 ||
     user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
-    user.roles.includes(UserRoles.ETG) ||
-    user.roles.includes(UserRoles.SVI);
+    user.roles.includes(UserRoles.ETG);
 
   const canChange = user.roles.includes(UserRoles.ADMIN);
 
@@ -233,7 +228,7 @@ export default function MesInformations() {
                       defaultValue: user.addresse_ligne_2 ?? '',
                     }}
                   />
-                  <div className="flex flex-col md:flex-row w-full gap-x-4">
+                  <div className="flex w-full flex-col gap-x-4 md:flex-row">
                     <Input
                       label="Code postal"
                       hintText="Format attendu : 5 chiffres"
@@ -288,8 +283,7 @@ export default function MesInformations() {
                   </Accordion>
                 )}
               </form>
-              {(user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ||
-                user.roles.includes(UserRoles.PREMIER_DETENTEUR)) && (
+              {user.roles.includes(UserRoles.PREMIER_DETENTEUR) && (
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-associations-data"
                   setRefreshKey={setRefreshKey}
@@ -311,7 +305,7 @@ export default function MesInformations() {
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-collecteur-pro-data"
                   setRefreshKey={setRefreshKey}
-                  accordionLabel="Vous êtes/travaillez pour un Collecteur Professionnel"
+                  accordionLabel="Vous recevez des carcasses pour un Collecteur Professionnel"
                   addLabel={canChange ? 'Ajouter un Collecteur Professionnel' : 'Vos entreprises'}
                   selectLabel={canChange ? 'Sélectionnez un Collecteur Professionnel' : ''}
                   done={collecteursProDone}
@@ -324,7 +318,7 @@ export default function MesInformations() {
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-etg-data"
                   setRefreshKey={setRefreshKey}
-                  accordionLabel="Vous êtes/travaillez pour un Établissements de Traitement du Gibier sauvage (ETG)"
+                  accordionLabel="Vous recevez des carcasses pour un Établissement de Traitement du Gibier sauvage (ETG)"
                   addLabel={canChange ? 'Ajouter un ETG' : 'Vos entreprises'}
                   selectLabel={canChange ? 'Sélectionnez un ETG' : ''}
                   done={etgsDone}
@@ -337,7 +331,7 @@ export default function MesInformations() {
                 <AccordionEntreprise
                   fetcherKey="onboarding-etape-2-svi-data"
                   setRefreshKey={setRefreshKey}
-                  accordionLabel="Vous êtes/travaillez pour un Service Vétérinaire d'Inspection (SVI)"
+                  accordionLabel="Vous travaillez pour un Service Vétérinaire d'Inspection (SVI)"
                   addLabel="Ajouter un SVI"
                   selectLabel="Sélectionnez un SVI"
                   done={svisDone}
@@ -442,6 +436,8 @@ function AccordionEntreprise({
     (entity) => !userEntitiesByTypeAndId[entityType][entity.id],
   );
 
+  const [entityId, setEntityId] = useState<string | null>(null);
+
   return (
     <Accordion
       titleAs="h2"
@@ -460,7 +456,7 @@ function AccordionEntreprise({
             <Fragment key={entity.id}>
               {/* @ts-expect-error Type 'boolean' is not assignable to type 'true' */}
               <Notice
-                className="mb-4 fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice\\_\\_title]:before:hidden"
+                className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice\\\\_\\\\_title]:before:hidden"
                 style={{
                   boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
                 }}
@@ -499,21 +495,18 @@ function AccordionEntreprise({
           );
         })}
       {canChange && (
-        <form id={fetcherKey} className="flex w-full flex-row items-end gap-4" method="POST">
-          <input type="hidden" name={Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id} value={user.id} />
-          <input type="hidden" name="_action" value="create" />
-          <input type="hidden" name="route" value={`/api/action/user-entity/${user.id}`} />
-          <input
-            type="hidden"
-            name={Prisma.EntityAndUserRelationsScalarFieldEnum.relation}
-            value={EntityRelationType.WORKING_FOR}
-          />
+        <form
+          id={fetcherKey}
+          className="flex w-full flex-row items-end gap-4 [&_.fr-select-group]:mb-0"
+          method="POST"
+        >
           <Select
             label={addLabel}
             hint={selectLabel}
             disabled={!user?.roles.includes(UserRoles.ADMIN)}
             nativeSelectProps={{
               name: Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id,
+              onChange: (e) => setEntityId(e.currentTarget.value),
             }}
           >
             <option value="">{selectLabel}</option>
@@ -531,15 +524,15 @@ function AccordionEntreprise({
             nativeButtonProps={{ form: fetcherKey, disabled: !user?.roles.includes(UserRoles.ADMIN) }}
             onClick={(e) => {
               e.preventDefault();
-              console.log(
-                Object.fromEntries(new FormData(e.currentTarget.form as HTMLFormElement).entries()),
-              );
               fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
                 method: 'POST',
                 credentials: 'include',
-                body: JSON.stringify(
-                  Object.fromEntries(new FormData(e.currentTarget.form as HTMLFormElement).entries()),
-                ),
+                body: JSON.stringify({
+                  [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
+                  _action: 'create',
+                  [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]: EntityRelationType.WORKING_FOR,
+                  [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entityId,
+                }),
                 headers: {
                   Accept: 'application/json',
                   'Content-Type': 'application/json',

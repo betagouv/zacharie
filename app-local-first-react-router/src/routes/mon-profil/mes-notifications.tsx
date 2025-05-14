@@ -15,8 +15,6 @@ export default function MesNotifications() {
 
   const { subscribeToPush, canSendPush, isSubscribed, pushSubscription, pushAvailable } = usePush();
 
-  console.log({ canSendPush, isSubscribed, pushSubscription, pushAvailable });
-
   const checkBoxChecked = useMemo(() => {
     return (
       canSendPush &&
@@ -27,12 +25,7 @@ export default function MesNotifications() {
   }, [canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
 
   const skipCCG = useMemo(() => {
-    if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-      if (user.roles.length === 1) {
-        return true;
-      }
-    }
-    if (user.roles.includes(UserRoles.SVI)) {
+    if (!user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
       return true;
     }
     return false;

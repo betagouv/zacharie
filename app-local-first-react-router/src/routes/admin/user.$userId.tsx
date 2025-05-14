@@ -466,7 +466,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       type: EntityTypes.SVI,
       relation: EntityRelationType.WORKING_WITH,
     };
-  }, [allEntities, userEntitiesRelations, user.roles, relation]);
+  }, [allEntities, userEntitiesRelations, shouldHaveAssociatedSvi]);
 
   const potentialEntities = useMemo(() => {
     const userEntityIds: Record<Entity['id'], boolean> = {};
