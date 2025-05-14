@@ -45,9 +45,10 @@ export default function MesCCGs() {
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <Stepper
             currentStep={3}
-            stepCount={4}
+            // stepCount={4}
+            stepCount={3}
             title="Vos Centres de Collectes du Gibier sauvage"
-            nextTitle="Vos notifications"
+            // nextTitle="Vos notifications"
           />
           <h1 className="fr-h2 fr-mb-2w">Identifiez vos CCGs</h1>
           <CallOut className="bg-white">
@@ -83,7 +84,7 @@ export default function MesCCGs() {
               {userCCGs.map((entity) => {
                 return (
                   <Notice
-                    className="mb-4 fr-text-default--grey fr-background-contrast--grey [&_p.fr-notice__title]:before:hidden"
+                    className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice__title]:before:hidden"
                     style={{
                       boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
                     }}
@@ -135,7 +136,8 @@ export default function MesCCGs() {
                   {
                     children: 'Continuer',
                     linkProps: {
-                      to: redirect || '/app/tableau-de-bord/mon-profil/mes-notifications',
+                      // to: redirect || '/app/tableau-de-bord/mon-profil/mes-notifications',
+                      to: redirect || '/app/tableau-de-bord',
                       href: '#',
                     },
                   },
