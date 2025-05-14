@@ -20,6 +20,7 @@ import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
 import type { AdminUserDataResponse } from '@api/src/types/responses';
 import { Link, useParams } from 'react-router';
 import Chargement from '@app/components/Chargement';
+import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   fetch(`${import.meta.env.VITE_API_URL}/admin/user/${userId}`, {
@@ -442,9 +443,14 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
 }: PeutEnvoyerDesFichesAOuTraiterAuNomDeProps) {
   const { user, userEntitiesRelations, allEntities } = userResponseData;
 
+  const shouldHaveAssociatedSvi = useMemo(() => {
+    if (!user.roles.includes(UserRoles.ETG)) return false;
+    if (relation !== EntityRelationType.WORKING_WITH) return false;
+    return true;
+  }, [user.roles, relation]);
+
   const associatedSvi = useMemo(() => {
-    if (!user.roles.includes(UserRoles.ETG)) return null;
-    if (relation !== EntityRelationType.WORKING_WITH) return null;
+    if (!shouldHaveAssociatedSvi) return null;
     const etgId = userEntitiesRelations.find((entity) => {
       return entity.type === EntityTypes.ETG && entity.relation === EntityRelationType.WORKING_FOR;
     })?.id;
@@ -536,6 +542,18 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
 
   return (
     <>
+      {shouldHaveAssociatedSvi && (
+        <Highlight
+          className="m-0 mb-8"
+          classes={{
+            root: 'fr-highlight--green-emeraude',
+          }}
+        >
+          {associatedSvi
+            ? "Un utilisateur associé à un SVI ne peut pas envoyer de fiche à un autre SVI que celui auquel est rattaché l'ETG. Conernant l'envoi à d'autres types d'entités (ETG, Collecteur Pro), à l'avenir il pourra le faire."
+            : "Veuillez associer un SVI à l'ETG, il sera automatiquement ajouté à la liste des entités auxquelles l'utilisateur peut envoyer des fiches"}
+        </Highlight>
+      )}
       {[associatedSvi, ...userEntitiesRelations]
         .filter((entity) => {
           if (!entity) return false;
@@ -599,66 +617,68 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
             />
           );
         })}
-      <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
-        <Table
-          fixed
-          noCaption
-          className="[&_td]:h-px"
-          data={potentialEntities.map((entity) => [
-            <form
-              key={entity.id}
-              id={id}
-              className="flex w-full flex-col items-start gap-4"
-              method="POST"
-              onSubmit={(event) => {
-                event.preventDefault();
-                fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: JSON.stringify({
-                    _action: 'create',
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                    relation,
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                  }),
-                  headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                  },
-                })
-                  .then((res) => res.json())
-                  .then(() => {
-                    loadData(user.id).then((response) => {
-                      if (response.data) setUserResponseData(response.data!);
+      {!!potentialEntities.length && (
+        <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+          <Table
+            fixed
+            noCaption
+            className="[&_td]:h-px"
+            data={potentialEntities.map((entity) => [
+              <form
+                key={entity.id}
+                id={id}
+                className="flex w-full flex-col items-start gap-4"
+                method="POST"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      _action: 'create',
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
+                      relation,
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+                    }),
+                    headers: {
+                      Accept: 'application/json',
+                      'Content-Type': 'application/json',
+                    },
+                  })
+                    .then((res) => res.json())
+                    .then(() => {
+                      loadData(user.id).then((response) => {
+                        if (response.data) setUserResponseData(response.data!);
+                      });
                     });
-                  });
-              }}
-            >
-              <Link
-                to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                }}
+              >
+                <Link
+                  to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                  className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                >
+                  {entity.nom_d_usage}
+                  <br />
+                  {entity.siret}
+                  {entity.numero_ddecpp}
+                  <br />
+                  {entity.code_postal} {entity.ville}
+                </Link>
+                <Button type="submit" className="m-2">
+                  Ajouter
+                </Button>
+              </form>,
+              <p
+                key={user.id}
                 className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
               >
-                {entity.nom_d_usage}
-                <br />
-                {entity.siret}
-                {entity.numero_ddecpp}
-                <br />
-                {entity.code_postal} {entity.ville}
-              </Link>
-              <Button type="submit" className="m-2">
-                Ajouter
-              </Button>
-            </form>,
-            <p
-              key={user.id}
-              className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
-            >
-              {entity.type}
-            </p>,
-          ])}
-          headers={['Entité', 'Type']}
-        />
-      </div>
+                {entity.type}
+              </p>,
+            ])}
+            headers={['Entité', 'Type']}
+          />
+        </div>
+      )}
     </>
   );
 }
