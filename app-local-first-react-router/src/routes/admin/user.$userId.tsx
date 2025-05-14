@@ -143,9 +143,15 @@ export default function AdminUser() {
   }
 
   if (!user.roles.includes(UserRoles.SVI)) {
+    let numberOfWOrkingWith = userEntitiesRelations.filter(
+      (rel) => rel.relation === EntityRelationType.WORKING_WITH && rel.type !== EntityTypes.CCG,
+    ).length;
+    if (user.roles.includes(UserRoles.ETG)) {
+      numberOfWOrkingWith += 1;
+    }
     tabs.push({
       tabId: 'Peut envoyer des fiches à',
-      label: `Peut envoyer des fiches à (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH && rel.type !== EntityTypes.CCG).length})`,
+      label: `Peut envoyer des fiches à (${numberOfWOrkingWith})`,
     });
   }
 
@@ -382,34 +388,28 @@ export default function AdminUser() {
                 </form>
               )}
               {selectedTabId === 'Peut traiter des fiches au nom de' && (
-                <WorkingWithOrFor
+                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
                   relation={EntityRelationType.WORKING_FOR}
-                  fetcherKey="working-for"
+                  id={selectedTabId}
                   userResponseData={userResponseData}
                   setUserResponseData={setUserResponseData}
                 />
               )}
               {selectedTabId === 'CCGs' && (
-                <WorkingWithOrFor
+                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
+                  relation={EntityRelationType.WORKING_WITH}
+                  id={selectedTabId}
                   userResponseData={userResponseData}
                   setUserResponseData={setUserResponseData}
-                  relation={EntityRelationType.WORKING_WITH}
-                  types={[EntityTypes.CCG]}
-                  fetcherKey="working-with"
+                  forCCG
                 />
               )}
               {selectedTabId === 'Peut envoyer des fiches à' && (
-                <WorkingWithOrFor
+                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
+                  relation={EntityRelationType.WORKING_WITH}
+                  id={selectedTabId}
                   userResponseData={userResponseData}
                   setUserResponseData={setUserResponseData}
-                  relation={EntityRelationType.WORKING_WITH}
-                  types={[
-                    EntityTypes.ETG,
-                    EntityTypes.COLLECTEUR_PRO,
-                    EntityTypes.SVI,
-                    EntityTypes.PREMIER_DETENTEUR,
-                  ]}
-                  fetcherKey="working-with"
                 />
               )}
               <div className="mb-16 ml-6 mt-6">
@@ -425,38 +425,69 @@ export default function AdminUser() {
   );
 }
 
-interface WorkingWithOrForProps {
+interface PeutEnvoyerDesFichesAOuTraiterAuNomDeProps {
   relation: EntityRelationType;
-  fetcherKey: string;
+  id: string;
   userResponseData: State;
   setUserResponseData: (data: State) => void;
-  types?: Array<EntityTypes>;
+  forCCG?: boolean;
 }
 
-function WorkingWithOrFor({
+function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
   relation,
-  fetcherKey,
+  id,
   userResponseData,
   setUserResponseData,
-  types,
-}: WorkingWithOrForProps) {
+  forCCG,
+}: PeutEnvoyerDesFichesAOuTraiterAuNomDeProps) {
   const { user, userEntitiesRelations, allEntities } = userResponseData;
+
+  const associatedSvi = useMemo(() => {
+    if (!user.roles.includes(UserRoles.ETG)) return null;
+    if (relation !== EntityRelationType.WORKING_WITH) return null;
+    const etgId = userEntitiesRelations.find((entity) => {
+      return entity.type === EntityTypes.ETG && entity.relation === EntityRelationType.WORKING_FOR;
+    })?.id;
+    if (!etgId) return null;
+    const sviId = allEntities
+      .find((entity) => entity.id === etgId)
+      ?.AsEtgRelationsWithOtherEntities.find((entity) => entity.entity_type === EntityTypes.SVI)?.entity_id;
+    if (!sviId) return null;
+    const svi = allEntities.find((entity) => entity.id === sviId);
+    if (!svi) return null;
+    return {
+      ...svi,
+      type: EntityTypes.SVI,
+      relation: EntityRelationType.WORKING_WITH,
+    };
+  }, [allEntities, userEntitiesRelations, user.roles, relation]);
 
   const potentialEntities = useMemo(() => {
     const userEntityIds: Record<Entity['id'], boolean> = {};
     for (const userEntityRelation of userEntitiesRelations) {
       if (userEntityRelation.relation === relation) {
-        if (!!types?.length && !types?.includes(userEntityRelation.type)) {
-          console.log('SKIIP', userEntityRelation);
-          continue;
-        }
-        userEntityIds[userEntityRelation.id] = true;
+        userEntityIds[userEntityRelation.id] = forCCG
+          ? userEntityRelation.type === EntityTypes.CCG
+          : userEntityRelation.type !== EntityTypes.CCG;
       }
     }
     const entities = [];
     for (const entity of allEntities) {
+      if (entity.type === EntityTypes.SVI) {
+        if (relation === EntityRelationType.WORKING_WITH) {
+          // cette relation est définie dans l'ETG:
+          // si un user a un rôle ETG, alors il peut envoyer une fiche
+          // au SVI auquel est rattaché l'ETG via AsEtgRelationsWithOtherEntities
+          // donc on ne doit pas afficher cette relation dans la liste des entités potentielles
+          // en revanche elle doit être affichée dans la liste des entités, et disabled
+          continue;
+        }
+      }
       if (userEntityIds[entity.id]) continue;
-      if (!!types?.length && !types?.includes(entity.type)) {
+      if (forCCG && entity.type !== EntityTypes.CCG) {
+        continue;
+      }
+      if (!forCCG && entity.type === EntityTypes.CCG) {
         continue;
       }
       if (relation === EntityRelationType.WORKING_WITH) {
@@ -501,25 +532,30 @@ function WorkingWithOrFor({
       }
     }
     return entities;
-  }, [allEntities, userEntitiesRelations, types, relation, user.roles]);
+  }, [allEntities, userEntitiesRelations, forCCG, relation, user.roles]);
 
   return (
     <>
-      {userEntitiesRelations
+      {[associatedSvi, ...userEntitiesRelations]
         .filter((entity) => {
+          if (!entity) return false;
           if (entity.relation !== relation) return false;
-          if (!!types?.length && !types?.includes(entity.type)) return false;
+          if (forCCG && entity.type !== EntityTypes.CCG) return false;
+          if (!forCCG && entity.type === EntityTypes.CCG) return false;
           return true;
         })
         .map((entity) => {
+          if (!entity) return null;
+          const isSviLinkedToEtg = associatedSvi?.id === entity.id;
           return (
+            // @ts-expect-error Types of property 'isClosable' are incompatible. Type 'boolean' is not assignable to type 'true'
             <Notice
               key={entity.id}
               className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice\\\\_\\\\_title]:before:hidden"
               style={{
                 boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
               }}
-              isClosable
+              isClosable={!isSviLinkedToEtg}
               onClose={() => {
                 fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
                   method: 'POST',
@@ -555,6 +591,9 @@ function WorkingWithOrFor({
                   {entity.numero_ddecpp}
                   <br />
                   {entity.code_postal} {entity.ville}
+                  <br />
+                  <br />
+                  {isSviLinkedToEtg && <>(SVI lié à l'ETG, ne peut pas être supprimé)</>}
                 </Link>
               }
             />
@@ -568,7 +607,7 @@ function WorkingWithOrFor({
           data={potentialEntities.map((entity) => [
             <form
               key={entity.id}
-              id={fetcherKey}
+              id={id}
               className="flex w-full flex-col items-start gap-4"
               method="POST"
               onSubmit={(event) => {
