@@ -183,7 +183,7 @@ export default function Connexion() {
                 {connexionType === 'compte-existant' && (
                   <li className="flex w-auto justify-start">
                     <button
-                      className="!text-xs text-gray-500 py-1 text-center w-full"
+                      className="w-full py-1 text-center !text-xs text-gray-500"
                       type="submit"
                       value="true"
                       name="reset-password"

@@ -1,4 +1,3 @@
-import useUser from '@app/zustand/user';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Prisma, UserRoles, User } from '@prisma/client';
 import { useState } from 'react';
@@ -12,19 +11,52 @@ export default function RolesCheckBoxes({
   legend?: string;
   withAdmin?: boolean;
 }) {
-  const me = useUser((state) => state.user);
-
   const [checkedRoles, setCheckedRoles] = useState(user?.roles || []);
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setCheckedRoles((roles) => [...roles, e.target.value as UserRoles]);
-    } else {
+    const nextValue = e.target.value as UserRoles;
+    const currentRoles = checkedRoles;
+    if (!e.target.checked) {
       setCheckedRoles((roles) => roles.filter((role) => role !== e.target.value));
+      return;
     }
+    let nextRoles: Array<UserRoles> = [nextValue];
+    switch (nextValue) {
+      case UserRoles.EXAMINATEUR_INITIAL:
+        if (currentRoles.includes(UserRoles.PREMIER_DETENTEUR)) {
+          nextRoles.push(UserRoles.PREMIER_DETENTEUR);
+        }
+        break;
+      case UserRoles.PREMIER_DETENTEUR:
+        if (currentRoles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+          nextRoles.push(UserRoles.EXAMINATEUR_INITIAL);
+        }
+        break;
+      case UserRoles.COLLECTEUR_PRO:
+        if (currentRoles.includes(UserRoles.ETG)) {
+          nextRoles.push(UserRoles.ETG);
+        }
+        break;
+      case UserRoles.ETG:
+        if (currentRoles.includes(UserRoles.COLLECTEUR_PRO)) {
+          nextRoles.push(UserRoles.COLLECTEUR_PRO);
+        }
+        break;
+      default:
+      case UserRoles.SVI:
+        break;
+    }
+    if (currentRoles.includes(UserRoles.ADMIN)) {
+      nextRoles.push(UserRoles.ADMIN);
+    }
+    setCheckedRoles(nextRoles);
   };
 
-  const isSvi = checkedRoles.includes(UserRoles.SVI);
+  const isSvi = user?.roles.includes(UserRoles.SVI);
+  const isExamOrPremDet =
+    user?.roles.includes(UserRoles.EXAMINATEUR_INITIAL) || user?.roles.includes(UserRoles.PREMIER_DETENTEUR);
+  const isCollecteurProOrEtg =
+    user?.roles.includes(UserRoles.COLLECTEUR_PRO) || user?.roles.includes(UserRoles.ETG);
 
   const options = [
     {
@@ -35,8 +67,8 @@ export default function RolesCheckBoxes({
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.EXAMINATEUR_INITIAL,
         onChange: handleCheckboxChange,
-        disabled: !withAdmin && isSvi,
-        defaultChecked: user?.roles.includes(UserRoles.EXAMINATEUR_INITIAL),
+        disabled: withAdmin ? false : isCollecteurProOrEtg || isSvi,
+        checked: checkedRoles.includes(UserRoles.EXAMINATEUR_INITIAL),
       },
     },
     {
@@ -46,8 +78,8 @@ export default function RolesCheckBoxes({
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.PREMIER_DETENTEUR,
         onChange: handleCheckboxChange,
-        disabled: !withAdmin && isSvi,
-        defaultChecked: user?.roles.includes(UserRoles.PREMIER_DETENTEUR),
+        disabled: withAdmin ? false : isCollecteurProOrEtg || isSvi,
+        checked: checkedRoles.includes(UserRoles.PREMIER_DETENTEUR),
       },
     },
     {
@@ -58,8 +90,8 @@ export default function RolesCheckBoxes({
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.COLLECTEUR_PRO,
         onChange: handleCheckboxChange,
-        disabled: !withAdmin && isSvi,
-        defaultChecked: user?.roles.includes(UserRoles.COLLECTEUR_PRO),
+        disabled: withAdmin ? false : isExamOrPremDet || isSvi,
+        checked: checkedRoles.includes(UserRoles.COLLECTEUR_PRO),
       },
     },
     {
@@ -69,8 +101,8 @@ export default function RolesCheckBoxes({
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.ETG,
         onChange: handleCheckboxChange,
-        disabled: !withAdmin && isSvi,
-        defaultChecked: user?.roles.includes(UserRoles.ETG),
+        disabled: withAdmin ? false : isExamOrPremDet || isSvi,
+        checked: checkedRoles.includes(UserRoles.ETG),
       },
     },
     {
@@ -80,8 +112,8 @@ export default function RolesCheckBoxes({
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.SVI,
         onChange: handleCheckboxChange,
-        disabled: !withAdmin && !!checkedRoles.length && checkedRoles[0] !== UserRoles.SVI,
-        defaultChecked: user?.roles.includes(UserRoles.SVI),
+        disabled: withAdmin ? false : isCollecteurProOrEtg || isExamOrPremDet || isSvi,
+        checked: checkedRoles.includes(UserRoles.SVI),
       },
     },
     {
@@ -92,7 +124,7 @@ export default function RolesCheckBoxes({
         value: UserRoles.ADMIN,
         disabled: user?.roles.includes(UserRoles.ADMIN),
         onChange: handleCheckboxChange,
-        defaultChecked: user?.roles.includes(UserRoles.ADMIN),
+        checked: checkedRoles.includes(UserRoles.ADMIN),
       },
     },
   ];
@@ -101,23 +133,13 @@ export default function RolesCheckBoxes({
     options.pop();
   }
 
-  const canChange = me?.roles.includes(UserRoles.ADMIN);
+  // const canChange = me?.roles.includes(UserRoles.ADMIN);
+  const canChange = true;
 
   return (
     <>
       <Checkbox
-        hintText={
-          canChange ? (
-            ''
-          ) : (
-            <>
-              Seul un administrateur de Zacharie peut modifier vos rôles pour le moment.{' '}
-              <a href="mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de mes rôles sur Zacharie">
-                Cliquez ici pour nous contacter si besoin
-              </a>
-            </>
-          )
-        }
+        hintText="Vous pouvez cumuler Examinateur Initial et Premier Détenteur, ou bien Collecteur Professionnel et ETG, mais ce sont les seuls rôles que vous pouvez cumuler."
         legend={canChange ? legend : 'Voici vos rôles sur Zacharie'}
         disabled={!canChange}
         options={options}

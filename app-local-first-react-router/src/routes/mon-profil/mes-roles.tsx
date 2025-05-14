@@ -1,5 +1,4 @@
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
-import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import RolesCheckBoxes from '@app/components/RolesCheckboxes';
 import { Prisma, type User, UserRoles } from '@prisma/client';
@@ -48,12 +47,6 @@ export default function MesRoles() {
               title="Vos rôles"
             />
             <h1 className="fr-h2 fr-mb-2w">Renseignez vos rôles</h1>
-            <CallOut title="☝️ Un seul compte pour toutes vos casquettes" className="bg-white">
-              Les acteurs de la chasse sont nombreux : examinateur, centre de collecte, etc. et parfois vous
-              combinez plusieurs rôles. Zacharie vous permet de jongler entre tous très facilement.
-              <br />
-              Quels sont vos rôles ?
-            </CallOut>
             <div className="mb-6 bg-white md:shadow">
               <div className="p-4 pb-32 md:p-8 md:pb-0">
                 {user.roles.includes(UserRoles.ADMIN) && (
