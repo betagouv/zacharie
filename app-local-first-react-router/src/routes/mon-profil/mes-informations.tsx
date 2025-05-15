@@ -9,7 +9,7 @@ import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
-import { EntityTypes, EntityRelationType, UserRoles, Prisma, User } from '@prisma/client';
+import { EntityTypes, EntityRelationType, UserRoles, Prisma, User, Entity } from '@prisma/client';
 import InputVille from '@app/components/InputVille';
 import InputNotEditable from '@app/components/InputNotEditable';
 import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
@@ -106,6 +106,30 @@ export default function MesInformations() {
     [user.id],
   );
 
+  const [assoExpanded, setAssoExpanded] = useState(false);
+  const [assoPostalCode, setAssoPostalCode] = useState('');
+  const handleEntitySubmit = useCallback(async (event: React.FocusEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const body: Partial<Entity> = Object.fromEntries(formData.entries());
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/entite/association-de-chasse`, {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify(body),
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => data as UserConnexionResponse);
+    if (response.ok) {
+      setRefreshKey((prev) => prev + 1);
+      setAssoPostalCode('');
+      setAssoExpanded(false);
+    }
+  }, []);
+
   const [identityExpanded, setIdentityExpanded] = useState(!identityDone || !user.onboarded_at);
   useEffect(() => {
     setIdentityExpanded(!identityDone || !user.onboarded_at);
@@ -133,7 +157,7 @@ export default function MesInformations() {
     user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
     user.roles.includes(UserRoles.ETG);
 
-  const canChange = user.roles.includes(UserRoles.ADMIN);
+  const canChange = true;
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -298,7 +322,116 @@ export default function MesInformations() {
                   entityType={EntityTypes.PREMIER_DETENTEUR}
                   allEntitiesByTypeAndId={allEntitiesByTypeAndId}
                   userEntitiesByTypeAndId={userEntitiesByTypeAndId}
-                />
+                >
+                  <div className="mt-8">
+                    {!assoExpanded ? (
+                      <>
+                        Votre association n'est pas encore enregistrée dans Zacharie ?<br />
+                        <Button
+                          priority="secondary"
+                          className="mt-4"
+                          nativeButtonProps={{
+                            onClick: () => setAssoExpanded(true),
+                          }}
+                        >
+                          Enregistrer mon association
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="rounded-lg border border-gray-300 px-8 py-6">
+                        <p className="mb-8 font-semibold">Enregistrer une nouvelle association de chasse</p>
+                        <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
+                          <Input
+                            label="Nom d'usage"
+                            nativeInputProps={{
+                              id: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                              name: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                              autoComplete: 'off',
+                              required: true,
+                              defaultValue: '',
+                            }}
+                          />
+                          <Input
+                            label="Raison Sociale"
+                            nativeInputProps={{
+                              id: Prisma.EntityScalarFieldEnum.raison_sociale,
+                              name: Prisma.EntityScalarFieldEnum.raison_sociale,
+                              autoComplete: 'off',
+                              required: true,
+                              defaultValue: '',
+                            }}
+                          />
+                          <Input
+                            label="SIRET"
+                            nativeInputProps={{
+                              id: Prisma.EntityScalarFieldEnum.siret,
+                              name: Prisma.EntityScalarFieldEnum.siret,
+                              autoComplete: 'off',
+                              defaultValue: '',
+                            }}
+                          />
+                          <Input
+                            label="Adresse"
+                            hintText="Indication : numéro et voie"
+                            nativeInputProps={{
+                              id: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                              name: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                              autoComplete: 'off',
+                              required: true,
+                              defaultValue: '',
+                            }}
+                          />
+                          <Input
+                            label="Complément d'adresse (optionnel)"
+                            hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                            nativeInputProps={{
+                              id: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                              name: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                              autoComplete: 'off',
+                              defaultValue: '',
+                            }}
+                          />
+
+                          <div className="flex w-full flex-col gap-x-4 md:flex-row">
+                            <Input
+                              label="Code postal"
+                              hintText="Format attendu : 5 chiffres"
+                              className="shrink-0 md:basis-1/5"
+                              nativeInputProps={{
+                                id: Prisma.EntityScalarFieldEnum.code_postal,
+                                name: Prisma.EntityScalarFieldEnum.code_postal,
+                                autoComplete: 'off',
+                                required: true,
+                                value: assoPostalCode,
+                                onChange: (e) => {
+                                  setAssoPostalCode(e.currentTarget.value);
+                                },
+                              }}
+                            />
+                            <div className="basis-4/5">
+                              <InputVille
+                                postCode={assoPostalCode}
+                                trimPostCode
+                                label="Ville ou commune"
+                                hintText="Exemple : Montpellier"
+                                nativeInputProps={{
+                                  id: Prisma.EntityScalarFieldEnum.ville,
+                                  name: Prisma.EntityScalarFieldEnum.ville,
+                                  autoComplete: 'off',
+                                  required: true,
+                                  defaultValue: '',
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                            Enregistrer
+                          </Button>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                </AccordionEntreprise>
               )}
 
               {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
@@ -414,6 +547,7 @@ interface AccordionEntrepriseProps {
   description?: React.ReactNode;
   allEntitiesByTypeAndId: EntitiesByTypeAndId;
   userEntitiesByTypeAndId: EntitiesByTypeAndId;
+  children?: React.ReactNode;
 }
 
 function AccordionEntreprise({
@@ -427,10 +561,10 @@ function AccordionEntreprise({
   description,
   allEntitiesByTypeAndId,
   userEntitiesByTypeAndId,
+  children,
 }: AccordionEntrepriseProps) {
   const user = useUser((state) => state.user)!;
-  const canChange = user.roles.includes(UserRoles.ADMIN);
-  // const userEntityFetcher = useFetcher({ key: fetcherKey });
+  const canChange = true;
   const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
   const remainingEntities = Object.values(allEntitiesByTypeAndId[entityType]).filter(
     (entity) => !userEntitiesByTypeAndId[entityType][entity.id],
@@ -502,8 +636,7 @@ function AccordionEntreprise({
         >
           <Select
             label={addLabel}
-            hint={selectLabel}
-            disabled={!user?.roles.includes(UserRoles.ADMIN)}
+            // hint={selectLabel}
             nativeSelectProps={{
               name: Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id,
               onChange: (e) => setEntityId(e.currentTarget.value),
@@ -521,7 +654,7 @@ function AccordionEntreprise({
           </Select>
           <Button
             type="submit"
-            nativeButtonProps={{ form: fetcherKey, disabled: !user?.roles.includes(UserRoles.ADMIN) }}
+            nativeButtonProps={{ form: fetcherKey }}
             onClick={(e) => {
               e.preventDefault();
               fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
@@ -551,6 +684,7 @@ function AccordionEntreprise({
           </Button>
         </form>
       )}
+      {children}
     </Accordion>
   );
 }

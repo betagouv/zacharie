@@ -1,5 +1,5 @@
 import { Footer } from '@codegouvfr/react-dsfr/Footer';
-import { Header } from '@codegouvfr/react-dsfr/Header';
+import { Header, type HeaderProps } from '@codegouvfr/react-dsfr/Header';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import { UserRoles } from '@prisma/client';
 import { clearCache } from '@app/services/indexed-db';
@@ -33,6 +33,34 @@ export default function RootDisplay({
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   const RenderedSearchInput = useRef(user?.roles.includes(UserRoles.SVI) ? SearchInput : undefined).current;
   // console.log("root display user " + id, user);
+  const quickAccessItems: Array<HeaderProps.QuickAccessItem> = [
+    {
+      linkProps: {
+        to: user?.email ? '/app/tableau-de-bord' : '/app/connexion?type=compte-existant',
+        href: '#',
+      },
+      iconId: 'ri-account-box-line',
+      text: user?.email ?? 'Se connecter',
+    },
+  ];
+  if (!user) {
+    quickAccessItems.push({
+      linkProps: {
+        to: '/app/connexion?type=creation-de-compte',
+        href: '#',
+      },
+      iconId: 'fr-icon-add-circle-line',
+      text: 'Créer un compte',
+    });
+  }
+  quickAccessItems.push({
+    iconId: 'fr-icon-mail-fill',
+    linkProps: {
+      href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de Zacharie`,
+    },
+    text: 'Contact',
+  });
+
   return (
     <>
       <Header
@@ -56,31 +84,7 @@ export default function RootDisplay({
         navigation={navigation}
         allowEmptySearch={false}
         renderSearchInput={RenderedSearchInput}
-        quickAccessItems={[
-          {
-            linkProps: {
-              to: user?.email ? '/app/tableau-de-bord' : '/app/connexion?type=compte-existant',
-              href: '#',
-            },
-            iconId: 'ri-account-box-line',
-            text: user?.email ?? 'Se connecter',
-          },
-          // {
-          //   linkProps: {
-          //     to: "/app/connexion?type=creation-de-compte",
-          //     href: '#',
-          //   },
-          //   iconId: 'fr-icon-add-circle-line',
-          //   text: 'Créer un compte',
-          // },
-          {
-            iconId: 'fr-icon-mail-fill',
-            linkProps: {
-              href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de Zacharie`,
-            },
-            text: 'Contact',
-          },
-        ]}
+        quickAccessItems={quickAccessItems}
         operatorLogo={{
           alt: 'Logo de Zacharie - un bois de cerf bland sur fond bleu avec liseré rouge',
           imgUrl: '/logo_zacharie_solo_small.svg',

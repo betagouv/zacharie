@@ -59,14 +59,14 @@ export default function useNavigationMenu() {
       },
     });
   }
-  profileMenu.push({
-    text: 'Mes notifications',
-    isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-notifications',
-    linkProps: {
-      href: '#',
-      to: '/app/tableau-de-bord/mon-profil/mes-notifications',
-    },
-  });
+  // profileMenu.push({
+  //   text: 'Mes notifications',
+  //   isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-notifications',
+  //   linkProps: {
+  //     href: '#',
+  //     to: '/app/tableau-de-bord/mon-profil/mes-notifications',
+  //   },
+  // });
   profileMenu.push({
     text: `Déconnecter ${user?.email}`,
     linkProps: {

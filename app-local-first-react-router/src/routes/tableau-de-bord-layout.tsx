@@ -35,7 +35,7 @@ export default function TableauDeBordLayout() {
                 <p className="fr-text--sm fr-mb-5w">
                   Nos équipes vérifient les informations que vous avez renseignées.
                   <br />
-                  Revenez un peu plus tard pour accéder à votre tableau de bord.
+                  Revenez un peu plus tard !
                   <br />
                   Sinon contactez-nous pour que l’on puisse vous rediriger vers la bonne information.
                 </p>

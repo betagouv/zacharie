@@ -124,4 +124,41 @@ router.get(
   }),
 );
 
+router.post(
+  '/association-de-chasse',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user!;
+
+    const body = req.body;
+
+    const data: Prisma.EntityUncheckedCreateInput = {
+      raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
+      nom_d_usage: body[Prisma.EntityScalarFieldEnum.nom_d_usage],
+      type: EntityTypes.PREMIER_DETENTEUR,
+      address_ligne_1: body[Prisma.EntityScalarFieldEnum.address_ligne_1],
+      address_ligne_2: body[Prisma.EntityScalarFieldEnum.address_ligne_2],
+      code_postal: body[Prisma.EntityScalarFieldEnum.code_postal],
+      prefecture_svi: body[Prisma.EntityScalarFieldEnum.prefecture_svi],
+      nom_prenom_responsable: body[Prisma.EntityScalarFieldEnum.nom_prenom_responsable],
+      ville: body[Prisma.EntityScalarFieldEnum.ville],
+      siret: body[Prisma.EntityScalarFieldEnum.siret] || null,
+    };
+
+    const createdEntity = await prisma.entity.create({
+      data,
+    });
+
+    const createdEntityRelation = await prisma.entityAndUserRelations.create({
+      data: {
+        owner_id: user.id,
+        relation: EntityRelationType.WORKING_FOR,
+        entity_id: createdEntity.id,
+      },
+    });
+
+    res.status(200).send({ ok: true, error: '', data: { createdEntity, createdEntityRelation } });
+  }),
+);
+
 export default router;
