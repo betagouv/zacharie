@@ -61,12 +61,13 @@ export default function MesCCGs() {
             </strong>
             <br /> Si ce n'est pas encore fait, la démarche est simple et rapide,{' '}
             <a
-              href="https://entreprendre.service-public.fr/vosdroits/R44572"
-              className="fr-link fr-link--icon-right"
+              // href="https://entreprendre.service-public.fr/vosdroits/R44572"
+              href="https://mesdemarches.agriculture.gouv.fr/demarches/association-ou-organisation-de/assurer-une-activite-de-76/article/declarer-la-manipulation-de"
+              className="fr-link fr-link--icon-right text-lg"
             >
-              disponible ici sur
-              https://mesdemarches.agriculture.gouv.fr/demarches/association-ou-organisation-de/assurer-une-activite-de-76/article/declarer-la-manipulation-de.
+              disponible ici
             </a>
+            .
             <br />
             Contactez-nous ensuite pour que nous l'enregistrions dans Zacharie.
           </CallOut>
