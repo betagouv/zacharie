@@ -18,48 +18,7 @@ export default function TableauDeBordLayout() {
     return <Chargement />;
   }
   if (!user?.activated && !location.pathname.includes('mon-profil') && !location.pathname.includes('admin')) {
-    return (
-      <RootDisplay hideMinistereName navigation={navigation} id="tableau-de-bord-layout-not-activated">
-        <main role="main" id="content">
-          <title>
-            Compte en cours d'activation | Zacharie | Ministère de l'Agriculture et de la Souveraineté
-            Alimentaire
-          </title>
-          <div className="fr-container">
-            <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center">
-              <div className="fr-py-0 fr-col-12 fr-col-md-6">
-                <h1 className="fr-h1">Compte en cours d'activation</h1>
-                <p className="fr-text--lead fr-mb-3w">
-                  Veuillez patienter, votre compte est en cours d'activation.
-                </p>
-                <p className="fr-text--sm fr-mb-5w">
-                  Nos équipes vérifient les informations que vous avez renseignées.
-                  <br />
-                  Revenez un peu plus tard !
-                  <br />
-                  Sinon contactez-nous pour que l’on puisse vous rediriger vers la bonne information.
-                </p>
-                <ul className="fr-btns-group fr-btns-group--inline-md">
-                  <li>
-                    <a className="fr-btn" href="/">
-                      Page d'accueil
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      className="fr-btn fr-btn--secondary"
-                      href={`mailto:contact@zacharie.beta.gouv.fr?subject=Erreur 404&body=Bonjour, je rencontre une erreur 404 sur la page suivante : ${location.pathname}`}
-                    >
-                      Contactez-nous
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </main>
-      </RootDisplay>
-    );
+    return <DeactivatedAccount />;
   }
 
   return (
@@ -70,6 +29,55 @@ export default function TableauDeBordLayout() {
         className="fr-background-alt--blue-france relative min-h-full overflow-auto"
       >
         <Outlet />
+      </main>
+    </RootDisplay>
+  );
+}
+
+function DeactivatedAccount() {
+  const navigation = useNavigationMenu();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  return (
+    <RootDisplay hideMinistereName navigation={navigation} id="tableau-de-bord-layout-not-activated">
+      <main role="main" id="content">
+        <title>
+          Compte en attente d'activation | Zacharie | Ministère de l'Agriculture et de la Souveraineté
+          Alimentaire
+        </title>
+        <div className="fr-container">
+          <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center">
+            <div className="fr-py-0 fr-col-12 fr-col-md-6">
+              <h1 className="fr-h1">Compte en attente d'activation</h1>
+              <p className="fr-text--lead fr-mb-3w">Votre compte est en attente d'activation.</p>
+              <p className="fr-text--sm fr-mb-5w">
+                Nos équipes vérifient les informations que vous avez renseignées.
+                <br />
+                Revenez un peu plus tard !
+                <br />
+                Sinon contactez-nous pour que l’on puisse vous rediriger vers la bonne information.
+              </p>
+              <ul className="fr-btns-group fr-btns-group--inline-md">
+                <li>
+                  <a className="fr-btn" href="/">
+                    Page d'accueil
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className="fr-btn fr-btn--secondary"
+                    href={`mailto:contact@zacharie.beta.gouv.fr?subject=Erreur 404&body=Bonjour, je rencontre une erreur 404 sur la page suivante : ${location.pathname}`}
+                  >
+                    Contactez-nous
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </main>
     </RootDisplay>
   );
