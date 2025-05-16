@@ -54,6 +54,7 @@ model User {
   web_push_tokens                String[]
   prefilled                      Boolean                  @default(false)
   activated                      Boolean                  @default(false)
+  activated_at                   DateTime?
   is_synced                      Boolean                  @default(true) // just for typing purppose with zustand frontend
   Password                       Password?
   UserRelationsAsOwner           UserRelations[]          @relation("UserOwnerOfUserRelation")

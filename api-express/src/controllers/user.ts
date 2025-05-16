@@ -569,6 +569,9 @@ router.post(
 
     if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
       nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
+      if (nextUser.activated) {
+        nextUser.activated_at = new Date();
+      }
     }
     if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox)) {
       nextUser.user_entities_vivible_checkbox =
