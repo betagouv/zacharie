@@ -117,7 +117,7 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
       <Link
         to={`/app/tableau-de-bord/fei/${fei.numero}`}
         className={[
-          'flex size-full shrink-0 flex-col gap-y-2 bg-none p-5 !no-underline hover:!bg-active-tint hover:!no-underline',
+          'flex size-full shrink-0 flex-col gap-y-2.5 bg-none p-5 !no-underline hover:!bg-active-tint hover:!no-underline',
 
           carcassesRefusées.length > 0
             ? 'border-l-2 border-warning-main-525'
