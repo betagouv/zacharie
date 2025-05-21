@@ -5,7 +5,6 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
-import { Select } from '@codegouvfr/react-dsfr/Select';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { EntityTypes, EntityRelationType, UserRoles, Prisma, User, Entity } from '@prisma/client';
@@ -15,6 +14,7 @@ import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src
 import type { EntitiesByTypeAndId } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
 import { useNavigate } from 'react-router';
+import SelectCustom from '@app/components/SelectCustom';
 
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.PREMIER_DETENTEUR]: {},
@@ -291,13 +291,8 @@ export default function MesInformations() {
               formId="onboarding-etape-2-associations-data"
               setRefreshKey={setRefreshKey}
               sectionLabel="Vos associations / sociétés / domaines de chasse / repas associatifs"
-              // addLabel={
-              //   canChange
-              //     ? 'Ajouter une association / société / domaine'
-              //     : 'Vos associations / sociétés / domaines'
-              // }
               addLabel=""
-              selectLabel={canChange ? 'Cliquez ici pour sélectionner une entité existante' : ''}
+              selectLabel={canChange ? 'Cherchez ici une entité existante' : ''}
               done
               entityType={EntityTypes.PREMIER_DETENTEUR}
               allEntitiesByTypeAndId={allEntitiesByTypeAndId}
@@ -540,7 +535,6 @@ function ListAndSelectEntities({
   setRefreshKey,
   done,
   entityType,
-  addLabel,
   selectLabel,
   sectionLabel,
   formId,
@@ -614,27 +608,35 @@ function ListAndSelectEntities({
         {canChange && (
           <form
             id={formId}
-            className="flex w-full flex-row items-end gap-4 [&_.fr-select-group]:mb-0"
+            className="flex w-full flex-col gap-4 md:flex-row [&_.fr-select-group]:mb-0"
             method="POST"
           >
-            <Select
-              label={addLabel}
-              // hint={selectLabel}
-              nativeSelectProps={{
-                name: Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id,
-                onChange: (e) => setEntityId(e.currentTarget.value),
-              }}
-            >
-              <option value="">{selectLabel}</option>
-              <hr />
-              {remainingEntities.map((entity) => {
-                return (
-                  <option key={entity.id} value={entity.id}>
-                    {entity.nom_d_usage} - {entity.code_postal} {entity.ville}
-                  </option>
-                );
-              })}
-            </Select>
+            <SelectCustom
+              options={remainingEntities.map((entity) => ({
+                label: `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
+                value: entity.id,
+              }))}
+              placeholder={selectLabel}
+              value={
+                entityId
+                  ? {
+                      label: remainingEntities
+                        .filter((entity) => entity.id === entityId)
+                        .map(
+                          (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
+                        )?.[0],
+                      value: entityId,
+                    }
+                  : null
+              }
+              getOptionLabel={(f) => f.label!}
+              getOptionValue={(f) => f.value}
+              onChange={(f) => (f ? setEntityId(f.value) : setEntityId(null))}
+              isClearable={!!entityId}
+              inputId={`select-${formId}`}
+              classNamePrefix={`select-${formId}`}
+              className="basis-2/3"
+            />
             <Button
               type="submit"
               nativeButtonProps={{ form: formId }}
@@ -658,6 +660,7 @@ function ListAndSelectEntities({
                   .then((res) => {
                     if (res.ok) {
                       setRefreshKey((k) => k + 1);
+                      setEntityId(null);
                     }
                   });
               }}
