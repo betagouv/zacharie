@@ -14,7 +14,6 @@ export default function TableauDeBordLayout() {
     refreshUser('TableauDeBordLayout');
   }, []);
 
-  return <DeactivatedAccount />;
   if (!user) {
     return <Chargement />;
   }
