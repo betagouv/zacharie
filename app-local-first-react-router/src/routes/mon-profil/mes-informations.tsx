@@ -314,7 +314,7 @@ export default function MesInformations() {
                         onClick: () => setAssoExpanded(true),
                       }}
                     >
-                      Enregistrer mon association
+                      Enregistrer mon entité
                     </Button>
                   </>
                 ) : (
