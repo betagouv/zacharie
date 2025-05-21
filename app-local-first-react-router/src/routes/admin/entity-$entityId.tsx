@@ -242,7 +242,7 @@ export default function AdminEntity() {
                   <div className="flex w-full flex-col gap-x-4 md:flex-row">
                     <Input
                       label="Code postal"
-                      hintText="Format attendu : 5 chiffres"
+                      hintText="5 chiffres"
                       className="shrink-0 md:basis-1/5"
                       nativeInputProps={{
                         id: Prisma.EntityScalarFieldEnum.code_postal,
