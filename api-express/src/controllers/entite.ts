@@ -64,7 +64,7 @@ router.get(
         type: { not: EntityTypes.CCG },
       },
       orderBy: {
-        updated_at: 'desc',
+        nom_d_usage: 'asc',
       },
     });
     const userEntitiesRelationsWorkingFor = await prisma.entityAndUserRelations.findMany({
@@ -73,7 +73,9 @@ router.get(
         relation: EntityRelationType.WORKING_FOR,
       },
       orderBy: {
-        updated_at: 'desc',
+        EntityRelatedWithUser: {
+          nom_d_usage: 'asc',
+        },
       },
     });
 
