@@ -1,4 +1,12 @@
+import { useEffect } from 'react';
+
 export default function ModalitesDutilisation() {
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'instant',
+    });
+  }, []);
   return (
     <article className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -6,19 +14,19 @@ export default function ModalitesDutilisation() {
           <title>
             Modalités d’utilisation | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
           </title>
-          <h1 className="text-2xl font-bold mb-3 mt-0">Modalités d’utilisation de « Zacharie »</h1>
-          <p>
-            <h2 className="text-xl font-semibold mb-2 mt-6">Article 1 - Champ d’application </h2>
-          </p>
+          <h1 className="mb-3 mt-0 text-2xl font-bold">Modalités d’utilisation de « Zacharie »</h1>
+
+          <h2 className="mb-2 mt-6 text-xl font-semibold">Article 1 - Champ d’application </h2>
+
           <p>
             Les présentes modalités d’utilisation sont mises en œuvre conformément à l’article L. 112-9 du
             code des relations entre le public et l’administration (CRPA). Elles s’imposent de plein droit au
             public et précisent les conditions d’accès et d’utilisation des Services de la Plateforme par
             l’Utilisateur.
           </p>
-          <p>
-            <h2 className="text-xl font-semibold mb-2 mt-6">Article 2 - Présentation de la Plateforme</h2>
-          </p>
+
+          <h2 className="mb-2 mt-6 text-xl font-semibold">Article 2 - Présentation de la Plateforme</h2>
+
           <p>
             Zacharie (ci-après la “Plateforme”) est un service numérique mis en œuvre par la Direction
             générale de l’Alimentation (DGAL) du ministère de l’Agriculture, de la Souveraineté alimentaire et
@@ -30,9 +38,9 @@ export default function ModalitesDutilisation() {
             initial du gibier sauvage.
           </p>
           <p></p>
-          <p>
-            <h2 className="text-xl font-semibold mb-2 mt-6">Article 3 - Définitions</h2>
-          </p>
+
+          <h2 className="mb-2 mt-6 text-xl font-semibold">Article 3 - Définitions</h2>
+
           <p>
             “Éditeur” désigne la personne morale qui met à la disposition du public la Plateforme, à savoir la
             DGAL
@@ -46,9 +54,9 @@ export default function ModalitesDutilisation() {
             viandes de gibier sauvage, qui s’inscrit sur la Plateforme et sélectionne un rôle
           </p>
           <p></p>
-          <p>
-            <h2 className="text-xl font-semibold mb-2 mt-6">Article 4 - Fonctionnalités</h2>
-          </p>
+
+          <h2 className="mb-2 mt-6 text-xl font-semibold">Article 4 - Fonctionnalités</h2>
+
           <p>
             Toute personne qui navigue en tant que visiteur sur la Plateforme peut s’inscrire en tant que beta
             testeur pour être contacté par l’équipe du service numérique, pour tester le service lorsqu’il est
@@ -71,7 +79,7 @@ export default function ModalitesDutilisation() {
             Vétérinaire d’Inspection”.
           </p>
           <p>
-            <h3 className="text-lg font-bold mb-3 mt-3">4.1 Examinateur initial</h3>
+            <h3 className="mb-3 mt-3 text-lg font-bold">4.1 Examinateur initial</h3>
           </p>
           <p>
             L’Examinateur initial possède et communique un numéro de formateur référent ou de personne formée
@@ -96,7 +104,7 @@ export default function ModalitesDutilisation() {
             Ces modifications sont envisageables uniquement avant l’intervention d’un autre Utilisateur.
           </p>
           <p>
-            <h3 className="text-lg font-bold mb-3 mt-3">4.2 Premier détenteur </h3>
+            <h3 className="mb-3 mt-3 text-lg font-bold">4.2 Premier détenteur </h3>
           </p>
           <p>
             Le Premier détenteur est le propriétaire légal des carcasses en poils/plumes de gibier sauvage
@@ -117,7 +125,7 @@ export default function ModalitesDutilisation() {
             mise sur le marché des carcasses en poils/plumes.
           </p>
           <p>
-            <h3 className="text-lg font-bold mb-3 mt-3">4.3 Destinataire collecteur professionnel</h3>
+            <h3 className="mb-3 mt-3 text-lg font-bold">4.3 Destinataire collecteur professionnel</h3>
           </p>
           <p>
             Le Destinataire collecteur professionnel possède et communique un numéro de SIRET affilié à
@@ -141,7 +149,7 @@ export default function ModalitesDutilisation() {
             Destinataire Collecteur Professionnel ».
           </p>
           <p>
-            <h3 className="text-lg font-bold mb-3 mt-3">
+            <h3 className="mb-3 mt-3 text-lg font-bold">
               4.4 Destinataire établissement de traitement du gibier sauvage
             </h3>
           </p>
@@ -177,7 +185,7 @@ export default function ModalitesDutilisation() {
             Vétérinaire d’Inspection ».
           </p>
           <p>
-            <h3 className="text-lg font-bold mb-3 mt-3">4.5 Service vétérinaire d’inspection </h3>
+            <h3 className="mb-3 mt-3 text-lg font-bold">4.5 Service vétérinaire d’inspection </h3>
           </p>
           <p>
             Le Service vétérinaire d’inspection est un rôle réservé aux agents du MASAF, affiliés à une
@@ -202,7 +210,7 @@ export default function ModalitesDutilisation() {
             classée comme close 10 jours après la confirmation de prise en charge de la fiche.
           </p>
           <p>
-            <h3 className="text-lg font-bold mb-3 mt-3">4.6 Fonctionnalités liées aux fiches</h3>
+            <h3 className="mb-3 mt-3 text-lg font-bold">4.6 Fonctionnalités liées aux fiches</h3>
           </p>
           <p>
             Pour que les fiches suivent les carcasses qu’elles concernent, chaque Utilisateur doit attribuer
@@ -230,11 +238,11 @@ export default function ModalitesDutilisation() {
             Chaque Utilisateur peut consulter les fiches le concernant (création ou prise en charge) et leur
             statut, elles sont consultables à tout moment dans l’onglet “Mes Fiches”.
           </p>
+
+          <h2 className="mb-2 mt-6 text-xl font-semibold">Article 5 - Responsabilités </h2>
+
           <p>
-            <h2 className="text-xl font-semibold mb-2 mt-6">Article 5 - Responsabilités </h2>
-          </p>
-          <p>
-            <h3 className="text-lg font-bold mb-3 mt-3">5.1 L’Éditeur de la Plateforme </h3>
+            <h3 className="mb-3 mt-3 text-lg font-bold">5.1 L’Éditeur de la Plateforme </h3>
           </p>
           <p>
             Les sources des informations diffusées sur la Plateforme sont réputées fiables mais elle ne
@@ -255,7 +263,7 @@ export default function ModalitesDutilisation() {
             supprimer le compte de l’Utilisateur responsable.
           </p>
           <p>
-            <h3 className="text-lg font-bold mb-3 mt-3">5.2 L’Utilisateur de la Plateforme</h3>
+            <h3 className="mb-3 mt-3 text-lg font-bold">5.2 L’Utilisateur de la Plateforme</h3>
           </p>
           <p>
             L’Utilisateur s’assure de garder son mot de passe secret. Toute divulgation du mot de passe,
@@ -291,11 +299,9 @@ export default function ModalitesDutilisation() {
             obligation de moyens et doit consacrer le temps nécessaire pour compléter la fiche
             d’accompagnement du gibier sauvage avec soin, responsabilité et sincérité.
           </p>
-          <p>
-            <h2 className="text-xl font-semibold mb-2 mt-6">
-              Article 6 - Mise à jour des modalités d’utilisation
-            </h2>
-          </p>
+          <h2 className="mb-2 mt-6 text-xl font-semibold">
+            Article 6 - Mise à jour des modalités d’utilisation
+          </h2>
           <p>
             Les termes des présentes modalités d’utilisation peuvent être modifiés ou complétés à tout moment,
             sans préavis, en fonction des modifications apportées au Service, de l’évolution de la législation
