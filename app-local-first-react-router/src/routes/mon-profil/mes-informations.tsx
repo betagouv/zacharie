@@ -314,21 +314,13 @@ export default function MesInformations() {
                   </>
                 ) : (
                   <div className="rounded-lg border border-gray-300 px-8 py-6">
-                    <p className="font-semibold">Enregistrer une nouvelle association de chasse</p>
+                    <p className="font-semibold">
+                      Enregistrer une nouvelle association / société / domaine de chasse / repas associatif
+                    </p>
                     <p className="mb-5 text-sm text-gray-500">
                       * Les champs marqués d'une étoile sont obligatoires.
                     </p>
                     <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
-                      <Input
-                        label="Nom d'usage *"
-                        nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                          name: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                          autoComplete: 'off',
-                          required: true,
-                          defaultValue: '',
-                        }}
-                      />
                       <Input
                         label="Raison Sociale *"
                         nativeInputProps={{

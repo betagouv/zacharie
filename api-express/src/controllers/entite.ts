@@ -136,7 +136,7 @@ router.post(
 
     const data: Prisma.EntityUncheckedCreateInput = {
       raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
-      nom_d_usage: body[Prisma.EntityScalarFieldEnum.nom_d_usage],
+      nom_d_usage: body[Prisma.EntityScalarFieldEnum.raison_sociale],
       type: EntityTypes.PREMIER_DETENTEUR,
       address_ligne_1: body[Prisma.EntityScalarFieldEnum.address_ligne_1],
       address_ligne_2: body[Prisma.EntityScalarFieldEnum.address_ligne_2],
