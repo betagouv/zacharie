@@ -290,13 +290,14 @@ export default function MesInformations() {
             <ListAndSelectEntities
               formId="onboarding-etape-2-associations-data"
               setRefreshKey={setRefreshKey}
-              sectionLabel="Vos associations de chasse / repas associatifs"
-              addLabel={
-                canChange
-                  ? 'Ajouter une association de chasse'
-                  : 'Vos associations de chasse / repas associatifs'
-              }
-              selectLabel={canChange ? 'Sélectionnez une association de chasse' : ''}
+              sectionLabel="Vos associations / sociétés / domaines de chasse / repas associatifs"
+              // addLabel={
+              //   canChange
+              //     ? 'Ajouter une association / société / domaine'
+              //     : 'Vos associations / sociétés / domaines'
+              // }
+              addLabel=""
+              selectLabel={canChange ? 'Cliquez ici pour sélectionner une entité existante' : ''}
               done
               entityType={EntityTypes.PREMIER_DETENTEUR}
               allEntitiesByTypeAndId={allEntitiesByTypeAndId}
@@ -305,7 +306,7 @@ export default function MesInformations() {
               <div className="mt-8">
                 {!assoExpanded ? (
                   <>
-                    Votre association n'est pas encore enregistrée dans Zacharie ?<br />
+                    Votre entité n'est pas encore enregistrée dans Zacharie ?<br />
                     <Button
                       priority="secondary"
                       className="mt-4"

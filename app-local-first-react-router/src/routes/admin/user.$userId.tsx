@@ -54,6 +54,7 @@ const initialState: State = {
     prochain_bracelet_a_utiliser: 1,
     created_at: new Date(),
     updated_at: new Date(),
+    activated_at: null,
     last_login_at: null,
     last_seen_at: null,
     deleted_at: null,

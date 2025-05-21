@@ -3,8 +3,7 @@ import { useState, ChangeEvent, useEffect, useRef } from 'react';
 import { useDebounce } from '@uidotdev/usehooks';
 import villes from '@app/data/villes.json';
 
-type OnlyInput = Omit<InputProps, 'nativeTextAreaProps' | 'textArea'>;
-interface InputVilleProps extends OnlyInput {
+interface InputVilleProps extends InputProps.RegularInput {
   trimPostCode?: boolean;
   postCode?: string;
   onSelect?: (ville: string) => void;

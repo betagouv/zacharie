@@ -12,7 +12,7 @@ import { useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 
-export default function SelectNextForExaminateur({ disabled }: { disabled: boolean }) {
+export default function SelectNextForExaminateur({ disabled }: { disabled?: boolean }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);

@@ -1,14 +1,9 @@
-import { Input, InputProps } from "@codegouvfr/react-dsfr/Input";
+import { Input, InputProps } from '@codegouvfr/react-dsfr/Input';
 
-type InputNotEditableProps = Omit<InputProps, "nativeInputProps" | "nativeTextAreaProps"> & {
-  nativeInputProps?: Omit<NonNullable<InputProps.RegularInput["nativeInputProps"]>, "readOnly">;
-  nativeTextAreaProps?: Omit<NonNullable<InputProps.TextArea["nativeTextAreaProps"]>, "readOnly">;
-};
-
-export default function InputNotEditable(props: InputNotEditableProps) {
-  const { textArea, nativeInputProps, nativeTextAreaProps, ...rest } = props;
-
-  if (textArea) {
+export default function InputNotEditable(props: InputProps.RegularInput | InputProps.TextArea) {
+  if (props.textArea) {
+    props = props as InputProps.TextArea;
+    const { nativeTextAreaProps, ...rest } = props;
     return (
       <Input
         {...rest}
@@ -21,6 +16,9 @@ export default function InputNotEditable(props: InputNotEditableProps) {
       />
     );
   }
+
+  props = props as InputProps.RegularInput;
+  const { nativeInputProps, ...rest } = props;
 
   return (
     <Input
