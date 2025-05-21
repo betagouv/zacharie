@@ -272,7 +272,7 @@ function CTA({ mobile, desktop }: { mobile?: boolean; desktop?: boolean }) {
   return (
     <div
       className={[
-        'my-4 items-center justify-center md:my-16',
+        'my-4 flex-col items-center justify-center gap-4 md:my-16',
         mobile && !desktop && 'flex md:hidden',
         !mobile && desktop && 'hidden md:flex',
         mobile && desktop && 'flex',
@@ -280,15 +280,28 @@ function CTA({ mobile, desktop }: { mobile?: boolean; desktop?: boolean }) {
         .filter(Boolean)
         .join(' ')}
     >
+      {!isLoggedIn && (
+        <Button
+          className="m-0"
+          linkProps={{
+            // to: "/app/connexion?type=creation-de-compte",
+            to: '/app/connexion?type=compte-existant',
+            href: '#',
+          }}
+        >
+          Créer mon compte
+        </Button>
+      )}{' '}
       <Button
         className="m-0"
+        priority={isLoggedIn ? 'primary' : 'tertiary no outline'}
         linkProps={{
           // to: "/app/connexion?type=creation-de-compte",
           to: '/app/connexion?type=compte-existant',
           href: '#',
         }}
       >
-        {isLoggedIn ? 'Accéder à mon compte' : 'Se connecter'}
+        {isLoggedIn ? 'Accéder à mon compte' : 'Me connecter'}
       </Button>
     </div>
   );
