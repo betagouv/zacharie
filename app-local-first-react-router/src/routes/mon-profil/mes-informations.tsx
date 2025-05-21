@@ -290,7 +290,7 @@ export default function MesInformations() {
             <ListAndSelectEntities
               formId="onboarding-etape-2-associations-data"
               setRefreshKey={setRefreshKey}
-              sectionLabel="Vos associations / sociétés / domaines de chasse / repas associatifs"
+              sectionLabel="Vos associations / sociétés / domaines de chasse"
               addLabel=""
               selectLabel={canChange ? 'Cherchez ici une entité existante' : ''}
               done
@@ -315,7 +315,7 @@ export default function MesInformations() {
                 ) : (
                   <div className="rounded-lg border border-gray-300 px-8 py-6">
                     <p className="font-semibold">
-                      Enregistrer une nouvelle association / société / domaine de chasse / repas associatif
+                      Enregistrer une nouvelle association / société / domaine de chasse
                     </p>
                     <p className="mb-5 text-sm text-gray-500">
                       * Les champs marqués d'une étoile sont obligatoires.
