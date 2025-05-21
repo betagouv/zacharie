@@ -14,6 +14,7 @@ export default function TableauDeBordLayout() {
     refreshUser('TableauDeBordLayout');
   }, []);
 
+  return <DeactivatedAccount />;
   if (!user) {
     return <Chargement />;
   }
@@ -51,15 +52,23 @@ function DeactivatedAccount() {
         <div className="fr-container">
           <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center">
             <div className="fr-py-0 fr-col-12 fr-col-md-6">
-              <h1 className="fr-h1">Compte en attente d'activation</h1>
+              <h1 className="fr-h1">Merci pour votre inscription à Zacharie!</h1>
               <p className="fr-text--lead fr-mb-3w">Votre compte est en attente d'activation.</p>
-              <p className="fr-text--sm fr-mb-5w">
-                Nos équipes vérifient les informations que vous avez renseignées.
+              <p className="fr-text--sm">
+                Nous vérifions les informations que vous avez renseignées.
                 <br />
-                Revenez un peu plus tard !
-                <br />
-                Sinon contactez-nous pour que l’on puisse vous rediriger vers la bonne information.
+                Nous vous enverrons un mail pour confirmer l’activation de votre compte ou vous demander des
+                informations complémentaires.
               </p>
+              <p className="fr-text--sm">Des questions ? Contactez-nous :</p>
+              <ul className="fr-text--sm fr-mb-5w list-inside list-disc">
+                <li>
+                  par mail : <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a>
+                </li>
+                <li>
+                  par téléphone : <a href="tel:+33189316640">01 89 31 66 40</a>
+                </li>
+              </ul>
               <ul className="fr-btns-group fr-btns-group--inline-md">
                 <li>
                   <a className="fr-btn" href="/">
