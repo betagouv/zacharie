@@ -8,6 +8,9 @@ const ENVIRONMENT = process.env.ENVIRONMENT ?? process.env.NODE_ENV ?? 'developm
 const SENTRY_KEY = 'https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175';
 const SENTRY_SECRET = process.env.SENTRY_SECRET;
 
+const BREVO_BEARER = process.env.BREVO_BEARER;
+const BREVO_API = process.env.BREVO_API;
+
 const buildId = JSON.stringify(`${dayjs().format('DD-MM-YYYY')} vers ${dayjs().format('HH')}:00`);
 const VERSION = buildId;
 
@@ -31,4 +34,6 @@ export {
   TIPIMAIL_EMAIL_TO,
   TIPIMAIL_EMAIL_FROM,
   METABASE_SECRET_KEY,
+  BREVO_BEARER,
+  BREVO_API,
 };
