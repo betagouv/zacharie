@@ -64,32 +64,40 @@ export async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER
     console.log(props);
     return;
   }
+  if (props.roles.includes(UserRoles.ADMIN)) {
+    return;
+  }
   const apiInstance = new brevo.ContactsApi();
   apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
-  const getContact = await apiInstance.getContactInfo(props.email);
+  try {
+    // wrap in try catch for 404
+    const getContact = await apiInstance.getContactInfo(props.email);
 
-  if (getContact?.body?.id) {
-    if (!props.brevo_contact_id) {
-      props = await prisma.user.update({
-        where: { id: props.id },
-        data: { brevo_contact_id: getContact.body.id },
+    if (getContact?.body?.id) {
+      if (!props.brevo_contact_id) {
+        props = await prisma.user.update({
+          where: { id: props.id },
+          data: { brevo_contact_id: getContact.body.id },
+        });
+      }
+      // @ts-expect-error EXT_ID any
+      if (getContact.body.attributes?.EXT_ID !== props.id) {
+        const updateContact = new brevo.UpdateContact();
+        updateContact.attributes = {
+          EXT_ID: props.id,
+        };
+        await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
+      }
+      await sendEmail({
+        emails: ['contact@zacharie.beta.gouv.fr'],
+        subject: `Nouvelle ouverture de compte pour ${props.email}`,
+        text: `Un nouveau compte a été ouvert pour ${props.email}`,
       });
+      return;
     }
-    // @ts-expect-error EXT_ID any
-    if (getContact.body.attributes?.EXT_ID !== props.id) {
-      const updateContact = new brevo.UpdateContact();
-      updateContact.attributes = {
-        EXT_ID: props.id,
-      };
-      await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
-    }
-    await sendEmail({
-      emails: ['contact@zacharie.beta.gouv.fr'],
-      subject: `Nouvelle ouverture de compte pour ${props.email}`,
-      text: `Un nouveau compte a été ouvert pour ${props.email}`,
-    });
-    return;
+  } catch (error) {
+    console.log(error);
   }
 
   const createContact = new brevo.CreateContact();
@@ -119,6 +127,9 @@ export async function updateBrevoContact(props: User) {
   if (process.env.NODE_ENV === 'development') {
     console.log('Updating Brevo contact in development mode');
     console.log(props);
+    return;
+  }
+  if (props.roles.includes(UserRoles.ADMIN)) {
     return;
   }
   const apiInstance = new brevo.ContactsApi();
