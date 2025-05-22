@@ -30,4 +30,16 @@ router.post(
   }),
 );
 
+router.post(
+  '/brevo',
+  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.log({ body: req.body, headers: req.headers });
+
+    res.status(200).send({
+      ok: true,
+      error: '',
+    });
+  }),
+);
+
 export default router;
