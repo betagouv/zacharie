@@ -22,7 +22,11 @@ export async function sendEmail(props: SendEmailProps) {
 
   const sendSmtpEmail = new brevo.SendSmtpEmail();
   sendSmtpEmail.subject = props.subject;
-  sendSmtpEmail.htmlContent = props.html;
+  if (props.html) {
+    sendSmtpEmail.htmlContent = props.html;
+  } else if (props.text) {
+    sendSmtpEmail.textContent = props.text;
+  }
   sendSmtpEmail.sender = {
     name: 'Zacharie',
     email: 'contact@zacharie.beta.gouv.fr',

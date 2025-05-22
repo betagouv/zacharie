@@ -647,7 +647,7 @@ router.post(
       });
 
       await updateBrevoContact(savedUser);
-      if (nextUser.activated && !user.activated) {
+      if (nextUser.activated) {
         await sendEmail({
           emails: [savedUser.email],
           subject: 'Votre compte Zacharie a été activé',
