@@ -2,7 +2,7 @@ import webpush from 'web-push';
 import { type User, UserNotifications } from '@prisma/client';
 import * as Sentry from '@sentry/node';
 import PQueue from 'p-queue';
-import { sendEmail } from '../third-parties/tipimail';
+import { sendEmail } from '~/third-parties/brevo';
 import prisma from '../prisma';
 
 const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 1000 });
@@ -170,7 +170,6 @@ async function sendNotificationToUser({
       emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
       subject: title,
       text: email,
-      html: email,
     })
       .then(async (response) => {
         await prisma.notificationLog.create({

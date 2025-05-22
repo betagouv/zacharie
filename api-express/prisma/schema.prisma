@@ -56,6 +56,7 @@ model User {
   activated                      Boolean                  @default(false)
   activated_at                   DateTime?
   is_synced                      Boolean                  @default(true) // just for typing purppose with zustand frontend
+  brevo_contact_id               Int?
   Password                       Password?
   UserRelationsAsOwner           UserRelations[]          @relation("UserOwnerOfUserRelation")
   UserRelationsAsRelated         UserRelations[]          @relation("UserRelatedOfUserRelation")

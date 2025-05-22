@@ -20,6 +20,7 @@ import type {
 import passport from 'passport';
 import validateUser from '~/middlewares/validateUser';
 import { entityAdminInclude } from '~/types/entity';
+import { createContact } from '~/third-parties/brevo';
 
 router.post(
   '/user/connect-as',
@@ -76,6 +77,8 @@ router.post(
           roles: body[Prisma.UserScalarFieldEnum.roles] as UserRoles[],
         },
       });
+
+      await createContact(createdUser, 'ADMIN');
 
       res.status(200).send({ ok: true, data: { user: createdUser }, error: '' });
     },
