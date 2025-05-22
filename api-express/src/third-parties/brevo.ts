@@ -13,6 +13,11 @@ type SendEmailProps = {
   from?: string;
 };
 export async function sendEmail(props: SendEmailProps) {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Sending email in development mode');
+    console.log(props);
+    return;
+  }
   if (!props.html && !props.text) {
     throw new Error('html or text is required');
   }
@@ -54,6 +59,11 @@ function formatRoles(role: UserRoles) {
 }
 
 export async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Creating Brevo contact in development mode');
+    console.log(props);
+    return;
+  }
   const apiInstance = new brevo.ContactsApi();
   apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
@@ -106,6 +116,11 @@ export async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER
 }
 
 export async function updateBrevoContact(props: User) {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Updating Brevo contact in development mode');
+    console.log(props);
+    return;
+  }
   const apiInstance = new brevo.ContactsApi();
   apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
