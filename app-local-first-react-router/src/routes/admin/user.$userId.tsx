@@ -61,6 +61,7 @@ const initialState: State = {
     onboarded_at: null,
     notifications: [UserNotifications.EMAIL, UserNotifications.PUSH],
     web_push_tokens: [],
+    brevo_contact_id: null,
     prefilled: false,
     is_synced: true,
   },
@@ -109,6 +110,9 @@ export default function AdminUser() {
         loadData(params.userId!).then((res) => {
           if (res.ok && res.data) {
             setUserResponseData(res.data as State);
+          }
+          if (!res.ok) {
+            alert(res.error);
           }
         });
       });

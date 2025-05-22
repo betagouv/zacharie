@@ -53,6 +53,26 @@ export async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER
   const apiInstance = new brevo.ContactsApi();
   apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
+  const getContact = await apiInstance.getContactInfo(props.email);
+
+  if (getContact?.body?.id) {
+    if (!props.brevo_contact_id) {
+      props = await prisma.user.update({
+        where: { id: props.id },
+        data: { brevo_contact_id: getContact.body.id },
+      });
+    }
+    // @ts-expect-error EXT_ID any
+    if (getContact.body.attributes?.EXT_ID !== props.id) {
+      const updateContact = new brevo.UpdateContact();
+      updateContact.attributes = {
+        EXT_ID: props.id,
+      };
+      await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
+    }
+    return;
+  }
+
   const createContact = new brevo.CreateContact();
   createContact.email = props.email;
   createContact.extId = props.id;
@@ -74,6 +94,17 @@ export async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER
 export async function updateBrevoContact(props: User) {
   const apiInstance = new brevo.ContactsApi();
   apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
+
+  if (!props.brevo_contact_id) {
+    const getContact = await apiInstance.getContactInfo(props.email);
+    if (!getContact?.body?.id) {
+      return;
+    }
+    props = await prisma.user.update({
+      where: { id: props.id },
+      data: { brevo_contact_id: getContact.body.id },
+    });
+  }
 
   let LANDLINE_NUMBER = '';
   let SMS = '';
@@ -118,8 +149,7 @@ export async function updateBrevoContact(props: User) {
     EXT_ID: props.id,
   };
 
-  const result = await apiInstance.updateContact(props.email, updateContact);
-  // console.log(result);
+  const result = await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
 
   // result.body is undefined so we don't update
   // await prisma.user.update({
