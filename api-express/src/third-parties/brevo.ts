@@ -74,6 +74,11 @@ export async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER
       };
       await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
     }
+    await sendEmail({
+      emails: ['contact@zacharie.beta.gouv.fr'],
+      subject: `Nouvelle ouverture de compte pour ${props.email}`,
+      text: `Un nouveau compte a été ouvert pour ${props.email}`,
+    });
     return;
   }
 
@@ -92,6 +97,11 @@ export async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER
   await prisma.user.update({
     where: { id: props.id },
     data: { brevo_contact_id: result.body.id },
+  });
+  await sendEmail({
+    emails: ['contact@zacharie.beta.gouv.fr'],
+    subject: `Nouvelle ouverture de compte pour ${props.email}`,
+    text: `Un nouveau compte a été ouvert pour ${props.email}`,
   });
 }
 
