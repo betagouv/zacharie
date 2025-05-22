@@ -565,7 +565,7 @@ router.post(
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
         nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
-        if (nextUser.activated) {
+        if (nextUser.activated && !user.activated) {
           nextUser.activated_at = new Date();
         }
       }
@@ -647,6 +647,13 @@ router.post(
       });
 
       await updateBrevoContact(savedUser);
+      if (nextUser.activated && !user.activated) {
+        await sendEmail({
+          emails: [savedUser.email],
+          subject: 'Votre compte Zacharie a été activé',
+          text: `Votre compte Zacharie a été activé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant`,
+        });
+      }
 
       res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
     },

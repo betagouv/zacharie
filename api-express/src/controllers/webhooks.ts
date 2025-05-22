@@ -55,8 +55,6 @@ router.post(
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const authHeader = req.headers.authorization;
 
-    console.log({ body: req.body, headers: req.headers }); // req.body is accessible here
-
     if (!authHeader) {
       console.log('Brevo webhook: Missing Authorization header');
       res.status(401).send({ ok: false, error: 'Unauthorized' });
@@ -85,21 +83,7 @@ router.post(
       return;
     }
 
-    // ---- Token is valid ----
-    // Now you can safely process req.body
-    console.log('Brevo webhook validated. Processing body:');
-
-    // **TODO: Add your actual Brevo event handling logic here.**
-    // For example, based on req.body.event, req.body.email, etc.
-    // switch (req.body.event) {
-    //   case 'contact_updated':
-    //     // Handle contact update
-    //     console.log(`Contact ${req.body.email} was updated.`);
-    //     break;
-    //   // Add other event cases as needed
-    //   default:
-    //     console.log(`Received unhandled event: ${req.body.event}`);
-    // }
+    console.log(JSON.stringify(req.body, null, 2));
 
     res.status(200).send({
       ok: true,
