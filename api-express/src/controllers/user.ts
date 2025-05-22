@@ -6,7 +6,7 @@ const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import jwt from 'jsonwebtoken';
 import dayjs from 'dayjs';
-import { createContact, sendEmail, updateContact } from '~/third-parties/brevo';
+import { createBrevoContact, sendEmail, updateBrevoContact } from '~/third-parties/brevo';
 import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
 import { comparePassword, hashPassword } from '~/service/crypto';
@@ -185,7 +185,7 @@ router.post(
           prefilled: false,
         },
       });
-      await createContact(user, 'USER');
+      await createBrevoContact(user, 'USER');
     }
     const hashedPassword = await hashPassword(passwordUser);
     const existingPassword = await prisma.password.findFirst({
@@ -646,7 +646,7 @@ router.post(
         data: nextUser,
       });
 
-      await updateContact(savedUser);
+      await updateBrevoContact(savedUser);
 
       res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
     },

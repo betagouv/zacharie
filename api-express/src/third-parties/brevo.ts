@@ -49,7 +49,7 @@ function formatRoles(role: UserRoles) {
   }
 }
 
-export async function createContact(props: User, createdBy: 'ADMIN' | 'USER') {
+export async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
   const apiInstance = new brevo.ContactsApi();
   apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
@@ -57,7 +57,7 @@ export async function createContact(props: User, createdBy: 'ADMIN' | 'USER') {
   createContact.email = props.email;
   createContact.extId = props.id;
   createContact.attributes = {
-    CREATED_BY: createdBy,
+    CREATED_BY: [createdBy],
     'CREATION DATE': props.created_at.toISOString(),
     ROLE: props.roles.map(formatRoles),
   };
@@ -71,7 +71,7 @@ export async function createContact(props: User, createdBy: 'ADMIN' | 'USER') {
   });
 }
 
-export async function updateContact(props: User) {
+export async function updateBrevoContact(props: User) {
   const apiInstance = new brevo.ContactsApi();
   apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
