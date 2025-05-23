@@ -360,6 +360,7 @@ router.post(
           body: `Vous avez une nouvelle fiche à traiter. Rendez-vous sur Zacharie pour la traiter.`,
           email: [
             `Carcasses à inspecter :\n${savedFei.resume_nombre_de_carcasses}`,
+            `ETG concerné: ${savedFei.FeiCurrentEntity.nom_d_usage}`,
             `Rendez-vous sur Zacharie pour consulter le détail de la fiche\u00A0:\nhttps://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
           ].join('\n'),
           notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
