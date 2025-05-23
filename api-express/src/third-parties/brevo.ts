@@ -301,11 +301,11 @@ function getBrevoCategory(type: EntityTypes) {
 }
 
 export async function updateOrCreateBrevoCompany(props: Entity) {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Updating Brevo company in development mode');
-    console.log(props);
-    return;
-  }
+  // if (process.env.NODE_ENV === 'development') {
+  //   console.log('Updating Brevo company in development mode');
+  //   console.log(props);
+  //   return;
+  // }
   const apiInstance = new brevo.CompaniesApi();
   apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
 
@@ -313,25 +313,29 @@ export async function updateOrCreateBrevoCompany(props: Entity) {
     attributes: {
       name: props.raison_sociale,
       cat_gorie: [getBrevoCategory(props.type)],
-      code_postal: props.code_postal,
-      d_partement: props.code_postal.slice(0, 2),
-      num_ro_ccg: props.numero_ddecpp,
+      code_postal: props.code_postal || undefined,
+      d_partement: props.code_postal?.slice(0, 2) || undefined,
+      num_ro_ccg: props.numero_ddecpp || undefined,
     },
   };
 
   if (!props.brevo_id) {
+    console.log('Creating Brevo company');
     const result = await apiInstance.companiesPost({
       name: props.raison_sociale,
       attributes: brevoCompany.attributes,
     });
-    console.log(result);
+    await prisma.entity.update({
+      where: { id: props.id },
+      data: { brevo_id: result.body.id },
+    });
     return;
   }
 
+  console.log('Updating Brevo company');
   const updateCompany = await apiInstance.companiesIdPatch(props.brevo_id, {
     attributes: brevoCompany.attributes,
   });
-  console.log(updateCompany);
   return;
 }
 
