@@ -107,7 +107,7 @@ model Entity {
   inc_certificat                  Int?                     @default(0)
   inc_decision                    Int?                     @default(0)
   code_etbt_certificat            String?                  @unique // Il pourrait s'agir d'un code court unique qui identifie l’établissement (exemple : 01 pour Villette viandes, 02 pour Nemrod et 03 pour Guellier).
-  brevo_id                        Int?
+  brevo_id                        String?
   type                            EntityTypes
   created_at                      DateTime                 @default(now())
   updated_at                      DateTime                 @default(now()) @updatedAt
@@ -173,7 +173,7 @@ model EntityAndUserRelations {
   owner_id              String
   entity_id             String
   relation              EntityRelationType
-  brevo_id              Int?
+  brevo_id              String?
   created_at            DateTime           @default(now())
   updated_at            DateTime           @default(now()) @updatedAt
   deleted_at            DateTime?
@@ -194,7 +194,7 @@ model ETGAndEntityRelations {
   created_at           DateTime    @default(now())
   updated_at           DateTime    @default(now()) @updatedAt
   deleted_at           DateTime?
-  brevo_id             Int?
+  brevo_id             String?
   is_synced            Boolean     @default(true) // just for typing purppose with zustand frontend
   ETGRelatedWithEntity Entity      @relation("ETGRelatedWithEntity", fields: [etg_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   EntityRelatedWithETG Entity      @relation("EntityRelatedWithETG", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)

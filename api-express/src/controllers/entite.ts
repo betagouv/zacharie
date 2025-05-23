@@ -10,6 +10,7 @@ import {
   sortEntitiesByTypeAndId,
   sortEntitiesRelationsByTypeAndId,
 } from '~/utils/sort-things-by-type-and-id.server';
+import { updateOrCreateBrevoCompany } from '~/third-parties/brevo';
 
 router.get(
   '/fei/:entity_id/:fei_numero',
@@ -150,6 +151,8 @@ router.post(
     const createdEntity = await prisma.entity.create({
       data,
     });
+
+    await updateOrCreateBrevoCompany(createdEntity);
 
     const createdEntityRelation = await prisma.entityAndUserRelations.create({
       data: {

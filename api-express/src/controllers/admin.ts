@@ -20,7 +20,7 @@ import type {
 import passport from 'passport';
 import validateUser from '~/middlewares/validateUser';
 import { entityAdminInclude } from '~/types/entity';
-import { createBrevoContact } from '~/third-parties/brevo';
+import { createBrevoContact, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
 
 router.post(
   '/user/connect-as',
@@ -410,6 +410,8 @@ router.post(
         include: entityAdminInclude,
       });
 
+      await updateOrCreateBrevoCompany(createdEntity);
+
       res.status(200).send({ ok: true, data: { entity: createdEntity }, error: '' });
     },
   ),
@@ -488,6 +490,8 @@ router.post(
         data,
         include: entityAdminInclude,
       });
+
+      await updateOrCreateBrevoCompany(updatedEntity);
 
       res.status(200).send({
         ok: true,
