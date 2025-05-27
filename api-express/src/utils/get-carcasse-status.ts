@@ -83,7 +83,7 @@ export function getSimplifiedCarcasseStatus(carcasse: Carcasse) {
     case CarcasseStatus.SANS_DECISION:
     case CarcasseStatus.CONSIGNE:
     default:
-      return 'en cours';
+      return 'en cours de traitement';
     case CarcasseStatus.ACCEPTE:
     case CarcasseStatus.LEVEE_DE_CONSIGNE:
     case CarcasseStatus.TRAITEMENT_ASSAINISSANT:

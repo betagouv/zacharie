@@ -112,10 +112,11 @@ export default function CollecteurCarcassePreview({ carcasse }: CarcasseIntermed
               })}
             </>
           )}
-          {status && (
+          {status !== 'en cours de création' && (
             <span className="ml-4 mt-4 block font-bold">
               {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'} {status}
-              {status !== 'en cours' && (carcasse.type === CarcasseType.PETIT_GIBIER ? '' : 'e')}
+              {status !== 'en cours de traitement' &&
+                (carcasse.type === CarcasseType.PETIT_GIBIER ? '' : 'e')}
             </span>
           )}
           {motifRefus && <span className="mt-2 block font-normal">{motifRefus}</span>}

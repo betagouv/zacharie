@@ -148,15 +148,15 @@ function Fei() {
 
   return (
     <>
+      <title>
+        {`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
+      </title>
       {fei.deleted_at && (
         <div className="mb-2 bg-error-main-525 py-2 text-center text-white">
           <p>Fiche supprimée</p>
         </div>
       )}
       <div className="fr-container fr-container--fluid fr-my-md-14v">
-        <title>
-          {params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
-        </title>
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 m-4 bg-alt-blue-france md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
             {showInterface === UserRoles.SVI && <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>}

@@ -13,7 +13,7 @@ import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
 import { useSaveScroll } from '@app/services/useSaveScroll';
-import Card from '@app/components/Card';
+import CardFiche from '@app/components/CardFiche';
 
 async function loadData() {
   await syncData('tableau-de-bord');
@@ -165,7 +165,7 @@ export default function TableauDeBordIndex() {
                       .filter((fei) => fei !== null)
                       .map((fei) => {
                         return (
-                          <Card
+                          <CardFiche
                             key={fei.numero}
                             fei={fei}
                             onPrintSelect={handleCheckboxClick}
@@ -208,7 +208,7 @@ export default function TableauDeBordIndex() {
                         .filter((fei) => fei !== null)
                         .map((fei) => {
                           return (
-                            <Card
+                            <CardFiche
                               key={fei.numero}
                               fei={fei}
                               onPrintSelect={handleCheckboxClick}
@@ -274,7 +274,7 @@ export default function TableauDeBordIndex() {
                         return null;
                       }
                       return (
-                        <Card
+                        <CardFiche
                           key={fei.numero}
                           fei={fei}
                           onPrintSelect={handleCheckboxClick}
@@ -326,7 +326,7 @@ export default function TableauDeBordIndex() {
                         .filter((fei) => fei !== null)
                         .map((fei) => {
                           return (
-                            <Card
+                            <CardFiche
                               key={fei.numero}
                               fei={fei}
                               onPrintSelect={handleCheckboxClick}
@@ -374,7 +374,7 @@ export default function TableauDeBordIndex() {
                         .filter((fei) => fei !== null)
                         .map((fei) => {
                           return (
-                            <Card
+                            <CardFiche
                               key={fei.numero}
                               fei={fei}
                               onPrintSelect={handleCheckboxClick}

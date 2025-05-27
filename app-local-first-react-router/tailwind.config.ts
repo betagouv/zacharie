@@ -7,6 +7,10 @@ export default {
       borderColor: {
         DEFAULT: '#000',
       },
+      borderWidth: {
+        6: '6px',
+        3: '3px',
+      },
       colors: {
         'action-high-blue-france': {
           DEFAULT: 'var(--text-action-high-blue-france)',
@@ -45,6 +49,9 @@ export default {
         },
         'green-emeraude': {
           DEFAULT: 'var(--green-emeraude-main-632)',
+        },
+        'contrast-grey': {
+          DEFAULT: 'var(--background-contrast-grey)',
         },
         'active-tint': 'var(--active-tint)',
       },
