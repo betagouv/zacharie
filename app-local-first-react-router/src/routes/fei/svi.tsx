@@ -76,7 +76,7 @@ export default function FEI_SVI() {
 
   return (
     <>
-      <details>
+      <details className="bg-white p-4 md:p-8">
         <summary>
           <h3 className="ml-2 inline text-lg font-semibold text-gray-900">Données de chasse</h3>
         </summary>
@@ -84,10 +84,7 @@ export default function FEI_SVI() {
           <FEIDonneesDeChasse />
         </div>
       </details>
-
-      <hr className="mt-8" />
-
-      <details open>
+      <details open className="mt-8 bg-white p-4 md:p-8">
         <summary>
           <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
             {`Carcasses à inspecter (${carcassesAAfficher.length})`}
@@ -124,13 +121,11 @@ export default function FEI_SVI() {
           )}
         </div>
       </details>
-      <hr className="mt-8" />
-
-      <details open>
+      <details open className="mt-8 bg-white p-4 pb-0 md:p-8 md:pb-0">
         <summary>
           <h3 className="ml-2 inline text-lg font-semibold text-gray-900">Validation de la fiche</h3>
         </summary>
-        <div className="p-5">
+        <div className="px-5 pt-5">
           <form
             method="POST"
             id="svi_check_finished_at"
@@ -197,7 +192,7 @@ export default function FEI_SVI() {
                 },
               ]}
             />
-            <Button type="submit" className="mb-4" disabled={!canEdit}>
+            <Button type="submit" className="my-4" disabled={!canEdit}>
               Enregistrer
             </Button>
 
@@ -277,14 +272,16 @@ export default function FEI_SVI() {
           </form>
         </div>
       </details>
-      {(fei.svi_signed_at || fei.automatic_closed_at) && (
-        <Alert
-          severity="success"
-          className="mt-4 md:mx-3"
-          description="L'inspection des carcasses est terminée, cette fiche est clôturée. Merci !"
-          title="Fiche clôturée"
-        />
-      )}
+      <div className="bg-white p-4 md:p-8">
+        {(fei.svi_signed_at || fei.automatic_closed_at) && (
+          <Alert
+            severity="success"
+            className="md:mx-4"
+            description="L'inspection des carcasses est terminée, cette fiche est clôturée. Merci !"
+            title="Fiche clôturée"
+          />
+        )}
+      </div>
     </>
   );
 }

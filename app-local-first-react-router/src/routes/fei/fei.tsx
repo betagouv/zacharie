@@ -163,13 +163,11 @@ function Fei() {
             <FeiTransfer />
             {showInterface !== UserRoles.SVI && <CurrentOwnerConfirm />}
             {showInterface !== UserRoles.SVI && <FeiStepper />}
-            <div className="bg-white p-4 md:p-8">
-              {showInterface === UserRoles.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
-              {showInterface === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
-              {showInterface === UserRoles.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
-              {showInterface === UserRoles.ETG && <FEICurrentIntermediaire />}
-              {showInterface === UserRoles.SVI && <FEI_SVI />}
-            </div>
+            {showInterface === UserRoles.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
+            {showInterface === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
+            {showInterface === UserRoles.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
+            {showInterface === UserRoles.ETG && <FEICurrentIntermediaire />}
+            {showInterface === UserRoles.SVI && <FEI_SVI />}
             <div className="m-8 flex flex-col justify-start gap-4">
               <Button
                 linkProps={{

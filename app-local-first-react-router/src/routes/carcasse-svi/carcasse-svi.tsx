@@ -4,7 +4,6 @@ import { CarcasseType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import CarcasseSVI from '../fei/svi-carcasse';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
-import { Accordion } from '@codegouvfr/react-dsfr/Accordion';
 import InputNotEditable from '@app/components/InputNotEditable';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
@@ -15,10 +14,10 @@ import { loadFei } from '@app/utils/load-fei';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
-import PencilStrikeThrough from '@app/components/PencilStrikeThrough';
 import { CarcasseIPM1 } from './ipm1';
 import { CarcasseIPM2 } from './ipm2';
 import CarcasseSVICertificats from './certificats';
+import FEIDonneesDeChasse from '../fei/donnees-de-chasse';
 
 export default function CarcasseSviLoader() {
   const params = useParams();
@@ -52,15 +51,6 @@ export function CarcasseEditSVI() {
   const state = useZustandStore((state) => state);
   const navigate = useNavigate();
   const fei = state.feis[params.fei_numero!];
-  const examinateurInitialUser = fei.examinateur_initial_user_id
-    ? state.users[fei.examinateur_initial_user_id]
-    : null;
-  const premierDetenteurUser = fei.premier_detenteur_user_id
-    ? state.users[fei.premier_detenteur_user_id]
-    : null;
-  const premierDetenteurEntity = fei.premier_detenteur_entity_id
-    ? state.entities[fei.premier_detenteur_entity_id]
-    : null;
   const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
   const carcasse = state.carcasses[params.zacharie_carcasse_id!];
 
@@ -80,32 +70,6 @@ export function CarcasseEditSVI() {
     }
     return commentaires;
   }, [carcasse.numero_bracelet, fei.numero, intermediaires, state.carcassesIntermediaires, state.entities]);
-
-  const examinateurInitialInput = useMemo(() => {
-    const lines = [];
-    lines.push(`${examinateurInitialUser?.prenom} ${examinateurInitialUser?.nom_de_famille}`);
-    lines.push(examinateurInitialUser?.telephone);
-    lines.push(examinateurInitialUser?.email);
-    lines.push(examinateurInitialUser?.numero_cfei);
-    lines.push(`${examinateurInitialUser?.code_postal} ${examinateurInitialUser?.ville}`);
-    return lines;
-  }, [examinateurInitialUser]);
-
-  const premierDetenteurInput = useMemo(() => {
-    const lines = [];
-    if (premierDetenteurEntity) {
-      lines.push(premierDetenteurEntity.nom_d_usage);
-      lines.push(premierDetenteurEntity.siret);
-      lines.push(`${premierDetenteurEntity.code_postal} ${premierDetenteurEntity.ville}`);
-      return lines;
-    }
-    lines.push(`${premierDetenteurUser?.prenom} ${premierDetenteurUser?.nom_de_famille}`);
-    lines.push(premierDetenteurUser?.telephone);
-    lines.push(premierDetenteurUser?.email);
-    lines.push(premierDetenteurUser?.numero_cfei);
-    lines.push(`${premierDetenteurUser?.code_postal} ${premierDetenteurUser?.ville}`);
-    return lines;
-  }, [premierDetenteurEntity, premierDetenteurUser]);
 
   const isSviWorkingFor = useMemo(() => {
     // if (fei.fei_current_owner_role === UserRoles.SVI && !!fei.svi_entity_id) {
@@ -174,136 +138,94 @@ export function CarcasseEditSVI() {
               },
             ]}
           />
-          <div className="mb-6 bg-white py-2 md:shadow">
-            <div className="p-4 pb-8 md:p-8 md:pb-4">
-              <Accordion
-                titleAs="h2"
-                defaultExpanded
-                label={
-                  <>
-                    Infos sur la chasse et{' '}
-                    {carcasse.type === CarcasseType.PETIT_GIBIER ? 'le lot de carcasses' : 'la carcasse'}{' '}
-                    <PencilStrikeThrough />
-                  </>
-                }
-              >
-                <>
+          <details className="bg-white p-4 md:p-8">
+            <summary>
+              <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
+                Infos sur la chasse et{' '}
+                {carcasse.type === CarcasseType.PETIT_GIBIER ? 'le lot de carcasses' : 'la carcasse'}
+              </h3>
+            </summary>
+            <div className="p-5">
+              <>
+                <FEIDonneesDeChasse carcasseId={carcasse.zacharie_carcasse_id} />
+                {carcasse.type === CarcasseType.PETIT_GIBIER && (
                   <InputNotEditable
-                    label="Espèce"
+                    label="Nombre d'animaux initialement prélevés"
                     nativeInputProps={{
-                      defaultValue: carcasse.espece!,
+                      defaultValue: carcasse.nombre_d_animaux!,
                     }}
                   />
-                  <InputNotEditable
-                    label="Dates clés"
-                    textArea
-                    nativeTextAreaProps={{
-                      rows: 5,
-                      defaultValue: [
-                        `Date de mise à mort: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
-                        `Heure de mise à mort de la première carcasse de la fiche: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
-                        carcasse.type === CarcasseType.GROS_GIBIER
-                          ? `Heure d'éviscération de la dernière carcasse de la fiche: ${fei.heure_evisceration_derniere_carcasse!}`
-                          : '',
-                        `Date et heure de dépôt dans le CCG le cas échéant: ${fei.premier_detenteur_depot_type === 'CCG' ? dayjs(fei.premier_detenteur_date_depot_quelque_part).format('dddd DD MMMM YYYY à HH:mm') : 'N/A'}`,
-                        `Date et heure de prise en charge par l'ETG: ${dayjs(intermediaires[intermediaires.length - 1].check_finished_at).format('dddd DD MMMM YYYY à HH:mm')}`,
-                      ]
-                        .filter(Boolean)
-                        .join('\n'),
-                    }}
-                  />
-                  {carcasse.type === CarcasseType.PETIT_GIBIER && (
-                    <InputNotEditable
-                      label="Nombre d'animaux initialement prélevés"
-                      nativeInputProps={{
-                        defaultValue: carcasse.nombre_d_animaux!,
-                      }}
-                    />
-                  )}
-                  <InputNotEditable
-                    label="Commentaires des destinataires"
-                    textArea
-                    nativeTextAreaProps={{
-                      rows: commentairesIntermediaires.length,
-                      defaultValue: commentairesIntermediaires.join('\n'),
-                    }}
-                  />
-                  <InputNotEditable
-                    label="Examinateur Initial"
-                    textArea
-                    nativeTextAreaProps={{
-                      rows: examinateurInitialInput.length,
-                      defaultValue: examinateurInitialInput.join('\n'),
-                    }}
-                  />
-                  <InputNotEditable
-                    label="Premier Détenteur"
-                    textArea
-                    nativeTextAreaProps={{
-                      rows: premierDetenteurInput.length,
-                      defaultValue: premierDetenteurInput.join('\n'),
-                    }}
-                  />
-                </>
-              </Accordion>
-              {canEdit && (
-                <Accordion titleAs="h2" defaultExpanded={!carcasse.svi_ipm2_decision} label="Décision SVI">
-                  <Accordion
-                    titleAs="h3"
-                    defaultExpanded={false}
-                    label={`Inspection Post-Mortem 1 (IPM1)${carcasse.svi_ipm1_date ? ` - ${dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}` : ''}`}
-                  >
-                    <CarcasseIPM1 canEdit={canEdit} />
-                  </Accordion>
-                  <Accordion
-                    titleAs="h3"
-                    defaultExpanded={false}
-                    label={`Inspection Post-Mortem 2 (IPM2)${carcasse.svi_ipm2_date ? ` - ${dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}` : ''}`}
-                  >
-                    <CarcasseIPM2 canEdit={canEdit} />
-                  </Accordion>
-                </Accordion>
-              )}
-              <Accordion
-                titleAs="h2"
-                defaultExpanded
-                label={
-                  <>
-                    Résumé de la décision <PencilStrikeThrough />
-                  </>
-                }
-              >
-                <CarcasseSVI
-                  carcasse={carcasse}
-                  canEdit={false}
-                  key={dayjs(carcasse.updated_at).toISOString()}
-                />
-              </Accordion>
-              {user.roles.includes(UserRoles.SVI) && (
-                <Accordion
-                  titleAs="h2"
-                  defaultExpanded
-                  label={
-                    <>
-                      Certificats <PencilStrikeThrough />
-                    </>
-                  }
-                >
-                  <CarcasseSVICertificats />
-                </Accordion>
-              )}
-              <div className="mt-4">
-                <Button
-                  nativeButtonProps={{
-                    onClick: () => {
-                      navigate(-1);
-                    },
+                )}
+                <InputNotEditable
+                  label="Commentaires des destinataires"
+                  textArea
+                  nativeTextAreaProps={{
+                    rows: commentairesIntermediaires.length,
+                    defaultValue: commentairesIntermediaires.join('\n'),
                   }}
-                >
-                  Retour
-                </Button>
-              </div>
+                />
+              </>
             </div>
+          </details>
+          {canEdit && (
+            <>
+              <details open={!carcasse.svi_ipm1_decision} className="mt-8 bg-white p-4 md:p-8">
+                <summary>
+                  <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
+                    {`Inspection Post-Mortem 1 (IPM1)${carcasse.svi_ipm1_date ? ` - ${dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}` : ''}`}
+                  </h3>
+                </summary>
+                <div className="p-5">
+                  <CarcasseIPM1 canEdit={canEdit} />
+                </div>
+              </details>
+              <details open={!carcasse.svi_ipm2_decision} className="mt-8 bg-white p-4 md:p-8">
+                <summary>
+                  <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
+                    {`Inspection Post-Mortem 2 (IPM2)${carcasse.svi_ipm2_date ? ` - ${dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}` : ''}`}
+                  </h3>
+                </summary>
+                <div className="p-5">
+                  <CarcasseIPM2 canEdit={canEdit} />
+                </div>
+              </details>
+            </>
+          )}
+
+          <details open className="mt-8 bg-white p-4 md:p-8">
+            <summary>
+              <h2 className="ml-2 inline text-lg font-semibold text-gray-900">Résumé de la décision</h2>
+            </summary>
+            <div className="p-5">
+              <CarcasseSVI
+                carcasse={carcasse}
+                canEdit={false}
+                key={dayjs(carcasse.updated_at).toISOString()}
+              />
+            </div>
+          </details>
+
+          {user.roles.includes(UserRoles.SVI) && (
+            <details open className="mt-8 bg-white p-4 md:p-8">
+              <summary>
+                <h2 className="ml-2 inline text-lg font-semibold text-gray-900">Certificats</h2>
+              </summary>
+              <div className="p-5">
+                <CarcasseSVICertificats />
+              </div>
+            </details>
+          )}
+
+          <div className="mt-4">
+            <Button
+              nativeButtonProps={{
+                onClick: () => {
+                  navigate(-1);
+                },
+              }}
+            >
+              Retour
+            </Button>
           </div>
         </div>
       </div>

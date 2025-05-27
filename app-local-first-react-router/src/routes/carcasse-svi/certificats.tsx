@@ -25,6 +25,10 @@ export default function CarcasseSVICertificats() {
     }
   }, [params.zacharie_carcasse_id, carcasse.is_synced]);
 
+  if (certificats.length === 0) {
+    return <p>Aucun certificat encore généré</p>;
+  }
+
   return (
     <div>
       <TableResponsive
