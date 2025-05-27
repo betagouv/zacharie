@@ -14,6 +14,7 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
+import Section from '@app/components/Section';
 
 export default function FeiPremierDetenteur() {
   const params = useParams();
@@ -153,10 +154,7 @@ export default function FeiPremierDetenteur() {
   }
 
   return (
-    <>
-      <h3 className="text-lg font-semibold text-gray-900">
-        Action du Premier détenteur | {premierDetenteurInput}
-      </h3>
+    <Section title={`Action du Premier détenteur | ${premierDetenteurInput}`}>
       <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'une étoile sont obligatoires.</p>
       {showAsDisabled && (
         <Alert
@@ -378,6 +376,6 @@ export default function FeiPremierDetenteur() {
             </>
           )}
       </div>
-    </>
+    </Section>
   );
 }
