@@ -14,6 +14,7 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import FEIDonneesDeChasse from './donnees-de-chasse';
 import CollecteurCarcassePreview from './collecteur-carcasse-preview';
+import Section from '@app/components/Section';
 
 export default function FEI_SVI() {
   const params = useParams();
@@ -57,13 +58,13 @@ export default function FEI_SVI() {
   }, [fei, user, state.entities]);
 
   const canEdit = useMemo(() => {
+    if (fei.automatic_closed_at) {
+      return false;
+    }
     if (isSviWorkingFor) {
       return true;
     }
     if (fei.fei_current_owner_user_id !== user.id) {
-      return false;
-    }
-    if (fei.automatic_closed_at) {
       return false;
     }
     if (fei.fei_current_owner_role !== UserRoles.SVI) {
@@ -76,202 +77,189 @@ export default function FEI_SVI() {
 
   return (
     <>
-      <details className="bg-white p-4 md:p-8">
-        <summary>
-          <h3 className="ml-2 inline text-lg font-semibold text-gray-900">Données de chasse</h3>
-        </summary>
-        <div className="p-5">
-          <FEIDonneesDeChasse />
-        </div>
-      </details>
-      <details open className="mt-8 bg-white p-4 md:p-8">
-        <summary>
-          <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
-            {`Carcasses à inspecter (${carcassesAAfficher.length})`}
-          </h3>
-        </summary>
-        <div className="p-5">
-          {canEdit && (
-            <p className="mb-8 text-sm text-gray-600">
-              Veuillez cliquer sur une carcasse pour la saisir ou l'annoter
-            </p>
-          )}
-          {carcassesAAfficher.map((carcasse) => {
-            return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
-          })}
-          {carcassesDejaRefusees.length > 0 && (
-            <div className="my-8 flex justify-center">
-              <Button
-                onClick={() => {
-                  setShowRefusedCarcasses(!showRefusedCarcasses);
-                }}
-                priority="secondary"
-              >
-                {showRefusedCarcasses ? 'Masquer' : 'Afficher'} les carcasses déjà refusées (
-                {carcassesDejaRefusees.length})
-              </Button>
-            </div>
-          )}
-          {showRefusedCarcasses && (
+      <Section title="Données de chasse">
+        <FEIDonneesDeChasse />
+      </Section>
+      <Section title={`Carcasses à inspecter (${carcassesAAfficher.length})`}>
+        {canEdit && (
+          <p className="mb-8 text-sm text-gray-600">
+            Veuillez cliquer sur une carcasse pour la saisir ou l'annoter
+          </p>
+        )}
+        {carcassesAAfficher.map((carcasse) => {
+          return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
+        })}
+        {carcassesDejaRefusees.length > 0 && (
+          <div className="my-8 flex justify-center">
+            <Button
+              onClick={() => {
+                setShowRefusedCarcasses(!showRefusedCarcasses);
+              }}
+              priority="secondary"
+            >
+              {showRefusedCarcasses ? 'Masquer' : 'Afficher'} les carcasses déjà refusées (
+              {carcassesDejaRefusees.length})
+            </Button>
+          </div>
+        )}
+        {showRefusedCarcasses && (
+          <>
+            {carcassesDejaRefusees.map((carcasse) => {
+              return <CollecteurCarcassePreview carcasse={carcasse} key={carcasse.numero_bracelet} />;
+            })}
+          </>
+        )}
+      </Section>
+      <Section title="Validation de la fiche">
+        <form
+          method="POST"
+          id="svi_check_finished_at"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const nextFei: Partial<Fei> = {
+              svi_signed_at: dayjs().toDate(),
+              svi_assigned_at: fei.svi_assigned_at ?? dayjs().toDate(),
+            };
+            if (fei.fei_current_owner_role !== UserRoles.SVI) {
+              nextFei.fei_current_owner_role = UserRoles.SVI;
+              nextFei.fei_current_owner_entity_id = fei.fei_next_owner_entity_id;
+              nextFei.fei_current_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
+              nextFei.fei_current_owner_user_id = user.id;
+              nextFei.fei_current_owner_user_name_cache =
+                fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`;
+              nextFei.fei_next_owner_role = null;
+              nextFei.fei_next_owner_user_id = null;
+              nextFei.fei_next_owner_user_name_cache = null;
+              nextFei.fei_next_owner_entity_id = null;
+              nextFei.fei_next_owner_entity_name_cache = null;
+              nextFei.fei_prev_owner_role = fei.fei_current_owner_role || null;
+              nextFei.fei_prev_owner_user_id = fei.fei_current_owner_user_id || null;
+              nextFei.fei_prev_owner_entity_id = fei.fei_current_owner_entity_id || null;
+              nextFei.svi_user_id = user.id;
+            }
+            updateFei(fei.numero, nextFei);
+            addLog({
+              user_id: user.id,
+              action: 'svi-check-finished-at',
+              fei_numero: fei.numero,
+              history: createHistoryInput(fei, nextFei),
+              user_role: UserRoles.SVI,
+              entity_id: fei.svi_entity_id,
+              zacharie_carcasse_id: null,
+              carcasse_intermediaire_id: null,
+              fei_intermediaire_id: null,
+            });
+            for (const carcasse of carcassesAAfficher) {
+              if (
+                !carcasse.svi_carcasse_status ||
+                carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
+              ) {
+                updateCarcasse(carcasse.zacharie_carcasse_id, {
+                  svi_carcasse_status: CarcasseStatus.ACCEPTE,
+                  svi_carcasse_status_set_at: dayjs().toDate(),
+                });
+              }
+            }
+          }}
+        >
+          {!fei.automatic_closed_at && (
             <>
-              {carcassesDejaRefusees.map((carcasse) => {
-                return <CollecteurCarcassePreview carcasse={carcasse} key={carcasse.numero_bracelet} />;
-              })}
+              <Checkbox
+                className={!canEdit ? 'checkbox-black' : ''}
+                options={[
+                  {
+                    label: "J'ai fini l'inspection de toutes les carcasses et je clôture la fiche.",
+                    nativeInputProps: {
+                      required: true,
+                      name: 'svi_finito',
+                      value: 'true',
+                      readOnly: !!fei.svi_signed_at || !!fei.automatic_closed_at,
+                      defaultChecked: fei.svi_signed_at ? true : false,
+                    },
+                  },
+                ]}
+              />
+              <Button type="submit" className="my-4" disabled={!canEdit}>
+                Enregistrer
+              </Button>
             </>
           )}
-        </div>
-      </details>
-      <details open className="mt-8 bg-white p-4 pb-0 md:p-8 md:pb-0">
-        <summary>
-          <h3 className="ml-2 inline text-lg font-semibold text-gray-900">Validation de la fiche</h3>
-        </summary>
-        <div className="px-5 pt-5">
-          <form
-            method="POST"
-            id="svi_check_finished_at"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const nextFei: Partial<Fei> = {
-                svi_signed_at: dayjs().toDate(),
-                svi_assigned_at: fei.svi_assigned_at ?? dayjs().toDate(),
-              };
-              if (fei.fei_current_owner_role !== UserRoles.SVI) {
-                nextFei.fei_current_owner_role = UserRoles.SVI;
-                nextFei.fei_current_owner_entity_id = fei.fei_next_owner_entity_id;
-                nextFei.fei_current_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
-                nextFei.fei_current_owner_user_id = user.id;
-                nextFei.fei_current_owner_user_name_cache =
-                  fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`;
-                nextFei.fei_next_owner_role = null;
-                nextFei.fei_next_owner_user_id = null;
-                nextFei.fei_next_owner_user_name_cache = null;
-                nextFei.fei_next_owner_entity_id = null;
-                nextFei.fei_next_owner_entity_name_cache = null;
-                nextFei.fei_prev_owner_role = fei.fei_current_owner_role || null;
-                nextFei.fei_prev_owner_user_id = fei.fei_current_owner_user_id || null;
-                nextFei.fei_prev_owner_entity_id = fei.fei_current_owner_entity_id || null;
-                nextFei.svi_user_id = user.id;
-              }
-              updateFei(fei.numero, nextFei);
-              addLog({
-                user_id: user.id,
-                action: 'svi-check-finished-at',
-                fei_numero: fei.numero,
-                history: createHistoryInput(fei, nextFei),
-                user_role: UserRoles.SVI,
-                entity_id: fei.svi_entity_id,
-                zacharie_carcasse_id: null,
-                carcasse_intermediaire_id: null,
-                fei_intermediaire_id: null,
-              });
-              for (const carcasse of carcassesAAfficher) {
-                if (
-                  !carcasse.svi_carcasse_status ||
-                  carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
-                ) {
-                  updateCarcasse(carcasse.zacharie_carcasse_id, {
-                    svi_carcasse_status: CarcasseStatus.ACCEPTE,
-                    svi_carcasse_status_set_at: dayjs().toDate(),
-                  });
-                }
-              }
-            }}
-          >
-            <Checkbox
-              className={!canEdit ? 'checkbox-black' : ''}
-              options={[
-                {
-                  label: "J'ai fini l'inspection de toutes les carcasses et je clôture la fiche.",
-                  nativeInputProps: {
-                    required: true,
-                    name: 'svi_finito',
-                    value: 'true',
-                    readOnly: !!fei.svi_signed_at || !!fei.automatic_closed_at,
-                    defaultChecked: fei.svi_signed_at ? true : false,
-                  },
-                },
-              ]}
-            />
-            <Button type="submit" className="my-4" disabled={!canEdit}>
-              Enregistrer
-            </Button>
 
-            {!!fei.svi_signed_at && (
-              <DateFinInput
-                label="Date de fin d'inspection"
-                nativeInputProps={{
-                  id: Prisma.FeiScalarFieldEnum.svi_signed_at,
-                  name: Prisma.FeiScalarFieldEnum.svi_signed_at,
-                  type: 'datetime-local',
-                  autoComplete: 'off',
-                  onBlur: (e) => {
-                    const nextFei: Partial<Fei> = {
-                      svi_signed_at: dayjs(e.target.value).toDate(),
-                      svi_assigned_at: fei.svi_assigned_at ?? dayjs(e.target.value).toDate(),
-                    };
-                    if (fei.fei_current_owner_role !== UserRoles.SVI) {
-                      nextFei.fei_current_owner_role = UserRoles.SVI;
-                      nextFei.fei_current_owner_entity_id = fei.fei_next_owner_entity_id;
-                      nextFei.fei_current_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
-                      nextFei.fei_current_owner_user_id = user.id;
-                      nextFei.fei_current_owner_user_name_cache =
-                        fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`;
-                      nextFei.fei_next_owner_role = null;
-                      nextFei.fei_next_owner_user_id = null;
-                      nextFei.fei_next_owner_user_name_cache = null;
-                      nextFei.fei_next_owner_entity_id = null;
-                      nextFei.fei_next_owner_entity_name_cache = null;
-                      nextFei.fei_prev_owner_role = fei.fei_current_owner_role || null;
-                      nextFei.fei_prev_owner_user_id = fei.fei_current_owner_user_id || null;
-                      nextFei.fei_prev_owner_entity_id = fei.fei_current_owner_entity_id || null;
-                      nextFei.svi_user_id = user.id;
+          {!!fei.svi_signed_at && (
+            <DateFinInput
+              label="Date de fin d'inspection"
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.svi_signed_at,
+                name: Prisma.FeiScalarFieldEnum.svi_signed_at,
+                type: 'datetime-local',
+                autoComplete: 'off',
+                onBlur: (e) => {
+                  const nextFei: Partial<Fei> = {
+                    svi_signed_at: dayjs(e.target.value).toDate(),
+                    svi_assigned_at: fei.svi_assigned_at ?? dayjs(e.target.value).toDate(),
+                  };
+                  if (fei.fei_current_owner_role !== UserRoles.SVI) {
+                    nextFei.fei_current_owner_role = UserRoles.SVI;
+                    nextFei.fei_current_owner_entity_id = fei.fei_next_owner_entity_id;
+                    nextFei.fei_current_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
+                    nextFei.fei_current_owner_user_id = user.id;
+                    nextFei.fei_current_owner_user_name_cache =
+                      fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`;
+                    nextFei.fei_next_owner_role = null;
+                    nextFei.fei_next_owner_user_id = null;
+                    nextFei.fei_next_owner_user_name_cache = null;
+                    nextFei.fei_next_owner_entity_id = null;
+                    nextFei.fei_next_owner_entity_name_cache = null;
+                    nextFei.fei_prev_owner_role = fei.fei_current_owner_role || null;
+                    nextFei.fei_prev_owner_user_id = fei.fei_current_owner_user_id || null;
+                    nextFei.fei_prev_owner_entity_id = fei.fei_current_owner_entity_id || null;
+                    nextFei.svi_user_id = user.id;
+                  }
+                  updateFei(fei.numero, nextFei);
+                  addLog({
+                    user_id: user.id,
+                    action: 'svi-check-finished-at-update',
+                    fei_numero: fei.numero,
+                    history: createHistoryInput(fei, nextFei),
+                    user_role: UserRoles.SVI,
+                    entity_id: fei.svi_entity_id,
+                    zacharie_carcasse_id: null,
+                    carcasse_intermediaire_id: null,
+                    fei_intermediaire_id: null,
+                  });
+                  for (const carcasse of carcassesAAfficher) {
+                    if (
+                      !carcasse.svi_carcasse_status ||
+                      carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
+                    ) {
+                      updateCarcasse(carcasse.zacharie_carcasse_id, {
+                        svi_carcasse_status: CarcasseStatus.ACCEPTE,
+                        svi_carcasse_status_set_at: dayjs(e.target.value).toDate(),
+                      });
                     }
-                    updateFei(fei.numero, nextFei);
-                    addLog({
-                      user_id: user.id,
-                      action: 'svi-check-finished-at-update',
-                      fei_numero: fei.numero,
-                      history: createHistoryInput(fei, nextFei),
-                      user_role: UserRoles.SVI,
-                      entity_id: fei.svi_entity_id,
-                      zacharie_carcasse_id: null,
-                      carcasse_intermediaire_id: null,
-                      fei_intermediaire_id: null,
-                    });
-                    for (const carcasse of carcassesAAfficher) {
-                      if (
-                        !carcasse.svi_carcasse_status ||
-                        carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
-                      ) {
-                        updateCarcasse(carcasse.zacharie_carcasse_id, {
-                          svi_carcasse_status: CarcasseStatus.ACCEPTE,
-                          svi_carcasse_status_set_at: dayjs(e.target.value).toDate(),
-                        });
-                      }
-                    }
-                  },
-                  suppressHydrationWarning: true,
-                  defaultValue: dayjs(fei.svi_signed_at).format('YYYY-MM-DDTHH:mm'),
-                }}
-              />
-            )}
-            {!!fei.automatic_closed_at && (
-              <DateFinInput
-                label="Date de clôture automatique"
-                hintText="La fiche a été clôturée automatiquement par le système 10 jours après la date d'assignation au SVI"
-                nativeInputProps={{
-                  id: Prisma.FeiScalarFieldEnum.automatic_closed_at,
-                  name: Prisma.FeiScalarFieldEnum.automatic_closed_at,
-                  type: 'datetime-local',
-                  autoComplete: 'off',
-                  suppressHydrationWarning: true,
-                  defaultValue: dayjs(fei.automatic_closed_at).format('YYYY-MM-DDTHH:mm'),
-                }}
-              />
-            )}
-          </form>
-        </div>
-      </details>
+                  }
+                },
+                suppressHydrationWarning: true,
+                defaultValue: dayjs(fei.svi_signed_at).format('YYYY-MM-DDTHH:mm'),
+              }}
+            />
+          )}
+          {!!fei.automatic_closed_at && (
+            <DateFinInput
+              label="Date de clôture automatique"
+              hintText="La fiche a été clôturée automatiquement par le système 10 jours après la date d'assignation au SVI"
+              nativeInputProps={{
+                id: Prisma.FeiScalarFieldEnum.automatic_closed_at,
+                name: Prisma.FeiScalarFieldEnum.automatic_closed_at,
+                type: 'datetime-local',
+                autoComplete: 'off',
+                suppressHydrationWarning: true,
+                defaultValue: dayjs(fei.automatic_closed_at).format('YYYY-MM-DDTHH:mm'),
+              }}
+            />
+          )}
+        </form>
+      </Section>
       <div className="bg-white p-4 md:p-8">
         {(fei.svi_signed_at || fei.automatic_closed_at) && (
           <Alert

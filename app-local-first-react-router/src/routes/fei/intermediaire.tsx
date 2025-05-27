@@ -17,6 +17,7 @@ import CollecteurCarcassePreview from './collecteur-carcasse-preview';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import FEIDonneesDeChasse from './donnees-de-chasse';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
+import Section from '@app/components/Section';
 
 interface Props {
   readOnly?: boolean;
@@ -388,181 +389,159 @@ export default function FEICurrentIntermediaire(props: Props) {
         </nav>
       )}
 
-      <details open={!!intermediaires.length}>
-        <summary>
-          <h3 className="ml-2 inline text-lg font-semibold text-gray-900">Données de chasse</h3>
-        </summary>
-        <div className="p-5">
-          <FEIDonneesDeChasse />
-        </div>
-      </details>
-      <hr className="mt-8" />
+      <Section open={!!intermediaires.length} title="Données de chasse">
+        <FEIDonneesDeChasse />
+      </Section>
+
       {intermediaire ? (
-        <details open>
-          <summary>
-            <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
-              Carcasses ({intermediaireCarcasses.length})
-            </h3>
-          </summary>
-          <div className="p-5">
-            {effectiveCanEdit && (
-              <div className="mb-8">
-                <p className="text-sm text-gray-600">
-                  Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
-                </p>
-              </div>
-            )}
-            {intermediaireCarcasses.map((intermediaireCarcasse) => {
-              const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
-              return (
-                <Fragment key={carcasse.numero_bracelet}>
-                  <CarcasseIntermediaireComp
-                    intermediaire={intermediaire}
-                    canEdit={effectiveCanEdit}
-                    carcasse={carcasse}
-                  />
-                </Fragment>
-              );
-            })}
-            <div className="my-8 flex justify-center">
-              <Button
-                onClick={() => {
-                  setShowRefusedCarcasses(!showRefusedCarcasses);
-                }}
-                priority="secondary"
-              >
-                {showRefusedCarcasses ? 'Masquer' : 'Afficher'} les carcasses déjà refusées (
-                {carcassesDejaRefusees.length})
-              </Button>
+        <Section title={`Carcasses (${intermediaireCarcasses.length})`}>
+          {effectiveCanEdit && (
+            <div className="mb-8">
+              <p className="text-sm text-gray-600">
+                Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
+              </p>
             </div>
-            {showRefusedCarcasses && (
-              <>
-                {carcassesDejaRefusees.map((carcasse) => {
-                  return <CollecteurCarcassePreview carcasse={carcasse} key={carcasse.numero_bracelet} />;
-                })}
-              </>
-            )}
+          )}
+          {intermediaireCarcasses.map((intermediaireCarcasse) => {
+            const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
+            return (
+              <Fragment key={carcasse.numero_bracelet}>
+                <CarcasseIntermediaireComp
+                  intermediaire={intermediaire}
+                  canEdit={effectiveCanEdit}
+                  carcasse={carcasse}
+                />
+              </Fragment>
+            );
+          })}
+          <div className="my-8 flex justify-center">
+            <Button
+              onClick={() => {
+                setShowRefusedCarcasses(!showRefusedCarcasses);
+              }}
+              priority="secondary"
+            >
+              {showRefusedCarcasses ? 'Masquer' : 'Afficher'} les carcasses déjà refusées (
+              {carcassesDejaRefusees.length})
+            </Button>
           </div>
-        </details>
+          {showRefusedCarcasses && (
+            <>
+              {carcassesDejaRefusees.map((carcasse) => {
+                return <CollecteurCarcassePreview carcasse={carcasse} key={carcasse.numero_bracelet} />;
+              })}
+            </>
+          )}
+        </Section>
       ) : (
-        <details open>
-          <summary>
-            <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
-              Carcasses (
-              {originalCarcasses.filter((c) => c.svi_carcasse_status === CarcasseStatus.SANS_DECISION).length}
-              )
-            </h3>
-          </summary>
-        </details>
+        <Section
+          title={`Carcasses (${originalCarcasses.filter((c) => c.svi_carcasse_status === CarcasseStatus.SANS_DECISION).length})`}
+        >
+          <div />
+        </Section>
       )}
 
       {!!labelCheckDone.length && (
         <>
-          <hr className="mt-8" />
-          <h3 className="ml-4 inline text-lg font-semibold text-gray-900">
-            Prise en charge des carcasses acceptées
-          </h3>
-          <form
-            className="p-5"
-            method="POST"
-            id="form_intermediaire_check_finished_at"
-            onSubmit={handleSubmitCheckFinishedAt}
-          >
-            <Checkbox
-              className={!intermediaire?.check_finished_at ? '' : 'checkbox-black'}
-              options={[
-                {
-                  label: (
-                    <>
-                      {labelCheckDone.map((line) => {
-                        return (
-                          <span className="block basis-full" key={line}>
-                            {line}
-                          </span>
-                        );
-                      })}
-                    </>
-                  ),
-                  nativeInputProps: {
-                    required: true,
-                    name: 'check_finished_at_checked',
-                    value: 'true',
-                    disabled: !!intermediaire?.check_finished_at,
-                    form: 'form_intermediaire_check_finished_at',
-                    readOnly: !!intermediaire?.check_finished_at || props.readOnly,
-                    defaultChecked: intermediaire?.check_finished_at ? true : false,
+          <Section title="Prise en charge des carcasses acceptées">
+            <form
+              method="POST"
+              id="form_intermediaire_check_finished_at"
+              onSubmit={handleSubmitCheckFinishedAt}
+            >
+              <Checkbox
+                className={!intermediaire?.check_finished_at ? '' : 'checkbox-black'}
+                options={[
+                  {
+                    label: (
+                      <>
+                        {labelCheckDone.map((line) => {
+                          return (
+                            <span className="block basis-full" key={line}>
+                              {line}
+                            </span>
+                          );
+                        })}
+                      </>
+                    ),
+                    nativeInputProps: {
+                      required: true,
+                      name: 'check_finished_at_checked',
+                      value: 'true',
+                      disabled: !!intermediaire?.check_finished_at,
+                      form: 'form_intermediaire_check_finished_at',
+                      readOnly: !!intermediaire?.check_finished_at || props.readOnly,
+                      defaultChecked: intermediaire?.check_finished_at ? true : false,
+                    },
                   },
-                },
-              ]}
-            />
-            <PriseEnChargeInput
-              key={JSON.stringify(intermediaire?.check_finished_at || '')}
-              className={effectiveCanEdit ? '' : 'pointer-events-none'}
-              hintText={
-                effectiveCanEdit ? (
-                  <button
-                    className="inline-block"
-                    type="button"
-                    onClick={() => {
-                      handleCheckFinishedAt(dayjs().toDate());
+                ]}
+              />
+              <PriseEnChargeInput
+                key={JSON.stringify(intermediaire?.check_finished_at || '')}
+                className={effectiveCanEdit ? '' : 'pointer-events-none'}
+                hintText={
+                  effectiveCanEdit ? (
+                    <button
+                      className="inline-block"
+                      type="button"
+                      onClick={() => {
+                        handleCheckFinishedAt(dayjs().toDate());
+                      }}
+                    >
+                      <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
+                      maintenant
+                    </button>
+                  ) : null
+                }
+                label={
+                  carcassesSorted.carcassesApproved.length > 0
+                    ? 'Date de prise en charge'
+                    : 'Date de décision'
+                }
+                nativeInputProps={{
+                  id: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
+                  name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
+                  type: 'datetime-local',
+                  form: 'form_intermediaire_check_finished_at',
+                  suppressHydrationWarning: true,
+                  autoComplete: 'off',
+                  defaultValue: dayjs(intermediaire?.check_finished_at || undefined).format(
+                    'YYYY-MM-DDTHH:mm',
+                  ),
+                }}
+              />
+              {!!canEdit && (
+                <Button type="submit" disabled={!effectiveCanEdit}>
+                  Enregistrer
+                </Button>
+              )}
+              {!carcassesApprovedSorted.length && fei.intermediaire_closed_at && (
+                <>
+                  <Alert
+                    severity="info"
+                    className="mt-6"
+                    description="Vous n'avez pas pris en charge de carcasse acceptée, la fiche est donc clôturée."
+                    title="Aucune carcasse acceptée"
+                  />
+                  <Button
+                    className="mt-6"
+                    linkProps={{
+                      to: `/app/tableau-de-bord/`,
                     }}
                   >
-                    <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
-                    maintenant
-                  </button>
-                ) : null
-              }
-              label={
-                carcassesSorted.carcassesApproved.length > 0 ? 'Date de prise en charge' : 'Date de décision'
-              }
-              nativeInputProps={{
-                id: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
-                name: Prisma.FeiIntermediaireScalarFieldEnum.check_finished_at,
-                type: 'datetime-local',
-                form: 'form_intermediaire_check_finished_at',
-                suppressHydrationWarning: true,
-                autoComplete: 'off',
-                defaultValue: dayjs(intermediaire?.check_finished_at || undefined).format('YYYY-MM-DDTHH:mm'),
-              }}
-            />
-            {!!canEdit && (
-              <Button type="submit" disabled={!effectiveCanEdit}>
-                Enregistrer
-              </Button>
-            )}
-            {!carcassesApprovedSorted.length && fei.intermediaire_closed_at && (
-              <>
-                <Alert
-                  severity="info"
-                  className="mt-6"
-                  description="Vous n'avez pas pris en charge de carcasse acceptée, la fiche est donc clôturée."
-                  title="Aucune carcasse acceptée"
-                />
-                <Button
-                  className="mt-6"
-                  linkProps={{
-                    to: `/app/tableau-de-bord/`,
-                  }}
-                >
-                  Voir toutes mes fiches
-                </Button>
-              </>
-            )}
-          </form>
-
+                    Voir toutes mes fiches
+                  </Button>
+                </>
+              )}
+            </form>
+          </Section>
           {couldSelectNextUser && (
-            <>
-              <hr className="mt-8" />
-              <h3 className="ml-4 inline text-lg font-semibold text-gray-900">
-                Sélection du prochain destinataire
-              </h3>
-              <div className="p-5" key={intermediaire?.id + needSelectNextUser}>
-                <SelectNextOwnerForPremierDetenteurOrIntermediaire
-                  calledFrom="intermediaire-next-owner"
-                  disabled={!needSelectNextUser || props.readOnly}
-                />
-              </div>
-            </>
+            <Section title="Sélection du prochain destinataire" key={intermediaire?.id + needSelectNextUser}>
+              <SelectNextOwnerForPremierDetenteurOrIntermediaire
+                calledFrom="intermediaire-next-owner"
+                disabled={!needSelectNextUser || props.readOnly}
+              />
+            </Section>
           )}
         </>
       )}

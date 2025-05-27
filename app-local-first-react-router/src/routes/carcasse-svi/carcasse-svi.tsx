@@ -18,6 +18,7 @@ import { CarcasseIPM1 } from './ipm1';
 import { CarcasseIPM2 } from './ipm2';
 import CarcasseSVICertificats from './certificats';
 import FEIDonneesDeChasse from '../fei/donnees-de-chasse';
+import Section from '@app/components/Section';
 
 export default function CarcasseSviLoader() {
   const params = useParams();
@@ -138,82 +139,55 @@ export function CarcasseEditSVI() {
               },
             ]}
           />
-          <details className="bg-white p-4 md:p-8">
-            <summary>
-              <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
-                Infos sur la chasse et{' '}
-                {carcasse.type === CarcasseType.PETIT_GIBIER ? 'le lot de carcasses' : 'la carcasse'}
-              </h3>
-            </summary>
-            <div className="p-5">
-              <>
-                <FEIDonneesDeChasse carcasseId={carcasse.zacharie_carcasse_id} />
-                {carcasse.type === CarcasseType.PETIT_GIBIER && (
-                  <InputNotEditable
-                    label="Nombre d'animaux initialement prélevés"
-                    nativeInputProps={{
-                      defaultValue: carcasse.nombre_d_animaux!,
-                    }}
-                  />
-                )}
+          <Section
+            title={`Infos sur la chasse et ${carcasse.type === CarcasseType.PETIT_GIBIER ? 'le lot de carcasses' : 'la carcasse'}`}
+            open={false}
+          >
+            <>
+              <FEIDonneesDeChasse carcasseId={carcasse.zacharie_carcasse_id} />
+              {carcasse.type === CarcasseType.PETIT_GIBIER && (
                 <InputNotEditable
-                  label="Commentaires des destinataires"
-                  textArea
-                  nativeTextAreaProps={{
-                    rows: commentairesIntermediaires.length,
-                    defaultValue: commentairesIntermediaires.join('\n'),
+                  label="Nombre d'animaux initialement prélevés"
+                  nativeInputProps={{
+                    defaultValue: carcasse.nombre_d_animaux!,
                   }}
                 />
-              </>
-            </div>
-          </details>
+              )}
+              <InputNotEditable
+                label="Commentaires des destinataires"
+                textArea
+                nativeTextAreaProps={{
+                  rows: commentairesIntermediaires.length,
+                  defaultValue: commentairesIntermediaires.join('\n'),
+                }}
+              />
+            </>
+          </Section>
           {canEdit && (
             <>
-              <details open={!carcasse.svi_ipm1_decision} className="mt-8 bg-white p-4 md:p-8">
-                <summary>
-                  <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
-                    {`Inspection Post-Mortem 1 (IPM1)${carcasse.svi_ipm1_date ? ` - ${dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}` : ''}`}
-                  </h3>
-                </summary>
-                <div className="p-5">
-                  <CarcasseIPM1 canEdit={canEdit} />
-                </div>
-              </details>
-              <details open={!carcasse.svi_ipm2_decision} className="mt-8 bg-white p-4 md:p-8">
-                <summary>
-                  <h3 className="ml-2 inline text-lg font-semibold text-gray-900">
-                    {`Inspection Post-Mortem 2 (IPM2)${carcasse.svi_ipm2_date ? ` - ${dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}` : ''}`}
-                  </h3>
-                </summary>
-                <div className="p-5">
-                  <CarcasseIPM2 canEdit={canEdit} />
-                </div>
-              </details>
+              <Section
+                open={!carcasse.svi_ipm1_decision}
+                title={`Inspection Post-Mortem 1 (IPM1)${carcasse.svi_ipm1_date ? ` - ${dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}` : ''}`}
+              >
+                <CarcasseIPM1 canEdit={canEdit} />
+              </Section>
+              <Section
+                open={!carcasse.svi_ipm2_decision}
+                title={`Inspection Post-Mortem 2 (IPM2)${carcasse.svi_ipm2_date ? ` - ${dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}` : ''}`}
+              >
+                <CarcasseIPM2 canEdit={canEdit} />
+              </Section>
             </>
           )}
 
-          <details open className="mt-8 bg-white p-4 md:p-8">
-            <summary>
-              <h2 className="ml-2 inline text-lg font-semibold text-gray-900">Résumé de la décision</h2>
-            </summary>
-            <div className="p-5">
-              <CarcasseSVI
-                carcasse={carcasse}
-                canEdit={false}
-                key={dayjs(carcasse.updated_at).toISOString()}
-              />
-            </div>
-          </details>
+          <Section title="Résumé de la décision">
+            <CarcasseSVI carcasse={carcasse} canEdit={false} key={dayjs(carcasse.updated_at).toISOString()} />
+          </Section>
 
           {user.roles.includes(UserRoles.SVI) && (
-            <details open className="mt-8 bg-white p-4 md:p-8">
-              <summary>
-                <h2 className="ml-2 inline text-lg font-semibold text-gray-900">Certificats</h2>
-              </summary>
-              <div className="p-5">
-                <CarcasseSVICertificats />
-              </div>
-            </details>
+            <Section title="Certificats">
+              <CarcasseSVICertificats />
+            </Section>
           )}
 
           <div className="mt-4">
