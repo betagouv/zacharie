@@ -8,13 +8,13 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
   const entities = useZustandStore((state) => state.entities);
   const feisIntermediaires = useZustandStore((state) => state.feisIntermediaires);
 
-  const status: 'en cours' | 'refusé' | 'accepté' | null = useMemo(() => {
+  const status: 'en cours de création' | 'en cours de traitement' | 'refusé' | 'accepté' = useMemo(() => {
     if (
       fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL ||
       fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR
     ) {
       if (!fei.fei_next_owner_role) {
-        return null;
+        return 'en cours de création';
       }
     }
     return getSimplifiedCarcasseStatus(carcasse);
@@ -62,5 +62,39 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
     feisIntermediaires,
   ]);
 
-  return { status, motifRefus };
+  const statusNewCard: string = useMemo(() => {
+    if (status !== 'refusé') {
+      return status;
+    }
+    switch (carcasse.svi_carcasse_status) {
+      default:
+        return '';
+      case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR: {
+        const carcasseIntermediaire =
+          feisIntermediaires[carcasse.intermediaire_carcasse_refus_intermediaire_id!];
+        const entity = entities[carcasseIntermediaire.fei_intermediaire_entity_id!];
+        return `manquant pour ${entity?.nom_d_usage}`;
+      }
+      case CarcasseStatus.MANQUANTE_SVI:
+        return 'manquant pour le service vétérinaire';
+      case CarcasseStatus.REFUS_ETG_COLLECTEUR: {
+        const carcasseIntermediaire =
+          feisIntermediaires[carcasse.intermediaire_carcasse_refus_intermediaire_id!];
+        const entity = entities[carcasseIntermediaire.fei_intermediaire_entity_id!];
+        return `refusé par ${entity.nom_d_usage}`;
+      }
+      case CarcasseStatus.SAISIE_TOTALE:
+      case CarcasseStatus.SAISIE_PARTIELLE: {
+        return 'refusé par le service vétérinaire';
+      }
+    }
+  }, [
+    carcasse.svi_carcasse_status,
+    carcasse.intermediaire_carcasse_refus_intermediaire_id,
+    entities,
+    feisIntermediaires,
+    status,
+  ]);
+
+  return { status, motifRefus, statusNewCard };
 }

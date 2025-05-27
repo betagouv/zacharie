@@ -19,17 +19,17 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
     text: 'text-[#6E445A]',
   },
   'En cours': {
-    bg: 'bg-[#E8EDFF]',
-    text: 'text-[#3558A2]',
+    bg: 'bg-[#FFECBD]',
+    text: 'text-[#73603F]',
   },
   Clôturée: {
-    bg: 'bg-[#E3FDEB]',
-    text: 'text-[#297254]',
+    bg: 'bg-[#E8EDFF]',
+    text: 'text-[#01008B]',
   },
 };
 
 const maxDetailedLines = 2;
-export default function Card({ fei, onPrintSelect, isPrintSelected = false }: CardProps) {
+export default function FicheCard({ fei, onPrintSelect, isPrintSelected = false }: CardProps) {
   const { simpleStatus, currentStepLabel } = useFeiSteps(fei);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -48,13 +48,22 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
 
   const [carcassesAcceptées, carcassesRefusées] = useMemo(() => {
     if (!fei.resume_nombre_de_carcasses) {
-      return [[], []];
+      return [[], 0];
     }
     const _carcassesAcceptées = [];
-    const _carcassesRefusées = [];
+    let _carcassesRefusées = 0;
     for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
       if (carcasse.includes('refusé')) {
-        _carcassesRefusées.push(carcasse);
+        // soit "10 carcasses" soit "3 lots (23 carcasses)"
+        // on veut récupérer 10 et 23, soit le dernier numéro de la phrase
+        // et faire la somme de toutes les carcasses refusées
+        const nombreDAnimaux =
+          carcasse
+            .split(' ')
+            .map((w) => parseInt(w, 10))
+            .filter(Boolean)
+            .at(-1) || 0;
+        _carcassesRefusées += nombreDAnimaux;
       } else if (carcasse) {
         _carcassesAcceptées.push(carcasse);
       }
@@ -119,10 +128,10 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
         className={[
           'flex size-full shrink-0 flex-col gap-y-2.5 bg-none p-5 !no-underline hover:!bg-active-tint hover:!no-underline',
 
-          carcassesRefusées.length > 0
-            ? 'border-l-2 border-warning-main-525'
+          carcassesRefusées > 0
+            ? 'border-l-3 border-warning-main-525'
             : simpleStatus === 'Clôturée'
-              ? 'border-l-2 border-success-main-625'
+              ? 'border-l-3 border-action-high-blue-france'
               : '',
         ].join(' ')}
       >
@@ -199,21 +208,18 @@ export default function Card({ fei, onPrintSelect, isPrintSelected = false }: Ca
             {/* {simpleStatus === 'Clôturée' && !carcassesRefusées.length && (
               <div className="flex shrink basis-1/2 flex-col gap-y-1">
                 <CheckIcon />
-                // <p className="m-0 text-xl text-success-main-625">0 carcasse refusée</p>
+                // <p className="m-0 text-xl text-action-high-blue-france">0 carcasse refusée</p>
               </div>
             )} */}
-            {carcassesRefusées.length > 0 && (
+            {carcassesRefusées > 0 && (
               <div className="flex shrink basis-1/2 flex-col gap-y-1">
                 <>
                   <RefusIcon />
                   <div>
-                    {carcassesRefusées.map((line) => {
-                      return (
-                        <p className="m-0 text-xl text-warning-main-525" key={line}>
-                          {line}
-                        </p>
-                      );
-                    })}
+                    <p className="m-0 text-xl text-warning-main-525">
+                      {carcassesRefusées} carcasse{carcassesRefusées > 1 ? 's' : ''} refusée
+                      {carcassesRefusées > 1 ? 's' : ''}
+                    </p>
                   </div>
                 </>
               </div>

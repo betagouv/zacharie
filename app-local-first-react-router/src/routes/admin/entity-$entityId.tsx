@@ -28,6 +28,7 @@ type State = NonNullable<AdminGetEntityResponse['data']>;
 const initialData: State = {
   entity: {
     id: '',
+    brevo_id: null,
     type: EntityTypes.ETG,
     nom_d_usage: '',
     raison_sociale: '',
@@ -119,7 +120,7 @@ export default function AdminEntity() {
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v relative">
       <title>
-        {entity.nom_d_usage} ({entity.type}) | Admin | Zacharie | Ministère de l'Agriculture
+        {`${entity.nom_d_usage} (${entity.type}) | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
       </title>
       {isSaving && (
         <div className="fixed right-0 top-0 bg-action-high-blue-france">

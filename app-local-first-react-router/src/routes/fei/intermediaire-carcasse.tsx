@@ -15,6 +15,7 @@ import useUser from '@app/zustand/user';
 import dayjs from 'dayjs';
 import { getVulgarisationSaisie } from '@app/utils/get-vulgarisation-saisie';
 import { getSimplifiedCarcasseStatus } from '@app/utils/get-carcasse-status';
+import CardCarcasse from '@app/components/CardCarcasse';
 
 interface CarcasseIntermediaireProps {
   carcasse: Carcasse;
@@ -81,12 +82,12 @@ export default function CarcasseIntermediaireComp({
     carcasse.intermediaire_carcasse_refus_motif ?? intermediaireCarcasse.refus ?? '',
   );
 
-  const status: 'en cours' | 'refusé' | 'accepté' | '' = useMemo(() => {
+  const status: 'en cours de traitement' | 'refusé' | 'accepté' | '' = useMemo(() => {
     const simplifiedStatus = getSimplifiedCarcasseStatus(carcasse);
-    if (simplifiedStatus === 'en cours') {
+    if (simplifiedStatus === 'en cours de traitement') {
       if (!canEdit) {
         // si l'intermédiaire ne peut plus modifier, la carcasse est à l'étape suivante, donc vraiment "en cours"
-        return 'en cours';
+        return 'en cours de traitement';
       }
       // s'il peut modifier encore, il peut l'avoir manuellement acceptée - on l'affiche le cas échéant
       if (intermediaireCarcasse.check_manuel) {
@@ -281,103 +282,15 @@ export default function CarcasseIntermediaireComp({
   };
 
   return (
-    <div
-      key={carcasse.numero_bracelet}
-      className={[
-        'mb-2 border-4 border-transparent',
-        !!refus && '!border-red-500',
-        carcasseManquante && '!border-red-300',
-        intermediaireCarcasse.check_manuel && '!border-action-high-blue-france',
-        !canEdit && status === 'refusé' && '!border-red-500',
-        !canEdit && status === 'accepté' && '!border-action-high-blue-france',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <CustomNotice
-        key={carcasse.numero_bracelet}
-        className={[
-          !!refus && '!bg-error-main-525 text-white',
-          carcasseManquante && '!bg-error-850 text-white',
-          !!intermediaireCarcasse.check_manuel && '!bg-action-high-blue-france text-white',
-          !canEdit && status === 'refusé' && '!bg-error-main-525 text-white',
-          !canEdit && status === 'accepté' && '!bg-action-high-blue-france text-white',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        <Component
-          className="block w-full p-8 text-left [&_*]:no-underline [&_*]:hover:no-underline"
-          type={canEdit ? 'button' : undefined}
-          onClick={canEdit ? () => refusIntermediaireModal.current.open() : undefined}
-        >
-          <span className="mb-4 block text-3xl font-bold">
-            {/* {carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : 'Numéro de bracelet'} */}
-            {/* &nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span> */}
-            {carcasse.numero_bracelet}
-          </span>
-          <span className="block text-2xl font-bold">
-            {carcasse.espece}
-            {carcasse.categorie && ` - ${carcasse.categorie}`}
-          </span>
-          <span className="block text-sm font-normal italic opacity-50">
-            {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Petit gibier' : 'Grand gibier'}
-          </span>
-          {carcasse.type === CarcasseType.PETIT_GIBIER && (
-            <span className="block font-normal">
-              Nombre de carcasses dans le lot&nbsp;: {carcasse.nombre_d_animaux || 'À REMPLIR'}
-            </span>
-          )}
-
-          {carcasse.heure_evisceration && (
-            <span className="block font-normal">
-              Éviscération&nbsp;: {carcasse.heure_evisceration || 'À REMPLIR'}
-            </span>
-          )}
-          {!!carcasse.examinateur_anomalies_abats?.length && (
-            <>
-              <br />
-              <span className="m-0 block font-bold">Anomalies abats:</span>
-              {carcasse.examinateur_anomalies_abats.map((anomalie) => {
-                return (
-                  <span className="m-0 ml-2 block font-bold" key={anomalie}>
-                    {anomalie}
-                  </span>
-                );
-              })}
-            </>
-          )}
-          {!!carcasse.examinateur_anomalies_carcasse?.length && (
-            <>
-              <br />
-              <span className="m-0 block font-bold">Anomalies carcasse:</span>
-              {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
-                return (
-                  <span className="m-0 ml-2 block font-bold" key={anomalie}>
-                    {anomalie}
-                  </span>
-                );
-              })}
-            </>
-          )}
-          {commentairesIntermediaires.map((commentaire, index) => {
-            return (
-              <span key={commentaire + index} className="mt-2 block font-normal">
-                {commentaire}
-              </span>
-            );
-          })}
-          {status && (
-            <span className="ml-4 mt-4 block font-bold">
-              {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'} {status}
-              {status !== 'en cours' && (carcasse.type === CarcasseType.PETIT_GIBIER ? '' : 'e')}
-            </span>
-          )}
-          {motifCarcasseNotAccepted && (
-            <span className="mt-2 block font-normal">{motifCarcasseNotAccepted}</span>
-          )}
-        </Component>
-      </CustomNotice>
+    <>
+      <CardCarcasse
+        carcasse={carcasse}
+        forceRefus={!!refus}
+        forceManquante={!!carcasseManquante}
+        forceAccept={!!intermediaireCarcasse.check_manuel}
+        onClick={canEdit ? () => refusIntermediaireModal.current.open() : undefined}
+        className="[zoom:1.3] [&.border-manquante]:!border-gray-500 [&_.text-manquante]:!text-gray-500"
+      />
       {canEdit && (
         <refusIntermediaireModal.current.Component
           title={
@@ -568,6 +481,108 @@ export default function CarcasseIntermediaireComp({
           </form>
         </refusIntermediaireModal.current.Component>
       )}
+    </>
+  );
+
+  return (
+    <div
+      key={carcasse.numero_bracelet}
+      className={[
+        'mb-2 border-4 border-transparent',
+        !!refus && '!border-red-500',
+        carcasseManquante && '!border-red-300',
+        intermediaireCarcasse.check_manuel && '!border-action-high-blue-france',
+        !canEdit && status === 'refusé' && '!border-red-500',
+        !canEdit && status === 'accepté' && '!border-action-high-blue-france',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <CustomNotice
+        key={carcasse.numero_bracelet}
+        className={[
+          !!refus && '!bg-error-main-525 text-white',
+          carcasseManquante && '!bg-error-850 text-white',
+          !!intermediaireCarcasse.check_manuel && '!bg-action-high-blue-france text-white',
+          !canEdit && status === 'refusé' && '!bg-error-main-525 text-white',
+          !canEdit && status === 'accepté' && '!bg-action-high-blue-france text-white',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <Component
+          className="block w-full p-8 text-left [&_*]:no-underline [&_*]:hover:no-underline"
+          type={canEdit ? 'button' : undefined}
+          onClick={canEdit ? () => refusIntermediaireModal.current.open() : undefined}
+        >
+          <span className="mb-4 block text-3xl font-bold">
+            {/* {carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : 'Numéro de bracelet'} */}
+            {/* &nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span> */}
+            {carcasse.numero_bracelet}
+          </span>
+          <span className="block text-2xl font-bold">
+            {carcasse.espece}
+            {carcasse.categorie && ` - ${carcasse.categorie}`}
+          </span>
+          <span className="block text-sm font-normal italic opacity-50">
+            {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Petit gibier' : 'Grand gibier'}
+          </span>
+          {carcasse.type === CarcasseType.PETIT_GIBIER && (
+            <span className="block font-normal">
+              Nombre de carcasses dans le lot&nbsp;: {carcasse.nombre_d_animaux || 'À REMPLIR'}
+            </span>
+          )}
+
+          {carcasse.heure_evisceration && (
+            <span className="block font-normal">
+              Éviscération&nbsp;: {carcasse.heure_evisceration || 'À REMPLIR'}
+            </span>
+          )}
+          {!!carcasse.examinateur_anomalies_abats?.length && (
+            <>
+              <br />
+              <span className="m-0 block font-bold">Anomalies abats:</span>
+              {carcasse.examinateur_anomalies_abats.map((anomalie) => {
+                return (
+                  <span className="m-0 ml-2 block font-bold" key={anomalie}>
+                    {anomalie}
+                  </span>
+                );
+              })}
+            </>
+          )}
+          {!!carcasse.examinateur_anomalies_carcasse?.length && (
+            <>
+              <br />
+              <span className="m-0 block font-bold">Anomalies carcasse:</span>
+              {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
+                return (
+                  <span className="m-0 ml-2 block font-bold" key={anomalie}>
+                    {anomalie}
+                  </span>
+                );
+              })}
+            </>
+          )}
+          {commentairesIntermediaires.map((commentaire, index) => {
+            return (
+              <span key={commentaire + index} className="mt-2 block font-normal">
+                {commentaire}
+              </span>
+            );
+          })}
+          {status && (
+            <span className="ml-4 mt-4 block font-bold">
+              {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'} {status}
+              {status !== 'en cours de traitement' &&
+                (carcasse.type === CarcasseType.PETIT_GIBIER ? '' : 'e')}
+            </span>
+          )}
+          {motifCarcasseNotAccepted && (
+            <span className="mt-2 block font-normal">{motifCarcasseNotAccepted}</span>
+          )}
+        </Component>
+      </CustomNotice>
     </div>
   );
 }

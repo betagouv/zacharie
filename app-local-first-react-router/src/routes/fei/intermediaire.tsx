@@ -402,18 +402,20 @@ export default function FEICurrentIntermediaire(props: Props) {
               </p>
             </div>
           )}
-          {intermediaireCarcasses.map((intermediaireCarcasse) => {
-            const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
-            return (
-              <Fragment key={carcasse.numero_bracelet}>
-                <CarcasseIntermediaireComp
-                  intermediaire={intermediaire}
-                  canEdit={effectiveCanEdit}
-                  carcasse={carcasse}
-                />
-              </Fragment>
-            );
-          })}
+          <div className="flex flex-col gap-4">
+            {intermediaireCarcasses.map((intermediaireCarcasse) => {
+              const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
+              return (
+                <Fragment key={carcasse.numero_bracelet}>
+                  <CarcasseIntermediaireComp
+                    intermediaire={intermediaire}
+                    canEdit={effectiveCanEdit}
+                    carcasse={carcasse}
+                  />
+                </Fragment>
+              );
+            })}
+          </div>
           <div className="my-8 flex justify-center">
             <Button
               onClick={() => {
