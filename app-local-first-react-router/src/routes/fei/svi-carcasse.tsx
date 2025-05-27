@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Carcasse, CarcasseStatus, CarcasseType, IPM1Decision, IPM2Decision } from '@prisma/client';
+import { Carcasse, CarcasseType, IPM1Decision, IPM2Decision } from '@prisma/client';
 import dayjs from 'dayjs';
 import { useParams, useNavigate } from 'react-router';
 import useZustandStore from '@app/zustand/store';
