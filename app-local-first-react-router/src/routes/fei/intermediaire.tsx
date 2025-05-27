@@ -13,11 +13,11 @@ import useZustandStore from '@app/zustand/store';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
-import CollecteurCarcassePreview from './collecteur-carcasse-preview';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import FEIDonneesDeChasse from './donnees-de-chasse';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import Section from '@app/components/Section';
+import CardCarcasse from '@app/components/CardCarcasse';
 
 interface Props {
   readOnly?: boolean;
@@ -416,23 +416,25 @@ export default function FEICurrentIntermediaire(props: Props) {
               );
             })}
           </div>
-          <div className="my-8 flex justify-center">
-            <Button
-              onClick={() => {
-                setShowRefusedCarcasses(!showRefusedCarcasses);
-              }}
-              priority="secondary"
-            >
-              {showRefusedCarcasses ? 'Masquer' : 'Afficher'} les carcasses déjà refusées (
-              {carcassesDejaRefusees.length})
-            </Button>
-          </div>
+          {carcassesDejaRefusees.length > 0 && (
+            <div className="my-8 flex justify-center">
+              <Button
+                onClick={() => {
+                  setShowRefusedCarcasses(!showRefusedCarcasses);
+                }}
+                priority="secondary"
+              >
+                {showRefusedCarcasses ? 'Masquer' : 'Afficher'} les carcasses déjà refusées (
+                {carcassesDejaRefusees.length})
+              </Button>
+            </div>
+          )}
           {showRefusedCarcasses && (
-            <>
+            <div className="flex flex-col gap-4">
               {carcassesDejaRefusees.map((carcasse) => {
-                return <CollecteurCarcassePreview carcasse={carcasse} key={carcasse.numero_bracelet} />;
+                return <CardCarcasse carcasse={carcasse} key={carcasse.numero_bracelet} />;
               })}
-            </>
+            </div>
           )}
         </Section>
       ) : (
