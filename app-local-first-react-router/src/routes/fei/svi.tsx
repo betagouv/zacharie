@@ -13,8 +13,8 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import FEIDonneesDeChasse from './donnees-de-chasse';
-import CollecteurCarcassePreview from './collecteur-carcasse-preview';
 import Section from '@app/components/Section';
+import CardCarcasse from '@app/components/CardCarcasse';
 
 export default function FEI_SVI() {
   const params = useParams();
@@ -86,9 +86,11 @@ export default function FEI_SVI() {
             Veuillez cliquer sur une carcasse pour la saisir ou l'annoter
           </p>
         )}
-        {carcassesAAfficher.map((carcasse) => {
-          return <CarcasseSVI canEdit={canEdit} key={carcasse.numero_bracelet} carcasse={carcasse} />;
-        })}
+        <div className="flex flex-col gap-4">
+          {carcassesAAfficher.map((carcasse) => {
+            return <CarcasseSVI canClick key={carcasse.numero_bracelet} carcasse={carcasse} />;
+          })}
+        </div>
         {carcassesDejaRefusees.length > 0 && (
           <div className="my-8 flex justify-center">
             <Button
@@ -103,11 +105,11 @@ export default function FEI_SVI() {
           </div>
         )}
         {showRefusedCarcasses && (
-          <>
+          <div className="flex flex-col gap-4">
             {carcassesDejaRefusees.map((carcasse) => {
-              return <CollecteurCarcassePreview carcasse={carcasse} key={carcasse.numero_bracelet} />;
+              return <CardCarcasse carcasse={carcasse} key={carcasse.numero_bracelet} />;
             })}
-          </>
+          </div>
         )}
       </Section>
       <Section title="Validation de la fiche">

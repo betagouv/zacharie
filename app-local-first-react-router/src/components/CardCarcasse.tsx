@@ -105,7 +105,6 @@ export default function CardCarcasse({
       {...componentProps}
       className={[
         'flex basis-full flex-row items-center justify-between border-solid p-4 text-left',
-        isEnCours && 'bg-contrast-grey border-0',
         'bg-contrast-grey border-0',
         isRefus && 'border-l-3 border-error-main-525',
         isManquante && 'border-l-3 border-manquante border-error-main-525',

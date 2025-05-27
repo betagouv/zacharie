@@ -28,7 +28,7 @@ prisma.fei
         data: { resume_nombre_de_carcasses: nombreDAnimaux },
       });
     }
-    console.log('done');
+    console.log('done renaming all resume_nombre_de_carcasses');
   });
 
 router.post(

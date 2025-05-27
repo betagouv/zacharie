@@ -1,20 +1,17 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { CarcasseStatus, CarcasseType, Prisma, type Carcasse, type FeiIntermediaire } from '@prisma/client';
+import { CarcasseType, Prisma, type Carcasse, type FeiIntermediaire } from '@prisma/client';
 import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
-import { CustomNotice } from '@app/components/CustomNotice';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import useZustandStore from '@app/zustand/store';
 import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
 import dayjs from 'dayjs';
-import { getVulgarisationSaisie } from '@app/utils/get-vulgarisation-saisie';
-import { getSimplifiedCarcasseStatus } from '@app/utils/get-carcasse-status';
 import CardCarcasse from '@app/components/CardCarcasse';
 
 interface CarcasseIntermediaireProps {
@@ -34,32 +31,9 @@ export default function CarcasseIntermediaireComp({
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
   const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
-  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
-  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
   const carcassesIntermediaires = useZustandStore((state) => state.carcassesIntermediaires);
-  const feisIntermediaires = useZustandStore((state) => state.feisIntermediaires);
-  const entities = useZustandStore((state) => state.entities);
 
   const formRef = useRef<HTMLFormElement>(null);
-
-  const commentairesIntermediaires = useMemo(() => {
-    const commentaires = [];
-    for (const _intermediaire of intermediaires) {
-      const carcasseIntermediaireId = getCarcasseIntermediaireId(
-        fei.numero,
-        carcasse.numero_bracelet,
-        _intermediaire.id,
-      );
-      const _carcasseIntermediaire = carcassesIntermediaires[carcasseIntermediaireId];
-      const _intermediaireEntity = entities[_intermediaire.fei_intermediaire_entity_id];
-      if (_carcasseIntermediaire?.commentaire) {
-        commentaires.push(
-          `Commentaire de ${_intermediaireEntity?.nom_d_usage} : ${_carcasseIntermediaire?.commentaire}`,
-        );
-      }
-    }
-    return commentaires;
-  }, [intermediaires, fei.numero, carcasse.numero_bracelet, carcassesIntermediaires, entities]);
 
   const carcasseIntermediaireId = getCarcasseIntermediaireId(
     fei.numero,
@@ -81,67 +55,6 @@ export default function CarcasseIntermediaireComp({
   const [refus, setRefus] = useState(
     carcasse.intermediaire_carcasse_refus_motif ?? intermediaireCarcasse.refus ?? '',
   );
-
-  const status: 'en cours de traitement' | 'refusé' | 'accepté' | '' = useMemo(() => {
-    const simplifiedStatus = getSimplifiedCarcasseStatus(carcasse);
-    if (simplifiedStatus === 'en cours de traitement') {
-      if (!canEdit) {
-        // si l'intermédiaire ne peut plus modifier, la carcasse est à l'étape suivante, donc vraiment "en cours"
-        return 'en cours de traitement';
-      }
-      // s'il peut modifier encore, il peut l'avoir manuellement acceptée - on l'affiche le cas échéant
-      if (intermediaireCarcasse.check_manuel) {
-        return 'accepté';
-      }
-      // sinon, elle est à traiter, on n'affiche rien
-      return '';
-    }
-    return simplifiedStatus;
-  }, [carcasse, canEdit, intermediaireCarcasse.check_manuel]);
-
-  const motifCarcasseNotAccepted: string = useMemo(() => {
-    switch (carcasse.svi_carcasse_status) {
-      default:
-        return '';
-      case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR: {
-        const carcasseIntermediaire =
-          feisIntermediaires[carcasse.intermediaire_carcasse_refus_intermediaire_id!];
-        const entity = entities[carcasseIntermediaire.fei_intermediaire_entity_id!];
-        const manquant = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Manquant' : 'Manquante';
-        return `${manquant} au moment de la collecte par ${entity?.nom_d_usage}`;
-      }
-      case CarcasseStatus.MANQUANTE_SVI:
-        return "Manquant(e) au moment de l'inspection par le service vétérinaire";
-      case CarcasseStatus.REFUS_ETG_COLLECTEUR: {
-        const carcasseIntermediaire =
-          feisIntermediaires[carcasse.intermediaire_carcasse_refus_intermediaire_id!];
-        const entity = entities[carcasseIntermediaire.fei_intermediaire_entity_id!];
-        const refusé = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Refusé' : 'Refusée';
-        let refus = `${refusé} par ${entity.nom_d_usage}`;
-        if (carcasse.intermediaire_carcasse_refus_motif) {
-          refus += ` : ${carcasse.intermediaire_carcasse_refus_motif}`;
-        }
-        return refus;
-      }
-      case CarcasseStatus.SAISIE_TOTALE:
-      case CarcasseStatus.SAISIE_PARTIELLE: {
-        const refusé = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Refusé' : 'Refusée';
-        return `${refusé} par le service vétérinaire : ${carcasse.svi_ipm2_lesions_ou_motifs
-          .map((motif) => getVulgarisationSaisie(motif, carcasse.type!))
-          .join(', ')}`;
-      }
-    }
-  }, [
-    carcasse.svi_carcasse_status,
-    carcasse.svi_ipm2_lesions_ou_motifs,
-    carcasse.type,
-    carcasse.intermediaire_carcasse_refus_motif,
-    feisIntermediaires,
-    entities,
-    carcasse.intermediaire_carcasse_refus_intermediaire_id,
-  ]);
-
-  const Component = canEdit ? 'button' : 'div';
 
   const submitCarcasseManquante = () => {
     setCarcasseManquante(true);
@@ -482,107 +395,5 @@ export default function CarcasseIntermediaireComp({
         </refusIntermediaireModal.current.Component>
       )}
     </>
-  );
-
-  return (
-    <div
-      key={carcasse.numero_bracelet}
-      className={[
-        'mb-2 border-4 border-transparent',
-        !!refus && '!border-red-500',
-        carcasseManquante && '!border-red-300',
-        intermediaireCarcasse.check_manuel && '!border-action-high-blue-france',
-        !canEdit && status === 'refusé' && '!border-red-500',
-        !canEdit && status === 'accepté' && '!border-action-high-blue-france',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <CustomNotice
-        key={carcasse.numero_bracelet}
-        className={[
-          !!refus && '!bg-error-main-525 text-white',
-          carcasseManquante && '!bg-error-850 text-white',
-          !!intermediaireCarcasse.check_manuel && '!bg-action-high-blue-france text-white',
-          !canEdit && status === 'refusé' && '!bg-error-main-525 text-white',
-          !canEdit && status === 'accepté' && '!bg-action-high-blue-france text-white',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        <Component
-          className="block w-full p-8 text-left [&_*]:no-underline [&_*]:hover:no-underline"
-          type={canEdit ? 'button' : undefined}
-          onClick={canEdit ? () => refusIntermediaireModal.current.open() : undefined}
-        >
-          <span className="mb-4 block text-3xl font-bold">
-            {/* {carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : 'Numéro de bracelet'} */}
-            {/* &nbsp;: <span className="whitespace-nowrap">{carcasse.numero_bracelet}</span> */}
-            {carcasse.numero_bracelet}
-          </span>
-          <span className="block text-2xl font-bold">
-            {carcasse.espece}
-            {carcasse.categorie && ` - ${carcasse.categorie}`}
-          </span>
-          <span className="block text-sm font-normal italic opacity-50">
-            {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Petit gibier' : 'Grand gibier'}
-          </span>
-          {carcasse.type === CarcasseType.PETIT_GIBIER && (
-            <span className="block font-normal">
-              Nombre de carcasses dans le lot&nbsp;: {carcasse.nombre_d_animaux || 'À REMPLIR'}
-            </span>
-          )}
-
-          {carcasse.heure_evisceration && (
-            <span className="block font-normal">
-              Éviscération&nbsp;: {carcasse.heure_evisceration || 'À REMPLIR'}
-            </span>
-          )}
-          {!!carcasse.examinateur_anomalies_abats?.length && (
-            <>
-              <br />
-              <span className="m-0 block font-bold">Anomalies abats:</span>
-              {carcasse.examinateur_anomalies_abats.map((anomalie) => {
-                return (
-                  <span className="m-0 ml-2 block font-bold" key={anomalie}>
-                    {anomalie}
-                  </span>
-                );
-              })}
-            </>
-          )}
-          {!!carcasse.examinateur_anomalies_carcasse?.length && (
-            <>
-              <br />
-              <span className="m-0 block font-bold">Anomalies carcasse:</span>
-              {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
-                return (
-                  <span className="m-0 ml-2 block font-bold" key={anomalie}>
-                    {anomalie}
-                  </span>
-                );
-              })}
-            </>
-          )}
-          {commentairesIntermediaires.map((commentaire, index) => {
-            return (
-              <span key={commentaire + index} className="mt-2 block font-normal">
-                {commentaire}
-              </span>
-            );
-          })}
-          {status && (
-            <span className="ml-4 mt-4 block font-bold">
-              {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'} {status}
-              {status !== 'en cours de traitement' &&
-                (carcasse.type === CarcasseType.PETIT_GIBIER ? '' : 'e')}
-            </span>
-          )}
-          {motifCarcasseNotAccepted && (
-            <span className="mt-2 block font-normal">{motifCarcasseNotAccepted}</span>
-          )}
-        </Component>
-      </CustomNotice>
-    </div>
   );
 }

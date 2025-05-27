@@ -181,7 +181,7 @@ export function CarcasseEditSVI() {
           )}
 
           <Section title="Résumé de la décision">
-            <CarcasseSVI carcasse={carcasse} canEdit={false} key={dayjs(carcasse.updated_at).toISOString()} />
+            <CarcasseSVI carcasse={carcasse} canClick={false} key={dayjs(carcasse.updated_at).toISOString()} />
           </Section>
 
           {user.roles.includes(UserRoles.SVI) && (
