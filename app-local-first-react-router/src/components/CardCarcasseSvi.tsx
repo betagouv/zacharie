@@ -78,9 +78,9 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
       <p
         className={[
           'text-sm first-letter:uppercase',
-          // status === 'en cours de traitement' && '!text-transparent',
-          status === 'refusé' && 'text-error-main-525',
-          status === 'accepté' && 'text-action-high-blue-france',
+          status === 'en cours de traitement' && '!text-transparent',
+          status === 'refusé' && 'font-bold text-error-main-525',
+          status === 'accepté' && 'font-bold text-action-high-blue-france',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -120,9 +120,8 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
           </p>
         );
       })}
-      <br />
       {carcasse.svi_ipm1_date && (
-        <p className="m-0 block text-sm font-bold" key={JSON.stringify(carcasse.svi_ipm1_signed_at)}>
+        <p className="m-0 mt-2 block text-sm font-bold" key={JSON.stringify(carcasse.svi_ipm1_signed_at)}>
           SVI Inspection Post Mortem 1 du {dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}&nbsp;:
           <br />
           {!carcasse.svi_ipm1_presentee_inspection ? (
@@ -180,9 +179,8 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
           )}
         </p>
       )}
-      <br />
       {carcasse.svi_ipm2_date && (
-        <span className="m-0 block font-bold" key={JSON.stringify(carcasse.svi_ipm2_signed_at)}>
+        <p className="m-0 mt-2 block text-sm font-bold" key={JSON.stringify(carcasse.svi_ipm2_signed_at)}>
           SVI Inspection Post Mortem 2 du {dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}&nbsp;:
           <br />
           {!carcasse.svi_ipm2_presentee_inspection ? (
@@ -273,7 +271,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
               )}
             </>
           )}
-        </span>
+        </p>
       )}
       {carcasse.svi_carcasse_commentaire && (
         <>
