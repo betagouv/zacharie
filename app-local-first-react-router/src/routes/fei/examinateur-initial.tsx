@@ -324,6 +324,7 @@ export default function FEIExaminateurInitial() {
                 );
                 // reset input
                 e.target.value = '';
+                updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: '' });
               } else {
                 updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse });
               }
@@ -360,6 +361,7 @@ export default function FEIExaminateurInitial() {
                       );
                       // reset input
                       e.target.value = '';
+                      updateFei(fei.numero, { heure_evisceration_derniere_carcasse: '' });
                     } else {
                       updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
                     }
