@@ -9,8 +9,8 @@ import TableauDeBordLayout from './routes/tableau-de-bord-layout';
 import { useMostFreshUser } from './utils-offline/get-most-fresh-user';
 import Fei from './routes/fei/fei';
 import OfflineMode from './components/OfflineMode';
-import Carcasse from './routes/carcasse';
-import CarcasseEditSVI from './routes/carcasse-svi/carcasse-svi';
+import CarcasseExaminateur from './routes/carcasse-examinateur';
+import SviInspectionCarcasse from './routes/svi-inspection-carcasse/svi-inspection-carcasse';
 import MesRoles from './routes/mon-profil/mes-roles';
 import MesCCGs from './routes/mon-profil/mes-ccgs';
 import MesInformations from './routes/mon-profil/mes-informations';
@@ -123,7 +123,7 @@ function App() {
               path="carcasse/:fei_numero/:zacharie_carcasse_id"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
-                  <Carcasse />
+                  <CarcasseExaminateur />
                 </RestrictedRoute>
               }
             />
@@ -131,7 +131,7 @@ function App() {
               path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
-                  <CarcasseEditSVI />
+                  <SviInspectionCarcasse />
                 </RestrictedRoute>
               }
             />

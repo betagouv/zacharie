@@ -167,3 +167,8 @@ label.tailwindui {
 details {
   cursor: default;
 }
+
+.with-marker::before {
+  content: '•';
+  @apply mr-3 text-lg font-bold;
+}

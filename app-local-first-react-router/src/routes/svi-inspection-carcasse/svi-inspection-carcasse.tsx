@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { CarcasseType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
-import CarcasseSVI from '../fei/svi-carcasse';
+import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
 import InputNotEditable from '@app/components/InputNotEditable';
 import useUser from '@app/zustand/user';
@@ -20,7 +20,7 @@ import CarcasseSVICertificats from './certificats';
 import FEIDonneesDeChasse from '../fei/donnees-de-chasse';
 import Section from '@app/components/Section';
 
-export default function CarcasseSviLoader() {
+export default function SviInspectionCarcasseLoader() {
   const params = useParams();
   const state = useZustandStore((state) => state);
   const fei = state.feis[params.fei_numero!];
@@ -43,10 +43,10 @@ export default function CarcasseSviLoader() {
   if (!fei) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;
   }
-  return <CarcasseEditSVI key={fei.numero} />;
+  return <SviInspectionCarcasse key={fei.numero} />;
 }
 
-export function CarcasseEditSVI() {
+export function SviInspectionCarcasse() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
@@ -181,7 +181,11 @@ export function CarcasseEditSVI() {
           )}
 
           <Section title="Résumé de la décision">
-            <CarcasseSVI carcasse={carcasse} canClick={false} key={dayjs(carcasse.updated_at).toISOString()} />
+            <CardCarcasseSvi
+              carcasse={carcasse}
+              canClick={false}
+              key={dayjs(carcasse.updated_at).toISOString()}
+            />
           </Section>
 
           {user.roles.includes(UserRoles.SVI) && (
