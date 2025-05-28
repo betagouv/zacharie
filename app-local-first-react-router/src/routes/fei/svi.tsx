@@ -8,7 +8,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
-import CarcasseSVI from './svi-carcasse';
+import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
@@ -88,7 +88,7 @@ export default function FEI_SVI() {
         )}
         <div className="flex flex-col gap-4">
           {carcassesAAfficher.map((carcasse) => {
-            return <CarcasseSVI canClick key={carcasse.numero_bracelet} carcasse={carcasse} />;
+            return <CardCarcasseSvi canClick key={carcasse.numero_bracelet} carcasse={carcasse} />;
           })}
         </div>
         {carcassesDejaRefusees.length > 0 && (

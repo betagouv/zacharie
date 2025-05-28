@@ -11,7 +11,7 @@ interface CarcasseAVerifierProps {
   canClick: boolean;
 }
 
-export default function CarcasseSVI({ carcasse, canClick }: CarcasseAVerifierProps) {
+export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifierProps) {
   // const { fei, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
   const params = useParams();
   const navigate = useNavigate();
@@ -48,8 +48,6 @@ export default function CarcasseSVI({ carcasse, canClick }: CarcasseAVerifierPro
     : {};
 
   const status = getSimplifiedCarcasseStatus(carcasse);
-
-  console.log(status);
 
   let espece = carcasse.espece;
   if (carcasse.nombre_d_animaux! > 1) espece = espece += ` (${carcasse.nombre_d_animaux})`;

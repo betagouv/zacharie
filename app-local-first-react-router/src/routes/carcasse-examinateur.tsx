@@ -34,35 +34,6 @@ const gibierSelect = {
   petit: petitGibier.especes,
 };
 
-// export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
-//   const user = await useMostFreshUser();
-//   if (!user) {
-//     throw redirect(`/app/connexion?type=compte-existant`);
-//   }
-//   async function get(pathname: string) {
-//     return fetch(`${import.meta.env.VITE_API_URL}${pathname}`, {
-//       method: "GET",
-//       credentials: "include",
-//       headers: new Headers({
-//         Accept: "application/json",
-//         "Content-Type": "application/json",
-//       }),
-//     }).then((res) => res.json());
-//   }
-
-//   const response = (await get(
-//     `/api/fei-carcasse/${params.fei_numero}/${params.numero_bracelet}`,
-//   )) as CarcasseLoaderData;
-
-//   if (!response?.ok) {
-//     throw redirect(`/app/tableau-de-bord/fei/${params.fei_numero}`);
-//   }
-
-//   const feiResponse = (await get(`/api/fei/${params.fei_numero}`)) as FeiLoaderData;
-
-//   return json({ carcasse: response.data!.carcasse!, user, fei: feiResponse.data!.fei! });
-// }
-
 const anomaliesAbatsModal = createModal({
   isOpenedByDefault: false,
   id: 'anomalie-abats-modal-carcasse',
@@ -73,7 +44,7 @@ const anomaliesCarcasseModal = createModal({
   id: 'anomalie-carcasse-modal-carcasse',
 });
 
-export default function CarcasseLoader() {
+export default function CarcasseExaminateurLoader() {
   const params = useParams();
   const state = useZustandStore((state) => state);
   const fei = state.feis[params.fei_numero!];
@@ -97,10 +68,10 @@ export default function CarcasseLoader() {
   if (!fei || !carcasse) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;
   }
-  return <CarcasseReadAndWrite />;
+  return <CarcasseExaminateur />;
 }
 
-function CarcasseReadAndWrite() {
+function CarcasseExaminateur() {
   const params = useParams();
   const state = useZustandStore((state) => state);
   const user = useUser((state) => state.user)!;

@@ -65,17 +65,53 @@ export default function FEIDonneesDeChasse({
     return lines;
   }, [premierDetenteurEntity, premierDetenteurUser]);
 
-  const etgInput = useMemo(() => {
-    if (latestIntermediaire.fei_intermediaire_role !== UserRoles.ETG) {
-      return null;
-    }
-    const etg = state.entities[latestIntermediaire.fei_intermediaire_entity_id!];
+  const intermediairesInputs = useMemo(() => {
     const lines = [];
-    lines.push(etg.nom_d_usage);
-    lines.push(etg.siret);
-    lines.push(`${etg.code_postal} ${etg.ville}`);
+    let collecteurs = 0;
+    for (const intermediaire of intermediaires) {
+      const intermediaireLines = [];
+      const isCollecteur = intermediaire.fei_intermediaire_role === UserRoles.COLLECTEUR_PRO;
+      const label = isCollecteur
+        ? `Collecteur ${collecteurs + 1}`
+        : 'Établissement de Traitement du Gibier Sauvage';
+      const entity = state.entities[intermediaire.fei_intermediaire_entity_id!];
+      intermediaireLines.push(entity.nom_d_usage);
+      intermediaireLines.push(entity.siret);
+      intermediaireLines.push(`${entity.code_postal} ${entity.ville}`);
+      lines.push({ label, value: intermediaireLines });
+    }
     return lines;
-  }, [latestIntermediaire, state.entities]);
+  }, [intermediaires, state.entities]);
+
+  const ccgDate =
+    fei.premier_detenteur_depot_type === 'CCG'
+      ? dayjs(fei.premier_detenteur_date_depot_quelque_part).format('dddd DD MMMM YYYY à HH:mm')
+      : null;
+  const etgDate = latestIntermediaire
+    ? dayjs(latestIntermediaire.check_finished_at).format('dddd DD MMMM YYYY à HH:mm')
+    : null;
+
+  const milestones = useMemo(() => {
+    const _milestones = [
+      `Date de mise à mort: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
+      `Heure de mise à mort de la première carcasse de la fiche: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
+    ];
+    if (onlyPetitGibier) {
+      _milestones.push(
+        `Heure d'éviscération de la dernière carcasse de la fiche: ${fei.heure_evisceration_derniere_carcasse!}`,
+      );
+    }
+    if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG: ${ccgDate}`);
+    if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG: ${etgDate}`);
+    return _milestones;
+  }, [
+    ccgDate,
+    etgDate,
+    onlyPetitGibier,
+    fei.date_mise_a_mort,
+    fei.heure_mise_a_mort_premiere_carcasse,
+    fei.heure_evisceration_derniere_carcasse,
+  ]);
 
   return (
     <>
@@ -95,16 +131,20 @@ export default function FEIDonneesDeChasse({
           defaultValue: premierDetenteurInput.join('\n'),
         }}
       />
-      {etgInput && (
-        <InputNotEditable
-          label="Établissement de Traitement du Gibier Sauvage"
-          textArea
-          nativeTextAreaProps={{
-            rows: etgInput.length,
-            defaultValue: etgInput.join('\n'),
-          }}
-        />
-      )}
+      {intermediairesInputs.map((intermediaireInput) => {
+        const value = intermediaireInput.value.join('\n');
+        return (
+          <InputNotEditable
+            key={value}
+            label={intermediaireInput.label}
+            textArea
+            nativeTextAreaProps={{
+              rows: intermediaireInput.value.length,
+              defaultValue: intermediaireInput.value.join('\n'),
+            }}
+          />
+        );
+      })}
       <InputNotEditable
         label="Commune de mise à mort"
         nativeInputProps={{
@@ -118,18 +158,8 @@ export default function FEIDonneesDeChasse({
         label="Épisodes clés"
         textArea
         nativeTextAreaProps={{
-          rows: 5,
-          defaultValue: [
-            `Date de mise à mort: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
-            `Heure de mise à mort de la première carcasse de la fiche: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
-            onlyPetitGibier
-              ? `Heure d'éviscération de la dernière carcasse de la fiche: ${fei.heure_evisceration_derniere_carcasse!}`
-              : '',
-            `Date et heure de dépôt dans le CCG le cas échéant: ${fei.premier_detenteur_depot_type === 'CCG' ? dayjs(fei.premier_detenteur_date_depot_quelque_part).format('dddd DD MMMM YYYY à HH:mm') : 'N/A'}`,
-            `Date et heure de prise en charge par l'ETG: ${dayjs(intermediaires[intermediaires.length - 1].check_finished_at).format('dddd DD MMMM YYYY à HH:mm')}`,
-          ]
-            .filter(Boolean)
-            .join('\n'),
+          rows: milestones.length,
+          defaultValue: milestones.join('\n'),
         }}
       />
       <InputNotEditable
