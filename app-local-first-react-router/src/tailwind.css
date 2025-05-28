@@ -172,3 +172,11 @@ details {
   content: '•';
   @apply mr-3 text-lg font-bold;
 }
+
+.drop-down .fr-nav__item {
+  @apply !bg-white;
+}
+
+.drop-down .fr-nav__btn {
+  @apply !py-0 !min-h-10 !text-action-high-blue-france !font-medium !text-base;
+}
