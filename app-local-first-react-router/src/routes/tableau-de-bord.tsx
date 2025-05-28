@@ -101,10 +101,10 @@ export default function TableauDeBordIndex() {
 
   function Actions() {
     return (
-      <div className="relative my-2 flex items-center justify-end gap-2">
+      <div className="xs:flex-row relative my-2 flex flex-col items-end justify-end gap-2">
         <Button
           priority="tertiary"
-          className="bg-white"
+          className="hidden shrink-0 bg-white lg:flex"
           iconId="ri-refresh-line"
           disabled={!isOnline || loading}
           onClick={async () => {
@@ -118,7 +118,7 @@ export default function TableauDeBordIndex() {
         {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
           <Button
             priority="primary"
-            className="block lg:hidden"
+            className="block shrink-0 lg:hidden"
             onClick={() => {
               const newFei = createNewFei();
               navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
@@ -129,7 +129,7 @@ export default function TableauDeBordIndex() {
         )}
         <DropDownMenu
           text={dropDownMenuFilterText}
-          isActive={selectedFeis.length > 0}
+          isActive={filter !== 'Toutes les fiches'}
           menuLinks={[
             {
               linkProps: {
@@ -182,6 +182,7 @@ export default function TableauDeBordIndex() {
           ]}
         />
         <DropDownMenu
+          className="hidden lg:block"
           text="Action sur les fiches sélectionnées"
           isActive={selectedFeis.length > 0}
           menuLinks={[

@@ -11,7 +11,7 @@ export default function DropDownMenu({ isActive, text, menuLinks, className = ''
   return (
     <MainNavigation
       // prettier-ignore
-      className={["drop-down", "hidden lg:block", className].join(' ')}
+      className={["drop-down", className].join(' ')}
       items={[
         {
           text,
