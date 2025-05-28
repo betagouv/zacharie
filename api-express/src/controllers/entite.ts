@@ -10,7 +10,7 @@ import {
   sortEntitiesByTypeAndId,
   sortEntitiesRelationsByTypeAndId,
 } from '~/utils/sort-things-by-type-and-id.server';
-import { updateOrCreateBrevoCompany } from '~/third-parties/brevo';
+import { sendEmail, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
 
 router.get(
   '/fei/:entity_id/:fei_numero',
@@ -160,6 +160,55 @@ router.post(
         relation: EntityRelationType.WORKING_FOR,
         entity_id: createdEntity.id,
       },
+    });
+
+    await sendEmail({
+      emails: ['contact@zacharie.beta.gouv.fr'],
+      subject: `Nouvelle association de chasse pré-enregistrée dans Zacharie`,
+      text: `Une nouvelle association de chasse a été pré-enregistrée dans Zacharie : ${createdEntity.nom_d_usage}`,
+    });
+
+    res.status(200).send({ ok: true, error: '', data: { createdEntity, createdEntityRelation } });
+  }),
+);
+
+router.post(
+  '/ccg',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user!;
+
+    const body = req.body;
+
+    const data: Prisma.EntityUncheckedCreateInput = {
+      raison_sociale: body[Prisma.EntityScalarFieldEnum.nom_d_usage],
+      nom_d_usage: body[Prisma.EntityScalarFieldEnum.nom_d_usage],
+      type: EntityTypes.CCG,
+      ccg_status: 'Pré-enregistré dans Zacharie',
+      address_ligne_1: body[Prisma.EntityScalarFieldEnum.address_ligne_1],
+      address_ligne_2: body[Prisma.EntityScalarFieldEnum.address_ligne_2],
+      code_postal: body[Prisma.EntityScalarFieldEnum.code_postal],
+      ville: body[Prisma.EntityScalarFieldEnum.ville],
+      siret: body[Prisma.EntityScalarFieldEnum.siret] || null,
+      numero_ddecpp: body[Prisma.EntityScalarFieldEnum.numero_ddecpp] || null,
+    };
+
+    const createdEntity = await prisma.entity.create({
+      data,
+    });
+
+    const createdEntityRelation = await prisma.entityAndUserRelations.create({
+      data: {
+        owner_id: user.id,
+        relation: EntityRelationType.WORKING_WITH,
+        entity_id: createdEntity.id,
+      },
+    });
+
+    await sendEmail({
+      emails: ['contact@zacharie.beta.gouv.fr'],
+      subject: `Nouveau CCG pré-enregistré dans Zacharie`,
+      text: `Un nouveau CCG a été pré-enregistré dans Zacharie : ${createdEntity.nom_d_usage}`,
     });
 
     res.status(200).send({ ok: true, error: '', data: { createdEntity, createdEntityRelation } });

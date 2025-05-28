@@ -5,10 +5,11 @@ import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { EntityTypes, EntityRelationType, Entity, Prisma } from '@prisma/client';
-import type { UserCCGsResponse, UserEntityResponse } from '@api/src/types/responses';
+import type { UserCCGsResponse, UserConnexionResponse, UserEntityResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
+import InputVille from '@app/components/InputVille';
 
 export default function MesCCGs() {
   // const removeCCGFetcher = useFetcher({ key: 'ccg-remove' });
@@ -17,8 +18,7 @@ export default function MesCCGs() {
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  function refreshUserCCGs() {
     fetch(`${import.meta.env.VITE_API_URL}/user/my-ccgs`, {
       method: 'GET',
       credentials: 'include',
@@ -34,12 +34,65 @@ export default function MesCCGs() {
           setUserCCGs(res.data.userCCGs);
         }
       });
+  }
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    refreshUserCCGs();
   }, []);
+
+  const [newCCGExpanded, setNewCCGExpanded] = useState(false);
+  const [ccgPostalCode, setCCGPostalCode] = useState('');
+  const handleNewCCGSubmit = useCallback(async (event: React.FocusEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const body: Partial<Entity> = Object.fromEntries(formData.entries());
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/entite/ccg`, {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify(body),
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => data as UserConnexionResponse);
+    if (response.ok) {
+      refreshUserCCGs();
+      setCCGPostalCode('');
+      setNewCCGExpanded(false);
+      document.getElementById('onboarding-etape-2-ccgs-data')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
+  function RegisterCCG() {
+    return (
+      <p className="mt-4 text-sm">
+        <br />
+        Le CCG doit être déclaré auprès de la direction départementale en charge de la protection des
+        populations du département d’implantation de la chambre froide.
+        <br />
+        Pour ce faire, vous pouvez{' '}
+        <a href="https://agriculture.gouv.fr/ddpp-et-ddets-pp-tous-les-contacts-des-services-deconcentres">
+          effectuer votre démarche en ligne ici
+        </a>{' '}
+        ou{' '}
+        <a href="https://mesdemarches.agriculture.gouv.fr/demarches/association-ou-organisation-de/assurer-une-activite-de-76/article/declarer-la-manipulation-de">
+          transmettre le formulaire papier accessible là.
+        </a>
+        <br />
+        La démarche en ligne n’est possible que pour les CCG disposant d’un numéro SIRET. A l’issue de
+        l’enregistrement par l’autorité compétente un numéro d’identification unique sera attribué au CCG
+        qu’il conviendra de nous communiquer pour finaliser son enregistrement dans Zacharie.
+      </p>
+    );
+  }
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <title>
-        Mes centres de collecte | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+        Mes Centres de collecte | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
@@ -47,10 +100,10 @@ export default function MesCCGs() {
             currentStep={3}
             // stepCount={4}
             stepCount={3}
-            title="Vos Centres de Collectes du Gibier sauvage"
+            title="Vos Centres de Collecte"
             // nextTitle="Vos notifications"
           />
-          <h1 className="fr-h2 fr-mb-2w">Identifiez vos CCGs</h1>
+          <h1 className="fr-h2 fr-mb-2w">Identifiez vos Centres de Collecte</h1>
           <CallOut className="bg-white">
             Si vous utilisez un Centre de Collecte du Gibier sauvage (CCG) pour entreposer votre gibier, vous
             pouvez l'identifier ici.
@@ -68,7 +121,7 @@ export default function MesCCGs() {
               disponible ici.
             </a>
           </CallOut>
-          <div className="mb-6 bg-white md:shadow">
+          <div className="mb-6 bg-white md:shadow" id="onboarding-etape-2-ccgs-data">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
               {!userCCGs.length && (
                 <p className="mb-4 text-lg font-bold">
@@ -116,12 +169,138 @@ export default function MesCCGs() {
                         {entity.nom_d_usage}
                         <br />
                         {entity.code_postal} {entity.ville}
+                        {entity.ccg_status === 'Pré-enregistré dans Zacharie' && (
+                          <>
+                            <RegisterCCG />
+                            <p className="mt-4 text-sm">
+                              Si vous avez déjà fait la démarche, vous pouvez ignorer ce message.
+                            </p>
+                          </>
+                        )}
                       </>
                     }
                   />
                 );
               })}
               <InputCCG addCCG={(ccg) => setUserCCGs([...userCCGs, ccg])} />
+              <div className="mt-8">
+                {!newCCGExpanded ? (
+                  <>
+                    Votre Centre de Collecte n'est pas encore enregistrée dans Zacharie ?<br />
+                    <Button
+                      priority="secondary"
+                      className="mt-4"
+                      nativeButtonProps={{
+                        onClick: () => setNewCCGExpanded(true),
+                      }}
+                    >
+                      Pré-enregistrer mon CCG
+                    </Button>
+                  </>
+                ) : (
+                  <div className="rounded-lg border border-gray-300 px-8 py-6">
+                    <p className="font-semibold">Pré-enregistrer un nouveau Centre de Collecte</p>
+                    <p className="mb-5 text-sm text-gray-500">
+                      * Les champs marqués d'une étoile sont obligatoires.
+                    </p>
+                    <form id="association_data_form" method="POST" onSubmit={handleNewCCGSubmit}>
+                      <Input
+                        label="Nom usuel *"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                          name: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                          autoComplete: 'off',
+                          required: true,
+                          defaultValue: '',
+                        }}
+                      />
+                      <Input
+                        label="SIRET"
+                        hintText="Si vous n'en n'avez pas, laissez vide."
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.siret,
+                          name: Prisma.EntityScalarFieldEnum.siret,
+                          autoComplete: 'off',
+                          defaultValue: '',
+                        }}
+                      />
+                      <Input
+                        label="Numéro d'identification du CCG"
+                        hintText="De la forme 03-CCG-123. Si vous ne le connaissez pas, laissez vide."
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+                          name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+                          autoComplete: 'off',
+                          defaultValue: '',
+                        }}
+                      />
+                      <Input
+                        label="Adresse *"
+                        hintText="Indication : numéro et voie"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                          name: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                          autoComplete: 'off',
+                          required: true,
+                          defaultValue: '',
+                        }}
+                      />
+                      <Input
+                        label="Complément d'adresse (optionnel)"
+                        hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                          name: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                          autoComplete: 'off',
+                          defaultValue: '',
+                        }}
+                      />
+
+                      <div className="flex w-full flex-col gap-x-4 md:flex-row">
+                        <Input
+                          label="Code postal *"
+                          hintText="5 chiffres"
+                          className="shrink-0 md:basis-1/5"
+                          nativeInputProps={{
+                            id: Prisma.EntityScalarFieldEnum.code_postal,
+                            name: Prisma.EntityScalarFieldEnum.code_postal,
+                            autoComplete: 'off',
+                            required: true,
+                            value: ccgPostalCode,
+                            onChange: (e) => {
+                              setCCGPostalCode(e.currentTarget.value);
+                            },
+                          }}
+                        />
+                        <div className="basis-4/5">
+                          <InputVille
+                            postCode={ccgPostalCode}
+                            trimPostCode
+                            label="Ville ou commune *"
+                            hintText="Exemple : Montpellier"
+                            nativeInputProps={{
+                              id: Prisma.EntityScalarFieldEnum.ville,
+                              name: Prisma.EntityScalarFieldEnum.ville,
+                              autoComplete: 'off',
+                              required: true,
+                              defaultValue: '',
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <p className="my-4">
+                        Ceci ne remplace pas la déclaration officielle du centre de collecte du gibier sauvage
+                        (CCG). Cela permet simplement de pouvoir en faire référence dans Zacharie, en
+                        attendant son enregistrement (voir ci-dessous).
+                      </p>
+                      <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                        Enregistrer
+                      </Button>
+                      <RegisterCCG />
+                    </form>
+                  </div>
+                )}
+              </div>
               <div className="mb-16 ml-6 mt-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page

@@ -70,8 +70,6 @@ export default function RegistreCarcasses() {
     return filteredData.slice(start, end);
   }, [filteredData, page, itemsPerPage]);
 
-  const [showBackOnlineRefresh, setShowBackOnlineRefresh] = useState(false);
-
   useEffect(() => {
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type: 'REGISTRE_CARCASSES_OPEN' });
@@ -112,20 +110,8 @@ export default function RegistreCarcasses() {
 
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 p-4">
-          {showBackOnlineRefresh && (
-            <button
-              className="block bg-action-high-blue-france px-4 py-2 text-sm text-white"
-              onClick={() => {
-                window.location.reload();
-                setShowBackOnlineRefresh(false);
-              }}
-              type="button"
-            >
-              Vous êtes de retour en ligne. Cliquez <u>ici</u> pour rafraichir les données.
-            </button>
-          )}
-          <h1 className="mx-auto mb-8 flex flex-col fr-h2 fr-container">Registre des carcasses</h1>
-          <section className="mb-6 p-4 bg-white fr-container">
+          <h1 className="fr-h2 fr-container mx-auto mb-8 flex flex-col">Registre des carcasses</h1>
+          <section className="fr-container mb-6 bg-white p-4">
             <Filters
               onChange={setFilters}
               base={carcasseFilterableFields}
@@ -134,7 +120,7 @@ export default function RegistreCarcasses() {
             />
           </section>
           <section className="flex flex-row justify-between">
-            <p className="text-sm opacity-50 mb-6">
+            <p className="mb-6 text-sm opacity-50">
               {filteredData.length !== carcassesRegistry.length ? (
                 <>
                   Nombre d'éléments filtrés: {filteredData.length}
@@ -159,7 +145,7 @@ export default function RegistreCarcasses() {
                 );
               })}
             </p>
-            <div className="items-center gap-2 my-2 justify-end hidden sm:flex">
+            <div className="my-2 hidden items-center justify-end gap-2 sm:flex">
               <Button
                 onClick={() => {
                   const selectedCarcassesObject: Record<string, boolean> = {};
@@ -202,7 +188,7 @@ export default function RegistreCarcasses() {
                       <div className="flex flex-col items-start">
                         <Link
                           to={`/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
-                          className="block mr-auto"
+                          className="mr-auto block"
                         >
                           {carcasse.numero_bracelet}
                         </Link>
