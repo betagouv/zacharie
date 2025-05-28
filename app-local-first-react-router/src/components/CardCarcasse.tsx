@@ -4,10 +4,11 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
-import { Carcasse, CarcasseType, IPM1Decision, IPM2Decision, Prisma, UserRoles } from '@prisma/client';
+import { Carcasse, CarcasseType, IPM1Decision, IPM2Decision, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
+import ItemNotEditable from './ItemNotEditable';
 
 interface CardCarcasseProps {
   carcasse: Carcasse;
@@ -504,42 +505,5 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
         );
       })}
     </>
-  );
-}
-
-function ItemNotEditable({
-  label,
-  value,
-  withDiscs = false,
-}: {
-  label: string;
-  value: string | Array<string | null | undefined | React.ReactNode>;
-  withDiscs?: boolean;
-}) {
-  return (
-    <div className="mb-8 flex flex-col gap-2">
-      <p className="font-bold">{label}</p>
-      {Array.isArray(value) ? (
-        value.length > 0 ? (
-          <ul className={['ml-4 list-inside'].filter(Boolean).join(' ')}>
-            {value.map((item, index) => {
-              if (!item) return null;
-              if (typeof item === 'string') {
-                return (
-                  <li key={item + index}>
-                    <p className={['m-0 inline', withDiscs ? 'with-marker' : ''].join(' ')}>{item}</p>
-                  </li>
-                );
-              }
-              return <li key={index}>{item}</li>;
-            })}
-          </ul>
-        ) : (
-          <p className="ml-4">N/A</p>
-        )
-      ) : (
-        <p className="ml-4">{value}</p>
-      )}
-    </div>
   );
 }

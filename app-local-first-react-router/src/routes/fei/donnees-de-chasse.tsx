@@ -4,6 +4,7 @@ import { Carcasse, CarcasseType, Prisma, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
+import ItemNotEditable from '@app/components/ItemNotEditable';
 
 export default function FEIDonneesDeChasse({
   carcasseId,
@@ -68,7 +69,7 @@ export default function FEIDonneesDeChasse({
   const intermediairesInputs = useMemo(() => {
     const lines = [];
     let collecteurs = 0;
-    for (const intermediaire of intermediaires) {
+    for (const intermediaire of intermediaires.reverse()) {
       const intermediaireLines = [];
       const isCollecteur = intermediaire.fei_intermediaire_role === UserRoles.COLLECTEUR_PRO;
       const label = isCollecteur
@@ -93,6 +94,7 @@ export default function FEIDonneesDeChasse({
 
   const milestones = useMemo(() => {
     const _milestones = [
+      `Commune de mise à mort: ${fei?.commune_mise_a_mort ?? ''}`,
       `Date de mise à mort: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
       `Heure de mise à mort de la première carcasse de la fiche: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
     ];
@@ -105,6 +107,7 @@ export default function FEIDonneesDeChasse({
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG: ${etgDate}`);
     return _milestones;
   }, [
+    fei.commune_mise_a_mort,
     ccgDate,
     etgDate,
     onlyPetitGibier,
@@ -115,59 +118,18 @@ export default function FEIDonneesDeChasse({
 
   return (
     <>
-      <InputNotEditable
-        label="Examinateur Initial"
-        textArea
-        nativeTextAreaProps={{
-          rows: examinateurInitialInput.length,
-          defaultValue: examinateurInitialInput.join('\n'),
-        }}
+      <ItemNotEditable
+        label={carcasses.length > 1 ? 'Espèces' : 'Espèce'}
+        value={[...new Set(carcasses.map((c) => c.espece))].join(', ')}
       />
-      <InputNotEditable
-        label="Premier Détenteur"
-        textArea
-        nativeTextAreaProps={{
-          rows: premierDetenteurInput.length,
-          defaultValue: premierDetenteurInput.join('\n'),
-        }}
-      />
-      {intermediairesInputs.map((intermediaireInput) => {
-        const value = intermediaireInput.value.join('\n');
+      <ItemNotEditable label="Épisodes clés" value={milestones} />
+      <ItemNotEditable label="Examinateur Initial" value={examinateurInitialInput} />
+      <ItemNotEditable label="Premier Détenteur" value={premierDetenteurInput} />
+      {intermediairesInputs.map((intermediaireInput, index) => {
         return (
-          <InputNotEditable
-            key={value}
-            label={intermediaireInput.label}
-            textArea
-            nativeTextAreaProps={{
-              rows: intermediaireInput.value.length,
-              defaultValue: intermediaireInput.value.join('\n'),
-            }}
-          />
+          <ItemNotEditable key={index} label={intermediaireInput.label} value={intermediaireInput.value} />
         );
       })}
-      <InputNotEditable
-        label="Commune de mise à mort"
-        nativeInputProps={{
-          id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
-          name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
-          type: 'text',
-          defaultValue: fei?.commune_mise_a_mort ?? '',
-        }}
-      />
-      <InputNotEditable
-        label="Épisodes clés"
-        textArea
-        nativeTextAreaProps={{
-          rows: milestones.length,
-          defaultValue: milestones.join('\n'),
-        }}
-      />
-      <InputNotEditable
-        label={carcasses.length > 1 ? 'Espèces' : 'Espèce'}
-        nativeInputProps={{
-          defaultValue: [...new Set(carcasses.map((c) => c.espece))].join(', '),
-        }}
-      />
     </>
   );
 }
