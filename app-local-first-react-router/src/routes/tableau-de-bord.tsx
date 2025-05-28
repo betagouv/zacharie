@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { MainNavigation } from '@codegouvfr/react-dsfr/MainNavigation';
+import { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
@@ -14,6 +14,7 @@ import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
+import DropDownMenu from '@app/components/DropDownMenu';
 
 async function loadData() {
   await syncData('tableau-de-bord');
@@ -83,6 +84,21 @@ export default function TableauDeBordIndex() {
     });
   };
 
+  const [filter, setFilter] = useState<FeiStepSimpleStatus | 'Toutes les fiches'>('Toutes les fiches');
+  const dropDownMenuFilterText = useMemo(() => {
+    switch (filter) {
+      case 'Toutes les fiches':
+      default:
+        return 'Filtrer';
+      case 'À compléter':
+        return 'Fiches à compléter';
+      case 'En cours':
+        return 'Fiches en cours';
+      case 'Clôturée':
+        return 'Fiches clôturées';
+    }
+  }, [filter]);
+
   function Actions() {
     return (
       <div className="relative my-2 flex items-center justify-end gap-2">
@@ -111,33 +127,80 @@ export default function TableauDeBordIndex() {
             Nouvelle fiche
           </Button>
         )}
-        <MainNavigation
-          // prettier-ignore
-          className="[&_.fr-nav\_\_item]:!bg-white [&_.fr-nav\_\_btn]:!py-0 [&_.fr-nav\_\_btn]:!min-h-10 [&_.fr-nav\_\_btn]:!text-action-high-blue-france [&_.fr-nav\_\_btn]:!font-medium [&_.fr-nav\_\_btn]:!text-base hidden lg:block"
-          items={[
+        <DropDownMenu
+          text="Action sur les fiches sélectionnées"
+          isActive={selectedFeis.length > 0}
+          menuLinks={[
             {
-              text: 'Action sur les fiches sélectionnées',
-              className: 'fr-btn--tertiary',
-              isActive: selectedFeis.length > 0,
-              menuLinks: [
-                {
-                  linkProps: {
-                    href: '#',
-                    'aria-disabled': selectedFeis.length === 0,
-                    className: !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title:
-                      selectedFeis.length === 0
-                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                        : '',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      if (selectedFeis.length === 0) return;
-                      onExportToXlsx(selectedFeis);
-                    },
-                  },
-                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées',
+              linkProps: {
+                href: '#',
+                'aria-disabled': selectedFeis.length === 0,
+                className: !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                title:
+                  selectedFeis.length === 0
+                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                    : '',
+                onClick: (e) => {
+                  e.preventDefault();
+                  if (selectedFeis.length === 0) return;
+                  onExportToXlsx(selectedFeis);
                 },
-              ],
+              },
+              text: 'Télécharger un fichier Excel avec les fiches sélectionnées',
+            },
+          ]}
+        />
+        <DropDownMenu
+          text={dropDownMenuFilterText}
+          isActive={selectedFeis.length > 0}
+          menuLinks={[
+            {
+              linkProps: {
+                href: '#',
+                title: 'Toutes les fiches',
+                onClick: (e) => {
+                  e.preventDefault();
+                  setFilter('Toutes les fiches');
+                },
+              },
+              text: 'Toutes les fiches',
+              isActive: filter === 'Toutes les fiches',
+            },
+            {
+              linkProps: {
+                href: '#',
+                title: 'Fiches à compléter',
+                onClick: (e) => {
+                  e.preventDefault();
+                  setFilter('À compléter');
+                },
+              },
+              text: 'Fiches à compléter',
+              isActive: filter === 'À compléter',
+            },
+            {
+              linkProps: {
+                href: '#',
+                title: 'Fiches en cours',
+                onClick: (e) => {
+                  e.preventDefault();
+                  setFilter('En cours');
+                },
+              },
+              text: 'Fiches en cours',
+              isActive: filter === 'En cours',
+            },
+            {
+              linkProps: {
+                href: '#',
+                title: 'Fiches à compléter',
+                onClick: (e) => {
+                  e.preventDefault();
+                  setFilter('Clôturée');
+                },
+              },
+              text: 'Fiches clôturées',
+              isActive: filter === 'Clôturée',
             },
           ]}
         />
@@ -170,6 +233,7 @@ export default function TableauDeBordIndex() {
                       <CardFiche
                         key={fei.numero}
                         fei={fei}
+                        filter={filter}
                         onPrintSelect={handleCheckboxClick}
                         isPrintSelected={selectedFeis.includes(fei.numero)}
                       />
@@ -182,6 +246,7 @@ export default function TableauDeBordIndex() {
                       <CardFiche
                         key={fei.numero}
                         fei={fei}
+                        filter={filter}
                         onPrintSelect={handleCheckboxClick}
                         isPrintSelected={selectedFeis.includes(fei.numero)}
                       />
@@ -197,6 +262,7 @@ export default function TableauDeBordIndex() {
                     <CardFiche
                       key={fei.numero}
                       fei={fei}
+                      filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
                       disabledBecauseOffline={!isOnline}
@@ -214,6 +280,7 @@ export default function TableauDeBordIndex() {
                       <CardFiche
                         key={fei.numero}
                         fei={fei}
+                        filter={filter}
                         onPrintSelect={handleCheckboxClick}
                         isPrintSelected={selectedFeis.includes(fei.numero)}
                         disabledBecauseOffline={!isOnline}
@@ -227,6 +294,7 @@ export default function TableauDeBordIndex() {
                       <CardFiche
                         key={fei.numero}
                         fei={fei}
+                        filter={filter}
                         onPrintSelect={handleCheckboxClick}
                         isPrintSelected={selectedFeis.includes(fei.numero)}
                         disabledBecauseOffline={!isOnline}
