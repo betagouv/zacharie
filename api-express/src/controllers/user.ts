@@ -248,9 +248,13 @@ router.post(
 
     let entityId: string = body.entity_id;
     if (body.numero_ddecpp) {
+      const sanitizedNumeroDdecpp = body.numero_ddecpp
+        .split('-')
+        .map((part: string, index: number) => (index === 2 ? part.replace(/^0+/, '') : part))
+        .join('-');
       const entity = await prisma.entity.findFirst({
         where: {
-          numero_ddecpp: body.numero_ddecpp,
+          numero_ddecpp: sanitizedNumeroDdecpp,
           type: body.type as EntityTypes,
         },
       });
