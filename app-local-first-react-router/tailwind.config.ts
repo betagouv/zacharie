@@ -4,6 +4,9 @@ export default {
   content: ['./src/**/{**,.client,.server}/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
+      screens: {
+        xs: '450px',
+      },
       borderColor: {
         DEFAULT: '#000',
       },
