@@ -77,7 +77,7 @@ export default function FEI_SVI() {
 
   return (
     <>
-      <Section title="Données de chasse">
+      <Section open={false} title="Données de chasse">
         <FEIDonneesDeChasse />
       </Section>
       <Section title={`Carcasses à inspecter (${carcassesAAfficher.length})`}>
@@ -262,16 +262,16 @@ export default function FEI_SVI() {
           )}
         </form>
       </Section>
-      <div className="bg-white p-4 md:p-8">
-        {(fei.svi_signed_at || fei.automatic_closed_at) && (
+      {(fei.svi_signed_at || fei.automatic_closed_at) && (
+        <div className="bg-white px-4 pb-4 md:px-8 md:pb-8">
           <Alert
             severity="success"
             className="md:mx-4"
             description="L'inspection des carcasses est terminée, cette fiche est clôturée. Merci !"
             title="Fiche clôturée"
           />
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 }

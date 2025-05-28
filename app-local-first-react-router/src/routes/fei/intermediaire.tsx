@@ -450,6 +450,7 @@ export default function FEICurrentIntermediaire(props: Props) {
           <Section title="Prise en charge des carcasses acceptées">
             <form
               method="POST"
+              className="flex flex-col gap-y-4"
               id="form_intermediaire_check_finished_at"
               onSubmit={handleSubmitCheckFinishedAt}
             >
