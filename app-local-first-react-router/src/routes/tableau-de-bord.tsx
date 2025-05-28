@@ -135,7 +135,7 @@ export default function TableauDeBordIndex() {
               linkProps: {
                 href: '#',
                 'aria-disabled': selectedFeis.length === 0,
-                className: !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
                 title:
                   selectedFeis.length === 0
                     ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
@@ -143,6 +143,7 @@ export default function TableauDeBordIndex() {
                 onClick: (e) => {
                   e.preventDefault();
                   if (selectedFeis.length === 0) return;
+                  if (isExporting) return;
                   onExportToXlsx(selectedFeis);
                 },
               },
