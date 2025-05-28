@@ -11,6 +11,7 @@ interface CardProps {
   fei: FeiDone;
   onPrintSelect?: (feiNumber: string, selected: boolean) => void;
   isPrintSelected?: boolean;
+  disabledBecauseOffline?: boolean;
 }
 
 const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
@@ -29,7 +30,12 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
 };
 
 const maxDetailedLines = 2;
-export default function FicheCard({ fei, onPrintSelect, isPrintSelected = false }: CardProps) {
+export default function FicheCard({
+  fei,
+  onPrintSelect,
+  isPrintSelected = false,
+  disabledBecauseOffline = false,
+}: CardProps) {
   const { simpleStatus, currentStepLabel } = useFeiSteps(fei);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -97,6 +103,14 @@ export default function FicheCard({ fei, onPrintSelect, isPrintSelected = false 
     return lines;
   }, [carcassesAcceptées]);
 
+  /* 
+  {!isOnline && (
+                <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
+                  Vous ne pouvez pas accéder au détail de vos fiches archivées sans connexion internet.
+                </p>
+              )}
+  */
+
   return (
     <div
       className={[
@@ -104,6 +118,7 @@ export default function FicheCard({ fei, onPrintSelect, isPrintSelected = false 
         'w-full max-w-96',
         isPrintSelected ? 'border-2 border-action-high-blue-france' : 'border border-gray-200',
         menuOpen ? 'bg-active-tint' : '',
+        disabledBecauseOffline ? 'cursor-not-allowed opacity-50' : '',
       ].join(' ')}
     >
       {/* Print selection checkbox */}
@@ -127,12 +142,12 @@ export default function FicheCard({ fei, onPrintSelect, isPrintSelected = false 
         to={`/app/tableau-de-bord/fei/${fei.numero}`}
         className={[
           'flex size-full shrink-0 flex-col gap-y-2.5 bg-none p-5 !no-underline hover:!bg-active-tint hover:!no-underline',
-
           carcassesRefusées > 0
             ? 'border-l-3 border-warning-main-525'
             : simpleStatus === 'Clôturée'
               ? 'border-l-3 border-action-high-blue-france'
               : '',
+          disabledBecauseOffline ? 'pointer-events-none' : '',
         ].join(' ')}
       >
         <div className="absolute right-0 top-0 text-transparent selection:text-gray-200">{fei.numero}</div>
@@ -157,7 +172,7 @@ export default function FicheCard({ fei, onPrintSelect, isPrintSelected = false 
               <p
                 className={[
                   'line-clamp-2 text-sm capitalize',
-                  fei.commune_mise_a_mort ? 'text-black' : 'text-white',
+                  fei.commune_mise_a_mort ? 'text-black' : 'text-neutral-400',
                 ].join(' ')}
               >
                 {fei.commune_mise_a_mort
@@ -233,6 +248,13 @@ export default function FicheCard({ fei, onPrintSelect, isPrintSelected = false 
         )}
         <div className="absolute bottom-0 right-0 text-transparent selection:text-gray-200">{fei.numero}</div>
       </Link>
+      {disabledBecauseOffline && (
+        <div className="absolute bottom-0 left-0 flex grow flex-row items-end gap-x-2 bg-action-high-blue-france px-2 py-1">
+          <p className="text-sm italic text-white">
+            Vous ne pouvez pas accéder au détail de vos fiches clôturées sans connexion internet.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

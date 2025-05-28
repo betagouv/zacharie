@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { Carcasse, CarcasseType, Prisma, UserRoles } from '@prisma/client';
-import InputNotEditable from '@app/components/InputNotEditable';
+import { Carcasse, CarcasseType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import ItemNotEditable from '@app/components/ItemNotEditable';

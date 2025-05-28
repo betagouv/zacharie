@@ -80,7 +80,7 @@ export default function RootDisplay({
           title: "Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire",
         }}
         id="fr-header-header-with-quick-access-items"
-        className="[&_.fr-header\_\_service-title]:flex [&_.fr-header\_\_service-title]:items-end"
+        className="[&_.fr-header\\_\\_service-title]:flex [&_.fr-header\\_\\_service-title]:items-end"
         navigation={navigation}
         allowEmptySearch={false}
         renderSearchInput={RenderedSearchInput}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
+import { MainNavigation } from '@codegouvfr/react-dsfr/MainNavigation';
 import { UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
@@ -31,10 +31,8 @@ export default function TableauDeBordIndex() {
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
-  const [showBackOnlineRefresh, setShowBackOnlineRefresh] = useState(false);
-  const isOnline = useIsOnline(() => {
-    setShowBackOnlineRefresh(true);
-  });
+  const [loading, setLoading] = useState(false);
+  const isOnline = useIsOnline();
 
   useEffect(() => {
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
@@ -85,329 +83,166 @@ export default function TableauDeBordIndex() {
     });
   };
 
-  return (
-    <div className="fr-container fr-container--fluid fr-my-md-14v">
-      <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          {showBackOnlineRefresh && (
-            <button
-              className="block bg-action-high-blue-france px-4 py-2 text-sm text-white"
-              onClick={() => {
-                window.location.reload();
-                setShowBackOnlineRefresh(false);
-              }}
-              type="button"
-            >
-              Vous êtes de retour en ligne. Cliquez <u>ici</u> pour rafraichir les données.
-            </button>
-          )}
-
-          {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
-            <ButtonsGroup
-              className="block sm:hidden"
-              buttons={[
+  function Actions() {
+    return (
+      <div className="relative my-2 flex items-center justify-end gap-2">
+        <Button
+          priority="tertiary"
+          className="bg-white"
+          iconId="ri-refresh-line"
+          disabled={!isOnline || loading}
+          onClick={async () => {
+            setLoading(true);
+            await loadData();
+            setLoading(false);
+          }}
+        >
+          Mettre à jour
+        </Button>
+        {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
+          <Button
+            priority="primary"
+            className="block lg:hidden"
+            onClick={() => {
+              const newFei = createNewFei();
+              navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+            }}
+          >
+            Nouvelle fiche
+          </Button>
+        )}
+        <MainNavigation
+          // prettier-ignore
+          className="[&_.fr-nav\_\_item]:!bg-white [&_.fr-nav\_\_btn]:!py-0 [&_.fr-nav\_\_btn]:!min-h-10 [&_.fr-nav\_\_btn]:!text-action-high-blue-france [&_.fr-nav\_\_btn]:!font-medium [&_.fr-nav\_\_btn]:!text-base hidden lg:block"
+          items={[
+            {
+              text: 'Action sur les fiches sélectionnées',
+              className: 'fr-btn--tertiary',
+              isActive: selectedFeis.length > 0,
+              menuLinks: [
                 {
-                  children: 'Nouvelle fiche',
-                  nativeButtonProps: {
-                    onClick: () => {
-                      const newFei = createNewFei();
-                      navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+                  linkProps: {
+                    href: '#',
+                    'aria-disabled': selectedFeis.length === 0,
+                    className: !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                    title:
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                        : '',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      if (selectedFeis.length === 0) return;
+                      onExportToXlsx(selectedFeis);
                     },
                   },
+                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées',
                 },
-              ]}
-            />
-          )}
-          <div className="my-2 hidden items-center justify-end gap-2 lg:flex">
-            <Button
-              onClick={() => {
-                onExportToXlsx(selectedFeis);
-              }}
-              disabled={selectedFeis.length === 0 || isExporting}
-              title={
-                selectedFeis.length === 0
-                  ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                  : ''
-              }
-            >
-              Télécharger un fichier Excel avec les fiches sélectionnées
-            </Button>
-          </div>
-          {!!selectedFeis.length && (
-            <div className="fixed bottom-0 left-0 right-0 z-50 flex w-screen items-center justify-center bg-white py-4 shadow">
-              <Button
-                onClick={() => {
-                  onExportToXlsx(selectedFeis);
-                }}
-                disabled={selectedFeis.length === 0 || isExporting}
-                title={
-                  selectedFeis.length === 0
-                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                    : ''
-                }
-              >
-                Télécharger un fichier Excel avec les fiches sélectionnées
-              </Button>
+              ],
+            },
+          ]}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="fixed top-0 z-30 w-full bg-white shadow-md">
+        <div className="fr-container mx-auto">
+          <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+            <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+              <Actions />
             </div>
-          )}
-          {!isOnlySvi && (
-            <>
-              <section className="mb-6">
-                <div className="p-4 md:p-8 md:pb-0">
-                  <h2 className="fr-h3">
-                    Fiches à compléter{feisAssigned.length > 0 ? ` (${feisAssigned.length})` : null}
-                  </h2>
-                </div>
-                {feisAssigned.length ? (
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {feisAssigned
-                      .filter((fei) => fei !== null)
-                      .map((fei) => {
-                        return (
-                          <CardFiche
-                            key={fei.numero}
-                            fei={fei}
-                            onPrintSelect={handleCheckboxClick}
-                            isPrintSelected={selectedFeis.includes(fei.numero)}
-                          />
-                        );
-                      })}
-                  </div>
-                ) : (
-                  <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
-                    Pas de fiche assignée
-                  </p>
-                )}
-                <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
-                  <Button
-                    priority="tertiary"
-                    className="bg-white"
-                    iconId="ri-refresh-line"
-                    disabled={!isOnline}
-                    onClick={loadData}
-                  >
-                    Mettre à jour
-                  </Button>
-                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                    Haut de page
-                  </a>
-                </div>
-              </section>
-              {feisOngoing.length > 0 && (
-                <section className="mb-6">
-                  <div className="p-4 md:p-8 md:pb-0">
-                    <h2 className="fr-h3">
-                      Fiches en cours
-                      {feisOngoing.length > 0 ? ` (${feisOngoing.length})` : null}
-                    </h2>
-                  </div>
-                  {feisOngoing.length ? (
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {feisOngoing
-                        .filter((fei) => fei !== null)
-                        .map((fei) => {
-                          return (
-                            <CardFiche
-                              key={fei.numero}
-                              fei={fei}
-                              onPrintSelect={handleCheckboxClick}
-                              isPrintSelected={selectedFeis.includes(fei.numero)}
-                            />
-                          );
-                        })}
-                    </div>
-                  ) : (
-                    <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
-                      Pas de fiche en cours
-                    </p>
-                  )}
-                  <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
-                    <Button
-                      priority="tertiary"
-                      className="bg-white"
-                      iconId="ri-refresh-line"
-                      disabled={!isOnline}
-                      onClick={loadData}
-                    >
-                      Mettre à jour
-                    </Button>
-                    <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                      Haut de page
-                    </a>
-                  </div>
-                </section>
-              )}
-            </>
-          )}
-          {!isOnlySvi && (
-            <details
-              className="mb-6 open:[&_summary]:md:pb-0"
-              open
-              // open={window.sessionStorage.getItem('fiches-cloturees-opened') ? true : false}
-              // onToggle={() => {
-              //   console.log('tottle');
-              //   if (window.sessionStorage.getItem('fiches-cloturees-opened')) {
-              //     window.sessionStorage.removeItem('fiches-cloturees-opened');
-              //   } else {
-              //     window.sessionStorage.setItem('fiches-cloturees-opened', 'true');
-              //   }
-              // }}
-            >
-              {!isOnline && (
-                <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
-                  Vous ne pouvez pas accéder au détail de vos fiches archivées sans connexion internet.
-                </p>
-              )}
-              <summary className="p-4 md:p-8">
-                <h2 className="fr-h3 inline">
-                  Fiches clôturées ou en cours d'inspection par le service vétérinaire{' '}
-                  {feisDoneNumeros.length > 0 ? ` (${feisDoneNumeros.length})` : null}
-                </h2>
-              </summary>
-              <div className="py-2 md:pb-0 md:pt-2">
-                {feisDoneNumeros.length ? (
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {feisDoneNumeros.map((feiNumero) => {
-                      const fei = feisDone[feiNumero]!;
-                      if (!fei) {
-                        return null;
-                      }
-                      return (
-                        <CardFiche
-                          key={fei.numero}
-                          fei={fei}
-                          onPrintSelect={handleCheckboxClick}
-                          isPrintSelected={selectedFeis.includes(fei.numero)}
-                        />
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
-                    Pas encore de fiche
-                  </p>
-                )}
-              </div>
-              <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
-                <Button
-                  priority="tertiary"
-                  className="bg-white"
-                  iconId="ri-refresh-line"
-                  disabled={!isOnline}
-                  onClick={loadData}
-                >
-                  Mettre à jour
-                </Button>
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                  Haut de page
-                </a>
-              </div>
-            </details>
-          )}
-          {isOnlySvi && (
-            <>
-              <section className="mb-6">
-                {!isOnline && (
-                  <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
-                    Vous ne pouvez pas accéder au détail de vos fiches sans connexion internet.
-                  </p>
-                )}
-                <div className="p-4 md:p-8">
-                  <h2 className="fr-h3 inline">
-                    Fiches sous ma responsabilité{' '}
-                    {feiActivesForSvi.length > 0 ? ` (${feiActivesForSvi.length})` : null}
-                  </h2>
-                </div>
-                <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2">
-                  {feiActivesForSvi.length ? (
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {feiActivesForSvi
-                        .filter((fei) => fei !== null)
-                        .map((fei) => {
-                          return (
-                            <CardFiche
-                              key={fei.numero}
-                              fei={fei}
-                              onPrintSelect={handleCheckboxClick}
-                              isPrintSelected={selectedFeis.includes(fei.numero)}
-                            />
-                          );
-                        })}
-                    </div>
-                  ) : (
-                    <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
-                      Pas encore de fiche sous ma responsabilité
-                    </p>
-                  )}
-                </div>
-                <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
-                  <Button
-                    priority="tertiary"
-                    className="bg-white"
-                    iconId="ri-refresh-line"
-                    disabled={!isOnline}
-                    onClick={loadData}
-                  >
-                    Mettre à jour
-                  </Button>
-                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                    Haut de page
-                  </a>
-                </div>
-              </section>
-              <section className="mb-6">
-                {!isOnline && (
-                  <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
-                    Vous ne pouvez pas accéder au détail de vos fiches sans connexion internet.
-                  </p>
-                )}
-                <div className="p-4 md:p-8">
-                  <h2 className="fr-h3 inline">
-                    Fiches clôturées {feisDoneForSvi.length > 0 ? ` (${feisDoneForSvi.length})` : null}
-                  </h2>
-                </div>
-                <div className="px-4 py-2 md:px-8 md:pb-0 md:pt-2">
-                  {feisDoneForSvi.length ? (
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {feisDoneForSvi
-                        .filter((fei) => fei !== null)
-                        .map((fei) => {
-                          return (
-                            <CardFiche
-                              key={fei.numero}
-                              fei={fei}
-                              onPrintSelect={handleCheckboxClick}
-                              isPrintSelected={selectedFeis.includes(fei.numero)}
-                            />
-                          );
-                        })}
-                    </div>
-                  ) : (
-                    <p className="flex max-w-96 shrink-0 cursor-pointer flex-col gap-3 rounded border border-gray-200 bg-white bg-none p-6 !no-underline hover:!no-underline">
-                      Pas encore de fiche clôturée
-                    </p>
-                  )}
-                </div>
-                <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
-                  <Button
-                    priority="tertiary"
-                    className="bg-white"
-                    iconId="ri-refresh-line"
-                    disabled={!isOnline}
-                    onClick={loadData}
-                  >
-                    Mettre à jour
-                  </Button>
-                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                    Haut de page
-                  </a>
-                </div>
-              </section>
-            </>
-          )}
+          </div>
         </div>
       </div>
-    </div>
+      <div className="fr-container fr-container--fluid">
+        <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
+          <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+            <Actions />
+            {!isOnlySvi && (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {feisAssigned
+                  .filter((fei) => fei !== null)
+                  .map((fei) => {
+                    return (
+                      <CardFiche
+                        key={fei.numero}
+                        fei={fei}
+                        onPrintSelect={handleCheckboxClick}
+                        isPrintSelected={selectedFeis.includes(fei.numero)}
+                      />
+                    );
+                  })}
+                {feisOngoing
+                  .filter((fei) => fei !== null)
+                  .map((fei) => {
+                    return (
+                      <CardFiche
+                        key={fei.numero}
+                        fei={fei}
+                        onPrintSelect={handleCheckboxClick}
+                        isPrintSelected={selectedFeis.includes(fei.numero)}
+                      />
+                    );
+                  })}
+
+                {feisDoneNumeros.map((feiNumero) => {
+                  const fei = feisDone[feiNumero]!;
+                  if (!fei) {
+                    return null;
+                  }
+                  return (
+                    <CardFiche
+                      key={fei.numero}
+                      fei={fei}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                      disabledBecauseOffline={!isOnline}
+                    />
+                  );
+                })}
+              </div>
+            )}
+            {isOnlySvi && (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {feiActivesForSvi
+                  .filter((fei) => fei !== null)
+                  .map((fei) => {
+                    return (
+                      <CardFiche
+                        key={fei.numero}
+                        fei={fei}
+                        onPrintSelect={handleCheckboxClick}
+                        isPrintSelected={selectedFeis.includes(fei.numero)}
+                        disabledBecauseOffline={!isOnline}
+                      />
+                    );
+                  })}
+                {feisDoneForSvi
+                  .filter((fei) => fei !== null)
+                  .map((fei) => {
+                    return (
+                      <CardFiche
+                        key={fei.numero}
+                        fei={fei}
+                        onPrintSelect={handleCheckboxClick}
+                        isPrintSelected={selectedFeis.includes(fei.numero)}
+                        disabledBecauseOffline={!isOnline}
+                      />
+                    );
+                  })}
+              </div>
+            )}
+            <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
+              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                Haut de page
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
