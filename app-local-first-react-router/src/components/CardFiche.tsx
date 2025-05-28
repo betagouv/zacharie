@@ -12,6 +12,7 @@ interface CardProps {
   onPrintSelect?: (feiNumber: string, selected: boolean) => void;
   isPrintSelected?: boolean;
   disabledBecauseOffline?: boolean;
+  filter: FeiStepSimpleStatus | 'Toutes les fiches';
 }
 
 const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
@@ -30,11 +31,12 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
 };
 
 const maxDetailedLines = 2;
-export default function FicheCard({
+export default function CardFiche({
   fei,
   onPrintSelect,
   isPrintSelected = false,
   disabledBecauseOffline = false,
+  filter,
 }: CardProps) {
   const { simpleStatus, currentStepLabel } = useFeiSteps(fei);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -110,6 +112,10 @@ export default function FicheCard({
                 </p>
               )}
   */
+
+  if (filter !== 'Toutes les fiches' && filter !== simpleStatus) {
+    return null;
+  }
 
   return (
     <div
