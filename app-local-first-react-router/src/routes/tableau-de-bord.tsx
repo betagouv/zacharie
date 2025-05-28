@@ -128,30 +128,6 @@ export default function TableauDeBordIndex() {
           </Button>
         )}
         <DropDownMenu
-          text="Action sur les fiches sélectionnées"
-          isActive={selectedFeis.length > 0}
-          menuLinks={[
-            {
-              linkProps: {
-                href: '#',
-                'aria-disabled': selectedFeis.length === 0,
-                className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                title:
-                  selectedFeis.length === 0
-                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                    : '',
-                onClick: (e) => {
-                  e.preventDefault();
-                  if (selectedFeis.length === 0) return;
-                  if (isExporting) return;
-                  onExportToXlsx(selectedFeis);
-                },
-              },
-              text: 'Télécharger un fichier Excel avec les fiches sélectionnées',
-            },
-          ]}
-        />
-        <DropDownMenu
           text={dropDownMenuFilterText}
           isActive={selectedFeis.length > 0}
           menuLinks={[
@@ -202,6 +178,30 @@ export default function TableauDeBordIndex() {
               },
               text: 'Fiches clôturées',
               isActive: filter === 'Clôturée',
+            },
+          ]}
+        />
+        <DropDownMenu
+          text="Action sur les fiches sélectionnées"
+          isActive={selectedFeis.length > 0}
+          menuLinks={[
+            {
+              linkProps: {
+                href: '#',
+                'aria-disabled': selectedFeis.length === 0,
+                className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                title:
+                  selectedFeis.length === 0
+                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                    : '',
+                onClick: (e) => {
+                  e.preventDefault();
+                  if (selectedFeis.length === 0) return;
+                  if (isExporting) return;
+                  onExportToXlsx(selectedFeis);
+                },
+              },
+              text: 'Télécharger un fichier Excel avec les fiches sélectionnées',
             },
           ]}
         />
