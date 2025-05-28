@@ -9,7 +9,7 @@ import prisma from '~/prisma';
 //
 
 function insertCCGsDéclarésInDB() {
-  const sourcePath = path.resolve('../../ccgs.csv');
+  const sourcePath = path.resolve('../../ccgs-déclarés.csv');
 
   // Check if file exists
   if (!fs.existsSync(sourcePath)) {
@@ -74,5 +74,69 @@ function insertCCGsDéclarésInDB() {
     });
 }
 
+function insertCCGsAgréésInDB() {
+  const sourcePath = path.resolve('../../ccgs-agréés.csv');
+
+  // Check if file exists
+  if (!fs.existsSync(sourcePath)) {
+    console.error(`CSV file not found at: ${sourcePath}`);
+    return;
+  }
+
+  // Read and parse CSV file
+  fs.createReadStream(sourcePath)
+    .pipe(
+      parse({
+        columns: true, // Use first row as column headers
+        skip_empty_lines: true,
+        relax_column_count: true, // Allow inconsistent column counts
+        skip_records_with_error: false, // Skip problematic records instead of failing
+      }),
+    )
+    .on('data', async (row) => {
+      const cleanRow: Prisma.EntityUncheckedCreateInput = {
+        type: EntityTypes.CCG,
+        siret: row['SIRET'],
+        nom_d_usage: row['Raison SOCIALE - Enseigne commerciale/Name'],
+        raison_sociale: row['Raison SOCIALE - Enseigne commerciale/Name'],
+        numero_ddecpp: row['Numéro agrément/Approval number'],
+        address_ligne_1: row['Adresse/Adress']?.trim(),
+        code_postal: row['Code postal/Postal code'],
+        ville: row['Commune/Town'],
+        ccg_status: 'Agréé',
+      };
+      if (!cleanRow.numero_ddecpp) {
+        // console.log('No numeroDdecpp found for row:', row);
+        return;
+      }
+      const existingEntity = await prisma.entity.findFirst({
+        where: {
+          numero_ddecpp: cleanRow.numero_ddecpp,
+        },
+      });
+      if (!existingEntity) {
+        console.log('Creating entity:', cleanRow.numero_ddecpp);
+        await prisma.entity.create({
+          data: cleanRow,
+        });
+        return;
+      }
+      console.log('Updating entity:', cleanRow.numero_ddecpp);
+      await prisma.entity.update({
+        where: { id: existingEntity.id },
+        data: cleanRow,
+      });
+    })
+    .on('error', (err) => {
+      console.error('Error reading CSV:', err);
+    })
+    .on('skip', (err) => {
+      console.warn('Skipped problematic record:', err.message);
+    })
+    .on('end', () => {
+      console.log('Finished reading CSV file');
+    });
+}
+
 // Call the function
-insertCCGsDéclarésInDB();
+insertCCGsAgréésInDB();
