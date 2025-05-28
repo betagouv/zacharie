@@ -295,6 +295,7 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
 
   const milestones = useMemo(() => {
     const _milestones = [
+      `Commune de mise à mort: ${fei?.commune_mise_a_mort ?? ''}`,
       `Date de mise à mort: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
       `Heure de mise à mort de la première carcasse de la fiche: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
     ];
@@ -502,7 +503,6 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
           <ItemNotEditable key={index} label={intermediaireInput.label} value={intermediaireInput.value} />
         );
       })}
-      <ItemNotEditable label="Commune de mise à mort" value={fei?.commune_mise_a_mort ?? ''} />
     </>
   );
 }
