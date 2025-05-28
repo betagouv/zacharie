@@ -5,9 +5,6 @@ import { EntityRelationType, EntityTypes, Prisma, UserRoles } from '@prisma/clie
 import prisma from '~/prisma';
 
 // le fichier est un export Excel de l'administration - non public
-// on le transforme en CSV d'abord
-//
-
 function insertCCGsDéclarésInDB() {
   const sourcePath = path.resolve('../../ccgs-déclarés.csv');
 
@@ -74,6 +71,7 @@ function insertCCGsDéclarésInDB() {
     });
 }
 
+// https://fichiers-publics.agriculture.gouv.fr/dgal/ListesOfficielles/SSA1_VIAN_GIB_SAUV.txt
 function insertCCGsAgréésInDB() {
   const sourcePath = path.resolve('../../ccgs-agréés.csv');
 
@@ -140,3 +138,4 @@ function insertCCGsAgréésInDB() {
 
 // Call the function
 insertCCGsAgréésInDB();
+insertCCGsDéclarésInDB();

@@ -236,132 +236,149 @@ router.post(
   '/user-entity/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
   authorizeUserOrAdmin,
-  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
-    const body = req.body;
-    const userId = req.params.user_id;
-    const isAdmin = req.isAdmin;
+  catchErrors(
+    async (req: RequestWithUser, res: express.Response<UserEntityResponse>, next: express.NextFunction) => {
+      const body = req.body as {
+        owner_id: string;
+        entity_id: string;
+        numero_ddecpp: string;
+        type: EntityTypes;
+        _action: 'create' | 'delete';
+        relation: EntityRelationType;
+      };
+      const userId = req.params.user_id;
+      const isAdmin = req.isAdmin;
 
-    if (!body.owner_id) {
-      res.status(400).send({ ok: false, data: { relation: null, entity: null }, error: 'Missing owner_id' });
-      return;
-    }
-
-    let entityId: string = body.entity_id;
-    if (body.numero_ddecpp) {
-      const sanitizedNumeroDdecpp = body.numero_ddecpp.includes('CCG')
-        ? body.numero_ddecpp
-            .split('-')
-            .map((part: string, index: number) => (index === 2 ? part.replace(/^0+/, '') : part))
-            .join('-')
-        : body.numero_ddecpp;
-      const entity = await prisma.entity.findFirst({
-        where: {
-          numero_ddecpp: sanitizedNumeroDdecpp,
-          type: body.type as EntityTypes,
-        },
-      });
-      if (!entity) {
-        res.status(404).send({
-          ok: false,
-          data: { relation: null, entity: null },
-          error: "Ce Centre de Collecte n'existe pas",
-        } satisfies UserEntityResponse);
+      if (!body.owner_id) {
+        res
+          .status(400)
+          .send({ ok: false, data: { relation: null, entity: null }, error: 'Missing owner_id' });
         return;
       }
-      entityId = entity?.id || '';
-    }
 
-    if (!entityId) {
-      res.status(400).send({
-        ok: false,
-        data: { relation: null, entity: null },
-        error: 'Missing entity_id',
-      } satisfies UserEntityResponse);
-      return;
-    }
+      let entityId: string = body.entity_id;
+      if (body.numero_ddecpp && body.type === EntityTypes.CCG) {
+        const sanitizedNumeroDdecpp = body.numero_ddecpp.toLowerCase().includes('ccg')
+          ? body.numero_ddecpp
+              .split('-')
+              .map((part: string, index: number) => {
+                if (index === 2) {
+                  return part.replace(/^0+/, '');
+                }
+                if (index === 1) {
+                  return part.toLocaleUpperCase();
+                }
+                return part;
+              })
+              .join('-')
+          : body.numero_ddecpp;
+        const entity = await prisma.entity.findFirst({
+          where: {
+            numero_ddecpp: sanitizedNumeroDdecpp,
+            type: body.type as EntityTypes,
+          },
+        });
+        if (!entity) {
+          res.status(404).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error: "Ce Centre de Collecte n'existe pas",
+          });
+          return;
+        }
+        entityId = entity?.id || '';
+      }
 
-    if (!isAdmin && userId !== body.owner_id) {
-      res.status(401).send({
-        ok: false,
-        data: { relation: null, entity: null },
-        error: 'Unauthorized',
-      } satisfies UserEntityResponse);
-      return;
-    }
-
-    // Handle create action
-    if (body._action === 'create') {
-      if (!body.relation) {
+      if (!entityId) {
         res.status(400).send({
           ok: false,
           data: { relation: null, entity: null },
-          error: 'Missing relation',
-        } satisfies UserEntityResponse);
+          error: 'Missing entity_id',
+        });
         return;
       }
 
-      const nextEntityRelation = {
-        owner_id: body.owner_id,
-        entity_id: entityId,
-        relation: body.relation as EntityRelationType,
-      };
-
-      const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
-        where: nextEntityRelation,
-      });
-
-      if (existingEntityRelation) {
-        res.status(409).send({
+      if (!isAdmin && userId !== body.owner_id) {
+        res.status(401).send({
           ok: false,
           data: { relation: null, entity: null },
-          error: 'Vous avez déjà ajouté cette entité',
-        } satisfies UserEntityResponse);
+          error: 'Unauthorized',
+        });
         return;
       }
 
-      const relation = await prisma.entityAndUserRelations.create({
-        data: nextEntityRelation,
-      });
+      // Handle create action
+      if (body._action === 'create') {
+        if (!body.relation) {
+          res.status(400).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error: 'Missing relation',
+          });
+          return;
+        }
 
-      const entity = await prisma.entity.findUnique({
-        where: {
-          id: entityId,
-        },
-      });
-
-      res.status(200).send({ ok: true, data: { relation, entity }, error: '' } satisfies UserEntityResponse);
-      return;
-    }
-
-    // Handle delete action
-    if (body._action === 'delete') {
-      const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
-        where: {
+        const nextEntityRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
           owner_id: body.owner_id,
-          relation: body.relation as EntityRelationType,
           entity_id: entityId,
-        },
-      });
+          relation: body.relation as EntityRelationType,
+        };
 
-      if (existingEntityRelation) {
-        await prisma.entityAndUserRelations.delete({
+        const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
+          where: nextEntityRelation,
+        });
+
+        if (existingEntityRelation) {
+          res.status(409).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error: 'Vous avez déjà ajouté cette entité',
+          });
+          return;
+        }
+
+        const relation = await prisma.entityAndUserRelations.create({
+          data: nextEntityRelation,
+        });
+
+        const entity = await prisma.entity.findUnique({
           where: {
-            id: existingEntityRelation.id,
+            id: entityId,
           },
         });
-      }
-      res
-        .status(200)
-        .send({ ok: true, data: { relation: null, entity: null }, error: '' } satisfies UserEntityResponse);
-      return;
-    }
 
-    res.status(400).send({
-      ok: false,
-      data: { relation: null, entity: null },
-      error: 'Invalid action',
-    } satisfies UserEntityResponse);
-  }),
+        res.status(200).send({ ok: true, data: { relation, entity }, error: '' });
+        return;
+      }
+
+      // Handle delete action
+      if (body._action === 'delete') {
+        const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
+          where: {
+            owner_id: body.owner_id,
+            relation: body.relation as EntityRelationType,
+            entity_id: entityId,
+          },
+        });
+
+        if (existingEntityRelation) {
+          await prisma.entityAndUserRelations.delete({
+            where: {
+              id: existingEntityRelation.id,
+            },
+          });
+        }
+        res.status(200).send({ ok: true, data: { relation: null, entity: null }, error: '' });
+        return;
+      }
+
+      res.status(400).send({
+        ok: false,
+        data: { relation: null, entity: null },
+        error: 'Invalid action',
+      });
+    },
+  ),
 );
 
 router.post(
@@ -452,106 +469,106 @@ router.post(
 router.post(
   '/fei/trouver-premier-detenteur',
   passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
-    const user = req.user!;
-    const body = req.body as Record<'email' | 'numero', string>;
-    const userId = req.params.user_id;
+  catchErrors(
+    async (req: RequestWithUser, res: express.Response<UserForFeiResponse>, next: express.NextFunction) => {
+      const user = req.user!;
+      const body = req.body as Record<'email' | 'numero', string>;
+      const userId = req.params.user_id;
 
-    console.log('body', body);
-    if (!body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
-      res.status(400).send({
-        ok: false,
-        data: {
-          user: null,
+      console.log('body', body);
+      if (!body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
+        res.status(400).send({
+          ok: false,
+          data: {
+            user: null,
+          },
+          error: "L'email est obligatoire",
+        });
+        return;
+      }
+      if (!body.hasOwnProperty(Prisma.FeiScalarFieldEnum.numero)) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: 'Le numéro de la fiche est obligatoire',
+        });
+        return;
+      }
+      const fei = await prisma.fei.findUnique({
+        where: {
+          numero: body[Prisma.FeiScalarFieldEnum.numero],
+          fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
         },
-        error: "L'email est obligatoire",
-      } satisfies UserForFeiResponse);
-      return;
-    }
-    if (!body.hasOwnProperty(Prisma.FeiScalarFieldEnum.numero)) {
-      res.status(400).send({
-        ok: false,
-        data: { user: null },
-        error: 'Le numéro de la fiche est obligatoire',
-      } satisfies UserForFeiResponse);
-      return;
-    }
-    const fei = await prisma.fei.findUnique({
-      where: {
-        numero: body[Prisma.FeiScalarFieldEnum.numero],
-        fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
-      },
-    });
-    if (!fei) {
-      res.status(400).send({
-        ok: false,
-        data: { user: null },
-        error: "La fiche n'existe pas",
-      } satisfies UserForFeiResponse);
-      return;
-    }
-    const nextPremierDetenteur = await prisma.user.findUnique({
-      where: {
-        email: body[Prisma.UserScalarFieldEnum.email],
-      },
-    });
-    if (!nextPremierDetenteur) {
-      res.status(400).send({
-        ok: false,
-        data: { user: null },
-        error: "L'utilisateur n'existe pas",
-      } satisfies UserForFeiResponse);
-      return;
-    }
+      });
+      if (!fei) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: "La fiche n'existe pas",
+        });
+        return;
+      }
+      const nextPremierDetenteur = await prisma.user.findUnique({
+        where: {
+          email: body[Prisma.UserScalarFieldEnum.email],
+        },
+      });
+      if (!nextPremierDetenteur) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: "L'utilisateur n'existe pas",
+        });
+        return;
+      }
 
-    const existingRelation = await prisma.userRelations.findFirst({
-      where: {
-        owner_id: user.id,
-        related_id: nextPremierDetenteur.id,
-        relation: UserRelationType.PREMIER_DETENTEUR,
-      },
-    });
-
-    if (!existingRelation) {
-      await prisma.userRelations.create({
-        data: {
+      const existingRelation = await prisma.userRelations.findFirst({
+        where: {
           owner_id: user.id,
           related_id: nextPremierDetenteur.id,
           relation: UserRelationType.PREMIER_DETENTEUR,
         },
       });
-    }
 
-    await prisma.fei.update({
-      where: {
-        numero: fei.numero,
-      },
-      data: {
-        fei_next_owner_user_id: nextPremierDetenteur.id,
-      },
-    });
+      if (!existingRelation) {
+        await prisma.userRelations.create({
+          data: {
+            owner_id: user.id,
+            related_id: nextPremierDetenteur.id,
+            relation: UserRelationType.PREMIER_DETENTEUR,
+          },
+        });
+      }
 
-    if (nextPremierDetenteur.id !== user.id) {
-      await sendNotificationToUser({
-        user: nextPremierDetenteur!,
-        title: 'Vous avez une nouvelle fiche à traiter',
-        body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
-        email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${fei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
-        notificationLogAction: `FEI_ASSIGNED_TO_${UserRelationType.PREMIER_DETENTEUR}_${fei.numero}`,
+      await prisma.fei.update({
+        where: {
+          numero: fei.numero,
+        },
+        data: {
+          fei_next_owner_user_id: nextPremierDetenteur.id,
+        },
       });
-    }
 
-    const nextPremierDetenteurForFei = await prisma.user.findUnique({
-      where: {
-        email: body[Prisma.UserScalarFieldEnum.email],
-      },
-      select: userFeiSelect,
-    });
+      if (nextPremierDetenteur.id !== user.id) {
+        await sendNotificationToUser({
+          user: nextPremierDetenteur!,
+          title: 'Vous avez une nouvelle fiche à traiter',
+          body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
+          email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${fei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
+          notificationLogAction: `FEI_ASSIGNED_TO_${UserRelationType.PREMIER_DETENTEUR}_${fei.numero}`,
+        });
+      }
 
-    res
-      .status(200)
-      .send({ ok: true, data: { user: nextPremierDetenteurForFei }, error: '' } satisfies UserForFeiResponse);
-  }),
+      const nextPremierDetenteurForFei = await prisma.user.findUnique({
+        where: {
+          email: body[Prisma.UserScalarFieldEnum.email],
+        },
+        select: userFeiSelect,
+      });
+
+      res.status(200).send({ ok: true, data: { user: nextPremierDetenteurForFei }, error: '' });
+    },
+  ),
 );
 
 router.post(
@@ -669,70 +686,72 @@ router.post(
 router.get(
   '/fei/:fei_numero/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
-    const user = req.user!;
-    if (!req.params.fei_numero) {
-      res.status(401).send({ ok: false, data: null, error: 'Missing fei_numero' });
-      return;
-    }
-    const fei = await prisma.fei.findUnique({
-      where: {
-        numero: req.params.fei_numero as string,
-        deleted_at: null,
-      },
-    });
-    if (!fei) {
-      res.status(401).send({
-        ok: false,
-        data: null,
-        error: 'Unauthorized',
+  catchErrors(
+    async (req: RequestWithUser, res: express.Response<UserForFeiResponse>, next: express.NextFunction) => {
+      const user = req.user!;
+      if (!req.params.fei_numero) {
+        res.status(401).send({ ok: false, data: null, error: 'Missing fei_numero' });
+        return;
+      }
+      const fei = await prisma.fei.findUnique({
+        where: {
+          numero: req.params.fei_numero as string,
+          deleted_at: null,
+        },
       });
-      return;
-    }
-    if (!req.params.user_id) {
-      res.status(400).send({
-        ok: false,
-        data: null,
-        error: 'Missing user_id',
+      if (!fei) {
+        res.status(401).send({
+          ok: false,
+          data: null,
+          error: 'Unauthorized',
+        });
+        return;
+      }
+      if (!req.params.user_id) {
+        res.status(400).send({
+          ok: false,
+          data: null,
+          error: 'Missing user_id',
+        });
+        return;
+      }
+      const feiUser = await prisma.user.findUnique({
+        where: {
+          id: req.params.user_id,
+        },
+        select: userFeiSelect,
       });
-      return;
-    }
-    const feiUser = await prisma.user.findUnique({
-      where: {
-        id: req.params.user_id,
-      },
-      select: userFeiSelect,
-    });
-    if (!feiUser) {
+      if (!feiUser) {
+        res.status(200).send({
+          ok: true,
+          data: {
+            user: {
+              id: req.params.user_id,
+              prenom: 'Jean',
+              nom_de_famille: 'Le Chasseur',
+              telephone: '0123456789',
+              email: 'jean@lechasseur.com',
+              addresse_ligne_1: '1 rue de la forêt',
+              addresse_ligne_2: '',
+              code_postal: '12345',
+              ville: 'La Forêt',
+              numero_cfei: '1234567890123456',
+            },
+          },
+          error: '',
+        });
+        return;
+      }
+
       res.status(200).send({
         ok: true,
         data: {
-          user: {
-            id: req.params.user_id,
-            prenom: 'Jean',
-            nom_de_famille: 'Le Chasseur',
-            telephone: '0123456789',
-            email: 'jean@lechasseur.com',
-            addresse_ligne_1: '1 rue de la forêt',
-            addresse_ligne_2: '',
-            code_postal: '12345',
-            ville: 'La Forêt',
-            numero_cfei: '1234567890123456',
-          } satisfies UserForFei,
+          user: feiUser,
         },
         error: '',
       });
-      return;
-    }
-
-    res.status(200).send({
-      ok: true,
-      data: {
-        user: feiUser,
-      },
-      error: '',
-    });
-  }),
+    },
+  ),
 );
 
 router.get(
@@ -770,9 +789,14 @@ router.get(
 router.get(
   '/my-relations',
   passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
-    const user = req.user!;
-    /*
+  catchErrors(
+    async (
+      req: RequestWithUser,
+      res: express.Response<UserMyRelationsResponse>,
+      next: express.NextFunction,
+    ) => {
+      const user = req.user!;
+      /*
       I need to fetch
       - the entities the user is working for (salarié, dirigeant, etc.)
       - teh entities working with the entities the user is working for (ETG, SVI, etc.)
@@ -785,211 +809,212 @@ router.get(
 
       */
 
-    /* ENTITIES WORKING FOR */
+      /* ENTITIES WORKING FOR */
 
-    const entitiesWorkingDirectlyFor = await prisma.entityAndUserRelations
-      .findMany({
-        where: {
-          owner_id: user.id,
-          relation: EntityRelationType.WORKING_FOR,
-        },
-        include: {
-          EntityRelatedWithUser: true,
-        },
-        orderBy: {
-          updated_at: 'desc',
-        },
-      })
-      .then((entityRelations) =>
-        entityRelations.map(
-          (rel): EntityWithUserRelation => ({
-            ...rel.EntityRelatedWithUser,
-            relation: 'WORKING_FOR' satisfies EntityWithUserRelationType,
-          }),
-        ),
-      );
-
-    const etgsRelatedWithMyEntities = await prisma.eTGAndEntityRelations.findMany({
-      where: {
-        entity_id: {
-          in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
-        },
-      },
-      include: {
-        ETGRelatedWithEntity: true,
-      },
-    });
-
-    const svisRelatedWithMyETGs = await prisma.eTGAndEntityRelations.findMany({
-      where: {
-        etg_id: {
-          in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
-        },
-        entity_type: EntityTypes.SVI,
-      },
-      include: {
-        EntityRelatedWithETG: true,
-      },
-    });
-
-    const collecteursProsRelatedWithMyETGs = await prisma.eTGAndEntityRelations.findMany({
-      where: {
-        etg_id: {
-          in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
-        },
-        entity_type: EntityTypes.COLLECTEUR_PRO,
-      },
-      include: {
-        EntityRelatedWithETG: true,
-      },
-    });
-
-    const entitiesWorkingForObject: Record<string, EntityWithUserRelation> = {};
-    for (const svi of svisRelatedWithMyETGs.map((r) => r.EntityRelatedWithETG)) {
-      entitiesWorkingForObject[svi.id] = {
-        ...svi,
-        relation: 'WORKING_FOR_ENTITY_RELATED_WITH' satisfies EntityWithUserRelationType,
-      };
-    }
-    for (const etg of etgsRelatedWithMyEntities.map((r) => r.ETGRelatedWithEntity)) {
-      entitiesWorkingForObject[etg.id] = {
-        ...etg,
-        relation: 'WORKING_FOR_ENTITY_RELATED_WITH' satisfies EntityWithUserRelationType,
-      };
-    }
-    for (const collecteurPro of collecteursProsRelatedWithMyETGs.map((r) => r.EntityRelatedWithETG)) {
-      entitiesWorkingForObject[collecteurPro.id] = {
-        ...collecteurPro,
-        relation: 'WORKING_FOR_ENTITY_RELATED_WITH' satisfies EntityWithUserRelationType,
-      };
-    }
-    for (const entity of entitiesWorkingDirectlyFor) {
-      entitiesWorkingForObject[entity.id] = entity;
-    }
-    const entitiesWorkingFor = Object.values(entitiesWorkingForObject);
-
-    const entitiesWorkingWith = await prisma.entityAndUserRelations
-      .findMany({
-        where: {
-          owner_id: user.id,
-          relation: EntityRelationType.WORKING_WITH,
-        },
-        include: {
-          EntityRelatedWithUser: true,
-        },
-        orderBy: {
-          updated_at: 'desc',
-        },
-      })
-      .then((entityRelations) =>
-        entityRelations.map(
-          (rel): EntityWithUserRelation => ({
-            ...rel.EntityRelatedWithUser,
-            relation: 'WORKING_WITH' satisfies EntityWithUserRelationType,
-          }),
-        ),
-      );
-
-    const allOtherEntities = await prisma.entity
-      .findMany({
-        where: {
-          id: {
-            notIn: [
-              ...entitiesWorkingFor.map((entity) => entity.id),
-              ...entitiesWorkingWith.map((entity) => entity.id),
-            ],
+      const entitiesWorkingDirectlyFor = await prisma.entityAndUserRelations
+        .findMany({
+          where: {
+            owner_id: user.id,
+            relation: EntityRelationType.WORKING_FOR,
           },
-          type: {
-            notIn: [
-              EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
-              EntityTypes.PREMIER_DETENTEUR, // les associations de chasse doivent rester confidentielles
-            ],
+          include: {
+            EntityRelatedWithUser: true,
+          },
+          orderBy: {
+            updated_at: 'desc',
+          },
+        })
+        .then((entityRelations) =>
+          entityRelations.map(
+            (rel): EntityWithUserRelation => ({
+              ...rel.EntityRelatedWithUser,
+              relation: 'WORKING_FOR' satisfies EntityWithUserRelationType,
+            }),
+          ),
+        );
+
+      const etgsRelatedWithMyEntities = await prisma.eTGAndEntityRelations.findMany({
+        where: {
+          entity_id: {
+            in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
           },
         },
+        include: {
+          ETGRelatedWithEntity: true,
+        },
+      });
+
+      const svisRelatedWithMyETGs = await prisma.eTGAndEntityRelations.findMany({
+        where: {
+          etg_id: {
+            in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
+          },
+          entity_type: EntityTypes.SVI,
+        },
+        include: {
+          EntityRelatedWithETG: true,
+        },
+      });
+
+      const collecteursProsRelatedWithMyETGs = await prisma.eTGAndEntityRelations.findMany({
+        where: {
+          etg_id: {
+            in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
+          },
+          entity_type: EntityTypes.COLLECTEUR_PRO,
+        },
+        include: {
+          EntityRelatedWithETG: true,
+        },
+      });
+
+      const entitiesWorkingForObject: Record<string, EntityWithUserRelation> = {};
+      for (const svi of svisRelatedWithMyETGs.map((r) => r.EntityRelatedWithETG)) {
+        entitiesWorkingForObject[svi.id] = {
+          ...svi,
+          relation: 'WORKING_FOR_ENTITY_RELATED_WITH' satisfies EntityWithUserRelationType,
+        };
+      }
+      for (const etg of etgsRelatedWithMyEntities.map((r) => r.ETGRelatedWithEntity)) {
+        entitiesWorkingForObject[etg.id] = {
+          ...etg,
+          relation: 'WORKING_FOR_ENTITY_RELATED_WITH' satisfies EntityWithUserRelationType,
+        };
+      }
+      for (const collecteurPro of collecteursProsRelatedWithMyETGs.map((r) => r.EntityRelatedWithETG)) {
+        entitiesWorkingForObject[collecteurPro.id] = {
+          ...collecteurPro,
+          relation: 'WORKING_FOR_ENTITY_RELATED_WITH' satisfies EntityWithUserRelationType,
+        };
+      }
+      for (const entity of entitiesWorkingDirectlyFor) {
+        entitiesWorkingForObject[entity.id] = entity;
+      }
+      const entitiesWorkingFor = Object.values(entitiesWorkingForObject);
+
+      const entitiesWorkingWith = await prisma.entityAndUserRelations
+        .findMany({
+          where: {
+            owner_id: user.id,
+            relation: EntityRelationType.WORKING_WITH,
+          },
+          include: {
+            EntityRelatedWithUser: true,
+          },
+          orderBy: {
+            updated_at: 'desc',
+          },
+        })
+        .then((entityRelations) =>
+          entityRelations.map(
+            (rel): EntityWithUserRelation => ({
+              ...rel.EntityRelatedWithUser,
+              relation: 'WORKING_WITH' satisfies EntityWithUserRelationType,
+            }),
+          ),
+        );
+
+      const allOtherEntities = await prisma.entity
+        .findMany({
+          where: {
+            id: {
+              notIn: [
+                ...entitiesWorkingFor.map((entity) => entity.id),
+                ...entitiesWorkingWith.map((entity) => entity.id),
+              ],
+            },
+            type: {
+              notIn: [
+                EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
+                EntityTypes.PREMIER_DETENTEUR, // les associations de chasse doivent rester confidentielles
+              ],
+            },
+          },
+          orderBy: {
+            updated_at: 'desc',
+          },
+        })
+        .then((entities) =>
+          entities.map((entity): EntityWithUserRelation => ({ ...entity, relation: 'NONE' })),
+        );
+
+      const userRelationsWithOtherUsers = await prisma.userRelations.findMany({
+        where: {
+          owner_id: user.id,
+        },
+        include: {
+          UserRelatedOfUserRelation: {
+            select: userFeiSelect,
+          },
+        },
         orderBy: {
           updated_at: 'desc',
         },
-      })
-      .then((entities) =>
-        entities.map((entity): EntityWithUserRelation => ({ ...entity, relation: 'NONE' })),
+      });
+
+      const detenteursInitiaux = userRelationsWithOtherUsers
+        .filter((userRelation) => userRelation.relation === UserRelationType.PREMIER_DETENTEUR)
+        .map((userRelation) => userRelation.UserRelatedOfUserRelation);
+      if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+        detenteursInitiaux.unshift(user);
+      }
+
+      // const examinateursInitiaux = userRelationsWithOtherUsers
+      //   .filter((userRelation) => userRelation.relation === UserRelationType.EXAMINATEUR_INITIAL)
+      //   .map((userRelation) => ({ ...userRelation.UserRelatedOfUserRelation, relation: userRelation.relation }));
+      // if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      //   examinateursInitiaux.unshift({ ...user, relation: UserRelationType.EXAMINATEUR_INITIAL });
+      // }
+
+      const allEntities = [
+        ...entitiesWorkingFor.filter(
+          (entity) =>
+            entity.type !== EntityTypes.CCG &&
+            ['WORKING_FOR', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
+        ),
+        ...entitiesWorkingWith.map((entity) => ({
+          ...entity,
+          relation: 'WORKING_WITH' as EntityWithUserRelationType,
+        })),
+        ...allOtherEntities.map((entity) => ({ ...entity, relation: 'NONE' as EntityWithUserRelationType })),
+      ].filter((entity, index, array) => array.findIndex((e) => e.id === entity.id) === index); // remove duplicates
+
+      const ccgs = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.CCG);
+
+      const associationsDeChasse = entitiesWorkingDirectlyFor.filter(
+        (entity) => entity.type === EntityTypes.PREMIER_DETENTEUR,
       );
 
-    const userRelationsWithOtherUsers = await prisma.userRelations.findMany({
-      where: {
-        owner_id: user.id,
-      },
-      include: {
-        UserRelatedOfUserRelation: {
-          select: userFeiSelect,
-        },
-      },
-      orderBy: {
-        updated_at: 'desc',
-      },
-    });
+      const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
 
-    const detenteursInitiaux = userRelationsWithOtherUsers
-      .filter((userRelation) => userRelation.relation === UserRelationType.PREMIER_DETENTEUR)
-      .map((userRelation) => userRelation.UserRelatedOfUserRelation);
-    if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
-      detenteursInitiaux.unshift(user);
-    }
+      const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
 
-    // const examinateursInitiaux = userRelationsWithOtherUsers
-    //   .filter((userRelation) => userRelation.relation === UserRelationType.EXAMINATEUR_INITIAL)
-    //   .map((userRelation) => ({ ...userRelation.UserRelatedOfUserRelation, relation: userRelation.relation }));
-    // if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-    //   examinateursInitiaux.unshift({ ...user, relation: UserRelationType.EXAMINATEUR_INITIAL });
-    // }
-
-    const allEntities = [
-      ...entitiesWorkingFor.filter(
+      const svis = allEntities.filter(
         (entity) =>
-          entity.type !== EntityTypes.CCG &&
-          ['WORKING_FOR', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
-      ),
-      ...entitiesWorkingWith.map((entity) => ({
-        ...entity,
-        relation: 'WORKING_WITH' as EntityWithUserRelationType,
-      })),
-      ...allOtherEntities.map((entity) => ({ ...entity, relation: 'NONE' as EntityWithUserRelationType })),
-    ].filter((entity, index, array) => array.findIndex((e) => e.id === entity.id) === index); // remove duplicates
+          entity.type === EntityTypes.SVI &&
+          ['WORKING_WITH', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
+      );
 
-    const ccgs = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.CCG);
-
-    const associationsDeChasse = entitiesWorkingDirectlyFor.filter(
-      (entity) => entity.type === EntityTypes.PREMIER_DETENTEUR,
-    );
-
-    const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
-
-    const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
-
-    const svis = allEntities.filter(
-      (entity) =>
-        entity.type === EntityTypes.SVI &&
-        ['WORKING_WITH', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
-    );
-
-    res.status(200).send({
-      ok: true,
-      data: {
-        user: user satisfies User,
-        detenteursInitiaux: detenteursInitiaux satisfies Array<UserForFei>,
-        // examinateursInitiaux: examinateursInitiaux satisfies Array<User>,
-        associationsDeChasse: associationsDeChasse satisfies Array<EntityWithUserRelation>,
-        ccgs: ccgs satisfies Array<EntityWithUserRelation>,
-        collecteursPro: collecteursPro satisfies Array<EntityWithUserRelation>,
-        etgs: etgs satisfies Array<EntityWithUserRelation>,
-        svis: svis satisfies Array<EntityWithUserRelation>,
-        entitiesWorkingFor: entitiesWorkingFor satisfies Array<EntityWithUserRelation>,
-        collecteursProsRelatedWithMyETGs:
-          collecteursProsRelatedWithMyETGs satisfies Array<ETGAndEntityRelations>,
-        etgsRelatedWithMyEntities: etgsRelatedWithMyEntities satisfies Array<ETGAndEntityRelations>,
-      },
-      error: '',
-    } satisfies UserMyRelationsResponse);
-  }),
+      res.status(200).send({
+        ok: true,
+        data: {
+          user: user satisfies User,
+          detenteursInitiaux: detenteursInitiaux satisfies Array<UserForFei>,
+          // examinateursInitiaux: examinateursInitiaux satisfies Array<User>,
+          associationsDeChasse: associationsDeChasse satisfies Array<EntityWithUserRelation>,
+          ccgs: ccgs satisfies Array<EntityWithUserRelation>,
+          collecteursPro: collecteursPro satisfies Array<EntityWithUserRelation>,
+          etgs: etgs satisfies Array<EntityWithUserRelation>,
+          svis: svis satisfies Array<EntityWithUserRelation>,
+          entitiesWorkingFor: entitiesWorkingFor satisfies Array<EntityWithUserRelation>,
+          collecteursProsRelatedWithMyETGs:
+            collecteursProsRelatedWithMyETGs satisfies Array<ETGAndEntityRelations>,
+          etgsRelatedWithMyEntities: etgsRelatedWithMyEntities satisfies Array<ETGAndEntityRelations>,
+        },
+        error: '',
+      });
+    },
+  ),
 );
 
 export default router;

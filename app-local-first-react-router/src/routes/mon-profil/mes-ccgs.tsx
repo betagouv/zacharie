@@ -65,11 +65,8 @@ export default function MesCCGs() {
               href="https://mesdemarches.agriculture.gouv.fr/demarches/association-ou-organisation-de/assurer-une-activite-de-76/article/declarer-la-manipulation-de"
               className="fr-link fr-link--icon-right text-lg"
             >
-              disponible ici
+              disponible ici.
             </a>
-            .
-            <br />
-            Contactez-nous ensuite pour que nous l'enregistrions dans Zacharie.
           </CallOut>
           <div className="mb-6 bg-white md:shadow">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
