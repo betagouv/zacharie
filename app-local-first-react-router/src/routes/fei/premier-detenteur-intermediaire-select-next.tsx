@@ -198,8 +198,20 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
     if (fei.automatic_closed_at) {
       return false;
     }
+    if (fei.intermediaire_closed_at) {
+      return false;
+    }
     return true;
-  }, [fei, user, isEtgWorkingFor]);
+  }, [
+    premierDetenteurEntity?.relation,
+    fei.fei_current_owner_role,
+    fei.fei_current_owner_user_id,
+    fei.svi_signed_at,
+    fei.automatic_closed_at,
+    isEtgWorkingFor,
+    user.id,
+    fei.intermediaire_closed_at,
+  ]);
 
   if (!canSelectNextOwner) {
     return null;

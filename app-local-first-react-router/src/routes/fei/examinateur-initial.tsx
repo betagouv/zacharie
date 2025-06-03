@@ -118,7 +118,7 @@ export default function FEIExaminateurInitial() {
   }, [carcasses]);
 
   const canEdit = useMemo(() => {
-    if (fei.automatic_closed_at || fei.svi_signed_at || fei.svi_assigned_at) {
+    if (fei.automatic_closed_at || fei.svi_signed_at || fei.svi_assigned_at || fei.intermediaire_closed_at) {
       return false;
     }
     if (fei.examinateur_initial_user_id !== user.id) {
@@ -158,7 +158,7 @@ export default function FEIExaminateurInitial() {
   }, [fei, user]);
 
   const canEditAsPremierDetenteur = useMemo(() => {
-    if (fei.svi_signed_at || fei.automatic_closed_at || fei.svi_assigned_at) {
+    if (fei.svi_signed_at || fei.automatic_closed_at || fei.svi_assigned_at || fei.intermediaire_closed_at) {
       return false;
     }
     if (fei.examinateur_initial_user_id === user.id) {

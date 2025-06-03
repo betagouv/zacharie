@@ -262,7 +262,7 @@ export default function FEI_SVI() {
           )}
         </form>
       </Section>
-      {(fei.svi_signed_at || fei.automatic_closed_at) && (
+      {(fei.svi_signed_at || fei.automatic_closed_at || fei.intermediaire_closed_at) && (
         <div className="bg-white px-4 pb-4 md:px-8 md:pb-8">
           <Alert
             severity="success"

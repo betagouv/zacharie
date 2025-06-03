@@ -18,6 +18,7 @@ export const feiDoneSelect = {
   examinateur_initial_date_approbation_mise_sur_le_marche: true,
   premier_detenteur_name_cache: true,
   resume_nombre_de_carcasses: true,
+  intermediaire_closed_at: true,
   is_synced: true,
 } as const;
 

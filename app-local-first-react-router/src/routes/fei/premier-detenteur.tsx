@@ -61,7 +61,7 @@ export default function FeiPremierDetenteur() {
   });
 
   const canEdit = useMemo(() => {
-    if (fei.automatic_closed_at || fei.svi_signed_at || fei.svi_assigned_at) {
+    if (fei.automatic_closed_at || fei.svi_signed_at || fei.svi_assigned_at || fei.intermediaire_closed_at) {
       return false;
     }
     if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
@@ -83,7 +83,7 @@ export default function FeiPremierDetenteur() {
   }, [fei, user, premierDetenteurEntity]);
 
   const canChangeNextOwner = useMemo(() => {
-    if (fei.automatic_closed_at || fei.svi_signed_at || fei.svi_assigned_at) {
+    if (fei.automatic_closed_at || fei.svi_signed_at || fei.svi_assigned_at || fei.intermediaire_closed_at) {
       return false;
     }
     if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
