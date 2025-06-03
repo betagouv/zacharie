@@ -81,7 +81,7 @@ export default function CurrentOwnerConfirm() {
   if (!fei.fei_next_owner_role) {
     return null;
   }
-  if (!fei.automatic_closed_at && !fei.svi_signed_at && !fei.intermediaire_closed_at) {
+  if (fei.automatic_closed_at || fei.svi_signed_at || fei.intermediaire_closed_at) {
     return null;
   }
 
