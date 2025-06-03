@@ -260,6 +260,9 @@ export default function FEICurrentIntermediaire(props: Props) {
   ]);
 
   const couldSelectNextUser = useMemo(() => {
+    if (fei.intermediaire_closed_at) {
+      return false;
+    }
     if (intermediaireIndex !== 0) {
       return false;
     }
