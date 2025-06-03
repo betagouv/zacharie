@@ -81,6 +81,9 @@ export default function CurrentOwnerConfirm() {
   if (!fei.fei_next_owner_role) {
     return null;
   }
+  if (!fei.automatic_closed_at && !fei.svi_signed_at && !fei.intermediaire_closed_at) {
+    return null;
+  }
 
   async function handlePriseEnCharge({
     transfer,
@@ -313,7 +316,7 @@ export default function CurrentOwnerConfirm() {
           <>
             <div>
               <span>Il y a une erreur ?</span>
-              <div className="flex gap-2 items-center">
+              <div className="flex items-center gap-2">
                 <Button
                   priority="tertiary"
                   type="button"
