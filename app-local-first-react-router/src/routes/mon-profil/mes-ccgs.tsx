@@ -103,15 +103,16 @@ export default function MesCCGs() {
             title="Vos Centres de Collecte"
             // nextTitle="Vos notifications"
           />
-          <h1 className="fr-h2 fr-mb-2w">Identifiez vos Centres de Collecte</h1>
+          <h1 className="fr-h2 fr-mb-2w">Identifier vos Centres de Collecte du Gibier sauvage</h1>
           <CallOut className="bg-white">
-            Si vous utilisez un Centre de Collecte du Gibier sauvage (CCG) pour entreposer votre gibier, vous
-            pouvez l'identifier ici.
+            <strong>Qu’est ce qu’un centre de collecte du gibier sauvage (CCG) ?</strong>
+            <br />
+            <br />
+            C’est une chambre froide utilisée par les chasseurs pour déposer le gibier prélevé dans de bonnes
+            conditions d’hygiène et de conservation avant sa cession.
           </CallOut>
-          <CallOut colorVariant="purple-glycine" className="bg-white">
-            <strong>
-              Attention: seuls les CCGs enregistrés par le Ministère de l'Agriculture sont disponibles.
-            </strong>
+          {/* <CallOut colorVariant="purple-glycine" className="bg-white">
+            <strong>Qu’est ce qu’un centre de collecte du gibier sauvage (CCG) ?</strong>
             <br /> Si ce n'est pas encore fait, la démarche est simple et rapide,{' '}
             <a
               // href="https://entreprendre.service-public.fr/vosdroits/R44572"
@@ -120,7 +121,7 @@ export default function MesCCGs() {
             >
               disponible ici.
             </a>
-          </CallOut>
+          </CallOut> */}
           <div className="mb-6 bg-white md:shadow" id="onboarding-etape-2-ccgs-data">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
               {!userCCGs.length && (
@@ -186,7 +187,9 @@ export default function MesCCGs() {
               <div className="mt-8">
                 {!newCCGExpanded ? (
                   <>
-                    Votre Centre de Collecte n'est pas encore enregistrée dans Zacharie ?<br />
+                    Si vous utilisez un CCG non encore enregistré auprès des services de l’Etat, vous pouvez
+                    l’identifier ici.
+                    <br />
                     <Button
                       priority="secondary"
                       className="mt-4"
@@ -381,19 +384,13 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
       }}
     >
       <Input
-        label="Numéro du Centre de Collecte du Gibier sauvage (CCG)"
+        label="Si vous utilisez un CCG enregistré auprès des services de l’Etat, vous pouvez le renseigner ici."
         className="!mb-0"
-        hintText={
-          <a href="https://entreprendre.service-public.fr/vosdroits/R44572" className="bg-none">
-            Votre CCG n'est pas encore enregistré ? Contactez-nous pour que nous l'ajoutions. Si vous ne
-            l'avez pas encore enregistré auprès du ministère,{' '}
-            <u className="inline">faites-le en cliquant ici</u>.
-          </a>
-        }
         state={error ? 'error' : 'default'}
         stateRelatedMessage={error}
         nativeInputProps={{
           type: 'text',
+          placeholder: 'Exemples : 03-CCG-123, ou encore 03.564.345',
           required: true,
           name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
         }}
