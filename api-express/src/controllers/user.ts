@@ -571,6 +571,33 @@ router.post(
   ),
 );
 
+function hasAllRequiredFields(user: User) {
+  if (!user.numero_cfei) {
+    if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      return false;
+    }
+  }
+  if (!user.addresse_ligne_1) {
+    return false;
+  }
+  if (!user.code_postal) {
+    return false;
+  }
+  if (!user.ville) {
+    return false;
+  }
+  if (!user.telephone) {
+    return false;
+  }
+  if (!user.email) {
+    return false;
+  }
+  if (!user.nom_de_famille) {
+    return false;
+  }
+  return true;
+}
+
 router.post(
   '/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
@@ -668,9 +695,25 @@ router.post(
         where: { id: userId },
         data: nextUser,
       });
-
       await updateBrevoContact(savedUser);
-      if (nextUser.activated) {
+
+      if (!hasAllRequiredFields(user) && hasAllRequiredFields(savedUser)) {
+        await sendEmail({
+          emails: ['contact@zacharie.beta.gouv.fr'],
+          subject: `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`,
+          text: `L'utilisateur ${savedUser.email} a fini son inscription :
+- Roles: ${savedUser.roles.join(', ')}
+- Prénom et nom: ${savedUser.prenom} ${savedUser.nom_de_famille}
+- Adresse: ${savedUser.addresse_ligne_1}
+- Code postal et ville: ${savedUser.code_postal} ${savedUser.ville}
+- Email: ${savedUser.email}
+- Téléphone: ${savedUser.telephone}
+${savedUser.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ? `- Numéro CFEI: ${savedUser.numero_cfei}` : ''}
+          `,
+        });
+      }
+
+      if (nextUser.activated && !savedUser.activated) {
         await sendEmail({
           emails: [savedUser.email],
           subject: 'Votre compte Zacharie a été activé',

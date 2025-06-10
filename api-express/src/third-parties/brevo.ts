@@ -145,7 +145,7 @@ export async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER
 export async function updateBrevoContact(props: User) {
   if (process.env.NODE_ENV === 'development') {
     console.log('Updating Brevo contact in development mode');
-    console.log(props);
+    // console.log(props);
     return;
   }
   if (props.roles.includes(UserRoles.ADMIN)) {
