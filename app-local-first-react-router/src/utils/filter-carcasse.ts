@@ -65,51 +65,62 @@ type CarcasseFilterableField = FilterableField & {
   name: keyof CarcasseForResponseForRegistry;
 };
 
-export const carcasseFilterableFields: Array<CarcasseFilterableField> = [
-  { name: 'numero_bracelet', label: "Numéro de bracelet ou d'identification", type: 'text' },
-  { name: 'fei_numero', label: 'Numéro FEI', type: 'text' },
-  { name: 'svi_assigned_to_fei_at', label: 'Date de transmission de la FEI au SVI', type: 'date-with-time' },
-  { name: 'svi_carcasse_status_set_at', label: 'Date de dernière décision SVI', type: 'date-with-time' },
-  {
-    name: 'svi_carcasse_status',
-    label: 'Dernière décision SVI',
-    type: 'enum',
-    options: carcasseStatusOptions,
-  },
-  { name: 'svi_ipm2_lesions_ou_motifs', label: 'Motif de la dernière décision SVI', type: 'text' },
-  { name: 'svi_carcasse_archived', label: 'Carcasse(s) archivée(s)', type: 'boolean' },
-  { name: 'svi_carcasse_commentaire', label: 'Commentaire SVI', type: 'text' },
-  { name: 'type', label: 'Catégorie de gibier', type: 'enum', options: carcasseTypeOptions },
-  {
-    name: 'espece',
-    label: 'Espèce',
-    type: 'enum',
-    options: [...grandGibier.especes, ...petitGibier.especes],
-  },
-  { name: 'fei_date_mise_a_mort', label: 'Date de mise à mort', type: 'date-with-time' },
-  { name: 'fei_commune_mise_a_mort', label: 'Commune de mise à mort', type: 'text' },
-  { name: 'fei_premier_detenteur_name_cache', label: 'Nom du premier détenteur', type: 'text' },
-  {
-    name: 'fei_examinateur_initial_date_approbation_mise_sur_le_marche',
-    label: "Date d'approbation de la mise sur le marché",
-    type: 'date-with-time',
-  },
-  { name: 'heure_mise_a_mort', label: 'Heure de mise à mort', type: 'date-with-time' },
-  { name: 'heure_evisceration', label: "Heure d'éviscération", type: 'date-with-time' },
-  {
-    name: 'intermediaire_carcasse_signed_at',
-    label: 'Date décision destinataire',
-    type: 'date-with-time',
-  },
-  // TODO: Décision destinataire
-  { name: 'intermediaire_carcasse_refus_motif', label: 'Motif de refus d’un destinataire', type: 'text' },
-  { name: 'fei_svi_signed_at', label: 'Date de clôture manuelle de la fiche', type: 'date-with-time' },
-  {
-    name: 'fei_automatic_closed_at',
-    label: 'Date de clôture automatique de la fiche',
-    type: 'date-with-time',
-  },
-];
+export function carcasseFilterableFields(motifs: Array<string>): Array<CarcasseFilterableField> {
+  return [
+    { name: 'numero_bracelet', label: "Numéro de bracelet ou d'identification", type: 'text' },
+    { name: 'fei_numero', label: 'Numéro FEI', type: 'text' },
+    {
+      name: 'svi_assigned_to_fei_at',
+      label: 'Date de transmission de la FEI au SVI',
+      type: 'date-with-time',
+    },
+    { name: 'svi_carcasse_status_set_at', label: 'Date de dernière décision SVI', type: 'date-with-time' },
+    {
+      name: 'svi_carcasse_status',
+      label: 'Dernière décision SVI',
+      type: 'enum',
+      options: carcasseStatusOptions,
+    },
+    {
+      name: 'svi_ipm2_lesions_ou_motifs',
+      label: 'Motif de la dernière décision SVI',
+      type: 'multi-choice',
+      options: motifs,
+    },
+    { name: 'svi_carcasse_archived', label: 'Carcasse(s) archivée(s)', type: 'boolean' },
+    { name: 'svi_carcasse_commentaire', label: 'Commentaire SVI', type: 'text' },
+    { name: 'type', label: 'Catégorie de gibier', type: 'enum', options: carcasseTypeOptions },
+    {
+      name: 'espece',
+      label: 'Espèce',
+      type: 'enum',
+      options: [...grandGibier.especes, ...petitGibier.especes],
+    },
+    { name: 'fei_date_mise_a_mort', label: 'Date de mise à mort', type: 'date-with-time' },
+    { name: 'fei_commune_mise_a_mort', label: 'Commune de mise à mort', type: 'text' },
+    { name: 'fei_premier_detenteur_name_cache', label: 'Nom du premier détenteur', type: 'text' },
+    {
+      name: 'fei_examinateur_initial_date_approbation_mise_sur_le_marche',
+      label: "Date d'approbation de la mise sur le marché",
+      type: 'date-with-time',
+    },
+    { name: 'heure_mise_a_mort', label: 'Heure de mise à mort', type: 'date-with-time' },
+    { name: 'heure_evisceration', label: "Heure d'éviscération", type: 'date-with-time' },
+    {
+      name: 'intermediaire_carcasse_signed_at',
+      label: 'Date décision destinataire',
+      type: 'date-with-time',
+    },
+    // TODO: Décision destinataire
+    { name: 'intermediaire_carcasse_refus_motif', label: 'Motif de refus d’un destinataire', type: 'text' },
+    { name: 'fei_svi_signed_at', label: 'Date de clôture manuelle de la fiche', type: 'date-with-time' },
+    {
+      name: 'fei_automatic_closed_at',
+      label: 'Date de clôture automatique de la fiche',
+      type: 'date-with-time',
+    },
+  ];
+}
 
 export type CarcasseFilter = Filter & {
   field: CarcasseFilterableField['name'];

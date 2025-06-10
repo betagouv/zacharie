@@ -43,6 +43,19 @@ export default function RegistreCarcasses() {
     [],
   );
 
+  const filterableFields = useMemo(() => {
+    const motifs = new Set<string>();
+    for (const carcasse of carcassesRegistry) {
+      for (const motif of carcasse.svi_ipm2_lesions_ou_motifs) {
+        if (motif) {
+          motifs.add(motif);
+        }
+      }
+    }
+    const sortedMotifs = Array.from(motifs).sort();
+    return carcasseFilterableFields(sortedMotifs);
+  }, [carcassesRegistry]);
+
   const filteredData = useMemo(() => {
     return carcassesRegistry
       .filter((carcasse) => filterCarcassesInRegistre(filters)(carcasse))
@@ -114,7 +127,7 @@ export default function RegistreCarcasses() {
           <section className="fr-container mb-6 bg-white p-4">
             <Filters
               onChange={setFilters}
-              base={carcasseFilterableFields}
+              base={filterableFields}
               filters={filters}
               saveInURLParams={false}
             />

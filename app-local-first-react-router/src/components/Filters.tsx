@@ -185,7 +185,7 @@ export default function Filters<T extends Filter = Filter>({
                   {!!filters.filter((_filter: T) => Boolean(_filter.field)).length && (
                     <button
                       type="button"
-                      className="text-error-main-525 hover:bg-error-850 h-full w-full rounded border border-gray-300 bg-white px-2.5 py-2 text-sm"
+                      className="h-full w-full rounded border border-gray-300 bg-white px-2.5 py-2 text-sm text-error-main-525 hover:bg-error-850"
                       onClick={onRemoveFilter}
                     >
                       Retirer
@@ -436,25 +436,6 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
 
   if (['enum', 'multi-choice'].includes(type)) {
     try {
-      // return (
-      //   <Select
-      //     label=""
-      //     nativeSelectProps={{
-      //       id: name,
-      //       name: name,
-      //       value: value,
-      //       // multiple: true,
-      //       onChange: (e) => onChangeValue(e.target.value),
-      //     }}
-      //   >
-      //     {filterValues.map((_value) => (
-      //       <option key={_value} value={_value}>
-      //         {_value}
-      //       </option>
-      //     ))}
-      //   </Select>
-      // );
-
       return (
         <SelectCustom
           options={filterValues.map((_value: string) => ({ label: _value, value: _value }))}
@@ -489,23 +470,6 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
     return null;
   }
 
-  // return (
-  //   <Select
-  //     label=""
-  //     nativeSelectProps={{
-  //       id: name,
-  //       name: name,
-  //       value: value,
-  //       onChange: (e) => onChangeValue(e.target.value),
-  //     }}
-  //   >
-  //     {filterValues.map((_value) => (
-  //       <option key={_value} value={_value}>
-  //         {_value}
-  //       </option>
-  //     ))}
-  //   </Select>
-  // );
   return (
     <SelectCustom
       options={filterValues.map((_value) => ({ label: _value, value: _value }))}
