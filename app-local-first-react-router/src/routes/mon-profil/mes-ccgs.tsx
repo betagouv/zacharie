@@ -384,7 +384,7 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
       }}
     >
       <Input
-        label="Si vous utilisez un CCG enregistré auprès des services de l’Etat, vous pouvez le renseigner ici."
+        label="Si vous utilisez un CCG enregistré auprès des services de l'Etat, renseignez ici son numéro d'identification."
         className="!mb-0"
         state={error ? 'error' : 'default'}
         stateRelatedMessage={error}
