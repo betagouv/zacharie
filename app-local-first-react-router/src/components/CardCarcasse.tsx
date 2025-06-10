@@ -112,9 +112,9 @@ export default function CardCarcasse({
       <div
         className={[
           'flex basis-full flex-row items-center justify-between border-solid text-left',
-          'bg-contrast-grey border-0',
+          'border-0 bg-contrast-grey',
           isRefus && 'border-l-3 border-error-main-525',
-          isManquante && 'border-l-3 border-manquante border-error-main-525',
+          isManquante && 'border-manquante border-l-3 border-error-main-525',
           isAccept && 'border-l-3 border-action-high-blue-france',
           className || '',
         ]

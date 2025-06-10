@@ -96,6 +96,13 @@ export function CarcasseExaminateur({
               navigate(`/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
             }
       }
+      onClick={
+        !canEditAsExaminateurInitial
+          ? undefined
+          : () => {
+              navigate(`/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
+            }
+      }
       onDelete={
         !canEditAsExaminateurInitial && !canEditAsPremierDetenteur
           ? undefined
