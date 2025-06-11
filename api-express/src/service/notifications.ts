@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/node';
 import PQueue from 'p-queue';
 import { sendEmail } from '~/third-parties/brevo';
 import prisma from '../prisma';
+import { IS_TEST } from '~/config';
 
 const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 1000 });
 let count = 0;
@@ -62,7 +63,7 @@ async function sendNotificationToUser({
         console.log('Notification already sent', user.id);
         return;
       }
-      if (process.env.NODE_ENV === 'development') {
+      if (IS_TEST) {
         console.log(
           'SENDING WEB PUSH NOTIFICATION IN DEV',
           JSON.stringify({ user, body, title, email, notificationLogAction, img }, null, 2),
@@ -144,7 +145,7 @@ async function sendNotificationToUser({
       console.log('Email already sent', user.id);
       return;
     }
-    if (process.env.NODE_ENV === 'development') {
+    if (IS_TEST) {
       console.log(
         'SENDING EMAIL NOTIFICATION IN DEV',
         JSON.stringify({ user, body, title, email, notificationLogAction, img }, null, 2),

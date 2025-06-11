@@ -22,6 +22,10 @@ const TIPIMAIL_EMAIL_FROM = 'contact@zacharie.beta.gouv.fr';
 const SECRET = process.env.VITE_SECRET ?? 'not-so-secret';
 const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
+const IS_DEV = process.env.NODE_ENV === 'development';
+const IS_TEST = process.env.TEST_ENV === 'true';
+const IS_DEV_OR_TEST = IS_DEV || IS_TEST;
+
 export {
   PORT,
   ENVIRONMENT,
@@ -36,4 +40,7 @@ export {
   METABASE_SECRET_KEY,
   BREVO_BEARER,
   BREVO_API,
+  IS_DEV_OR_TEST,
+  IS_DEV,
+  IS_TEST,
 };

@@ -3,6 +3,7 @@ import { Entity, EntityTypes, User, UserRoles } from '@prisma/client';
 import parsePhoneNumber from 'libphonenumber-js';
 import prisma from '~/prisma';
 import { capture } from './sentry';
+import { IS_DEV_OR_TEST } from '~/config';
 
 const API_KEY = process.env.BREVO_API;
 
@@ -13,9 +14,9 @@ type SendEmailProps = {
   text?: string;
   from?: string;
 };
-export async function sendEmail(props: SendEmailProps) {
+async function sendEmail(props: SendEmailProps) {
   try {
-    if (process.env.NODE_ENV === 'development') {
+    if (IS_DEV_OR_TEST) {
       console.log('Sending email in development mode');
       console.log(props);
       return;
@@ -82,13 +83,9 @@ interface BrevoContact extends brevo.GetExtendedContactDetails {
     EXT_ID: string;
   };
 }
-export async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
+async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Creating Brevo contact in development mode');
-      console.log(props);
-      return;
-    }
+    if (IS_DEV_OR_TEST) return;
     if (props.roles.includes(UserRoles.ADMIN)) {
       return;
     }
@@ -159,16 +156,10 @@ export async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER
   }
 }
 
-export async function updateBrevoContact(props: User) {
+async function updateBrevoContact(props: User) {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Updating Brevo contact in development mode');
-      // console.log(props);
-      return;
-    }
-    if (props.roles.includes(UserRoles.ADMIN)) {
-      return;
-    }
+    if (IS_DEV_OR_TEST) return;
+    if (props.roles.includes(UserRoles.ADMIN)) return;
     const apiInstance = new brevo.ContactsApi();
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
@@ -325,13 +316,9 @@ function getBrevoCategory(type: EntityTypes) {
   }
 }
 
-export async function updateOrCreateBrevoCompany(props: Entity) {
+async function updateOrCreateBrevoCompany(props: Entity) {
   try {
-    // if (process.env.NODE_ENV === 'development') {
-    //   console.log('Updating Brevo company in development mode');
-    //   console.log(props);
-    //   return;
-    // }
+    if (IS_DEV_OR_TEST) return;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
 
@@ -372,8 +359,9 @@ export async function updateOrCreateBrevoCompany(props: Entity) {
   }
 }
 
-export async function linkBrevoCompanyToContact(entity: Entity, user: User) {
+async function linkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
+    if (IS_DEV_OR_TEST) return;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
     await apiInstance.companiesLinkUnlinkIdPatch(entity.brevo_id, {
@@ -389,8 +377,9 @@ export async function linkBrevoCompanyToContact(entity: Entity, user: User) {
   }
 }
 
-export async function unlinkBrevoCompanyToContact(entity: Entity, user: User) {
+async function unlinkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
+    if (IS_DEV_OR_TEST) return;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
     await apiInstance.companiesLinkUnlinkIdPatch(entity.brevo_id, {
@@ -515,8 +504,9 @@ function getChasseurPipelineStep(
   return null;
 }
 
-export async function updateBrevoChasseurDeal(chasseur: User) {
+async function updateBrevoChasseurDeal(chasseur: User) {
   try {
+    if (IS_DEV_OR_TEST) return;
     if (
       !chasseur.roles.includes(UserRoles.PREMIER_DETENTEUR) &&
       !chasseur.roles.includes(UserRoles.EXAMINATEUR_INITIAL)
@@ -578,3 +568,112 @@ export async function updateBrevoChasseurDeal(chasseur: User) {
     });
   }
 }
+
+async function updateBrevoETGDealPremiereFiche(etg: Entity) {
+  try {
+    if (IS_DEV_OR_TEST) return;
+    if (etg.type !== EntityTypes.ETG) return;
+
+    const apiInstance = new brevo.DealsApi();
+    apiInstance.setApiKey(brevo.DealsApiApiKeys.apiKey, API_KEY);
+
+    const getDealsResult = await apiInstance.crmDealsGet(
+      undefined, // filtersAttributesDealName?: string,
+      etg.brevo_id, // filtersLinkedCompaniesIds?: string,
+      undefined, // filtersLinkedContactsIds?: string
+    );
+    let deals = getDealsResult?.body?.items as Array<BrevoDeal>;
+    const allPipelines = await apiInstance.crmPipelineDetailsAllGet();
+    const pipelines = allPipelines.body as Array<BrevoPipeline>;
+    const etgPipeline = pipelines.find((pipeline) => pipeline.pipelineName === 'ETG') as BrevoETGPipeline;
+
+    const dealToUpdate = deals?.find((deal) => deal.attributes.pipeline === etgPipeline.pipeline);
+
+    if (!dealToUpdate) {
+      capture(new Error('No deal found for ETG'), {
+        extra: {
+          etg,
+        },
+      });
+      return;
+    }
+
+    const dealStage = etgPipeline.stages.find((stage) => stage.name === '1ère fiche traitée')?.id;
+
+    await apiInstance.crmDealsIdPatch(dealToUpdate.id, {
+      attributes: {
+        deal_stage: dealStage,
+        pipeline: etgPipeline.pipeline,
+      },
+    });
+  } catch (error) {
+    capture(error as Error, {
+      extra: {
+        user: etg,
+      },
+    });
+  }
+}
+
+async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
+  try {
+    if (IS_DEV_OR_TEST) return;
+    if (svi.type !== EntityTypes.SVI) return;
+
+    const apiInstance = new brevo.DealsApi();
+    apiInstance.setApiKey(brevo.DealsApiApiKeys.apiKey, API_KEY);
+
+    const getDealsResult = await apiInstance.crmDealsGet(
+      undefined, // filtersAttributesDealName?: string,
+      svi.brevo_id, // filtersLinkedCompaniesIds?: string,
+      undefined, // filtersLinkedContactsIds?: string
+    );
+    let deals = getDealsResult?.body?.items as Array<BrevoDeal>;
+    const allPipelines = await apiInstance.crmPipelineDetailsAllGet();
+    const pipelines = allPipelines.body as Array<BrevoPipeline>;
+    const sviPipeline = pipelines.find((pipeline) => pipeline.pipelineName === 'SVI') as BrevoSviPipeline;
+
+    const dealToUpdate = deals?.find((deal) => deal.attributes.pipeline === sviPipeline.pipeline);
+
+    if (!dealToUpdate) {
+      capture(new Error('No deal found for SVI'), {
+        extra: {
+          svi,
+        },
+      });
+      return;
+    }
+
+    const dealStage = sviPipeline.stages.find((stage) => stage.name === '1ère fiche reçue')?.id;
+
+    await apiInstance.crmDealsIdPatch(dealToUpdate.id, {
+      attributes: {
+        deal_stage: dealStage,
+        pipeline: sviPipeline.pipeline,
+      },
+    });
+  } catch (error) {
+    capture(error as Error, {
+      extra: {
+        user: svi,
+      },
+    });
+  }
+}
+
+export {
+  // services
+  sendEmail,
+  // specific to zacharie
+  // contact
+  createBrevoContact,
+  updateBrevoContact,
+  // company
+  updateOrCreateBrevoCompany,
+  linkBrevoCompanyToContact,
+  unlinkBrevoCompanyToContact,
+  // deals
+  updateBrevoChasseurDeal,
+  updateBrevoETGDealPremiereFiche,
+  updateBrevoSVIDealPremiereFiche,
+};
