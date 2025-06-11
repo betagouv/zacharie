@@ -339,73 +339,165 @@ export async function updateOrCreateBrevoCompany(props: Entity) {
   return;
 }
 
-/* 
-async function importFromBrevo() {
-  // if (process.env.NODE_ENV === 'development') {
-  //   console.log('Creating Brevo entity in development mode');
-  //   return;
-  // }
-  // const apiInstance = new brevo.CompaniesApi();
-  // apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
+interface BrevoDeal extends brevo.Deal {
+  attributes: {
+    created_at: string;
+    d_patement: number;
+    deal_name: string;
+    deal_owner: string;
+    deal_stage: string;
+    pipeline: string;
+    destinataire_fiche?: Array<string>;
+    last_activity_date?: string;
+    last_updated_date?: string;
+    number_of_activities?: number;
+    number_of_contacts?: number;
+    stage_updated_at?: string;
+  };
+}
 
-  // const companies = await apiInstance.companiesGet();
-  // console.log(JSON.stringify(companies.body.items, null, 2));
+interface BrevoChasseurPipeline extends brevo.Pipeline {
+  pipelineName: 'Chasseurs';
+  stages: Array<{
+    id: string;
+    name:
+      | 'Pas de réponse'
+      | 'Inscription à valider'
+      | "Liste d'attente"
+      | 'Recrutement en cours'
+      | 'Compte créé'
+      | '1ere fiche envoyée'
+      | 'Refus';
+  }>;
+}
 
-  const apiInstance = new brevo.CompaniesApi();
-  apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
+interface BrevoSviPipeline extends brevo.Pipeline {
+  pipelineName: 'SVI';
+  stages: Array<{
+    id: string;
+    name:
+      | 'Pas de réponse'
+      | "En attente - pas d'ETG"
+      | 'Recrutement en cours'
+      | 'Compte créé'
+      | '1ère fiche reçue'
+      | 'Refus';
+  }>;
+}
 
-  const companies = await apiInstance.companiesGet(undefined, undefined, undefined, 1, 100);
-  const companiesArray = companies.body.items as Array<BrevoCompany>;
+interface BrevoETGPipeline extends brevo.Pipeline {
+  pipelineName: 'ETG';
+  stages: Array<{
+    id: string;
+    name:
+      | 'Pas de coordonnées'
+      | 'Pas de réponse'
+      | 'Recrutement en cours'
+      | 'Compte créé'
+      | 'Chasseurs contactés'
+      | '1ère fiche traitée'
+      | 'Refus';
+  }>;
+}
 
-  const zachPremierDetenteurs = await prisma.entity.findMany({
-    where: {
-      type: EntityTypes.PREMIER_DETENTEUR,
+interface BrevoCollecteursPipeline extends brevo.Pipeline {
+  pipelineName: 'Collecteurs';
+  stages: Array<{
+    id: string;
+    name:
+      | 'Pas de coordonnées'
+      | 'Pas de réponse'
+      | 'Inscription à valider'
+      | 'Recrutement en cours'
+      | '1ère fiche traitée'
+      | 'Refus';
+  }>;
+}
+
+type BrevoPipeline = BrevoChasseurPipeline | BrevoSviPipeline | BrevoETGPipeline | BrevoCollecteursPipeline;
+
+function getChasseurPipelineStep(
+  chasseur: User,
+  pipelineStages: BrevoChasseurPipeline['stages'],
+): BrevoChasseurPipeline['stages'][number]['id'] {
+  let allFieldUpFields = true;
+  if (!chasseur.telephone) allFieldUpFields = false;
+  if (!chasseur.email) allFieldUpFields = false;
+  if (!chasseur.nom_de_famille) allFieldUpFields = false;
+  if (!chasseur.prenom) allFieldUpFields = false;
+  if (!chasseur.addresse_ligne_1) allFieldUpFields = false;
+  if (!chasseur.code_postal) allFieldUpFields = false;
+  if (!chasseur.ville) allFieldUpFields = false;
+  if (chasseur.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+    if (!chasseur.numero_cfei) allFieldUpFields = false;
+  }
+  let isActivated = chasseur.activated;
+  if (isActivated) {
+    if (chasseur.at_least_one_fei_treated) {
+      return pipelineStages.find((stage) => stage.name === '1ere fiche envoyée')?.id;
+    }
+    return pipelineStages.find((stage) => stage.name === 'Compte créé')?.id;
+  }
+  if (!allFieldUpFields) {
+    return pipelineStages.find((stage) => stage.name === 'Inscription à valider')?.id;
+  }
+  if (!isActivated) {
+    return pipelineStages.find((stage) => stage.name === "Liste d'attente")?.id;
+  }
+
+  return pipelineStages.find((stage) => stage.name === 'Pas de réponse')?.id;
+}
+
+export async function updateBrevoChasseurDeal(chasseur: User) {
+  if (
+    !chasseur.roles.includes(UserRoles.PREMIER_DETENTEUR) &&
+    !chasseur.roles.includes(UserRoles.EXAMINATEUR_INITIAL)
+  ) {
+    return;
+  }
+  if (!chasseur.brevo_contact_id) {
+    return;
+  }
+
+  const apiInstance = new brevo.DealsApi();
+  apiInstance.setApiKey(brevo.DealsApiApiKeys.apiKey, API_KEY);
+
+  const getDealsResult = await apiInstance.crmDealsGet(
+    undefined, // filtersAttributesDealName?: string,
+    undefined, // filtersLinkedCompaniesIds?: string,
+    chasseur.brevo_contact_id.toString(), // filtersLinkedContactsIds?: string
+  );
+  let deals = getDealsResult?.body?.items as Array<BrevoDeal>;
+  const allPipelines = await apiInstance.crmPipelineDetailsAllGet();
+  const pipelines = allPipelines.body as Array<BrevoPipeline>;
+  const chasseurPipeline = pipelines.find(
+    (pipeline) => pipeline.pipelineName === 'Chasseurs',
+  ) as BrevoChasseurPipeline;
+
+  const dealToUpdate = deals?.find((deal) => deal.attributes.pipeline === chasseurPipeline.pipeline);
+
+  if (!dealToUpdate) {
+    const createDealBodyAttributes: BrevoDeal['attributes'] = {
+      created_at: new Date().toISOString(),
+      d_patement: chasseur.code_postal?.length > 4 ? Number(chasseur.code_postal.slice(0, 2)) : 0,
+      deal_name: `${chasseur.prenom} ${chasseur.nom_de_famille}`,
+      deal_owner: '67d2cf69c9580538a20d4b95', // fixed owner id, to hack deals system to fit our needs
+      deal_stage: getChasseurPipelineStep(chasseur, chasseurPipeline.stages), // it's an ObjectId
+      pipeline: chasseurPipeline.pipeline,
+    };
+    await apiInstance.crmDealsPost({
+      name: `${chasseur.prenom} ${chasseur.nom_de_famille}`,
+      attributes: createDealBodyAttributes,
+      linkedContactsIds: [chasseur.brevo_contact_id],
+    });
+    return;
+  }
+
+  await apiInstance.crmDealsIdPatch(dealToUpdate.id, {
+    attributes: {
+      d_patement: chasseur.code_postal?.length > 4 ? Number(chasseur.code_postal.slice(0, 2)) : 0,
+      deal_name: `${chasseur.prenom} ${chasseur.nom_de_famille}`,
+      deal_stage: getChasseurPipelineStep(chasseur, chasseurPipeline.stages),
     },
   });
-  // for (const etg of zachSvis) {
-  //   const name = etg.raison_sociale;
-  //   const company = companiesArray.find((company) => company.attributes.name === name);
-  //   if (company) {
-  //     console.log('FOUND');
-  //     console.log(company.id);
-  //   } else {
-  //     console.log('NOT FOUND');
-  //     console.log(name);
-  //   }
-  // }
-
-  for (const det of companiesArray) {
-    const brevoCompany = companiesArray.find(
-      (company) =>
-        company.attributes.cat_gorie.includes('collecteur') &&
-        company.attributes.name === det.attributes.name,
-    );
-    const zachCompany = zachPremierDetenteurs.find((etg) => etg.raison_sociale === det.attributes.name);
-    if (brevoCompany && zachCompany) {
-      // console.log('FOUND in BRVO and ZACH');
-      // await prisma.entity.update({
-      //   where: { id: zachCompany.id },
-      //   data: {
-      //     brevo_id: brevoCompany.id,
-      //   },
-      // });
-    } else if (zachCompany) {
-      // console.log('FOUND in ZACH but not in BRVO');
-      // console.log(zachCompany);
-    } else if (brevoCompany) {
-      console.log('FOUND in BRVO but not in ZACH');
-      console.log(brevoCompany);
-      await prisma.entity.create({
-        data: {
-          type: EntityTypes.COLLECTEUR_PRO,
-          brevo_id: brevoCompany.id,
-          raison_sociale: brevoCompany.attributes.name,
-          nom_d_usage: brevoCompany.attributes.name,
-        },
-      });
-    }
-  }
-} 
-  */
-
-// importFromBrevo();
+}
