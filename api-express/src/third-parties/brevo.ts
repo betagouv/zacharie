@@ -372,6 +372,40 @@ export async function updateOrCreateBrevoCompany(props: Entity) {
   }
 }
 
+export async function linkBrevoCompanyToContact(entity: Entity, user: User) {
+  try {
+    const apiInstance = new brevo.CompaniesApi();
+    apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
+    await apiInstance.companiesLinkUnlinkIdPatch(entity.brevo_id, {
+      linkContactIds: [user.brevo_contact_id],
+    });
+  } catch (error) {
+    capture(error as Error, {
+      extra: {
+        entity,
+        user,
+      },
+    });
+  }
+}
+
+export async function unlinkBrevoCompanyToContact(entity: Entity, user: User) {
+  try {
+    const apiInstance = new brevo.CompaniesApi();
+    apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
+    await apiInstance.companiesLinkUnlinkIdPatch(entity.brevo_id, {
+      unlinkContactIds: [user.brevo_contact_id],
+    });
+  } catch (error) {
+    capture(error as Error, {
+      extra: {
+        entity,
+        user,
+      },
+    });
+  }
+}
+
 interface BrevoDeal extends brevo.Deal {
   attributes: {
     created_at: string;

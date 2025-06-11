@@ -10,7 +10,7 @@ import {
   sortEntitiesByTypeAndId,
   sortEntitiesRelationsByTypeAndId,
 } from '~/utils/sort-things-by-type-and-id.server';
-import { sendEmail, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
+import { linkBrevoCompanyToContact, sendEmail, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
 
 router.get(
   '/fei/:entity_id/:fei_numero',
@@ -167,6 +167,8 @@ router.post(
       subject: `Nouvelle association de chasse pré-enregistrée dans Zacharie`,
       text: `Une nouvelle association de chasse a été pré-enregistrée dans Zacharie : ${createdEntity.nom_d_usage}`,
     });
+
+    await linkBrevoCompanyToContact(createdEntity, user);
 
     res.status(200).send({ ok: true, error: '', data: { createdEntity, createdEntityRelation } });
   }),

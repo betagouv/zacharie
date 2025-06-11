@@ -8,7 +8,9 @@ import jwt from 'jsonwebtoken';
 import dayjs from 'dayjs';
 import {
   createBrevoContact,
+  linkBrevoCompanyToContact,
   sendEmail,
+  unlinkBrevoCompanyToContact,
   updateBrevoChasseurDeal,
   updateBrevoContact,
 } from '~/third-parties/brevo';
@@ -353,6 +355,10 @@ router.post(
           },
         });
 
+        if (relation.relation === EntityRelationType.WORKING_FOR) {
+          await linkBrevoCompanyToContact(entity, req.user);
+        }
+
         res.status(200).send({ ok: true, data: { relation, entity }, error: '' });
         return;
       }
@@ -374,6 +380,17 @@ router.post(
             },
           });
         }
+
+        if (existingEntityRelation.relation === EntityRelationType.WORKING_FOR) {
+          const entity = await prisma.entity.findUnique({
+            where: {
+              id: entityId,
+            },
+          });
+
+          await unlinkBrevoCompanyToContact(entity, req.user);
+        }
+
         res.status(200).send({ ok: true, data: { relation: null, entity: null }, error: '' });
         return;
       }
