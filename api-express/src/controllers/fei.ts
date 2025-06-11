@@ -9,6 +9,7 @@ import { EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
 import { feiDoneSelect, feiPopulatedInclude } from '~/types/fei';
 import { formatCountCarcasseByEspece } from '~/utils/count-carcasses';
+import { updateBrevoChasseurDeal } from '~/third-parties/brevo';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 // prisma.fei
@@ -31,12 +32,80 @@ import { formatCountCarcasseByEspece } from '~/utils/count-carcasses';
 //     console.log('done renaming all resume_nombre_de_carcasses');
 //   });
 
+prisma.user
+  .findMany({
+    where: {
+      at_least_one_fei_treated: null,
+      roles: { hasSome: [UserRoles.PREMIER_DETENTEUR, UserRoles.EXAMINATEUR_INITIAL] },
+    },
+    include: {
+      FeiExaminateurInitialUser: true,
+      FeiPremierDetenteurUser: true,
+    },
+  })
+  .then(async (users) => {
+    console.log(users.length);
+    for (const user of users) {
+      let atLeastOneFeiTreated = false;
+      if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+        if (user.FeiExaminateurInitialUser.length > 0) {
+          const feis = user.FeiExaminateurInitialUser.filter(
+            (fei) =>
+              !fei.deleted_at &&
+              fei.examinateur_initial_date_approbation_mise_sur_le_marche &&
+              fei.examinateur_initial_user_id === user.id,
+          ).sort((a, b) => {
+            return (
+              a.examinateur_initial_date_approbation_mise_sur_le_marche.getTime() -
+              b.examinateur_initial_date_approbation_mise_sur_le_marche.getTime()
+            );
+          });
+          if (feis.length > 0) {
+            atLeastOneFeiTreated = true;
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                at_least_one_fei_treated: feis[0].examinateur_initial_date_approbation_mise_sur_le_marche,
+              },
+            });
+          }
+        }
+      }
+      if (atLeastOneFeiTreated) {
+        continue;
+      }
+      if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+        if (user.FeiPremierDetenteurUser.length > 0) {
+          const feis = user.FeiPremierDetenteurUser.filter(
+            (fei) =>
+              !fei.deleted_at &&
+              fei.premier_detenteur_date_depot_quelque_part &&
+              fei.premier_detenteur_user_id === user.id,
+          ).sort((a, b) => {
+            return (
+              a.premier_detenteur_date_depot_quelque_part.getTime() -
+              b.premier_detenteur_date_depot_quelque_part.getTime()
+            );
+          });
+          if (feis.length > 0) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                at_least_one_fei_treated: feis[0].premier_detenteur_date_depot_quelque_part,
+              },
+            });
+          }
+        }
+      }
+    }
+  });
+
 router.post(
   '/:fei_numero',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const body: Prisma.FeiUncheckedCreateInput = req.body;
-    const user = req.user;
+    const user = req.user as User;
     const feiNumero = req.params.fei_numero;
     if (!feiNumero) {
       res.status(400).send({
@@ -310,6 +379,33 @@ router.post(
       data: nextFei,
       include: feiPopulatedInclude,
     });
+
+    if (!user.at_least_one_fei_treated) {
+      if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+        if (savedFei.examinateur_initial_user_id === user.id) {
+          if (savedFei.examinateur_initial_date_approbation_mise_sur_le_marche) {
+            const updatedUser = await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                at_least_one_fei_treated: savedFei.examinateur_initial_date_approbation_mise_sur_le_marche,
+              },
+            });
+            await updateBrevoChasseurDeal(updatedUser);
+          }
+        }
+      }
+      if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+        if (savedFei.premier_detenteur_user_id === user.id) {
+          if (savedFei.premier_detenteur_date_depot_quelque_part) {
+            const updatedUser = await prisma.user.update({
+              where: { id: user.id },
+              data: { at_least_one_fei_treated: savedFei.premier_detenteur_date_depot_quelque_part },
+            });
+            await updateBrevoChasseurDeal(updatedUser);
+          }
+        }
+      }
+    }
 
     if (existingFei.fei_next_owner_role !== UserRoles.SVI && savedFei.fei_next_owner_role === UserRoles.SVI) {
       // this is the end of the fiche
