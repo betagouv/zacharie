@@ -445,7 +445,7 @@ function getChasseurPipelineStep(
     return pipelineStages.find((stage) => stage.name === "Liste d'attente")?.id;
   }
 
-  return pipelineStages.find((stage) => stage.name === 'Pas de réponse')?.id;
+  return null;
 }
 
 export async function updateBrevoChasseurDeal(chasseur: User) {
@@ -493,11 +493,13 @@ export async function updateBrevoChasseurDeal(chasseur: User) {
     return;
   }
 
-  await apiInstance.crmDealsIdPatch(dealToUpdate.id, {
-    attributes: {
-      d_patement: chasseur.code_postal?.length > 4 ? Number(chasseur.code_postal.slice(0, 2)) : 0,
-      deal_name: `${chasseur.prenom} ${chasseur.nom_de_famille}`,
-      deal_stage: getChasseurPipelineStep(chasseur, chasseurPipeline.stages),
-    },
-  });
+  if (getChasseurPipelineStep(chasseur, chasseurPipeline.stages) !== dealToUpdate.attributes.deal_stage) {
+    await apiInstance.crmDealsIdPatch(dealToUpdate.id, {
+      attributes: {
+        d_patement: chasseur.code_postal?.length > 4 ? Number(chasseur.code_postal.slice(0, 2)) : 0,
+        deal_name: `${chasseur.prenom} ${chasseur.nom_de_famille}`,
+        deal_stage: getChasseurPipelineStep(chasseur, chasseurPipeline.stages),
+      },
+    });
+  }
 }
