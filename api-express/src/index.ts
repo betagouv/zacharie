@@ -27,6 +27,7 @@ import webhooksRouter from './controllers/webhooks.ts';
 import utilsRouter from './controllers/utils.ts';
 import statsRouter from './controllers/stats.ts';
 import './cronjobs/index.ts';
+import './scripts/migrations.ts';
 
 import packageJson from '../package.json';
 
