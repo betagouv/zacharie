@@ -121,7 +121,7 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
         return;
       }
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
 
     const createContact = new brevo.CreateContact();
@@ -177,7 +177,7 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
         return;
       }
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
 
     let LANDLINE_NUMBER = '';
