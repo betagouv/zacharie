@@ -12,7 +12,10 @@ type SendEmailProps = {
   subject: string;
   html?: string;
   text?: string;
-  from?: string;
+  from?: {
+    name: string;
+    email: string;
+  };
 };
 async function sendEmail(props: SendEmailProps) {
   try {
@@ -35,10 +38,13 @@ async function sendEmail(props: SendEmailProps) {
     } else if (props.text) {
       sendSmtpEmail.textContent = props.text;
     }
-    sendSmtpEmail.sender = {
-      name: 'Zacharie',
-      email: 'contact@zacharie.beta.gouv.fr',
-    };
+    if (props.from) {
+    } else {
+      sendSmtpEmail.sender = {
+        name: 'Zacharie',
+        email: 'contact@zacharie.beta.gouv.fr',
+      };
+    }
     sendSmtpEmail.to = props.emails.map((email) => ({ email }));
     const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
     // console.log('Email sent successfully:', result);
