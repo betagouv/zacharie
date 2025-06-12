@@ -56,7 +56,8 @@ export default function RootDisplay({
   quickAccessItems.push({
     iconId: 'fr-icon-mail-fill',
     linkProps: {
-      href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de Zacharie`,
+      to: '/contact',
+      href: '#',
     },
     text: 'Contact',
   });
