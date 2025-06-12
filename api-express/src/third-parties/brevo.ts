@@ -39,6 +39,7 @@ async function sendEmail(props: SendEmailProps) {
       sendSmtpEmail.textContent = props.text;
     }
     if (props.from) {
+      sendSmtpEmail.sender = props.from;
     } else {
       sendSmtpEmail.sender = {
         name: 'Zacharie',
