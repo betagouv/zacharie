@@ -33,7 +33,9 @@ router.post(
     await sendEmail({
       emails: ['contact@zacharie.beta.gouv.fr', email],
       subject: `Contact: ${prenom} ${nom_de_famille} - ${email} - ${object}`,
-      html: `<p>Nom: ${nom_de_famille}</p>
+      html: `<p>Nous avons bien reçu votre message. Nous vous répondrons dans les plus brefs délais.</p>
+      <p>Voici les informations que vous avez fournies :</p>
+      <p>Nom: ${nom_de_famille}</p>
       <p>Prénom: ${prenom}</p>
       <p>Téléphone: ${telephone}</p>
       <p>Email: ${email}</p>
