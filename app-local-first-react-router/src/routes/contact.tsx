@@ -122,10 +122,7 @@ export default function Stats() {
                       rows: 5,
                     }}
                   />
-                  <Button
-                    type="submit"
-                    // disabled={sent}
-                  >
+                  <Button type="submit" disabled={sent}>
                     {sent ? 'Message envoyé, merci !' : 'Envoyer'}
                   </Button>
                 </form>
