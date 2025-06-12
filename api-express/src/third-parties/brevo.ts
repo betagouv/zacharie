@@ -156,6 +156,73 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
   }
 }
 
+type ContactForm = {
+  nom_de_famille: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  message: string;
+};
+async function createBrevoContactFromContactForm(props: ContactForm) {
+  try {
+    if (IS_DEV_OR_TEST) return;
+    const apiInstance = new brevo.ContactsApi();
+    apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
+
+    try {
+      // wrap in try catch for 404
+      const getContact = await apiInstance.getContactInfo(props.email);
+      const brevoContact = getContact.body as BrevoContact;
+      if (brevoContact?.id) {
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
+    let LANDLINE_NUMBER = '';
+    let SMS = '';
+    let WHATSAPP = '';
+    let TELEPHONE_PORTABLE = '';
+    let TELEPHONE_FIXE = '';
+    if (props.telephone) {
+      const phoneNumber = parsePhoneNumber(props.telephone, 'FR');
+      if (phoneNumber?.isPossible()) {
+        if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
+          SMS = phoneNumber.number;
+          WHATSAPP = phoneNumber.number;
+          TELEPHONE_PORTABLE = phoneNumber.number;
+        } else {
+          LANDLINE_NUMBER = phoneNumber.number;
+          TELEPHONE_FIXE = phoneNumber.number;
+        }
+      }
+    }
+
+    const createContact = new brevo.CreateContact();
+    createContact.email = props.email;
+    createContact.attributes = {
+      CREATED_BY: ['CONTACT FORM'],
+      'CREATION DATE': new Date().toISOString(),
+      PRENOM: props.prenom,
+      NOM: props.nom_de_famille,
+      LANDLINE_NUMBER,
+      SMS,
+      WHATSAPP,
+      TELEPHONE_PORTABLE,
+      TELEPHONE_FIXE,
+    };
+
+    const result = await apiInstance.createContact(createContact);
+  } catch (error) {
+    capture(error as Error, {
+      extra: {
+        user: props,
+      },
+    });
+  }
+}
+
 async function updateBrevoContact(props: User) {
   try {
     if (IS_DEV_OR_TEST) return;
@@ -666,6 +733,7 @@ export {
   sendEmail,
   // specific to zacharie
   // contact
+  createBrevoContactFromContactForm,
   createBrevoContact,
   updateBrevoContact,
   // company

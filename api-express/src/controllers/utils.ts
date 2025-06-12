@@ -3,7 +3,7 @@ import passport from 'passport';
 import { catchErrors } from '../middlewares/errors';
 const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
-import { sendEmail } from '~/third-parties/brevo';
+import { createBrevoContactFromContactForm, sendEmail } from '~/third-parties/brevo';
 
 router.get(
   '/now',
@@ -23,7 +23,14 @@ router.post(
       res.status(200).send({ ok: true });
       return;
     }
-    sendEmail({
+    await createBrevoContactFromContactForm({
+      nom_de_famille,
+      prenom,
+      email,
+      telephone,
+      message,
+    });
+    await sendEmail({
       emails: ['contact@zacharie.beta.gouv.fr'],
       subject: `Contact: ${prenom} ${nom_de_famille} - ${email} - ${object}`,
       html: `<p>Nom: ${nom_de_famille}</p>
