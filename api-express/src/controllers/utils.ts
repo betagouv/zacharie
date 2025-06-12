@@ -31,11 +31,7 @@ router.post(
       message,
     });
     await sendEmail({
-      emails: ['contact@zacharie.beta.gouv.fr'],
-      from: {
-        name: `${prenom} ${nom_de_famille}`,
-        email,
-      },
+      emails: ['contact@zacharie.beta.gouv.fr', email],
       subject: `Contact: ${prenom} ${nom_de_famille} - ${email} - ${object}`,
       html: `<p>Nom: ${nom_de_famille}</p>
       <p>Prénom: ${prenom}</p>
