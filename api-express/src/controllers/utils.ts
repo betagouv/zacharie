@@ -25,7 +25,7 @@ router.post(
     }
     sendEmail({
       emails: ['contact@zacharie.beta.gouv.fr'],
-      subject: 'Nouveau message de la page de contact',
+      subject: `Contact: ${prenom} ${nom_de_famille} - ${email} - ${object}`,
       html: `<p>Nom: ${nom_de_famille}</p>
       <p>Prénom: ${prenom}</p>
       <p>Téléphone: ${telephone}</p>
