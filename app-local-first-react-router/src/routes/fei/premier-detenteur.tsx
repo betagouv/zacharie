@@ -358,7 +358,7 @@ export default function FeiPremierDetenteur() {
                 // disabled: !canEdit,
                 onChange: () => {
                   setDepotType(DepotType.AUCUN);
-                  setDepotDate(null);
+                  setDepotDate(undefined);
                   setDepotEntityId(null);
                 },
               },
