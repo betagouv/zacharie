@@ -260,6 +260,23 @@ router.post(
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type)) {
       nextFei.premier_detenteur_depot_type = body.premier_detenteur_depot_type || null;
     }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at)) {
+      nextFei.premier_detenteur_depot_ccg_at = body.premier_detenteur_depot_ccg_at || null;
+    }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_transport_type)) {
+      nextFei.premier_detenteur_transport_type = body.premier_detenteur_transport_type || null;
+    }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_transport_date)) {
+      nextFei.premier_detenteur_transport_date = body.premier_detenteur_transport_date || null;
+    }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_type_cache)) {
+      nextFei.premier_detenteur_prochain_detenteur_type_cache =
+        body.premier_detenteur_prochain_detenteur_type_cache || null;
+    }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
+      nextFei.premier_detenteur_prochain_detenteur_id_cache =
+        body.premier_detenteur_prochain_detenteur_id_cache || null;
+    }
 
     /*
   *

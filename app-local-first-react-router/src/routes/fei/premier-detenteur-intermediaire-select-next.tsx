@@ -20,7 +20,6 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
 }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const state = useZustandStore((state) => state);
   const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
@@ -29,14 +28,15 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
   const carcasses = useZustandStore((state) => state.carcassesIdsByFei[fei.numero]);
   const entities = useZustandStore((state) => state.entities);
   const ccgs = useZustandStore((state) => state.ccgsIds).map((id) => entities[id]);
-  const etgs = useZustandStore((state) => state.etgsIds).map((id) => entities[id]);
+  const etgsIds = useZustandStore((state) => state.etgsIds);
+  const etgs = etgsIds.map((id) => entities[id]);
   const svis = useZustandStore((state) => state.svisIds).map((id) => entities[id]);
+  const collecteursPro = useZustandStore((state) => state.collecteursProIds).map((id) => entities[id]);
+  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
+  const feiIntermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
   const premierDetenteurEntity = fei.premier_detenteur_entity_id
     ? entities[fei.premier_detenteur_entity_id]
     : null;
-
-  const collecteursPro = state.collecteursProIds.map((id) => state.entities[id]);
-  const feiIntermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
 
   const showIntermediaires = useMemo(() => {
     if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
@@ -154,8 +154,8 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
   const isEtgWorkingFor = useMemo(() => {
     if (fei.fei_current_owner_role === UserRoles.ETG && !!fei.fei_current_owner_entity_id) {
       if (user.roles.includes(UserRoles.ETG)) {
-        if (state.etgsIds.includes(fei.fei_current_owner_entity_id)) {
-          const etg = state.entities[fei.fei_current_owner_entity_id];
+        if (etgsIds.includes(fei.fei_current_owner_entity_id)) {
+          const etg = entities[fei.fei_current_owner_entity_id];
           if (etg.relation === 'WORKING_FOR') {
             return true;
           }
@@ -168,8 +168,8 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
       !!fei.fei_next_owner_entity_id
     ) {
       if (user.roles.includes(UserRoles.ETG)) {
-        if (state.etgsIds.includes(fei.fei_next_owner_entity_id)) {
-          const etg = state.entities[fei.fei_next_owner_entity_id];
+        if (etgsIds.includes(fei.fei_next_owner_entity_id)) {
+          const etg = entities[fei.fei_next_owner_entity_id];
           if (etg.relation === 'WORKING_FOR') {
             return true;
           }
@@ -177,7 +177,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
       }
     }
     return false;
-  }, [fei, user, state]);
+  }, [fei, user, etgsIds, entities]);
 
   const canSelectNextOwner = useMemo(() => {
     if (

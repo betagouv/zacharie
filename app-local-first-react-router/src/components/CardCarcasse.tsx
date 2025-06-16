@@ -4,7 +4,7 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
-import { Carcasse, CarcasseType, IPM1Decision, IPM2Decision, UserRoles } from '@prisma/client';
+import { Carcasse, CarcasseType, DepotType, IPM1Decision, IPM2Decision, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
@@ -287,7 +287,7 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
   }, [intermediaires, state.entities]);
 
   const ccgDate =
-    fei.premier_detenteur_depot_type === 'CCG'
+    fei.premier_detenteur_depot_type === DepotType.CCG
       ? dayjs(fei.premier_detenteur_date_depot_quelque_part).format('dddd DD MMMM YYYY à HH:mm')
       : null;
   const etgDate = latestIntermediaire

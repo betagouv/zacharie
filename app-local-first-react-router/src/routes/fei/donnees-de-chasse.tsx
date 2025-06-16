@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { Carcasse, CarcasseType, UserRoles } from '@prisma/client';
+import { Carcasse, CarcasseType, DepotType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import ItemNotEditable from '@app/components/ItemNotEditable';
@@ -84,7 +84,7 @@ export default function FEIDonneesDeChasse({
   }, [intermediaires, state.entities]);
 
   const ccgDate =
-    fei.premier_detenteur_depot_type === 'CCG'
+    fei.premier_detenteur_depot_type === DepotType.CCG
       ? dayjs(fei.premier_detenteur_date_depot_quelque_part).format('dddd DD MMMM YYYY à HH:mm')
       : null;
   const etgDate = latestIntermediaire

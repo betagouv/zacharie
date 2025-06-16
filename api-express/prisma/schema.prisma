@@ -234,6 +234,19 @@ model Log {
   @@index([user_id, action])
 }
 
+enum DepotType {
+  CCG
+  ETG
+  AUCUN
+}
+
+enum TransportType {
+  PREMIER_DETENTEUR
+  ETG
+  COLLECTEUR_PRO
+  AUCUN
+}
+
 // Fiche d'Examen Initial
 model Fei {
   id                                                      Int                     @id @default(autoincrement())
@@ -252,9 +265,16 @@ model Fei {
   premier_detenteur_user_id                               String?
   premier_detenteur_entity_id                             String?
   premier_detenteur_name_cache                            String?
-  premier_detenteur_date_depot_quelque_part               DateTime?
+  premier_detenteur_depot_type                            DepotType?
   premier_detenteur_depot_entity_id                       String?
-  premier_detenteur_depot_type                            EntityTypes?
+  premier_detenteur_depot_ccg_at                          DateTime?
+  premier_detenteur_date_depot_quelque_part               DateTime? // deprecated, migrate to premier_detenteur_depot_ccg_at
+  premier_detenteur_transport_type                        TransportType?
+  premier_detenteur_transport_date                        DateTime?
+  // new fields, we keep for cache and prefill premier detenteur next owner
+  premier_detenteur_prochain_detenteur_type_cache         EntityTypes?
+  premier_detenteur_prochain_detenteur_id_cache           String?
+  // end new fields
   intermediaire_closed_at                                 DateTime? // si toutes les carcasses sont rejetées/manquantes
   intermediaire_closed_by_user_id                         String?
   intermediaire_closed_by_entity_id                       String?

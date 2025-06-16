@@ -56,6 +56,9 @@ export default {
         'contrast-grey': {
           DEFAULT: 'var(--background-contrast-grey)',
         },
+        'disabled-grey': {
+          DEFAULT: 'var(--text-disabled-grey)',
+        },
         'active-tint': 'var(--active-tint)',
       },
     },
