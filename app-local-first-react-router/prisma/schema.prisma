@@ -397,12 +397,11 @@ model Carcasse {
   zacharie_carcasse_id                               String                  @id // {fei_numero}_{numero_bracelet}
   numero_bracelet                                    String // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
   fei_numero                                         String
+  espece                                             String? // Sanglier, Cerf, etc.
   type                                               CarcasseType?
   nombre_d_animaux                                   Int?
   heure_mise_a_mort                                  String?
   heure_evisceration                                 String?
-  espece                                             String? // Sanglier, Cerf, etc.
-  categorie                                          String? // Laie, MArcassin, etc.
   /**
    * EXAMINATEUR
    */

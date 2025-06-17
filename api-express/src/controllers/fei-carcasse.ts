@@ -141,9 +141,6 @@ router.post(
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.espece)) {
       nextCarcasse.espece = body[Prisma.CarcasseScalarFieldEnum.espece];
     }
-    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.categorie)) {
-      nextCarcasse.categorie = body[Prisma.CarcasseScalarFieldEnum.categorie];
-    }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie)) {
       const nextValue = body[Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie];
       nextCarcasse.examinateur_carcasse_sans_anomalie = nextValue;

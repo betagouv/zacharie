@@ -92,13 +92,7 @@ export default function FEIExaminateurInitial() {
     const notReady = [];
     let _atLeastOneCarcasseWithAnomalie = false;
     for (const carcasse of carcasses.filter((c) => c !== null)) {
-      if (
-        !carcasse.examinateur_signed_at ||
-        // !carcasse.heure_evisceration ||
-        // !carcasse.heure_mise_a_mort ||
-        // !carcasse.categorie ||
-        !carcasse.espece
-      ) {
+      if (!carcasse.examinateur_signed_at || !carcasse.espece) {
         notReady.push(carcasse);
       }
       if (carcasse.examinateur_anomalies_abats?.length || carcasse.examinateur_anomalies_carcasse?.length) {

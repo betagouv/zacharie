@@ -155,7 +155,6 @@ export default function NouvelleCarcasse() {
             heure_mise_a_mort: null,
             heure_evisceration: null,
             espece: espece,
-            categorie: null,
             examinateur_carcasse_sans_anomalie: null,
             examinateur_anomalies_carcasse: [],
             examinateur_anomalies_abats: [],

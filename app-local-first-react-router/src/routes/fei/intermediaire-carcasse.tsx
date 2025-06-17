@@ -210,10 +210,7 @@ export default function CarcasseIntermediaireComp({
             <>
               {carcasse.numero_bracelet}
               <br />
-              <span className="text-sm">
-                {carcasse.espece}
-                {carcasse.categorie && ` - ${carcasse.categorie}`}
-              </span>
+              <span className="text-sm">{carcasse.espece}</span>
               <br />
               <span className="text-sm font-normal italic opacity-50">
                 {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Petit gibier' : 'Grand gibier'}
