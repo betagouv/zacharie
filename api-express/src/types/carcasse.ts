@@ -17,7 +17,7 @@ export const carcasseForRegistrySelect = {
   // examinateur_signed_at: false,
   intermediaire_carcasse_refus_intermediaire_id: true,
   intermediaire_carcasse_refus_motif: true,
-  intermediaire_carcasse_signed_at: true,
+  latest_intermediaire_signed_at: true,
   intermediaire_carcasse_manquante: true,
   svi_assigned_to_fei_at: true,
   svi_carcasse_commentaire: true,

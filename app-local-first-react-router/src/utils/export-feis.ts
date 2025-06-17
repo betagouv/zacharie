@@ -366,8 +366,8 @@ export default function useExportFeis() {
             'Examinateur initial téléphone': examinateurInitial?.telephone || '',
             'Examinateur initial email': examinateurInitial?.email || '',
             // Observations ETG
-            Réceptionnée: carcasse.intermediaire_carcasse_signed_at
-              ? dayjs(carcasse.intermediaire_carcasse_signed_at).format('DD/MM/YYYY HH:mm')
+            Réceptionnée: carcasse.latest_intermediaire_signed_at
+              ? dayjs(carcasse.latest_intermediaire_signed_at).format('DD/MM/YYYY HH:mm')
               : null,
             // Plus d'infos
             'Heure de première mise à mort': fei.heure_mise_a_mort_premiere_carcasse,

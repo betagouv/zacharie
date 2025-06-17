@@ -166,8 +166,8 @@ router.post(
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at)) {
       nextCarcasse.examinateur_signed_at = body.examinateur_signed_at;
     }
-    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_signed_at)) {
-      nextCarcasse.intermediaire_carcasse_signed_at = body.intermediaire_carcasse_signed_at;
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.latest_intermediaire_signed_at)) {
+      nextCarcasse.latest_intermediaire_signed_at = body.latest_intermediaire_signed_at;
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_manquante)) {
       const nextValue = body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_manquante];

@@ -17,8 +17,12 @@ export function sortEarliestFirstByUpdatedAt<T extends { updated_at: string }>(a
 }
 
 export function sortCarcassesApproved(carcasseA: Carcasse, carcasseB: Carcasse) {
-  if (carcasseA.intermediaire_carcasse_signed_at && carcasseB.intermediaire_carcasse_signed_at) {
-    return carcasseA.intermediaire_carcasse_signed_at > carcasseB.intermediaire_carcasse_signed_at ? 1 : -1;
+  if (carcasseA.latest_intermediaire_signed_at && carcasseB.latest_intermediaire_signed_at) {
+    return carcasseA.latest_intermediaire_signed_at > carcasseB.latest_intermediaire_signed_at ? 1 : -1;
+  } else if (carcasseA.latest_intermediaire_signed_at) {
+    return 1;
+  } else if (carcasseB.latest_intermediaire_signed_at) {
+    return -1;
   }
   if (carcasseA.espece === carcasseB.espece) {
     return carcasseA.numero_bracelet.localeCompare(carcasseB.numero_bracelet);

@@ -412,6 +412,7 @@ model Carcasse {
   intermediaire_carcasse_refus_motif                 String?
   intermediaire_carcasse_manquante                   Boolean?
   intermediaire_carcasse_signed_at                   DateTime?
+  latest_intermediaire_signed_at                     DateTime?
   svi_assigned_to_fei_at                             DateTime? // same as svi_assigned_at in fei
   svi_carcasse_saisie                                String[] // deprecated, use svi_carcasse_saisie_motif instead
   svi_carcasse_saisie_at                             DateTime?

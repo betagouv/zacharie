@@ -258,8 +258,8 @@ export default function useExportCarcasses() {
           'Examinateur initial téléphone': examinateur?.telephone || '',
           'Examinateur initial email': examinateur?.email || '',
           // Observations ETG
-          Réceptionnée: carcasse.intermediaire_carcasse_signed_at
-            ? dayjs(carcasse.intermediaire_carcasse_signed_at).format('DD/MM/YYYY HH:mm')
+          Réceptionnée: carcasse.latest_intermediaire_signed_at
+            ? dayjs(carcasse.latest_intermediaire_signed_at).format('DD/MM/YYYY HH:mm')
             : null,
           // Plus d'infos
           'Heure de première mise à mort': carcasse.fei_heure_mise_a_mort_premiere_carcasse,

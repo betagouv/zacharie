@@ -163,7 +163,7 @@ export default function NouvelleCarcasse() {
             examinateur_signed_at: dayjs().toDate(),
             intermediaire_carcasse_refus_intermediaire_id: null,
             intermediaire_carcasse_refus_motif: null,
-            intermediaire_carcasse_signed_at: null,
+            latest_intermediaire_signed_at: null,
             intermediaire_carcasse_manquante: false,
             svi_assigned_to_fei_at: null,
             svi_carcasse_saisie: [],

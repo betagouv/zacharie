@@ -107,8 +107,8 @@ export function carcasseFilterableFields(motifs: Array<string>): Array<CarcasseF
     { name: 'heure_mise_a_mort', label: 'Heure de mise à mort', type: 'date-with-time' },
     { name: 'heure_evisceration', label: "Heure d'éviscération", type: 'date-with-time' },
     {
-      name: 'intermediaire_carcasse_signed_at',
-      label: 'Date décision destinataire',
+      name: 'latest_intermediaire_signed_at',
+      label: 'Date dernière décision destinataire',
       type: 'date-with-time',
     },
     // TODO: Décision destinataire
