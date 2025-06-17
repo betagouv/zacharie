@@ -166,11 +166,7 @@ export default function NouvelleCarcasse() {
             latest_intermediaire_signed_at: null,
             intermediaire_carcasse_manquante: false,
             svi_assigned_to_fei_at: null,
-            svi_carcasse_saisie: [],
-            svi_carcasse_saisie_motif: [],
-            svi_carcasse_saisie_at: null,
-            svi_carcasse_signed_at: null,
-            svi_carcasse_commentaire: null,
+            svi_carcasse_commentaire: null, // cache of ipm1 and ipm2 comments
             svi_carcasse_status: CarcasseStatus.SANS_DECISION,
             svi_carcasse_status_set_at: null,
             svi_ipm1_presentee_inspection: null,

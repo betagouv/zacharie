@@ -50,6 +50,7 @@ const initialState: State = {
     activated: true,
     roles: [],
     numero_cfei: '',
+    at_least_one_fei_treated: null,
     user_entities_vivible_checkbox: false,
     prochain_bracelet_a_utiliser: 1,
     created_at: new Date(),

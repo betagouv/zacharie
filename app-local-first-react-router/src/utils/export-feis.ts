@@ -354,7 +354,7 @@ export default function useExportFeis() {
               : '',
             'SVI - Saisie motif': carcasse.svi_ipm2_lesions_ou_motifs.join('\n'),
             'SVI - Certificat de saisie OK': '',
-            "SVI - Date d'examen": carcasse.svi_carcasse_signed_at,
+            "SVI - Date d'examen": carcasse.svi_ipm2_date,
             // infos de chasse
             'Commune de la chasse': fei.commune_mise_a_mort,
             'Numéro de fiche': fei.numero,

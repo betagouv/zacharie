@@ -39,6 +39,8 @@ const initialData: State = {
     code_postal: '',
     ville: '',
     prefilled: false,
+    ccg_status: null,
+    at_least_one_fei_treated: null,
     EntityRelationsWithUsers: [],
     created_at: new Date(),
     updated_at: new Date(),

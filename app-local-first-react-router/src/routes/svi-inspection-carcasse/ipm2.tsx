@@ -193,6 +193,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       svi_ipm2_lesions_ou_motifs: sviIpm2LesionsOuMotifs,
       svi_ipm2_nombre_animaux: sviIpm2NombreAnimaux,
       svi_ipm2_commentaire: sviIpm2Commentaire,
+      svi_carcasse_commentaire: carcasse.svi_carcasse_commentaire
+        ? `${carcasse.svi_carcasse_commentaire}\n\nIPM2: ${sviIpm2Commentaire}`
+        : `IPM2: ${sviIpm2Commentaire}`,
       svi_ipm2_decision: sviIpm2Decision,
       svi_ipm2_traitement_assainissant: sviIpm2TraitementAssainissant,
       svi_ipm2_traitement_assainissant_cuisson_temps: sviIpm2TraitementAssainissantCuissonTemps,
@@ -420,7 +423,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
           </div>
-          <div className="mb-4 mx-4">
+          <div className="mx-4 mb-4">
             {sviIpm2Pieces.map((piece, index) => {
               return (
                 <Notice
@@ -476,7 +479,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
           </div>
-          <div className="mb-4 mx-4">
+          <div className="mx-4 mb-4">
             {sviIpm2LesionsOuMotifs.map((lom, index) => {
               return (
                 <Notice

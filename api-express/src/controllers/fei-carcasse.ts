@@ -194,18 +194,6 @@ router.post(
     }
 
     if (user.roles.includes(UserRoles.SVI)) {
-      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie)) {
-        nextCarcasse.svi_carcasse_saisie = (body.svi_carcasse_saisie as string[]).filter(Boolean);
-      }
-      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_motif)) {
-        nextCarcasse.svi_carcasse_saisie_motif = (body.svi_carcasse_saisie_motif as string[]).filter(Boolean);
-      }
-      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_saisie_at)) {
-        nextCarcasse.svi_carcasse_saisie_at = body.svi_carcasse_saisie_at;
-      }
-      if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_signed_at)) {
-        nextCarcasse.svi_carcasse_signed_at = body.svi_carcasse_signed_at;
-      }
       if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire)) {
         nextCarcasse.svi_carcasse_commentaire = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire];
       }
@@ -368,9 +356,7 @@ router.post(
       await sendNotificationToUser({
         user: examinateurInitial!,
         title: `Une carcasse de ${updatedCarcasse.espece} a été saisie`,
-        body: `Motif${
-          updatedCarcasse.svi_carcasse_saisie_motif.length > 1 ? 's' : ''
-        } de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(', ')}`,
+        body: email,
         email: email,
         notificationLogAction: `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`,
       });
@@ -379,9 +365,7 @@ router.post(
         await sendNotificationToUser({
           user: premierDetenteur!,
           title: `Une carcasse de ${updatedCarcasse.espece} a été saisie`,
-          body: `Motif${
-            updatedCarcasse.svi_carcasse_saisie_motif.length > 1 ? 's' : ''
-          } de saisie: ${updatedCarcasse.svi_carcasse_saisie_motif.join(', ')}`,
+          body: email,
           email: email,
           notificationLogAction: `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`,
         });
@@ -411,7 +395,7 @@ router.post(
       await sendNotificationToUser({
         user: examinateurInitial!,
         title: `Une carcasse de ${updatedCarcasse.espece} est manquante`,
-        body: '',
+        body: email,
         email: email,
         notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
       });
@@ -420,7 +404,7 @@ router.post(
         await sendNotificationToUser({
           user: premierDetenteur!,
           title: `Une carcasse de ${updatedCarcasse.espece} est manquante`,
-          body: '',
+          body: email,
           email: email,
           notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
         });
@@ -450,7 +434,7 @@ router.post(
       await sendNotificationToUser({
         user: examinateurInitial!,
         title: `Une carcasse de ${updatedCarcasse.espece} est refusée`,
-        body: `Motif de refus: ${updatedCarcasse.intermediaire_carcasse_refus_motif}`,
+        body: email,
         email: email,
         notificationLogAction: `CARCASSE_REFUS_${updatedCarcasse.zacharie_carcasse_id}`,
       });
@@ -459,7 +443,7 @@ router.post(
         await sendNotificationToUser({
           user: premierDetenteur!,
           title: `Une carcasse de ${updatedCarcasse.espece} est refusée`,
-          body: `Motif de refus: ${updatedCarcasse.intermediaire_carcasse_refus_motif}`,
+          body: email,
           email: email,
           notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
         });
