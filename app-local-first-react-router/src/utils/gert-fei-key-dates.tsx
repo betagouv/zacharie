@@ -26,8 +26,8 @@ export function getFeiKeyDates(fei: FeiWithIntermediaires | FeiDone | Fei) {
       Dépôt en chambre froide&nbsp;:
       <br />
       <span className="ml-4">
-        {fei.premier_detenteur_date_depot_quelque_part ? (
-          <>{dayjs(fei.premier_detenteur_date_depot_quelque_part).format('DD/MM/YYYY à HH:mm')}</>
+        {fei.premier_detenteur_depot_ccg_at ? (
+          <>{dayjs(fei.premier_detenteur_depot_ccg_at).format('DD/MM/YYYY à HH:mm')}</>
         ) : (
           '/'
         )}

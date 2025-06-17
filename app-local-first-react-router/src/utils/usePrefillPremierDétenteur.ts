@@ -5,7 +5,6 @@ import { useParams } from 'react-router';
 
 interface PrefillPremierDétenteurInfos {
   premier_detenteur_depot_type: Fei['premier_detenteur_depot_type'];
-  // premier_detenteur_date_depot_quelque_part: Fei['premier_detenteur_date_depot_quelque_part'];
   premier_detenteur_depot_entity_id: Fei['premier_detenteur_depot_entity_id'];
   premier_detenteur_prochain_detenteur_type_cache: Fei['premier_detenteur_prochain_detenteur_type_cache'];
   premier_detenteur_prochain_detenteur_id_cache: Fei['premier_detenteur_prochain_detenteur_id_cache'];

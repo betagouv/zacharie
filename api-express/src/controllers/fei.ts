@@ -16,94 +16,6 @@ import {
 } from '~/third-parties/brevo';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
-// prisma.fei
-//   .findMany({
-//     where: {
-//       // numero: 'ZACH-20250114-EVHMN-154237',
-//     },
-//     include: {
-//       Carcasses: true,
-//     },
-//   })
-//   .then(async (feis) => {
-//     for (const fei of feis) {
-//       const nombreDAnimaux = formatCountCarcasseByEspece(fei.Carcasses).filter(Boolean).join('\n');
-//       await prisma.fei.update({
-//         where: { numero: fei.numero },
-//         data: { resume_nombre_de_carcasses: nombreDAnimaux },
-//       });
-//     }
-//     console.log('done renaming all resume_nombre_de_carcasses');
-//   });
-
-// prisma.user
-//   .findMany({
-//     where: {
-//       at_least_one_fei_treated: null,
-//       roles: { hasSome: [UserRoles.PREMIER_DETENTEUR, UserRoles.EXAMINATEUR_INITIAL] },
-//     },
-//     include: {
-//       FeiExaminateurInitialUser: true,
-//       FeiPremierDetenteurUser: true,
-//     },
-//   })
-//   .then(async (users) => {
-//     console.log(users.length);
-//     for (const user of users) {
-//       let atLeastOneFeiTreated = false;
-//       if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-//         if (user.FeiExaminateurInitialUser.length > 0) {
-//           const feis = user.FeiExaminateurInitialUser.filter(
-//             (fei) =>
-//               !fei.deleted_at &&
-//               fei.examinateur_initial_date_approbation_mise_sur_le_marche &&
-//               fei.examinateur_initial_user_id === user.id,
-//           ).sort((a, b) => {
-//             return (
-//               a.examinateur_initial_date_approbation_mise_sur_le_marche.getTime() -
-//               b.examinateur_initial_date_approbation_mise_sur_le_marche.getTime()
-//             );
-//           });
-//           if (feis.length > 0) {
-//             atLeastOneFeiTreated = true;
-//             await prisma.user.update({
-//               where: { id: user.id },
-//               data: {
-//                 at_least_one_fei_treated: feis[0].examinateur_initial_date_approbation_mise_sur_le_marche,
-//               },
-//             });
-//           }
-//         }
-//       }
-//       if (atLeastOneFeiTreated) {
-//         continue;
-//       }
-//       if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
-//         if (user.FeiPremierDetenteurUser.length > 0) {
-//           const feis = user.FeiPremierDetenteurUser.filter(
-//             (fei) =>
-//               !fei.deleted_at &&
-//               fei.premier_detenteur_date_depot_quelque_part &&
-//               fei.premier_detenteur_user_id === user.id,
-//           ).sort((a, b) => {
-//             return (
-//               a.premier_detenteur_date_depot_quelque_part.getTime() -
-//               b.premier_detenteur_date_depot_quelque_part.getTime()
-//             );
-//           });
-//           if (feis.length > 0) {
-//             await prisma.user.update({
-//               where: { id: user.id },
-//               data: {
-//                 at_least_one_fei_treated: feis[0].premier_detenteur_date_depot_quelque_part,
-//               },
-//             });
-//           }
-//         }
-//       }
-//     }
-//   });
-
 router.post(
   '/:fei_numero',
   passport.authenticate('user', { session: false }),
@@ -250,10 +162,6 @@ router.post(
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache)) {
       nextFei.premier_detenteur_name_cache = body.premier_detenteur_name_cache || null;
     }
-    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_date_depot_quelque_part)) {
-      nextFei.premier_detenteur_date_depot_quelque_part =
-        body.premier_detenteur_date_depot_quelque_part || null;
-    }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id)) {
       nextFei.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id || null;
     }
@@ -385,15 +293,6 @@ router.post(
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_user_id)) {
       nextFei.svi_user_id = body.svi_user_id || null;
     }
-    if (body.svi_carcasses_saisies) {
-      nextFei.svi_carcasses_saisies = body.svi_carcasses_saisies || null;
-    }
-    if (body.svi_aucune_carcasse_saisie) {
-      nextFei.svi_aucune_carcasse_saisie = body.svi_aucune_carcasse_saisie || null;
-    }
-    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_commentaire)) {
-      nextFei.svi_commentaire = body.svi_commentaire || null;
-    }
 
     const savedFei = await prisma.fei.update({
       where: { numero: feiNumero },
@@ -417,10 +316,10 @@ router.post(
       }
       if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
         if (savedFei.premier_detenteur_user_id === user.id) {
-          if (savedFei.premier_detenteur_date_depot_quelque_part) {
+          if (savedFei.fei_current_owner_user_id !== user.id) {
             const updatedUser = await prisma.user.update({
               where: { id: user.id },
-              data: { at_least_one_fei_treated: savedFei.premier_detenteur_date_depot_quelque_part },
+              data: { at_least_one_fei_treated: savedFei.updated_at },
             });
             await updateBrevoChasseurDeal(updatedUser);
           }

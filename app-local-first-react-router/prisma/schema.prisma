@@ -250,6 +250,9 @@ enum TransportType {
 // Fiche d'Examen Initial
 model Fei {
   id                                                      Int                     @id @default(autoincrement())
+  /**
+  * metadata
+  */
   numero                                                  String                  @unique
   date_mise_a_mort                                        DateTime?               @db.Date // et éviscération
   commune_mise_a_mort                                     String?
@@ -257,35 +260,47 @@ model Fei {
   heure_evisceration_derniere_carcasse                    String?
   created_by_user_id                                      String
   resume_nombre_de_carcasses                              String?
-  examinateur_initial_offline                             Boolean?
+  automatic_closed_at                                     DateTime?
+  /**
+  * examinateur initial
+  */
+  examinateur_initial_offline                             Boolean? // was the examinateur initial offline when the fei was created
   examinateur_initial_user_id                             String?
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
-  premier_detenteur_offline                               Boolean?
+  /**
+  * premier detenteur
+  */
+  premier_detenteur_offline                               Boolean? // was the premier detenteur offline when the fei was completed
   premier_detenteur_user_id                               String?
   premier_detenteur_entity_id                             String?
   premier_detenteur_name_cache                            String?
-  premier_detenteur_depot_type                            DepotType?
+  premier_detenteur_depot_type                            DepotType? // CCG, ETG, AUCUN
   premier_detenteur_depot_entity_id                       String?
   premier_detenteur_depot_ccg_at                          DateTime?
-  premier_detenteur_date_depot_quelque_part               DateTime? // deprecated
   premier_detenteur_transport_type                        TransportType?
   premier_detenteur_transport_date                        DateTime?
-  // new fields, we keep for cache and prefill premier detenteur next owner
   premier_detenteur_prochain_detenteur_type_cache         EntityTypes?
   premier_detenteur_prochain_detenteur_id_cache           String?
-  // end new fields
+  /**
+  * intermediaire
+  */
   intermediaire_closed_at                                 DateTime? // si toutes les carcasses sont rejetées/manquantes
   intermediaire_closed_by_user_id                         String?
   intermediaire_closed_by_entity_id                       String?
+  /**
+  * svi
+  */
   svi_assigned_at                                         DateTime?
   svi_entity_id                                           String?
   svi_user_id                                             String?
-  svi_carcasses_saisies                                   Int?
-  svi_aucune_carcasse_saisie                              Boolean?
-  svi_commentaire                                         String?
-  svi_signed_at                                           DateTime?
-  svi_signed_by                                           String?
+  svi_signed_at                                           DateTime? // TO DELETE, use svi_closed_at instead
+  svi_signed_by                                           String? // TO DELETE, use svi_closed_by_user_id instead
+  svi_closed_at                                           DateTime?
+  svi_closed_by_user_id                                   String?
+  /**
+  * owners
+  */
   fei_current_owner_user_id                               String?
   fei_current_owner_user_name_cache                       String?
   fei_current_owner_entity_id                             String?
@@ -300,11 +315,16 @@ model Fei {
   fei_prev_owner_user_id                                  String?
   fei_prev_owner_entity_id                                String?
   fei_prev_owner_role                                     UserRoles?
+  /**
+  * owners
+  */
   created_at                                              DateTime                @default(now())
   updated_at                                              DateTime                @default(now()) @updatedAt
   deleted_at                                              DateTime?
-  is_synced                                               Boolean                 @default(true) // just for typing purppose with zustand frontend
-  automatic_closed_at                                     DateTime?
+  is_synced                                               Boolean                 @default(true)
+  /**
+  * relations
+  */
   Carcasses                                               Carcasse[]
   FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiPremierDetenteurUser                                 User?                   @relation("FeiPremierDetenteurUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)

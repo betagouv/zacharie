@@ -78,15 +78,13 @@ export const carcasseForRegistrySelect = {
       // premier_detenteur_user_id: false,
       // premier_detenteur_entity_id: false,
       premier_detenteur_name_cache: true,
-      premier_detenteur_date_depot_quelque_part: true,
+      premier_detenteur_depot_ccg_at: true,
       // premier_detenteur_depot_entity_id: false,
       // premier_detenteur_depot_type: false,
       svi_assigned_at: true,
       svi_entity_id: true,
       svi_user_id: true,
       svi_carcasses_saisies: true,
-      svi_aucune_carcasse_saisie: true,
-      svi_commentaire: true,
       svi_signed_at: true,
       svi_signed_by: true,
       // fei_current_owner_user_id: false,
@@ -128,13 +126,9 @@ export type CarcasseForResponseForRegistry = Omit<CarcasseGetForRegistry, 'Fei'>
   // fei_resume_nombre_de_carcasses: Fei['resume_nombre_de_carcasses'];
   fei_examinateur_initial_date_approbation_mise_sur_le_marche: Fei['examinateur_initial_date_approbation_mise_sur_le_marche'];
   fei_premier_detenteur_name_cache: Fei['premier_detenteur_name_cache'];
-  fei_premier_detenteur_date_depot_quelque_part: Fei['premier_detenteur_date_depot_quelque_part'];
   fei_svi_assigned_at: Fei['svi_assigned_at'];
   fei_svi_entity_id: Fei['svi_entity_id'];
   fei_svi_user_id: Fei['svi_user_id'];
-  fei_svi_carcasses_saisies: Fei['svi_carcasses_saisies'];
-  fei_svi_aucune_carcasse_saisie: Fei['svi_aucune_carcasse_saisie'];
-  fei_svi_commentaire: Fei['svi_commentaire'];
   fei_svi_signed_at: Fei['svi_signed_at'];
   fei_svi_signed_by: Fei['svi_signed_by'];
   fei_created_at: Fei['created_at'];

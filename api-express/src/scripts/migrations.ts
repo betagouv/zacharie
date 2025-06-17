@@ -69,19 +69,19 @@ import { formatCountCarcasseByEspece } from '~/utils/count-carcasses';
 //           const feis = user.FeiPremierDetenteurUser.filter(
 //             (fei) =>
 //               !fei.deleted_at &&
-//               fei.premier_detenteur_date_depot_quelque_part &&
+//               fei.fei_current_owner_user_id !== user.id &&
 //               fei.premier_detenteur_user_id === user.id,
 //           ).sort((a, b) => {
 //             return (
-//               a.premier_detenteur_date_depot_quelque_part.getTime() -
-//               b.premier_detenteur_date_depot_quelque_part.getTime()
+//               a.updated_at.getTime() -
+//               b.updated_at.getTime()
 //             );
 //           });
 //           if (feis.length > 0) {
 //             await prisma.user.update({
 //               where: { id: user.id },
 //               data: {
-//                 at_least_one_fei_treated: feis[0].premier_detenteur_date_depot_quelque_part,
+//                 at_least_one_fei_treated: feis[0].updated_at,
 //               },
 //             });
 //           }

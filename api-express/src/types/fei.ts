@@ -8,7 +8,7 @@ export const feiDoneSelect = {
   fei_next_owner_role: true,
   date_mise_a_mort: true,
   heure_evisceration_derniere_carcasse: true,
-  premier_detenteur_date_depot_quelque_part: true,
+  premier_detenteur_depot_ccg_at: true,
   premier_detenteur_depot_type: true,
   premier_detenteur_depot_entity_id: true,
   premier_detenteur_prochain_detenteur_id_cache: true,

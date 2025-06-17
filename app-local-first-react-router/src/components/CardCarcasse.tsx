@@ -288,7 +288,7 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
 
   const ccgDate =
     fei.premier_detenteur_depot_type === DepotType.CCG
-      ? dayjs(fei.premier_detenteur_date_depot_quelque_part).format('dddd DD MMMM YYYY à HH:mm')
+      ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd DD MMMM YYYY à HH:mm')
       : null;
   const etgDate = latestIntermediaire
     ? dayjs(latestIntermediaire.check_finished_at).format('dddd DD MMMM YYYY à HH:mm')
