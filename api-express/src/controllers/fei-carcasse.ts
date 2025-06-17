@@ -181,10 +181,6 @@ router.post(
       nextCarcasse.intermediaire_carcasse_refus_motif =
         body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif];
     }
-    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire)) {
-      nextCarcasse.intermediaire_carcasse_commentaire =
-        body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_commentaire];
-    }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_assigned_to_fei_at)) {
       nextCarcasse.svi_assigned_to_fei_at = body.svi_assigned_to_fei_at;
     }
