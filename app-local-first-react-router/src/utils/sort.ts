@@ -28,16 +28,3 @@ export function sortCarcassesApproved(carcasseA: Carcasse, carcasseB: Carcasse) 
   }
   return carcasseA.type!.localeCompare(carcasseB.type!);
 }
-
-export function sortCarcassesApprovedForExcel(carcasseA: Carcasse, carcasseB: Carcasse) {
-  if (carcasseA.intermediaire_carcasse_signed_at && carcasseB.intermediaire_carcasse_signed_at) {
-    return carcasseA.intermediaire_carcasse_signed_at > carcasseB.intermediaire_carcasse_signed_at ? 1 : -1;
-  }
-  if (carcasseA.espece === carcasseB.espece) {
-    return carcasseA.numero_bracelet.localeCompare(carcasseB.numero_bracelet);
-  }
-  if (carcasseA.type === carcasseB.type) {
-    return carcasseA.espece!.localeCompare(carcasseB.espece!);
-  }
-  return carcasseA.type!.localeCompare(carcasseB.type!);
-}

@@ -251,8 +251,8 @@ enum TransportType {
 model Fei {
   id                                                      Int                     @id @default(autoincrement())
   /**
-  * metadata
-  */
+   * metadata
+   */
   numero                                                  String                  @unique
   date_mise_a_mort                                        DateTime?               @db.Date // et éviscération
   commune_mise_a_mort                                     String?
@@ -262,15 +262,15 @@ model Fei {
   resume_nombre_de_carcasses                              String?
   automatic_closed_at                                     DateTime?
   /**
-  * examinateur initial
-  */
+   * examinateur initial
+   */
   examinateur_initial_offline                             Boolean? // was the examinateur initial offline when the fei was created
   examinateur_initial_user_id                             String?
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
   /**
-  * premier detenteur
-  */
+   * premier detenteur
+   */
   premier_detenteur_offline                               Boolean? // was the premier detenteur offline when the fei was completed
   premier_detenteur_user_id                               String?
   premier_detenteur_entity_id                             String?
@@ -283,22 +283,22 @@ model Fei {
   premier_detenteur_prochain_detenteur_type_cache         EntityTypes?
   premier_detenteur_prochain_detenteur_id_cache           String?
   /**
-  * intermediaire
-  */
+   * intermediaire
+   */
   intermediaire_closed_at                                 DateTime? // si toutes les carcasses sont rejetées/manquantes
   intermediaire_closed_by_user_id                         String?
   intermediaire_closed_by_entity_id                       String?
   /**
-  * svi
-  */
+   * svi
+   */
   svi_assigned_at                                         DateTime?
   svi_entity_id                                           String?
   svi_user_id                                             String?
   svi_closed_at                                           DateTime?
   svi_closed_by_user_id                                   String?
   /**
-  * owners
-  */
+   * owners
+   */
   fei_current_owner_user_id                               String?
   fei_current_owner_user_name_cache                       String?
   fei_current_owner_entity_id                             String?
@@ -314,15 +314,15 @@ model Fei {
   fei_prev_owner_entity_id                                String?
   fei_prev_owner_role                                     UserRoles?
   /**
-  * owners
-  */
+   * owners
+   */
   created_at                                              DateTime                @default(now())
   updated_at                                              DateTime                @default(now()) @updatedAt
   deleted_at                                              DateTime?
   is_synced                                               Boolean                 @default(true)
   /**
-  * relations
-  */
+   * relations
+   */
   Carcasses                                               Carcasse[]
   FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiPremierDetenteurUser                                 User?                   @relation("FeiPremierDetenteurUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -410,9 +410,9 @@ model Carcasse {
   examinateur_signed_at                              DateTime?
   intermediaire_carcasse_refus_intermediaire_id      String?
   intermediaire_carcasse_refus_motif                 String?
-  intermediaire_carcasse_signed_at                   DateTime?
-  intermediaire_carcasse_commentaire                 String?
   intermediaire_carcasse_manquante                   Boolean?
+  intermediaire_carcasse_commentaire                 String?
+  intermediaire_carcasse_signed_at                   DateTime?
   svi_assigned_to_fei_at                             DateTime? // same as svi_assigned_at in fei
   svi_carcasse_saisie                                String[] // deprecated, use svi_carcasse_saisie_motif instead
   svi_carcasse_saisie_at                             DateTime?
