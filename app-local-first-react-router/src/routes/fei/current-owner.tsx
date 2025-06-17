@@ -47,7 +47,7 @@ export default function CurrentOwner() {
     return fei.fei_current_owner_role;
   }, [user.roles, fei.fei_current_owner_role]);
 
-  if (fei.svi_signed_at || fei.automatic_closed_at || fei.intermediaire_closed_at) {
+  if (fei.svi_closed_at || fei.automatic_closed_at || fei.intermediaire_closed_at) {
     return (
       <div className="bg-alt-blue-france pb-8">
         <div className="bg-white">

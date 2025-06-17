@@ -17,7 +17,7 @@ export const feiDoneSelect = {
   premier_detenteur_transport_date: true,
   commune_mise_a_mort: true,
   svi_assigned_at: true,
-  svi_signed_at: true,
+  svi_closed_at: true,
   automatic_closed_at: true,
   examinateur_initial_date_approbation_mise_sur_le_marche: true,
   premier_detenteur_name_cache: true,

@@ -280,9 +280,9 @@ router.post(
   SVI
 
   */
-    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_signed_at)) {
-      nextFei.svi_signed_at = body.svi_signed_at || null;
-      if (body.svi_signed_at) nextFei.svi_signed_by = user.id;
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_closed_at)) {
+      nextFei.svi_closed_at = body.svi_closed_at || null;
+      if (body.svi_closed_at) nextFei.svi_closed_by_user_id = user.id;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_assigned_at)) {
       nextFei.svi_assigned_at = body.svi_assigned_at || null;
@@ -529,7 +529,7 @@ router.get(
         AND: [
           {
             OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
-            // OR: [{ automatic_closed_at: { not: null } }, { svi_signed_at: { not: null } }],
+            // OR: [{ automatic_closed_at: { not: null } }, { svi_closed_at: { not: null } }],
           },
           {
             OR: [
@@ -708,7 +708,7 @@ router.get(
       where: {
         // deleted_at: null,
         automatic_closed_at: null,
-        svi_signed_at: null,
+        svi_closed_at: null,
         fei_next_owner_user_id: null,
         fei_next_owner_entity_id: null,
         svi_assigned_at: null,

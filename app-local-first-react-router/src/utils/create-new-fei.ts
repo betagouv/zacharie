@@ -46,8 +46,6 @@ export function createNewFei(): FeiWithIntermediaires {
     svi_assigned_at: null,
     svi_entity_id: null,
     svi_user_id: null,
-    svi_signed_at: null,
-    svi_signed_by: null,
     svi_closed_at: null,
     svi_closed_by_user_id: null,
     fei_current_owner_user_id: user.id,

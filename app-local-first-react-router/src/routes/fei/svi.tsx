@@ -119,7 +119,7 @@ export default function FEI_SVI() {
           onSubmit={(e) => {
             e.preventDefault();
             const nextFei: Partial<Fei> = {
-              svi_signed_at: dayjs().toDate(),
+              svi_closed_at: dayjs().toDate(),
               svi_assigned_at: fei.svi_assigned_at ?? dayjs().toDate(),
             };
             if (fei.fei_current_owner_role !== UserRoles.SVI) {
@@ -175,8 +175,8 @@ export default function FEI_SVI() {
                       required: true,
                       name: 'svi_finito',
                       value: 'true',
-                      readOnly: !!fei.svi_signed_at || !!fei.automatic_closed_at,
-                      defaultChecked: fei.svi_signed_at ? true : false,
+                      readOnly: !!fei.svi_closed_at || !!fei.automatic_closed_at,
+                      defaultChecked: fei.svi_closed_at ? true : false,
                     },
                   },
                 ]}
@@ -187,17 +187,17 @@ export default function FEI_SVI() {
             </>
           )}
 
-          {!!fei.svi_signed_at && (
+          {!!fei.svi_closed_at && (
             <DateFinInput
               label="Date de fin d'inspection"
               nativeInputProps={{
-                id: Prisma.FeiScalarFieldEnum.svi_signed_at,
-                name: Prisma.FeiScalarFieldEnum.svi_signed_at,
+                id: Prisma.FeiScalarFieldEnum.svi_closed_at,
+                name: Prisma.FeiScalarFieldEnum.svi_closed_at,
                 type: 'datetime-local',
                 autoComplete: 'off',
                 onBlur: (e) => {
                   const nextFei: Partial<Fei> = {
-                    svi_signed_at: dayjs(e.target.value).toDate(),
+                    svi_closed_at: dayjs(e.target.value).toDate(),
                     svi_assigned_at: fei.svi_assigned_at ?? dayjs(e.target.value).toDate(),
                   };
                   if (fei.fei_current_owner_role !== UserRoles.SVI) {
@@ -242,7 +242,7 @@ export default function FEI_SVI() {
                   }
                 },
                 suppressHydrationWarning: true,
-                defaultValue: dayjs(fei.svi_signed_at).format('YYYY-MM-DDTHH:mm'),
+                defaultValue: dayjs(fei.svi_closed_at).format('YYYY-MM-DDTHH:mm'),
               }}
             />
           )}
@@ -262,7 +262,7 @@ export default function FEI_SVI() {
           )}
         </form>
       </Section>
-      {(fei.svi_signed_at || fei.automatic_closed_at || fei.intermediaire_closed_at) && (
+      {(fei.svi_closed_at || fei.automatic_closed_at || fei.intermediaire_closed_at) && (
         <div className="bg-white px-4 pb-4 md:px-8 md:pb-8">
           <Alert
             severity="success"

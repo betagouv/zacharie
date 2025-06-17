@@ -557,9 +557,9 @@ router.get(
           }
           toReturn.svi_carcasse_status = carcasse.svi_carcasse_status || updateCarcasseStatus(carcasse);
           toReturn.svi_carcasse_status_set_at =
-            carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_signed_at;
+            carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_closed_at;
           toReturn.svi_assigned_to_fei_at = carcasse.svi_assigned_to_fei_at || fei.svi_assigned_at;
-          // svi_carcasse_archived = fei.automatic_closed_at || fei.svi_signed_at,
+          // svi_carcasse_archived = fei.automatic_closed_at || fei.svi_closed_at,
           toReturn.svi_carcasse_archived =
             !!fei.automatic_closed_at || dayjs(now).diff(fei.svi_assigned_at, 'day') > 10;
           for (const key of Object.keys(fei)) {
@@ -657,9 +657,9 @@ router.get(
           }
           toReturn.svi_carcasse_status = carcasse.svi_carcasse_status || updateCarcasseStatus(carcasse);
           toReturn.svi_carcasse_status_set_at =
-            carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_signed_at;
+            carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_closed_at;
           toReturn.svi_assigned_to_fei_at = carcasse.svi_assigned_to_fei_at || fei.svi_assigned_at;
-          // svi_carcasse_archived = fei.automatic_closed_at || fei.svi_signed_at,
+          // svi_carcasse_archived = fei.automatic_closed_at || fei.svi_closed_at,
           toReturn.svi_carcasse_archived =
             !!fei.automatic_closed_at || dayjs(now).diff(fei.svi_assigned_at, 'day') > 10;
           for (const key of Object.keys(fei)) {

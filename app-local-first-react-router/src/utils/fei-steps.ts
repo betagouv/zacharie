@@ -35,7 +35,7 @@ export function useFeiSteps(fei: FeiDone) {
   }, [fei.fei_current_owner_role, fei.fei_next_owner_role, steps]);
 
   const currentStepLabel: FeiStep = useMemo(() => {
-    if (fei.automatic_closed_at || fei.svi_signed_at || fei.intermediaire_closed_at) {
+    if (fei.automatic_closed_at || fei.svi_closed_at || fei.intermediaire_closed_at) {
       return 'Clôturée';
     }
     switch (steps[currentStep - 1]) {
@@ -57,7 +57,14 @@ export function useFeiSteps(fei: FeiDone) {
       default:
         return 'Clôturée';
     }
-  }, [currentStep, steps, fei.fei_next_owner_role, fei.automatic_closed_at, fei.svi_signed_at]);
+  }, [
+    fei.automatic_closed_at,
+    fei.svi_closed_at,
+    fei.intermediaire_closed_at,
+    fei.fei_next_owner_role,
+    steps,
+    currentStep,
+  ]);
 
   const nextStepLabel = useMemo(() => {
     switch (currentStepLabel) {

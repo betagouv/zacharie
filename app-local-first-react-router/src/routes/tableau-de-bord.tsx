@@ -48,7 +48,7 @@ export default function TableauDeBordIndex() {
       const fei = feisDone[feiNumero]!;
       if (fei.automatic_closed_at) {
         acc.feisDoneForSvi.push(fei);
-      } else if (fei.svi_signed_at) {
+      } else if (fei.svi_closed_at) {
         acc.feisDoneForSvi.push(fei);
       } else if (dayjs(fei!.svi_assigned_at).isBefore(dayjs().subtract(10, 'days'))) {
         acc.feisDoneForSvi.push(fei);
@@ -101,7 +101,7 @@ export default function TableauDeBordIndex() {
 
   function Actions() {
     return (
-      <div className="xs:flex-row relative my-2 flex flex-col items-end justify-end gap-2">
+      <div className="relative my-2 flex flex-col items-end justify-end gap-2 xs:flex-row">
         <Button
           priority="tertiary"
           className="hidden shrink-0 bg-white lg:flex"

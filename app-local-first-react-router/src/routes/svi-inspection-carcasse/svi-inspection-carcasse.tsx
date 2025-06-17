@@ -93,7 +93,7 @@ export function SviInspectionCarcasse() {
     // if (fei.fei_current_owner_user_id !== user.id) {
     //   return false;
     // }
-    // if (fei.svi_signed_at) {
+    // if (fei.svi_closed_at) {
     //   return false;
     // }
     // if (fei.automatic_closed_at) {

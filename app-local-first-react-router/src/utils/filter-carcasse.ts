@@ -113,7 +113,7 @@ export function carcasseFilterableFields(motifs: Array<string>): Array<CarcasseF
     },
     // TODO: Décision destinataire
     { name: 'intermediaire_carcasse_refus_motif', label: 'Motif de refus d’un destinataire', type: 'text' },
-    { name: 'fei_svi_signed_at', label: 'Date de clôture manuelle de la fiche', type: 'date-with-time' },
+    { name: 'fei_svi_closed_at', label: 'Date de clôture manuelle de la fiche', type: 'date-with-time' },
     {
       name: 'fei_automatic_closed_at',
       label: 'Date de clôture automatique de la fiche',

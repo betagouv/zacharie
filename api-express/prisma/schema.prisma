@@ -67,7 +67,7 @@ model User {
   FeiPremierDetenteurUser        Fei[]                    @relation("FeiPremierDetenteurUser")
   FeiExaminateurInitialUser      Fei[]                    @relation("FeiExaminateurInitialUser")
   FeiSviUser                     Fei[]                    @relation("FeiSviUser")
-  FeiSviUserSignedBy             Fei[]                    @relation("FeiSviUserSignedBy")
+  FeiSviUserClosedBy             Fei[]                    @relation("FeiSviUserClosedBy")
   FeiIntermediaireUser           FeiIntermediaire[]       @relation("FeiIntermediaireUser")
   Logs                           Log[]
   NotificationLog                NotificationLog[]
@@ -294,8 +294,6 @@ model Fei {
   svi_assigned_at                                         DateTime?
   svi_entity_id                                           String?
   svi_user_id                                             String?
-  svi_signed_at                                           DateTime? // TO DELETE, use svi_closed_at instead
-  svi_signed_by                                           String? // TO DELETE, use svi_closed_by_user_id instead
   svi_closed_at                                           DateTime?
   svi_closed_by_user_id                                   String?
   /**
@@ -333,7 +331,7 @@ model Fei {
   FeiDepotEntity                                          Entity?                 @relation("FeiDepotEntity", fields: [premier_detenteur_depot_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiSviEntity                                            Entity?                 @relation("FeiSviEntity", fields: [svi_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiSviUser                                              User?                   @relation("FeiSviUser", fields: [svi_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiSviUserSignedBy                                      User?                   @relation("FeiSviUserSignedBy", fields: [svi_signed_by], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  FeiSviUserClosedBy                                      User?                   @relation("FeiSviUserClosedBy", fields: [svi_closed_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiIntermediaires                                       FeiIntermediaire[]
   FeiCurrentUser                                          User?                   @relation("FeiCurrentUser", fields: [fei_current_owner_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiCurrentEntity                                        Entity?                 @relation("FeiCurrentEntity", fields: [fei_current_owner_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -345,7 +343,7 @@ model Fei {
   @@index([created_by_user_id])
   @@index([premier_detenteur_user_id])
   @@index([examinateur_initial_user_id])
-  @@index([svi_signed_at])
+  @@index([svi_closed_at])
   @@index([fei_next_owner_user_id])
   @@index([fei_next_owner_entity_id])
   @@index([fei_current_owner_user_id])

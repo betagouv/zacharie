@@ -52,7 +52,7 @@ export default function FEI_ETGInspectionSvi() {
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
-    // if (fei.svi_signed_at) {
+    // if (fei.svi_closed_at) {
     //   return false;
     // }
     if (fei.automatic_closed_at) {
@@ -108,20 +108,20 @@ export default function FEI_ETGInspectionSvi() {
       </Accordion>
 
       <Accordion titleAs="h3" label="Validation de la fiche" defaultExpanded>
-        {!fei.svi_signed_at && !fei.automatic_closed_at && (
+        {!fei.svi_closed_at && !fei.automatic_closed_at && (
           <p className="text-sm text-gray-600">Inspection non terminée</p>
         )}
-        {!!fei.svi_signed_at && (
+        {!!fei.svi_closed_at && (
           <DateFinInput
             label="Date de fin d'inspection"
             nativeInputProps={{
-              id: Prisma.FeiScalarFieldEnum.svi_signed_at,
-              name: Prisma.FeiScalarFieldEnum.svi_signed_at,
+              id: Prisma.FeiScalarFieldEnum.svi_closed_at,
+              name: Prisma.FeiScalarFieldEnum.svi_closed_at,
               type: 'datetime-local',
               autoComplete: 'off',
               onBlur: (e) => {
                 const nextFei: Partial<Fei> = {
-                  svi_signed_at: dayjs(e.target.value).toDate(),
+                  svi_closed_at: dayjs(e.target.value).toDate(),
                   svi_assigned_at: fei.svi_assigned_at ?? dayjs(e.target.value).toDate(),
                 };
                 if (fei.fei_current_owner_role !== UserRoles.SVI) {
@@ -166,7 +166,7 @@ export default function FEI_ETGInspectionSvi() {
                 }
               },
               suppressHydrationWarning: true,
-              defaultValue: dayjs(fei.svi_signed_at).format('YYYY-MM-DDTHH:mm'),
+              defaultValue: dayjs(fei.svi_closed_at).format('YYYY-MM-DDTHH:mm'),
             }}
           />
         )}
@@ -185,7 +185,7 @@ export default function FEI_ETGInspectionSvi() {
           />
         )}
       </Accordion>
-      {(fei.svi_signed_at || fei.automatic_closed_at) && (
+      {(fei.svi_closed_at || fei.automatic_closed_at) && (
         <Alert
           severity="success"
           className="mt-4 md:mx-3"

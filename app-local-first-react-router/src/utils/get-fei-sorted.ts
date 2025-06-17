@@ -29,7 +29,7 @@ export function getFeisSorted(): FeiSorted {
       !fei.automatic_closed_at &&
       !fei.intermediaire_closed_at &&
       !fei.svi_assigned_at &&
-      !fei.svi_signed_at &&
+      !fei.svi_closed_at &&
       !fei.fei_next_owner_user_id &&
       !fei.fei_next_owner_entity_id
     ) {

@@ -189,7 +189,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
-    if (fei.svi_signed_at) {
+    if (fei.svi_closed_at) {
       return false;
     }
     if (fei.automatic_closed_at) {
@@ -203,7 +203,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
     premierDetenteurEntity?.relation,
     fei.fei_current_owner_role,
     fei.fei_current_owner_user_id,
-    fei.svi_signed_at,
+    fei.svi_closed_at,
     fei.automatic_closed_at,
     isEtgWorkingFor,
     user.id,

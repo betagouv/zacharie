@@ -85,8 +85,8 @@ export const carcasseForRegistrySelect = {
       svi_entity_id: true,
       svi_user_id: true,
       svi_carcasses_saisies: true,
-      svi_signed_at: true,
-      svi_signed_by: true,
+      svi_closed_at: true,
+      svi_closed_by_user_id: true,
       // fei_current_owner_user_id: false,
       // fei_current_owner_user_name_cache: false,
       // fei_current_owner_entity_id: false,
@@ -129,8 +129,7 @@ export type CarcasseForResponseForRegistry = Omit<CarcasseGetForRegistry, 'Fei'>
   fei_svi_assigned_at: Fei['svi_assigned_at'];
   fei_svi_entity_id: Fei['svi_entity_id'];
   fei_svi_user_id: Fei['svi_user_id'];
-  fei_svi_signed_at: Fei['svi_signed_at'];
-  fei_svi_signed_by: Fei['svi_signed_by'];
+  fei_svi_closed_at: Fei['svi_closed_at'];
   fei_created_at: Fei['created_at'];
   fei_updated_at: Fei['updated_at'];
   fei_deleted_at: Fei['deleted_at'];

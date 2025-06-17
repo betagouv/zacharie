@@ -57,7 +57,7 @@ async function automaticClosingOfFeis() {
         // start of day of assigned day is older than 10 days of start of day of today with dayjs
         lte: dayjs().subtract(10, 'days').startOf('day').toDate(),
       },
-      svi_signed_at: null,
+      svi_closed_at: null,
       automatic_closed_at: null,
     },
     include: {
