@@ -268,7 +268,7 @@ model Fei {
   premier_detenteur_depot_type                            DepotType?
   premier_detenteur_depot_entity_id                       String?
   premier_detenteur_depot_ccg_at                          DateTime?
-  premier_detenteur_date_depot_quelque_part               DateTime? // deprecated, migrate to premier_detenteur_depot_ccg_at
+  premier_detenteur_date_depot_quelque_part               DateTime? // TO DELETE deprecated, migrate to premier_detenteur_depot_ccg_at
   premier_detenteur_transport_type                        TransportType?
   premier_detenteur_transport_date                        DateTime?
   // new fields, we keep for cache and prefill premier detenteur next owner

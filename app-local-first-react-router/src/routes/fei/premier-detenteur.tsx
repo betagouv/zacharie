@@ -467,7 +467,17 @@ export default function FeiPremierDetenteur() {
                 {
                   label: <span className="inline-block">Je transporte les carcasses moi-même</span>,
                   hintText: (
-                    <span>N'oubliez pas de notifier le prochain détenteur des carcasses de votre dépôt.</span>
+                    <span>
+                      N'oubliez pas de notifier le prochain détenteur des carcasses de votre dépôt.{' '}
+                      {depotType === DepotType.AUCUN ? (
+                        <>
+                          Sans stockage en chambre froide, les carcasses doivent être transportées{' '}
+                          <b>le jour-même du tir</b>
+                        </>
+                      ) : (
+                        ''
+                      )}
+                    </span>
                   ),
                   nativeInputProps: {
                     checked: transportType === TransportType.PREMIER_DETENTEUR,
