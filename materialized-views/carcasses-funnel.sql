@@ -51,6 +51,6 @@ WHERE c.deleted_at IS NULL
   AND c.intermediaire_carcasse_refus_intermediaire_id IS NULL
   AND (c.intermediaire_carcasse_manquante IS NULL OR c.intermediaire_carcasse_manquante = false)
   AND f.svi_assigned_at IS NOT NULL
-  AND c.svi_carcasse_saisie_at IS NULL;
+  AND c.svi_carcasse_status IN ('SANS_DECISION', 'ACCEPTE', 'LEVEE_DE_CONSIGNE', 'TRAITEMENT_ASSAINISSANT');
 
 CREATE UNIQUE INDEX ON carcasses_funnel_stats (stage);

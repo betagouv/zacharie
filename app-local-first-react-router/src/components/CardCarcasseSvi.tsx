@@ -23,12 +23,12 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];
     for (const intermediaire of intermediaires) {
-      const carcassesIntermediairesId = getCarcasseIntermediaireId(
+      const intermediaireCarcasseId = getCarcasseIntermediaireId(
         fei.numero,
         carcasse.numero_bracelet,
         intermediaire.id,
       );
-      const intermediaireCarcasse = state.carcassesIntermediaires[carcassesIntermediairesId];
+      const intermediaireCarcasse = state.carcassesIntermediaires[intermediaireCarcasseId];
       if (intermediaireCarcasse?.commentaire) {
         const intermediaireEntity = state.entities[intermediaire.fei_intermediaire_entity_id];
         commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${intermediaireCarcasse?.commentaire}`);
@@ -64,7 +64,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
       key={carcasse?.updated_at ? dayjs(carcasse.updated_at).toISOString() : carcasse?.zacharie_carcasse_id}
       {...componentProps}
       className={[
-        'bg-contrast-grey flex basis-full flex-col items-start justify-between border-0 p-4 text-left',
+        'flex basis-full flex-col items-start justify-between border-0 bg-contrast-grey p-4 text-left',
         status === 'refusé' && '!border-l-3 border-solid !border-red-500',
         status === 'accepté' && '!border-l-3 border-solid !border-action-high-blue-france',
         // priseEnCharge && '!border-action-high-blue-france',

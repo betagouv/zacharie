@@ -167,7 +167,9 @@ export default function CurrentOwnerConfirm() {
         carcasse_intermediaire_id: null,
       });
       if (nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
-        // on envoie directement à l'ETG
+        // la fiche était destinée à un ETG, qui envoie un de ses transporteurs,
+        // le transporteur récupère les carcasses, on sait déjà à qui il va les envoyer: son ETG
+        // donc on met directement les infos de l'ETG
         if (fei.fei_next_owner_role === UserRoles.ETG) {
           nextFei.fei_next_owner_role = UserRoles.ETG;
           nextFei.fei_next_owner_entity_id = fei.fei_next_owner_entity_id;

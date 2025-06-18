@@ -557,19 +557,38 @@ model FeiIntermediaire {
 }
 
 model CarcasseIntermediaire {
-  fei_numero__bracelet__intermediaire_id String           @id
+  id                                     String?          @default(nanoid()) // TODO: make id @id in place of fei_numero__bracelet__intermediaire_id after migration
   fei_numero                             String
   numero_bracelet                        String
   zacharie_carcasse_id                   String
-  fei_intermediaire_id                   String
-  fei_intermediaire_user_id              String
-  fei_intermediaire_entity_id            String
   prise_en_charge                        Boolean?
   check_manuel                           Boolean?
   manquante                              Boolean?
   refus                                  String?
   commentaire                            String?
-  carcasse_check_finished_at             DateTime?
+  carcasse_check_finished_at             DateTime? // TO DELETE after migration of decision_at
+  decision_at                            DateTime? // replace carcasse_check_finished_at
+  /**
+  * TO DELETE
+  */
+  fei_numero__bracelet__intermediaire_id String           @id //  {user_id}_{fei_numero}_{HHMMSS}_{zacharie_carcasse_id} // TO DELETE
+  fei_intermediaire_id                   String // TO DELETE
+  fei_intermediaire_user_id              String // TO DELETE
+  fei_intermediaire_entity_id            String // TO DELETE
+  /**
+  * new fields
+  */
+  intermediaire_id                       String? // {user_id}_{HHMMSS} // because a user could be multiple times intermediaire for a same fei
+  intermediaire_entity_id                String?
+  intermediaire_user_id                  String?
+  /**
+  * fields from FeiIntermediaire
+  */
+  intermediaire_role                     UserRoles? // FeiIntermediaire.fei_intermediaire_role
+  prise_en_charge_at                     DateTime? // FeiIntermediaire.check_finished_at
+  /**
+  * end of fields from FeiIntermediaire
+  */
   created_at                             DateTime         @default(now())
   updated_at                             DateTime         @default(now()) @updatedAt
   deleted_at                             DateTime?
