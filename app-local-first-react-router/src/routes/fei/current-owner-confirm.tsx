@@ -3,14 +3,18 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { useMemo } from 'react';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
-import { UserRoles, FeiIntermediaire } from '@prisma/client';
-import dayjs from 'dayjs';
+import { UserRoles } from '@prisma/client';
 import type { FeiWithIntermediaires } from '~/src/types/fei';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useGetMyNextRoleForThisFei, useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
+import {
+  type FeiIntermediaire,
+  getNewCarcasseIntermediaireId,
+} from '@app/utils/get-carcasse-intermediaire-id';
+import dayjs from 'dayjs';
 
 export default function CurrentOwnerConfirm() {
   const params = useParams();
@@ -135,35 +139,27 @@ export default function CurrentOwnerConfirm() {
     ];
 
     if (intermediaireRole.includes(nextFei.fei_current_owner_role!)) {
-      const newIntermediaireId = `${user.id}_${fei.numero}_${dayjs().format('HHmmss')}`;
+      const newIntermediaireId = getNewCarcasseIntermediaireId(user.id, fei.numero);
       const newIntermediaire: FeiIntermediaire = {
         id: newIntermediaireId,
         fei_numero: fei.numero,
-        fei_intermediaire_offline: navigator.onLine ? false : true,
-        fei_intermediaire_user_id: user.id,
-        fei_intermediaire_role: forcedNextRole || fei.fei_next_owner_role!,
-        fei_intermediaire_entity_id: forceNextEntityId || fei.fei_next_owner_entity_id || '',
-        // on met le check fini pour que le transporteur n'ait qu'un seul clic à faire
-        check_finished_at:
-          nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO ? dayjs().toDate() : null,
+        intermediaire_user_id: user.id,
+        intermediaire_role: forcedNextRole || fei.fei_next_owner_role!,
+        intermediaire_entity_id: forceNextEntityId || fei.fei_next_owner_entity_id || '',
         created_at: dayjs().toDate(),
-        updated_at: dayjs().toDate(),
-        commentaire: null,
-        deleted_at: null,
-        handover_at: null,
-        received_at: null,
-        is_synced: false,
+        prise_en_charge_at:
+          nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO ? dayjs().toDate() : null,
       };
       await createFeiIntermediaire(newIntermediaire);
       addLog({
         user_id: user.id,
-        user_role: newIntermediaire.fei_intermediaire_role!,
+        user_role: newIntermediaire.intermediaire_role!,
         fei_numero: fei.numero,
         action: 'intermediaire-create',
         history: createHistoryInput(null, newIntermediaire),
         entity_id: fei.fei_current_owner_entity_id,
         zacharie_carcasse_id: null,
-        fei_intermediaire_id: newIntermediaireId,
+        intermediaire_id: newIntermediaireId,
         carcasse_intermediaire_id: null,
       });
       if (nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
@@ -188,7 +184,7 @@ export default function CurrentOwnerConfirm() {
       history: createHistoryInput(fei, nextFei),
       entity_id: fei.fei_current_owner_entity_id,
       zacharie_carcasse_id: null,
-      fei_intermediaire_id: null,
+      intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
   }
@@ -344,7 +340,7 @@ export default function CurrentOwnerConfirm() {
                       action: 'current-owner-renvoi',
                       entity_id: fei.fei_next_owner_entity_id,
                       zacharie_carcasse_id: null,
-                      fei_intermediaire_id: null,
+                      intermediaire_id: null,
                       carcasse_intermediaire_id: null,
                       history: createHistoryInput(fei, nextFei),
                     });

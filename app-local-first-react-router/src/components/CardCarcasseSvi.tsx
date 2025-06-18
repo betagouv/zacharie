@@ -3,7 +3,6 @@ import { Carcasse, CarcasseType, IPM1Decision, IPM2Decision } from '@prisma/clie
 import dayjs from 'dayjs';
 import { useParams, useNavigate } from 'react-router';
 import useZustandStore from '@app/zustand/store';
-import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import { getSimplifiedCarcasseStatus } from '@app/utils/get-carcasse-status';
 
 interface CarcasseAVerifierProps {
@@ -17,25 +16,23 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
   const navigate = useNavigate();
 
   const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
-  const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+  const getCarcassesIntermediairesForCarcasse = useZustandStore(
+    (state) => state.getCarcassesIntermediairesForCarcasse,
+  );
+  const carcasseIntermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
 
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];
-    for (const intermediaire of intermediaires) {
-      const intermediaireCarcasseId = getCarcasseIntermediaireId(
-        fei.numero,
-        carcasse.numero_bracelet,
-        intermediaire.id,
-      );
-      const intermediaireCarcasse = state.carcassesIntermediaires[intermediaireCarcasseId];
-      if (intermediaireCarcasse?.commentaire) {
-        const intermediaireEntity = state.entities[intermediaire.fei_intermediaire_entity_id];
-        commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${intermediaireCarcasse?.commentaire}`);
+    for (const carcasseIntermediaire of carcasseIntermediaires) {
+      if (carcasseIntermediaire?.commentaire) {
+        const intermediaireEntity = state.entities[carcasseIntermediaire.intermediaire_entity_id];
+        commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${carcasseIntermediaire?.commentaire}`);
       }
     }
     return commentaires;
-  }, [intermediaires, state.carcassesIntermediaires, state.entities, carcasse.numero_bracelet, fei.numero]);
+  }, [carcasseIntermediaires, state.entities]);
 
   const Component = canClick ? 'button' : 'div';
   const componentProps = canClick

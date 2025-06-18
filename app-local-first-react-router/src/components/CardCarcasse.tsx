@@ -1,4 +1,3 @@
-import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import { useCarcasseStatusAndRefus } from '@app/utils/useCarcasseStatusAndRefus';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
@@ -43,32 +42,24 @@ export default function CardCarcasse({
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
-  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
-  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
-  const carcassesIntermediaires = useZustandStore((state) => state.carcassesIntermediaires);
+  const getCarcassesIntermediairesForCarcasse = useZustandStore(
+    (state) => state.getCarcassesIntermediairesForCarcasse,
+  );
+  const carcassesIntermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
   const entities = useZustandStore((state) => state.entities);
 
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];
-    for (const _intermediaire of intermediaires) {
-      if (!_intermediaire?.id) {
-        continue;
-      }
-      const carcasseIntermediaireId = getCarcasseIntermediaireId(
-        fei.numero,
-        carcasse.numero_bracelet,
-        _intermediaire.id,
-      );
-      const _carcasseIntermediaire = carcassesIntermediaires[carcasseIntermediaireId];
-      const _intermediaireEntity = entities[_intermediaire.fei_intermediaire_entity_id];
+    for (const _carcasseIntermediaire of carcassesIntermediaires) {
       if (_carcasseIntermediaire?.commentaire) {
+        const _intermediaireEntity = entities[_carcasseIntermediaire.intermediaire_entity_id];
         commentaires.push(
           `Commentaire de ${_intermediaireEntity?.nom_d_usage} : ${_carcasseIntermediaire?.commentaire}`,
         );
       }
     }
     return commentaires;
-  }, [intermediaires, fei.numero, carcasse.numero_bracelet, carcassesIntermediaires, entities]);
+  }, [carcassesIntermediaires, entities]);
 
   let { statusNewCard } = useCarcasseStatusAndRefus(carcasse, fei);
 
@@ -199,40 +190,37 @@ export default function CardCarcasse({
 function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carcasse_id'] }) {
   const user = useUser((state) => state.user)!;
   const params = useParams();
-  const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
-  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
-  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
-  const latestIntermediaire = intermediaires[0];
+  const feis = useZustandStore((state) => state.feis);
+  const users = useZustandStore((state) => state.users);
+  const entities = useZustandStore((state) => state.entities);
+  const carcasses = useZustandStore((state) => state.carcasses);
+  const fei = feis[params.fei_numero!];
+  const getCarcassesIntermediairesForCarcasse = useZustandStore(
+    (state) => state.getCarcassesIntermediairesForCarcasse,
+  );
+  const carcassesIntermediaires = getCarcassesIntermediairesForCarcasse(carcasseId!);
+  const latestIntermediaire = carcassesIntermediaires[0];
   // console.log('fei', fei);
 
-  const carcasse = state.carcasses[carcasseId!];
+  const carcasse = carcasses[carcasseId!];
 
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];
-    for (const intermediaire of intermediaires) {
-      const carcassesIntermediairesId = getCarcasseIntermediaireId(
-        fei.numero,
-        carcasse.numero_bracelet,
-        intermediaire.id,
-      );
-      const intermediaireCarcasse = state.carcassesIntermediaires[carcassesIntermediairesId];
-      if (intermediaireCarcasse?.commentaire) {
-        const intermediaireEntity = state.entities[intermediaire.fei_intermediaire_entity_id];
-        commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${intermediaireCarcasse?.commentaire}`);
+    for (const carcasseIntermediaire of carcassesIntermediaires) {
+      if (carcasseIntermediaire?.commentaire) {
+        const intermediaireEntity = entities[carcasseIntermediaire.intermediaire_entity_id];
+        commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${carcasseIntermediaire?.commentaire}`);
       }
     }
     return commentaires;
-  }, [intermediaires, state.carcassesIntermediaires, state.entities, carcasse.numero_bracelet, fei.numero]);
+  }, [carcassesIntermediaires, entities]);
 
   const examinateurInitialUser = fei.examinateur_initial_user_id
-    ? state.users[fei.examinateur_initial_user_id!]
+    ? users[fei.examinateur_initial_user_id!]
     : null;
-  const premierDetenteurUser = fei.premier_detenteur_user_id
-    ? state.users[fei.premier_detenteur_user_id!]
-    : null;
+  const premierDetenteurUser = fei.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id!] : null;
   const premierDetenteurEntity = fei.premier_detenteur_entity_id
-    ? state.entities[fei.premier_detenteur_entity_id!]
+    ? entities[fei.premier_detenteur_entity_id!]
     : null;
 
   const onlyPetitGibier = useMemo(() => {
@@ -271,27 +259,29 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
   const intermediairesInputs = useMemo(() => {
     const lines = [];
     let collecteurs = 0;
-    for (const intermediaire of intermediaires) {
+    for (const carcasseIntermediaire of carcassesIntermediaires) {
       const intermediaireLines = [];
-      const isCollecteur = intermediaire.fei_intermediaire_role === UserRoles.COLLECTEUR_PRO;
+      const isCollecteur = carcasseIntermediaire.intermediaire_role === UserRoles.COLLECTEUR_PRO;
       const label = isCollecteur
         ? `Collecteur ${collecteurs + 1}`
         : 'Établissement de Traitement du Gibier Sauvage';
-      const entity = state.entities[intermediaire.fei_intermediaire_entity_id!];
+      const entity = entities[carcasseIntermediaire.intermediaire_entity_id!];
       intermediaireLines.push(entity.nom_d_usage);
       intermediaireLines.push(entity.siret);
       intermediaireLines.push(`${entity.code_postal} ${entity.ville}`);
       lines.push({ label, value: intermediaireLines });
     }
     return lines;
-  }, [intermediaires, state.entities]);
+  }, [carcassesIntermediaires, entities]);
 
   const ccgDate =
     fei.premier_detenteur_depot_type === DepotType.CCG
       ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd DD MMMM YYYY à HH:mm')
       : null;
   const etgDate = latestIntermediaire
-    ? dayjs(latestIntermediaire.check_finished_at).format('dddd DD MMMM YYYY à HH:mm')
+    ? dayjs(latestIntermediaire.prise_en_charge_at || latestIntermediaire.decision_at).format(
+        'dddd DD MMMM YYYY à HH:mm',
+      )
     : null;
 
   const milestones = useMemo(() => {
@@ -314,12 +304,13 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
       );
     return _milestones;
   }, [
-    ccgDate,
-    etgDate,
-    onlyPetitGibier,
+    fei?.commune_mise_a_mort,
     fei.date_mise_a_mort,
     fei.heure_mise_a_mort_premiere_carcasse,
     fei.heure_evisceration_derniere_carcasse,
+    onlyPetitGibier,
+    ccgDate,
+    etgDate,
     carcasse.svi_ipm2_date,
   ]);
 

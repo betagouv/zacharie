@@ -49,7 +49,7 @@ export default function FEIExaminateurInitial() {
       history: createHistoryInput(fei, nextFei),
       entity_id: null,
       zacharie_carcasse_id: null,
-      fei_intermediaire_id: null,
+      intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
   };

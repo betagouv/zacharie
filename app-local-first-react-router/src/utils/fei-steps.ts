@@ -6,8 +6,8 @@ import { UserRoles } from '@prisma/client';
 import { useMemo } from 'react';
 
 export function useFeiSteps(fei: FeiDone) {
-  const state = useZustandStore((state) => state);
-  const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
+  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
+  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
   const user = useUser((state) => state.user);
 
   const steps = useMemo(
@@ -15,8 +15,8 @@ export function useFeiSteps(fei: FeiDone) {
       UserRoles.EXAMINATEUR_INITIAL,
       UserRoles.PREMIER_DETENTEUR,
       ...(intermediaires || [])
-        .filter((i) => i.fei_intermediaire_role !== UserRoles.ETG)
-        .map((i) => i.fei_intermediaire_role),
+        .filter((i) => i.intermediaire_role !== UserRoles.ETG)
+        .map((i) => i.intermediaire_role),
       UserRoles.ETG,
       UserRoles.SVI,
     ],

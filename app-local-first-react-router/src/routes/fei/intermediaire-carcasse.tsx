@@ -1,14 +1,17 @@
 import { useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { CarcasseType, Prisma, type Carcasse, type FeiIntermediaire } from '@prisma/client';
+import { CarcasseType, Prisma, type Carcasse } from '@prisma/client';
 import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import useZustandStore from '@app/zustand/store';
-import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
+import {
+  getFeiAndCarcasseAndIntermediaireIdsFromCarcasse,
+  type FeiIntermediaire,
+} from '@app/utils/get-carcasse-intermediaire-id';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
 import dayjs from 'dayjs';
@@ -31,29 +34,26 @@ export default function CarcasseIntermediaireComp({
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
   const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
-  const carcassesIntermediaires = useZustandStore((state) => state.carcassesIntermediaires);
-
-  const formRef = useRef<HTMLFormElement>(null);
-
-  const carcasseIntermediaireId = getCarcasseIntermediaireId(
-    fei.numero,
-    carcasse.numero_bracelet,
+  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+  const carcasseIntermediaireId = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
+    carcasse,
     intermediaire.id,
   );
+  const carcasseIntermediaire = carcassesIntermediaireById[carcasseIntermediaireId];
 
-  const intermediaireCarcasse = carcassesIntermediaires[carcasseIntermediaireId];
+  const formRef = useRef<HTMLFormElement>(null);
 
   const refusIntermediaireModal = useRef(
     createModal({
       isOpenedByDefault: false,
-      id: `refus-intermediaire-modal-carcasse-${intermediaireCarcasse.fei_numero__bracelet__intermediaire_id}`,
+      id: `refus-intermediaire-modal-carcasse-${carcasseIntermediaireId}`,
     }),
   );
 
   const [carcasseManquante, setCarcasseManquante] = useState(!!carcasse.intermediaire_carcasse_manquante);
-  const [carcasseRefusCheckbox, setCarcasseRefusCheckbox] = useState(!!intermediaireCarcasse.refus);
+  const [carcasseRefusCheckbox, setCarcasseRefusCheckbox] = useState(!!carcasseIntermediaire.refus);
   const [refus, setRefus] = useState(
-    carcasse.intermediaire_carcasse_refus_motif ?? intermediaireCarcasse.refus ?? '',
+    carcasse.intermediaire_carcasse_refus_motif ?? carcasseIntermediaire.refus ?? '',
   );
 
   const submitCarcasseManquante = () => {
@@ -65,18 +65,18 @@ export default function CarcasseIntermediaireComp({
       refus: null,
       prise_en_charge: false,
       check_manuel: false,
-      carcasse_check_finished_at: dayjs().toDate(),
+      decision_at: dayjs().toDate(),
     };
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.fei_intermediaire_role!,
+      user_role: intermediaire.intermediaire_role!,
       fei_numero: fei.numero,
       action: 'carcasse-intermediaire-manquante',
-      history: createHistoryInput(intermediaireCarcasse, nextPartialCarcasseIntermediaire),
-      entity_id: intermediaire.fei_intermediaire_entity_id,
+      history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
+      entity_id: intermediaire.intermediaire_entity_id,
       zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-      fei_intermediaire_id: intermediaire.id,
+      intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
     const nextPartialCarcasse: Partial<Carcasse> = {
@@ -88,13 +88,13 @@ export default function CarcasseIntermediaireComp({
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.fei_intermediaire_role!,
+      user_role: intermediaire.intermediaire_role!,
       fei_numero: fei.numero,
       action: 'carcasse-manquante',
       history: createHistoryInput(carcasse, nextPartialCarcasse),
-      entity_id: intermediaire.fei_intermediaire_entity_id,
+      entity_id: intermediaire.intermediaire_entity_id,
       zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-      fei_intermediaire_id: intermediaire.id,
+      intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
   };
@@ -116,19 +116,19 @@ export default function CarcasseIntermediaireComp({
       refus: refusToRemember,
       prise_en_charge: false,
       check_manuel: false,
-      carcasse_check_finished_at: dayjs().toDate(),
+      decision_at: dayjs().toDate(),
     };
 
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.fei_intermediaire_role!,
+      user_role: intermediaire.intermediaire_role!,
       fei_numero: fei.numero,
       action: 'carcasse-intermediaire-refus',
-      history: createHistoryInput(intermediaireCarcasse, nextPartialCarcasseIntermediaire),
-      entity_id: intermediaire.fei_intermediaire_entity_id,
+      history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
+      entity_id: intermediaire.intermediaire_entity_id,
       zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-      fei_intermediaire_id: intermediaire.id,
+      intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
     const nextPartialCarcasse: Partial<Carcasse> = {
@@ -140,13 +140,13 @@ export default function CarcasseIntermediaireComp({
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.fei_intermediaire_role!,
+      user_role: intermediaire.intermediaire_role!,
       fei_numero: fei.numero,
       action: 'carcasse-refus',
       history: createHistoryInput(carcasse, nextPartialCarcasse),
-      entity_id: intermediaire.fei_intermediaire_entity_id,
+      entity_id: intermediaire.intermediaire_entity_id,
       zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-      fei_intermediaire_id: intermediaire.id,
+      intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
   };
@@ -160,18 +160,18 @@ export default function CarcasseIntermediaireComp({
       refus: null,
       prise_en_charge: true,
       check_manuel: true,
-      carcasse_check_finished_at: dayjs().toDate(),
+      decision_at: dayjs().toDate(),
     };
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.fei_intermediaire_role!,
+      user_role: intermediaire.intermediaire_role!,
       fei_numero: fei.numero,
       action: 'carcasse-intermediaire-accept',
-      history: createHistoryInput(intermediaireCarcasse, nextPartialCarcasseIntermediaire),
-      entity_id: intermediaire.fei_intermediaire_entity_id,
+      history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
+      entity_id: intermediaire.intermediaire_entity_id,
       zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-      fei_intermediaire_id: intermediaire.id,
+      intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
     const nextPartialCarcasse: Partial<Carcasse> = {
@@ -183,13 +183,13 @@ export default function CarcasseIntermediaireComp({
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.fei_intermediaire_role!,
+      user_role: intermediaire.intermediaire_role!,
       fei_numero: fei.numero,
       action: 'carcasse-accept',
       history: createHistoryInput(carcasse, nextPartialCarcasse),
-      entity_id: intermediaire.fei_intermediaire_entity_id,
+      entity_id: intermediaire.intermediaire_entity_id,
       zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-      fei_intermediaire_id: intermediaire.id,
+      intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
   };
@@ -200,7 +200,7 @@ export default function CarcasseIntermediaireComp({
         carcasse={carcasse}
         forceRefus={!!refus}
         forceManquante={!!carcasseManquante}
-        forceAccept={!!intermediaireCarcasse.check_manuel}
+        forceAccept={!!carcasseIntermediaire.check_manuel}
         onClick={canEdit ? () => refusIntermediaireModal.current.open() : undefined}
         className="[zoom:1.3] [&.border-manquante]:!border-gray-500 [&_.text-manquante]:!text-gray-500"
       />
@@ -234,7 +234,7 @@ export default function CarcasseIntermediaireComp({
                       checked:
                         !carcasseRefusCheckbox &&
                         !carcasseManquante &&
-                        (intermediaireCarcasse.check_manuel ? true : false),
+                        (carcasseIntermediaire.check_manuel ? true : false),
                       onChange: () => {
                         refusIntermediaireModal.current.close();
                         submitCarcasseAccept();
@@ -304,7 +304,7 @@ export default function CarcasseIntermediaireComp({
               nativeTextAreaProps={{
                 name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
                 form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                defaultValue: intermediaireCarcasse.commentaire || '',
+                defaultValue: carcasseIntermediaire.commentaire || '',
                 disabled: !canEdit,
                 onBlur: (e) => {
                   if (!canEdit) return;
@@ -314,13 +314,13 @@ export default function CarcasseIntermediaireComp({
                   updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
                   addLog({
                     user_id: user.id,
-                    user_role: intermediaire.fei_intermediaire_role!,
+                    user_role: intermediaire.intermediaire_role!,
                     fei_numero: fei.numero,
                     action: 'carcasse-intermediaire-commentaire',
-                    history: createHistoryInput(intermediaireCarcasse, nextPartialCarcasseIntermediaire),
-                    entity_id: intermediaire.fei_intermediaire_entity_id,
+                    history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
+                    entity_id: intermediaire.intermediaire_entity_id,
                     zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-                    fei_intermediaire_id: intermediaire.id,
+                    intermediaire_id: intermediaire.id,
                     carcasse_intermediaire_id: carcasseIntermediaireId,
                   });
                 },
@@ -330,7 +330,7 @@ export default function CarcasseIntermediaireComp({
             <div className="mt-8 flex flex-col items-start bg-white [&_ul]:md:min-w-96">
               <ButtonsGroup
                 buttons={
-                  intermediaireCarcasse.refus
+                  carcasseIntermediaire.refus
                     ? [
                         {
                           children: 'Enregistrer',

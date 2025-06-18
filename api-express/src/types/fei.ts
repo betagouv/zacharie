@@ -32,11 +32,7 @@ export type FeiDone = Prisma.FeiGetPayload<{
 
 export type FeiWithIntermediaires = Prisma.FeiGetPayload<{
   include: {
-    FeiIntermediaires: {
-      include: {
-        FeiIntermediairesCarcasses: true;
-      };
-    };
+    CarcasseIntermediaire: true;
   };
 }>;
 
@@ -56,12 +52,10 @@ export const feiPopulatedInclude = {
   FeiNextEntity: true,
   FeiSviUser: true,
   FeiSviEntity: true,
-  FeiIntermediaires: {
+  CarcasseIntermediaire: {
     include: {
-      FeiIntermediaireUser: true,
-      FeiIntermediaireEntity: true,
-      FeiIntermediairesCarcasses: true,
-      CarcasseIntermediaire: true,
+      CarcasseIntermediaireEntity: true,
+      CarcasseIntermediaireUser: true,
     },
     orderBy: {
       created_at: Prisma.SortOrder.desc,

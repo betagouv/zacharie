@@ -5,18 +5,15 @@ import type { CarcasseIntermediaireResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { Prisma } from '@prisma/client';
-import { getCarcasseIntermediaireId } from '~/utils/get-carcasse-intermediaire-id';
-import dayjs from 'dayjs';
-import { capture } from '~/third-parties/sentry';
 
 router.post(
-  '/:fei_numero/:intermediaire_id/:numero_bracelet',
+  '/:fei_numero/:intermediaire_id/:zacharie_carcasse_id',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // Fetch the fiche data along with the required intervenants
     const body = req.body;
     const user = req.user;
-    const { fei_numero, intermediaire_id, numero_bracelet } = req.params;
+    const { fei_numero, intermediaire_id, zacharie_carcasse_id } = req.params;
     if (!fei_numero) {
       res.status(400).send({
         ok: false,
@@ -36,7 +33,7 @@ router.post(
       } satisfies CarcasseIntermediaireResponse);
       return;
     }
-    if (!numero_bracelet) {
+    if (!zacharie_carcasse_id) {
       res.status(400).send({
         ok: false,
         data: { carcasseIntermediaire: null },
@@ -46,8 +43,8 @@ router.post(
     }
     const existingCarcasse = await prisma.carcasse.findFirst({
       where: {
-        numero_bracelet: numero_bracelet,
-        fei_numero: fei_numero,
+        zacharie_carcasse_id,
+        fei_numero,
       },
     });
     if (!existingCarcasse) {
@@ -66,39 +63,15 @@ router.post(
       } satisfies CarcasseIntermediaireResponse);
       return;
     }
-    const feiIntermediaire = await prisma.feiIntermediaire.findUnique({
-      where: { id: intermediaire_id },
-    });
-    if (!feiIntermediaire) {
-      capture(new Error('Intermediaire not found yet on fei carcasse intermediaire creation'), {
-        extra: {
-          fei_numero,
-          intermediaire_id,
-          numero_bracelet,
-        },
-      });
-      res.status(400).send({
-        ok: false,
-        data: { carcasseIntermediaire: null },
-        error: 'Intermediaire not found',
-      } satisfies CarcasseIntermediaireResponse);
-      return;
-    }
-
-    const fei_numero__bracelet__intermediaire_id = getCarcasseIntermediaireId(
-      fei_numero,
-      numero_bracelet,
-      intermediaire_id,
-    );
 
     const data: Prisma.CarcasseIntermediaireUncheckedCreateInput = {
-      fei_numero__bracelet__intermediaire_id,
       fei_numero: fei_numero,
-      numero_bracelet,
+      numero_bracelet: existingCarcasse.numero_bracelet,
       zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
-      fei_intermediaire_id: intermediaire_id,
-      fei_intermediaire_user_id: user.id,
-      fei_intermediaire_entity_id: feiIntermediaire.fei_intermediaire_entity_id,
+      intermediaire_id,
+      intermediaire_entity_id: body.intermediaire_entity_id,
+      intermediaire_role: body.intermediaire_role,
+      intermediaire_user_id: user.id,
       is_synced: true,
     };
 
@@ -117,14 +90,20 @@ router.post(
     if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.refus)) {
       data.refus = body[Prisma.CarcasseIntermediaireScalarFieldEnum.refus];
     }
-    if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.carcasse_check_finished_at)) {
-      data.carcasse_check_finished_at =
-        body[Prisma.CarcasseIntermediaireScalarFieldEnum.carcasse_check_finished_at];
+    if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.decision_at)) {
+      data.decision_at = body[Prisma.CarcasseIntermediaireScalarFieldEnum.decision_at];
+    }
+    if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge_at)) {
+      data.prise_en_charge_at = body[Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge_at];
     }
 
     const carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
       where: {
-        fei_numero__bracelet__intermediaire_id,
+        fei_numero_zacharie_carcasse_id_intermediaire_id: {
+          fei_numero: fei_numero,
+          zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
+          intermediaire_id: intermediaire_id,
+        },
       },
       create: data,
       update: data,
@@ -139,7 +118,7 @@ router.post(
 );
 
 router.get(
-  '/:fei_numero/:intermediaire_id/:numero_bracelet',
+  '/:fei_numero/:intermediaire_id/:zacharie_carcasse_id',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (!req.params.fei_numero) {
@@ -159,13 +138,17 @@ router.get(
       res.status(400).send({ ok: false, data: null, error: 'Missing intermediaire_id' });
       return;
     }
+    if (!req.params.zacharie_carcasse_id) {
+      res.status(400).send({ ok: false, data: null, error: 'Missing zacharie_carcasse_id' });
+      return;
+    }
     const carcasseIntermediaire = await prisma.carcasseIntermediaire.findUnique({
       where: {
-        fei_numero__bracelet__intermediaire_id: getCarcasseIntermediaireId(
-          req.params.fei_numero,
-          req.params.numero_bracelet,
-          req.params.intermediaire_id,
-        ),
+        fei_numero_zacharie_carcasse_id_intermediaire_id: {
+          fei_numero: req.params.fei_numero,
+          zacharie_carcasse_id: req.params.zacharie_carcasse_id,
+          intermediaire_id: req.params.intermediaire_id,
+        },
       },
     });
     if (!carcasseIntermediaire) {

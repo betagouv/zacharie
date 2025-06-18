@@ -4,7 +4,6 @@ import type {
   Entity,
   EntityAndUserRelations,
   Carcasse,
-  FeiIntermediaire,
   CarcasseIntermediaire,
   Log,
   CarcasseCertificat,
@@ -117,14 +116,6 @@ export interface EntitiesWorkingForResponse {
     userEntitiesByTypeAndId: EntitiesByTypeAndId;
   };
   error: '';
-}
-
-export interface FeiIntermediaireResponse {
-  ok: boolean;
-  data: {
-    feiIntermediaire: FeiIntermediaire | null;
-  };
-  error: string;
 }
 
 export interface CarcasseIntermediaireResponse {

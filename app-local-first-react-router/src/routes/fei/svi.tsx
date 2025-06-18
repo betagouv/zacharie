@@ -149,7 +149,7 @@ export default function FEI_SVI() {
               entity_id: fei.svi_entity_id,
               zacharie_carcasse_id: null,
               carcasse_intermediaire_id: null,
-              fei_intermediaire_id: null,
+              intermediaire_id: null,
             });
             for (const carcasse of carcassesAAfficher) {
               if (
@@ -227,7 +227,7 @@ export default function FEI_SVI() {
                     entity_id: fei.svi_entity_id,
                     zacharie_carcasse_id: null,
                     carcasse_intermediaire_id: null,
-                    fei_intermediaire_id: null,
+                    intermediaire_id: null,
                   });
                   for (const carcasse of carcassesAAfficher) {
                     if (

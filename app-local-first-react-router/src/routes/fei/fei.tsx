@@ -20,8 +20,8 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 
 export default function FeiLoader() {
   const params = useParams();
-  const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
 
   useEffect(() => {
@@ -48,9 +48,10 @@ export default function FeiLoader() {
 function Fei() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
-  const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
+  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
 
   // const entities = useZustandStore((state) => state.entities);
   // const nextOwnerEntity = fei.fei_next_owner_entity_id ? state.entities[fei.fei_next_owner_entity_id] : null;
@@ -123,10 +124,10 @@ function Fei() {
     }
     if (intermediaires.length > 0) {
       const userWasIntermediaire = intermediaires.find(
-        (intermediaire) => intermediaire.fei_intermediaire_user_id === user.id,
+        (intermediaire) => intermediaire.intermediaire_user_id === user.id,
       );
       if (userWasIntermediaire) {
-        return userWasIntermediaire.fei_intermediaire_role;
+        return userWasIntermediaire.intermediaire_role;
       }
     }
     return null;

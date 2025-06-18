@@ -112,7 +112,7 @@ export default function CurrentOwner() {
                 action: 'current-owner-delete',
                 entity_id: currentOwnerEntity?.id || null,
                 zacharie_carcasse_id: null,
-                fei_intermediaire_id: null,
+                intermediaire_id: null,
                 carcasse_intermediaire_id: null,
                 history: createHistoryInput(fei, nextFei),
               });

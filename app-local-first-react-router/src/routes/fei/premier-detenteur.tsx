@@ -592,7 +592,7 @@ export default function FeiPremierDetenteur() {
                   entity_id: fei.premier_detenteur_entity_id,
                   zacharie_carcasse_id: null,
                   carcasse_intermediaire_id: null,
-                  fei_intermediaire_id: null,
+                  intermediaire_id: null,
                 });
               },
             }}

@@ -216,7 +216,7 @@ export default function NouvelleCarcasse() {
             history: createHistoryInput(null, newCarcasse),
             entity_id: fei.fei_current_owner_entity_id,
             zacharie_carcasse_id: newCarcasse.zacharie_carcasse_id,
-            fei_intermediaire_id: null,
+            intermediaire_id: null,
             carcasse_intermediaire_id: null,
           });
           setNumeroBracelet('');
