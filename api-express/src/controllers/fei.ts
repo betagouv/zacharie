@@ -14,6 +14,7 @@ import {
   updateBrevoETGDealPremiereFiche,
   updateBrevoSVIDealPremiereFiche,
 } from '~/third-parties/brevo';
+import { userFeiSelect } from '~/types/user';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 router.post(
@@ -63,10 +64,6 @@ router.post(
         include: feiPopulatedInclude,
       });
       await prisma.carcasse.updateMany({
-        where: { fei_numero: feiNumero },
-        data: { deleted_at: body.deleted_at },
-      });
-      await prisma.feiIntermediaire.updateMany({
         where: { fei_numero: feiNumero },
         data: { deleted_at: body.deleted_at },
       });
@@ -553,16 +550,16 @@ router.get(
                 : []),
               { svi_user_id: user.id },
               {
-                FeiIntermediaires: {
+                CarcasseIntermediaire: {
                   some: {
-                    fei_intermediaire_user_id: user.id,
+                    intermediaire_user_id: user.id,
                   },
                 },
               },
               {
-                FeiIntermediaires: {
+                CarcasseIntermediaire: {
                   some: {
-                    FeiIntermediaireEntity: {
+                    CarcasseIntermediaireEntity: {
                       EntityRelationsWithUsers: {
                         some: {
                           owner_id: user.id,
@@ -574,9 +571,9 @@ router.get(
                 },
               },
               {
-                FeiIntermediaires: {
+                CarcasseIntermediaire: {
                   some: {
-                    FeiIntermediaireEntity: {
+                    CarcasseIntermediaireEntity: {
                       RelationsWithEtgs: {
                         some: {
                           ETGRelatedWithEntity: {
@@ -656,15 +653,13 @@ router.get(
         FeiNextEntity: true,
         FeiSviUser: true,
         FeiSviEntity: true,
-        FeiIntermediaires: {
+        CarcasseIntermediaire: {
           include: {
-            FeiIntermediaireUser: true,
-            FeiIntermediaireEntity: true,
-            FeiIntermediairesCarcasses: true,
-            CarcasseIntermediaire: true,
+            CarcasseIntermediaireEntity: true,
+            CarcasseIntermediaireUser: true,
           },
           orderBy: {
-            created_at: 'desc',
+            created_at: Prisma.SortOrder.desc,
           },
         },
       },
@@ -756,11 +751,7 @@ router.get(
         ],
       },
       include: {
-        FeiIntermediaires: {
-          include: {
-            FeiIntermediairesCarcasses: true,
-          },
-        },
+        CarcasseIntermediaire: true,
       },
       orderBy: {
         updated_at: 'desc',
@@ -813,11 +804,7 @@ router.get(
         ],
       },
       include: {
-        FeiIntermediaires: {
-          include: {
-            FeiIntermediairesCarcasses: true,
-          },
-        },
+        CarcasseIntermediaire: true,
       },
       orderBy: {
         updated_at: 'desc',
@@ -885,16 +872,16 @@ router.get(
                   ]
                 : []),
               {
-                FeiIntermediaires: {
+                CarcasseIntermediaire: {
                   some: {
-                    fei_intermediaire_user_id: user.id,
+                    intermediaire_user_id: user.id,
                   },
                 },
               },
               {
-                FeiIntermediaires: {
+                CarcasseIntermediaire: {
                   some: {
-                    FeiIntermediaireEntity: {
+                    CarcasseIntermediaireEntity: {
                       EntityRelationsWithUsers: {
                         some: {
                           owner_id: user.id,
@@ -906,9 +893,9 @@ router.get(
                 },
               },
               {
-                FeiIntermediaires: {
+                CarcasseIntermediaire: {
                   some: {
-                    FeiIntermediaireEntity: {
+                    CarcasseIntermediaireEntity: {
                       RelationsWithEtgs: {
                         some: {
                           ETGRelatedWithEntity: {
@@ -930,11 +917,7 @@ router.get(
         ],
       },
       include: {
-        FeiIntermediaires: {
-          include: {
-            FeiIntermediairesCarcasses: true,
-          },
-        },
+        CarcasseIntermediaire: true,
       },
       orderBy: {
         updated_at: 'desc',

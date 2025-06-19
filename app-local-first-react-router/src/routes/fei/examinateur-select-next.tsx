@@ -127,7 +127,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
             history: createHistoryInput(fei, nextFei),
             entity_id: null,
             zacharie_carcasse_id: null,
-            fei_intermediaire_id: null,
+            intermediaire_id: null,
             carcasse_intermediaire_id: null,
           });
         }}
@@ -229,7 +229,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
                   history: createHistoryInput(fei, nextFei),
                   entity_id: null,
                   zacharie_carcasse_id: null,
-                  fei_intermediaire_id: null,
+                  intermediaire_id: null,
                   carcasse_intermediaire_id: null,
                 });
                 setNextValue(nextPremierDetenteur.id);
@@ -277,7 +277,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
             <Alert
               severity="success"
               className="mt-6"
-              description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
+              description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié'}.`}
               title="Attribution effectuée"
             />
           </>

@@ -5,7 +5,7 @@ import type { UserForFei } from '~/src/types/user';
 import { EntityWithUserRelation } from '@api/src/types/entity';
 import { getUserRoleLabel } from './get-user-roles-label';
 import dayjs from 'dayjs';
-import { getCarcasseIntermediaireId } from './get-carcasse-intermediaire-id';
+import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
 import { loadFei } from './load-fei';
 import { capture } from '@app/services/sentry';
 import { IPM1Decision, IPM2Decision } from '@prisma/client';
@@ -206,10 +206,13 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
 
 export default function useExportFeis() {
   let [isExporting, setIsExporting] = useState(false);
-  const state = useZustandStore((state) => state);
-  const feis = state.feis;
-  const entities = state.entities;
-  const users = state.users;
+  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
+  const feis = useZustandStore((state) => state.feis);
+  const entities = useZustandStore((state) => state.entities);
+  const users = useZustandStore((state) => state.users);
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+  const carcasses = useZustandStore((state) => state.carcasses);
 
   async function onExportToXlsx(feiNumbers: Array<string>) {
     setIsExporting(true);
@@ -268,14 +271,14 @@ export default function useExportFeis() {
           });
         }
 
-        const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
+        const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
         if (intermediaires.length > 0) {
           for (const [index, intermediaire] of Object.entries(intermediaires)) {
-            const intermediaireEntity = entities[intermediaire.fei_intermediaire_entity_id];
-            const intermediaireUser = users[intermediaire.fei_intermediaire_user_id!];
+            const intermediaireEntity = entities[intermediaire.intermediaire_entity_id];
+            const intermediaireUser = users[intermediaire.intermediaire_user_id!];
             feiSheetData.push({
               Donnée: `Destinataire ${Number(index) + 1}`,
-              Valeur: `${getUserRoleLabel(intermediaire.fei_intermediaire_role!)}\n${formatEntity(intermediaireEntity)}\n${formatUser(intermediaireUser)}`,
+              Valeur: `${getUserRoleLabel(intermediaire.intermediaire_role!)}\n${formatEntity(intermediaireEntity)}\n${formatUser(intermediaireUser)}`,
             });
           }
         } else {
@@ -293,8 +296,8 @@ export default function useExportFeis() {
 
         feiSheets[fei.numero] = feiSheetData;
 
-        for (const carcasseId of state.carcassesIdsByFei[fei.numero] || []) {
-          const carcasse = state.carcasses[carcasseId];
+        for (const carcasseId of carcassesIdsByFei[fei.numero] || []) {
+          const carcasse = carcasses[carcasseId];
           if (!carcasse) {
             console.error('carcasse not found', carcasseId);
             continue;
@@ -313,15 +316,10 @@ export default function useExportFeis() {
           }
           const commentaires = [];
           for (const intermediaire of intermediaires) {
-            if (intermediaire.deleted_at) continue;
-            const carcassesIntermediairesId = getCarcasseIntermediaireId(
-              fei.numero,
-              carcasse.numero_bracelet,
-              intermediaire.id,
-            );
-            const intermediaireCarcasse = state.carcassesIntermediaires[carcassesIntermediairesId];
+            const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
+            const intermediaireCarcasse = carcassesIntermediaireById[id];
             if (intermediaireCarcasse?.commentaire) {
-              const intermediaireEntity = state.entities[intermediaire.fei_intermediaire_entity_id];
+              const intermediaireEntity = entities[intermediaire.intermediaire_entity_id];
               commentaires.push(
                 `${intermediaireEntity?.nom_d_usage} : ${intermediaireCarcasse?.commentaire}`,
               );

@@ -1,27 +1,27 @@
 import prisma from '~/prisma';
 import { EntityTypes, UserRoles } from '@prisma/client';
 import { formatCountCarcasseByEspece } from '~/utils/count-carcasses';
-
-// prisma.fei
-//   .findMany({
-//     where: {
-//       // numero: 'ZACH-20250114-EVHMN-154237',
-//     },
-//     include: {
-//       Carcasses: true,
-//     },
-//   })
-//   .then(async (feis) => {
-//     for (const fei of feis) {
-//       const nombreDAnimaux = formatCountCarcasseByEspece(fei.Carcasses).filter(Boolean).join('\n');
-//       await prisma.fei.update({
-//         where: { numero: fei.numero },
-//         data: { resume_nombre_de_carcasses: nombreDAnimaux },
-//       });
-//     }
-//     console.log('done renaming all resume_nombre_de_carcasses');
-//   });
-
+/* 
+prisma.fei
+  .findMany({
+    where: {
+      numero: 'ZACH-20250130-BK7LC-195237',
+    },
+    include: {
+      Carcasses: true,
+    },
+  })
+  .then(async (feis) => {
+    for (const fei of feis) {
+      const nombreDAnimaux = formatCountCarcasseByEspece(fei.Carcasses).filter(Boolean).join('\n');
+      await prisma.fei.update({
+        where: { numero: fei.numero },
+        data: { resume_nombre_de_carcasses: nombreDAnimaux },
+      });
+    }
+    console.log('done renaming all resume_nombre_de_carcasses');
+  });
+ */
 // prisma.user
 //   .findMany({
 //     where: {
@@ -170,3 +170,60 @@ import { formatCountCarcasseByEspece } from '~/utils/count-carcasses';
 //       }
 //     }
 //   });
+/* 
+prisma.carcasseIntermediaire
+  .findMany({
+    where: {
+      intermediaire_id: null,
+    },
+    include: {
+      CarcasseIntermediaireFeiIntermediaire: true,
+    },
+  })
+  .then(async (carcasseIntermediaires) => {
+    for (const carcasseIntermediaire of carcasseIntermediaires) {
+      const feiIntermediaire = carcasseIntermediaire.CarcasseIntermediaireFeiIntermediaire;
+      if (feiIntermediaire) {
+        const feiIntermediaireId = feiIntermediaire.id; // {user_id}_{fei_numero}_{HHMMSS}
+        const newIntermediaireId = feiIntermediaireId
+          .split('_')
+          .filter((str, index) => index !== 1)
+          .join('_');
+        await prisma.carcasseIntermediaire.update({
+          where: {
+            fei_numero__bracelet__intermediaire_id:
+              carcasseIntermediaire.fei_numero__bracelet__intermediaire_id,
+          },
+          data: {
+            id: crypto.randomUUID(),
+            decision_at: carcasseIntermediaire.carcasse_check_finished_at,
+            prise_en_charge_at: feiIntermediaire.check_finished_at,
+            intermediaire_id: newIntermediaireId,
+            intermediaire_entity_id: feiIntermediaire.fei_intermediaire_entity_id,
+            intermediaire_user_id: feiIntermediaire.fei_intermediaire_user_id,
+            intermediaire_role: feiIntermediaire.fei_intermediaire_role,
+          },
+        });
+      }
+    }
+    console.log('done migrating carcasseIntermediaire');
+  });
+  */
+/* prisma.carcasseIntermediaire.findMany({ where: {} }).then(async (carcasseIntermediaires) => {
+  for (const carcasseIntermediaire of carcasseIntermediaires) {
+    await prisma.carcasseIntermediaire.update({
+      where: {
+        fei_numero_zacharie_carcasse_id_intermediaire_id: {
+          fei_numero: carcasseIntermediaire.fei_numero,
+          zacharie_carcasse_id: carcasseIntermediaire.zacharie_carcasse_id,
+          intermediaire_id: carcasseIntermediaire.intermediaire_id,
+        },
+      },
+      data: {
+        intermediaire_id: carcasseIntermediaire.fei_intermediaire_id,
+      },
+    });
+  }
+  console.log('done migrating carcasseIntermediaire');
+});
+ */

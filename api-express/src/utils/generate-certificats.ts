@@ -110,9 +110,10 @@ export async function generateDBCertificat(
       Fei: {
         include: {
           FeiExaminateurInitialUser: true,
-          FeiIntermediaires: {
+          CarcasseIntermediaire: {
             select: {
-              FeiIntermediaireEntity: true,
+              CarcasseIntermediaireEntity: true,
+              intermediaire_role: true,
             },
           },
         },
@@ -181,9 +182,16 @@ export async function generateDBCertificat(
 
   const fei = existingCarcasse.Fei;
   const examinateur = fei.FeiExaminateurInitialUser;
-  const etg = fei.FeiIntermediaires.find(
-    (intermediaire) => intermediaire.FeiIntermediaireEntity.type === EntityTypes.ETG,
-  )?.FeiIntermediaireEntity!;
+  const etg = fei.CarcasseIntermediaire.find(
+    (intermediaire) => intermediaire.intermediaire_role === EntityTypes.ETG,
+  )?.CarcasseIntermediaireEntity!;
+  const collecteursPro = Array.from(
+    new Set(
+      fei.CarcasseIntermediaire.filter(
+        (intermediaire) => intermediaire.intermediaire_role === EntityTypes.COLLECTEUR_PRO,
+      ).map((intermediaire) => intermediaire.CarcasseIntermediaireEntity.nom_d_usage),
+    ),
+  ).join(', ');
 
   if (!certificat) {
     const lastCertificat = await prisma.carcasseCertificat.findFirst({
@@ -227,11 +235,7 @@ export async function generateDBCertificat(
         commune_mise_a_mort: fei.commune_mise_a_mort,
         examinateur_initial: `${examinateur?.prenom} ${examinateur?.nom_de_famille}`,
         premier_detenteur: fei.premier_detenteur_name_cache,
-        collecteur_pro: fei.FeiIntermediaires.filter(
-          (intermediaire) => intermediaire.FeiIntermediaireEntity.type === EntityTypes.COLLECTEUR_PRO,
-        )
-          .map((intermediaire) => intermediaire.FeiIntermediaireEntity.nom_d_usage)
-          .join(', '),
+        collecteur_pro: collecteursPro,
         pieces:
           certificatType === CarcasseCertificatType.CC
             ? existingCarcasse.svi_ipm1_pieces

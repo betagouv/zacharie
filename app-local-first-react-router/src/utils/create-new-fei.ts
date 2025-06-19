@@ -66,7 +66,7 @@ export function createNewFei(): FeiWithIntermediaires {
     updated_at: dayjs().toDate(),
     deleted_at: null,
     is_synced: false,
-    FeiIntermediaires: [],
+    CarcasseIntermediaire: [],
   };
   useZustandStore.getState().createFei(newFei);
   useZustandStore.getState().addLog({
@@ -77,7 +77,7 @@ export function createNewFei(): FeiWithIntermediaires {
     entity_id: null,
     history: createHistoryInput(null, newFei),
     zacharie_carcasse_id: null,
-    fei_intermediaire_id: null,
+    intermediaire_id: null,
     carcasse_intermediaire_id: null,
   });
   return newFei;

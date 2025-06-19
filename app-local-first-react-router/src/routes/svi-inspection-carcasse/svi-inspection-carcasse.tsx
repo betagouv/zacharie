@@ -4,10 +4,8 @@ import { CarcasseType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
-import InputNotEditable from '@app/components/InputNotEditable';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
-import { getCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { loadFei } from '@app/utils/load-fei';
@@ -19,6 +17,7 @@ import { CarcasseIPM2 } from './ipm2';
 import CarcasseSVICertificats from './certificats';
 import FEIDonneesDeChasse from '../fei/donnees-de-chasse';
 import Section from '@app/components/Section';
+import ItemNotEditable from '@app/components/ItemNotEditable';
 
 export default function SviInspectionCarcasseLoader() {
   const params = useParams();
@@ -51,26 +50,26 @@ export function SviInspectionCarcasse() {
   const user = useUser((state) => state.user)!;
   const state = useZustandStore((state) => state);
   const navigate = useNavigate();
-  const fei = state.feis[params.fei_numero!];
-  const intermediaires = state.getFeiIntermediairesForFeiNumero(fei.numero);
-  const carcasse = state.carcasses[params.zacharie_carcasse_id!];
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+  const getCarcassesIntermediairesForCarcasse = useZustandStore(
+    (state) => state.getCarcassesIntermediairesForCarcasse,
+  );
+  const carcasses = useZustandStore((state) => state.carcasses);
+  const carcasse = carcasses[params.zacharie_carcasse_id!];
+  const carcassesIntermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
+  const entities = useZustandStore((state) => state.entities);
 
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];
-    for (const intermediaire of intermediaires) {
-      const carcassesIntermediairesId = getCarcasseIntermediaireId(
-        fei.numero,
-        carcasse.numero_bracelet,
-        intermediaire.id,
-      );
-      const intermediaireCarcasse = state.carcassesIntermediaires[carcassesIntermediairesId];
-      if (intermediaireCarcasse?.commentaire) {
-        const intermediaireEntity = state.entities[intermediaire.fei_intermediaire_entity_id];
-        commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${intermediaireCarcasse?.commentaire}`);
+    for (const carcassesIntermediaire of carcassesIntermediaires) {
+      if (carcassesIntermediaire?.commentaire) {
+        const intermediaireEntity = entities[carcassesIntermediaire.intermediaire_entity_id];
+        commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${carcassesIntermediaire?.commentaire}`);
       }
     }
     return commentaires;
-  }, [carcasse.numero_bracelet, fei.numero, intermediaires, state.carcassesIntermediaires, state.entities]);
+  }, [carcassesIntermediaires, entities]);
 
   const isSviWorkingFor = useMemo(() => {
     // if (fei.fei_current_owner_role === UserRoles.SVI && !!fei.svi_entity_id) {
@@ -145,20 +144,14 @@ export function SviInspectionCarcasse() {
             <>
               <FEIDonneesDeChasse carcasseId={carcasse.zacharie_carcasse_id} />
               {carcasse.type === CarcasseType.PETIT_GIBIER && (
-                <InputNotEditable
+                <ItemNotEditable
                   label="Nombre d'animaux initialement prélevés"
-                  nativeInputProps={{
-                    defaultValue: carcasse.nombre_d_animaux!,
-                  }}
+                  value={carcasse.nombre_d_animaux!.toString()}
                 />
               )}
-              <InputNotEditable
+              <ItemNotEditable
                 label="Commentaires des destinataires"
-                textArea
-                nativeTextAreaProps={{
-                  rows: commentairesIntermediaires.length,
-                  defaultValue: commentairesIntermediaires.join('\n'),
-                }}
+                value={commentairesIntermediaires.join('\n') || 'N/A'}
               />
             </>
           </Section>

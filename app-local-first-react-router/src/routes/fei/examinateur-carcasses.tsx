@@ -120,7 +120,7 @@ export function CarcasseExaminateur({
                   history: createHistoryInput(carcasse, nextPartialCarcasse),
                   entity_id: null,
                   zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-                  fei_intermediaire_id: null,
+                  intermediaire_id: null,
                   carcasse_intermediaire_id: null,
                 });
               }

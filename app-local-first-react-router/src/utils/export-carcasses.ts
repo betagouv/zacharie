@@ -5,7 +5,7 @@ import { capture } from '@app/services/sentry';
 import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 import { IPM1Decision, IPM2Decision } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
-import { getCarcasseIntermediaireId } from './get-carcasse-intermediaire-id';
+import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
 import { loadFei } from './load-fei';
 
 type FeiExcelData = {
@@ -181,7 +181,11 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
 
 export default function useExportCarcasses() {
   let [isExporting, setIsExporting] = useState(false);
-  const state = useZustandStore((state) => state);
+  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
+  const feis = useZustandStore((state) => state.feis);
+  const entities = useZustandStore((state) => state.entities);
+  const users = useZustandStore((state) => state.users);
+  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
   async function onExportToXlsx(carcasses: Array<CarcasseForResponseForRegistry>) {
     setIsExporting(true);
@@ -197,31 +201,22 @@ export default function useExportCarcasses() {
           console.error('carcasse deleted', carcasse.zacharie_carcasse_id);
           continue;
         }
-        const intermediaires = state.getFeiIntermediairesForFeiNumero(carcasse.fei_numero);
-        let fei = state.feis[carcasse.fei_numero];
+        const intermediaires = getFeiIntermediairesForFeiNumero(carcasse.fei_numero);
+        let fei = feis[carcasse.fei_numero];
         if (!fei) {
           await loadFei(carcasse.fei_numero);
         }
-        fei = state.feis[carcasse.fei_numero];
+        fei = feis[carcasse.fei_numero];
 
-        const premierDetenteur = fei?.premier_detenteur_user_id
-          ? state.users[fei.premier_detenteur_user_id]
-          : null;
-        const examinateur = fei?.examinateur_initial_user_id
-          ? state.users[fei.examinateur_initial_user_id]
-          : null;
+        const premierDetenteur = fei?.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id] : null;
+        const examinateur = fei?.examinateur_initial_user_id ? users[fei.examinateur_initial_user_id] : null;
 
         const commentaires = [];
         for (const intermediaire of intermediaires) {
-          if (intermediaire.deleted_at) continue;
-          const carcassesIntermediairesId = getCarcasseIntermediaireId(
-            carcasse.fei_numero,
-            carcasse.numero_bracelet,
-            intermediaire.id,
-          );
-          const intermediaireCarcasse = state.carcassesIntermediaires[carcassesIntermediairesId];
+          const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
+          const intermediaireCarcasse = carcassesIntermediaireById[id];
           if (intermediaireCarcasse?.commentaire) {
-            const intermediaireEntity = state.entities[intermediaire.fei_intermediaire_entity_id];
+            const intermediaireEntity = entities[intermediaire.intermediaire_entity_id];
             commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${intermediaireCarcasse?.commentaire}`);
           }
         }

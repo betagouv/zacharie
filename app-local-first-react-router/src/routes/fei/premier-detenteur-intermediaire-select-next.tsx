@@ -10,6 +10,7 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { useIsOnline } from '@app/utils-offline/use-is-offline';
 
 export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
   calledFrom,
@@ -19,6 +20,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
   disabled?: boolean;
 }) {
   const params = useParams();
+  const isOnline = useIsOnline();
   const user = useUser((state) => state.user)!;
   const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
@@ -67,12 +69,9 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
       return false;
     }
     const latestIntermediaire = feiIntermediaires[0];
-    if (latestIntermediaire.fei_intermediaire_role !== UserRoles.ETG) {
+    if (latestIntermediaire.intermediaire_role !== UserRoles.ETG) {
       return false;
     }
-    // if (!latestIntermediaire.check_finished_at) {
-    //   return false;
-    // }
     return true;
   }, [fei.fei_current_owner_role, feiIntermediaires]);
 
@@ -252,7 +251,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
             entity_id: fei.fei_current_owner_entity_id,
             zacharie_carcasse_id: null,
             carcasse_intermediaire_id: null,
-            fei_intermediaire_id: null,
+            intermediaire_id: null,
           });
         }}
       >
@@ -297,7 +296,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
           <Alert
             severity="success"
             className="mt-6"
-            description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : 'sera notifié dès que vous aurez retrouvé du réseau'}.`}
+            description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié'}.`}
             title="Attribution effectuée"
           />
         </>

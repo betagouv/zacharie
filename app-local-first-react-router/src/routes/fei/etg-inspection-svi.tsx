@@ -151,7 +151,7 @@ export default function FEI_ETGInspectionSvi() {
                   entity_id: fei.svi_entity_id,
                   zacharie_carcasse_id: null,
                   carcasse_intermediaire_id: null,
-                  fei_intermediaire_id: null,
+                  intermediaire_id: null,
                 });
                 for (const carcasse of carcassesSorted) {
                   if (

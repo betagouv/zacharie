@@ -19,15 +19,15 @@ WITH base_stats AS (
     CASE WHEN f.premier_detenteur_user_id IS NOT NULL 
       OR f.premier_detenteur_entity_id IS NOT NULL THEN true ELSE false END as has_premier_detenteur,
     CASE WHEN EXISTS (
-      SELECT 1 FROM "FeiIntermediaire" fi 
-      WHERE fi.fei_numero = f.numero 
-      AND fi.deleted_at IS NULL
+      SELECT 1 FROM "CarcasseIntermediaire" ci 
+      WHERE ci.fei_numero = f.numero 
+      AND ci.deleted_at IS NULL
     ) THEN true ELSE false END as has_intermediaire,
     CASE WHEN EXISTS (
-      SELECT 1 FROM "FeiIntermediaire" fi 
-      WHERE fi.fei_numero = f.numero 
-      AND fi.check_finished_at IS NOT NULL
-      AND fi.deleted_at IS NULL
+      SELECT 1 FROM "CarcasseIntermediaire" ci 
+      WHERE ci.fei_numero = f.numero 
+      AND ci.prise_en_charge_at IS NOT NULL
+      AND ci.deleted_at IS NULL
     ) THEN true ELSE false END as has_intermediaire_check,
     CASE WHEN f.svi_assigned_at IS NOT NULL THEN true ELSE false END as svi_assigned,
     CASE WHEN f.svi_closed_at IS NOT NULL THEN true ELSE false END as svi_signed,

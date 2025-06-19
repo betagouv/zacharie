@@ -518,9 +518,9 @@ router.get(
         FeiExaminateurInitialUser: { select: { email: true } }, // Fetching the examinateur's email
         FeiPremierDetenteurUser: { select: { email: true } }, // Fetching the premier detenteur's email
         FeiPremierDetenteurEntity: { select: { nom_d_usage: true } }, // Fetching the premier detenteur's raison sociale
-        FeiIntermediaires: {
+        CarcasseIntermediaire: {
           include: {
-            FeiIntermediaireEntity: {
+            CarcasseIntermediaireEntity: {
               select: {
                 nom_d_usage: true,
                 type: true,
@@ -563,11 +563,19 @@ router.get(
               email: fei.FeiPremierDetenteurUser?.email,
               nom_d_usage: '',
             },
-            ...fei.FeiIntermediaires.map((inter) => ({
-              type: inter.FeiIntermediaireEntity.type,
-              email: '',
-              nom_d_usage: inter.FeiIntermediaireEntity.nom_d_usage,
-            })),
+            ...Object.values(
+              fei.CarcasseIntermediaire.reduce((acc, intermediaire) => {
+                if (acc[intermediaire.intermediaire_entity_id]) return acc;
+                return {
+                  ...acc,
+                  [intermediaire.intermediaire_entity_id]: {
+                    type: intermediaire.intermediaire_role,
+                    email: '',
+                    nom_d_usage: intermediaire.CarcasseIntermediaireEntity.nom_d_usage,
+                  },
+                };
+              }, {} as Record<string, { type: string; email: string; nom_d_usage: string }>),
+            ),
             {
               type: 'SVI',
               email: '',

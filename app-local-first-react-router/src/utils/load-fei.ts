@@ -2,6 +2,13 @@ import dayjs from 'dayjs';
 import type { FeiResponse } from '@api/src/types/responses';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import useZustandStore from '@app/zustand/store';
+import {
+  FeiAndCarcasseAndIntermediaireIds,
+  FeiAndIntermediaireIds,
+  type FeiIntermediaire,
+  getFeiAndCarcasseAndIntermediaireIds,
+  getFeiAndIntermediaireIds,
+} from '@app/utils/get-carcasse-intermediaire-id';
 
 export async function loadFei(fei_numero: string) {
   const isOnline = useZustandStore.getState().isOnline;
@@ -213,54 +220,21 @@ export async function setFeiInStore(feiResponse: FeiResponse) {
     }
   }
 
-  const intermediaires = fei.FeiIntermediaires.sort(
-    (a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf(),
-  ); // newest first
+  const carcassesIntermediaires = fei.CarcasseIntermediaire; // already sorted by created_at desc
 
-  for (const intermediaire of intermediaires || []) {
-    const intermediaireId = intermediaire.id; // {user_id}_{fei_numero}_{HHMMSS}
-    const localIntermediaire = useZustandStore.getState().feisIntermediaires[intermediaireId];
-    useZustandStore.setState((state) => ({
-      ...state,
-      feisIntermediairesIdsByFei: {
-        ...state.feisIntermediairesIdsByFei,
-        [fei.numero]: [
-          ...new Set([...(state.feisIntermediairesIdsByFei[fei.numero] || []), intermediaireId]),
-        ], // newest first
-      },
-    }));
-    if (!localIntermediaire) {
-      useZustandStore.setState((state) => ({
-        ...state,
-        feisIntermediaires: {
-          ...state.feisIntermediaires,
-          [intermediaireId]: intermediaire,
-        },
-      }));
-    } else {
-      const newestIntermediaire =
-        dayjs(localIntermediaire.updated_at).diff(intermediaire.updated_at) > 0
-          ? localIntermediaire
-          : intermediaire;
-      const oldestIntermediaire =
-        dayjs(localIntermediaire.updated_at).diff(intermediaire.updated_at) > 0
-          ? intermediaire
-          : localIntermediaire;
+  const users = useZustandStore.getState().users;
+  const entities = useZustandStore.getState().entities;
 
-      useZustandStore.setState((state) => ({
-        ...state,
-        feisIntermediaires: {
-          ...state.feisIntermediaires,
-          [intermediaireId]: {
-            ...oldestIntermediaire,
-            ...newestIntermediaire,
-          },
-        },
-      }));
-    }
+  const intermediairesByFei: Record<FeiIntermediaire['id'], FeiIntermediaire> = {};
 
-    const intermediaireUser = intermediaire.FeiIntermediaireUser;
-    if (intermediaireUser) {
+  for (const carcasseIntermediaire of carcassesIntermediaires || []) {
+    const carcassesIntermediairesIdsByCarcasse =
+      useZustandStore.getState().carcassesIntermediairesIdsByCarcasse;
+    const carcassesIntermediaireIdsByIntermediaire =
+      useZustandStore.getState().carcassesIntermediaireIdsByIntermediaire;
+
+    if (!users[carcasseIntermediaire.intermediaire_user_id]) {
+      const intermediaireUser = carcasseIntermediaire.CarcasseIntermediaireUser;
       useZustandStore.setState((state) => ({
         users: {
           ...state.users,
@@ -269,60 +243,99 @@ export async function setFeiInStore(feiResponse: FeiResponse) {
       }));
     }
 
-    const intermediaireEntity = intermediaire.FeiIntermediaireEntity;
-    if (intermediaire.fei_intermediaire_entity_id) {
-      if (!useZustandStore.getState().entities[intermediaire.fei_intermediaire_entity_id]) {
-        useZustandStore.setState((state) => ({
-          entities: {
-            ...state.entities,
-            [intermediaire.fei_intermediaire_entity_id!]: {
-              ...intermediaireEntity,
-              relation: 'NONE',
-            } satisfies EntityWithUserRelation,
-          },
-        }));
-      }
+    if (!entities[carcasseIntermediaire.intermediaire_entity_id]) {
+      const intermediaireEntity = carcasseIntermediaire.CarcasseIntermediaireEntity;
+      useZustandStore.setState((state) => ({
+        entities: {
+          ...state.entities,
+          [carcasseIntermediaire.intermediaire_entity_id!]: {
+            ...intermediaireEntity,
+            relation: 'NONE',
+          } satisfies EntityWithUserRelation,
+        },
+      }));
     }
 
-    const intermediaireCarcasses = intermediaire.CarcasseIntermediaire || []; // it's an array
-    useZustandStore.setState((state) => ({
-      carcassesIntermediairesByIntermediaire: {
-        ...state.carcassesIntermediairesByIntermediaire,
-        [intermediaireId]: intermediaireCarcasses.map((c) => c.fei_numero__bracelet__intermediaire_id),
-      },
-    }));
-    for (const carcasseIntermediaire of intermediaireCarcasses) {
-      const localCarcasseIntermediaire =
-        useZustandStore.getState().carcassesIntermediaires[
-          carcasseIntermediaire.fei_numero__bracelet__intermediaire_id
-        ];
-      if (!localCarcasseIntermediaire) {
-        useZustandStore.setState((state) => ({
-          carcassesIntermediaires: {
-            ...state.carcassesIntermediaires,
-            [carcasseIntermediaire.fei_numero__bracelet__intermediaire_id]: carcasseIntermediaire,
-          },
-        }));
-      } else {
-        const newestCarcasseIntermediaire =
-          dayjs(localCarcasseIntermediaire.updated_at).diff(carcasseIntermediaire.updated_at) > 0
-            ? localCarcasseIntermediaire
-            : carcasseIntermediaire;
-        const oldestCarcasseIntermediaire =
-          dayjs(localCarcasseIntermediaire.updated_at).diff(carcasseIntermediaire.updated_at) > 0
-            ? carcasseIntermediaire
-            : localCarcasseIntermediaire;
+    if (!intermediairesByFei[carcasseIntermediaire.intermediaire_id]) {
+      const intermediaire = {
+        id: carcasseIntermediaire.intermediaire_id,
+        fei_numero: fei.numero,
+        intermediaire_user_id: carcasseIntermediaire.intermediaire_user_id,
+        intermediaire_role: carcasseIntermediaire.intermediaire_role,
+        intermediaire_entity_id: carcasseIntermediaire.intermediaire_entity_id,
+        created_at: carcasseIntermediaire.created_at,
+        prise_en_charge_at: carcasseIntermediaire.prise_en_charge_at,
+      };
+      intermediairesByFei[carcasseIntermediaire.intermediaire_id] = intermediaire;
+    }
 
-        useZustandStore.setState((state) => ({
-          carcassesIntermediaires: {
-            ...state.carcassesIntermediaires,
-            [carcasseIntermediaire.fei_numero__bracelet__intermediaire_id]: {
-              ...oldestCarcasseIntermediaire,
-              ...newestCarcasseIntermediaire,
-            },
+    const carcasseId = carcasseIntermediaire.zacharie_carcasse_id;
+    const feiAndIntermediaireId = getFeiAndIntermediaireIds(carcasseIntermediaire) as FeiAndIntermediaireIds;
+    const feiAndCarcasseAndIntermediaireId = getFeiAndCarcasseAndIntermediaireIds(
+      carcasseIntermediaire,
+    ) as FeiAndCarcasseAndIntermediaireIds;
+
+    const existingIdsByCarcasse =
+      carcassesIntermediairesIdsByCarcasse[carcasseId] || ([] as Array<FeiAndCarcasseAndIntermediaireIds>);
+    const idsByCarcasse = new Set(existingIdsByCarcasse);
+    const existingIdsByFeiAndIntermediaire =
+      carcassesIntermediaireIdsByIntermediaire[feiAndIntermediaireId] ||
+      ([] as Array<FeiAndCarcasseAndIntermediaireIds>);
+    const idsByFeiAndIntermediaire = new Set(existingIdsByFeiAndIntermediaire);
+
+    idsByCarcasse.add(feiAndCarcasseAndIntermediaireId);
+    idsByFeiAndIntermediaire.add(feiAndCarcasseAndIntermediaireId);
+
+    const localCarcasseIntermediaire =
+      useZustandStore.getState().carcassesIntermediaireById[feiAndCarcasseAndIntermediaireId];
+
+    if (!localCarcasseIntermediaire) {
+      useZustandStore.setState((state) => ({
+        carcassesIntermediaireById: {
+          ...state.carcassesIntermediaireById,
+          [feiAndCarcasseAndIntermediaireId]: carcasseIntermediaire,
+        },
+        carcassesIntermediaireIdsByIntermediaire: {
+          ...state.carcassesIntermediaireIdsByIntermediaire,
+          [feiAndIntermediaireId]: [...idsByFeiAndIntermediaire],
+        },
+        carcassesIntermediairesIdsByCarcasse: {
+          ...state.carcassesIntermediairesIdsByCarcasse,
+          [carcasseId]: [...idsByCarcasse],
+        },
+      }));
+    } else {
+      const newestCarcasseIntermediaire =
+        dayjs(localCarcasseIntermediaire.updated_at).diff(carcasseIntermediaire.updated_at) > 0
+          ? localCarcasseIntermediaire
+          : carcasseIntermediaire;
+      const oldestCarcasseIntermediaire =
+        dayjs(localCarcasseIntermediaire.updated_at).diff(carcasseIntermediaire.updated_at) > 0
+          ? carcasseIntermediaire
+          : localCarcasseIntermediaire;
+      useZustandStore.setState((state) => ({
+        carcassesIntermediaireById: {
+          ...state.carcassesIntermediaireById,
+          [feiAndCarcasseAndIntermediaireId]: {
+            ...oldestCarcasseIntermediaire,
+            ...newestCarcasseIntermediaire,
           },
-        }));
-      }
+        },
+        carcassesIntermediaireIdsByIntermediaire: {
+          ...state.carcassesIntermediaireIdsByIntermediaire,
+          [feiAndIntermediaireId]: [...idsByFeiAndIntermediaire],
+        },
+        carcassesIntermediairesIdsByCarcasse: {
+          ...state.carcassesIntermediairesIdsByCarcasse,
+          [carcasseId]: [...idsByCarcasse],
+        },
+      }));
     }
   }
+  useZustandStore.setState((state) => ({
+    intermediairesByFei: {
+      ...state.intermediairesByFei,
+      [fei.numero]: Object.values(intermediairesByFei).sort((a, b) => (a.created_at < b.created_at ? 1 : -1)),
+    },
+  }));
 }

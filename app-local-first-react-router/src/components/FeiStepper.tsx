@@ -13,6 +13,7 @@ export default function FeiStepper() {
   return (
     <div className="w-full px-4 md:px-0">
       <Stepper
+        key={currentStep}
         currentStep={currentStep}
         stepCount={steps.length}
         title={currentStepLabel}

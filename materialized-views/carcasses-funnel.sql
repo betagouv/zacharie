@@ -13,7 +13,7 @@ SELECT
     'Carcasses avec un destinataire' as stage,
     COUNT(DISTINCT c.zacharie_carcasse_id) as count
 FROM "Carcasse" c
-JOIN "FeiIntermediaire" fi ON c.fei_numero = fi.fei_numero
+JOIN "CarcasseIntermediaire" fi ON c.fei_numero = fi.fei_numero
 WHERE c.deleted_at IS NULL
   AND fi.deleted_at IS NULL
 
@@ -23,7 +23,7 @@ SELECT
     'Carcasses non refusées/manquantes' as stage,
     COUNT(DISTINCT c.zacharie_carcasse_id) as count
 FROM "Carcasse" c
-JOIN "FeiIntermediaire" fi ON c.fei_numero = fi.fei_numero
+JOIN "CarcasseIntermediaire" fi ON c.fei_numero = fi.fei_numero
 WHERE c.deleted_at IS NULL
   AND fi.deleted_at IS NULL
   AND c.intermediaire_carcasse_refus_intermediaire_id IS NULL

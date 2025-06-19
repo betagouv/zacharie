@@ -54,7 +54,7 @@ export default function FeiTransfer() {
               action: 'current-owner-transfer',
               entity_id: fei.fei_next_owner_entity_id,
               zacharie_carcasse_id: null,
-              fei_intermediaire_id: null,
+              intermediaire_id: null,
               carcasse_intermediaire_id: null,
               history: createHistoryInput(fei, nextFei),
             });

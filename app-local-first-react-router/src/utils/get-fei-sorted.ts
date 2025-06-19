@@ -12,6 +12,8 @@ type FeiSorted = {
 export function getFeisSorted(): FeiSorted {
   const state = useZustandStore.getState();
   const user = useUser.getState().user;
+  const intermediairesByFei = useZustandStore.getState().intermediairesByFei;
+
   const feisSorted: FeiSorted = {
     feisUnderMyResponsability: [],
     feisToTake: [],
@@ -128,15 +130,15 @@ export function getFeisSorted(): FeiSorted {
         }
       }
       let isIntermediaire = false;
-      for (const intermediaire of fei.FeiIntermediaires) {
-        if (intermediaire.fei_intermediaire_user_id === user.id) {
+      for (const intermediaire of intermediairesByFei[fei.numero] || []) {
+        if (intermediaire.intermediaire_user_id === user.id) {
           feisSorted.feisOngoing.push(fei);
           isIntermediaire = true;
           // if (debug) console.log('12');
           break;
         }
-        if (intermediaire.fei_intermediaire_entity_id) {
-          if (state.entitiesIdsWorkingDirectlyFor.includes(intermediaire.fei_intermediaire_entity_id)) {
+        if (intermediaire.intermediaire_entity_id) {
+          if (state.entitiesIdsWorkingDirectlyFor.includes(intermediaire.intermediaire_entity_id)) {
             feisSorted.feisOngoing.push(fei);
             isIntermediaire = true;
             // if (debug) console.log('13');

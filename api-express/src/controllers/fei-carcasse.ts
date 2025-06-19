@@ -35,8 +35,6 @@ router.post(
     const body: Prisma.CarcasseUncheckedCreateInput = req.body;
     const user = req.user;
     const { fei_numero, zacharie_carcasse_id } = req.params;
-    console.log('body.svi_carcasse_status', body.svi_carcasse_status);
-    console.log('body', body);
     if (!fei_numero) {
       res.status(400).send({
         ok: false,
@@ -108,10 +106,9 @@ router.post(
           is_synced: true,
         },
       });
-      await prisma.carcasseIntermediaire.deleteMany({
-        where: {
-          zacharie_carcasse_id: existinCarcasse.zacharie_carcasse_id,
-        },
+      await prisma.carcasseIntermediaire.updateMany({
+        where: { zacharie_carcasse_id: existinCarcasse.zacharie_carcasse_id },
+        data: { deleted_at: body.deleted_at },
       });
       res
         .status(200)
@@ -183,7 +180,6 @@ router.post(
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status)) {
       nextCarcasse.svi_carcasse_status = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_status];
-      console.log('nextCarcasse.svi_carcasse_status', nextCarcasse.svi_carcasse_status);
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status_set_at)) {
       nextCarcasse.svi_carcasse_status_set_at =
@@ -318,9 +314,6 @@ router.post(
         nextCarcasse.svi_ipm2_signed_at = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_signed_at];
       }
     }
-
-    console.log('nextCarcasse', nextCarcasse);
-    console.log('nextCarcasse.svi_carcasse_status', nextCarcasse.svi_carcasse_status);
 
     const updatedCarcasse = await prisma.carcasse.update({
       where: {
@@ -576,9 +569,9 @@ router.get(
     const where: Prisma.CarcasseWhereInput = {
       Fei: {
         deleted_at: null,
-        FeiIntermediaires: {
+        CarcasseIntermediaire: {
           some: {
-            FeiIntermediaireEntity: {
+            CarcasseIntermediaireEntity: {
               EntityRelationsWithUsers: {
                 some: {
                   owner_id: req.user.id,

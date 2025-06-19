@@ -241,7 +241,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       history: createHistoryInput(carcasse, partialCarcasse),
       entity_id: null,
       zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-      fei_intermediaire_id: null,
+      intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
     // TODO: vérifier qu'elles sont réellement bien enregistrées

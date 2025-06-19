@@ -11,23 +11,25 @@ export default function FEIDonneesDeChasse({
   carcasseId?: Carcasse['zacharie_carcasse_id'];
 }) {
   const params = useParams();
-  const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
+  const feis = useZustandStore((state) => state.feis);
+  const carcassesState = useZustandStore((state) => state.carcasses);
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const users = useZustandStore((state) => state.users);
+  const entities = useZustandStore((state) => state.entities);
+  const fei = feis[params.fei_numero!];
   const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
   const latestIntermediaire = intermediaires[0];
   // console.log('fei', fei);
-  const carcasses = (carcasseId ? [carcasseId] : state.carcassesIdsByFei[params.fei_numero!] || [])
-    .map((cId) => state.carcasses[cId])
+  const carcasses = (carcasseId ? [carcasseId] : carcassesIdsByFei[params.fei_numero!] || [])
+    .map((cId) => carcassesState[cId])
     .filter((c) => !c.deleted_at);
   const examinateurInitialUser = fei.examinateur_initial_user_id
-    ? state.users[fei.examinateur_initial_user_id!]
+    ? users[fei.examinateur_initial_user_id!]
     : null;
-  const premierDetenteurUser = fei.premier_detenteur_user_id
-    ? state.users[fei.premier_detenteur_user_id!]
-    : null;
+  const premierDetenteurUser = fei.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id!] : null;
   const premierDetenteurEntity = fei.premier_detenteur_entity_id
-    ? state.entities[fei.premier_detenteur_entity_id!]
+    ? entities[fei.premier_detenteur_entity_id!]
     : null;
 
   const onlyPetitGibier = useMemo(() => {
@@ -70,25 +72,25 @@ export default function FEIDonneesDeChasse({
     let collecteurs = 0;
     for (const intermediaire of intermediaires.reverse()) {
       const intermediaireLines = [];
-      const isCollecteur = intermediaire.fei_intermediaire_role === UserRoles.COLLECTEUR_PRO;
+      const isCollecteur = intermediaire.intermediaire_role === UserRoles.COLLECTEUR_PRO;
       const label = isCollecteur
         ? `Collecteur ${collecteurs + 1}`
         : 'Établissement de Traitement du Gibier Sauvage';
-      const entity = state.entities[intermediaire.fei_intermediaire_entity_id!];
+      const entity = entities[intermediaire.intermediaire_entity_id!];
       intermediaireLines.push(entity.nom_d_usage);
       intermediaireLines.push(entity.siret);
       intermediaireLines.push(`${entity.code_postal} ${entity.ville}`);
       lines.push({ label, value: intermediaireLines });
     }
     return lines;
-  }, [intermediaires, state.entities]);
+  }, [intermediaires, entities]);
 
   const ccgDate =
     fei.premier_detenteur_depot_type === DepotType.CCG
       ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd DD MMMM YYYY à HH:mm')
       : null;
   const etgDate = latestIntermediaire
-    ? dayjs(latestIntermediaire.check_finished_at).format('dddd DD MMMM YYYY à HH:mm')
+    ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd DD MMMM YYYY à HH:mm')
     : null;
 
   const milestones = useMemo(() => {
