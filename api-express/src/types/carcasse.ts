@@ -77,7 +77,6 @@ export const carcasseForRegistrySelect = {
       svi_assigned_at: true,
       svi_entity_id: true,
       svi_user_id: true,
-      svi_carcasses_saisies: true,
       svi_closed_at: true,
       svi_closed_by_user_id: true,
       // fei_current_owner_user_id: false,
