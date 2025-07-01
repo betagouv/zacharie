@@ -301,7 +301,11 @@ export default function MesInformations() {
               <div className="mt-8">
                 {!assoExpanded ? (
                   <>
-                    Votre entité n'est pas encore enregistrée dans Zacharie ?<br />
+                    {!userAssociationsChasses.length && (
+                      <>
+                        Votre entité n'est pas encore enregistrée dans Zacharie ?<br />
+                      </>
+                    )}
                     <Button
                       priority="secondary"
                       className="mt-4"
@@ -309,7 +313,9 @@ export default function MesInformations() {
                         onClick: () => setAssoExpanded(true),
                       }}
                     >
-                      Enregistrer mon entité
+                      {!userAssociationsChasses.length
+                        ? 'Enregistrer mon entité'
+                        : 'Enregistrer une nouvelle entité'}
                     </Button>
                   </>
                 ) : (
@@ -631,6 +637,7 @@ function ListAndSelectEntities({
             />
             <Button
               type="submit"
+              className="flex basis-1/3 items-center justify-center"
               nativeButtonProps={{ form: formId }}
               onClick={(e) => {
                 e.preventDefault();
