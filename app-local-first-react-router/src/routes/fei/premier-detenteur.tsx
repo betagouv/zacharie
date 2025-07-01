@@ -300,9 +300,8 @@ export default function FeiPremierDetenteur() {
           hint={
             <>
               <span>
-                Indiquez ici non pas le destinataire final, ni un transporteur s'il est au service d'un
-                détenteur. Mais bien le prochain détenteur du gibier avec qui vous avez une transaction, le
-                cas échéant pouvant aussi être le destinataire final.
+                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge
+                le gibier.
               </span>
               {!prochainDetenteurEntityId && (
                 <div>
