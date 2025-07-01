@@ -184,9 +184,17 @@ router.get(
       next: express.NextFunction,
     ) => {
       const entities = await prisma.entity.findMany({
-        orderBy: {
-          type: 'asc',
-        },
+        orderBy: [
+          {
+            type: 'asc',
+          },
+          {
+            zacharie_compatible: 'desc',
+          },
+          {
+            nom_d_usage: 'asc',
+          },
+        ],
       });
       res.status(200).send({
         ok: true,
