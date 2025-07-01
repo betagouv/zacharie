@@ -116,6 +116,7 @@ model Entity {
   onboarded_at                    DateTime?
   prefilled                       Boolean                  @default(false)
   is_synced                       Boolean                  @default(true) // just for typing purppose with zustand frontend
+  for_testing                     Boolean                  @default(false)
   // for brevo
   brevo_id                        String?
   at_least_one_fei_treated        DateTime?
@@ -575,6 +576,7 @@ model CarcasseIntermediaire {
    * fields from FeiIntermediaire
    */
   /**
+   * /**
    * /**
    * /**
    * /**

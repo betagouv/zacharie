@@ -977,6 +977,7 @@ router.get(
                 ...entitiesWorkingWith.map((entity) => entity.id),
               ],
             },
+            for_testing: !user.roles.includes(UserRoles.ADMIN),
             type: {
               notIn: [
                 EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
