@@ -694,6 +694,10 @@ router.post(
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
         nextUser.numero_cfei = body[Prisma.UserScalarFieldEnum.numero_cfei] as string;
+        if (nextUser.numero_cfei !== user.numero_cfei) {
+          nextUser.activated = false;
+          nextUser.activated_at = null;
+        }
       }
       if (body.hasOwnProperty('onboarding_finished')) {
         nextUser.onboarded_at = new Date();
