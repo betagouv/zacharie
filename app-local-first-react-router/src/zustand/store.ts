@@ -277,12 +277,6 @@ const useZustandStore = create<State & Actions>()(
                 updated_at: newIntermediaire.created_at,
                 deleted_at: null,
                 is_synced: false,
-                // TO DELETE
-                fei_numero__bracelet__intermediaire_id: null,
-                fei_intermediaire_id: null,
-                fei_intermediaire_user_id: null,
-                fei_intermediaire_entity_id: null,
-                carcasse_check_finished_at: null,
               }));
             const byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
             const byCarcasseId = useZustandStore.getState().carcassesIntermediairesIdsByCarcasse;

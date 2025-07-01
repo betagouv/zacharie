@@ -43,6 +43,7 @@ const initialData: State = {
     ccg_status: null,
     at_least_one_fei_treated: null,
     zacharie_compatible: false,
+    for_testing: false,
     EntityRelationsWithUsers: [],
     created_at: new Date(),
     updated_at: new Date(),
