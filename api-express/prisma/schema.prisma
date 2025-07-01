@@ -199,6 +199,7 @@ model EntityAndUserRelations {
   @@index([owner_id, relation])
   @@index([entity_id, relation])
   @@index([owner_id, entity_id]) // Add: Used in nested queries for FeiNextEntity
+  @@index([owner_id, updated_at])
 }
 
 model ETGAndEntityRelations {
@@ -216,6 +217,8 @@ model ETGAndEntityRelations {
 
   @@index([etg_id, entity_type])
   @@index([entity_id, entity_type])
+  @@index([etg_id, updated_at])
+  @@index([entity_id, updated_at])
 }
 
 model Log {
@@ -586,6 +589,8 @@ model CarcasseIntermediaire {
    * fields from FeiIntermediaire
    */
   /**
+   * /**
+   * /**
    * /**
    * /**
    * /**
