@@ -40,6 +40,7 @@ function insertCCGsDéclarésInDB() {
         code_postal: row["Unité d'Activité (UA) :\nCode postal\n(Adresse de localisation)"],
         ville: row[' Unité Activité (UA) :\nAdresse de localisation :\nCommune Nom'],
         ccg_status: 'Déclaré',
+        zacharie_compatible: true,
       };
       if (!numeroDdecpp) {
         // console.log('No numeroDdecpp found for row:', row);
@@ -102,6 +103,7 @@ function insertCCGsAgréésInDB() {
         code_postal: row['Code postal/Postal code'],
         ville: row['Commune/Town'],
         ccg_status: 'Agréé',
+        zacharie_compatible: true,
       };
       if (!cleanRow.numero_ddecpp) {
         // console.log('No numeroDdecpp found for row:', row);

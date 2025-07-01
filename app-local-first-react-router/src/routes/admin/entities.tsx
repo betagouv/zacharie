@@ -4,9 +4,39 @@ import dayjs from 'dayjs';
 import type { AdminEntitiesResponse } from '@api/src/types/responses';
 import { useEffect, useState } from 'react';
 import Chargement from '@app/components/Chargement';
+import Tabs, { TabsProps } from '@codegouvfr/react-dsfr/Tabs';
+import { EntityTypes } from '@prisma/client';
 
 export default function AdminEntites() {
   const [entities, setUsers] = useState<NonNullable<AdminEntitiesResponse['data']['entities']>>([]);
+
+  const tabs: TabsProps['tabs'] = [
+    {
+      tabId: 'all',
+      label: `Tous (${entities.length})`,
+    },
+    {
+      tabId: EntityTypes.PREMIER_DETENTEUR,
+      label: `Premier détenteur (${entities.filter((entity) => entity.type === EntityTypes.PREMIER_DETENTEUR).length})`,
+    },
+    {
+      tabId: EntityTypes.COLLECTEUR_PRO,
+      label: `Collecteur Pro (${entities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO).length})`,
+    },
+    {
+      tabId: EntityTypes.ETG,
+      label: `ETG (${entities.filter((entity) => entity.type === EntityTypes.ETG).length})`,
+    },
+    {
+      tabId: EntityTypes.SVI,
+      label: `SVI (${entities.filter((entity) => entity.type === EntityTypes.SVI).length})`,
+    },
+    {
+      tabId: EntityTypes.CCG,
+      label: `CCG (${entities.filter((entity) => entity.type === EntityTypes.CCG).length})`,
+    },
+  ];
+  const [selectedTabId, setSelectedTabId] = useState(tabs[0].tabId);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/admin/entities`, {
@@ -37,58 +67,75 @@ export default function AdminEntites() {
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">Entités</h1>
           <section className="mb-6 bg-white md:shadow">
-            <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
-              <Table
-                fixed
-                noCaption
-                className="[&_td]:h-px"
-                data={entities.map((entity, index) => [
-                  <div key={entity.id} className="flex size-full flex-row items-start">
-                    <span className="p-4">{index + 1}</span>
-                    <Link
-                      key={entity.id}
-                      to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                      className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
-                      suppressHydrationWarning
-                    >
-                      {dayjs(entity.created_at).format('DD/MM/YYYY à HH:mm')}
-                    </Link>
-                  </div>,
-                  <Link
-                    key={entity.id}
-                    to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                    className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
-                  >
-                    {entity.nom_d_usage}
-                    <br />
-                    🏭 {entity.numero_ddecpp}
-                    <br />
-                    🏡 {entity.address_ligne_1}
-                    <br />
-                    {entity.address_ligne_2 && (
-                      <>
+            <Tabs
+              selectedTabId={selectedTabId}
+              tabs={tabs}
+              onTabChange={setSelectedTabId}
+              className="mb-6 bg-white md:shadow [&_.fr-tabs\_\_list]:!bg-alt-blue-france [&_.fr-tabs\_\_list]:!shadow-none"
+            >
+              <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+                <Table
+                  fixed
+                  noCaption
+                  className="[&_td]:h-px"
+                  data={entities
+                    .filter((entity) => {
+                      if (selectedTabId === 'all') return true;
+                      return entity.type === selectedTabId;
+                    })
+                    .map((entity, index) => [
+                      <div key={entity.id} className="flex size-full flex-row items-start">
+                        <span className="p-4">{index + 1}</span>
+                        <div>
+                          <span className="text-sm text-gray-500">
+                            Compatible Zacharie : {entity.zacharie_compatible ? '✅' : '❌'}
+                          </span>
+                          <Link
+                            key={entity.id}
+                            to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                            className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
+                            suppressHydrationWarning
+                          >
+                            {dayjs(entity.created_at).format('DD/MM/YYYY à HH:mm')}
+                          </Link>
+                        </div>
+                      </div>,
+                      <Link
+                        key={entity.id}
+                        to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                        className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
+                      >
+                        {entity.nom_d_usage}
                         <br />
-                        {entity.address_ligne_2}
-                      </>
-                    )}
-                    {entity.code_postal} {entity.ville}
-                  </Link>,
-                  <Link
-                    key={entity.id}
-                    to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                    className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
-                  >
-                    {entity.type}
-                  </Link>,
-                ])}
-                headers={['Date de création', 'Identité', 'Type']}
-              />
-            </div>
-            <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
-              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                Haut de page
-              </a>
-            </div>
+                        🏭 {entity.numero_ddecpp}
+                        <br />
+                        🏡 {entity.address_ligne_1}
+                        <br />
+                        {entity.address_ligne_2 && (
+                          <>
+                            <br />
+                            {entity.address_ligne_2}
+                          </>
+                        )}
+                        {entity.code_postal} {entity.ville}
+                      </Link>,
+                      <Link
+                        key={entity.id}
+                        to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                        className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
+                      >
+                        {entity.type}
+                      </Link>,
+                    ])}
+                  headers={['Date de création', 'Identité', 'Type']}
+                />
+              </div>
+              <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
+                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+                  Haut de page
+                </a>
+              </div>
+            </Tabs>
           </section>
         </div>
       </div>

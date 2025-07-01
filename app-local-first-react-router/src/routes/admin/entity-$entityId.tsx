@@ -1,4 +1,5 @@
 import { useState, useRef, Fragment, useMemo, useEffect } from 'react';
+import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
 import { Link, useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
@@ -41,6 +42,7 @@ const initialData: State = {
     prefilled: false,
     ccg_status: null,
     at_least_one_fei_treated: null,
+    zacharie_compatible: false,
     EntityRelationsWithUsers: [],
     created_at: new Date(),
     updated_at: new Date(),
@@ -171,6 +173,23 @@ export default function AdminEntity() {
                       });
                   }}
                 >
+                  <Checkbox
+                    className="mb-4"
+                    options={[
+                      {
+                        label: 'Prêt pour Zacharie',
+                        hintText:
+                          "Si l'entité peut traiter des fiches Zacharie, recevoir ou en envoyer, cochez la case. Si cette case n'est pas cochée, un message sera affiché à l'utilisateur lorsqu'il voudra transmettre une fiche à cette entité.",
+                        nativeInputProps: {
+                          required: true,
+                          name: Prisma.EntityScalarFieldEnum.zacharie_compatible,
+                          value: 'true',
+                          defaultChecked: entity.zacharie_compatible === true,
+                        },
+                      },
+                    ]}
+                  />
+
                   <Input
                     label="Nom d'usage"
                     nativeInputProps={{

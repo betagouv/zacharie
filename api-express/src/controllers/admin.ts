@@ -398,11 +398,18 @@ router.post(
         code_etbt_certificat = existingEtgs + 1;
       }
 
+      const entityType = body[Prisma.EntityScalarFieldEnum.type] as EntityTypes;
+      const zacharie_compatible =
+        entityType === EntityTypes.PREMIER_DETENTEUR ||
+        entityType === EntityTypes.COLLECTEUR_PRO ||
+        entityType === EntityTypes.SVI ||
+        entityType === EntityTypes.CCG;
       const createdEntity = await prisma.entity.create({
         data: {
           raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
           nom_d_usage: body[Prisma.EntityScalarFieldEnum.raison_sociale],
           type: body[Prisma.EntityScalarFieldEnum.type],
+          zacharie_compatible,
           code_etbt_certificat: code_etbt_certificat
             ? code_etbt_certificat.toString().padStart(2, '0')
             : null,
@@ -470,6 +477,10 @@ router.post(
         return;
       }
 
+      console.log(body[Prisma.EntityScalarFieldEnum.zacharie_compatible]);
+      console.log(body[Prisma.EntityScalarFieldEnum.zacharie_compatible] === true);
+      console.log(body[Prisma.EntityScalarFieldEnum.zacharie_compatible] === 'true');
+
       const data: Prisma.EntityUncheckedUpdateInput = {
         raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
         nom_d_usage: body[Prisma.EntityScalarFieldEnum.nom_d_usage],
@@ -481,6 +492,7 @@ router.post(
         ville: body[Prisma.EntityScalarFieldEnum.ville],
         siret: body[Prisma.EntityScalarFieldEnum.siret] || null,
         numero_ddecpp: body[Prisma.EntityScalarFieldEnum.numero_ddecpp] || null,
+        zacharie_compatible: body[Prisma.EntityScalarFieldEnum.zacharie_compatible] === 'true',
       };
 
       const updatedEntity = await prisma.entity.update({

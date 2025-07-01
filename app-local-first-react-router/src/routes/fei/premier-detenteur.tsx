@@ -339,6 +339,13 @@ export default function FeiPremierDetenteur() {
           isReadOnly={!canEdit}
           name={Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
         />
+        {!!prochainDetenteur && !prochainDetenteur?.zacharie_compatible && (
+          <Alert
+            severity="warning"
+            title="Attention"
+            description={`${prochainDetenteur?.nom_d_usage} n'est pas prêt pour Zacharie. Vous pouvez contacter un représentant avant de leur envoyer leur première fiche.`}
+          />
+        )}
         <RadioButtons
           legend="Lieu de stockage des carcasses *"
           className={canEdit ? '' : 'radio-black'}

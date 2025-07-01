@@ -70,21 +70,52 @@ export default function MesCCGs() {
     return (
       <p className="mt-4 text-sm">
         <br />
-        Le CCG doit être déclaré auprès de la direction départementale en charge de la protection des
-        populations du département d’implantation de la chambre froide.
+        Le CCG identifié dans Zacharie peut être utilisé pour entreposer du gibier. Toutefois, il est
+        important de reconnaître officiellement le CCG en procédant à son enregistrement auprès de la
+        direction départementale en charge de la protection des populations (DDPP/DDETSPP) du département
+        d’implantation du CCG.
         <br />
-        Pour ce faire, vous pouvez{' '}
-        <a href="https://agriculture.gouv.fr/ddpp-et-ddets-pp-tous-les-contacts-des-services-deconcentres">
-          effectuer votre démarche en ligne ici
-        </a>{' '}
-        ou{' '}
-        <a href="https://mesdemarches.agriculture.gouv.fr/demarches/association-ou-organisation-de/assurer-une-activite-de-76/article/declarer-la-manipulation-de">
-          transmettre le formulaire papier accessible là.
-        </a>
-        <br />
-        La démarche en ligne n’est possible que pour les CCG disposant d’un numéro SIRET. A l’issue de
-        l’enregistrement par l’autorité compétente un numéro d’identification unique sera attribué au CCG
-        qu’il conviendra de nous communiquer pour finaliser son enregistrement dans Zacharie.
+        Pour déclarer l’activité du CCG, il vous suffit de suivre la procédure suivante&nbsp;:
+        <ol className="list-inside list-decimal">
+          <li>
+            Remplir le formulaire de déclaration d’activité à télécharger sur le lien suivant&nbsp;:{' '}
+            <a
+              target="_blank"
+              rel="noreferrer noopener"
+              href="https://mesdemarches.agriculture.gouv.fr/demarches/association-ou-organisation-de/assurer-une-activite-de-76/article/declarer-la-manipulation-de"
+            >
+              https://mesdemarches.agriculture.gouv.fr/demarches/association-ou-organisation-de/assurer-une-activite-de-76/article/declarer-la-manipulation-de
+            </a>
+            <br />
+            Un document d’aide au remplissage du formulaire est accessible{' '}
+            <a
+              href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              ici
+            </a>
+            .
+          </li>
+          <li>
+            Envoyer la déclaration d’activité remplie, datée et signée à la DDPP/DDETSPP compétente par
+            courrier postal.
+            <br />
+            Les coordonnées des DDPP/DDETSPP sont accessibles via le lien suivant&nbsp;:
+            <a
+              href="https://agriculture.gouv.fr/ddpp-et-ddets-pp-tous-les-contacts-des-services-deconcentres"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              https://agriculture.gouv.fr/ddpp-et-ddets-pp-tous-les-contacts-des-services-deconcentres
+            </a>
+          </li>
+          <li>
+            Attendre l’accusé de réception. Un numéro d’identification unique sera attribué au CCG permettant
+            d’assurer la traçabilité et faciliter la valorisation des viandes.
+          </li>
+          <li>Le numéro d’identification est automatiquement enregistré dans Zacharie.</li>
+        </ol>
       </p>
     );
   }
