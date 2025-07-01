@@ -40,6 +40,7 @@ import { authorizeUserOrAdmin } from '~/utils/authorizeUserOrAdmin.server';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
 import sendNotificationToUser from '~/service/notifications';
 import { SECRET } from '~/config';
+import { autoActivatePremierDetenteur, hasAllRequiredFields } from '~/utils/user';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 router.post(
@@ -594,33 +595,6 @@ router.post(
   ),
 );
 
-function hasAllRequiredFields(user: User) {
-  if (!user.numero_cfei) {
-    if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-      return false;
-    }
-  }
-  if (!user.addresse_ligne_1) {
-    return false;
-  }
-  if (!user.code_postal) {
-    return false;
-  }
-  if (!user.ville) {
-    return false;
-  }
-  if (!user.telephone) {
-    return false;
-  }
-  if (!user.email) {
-    return false;
-  }
-  if (!user.nom_de_famille) {
-    return false;
-  }
-  return true;
-}
-
 router.post(
   '/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
@@ -696,7 +670,7 @@ router.post(
         nextUser.numero_cfei = body[Prisma.UserScalarFieldEnum.numero_cfei] as string;
         if (nextUser.numero_cfei !== user.numero_cfei) {
           nextUser.activated = false;
-          nextUser.activated_at = null;
+          nextUser.activated_at = new Date();
         }
       }
       if (body.hasOwnProperty('onboarding_finished')) {
@@ -741,7 +715,16 @@ ${savedUser.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ? `- Numéro CFEI: ${s
         });
       }
 
-      if (nextUser.activated && !savedUser.activated) {
+      if (autoActivatePremierDetenteur(savedUser)) {
+        nextUser.activated = true;
+        nextUser.activated_at = new Date();
+        savedUser = await prisma.user.update({
+          where: { id: userId },
+          data: nextUser,
+        });
+      }
+
+      if (savedUser.activated && !user.activated) {
         await sendEmail({
           emails: [savedUser.email],
           subject: 'Votre compte Zacharie a été activé',

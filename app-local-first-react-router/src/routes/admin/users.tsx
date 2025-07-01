@@ -91,7 +91,7 @@ export default function AdminUsers() {
                           Création: {dayjs(user.created_at).format('DD/MM/YYYY à HH:mm')}
                           <br />
                           {user.activated_at
-                            ? `Activé le: ${dayjs(user.activated_at).format('DD/MM/YYYY à HH:mm')}`
+                            ? `${user.activated ? 'Activé' : 'Désactivé'} le: ${dayjs(user.activated_at).format('DD/MM/YYYY à HH:mm')}`
                             : 'Activé avant mai 2025'}
                         </Link>
                       </div>,
