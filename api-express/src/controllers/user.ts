@@ -971,17 +971,17 @@ router.get(
       const allOtherEntities = await prisma.entity
         .findMany({
           where: {
-            id: {
-              notIn: [
-                ...entitiesWorkingFor.map((entity) => entity.id),
-                ...entitiesWorkingWith.map((entity) => entity.id),
-              ],
-            },
             for_testing: !user.roles.includes(UserRoles.ADMIN),
             type: {
               notIn: [
                 EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
                 EntityTypes.PREMIER_DETENTEUR, // les associations de chasse doivent rester confidentielles
+              ],
+            },
+            id: {
+              notIn: [
+                ...entitiesWorkingFor.map((entity) => entity.id),
+                ...entitiesWorkingWith.map((entity) => entity.id),
               ],
             },
           },

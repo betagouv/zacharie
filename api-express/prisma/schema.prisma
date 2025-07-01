@@ -135,6 +135,12 @@ model Entity {
   AsEtgRelationsWithOtherEntities ETGAndEntityRelations[]  @relation("ETGRelatedWithEntity")
   RelationsWithEtgs               ETGAndEntityRelations[]  @relation("EntityRelatedWithETG")
   Logs                            Log[]
+
+  @@index([updated_at]) // Time-based ordering
+  @@index([nom_d_usage]) // Name-based ordering
+  @@index([type, zacharie_compatible, nom_d_usage]) // Admin entities sorting (exact pattern)
+  @@index([for_testing, updated_at]) // User entities filtering + ordering
+  @@index([type, updated_at]) // Type filtering + time ordering
 }
 
 model Password {
@@ -580,6 +586,10 @@ model CarcasseIntermediaire {
    * fields from FeiIntermediaire
    */
   /**
+   * /**
+   * /**
+   * /**
+   * /**
    * /**
    * /**
    * /**
