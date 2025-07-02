@@ -275,7 +275,12 @@ export default function FEICurrentIntermediaire(props: Props) {
   ]);
 
   const couldSelectNextUser = useMemo(() => {
-    if (fei.intermediaire_closed_at || fei.svi_closed_at || fei.automatic_closed_at) {
+    if (
+      fei.intermediaire_closed_at ||
+      fei.svi_closed_at ||
+      fei.automatic_closed_at ||
+      fei.intermediaire_closed_at
+    ) {
       return false;
     }
     if (intermediaireIndex !== 0) {

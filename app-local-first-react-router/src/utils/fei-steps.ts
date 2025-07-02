@@ -36,21 +36,24 @@ export function useFeiSteps(fei: FeiDone) {
           : null,
       } as IntermediaireStep);
     }
-    if (!alreadyEtg) {
-      // on simplifie ici : pour montrer à l'utilisateur qu'on anticipe une étape ETG puis SVI
-      // mais peut-être que ça va changer, avec les circuits longs, les circuits courts...
-      steps.push({
-        id: null,
-        role: UserRoles.ETG,
-        nextRole: null,
-      });
+    if (!fei.intermediaire_closed_at) {
+      if (!alreadyEtg) {
+        // on simplifie ici : pour montrer à l'utilisateur qu'on anticipe une étape ETG puis SVI
+        // mais peut-être que ça va changer, avec les circuits longs, les circuits courts...
+        steps.push({
+          id: null,
+          role: UserRoles.ETG,
+          nextRole: null,
+        });
+      }
+      steps.push(fei.svi_assigned_at);
     }
-    steps.push(fei.svi_assigned_at);
     return steps;
   }, [
     fei.examinateur_initial_user_id,
     fei.premier_detenteur_entity_id,
     fei.premier_detenteur_user_id,
+    fei.intermediaire_closed_at,
     fei.svi_assigned_at,
     intermediaires,
     entities,
@@ -63,12 +66,13 @@ export function useFeiSteps(fei: FeiDone) {
     if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) return 1;
     if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) return 2;
     if (fei.svi_assigned_at) return steps.length;
+    if (fei.intermediaire_closed_at) return steps.length;
     const etgStep = steps[steps.length - 2] as IntermediaireStep;
     if (etgStep.id) {
       return steps.length - 1;
     }
     return steps.length - 2;
-  }, [fei.fei_current_owner_role, fei.svi_assigned_at, steps]);
+  }, [fei.fei_current_owner_role, fei.svi_assigned_at, fei.intermediaire_closed_at, steps]);
 
   const currentStepLabel: FeiStep = useMemo(() => {
     if (fei.automatic_closed_at || fei.svi_closed_at || fei.intermediaire_closed_at) {
@@ -93,6 +97,7 @@ export function useFeiSteps(fei: FeiDone) {
       // pas encore d'ETG, on regarde l'étape précédente
       // pour simplifier :
       const avantAvantDernierStep = steps[steps.length - 3] as IntermediaireStep;
+      console.log('avantAvantDernierStep', avantAvantDernierStep);
       if (avantAvantDernierStep.role === UserRoles.COLLECTEUR_PRO) {
         if (avantAvantDernierStep.nextRole === EntityTypes.ETG) {
           return 'Transport vers un établissement de traitement';
