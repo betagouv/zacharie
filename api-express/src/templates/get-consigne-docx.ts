@@ -277,7 +277,7 @@ export async function generateConsigneDocx(data: CarcasseCertificat, user: User)
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: `Commune de mise à mort : ${data.commune_mise_a_mort}`,
+                            text: `Commune de mise à mort\u00A0: ${data.commune_mise_a_mort}`,
                             font: 'Marianne',
                           }),
                         ],

@@ -28,7 +28,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
     for (const carcasseIntermediaire of carcasseIntermediaires) {
       if (carcasseIntermediaire?.commentaire) {
         const intermediaireEntity = state.entities[carcasseIntermediaire.intermediaire_entity_id];
-        commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${carcasseIntermediaire?.commentaire}`);
+        commentaires.push(`${intermediaireEntity?.nom_d_usage}\u00A0: ${carcasseIntermediaire?.commentaire}`);
       }
     }
     return commentaires;
@@ -48,12 +48,12 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
 
   let espece = carcasse.espece;
   if (carcasse.nombre_d_animaux! > 1) espece = espece += ` (${carcasse.nombre_d_animaux})`;
-  let miseAMort = `Mise à mort : ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
+  let miseAMort = `Mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
   if (carcasse.heure_mise_a_mort) {
     miseAMort += ` à ${carcasse.heure_mise_a_mort}`;
   }
   if (carcasse.heure_evisceration) {
-    miseAMort += ` - Éviscération : ${carcasse.heure_evisceration}`;
+    miseAMort += ` - Éviscération\u00A0: ${carcasse.heure_evisceration}`;
   }
 
   return (

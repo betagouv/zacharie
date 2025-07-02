@@ -54,7 +54,7 @@ export default function CardCarcasse({
       if (_carcasseIntermediaire?.commentaire) {
         const _intermediaireEntity = entities[_carcasseIntermediaire.intermediaire_entity_id];
         commentaires.push(
-          `Commentaire de ${_intermediaireEntity?.nom_d_usage} : ${_carcasseIntermediaire?.commentaire}`,
+          `Commentaire de ${_intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`,
         );
       }
     }
@@ -67,7 +67,7 @@ export default function CardCarcasse({
   if (carcasse.nombre_d_animaux! > 1) espece = espece += ` (${carcasse.nombre_d_animaux})`;
   let miseAMort = '';
   if (!hideDateMiseAMort) {
-    miseAMort += `Mise à mort : ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
+    miseAMort += `Mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
     if (carcasse.heure_mise_a_mort) {
       miseAMort += ` à ${carcasse.heure_mise_a_mort}`;
     }
@@ -209,7 +209,7 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
     for (const carcasseIntermediaire of carcassesIntermediaires) {
       if (carcasseIntermediaire?.commentaire) {
         const intermediaireEntity = entities[carcasseIntermediaire.intermediaire_entity_id];
-        commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${carcasseIntermediaire?.commentaire}`);
+        commentaires.push(`${intermediaireEntity?.nom_d_usage}\u00A0: ${carcasseIntermediaire?.commentaire}`);
       }
     }
     return commentaires;
@@ -286,21 +286,21 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
 
   const milestones = useMemo(() => {
     const _milestones = [
-      `Commune de mise à mort: ${fei?.commune_mise_a_mort ?? ''}`,
-      `Date de mise à mort: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
-      `Heure de mise à mort de la première carcasse de la fiche: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
+      `Commune de mise à mort\u00A0: ${fei?.commune_mise_a_mort ?? ''}`,
+      `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
+      `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
     ];
     if (onlyPetitGibier) {
       _milestones.push(
-        `Heure d'éviscération de la dernière carcasse de la fiche: ${fei.heure_evisceration_derniere_carcasse!}`,
+        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${fei.heure_evisceration_derniere_carcasse!}`,
       );
     }
-    if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG: ${ccgDate}`);
-    if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG: ${etgDate}`);
-    // if (carcasse.svi_ipm1_date) _milestones.push(`Date de l'inspection : ${dayjs(carcasse.svi_ipm1_date).format('dddd DD MMMM YYYY')}`);
+    if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
+    if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
+    // if (carcasse.svi_ipm1_date) _milestones.push(`Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd DD MMMM YYYY')}`);
     if (carcasse.svi_ipm2_date)
       _milestones.push(
-        `Date de l'inspection du service vétérinaire : ${dayjs(carcasse.svi_ipm2_date).format('dddd DD MMMM YYYY')}`,
+        `Date de l'inspection du service vétérinaire\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd DD MMMM YYYY')}`,
       );
     return _milestones;
   }, [
@@ -317,21 +317,23 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
   const ipm1 = useMemo(() => {
     if (!carcasse.svi_ipm1_date) return [];
     const imp1Lines = [];
-    imp1Lines.push(`Date de l'inspection : ${dayjs(carcasse.svi_ipm1_date).format('dddd DD MMMM YYYY')}`);
+    imp1Lines.push(
+      `Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd DD MMMM YYYY')}`,
+    );
     if (!carcasse.svi_ipm1_presentee_inspection) {
       imp1Lines.push('Carcasse manquante');
       return imp1Lines;
     }
     if (carcasse.type === CarcasseType.PETIT_GIBIER) {
-      imp1Lines.push(`Nombre d'animaux : ${carcasse.svi_ipm1_nombre_animaux}`);
+      imp1Lines.push(`Nombre d'animaux\u00A0: ${carcasse.svi_ipm1_nombre_animaux}`);
     }
     if (carcasse.svi_ipm1_commentaire) {
-      imp1Lines.push(`Commentaire de l'inspection : ${carcasse.svi_ipm1_commentaire}`);
+      imp1Lines.push(`Commentaire de l'inspection\u00A0: ${carcasse.svi_ipm1_commentaire}`);
     }
     if (carcasse.svi_ipm1_pieces.length) {
       imp1Lines.push(
         <>
-          <p className="with-marker">Pièces observées :</p>
+          <p className="with-marker">Pièces observées&nbsp;:</p>
           <ul className="ml-4 list-inside list-decimal">
             {carcasse.svi_ipm1_pieces.map((piece, index) => {
               return <li key={index}>{piece}</li>;
@@ -343,7 +345,7 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
     if (carcasse.svi_ipm1_lesions_ou_motifs.length) {
       imp1Lines.push(
         <>
-          <p className="with-marker">Lésions ou motifs de consigne :</p>
+          <p className="with-marker">Lésions ou motifs de consigne&nbsp;:</p>
           <ul className="ml-4 list-inside list-decimal">
             {carcasse.svi_ipm1_lesions_ou_motifs.map((type, index) => {
               return <li key={index}>{type}</li>;
@@ -353,13 +355,13 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
       );
     }
     imp1Lines.push(
-      `Décision IPM1 : ${carcasse.svi_ipm1_decision === IPM1Decision.NON_RENSEIGNEE ? 'Non renseigné' : 'Mise en consigne'}`,
+      `Décision IPM1\u00A0: ${carcasse.svi_ipm1_decision === IPM1Decision.NON_RENSEIGNEE ? 'Non renseigné' : 'Mise en consigne'}`,
     );
     if (carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE) {
-      imp1Lines.push(`Durée de la consigne : ${carcasse.svi_ipm1_duree_consigne} heures`);
+      imp1Lines.push(`Durée de la consigne\u00A0: ${carcasse.svi_ipm1_duree_consigne} heures`);
     }
     if (carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE && carcasse.svi_ipm1_poids_consigne) {
-      imp1Lines.push(`Poids de la consigne : ${carcasse.svi_ipm1_poids_consigne}kg`);
+      imp1Lines.push(`Poids de la consigne\u00A0: ${carcasse.svi_ipm1_poids_consigne}kg`);
     }
     return imp1Lines;
   }, [carcasse]);
@@ -371,21 +373,23 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
   const ipm2 = useMemo(() => {
     if (!carcasse.svi_ipm2_date) return [];
     const imp2Lines = [];
-    imp2Lines.push(`Date de l'inspection : ${dayjs(carcasse.svi_ipm2_date).format('dddd DD MMMM YYYY')}`);
+    imp2Lines.push(
+      `Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd DD MMMM YYYY')}`,
+    );
     if (!carcasse.svi_ipm2_presentee_inspection) {
       imp2Lines.push('Carcasse manquante');
       return imp2Lines;
     }
     if (carcasse.type === CarcasseType.PETIT_GIBIER) {
-      imp2Lines.push(`Nombre d'animaux : ${carcasse.svi_ipm2_nombre_animaux}`);
+      imp2Lines.push(`Nombre d'animaux\u00A0: ${carcasse.svi_ipm2_nombre_animaux}`);
     }
     if (carcasse.svi_ipm2_commentaire) {
-      imp2Lines.push(`Commentaire de l'inspection : ${carcasse.svi_ipm2_commentaire}`);
+      imp2Lines.push(`Commentaire de l'inspection\u00A0: ${carcasse.svi_ipm2_commentaire}`);
     }
     if (carcasse.svi_ipm2_pieces.length) {
       imp2Lines.push(
         <>
-          <p className="with-marker">Pièces observées :</p>
+          <p className="with-marker">Pièces observées&nbsp;:</p>
           <ul className="ml-4 list-inside list-decimal">
             {carcasse.svi_ipm2_pieces.map((piece, index) => {
               return <li key={index}>{piece}</li>;
@@ -397,7 +401,7 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
     if (carcasse.svi_ipm2_lesions_ou_motifs.length) {
       imp2Lines.push(
         <>
-          <p className="with-marker">Lésions ou motifs de consigne :</p>
+          <p className="with-marker">Lésions ou motifs de consigne&nbsp;:</p>
           <ul className="ml-4 list-inside list-decimal">
             {carcasse.svi_ipm2_lesions_ou_motifs.map((type, index) => {
               return <li key={index}>{type}</li>;
@@ -411,48 +415,52 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
         imp2Lines.push(`Pas de saisie`);
         break;
       case IPM2Decision.LEVEE_DE_LA_CONSIGNE:
-        imp2Lines.push(`Décision : Levée de la consigne, pas de saisie`);
+        imp2Lines.push(`Décision\u00A0: Levée de la consigne, pas de saisie`);
         break;
       case IPM2Decision.SAISIE_TOTALE:
-        imp2Lines.push(`Décision : Saisie totale`);
+        imp2Lines.push(`Décision\u00A0: Saisie totale`);
         break;
       case IPM2Decision.SAISIE_PARTIELLE:
-        imp2Lines.push(`Décision IPM2: Saisie partielle`);
+        imp2Lines.push(`Décision IPM2\u00A0: Saisie partielle`);
         break;
       case IPM2Decision.TRAITEMENT_ASSAINISSANT:
-        imp2Lines.push(`Décision IPM2: Traitement assainissant`);
+        imp2Lines.push(`Décision IPM2\u00A0: Traitement assainissant`);
         break;
     }
     if (carcasse.svi_ipm2_traitement_assainissant_cuisson_temps) {
-      imp2Lines.push(`Temps de cuisson : ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temps}`);
+      imp2Lines.push(`Temps de cuisson\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temps}`);
     }
     if (carcasse.svi_ipm2_traitement_assainissant_cuisson_temp) {
-      imp2Lines.push(`Température de cuisson : ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temp}`);
+      imp2Lines.push(
+        `Température de cuisson\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temp}`,
+      );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_congelation_temps) {
-      imp2Lines.push(`Temps de congélation : ${carcasse.svi_ipm2_traitement_assainissant_congelation_temps}`);
+      imp2Lines.push(
+        `Temps de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temps}`,
+      );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_congelation_temp) {
       imp2Lines.push(
-        `Température de congélation : ${carcasse.svi_ipm2_traitement_assainissant_congelation_temp}`,
+        `Température de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temp}`,
       );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_type) {
-      imp2Lines.push(`Type de traitement : ${carcasse.svi_ipm2_traitement_assainissant_type}`);
+      imp2Lines.push(`Type de traitement\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_type}`);
     }
     if (carcasse.svi_ipm2_traitement_assainissant_paramètres) {
-      imp2Lines.push(`Paramètres : ${carcasse.svi_ipm2_traitement_assainissant_paramètres}`);
+      imp2Lines.push(`Paramètres\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_paramètres}`);
     }
     if (carcasse.svi_ipm2_traitement_assainissant_etablissement) {
       imp2Lines.push(
-        `Établissement désigné pour réaliser le traitement assainissant : ${carcasse.svi_ipm2_traitement_assainissant_etablissement}`,
+        `Établissement désigné pour réaliser le traitement assainissant\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_etablissement}`,
       );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_poids) {
-      imp2Lines.push(`Poids : ${carcasse.svi_ipm2_traitement_assainissant_poids}`);
+      imp2Lines.push(`Poids\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_poids}`);
     }
     if (carcasse.svi_ipm2_poids_saisie) {
-      imp2Lines.push(`Poids : ${carcasse.svi_ipm2_poids_saisie}`);
+      imp2Lines.push(`Poids\u00A0: ${carcasse.svi_ipm2_poids_saisie}`);
     }
     return imp2Lines;
   }, [carcasse]);

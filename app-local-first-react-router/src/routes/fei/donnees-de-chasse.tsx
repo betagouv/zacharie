@@ -95,17 +95,17 @@ export default function FEIDonneesDeChasse({
 
   const milestones = useMemo(() => {
     const _milestones = [
-      `Commune de mise à mort: ${fei?.commune_mise_a_mort ?? ''}`,
-      `Date de mise à mort: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
-      `Heure de mise à mort de la première carcasse de la fiche: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
+      `Commune de mise à mort\u00A0: ${fei?.commune_mise_a_mort ?? ''}`,
+      `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
+      `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
     ];
     if (onlyPetitGibier) {
       _milestones.push(
-        `Heure d'éviscération de la dernière carcasse de la fiche: ${fei.heure_evisceration_derniere_carcasse!}`,
+        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${fei.heure_evisceration_derniere_carcasse!}`,
       );
     }
-    if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG: ${ccgDate}`);
-    if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG: ${etgDate}`);
+    if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
+    if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
     return _milestones;
   }, [
     fei.commune_mise_a_mort,

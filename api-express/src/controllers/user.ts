@@ -704,13 +704,17 @@ router.post(
           emails: ['contact@zacharie.beta.gouv.fr'],
           subject: `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`,
           text: `L'utilisateur ${savedUser.email} a fini son inscription :
-- Roles: ${savedUser.roles.join(', ')}
-- Prénom et nom: ${savedUser.prenom} ${savedUser.nom_de_famille}
-- Adresse: ${savedUser.addresse_ligne_1}
-- Code postal et ville: ${savedUser.code_postal} ${savedUser.ville}
-- Email: ${savedUser.email}
-- Téléphone: ${savedUser.telephone}
-${savedUser.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ? `- Numéro CFEI: ${savedUser.numero_cfei}` : ''}
+- Roles\u00A0: ${savedUser.roles.join(', ')}
+- Prénom et nom\u00A0: ${savedUser.prenom} ${savedUser.nom_de_famille}
+- Adresse\u00A0: ${savedUser.addresse_ligne_1}
+- Code postal et ville\u00A0: ${savedUser.code_postal} ${savedUser.ville}
+- Email\u00A0: ${savedUser.email}
+- Téléphone\u00A0: ${savedUser.telephone}
+${
+  savedUser.roles.includes(UserRoles.EXAMINATEUR_INITIAL)
+    ? `- Numéro CFEI\u00A0: ${savedUser.numero_cfei}`
+    : ''
+}
           `,
         });
       }

@@ -217,7 +217,9 @@ export default function useExportCarcasses() {
           const intermediaireCarcasse = carcassesIntermediaireById[id];
           if (intermediaireCarcasse?.commentaire) {
             const intermediaireEntity = entities[intermediaire.intermediaire_entity_id];
-            commentaires.push(`${intermediaireEntity?.nom_d_usage} : ${intermediaireCarcasse?.commentaire}`);
+            commentaires.push(
+              `${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`,
+            );
           }
         }
 

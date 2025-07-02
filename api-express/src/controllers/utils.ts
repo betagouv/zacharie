@@ -32,15 +32,15 @@ router.post(
     });
     await sendEmail({
       emails: ['contact@zacharie.beta.gouv.fr', email],
-      subject: `Contact: ${prenom} ${nom_de_famille} - ${email} - ${object}`,
+      subject: `Contact\u00A0: ${prenom} ${nom_de_famille} - ${email} - ${object}`,
       html: `<p>Nous avons bien reçu votre message. Nous vous répondrons dans les plus brefs délais.</p>
-      <p>Voici les informations que vous avez fournies :</p>
-      <p>Nom: ${nom_de_famille}</p>
-      <p>Prénom: ${prenom}</p>
-      <p>Téléphone: ${telephone}</p>
-      <p>Email: ${email}</p>
-      <p>Objet: ${object}</p>
-      <p>Message: ${message}</p>`,
+      <p>Voici les informations que vous avez fournies\u00A0:</p>
+      <p>Nom\u00A0: ${nom_de_famille}</p>
+      <p>Prénom\u00A0: ${prenom}</p>
+      <p>Téléphone\u00A0: ${telephone}</p>
+      <p>Email\u00A0: ${email}</p>
+      <p>Objet\u00A0: ${object}</p>
+      <p>Message\u00A0: ${message}</p>`,
     });
     res.status(200).send({ ok: true });
   }),

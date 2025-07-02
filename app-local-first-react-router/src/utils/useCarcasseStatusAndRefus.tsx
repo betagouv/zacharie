@@ -47,14 +47,14 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
         const refusé = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Refusé' : 'Refusée';
         let refus = `${refusé} par ${entity.nom_d_usage}`;
         if (carcasse.intermediaire_carcasse_refus_motif) {
-          refus += ` : ${carcasse.intermediaire_carcasse_refus_motif}`;
+          refus += `\u00A0: ${carcasse.intermediaire_carcasse_refus_motif}`;
         }
         return refus;
       }
       case CarcasseStatus.SAISIE_TOTALE:
       case CarcasseStatus.SAISIE_PARTIELLE: {
         const refusé = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Refusé' : 'Refusée';
-        return `${refusé} par le service vétérinaire : ${carcasse.svi_ipm2_lesions_ou_motifs
+        return `${refusé} par le service vétérinaire\u00A0: ${carcasse.svi_ipm2_lesions_ou_motifs
           .map((motif) => getVulgarisationSaisie(motif, carcasse.type!))
           .join(', ')}`;
       }

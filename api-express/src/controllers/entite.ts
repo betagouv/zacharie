@@ -165,7 +165,7 @@ router.post(
     await sendEmail({
       emails: ['contact@zacharie.beta.gouv.fr'],
       subject: `Nouvelle association de chasse pré-enregistrée dans Zacharie`,
-      text: `Une nouvelle association de chasse a été pré-enregistrée dans Zacharie : ${createdEntity.nom_d_usage}`,
+      text: `Une nouvelle association de chasse a été pré-enregistrée dans Zacharie\u00A0: ${createdEntity.nom_d_usage}`,
     });
 
     await linkBrevoCompanyToContact(createdEntity, user);
@@ -210,7 +210,7 @@ router.post(
     await sendEmail({
       emails: ['contact@zacharie.beta.gouv.fr'],
       subject: `Nouveau CCG pré-enregistré dans Zacharie`,
-      text: `Un nouveau CCG a été pré-enregistré dans Zacharie : ${createdEntity.nom_d_usage}`,
+      text: `Un nouveau CCG a été pré-enregistré dans Zacharie\u00A0: ${createdEntity.nom_d_usage}`,
     });
 
     res.status(200).send({ ok: true, error: '', data: { createdEntity, createdEntityRelation } });

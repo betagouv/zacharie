@@ -261,7 +261,7 @@ export async function generateLeveeSaisieDocx(data: CarcasseCertificat, user: Us
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: `Commune de mise à mort : ${data.commune_mise_a_mort}`,
+                            text: `Commune de mise à mort\u00A0: ${data.commune_mise_a_mort}`,
                             font: 'Marianne',
                           }),
                         ],
