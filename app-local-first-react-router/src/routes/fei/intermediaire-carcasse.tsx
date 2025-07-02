@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { CarcasseType, Prisma, type Carcasse } from '@prisma/client';
@@ -34,12 +34,28 @@ export default function CarcasseIntermediaireComp({
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
   const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
+  const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const carcasseIntermediaireId = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
     carcasse,
     intermediaire.id,
   );
   const carcasseIntermediaire = carcassesIntermediaireById[carcasseIntermediaireId];
+  const getCarcassesIntermediairesForCarcasse = useZustandStore(
+    (state) => state.getCarcassesIntermediairesForCarcasse,
+  );
+  const carcassesIntermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id!);
+
+  const commentairesIntermediaires = useMemo(() => {
+    const commentaires = [];
+    for (const carcasseIntermediaire of carcassesIntermediaires) {
+      if (carcasseIntermediaire?.commentaire) {
+        const intermediaireEntity = entities[carcasseIntermediaire.intermediaire_entity_id];
+        commentaires.push(`${intermediaireEntity?.nom_d_usage}\u00A0: ${carcasseIntermediaire?.commentaire}`);
+      }
+    }
+    return commentaires;
+  }, [carcassesIntermediaires, entities]);
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -208,13 +224,41 @@ export default function CarcasseIntermediaireComp({
         <refusIntermediaireModal.current.Component
           title={
             <>
-              {carcasse.numero_bracelet}
+              {carcasse.espece} - N° {carcasse.numero_bracelet}
               <br />
-              <span className="text-sm">{carcasse.espece}</span>
-              <br />
-              <span className="text-sm font-normal italic opacity-50">
-                {carcasse.type === CarcasseType.PETIT_GIBIER ? 'Petit gibier' : 'Grand gibier'}
-              </span>
+              {commentairesIntermediaires.map((commentaire, index) => {
+                return (
+                  <p key={commentaire + index} className="mt-2 block text-sm font-normal opacity-70">
+                    {commentaire}
+                  </p>
+                );
+              })}
+              {!!carcasse.examinateur_anomalies_abats?.length && (
+                <p className="mt-2 text-sm">
+                  Anomalies abats:
+                  <br />
+                  {carcasse.examinateur_anomalies_abats.map((anomalie) => {
+                    return (
+                      <span className="m-0 ml-2 block font-normal opacity-70" key={anomalie}>
+                        {anomalie}
+                      </span>
+                    );
+                  })}
+                </p>
+              )}
+              {!!carcasse.examinateur_anomalies_carcasse?.length && (
+                <p className="mt-2 text-sm">
+                  Anomalies carcasse:
+                  <br />
+                  {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
+                    return (
+                      <span className="m-0 ml-2 block font-normal opacity-70" key={anomalie}>
+                        {anomalie}
+                      </span>
+                    );
+                  })}
+                </p>
+              )}
             </>
           }
         >
@@ -293,7 +337,7 @@ export default function CarcasseIntermediaireComp({
               </div>
             )}
             <Input
-              label="Commentaire"
+              label="Votre commentaire"
               className="mt-2"
               hintText={
                 carcasseManquante
