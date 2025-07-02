@@ -976,6 +976,7 @@ router.get(
               notIn: [
                 EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
                 EntityTypes.PREMIER_DETENTEUR, // les associations de chasse doivent rester confidentielles
+                EntityTypes.SVI, // les SVI sont déjà inclus dans les ETGs
               ],
             },
             id: {

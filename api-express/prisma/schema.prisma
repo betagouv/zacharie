@@ -294,7 +294,7 @@ model Fei {
   premier_detenteur_transport_type                        TransportType?
   premier_detenteur_transport_date                        DateTime?
   premier_detenteur_prochain_detenteur_type_cache         EntityTypes?
-  premier_detenteur_prochain_detenteur_id_cache           String?
+  premier_detenteur_prochain_detenteur_id_cache           String? // Entity id
   /**
   * intermediaire
   */
@@ -549,23 +549,27 @@ model CarcasseCertificat {
 }
 
 model CarcasseIntermediaire {
-  fei_numero                    String
-  numero_bracelet               String
-  zacharie_carcasse_id          String
-  prise_en_charge               Boolean?
-  check_manuel                  Boolean?
-  manquante                     Boolean?
-  refus                         String?
-  commentaire                   String?
+  fei_numero                                  String
+  numero_bracelet                             String
+  zacharie_carcasse_id                        String
+  prise_en_charge                             Boolean?
+  check_manuel                                Boolean?
+  manquante                                   Boolean?
+  refus                                       String?
+  commentaire                                 String?
   /**
   * new fields
   */
-  decision_at                   DateTime? // replace carcasse_check_finished_at
-  prise_en_charge_at            DateTime? // FeiIntermediaire.check_finished_at
-  intermediaire_id              String // {user_id}_{fei_numero}_{HHMMSS} // because a user could be multiple times intermediaire for a same fei
-  intermediaire_entity_id       String
-  intermediaire_role            UserRoles? // FeiIntermediaire.fei_intermediaire_role
-  intermediaire_user_id         String
+  decision_at                                 DateTime? // replace carcasse_check_finished_at
+  prise_en_charge_at                          DateTime? // FeiIntermediaire.check_finished_at
+  intermediaire_id                            String // {user_id}_{fei_numero}_{HHMMSS} // because a user could be multiple times intermediaire for a same fei
+  intermediaire_entity_id                     String
+  intermediaire_role                          UserRoles? // FeiIntermediaire.fei_intermediaire_role
+  intermediaire_user_id                       String
+  intermediaire_depot_type                    DepotType? // CCG, ETG, AUCUN
+  intermediaire_depot_entity_id               String?
+  intermediaire_prochain_detenteur_type_cache EntityTypes?
+  intermediaire_prochain_detenteur_id_cache   String?
   /**
   * fields from FeiIntermediaire
   */
@@ -574,16 +578,20 @@ model CarcasseIntermediaire {
   * /**
   * /**
   * /**
+  * /**
+  * /**
+  * /**
+  * /**
   * end of fields from FeiIntermediaire
   */
-  created_at                    DateTime   @default(now())
-  updated_at                    DateTime   @default(now()) @updatedAt
-  deleted_at                    DateTime?
-  is_synced                     Boolean    @default(true) // just for typing purppose with zustand frontend
-  CarcasseIntermediaireFei      Fei        @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
-  CarcasseCarcasseIntermediaire Carcasse   @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
-  CarcasseIntermediaireUser     User       @relation("CarcasseIntermediaireUser", fields: [intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  CarcasseIntermediaireEntity   Entity     @relation("CarcasseIntermediaireEntity", fields: [intermediaire_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  created_at                                  DateTime     @default(now())
+  updated_at                                  DateTime     @default(now()) @updatedAt
+  deleted_at                                  DateTime?
+  is_synced                                   Boolean      @default(true) // just for typing purppose with zustand frontend
+  CarcasseIntermediaireFei                    Fei          @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseCarcasseIntermediaire               Carcasse     @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseIntermediaireUser                   User         @relation("CarcasseIntermediaireUser", fields: [intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseIntermediaireEntity                 Entity       @relation("CarcasseIntermediaireEntity", fields: [intermediaire_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   // Logs                                   Log[]
 
   @@unique([fei_numero, zacharie_carcasse_id, intermediaire_id])

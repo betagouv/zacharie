@@ -265,6 +265,12 @@ export async function setFeiInStore(feiResponse: FeiResponse) {
         intermediaire_entity_id: carcasseIntermediaire.intermediaire_entity_id,
         created_at: carcasseIntermediaire.created_at,
         prise_en_charge_at: carcasseIntermediaire.prise_en_charge_at,
+        intermediaire_depot_type: carcasseIntermediaire.intermediaire_depot_type,
+        intermediaire_depot_entity_id: carcasseIntermediaire.intermediaire_depot_entity_id,
+        intermediaire_prochain_detenteur_type_cache:
+          carcasseIntermediaire.intermediaire_prochain_detenteur_type_cache,
+        intermediaire_prochain_detenteur_id_cache:
+          carcasseIntermediaire.intermediaire_prochain_detenteur_id_cache,
       };
       intermediairesByFei[carcasseIntermediaire.intermediaire_id] = intermediaire;
     }

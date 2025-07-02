@@ -104,10 +104,10 @@ interface Actions {
     zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
   ) => Array<CarcasseIntermediaire>;
   createFeiIntermediaire: (newFeiIntermediaire: FeiIntermediaire) => Promise<void>;
-  setCarcasseIntermediairePriseEnChargeAt: (
+  updateAllCarcasseIntermediaire: (
     fei_numero: Fei['numero'],
     feiAndIntermediaireIds: FeiAndIntermediaireIds,
-    priseEnChargeAt: CarcasseIntermediaire['prise_en_charge_at'],
+    partialCarcasseIntermediaire: Partial<CarcasseIntermediaire>,
   ) => void;
   updateCarcasseIntermediaire: (
     feiAndCarcasseAndIntermediaireIds: FeiAndCarcasseAndIntermediaireIds,
@@ -273,6 +273,10 @@ const useZustandStore = create<State & Actions>()(
                 decision_at: null,
                 prise_en_charge: true, // always true by default, confirmed by the intermediaire globally
                 prise_en_charge_at: newIntermediaire.prise_en_charge_at, // will be set by the intermediaire when he confirms all the carcasse
+                intermediaire_depot_type: null,
+                intermediaire_depot_entity_id: null,
+                intermediaire_prochain_detenteur_type_cache: null,
+                intermediaire_prochain_detenteur_id_cache: null,
                 created_at: newIntermediaire.created_at,
                 updated_at: newIntermediaire.created_at,
                 deleted_at: null,
@@ -318,10 +322,10 @@ const useZustandStore = create<State & Actions>()(
             resolve();
           });
         },
-        setCarcasseIntermediairePriseEnChargeAt: (
+        updateAllCarcasseIntermediaire: (
           fei_numero: Fei['numero'],
           feiAndIntermediaireIds: FeiAndIntermediaireIds,
-          priseEnChargeAt: CarcasseIntermediaire['prise_en_charge_at'],
+          nextCarcasseIntermediaire: Partial<CarcasseIntermediaire>,
         ) => {
           const carcassesIntermediaireById = useZustandStore.getState().carcassesIntermediaireById;
           const nextCarcassesIntermediaireById: Record<
@@ -335,7 +339,7 @@ const useZustandStore = create<State & Actions>()(
             if (!carcassesIntermediaire.prise_en_charge) continue;
             nextCarcassesIntermediaireById[carcassesIntermediaireId] = {
               ...carcassesIntermediaire,
-              prise_en_charge_at: priseEnChargeAt,
+              ...nextCarcasseIntermediaire,
               updated_at: dayjs().toDate(),
               is_synced: false,
             };
@@ -351,7 +355,7 @@ const useZustandStore = create<State & Actions>()(
                   ) {
                     return {
                       ...intermediaire,
-                      prise_en_charge_at: priseEnChargeAt,
+                      ...nextCarcasseIntermediaire,
                       updated_at: dayjs().toDate(),
                       is_synced: false,
                     };

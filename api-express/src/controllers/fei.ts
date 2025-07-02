@@ -458,6 +458,7 @@ router.post(
       body.fei_next_owner_entity_id &&
       body.fei_next_owner_entity_id !== existingFei.fei_next_owner_entity_id
     ) {
+      console.log('ENVOI DE NOTIF AU PROCHAIN DETENTEUR');
       const usersWorkingForEntity = (
         await prisma.entityAndUserRelations.findMany({
           where: {

@@ -1,5 +1,5 @@
 import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
-import { Carcasse, UserRoles, type CarcasseIntermediaire } from '@prisma/client';
+import { Carcasse, DepotType, EntityTypes, UserRoles, type CarcasseIntermediaire } from '@prisma/client';
 import dayjs from 'dayjs';
 
 export function getNewCarcasseIntermediaireId(
@@ -23,6 +23,10 @@ export type FeiIntermediaire = {
   intermediaire_entity_id: string;
   intermediaire_role: UserRoles | null;
   prise_en_charge_at: Date | null;
+  intermediaire_depot_type: DepotType | null;
+  intermediaire_depot_entity_id: string | null;
+  intermediaire_prochain_detenteur_type_cache: EntityTypes | null;
+  intermediaire_prochain_detenteur_id_cache: string | null;
 };
 
 export type FeiAndIntermediaireIds =

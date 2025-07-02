@@ -5,7 +5,6 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import dayjs from 'dayjs';
-import SelectNextOwnerForPremierDetenteurOrIntermediaire from './premier-detenteur-intermediaire-select-next';
 import CarcasseIntermediaireComp from './intermediaire-carcasse';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
@@ -22,6 +21,7 @@ import FEIDonneesDeChasse from './donnees-de-chasse';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
+import DestinataireSelect from './destinataire-select';
 
 interface Props {
   readOnly?: boolean;
@@ -30,9 +30,7 @@ interface Props {
 export default function FEICurrentIntermediaire(props: Props) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const setCarcasseIntermediairePriseEnChargeAt = useZustandStore(
-    (state) => state.setCarcasseIntermediairePriseEnChargeAt,
-  );
+  const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
   const updateFei = useZustandStore((state) => state.updateFei);
   const addLog = useZustandStore((state) => state.addLog);
   const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
@@ -328,7 +326,9 @@ export default function FEICurrentIntermediaire(props: Props) {
       return;
     }
     setPriseEnChargeAt(_priseEnChargeAt);
-    setCarcasseIntermediairePriseEnChargeAt(fei.numero, feiAndIntermediaireIds, _priseEnChargeAt);
+    updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds, {
+      prise_en_charge_at: _priseEnChargeAt,
+    });
     addLog({
       user_id: user.id,
       action: 'intermediaire-check-finished-at',
@@ -577,9 +577,12 @@ export default function FEICurrentIntermediaire(props: Props) {
           </Section>
           {couldSelectNextUser && (
             <Section title="Sélection du prochain destinataire" key={intermediaire?.id + needSelectNextUser}>
-              <SelectNextOwnerForPremierDetenteurOrIntermediaire
+              <DestinataireSelect
                 calledFrom="intermediaire-next-owner"
                 disabled={!needSelectNextUser || props.readOnly}
+                canEdit={effectiveCanEdit}
+                feiAndIntermediaireIds={feiAndIntermediaireIds}
+                intermediaire={intermediaire}
               />
             </Section>
           )}
