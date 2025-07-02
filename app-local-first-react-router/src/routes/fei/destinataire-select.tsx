@@ -324,13 +324,14 @@ export default function DestinataireSelect({
       >
         <SelectCustom
           label="Prochain détenteur des carcasses *"
+          isDisabled={disabled}
           hint={
             <>
               <span>
                 Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge
                 le gibier.
               </span>
-              {!prochainDetenteurEntityId && (
+              {!prochainDetenteurEntityId && !disabled && (
                 <div>
                   {workingWith.map((entity) => {
                     return (
@@ -586,7 +587,7 @@ export default function DestinataireSelect({
           <Button
             className="mt-4"
             type="submit"
-            disabled={!needToSubmit}
+            disabled={disabled || !needToSubmit}
             nativeButtonProps={{
               onClick: (event) => {
                 event.preventDefault();
@@ -630,6 +631,9 @@ export default function DestinataireSelect({
                   let nextFei: Partial<typeof fei> = {
                     fei_next_owner_entity_id: prochainDetenteurEntityId,
                     fei_next_owner_role: entities[prochainDetenteurEntityId]?.type,
+                    svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
+                    svi_entity_id:
+                      prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
                   };
                   updateFei(fei.numero, nextFei);
                   let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
@@ -661,7 +665,7 @@ export default function DestinataireSelect({
             Envoyer
           </Button>
         )}
-        {!!jobIsMissing?.length && (
+        {!disabled && !!jobIsMissing?.length && (
           <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
         )}
         {canEdit && !needToSubmit && fei.fei_next_owner_entity_id && (
