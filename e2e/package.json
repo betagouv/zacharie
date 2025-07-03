@@ -1,0 +1,25 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test:start-app-for-record": "VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 PORT=3290 yarn --cwd ../app-local-first-react-router dev-test",
+    "test:start-api-for-record": "PORT=3291 NODE_ENV=test PGDATABASE=zacharietest yarn --cwd ../api-express dev-test",
+    "test:init-db": "PGDATABASE=zacharietest node ./scripts/init-db.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@playwright/test": "^1.53.2",
+    "@types/node": "^24.0.10",
+    "bcryptjs": "^3.0.2",
+    "dayjs": "^1.11.13",
+    "dotenv": "^17.0.1",
+    "nanoid": "^5.1.5",
+    "pg": "^8.16.3",
+    "tsx": "^4.20.3",
+    "uuid": "^11.1.0"
+  }
+}
