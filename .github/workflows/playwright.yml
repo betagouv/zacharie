@@ -62,11 +62,6 @@ jobs:
           npx playwright test
         env:
           PGBASEURL: postgres://postgres:postgres@localhost:5432
-          PGHOST: localhost
-          PGDATABASE: zacharietest
-          PGPORT: 5432
-          PGUSER: postgres
-          PGPASSWORD: 
 
       - uses: actions/upload-artifact@v4
         if: always()
