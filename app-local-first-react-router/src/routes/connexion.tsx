@@ -143,8 +143,8 @@ export default function Connexion() {
               <Input
                 hintText="Renseignez votre email ci-dessous"
                 label="Mon email"
-                state={getErrorMessage('email') ? 'error' : 'default'}
-                stateRelatedMessage={getErrorMessage('email')}
+                state={getErrorMessage('email') || getErrorMessage('mot de passe') ? 'error' : 'default'}
+                stateRelatedMessage={getErrorMessage('email') || getErrorMessage('mot de passe')}
                 nativeInputProps={{
                   name: 'email-utilisateur',
                   type: 'email',
@@ -156,16 +156,6 @@ export default function Connexion() {
               <PasswordInput
                 hintText="Veuillez entrer votre mot de passe"
                 label="Mon mot de passe"
-                messages={
-                  getErrorMessage('mot de passe')
-                    ? [
-                        {
-                          message: getErrorMessage('mot de passe'),
-                          severity: 'error',
-                        },
-                      ]
-                    : []
-                }
                 nativeInputProps={{
                   name: 'password-utilisateur',
                   minLength: 12,
@@ -174,6 +164,7 @@ export default function Connexion() {
                   defaultValue: import.meta.env.VITE_TEST ? '' : (import.meta.env.VITE_PASSWORD ?? ''),
                 }}
               />
+
               <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left">
                 <li className="flex w-auto justify-start">
                   <Button type="submit" disabled={isLoading}>
