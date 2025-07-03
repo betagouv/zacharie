@@ -54,14 +54,14 @@ jobs:
           npm run test:init-db
         env:
           PGDATABASE: zacharietest
-          PGBASEURL: postgres://postgres:postgres@localhost:5432
+          PGBASEURL: postgres://localhost:5432
 
       - name: Run Playwright tests
         run: |
           cd e2e
           npx playwright test
         env:
-          PGBASEURL: postgres://postgres:postgres@localhost:5432
+          PGBASEURL: postgres://localhost:5432
 
       - uses: actions/upload-artifact@v4
         if: always()
