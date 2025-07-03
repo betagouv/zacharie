@@ -149,6 +149,10 @@ export default function CurrentOwnerConfirm() {
         created_at: dayjs().toDate(),
         prise_en_charge_at:
           nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO ? dayjs().toDate() : null,
+        intermediaire_depot_type: null,
+        intermediaire_depot_entity_id: null,
+        intermediaire_prochain_detenteur_type_cache: null,
+        intermediaire_prochain_detenteur_id_cache: null,
       };
       await createFeiIntermediaire(newIntermediaire);
       addLog({
