@@ -276,18 +276,18 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
 
   const ccgDate =
     fei.premier_detenteur_depot_type === DepotType.CCG
-      ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd DD MMMM YYYY à HH:mm')
+      ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
       : null;
   const etgDate = latestIntermediaire
     ? dayjs(latestIntermediaire.prise_en_charge_at || latestIntermediaire.decision_at).format(
-        'dddd DD MMMM YYYY à HH:mm',
+        'dddd D MMMM YYYY à HH:mm',
       )
     : null;
 
   const milestones = useMemo(() => {
     const _milestones = [
       `Commune de mise à mort\u00A0: ${fei?.commune_mise_a_mort ?? ''}`,
-      `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
+      `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY')}`,
       `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
     ];
     if (onlyPetitGibier) {
@@ -297,10 +297,10 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
     }
     if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
-    // if (carcasse.svi_ipm1_date) _milestones.push(`Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd DD MMMM YYYY')}`);
+    // if (carcasse.svi_ipm1_date) _milestones.push(`Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd D MMMM YYYY')}`);
     if (carcasse.svi_ipm2_date)
       _milestones.push(
-        `Date de l'inspection du service vétérinaire\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd DD MMMM YYYY')}`,
+        `Date de l'inspection du service vétérinaire\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd D MMMM YYYY')}`,
       );
     return _milestones;
   }, [
@@ -317,9 +317,7 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
   const ipm1 = useMemo(() => {
     if (!carcasse.svi_ipm1_date) return [];
     const imp1Lines = [];
-    imp1Lines.push(
-      `Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd DD MMMM YYYY')}`,
-    );
+    imp1Lines.push(`Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd D MMMM YYYY')}`);
     if (!carcasse.svi_ipm1_presentee_inspection) {
       imp1Lines.push('Carcasse manquante');
       return imp1Lines;
@@ -373,9 +371,7 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
   const ipm2 = useMemo(() => {
     if (!carcasse.svi_ipm2_date) return [];
     const imp2Lines = [];
-    imp2Lines.push(
-      `Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd DD MMMM YYYY')}`,
-    );
+    imp2Lines.push(`Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd D MMMM YYYY')}`);
     if (!carcasse.svi_ipm2_presentee_inspection) {
       imp2Lines.push('Carcasse manquante');
       return imp2Lines;

@@ -159,7 +159,7 @@ model Password {
 }
 
 enum UserRelationType {
-  PREMIER_DETENTEUR // a user working with this relation as a detenteur initial
+  PREMIER_DETENTEUR // un examinateur (owner_id) envoie une fiche à un premier détenteur potentiel (related_id)
   EXAMINATEUR_INITIAL // a user working with this relation as an examinateur initial
 }
 
@@ -574,6 +574,7 @@ model CarcasseIntermediaire {
   * fields from FeiIntermediaire
   */
   /**
+  * /**
   * /**
   * /**
   * /**

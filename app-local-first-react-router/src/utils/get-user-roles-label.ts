@@ -1,53 +1,53 @@
-import { UserRoles } from "@prisma/client";
+import { EntityTypes, UserRoles } from '@prisma/client';
 
-export function getUserRoleLabel(role: UserRoles | "") {
+export function getUserRoleLabel(role: UserRoles | EntityTypes | '') {
   switch (role) {
     case UserRoles.ADMIN:
-      return "Administrateur";
+      return 'Administrateur';
     case UserRoles.PREMIER_DETENTEUR:
-      return "Premier Détenteur";
+      return 'Premier Détenteur';
     case UserRoles.EXAMINATEUR_INITIAL:
-      return "Examinateur Initial";
+      return 'Examinateur Initial';
     case UserRoles.CCG:
-      return "Centre de Collecte du Gibier sauvage";
+      return 'Centre de Collecte du Gibier sauvage';
     case UserRoles.COLLECTEUR_PRO:
-      return "Collecteur Pro";
+      return 'Collecteur Pro';
     case UserRoles.ETG:
-      return "Etablissement de Traitement du Gibier sauvage";
+      return 'Etablissement de Traitement du Gibier sauvage';
     case UserRoles.SVI:
       return "Service Vétérinaire d'Inspection";
     default:
-      return "Inconnu";
+      return 'Inconnu';
   }
 }
 
-export function getUserRoleLabelPlural(role: UserRoles | "") {
+export function getUserRoleLabelPlural(role: UserRoles | '') {
   switch (role) {
     case UserRoles.ADMIN:
-      return "Administrateur";
+      return 'Administrateur';
     case UserRoles.PREMIER_DETENTEUR:
-      return "Premiers Détenteurs";
+      return 'Premiers Détenteurs';
     case UserRoles.EXAMINATEUR_INITIAL:
-      return "Examinateurs Initiaux";
+      return 'Examinateurs Initiaux';
     case UserRoles.CCG:
-      return "Centres de Collecte du Gibier sauvage";
+      return 'Centres de Collecte du Gibier sauvage';
     case UserRoles.COLLECTEUR_PRO:
-      return "Collecteurs Pro";
+      return 'Collecteurs Pro';
     case UserRoles.ETG:
-      return "Etablissements de Traitement du Gibier sauvage";
+      return 'Etablissements de Traitement du Gibier sauvage';
     case UserRoles.SVI:
       return "Services Vétérinaire d'Inspection";
     default:
-      return "Inconnu";
+      return 'Inconnu';
   }
 }
 
-export function getUserRoleLabelPrefixed(role: UserRoles | "") {
+export function getUserRoleLabelPrefixed(role: UserRoles | '') {
   switch (role) {
     case UserRoles.ADMIN:
       return "de l'Administrateur";
     case UserRoles.PREMIER_DETENTEUR:
-      return "du Premier Détenteur";
+      return 'du Premier Détenteur';
     case UserRoles.EXAMINATEUR_INITIAL:
       return "de l'Examinateur Initial";
     case UserRoles.CCG:
@@ -59,6 +59,6 @@ export function getUserRoleLabelPrefixed(role: UserRoles | "") {
     case UserRoles.SVI:
       return "du Service Vétérinaire d'Inspection";
     default:
-      return "de je ne sais qui";
+      return 'de je ne sais qui';
   }
 }

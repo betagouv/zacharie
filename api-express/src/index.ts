@@ -1,4 +1,10 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+if (process.env.NODE_ENV === 'test') {
+  config({ path: '.env.test' });
+} else {
+  config();
+}
+
 import '~/prisma';
 
 import * as Sentry from '@sentry/node';
@@ -74,7 +80,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(
     cors({
       credentials: true,
-      origin: ['http://localhost:3234'],
+      origin: ['http://localhost:3234', 'http://localhost:3290'],
     }),
   );
 }

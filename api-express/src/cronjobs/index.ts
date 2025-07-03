@@ -25,9 +25,10 @@ if (sentryEnabled) {
 }
 
 const isLocalDevelopment = process.env.NODE_ENV === 'development';
-const isReviewBranch = ENVIRONMENT === 'development';
+const isTest = process.env.NODE_ENV === 'test';
 
-if (isLocalDevelopment || !isReviewBranch) {
+if (!isLocalDevelopment && !isTest) {
+  console.log('Start cron');
   Promise.resolve()
     .then(initFeisCron)
     .then(() => console.log('All feis cronjobs are set up'))

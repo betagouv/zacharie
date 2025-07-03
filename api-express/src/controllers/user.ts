@@ -176,6 +176,7 @@ router.post(
       }
     }
     if (!user) {
+      console.log('email', email);
       if (connexionType === 'compte-existant') {
         res.status(400).send({
           ok: false,
@@ -197,6 +198,7 @@ router.post(
       await updateBrevoChasseurDeal(user);
     }
     const hashedPassword = await hashPassword(passwordUser);
+    console.log('hashedPassword', hashedPassword);
     const existingPassword = await prisma.password.findFirst({
       where: { user_id: user.id },
     });
@@ -403,82 +405,6 @@ router.post(
       });
     },
   ),
-);
-
-router.post(
-  '/user-relation/:user_id',
-  passport.authenticate('user', { session: false, failWithError: true }),
-  authorizeUserOrAdmin,
-  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
-    const body = req.body;
-    const userId = req.params.user_id;
-
-    if (!body.hasOwnProperty(Prisma.UserRelationsScalarFieldEnum.owner_id)) {
-      res.status(400).send({ ok: false, data: null, error: 'Missing owner_id' });
-      return;
-    }
-    if (!body.hasOwnProperty(Prisma.UserRelationsScalarFieldEnum.related_id)) {
-      res.status(400).send({ ok: false, data: null, error: 'Missing related_id' });
-      return;
-    }
-    if (userId !== body[Prisma.UserRelationsScalarFieldEnum.owner_id]) {
-      res.status(401).send({ ok: false, data: null, error: 'Unauthorized' });
-      return;
-    }
-
-    if (body._action === 'create') {
-      if (!body.hasOwnProperty(Prisma.UserRelationsScalarFieldEnum.relation)) {
-        res.status(400).send({ ok: false, data: null, error: 'Missing relation' });
-        return;
-      }
-
-      const nextUserRelation = {
-        owner_id: body.hasOwnProperty(Prisma.UserRelationsScalarFieldEnum.owner_id) as User['id'],
-        related_id: body.hasOwnProperty(Prisma.UserRelationsScalarFieldEnum.related_id) as User['id'],
-        relation: body.hasOwnProperty(Prisma.UserRelationsScalarFieldEnum.relation) as UserRelationType,
-      };
-
-      const existingEntityRelation = await prisma.userRelations.findFirst({
-        where: nextUserRelation,
-      });
-      if (existingEntityRelation) {
-        res.status(409).send({
-          ok: false,
-          data: null,
-          error: 'EntityRelation already exists',
-        });
-        return;
-      }
-      const relation = await prisma.userRelations.create({
-        data: nextUserRelation,
-      });
-
-      res.status(200).send({ ok: true, data: { relation }, error: '' });
-      return;
-    }
-
-    if (body._action === 'delete') {
-      const existingEntityRelation = await prisma.userRelations.findFirst({
-        where: {
-          owner_id: body.hasOwnProperty(Prisma.UserRelationsScalarFieldEnum.owner_id) as User['id'],
-          related_id: body.hasOwnProperty(Prisma.UserRelationsScalarFieldEnum.related_id) as User['id'],
-          relation: body.hasOwnProperty(Prisma.UserRelationsScalarFieldEnum.relation) as UserRelationType,
-        },
-      });
-      if (existingEntityRelation) {
-        await prisma.userRelations.delete({
-          where: {
-            id: existingEntityRelation.id,
-          },
-        });
-
-        res.status(200).send({ ok: true, data: null, error: '' });
-        return;
-      }
-    }
-
-    res.status(400).send({ ok: false, data: null, error: 'Invalid action' });
-  }),
 );
 
 router.post(
@@ -1018,13 +944,6 @@ router.get(
       if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
         detenteursInitiaux.unshift(user);
       }
-
-      // const examinateursInitiaux = userRelationsWithOtherUsers
-      //   .filter((userRelation) => userRelation.relation === UserRelationType.EXAMINATEUR_INITIAL)
-      //   .map((userRelation) => ({ ...userRelation.UserRelatedOfUserRelation, relation: userRelation.relation }));
-      // if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-      //   examinateursInitiaux.unshift({ ...user, relation: UserRelationType.EXAMINATEUR_INITIAL });
-      // }
 
       const allEntities = [
         ...entitiesWorkingFor.filter(

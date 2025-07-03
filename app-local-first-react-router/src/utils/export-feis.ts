@@ -238,7 +238,7 @@ export default function useExportFeis() {
         const feiSheetData = [
           {
             Donnée: 'Date de la chasse',
-            Valeur: dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY'),
+            Valeur: dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY'),
           },
           {
             Donnée: 'Heure de première mise à mort',

@@ -4,6 +4,7 @@ import { Carcasse, CarcasseType, DepotType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import ItemNotEditable from '@app/components/ItemNotEditable';
+import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
 
 export default function FEIDonneesDeChasse({
   carcasseId,
@@ -72,31 +73,26 @@ export default function FEIDonneesDeChasse({
     let collecteurs = 0;
     for (const intermediaire of intermediaires.reverse()) {
       const intermediaireLines = [];
-      const isCollecteur = intermediaire.intermediaire_role === UserRoles.COLLECTEUR_PRO;
-      const label = isCollecteur
-        ? `Collecteur ${collecteurs + 1}`
-        : 'Établissement de Traitement du Gibier Sauvage';
       const entity = entities[intermediaire.intermediaire_entity_id!];
-      intermediaireLines.push(entity.nom_d_usage);
+      intermediaireLines.push(getUserRoleLabel(intermediaire.intermediaire_role!));
       intermediaireLines.push(entity.siret);
       intermediaireLines.push(`${entity.code_postal} ${entity.ville}`);
-      lines.push({ label, value: intermediaireLines });
+      intermediaireLines.push(
+        `Prise en charge\u00A0: ${dayjs(intermediaire.prise_en_charge_at).format('dddd D MMMM à HH:mm')}`,
+      );
+      lines.push({ label: entity.nom_d_usage, value: intermediaireLines });
     }
     return lines;
   }, [intermediaires, entities]);
 
-  const ccgDate =
-    fei.premier_detenteur_depot_type === DepotType.CCG
-      ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd DD MMMM YYYY à HH:mm')
-      : null;
   const etgDate = latestIntermediaire
-    ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd DD MMMM YYYY à HH:mm')
+    ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
 
   const milestones = useMemo(() => {
     const _milestones = [
       `Commune de mise à mort\u00A0: ${fei?.commune_mise_a_mort ?? ''}`,
-      `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd DD MMMM YYYY')}`,
+      `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY')}`,
       `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
     ];
     if (onlyPetitGibier) {
@@ -104,12 +100,10 @@ export default function FEIDonneesDeChasse({
         `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${fei.heure_evisceration_derniere_carcasse!}`,
       );
     }
-    if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
     return _milestones;
   }, [
     fei.commune_mise_a_mort,
-    ccgDate,
     etgDate,
     onlyPetitGibier,
     fei.date_mise_a_mort,
@@ -124,13 +118,16 @@ export default function FEIDonneesDeChasse({
         value={[...new Set(carcasses.map((c) => c.espece))].join(', ')}
       />
       <ItemNotEditable label="Épisodes clés" value={milestones} />
-      <ItemNotEditable label="Examinateur Initial" value={examinateurInitialInput} />
-      <ItemNotEditable label="Premier Détenteur" value={premierDetenteurInput} />
-      {intermediairesInputs.map((intermediaireInput, index) => {
-        return (
-          <ItemNotEditable key={index} label={intermediaireInput.label} value={intermediaireInput.value} />
-        );
-      })}
+      <p className="mb-2 font-bold">Acteurs</p>
+      <div className="flex flex-col px-2">
+        <ItemNotEditable label="Examinateur Initial" value={examinateurInitialInput} />
+        <ItemNotEditable label="Premier Détenteur" value={premierDetenteurInput} />
+        {intermediairesInputs.map((intermediaireInput, index) => {
+          return (
+            <ItemNotEditable key={index} label={intermediaireInput.label!} value={intermediaireInput.value} />
+          );
+        })}
+      </div>
     </>
   );
 }

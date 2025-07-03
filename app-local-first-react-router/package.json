@@ -8,6 +8,7 @@
     "prebuild": "react-dsfr update-icons",
     "typecheck": "tsc -b",
     "dev": "prisma generate && vite --port 3234",
+    "dev-test": "VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 vite --port 3290",
     "build": "npm install && npm run prebuild && vite build && npx prisma generate",
     "lint": "eslint .",
     "preview": "vite preview --port 3234",

@@ -150,7 +150,7 @@ export default function Connexion() {
                   type: 'email',
                   autoComplete: 'username',
                   placeholder: 'votre@email.com',
-                  defaultValue: import.meta.env.VITE_EMAIL ?? '',
+                  defaultValue: import.meta.env.VITE_TEST ? '' : (import.meta.env.VITE_EMAIL ?? ''),
                 }}
               />
               <PasswordInput
@@ -171,7 +171,7 @@ export default function Connexion() {
                   minLength: 12,
                   autoComplete: 'current-password',
                   placeholder: 'votre mot de passe',
-                  defaultValue: import.meta.env.VITE_PASSWORD ?? '',
+                  defaultValue: import.meta.env.VITE_TEST ? '' : (import.meta.env.VITE_PASSWORD ?? ''),
                 }}
               />
               <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left">

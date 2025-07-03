@@ -23,7 +23,7 @@ const SECRET = process.env.VITE_SECRET ?? 'not-so-secret';
 const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
 const IS_DEV = process.env.NODE_ENV === 'development';
-const IS_TEST = process.env.TEST_ENV === 'true';
+const IS_TEST = process.env.NODE_ENV === 'test';
 const IS_DEV_OR_TEST = IS_DEV || IS_TEST;
 
 export {
