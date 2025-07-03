@@ -73,5 +73,10 @@ test("Create account", async ({ page }) => {
   await page.getByRole("button", { name: "PARIS 18" }).click();
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.getByRole("textbox", { name: "Nom usuel *" }).fill("CCG-02-001");
+  await page.getByText("Nom usuel *SIRETSi vous n'en").click();
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("textbox", { name: "Numéro d'identification du" }).click();
+  await page.getByRole("textbox", { name: "Numéro d'identification du" }).fill("CCG-02-001");
+  await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.getByText("Le CCG identifié dans").click();
 });
