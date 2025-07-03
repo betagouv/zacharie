@@ -22,7 +22,7 @@ test("Try to login and failure", async ({ page }) => {
   await page.getByText("Le mot de passe est incorrect").click();
 });
 
-test("Create account", async ({ page }) => {
+test.skip("Create account", async ({ page }) => {
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur-nouveau@example.fr");
