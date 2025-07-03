@@ -1,0 +1,67 @@
+name: Tests - Playrwright and Jest
+on:
+  push:
+    branches: [main]
+jobs:
+  test:
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore:') }}
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # cache: yarn
+          # cache-dependency-path: "**/yarn.lock"
+      - name: Install dependencies
+        run: npm i
+
+      - name: Install dashboard dependencies
+        run: npm i --cwd ./app-local-first-react-router
+
+      # - name: Run Dashboard Jest tests
+      #   run: npm run test --cwd ./dashboard
+
+      - name: Install api dependencies
+        run: npm i --cwd ./api-express
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Init DB
+        run: npm run test:init-db --cwd ./e2e
+        env:
+          PGDATABASE: zacharietest
+          PGBASEURL: postgres://postgres:postgres@localhost:5432
+
+      - name: Run Playwright tests
+        run: npx playwright test
+        env:
+          PGBASEURL: postgres://postgres:postgres@localhost:5432
+          PGHOST: localhost
+          PGDATABASE: zacharietest
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: postgres
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
