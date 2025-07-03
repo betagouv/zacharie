@@ -1,4 +1,4 @@
-name: Tests - Playrwright and Jest
+name: Tests - Playwright
 on:
   push:
     branches: [main]
@@ -28,29 +28,38 @@ jobs:
           node-version: 20
           # cache: yarn
           # cache-dependency-path: "**/yarn.lock"
-      - name: Install dependencies
-        run: npm i
 
-      - name: Install dashboard dependencies
-        run: npm i --cwd ./app-local-first-react-router
+      - name: Install app dependencies
+        run: |
+          cd app-local-first-react-router
+          npm i
 
       # - name: Run Dashboard Jest tests
       #   run: npm run test --cwd ./dashboard
 
       - name: Install api dependencies
-        run: npm i --cwd ./api-express
+        run: |
+          cd api-express
+          npm i
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: |
+          cd e2e
+          npm i
+          npx playwright install --with-deps
 
       - name: Init DB
-        run: npm run test:init-db --cwd ./e2e
+        run: |
+          cd e2e
+          npm run test:init-db
         env:
           PGDATABASE: zacharietest
           PGBASEURL: postgres://postgres:postgres@localhost:5432
 
       - name: Run Playwright tests
-        run: npx playwright test
+        run: |
+          cd e2e
+          npx playwright test
         env:
           PGBASEURL: postgres://postgres:postgres@localhost:5432
           PGHOST: localhost
