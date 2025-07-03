@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test:start-app-for-record": "VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 PORT=3290 yarn --cwd ../app-local-first-react-router dev-test",
-    "test:start-api-for-record": "PORT=3291 NODE_ENV=test PGDATABASE=zacharietest yarn --cwd ../api-express dev-test",
+    "test:start-app-for-record": "VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 PORT=3290 npm run dev-test --prefix ../app-local-first-react-router",
+    "test:start-api-for-record": "PORT=3291 NODE_ENV=test PGDATABASE=zacharietest npm run dev-test --prefix ../api-express",
     "test:init-db": "PGDATABASE=zacharietest node ./scripts/init-db.js"
   },
   "keywords": [],

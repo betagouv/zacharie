@@ -299,6 +299,8 @@ Christine
     ],
   });
   console.log('Entity and user relations created for test', entityAndUserRelations.count);
+
+  console.log('Database populated successfully');
 }
 
 populateDb();

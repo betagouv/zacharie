@@ -118,7 +118,8 @@ const config: PlaywrightTestConfig = {
 
   webServer: [
     {
-      command: "yarn --cwd ../app-local-first-react-router dev-test",
+      command:
+        "VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 PORT=3290 npm run dev-test --prefix ../app-local-first-react-router",
       port: 3290,
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
@@ -131,7 +132,7 @@ const config: PlaywrightTestConfig = {
       },
     },
     {
-      command: "yarn --cwd ../api-express dev-test",
+      command: "PORT=3291 NODE_ENV=test PGDATABASE=zacharietest npm run dev-test --prefix ../api-express",
       port: 3291,
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
