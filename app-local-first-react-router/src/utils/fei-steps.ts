@@ -16,6 +16,10 @@ export function useFeiSteps(fei: FeiDone) {
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
   const user = useUser((state) => state.user);
   const entities = useZustandStore((state) => state.entities);
+  const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
+  const entitiesIdsWorkingDirectlyAndIndirectlyFor = useZustandStore(
+    (state) => state.entitiesIdsWorkingDirectlyAndIndirectlyFor,
+  );
 
   const steps = useMemo(() => {
     const steps: Array<unknown> = [
@@ -59,8 +63,6 @@ export function useFeiSteps(fei: FeiDone) {
     entities,
   ]);
 
-  console.log(steps);
-
   const currentStep: number = useMemo(() => {
     // find role equal to fei.fei_current_owner_role but in reverse order
     if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) return 1;
@@ -80,13 +82,16 @@ export function useFeiSteps(fei: FeiDone) {
     }
     if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) return 'Examen initial';
     if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
-      return 'Validation par le premier détenteur';
+      if (!fei.fei_next_owner_role) {
+        return 'Validation par le premier détenteur';
+      } else {
+        return 'Fiche envoyée, pas encore traitée';
+      }
     }
     if (fei.svi_assigned_at) return 'Inspection par le SVI';
 
     const avantDernierStep = steps[steps.length - 2] as IntermediaireStep; // c'est toujours l'étape ETG, qu'il soit sélectionné ou pas encore
     if (avantDernierStep.id) {
-      console.log('ETG sélectionné', avantDernierStep);
       // l'ETG a été sélectionné, mais a-t-il commencé à traiter la fiche ?
       if (fei.fei_next_owner_role === UserRoles.ETG) {
         return 'Fiche envoyée, pas encore traitée';
@@ -97,7 +102,6 @@ export function useFeiSteps(fei: FeiDone) {
       // pas encore d'ETG, on regarde l'étape précédente
       // pour simplifier :
       const avantAvantDernierStep = steps[steps.length - 3] as IntermediaireStep;
-      console.log('avantAvantDernierStep', avantAvantDernierStep);
       if (avantAvantDernierStep.role === UserRoles.COLLECTEUR_PRO) {
         if (avantAvantDernierStep.nextRole === EntityTypes.ETG) {
           return 'Transport vers un établissement de traitement';
@@ -134,7 +138,6 @@ export function useFeiSteps(fei: FeiDone) {
       case 'Fiche envoyée, pas encore traitée':
       case 'Transport vers un établissement de traitement':
       case 'Transport':
-        // return "Réception par l'établissement de traitement";
         return 'Transport vers / réception par un établissement de traitement';
       case 'Réception par un établissement de traitement':
         // return '';
@@ -170,28 +173,53 @@ export function useFeiSteps(fei: FeiDone) {
           return 'En cours';
       }
     }
-    if (user?.roles.includes(UserRoles.COLLECTEUR_PRO)) {
-      switch (currentStepLabel) {
-        case 'Fiche envoyée, pas encore traitée':
-        case 'Transport':
-          return 'À compléter';
-        case 'Clôturée':
-          return 'Clôturée';
-        default:
-          return 'En cours';
-      }
-    }
-    // now we are in the ETG or COLLECTEUR_PRO role
+
+    // now we are in the COLLECTEUR_PRO or ETG
     switch (currentStepLabel) {
       case 'Fiche envoyée, pas encore traitée':
       case 'Réception par un établissement de traitement':
-        return 'À compléter';
+      case 'Transport':
+      case 'Transport vers un établissement de traitement':
+      case 'Transport vers un autre établissement de traitement': {
+        if (user?.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+          if (currentStepLabel === 'Réception par un établissement de traitement') {
+            return 'En cours';
+          }
+        }
+        if (fei.fei_current_owner_entity_id) {
+          if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id)) {
+            return 'À compléter';
+          }
+          if (entitiesIdsWorkingDirectlyAndIndirectlyFor.includes(fei.fei_current_owner_entity_id)) {
+            return 'À compléter';
+          }
+        }
+        if (fei.fei_next_owner_entity_id) {
+          if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)) {
+            return 'À compléter';
+          }
+          if (entitiesIdsWorkingDirectlyAndIndirectlyFor.includes(fei.fei_next_owner_entity_id)) {
+            return 'À compléter';
+          }
+        }
+        return 'En cours';
+      }
       case 'Clôturée':
         return 'Clôturée';
+      case 'Examen initial':
+      case 'Validation par le premier détenteur':
+      case 'Inspection par le SVI':
       default:
         return 'En cours';
     }
-  }, [currentStepLabel, user?.roles]);
+  }, [
+    currentStepLabel,
+    user?.roles,
+    fei.fei_current_owner_entity_id,
+    fei.fei_next_owner_entity_id,
+    entitiesIdsWorkingDirectlyFor,
+    entitiesIdsWorkingDirectlyAndIndirectlyFor,
+  ]);
 
   return {
     currentStep,
