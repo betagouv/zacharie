@@ -11,7 +11,7 @@ test("Try to login and success", async ({ page }) => {
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
 });
 
-test("Try to login and failure", async ({ page }) => {
+test("Try to login and password failure", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr", "secret-mauvais-secretasdfdsaf");
   await expect(page.getByText("Le mot de passe est incorrect")).toBeVisible();
 });
@@ -19,9 +19,7 @@ test("Try to login and failure", async ({ page }) => {
 test("Try to create account with existing email", async ({ page }) => {
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).click();
-  await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur@example.fr");
-  await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).click();
   await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Créer mon compte" }).click();
   await page.getByText("Un compte existe déjà avec").click();
@@ -33,6 +31,14 @@ test("Try to create account with existing email", async ({ page }) => {
 test.describe("Account creation", () => {
   test.beforeAll(async () => {
     await resetDb();
+  });
+
+  test("Try to login and email failure", async ({ page }) => {
+    await connectWith(page, "examinateur-pas-encore-existe@example.fr", "secret-mauvais-secret");
+    await page.getByText("L'email est incorrect, ou vous n'avez pas encore de compte").click();
+    await page.getByRole("link", { name: "Cliquez ici pour en créer un" }).click();
+    await page.getByRole("button", { name: "Créer mon compte" }).click();
+    await expect(page.getByRole("heading", { name: "Renseignez vos rôles" })).toBeVisible();
   });
 
   test("Create account", async ({ page }) => {
