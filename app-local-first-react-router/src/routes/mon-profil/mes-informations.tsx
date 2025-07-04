@@ -32,9 +32,10 @@ export default function MesInformations() {
     useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const userAssociationsChasses = user.roles.includes(UserRoles.PREMIER_DETENTEUR)
-    ? Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR])
-    : [];
+  const userAssociationsChasses =
+    user.roles.includes(UserRoles.PREMIER_DETENTEUR) || user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)
+      ? Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR])
+      : [];
   const userCollecteursPro = user.roles.includes(UserRoles.COLLECTEUR_PRO)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO])
     : [];
@@ -314,9 +315,7 @@ export default function MesInformations() {
                         onClick: () => setAssoExpanded(true),
                       }}
                     >
-                      {!userAssociationsChasses.length
-                        ? 'Enregistrer mon entité'
-                        : 'Enregistrer une nouvelle entité'}
+                      Enregistrer mon entité
                     </Button>
                   </>
                 ) : (
