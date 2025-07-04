@@ -227,39 +227,35 @@ export default function TableauDeBordIndex() {
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
             <Actions />
             {!isOnlySvi && (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {feisAssigned
-                  .filter((fei) => fei !== null)
-                  .map((fei) => {
-                    return (
-                      <CardFiche
-                        key={fei.numero}
-                        fei={fei}
-                        filter={filter}
-                        onPrintSelect={handleCheckboxClick}
-                        isPrintSelected={selectedFeis.includes(fei.numero)}
-                      />
-                    );
-                  })}
-                {feisOngoing
-                  .filter((fei) => fei !== null)
-                  .map((fei) => {
-                    return (
-                      <CardFiche
-                        key={fei.numero}
-                        fei={fei}
-                        filter={filter}
-                        onPrintSelect={handleCheckboxClick}
-                        isPrintSelected={selectedFeis.includes(fei.numero)}
-                      />
-                    );
-                  })}
+              <FeisWrapper>
+                {feisAssigned.map((fei) => {
+                  if (!fei) return null;
+                  return (
+                    <CardFiche
+                      key={fei.numero}
+                      fei={fei}
+                      filter={filter}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                    />
+                  );
+                })}
+                {feisOngoing.map((fei) => {
+                  if (!fei) return null;
+                  return (
+                    <CardFiche
+                      key={fei.numero}
+                      fei={fei}
+                      filter={filter}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                    />
+                  );
+                })}
 
                 {feisDoneNumeros.map((feiNumero) => {
                   const fei = feisDone[feiNumero]!;
-                  if (!fei) {
-                    return null;
-                  }
+                  if (!fei) return null;
                   return (
                     <CardFiche
                       key={fei.numero}
@@ -271,10 +267,10 @@ export default function TableauDeBordIndex() {
                     />
                   );
                 })}
-              </div>
+              </FeisWrapper>
             )}
             {isOnlySvi && (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <FeisWrapper>
                 {feiActivesForSvi
                   .filter((fei) => fei !== null)
                   .map((fei) => {
@@ -303,7 +299,7 @@ export default function TableauDeBordIndex() {
                       />
                     );
                   })}
-              </div>
+              </FeisWrapper>
             )}
             <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
               <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
@@ -315,4 +311,45 @@ export default function TableauDeBordIndex() {
       </div>
     </>
   );
+}
+
+function FeisWrapper({ children }: { children: React.ReactNode }) {
+  const user = useMostFreshUser('tableau de bord index')!;
+  const navigate = useNavigate();
+  const nothingToShow =
+    !children || (Array.isArray(children) && children.filter((child) => child.length > 0).length === 0);
+
+  if (nothingToShow) {
+    return (
+      <div className="fr-container">
+        <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center bg-white p-4 md:p-8">
+          <div className="fr-py-0 fr-col-12 fr-col-md-6">
+            <h1 className="fr-h4">Vous n'avez pas encore de fiche</h1>
+            {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ? (
+              <>
+                <p className="fr-text--lead fr-mb-3w lg:hidden">
+                  Vous pouvez créer une nouvelle fiche en cliquant sur le bouton ci-dessous.
+                </p>
+                <Button
+                  priority="primary"
+                  // on a déjà le bouton de base en mobile, on ne veut pas le dupliquer
+                  className="hidden shrink-0 lg:block"
+                  onClick={() => {
+                    const newFei = createNewFei();
+                    navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+                  }}
+                >
+                  Nouvelle fiche
+                </Button>
+              </>
+            ) : (
+              <p className="fr-text--lead fr-mb-3w">Veuillez patienter, Zach'arrive&nbsp;!</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">{children}</div>;
 }
