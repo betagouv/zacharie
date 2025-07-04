@@ -146,6 +146,7 @@ router.post(
       nom_prenom_responsable: body[Prisma.EntityScalarFieldEnum.nom_prenom_responsable],
       ville: body[Prisma.EntityScalarFieldEnum.ville],
       siret: body[Prisma.EntityScalarFieldEnum.siret] || null,
+      zacharie_compatible: true,
     };
 
     const createdEntity = await prisma.entity.create({
@@ -193,6 +194,7 @@ router.post(
       ville: body[Prisma.EntityScalarFieldEnum.ville],
       siret: body[Prisma.EntityScalarFieldEnum.siret] || null,
       numero_ddecpp: body[Prisma.EntityScalarFieldEnum.numero_ddecpp] || null,
+      zacharie_compatible: true,
     };
 
     const createdEntity = await prisma.entity.create({

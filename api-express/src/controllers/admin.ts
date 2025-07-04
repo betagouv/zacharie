@@ -409,7 +409,6 @@ router.post(
       const entityType = body[Prisma.EntityScalarFieldEnum.type] as EntityTypes;
       const zacharie_compatible =
         entityType === EntityTypes.PREMIER_DETENTEUR ||
-        entityType === EntityTypes.COLLECTEUR_PRO ||
         entityType === EntityTypes.SVI ||
         entityType === EntityTypes.CCG;
       const createdEntity = await prisma.entity.create({
