@@ -1,26 +1,33 @@
 import { test, expect } from "@playwright/test";
 import { resetDb } from "../scripts/reset-db";
+import { connectWith } from "../scripts/connect-with";
 
 // test.beforeAll(async () => {
 //   await resetDb();
 // });
 
 test("Try to login and success", async ({ page }) => {
-  await page.goto("http://localhost:3290/");
-  await page.locator("#fr-header-header-with-quick-access-items-quick-access-item-0").click();
-  await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur@example.fr");
-  await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
-  await page.getByRole("button", { name: "Me connecter" }).click();
+  await connectWith(page, "examinateur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
 });
 
 test("Try to login and failure", async ({ page }) => {
+  await connectWith(page, "examinateur@example.fr", "secret-mauvais-secretasdfdsaf");
+  await expect(page.getByText("Le mot de passe est incorrect")).toBeVisible();
+});
+
+test("Try to create account with existing email", async ({ page }) => {
   await page.goto("http://localhost:3290/");
-  await page.locator("#fr-header-header-with-quick-access-items-quick-access-item-0").click();
+  await page.getByRole("link", { name: "Créer un compte" }).click();
+  await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur@example.fr");
-  await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-mauvais-secretasdfdsaf");
+  await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).click();
+  await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
+  await page.getByRole("button", { name: "Créer mon compte" }).click();
+  await page.getByText("Un compte existe déjà avec").click();
+  await page.getByRole("link", { name: "Cliquez ici pour vous" }).click();
   await page.getByRole("button", { name: "Me connecter" }).click();
-  await page.getByText("Le mot de passe est incorrect").click();
+  await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
 });
 
 test.describe("Account creation", () => {
