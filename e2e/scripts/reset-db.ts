@@ -44,7 +44,6 @@ export async function resetDb() {
     // Populate the test database
     const populateCommand =
       "cd ./api-express && NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest  npx tsx ./scripts/populate-test-db.ts";
-    await execAsync(populateCommand);
 
     await waitForExecOutput(populateCommand, "Database populated successfully");
     console.log("Database reset and populated successfully");

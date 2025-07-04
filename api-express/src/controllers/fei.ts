@@ -291,7 +291,8 @@ router.post(
       nextFei.svi_user_id = body.svi_user_id || null;
     }
 
-    console.log('nextFei', nextFei);
+    // console.log('nextFei', nextFei);
+    console.log('NOW', dayjs().format('HH:mm:ss'));
 
     const savedFei = await prisma.fei.update({
       where: { numero: feiNumero },

@@ -148,7 +148,7 @@ async function sendNotificationToUser({
     if (IS_TEST) {
       console.log(
         'SENDING EMAIL NOTIFICATION IN DEV',
-        JSON.stringify({ user, body, title, email, notificationLogAction, img }, null, 2),
+        JSON.stringify({ user: user.email, body, title, email, notificationLogAction, img }, null, 2),
       );
       await prisma.notificationLog.create({
         data: {

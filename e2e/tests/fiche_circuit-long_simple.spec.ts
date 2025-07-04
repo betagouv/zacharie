@@ -94,21 +94,21 @@ test("Connexion avec compte examinateur initial", async ({ page }) => {
   // await page.getByRole("button", { name: "Déconnecter examinateur@example.fr" }).click();
 });
 
-// test("Connexion avec compte premier détenteur", async ({ page }) => {
-//   await connectWith(page, "premier-detenteur@example.fr");
-//   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
-//   await expect(page.getByRole("link", { name: feiId })).toBeVisible();
-//   await expect(page.getByRole("link", { name: feiId })).toContainText("À compléter");
-//   await expect(page.getByRole("link", { name: feiId })).toContainText("chassenard");
-//   await expect(page.getByRole("link", { name: feiId })).toContainText("4 daims");
-//   await expect(page.getByRole("link", { name: feiId })).toContainText("À renseigner");
-//   await page.getByRole("link", { name: feiId }).click();
-//   await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
-//   await expect(page.getByText("En tant que Premier Détenteur")).toBeVisible();
-//   await expect(page.getByRole("button", { name: "Je prends en charge cette" })).toBeVisible();
-//   await expect(page.getByRole("heading", { name: "Examen initial Étape 1 sur" })).toBeVisible();
-//   await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
-// });
+test("Connexion avec compte premier détenteur", async ({ page }) => {
+  await connectWith(page, "premier-detenteur@example.fr");
+  await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+  await expect(page.getByRole("link", { name: feiId })).toBeVisible();
+  await expect(page.getByRole("link", { name: feiId })).toContainText("À compléter");
+  await expect(page.getByRole("link", { name: feiId })).toContainText("chassenard");
+  await expect(page.getByRole("link", { name: feiId })).toContainText("4 daims");
+  await expect(page.getByRole("link", { name: feiId })).toContainText("À renseigner");
+  await page.getByRole("link", { name: feiId }).click();
+  await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
+  await expect(page.getByText("En tant que Premier Détenteur")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Je prends en charge cette" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Examen initial Étape 1 sur" })).toBeVisible();
+  await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
+});
 
 // test("Connexion avec compte collecteur pro", async ({ page }) => {
 //   await connectWith(page, "collecteur-pro@example.fr");
