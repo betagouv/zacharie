@@ -286,7 +286,8 @@ export default function MesInformations() {
               </form>
             </div>
           </div>
-          {user.roles.includes(UserRoles.PREMIER_DETENTEUR) && (
+          {(user.roles.includes(UserRoles.PREMIER_DETENTEUR) ||
+            user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) && (
             <ListAndSelectEntities
               formId="onboarding-etape-2-associations-data"
               setRefreshKey={setRefreshKey}
