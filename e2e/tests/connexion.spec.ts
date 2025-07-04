@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { resetDb } from "../scripts/reset-db";
-import { connectWith } from "../scripts/connect-with";
+import { connectWith } from "../utils/connect-with";
 
 // test.beforeAll(async () => {
 //   await resetDb();
