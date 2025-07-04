@@ -63,6 +63,7 @@ Christine
         prenom: 'Marie',
         nom_de_famille: 'Martin',
         addresse_ligne_1: '1 rue de la paix',
+        numero_cfei: 'CFEI-075-25-001',
         code_postal: '75000',
         ville: 'Paris',
         telephone: '0606060601',

@@ -39,6 +39,7 @@ import {
 
 export interface State {
   isOnline: boolean;
+  dataIsSynced: boolean;
   feisDoneNumeros: Array<FeiDone['numero']>;
   feisDone: Record<FeiDone['numero'], FeiDone>;
   feis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires>;
@@ -122,6 +123,7 @@ const useZustandStore = create<State & Actions>()(
     persist(
       (set, get): State & Actions => ({
         isOnline: true,
+        dataIsSynced: true,
         carcassesRegistry: [],
         lastUpdateCarcassesRegistry: 0,
         feisDoneNumeros: [],
@@ -172,6 +174,7 @@ const useZustandStore = create<State & Actions>()(
             ...state,
             feis: { ...state.feis, [newFei.numero]: newFei },
             carcassesIdsByFei: { ...state.carcassesIdsByFei, [newFei.numero]: [] },
+            dataIsSynced: false,
           }));
           syncData(`create-fei-${newFei.numero}`);
         },
@@ -197,6 +200,7 @@ const useZustandStore = create<State & Actions>()(
               ...feis,
               [fei_numero]: nextFei,
             },
+            dataIsSynced: false,
           });
           syncData(`update-fei-${fei_numero}`);
         },
@@ -219,6 +223,7 @@ const useZustandStore = create<State & Actions>()(
                 ...state.carcassesIdsByFei,
                 [newCarcasse.fei_numero]: nextCarcassesIdsByFei,
               },
+              dataIsSynced: false,
             };
           });
           get().updateFei(newCarcasse.fei_numero, { updated_at: dayjs().toDate() });
@@ -244,6 +249,7 @@ const useZustandStore = create<State & Actions>()(
               ...carcasses,
               [zacharie_carcasse_id]: nextCarcasse,
             },
+            dataIsSynced: false,
           });
           get().updateFei(nextCarcasse.fei_numero, { updated_at: dayjs().toDate() });
         },
@@ -317,6 +323,7 @@ const useZustandStore = create<State & Actions>()(
                 carcassesIntermediaireIdsByIntermediaire: {
                   ...byIntermediaireId,
                 },
+                dataIsSynced: false,
               };
             });
             resolve();
@@ -367,6 +374,7 @@ const useZustandStore = create<State & Actions>()(
                 ...state.carcassesIntermediaireById,
                 ...nextCarcassesIntermediaireById,
               },
+              dataIsSynced: false,
             };
           });
         },
@@ -389,6 +397,7 @@ const useZustandStore = create<State & Actions>()(
                   is_synced: false,
                 },
               },
+              dataIsSynced: false,
             };
           });
         },
@@ -414,6 +423,7 @@ const useZustandStore = create<State & Actions>()(
           useZustandStore.setState((state) => ({
             ...state,
             logs: [...state.logs, log],
+            dataIsSynced: false,
           }));
           return log;
         },
@@ -689,5 +699,6 @@ export async function syncData(calledFrom: string) {
     await syncLogs();
     if (debug) console.log('synced logs finito');
     if (debug) console.log('synced data finito');
+    useZustandStore.setState({ dataIsSynced: true });
   });
 }

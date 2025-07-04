@@ -36,7 +36,6 @@ const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 function App() {
   return (
     <>
-      <OfflineMode />
       <SentryRoutes>
         <Route index element={<LandingPage />} />
         <Route
@@ -229,6 +228,7 @@ function App() {
           </Route>
         </Route>
       </SentryRoutes>
+      <OfflineMode />
     </>
   );
 }

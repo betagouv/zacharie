@@ -4,12 +4,15 @@ import useNavigationMenu from '@app/utils/get-navigation-menu';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import Chargement from '@app/components/Chargement';
 import { useEffect } from 'react';
+import useZustandStore from '@app/zustand/store';
+import { useIsOnline } from '@app/utils-offline/use-is-offline';
 
 export default function TableauDeBordLayout() {
   const location = useLocation();
   const user = useMostFreshUser('TableauDeBordLayout');
   const navigation = useNavigationMenu();
-
+  const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
+  const isOnline = useIsOnline();
   useEffect(() => {
     refreshUser('TableauDeBordLayout');
   }, []);
@@ -22,15 +25,22 @@ export default function TableauDeBordLayout() {
   }
 
   return (
-    <RootDisplay navigation={navigation} hideMinistereName id="tableau-de-bord-layout-activated">
-      <main
-        role="main"
-        id="content"
-        className="fr-background-alt--blue-france relative min-h-full overflow-auto"
-      >
-        <Outlet />
-      </main>
-    </RootDisplay>
+    <>
+      <RootDisplay navigation={navigation} hideMinistereName id="tableau-de-bord-layout-activated">
+        <main
+          role="main"
+          id="content"
+          className="fr-background-alt--blue-france relative min-h-full overflow-auto"
+        >
+          <Outlet />
+        </main>
+      </RootDisplay>
+      {!dataIsSynced && isOnline && import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' && (
+        <p className="fixed bottom-0 left-0 right-0 z-50 bg-white px-4 py-1 text-sm text-action-high-blue-france text-opacity-25">
+          Synchronisation en cours
+        </p>
+      )}
+    </>
   );
 }
 
