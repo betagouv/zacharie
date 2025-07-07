@@ -14,7 +14,7 @@ test.use({
 
 test.describe("Fiches examinateur initial", () => {
   test.beforeAll(async () => {
-    await resetDb(false);
+    await resetDb("EXAMINATEUR_INITIAL");
   });
 
   test("Création d'une fiche", async ({ page }) => {
@@ -98,7 +98,7 @@ test.describe("Fiches examinateur initial", () => {
 
 test.describe("Fiches premier détenteur", () => {
   test.beforeEach(async () => {
-    await resetDb(true);
+    await resetDb("PREMIER_DETENTEUR");
   });
 
   test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page }) => {

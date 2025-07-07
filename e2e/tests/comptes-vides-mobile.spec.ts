@@ -2,9 +2,9 @@ import { test, expect } from "@playwright/test";
 import { resetDb } from "../scripts/reset-db";
 import { connectWith } from "../utils/connect-with";
 
-// test.beforeAll(async () => {
-//   await resetDb();
-// });
+test.beforeAll(async () => {
+  await resetDb();
+});
 
 test.use({
   viewport: { width: 350, height: 667 },

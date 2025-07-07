@@ -13,7 +13,7 @@ import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
 
-export async function populateDb(withFei = false) {
+export async function populateDb(role?: UserRoles) {
   console.log('Populate db', process.env.NODE_ENV);
   if (process.env.NODE_ENV !== 'test') {
     console.log('Not in test environment');
@@ -25,9 +25,8 @@ export async function populateDb(withFei = false) {
   await prisma.entity.deleteMany();
   await prisma.entityAndUserRelations.deleteMany();
   await prisma.userRelations.deleteMany();
-  if (withFei) {
-    await prisma.fei.deleteMany();
-  }
+  await prisma.fei.deleteMany();
+  await prisma.carcasse.deleteMany();
 
   /* 
   Martin
@@ -193,6 +192,7 @@ Christine
         ville: 'Paris',
       },
       {
+        id: '4f67364a-8373-49f9-a4f6-31a0d88ba27b',
         raison_sociale: 'CCG Chasseurs',
         nom_d_usage: 'CCG Chasseurs',
         numero_ddecpp: 'CCG-01',
@@ -233,6 +233,7 @@ Christine
         ville: 'Paris',
       },
       {
+        id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
         raison_sociale: 'ETG 1',
         nom_d_usage: 'ETG 1',
         siret: '12345678901234',
@@ -313,22 +314,48 @@ Christine
   });
   console.log('Entity and user relations created for test', entityAndUserRelations.count);
 
-  if (withFei) {
-    await prisma.fei.createMany({
-      data: [feiValidatedByExaminateur],
-    });
-    console.log('Fei created for test', feiValidatedByExaminateur.numero);
-    await prisma.carcasse.createMany({
-      data: carcasses,
-    });
-    console.log('Carcasses created for test', carcasses.length);
+  if (role) {
+    if (role === UserRoles.EXAMINATEUR_INITIAL) {
+      await prisma.fei.createMany({
+        data: [],
+      });
+      console.log('Fei created for test for examinateur initial', feiValidatedByExaminateur.numero);
+    }
+    if (role === UserRoles.PREMIER_DETENTEUR) {
+      await prisma.fei.createMany({
+        data: [feiValidatedByExaminateur],
+      });
+      console.log('Fei created for test for premier detenteur', feiValidatedByPremierDetenteur.numero);
+      const carcasses = await prisma.carcasse.createMany({
+        data: [
+          ...getCarcasses(feiValidatedByExaminateur.numero),
+          // ...getCarcasses(feiValidatedByPremierDetenteur.numero),
+        ],
+      });
+      console.log('Carcasses created for test for examinateur initial', carcasses.count);
+    }
+    if (role === UserRoles.ETG) {
+      await prisma.fei.createMany({
+        data: [feiValidatedByPremierDetenteur],
+      });
+      console.log('Fei created for test for etg', feiValidatedByExaminateur.numero);
+      const carcasses = await prisma.carcasse.createMany({
+        data: [
+          // ...getCarcasses(feiValidatedByExaminateur.numero),
+          ...getCarcasses(feiValidatedByPremierDetenteur.numero),
+        ],
+      });
+      console.log('Carcasses created for test for etg', carcasses.count);
+    }
   }
 
   console.log('Database populated successfully');
 }
 
-if (process.argv.includes('--withFei')) {
-  populateDb(true);
+const withRole = process.argv.find((arg) => arg.includes('--role'));
+if (withRole) {
+  console.log('Populate db with role', withRole?.split('=')[1]);
+  populateDb(withRole?.split('=')[1] as UserRoles);
 } else {
   populateDb();
 }
@@ -352,47 +379,69 @@ const feiValidatedByExaminateur: Prisma.FeiUncheckedCreateInput = {
   fei_next_owner_user_name_cache: 'Pierre Petit',
 };
 
-const carcasses: Prisma.CarcasseUncheckedCreateInput[] = [
-  {
-    fei_numero: 'ZACH-20250707-QZ6E0-155242',
-    numero_bracelet: 'MM-001-001',
-    espece: 'Daim',
-    examinateur_signed_at: '2025-07-07T14:24:19.272Z',
-    examinateur_anomalies_abats: ['Abcès ou nodules Unique - Appareil respiratoire (sinus/trachée/poumon)'],
-    nombre_d_animaux: 1,
-    type: CarcasseType.GROS_GIBIER,
-    zacharie_carcasse_id: 'ZACH-20250707-QZ6E0-155242_MM-001-001',
-    svi_carcasse_status: CarcasseStatus.SANS_DECISION,
-  },
-  {
-    fei_numero: 'ZACH-20250707-QZ6E0-155242',
-    numero_bracelet: 'MM-001-002',
-    espece: 'Daim',
-    examinateur_anomalies_carcasse: ['Unique - Abcès ou nodules'],
-    examinateur_signed_at: '2025-07-07T14:24:20.272Z',
-    nombre_d_animaux: 1,
-    type: CarcasseType.GROS_GIBIER,
-    zacharie_carcasse_id: 'ZACH-20250707-QZ6E0-155242_MM-001-002',
-    svi_carcasse_status: CarcasseStatus.SANS_DECISION,
-  },
-  {
-    fei_numero: 'ZACH-20250707-QZ6E0-155242',
-    numero_bracelet: 'MM-001-003',
-    espece: 'Pigeons',
-    examinateur_signed_at: '2025-07-07T14:24:21.272Z',
-    nombre_d_animaux: 10,
-    type: CarcasseType.PETIT_GIBIER,
-    zacharie_carcasse_id: 'ZACH-20250707-QZ6E0-155242_MM-001-003',
-    svi_carcasse_status: CarcasseStatus.SANS_DECISION,
-  },
-  {
-    fei_numero: 'ZACH-20250707-QZ6E0-155242',
-    numero_bracelet: 'MM-001-004',
-    espece: 'Daim',
-    examinateur_signed_at: '2025-07-07T14:24:22.256Z',
-    nombre_d_animaux: 1,
-    type: CarcasseType.GROS_GIBIER,
-    zacharie_carcasse_id: 'ZACH-20250707-QZ6E0-155242_MM-001-004',
-    svi_carcasse_status: CarcasseStatus.SANS_DECISION,
-  },
-];
+const feiValidatedByPremierDetenteur: Prisma.FeiUncheckedCreateInput = {
+  ...feiValidatedByExaminateur,
+  numero: 'ZACH-20250707-QZ6E0-165242',
+  fei_current_owner_user_id: '0Y545',
+  fei_current_owner_role: 'PREMIER_DETENTEUR',
+  fei_next_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  fei_next_owner_role: 'ETG',
+  fei_prev_owner_user_id: 'QZ6E0',
+  fei_prev_owner_entity_id: null,
+  fei_prev_owner_role: 'EXAMINATEUR_INITIAL',
+  premier_detenteur_user_id: '0Y545',
+  premier_detenteur_depot_entity_id: '4f67364a-8373-49f9-a4f6-31a0d88ba27b',
+  fei_current_owner_user_name_cache: 'Pierre Petit',
+  premier_detenteur_prochain_detenteur_id_cache: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  premier_detenteur_prochain_detenteur_type_cache: 'ETG',
+  premier_detenteur_depot_type: 'CCG',
+  premier_detenteur_transport_type: 'COLLECTEUR_PRO',
+  premier_detenteur_depot_ccg_at: '2025-07-07T15:47:00.000Z',
+};
+
+function getCarcasses(feiNumero: string): Array<Prisma.CarcasseUncheckedCreateInput> {
+  return [
+    {
+      fei_numero: feiNumero,
+      numero_bracelet: 'MM-001-001',
+      espece: 'Daim',
+      examinateur_signed_at: '2025-07-07T14:24:19.272Z',
+      examinateur_anomalies_abats: ['Abcès ou nodules Unique - Appareil respiratoire (sinus/trachée/poumon)'],
+      nombre_d_animaux: 1,
+      type: CarcasseType.GROS_GIBIER,
+      zacharie_carcasse_id: `${feiNumero}_MM-001-001`,
+      svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+    },
+    {
+      fei_numero: feiNumero,
+      numero_bracelet: 'MM-001-002',
+      espece: 'Daim',
+      examinateur_anomalies_carcasse: ['Unique - Abcès ou nodules'],
+      examinateur_signed_at: '2025-07-07T14:24:20.272Z',
+      nombre_d_animaux: 1,
+      type: CarcasseType.GROS_GIBIER,
+      zacharie_carcasse_id: `${feiNumero}_MM-001-002`,
+      svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+    },
+    {
+      fei_numero: feiNumero,
+      numero_bracelet: 'MM-001-003',
+      espece: 'Pigeons',
+      examinateur_signed_at: '2025-07-07T14:24:21.272Z',
+      nombre_d_animaux: 10,
+      type: CarcasseType.PETIT_GIBIER,
+      zacharie_carcasse_id: `${feiNumero}_MM-001-003`,
+      svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+    },
+    {
+      fei_numero: feiNumero,
+      numero_bracelet: 'MM-001-004',
+      espece: 'Daim',
+      examinateur_signed_at: '2025-07-07T14:24:22.256Z',
+      nombre_d_animaux: 1,
+      type: CarcasseType.GROS_GIBIER,
+      zacharie_carcasse_id: `${feiNumero}_MM-001-004`,
+      svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+    },
+  ];
+}
