@@ -53,15 +53,7 @@ export function useFeiSteps(fei: FeiDone) {
       steps.push(fei.svi_assigned_at);
     }
     return steps;
-  }, [
-    fei.examinateur_initial_user_id,
-    fei.premier_detenteur_entity_id,
-    fei.premier_detenteur_user_id,
-    fei.intermediaire_closed_at,
-    fei.svi_assigned_at,
-    intermediaires,
-    entities,
-  ]);
+  }, [fei, intermediaires, entities]);
 
   const currentStep: number = useMemo(() => {
     // find role equal to fei.fei_current_owner_role but in reverse order
@@ -74,10 +66,13 @@ export function useFeiSteps(fei: FeiDone) {
       return steps.length - 1;
     }
     return steps.length - 2;
-  }, [fei.fei_current_owner_role, fei.svi_assigned_at, fei.intermediaire_closed_at, steps]);
+  }, [fei, steps]);
 
   const currentStepLabel: FeiStep = useMemo(() => {
     if (fei.automatic_closed_at || fei.svi_closed_at || fei.intermediaire_closed_at) {
+      console.log('fei.automatic_closed_at', fei.automatic_closed_at);
+      console.log('fei.svi_closed_at', fei.svi_closed_at);
+      console.log('fei.intermediaire_closed_at', fei.intermediaire_closed_at);
       return 'Clôturée';
     }
     if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) return 'Examen initial';
@@ -117,17 +112,10 @@ export function useFeiSteps(fei: FeiDone) {
         }
         return 'Transport vers un autre établissement de traitement';
       }
+      console.log('avantAvantDernierStep', avantAvantDernierStep);
       return 'Clôturée';
     }
-  }, [
-    fei.automatic_closed_at,
-    fei.svi_closed_at,
-    fei.intermediaire_closed_at,
-    fei.fei_current_owner_role,
-    fei.svi_assigned_at,
-    fei.fei_next_owner_role,
-    steps,
-  ]);
+  }, [fei, steps]);
 
   const nextStepLabel: FeiStep = useMemo(() => {
     switch (currentStepLabel) {
@@ -215,8 +203,7 @@ export function useFeiSteps(fei: FeiDone) {
   }, [
     currentStepLabel,
     user?.roles,
-    fei.fei_current_owner_entity_id,
-    fei.fei_next_owner_entity_id,
+    fei,
     entitiesIdsWorkingDirectlyFor,
     entitiesIdsWorkingDirectlyAndIndirectlyFor,
   ]);

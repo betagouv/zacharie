@@ -35,14 +35,16 @@ function waitForExecOutput(command: string, expectedOutput: string, timeout: num
   });
 }
 
-export async function resetDb(role: "EXAMINATEUR_INITIAL" | "PREMIER_DETENTEUR" = "EXAMINATEUR_INITIAL") {
+export async function resetDb(role?: "EXAMINATEUR_INITIAL" | "PREMIER_DETENTEUR" | "ETG") {
   try {
     const command =
       "cd ./api-express && NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest npx prisma migrate reset --force --skip-generate";
     await execAsync(command);
 
     // Populate the test database
-    const populateCommand = `cd ./api-express && NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest  npx tsx ./scripts/populate-test-db.ts --role=${role}`;
+    const populateCommand = `cd ./api-express && NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest  npx tsx ./scripts/populate-test-db.ts ${
+      role ? `--role=${role}` : ""
+    }`;
 
     await waitForExecOutput(populateCommand, "Database populated successfully");
     console.log("Database reset and populated successfully");

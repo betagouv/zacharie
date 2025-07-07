@@ -5,8 +5,8 @@ import { useFeiSteps } from '@app/utils/fei-steps';
 
 export default function FeiStepper() {
   const params = useParams();
-  const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
 
   const { currentStep, currentStepLabel, nextStepLabel, steps } = useFeiSteps(fei!);
 

@@ -37,7 +37,7 @@ test("Connexion avec compte collecteur pro", async ({ page }) => {
 });
 
 test("Connexion avec compte établissement de traitement", async ({ page }) => {
-  await connectWith(page, "etg@example.fr");
+  await connectWith(page, "etg-1@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
   await expect(page.getByRole("heading", { name: "Vous n'avez pas encore de" })).toBeVisible();
   await expect(page.locator("#content").getByRole("button", { name: "Nouvelle fiche" })).not.toBeVisible();

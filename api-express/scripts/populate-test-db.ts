@@ -124,7 +124,7 @@ Christine
       },
       {
         id: await createUserId(),
-        email: 'etg@example.fr',
+        email: 'etg-1@example.fr',
         roles: [UserRoles.ETG],
         activated: true,
         activated_at: dayjs().toDate(),
@@ -138,7 +138,21 @@ Christine
       },
       {
         id: await createUserId(),
-        email: 'collecteur-pro-etg@example.fr',
+        email: 'etg-2@example.fr',
+        roles: [UserRoles.ETG],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'Matthias',
+        nom_de_famille: 'Michu',
+        addresse_ligne_1: '5 rue de la paix',
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060606',
+        onboarded_at: dayjs().toDate(),
+      },
+      {
+        id: await createUserId(),
+        email: 'collecteur-pro-1-etg-1@example.fr',
         roles: [UserRoles.COLLECTEUR_PRO, UserRoles.ETG],
         activated: true,
         activated_at: dayjs().toDate(),
@@ -182,6 +196,7 @@ Christine
   await prisma.entity.createMany({
     data: [
       {
+        id: '5b916331-632e-4c29-be2e-12a834e92688',
         raison_sociale: 'Association de chasseurs',
         nom_d_usage: 'Association de chasseurs',
         siret: '12345678901234',
@@ -203,6 +218,7 @@ Christine
         ville: 'Paris',
       },
       {
+        id: '6c09e89c-5da7-4864-b3b4-11cc34468745',
         raison_sociale: 'CCG Transporteurs',
         nom_d_usage: 'CCG Transporteurs',
         numero_ddecpp: 'CCG-02',
@@ -213,6 +229,7 @@ Christine
         ville: 'Paris',
       },
       {
+        id: 'a447bab1-8796-48a4-b955-3a5466116bca',
         raison_sociale: 'Collecteur Pro 1',
         nom_d_usage: 'Collecteur Pro 1',
         siret: '12345678901234',
@@ -223,6 +240,7 @@ Christine
         ville: 'Paris',
       },
       {
+        id: '94684af1-ac01-46eb-8ff4-18dcb7ff560c',
         raison_sociale: 'Collecteur Pro 2',
         nom_d_usage: 'Collecteur Pro 2',
         siret: '12345678901234',
@@ -245,6 +263,7 @@ Christine
         ville: 'Paris',
       },
       {
+        id: '8cb0e705-6bbe-43b1-af4a-2daa90db92e0',
         raison_sociale: 'ETG 2',
         nom_d_usage: 'ETG 2',
         siret: '12345678901234',
@@ -256,6 +275,7 @@ Christine
         ville: 'Paris',
       },
       {
+        id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
         raison_sociale: 'SVI 1',
         nom_d_usage: 'SVI 1',
         siret: '12345678901234',
@@ -266,6 +286,7 @@ Christine
         ville: 'Paris',
       },
       {
+        id: '04881d2b-9b27-42a1-8092-7080c67e90fe',
         raison_sociale: 'SVI 2',
         nom_d_usage: 'SVI 2',
         siret: '12345678901234',
@@ -310,9 +331,45 @@ Christine
         entity_id: entities.find((entity) => entity.raison_sociale === 'Association de chasseurs')?.id,
         relation: EntityRelationType.WORKING_FOR,
       },
+      {
+        owner_id: users.find((user) => user.email === 'etg-1@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
+        relation: EntityRelationType.WORKING_FOR,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'etg-2@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 2')?.id,
+        relation: EntityRelationType.WORKING_FOR,
+      },
     ],
   });
   console.log('Entity and user relations created for test', entityAndUserRelations.count);
+
+  const etgAndEntityRelations = await prisma.eTGAndEntityRelations.createMany({
+    data: [
+      {
+        etg_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
+        entity_type: EntityTypes.COLLECTEUR_PRO,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'Collecteur Pro 1')?.id,
+      },
+      {
+        etg_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
+        entity_type: EntityTypes.SVI,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 1')?.id,
+      },
+      {
+        etg_id: entities.find((entity) => entity.raison_sociale === 'ETG 2')?.id,
+        entity_type: EntityTypes.COLLECTEUR_PRO,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'Collecteur Pro 2')?.id,
+      },
+      {
+        etg_id: entities.find((entity) => entity.raison_sociale === 'ETG 2')?.id,
+        entity_type: EntityTypes.SVI,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 2')?.id,
+      },
+    ],
+  });
+  console.log('ETG and entity relations created for test', etgAndEntityRelations.count);
 
   if (role) {
     if (role === UserRoles.EXAMINATEUR_INITIAL) {
@@ -393,9 +450,9 @@ const feiValidatedByPremierDetenteur: Prisma.FeiUncheckedCreateInput = {
   premier_detenteur_depot_entity_id: '4f67364a-8373-49f9-a4f6-31a0d88ba27b',
   fei_current_owner_user_name_cache: 'Pierre Petit',
   premier_detenteur_prochain_detenteur_id_cache: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-  premier_detenteur_prochain_detenteur_type_cache: 'ETG',
-  premier_detenteur_depot_type: 'CCG',
-  premier_detenteur_transport_type: 'COLLECTEUR_PRO',
+  premier_detenteur_prochain_detenteur_type_cache: EntityTypes.ETG,
+  premier_detenteur_depot_type: EntityTypes.CCG,
+  premier_detenteur_transport_type: EntityTypes.COLLECTEUR_PRO,
   premier_detenteur_depot_ccg_at: '2025-07-07T15:47:00.000Z',
 };
 
