@@ -901,7 +901,8 @@ router.get(
       const allOtherEntities = await prisma.entity
         .findMany({
           where: {
-            for_testing: !user.roles.includes(UserRoles.ADMIN),
+            // for_testing: ETG test, CCG test, SVI test, etc.
+            ...(user.roles.includes(UserRoles.ADMIN) ? {} : { for_testing: false }),
             type: {
               notIn: [
                 EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI

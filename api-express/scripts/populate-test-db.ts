@@ -1,10 +1,19 @@
-import { EntityRelationType, EntityTypes, UserRelationType, UserRoles } from '@prisma/client';
+import {
+  CarcasseStatus,
+  CarcasseType,
+  EntityRelationType,
+  EntityTypes,
+  Prisma,
+  User,
+  UserRelationType,
+  UserRoles,
+} from '@prisma/client';
 import dayjs from 'dayjs';
 import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
 
-export async function populateDb() {
+export async function populateDb(withFei = false) {
   console.log('Populate db', process.env.NODE_ENV);
   if (process.env.NODE_ENV !== 'test') {
     console.log('Not in test environment');
@@ -16,6 +25,9 @@ export async function populateDb() {
   await prisma.entity.deleteMany();
   await prisma.entityAndUserRelations.deleteMany();
   await prisma.userRelations.deleteMany();
+  if (withFei) {
+    await prisma.fei.deleteMany();
+  }
 
   /* 
   Martin
@@ -55,7 +67,7 @@ Christine
   await prisma.user.createMany({
     data: [
       {
-        id: await createUserId(),
+        id: 'QZ6E0',
         email: 'examinateur@example.fr',
         roles: [UserRoles.EXAMINATEUR_INITIAL],
         activated: true,
@@ -70,7 +82,7 @@ Christine
         onboarded_at: dayjs().toDate(),
       },
       {
-        id: await createUserId(),
+        id: '0Y545',
         email: 'premier-detenteur@example.fr',
         roles: [UserRoles.PREMIER_DETENTEUR],
         activated: true,
@@ -301,7 +313,86 @@ Christine
   });
   console.log('Entity and user relations created for test', entityAndUserRelations.count);
 
+  if (withFei) {
+    await prisma.fei.createMany({
+      data: [feiValidatedByExaminateur],
+    });
+    console.log('Fei created for test', feiValidatedByExaminateur.numero);
+    await prisma.carcasse.createMany({
+      data: carcasses,
+    });
+    console.log('Carcasses created for test', carcasses.length);
+  }
+
   console.log('Database populated successfully');
 }
 
-populateDb();
+if (process.argv.includes('--withFei')) {
+  populateDb(true);
+} else {
+  populateDb();
+}
+
+const feiValidatedByExaminateur: Prisma.FeiUncheckedCreateInput = {
+  numero: 'ZACH-20250707-QZ6E0-155242',
+  date_mise_a_mort: '2025-07-07T00:00:00.000Z',
+  commune_mise_a_mort: '03510 CHASSENARD',
+  created_by_user_id: 'QZ6E0',
+  fei_current_owner_user_id: 'QZ6E0',
+  fei_current_owner_user_name_cache: 'Marie Martin',
+  fei_current_owner_role: 'EXAMINATEUR_INITIAL',
+  examinateur_initial_user_id: 'QZ6E0',
+  examinateur_initial_approbation_mise_sur_le_marche: true,
+  examinateur_initial_date_approbation_mise_sur_le_marche: '2025-07-07T13:52:52.026Z',
+  heure_mise_a_mort_premiere_carcasse: '12:12',
+  heure_evisceration_derniere_carcasse: '12:14',
+  resume_nombre_de_carcasses: '4 daims',
+  fei_next_owner_user_id: '0Y545',
+  fei_next_owner_role: 'PREMIER_DETENTEUR',
+  fei_next_owner_user_name_cache: 'Pierre Petit',
+};
+
+const carcasses: Prisma.CarcasseUncheckedCreateInput[] = [
+  {
+    fei_numero: 'ZACH-20250707-QZ6E0-155242',
+    numero_bracelet: 'MM-001-001',
+    espece: 'Daim',
+    examinateur_signed_at: '2025-07-07T14:24:19.272Z',
+    examinateur_anomalies_abats: ['Abcès ou nodules Unique - Appareil respiratoire (sinus/trachée/poumon)'],
+    nombre_d_animaux: 1,
+    type: CarcasseType.GROS_GIBIER,
+    zacharie_carcasse_id: 'ZACH-20250707-QZ6E0-155242_MM-001-001',
+    svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+  },
+  {
+    fei_numero: 'ZACH-20250707-QZ6E0-155242',
+    numero_bracelet: 'MM-001-002',
+    espece: 'Daim',
+    examinateur_anomalies_carcasse: ['Unique - Abcès ou nodules'],
+    examinateur_signed_at: '2025-07-07T14:24:20.272Z',
+    nombre_d_animaux: 1,
+    type: CarcasseType.GROS_GIBIER,
+    zacharie_carcasse_id: 'ZACH-20250707-QZ6E0-155242_MM-001-002',
+    svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+  },
+  {
+    fei_numero: 'ZACH-20250707-QZ6E0-155242',
+    numero_bracelet: 'MM-001-003',
+    espece: 'Pigeons',
+    examinateur_signed_at: '2025-07-07T14:24:21.272Z',
+    nombre_d_animaux: 10,
+    type: CarcasseType.PETIT_GIBIER,
+    zacharie_carcasse_id: 'ZACH-20250707-QZ6E0-155242_MM-001-003',
+    svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+  },
+  {
+    fei_numero: 'ZACH-20250707-QZ6E0-155242',
+    numero_bracelet: 'MM-001-004',
+    espece: 'Daim',
+    examinateur_signed_at: '2025-07-07T14:24:22.256Z',
+    nombre_d_animaux: 1,
+    type: CarcasseType.GROS_GIBIER,
+    zacharie_carcasse_id: 'ZACH-20250707-QZ6E0-155242_MM-001-004',
+    svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+  },
+];

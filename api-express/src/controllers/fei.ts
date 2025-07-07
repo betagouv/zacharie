@@ -416,9 +416,8 @@ router.post(
       return;
     }
 
-    if (body.fei_next_owner_user_id !== existingFei.fei_next_owner_user_id) {
-      const nextOwnerId = body.fei_next_owner_user_id as string;
-
+    const nextOwnerId = body.fei_next_owner_user_id as string;
+    if (nextOwnerId && nextOwnerId !== existingFei.fei_next_owner_user_id) {
       if (nextOwnerId !== user.id) {
         const nextOwner = await prisma.user.findUnique({
           where: { id: nextOwnerId },

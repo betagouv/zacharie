@@ -40,6 +40,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
     ? entities[fei.premier_detenteur_entity_id]
     : null;
 
+  console.log({ etgs });
   const showIntermediaires = useMemo(() => {
     if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
       return false;
