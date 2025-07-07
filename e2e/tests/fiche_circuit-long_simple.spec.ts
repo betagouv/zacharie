@@ -97,11 +97,11 @@ test.describe("Fiches examinateur initial", () => {
 });
 
 test.describe("Fiches premier détenteur", () => {
-  test.beforeAll(async () => {
+  test.beforeEach(async () => {
     await resetDb(true);
   });
 
-  test("Connexion avec compte premier détenteur", async ({ page }) => {
+  test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page }) => {
     const feiId = "ZACH-20250707-QZ6E0-155242";
     await connectWith(page, "premier-detenteur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
@@ -151,6 +151,60 @@ test.describe("Fiches premier détenteur", () => {
     await page.getByText("Je transporte les carcasses").click();
     await page.getByRole("button", { name: "Envoyer" }).click();
     await expect(page.getByRole("heading", { name: "Attribution effectuée" })).toBeVisible();
+    await expect(page.getByText("ETG 1 a été notifié")).toBeVisible();
+  });
+
+  test("Stockage - Je transporte les carcasses moi-même", async ({ page }) => {
+    const feiId = "ZACH-20250707-QZ6E0-155242";
+    await connectWith(page, "premier-detenteur@example.fr");
+    await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+    await page.getByRole("link", { name: feiId }).click();
+    await page.getByRole("button", { name: "Je prends en charge cette" }).click();
+    await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
+    await page.locator(".select-prochain-detenteur__input-container").click();
+    await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
+    await page.getByText("J'ai déposé mes carcasses").click();
+    await page.locator(".select-ccg__input-container").click();
+    await page.getByText("Aucun résultat").click();
+    await page.getByRole("link", { name: "Vous n'avez pas encore" }).click();
+    await page.getByRole("textbox", { name: "Si vous utilisez un CCG" }).fill("CCG-01");
+    await page.getByRole("button", { name: "Ajouter" }).click();
+    await page.getByRole("link", { name: "Continuer" }).click();
+    await page.locator(".select-prochain-detenteur__input-container").click();
+    await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
+    await page.getByText("J'ai déposé mes carcasses").click();
+    await page.getByRole("button", { name: "CCG Chasseurs" }).click();
+    await page.getByRole("button", { name: "Cliquez ici pour définir la" }).click();
+    await page.getByText("Je transporte les carcasses moi-mêmeN'oubliez pas de notifier le prochain dé").click();
+    await expect(page.getByText("Il manque la date de transport")).toBeVisible();
+    await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour et maintenant." }).click();
+    await page.getByRole("button", { name: "Envoyer" }).click();
+    await expect(page.getByText("ETG 1 a été notifié")).toBeVisible();
+  });
+
+  test("Stockage - Le transport est réalisé par un collecteur professionnel", async ({ page }) => {
+    const feiId = "ZACH-20250707-QZ6E0-155242";
+    await connectWith(page, "premier-detenteur@example.fr");
+    await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+    await page.getByRole("link", { name: feiId }).click();
+    await page.getByRole("button", { name: "Je prends en charge cette" }).click();
+    await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
+    await page.locator(".select-prochain-detenteur__input-container").click();
+    await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
+    await page.getByText("J'ai déposé mes carcasses").click();
+    await page.locator(".select-ccg__input-container").click();
+    await page.getByText("Aucun résultat").click();
+    await page.getByRole("link", { name: "Vous n'avez pas encore" }).click();
+    await page.getByRole("textbox", { name: "Si vous utilisez un CCG" }).fill("CCG-01");
+    await page.getByRole("button", { name: "Ajouter" }).click();
+    await page.getByRole("link", { name: "Continuer" }).click();
+    await page.locator(".select-prochain-detenteur__input-container").click();
+    await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
+    await page.getByText("J'ai déposé mes carcasses").click();
+    await page.getByRole("button", { name: "CCG Chasseurs" }).click();
+    await page.getByRole("button", { name: "Cliquez ici pour définir la" }).click();
+    await page.getByText("Le transport est réalisé par un collecteur professionnel").click();
+    await page.getByRole("button", { name: "Envoyer" }).click();
     await expect(page.getByText("ETG 1 a été notifié")).toBeVisible();
   });
 });

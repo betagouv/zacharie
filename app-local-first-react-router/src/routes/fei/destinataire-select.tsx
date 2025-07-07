@@ -1,4 +1,4 @@
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { useMemo, useState } from 'react';
 import {
   UserRoles,
@@ -424,7 +424,7 @@ export default function DestinataireSelect({
                   isReadOnly={!canEdit}
                   hint={
                     <>
-                      {!depotEntityId && depotType === DepotType.CCG && (
+                      {!depotEntityId && depotType === DepotType.CCG && ccgsWorkingWith.length > 0 ? (
                         <div>
                           {ccgsWorkingWith.map((entity) => {
                             return (
@@ -443,6 +443,14 @@ export default function DestinataireSelect({
                             );
                           })}
                         </div>
+                      ) : (
+                        <Link
+                          className="!bg-none text-left !no-underline"
+                          to={`/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`}
+                        >
+                          Vous n'avez pas encore renseigné votre centre de collecte ? Vous pouvez le faire en{' '}
+                          <u className="inline">cliquant ici</u>
+                        </Link>
                       )}
                     </>
                   }
@@ -468,7 +476,7 @@ export default function DestinataireSelect({
                     hintText={
                       canEdit ? (
                         <button
-                          className="inline-block"
+                          className="inline-block text-left"
                           type="button"
                           disabled={depotType !== DepotType.CCG}
                           onClick={() => {
@@ -551,7 +559,7 @@ export default function DestinataireSelect({
                   canEdit ? (
                     <>
                       <button
-                        className="mr-1 inline-block"
+                        className="await page.getByRole('button', { name: 'Cliquez ici pour définir la date du jour et maintenant.' }).click(); await page.getByRole('button', { name: 'Envoyer' }).click(); await expect(page.getByText('ETG 1 a été notifié')).toBeVisible(); mr-1 inline-block text-left"
                         type="button"
                         disabled={
                           transportType !== TransportType.PREMIER_DETENTEUR || depotType !== DepotType.CCG
