@@ -14,9 +14,13 @@ import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
 
 export async function populateDb(role?: UserRoles) {
-  console.log('Populate db', process.env.NODE_ENV);
+  console.log('Populate db', process.env.NODE_ENV, process.env.POSTGRESQL_ADDON_URI);
   if (process.env.NODE_ENV !== 'test') {
     console.log('Not in test environment');
+    return;
+  }
+  if (process.env.POSTGRESQL_ADDON_URI !== 'postgres://postgres:postgres@localhost:5432/zacharietest') {
+    console.log('Not the test db 🤪');
     return;
   }
 
