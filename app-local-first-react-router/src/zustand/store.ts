@@ -474,7 +474,7 @@ let debug = false;
 // let FOR_TEST_ONLY_askedForSync = null;
 // let FOR_TEST_ONLY_started = false;
 
-const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 20 });
+const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 25 });
 let count = 0;
 queue.on('active', () => {
   if (debug) console.log(`Working on item #${++count}.  Size: ${queue.size}  Pending: ${queue.pending}`);

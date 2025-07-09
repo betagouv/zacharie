@@ -119,8 +119,8 @@ export default function TableauDeBordIndex() {
           <Button
             priority="primary"
             className="block shrink-0 lg:hidden"
-            onClick={() => {
-              const newFei = createNewFei();
+            onClick={async () => {
+              const newFei = await createNewFei();
               navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
             }}
           >
@@ -334,8 +334,8 @@ function FeisWrapper({ children }: { children: React.ReactNode }) {
                   priority="primary"
                   // on a déjà le bouton de base en mobile, on ne veut pas le dupliquer
                   className="hidden shrink-0 lg:block"
-                  onClick={() => {
-                    const newFei = createNewFei();
+                  onClick={async () => {
+                    const newFei = await createNewFei();
                     navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
                   }}
                 >

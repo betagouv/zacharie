@@ -79,16 +79,6 @@ router.post(
       return;
     }
 
-    if (!existingFei) {
-      existingFei = await prisma.fei.create({
-        data: {
-          numero: feiNumero,
-          created_by_user_id: user.id,
-        },
-        include: feiPopulatedInclude,
-      });
-    }
-
     const nextFei: Prisma.FeiUncheckedUpdateInput = {
       is_synced: true,
     };
@@ -291,14 +281,25 @@ router.post(
       nextFei.svi_user_id = body.svi_user_id || null;
     }
 
-    // console.log('nextFei', nextFei);
-    console.log('NOW', dayjs().format('HH:mm:ss'));
+    console.log('updating fei', feiNumero, Date.now());
+    const savedFei = existingFei
+      ? await prisma.fei.update({
+          where: { numero: feiNumero },
+          data: nextFei,
+          include: feiPopulatedInclude,
+        })
+      : await prisma.fei.create({
+          data: {
+            ...(nextFei as Prisma.FeiUncheckedCreateInput),
+            numero: feiNumero,
+            created_by_user_id: user.id,
+          },
+          include: feiPopulatedInclude,
+        });
 
-    const savedFei = await prisma.fei.update({
-      where: { numero: feiNumero },
-      data: nextFei,
-      include: feiPopulatedInclude,
-    });
+    if (!existingFei) {
+      existingFei = savedFei;
+    }
 
     if (!user.at_least_one_fei_treated) {
       if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {

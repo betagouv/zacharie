@@ -1,4 +1,5 @@
 export type FeiStep =
+  | 'En cours'
   | 'Clôturée'
   | 'Examen initial'
   | 'Validation par le premier détenteur'

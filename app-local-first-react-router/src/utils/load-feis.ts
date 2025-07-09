@@ -96,6 +96,11 @@ export async function loadFeis() {
       await new Promise((resolve) => setTimeout(resolve, 100)); // to avoid block main thread
       loadFei(fei_numero);
     }
+    if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+      // if it goes too fast, we have a race condition with the sync with the backend and PG doesn'tlike it
+      // again, "cache lookup failed for type" problem
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     useZustandStore.setState({ dataIsSynced: true });
 
     console.log('chargement feis fini');

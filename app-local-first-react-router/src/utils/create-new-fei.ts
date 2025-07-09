@@ -5,9 +5,9 @@ import { UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { createHistoryInput } from './create-history-entry';
 
-export function createNewFei(): FeiWithIntermediaires {
+export async function createNewFei(): Promise<FeiWithIntermediaires> {
   const user = useUser.getState().user;
-  if (!user) {
+  if (!user?.id) {
     throw new Error('No user found');
   }
   if (!user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
@@ -80,5 +80,10 @@ export function createNewFei(): FeiWithIntermediaires {
     intermediaire_id: null,
     carcasse_intermediaire_id: null,
   });
+  if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+    // if it goes too fast, we have a race condition with the sync with the backend and PG doesn'tlike it
+    // again, "cache lookup failed for type" problem
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
   return newFei;
 }

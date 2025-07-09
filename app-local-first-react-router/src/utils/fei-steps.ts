@@ -96,6 +96,9 @@ export function useFeiSteps(fei: FeiDone) {
       // pas encore d'ETG, on regarde l'étape précédente
       // pour simplifier :
       const avantAvantDernierStep = steps[steps.length - 3] as IntermediaireStep;
+      if (!avantAvantDernierStep) {
+        return 'Examen initial';
+      }
       if (avantAvantDernierStep.role === UserRoles.COLLECTEUR_PRO) {
         if (avantAvantDernierStep.nextRole === EntityTypes.ETG) {
           return 'Transport vers un établissement de traitement';
@@ -111,7 +114,7 @@ export function useFeiSteps(fei: FeiDone) {
         }
         return 'Transport vers un autre établissement de traitement';
       }
-      return 'Clôturée';
+      return 'En cours';
     }
   }, [fei, steps]);
 

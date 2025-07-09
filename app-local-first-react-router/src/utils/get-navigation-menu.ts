@@ -91,8 +91,8 @@ export default function useNavigationMenu() {
       text: 'Nouvelle fiche',
       linkProps: {
         href: '#',
-        onClick: () => {
-          const newFei = createNewFei();
+        onClick: async () => {
+          const newFei = await createNewFei();
           navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
         },
       },
