@@ -179,8 +179,6 @@ model UserRelations {
 }
 
 enum EntityRelationType {
-  WORKING_FOR // a user working for the entity
-  WORKING_WITH // a user working with the entity
   CAN_TRANSMIT_CARCASSES_TO_ENTITY // a user can send carcasses to the entity
   CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY // a user can receive carcasses on behalf of the entity
   // the next two fields are not used in DB but are deducted from the DB
@@ -592,6 +590,7 @@ model CarcasseIntermediaire {
   * fields from FeiIntermediaire
   */
   /**
+  * /**
   * /**
   * /**
   * /**
