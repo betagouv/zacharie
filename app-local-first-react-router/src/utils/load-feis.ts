@@ -10,6 +10,7 @@ export async function loadFeis() {
     console.log('not loading feis because not online');
     return;
   }
+  useZustandStore.setState({ dataIsSynced: false });
   try {
     const response = await fetch(`${import.meta.env.VITE_API_URL}/fei`, {
       method: 'GET',
@@ -95,6 +96,7 @@ export async function loadFeis() {
       await new Promise((resolve) => setTimeout(resolve, 100)); // to avoid block main thread
       loadFei(fei_numero);
     }
+    useZustandStore.setState({ dataIsSynced: true });
 
     console.log('chargement feis fini');
   } catch (error) {

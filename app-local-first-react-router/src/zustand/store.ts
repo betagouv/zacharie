@@ -463,8 +463,18 @@ export default useZustandStore;
 
 // SYNC DATA
 
-const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 1000 });
 let debug = false;
+
+// we suffer from a SQL related bug while testing which is "cache lookup failed for type", not easy to debug
+// it might be a problem with race condition:
+// playwright is going so fast, and coupled with our local-first and submit-on-blur policies,
+// too many requests are sent to the server,
+// and too many SQL queries are made for the same data
+// so we need to throttle and cancel the sync if it's called too soon
+// let FOR_TEST_ONLY_askedForSync = null;
+// let FOR_TEST_ONLY_started = false;
+
+const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 20 });
 let count = 0;
 queue.on('active', () => {
   if (debug) console.log(`Working on item #${++count}.  Size: ${queue.size}  Pending: ${queue.pending}`);
@@ -475,7 +485,8 @@ queue.on('add', () => {
 });
 
 queue.on('next', () => {
-  if (debug) console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
+  // if (debug) console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
+  console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
 });
 
 export async function syncFei(nextFei: FeiWithIntermediaires) {
@@ -516,7 +527,9 @@ export async function syncFeis() {
   for (const fei of Object.values(feis)) {
     if (!fei.is_synced) {
       if (debug) console.log('syncing fei', fei);
-      await syncFei(fei);
+      queue.add(async () => {
+        await syncFei(fei);
+      });
     }
   }
 }
@@ -571,7 +584,9 @@ export async function syncCarcasses() {
   for (const carcasse of Object.values(carcasses)) {
     if (!carcasse.is_synced) {
       if (debug) console.log('syncing carcasse', carcasse);
-      await syncCarcasse(carcasse);
+      queue.add(async () => {
+        await syncCarcasse(carcasse);
+      });
     }
   }
 }
@@ -625,7 +640,9 @@ export async function syncCarcassesIntermediaires() {
   for (const carcassesIntermediaire of Object.values(carcassesIntermediaires)) {
     if (!carcassesIntermediaire.is_synced) {
       if (debug) console.log('syncing carcasse intermediaire', carcassesIntermediaire);
-      await syncCarcasseIntermediaire(carcassesIntermediaire);
+      queue.add(async () => {
+        await syncCarcasseIntermediaire(carcassesIntermediaire);
+      });
     }
   }
 }
@@ -666,7 +683,9 @@ export async function syncLogs() {
   for (const log of Object.values(logs)) {
     if (!log.is_synced) {
       if (debug) console.log('syncing log', log);
-      await syncLog(log);
+      queue.add(async () => {
+        await syncLog(log);
+      });
     }
   }
 }
@@ -677,28 +696,62 @@ export async function syncData(calledFrom: string) {
     console.log('not syncing data because not online');
     return;
   }
+  // if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+  //   if (FOR_TEST_ONLY_started) {
+  //     console.log('TEST_ONLY: waiting for queue to be empty');
+  //     await new Promise((resolve) => queue.on('empty', resolve));
+  //   }
+  //   let FOR_TEST_ONLY_curentTryAskForSync = Date.now();
+  //   FOR_TEST_ONLY_askedForSync = FOR_TEST_ONLY_curentTryAskForSync;
+  //   // just wait one second to avoid race condition
+  //   await new Promise((resolve) => setTimeout(resolve, 1000));
+  //   if (FOR_TEST_ONLY_askedForSync !== FOR_TEST_ONLY_curentTryAskForSync) {
+  //     console.log(
+  //       'TEST_ONLY: not syncing data because another request has been made since this one was started',
+  //     );
+  //     // it means another request has been made since this one was started
+  //     return;
+  //   }
+  //   FOR_TEST_ONLY_started = true;
+  // }
+  console.log('syncing data from', calledFrom);
   queue.add(async () => {
-    if (debug) {
-      console.log('------------------------------------------');
-      console.log('------------------------------------------');
-      console.log('------------------------------------------');
-      console.log('------------------------------------------');
-      console.log(`--------SYNCING DATA called from ${calledFrom}----------------------`);
-      console.log('------------------------------------------');
-      console.log('------------------------------------------');
-      console.log('------------------------------------------');
-    }
     await syncProchainBraceletAUtiliser();
-    if (debug) console.log('synced dernier bracelet utilise');
-    await syncFeis();
-    if (debug) console.log('synced feis finito');
-    await syncCarcasses();
-    if (debug) console.log('synced intermediaires finito');
-    await syncCarcassesIntermediaires();
-    if (debug) console.log('synced carcasses intermediaires finito');
-    await syncLogs();
-    if (debug) console.log('synced logs finito');
-    if (debug) console.log('synced data finito');
-    useZustandStore.setState({ dataIsSynced: true });
   });
+  syncFeis();
+  syncCarcasses();
+  syncCarcassesIntermediaires();
+  syncLogs();
+  queue.on('empty', () => {
+    console.log('TEST_ONLY: queue is empty');
+    useZustandStore.setState({ dataIsSynced: true });
+    // FOR_TEST_ONLY_askedForSync = null;
+    // FOR_TEST_ONLY_started = false;
+  });
+  // queue.add(async () => {
+  //   if (debug) {
+  //     console.log('------------------------------------------');
+  //     console.log('------------------------------------------');
+  //     console.log('------------------------------------------');
+  //     console.log('------------------------------------------');
+  //     console.log(`--------SYNCING DATA called from ${calledFrom}----------------------`);
+  //     console.log('------------------------------------------');
+  //     console.log('------------------------------------------');
+  //     console.log('------------------------------------------');
+  //   }
+  //   await syncProchainBraceletAUtiliser();
+  //   if (debug) console.log('synced dernier bracelet utilise');
+  //   await syncFeis();
+  //   if (debug) console.log('synced feis finito');
+  //   await syncCarcasses();
+  //   if (debug) console.log('synced intermediaires finito');
+  //   await syncCarcassesIntermediaires();
+  //   if (debug) console.log('synced carcasses intermediaires finito');
+  //   await syncLogs();
+  //   if (debug) console.log('synced logs finito');
+  //   if (debug) console.log('synced data finito');
+  //   useZustandStore.setState({ dataIsSynced: true });
+  //   FOR_TEST_ONLY_askedForSync = null;
+  //   FOR_TEST_ONLY_started = false;
+  // });
 }

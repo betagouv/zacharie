@@ -53,6 +53,8 @@ const sendError = (
   const { auth, appversion, appbuild, appdevice } = headers;
   if (err.status === 401) {
     console.log(err.status, 'Unauthorized');
+  } else if (process.env.NODE_ENV === 'test') {
+    console.log(err);
   } else {
     capture(err, {
       extra: {

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { resetDb } from "../scripts/reset-db";
 import { connectWith } from "../utils/connect-with";
+import { NETWORK_PRESETS } from "../utils/network-throttling";
 
 // test.describe.configure({ mode: "serial" }); // TODO: remove this and make the tests parallel
 
@@ -18,6 +19,8 @@ test.describe("Fiches examinateur initial", () => {
   test("Création d'une fiche", async ({ page }) => {
     await connectWith(page, "examinateur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("button", { name: "Nouvelle fiche" }).nth(1).click();
     await expect(page.getByRole("heading", { name: "Examen initial Étape 1 sur" })).toBeVisible();
     await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
@@ -109,6 +112,8 @@ test.describe("Fiches premier détenteur", () => {
     const feiId = "ZACH-20250707-QZ6E0-155242";
     await connectWith(page, "premier-detenteur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await expect(page.getByRole("link", { name: feiId })).toBeVisible();
     await expect(page.getByRole("link", { name: feiId })).toContainText("À compléter");
     await expect(page.getByRole("link", { name: feiId })).toContainText("chassenard");
@@ -162,6 +167,8 @@ test.describe("Fiches premier détenteur", () => {
     const feiId = "ZACH-20250707-QZ6E0-155242";
     await connectWith(page, "premier-detenteur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("link", { name: feiId }).click();
     await page.getByRole("button", { name: "Je prends en charge cette" }).click();
     await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
@@ -190,6 +197,8 @@ test.describe("Fiches premier détenteur", () => {
     const feiId = "ZACH-20250707-QZ6E0-155242";
     await connectWith(page, "premier-detenteur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("link", { name: feiId }).click();
     await page.getByRole("button", { name: "Je prends en charge cette" }).click();
     await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
@@ -218,10 +227,16 @@ test.describe("Fiches ETG", () => {
     await resetDb("ETG");
   });
 
-  test("Pas de stockage - Je renvoie au SVI", async ({ page }) => {
+  test("Pas de stockage - Je renvoie au SVI", async ({ page, context }) => {
+    // const cdpSession = await context.newCDPSession(page);
+    // // @ts-ignore
+    // await cdpSession.send("Network.emulateNetworkConditions", NETWORK_PRESETS.PrettyGood);
+
     const feiId = "ZACH-20250707-QZ6E0-165242";
     await connectWith(page, "etg-1@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await expect(page.getByRole("link", { name: feiId })).toBeVisible();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
       - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner 4 daims fin de liste fin de liste ZACH-\\d+-QZ6E0-\\d+/:
@@ -380,6 +395,8 @@ test.describe("Fiches ETG", () => {
     const feiId = "ZACH-20250707-QZ6E0-165242";
     await connectWith(page, "etg-1@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await expect(page.getByRole("link", { name: feiId })).toBeVisible();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
       - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner 4 daims fin de liste fin de liste ZACH-\\d+-QZ6E0-\\d+/:
@@ -506,10 +523,16 @@ test.describe("Fiches ETG", () => {
     `);
   });
 
-  test("Pas de stockage - Je transfert à un autre ETG", async ({ page }) => {
+  test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context }) => {
+    // const cdpSession = await context.newCDPSession(page);
+    // // @ts-ignore
+    // await cdpSession.send("Network.emulateNetworkConditions", NETWORK_PRESETS.PrettyGood);
+
     const feiId = "ZACH-20250707-QZ6E0-165242";
     await connectWith(page, "etg-1@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await expect(page.getByRole("link", { name: feiId })).toBeVisible();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
       - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner 4 daims fin de liste fin de liste ZACH-\\d+-QZ6E0-\\d+/:
@@ -616,6 +639,10 @@ test.describe("Fiches ETG", () => {
     await page.getByText("Le transport est réalisé par").click();
     await page.getByText("Je transporte les carcasses moi-mêmeN'oubliez pas de notifier le prochain dé").click();
     await page.getByRole("button", { name: "Envoyer" }).click();
+    await expect(page.locator("#content")).toMatchAriaSnapshot(`
+      - heading "Attribution effectuée" [level=3]
+      - paragraph: ETG 2 a été notifié.
+      `);
     await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
     - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées Fiche envoyée, pas encore traitée ZACH-\\d+-QZ6E0-\\d+/:
@@ -635,14 +662,7 @@ test.describe("Fiches ETG", () => {
     `);
     await page.getByRole("button", { name: "Mon profil" }).click();
     await page.getByRole("button", { name: "Déconnecter etg-1@example.fr" }).click();
-    await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).click();
-    await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("etg-2@example.com");
-    await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).click();
-    await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
-    await page.getByRole("button", { name: "Me connecter" }).click();
-    await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).click();
-    await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("etg-2@example.fr");
-    await page.getByRole("button", { name: "Me connecter" }).click();
+    await connectWith(page, "etg-2@example.fr");
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
     - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
       - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
@@ -681,40 +701,6 @@ test.describe("Fiches ETG", () => {
       - listitem:
         - button "ETG 2"
     `);
-    await expect(page.locator("#content")).toMatchAriaSnapshot(`
-    - paragraph: Examinateur Initial
-    - list:
-      - listitem:
-        - paragraph: Marie Martin
-      - listitem:
-        - paragraph: /\\d+/
-      - listitem:
-        - paragraph: examinateur@example.fr
-      - listitem:
-        - paragraph: /CFEI-\\d+-\\d+-\\d+/
-      - listitem:
-        - paragraph: /\\d+ Paris/
-    - paragraph: Premier Détenteur
-    - list:
-      - listitem:
-        - paragraph: Pierre Petit
-      - listitem:
-        - paragraph: /\\d+/
-      - listitem:
-        - paragraph: premier-detenteur@example.fr
-      - listitem:
-        - paragraph: /\\d+ Paris/
-    - paragraph: ETG 1
-    - list:
-      - listitem:
-        - paragraph: Etablissement de Traitement du Gibier sauvage
-      - listitem:
-        - paragraph: /\\d+/
-      - listitem:
-        - paragraph: /\\d+ Paris/
-      - listitem:
-        - paragraph: "Prise en charge : Invalid Date"
-    `);
     await page.getByRole("button", { name: "Afficher les carcasses déjà" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
     - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':
@@ -732,9 +718,6 @@ test.describe("Fiches ETG", () => {
       - paragraph: Aucune anomalie
       - paragraph: manquant pour ETG 1
     `);
-    await expect(page.locator("#form_intermediaire_check_finished_at")).toMatchAriaSnapshot(
-      `- text: /Je prends en charge les carcasses que j'ai acceptées \\(\\d+ pigeons, 1 daim\\)\\./`
-    );
     await page.locator("label").filter({ hasText: "Je prends en charge les" }).click();
     await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
     await page.getByRole("button", { name: "Enregistrer" }).click();

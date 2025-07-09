@@ -31,6 +31,8 @@ export async function populateDb(role?: UserRoles) {
   await prisma.userRelations.deleteMany();
   await prisma.fei.deleteMany();
   await prisma.carcasse.deleteMany();
+  await prisma.carcasseIntermediaire.deleteMany();
+  await prisma.log.deleteMany();
 
   /* 
   Martin

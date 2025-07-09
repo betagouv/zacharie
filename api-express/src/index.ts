@@ -40,7 +40,8 @@ import packageJson from '../package.json';
 const app = express();
 
 app.use(
-  logger('tiny', {
+  // logger('tiny', {
+  logger(':method :url :status :res[content-length] - :response-time ms - :date[iso]', {
     skip: (req) => req.method === 'OPTIONS',
   }),
 );
