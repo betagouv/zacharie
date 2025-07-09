@@ -703,13 +703,13 @@ test.describe("Fiches ETG", () => {
     `);
     await page.getByRole("button", { name: "Afficher les carcasses déjà" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
-    - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':
-      - paragraph: Daim
-      - paragraph: /N° MM-\\d+-\\d+/
-      - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-      - paragraph: 1 anomalie, 1 commentaire
-      - paragraph: refusé par ETG 1
-    `);
+      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':
+        - paragraph: Daim
+        - paragraph: /N° MM-\\d+-\\d+/
+        - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
+        - paragraph: 1 anomalie, 1 commentaire
+        - paragraph: refusé par ETG 1
+      `);
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
     - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie manquant pour ETG 1/':
       - paragraph: Daim
@@ -728,6 +728,7 @@ test.describe("Fiches ETG", () => {
     - heading "Attribution effectuée" [level=3]
     - paragraph: SVI 2 a été notifié.
     `);
+
     await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
     - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées Inspection par le SVI ZACH-\\d+-QZ6E0-\\d+/:
