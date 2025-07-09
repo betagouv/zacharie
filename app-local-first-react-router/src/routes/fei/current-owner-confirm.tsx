@@ -3,7 +3,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { useMemo } from 'react';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
-import { EntityRelationType, UserRoles } from '@prisma/client';
+import { DepotType, EntityRelationType, UserRoles } from '@prisma/client';
 import type { FeiWithIntermediaires } from '~/src/types/fei';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
@@ -45,6 +45,16 @@ export default function CurrentOwnerConfirm() {
     if (fei.fei_next_owner_user_id === user.id) {
       return true;
     }
+    if (fei.fei_current_owner_user_id === user.id) {
+      if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
+        if (fei.fei_next_owner_role === UserRoles.ETG) {
+          if (user.roles.includes(UserRoles.ETG)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
     if (!nextOwnerEntity) {
       return false;
     }
@@ -64,21 +74,31 @@ export default function CurrentOwnerConfirm() {
         return false;
       }
     }
-
     if (fei.fei_next_owner_role === UserRoles.ETG) {
-      // if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && !user.roles.includes(UserRoles.ETG)) {
-      // FIXME: il ne peut y avoir pour le moment qu'un seul collecteur pro pour une fiche
-      if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
-        if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
-          return false;
-        }
-      }
+      return user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.COLLECTEUR_PRO);
     }
     return true;
   }, [fei, user, nextOwnerEntity]);
 
   const nextOwnerCollecteurProEntityId = useNextOwnerCollecteurProEntityId(fei, user);
   const myNextRoleForThisFei = useGetMyNextRoleForThisFei(fei, user);
+
+  const willCollecteurProHandleCarcassesForETG = useMemo(() => {
+    if (fei.fei_next_owner_role !== UserRoles.ETG) {
+      return false;
+    }
+    if (nextOwnerEntity.relation !== EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
+      return false;
+    }
+    if (!myNextRoleForThisFei) {
+      return false;
+    }
+    return true;
+  }, [fei, nextOwnerEntity, myNextRoleForThisFei]);
+
+  console.log('willCollecteurProHandleCarcassesForETG', willCollecteurProHandleCarcassesForETG);
+  console.log('myNextRoleForThisFei', myNextRoleForThisFei);
+  console.log('nextOwnerEntity', nextOwnerEntity);
 
   const myNextRoleForThisFeiIsCollecteurPro = myNextRoleForThisFei === UserRoles.COLLECTEUR_PRO;
 
@@ -120,6 +140,13 @@ export default function CurrentOwnerConfirm() {
       fei_prev_owner_user_id: fei.fei_current_owner_user_id || null,
       fei_prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
     };
+    if (willCollecteurProHandleCarcassesForETG) {
+      nextFei.fei_next_owner_entity_id = fei.fei_next_owner_entity_id;
+      nextFei.fei_next_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
+      nextFei.fei_next_owner_role = UserRoles.ETG;
+      nextFei.fei_next_owner_user_id = null;
+      nextFei.fei_next_owner_user_name_cache = null;
+    }
     if (nextFei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
       nextFei.examinateur_initial_user_id = user.id;
       nextFei.examinateur_initial_offline = navigator.onLine ? false : true;
@@ -154,6 +181,12 @@ export default function CurrentOwnerConfirm() {
         intermediaire_prochain_detenteur_type_cache: null,
         intermediaire_prochain_detenteur_id_cache: null,
       };
+      if (willCollecteurProHandleCarcassesForETG) {
+        newIntermediaire.intermediaire_prochain_detenteur_id_cache = nextFei.fei_next_owner_entity_id!;
+        newIntermediaire.intermediaire_prochain_detenteur_type_cache = UserRoles.ETG;
+        newIntermediaire.intermediaire_depot_type = DepotType.AUCUN;
+        newIntermediaire.intermediaire_depot_entity_id = null;
+      }
       await createFeiIntermediaire(newIntermediaire);
       addLog({
         user_id: user.id,

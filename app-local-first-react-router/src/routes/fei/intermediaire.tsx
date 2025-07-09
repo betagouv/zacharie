@@ -378,7 +378,7 @@ export default function FEICurrentIntermediaire(props: Props) {
     fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.fei_current_owner_user_id === user.id;
 
   return (
-    <>
+    <Fragment key={intermediaire?.id}>
       {!showCollecteurInterface && intermediaires.length > 1 && effectiveCanEdit && (
         <nav
           id="fr-breadcrumb-:r54:"
@@ -600,6 +600,6 @@ export default function FEICurrentIntermediaire(props: Props) {
           )}
         </>
       )}
-    </>
+    </Fragment>
   );
 }

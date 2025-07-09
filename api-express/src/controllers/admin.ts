@@ -260,7 +260,7 @@ router.get(
           roles: {
             hasSome:
               entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
-                ? [UserRoles.PREMIER_DETENTEUR]
+                ? [UserRoles.PREMIER_DETENTEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
                 : entity.type === EntityTypes.PREMIER_DETENTEUR
                 ? [UserRoles.EXAMINATEUR_INITIAL]
                 : entity.type === EntityTypes.SVI
