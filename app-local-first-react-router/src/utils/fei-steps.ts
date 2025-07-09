@@ -70,9 +70,6 @@ export function useFeiSteps(fei: FeiDone) {
 
   const currentStepLabel: FeiStep = useMemo(() => {
     if (fei.automatic_closed_at || fei.svi_closed_at || fei.intermediaire_closed_at) {
-      console.log('fei.automatic_closed_at', fei.automatic_closed_at);
-      console.log('fei.svi_closed_at', fei.svi_closed_at);
-      console.log('fei.intermediaire_closed_at', fei.intermediaire_closed_at);
       return 'Clôturée';
     }
     if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) return 'Examen initial';
@@ -90,6 +87,8 @@ export function useFeiSteps(fei: FeiDone) {
       // l'ETG a été sélectionné, mais a-t-il commencé à traiter la fiche ?
       if (fei.fei_next_owner_role === UserRoles.ETG) {
         return 'Fiche envoyée, pas encore traitée';
+      } else if (avantDernierStep.nextRole === UserRoles.COLLECTEUR_PRO) {
+        return 'Transport vers un autre établissement de traitement';
       } else {
         return 'Réception par un établissement de traitement';
       }
@@ -112,7 +111,6 @@ export function useFeiSteps(fei: FeiDone) {
         }
         return 'Transport vers un autre établissement de traitement';
       }
-      console.log('avantAvantDernierStep', avantAvantDernierStep);
       return 'Clôturée';
     }
   }, [fei, steps]);
@@ -174,19 +172,20 @@ export function useFeiSteps(fei: FeiDone) {
             return 'En cours';
           }
         }
-        if (fei.fei_current_owner_entity_id) {
-          if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id)) {
-            return 'À compléter';
-          }
-          if (entitiesIdsWorkingDirectlyAndIndirectlyFor.includes(fei.fei_current_owner_entity_id)) {
-            return 'À compléter';
-          }
-        }
         if (fei.fei_next_owner_entity_id) {
           if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)) {
             return 'À compléter';
           }
           if (entitiesIdsWorkingDirectlyAndIndirectlyFor.includes(fei.fei_next_owner_entity_id)) {
+            return 'À compléter';
+          }
+          return 'En cours';
+        }
+        if (fei.fei_current_owner_entity_id) {
+          if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id)) {
+            return 'À compléter';
+          }
+          if (entitiesIdsWorkingDirectlyAndIndirectlyFor.includes(fei.fei_current_owner_entity_id)) {
             return 'À compléter';
           }
         }
