@@ -160,6 +160,29 @@ router.post(
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at)) {
       nextCarcasse.examinateur_signed_at = body.examinateur_signed_at;
     }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id)) {
+      nextCarcasse.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id || null;
+    }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_type)) {
+      nextCarcasse.premier_detenteur_depot_type = body.premier_detenteur_depot_type || null;
+    }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_ccg_at)) {
+      nextCarcasse.premier_detenteur_depot_ccg_at = body.premier_detenteur_depot_ccg_at || null;
+    }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_transport_type)) {
+      nextCarcasse.premier_detenteur_transport_type = body.premier_detenteur_transport_type || null;
+    }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_transport_date)) {
+      nextCarcasse.premier_detenteur_transport_date = body.premier_detenteur_transport_date || null;
+    }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_type_cache)) {
+      nextCarcasse.premier_detenteur_prochain_detenteur_type_cache =
+        body.premier_detenteur_prochain_detenteur_type_cache || null;
+    }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
+      nextCarcasse.premier_detenteur_prochain_detenteur_id_cache =
+        body.premier_detenteur_prochain_detenteur_id_cache || null;
+    }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.latest_intermediaire_signed_at)) {
       nextCarcasse.latest_intermediaire_signed_at = body.latest_intermediaire_signed_at;
     }
