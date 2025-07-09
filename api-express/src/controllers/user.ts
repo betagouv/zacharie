@@ -24,7 +24,7 @@ import type {
   UserForFeiResponse,
   UserEntityResponse,
 } from '~/types/responses';
-import type { EntityWithUserRelation, EntityWithUserRelationType } from '~/types/entity';
+import type { EntityWithUserRelation } from '~/types/entity';
 import {
   EntityRelationType,
   EntityTypes,
@@ -812,7 +812,7 @@ router.get(
           entityRelations.map(
             (rel): EntityWithUserRelation => ({
               ...rel.EntityRelatedWithUser,
-              relation: 'WORKING_FOR' satisfies EntityWithUserRelationType,
+              relation: EntityRelationType.WORKING_FOR,
             }),
           ),
         );
@@ -856,19 +856,19 @@ router.get(
       for (const svi of svisRelatedWithMyETGs.map((r) => r.EntityRelatedWithETG)) {
         entitiesWorkingForObject[svi.id] = {
           ...svi,
-          relation: 'WORKING_FOR_ENTITY_RELATED_WITH' satisfies EntityWithUserRelationType,
+          relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
         };
       }
       for (const etg of etgsRelatedWithMyEntities.map((r) => r.ETGRelatedWithEntity)) {
         entitiesWorkingForObject[etg.id] = {
           ...etg,
-          relation: 'WORKING_FOR_ENTITY_RELATED_WITH' satisfies EntityWithUserRelationType,
+          relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
         };
       }
       for (const collecteurPro of collecteursProsRelatedWithMyETGs.map((r) => r.EntityRelatedWithETG)) {
         entitiesWorkingForObject[collecteurPro.id] = {
           ...collecteurPro,
-          relation: 'WORKING_FOR_ENTITY_RELATED_WITH' satisfies EntityWithUserRelationType,
+          relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
         };
       }
       for (const entity of entitiesWorkingDirectlyFor) {
@@ -893,7 +893,7 @@ router.get(
           entityRelations.map(
             (rel): EntityWithUserRelation => ({
               ...rel.EntityRelatedWithUser,
-              relation: 'WORKING_WITH' satisfies EntityWithUserRelationType,
+              relation: EntityRelationType.WORKING_WITH,
             }),
           ),
         );
@@ -954,9 +954,9 @@ router.get(
         ),
         ...entitiesWorkingWith.map((entity) => ({
           ...entity,
-          relation: 'WORKING_WITH' as EntityWithUserRelationType,
+          relation: EntityRelationType.WORKING_WITH,
         })),
-        ...allOtherEntities.map((entity) => ({ ...entity, relation: 'NONE' as EntityWithUserRelationType })),
+        ...allOtherEntities.map((entity) => ({ ...entity, relation: EntityRelationType.NONE })),
       ].filter((entity, index, array) => array.findIndex((e) => e.id === entity.id) === index); // remove duplicates
 
       const ccgs = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.CCG);
