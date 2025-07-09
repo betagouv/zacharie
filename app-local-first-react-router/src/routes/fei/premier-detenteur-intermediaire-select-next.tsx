@@ -2,7 +2,7 @@ import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import type { EntityWithUserRelation } from '~/src/types/entity';
-import { UserRoles, Prisma, Carcasse } from '@prisma/client';
+import { UserRoles, Prisma, Carcasse, EntityRelationType } from '@prisma/client';
 import { useMemo, useState } from 'react';
 // import { mergeFei } from '@app/db/fei.client';
 import { useParams } from 'react-router';
@@ -153,7 +153,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
       if (user.roles.includes(UserRoles.ETG)) {
         if (etgsIds.includes(fei.fei_current_owner_entity_id)) {
           const etg = entities[fei.fei_current_owner_entity_id];
-          if (etg.relation === 'WORKING_FOR') {
+          if (etg.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
             return true;
           }
         }
@@ -167,7 +167,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
       if (user.roles.includes(UserRoles.ETG)) {
         if (etgsIds.includes(fei.fei_next_owner_entity_id)) {
           const etg = entities[fei.fei_next_owner_entity_id];
-          if (etg.relation === 'WORKING_FOR') {
+          if (etg.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
             return true;
           }
         }
@@ -178,7 +178,7 @@ export default function SelectNextOwnerForPremierDetenteurOrIntermediaire({
 
   const canSelectNextOwner = useMemo(() => {
     if (
-      premierDetenteurEntity?.relation === 'WORKING_FOR' &&
+      premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY &&
       fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR
     ) {
       return true;

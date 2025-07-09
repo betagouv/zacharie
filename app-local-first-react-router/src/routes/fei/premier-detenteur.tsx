@@ -1,6 +1,6 @@
 import { useParams } from 'react-router';
 import { useMemo } from 'react';
-import { UserRoles } from '@prisma/client';
+import { EntityRelationType, UserRoles } from '@prisma/client';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
@@ -40,7 +40,7 @@ export default function FeiPremierDetenteur() {
     if (!user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
       return false;
     }
-    if (premierDetenteurEntity?.relation === 'WORKING_FOR') {
+    if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
       return true;
     }
     if (fei.fei_current_owner_user_id !== user.id) {
@@ -62,7 +62,7 @@ export default function FeiPremierDetenteur() {
     if (!user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
       return true;
     }
-    if (premierDetenteurEntity?.relation === 'WORKING_FOR') {
+    if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
       return false;
     }
     return true;

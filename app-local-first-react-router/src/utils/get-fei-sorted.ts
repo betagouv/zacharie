@@ -1,6 +1,6 @@
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import { UserRoles } from '@prisma/client';
+import { EntityRelationType, UserRoles } from '@prisma/client';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 
 type FeiSorted = {
@@ -48,7 +48,7 @@ export function getFeisSorted(): FeiSorted {
       if (fei.fei_current_owner_role === UserRoles.ETG) {
         // also collecteurs from this etg can take the lead
         const etg = state.entities[fei.fei_current_owner_entity_id!];
-        if (etg?.relation === 'WORKING_FOR_ENTITY_RELATED_WITH') {
+        if (etg?.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
           if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
             feisSorted.feisUnderMyResponsability.push(fei);
             // if (debug) console.log('3');
@@ -59,7 +59,7 @@ export function getFeisSorted(): FeiSorted {
       if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
         // also collecteurs from this etg can take the lead
         const collecteurPro = state.entities[fei.fei_current_owner_entity_id!];
-        if (collecteurPro?.relation === 'WORKING_FOR_ENTITY_RELATED_WITH') {
+        if (collecteurPro?.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
           if (user.roles.includes(UserRoles.ETG)) {
             feisSorted.feisUnderMyResponsability.push(fei);
             // if (debug) console.log('4');
@@ -83,7 +83,7 @@ export function getFeisSorted(): FeiSorted {
       if (fei.fei_next_owner_role === UserRoles.ETG) {
         // also collecteurs from this etg can take the lead
         const etg = state.entities[fei.fei_next_owner_entity_id!];
-        if (etg?.relation === 'WORKING_FOR_ENTITY_RELATED_WITH') {
+        if (etg?.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
           if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
             if (!user.roles.includes(UserRoles.ETG)) {
               if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
@@ -101,7 +101,7 @@ export function getFeisSorted(): FeiSorted {
       if (fei.fei_next_owner_role === UserRoles.COLLECTEUR_PRO) {
         // also collecteurs from this etg can take the lead
         const collecteurPro = state.entities[fei.fei_next_owner_entity_id!];
-        if (collecteurPro?.relation === 'WORKING_FOR_ENTITY_RELATED_WITH') {
+        if (collecteurPro?.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
           if (user.roles.includes(UserRoles.ETG)) {
             feisSorted.feisToTake.push(fei);
             // if (debug) console.log('8');

@@ -214,7 +214,7 @@ router.post(
         const nextRelation = {
           entity_id: body.fei_next_owner_entity_id,
           owner_id: user.id,
-          relation: EntityRelationType.WORKING_WITH,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         };
         const existingRelation = await prisma.entityAndUserRelations.findFirst({
           where: nextRelation,
@@ -377,7 +377,7 @@ router.post(
           EntityAndUserRelations: {
             some: {
               entity_id: savedFei.svi_entity_id!,
-              relation: EntityRelationType.WORKING_FOR,
+              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             },
           },
         },
@@ -466,7 +466,7 @@ router.post(
         await prisma.entityAndUserRelations.findMany({
           where: {
             entity_id: body.fei_next_owner_entity_id as string,
-            relation: EntityRelationType.WORKING_FOR,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           },
           include: {
             UserRelatedWithEntity: {
@@ -545,7 +545,7 @@ router.get(
                         EntityRelationsWithUsers: {
                           some: {
                             owner_id: user.id,
-                            relation: EntityRelationType.WORKING_FOR,
+                            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                           },
                         },
                       },
@@ -567,7 +567,7 @@ router.get(
                       EntityRelationsWithUsers: {
                         some: {
                           owner_id: user.id,
-                          relation: EntityRelationType.WORKING_FOR,
+                          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                         },
                       },
                     },
@@ -584,7 +584,7 @@ router.get(
                             EntityRelationsWithUsers: {
                               some: {
                                 owner_id: user.id,
-                                relation: EntityRelationType.WORKING_FOR,
+                                relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                               },
                             },
                           },
@@ -599,7 +599,7 @@ router.get(
                   EntityRelationsWithUsers: {
                     some: {
                       owner_id: user.id,
-                      relation: EntityRelationType.WORKING_FOR,
+                      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                     },
                   },
                 },
@@ -723,7 +723,7 @@ router.get(
               EntityRelationsWithUsers: {
                 some: {
                   owner_id: user.id,
-                  relation: EntityRelationType.WORKING_FOR,
+                  relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                 },
               },
             },
@@ -742,7 +742,7 @@ router.get(
                         EntityRelationsWithUsers: {
                           some: {
                             owner_id: user.id,
-                            relation: EntityRelationType.WORKING_FOR,
+                            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                           },
                         },
                       },
@@ -777,7 +777,7 @@ router.get(
               EntityRelationsWithUsers: {
                 some: {
                   owner_id: user.id,
-                  relation: EntityRelationType.WORKING_FOR,
+                  relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                 },
               },
             },
@@ -795,7 +795,7 @@ router.get(
                         EntityRelationsWithUsers: {
                           some: {
                             owner_id: user.id,
-                            relation: EntityRelationType.WORKING_FOR,
+                            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                           },
                         },
                       },
@@ -846,7 +846,7 @@ router.get(
           //         EntityRelationsWithUsers: {
           //           none: {
           //             owner_id: user.id,
-          //             relation: EntityRelationType.WORKING_FOR,
+          //             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           //           },
           //         },
           //       },
@@ -868,7 +868,7 @@ router.get(
                         EntityRelationsWithUsers: {
                           some: {
                             owner_id: user.id,
-                            relation: EntityRelationType.WORKING_FOR,
+                            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                           },
                         },
                       },
@@ -889,7 +889,7 @@ router.get(
                       EntityRelationsWithUsers: {
                         some: {
                           owner_id: user.id,
-                          relation: EntityRelationType.WORKING_FOR,
+                          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                         },
                       },
                     },
@@ -906,7 +906,7 @@ router.get(
                             EntityRelationsWithUsers: {
                               some: {
                                 owner_id: user.id,
-                                relation: EntityRelationType.WORKING_FOR,
+                                relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                               },
                             },
                           },

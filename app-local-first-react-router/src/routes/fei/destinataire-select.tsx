@@ -7,6 +7,7 @@ import {
   DepotType,
   TransportType,
   CarcasseIntermediaire,
+  EntityRelationType,
 } from '@prisma/client';
 import dayjs from 'dayjs';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -74,9 +75,11 @@ export default function DestinataireSelect({
     return [...etgs, ...collecteursPros];
   }, [etgs, collecteursPros, svis, fei.fei_current_owner_role]);
 
-  const workingWith = useMemo(() => {
+  const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
-      (entity) => entity.relation === 'WORKING_WITH' || entity.relation === 'WORKING_FOR_ENTITY_RELATED_WITH',
+      (entity) =>
+        entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY ||
+        entity.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
     );
   }, [prochainsDetenteurs]);
 
@@ -88,7 +91,7 @@ export default function DestinataireSelect({
   }, [ccgs]);
 
   const ccgsWorkingWith = useMemo(() => {
-    return ccgs.filter((entity) => entity.relation === 'WORKING_WITH');
+    return ccgs.filter((entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY);
   }, [ccgs]);
 
   const prochainsDetenteursOptions = useMemo(() => {
@@ -341,7 +344,7 @@ export default function DestinataireSelect({
               </span>
               {!prochainDetenteurEntityId && !disabled && (
                 <div>
-                  {workingWith.map((entity) => {
+                  {canTransmitCarcassesToEntities.map((entity) => {
                     return (
                       <Tag
                         key={entity.id}

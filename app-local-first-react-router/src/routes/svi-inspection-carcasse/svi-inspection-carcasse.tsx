@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { CarcasseType, UserRoles } from '@prisma/client';
+import { CarcasseType, EntityRelationType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
@@ -79,7 +79,7 @@ export function SviInspectionCarcasse() {
     if (fei.svi_entity_id) {
       if (user.roles.includes(UserRoles.SVI)) {
         const svi = state.entities[fei.svi_entity_id];
-        if (svi?.relation === 'WORKING_FOR') {
+        if (svi?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           return true;
         }
       }

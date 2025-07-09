@@ -96,12 +96,12 @@ export default function AdminEntity() {
   if (entity.type !== EntityTypes.CCG) {
     tabs.push({
       tabId: 'Utilisateurs pouvant traiter des fiches pour cette entité',
-      label: `Utilisateurs pouvant traiter des fiches pour cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
+      label: `Utilisateurs pouvant traiter des fiches pour cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY).length})`,
     });
     if (entity.type !== EntityTypes.SVI) {
       tabs.push({
         tabId: 'Utilisateurs pouvant envoyer des fiches à cette entité',
-        label: `Utilisateurs pouvant envoyer des fiches à cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.WORKING_WITH).length})`,
+        label: `Utilisateurs pouvant envoyer des fiches à cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY).length})`,
       });
     }
   }
@@ -335,7 +335,7 @@ export default function AdminEntity() {
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
                   potentialUsers={canTakeFichesForEntity}
-                  relation={EntityRelationType.WORKING_FOR}
+                  relation={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
                   fetcherKey="working-for"
                   setIsSaving={setIsSaving}
                 />
@@ -345,7 +345,7 @@ export default function AdminEntity() {
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
                   potentialUsers={canSendFichesToEntity}
-                  relation={EntityRelationType.WORKING_WITH}
+                  relation={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
                   fetcherKey="working-with"
                   setIsSaving={setIsSaving}
                 />

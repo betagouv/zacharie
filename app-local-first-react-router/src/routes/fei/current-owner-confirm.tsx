@@ -3,7 +3,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { useMemo } from 'react';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
-import { UserRoles } from '@prisma/client';
+import { EntityRelationType, UserRoles } from '@prisma/client';
 import type { FeiWithIntermediaires } from '~/src/types/fei';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
@@ -49,8 +49,8 @@ export default function CurrentOwnerConfirm() {
       return false;
     }
     if (
-      nextOwnerEntity.relation !== 'WORKING_FOR' &&
-      nextOwnerEntity.relation !== 'WORKING_FOR_ENTITY_RELATED_WITH'
+      nextOwnerEntity.relation !== EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY &&
+      nextOwnerEntity.relation !== EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH
     ) {
       return false;
     }

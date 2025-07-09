@@ -1,5 +1,12 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Prisma, CarcasseIntermediaire, Carcasse, UserRoles, CarcasseStatus } from '@prisma/client';
+import {
+  Prisma,
+  CarcasseIntermediaire,
+  Carcasse,
+  UserRoles,
+  CarcasseStatus,
+  EntityRelationType,
+} from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -125,7 +132,7 @@ export default function FEICurrentIntermediaire(props: Props) {
       if (user.roles.includes(UserRoles.ETG)) {
         if (etgsIds.includes(fei.fei_current_owner_entity_id)) {
           const etg = entities[fei.fei_current_owner_entity_id];
-          if (etg.relation === 'WORKING_FOR') {
+          if (etg.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
             return true;
           }
         }
@@ -139,7 +146,7 @@ export default function FEICurrentIntermediaire(props: Props) {
       if (user.roles.includes(UserRoles.ETG)) {
         if (etgsIds.includes(fei.fei_next_owner_entity_id)) {
           const etg = entities[fei.fei_next_owner_entity_id];
-          if (etg.relation === 'WORKING_FOR') {
+          if (etg.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
             return true;
           }
         }

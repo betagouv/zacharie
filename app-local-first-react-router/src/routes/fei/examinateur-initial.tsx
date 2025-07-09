@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { CarcasseType, Prisma, UserRoles } from '@prisma/client';
+import { CarcasseType, EntityRelationType, Prisma, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -163,7 +163,7 @@ export default function FEIExaminateurInitial() {
     if (fei.examinateur_initial_user_id === user.id) {
       return true;
     }
-    if (premierDetenteurEntity?.relation === 'WORKING_FOR') {
+    if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
       return true;
     }
     return false;

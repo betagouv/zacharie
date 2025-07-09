@@ -2,6 +2,7 @@ import type { UserMyRelationsResponse } from '@api/src/types/responses';
 import type { UserForFei } from '@api/src/types/user';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import useZustandStore from '@app/zustand/store';
+import { EntityRelationType } from '@prisma/client';
 
 export async function loadMyRelations() {
   const isOnline = useZustandStore.getState().isOnline;
@@ -37,11 +38,11 @@ export async function loadMyRelations() {
       ...(myRelationsData.data?.entitiesWorkingFor || []),
     ]) {
       entities[entity.id] = entity;
-      if (entity.relation === 'WORKING_FOR') {
+      if (entity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         entitiesIdsWorkingDirectlyFor.push(entity.id);
         entitiesIdsWorkingDirectlyAndIndirectlyFor.push(entity.id);
       }
-      if (entity.relation === 'WORKING_FOR_ENTITY_RELATED_WITH') {
+      if (entity.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
         entitiesIdsWorkingDirectlyAndIndirectlyFor.push(entity.id);
       }
     }

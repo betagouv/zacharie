@@ -500,7 +500,7 @@ router.get(
           EntityRelationsWithUsers: {
             some: {
               owner_id: req.user!.id,
-              relation: EntityRelationType.WORKING_FOR,
+              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             },
           },
         },
@@ -598,7 +598,7 @@ router.get(
               EntityRelationsWithUsers: {
                 some: {
                   owner_id: req.user.id,
-                  relation: EntityRelationType.WORKING_FOR,
+                  relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                 },
               },
             },

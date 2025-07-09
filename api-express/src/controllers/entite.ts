@@ -71,7 +71,7 @@ router.get(
     const userEntitiesRelationsWorkingFor = await prisma.entityAndUserRelations.findMany({
       where: {
         owner_id: user.id,
-        relation: EntityRelationType.WORKING_FOR,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
       },
       orderBy: {
         EntityRelatedWithUser: {
@@ -106,7 +106,7 @@ router.get(
       await prisma.entityAndUserRelations.findMany({
         where: {
           owner_id: user.id,
-          relation: EntityRelationType.WORKING_WITH,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
           EntityRelatedWithUser: {
             type: EntityTypes.CCG,
           },
@@ -158,7 +158,7 @@ router.post(
     const createdEntityRelation = await prisma.entityAndUserRelations.create({
       data: {
         owner_id: user.id,
-        relation: EntityRelationType.WORKING_FOR,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         entity_id: createdEntity.id,
       },
     });
@@ -204,7 +204,7 @@ router.post(
     const createdEntityRelation = await prisma.entityAndUserRelations.create({
       data: {
         owner_id: user.id,
-        relation: EntityRelationType.WORKING_WITH,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         entity_id: createdEntity.id,
       },
     });

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import dayjs from 'dayjs';
-import { CarcasseStatus, Fei, Prisma, UserRoles } from '@prisma/client';
+import { CarcasseStatus, EntityRelationType, Fei, Prisma, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -49,7 +49,7 @@ export default function FEI_SVI() {
     if (fei.svi_entity_id) {
       if (user.roles.includes(UserRoles.SVI)) {
         const svi = state.entities[fei.svi_entity_id];
-        if (svi?.relation === 'WORKING_FOR') {
+        if (svi?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           return true;
         }
       }

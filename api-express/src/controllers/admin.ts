@@ -238,7 +238,8 @@ router.get(
                 },
           id: {
             notIn: entity.EntityRelationsWithUsers.filter(
-              (entityRelation) => entityRelation.relation === EntityRelationType.WORKING_FOR,
+              (entityRelation) =>
+                entityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
           },
         },
@@ -252,7 +253,8 @@ router.get(
         where: {
           id: {
             notIn: entity.EntityRelationsWithUsers.filter(
-              (entityRelation) => entityRelation.relation === EntityRelationType.WORKING_WITH,
+              (entityRelation) =>
+                entityRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
             ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
           },
           roles: {

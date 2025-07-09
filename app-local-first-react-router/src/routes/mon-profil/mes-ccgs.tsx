@@ -180,7 +180,7 @@ export default function MesCCGs() {
                           _action: 'delete',
                           [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                           [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                          relation: EntityRelationType.WORKING_WITH,
+                          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
                         }),
                         headers: {
                           Accept: 'application/json',
@@ -389,7 +389,7 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
           body: JSON.stringify({
             _action: 'create',
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-            relation: EntityRelationType.WORKING_WITH,
+            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
             [Prisma.EntityScalarFieldEnum.numero_ddecpp]: formData.get(
               Prisma.EntityScalarFieldEnum.numero_ddecpp,
             ),

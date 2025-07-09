@@ -131,7 +131,7 @@ export default function AdminUser() {
     },
     {
       tabId: 'Peut traiter des fiches au nom de',
-      label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.WORKING_FOR).length})`,
+      label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY).length})`,
     },
   ];
 
@@ -151,7 +151,8 @@ export default function AdminUser() {
 
   if (!user.roles.includes(UserRoles.SVI)) {
     let numberOfWOrkingWith = userEntitiesRelations.filter(
-      (rel) => rel.relation === EntityRelationType.WORKING_WITH && rel.type !== EntityTypes.CCG,
+      (rel) =>
+        rel.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY && rel.type !== EntityTypes.CCG,
     ).length;
     if (user.roles.includes(UserRoles.ETG)) {
       numberOfWOrkingWith += 1;
@@ -395,7 +396,7 @@ export default function AdminUser() {
               )}
               {selectedTabId === 'Peut traiter des fiches au nom de' && (
                 <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relation={EntityRelationType.WORKING_FOR}
+                  relation={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
                   id={selectedTabId}
                   userResponseData={userResponseData}
                   setUserResponseData={setUserResponseData}
@@ -403,7 +404,7 @@ export default function AdminUser() {
               )}
               {selectedTabId === 'CCGs' && (
                 <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relation={EntityRelationType.WORKING_WITH}
+                  relation={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
                   id={selectedTabId}
                   userResponseData={userResponseData}
                   setUserResponseData={setUserResponseData}
@@ -412,7 +413,7 @@ export default function AdminUser() {
               )}
               {selectedTabId === 'Peut envoyer des fiches à' && (
                 <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relation={EntityRelationType.WORKING_WITH}
+                  relation={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
                   id={selectedTabId}
                   userResponseData={userResponseData}
                   setUserResponseData={setUserResponseData}
@@ -450,14 +451,17 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
 
   const shouldHaveAssociatedSvi = useMemo(() => {
     if (!user.roles.includes(UserRoles.ETG)) return false;
-    if (relation !== EntityRelationType.WORKING_WITH) return false;
+    if (relation !== EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) return false;
     return true;
   }, [user.roles, relation]);
 
   const associatedSvi = useMemo(() => {
     if (!shouldHaveAssociatedSvi) return null;
     const etgId = userEntitiesRelations.find((entity) => {
-      return entity.type === EntityTypes.ETG && entity.relation === EntityRelationType.WORKING_FOR;
+      return (
+        entity.type === EntityTypes.ETG &&
+        entity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+      );
     })?.id;
     if (!etgId) return null;
     const sviId = allEntities
@@ -469,7 +473,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
     return {
       ...svi,
       type: EntityTypes.SVI,
-      relation: EntityRelationType.WORKING_WITH,
+      relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
     };
   }, [allEntities, userEntitiesRelations, shouldHaveAssociatedSvi]);
 
@@ -485,7 +489,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
     const entities = [];
     for (const entity of allEntities) {
       if (entity.type === EntityTypes.SVI) {
-        if (relation === EntityRelationType.WORKING_WITH) {
+        if (relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
           // cette relation est définie dans l'ETG:
           // si un user a un rôle ETG, alors il peut envoyer une fiche
           // au SVI auquel est rattaché l'ETG via AsEtgRelationsWithOtherEntities
@@ -501,7 +505,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       if (!forCCG && entity.type === EntityTypes.CCG) {
         continue;
       }
-      if (relation === EntityRelationType.WORKING_WITH) {
+      if (relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
         if (
           user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ||
           user.roles.includes(UserRoles.PREMIER_DETENTEUR)
@@ -522,7 +526,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
             entities.push(entity);
           }
         }
-      } else if (relation === EntityRelationType.WORKING_FOR) {
+      } else if (relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
           if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
             entities.push(entity);

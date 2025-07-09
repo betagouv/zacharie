@@ -358,7 +358,7 @@ router.post(
           },
         });
 
-        if (relation.relation === EntityRelationType.WORKING_FOR) {
+        if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           await linkBrevoCompanyToContact(entity, req.user);
         }
 
@@ -384,7 +384,7 @@ router.post(
           });
         }
 
-        if (existingEntityRelation.relation === EntityRelationType.WORKING_FOR) {
+        if (existingEntityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           const entity = await prisma.entity.findUnique({
             where: {
               id: entityId,
@@ -755,7 +755,7 @@ router.get(
       await prisma.entityAndUserRelations.findMany({
         where: {
           owner_id: user.id,
-          relation: EntityRelationType.WORKING_WITH,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
           EntityRelatedWithUser: {
             type: EntityTypes.CCG,
           },
@@ -799,7 +799,7 @@ router.get(
         .findMany({
           where: {
             owner_id: user.id,
-            relation: EntityRelationType.WORKING_FOR,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           },
           include: {
             EntityRelatedWithUser: true,
@@ -812,7 +812,7 @@ router.get(
           entityRelations.map(
             (rel): EntityWithUserRelation => ({
               ...rel.EntityRelatedWithUser,
-              relation: EntityRelationType.WORKING_FOR,
+              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             }),
           ),
         );
@@ -880,7 +880,7 @@ router.get(
         .findMany({
           where: {
             owner_id: user.id,
-            relation: EntityRelationType.WORKING_WITH,
+            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
           },
           include: {
             EntityRelatedWithUser: true,
@@ -893,7 +893,7 @@ router.get(
           entityRelations.map(
             (rel): EntityWithUserRelation => ({
               ...rel.EntityRelatedWithUser,
-              relation: EntityRelationType.WORKING_WITH,
+              relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
             }),
           ),
         );
@@ -950,11 +950,13 @@ router.get(
         ...entitiesWorkingFor.filter(
           (entity) =>
             entity.type !== EntityTypes.CCG &&
-            ['WORKING_FOR', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
+            ['CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(
+              entity.relation,
+            ),
         ),
         ...entitiesWorkingWith.map((entity) => ({
           ...entity,
-          relation: EntityRelationType.WORKING_WITH,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         })),
         ...allOtherEntities.map((entity) => ({ ...entity, relation: EntityRelationType.NONE })),
       ].filter((entity, index, array) => array.findIndex((e) => e.id === entity.id) === index); // remove duplicates
@@ -972,7 +974,7 @@ router.get(
       const svis = allEntities.filter(
         (entity) =>
           entity.type === EntityTypes.SVI &&
-          ['WORKING_WITH', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
+          ['CAN_TRANSMIT_CARCASSES_TO_ENTITY', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
       );
 
       res.status(200).send({

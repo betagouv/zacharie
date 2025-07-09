@@ -578,7 +578,7 @@ function ListAndSelectEntities({
                         _action: 'delete',
                         [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                         [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                        relation: EntityRelationType.WORKING_FOR,
+                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                       }),
                       headers: {
                         Accept: 'application/json',
@@ -647,7 +647,8 @@ function ListAndSelectEntities({
                   body: JSON.stringify({
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     _action: 'create',
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]: EntityRelationType.WORKING_FOR,
+                    [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
+                      EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entityId,
                   }),
                   headers: {
