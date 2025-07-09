@@ -41,7 +41,9 @@ export default function DestinataireSelect({
 }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
+  const isOnline = useIsOnline();
   const updateFei = useZustandStore((state) => state.updateFei);
+  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
@@ -50,9 +52,15 @@ export default function DestinataireSelect({
   const etgsIds = useZustandStore((state) => state.etgsIds);
   const svisIds = useZustandStore((state) => state.svisIds);
   const collecteursProIds = useZustandStore((state) => state.collecteursProIds);
+
   const fei = feis[params.fei_numero!];
   const prefilledInfos = usePrefillPremierDétenteurInfos();
-  const isOnline = useIsOnline();
+
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const carcassesState = useZustandStore((state) => state.carcasses);
+  const carcasses = (carcassesIdsByFei[params.fei_numero!] || [])
+    .map((cId) => carcassesState[cId])
+    .filter((c) => !c.deleted_at);
 
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
@@ -622,6 +630,19 @@ export default function DestinataireSelect({
                         : null
                       : null,
                   };
+                  for (const carcasse of carcasses) {
+                    updateCarcasse(carcasse.zacharie_carcasse_id, {
+                      premier_detenteur_prochain_detenteur_type_cache:
+                        nextFei.premier_detenteur_prochain_detenteur_type_cache,
+                      premier_detenteur_prochain_detenteur_id_cache:
+                        nextFei.premier_detenteur_prochain_detenteur_id_cache,
+                      premier_detenteur_depot_type: nextFei.premier_detenteur_depot_type,
+                      premier_detenteur_depot_entity_id: nextFei.premier_detenteur_depot_entity_id,
+                      premier_detenteur_depot_ccg_at: nextFei.premier_detenteur_depot_ccg_at,
+                      premier_detenteur_transport_type: nextFei.premier_detenteur_transport_type,
+                      premier_detenteur_transport_date: nextFei.premier_detenteur_transport_date,
+                    });
+                  }
                   updateFei(fei.numero, nextFei);
                   addLog({
                     user_id: user.id,

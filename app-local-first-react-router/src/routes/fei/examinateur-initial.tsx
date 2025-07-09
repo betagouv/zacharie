@@ -22,23 +22,28 @@ import Section from '@app/components/Section';
 export default function FEIExaminateurInitial() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
-  // console.log('fei', fei);
-  const carcasses = (state.carcassesIdsByFei[params.fei_numero!] || [])
-    .map((cId) => state.carcasses[cId])
+
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const carcassesState = useZustandStore((state) => state.carcasses);
+  const carcasses = (carcassesIdsByFei[params.fei_numero!] || [])
+    .map((cId) => carcassesState[cId])
     .filter((c) => !c.deleted_at);
+
+  const users = useZustandStore((state) => state.users);
+  const entities = useZustandStore((state) => state.entities);
+
   const examinateurInitialUser = fei.examinateur_initial_user_id
-    ? state.users[fei.examinateur_initial_user_id!]
+    ? users[fei.examinateur_initial_user_id!]
     : null;
-  const premierDetenteurUser = fei.premier_detenteur_user_id
-    ? state.users[fei.premier_detenteur_user_id!]
-    : null;
+  const premierDetenteurUser = fei.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id!] : null;
   const premierDetenteurEntity = fei.premier_detenteur_entity_id
-    ? state.entities[fei.premier_detenteur_entity_id!]
+    ? entities[fei.premier_detenteur_entity_id!]
     : null;
-  const updateFeiState = state.updateFei;
-  const addLog = state.addLog;
+  const updateFeiState = useZustandStore((state) => state.updateFei);
+  const addLog = useZustandStore((state) => state.addLog);
   const updateFei: typeof updateFeiState = (fei_numero, nextFei) => {
     updateFeiState(fei_numero, nextFei);
     addLog({
