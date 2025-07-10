@@ -463,7 +463,9 @@ router.post(
       }
     }
 
-    checkGenerateCertificat(existingCarcasse, updatedCarcasse);
+    if (updatedCarcasse.svi_ipm1_date || updatedCarcasse.svi_ipm2_date) {
+      await checkGenerateCertificat(existingCarcasse, updatedCarcasse);
+    }
 
     res.status(200).send({
       ok: true,

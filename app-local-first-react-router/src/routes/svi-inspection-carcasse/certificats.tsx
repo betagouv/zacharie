@@ -23,7 +23,7 @@ export default function CarcasseSVICertificats() {
           setCertificats(data);
         });
     }
-  }, [params.zacharie_carcasse_id, carcasse.is_synced]);
+  }, [params.zacharie_carcasse_id, carcasse.is_synced, carcasse.svi_ipm1_date, carcasse.svi_ipm2_date]);
 
   if (certificats.length === 0) {
     return <p>Aucun certificat encore généré</p>;

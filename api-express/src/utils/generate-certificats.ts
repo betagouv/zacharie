@@ -24,20 +24,20 @@ function checkDatesAreEqual(oldDate: Date, newDate: Date) {
   return dayjs(oldDate).toISOString() === dayjs(newDate).toISOString();
 }
 
-export function checkGenerateCertificat(oldCarcasse: Carcasse, newCarcasse: Carcasse) {
+export async function checkGenerateCertificat(oldCarcasse: Carcasse, newCarcasse: Carcasse) {
   if (!checkDatesAreEqual(oldCarcasse.svi_ipm1_signed_at, newCarcasse.svi_ipm1_signed_at)) {
     if (newCarcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE) {
-      generateDBCertificat(CarcasseCertificatType.CC, newCarcasse.zacharie_carcasse_id);
+      await generateDBCertificat(CarcasseCertificatType.CC, newCarcasse.zacharie_carcasse_id);
     }
   } else if (!checkDatesAreEqual(oldCarcasse.svi_ipm2_signed_at, newCarcasse.svi_ipm2_signed_at)) {
     if (newCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE) {
-      generateDBCertificat(CarcasseCertificatType.CSP, newCarcasse.zacharie_carcasse_id);
+      await generateDBCertificat(CarcasseCertificatType.CSP, newCarcasse.zacharie_carcasse_id);
     } else if (newCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE) {
-      generateDBCertificat(CarcasseCertificatType.CST, newCarcasse.zacharie_carcasse_id);
+      await generateDBCertificat(CarcasseCertificatType.CST, newCarcasse.zacharie_carcasse_id);
     } else if (newCarcasse.svi_ipm2_decision === IPM2Decision.TRAITEMENT_ASSAINISSANT) {
-      generateDBCertificat(CarcasseCertificatType.LPS, newCarcasse.zacharie_carcasse_id);
+      await generateDBCertificat(CarcasseCertificatType.LPS, newCarcasse.zacharie_carcasse_id);
     } else if (newCarcasse.svi_ipm2_decision === IPM2Decision.LEVEE_DE_LA_CONSIGNE) {
-      generateDBCertificat(CarcasseCertificatType.LC, newCarcasse.zacharie_carcasse_id);
+      await generateDBCertificat(CarcasseCertificatType.LC, newCarcasse.zacharie_carcasse_id);
     }
   }
 }
