@@ -61,7 +61,7 @@ export default function CardCarcasse({
     return commentaires;
   }, [carcassesIntermediaires, entities]);
 
-  let { statusNewCard } = useCarcasseStatusAndRefus(carcasse, fei);
+  let { statusNewCard, motifRefus, status } = useCarcasseStatusAndRefus(carcasse, fei);
 
   let espece = carcasse.espece;
   if (carcasse.nombre_d_animaux! > 1) espece = espece += ` (${carcasse.nombre_d_animaux})`;
@@ -181,13 +181,28 @@ export default function CardCarcasse({
           },
         ]}
       >
-        <CarcasseDetails carcasseId={carcasse.zacharie_carcasse_id} />
+        <CarcasseDetails
+          carcasseId={carcasse.zacharie_carcasse_id}
+          statusNewCard={statusNewCard}
+          motifRefus={motifRefus}
+          status={status}
+        />
       </cacasseModal.Component>
     </>
   );
 }
 
-function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carcasse_id'] }) {
+function CarcasseDetails({
+  carcasseId,
+  statusNewCard,
+  motifRefus,
+  status,
+}: {
+  carcasseId?: Carcasse['zacharie_carcasse_id'];
+  statusNewCard: string;
+  motifRefus: string;
+  status: string;
+}) {
   const user = useUser((state) => state.user)!;
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
@@ -200,7 +215,6 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
   );
   const carcassesIntermediaires = getCarcassesIntermediairesForCarcasse(carcasseId!);
   const latestIntermediaire = carcassesIntermediaires[0];
-  // console.log('fei', fei);
 
   const carcasse = carcasses[carcasseId!];
 
@@ -297,6 +311,9 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
     }
     if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
+    if (statusNewCard.includes('refus') || statusNewCard.includes('manquant')) {
+      _milestones.push(motifRefus);
+    }
     // if (carcasse.svi_ipm1_date) _milestones.push(`Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd D MMMM YYYY')}`);
     if (carcasse.svi_ipm2_date)
       _milestones.push(
@@ -311,7 +328,9 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
     onlyPetitGibier,
     ccgDate,
     etgDate,
+    statusNewCard,
     carcasse.svi_ipm2_date,
+    motifRefus,
   ]);
 
   const ipm1 = useMemo(() => {
@@ -465,9 +484,26 @@ function CarcasseDetails({ carcasseId }: { carcasseId?: Carcasse['zacharie_carca
     <>
       <hr className="mt-4 bg-none" />
       <ItemNotEditable label="Épisodes clés" value={milestones} withDiscs />
-      <ItemNotEditable label="Anomalies abats" value={carcasse.examinateur_anomalies_abats} withDiscs />
-      <ItemNotEditable label="Anomalies carcasse" value={carcasse.examinateur_anomalies_carcasse} withDiscs />
-      <ItemNotEditable label="Commentaires des intermédiaires" value={commentairesIntermediaires} withDiscs />
+      {carcasse.examinateur_anomalies_abats?.length > 0 && (
+        <ItemNotEditable label="Anomalies abats" value={carcasse.examinateur_anomalies_abats} withDiscs />
+      )}
+      {carcasse.examinateur_anomalies_carcasse?.length > 0 && (
+        <ItemNotEditable
+          label="Anomalies carcasse"
+          value={carcasse.examinateur_anomalies_carcasse}
+          withDiscs
+        />
+      )}
+      {statusNewCard.includes('refus') && motifRefus && (
+        <ItemNotEditable label={motifRefus.split(':')[0]} value={motifRefus.split(':')[1]} withDiscs />
+      )}
+      {commentairesIntermediaires.length > 0 && (
+        <ItemNotEditable
+          label="Commentaires des intermédiaires"
+          value={commentairesIntermediaires}
+          withDiscs
+        />
+      )}
       {showIpm1AndIpm2 ? (
         <>
           <ItemNotEditable
