@@ -167,6 +167,7 @@ export function SviInspectionCarcasse() {
               </Section>
               <Section
                 open={!carcasse.svi_ipm2_decision}
+                key={carcasse.svi_ipm1_date?.toISOString() ?? ''}
                 title={`Inspection Post-Mortem 2 (IPM2)${carcasse.svi_ipm2_date ? ` - ${dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}` : ''}`}
               >
                 <CarcasseIPM2 canEdit={canEdit} />
