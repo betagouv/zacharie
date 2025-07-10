@@ -167,6 +167,9 @@ export default function CurrentOwnerConfirm() {
 
     if (intermediaireRole.includes(nextFei.fei_current_owner_role!)) {
       const newIntermediaireId = getNewCarcasseIntermediaireId(user.id, fei.numero);
+      nextFei.latest_intermediaire_user_id = user.id;
+      nextFei.latest_intermediaire_entity_id = nextFei.fei_current_owner_entity_id;
+      nextFei.latest_intermediaire_name_cache = nextFei.fei_current_owner_entity_name_cache;
       const newIntermediaire: FeiIntermediaire = {
         id: newIntermediaireId,
         fei_numero: fei.numero,

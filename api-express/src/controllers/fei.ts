@@ -258,6 +258,15 @@ router.post(
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_entity_id)) {
       nextFei.intermediaire_closed_by_entity_id = body.intermediaire_closed_by_entity_id || null;
     }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_user_id)) {
+      nextFei.latest_intermediaire_user_id = body.latest_intermediaire_user_id || null;
+    }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_entity_id)) {
+      nextFei.latest_intermediaire_entity_id = body.latest_intermediaire_entity_id || null;
+    }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_name_cache)) {
+      nextFei.latest_intermediaire_name_cache = body.latest_intermediaire_name_cache || null;
+    }
 
     /*
   *

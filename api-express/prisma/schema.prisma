@@ -306,6 +306,12 @@ model Fei {
   intermediaire_closed_by_user_id                         String?
   intermediaire_closed_by_entity_id                       String?
   /**
+  * latest-intermediaire
+  */
+  latest_intermediaire_user_id                            String?
+  latest_intermediaire_entity_id                          String?
+  latest_intermediaire_name_cache                         String?
+  /**
   * svi
   */
   svi_assigned_at                                         DateTime?
@@ -590,6 +596,8 @@ model CarcasseIntermediaire {
   * fields from FeiIntermediaire
   */
   /**
+  * /**
+  * /**
   * /**
   * /**
   * /**
