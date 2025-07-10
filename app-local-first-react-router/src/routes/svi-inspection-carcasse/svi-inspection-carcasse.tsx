@@ -185,7 +185,9 @@ export function SviInspectionCarcasse() {
 
           {user.roles.includes(UserRoles.SVI) && (
             <Section title="Certificats">
-              <CarcasseSVICertificats />
+              <CarcasseSVICertificats
+                key={carcasse.svi_ipm1_date?.toISOString() ?? '' + carcasse.svi_ipm2_date?.toISOString()}
+              />
             </Section>
           )}
 
