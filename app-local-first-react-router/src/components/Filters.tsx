@@ -96,12 +96,20 @@ export default function Filters<T extends Filter = Filter>({
             // filter: field, value, type
             const filterValues = getFilterOptionsByField(filter.field!, base, index);
             const onChangeField = (newField: (typeof filterFields)[number] | null) => {
+              console.log('newField', newField);
               if (newField) {
                 onChange(
                   filters.map((_filter, i) =>
                     i === index
                       ? ({ field: newField?.field, value: null, type: newField?.type } as T)
                       : _filter,
+                  ),
+                  saveInURLParams,
+                );
+              } else {
+                onChange(
+                  filters.map((_filter, i) =>
+                    i === index ? ({ field: '', value: null, type: '' } as unknown as T) : _filter,
                   ),
                   saveInURLParams,
                 );
