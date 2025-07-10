@@ -61,7 +61,7 @@ export default function CardCarcasse({
     return commentaires;
   }, [carcassesIntermediaires, entities]);
 
-  let { statusNewCard, motifRefus, status } = useCarcasseStatusAndRefus(carcasse, fei);
+  let { statusNewCard, motifRefus } = useCarcasseStatusAndRefus(carcasse, fei);
 
   let espece = carcasse.espece;
   if (carcasse.nombre_d_animaux! > 1) espece = espece += ` (${carcasse.nombre_d_animaux})`;
@@ -185,7 +185,6 @@ export default function CardCarcasse({
           carcasseId={carcasse.zacharie_carcasse_id}
           statusNewCard={statusNewCard}
           motifRefus={motifRefus}
-          status={status}
         />
       </cacasseModal.Component>
     </>
@@ -196,12 +195,10 @@ function CarcasseDetails({
   carcasseId,
   statusNewCard,
   motifRefus,
-  status,
 }: {
   carcasseId?: Carcasse['zacharie_carcasse_id'];
   statusNewCard: string;
   motifRefus: string;
-  status: string;
 }) {
   const user = useUser((state) => state.user)!;
   const params = useParams();
