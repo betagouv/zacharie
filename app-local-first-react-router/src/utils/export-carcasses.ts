@@ -55,6 +55,16 @@ type CarcasseExcelData = {
   // Commentaires: string;
 };
 
+function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: CarcasseExcelData) {
+  if (carcasseA.Réceptionnée && carcasseB.Réceptionnée) {
+    return carcasseA.Réceptionnée.localeCompare(carcasseB.Réceptionnée);
+  }
+  if (carcasseA.Éspèce === carcasseB.Éspèce) {
+    return carcasseA['Numéro de bracelet'].localeCompare(carcasseB['Numéro de bracelet']);
+  }
+  return carcasseA.Éspèce!.localeCompare(carcasseB.Éspèce!);
+}
+
 function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
   data: Array<Record<T, unknown>>,
 ) {
@@ -270,7 +280,12 @@ export default function useExportCarcasses() {
         });
       }
 
-      utils.book_append_sheet(carcassesWorkbook, createSheet(allCarcasses), 'Carcasses', true);
+      utils.book_append_sheet(
+        carcassesWorkbook,
+        createSheet(allCarcasses.sort(sortCarcassesApprovedForExcel)),
+        'Carcasses',
+        true,
+      );
 
       writeFile(carcassesWorkbook, `export-carcasses-zacharie-${dayjs().format('YYYY-MM-DD-HH-mm')}.xlsx`, {
         cellStyles: true,
