@@ -308,7 +308,7 @@ function CarcasseDetails({
     }
     if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
-    if (statusNewCard.includes('refus') || statusNewCard.includes('manquant')) {
+    if (statusNewCard.includes('manquant')) {
       _milestones.push(motifRefus);
     }
     // if (carcasse.svi_ipm1_date) _milestones.push(`Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd D MMMM YYYY')}`);
