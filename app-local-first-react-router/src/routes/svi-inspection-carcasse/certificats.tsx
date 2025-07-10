@@ -15,6 +15,7 @@ export default function CarcasseSVICertificats() {
 
   useEffect(() => {
     if (carcasse.is_synced) {
+      setIsLoading(true);
       fetch(`${import.meta.env.VITE_API_URL}/certificat/${params.zacharie_carcasse_id}/all`, {
         credentials: 'include',
       })
@@ -68,7 +69,7 @@ function CertificatCard({ certificat }: { certificat: CarcasseCertificat }) {
 
   return (
     <div className="flex basis-full flex-row items-center justify-between border border-solid border-gray-200 bg-white text-left">
-      <div className="flex flex-1 flex-col p-4">
+      <button type="button" className="flex flex-1 flex-col p-4 text-left" onClick={handleDownload}>
         <p className="order-1 text-base font-bold">{mapCertificatTypeToLabel(certificat.type!)}</p>
         <p className="order-2 text-sm/4 font-medium text-gray-600">N° {certificat.certificat_id}</p>
         <p className="order-3 text-sm/4 text-gray-500">{dayjs(certificat.created_at).format('DD/MM/YYYY')}</p>
@@ -77,7 +78,7 @@ function CertificatCard({ certificat }: { certificat: CarcasseCertificat }) {
             Annule et remplace {certificat.remplace_certificat_id}
           </p>
         )}
-      </div>
+      </button>
       <div className="flex flex-row gap-2 pr-4">
         <Button
           type="button"
