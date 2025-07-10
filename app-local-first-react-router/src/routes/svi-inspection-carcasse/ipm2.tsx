@@ -641,6 +641,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             <>
               <Input
                 label="Temps de cuisson *"
+                hintText="N'oubliez pas de définir l'unité de temps (min, h, jours, etc.)"
                 nativeInputProps={{
                   name: Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temps,
                   value: sviIpm2TraitementAssainissantCuissonTemps || '',
@@ -651,8 +652,12 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               />
               <Input
                 label="Température de cuisson *"
+                hintText="En °C"
                 nativeInputProps={{
                   name: Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temp,
+                  type: 'number',
+                  min: -100,
+                  max: 1000,
                   value: sviIpm2TraitementAssainissantCuissonTemp || '',
                   onChange: (e) => {
                     setSviIpm2TraitementAssainissantCuissonTemp(e.target.value);
@@ -665,6 +670,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             <>
               <Input
                 label="Temps de congélation *"
+                hintText="N'oubliez pas de définir l'unité de temps (min, h, jours, etc.)"
                 nativeInputProps={{
                   name: Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_congelation_temps,
                   value: sviIpm2TraitementAssainissantCongelationTemps || '',
@@ -675,9 +681,13 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               />
               <Input
                 label="Température de congélation *"
+                hintText="En °C"
                 nativeInputProps={{
                   name: Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_congelation_temp,
                   value: sviIpm2TraitementAssainissantCongelationTemp || '',
+                  type: 'number',
+                  min: -100,
+                  max: 1000,
                   onChange: (e) => {
                     setSviIpm2TraitementAssainissantCongelationTemp(e.target.value);
                   },
