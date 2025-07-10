@@ -27,6 +27,7 @@ export default function TableauDeBordIndex() {
   const user = useMostFreshUser('tableau de bord index')!;
   const feisDoneNumeros = useZustandStore((state) => state.feisDoneNumeros);
   const feisDone = useZustandStore((state) => state.feisDone);
+  const entities = useZustandStore((state) => state.entities);
   const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();
   const { onExportToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
@@ -43,7 +44,7 @@ export default function TableauDeBordIndex() {
 
   const isOnlySvi =
     user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
-  const { feiActivesForSvi, feisDoneForSvi } = feisDoneNumeros.reduce(
+  const { feiActivesForSvi, feisDoneForSvi, etgIds } = feisDoneNumeros.reduce(
     (acc, feiNumero) => {
       const fei = feisDone[feiNumero]!;
       if (fei.automatic_closed_at) {
@@ -55,11 +56,13 @@ export default function TableauDeBordIndex() {
       } else {
         acc.feiActivesForSvi.push(fei);
       }
+      if (fei.latest_intermediaire_entity_id) acc.etgIds.add(fei.latest_intermediaire_entity_id);
       return acc;
     },
     {
       feiActivesForSvi: [] as Array<(typeof feisDone)[string]>,
       feisDoneForSvi: [] as Array<(typeof feisDone)[string]>,
+      etgIds: new Set<string>(),
     },
   );
 
@@ -89,7 +92,7 @@ export default function TableauDeBordIndex() {
     switch (filter) {
       case 'Toutes les fiches':
       default:
-        return 'Filtrer';
+        return 'Filtrer par statut';
       case 'À compléter':
         return 'Fiches à compléter';
       case 'En cours':
@@ -98,6 +101,13 @@ export default function TableauDeBordIndex() {
         return 'Fiches clôturées';
     }
   }, [filter]);
+  const [filterETG, setFilterETG] = useState<string>('');
+  const dropDownMenuFilterTextSvi = useMemo(() => {
+    if (etgIds.has(filterETG)) {
+      return `Fiches de ${entities[filterETG]?.nom_d_usage}`;
+    }
+    return 'Filtrer par ETG';
+  }, [filterETG, etgIds, entities]);
 
   function Actions() {
     return (
@@ -181,6 +191,38 @@ export default function TableauDeBordIndex() {
             },
           ]}
         />
+        {isOnlySvi && (
+          <DropDownMenu
+            text={dropDownMenuFilterTextSvi}
+            isActive={filterETG !== 'Toutes les fiches'}
+            menuLinks={[
+              {
+                linkProps: {
+                  href: '#',
+                  title: 'Toutes les fiches',
+                  onClick: (e) => {
+                    e.preventDefault();
+                    setFilterETG('');
+                  },
+                },
+                text: 'Toutes les fiches',
+                isActive: !filterETG,
+              },
+              ...[...etgIds].map((etgId) => ({
+                linkProps: {
+                  href: '#',
+                  title: `Fiches de ${entities[etgId]?.nom_d_usage}`,
+                  onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+                    e.preventDefault();
+                    setFilterETG(etgId);
+                  },
+                },
+                text: `Fiches de ${entities[etgId]?.nom_d_usage}`,
+                isActive: filterETG === etgId,
+              })),
+            ]}
+          />
+        )}
         <DropDownMenu
           className="hidden lg:block"
           text="Action sur les fiches sélectionnées"
@@ -224,7 +266,7 @@ export default function TableauDeBordIndex() {
       <div className="fr-container fr-container--fluid">
         <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
-          <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+          <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
             <Actions />
             {!isOnlySvi && (
               <FeisWrapper>
@@ -271,34 +313,34 @@ export default function TableauDeBordIndex() {
             )}
             {isOnlySvi && (
               <FeisWrapper>
-                {feiActivesForSvi
-                  .filter((fei) => fei !== null)
-                  .map((fei) => {
-                    return (
-                      <CardFiche
-                        key={fei.numero}
-                        fei={fei}
-                        filter={filter}
-                        onPrintSelect={handleCheckboxClick}
-                        isPrintSelected={selectedFeis.includes(fei.numero)}
-                        disabledBecauseOffline={!isOnline}
-                      />
-                    );
-                  })}
-                {feisDoneForSvi
-                  .filter((fei) => fei !== null)
-                  .map((fei) => {
-                    return (
-                      <CardFiche
-                        key={fei.numero}
-                        fei={fei}
-                        filter={filter}
-                        onPrintSelect={handleCheckboxClick}
-                        isPrintSelected={selectedFeis.includes(fei.numero)}
-                        disabledBecauseOffline={!isOnline}
-                      />
-                    );
-                  })}
+                {feiActivesForSvi.map((fei) => {
+                  if (!fei) return null;
+                  if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
+                  return (
+                    <CardFiche
+                      key={fei.numero}
+                      fei={fei}
+                      filter={filter}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                      disabledBecauseOffline={!isOnline}
+                    />
+                  );
+                })}
+                {feisDoneForSvi.map((fei) => {
+                  if (!fei) return null;
+                  if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
+                  return (
+                    <CardFiche
+                      key={fei.numero}
+                      fei={fei}
+                      filter={filter}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                      disabledBecauseOffline={!isOnline}
+                    />
+                  );
+                })}
               </FeisWrapper>
             )}
             <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">

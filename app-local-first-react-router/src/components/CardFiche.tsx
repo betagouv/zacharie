@@ -6,8 +6,6 @@ import { Link } from 'react-router';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { useMemo, useState, useRef, useEffect } from 'react';
-import useUser from '@app/zustand/user';
-import { UserRoles } from '@prisma/client';
 
 interface CardProps {
   fei: FeiDone;
@@ -40,7 +38,6 @@ export default function CardFiche({
   disabledBecauseOffline = false,
   filter,
 }: CardProps) {
-  const user = useUser((state) => state.user);
   const { simpleStatus, currentStepLabel } = useFeiSteps(fei);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -199,11 +196,12 @@ export default function CardFiche({
                   fei.premier_detenteur_name_cache ? 'text-black' : 'text-neutral-400',
                 ].join(' ')}
               >
-                {user?.roles.includes(UserRoles.SVI) ? (
+                {/* {user?.roles.includes(UserRoles.SVI) ? (
                   <>{fei.latest_intermediaire_name_cache || 'À renseigner'}</>
                 ) : (
                   <>{fei.premier_detenteur_name_cache || 'À renseigner'}</>
-                )}
+                )} */}
+                <>{fei.premier_detenteur_name_cache || 'À renseigner'}</>
               </p>
             </div>
           </div>

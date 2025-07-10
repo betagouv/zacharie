@@ -21,7 +21,7 @@ export const feiDoneSelect = {
   premier_detenteur_prochain_detenteur_type_cache: true,
   premier_detenteur_transport_type: true,
   premier_detenteur_transport_date: true,
-  latest_intermediaire_name_cache: true,
+  latest_intermediaire_entity_id: true,
   commune_mise_a_mort: true,
   svi_assigned_at: true,
   svi_closed_at: true,
