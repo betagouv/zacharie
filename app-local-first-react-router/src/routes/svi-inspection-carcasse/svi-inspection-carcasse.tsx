@@ -109,6 +109,9 @@ export function SviInspectionCarcasse() {
     return true;
   }, [fei, user, isSviWorkingFor]);
 
+  console.log(carcasse.svi_ipm1_date);
+  console.log(carcasse.svi_ipm2_date);
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <title>
@@ -167,7 +170,7 @@ export function SviInspectionCarcasse() {
               </Section>
               <Section
                 open={!carcasse.svi_ipm2_decision}
-                key={dayjs(carcasse.svi_ipm1_date).toISOString()}
+                key={dayjs(carcasse.svi_ipm1_date || undefined).toISOString()}
                 title={`Inspection Post-Mortem 2 (IPM2)${carcasse.svi_ipm2_date ? ` - ${dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}` : ''}`}
               >
                 <CarcasseIPM2 canEdit={canEdit} />
@@ -187,7 +190,8 @@ export function SviInspectionCarcasse() {
             <Section title="Certificats">
               <CarcasseSVICertificats
                 key={
-                  dayjs(carcasse.svi_ipm1_date).toISOString() + dayjs(carcasse.svi_ipm2_date).toISOString()
+                  dayjs(carcasse.svi_ipm1_date || undefined).toISOString() +
+                  dayjs(carcasse.svi_ipm2_date || undefined).toISOString()
                 }
               />
             </Section>
