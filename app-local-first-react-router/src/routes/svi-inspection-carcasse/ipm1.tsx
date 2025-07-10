@@ -107,9 +107,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
       svi_ipm1_lesions_ou_motifs: sviIpm1LesionsOuMotifs,
       svi_ipm1_nombre_animaux: sviIpm1NombreAnimaux,
       svi_ipm1_commentaire: sviIpm1Commentaire,
-      svi_carcasse_commentaire: carcasse.svi_carcasse_commentaire
-        ? `${carcasse.svi_carcasse_commentaire}\n\nIPM1\u00A0: ${sviIpm1Commentaire}`
-        : `IPM1\u00A0: ${sviIpm1Commentaire}`,
+      svi_carcasse_commentaire: sviIpm1Commentaire
+        ? carcasse.svi_carcasse_commentaire
+          ? `${carcasse.svi_carcasse_commentaire}\n\nIPM1\u00A0: ${sviIpm1Commentaire}`
+          : `IPM1\u00A0: ${sviIpm1Commentaire}`
+        : carcasse.svi_carcasse_commentaire,
       svi_ipm1_decision: sviIpm1Decision,
       svi_ipm1_user_id: carcasse.svi_ipm1_user_id ?? user.id,
       svi_ipm1_user_name_cache: carcasse.svi_ipm1_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,

@@ -12,6 +12,7 @@ export default function CarcasseSVICertificats() {
   const carcasse = carcasses[params.zacharie_carcasse_id as string];
 
   const [certificats, setCertificats] = useState<Array<CarcasseCertificat>>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (carcasse.is_synced) {
@@ -21,9 +22,14 @@ export default function CarcasseSVICertificats() {
         .then((res) => res.json())
         .then((data) => {
           setCertificats(data);
+          setIsLoading(false);
         });
     }
   }, [params.zacharie_carcasse_id, carcasse.is_synced, carcasse.svi_ipm1_date, carcasse.svi_ipm2_date]);
+
+  if (isLoading) {
+    return <p>Chargement des certificats...</p>;
+  }
 
   if (certificats.length === 0) {
     return <p>Aucun certificat encore généré</p>;

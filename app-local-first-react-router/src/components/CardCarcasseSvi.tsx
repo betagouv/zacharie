@@ -56,6 +56,8 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
     miseAMort += ` - Éviscération\u00A0: ${carcasse.heure_evisceration}`;
   }
 
+  console.log(carcasse.svi_carcasse_commentaire);
+
   return (
     <Component
       key={carcasse?.updated_at ? dayjs(carcasse.updated_at).toISOString() : carcasse?.zacharie_carcasse_id}
