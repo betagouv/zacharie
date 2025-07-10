@@ -9,10 +9,8 @@ import petitGibierCarcasseTree from '@app/data/petit-gibier-carcasse/tree.json';
 import grandGibierAbatstree from '@app/data/grand-gibier-abats/tree.json';
 import grandGibierAbatsList from '@app/data/grand-gibier-abats/list.json';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
-import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import InputNotEditable from '@app/components/InputNotEditable';
@@ -28,6 +26,7 @@ import { loadFei } from '@app/utils/load-fei';
 import useUser from '@app/zustand/user';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import InputMultiSelect from '@app/components/InputMultiSelect';
 
 const gibierSelect = {
   grand: grandGibier.especes,
@@ -63,6 +62,7 @@ export default function CarcasseExaminateurLoader() {
         setHasTriedLoading(true);
         console.error(error);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!fei || !carcasse) {
@@ -326,32 +326,6 @@ function CarcasseExaminateur() {
                     <h3 className="fr-h4 fr-mb-2w">
                       Anomalies carcasse<span className="fr-hint-text"></span>
                     </h3>
-                    <div className="mt-4">
-                      {anomaliesCarcasse.map((anomalie, index) => {
-                        return (
-                          // @ts-expect-error isClosable is of type `true` but we expect `boolean`
-                          <Notice
-                            className="fr-text-default--grey fr-background-contrast--grey mb-4 p-2 [&_p.fr-notice\\\\_\\\\_title]:before:hidden"
-                            title={anomalie}
-                            isClosable={canEdit}
-                            onClose={() => {
-                              const nextAnomalies = anomaliesCarcasse
-                                .filter((a) => a !== anomalie)
-                                .filter(Boolean);
-                              setAnomaliesCarcasse(nextAnomalies);
-                              updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                examinateur_anomalies_carcasse: nextAnomalies,
-                                examinateur_signed_at: dayjs().toDate(),
-                                examinateur_carcasse_sans_anomalie:
-                                  nextAnomalies.length === 0 && !anomaliesAbats.length,
-                              });
-                            }}
-                            key={anomalie + index}
-                          />
-                        );
-                      })}
-                      {!anomaliesCarcasse.length && <p className="fr-text--sm">Aucune anomalie carcasse.</p>}
-                    </div>
                     {canEdit && (
                       <>
                         {/* <div className="mt-2">
@@ -361,10 +335,8 @@ function CarcasseExaminateur() {
                         </div> */}
                         {addAnomalieCarcasse && (
                           <>
-                            <InputForSearchPrefilledData
-                              canEdit={canEdit}
+                            <InputMultiSelect
                               data={referentielAnomaliesCarcasseList}
-                              clearInputOnClick
                               label="Ajouter une nouvelle anomalie"
                               hintText={
                                 <button type="button" onClick={() => anomaliesCarcasseModal.open()}>
@@ -372,17 +344,17 @@ function CarcasseExaminateur() {
                                   <u className="inline">cliquant ici</u>
                                 </button>
                               }
-                              hideDataWhenNoSearch
-                              onSelect={(newAnomalie) => {
-                                // setAddAnomalieCarcasse(false);
-                                const nextAnomalies = [...anomaliesCarcasse, newAnomalie].filter(Boolean);
-                                setAnomaliesCarcasse(nextAnomalies);
+                              canEdit
+                              placeholder="Tapez une anomalie carcasse"
+                              onChange={(newAnomalies) => {
+                                setAnomaliesCarcasse(newAnomalies);
                                 updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                  examinateur_anomalies_carcasse: nextAnomalies,
+                                  examinateur_anomalies_carcasse: newAnomalies,
                                   examinateur_signed_at: dayjs().toDate(),
                                   examinateur_carcasse_sans_anomalie: false,
                                 });
                               }}
+                              values={anomaliesCarcasse}
                             />
                             <ModalTreeDisplay
                               data={referentielAnomaliesCarcasseTree}
@@ -411,32 +383,6 @@ function CarcasseExaminateur() {
                       <h3 className="fr-h4 fr-mb-2w">
                         Anomalies abats<span className="fr-hint-text"></span>
                       </h3>
-                      <div className="mt-4">
-                        {anomaliesAbats.map((anomalie, index) => {
-                          return (
-                            // @ts-expect-error isClosable is of type `true` but we expect `boolean`
-                            <Notice
-                              className="fr-text-default--grey fr-background-contrast--grey mb-4 p-2 [&_p.fr-notice\\\\_\\\\_title]:before:hidden"
-                              title={anomalie}
-                              isClosable={canEdit}
-                              onClose={() => {
-                                const nextAnomalies = anomaliesAbats
-                                  .filter((a) => a !== anomalie)
-                                  .filter(Boolean);
-                                setAnomaliesAbats(nextAnomalies);
-                                updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                  examinateur_anomalies_abats: nextAnomalies,
-                                  examinateur_signed_at: dayjs().toDate(),
-                                  examinateur_carcasse_sans_anomalie:
-                                    nextAnomalies.length === 0 && !anomaliesCarcasse.length,
-                                });
-                              }}
-                              key={anomalie + index}
-                            />
-                          );
-                        })}
-                        {!anomaliesAbats.length && <p className="fr-text--sm">Aucune anomalie abats.</p>}
-                      </div>
                       {canEdit && (
                         <>
                           {/* <div className="mt-2">
@@ -446,27 +392,26 @@ function CarcasseExaminateur() {
                         </div> */}
                           {addAnomalieAbats && (
                             <div className="mt-4">
-                              <InputForSearchPrefilledData
+                              <InputMultiSelect
                                 data={grandGibierAbatsList}
-                                label="Ajouter une nouvelle anomalie"
-                                clearInputOnClick
+                                label="Observations (lésions) *"
                                 hintText={
                                   <button type="button" onClick={() => anomaliesAbatsModal.open()}>
                                     Voir le référentiel des saisies d'abats en{' '}
                                     <u className="inline">cliquant ici</u>
                                   </button>
                                 }
-                                hideDataWhenNoSearch
-                                onSelect={(newAnomalie) => {
-                                  // setAddAnomalieAbats(false);
-                                  const nextAnomalies = [...anomaliesAbats, newAnomalie].filter(Boolean);
-                                  setAnomaliesAbats(nextAnomalies);
+                                canEdit
+                                placeholder="Tapez une anomalie abats"
+                                onChange={(newAnomalies) => {
+                                  setAnomaliesAbats(newAnomalies);
                                   updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                    examinateur_anomalies_abats: nextAnomalies,
+                                    examinateur_anomalies_abats: newAnomalies,
                                     examinateur_signed_at: dayjs().toDate(),
                                     examinateur_carcasse_sans_anomalie: false,
                                   });
                                 }}
+                                values={anomaliesAbats}
                               />
                               <ModalTreeDisplay
                                 data={grandGibierAbatstree}

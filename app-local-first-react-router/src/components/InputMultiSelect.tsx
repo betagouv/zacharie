@@ -1,5 +1,6 @@
 import type { InputProps } from '@codegouvfr/react-dsfr/Input';
 import SelectCustom from './SelectCustom';
+import { type SingleValue, type MultiValue } from 'react-select';
 
 interface InputMultiSelectProps<T> {
   label: InputProps['label'];
@@ -16,6 +17,7 @@ interface InputMultiSelectProps<T> {
   addSearchToClickableLabel?: boolean;
   clearInputOnClick?: boolean;
   canEdit?: boolean;
+  isMulti?: boolean;
 }
 
 export default function InputMultiSelect<T extends string>({
@@ -28,6 +30,7 @@ export default function InputMultiSelect<T extends string>({
   values = [],
   canEdit = true,
   required = false,
+  isMulti = true,
 }: InputMultiSelectProps<T>) {
   return (
     <div className="fr-input-group">
@@ -43,10 +46,18 @@ export default function InputMultiSelect<T extends string>({
         value={values?.map((_value: string) => ({ label: _value, value: _value })) || []}
         getOptionLabel={(f) => f.label}
         getOptionValue={(f) => f.value}
-        onChange={(newValue) => onChange(newValue?.map((option) => option.value as T))}
+        onChange={(newValue) => {
+          if (isMulti) {
+            newValue = newValue as MultiValue<{ label: string; value: string }>;
+            onChange(newValue?.map((option) => option.value as T) || []);
+          } else {
+            newValue = newValue as SingleValue<{ label: string; value: string }>;
+            onChange([newValue?.value as T]);
+          }
+        }}
         placeholder={placeholder}
         isClearable={!values?.length}
-        isMulti
+        isMulti={isMulti}
         inputId={`${name}`}
         isDisabled={!canEdit}
         required={required}

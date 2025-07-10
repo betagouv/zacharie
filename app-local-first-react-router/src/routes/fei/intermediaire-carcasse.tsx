@@ -5,7 +5,7 @@ import { CarcasseType, Prisma, type Carcasse } from '@prisma/client';
 import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
-import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
+// import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import useZustandStore from '@app/zustand/store';
 import {
@@ -16,6 +16,7 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
 import dayjs from 'dayjs';
 import CardCarcasse from '@app/components/CardCarcasse';
+import InputMultiSelect from '@app/components/InputMultiSelect';
 
 interface CarcasseIntermediaireProps {
   carcasse: Carcasse;
@@ -318,7 +319,19 @@ export default function CarcasseIntermediaireComp({
             </div>
             {!!carcasseRefusCheckbox && (
               <div className="mb-4">
-                <InputForSearchPrefilledData
+                <InputMultiSelect
+                  label="Vous refusez cette carcasse ? Indiquez le motif *"
+                  isMulti={false}
+                  canEdit
+                  data={refusIntermedaire}
+                  placeholder="Tapez un motif de refus"
+                  onChange={([refus]) => {
+                    setRefus(refus);
+                    submitCarcasseRefus(refus);
+                  }}
+                  values={[refus]}
+                />
+                {/* <InputForSearchPrefilledData
                   canEdit={canEdit}
                   data={refusIntermedaire}
                   label="Vous refusez cette carcasse ? Indiquez le motif *"
@@ -333,7 +346,7 @@ export default function CarcasseIntermediaireComp({
                   }}
                   defaultValue={refus ?? ''}
                   key={refus ?? ''}
-                />
+                /> */}
               </div>
             )}
             <Input
