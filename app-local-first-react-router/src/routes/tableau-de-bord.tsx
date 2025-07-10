@@ -191,7 +191,7 @@ export default function TableauDeBordIndex() {
             },
           ]}
         />
-        {isOnlySvi && (
+        {isOnlySvi && etgIds.size > 1 && (
           <DropDownMenu
             text={dropDownMenuFilterTextSvi}
             isActive={filterETG !== 'Toutes les fiches'}
