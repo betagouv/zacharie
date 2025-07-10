@@ -557,6 +557,7 @@ router.get(
           // svi_carcasse_archived = fei.automatic_closed_at || fei.svi_closed_at,
           toReturn.svi_carcasse_archived =
             !!fei.automatic_closed_at || dayjs(now).diff(fei.svi_assigned_at, 'day') > 10;
+          toReturn.latest_intermediaire_name_cache = fei.latest_intermediaire_name_cache;
           for (const key of Object.keys(fei)) {
             // @ts-expect-error cannot guess fei_* fields
             toReturn[`fei_${key}`] = fei[key];

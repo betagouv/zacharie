@@ -22,6 +22,7 @@ const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function RegistreCarcasses() {
   const user = useMostFreshUser('registre-carcasses')!;
+  const isSvi = user.roles.includes(UserRoles.SVI);
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
@@ -45,16 +46,23 @@ export default function RegistreCarcasses() {
 
   const filterableFields = useMemo(() => {
     const motifs = new Set<string>();
+    const etgNames = new Set<string>();
     for (const carcasse of carcassesRegistry) {
       for (const motif of carcasse.svi_ipm2_lesions_ou_motifs) {
         if (motif) {
           motifs.add(motif);
         }
       }
+      if (isSvi) {
+        if (carcasse.latest_intermediaire_name_cache) {
+          etgNames.add(carcasse.latest_intermediaire_name_cache);
+        }
+      }
     }
     const sortedMotifs = Array.from(motifs).sort();
-    return carcasseFilterableFields(sortedMotifs);
-  }, [carcassesRegistry]);
+    const sortedEtgNames = Array.from(etgNames).sort();
+    return carcasseFilterableFields(sortedMotifs, sortedEtgNames);
+  }, [carcassesRegistry, isSvi]);
 
   const filteredData = useMemo(() => {
     return carcassesRegistry

@@ -65,8 +65,11 @@ type CarcasseFilterableField = FilterableField & {
   name: keyof CarcasseForResponseForRegistry;
 };
 
-export function carcasseFilterableFields(motifs: Array<string>): Array<CarcasseFilterableField> {
-  return [
+export function carcasseFilterableFields(
+  motifs: Array<string>,
+  etgNames: Array<string>,
+): Array<CarcasseFilterableField> {
+  const filters: Array<CarcasseFilterableField> = [
     { name: 'numero_bracelet', label: "Numéro de bracelet ou d'identification", type: 'text' },
     { name: 'fei_numero', label: 'Numéro FEI', type: 'text' },
     {
@@ -120,6 +123,15 @@ export function carcasseFilterableFields(motifs: Array<string>): Array<CarcasseF
       type: 'date-with-time',
     },
   ];
+  if (etgNames.length) {
+    filters.push({
+      name: 'latest_intermediaire_name_cache',
+      label: 'ETG',
+      type: 'enum',
+      options: etgNames,
+    });
+  }
+  return filters;
 }
 
 export type CarcasseFilter = Filter & {
