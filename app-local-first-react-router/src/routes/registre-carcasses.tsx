@@ -115,6 +115,7 @@ export default function RegistreCarcasses() {
       .then(() => setLoading(true))
       .then(() => loadCarcasses(role))
       .then(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useSaveScroll('registre-carcasses-scrollY');

@@ -6,9 +6,7 @@ import { lesionsList, lesionsTree } from '@app/utils/lesions';
 import piecesList from '@app/data/svi/pieces-list.json';
 import piecesTree from '@app/data/svi/pieces-tree.json';
 import dayjs from 'dayjs';
-import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
 import InputNotEditable from '@app/components/InputNotEditable';
-import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import ModalTreeDisplay from '@app/components/ModalTreeDisplay';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
@@ -17,6 +15,7 @@ import useZustandStore from '@app/zustand/store';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
+import InputMultiSelect from '@app/components/InputMultiSelect';
 
 const lesionsOuMotifsConsigneModal = createModal({
   isOpenedByDefault: false,
@@ -298,23 +297,18 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             />
           )}
           <div>
-            <InputForSearchPrefilledData
+            <InputMultiSelect
               label="Pièces inspectées nécessitant une observation *"
               hintText={
                 <button type="button" onClick={() => piecesGibier.open()}>
                   Voir le référentiel des pièces en <u className="inline">cliquant ici</u>
                 </button>
               }
-              // canEdit={canDoIPM1}
+              canEdit
               data={piecesList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
-              hideDataWhenNoSearch
-              clearInputOnClick
-              addSearchToClickableLabel={false}
               placeholder="Commencez à taper une pièce"
-              onSelect={(newPiece) => {
-                const nextPieces = [...sviIpm1Pieces.filter((p) => p !== newPiece), newPiece];
-                setSviIpm1Pieces(nextPieces);
-              }}
+              onChange={setSviIpm1Pieces}
+              values={sviIpm1Pieces}
             />
             <ModalTreeDisplay
               data={piecesTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
@@ -330,24 +324,8 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
           </div>
-          <div className="mx-4 mb-4">
-            {sviIpm1Pieces.map((piece, index) => {
-              return (
-                <Notice
-                  isClosable
-                  key={piece + index}
-                  title={piece}
-                  onClose={() => {
-                    const nextPieces = sviIpm1Pieces.filter((p) => p !== piece);
-                    setSviIpm1Pieces(nextPieces);
-                  }}
-                />
-              );
-            })}
-          </div>
           <div>
-            <InputForSearchPrefilledData
-              canEdit
+            <InputMultiSelect
               data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               label="Observations (lésions) *"
               hintText={
@@ -355,21 +333,10 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                   Voir le référentiel des lésions de carcasse en <u className="inline">cliquant ici</u>
                 </button>
               }
-              hideDataWhenNoSearch
-              clearInputOnClick
-              addSearchToClickableLabel={false}
-              placeholder={
-                sviIpm1LesionsOuMotifs.length
-                  ? 'Commencez à taper une lésion supplémentaire'
-                  : 'Commencez à taper une lésion'
-              }
-              onSelect={(newLom) => {
-                const nextLesionsOuMotifsSaisie = [
-                  ...sviIpm1LesionsOuMotifs.filter((lom) => lom !== newLom),
-                  newLom,
-                ];
-                setSviIpm1LesionsOuMotifs(nextLesionsOuMotifsSaisie);
-              }}
+              canEdit
+              placeholder="Commencez à taper une lésion"
+              onChange={setSviIpm1LesionsOuMotifs}
+              values={sviIpm1LesionsOuMotifs}
             />
             <ModalTreeDisplay
               data={lesionsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
@@ -381,21 +348,6 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                 setSviIpm1LesionsOuMotifs(nextLesionsOuMotifsSaisie);
               }}
             />
-          </div>
-          <div className="mx-4 mb-4">
-            {sviIpm1LesionsOuMotifs.map((lom, index) => {
-              return (
-                <Notice
-                  isClosable
-                  key={lom + index}
-                  title={lom}
-                  onClose={() => {
-                    const nextPieces = sviIpm1LesionsOuMotifs.filter((p) => p !== lom);
-                    setSviIpm1LesionsOuMotifs(nextPieces);
-                  }}
-                />
-              );
-            })}
           </div>
         </>
       )}

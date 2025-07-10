@@ -19,9 +19,7 @@ import {
   retrieveEtablissementAgremenet,
 } from '@app/utils/etablissementsTraitementSaintaire';
 import dayjs from 'dayjs';
-import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
 import InputNotEditable from '@app/components/InputNotEditable';
-import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import ModalTreeDisplay from '@app/components/ModalTreeDisplay';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
@@ -31,6 +29,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
+import InputMultiSelect from '@app/components/InputMultiSelect';
 
 const lesionsOuMotifsConsigneModal = createModal({
   isOpenedByDefault: false,
@@ -390,7 +389,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             />
           )}
           <div>
-            <InputForSearchPrefilledData
+            <InputMultiSelect
               label="Pièces inspectées nécessitant une observation *"
               hintText={
                 <>
@@ -401,16 +400,11 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                   </button>
                 </>
               }
-              // canEdit={canDoIPM2}
+              canEdit
               data={piecesList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
-              hideDataWhenNoSearch
-              clearInputOnClick
-              addSearchToClickableLabel={false}
               placeholder="Commencez à taper une pièce"
-              onSelect={(newPiece) => {
-                const nextPieces = [...sviIpm2Pieces.filter((p) => p !== newPiece), newPiece];
-                setSviIpm2Pieces(nextPieces);
-              }}
+              onChange={setSviIpm2Pieces}
+              values={sviIpm2Pieces}
             />
             <ModalTreeDisplay
               data={piecesTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
@@ -426,27 +420,10 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               }}
             />
           </div>
-          <div className="mx-4 mb-4">
-            {sviIpm2Pieces.map((piece, index) => {
-              return (
-                <Notice
-                  isClosable
-                  key={piece + index}
-                  title={piece}
-                  onClose={() => {
-                    const nextPieces = sviIpm2Pieces.filter((p) => p !== piece);
-                    setSviIpm2Pieces(nextPieces);
-                  }}
-                />
-              );
-            })}
-          </div>
           <div>
-            <InputForSearchPrefilledData
-              canEdit
+            <InputMultiSelect
               data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               label="Observations (lésions) *"
-              addSearchToClickableLabel={false}
               hintText={
                 <>
                   Rappel IPM1: {carcasse.svi_ipm1_lesions_ou_motifs.join('; ')}
@@ -456,20 +433,14 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                   </button>
                 </>
               }
-              hideDataWhenNoSearch
-              clearInputOnClick
+              canEdit
               placeholder={
                 sviIpm2LesionsOuMotifs.length
                   ? 'Commencez à taper une lésion ou un motif de consigne supplémentaire'
                   : 'Commencez à taper une lésion ou un motif de consigne'
               }
-              onSelect={(newLom) => {
-                const nextLesionsOuMotifsSaisie = [
-                  ...sviIpm2LesionsOuMotifs.filter((lom) => lom !== newLom),
-                  newLom,
-                ];
-                setSviIpm2LesionsOuMotifs(nextLesionsOuMotifsSaisie);
-              }}
+              onChange={setSviIpm2LesionsOuMotifs}
+              values={sviIpm2LesionsOuMotifs}
             />
             <ModalTreeDisplay
               data={lesionsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
@@ -481,21 +452,6 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                 setSviIpm2LesionsOuMotifs(nextLesionsOuMotifsSaisie);
               }}
             />
-          </div>
-          <div className="mx-4 mb-4">
-            {sviIpm2LesionsOuMotifs.map((lom, index) => {
-              return (
-                <Notice
-                  isClosable
-                  key={lom + index}
-                  title={lom}
-                  onClose={() => {
-                    const nextPieces = sviIpm2LesionsOuMotifs.filter((p) => p !== lom);
-                    setSviIpm2LesionsOuMotifs(nextPieces);
-                  }}
-                />
-              );
-            })}
           </div>
         </>
       )}

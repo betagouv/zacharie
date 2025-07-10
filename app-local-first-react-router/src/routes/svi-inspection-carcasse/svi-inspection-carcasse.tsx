@@ -112,6 +112,8 @@ export function SviInspectionCarcasse() {
   const initIMP1Open = useRef(!carcasse.svi_ipm1_decision);
   const initIMP2Open = useRef(!carcasse.svi_ipm2_decision);
 
+  console.log(carcasse.svi_ipm1_date);
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <title>
