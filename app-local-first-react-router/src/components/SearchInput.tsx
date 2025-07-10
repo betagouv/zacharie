@@ -25,7 +25,6 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
     clearTimeout(searchDebounce.current);
 
     searchDebounce.current = setTimeout(() => {
-      console.log('value', value, cachedValue);
       if (value === cachedValue) return;
       setError('');
       setSuccessData([]);
@@ -40,7 +39,6 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
       })
         .then((response) => response.json())
         .then((data: SearchResponse) => {
-          console.log('data', data);
           setIsLoading(false);
           if (data.data?.length) {
             setSuccessData(data.data);

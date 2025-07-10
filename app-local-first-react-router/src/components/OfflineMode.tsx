@@ -3,8 +3,6 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 export default function OfflineMode() {
   const isOnline = useIsOnline();
 
-  console.log('isOnline', isOnline);
-
   if (isOnline) {
     return null;
   }
