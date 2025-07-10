@@ -126,7 +126,10 @@ export default function CurrentOwnerConfirm() {
     const nextFei: Partial<FeiWithIntermediaires> = {
       fei_current_owner_role: currentOwnerRole,
       fei_current_owner_entity_id: forceNextEntityId || fei.fei_next_owner_entity_id,
-      fei_current_owner_entity_name_cache: forceNextEntityName || fei.fei_next_owner_entity_name_cache,
+      fei_current_owner_entity_name_cache:
+        forceNextEntityName ||
+        fei.fei_next_owner_entity_name_cache ||
+        entities[fei.fei_next_owner_entity_id!].nom_d_usage,
       fei_current_owner_user_id: fei.fei_next_owner_user_id || user.id,
       fei_current_owner_user_name_cache:
         fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
