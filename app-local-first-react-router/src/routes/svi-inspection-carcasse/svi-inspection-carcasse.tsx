@@ -167,7 +167,7 @@ export function SviInspectionCarcasse() {
               </Section>
               <Section
                 open={!carcasse.svi_ipm2_decision}
-                key={carcasse.svi_ipm1_date?.toISOString() ?? ''}
+                key={dayjs(carcasse.svi_ipm1_date).toISOString()}
                 title={`Inspection Post-Mortem 2 (IPM2)${carcasse.svi_ipm2_date ? ` - ${dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}` : ''}`}
               >
                 <CarcasseIPM2 canEdit={canEdit} />
@@ -186,7 +186,9 @@ export function SviInspectionCarcasse() {
           {user.roles.includes(UserRoles.SVI) && (
             <Section title="Certificats">
               <CarcasseSVICertificats
-                key={carcasse.svi_ipm1_date?.toISOString() ?? '' + carcasse.svi_ipm2_date?.toISOString()}
+                key={
+                  dayjs(carcasse.svi_ipm1_date).toISOString() + dayjs(carcasse.svi_ipm2_date).toISOString()
+                }
               />
             </Section>
           )}
