@@ -87,6 +87,7 @@ export default function NouvelleCarcasse() {
           hintText="Optionel, seulement pour le petit gibier"
           nativeInputProps={{
             type: 'number',
+            min: 0,
             name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
             value: nombreDAnimaux,
             onChange: (e) => setNombreDAnimaux(e.target.value),

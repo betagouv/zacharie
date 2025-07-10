@@ -304,6 +304,7 @@ function CarcasseExaminateur() {
                   hintText="Optionel"
                   nativeInputProps={{
                     type: 'number',
+                    min: 0,
                     name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
                     defaultValue:
                       carcasse.type === CarcasseType.GROS_GIBIER ? '1' : (carcasse.nombre_d_animaux ?? ''),

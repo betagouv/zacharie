@@ -377,6 +377,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               hintText={`Nombre d'animaux initialement prélevés\u00A0: ${carcasse.nombre_d_animaux}`}
               nativeInputProps={{
                 type: 'number',
+                min: 0,
                 required: true,
                 value: sviIpm2NombreAnimaux ?? '',
                 // max: Number(carcasse.nombre_d_animaux),
@@ -742,6 +743,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             hintText="En kg, facultatif"
             nativeInputProps={{
               type: 'number',
+              min: 0,
               name: Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_poids,
               value: sviIpm2TraitementAssainissantPoids || '',
               onChange: (e) => {
@@ -759,6 +761,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             hintText="En kg, facultatif"
             nativeInputProps={{
               type: 'number',
+              min: 0,
               name: Prisma.CarcasseScalarFieldEnum.svi_ipm2_poids_saisie,
               value: sviIpm2PoidsSaisie || '',
               onChange: (e) => {

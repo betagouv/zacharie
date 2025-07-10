@@ -285,6 +285,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               hintText={`Nombre d'animaux initialement prélevés\u00A0: ${carcasse.nombre_d_animaux}`}
               nativeInputProps={{
                 type: 'number',
+                min: 0,
                 required: true,
                 value: sviIpm1NombreAnimaux ?? '',
                 // max: Number(carcasse.nombre_d_animaux),
@@ -436,6 +437,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             nativeInputProps={{
               type: 'number',
               required: true,
+              min: 0,
               name: Prisma.CarcasseScalarFieldEnum.svi_ipm1_duree_consigne,
               form: `svi-carcasse-ipm1-${carcasse.numero_bracelet}`,
               value: sviIpm1DureeConsigne || '',
@@ -449,6 +451,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             hintText="En kg, facultatif"
             nativeInputProps={{
               type: 'number',
+              min: 0,
               name: Prisma.CarcasseScalarFieldEnum.svi_ipm1_poids_consigne,
               form: `svi-carcasse-ipm1-${carcasse.numero_bracelet}`,
               value: sviIpm1PoidsConsigne || '',
