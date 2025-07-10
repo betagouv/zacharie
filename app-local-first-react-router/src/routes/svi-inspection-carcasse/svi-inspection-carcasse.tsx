@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { CarcasseType, EntityRelationType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -109,8 +109,8 @@ export function SviInspectionCarcasse() {
     return true;
   }, [fei, user, isSviWorkingFor]);
 
-  console.log(carcasse.svi_ipm1_date);
-  console.log(carcasse.svi_ipm2_date);
+  const initIMP1Open = useRef(!carcasse.svi_ipm1_decision);
+  const initIMP2Open = useRef(!carcasse.svi_ipm2_decision);
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -163,13 +163,13 @@ export function SviInspectionCarcasse() {
           {canEdit && (
             <>
               <Section
-                open={!carcasse.svi_ipm1_decision}
+                open={initIMP1Open.current}
                 title={`Inspection Post-Mortem 1 (IPM1)${carcasse.svi_ipm1_date ? ` - ${dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}` : ''}`}
               >
                 <CarcasseIPM1 canEdit={canEdit} />
               </Section>
               <Section
-                open={!carcasse.svi_ipm2_decision}
+                open={initIMP2Open.current}
                 key={dayjs(carcasse.svi_ipm1_date || undefined).toISOString()}
                 title={`Inspection Post-Mortem 2 (IPM2)${carcasse.svi_ipm2_date ? ` - ${dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}` : ''}`}
               >
