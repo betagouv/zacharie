@@ -17,14 +17,26 @@ router.get(
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const { zacharie_carcasse_id } = req.params;
-    const certificats = await prisma.carcasseCertificat.findMany({
-      where: {
-        zacharie_carcasse_id: zacharie_carcasse_id,
-      },
-      orderBy: {
-        created_at: 'desc',
-      },
-    });
+    const certificats = await prisma.carcasseCertificat
+      .findMany({
+        where: {
+          zacharie_carcasse_id: zacharie_carcasse_id,
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      })
+      .then((certificats) => {
+        const replacedIds: Record<string, string> = {};
+        for (const certificat of certificats) {
+          if (certificat.remplace_certificat_id) {
+            replacedIds[certificat.remplace_certificat_id] = certificat.certificat_id;
+          }
+        }
+        return certificats.map((certificat) => {
+          return { ...certificat, remplace_par_certificat_id: replacedIds[certificat.certificat_id] };
+        });
+      });
     res.send(certificats);
   }),
 );

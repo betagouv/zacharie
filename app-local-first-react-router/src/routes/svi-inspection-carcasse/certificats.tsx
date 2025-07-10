@@ -5,12 +5,14 @@ import dayjs from 'dayjs';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import useZustandStore from '@app/zustand/store';
 
+type Certificat = CarcasseCertificat & { remplace_par_certificat_id: string };
+
 export default function CarcasseSVICertificats() {
   const params = useParams();
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id as string];
 
-  const [certificats, setCertificats] = useState<Array<CarcasseCertificat>>([]);
+  const [certificats, setCertificats] = useState<Array<Certificat>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export default function CarcasseSVICertificats() {
   );
 }
 
-function CertificatCard({ certificat }: { certificat: CarcasseCertificat }) {
+function CertificatCard({ certificat }: { certificat: Certificat }) {
   const handleDownload = () => {
     fetch(`${import.meta.env.VITE_API_URL}/certificat/${certificat.certificat_id}`, {
       method: 'GET',
@@ -68,11 +70,21 @@ function CertificatCard({ certificat }: { certificat: CarcasseCertificat }) {
   };
 
   return (
-    <div className="flex basis-full flex-row items-center justify-between border border-solid border-gray-200 bg-white text-left">
+    <div
+      className={[
+        'flex basis-full flex-row items-center justify-between border border-solid border-gray-200 bg-white text-left',
+        certificat.remplace_par_certificat_id && 'opacity-50',
+      ].join(' ')}
+    >
       <button type="button" className="flex flex-1 flex-col p-4 text-left" onClick={handleDownload}>
         <p className="order-1 text-base font-bold">{mapCertificatTypeToLabel(certificat.type!)}</p>
         <p className="order-2 text-sm/4 font-medium text-gray-600">N° {certificat.certificat_id}</p>
         <p className="order-3 text-sm/4 text-gray-500">{dayjs(certificat.created_at).format('DD/MM/YYYY')}</p>
+        {certificat.remplace_par_certificat_id && (
+          <p className="order-4 text-sm/4 text-gray-500">
+            Remplacé par {certificat.remplace_par_certificat_id}
+          </p>
+        )}
         {certificat.remplace_certificat_id && (
           <p className="order-4 text-sm/4 text-gray-500">
             Annule et remplace {certificat.remplace_certificat_id}
