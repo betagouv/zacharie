@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { CarcasseCertificat, CarcasseCertificatType } from '@prisma/client';
 import dayjs from 'dayjs';
-import TableResponsive from '@app/components/TableResponsive';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import useZustandStore from '@app/zustand/store';
 
@@ -36,58 +35,58 @@ export default function CarcasseSVICertificats() {
   }
 
   return (
-    <div>
-      <TableResponsive
-        headers={['Type', 'Date de création', 'Annule et remplace', 'Actions']}
-        data={certificats.map((certificat) => ({
-          id: certificat.certificat_id,
-          isSynced: true,
-          cols: [
-            <>
-              {mapCertificatTypeToLabel(certificat.type!)}
-              <br />
-              {certificat.certificat_id}
-            </>,
-            dayjs(certificat.created_at).format('DD/MM/YYYY'),
-            certificat.remplace_certificat_id
-              ? `Annule et remplace ${certificat.remplace_certificat_id}`
-              : '',
-            <>
-              <Button
-                nativeButtonProps={{
-                  onClick: () => {
-                    fetch(`${import.meta.env.VITE_API_URL}/certificat/${certificat.certificat_id}`, {
-                      method: 'GET',
-                      credentials: 'include',
-                      headers: {
-                        Accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                        'Content-Type':
-                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                      },
-                    })
-                      .then((res) => res.blob())
-                      .then((blob) => {
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = mapCertificatTypeToDocName(certificat)!;
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
-                        window.URL.revokeObjectURL(url);
-                      });
-                  },
-                }}
-              >
-                Télécharger
-              </Button>
-            </>,
-          ],
-        }))}
-        onCheckboxClick={() => {}}
-        checkedItemIds={[]}
-      />
-      <div className="mt-4"></div>
+    <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {certificats.map((certificat) => (
+        <CertificatCard key={certificat.certificat_id} certificat={certificat} />
+      ))}
+    </div>
+  );
+}
+
+function CertificatCard({ certificat }: { certificat: CarcasseCertificat }) {
+  const handleDownload = () => {
+    fetch(`${import.meta.env.VITE_API_URL}/certificat/${certificat.certificat_id}`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      },
+    })
+      .then((res) => res.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = mapCertificatTypeToDocName(certificat)!;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      });
+  };
+
+  return (
+    <div className="flex basis-full flex-row items-center justify-between border border-solid border-gray-200 bg-white text-left">
+      <div className="flex flex-1 flex-col p-4">
+        <p className="order-1 text-base font-bold">{mapCertificatTypeToLabel(certificat.type!)}</p>
+        <p className="order-2 text-sm/4 font-medium text-gray-600">N° {certificat.certificat_id}</p>
+        <p className="order-3 text-sm/4 text-gray-500">{dayjs(certificat.created_at).format('DD/MM/YYYY')}</p>
+        {certificat.remplace_certificat_id && (
+          <p className="order-4 text-sm/4 text-gray-500">
+            Annule et remplace {certificat.remplace_certificat_id}
+          </p>
+        )}
+      </div>
+      <div className="flex flex-row gap-2 pr-4">
+        <Button
+          type="button"
+          iconId="fr-icon-download-line"
+          onClick={handleDownload}
+          title="Télécharger le certificat"
+          priority="tertiary no outline"
+        />
+      </div>
     </div>
   );
 }
