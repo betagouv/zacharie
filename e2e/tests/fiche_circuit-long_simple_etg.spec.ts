@@ -100,10 +100,13 @@ test.describe("Fiches ETG", () => {
     await page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" }).click();
     await page.getByText("Anomalies carcasse:Unique -").click();
     await page.getByLabel("Daim - N° MM-001-002Anomalies").getByText("Carcasse refusée").click();
-    await page.getByRole("button", { name: "Viande à évolution anormale (" }).click();
+    await page.locator(".input-for-search-prefilled-data__input-container").click();
+    await page.getByRole("option", { name: "Présence de souillures" }).click();
     await page.getByRole("textbox", { name: "Votre commentaire Un" }).click();
     await page.getByRole("textbox", { name: "Votre commentaire Un" }).fill("Pas bon");
-    await page.getByLabel("Daim - N° MM-001-002Anomalies").getByRole("button", { name: "Enregistrer" }).click();
+    await page.getByLabel("Daim - N° MM-001-002Anomalies").getByText("Un commentaire à ajouter ?").click();
+    await page.getByLabel("Daim - N° MM-001-002ETG 1 :").getByRole("button", { name: "Enregistrer" }).click();
+
     await expect(page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" })).toBeVisible();
     await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
     await page.getByLabel("Daim - N° MM-001-004").getByText("Carcasse manquante").click();
@@ -260,7 +263,8 @@ test.describe("Fiches ETG", () => {
     await page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" }).click();
     await page.getByText("Anomalies carcasse:Unique -").click();
     await page.getByLabel("Daim - N° MM-001-002Anomalies").getByText("Carcasse refusée").click();
-    await page.getByRole("button", { name: "Viande à évolution anormale (" }).click();
+    await page.locator(".input-for-search-prefilled-data__input-container").click();
+    await page.getByRole("option", { name: "Présence de souillures" }).click();
     await page.getByRole("textbox", { name: "Votre commentaire Un" }).click();
     await page.getByRole("textbox", { name: "Votre commentaire Un" }).fill("Pas bon");
     await page.getByLabel("Daim - N° MM-001-002Anomalies").getByRole("button", { name: "Enregistrer" }).click();
@@ -396,7 +400,8 @@ test.describe("Fiches ETG", () => {
     await page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" }).click();
     await page.getByText("Anomalies carcasse:Unique -").click();
     await page.getByLabel("Daim - N° MM-001-002Anomalies").getByText("Carcasse refusée").click();
-    await page.getByRole("button", { name: "Viande à évolution anormale (" }).click();
+    await page.locator(".input-for-search-prefilled-data__input-container").click();
+    await page.getByRole("option", { name: "Présence de souillures" }).click();
     await page.getByRole("textbox", { name: "Votre commentaire Un" }).click();
     await page.getByRole("textbox", { name: "Votre commentaire Un" }).fill("Pas bon");
     await page.getByLabel("Daim - N° MM-001-002Anomalies").getByRole("button", { name: "Enregistrer" }).click();

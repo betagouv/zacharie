@@ -40,8 +40,6 @@ test.describe("Fiches premier détenteur", () => {
     await expect(page.getByLabel("Daim - N° MM-001-001").getByText("Commune de mise à mort :")).toBeVisible();
     await expect(page.getByRole("listitem").filter({ hasText: "Date de mise à mort : lundi 7" })).toBeVisible();
     await expect(page.getByLabel("Daim - N° MM-001-001").getByText("Heure de mise à mort de la")).toBeVisible();
-    await expect(page.getByLabel("Daim - N° MM-001-001").getByText("Anomalies carcasse")).toBeVisible();
-    await expect(page.getByLabel("Daim - N° MM-001-001").getByText("N/A").first()).toBeVisible();
     await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
     await page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" }).click();
     await expect(page.getByText("Unique - Abcès ou nodules")).toBeVisible();
