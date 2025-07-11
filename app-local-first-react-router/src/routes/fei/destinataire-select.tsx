@@ -28,6 +28,7 @@ import { FeiAndIntermediaireIds, FeiIntermediaire } from '@app/utils/get-carcass
 export default function DestinataireSelect({
   className = '',
   canEdit,
+  transfer,
   disabled,
   calledFrom,
   feiAndIntermediaireIds,
@@ -35,6 +36,7 @@ export default function DestinataireSelect({
 }: {
   className?: string;
   canEdit: boolean;
+  transfer?: boolean;
   disabled?: boolean;
   calledFrom: 'premier-detenteur-need-select-next' | 'current-owner-transfer' | 'intermediaire-next-owner';
   feiAndIntermediaireIds?: FeiAndIntermediaireIds;
@@ -120,6 +122,7 @@ export default function DestinataireSelect({
   const prochainDetenteur = prochainDetenteurEntityId ? entities[prochainDetenteurEntityId] : null;
   const prochainDetenteurType = prochainDetenteur?.type;
   const needTransport = useMemo(() => {
+    if (transfer) return false;
     if (prochainDetenteurType === EntityTypes.SVI) return false;
     if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
       return prochainDetenteurType !== EntityTypes.COLLECTEUR_PRO;
@@ -128,15 +131,16 @@ export default function DestinataireSelect({
       return prochainDetenteurType === EntityTypes.ETG;
     }
     return false;
-  }, [prochainDetenteurType, fei.fei_current_owner_role]);
+  }, [prochainDetenteurType, fei.fei_current_owner_role, transfer]);
 
   const needDepot = useMemo(() => {
+    if (transfer) return false;
     if (prochainDetenteurType === EntityTypes.SVI) return false;
     if (fei.fei_current_owner_role === EntityTypes.ETG) {
       return false;
     }
     return true;
-  }, [fei.fei_current_owner_role, prochainDetenteurType]);
+  }, [fei.fei_current_owner_role, prochainDetenteurType, transfer]);
 
   const [depotEntityId, setDepotEntityId] = useState(() => {
     if (!needDepot) return null;
@@ -570,7 +574,7 @@ export default function DestinataireSelect({
                   canEdit ? (
                     <>
                       <button
-                        className="await page.getByRole('button', { name: 'Cliquez ici pour définir la date du jour et maintenant.' }).click(); await page.getByRole('button', { name: 'Envoyer' }).click(); await expect(page.getByText('ETG 1 a été notifié')).toBeVisible(); mr-1 inline-block text-left"
+                        className="mr-1 inline-block text-left"
                         type="button"
                         disabled={
                           transportType !== TransportType.PREMIER_DETENTEUR || depotType !== DepotType.CCG
@@ -610,12 +614,37 @@ export default function DestinataireSelect({
             nativeButtonProps={{
               onClick: (event) => {
                 event.preventDefault();
+                console.log('clicked');
+                console.log({ jobIsMissing });
                 if (jobIsMissing) {
                   alert(jobIsMissing);
                   return;
                 }
                 // for typescript only
                 if (!prochainDetenteurEntityId) return;
+                if (transfer) {
+                  let nextFei: Partial<typeof fei> = {
+                    fei_next_owner_entity_id: prochainDetenteurEntityId,
+                    fei_next_owner_role: entities[prochainDetenteurEntityId]?.type,
+                    fei_current_owner_wants_to_transfer: false,
+                    fei_current_owner_entity_id: fei.fei_prev_owner_entity_id,
+                    fei_current_owner_role: fei.fei_prev_owner_role,
+                    fei_current_owner_user_id: fei.fei_prev_owner_user_id,
+                  };
+                  updateFei(fei.numero, nextFei);
+                  addLog({
+                    user_id: user.id,
+                    user_role: fei.fei_current_owner_role!,
+                    action: `${calledFrom}-select-destinataire-transfer`,
+                    fei_numero: fei.numero,
+                    history: createHistoryInput(fei, nextFei),
+                    entity_id: fei.premier_detenteur_entity_id,
+                    zacharie_carcasse_id: null,
+                    carcasse_intermediaire_id: null,
+                    intermediaire_id: null,
+                  });
+                  return;
+                }
                 if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
                   let nextFei: Partial<typeof fei> = {
                     fei_next_owner_entity_id: prochainDetenteurEntityId,

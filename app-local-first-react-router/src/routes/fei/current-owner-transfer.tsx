@@ -2,20 +2,20 @@ import { UserRoles } from '@prisma/client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import SelectNextForExaminateur from './examinateur-select-next';
-import SelectNextOwnerForPremierDetenteurOrIntermediaire from './premier-detenteur-intermediaire-select-next';
 // import { mergeFei } from '@app/db/fei.client';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import DestinataireSelect from './destinataire-select';
 
 export default function FeiTransfer() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const state = useZustandStore((state) => state);
-  const updateFei = state.updateFei;
-  const addLog = state.addLog;
-  const fei = state.feis[params.fei_numero!];
+  const updateFei = useZustandStore((state) => state.updateFei);
+  const addLog = useZustandStore((state) => state.addLog);
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
 
   if (!fei.fei_current_owner_wants_to_transfer) {
     return null;
@@ -31,7 +31,7 @@ export default function FeiTransfer() {
           {fei.fei_prev_owner_role === UserRoles.EXAMINATEUR_INITIAL ? (
             <SelectNextForExaminateur />
           ) : (
-            <SelectNextOwnerForPremierDetenteurOrIntermediaire calledFrom="current-owner-transfer" />
+            <DestinataireSelect canEdit transfer calledFrom="current-owner-transfer" />
           )}
         </div>
         <span className="text-sm">Vous avez changé d'avis&nbsp;?</span>

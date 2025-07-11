@@ -149,8 +149,6 @@ function Fei() {
   //   refCurrentUserId.current = fei.fei_current_owner_user_id;
   // }, [fei.examinateur_initial_user_id, fei.fei_current_owner_role, fei.fei_current_owner_user_id, user.id]);
 
-  console.log('showInterface', showInterface);
-
   return (
     <>
       <title>

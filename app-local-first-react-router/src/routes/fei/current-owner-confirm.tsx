@@ -87,6 +87,9 @@ export default function CurrentOwnerConfirm() {
     if (fei.fei_next_owner_role !== UserRoles.ETG) {
       return false;
     }
+    if (!nextOwnerEntity) {
+      return false;
+    }
     if (nextOwnerEntity.relation !== EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
       return false;
     }
@@ -95,10 +98,6 @@ export default function CurrentOwnerConfirm() {
     }
     return true;
   }, [fei, nextOwnerEntity, myNextRoleForThisFei]);
-
-  console.log('willCollecteurProHandleCarcassesForETG', willCollecteurProHandleCarcassesForETG);
-  console.log('myNextRoleForThisFei', myNextRoleForThisFei);
-  console.log('nextOwnerEntity', nextOwnerEntity);
 
   const myNextRoleForThisFeiIsCollecteurPro = myNextRoleForThisFei === UserRoles.COLLECTEUR_PRO;
 
@@ -143,81 +142,84 @@ export default function CurrentOwnerConfirm() {
       fei_prev_owner_user_id: fei.fei_current_owner_user_id || null,
       fei_prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
     };
-    if (willCollecteurProHandleCarcassesForETG) {
-      nextFei.fei_next_owner_entity_id = fei.fei_next_owner_entity_id;
-      nextFei.fei_next_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
-      nextFei.fei_next_owner_role = UserRoles.ETG;
-      nextFei.fei_next_owner_user_id = null;
-      nextFei.fei_next_owner_user_name_cache = null;
-    }
-    if (nextFei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
-      nextFei.examinateur_initial_user_id = user.id;
-      nextFei.examinateur_initial_offline = navigator.onLine ? false : true;
-    }
-    if (nextFei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
-      nextFei.premier_detenteur_user_id = user.id;
-      nextFei.premier_detenteur_offline = navigator.onLine ? false : true;
-    }
-    if (nextFei.fei_current_owner_role === UserRoles.SVI) {
-      nextFei.svi_user_id = user.id;
-    }
-
-    const intermediaireRole: (keyof typeof UserRoles)[] = [
-      UserRoles.COLLECTEUR_PRO,
-      UserRoles.ETG,
-      UserRoles.CCG,
-    ];
-
-    if (intermediaireRole.includes(nextFei.fei_current_owner_role!)) {
-      const newIntermediaireId = getNewCarcasseIntermediaireId(user.id, fei.numero);
-      nextFei.latest_intermediaire_user_id = user.id;
-      nextFei.latest_intermediaire_entity_id = nextFei.fei_current_owner_entity_id;
-      nextFei.latest_intermediaire_name_cache = nextFei.fei_current_owner_entity_name_cache;
-      const newIntermediaire: FeiIntermediaire = {
-        id: newIntermediaireId,
-        fei_numero: fei.numero,
-        intermediaire_user_id: user.id,
-        intermediaire_role: forcedNextRole || fei.fei_next_owner_role!,
-        intermediaire_entity_id: forceNextEntityId || fei.fei_next_owner_entity_id || '',
-        created_at: dayjs().toDate(),
-        prise_en_charge_at:
-          nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO ? dayjs().toDate() : null,
-        intermediaire_depot_type: null,
-        intermediaire_depot_entity_id: null,
-        intermediaire_prochain_detenteur_type_cache: null,
-        intermediaire_prochain_detenteur_id_cache: null,
-      };
+    if (!transfer) {
       if (willCollecteurProHandleCarcassesForETG) {
-        newIntermediaire.intermediaire_prochain_detenteur_id_cache = nextFei.fei_next_owner_entity_id!;
-        newIntermediaire.intermediaire_prochain_detenteur_type_cache = UserRoles.ETG;
-        newIntermediaire.intermediaire_depot_type = DepotType.AUCUN;
-        newIntermediaire.intermediaire_depot_entity_id = null;
+        nextFei.fei_next_owner_entity_id = fei.fei_next_owner_entity_id;
+        nextFei.fei_next_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
+        nextFei.fei_next_owner_role = UserRoles.ETG;
+        nextFei.fei_next_owner_user_id = null;
+        nextFei.fei_next_owner_user_name_cache = null;
       }
-      await createFeiIntermediaire(newIntermediaire);
-      addLog({
-        user_id: user.id,
-        user_role: newIntermediaire.intermediaire_role!,
-        fei_numero: fei.numero,
-        action: 'intermediaire-create',
-        history: createHistoryInput(null, newIntermediaire),
-        entity_id: fei.fei_current_owner_entity_id,
-        zacharie_carcasse_id: null,
-        intermediaire_id: newIntermediaireId,
-        carcasse_intermediaire_id: null,
-      });
-      if (nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
-        // la fiche était destinée à un ETG, qui envoie un de ses transporteurs,
-        // le transporteur récupère les carcasses, on sait déjà à qui il va les envoyer: son ETG
-        // donc on met directement les infos de l'ETG
-        if (fei.fei_next_owner_role === UserRoles.ETG) {
-          nextFei.fei_next_owner_role = UserRoles.ETG;
-          nextFei.fei_next_owner_entity_id = fei.fei_next_owner_entity_id;
-          nextFei.fei_next_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
-          nextFei.fei_next_owner_user_id = null;
-          nextFei.fei_next_owner_user_name_cache = null;
+      if (nextFei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) {
+        nextFei.examinateur_initial_user_id = user.id;
+        nextFei.examinateur_initial_offline = navigator.onLine ? false : true;
+      }
+      if (nextFei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+        nextFei.premier_detenteur_user_id = user.id;
+        nextFei.premier_detenteur_offline = navigator.onLine ? false : true;
+      }
+      if (nextFei.fei_current_owner_role === UserRoles.SVI) {
+        nextFei.svi_user_id = user.id;
+      }
+
+      const intermediaireRole: (keyof typeof UserRoles)[] = [
+        UserRoles.COLLECTEUR_PRO,
+        UserRoles.ETG,
+        UserRoles.CCG,
+      ];
+
+      if (intermediaireRole.includes(nextFei.fei_current_owner_role!)) {
+        const newIntermediaireId = getNewCarcasseIntermediaireId(user.id, fei.numero);
+        nextFei.latest_intermediaire_user_id = user.id;
+        nextFei.latest_intermediaire_entity_id = nextFei.fei_current_owner_entity_id;
+        nextFei.latest_intermediaire_name_cache = nextFei.fei_current_owner_entity_name_cache;
+        const newIntermediaire: FeiIntermediaire = {
+          id: newIntermediaireId,
+          fei_numero: fei.numero,
+          intermediaire_user_id: user.id,
+          intermediaire_role: forcedNextRole || fei.fei_next_owner_role!,
+          intermediaire_entity_id: forceNextEntityId || fei.fei_next_owner_entity_id || '',
+          created_at: dayjs().toDate(),
+          prise_en_charge_at:
+            nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO ? dayjs().toDate() : null,
+          intermediaire_depot_type: null,
+          intermediaire_depot_entity_id: null,
+          intermediaire_prochain_detenteur_type_cache: null,
+          intermediaire_prochain_detenteur_id_cache: null,
+        };
+        if (willCollecteurProHandleCarcassesForETG) {
+          newIntermediaire.intermediaire_prochain_detenteur_id_cache = nextFei.fei_next_owner_entity_id!;
+          newIntermediaire.intermediaire_prochain_detenteur_type_cache = UserRoles.ETG;
+          newIntermediaire.intermediaire_depot_type = DepotType.AUCUN;
+          newIntermediaire.intermediaire_depot_entity_id = null;
+        }
+        await createFeiIntermediaire(newIntermediaire);
+        addLog({
+          user_id: user.id,
+          user_role: newIntermediaire.intermediaire_role!,
+          fei_numero: fei.numero,
+          action: 'intermediaire-create',
+          history: createHistoryInput(null, newIntermediaire),
+          entity_id: fei.fei_current_owner_entity_id,
+          zacharie_carcasse_id: null,
+          intermediaire_id: newIntermediaireId,
+          carcasse_intermediaire_id: null,
+        });
+        if (nextFei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
+          // la fiche était destinée à un ETG, qui envoie un de ses transporteurs,
+          // le transporteur récupère les carcasses, on sait déjà à qui il va les envoyer: son ETG
+          // donc on met directement les infos de l'ETG
+          if (fei.fei_next_owner_role === UserRoles.ETG) {
+            nextFei.fei_next_owner_role = UserRoles.ETG;
+            nextFei.fei_next_owner_entity_id = fei.fei_next_owner_entity_id;
+            nextFei.fei_next_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
+            nextFei.fei_next_owner_user_id = null;
+            nextFei.fei_next_owner_user_name_cache = null;
+          }
         }
       }
     }
+
     updateFei(fei.numero, nextFei);
     addLog({
       user_id: user.id,
@@ -376,6 +378,7 @@ export default function CurrentOwnerConfirm() {
                       fei_next_owner_entity_name_cache: null,
                       fei_next_owner_user_id: null,
                       fei_next_owner_user_name_cache: null,
+                      fei_next_owner_role: null,
                     };
                     updateFei(fei.numero, nextFei);
                     addLog({
