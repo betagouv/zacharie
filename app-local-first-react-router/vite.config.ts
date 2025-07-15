@@ -19,7 +19,6 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    tailwindcss(),
     sentryVitePlugin({
       org: 'betagouv',
       project: 'zacharie-vite-react-router-spa',
@@ -109,6 +108,7 @@ export default defineConfig({
       //   ],
       // },
     }),
+    tailwindcss(),
   ],
   build: {
     outDir: 'build',

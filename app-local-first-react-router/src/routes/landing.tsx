@@ -4,27 +4,31 @@ import RootDisplay from '@app/components/RootDisplay';
 export default function LandingPage() {
   return (
     <RootDisplay id="landing">
+      <title>
+        Zacharie | Garantir des viandes de gibier sauvage saines et sûres | Ministère de l'Agriculture et de
+        la Souveraineté Alimentaire
+      </title>
       <main>
         {/* Hero Section */}
         <section
-          className="bg-cover bg-center bg-no-repeat py-16 lg:py-24"
+          className="min-h-screen bg-cover bg-center bg-no-repeat py-16 lg:py-24"
           style={{ backgroundImage: "url('/landing/gradient-cerf.png')" }}
         >
           <div className="fr-container">
             <div className="grid items-center gap-12 lg:grid-cols-2">
               <div className="max-w-[75%] space-y-8">
-                <h1 className="text-xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl">
+                <h1 className="text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl">
                   Réalisez vos fiches d'examen initial du gibier directement depuis votre smartphone ou votre
                   ordinateur, où que vous soyez.
                 </h1>
-                <p className="!text-xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl">
+                <p className="text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl">
                   Simple, rapide et 100% gratuit, Zacharie accélère vos démarches.
                 </p>
                 <div className="flex flex-col gap-4">
                   <Button
                     size="large"
                     linkProps={{
-                      to: '/app/connexion?type=compte-existant',
+                      to: '/app/connexion?type=creation-de-compte',
                       href: '#',
                     }}
                   >
@@ -48,55 +52,45 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section className="bg-white py-16 lg:py-24">
-          <div className="fr-container">
-            <div className="grid items-center gap-12 lg:grid-cols-2">
-              <div className="flex justify-center">
-                {/* Phone mockup */}
-                <img
-                  src="/landing/main-app-mockup.png"
-                  alt="Mockup de l'application Zacharie sur smartphone"
-                  className="h-auto w-80 max-w-full"
-                />
-              </div>
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-blue-900 lg:text-4xl">
-                  Une application qui fonctionne même hors réseau
-                </h2>
-                <ul className="space-y-4 text-lg text-blue-900">
-                  <li className="flex items-start gap-3">
-                    <span className="text-xl text-blue-600">•</span>
-                    Toute la chasse du jour sur une seule fiche, peu importe le nombre de carcasses ou
-                    d'espèces
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-xl text-blue-600">•</span>
-                    Des informations pré-enregistrées pour un remplissage rapide et complet à coup sûr
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-xl text-blue-600">•</span>
-                    Un retour clair et direct sur les carcasses traitées et inspectées
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-xl text-blue-600">•</span>
-                    Un service public gratuit et sans engagement
-                  </li>
-                </ul>
-                <Button
-                  size="large"
-                  linkProps={{
-                    to: '/app/connexion?type=compte-existant',
-                    href: '#',
-                  }}
-                >
-                  ▷ Regarder la démo
-                </Button>
-              </div>
-            </div>
-            <div className="mt-12 text-center">
-              <p className="text-lg text-blue-900">
-                Le service est aussi disponible depuis votre ordinateur.
-              </p>
+        <section className="relative grid items-center bg-white lg:grid-cols-2">
+          <div className="relative z-10 -mt-16 flex justify-start lg:-mt-32">
+            {/* Phone mockup */}
+            <img
+              src="/landing/main-app-mockup.png"
+              alt="Mockup de l'application Zacharie sur smartphone"
+              className="h-1/4 w-full max-w-lg"
+            />
+          </div>
+          <div className="bg-action-high-blue-france/5 flex flex-col space-y-6 p-6 lg:bg-transparent">
+            <ul className="text-action-high-blue-france list-none space-y-4 text-lg">
+              <li>
+                Une application qui fonctionne <b>même hors réseau</b>
+              </li>
+              <li>
+                Toute la chasse du jour sur <b>une seule fiche</b>, peu importe le nombre de carcasses ou
+                d'espèces
+              </li>
+              <li>
+                Des <b>informations pré-enregistrées</b> pour un remplissage rapide et complet à coup sûr
+              </li>
+              <li>
+                Un <b>retour clair et direct</b> sur les carcasses traitées et inspectées
+              </li>
+              <li>
+                Un service public <b>gratuit et sans engagement</b>
+              </li>
+            </ul>
+            <div className="flex w-full justify-center">
+              <Button
+                size="large"
+                linkProps={{
+                  to: '/app/connexion?type=creation-de-compte',
+                  href: '#',
+                }}
+              >
+                {/* ▷ Regarder la démo */}
+                Créer un compte
+              </Button>
             </div>
           </div>
         </section>
@@ -107,137 +101,87 @@ export default function LandingPage() {
           style={{ backgroundImage: "url('/landing/testimonials-bg.png')" }}
         >
           <div className="fr-container">
-            <div className="mb-12 text-center">
-              <div className="mb-4 text-6xl font-bold text-blue-900 lg:text-8xl">100%</div>
-              <p className="mb-2 text-xl text-blue-900 lg:text-2xl">
-                des chasseurs ayant utilisé Zacharie recommandent l'application
-              </p>
-              <p className="text-gray-600">Enquête de février 2025</p>
-            </div>
-
-            <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
-              <blockquote className="relative rounded-lg bg-white p-6 shadow-xs">
-                <div
-                  className="absolute -top-4 -left-4"
-                  style={{
-                    width: '78px',
-                    height: '89px',
-                    fontFamily: 'Marianne',
-                    fontStyle: 'normal',
-                    fontWeight: 400,
-                    fontSize: '128px',
-                    lineHeight: '125%',
-                    color: 'rgba(1, 0, 139, 0.3)',
-                  }}
-                >
-                  "
-                </div>
-                <p className="mb-4 text-lg text-blue-900">
-                  En un clic, je transmets ma fiche et je sais tout de suite si une carcasse est saisie.
+            <div className="grid items-center gap-12 lg:grid-cols-2">
+              {/* Left side - 100% text */}
+              <div className="text-center lg:text-left">
+                <p className="text-action-high-blue-france mb-4 text-6xl font-bold lg:text-8xl">100%</p>
+                <p className="text-action-high-blue-france mb-4 text-xl lg:text-2xl">
+                  des chasseurs ayant utilisé Zacharie recommandent l'application
                 </p>
-                <div
-                  className="absolute -right-4 -bottom-4"
-                  style={{
-                    width: '78px',
-                    height: '89px',
-                    fontFamily: 'Marianne',
-                    fontStyle: 'normal',
-                    fontWeight: 400,
-                    fontSize: '128px',
-                    lineHeight: '125%',
-                    color: 'rgba(1, 0, 139, 0.3)',
-                  }}
-                >
-                  "
-                </div>
-              </blockquote>
+                <p className="text-action-high-blue-france">Enquête de février 2025</p>
+              </div>
 
-              <blockquote className="relative rounded-lg bg-white p-6 shadow-xs">
-                <div
-                  className="absolute -top-4 -left-4"
-                  style={{
-                    width: '78px',
-                    height: '89px',
-                    fontFamily: 'Marianne',
-                    fontStyle: 'normal',
-                    fontWeight: 400,
-                    fontSize: '128px',
-                    lineHeight: '125%',
-                    color: 'rgba(1, 0, 139, 0.3)',
-                  }}
-                >
-                  "
-                </div>
-                <p className="mb-4 text-lg text-blue-900">
-                  J'ai rempli une fiche d'examen initial en 15 minutes alors que ça m'aurait pris 1 heure avec
-                  le carnet à souches.
-                </p>
-                <div
-                  className="absolute -right-4 -bottom-4"
-                  style={{
-                    width: '78px',
-                    height: '89px',
-                    fontFamily: 'Marianne',
-                    fontStyle: 'normal',
-                    fontWeight: 400,
-                    fontSize: '128px',
-                    lineHeight: '125%',
-                    color: 'rgba(1, 0, 139, 0.3)',
-                  }}
-                >
-                  "
-                </div>
-              </blockquote>
-            </div>
-          </div>
-        </section>
+              {/* Right side - testimonials */}
+              <div className="grid gap-8">
+                <blockquote className="relative p-6">
+                  <p className="text-action-high-blue-france mb-4 text-2xl">
+                    <span className="text-action-high-blue-france/30 absolute -top-4 -left-4 text-[128px] font-normal italic">
+                      "
+                    </span>
+                    En un clic, je transmets ma fiche et je sais tout de suite si une carcasse est saisie.
+                    <span className="text-action-high-blue-france/30 absolute inline-block h-0 w-0 -translate-x-10 translate-y-15 text-[128px] leading-0 font-normal italic">
+                      "
+                    </span>
+                  </p>
+                </blockquote>
 
-        {/* CTA Section */}
-        <section className="bg-blue-900 py-16 lg:py-24">
-          <div className="fr-container text-center">
-            <h2 className="mb-8 text-3xl font-bold text-white lg:text-4xl">
-              Vous avez des questions ? Des remarques ?
-            </h2>
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Button
-                priority="secondary"
-                size="large"
-                linkProps={{
-                  href: 'mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de Zacharie',
-                }}
-              >
-                Nous contacter
-              </Button>
-              <Button
-                size="large"
-                linkProps={{
-                  to: '/app/connexion?type=compte-existant',
-                  href: '#',
-                }}
-              >
-                Créer votre compte
-              </Button>
+                <blockquote className="relative p-6">
+                  <p className="text-action-high-blue-france mb-4 text-2xl">
+                    <span className="text-action-high-blue-france/30 absolute -top-4 -left-4 text-[128px] font-normal italic">
+                      "
+                    </span>
+                    J'ai rempli une fiche d'examen initial en 15 minutes alors que ça m'aurait pris 1 heure
+                    avec le carnet à souches.
+                    <span className="text-action-high-blue-france/30 absolute inline-block h-0 w-0 -translate-x-10 translate-y-15 text-[128px] leading-0 font-normal italic">
+                      "
+                    </span>
+                  </p>
+                </blockquote>
+              </div>
             </div>
           </div>
         </section>
 
         {/* Desktop Additional Content */}
-        <section className="hidden bg-gray-50 py-16 lg:block">
-          <div className="fr-container">
-            <div className="grid items-center gap-12 lg:grid-cols-2">
-              <div className="space-y-6">
-                <h3 className="rounded bg-blue-900 p-4 text-2xl font-bold text-white">
-                  Votre compte Zacharie est aussi accessible depuis votre ordinateur
-                </h3>
-              </div>
-              <div className="flex justify-center">
-                {/* Desktop screenshot mockup */}
-                <img
-                  src="/landing/laptop-scene-1.png"
-                  alt="Interface desktop de Zacharie"
-                  className="h-auto w-full max-w-2xl"
-                />
-              </div>
+        <section className="bg-action-high-blue-france/5 flex h-screen flex-col justify-between bg-[url('/landing/laptop-scene-2.png')] bg-cover bg-center bg-no-repeat lg:h-auto lg:min-h-0 lg:flex-row lg:bg-none">
+          <div className="flex basis-full flex-col items-center justify-between space-y-12 p-8 lg:justify-center lg:p-16">
+            <h3 className="lg:text-action-high-blue-france rounded text-xl font-medium text-white text-shadow-2xs lg:text-2xl">
+              Votre compte Zacharie est aussi accessible depuis votre ordinateur.
+            </h3>
+            <Button
+              size="large"
+              linkProps={{
+                to: '/app/connexion?type=compte-existant',
+                href: '#',
+              }}
+            >
+              Créer un compte
+            </Button>
+          </div>
+          <div className="hidden max-w-2xl justify-end lg:block">
+            <img
+              src="/landing/laptop-scene-1.png"
+              alt="Interface desktop de Zacharie"
+              className="hidden size-full object-fill lg:block"
+            />
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-16 lg:py-24">
+          <div className="fr-container items-center text-center">
+            <h3 className="text-action-high-blue-france mb-8 rounded text-xl font-medium text-shadow-2xs lg:text-2xl">
+              Vous avez des questions ? Des remarques ?
+            </h3>
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Button
+                size="large"
+                linkProps={{
+                  to: '/contact',
+                }}
+              >
+                Nous contacter
+              </Button>
             </div>
           </div>
         </section>

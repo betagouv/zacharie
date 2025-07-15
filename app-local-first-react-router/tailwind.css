@@ -1,4 +1,9 @@
+@layer theme, base, dsfr, utilities;
+
+@import url(./node_modules/@codegouvfr/react-dsfr/main.css) layer(dsfr);
+@import url(./node_modules/@codegouvfr/react-dsfr/dsfr/utility/colors/colors.min.css) layer(dsfr);
 @import 'tailwindcss';
+
 
 @theme {
   --breakpoint-xs: 450px;
