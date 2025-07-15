@@ -23,6 +23,9 @@ export default function updateCarcasseStatus<T extends Carcasse | CarcasseForRes
   if (!carcasse.svi_ipm1_presentee_inspection && !carcasse.svi_ipm2_presentee_inspection) {
     return CarcasseStatus.MANQUANTE_SVI;
   }
+  if (carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE) {
+    return CarcasseStatus.ACCEPTE;
+  }
   if (carcasse.svi_ipm2_traitement_assainissant?.length > 0) {
     return CarcasseStatus.TRAITEMENT_ASSAINISSANT;
   }

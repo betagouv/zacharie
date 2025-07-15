@@ -403,6 +403,7 @@ enum IPM1Protocole {
 enum IPM1Decision {
   NON_RENSEIGNEE
   MISE_EN_CONSIGNE
+  ACCEPTE
 }
 
 enum IPM2Decision {
@@ -596,6 +597,7 @@ model CarcasseIntermediaire {
   * fields from FeiIntermediaire
   */
   /**
+  * /**
   * /**
   * /**
   * /**

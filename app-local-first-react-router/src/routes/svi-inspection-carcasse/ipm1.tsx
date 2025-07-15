@@ -66,19 +66,23 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
     if (!sviIpm1Decision) {
       return 'Il manque la décision IPM1';
     }
-    if (sviIpm1PresenteeInspection) {
-      if (carcasse.type === CarcasseType.PETIT_GIBIER && !sviIpm1NombreAnimaux) {
-        return "Il manque le nombre d'animaux inspectés";
-      }
-      if (!sviIpm1Pieces?.length) {
-        return 'Il manque les pièces inspectées nécessitant une observation';
-      }
-      if (!sviIpm1LesionsOuMotifs?.length) {
-        return 'Il manque les lésions';
-      }
-      if (sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE && !sviIpm1DureeConsigne) {
-        return 'Il manque la durée de la consigne';
-      }
+    if (sviIpm1PresenteeInspection && sviIpm1Decision === IPM1Decision.ACCEPTE) {
+      return null;
+    }
+    if (!sviIpm1PresenteeInspection) {
+      return null;
+    }
+    if (carcasse.type === CarcasseType.PETIT_GIBIER && !sviIpm1NombreAnimaux) {
+      return "Il manque le nombre d'animaux inspectés";
+    }
+    if (!sviIpm1Pieces?.length) {
+      return 'Il manque les pièces inspectées nécessitant une observation';
+    }
+    if (!sviIpm1LesionsOuMotifs?.length) {
+      return 'Il manque les lésions';
+    }
+    if (sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE && !sviIpm1DureeConsigne) {
+      return 'Il manque la durée de la consigne';
     }
     return null;
   }, [
@@ -379,6 +383,17 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                 },
               },
               label: 'Mise en consigne',
+            },
+            {
+              hintText: 'Aucune anomalie constatée',
+              nativeInputProps: {
+                required: true,
+                checked: sviIpm1Decision === IPM1Decision.ACCEPTE,
+                onChange: () => {
+                  setSviIpm1Decision(IPM1Decision.ACCEPTE);
+                },
+              },
+              label: 'Acceptée',
             },
           ]}
         />

@@ -18,6 +18,7 @@ interface InputMultiSelectProps<T> {
   clearInputOnClick?: boolean;
   canEdit?: boolean;
   isMulti?: boolean;
+  disabled?: boolean;
 }
 
 export default function InputMultiSelect<T extends string>({
@@ -29,11 +30,12 @@ export default function InputMultiSelect<T extends string>({
   name = 'input-for-search-prefilled-data',
   values = [],
   canEdit = true,
+  disabled = false,
   required = false,
   isMulti = true,
 }: InputMultiSelectProps<T>) {
   return (
-    <div className="fr-input-group">
+    <div className={['fr-input-group', disabled ? 'fr-input-group--disabled' : ''].join(' ')}>
       <label className="fr-label" htmlFor="input-«re»">
         {label}
         {hintText && <span className="fr-hint-text">{hintText}</span>}
@@ -59,7 +61,7 @@ export default function InputMultiSelect<T extends string>({
         isClearable={!values?.length}
         isMulti={isMulti}
         inputId={`${name}`}
-        isDisabled={!canEdit}
+        isDisabled={!canEdit || disabled}
         required={required}
         classNamePrefix={`${name}`}
         className="mt-2"

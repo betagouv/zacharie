@@ -10,6 +10,7 @@ import {
   IPM2Traitement,
   Carcasse,
   Fei,
+  IPM1Decision,
 } from '@prisma/client';
 import { lesionsList, lesionsTree } from '@app/utils/lesions';
 import piecesTree from '@app/data/svi/pieces-tree.json';
@@ -256,13 +257,27 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     if (carcasse.svi_ipm2_signed_at) {
       return false;
     }
+    if (carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE) {
+      return false;
+    }
     return true;
-  }, [canEdit, carcasse]);
+  }, [canEdit, carcasse.svi_ipm1_decision, carcasse.svi_ipm2_signed_at]);
+
+  console.log({ canDoIPM2 });
 
   const Component = canDoIPM2 ? Input : InputNotEditable;
 
   return (
     <form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`} onSubmit={(e) => e.preventDefault()}>
+      {carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE && (
+        <Alert
+          severity="info"
+          title="Vous ne pouvez pas modifier les données de l'inspection IPM2"
+          description="L'inspection IPM1 a été acceptée, vous ne pouvez pas modifier les données de l'inspection IPM2.
+          Veuillez changer la décision IPM1 pour modifier les données de l'inspection IPM2."
+          className="mb-4 opacity-50"
+        />
+      )}
       <RadioButtons
         legend={
           carcasse.type === CarcasseType.PETIT_GIBIER
@@ -270,6 +285,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             : "Carcasse présentée à l'inspection *"
         }
         orientation="horizontal"
+        disabled={!canDoIPM2}
         options={[
           {
             nativeInputProps: {
@@ -295,6 +311,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       />
       <Component
         label="Date de l'inspection *"
+        disabled={!canDoIPM2}
         key={`${sviIpm2Date}`}
         hintText={
           canDoIPM2 ? (
@@ -317,6 +334,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           autoComplete: 'off',
           required: true,
           suppressHydrationWarning: true,
+          disabled: !canDoIPM2,
           onBlur: (e) => {
             const date = dayjs.utc(e.target.value).startOf('day').toDate();
             setSviIpm2Date(date);
@@ -330,6 +348,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       />
       <InputNotEditable
         label="Inspection faite par *"
+        disabled={!canDoIPM2}
         nativeInputProps={{
           id: Prisma.CarcasseScalarFieldEnum.svi_ipm2_user_id,
           name: Prisma.CarcasseScalarFieldEnum.svi_ipm2_user_id,
@@ -348,6 +367,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           <RadioButtons
             legend="Protocole d'inspection *"
             hintText="Le protocole d'inspection «Renforcé » est utilisé lorsqu’une analyse de risque locale le juge nécessaire (exemple : animal provenant de zone réglementée vis-à-vis d’une maladie animale)."
+            disabled={!canDoIPM2}
             orientation="horizontal"
             options={[
               {
@@ -376,6 +396,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             <Input
               label="Nombre de carcasses saisies *"
               hintText={`Nombre d'animaux initialement prélevés\u00A0: ${carcasse.nombre_d_animaux}`}
+              disabled={!canDoIPM2}
               nativeInputProps={{
                 type: 'number',
                 min: 0,
@@ -391,6 +412,8 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           <div>
             <InputMultiSelect
               label="Pièces inspectées nécessitant une observation *"
+              disabled={!canDoIPM2}
+              canEdit
               hintText={
                 <>
                   Rappel IPM1: {carcasse.svi_ipm1_pieces.join('; ')}
@@ -400,7 +423,6 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                   </button>
                 </>
               }
-              canEdit
               data={piecesList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               placeholder="Commencez à taper une pièce"
               onChange={setSviIpm2Pieces}
@@ -424,6 +446,8 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             <InputMultiSelect
               data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               label="Observations (lésions) *"
+              disabled={!canDoIPM2}
+              canEdit
               hintText={
                 <>
                   Rappel IPM1: {carcasse.svi_ipm1_lesions_ou_motifs.join('; ')}
@@ -433,7 +457,6 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                   </button>
                 </>
               }
-              canEdit
               placeholder={
                 sviIpm2LesionsOuMotifs.length
                   ? 'Commencez à taper une lésion ou un motif de consigne supplémentaire'
@@ -458,6 +481,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       <Input
         label="Commentaire"
         hintText="Un commentaire à ajouter ?"
+        disabled={!canDoIPM2}
         textArea
         nativeTextAreaProps={{
           required: true,
@@ -471,6 +495,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       <RadioButtons
         legend="Décision IPM2 *"
         orientation="horizontal"
+        disabled={!canDoIPM2}
         // @ts-expect-error Type 'null' is not assignable to type
         options={[
           !sviIpm2PresenteeInspection
