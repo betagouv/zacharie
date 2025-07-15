@@ -217,7 +217,7 @@ export default function CarcasseIntermediaireComp({
         forceManquante={!!carcasseManquante}
         forceAccept={!!carcasseIntermediaire.check_manuel}
         onClick={canEdit ? () => refusIntermediaireModal.current.open() : undefined}
-        className="[zoom:1.3] [&.border-manquante]:!border-gray-500 [&_.text-manquante]:!text-gray-500"
+        className="[zoom:1.3] [&.border-manquante]:border-gray-500! [&_.text-manquante]:text-gray-500!"
       />
       {canEdit && (
         <refusIntermediaireModal.current.Component
@@ -382,7 +382,7 @@ export default function CarcasseIntermediaireComp({
               }}
             />
 
-            <div className="mt-8 flex flex-col items-start bg-white [&_ul]:md:min-w-96">
+            <div className="mt-8 flex flex-col items-start bg-white md:[&_ul]:min-w-96">
               <ButtonsGroup
                 buttons={
                   carcasseIntermediaire.refus

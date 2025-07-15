@@ -44,7 +44,7 @@ export default function AdminNouvelleEntite() {
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">Nouvelle Entité</h1>
-          <div className="mb-6 bg-white md:shadow">
+          <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
               <Input
                 label="Raison Sociale"
@@ -102,7 +102,7 @@ export default function AdminNouvelleEntite() {
                 ]}
               />
             </div>
-            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
+            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
               <ButtonsGroup
                 buttons={[
                   {

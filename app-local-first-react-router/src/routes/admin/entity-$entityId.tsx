@@ -141,7 +141,7 @@ export default function AdminEntity() {
               selectedTabId={selectedTabId}
               tabs={tabs}
               onTabChange={setSelectedTabId}
-              className="mb-6 bg-white md:shadow [&_.fr-tabs\_\_list]:!bg-alt-blue-france [&_.fr-tabs\_\_list]:!shadow-none"
+              className="mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:bg-alt-blue-france! [&_.fr-tabs\_\_list]:shadow-none!"
             >
               {selectedTabId === 'Raison Sociale' && (
                 <form
@@ -459,7 +459,7 @@ function UserWorkingWithOrFor({
               title={
                 <Link
                   to={`/app/tableau-de-bord/admin/user/${owner.id}`}
-                  className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                 >
                   {owner.prenom} {owner.nom_de_famille}
                   <br />
@@ -474,7 +474,7 @@ function UserWorkingWithOrFor({
           );
         },
       )}
-      <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+      <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
         <Table
           fixed
           noCaption
@@ -515,7 +515,7 @@ function UserWorkingWithOrFor({
             >
               <Link
                 to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
               >
                 {user.prenom} {user.nom_de_famille}
                 <br />＠ {user.email}
@@ -528,7 +528,7 @@ function UserWorkingWithOrFor({
             </form>,
             <p
               key={user.id}
-              className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+              className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
             >
               {user.roles.map((role) => (
                 <Fragment key={role}>
@@ -654,7 +654,7 @@ function EntitiesRelatedTo({
             title={
               <Link
                 to={`/app/tableau-de-bord/admin/entity/${coupledEntity.id}`}
-                className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
               >
                 {coupledEntity.nom_d_usage}
                 <br />
@@ -676,7 +676,7 @@ function EntitiesRelatedTo({
         );
       })}
       {showTable && (
-        <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+        <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
           <Table
             fixed
             noCaption
@@ -721,7 +721,7 @@ function EntitiesRelatedTo({
                 >
                   <Link
                     to={`/app/tableau-de-bord/admin/entity/${otherEntity.id}`}
-                    className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                    className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                   >
                     {potentialEntityRelated.type}
                     <br />
@@ -740,7 +740,7 @@ function EntitiesRelatedTo({
                 <Link
                   key={potentialEntityRelated.id}
                   to={`/app/tableau-de-bord/admin/entity/${potentialEntityRelated.id}`}
-                  className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                 >
                   {potentialEntityRelated.nom_d_usage}
                   {potentialEntityRelated.numero_ddecpp}
@@ -748,7 +748,7 @@ function EntitiesRelatedTo({
                 <Link
                   key={potentialEntityRelated.id}
                   to={`/app/tableau-de-bord/admin/entity/${potentialEntityRelated.id}`}
-                  className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                 >
                   {potentialEntityRelated.address_ligne_1}
                   <br />

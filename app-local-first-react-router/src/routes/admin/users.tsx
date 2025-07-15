@@ -55,14 +55,14 @@ export default function AdminUsers() {
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">Utilisateurs</h1>
-          <section className="mb-6 bg-white md:shadow">
+          <section className="mb-6 bg-white md:shadow-sm">
             <Tabs
               selectedTabId={selectedTabId}
               tabs={tabs}
               onTabChange={setSelectedTabId}
-              className="mb-6 bg-white md:shadow [&_.fr-tabs\_\_list]:!bg-alt-blue-france [&_.fr-tabs\_\_list]:!shadow-none"
+              className="mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:bg-alt-blue-france! [&_.fr-tabs\_\_list]:shadow-none!"
             >
-              <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+              <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
                 <Table
                   fixed
                   noCaption
@@ -83,7 +83,7 @@ export default function AdminUsers() {
                         <span className="p-4">{index + 1}</span>
                         <Link
                           to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                          className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
+                          className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
                           suppressHydrationWarning
                         >
                           Compte activé: {user.activated ? '✅' : '❌'}
@@ -98,7 +98,7 @@ export default function AdminUsers() {
                       <Link
                         key={user.id}
                         to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                        className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
+                        className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
                       >
                         {user.prenom} {user.nom_de_famille}
                         <br />＠ {user.email}
@@ -118,7 +118,7 @@ export default function AdminUsers() {
                       <Link
                         key={user.id}
                         to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                        className="!inline-flex size-full items-start justify-start !bg-none !no-underline"
+                        className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
                       >
                         {user.roles.map((role) => (
                           <Fragment key={role}>
@@ -160,7 +160,7 @@ export default function AdminUsers() {
                     ])}
                 />
               </div>
-              <div className="flex flex-col items-start bg-white px-8 [&_ul]:md:min-w-96">
+              <div className="flex flex-col items-start bg-white px-8 md:[&_ul]:min-w-96">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
                   Haut de page
                 </a>

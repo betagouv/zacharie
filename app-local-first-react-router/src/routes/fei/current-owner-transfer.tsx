@@ -27,7 +27,7 @@ export default function FeiTransfer() {
   return (
     <div className="bg-alt-blue-france pb-4">
       <CallOut title="Vous souhaitez transférer cette fiche" className="bg-white">
-        <div className="flex w-full flex-col bg-white md:items-start [&_ul]:md:min-w-96">
+        <div className="flex w-full flex-col bg-white md:items-start md:[&_ul]:min-w-96">
           {fei.fei_prev_owner_role === UserRoles.EXAMINATEUR_INITIAL ? (
             <SelectNextForExaminateur />
           ) : (

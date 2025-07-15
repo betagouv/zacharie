@@ -68,7 +68,7 @@ const renderNestedDetails = (
     }
     return (
       <details key={key} className="mb-2">
-        <summary className="cursor-pointer font-semibold hover:text-action-high-blue-france focus:outline-none">
+        <summary className="cursor-pointer font-semibold hover:text-action-high-blue-france focus:outline-hidden">
           {key}
         </summary>
         <div className="ml-4 mt-2">{renderNestedDetails(value, onItemClick, skipParent, key)}</div>

@@ -120,7 +120,7 @@ export default function CardFiche({
   return (
     <div
       className={[
-        'relative rounded bg-white',
+        'relative rounded-sm bg-white',
         'w-full max-w-96',
         isPrintSelected ? 'border-2 border-action-high-blue-france' : 'border border-gray-200',
         menuOpen ? 'bg-active-tint' : '',
@@ -147,7 +147,7 @@ export default function CardFiche({
       <Link
         to={`/app/tableau-de-bord/fei/${fei.numero}`}
         className={[
-          'flex size-full shrink-0 flex-col gap-y-2.5 bg-none p-5 !no-underline hover:!bg-active-tint hover:!no-underline',
+          'flex size-full shrink-0 flex-col gap-y-2.5 bg-none p-5 no-underline! hover:bg-active-tint! hover:no-underline!',
           carcassesRefusées > 0
             ? 'border-l-3 border-warning-main-525'
             : simpleStatus === 'Clôturée'

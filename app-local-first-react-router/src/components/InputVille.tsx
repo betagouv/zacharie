@@ -193,7 +193,7 @@ export default function InputVille(props: InputVilleProps) {
                 canSearch.current = false;
               }}
               type="button"
-              className="block !border-b-2 border-b-gray-200 py-1 pl-4 text-left"
+              className="block border-b-2! border-b-gray-200 py-1 pl-4 text-left"
             >
               {ville}
             </button>

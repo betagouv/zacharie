@@ -127,7 +127,7 @@ export function SviInspectionCarcasse() {
             {carcasse.numero_bracelet} - {carcasse.espece}
           </h1>
           <Breadcrumb
-            className="[&_a]:!text-base"
+            className="[&_a]:text-base!"
             currentPageLabel={`Carcasse ${carcasse.numero_bracelet}`}
             segments={[
               {

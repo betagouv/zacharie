@@ -5,6 +5,7 @@ import checker from 'vite-plugin-checker';
 import { resolve } from 'path';
 import dayjs from 'dayjs';
 import { VitePWA } from 'vite-plugin-pwa';
+import tailwindcss from '@tailwindcss/vite';
 
 const buildId = JSON.stringify(`${dayjs().format('DD-MM-YYYY')} vers ${dayjs().format('HH')}:00`);
 process.env.VITE_BUILD_ID = buildId;
@@ -107,6 +108,7 @@ export default defineConfig({
       //   ],
       // },
     }),
+    tailwindcss(),
   ],
   build: {
     outDir: 'build',

@@ -165,7 +165,7 @@ export default function MesInformations() {
             Qui êtes-vous ? À quelles entités êtes-vous rattaché ? <br />
             Lorsqu'une fiche sera attribuée à laquelle vous êtes rattachée, vous pourrez la prendre en charge.
           </CallOut>
-          <div className="mb-6 bg-white md:shadow">
+          <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
               <form
                 id="user_data_form"
@@ -449,7 +449,7 @@ export default function MesInformations() {
               userEntitiesByTypeAndId={userEntitiesByTypeAndId}
             />
           )}
-          <div className="mb-6 bg-white md:shadow">
+          <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
               {showEntrpriseVisibilityCheckbox && (
                 <>
@@ -486,7 +486,7 @@ export default function MesInformations() {
                 </a>
               </div>
             </div>
-            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
+            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
               <ButtonsGroup
                 buttons={[
                   {
@@ -551,7 +551,7 @@ function ListAndSelectEntities({
   const [entityId, setEntityId] = useState<string | null>(null);
 
   return (
-    <div className="mb-6 bg-white md:shadow">
+    <div className="mb-6 bg-white md:shadow-sm">
       <div className="p-4 md:p-8">
         <h3 className="mb-8 text-lg font-semibold text-gray-900" id={`${formId}-title`}>
           {sectionLabel}

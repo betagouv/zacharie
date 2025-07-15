@@ -96,7 +96,7 @@ export default function RootDisplay({
           <>
             Zacharie
             <span className="ml-4 inline-block">
-              <em className="mb-1 block rounded bg-green-300 px-1 text-sm not-italic text-green-900">
+              <em className="mb-1 block rounded-sm bg-green-300 px-1 text-sm not-italic text-green-900">
                 VERSION BETA
               </em>
             </span>

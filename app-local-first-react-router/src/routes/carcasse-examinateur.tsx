@@ -165,7 +165,7 @@ function CarcasseExaminateur() {
               {carcasse.numero_bracelet} - {carcasse.espece}
             </h1>
             <Breadcrumb
-              className="[&_a]:!text-base"
+              className="[&_a]:text-base!"
               currentPageLabel={`Carcasse ${carcasse.numero_bracelet}`}
               segments={[
                 {
@@ -205,7 +205,7 @@ function CarcasseExaminateur() {
                     examinateur_signed_at: dayjs().toDate(),
                   });
                 }}
-                className="mb-6 bg-white py-2 md:shadow"
+                className="mb-6 bg-white py-2 md:shadow-sm"
               >
                 <div className="p-4 pb-8 md:p-8 md:pb-4">
                   <Input
@@ -232,7 +232,7 @@ function CarcasseExaminateur() {
               id="carcasse-metadata-form"
               method="POST"
               ref={formRef}
-              className="mb-6 bg-white py-2 md:shadow"
+              className="mb-6 bg-white py-2 md:shadow-sm"
             >
               <div className="p-4 pb-8 md:p-8 md:pb-4">
                 {!canEdit && (
@@ -252,7 +252,7 @@ function CarcasseExaminateur() {
                 {canEdit ? (
                   <Select
                     label="Sélectionnez l'espèce du gibier"
-                    className="group !mb-0 grow"
+                    className="group mb-0! grow"
                     nativeSelectProps={{
                       name: Prisma.CarcasseScalarFieldEnum.espece,
                       value: espece,
@@ -298,7 +298,7 @@ function CarcasseExaminateur() {
                 )}
                 <Component
                   label="Nombre de carcasses"
-                  className={['!mb-0 grow', carcasse.type === CarcasseType.GROS_GIBIER ? 'hidden' : ''].join(
+                  className={['mb-0! grow', carcasse.type === CarcasseType.GROS_GIBIER ? 'hidden' : ''].join(
                     ' ',
                   )}
                   hintText="Optionel"
@@ -321,7 +321,7 @@ function CarcasseExaminateur() {
             </form>
             {espece && (
               <>
-                <div className="mb-6 bg-white md:shadow">
+                <div className="mb-6 bg-white md:shadow-sm">
                   <div className="p-4 pb-8 md:p-8 md:pb-4">
                     <h3 className="fr-h4 fr-mb-2w">
                       Anomalies carcasse<span className="fr-hint-text"></span>
@@ -378,7 +378,7 @@ function CarcasseExaminateur() {
                   </div>
                 </div>
                 {carcasse.type === CarcasseType.GROS_GIBIER && (
-                  <div className="mb-6 bg-white md:shadow">
+                  <div className="mb-6 bg-white md:shadow-sm">
                     <div className="p-4 pb-8 md:p-8 md:pb-4">
                       <h3 className="fr-h4 fr-mb-2w">
                         Anomalies abats<span className="fr-hint-text"></span>
@@ -437,7 +437,7 @@ function CarcasseExaminateur() {
                 )}
               </>
             )}
-            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
+            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col shadow-2xl md:relative md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
               {showScroll && (
                 <div className="w-full p-6 pb-2 md:hidden">
                   <button

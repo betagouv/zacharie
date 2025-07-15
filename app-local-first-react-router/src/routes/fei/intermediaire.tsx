@@ -398,7 +398,7 @@ export default function FEICurrentIntermediaire(props: Props) {
           <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
             <ol className="fr-breadcrumb__list">
               <li>
-                <span className="fr-breadcrumb__link !bg-none !no-underline">Premier Détenteur</span>
+                <span className="fr-breadcrumb__link bg-none! no-underline!">Premier Détenteur</span>
               </li>
               {intermediaires
                 .map((_intermediaire, index) => {
@@ -482,7 +482,7 @@ export default function FEICurrentIntermediaire(props: Props) {
                     <CardCarcasse
                       carcasse={carcasse}
                       key={carcasse.numero_bracelet}
-                      className="[zoom:1.3] [&.border-manquante]:!border-gray-500 [&_.text-manquante]:!text-gray-500"
+                      className="[zoom:1.3] [&.border-manquante]:border-gray-500! [&_.text-manquante]:text-gray-500!"
                     />
                   </Fragment>
                 );

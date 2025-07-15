@@ -240,7 +240,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
           >
             <Input
               label="...ou saisissez l'email du Premier Détenteur si vous ne le trouvez pas"
-              className="!mb-0"
+              className="mb-0!"
               disabled={disabled}
               hintText="Nous l'ajouterons automatiquement à la liste de vos partenaires pour la prochaine fois"
               nativeInputProps={{

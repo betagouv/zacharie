@@ -103,10 +103,10 @@ export default function CardCarcasse({
       <div
         className={[
           'flex basis-full flex-row items-center justify-between border-solid text-left',
-          'border-0 bg-contrast-grey',
-          isRefus && 'border-l-3 border-error-main-525',
-          isManquante && 'border-manquante border-l-3 border-error-main-525',
-          isAccept && 'border-l-3 border-action-high-blue-france',
+          'bg-contrast-grey border-0',
+          isRefus && 'border-error-main-525 border-l-3',
+          isManquante && 'border-manquante border-error-main-525 border-l-3',
+          isAccept && 'border-action-high-blue-france border-l-3',
           className || '',
         ]
           .filter(Boolean)
@@ -135,7 +135,7 @@ export default function CardCarcasse({
           <p
             className={[
               'order-5 text-sm/4 first-letter:uppercase',
-              isEnCours && '!text-transparent',
+              isEnCours && 'text-transparent!',
               !isEnCours && 'font-bold', // bold pour accepté et refusé et manquant
               isRefus && 'text-error-main-525',
               isManquante && 'text-manquante text-error-main-525',
