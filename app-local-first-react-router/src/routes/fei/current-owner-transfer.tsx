@@ -36,7 +36,7 @@ export default function FeiTransfer() {
         </div>
         <span className="text-sm">Vous avez changé d'avis&nbsp;?</span>
         <Button
-          priority="tertiary no outline-solid"
+          priority="tertiary no outline"
           type="submit"
           className="text-sm"
           onClick={() => {
