@@ -61,23 +61,23 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
       key={carcasse?.updated_at ? dayjs(carcasse.updated_at).toISOString() : carcasse?.zacharie_carcasse_id}
       {...componentProps}
       className={[
-        'flex basis-full flex-col items-start justify-between border-0 bg-contrast-grey p-4 text-left',
+        'bg-contrast-grey flex basis-full flex-col items-start justify-between border-0 p-4 text-left',
         status === 'refusé' && 'border-l-3! border-solid border-red-500!',
-        status === 'accepté' && 'border-l-3! border-solid border-action-high-blue-france!',
+        status === 'accepté' && 'border-action-high-blue-france! border-l-3! border-solid',
         // priseEnCharge && 'border-action-high-blue-france!',
       ]
         .filter(Boolean)
         .join(' ')}
     >
       <p className="text-base font-bold">{espece}</p>
-      <p className="text-sm/4font-bold">N° {carcasse.numero_bracelet}</p>
+      <p className="text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
       {miseAMort && <p className="text-sm/4">{miseAMort}</p>}
       <p
         className={[
           'text-sm first-letter:uppercase',
           status === 'en cours de traitement' && 'text-transparent!',
-          status === 'refusé' && 'font-bold text-error-main-525',
-          status === 'accepté' && 'font-bold text-action-high-blue-france',
+          status === 'refusé' && 'text-error-main-525 font-bold',
+          status === 'accepté' && 'text-action-high-blue-france font-bold',
         ]
           .filter(Boolean)
           .join(' ')}

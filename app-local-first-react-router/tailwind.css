@@ -56,6 +56,22 @@
   If we ever want to remove these styles, we need to add an explicit border
   color utility to any element that depends on these defaults.
 */
+@layer utilities {
+  p {
+    @apply m-0;
+  }
+  * {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: #000;
+  }
+  ol, ul, menu {
+    @apply list-none;
+    padding-inline-start: 0;
+  }
+}
+
 @layer base {
   *,
   ::after,
