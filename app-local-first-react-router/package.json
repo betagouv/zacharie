@@ -23,6 +23,7 @@
     "@prisma/client": "^6.8.2",
     "@react-hookz/web": "^25.1.1",
     "@sentry/react": "^9.22.0",
+    "@tailwindcss/vite": "^4.1.11",
     "@uidotdev/usehooks": "^2.4.1",
     "compression": "^1.7.5",
     "dayjs": "^1.11.13",

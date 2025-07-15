@@ -13,11 +13,11 @@ export default function LandingPage() {
           <div className="fr-container">
             <div className="grid items-center gap-12 lg:grid-cols-2">
               <div className="max-w-[75%] space-y-8">
-                <h1 className="text-xl font-bold leading-tight text-white lg:text-3xl">
+                <h1 className="text-xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl">
                   Réalisez vos fiches d'examen initial du gibier directement depuis votre smartphone ou votre
                   ordinateur, où que vous soyez.
                 </h1>
-                <p className="text-xl font-bold leading-relaxed text-white lg:text-3xl">
+                <p className="!text-xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl">
                   Simple, rapide et 100% gratuit, Zacharie accélère vos démarches.
                 </p>
                 <div className="flex flex-col gap-4">
@@ -118,7 +118,7 @@ export default function LandingPage() {
             <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
               <blockquote className="relative rounded-lg bg-white p-6 shadow-xs">
                 <div
-                  className="absolute -left-4 -top-4"
+                  className="absolute -top-4 -left-4"
                   style={{
                     width: '78px',
                     height: '89px',
@@ -136,7 +136,7 @@ export default function LandingPage() {
                   En un clic, je transmets ma fiche et je sais tout de suite si une carcasse est saisie.
                 </p>
                 <div
-                  className="absolute -bottom-4 -right-4"
+                  className="absolute -right-4 -bottom-4"
                   style={{
                     width: '78px',
                     height: '89px',
@@ -154,7 +154,7 @@ export default function LandingPage() {
 
               <blockquote className="relative rounded-lg bg-white p-6 shadow-xs">
                 <div
-                  className="absolute -left-4 -top-4"
+                  className="absolute -top-4 -left-4"
                   style={{
                     width: '78px',
                     height: '89px',
@@ -173,7 +173,7 @@ export default function LandingPage() {
                   le carnet à souches.
                 </p>
                 <div
-                  className="absolute -bottom-4 -right-4"
+                  className="absolute -right-4 -bottom-4"
                   style={{
                     width: '78px',
                     height: '89px',
