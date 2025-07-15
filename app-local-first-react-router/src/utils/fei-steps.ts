@@ -1,77 +1,119 @@
-import { FeiDone } from '@api/src/types/fei';
-import { FeiStep, FeiStepSimpleStatus } from '@app/types/fei-steps';
+import { capture } from '@app/services/sentry';
+import type { FeiDone } from '@api/src/types/fei';
+import type { FeiStep, FeiStepSimpleStatus } from '@app/types/fei-steps';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import { EntityTypes, UserRoles } from '@prisma/client';
+import { Entity, EntityTypes, User, UserRoles } from '@prisma/client';
 import { useMemo } from 'react';
+import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 
 type IntermediaireStep = {
   id: string | null;
-  role: EntityTypes;
-  nextRole: EntityTypes | null;
+  role: EntityTypes | UserRoles;
+  nextRole: EntityTypes | UserRoles | null;
 };
 
-export function useFeiSteps(fei: FeiDone) {
+type UseFeiStepsReturn = {
+  currentStep: number;
+  currentStepLabel: FeiStep;
+  nextStepLabel: FeiStep;
+  simpleStatus: FeiStepSimpleStatus;
+  steps: Array<IntermediaireStep>;
+};
+
+export function useFeiSteps(fei: FeiDone): UseFeiStepsReturn {
   const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
   const user = useUser((state) => state.user);
-  const entities = useZustandStore((state) => state.entities);
   const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
   const entitiesIdsWorkingDirectlyAndIndirectlyFor = useZustandStore(
     (state) => state.entitiesIdsWorkingDirectlyAndIndirectlyFor,
   );
 
-  const steps = useMemo(() => {
-    const steps: Array<unknown> = [
-      fei.examinateur_initial_user_id,
-      fei.premier_detenteur_entity_id || fei.premier_detenteur_user_id,
+  const memoizedComputeFeiSteps = useMemo(() => {
+    return computeFeiSteps({
+      fei,
+      intermediaires,
+      entitiesIdsWorkingDirectlyFor,
+      entitiesIdsWorkingDirectlyAndIndirectlyFor,
+      user,
+    });
+  }, [fei, intermediaires, entitiesIdsWorkingDirectlyFor, entitiesIdsWorkingDirectlyAndIndirectlyFor, user]);
+  return memoizedComputeFeiSteps;
+}
+
+interface ComputeFeiStepsParams {
+  fei: FeiDone;
+  intermediaires: Array<FeiIntermediaire>;
+  entitiesIdsWorkingDirectlyFor: Array<Entity['id']>;
+  entitiesIdsWorkingDirectlyAndIndirectlyFor: Array<Entity['id']>;
+  user: User | null;
+}
+
+export function computeFeiSteps({
+  fei,
+  intermediaires,
+  entitiesIdsWorkingDirectlyFor,
+  entitiesIdsWorkingDirectlyAndIndirectlyFor,
+  user,
+}: ComputeFeiStepsParams): UseFeiStepsReturn {
+  const steps: Array<IntermediaireStep> = (() => {
+    const _steps: Array<IntermediaireStep> = [
+      {
+        id: fei.examinateur_initial_user_id,
+        role: UserRoles.EXAMINATEUR_INITIAL,
+        nextRole: UserRoles.PREMIER_DETENTEUR,
+      },
+      {
+        id: fei.premier_detenteur_entity_id || fei.premier_detenteur_user_id,
+        role: UserRoles.PREMIER_DETENTEUR,
+        nextRole: fei.premier_detenteur_prochain_detenteur_type_cache,
+      },
     ];
-
-    let alreadyEtg = false;
     for (const i of intermediaires) {
-      if (i.intermediaire_role === UserRoles.ETG) {
-        alreadyEtg = true;
-      }
-      steps.push({
+      _steps.push({
         id: i.id,
-        role: i.intermediaire_role,
-        nextRole: i.intermediaire_prochain_detenteur_id_cache
-          ? entities[i.intermediaire_prochain_detenteur_id_cache]?.type
-          : null,
-      } as IntermediaireStep);
+        role: i.intermediaire_role as EntityTypes | UserRoles,
+        nextRole: i.intermediaire_prochain_detenteur_type_cache,
+      });
     }
-    if (!fei.intermediaire_closed_at) {
-      if (!alreadyEtg) {
-        // on simplifie ici : pour montrer à l'utilisateur qu'on anticipe une étape ETG puis SVI
-        // mais peut-être que ça va changer, avec les circuits longs, les circuits courts...
-        steps.push({
-          id: null,
-          role: UserRoles.ETG,
-          nextRole: null,
-        });
-      }
-      steps.push(fei.svi_assigned_at);
+    if (fei.intermediaire_closed_at) return _steps;
+    const lastStepIsEtgToSvi =
+      _steps[_steps.length - 1]?.role === UserRoles.ETG &&
+      _steps[_steps.length - 1]?.nextRole === UserRoles.SVI;
+    if (!lastStepIsEtgToSvi) {
+      // on simplifie ici : pour montrer à l'utilisateur qu'on anticipe une étape ETG puis SVI
+      // mais peut-être que ça va changer, avec les circuits longs, les circuits courts...
+      _steps.push({
+        id: null,
+        role: UserRoles.ETG,
+        nextRole: UserRoles.SVI,
+      });
     }
-    return steps;
-  }, [fei, intermediaires, entities]);
+    _steps.push({
+      id: null,
+      role: UserRoles.SVI,
+      nextRole: null,
+    });
+    return _steps;
+  })();
 
-  const currentStep: number = useMemo(() => {
+  const currentStepIndex: number = (() => {
     // find role equal to fei.fei_current_owner_role but in reverse order
-    if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) return 1;
-    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) return 2;
-    if (fei.svi_assigned_at) return steps.length;
-    if (fei.intermediaire_closed_at) return steps.length;
-    const etgStep = steps[steps.length - 2] as IntermediaireStep;
-    if (etgStep.id) {
-      return steps.length - 1;
-    }
-    return steps.length - 2;
-  }, [fei, steps]);
+    if (fei.svi_assigned_at) return steps.length - 1; // step is SVI
+    if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) return 0;
+    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) return 1;
+    if (fei.intermediaire_closed_at) return steps.length - 1; // fei is closed
+    const etgStep = steps[steps.length - 2];
+    if (etgStep.id) return steps.length - 2; // etg is selected
+    return steps.length - 3; // etg is not selected
+  })();
 
-  const currentStepLabel: FeiStep = useMemo(() => {
+  const currentStepLabel: FeiStep = (() => {
     if (fei.automatic_closed_at || fei.svi_closed_at || fei.intermediaire_closed_at) {
       return 'Clôturée';
     }
+    if (fei.svi_assigned_at) return 'Inspection par le SVI';
     if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) return 'Examen initial';
     if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
       if (!fei.fei_next_owner_role) {
@@ -80,45 +122,32 @@ export function useFeiSteps(fei: FeiDone) {
         return 'Fiche envoyée, pas encore traitée';
       }
     }
-    if (fei.svi_assigned_at) return 'Inspection par le SVI';
-
-    const avantDernierStep = steps[steps.length - 2] as IntermediaireStep; // c'est toujours l'étape ETG, qu'il soit sélectionné ou pas encore
-    if (avantDernierStep.id) {
-      // l'ETG a été sélectionné, mais a-t-il commencé à traiter la fiche ?
-      if (fei.fei_next_owner_role === UserRoles.ETG) {
-        return 'Fiche envoyée, pas encore traitée';
-      } else if (avantDernierStep.nextRole === UserRoles.COLLECTEUR_PRO) {
-        return 'Transport vers un autre établissement de traitement';
-      } else {
-        return 'Réception par un établissement de traitement';
-      }
-    } else {
-      // pas encore d'ETG, on regarde l'étape précédente
-      // pour simplifier :
-      const avantAvantDernierStep = steps[steps.length - 3] as IntermediaireStep;
-      if (!avantAvantDernierStep) {
-        return 'Examen initial';
-      }
-      if (avantAvantDernierStep.role === UserRoles.COLLECTEUR_PRO) {
-        if (avantAvantDernierStep.nextRole === EntityTypes.ETG) {
-          return 'Transport vers un établissement de traitement';
-        }
-        if (avantAvantDernierStep.nextRole === EntityTypes.COLLECTEUR_PRO) {
-          return 'Transport';
-        }
+    const avantDernierStep = steps[steps.length - 2]; // c'est toujours l'étape ETG vers SVI, qu'il soit sélectionné ou pas encore
+    if (avantDernierStep.id) return 'Réception par un établissement de traitement';
+    // pas encore d'ETG, on regarde l'étape précédente
+    // pour simplifier :
+    const currentStep = steps[steps.length - 3];
+    if (!currentStep) return 'Examen initial'; // juste pour éviter un bug
+    if (currentStep.role === UserRoles.COLLECTEUR_PRO) {
+      if (currentStep.nextRole === EntityTypes.ETG) {
+        return 'Transport vers un établissement de traitement';
+      } else if (currentStep.nextRole === EntityTypes.COLLECTEUR_PRO) {
         return 'Transport';
       }
-      if (avantAvantDernierStep.role === UserRoles.ETG) {
-        if (!avantAvantDernierStep.nextRole) {
-          return 'Réception par un établissement de traitement';
-        }
+      // pas de nextRole donc on ne sait rien d'autre que : c'est un transport
+      return 'Transport';
+    }
+    if (currentStep.role === UserRoles.ETG) {
+      if (currentStep.nextRole === EntityTypes.ETG || currentStep.nextRole === EntityTypes.COLLECTEUR_PRO) {
         return 'Transport vers un autre établissement de traitement';
       }
-      return 'En cours';
+      return 'Réception par un établissement de traitement';
     }
-  }, [fei, steps]);
+    capture('bug dans currentStepLabel', { extra: { fei, steps } });
+    return 'En cours';
+  })();
 
-  const nextStepLabel: FeiStep = useMemo(() => {
+  const nextStepLabel: FeiStep = (() => {
     switch (currentStepLabel) {
       case 'Examen initial':
         return 'Validation par le premier détenteur';
@@ -126,6 +155,7 @@ export function useFeiSteps(fei: FeiDone) {
         return 'Transport vers un établissement de traitement';
       case 'Fiche envoyée, pas encore traitée':
       case 'Transport vers un établissement de traitement':
+      case 'Transport vers un autre établissement de traitement':
       case 'Transport':
         return 'Transport vers / réception par un établissement de traitement';
       case 'Réception par un établissement de traitement':
@@ -135,9 +165,9 @@ export function useFeiSteps(fei: FeiDone) {
       default:
         return 'Clôturée';
     }
-  }, [currentStepLabel]);
+  })();
 
-  const simpleStatus: FeiStepSimpleStatus = useMemo(() => {
+  const simpleStatus: FeiStepSimpleStatus = (() => {
     if (
       user?.roles.includes(UserRoles.PREMIER_DETENTEUR) ||
       user?.roles.includes(UserRoles.EXAMINATEUR_INITIAL)
@@ -202,16 +232,10 @@ export function useFeiSteps(fei: FeiDone) {
       default:
         return 'En cours';
     }
-  }, [
-    currentStepLabel,
-    user?.roles,
-    fei,
-    entitiesIdsWorkingDirectlyFor,
-    entitiesIdsWorkingDirectlyAndIndirectlyFor,
-  ]);
+  })();
 
   return {
-    currentStep,
+    currentStep: currentStepIndex + 1,
     currentStepLabel,
     nextStepLabel,
     simpleStatus,

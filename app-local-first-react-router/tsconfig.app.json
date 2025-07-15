@@ -8,8 +8,6 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "strictNullChecks": true,
-
-    /* Bundler mode */
     "moduleResolution": "Bundler",
     "allowArbitraryExtensions": true,
     "allowImportingTsExtensions": true,
@@ -19,14 +17,13 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-    /* Linting */
     "types": [
       "@prisma/client",
       "vite-plugin-pwa/info",
       "vite-plugin-pwa/pwa-assets",
       "vite-plugin-pwa/react",
       "vite-plugin-pwa/client",
-      "workbox-precaching",
+      "workbox-precaching"
     ],
     "strict": true,
     "allowJs": true,
@@ -38,13 +35,16 @@
     "paths": {
       "@app/*": ["./src/*"],
       "@api/*": ["../api-express/*"],
-      "~/*": ["../api-express/*"],
-    },
+      "~/*": ["../api-express/*"]
+    }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     "src/**/*",
-    "../api-express/src/types/**/*"
-  ],
+    "__tests__/**/*",
+    "**/*.test.ts",
+    "../api-express/src/types/**/*",
+    "jest.setup.js"
+  ]
 }

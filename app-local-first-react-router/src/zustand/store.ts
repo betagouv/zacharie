@@ -29,13 +29,15 @@ import updateCarcasseStatus from '@app/utils/get-carcasse-status';
 import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 import PQueue from 'p-queue';
 import {
-  type FeiAndIntermediaireIds,
-  type FeiAndCarcasseAndIntermediaireIds,
-  type FeiIntermediaire,
   getFeiAndCarcasseAndIntermediaireIds,
   getFeiAndIntermediaireIds,
   getFeiAndIntermediaireIdsFromFeiIntermediaire,
 } from '@app/utils/get-carcasse-intermediaire-id';
+import type {
+  FeiAndCarcasseAndIntermediaireIds,
+  FeiAndIntermediaireIds,
+  FeiIntermediaire,
+} from '@app/types/fei-intermediaire';
 
 export interface State {
   isOnline: boolean;

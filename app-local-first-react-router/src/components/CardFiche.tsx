@@ -1,4 +1,4 @@
-import { FeiDone } from '@api/src/types/fei';
+import type { FeiDone } from '@api/src/types/fei';
 import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { useFeiSteps } from '@app/utils/fei-steps';
 import dayjs from 'dayjs';

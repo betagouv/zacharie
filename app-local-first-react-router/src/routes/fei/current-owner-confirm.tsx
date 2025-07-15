@@ -10,10 +10,8 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useGetMyNextRoleForThisFei, useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
-import {
-  type FeiIntermediaire,
-  getNewCarcasseIntermediaireId,
-} from '@app/utils/get-carcasse-intermediaire-id';
+import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
+import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import dayjs from 'dayjs';
 
 export default function CurrentOwnerConfirm() {

@@ -10,6 +10,9 @@ type ErrorType = Error | string;
 export function capture(err: ErrorType, context: Context | string = {}): void {
   let parsedContext: Context;
 
+  if (import.meta.env.VITEST) {
+    return console.log('capture', err, JSON.stringify(context, null, 2));
+  }
   if (import.meta.env.DEV) {
     return console.log('capture', err, context);
   }

@@ -8,10 +8,8 @@ import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 // import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import useZustandStore from '@app/zustand/store';
-import {
-  getFeiAndCarcasseAndIntermediaireIdsFromCarcasse,
-  type FeiIntermediaire,
-} from '@app/utils/get-carcasse-intermediaire-id';
+import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
+import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
 import dayjs from 'dayjs';

@@ -34,8 +34,10 @@ jobs:
           cd app-local-first-react-router
           npm i
 
-      # - name: Run Dashboard Jest tests
-      #   run: npm run test --cwd ./dashboard
+      - name: Run app vitest tests
+        run: |
+          cd app-local-first-react-router
+          npm run vitest
 
       - name: Install api dependencies
         run: |

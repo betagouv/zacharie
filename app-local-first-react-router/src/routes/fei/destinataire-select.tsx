@@ -23,7 +23,7 @@ import { getEntityDisplay } from '@app/utils/get-entity-display';
 import Button from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
-import { FeiAndIntermediaireIds, FeiIntermediaire } from '@app/utils/get-carcasse-intermediaire-id';
+import type { FeiIntermediaire, FeiAndIntermediaireIds } from '@app/types/fei-intermediaire';
 
 export default function DestinataireSelect({
   className = '',

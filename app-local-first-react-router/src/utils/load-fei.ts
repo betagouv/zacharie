@@ -3,12 +3,14 @@ import type { FeiResponse } from '@api/src/types/responses';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import useZustandStore from '@app/zustand/store';
 import {
-  FeiAndCarcasseAndIntermediaireIds,
-  FeiAndIntermediaireIds,
-  type FeiIntermediaire,
   getFeiAndCarcasseAndIntermediaireIds,
   getFeiAndIntermediaireIds,
 } from '@app/utils/get-carcasse-intermediaire-id';
+import type {
+  FeiAndCarcasseAndIntermediaireIds,
+  FeiAndIntermediaireIds,
+  FeiIntermediaire,
+} from '@app/types/fei-intermediaire';
 
 export async function loadFei(fei_numero: string) {
   const isOnline = useZustandStore.getState().isOnline;
