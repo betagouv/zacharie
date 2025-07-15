@@ -66,7 +66,7 @@ export default function TableResponsive({
                   <tr id={id} className="relative w-full">
                     <td className="hidden max-w-14 border-r border-r-gray-100 text-sm text-gray-500 lg:table-cell">
                       <Checkbox
-                        className="!m-0 [&_label]:before:!m-0"
+                        className="m-0! [&_label]:before:m-0!"
                         small
                         options={[
                           {
@@ -84,7 +84,7 @@ export default function TableResponsive({
                       />
                     </td>
                     <td className="w-full max-w-0 overflow-hidden text-sm font-medium text-gray-900 sm:hidden">
-                      <Link to={link!} className="block bg-none py-4 pl-4 pr-3 !no-underline">
+                      <Link to={link!} className="block bg-none py-4 pl-4 pr-3 no-underline!">
                         <dl className="font-normal lg:hidden">
                           <dt className="mt-2">{headers[0]}</dt>
                           <dd className="text-ellipsis text-gray-700">{cols[0]}</dd>
@@ -111,7 +111,7 @@ export default function TableResponsive({
                       {!isSynced && (
                         <div className="absolute left-0 top-0 h-full w-8 border-l-8 border-action-high-blue-france"></div>
                       )}
-                      <Link to={link!} className="block bg-none !no-underline">
+                      <Link to={link!} className="block bg-none no-underline!">
                         <span className="hidden lg:block">{cols[0]}</span>
                         <dl className="px-3 py-4 font-normal lg:hidden">
                           <dt className="mt-2">{headers[1]}</dt>
@@ -124,12 +124,12 @@ export default function TableResponsive({
                       </Link>
                     </td>
                     <td className="hidden text-sm text-gray-500 sm:table-cell">
-                      <Link to={link!} className="block bg-none px-3 py-4 !no-underline">
+                      <Link to={link!} className="block bg-none px-3 py-4 no-underline!">
                         {cols[1]}
                       </Link>
                     </td>
                     <td className="hidden max-w-96 text-sm text-gray-500 sm:table-cell">
-                      <Link to={link!} className="block bg-none px-3 py-4 !no-underline">
+                      <Link to={link!} className="block bg-none px-3 py-4 no-underline!">
                         {cols[2]}
                       </Link>
                     </td>
@@ -137,7 +137,7 @@ export default function TableResponsive({
                       <td className="hidden h-full max-w-56 items-stretch justify-start text-left text-sm font-medium sm:table-cell sm:pr-0">
                         <Link
                           to={link!}
-                          className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 !no-underline"
+                          className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 no-underline!"
                         >
                           {cols[3]}
                         </Link>
@@ -153,7 +153,7 @@ export default function TableResponsive({
                         strongId ? 'text-gray-900' : 'text-gray-200',
                       ].join(' ')}
                     >
-                      <Link to={link!} className="block bg-none !p-0 !m-0 !no-underline">
+                      <Link to={link!} className="block bg-none p-0! m-0! no-underline!">
                         {id}
                       </Link>
                     </td>

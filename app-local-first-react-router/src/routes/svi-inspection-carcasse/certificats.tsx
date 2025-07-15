@@ -97,7 +97,7 @@ function CertificatCard({ certificat }: { certificat: Certificat }) {
           iconId="fr-icon-download-line"
           onClick={handleDownload}
           title="Télécharger le certificat"
-          priority="tertiary no outline"
+          priority="tertiary no outline-solid"
         />
       </div>
     </div>

@@ -33,7 +33,7 @@ export default function LandingPage() {
                   <Button
                     size="large"
                     priority="secondary"
-                    className="border-white bg-white !shadow-none"
+                    className="border-white bg-white shadow-none!"
                     linkProps={{
                       to: '/app/connexion?type=compte-existant',
                       href: '#',
@@ -116,7 +116,7 @@ export default function LandingPage() {
             </div>
 
             <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
-              <blockquote className="relative rounded-lg bg-white p-6 shadow-sm">
+              <blockquote className="relative rounded-lg bg-white p-6 shadow-xs">
                 <div
                   className="absolute -left-4 -top-4"
                   style={{
@@ -152,7 +152,7 @@ export default function LandingPage() {
                 </div>
               </blockquote>
 
-              <blockquote className="relative rounded-lg bg-white p-6 shadow-sm">
+              <blockquote className="relative rounded-lg bg-white p-6 shadow-xs">
                 <div
                   className="absolute -left-4 -top-4"
                   style={{

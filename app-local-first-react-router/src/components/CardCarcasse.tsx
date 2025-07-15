@@ -135,7 +135,7 @@ export default function CardCarcasse({
           <p
             className={[
               'order-5 text-sm/4 first-letter:uppercase',
-              isEnCours && '!text-transparent',
+              isEnCours && 'text-transparent!',
               !isEnCours && 'font-bold', // bold pour accepté et refusé et manquant
               isRefus && 'text-error-main-525',
               isManquante && 'text-manquante text-error-main-525',
@@ -155,7 +155,7 @@ export default function CardCarcasse({
                 iconId="fr-icon-pencil-line"
                 onClick={onEdit}
                 title="Éditer la carcasse"
-                priority="tertiary no outline"
+                priority="tertiary no outline-solid"
               />
             )}
             {onDelete && !isRefus && !isManquante && (
@@ -164,7 +164,7 @@ export default function CardCarcasse({
                 iconId="fr-icon-delete-bin-line"
                 onClick={onDelete}
                 title="Supprimer la carcasse"
-                priority="tertiary no outline"
+                priority="tertiary no outline-solid"
               />
             )}
           </div>

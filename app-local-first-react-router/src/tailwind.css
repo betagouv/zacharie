@@ -1,6 +1,65 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --breakpoint-xs: 450px;
+
+  --border-width-3: 3px;
+  --border-width-6: 6px;
+
+  --color-action-high-blue-france: var(--text-action-high-blue-france);
+  --color-action-high-blue-france-dark: #8585f6;
+  --color-action-high-blue-france-light: #000091;
+
+  --color-alt-blue-france: var(--background-alt-blue-france);
+  --color-alt-blue-france-dark: #1b1b35;
+  --color-alt-blue-france-light: #f5f5fe;
+
+  --color-error-main-525: #f60700;
+  --color-error-main-525-dark: #f60700;
+  --color-error-main-525-light: #f60700;
+
+  --color-warning-main-525: #d64d00;
+  --color-warning-main-525-dark: #d64d00;
+  --color-warning-main-525-light: #d64d00;
+
+  --color-error-850: #ffbdbd;
+  --color-error-850-dark: #ffbdbd;
+  --color-error-850-light: #ffbdbd;
+
+  --color-success-main-525: #1f8d49;
+  --color-success-main-525-dark: #1f8d49;
+  --color-success-main-525-light: #1f8d49;
+
+  --color-success-main-625: #27a658;
+  --color-success-main-625-dark: #27a658;
+  --color-success-main-625-light: #27a658;
+
+  --color-green-emeraude: var(--green-emeraude-main-632);
+
+  --color-contrast-grey: var(--background-contrast-grey);
+
+  --color-disabled-grey: var(--text-disabled-grey);
+
+  --color-active-tint: var(--active-tint);
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: #000;
+  }
+}
 
 @media (max-width: 767px) {
   /* .fr-header__service {
@@ -98,7 +157,7 @@ table.table-custom {
 div.tailwindui,
 input.tailwindui,
 textarea.tailwindui {
-  @apply relative block w-full appearance-none rounded-[4px] border border-gray-300 border-solid px-2 py-2 text-base shadow-sm focus:border-action-high-blue-france focus:ring-action-high-blue-france focus:outline-action-high-blue-france sm:text-sm !-outline-offset-1 ;
+  @apply relative block w-full appearance-none rounded-[4px] border border-gray-300 border-solid px-2 py-2 text-base shadow-xs focus:border-action-high-blue-france focus:ring-action-high-blue-france focus:outline-action-high-blue-france sm:text-sm -outline-offset-1! ;
 }
 label.tailwindui {
   @apply mb-2 block text-gray-700;
@@ -122,11 +181,11 @@ label.tailwindui {
 } */
 
 .checkbox-black .fr-checkbox-group input[type=checkbox]:checked + label::before {
-  @apply !text-gray-900 !bg-gray-900;
+  @apply text-gray-900! bg-gray-900!;
 }
 
 .checkbox-black *  {
-  @apply !cursor-not-allowed !opacity-100 !text-gray-900;
+  @apply cursor-not-allowed! opacity-100! text-gray-900!;
 }
 
 .radio-black .fr-radio-group input[type=radio] + label {
@@ -140,7 +199,7 @@ label.tailwindui {
 }
 
 .radio-black * {
-  @apply !cursor-not-allowed pointer-events-none;
+  @apply cursor-not-allowed! pointer-events-none;
 }
 
 .card-checkbox {
@@ -174,9 +233,9 @@ details {
 }
 
 .drop-down .fr-nav__item {
-  @apply !bg-white;
+  @apply bg-white!;
 }
 
 .drop-down .fr-nav__btn {
-  @apply !py-0 !min-h-10 !text-action-high-blue-france !font-medium !text-base;
+  @apply py-0! min-h-10! text-action-high-blue-france! font-medium! text-base!;
 }

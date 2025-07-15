@@ -27,7 +27,7 @@ export default function Stats() {
               <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a> ou en
               remplissant le formulaire ci-dessous.
             </CallOut>
-            <div className="mb-6 bg-white md:shadow">
+            <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
                 <form
                   onSubmit={(e) => {

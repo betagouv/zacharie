@@ -153,7 +153,7 @@ export default function MesCCGs() {
               disponible ici.
             </a>
           </CallOut> */}
-          <div className="mb-6 bg-white md:shadow" id="onboarding-etape-2-ccgs-data">
+          <div className="mb-6 bg-white md:shadow-sm" id="onboarding-etape-2-ccgs-data">
             <div className="p-4 pb-32 md:p-8 md:pb-0">
               {!userCCGs.length && (
                 <p className="mb-4 text-lg font-bold">
@@ -341,7 +341,7 @@ export default function MesCCGs() {
                 </a>
               </div>
             </div>
-            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
+            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
               <ButtonsGroup
                 buttons={[
                   {
@@ -416,7 +416,7 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
     >
       <Input
         label="Si vous utilisez un CCG enregistré auprès des services de l'Etat, renseignez ici son numéro d'identification."
-        className="!mb-0"
+        className="mb-0!"
         state={error ? 'error' : 'default'}
         stateRelatedMessage={error}
         nativeInputProps={{

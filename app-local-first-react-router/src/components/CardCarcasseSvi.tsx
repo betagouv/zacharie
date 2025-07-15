@@ -62,9 +62,9 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
       {...componentProps}
       className={[
         'flex basis-full flex-col items-start justify-between border-0 bg-contrast-grey p-4 text-left',
-        status === 'refusé' && '!border-l-3 border-solid !border-red-500',
-        status === 'accepté' && '!border-l-3 border-solid !border-action-high-blue-france',
-        // priseEnCharge && '!border-action-high-blue-france',
+        status === 'refusé' && 'border-l-3! border-solid border-red-500!',
+        status === 'accepté' && 'border-l-3! border-solid border-action-high-blue-france!',
+        // priseEnCharge && 'border-action-high-blue-france!',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -75,7 +75,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
       <p
         className={[
           'text-sm first-letter:uppercase',
-          status === 'en cours de traitement' && '!text-transparent',
+          status === 'en cours de traitement' && 'text-transparent!',
           status === 'refusé' && 'font-bold text-error-main-525',
           status === 'accepté' && 'font-bold text-action-high-blue-france',
         ]

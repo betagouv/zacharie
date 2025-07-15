@@ -231,7 +231,7 @@ export default function AdminUser() {
               selectedTabId={selectedTabId}
               tabs={tabs}
               onTabChange={setSelectedTabId}
-              className="mb-6 bg-white md:shadow [&_.fr-tabs\_\_list]:!bg-alt-blue-france [&_.fr-tabs\_\_list]:!shadow-none"
+              className="mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:bg-alt-blue-france! [&_.fr-tabs\_\_list]:shadow-none!"
             >
               {selectedTabId === 'Roles' && (
                 <form
@@ -250,7 +250,7 @@ export default function AdminUser() {
                     user={user}
                     legend="Sélectionnez tous les rôles de cet utilisateur"
                   />
-                  <div className="relative flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
+                  <div className="relative flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
                     <ButtonsGroup
                       buttons={[
                         {
@@ -379,7 +379,7 @@ export default function AdminUser() {
                       }}
                     />
                   )}
-                  <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none [&_ul]:md:min-w-96">
+                  <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
                     <ButtonsGroup
                       buttons={[
                         {
@@ -608,7 +608,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
               title={
                 <Link
                   to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                  className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                 >
                   {entity.nom_d_usage}
                   <br />
@@ -627,7 +627,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
           );
         })}
       {!!potentialEntities.length && (
-        <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline [&_td]:has-[a]:!p-0">
+        <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
           <Table
             fixed
             noCaption
@@ -664,7 +664,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
               >
                 <Link
                   to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                  className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                 >
                   {entity.nom_d_usage}
                   <br />
@@ -679,7 +679,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
               </form>,
               <p
                 key={user.id}
-                className="!inline-flex size-full items-center justify-start !bg-none !no-underline"
+                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
               >
                 {entity.type}
               </p>,

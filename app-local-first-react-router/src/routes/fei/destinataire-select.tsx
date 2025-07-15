@@ -460,7 +460,7 @@ export default function DestinataireSelect({
                         </div>
                       ) : (
                         <Link
-                          className="!bg-none text-left !no-underline"
+                          className="bg-none! text-left no-underline!"
                           to={`/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`}
                         >
                           Vous n'avez pas encore renseigné votre centre de collecte ? Vous pouvez le faire en{' '}

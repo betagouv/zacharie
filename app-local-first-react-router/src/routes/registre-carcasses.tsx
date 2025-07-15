@@ -184,7 +184,7 @@ export default function RegistreCarcasses() {
               </Button>
             </div>
           </section>
-          <section className="mb-6 bg-white md:shadow">
+          <section className="mb-6 bg-white md:shadow-sm">
             <TableFilterable
               data={paginatedData}
               rowKey="zacharie_carcasse_id"
@@ -215,7 +215,7 @@ export default function RegistreCarcasses() {
                           {carcasse.numero_bracelet}
                         </Link>
                         <small className="text-xs text-gray-400">{carcasse.espece}</small>
-                        {/* <span className="opacity-30 !no-underline text-xs italic">
+                        {/* <span className="opacity-30 no-underline! text-xs italic">
                           ID Zacharie: {carcasse.zacharie_carcasse_id}
                         </span> */}
                       </div>

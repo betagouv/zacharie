@@ -193,7 +193,7 @@ export default function Filters<T extends Filter = Filter>({
                   {!!filters.filter((_filter: T) => Boolean(_filter.field)).length && (
                     <button
                       type="button"
-                      className="h-full w-full rounded border border-gray-300 bg-white px-2.5 py-2 text-sm text-error-main-525 hover:bg-error-850"
+                      className="h-full w-full rounded-sm border border-gray-300 bg-white px-2.5 py-2 text-sm text-error-main-525 hover:bg-error-850"
                       onClick={onRemoveFilter}
                     >
                       Retirer
@@ -208,7 +208,7 @@ export default function Filters<T extends Filter = Filter>({
           <div className="basis-1/12" />
           <button
             type="button"
-            className="text-main h-full rounded text-sm hover:underline disabled:opacity-20"
+            className="text-main h-full rounded-sm text-sm hover:underline disabled:opacity-20"
             onClick={onAddFilter}
             disabled={!!filters.find((f) => !f.field)}
           >
@@ -284,7 +284,7 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
       <div className="flex">
         <input
           name={name}
-          className={`tailwindui grow ${unfilledChecked ? '!text-gray-400' : ''}`}
+          className={`tailwindui grow ${unfilledChecked ? 'text-gray-400!' : ''}`}
           disabled={unfilledChecked}
           type="text"
           value={value || ''}

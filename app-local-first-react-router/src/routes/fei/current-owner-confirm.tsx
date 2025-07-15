@@ -369,7 +369,7 @@ export default function CurrentOwnerConfirm() {
                   Transférer la fiche
                 </Button>
                 <Button
-                  priority="tertiary no outline"
+                  priority="tertiary no outline-solid"
                   type="submit"
                   onClick={() => {
                     const nextFei = {
