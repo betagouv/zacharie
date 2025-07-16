@@ -584,6 +584,84 @@ describe('computeFeiSteps', () => {
 
         expect(result.simpleStatus).toBe('À compléter');
       });
+
+      test('should return "En cours" when COLLECTEUR_PRO (not ETG) user and step is "Réception par un établissement de traitement"', () => {
+        const collecteurProOnlyUser = createMockUser([UserRoles.COLLECTEUR_PRO]);
+        const etgIntermediaire = createMockIntermediaire({
+          id: 'etg-user_123456',
+          intermediaire_role: UserRoles.ETG,
+          intermediaire_prochain_detenteur_type_cache: EntityTypes.SVI,
+        });
+
+        const fei = createMockFei({
+          fei_current_owner_role: UserRoles.ETG,
+          fei_current_owner_entity_id: 'etg-entity',
+          // This will result in currentStepLabel being "Réception par un établissement de traitement"
+        });
+
+        const result = computeFeiSteps({
+          fei,
+          intermediaires: [etgIntermediaire],
+          user: collecteurProOnlyUser,
+          entitiesIdsWorkingDirectlyFor: ['etg-entity'],
+          entitiesIdsWorkingDirectlyAndIndirectlyFor: ['etg-entity'],
+        });
+
+        expect(result.currentStepLabel).toBe('Réception par un établissement de traitement');
+        expect(result.simpleStatus).toBe('En cours');
+      });
+
+      test('should NOT return "En cours" early when user has both COLLECTEUR_PRO and ETG roles and step is "Réception par un établissement de traitement"', () => {
+        const collecteurProEtgUser = createMockUser([UserRoles.COLLECTEUR_PRO, UserRoles.ETG]);
+        const etgIntermediaire = createMockIntermediaire({
+          id: 'etg-user_123456',
+          intermediaire_role: UserRoles.ETG,
+          intermediaire_prochain_detenteur_type_cache: EntityTypes.SVI,
+        });
+
+        const fei = createMockFei({
+          fei_current_owner_role: UserRoles.ETG,
+          fei_current_owner_entity_id: 'etg-entity',
+        });
+
+        const result = computeFeiSteps({
+          fei,
+          intermediaires: [etgIntermediaire],
+          user: collecteurProEtgUser,
+          entitiesIdsWorkingDirectlyFor: ['etg-entity'],
+          entitiesIdsWorkingDirectlyAndIndirectlyFor: ['etg-entity'],
+        });
+
+        expect(result.currentStepLabel).toBe('Réception par un établissement de traitement');
+        // Should continue with existing logic instead of returning "En cours" early
+        expect(result.simpleStatus).toBe('À compléter'); // Because user works for the entity
+      });
+
+      test('should continue with existing logic when COLLECTEUR_PRO (not ETG) user and step is NOT "Réception par un établissement de traitement"', () => {
+        const collecteurProOnlyUser = createMockUser([UserRoles.COLLECTEUR_PRO]);
+        const collecteurProIntermediaire = createMockIntermediaire({
+          intermediaire_role: UserRoles.COLLECTEUR_PRO,
+          intermediaire_prochain_detenteur_type_cache: EntityTypes.ETG,
+        });
+
+        const fei = createMockFei({
+          fei_current_owner_role: UserRoles.COLLECTEUR_PRO,
+          fei_current_owner_entity_id: 'collecteur-entity',
+          // This will result in currentStepLabel being "Transport vers un établissement de traitement"
+        });
+
+        const result = computeFeiSteps({
+          fei,
+          intermediaires: [collecteurProIntermediaire],
+          user: collecteurProOnlyUser,
+          entitiesIdsWorkingDirectlyFor: ['collecteur-entity'],
+          entitiesIdsWorkingDirectlyAndIndirectlyFor: ['collecteur-entity'],
+        });
+
+        expect(result.currentStepLabel).toBe('Transport vers un établissement de traitement');
+        // Should follow existing logic, not the new early return
+        expect(result.simpleStatus).toBe('À compléter');
+      });
     });
 
     describe('Closed status', () => {

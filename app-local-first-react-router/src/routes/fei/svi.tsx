@@ -15,6 +15,7 @@ import { sortCarcassesApproved } from '@app/utils/sort';
 import FEIDonneesDeChasse from './donnees-de-chasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
+// import DropDownMenu from '@app/components/DropDownMenu';
 
 export default function FEI_SVI() {
   const params = useParams();
@@ -81,11 +82,40 @@ export default function FEI_SVI() {
         <FEIDonneesDeChasse />
       </Section>
       <Section title={`Carcasses à inspecter (${carcassesAAfficher.length})`}>
-        {canEdit && (
-          <p className="mb-8 text-sm text-gray-600">
-            Veuillez cliquer sur une carcasse pour la saisir ou l'annoter
-          </p>
-        )}
+        {/* {carcassesAAfficher.length > 0 && canEdit && (
+          <>
+            <DropDownMenu
+              className="hidden lg:block"
+              text="Action sur les fiches sélectionnées"
+              isActive={}
+              menuLinks={[
+                {
+                  linkProps: {
+                    href: '#',
+                    'aria-disabled': selectedFeis.length === 0,
+                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                    title:
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                        : '',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      if (selectedFeis.length === 0) return;
+                      if (isExporting) return;
+                      onExportToXlsx(selectedFeis);
+                    },
+                  },
+                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées',
+                },
+              ]}
+            />
+            {canEdit && (
+              <p className="mb-8 text-sm text-gray-600">
+                Veuillez cliquer sur une carcasse pour la saisir ou l'annoter
+              </p>
+            )}
+          </>
+        )} */}
         <div className="flex flex-col gap-4">
           {carcassesAAfficher.map((carcasse) => {
             return <CardCarcasseSvi canClick key={carcasse.numero_bracelet} carcasse={carcasse} />;
@@ -120,7 +150,6 @@ export default function FEI_SVI() {
             e.preventDefault();
             const nextFei: Partial<Fei> = {
               svi_closed_at: dayjs().toDate(),
-              svi_assigned_at: fei.svi_assigned_at ?? dayjs().toDate(),
             };
             if (fei.fei_current_owner_role !== UserRoles.SVI) {
               nextFei.fei_current_owner_role = UserRoles.SVI;
@@ -198,7 +227,6 @@ export default function FEI_SVI() {
                 onBlur: (e) => {
                   const nextFei: Partial<Fei> = {
                     svi_closed_at: dayjs(e.target.value).toDate(),
-                    svi_assigned_at: fei.svi_assigned_at ?? dayjs(e.target.value).toDate(),
                   };
                   if (fei.fei_current_owner_role !== UserRoles.SVI) {
                     nextFei.fei_current_owner_role = UserRoles.SVI;

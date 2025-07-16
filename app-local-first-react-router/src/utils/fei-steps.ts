@@ -201,8 +201,10 @@ export function computeFeiSteps({
       case 'Transport vers un établissement de traitement':
       case 'Transport vers un autre établissement de traitement': {
         if (user?.roles.includes(UserRoles.COLLECTEUR_PRO)) {
-          if (currentStepLabel === 'Réception par un établissement de traitement') {
-            return 'En cours';
+          if (!user?.roles.includes(UserRoles.ETG)) {
+            if (currentStepLabel === 'Réception par un établissement de traitement') {
+              return 'En cours';
+            }
           }
         }
         if (fei.fei_next_owner_entity_id) {

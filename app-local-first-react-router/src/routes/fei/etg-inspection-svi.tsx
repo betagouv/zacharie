@@ -122,7 +122,6 @@ export default function FEI_ETGInspectionSvi() {
               onBlur: (e) => {
                 const nextFei: Partial<Fei> = {
                   svi_closed_at: dayjs(e.target.value).toDate(),
-                  svi_assigned_at: fei.svi_assigned_at ?? dayjs(e.target.value).toDate(),
                 };
                 if (fei.fei_current_owner_role !== UserRoles.SVI) {
                   nextFei.fei_current_owner_role = UserRoles.SVI;

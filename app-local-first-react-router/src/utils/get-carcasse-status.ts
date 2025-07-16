@@ -11,8 +11,11 @@ export default function updateCarcasseStatus<T extends Carcasse | CarcasseForRes
   if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
     return CarcasseStatus.REFUS_ETG_COLLECTEUR;
   }
+  if (carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE) {
+    return CarcasseStatus.ACCEPTE;
+  }
   if (!carcasse.svi_ipm1_date && !carcasse.svi_ipm2_date) {
-    if (dayjs().diff(dayjs(carcasse.svi_assigned_to_fei_at), 'day') > 10) {
+    if (dayjs().diff(dayjs(carcasse.svi_assigned_to_fei_at), 'day') >= 10) {
       return CarcasseStatus.ACCEPTE;
     }
     if (carcasse.svi_carcasse_status === CarcasseStatus.ACCEPTE) {
@@ -22,9 +25,6 @@ export default function updateCarcasseStatus<T extends Carcasse | CarcasseForRes
   }
   if (!carcasse.svi_ipm1_presentee_inspection && !carcasse.svi_ipm2_presentee_inspection) {
     return CarcasseStatus.MANQUANTE_SVI;
-  }
-  if (carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE) {
-    return CarcasseStatus.ACCEPTE;
   }
   if (carcasse.svi_ipm2_traitement_assainissant?.length > 0) {
     return CarcasseStatus.TRAITEMENT_ASSAINISSANT;
@@ -44,7 +44,7 @@ export default function updateCarcasseStatus<T extends Carcasse | CarcasseForRes
   if (carcasse.svi_ipm1_decision?.includes(IPM1Decision.MISE_EN_CONSIGNE)) {
     return CarcasseStatus.CONSIGNE;
   }
-  if (dayjs().diff(dayjs(carcasse.svi_assigned_to_fei_at), 'day') > 10) {
+  if (dayjs().diff(dayjs(carcasse.svi_assigned_to_fei_at), 'day') >= 10) {
     return CarcasseStatus.ACCEPTE;
   }
   return CarcasseStatus.SANS_DECISION;

@@ -295,6 +295,10 @@ function CarcasseDetails({
       )
     : null;
 
+  const sviAssignedToFeiAt = carcasse.svi_assigned_to_fei_at
+    ? dayjs(carcasse.svi_assigned_to_fei_at).format('dddd D MMMM YYYY à HH:mm')
+    : null;
+
   const milestones = useMemo(() => {
     const _milestones = [
       `Commune de mise à mort\u00A0: ${fei?.commune_mise_a_mort ?? ''}`,
@@ -308,6 +312,8 @@ function CarcasseDetails({
     }
     if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
+    if (sviAssignedToFeiAt)
+      _milestones.push(`Date et heure d'assignation au SVI\u00A0: ${sviAssignedToFeiAt}`);
     if (statusNewCard.includes('manquant')) {
       _milestones.push(motifRefus);
     }
@@ -328,6 +334,7 @@ function CarcasseDetails({
     statusNewCard,
     carcasse.svi_ipm2_date,
     motifRefus,
+    sviAssignedToFeiAt,
   ]);
 
   const ipm1 = useMemo(() => {

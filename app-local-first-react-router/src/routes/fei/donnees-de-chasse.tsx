@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { Carcasse, CarcasseType, DepotType, UserRoles } from '@prisma/client';
+import { Carcasse, CarcasseType } from '@prisma/client';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import ItemNotEditable from '@app/components/ItemNotEditable';
@@ -70,7 +70,6 @@ export default function FEIDonneesDeChasse({
 
   const intermediairesInputs = useMemo(() => {
     const lines = [];
-    let collecteurs = 0;
     for (const intermediaire of intermediaires.reverse()) {
       const intermediaireLines = [];
       const entity = entities[intermediaire.intermediaire_entity_id!];
@@ -88,6 +87,9 @@ export default function FEIDonneesDeChasse({
   const etgDate = latestIntermediaire
     ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
+  const sviAssignedToFeiAt = fei.svi_assigned_at
+    ? dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')
+    : null;
 
   const milestones = useMemo(() => {
     const _milestones = [
@@ -101,6 +103,8 @@ export default function FEIDonneesDeChasse({
       );
     }
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
+    if (sviAssignedToFeiAt)
+      _milestones.push(`Date et heure d'assignation au SVI\u00A0: ${sviAssignedToFeiAt}`);
     return _milestones;
   }, [
     fei.commune_mise_a_mort,
@@ -109,6 +113,7 @@ export default function FEIDonneesDeChasse({
     fei.date_mise_a_mort,
     fei.heure_mise_a_mort_premiere_carcasse,
     fei.heure_evisceration_derniere_carcasse,
+    sviAssignedToFeiAt,
   ]);
 
   return (

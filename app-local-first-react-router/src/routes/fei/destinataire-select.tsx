@@ -696,6 +696,13 @@ export default function DestinataireSelect({
                     svi_entity_id:
                       prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
                   };
+                  if (prochainDetenteurType === EntityTypes.SVI) {
+                    for (const carcasse of carcasses) {
+                      updateCarcasse(carcasse.zacharie_carcasse_id, {
+                        svi_assigned_to_fei_at: nextFei.svi_assigned_at,
+                      });
+                    }
+                  }
                   updateFei(fei.numero, nextFei);
                   let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
                     intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
