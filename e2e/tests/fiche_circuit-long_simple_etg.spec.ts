@@ -312,7 +312,7 @@ test.describe("Fiches ETG", () => {
     `);
   });
 
-  test.skip("Pas de stockage - Je transfert à un autre ETG", async ({ page, context }) => {
+  test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context }) => {
     // const cdpSession = await context.newCDPSession(page);
     // // @ts-ignore
     // await cdpSession.send("Network.emulateNetworkConditions", NETWORK_PRESETS.PrettyGood);
@@ -435,21 +435,21 @@ test.describe("Fiches ETG", () => {
       `);
     await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
-    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées Fiche envoyée, pas encore traitée ZACH-\\d+-QZ6E0-\\d+/:
-      - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
-      - paragraph: En cours
-      - img
-      - paragraph: chassenard
-      - img
-      - paragraph: À renseigner
-      - img
-      - paragraph: /\\d+ pigeons/
-      - paragraph: 3 daims
-      - paragraph: fin de liste
-      - img
-      - paragraph: 2 carcasses refusées
-      - paragraph: Fiche envoyée, pas encore traitée
-    `);
+      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées Transport vers un autre établissement de traitement ZACH-\\d+-QZ6E0-\\d+/:
+        - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
+        - paragraph: En cours
+        - img
+        - paragraph: chassenard
+        - img
+        - paragraph: À renseigner
+        - img
+        - paragraph: /\\d+ pigeons/
+        - paragraph: 3 daims
+        - paragraph: fin de liste
+        - img
+        - paragraph: 2 carcasses refusées
+        - paragraph: Transport vers un autre établissement de traitement
+      `);
     await page.getByRole("button", { name: "Mon profil" }).click();
     await page.getByRole("button", { name: "Déconnecter etg-1@example.fr" }).click();
     await connectWith(page, "etg-2@example.fr");
@@ -480,7 +480,7 @@ test.describe("Fiches ETG", () => {
     `);
     await page.getByRole("button", { name: "Je réceptionne le gibier" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
-    - heading "Réception par un établissement de traitement Étape 4 sur 5" [level=2]
+    - heading "Réception par un établissement de traitement Étape 4 sur 6" [level=2]
     - paragraph: "Étape suivante : Inspection par le SVI"
     `);
     await expect(page.locator("ol")).toMatchAriaSnapshot(`
