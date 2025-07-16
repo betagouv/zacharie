@@ -83,7 +83,7 @@ export function getCarcasseStatusLabel<T extends CarcasseForResponseForRegistry>
   }
 }
 
-export function getSimplifiedCarcasseStatus(carcasse: Carcasse) {
+export function getSimplifiedCarcasseStatus(carcasse: Carcasse | CarcasseForResponseForRegistry) {
   switch (carcasse.svi_carcasse_status) {
     case CarcasseStatus.SANS_DECISION:
     case CarcasseStatus.CONSIGNE:

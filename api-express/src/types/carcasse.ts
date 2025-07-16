@@ -109,7 +109,7 @@ export type CarcasseGetForRegistry = Prisma.CarcasseGetPayload<{
 }>;
 
 export type CarcasseForResponseForRegistry = Omit<CarcasseGetForRegistry, 'Fei'> & {
-  svi_carcasse_status: CarcasseStatus;
+  svi_carcasse_status: CarcasseStatus | null;
   svi_carcasse_status_set_at: Date | null;
   svi_assigned_to_fei_at: Date | null;
   svi_carcasse_archived: boolean | null;
