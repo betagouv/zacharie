@@ -1,11 +1,24 @@
-[
-  "Température non conforme",
-  "Présence de souillures",
-  "Évolution anormale de la viande",
-  "Défauts de traçabilité",
-  "Carcasse incomplète",
-  "Lésions suspectes ou non signalées",
-  "Conditions de stockage non conformes",
-  "Conditions de transport non conformes",
-  "Carcasse non conforme aux critères commerciaux"
-]
+{
+  "GROS_GIBIER": [
+    "Température non conforme",
+    "Présence de souillures",
+    "Évolution anormale de la viande",
+    "Défauts de traçabilité",
+    "Carcasse incomplète",
+    "Lésions suspectes ou non signalées",
+    "Conditions de stockage non conformes",
+    "Conditions de transport non conformes",
+    "Carcasse non conforme aux critères commerciaux"
+  ],
+  "PETIT_GIBIER": [
+    "Température non conforme",
+    "Présence de souillures",
+    "Évolution anormale de la viande",
+    "Défauts de traçabilité",
+    "Lot incomplet",
+    "Lésions suspectes ou non signalées",
+    "Conditions de stockage non conformes",
+    "Conditions de transport non conformes",
+    "Carcasses non conformes aux critères commerciaux"
+  ]
+}

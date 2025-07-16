@@ -321,7 +321,7 @@ export default function CarcasseIntermediaireComp({
                   label="Vous refusez cette carcasse ? Indiquez le motif *"
                   isMulti={false}
                   canEdit
-                  data={refusIntermedaire}
+                  data={refusIntermedaire[carcasse.type || CarcasseType.GROS_GIBIER]}
                   placeholder="Tapez un motif de refus"
                   onChange={([refus]) => {
                     setRefus(refus);
