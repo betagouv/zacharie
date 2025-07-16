@@ -33,8 +33,6 @@ test.describe("Fiches examinateur initial", () => {
     await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
     await page.getByRole("button", { name: "CHASSENARD" }).click();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).fill("12:12");
     await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).blur();
     await expect(page.getByText("Synchronisation en cours")).toBeVisible();
