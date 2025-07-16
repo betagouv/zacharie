@@ -87,7 +87,8 @@ test("Création de compte premier détenteur", async ({ page }) => {
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.getByText("Le CCG identifié dans").click();
   await page.getByRole("link", { name: "Continuer" }).click();
-  await page.getByRole("link", { name: "Continuer" }).click();
+  await expect(page.locator("#user_roles_form")).toMatchAriaSnapshot(`- heading "Activez les notifications" [level=1]`);
+  await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
 });
 
@@ -138,7 +139,8 @@ test("Création de compte examinateur initial + premier détenteur", async ({ pa
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.getByText("Le CCG identifié dans").click();
   await page.getByRole("link", { name: "Continuer" }).click();
-  await page.getByRole("link", { name: "Continuer" }).click();
+  await expect(page.locator("#user_roles_form")).toMatchAriaSnapshot(`- heading "Activez les notifications" [level=1]`);
+  await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
 });
 

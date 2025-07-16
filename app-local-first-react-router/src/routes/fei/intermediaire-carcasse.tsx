@@ -298,6 +298,10 @@ export default function CarcasseIntermediaireComp({
                       disabled: !canEdit,
                     },
                     label: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé',
+                    hintText:
+                      carcasse.type === CarcasseType.PETIT_GIBIER
+                        ? "Si vous refusez seulement quelques animaux, ne cochez pas cette case, précisez le nombre d'animaux refusés dans le commentaire"
+                        : 'Lot refusé',
                   },
                   {
                     nativeInputProps: {
