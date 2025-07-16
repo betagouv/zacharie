@@ -1,4 +1,4 @@
-name: Tests - Playwright
+name: Tests - Vitest & Playwright
 on:
   push:
     branches: [main]

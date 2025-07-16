@@ -34,9 +34,14 @@ export default function CurrentOwnerConfirm() {
     if (!user.roles.includes(UserRoles.ETG) && !user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
       return false;
     }
-    return (
-      fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.fei_next_owner_role === UserRoles.ETG
-    );
+    if (
+      fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO &&
+      fei.fei_next_owner_role === UserRoles.ETG &&
+      fei.fei_current_owner_user_id === user.id
+    ) {
+      return true;
+    }
+    return false;
   }, [fei, user]);
 
   const canConfirmCurrentOwner = useMemo(() => {
