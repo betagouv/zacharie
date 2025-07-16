@@ -8,7 +8,7 @@ test.beforeAll(async () => {
 
 test("Création de compte examinateur initial", async ({ page }) => {
   await page.goto("http://localhost:3290/");
-  await page.getByRole("link", { name: "Créer un compte" }).click();
+  await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur-nouveau@example.fr");
   await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Créer mon compte" }).click();
@@ -43,7 +43,7 @@ test("Création de compte examinateur initial", async ({ page }) => {
 
 test("Création de compte premier détenteur", async ({ page }) => {
   await page.goto("http://localhost:3290/");
-  await page.getByRole("link", { name: "Créer un compte" }).click();
+  await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("premier-detenteur-nouveau@example.fr");
   await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Créer mon compte" }).click();
@@ -91,7 +91,7 @@ test("Création de compte premier détenteur", async ({ page }) => {
 
 test("Création de compte examinateur initial + premier détenteur", async ({ page }) => {
   await page.goto("http://localhost:3290/");
-  await page.getByRole("link", { name: "Créer un compte" }).click();
+  await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page
     .getByRole("textbox", { name: "Mon email Renseignez votre" })
     .fill("examinateur-initial-premier-detenteur-nouveau@example.fr");
@@ -141,7 +141,7 @@ test("Création de compte examinateur initial + premier détenteur", async ({ pa
 
 test("Création de compte collecteur pro", async ({ page }) => {
   await page.goto("http://localhost:3290/");
-  await page.getByRole("link", { name: "Créer un compte" }).click();
+  await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("collecteur-pro-nouveau@example.fr");
   await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Créer mon compte" }).click();
@@ -165,7 +165,7 @@ test("Création de compte collecteur pro", async ({ page }) => {
 
 test("Création de compte établissement de traitement du gibier", async ({ page }) => {
   await page.goto("http://localhost:3290/");
-  await page.getByRole("link", { name: "Créer un compte" }).click();
+  await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("etg-nouveau@example.fr");
   await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Créer mon compte" }).click();
@@ -189,7 +189,7 @@ test("Création de compte établissement de traitement du gibier", async ({ page
 
 test("Création de compte collecteur + établissement de traitement du gibier", async ({ page }) => {
   await page.goto("http://localhost:3290/");
-  await page.getByRole("link", { name: "Créer un compte" }).click();
+  await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("collecteur-pro+etg-nouveau@example.fr");
   await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Créer mon compte" }).click();
@@ -217,7 +217,7 @@ test("Création de compte collecteur + établissement de traitement du gibier", 
 
 test("Création de compte SVI", async ({ page }) => {
   await page.goto("http://localhost:3290/");
-  await page.getByRole("link", { name: "Créer un compte" }).click();
+  await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("svi-nouveau@example.fr");
   await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Créer mon compte" }).click();

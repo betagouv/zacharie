@@ -18,7 +18,7 @@ test("Connexion avec mot de passe incorrect", async ({ page }) => {
 
 test("Création de compte avec email existant", async ({ page }) => {
   await page.goto("http://localhost:3290/");
-  await page.getByRole("link", { name: "Créer un compte" }).click();
+  await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur@example.fr");
   await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-ce");
   await page.getByText("Afficher").click();

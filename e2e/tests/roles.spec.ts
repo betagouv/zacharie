@@ -14,7 +14,7 @@ test.describe("Conditions sur les cases à cocher pour les rôles", () => {
 
   test("Conditions sur les cases à cocher pour les rôles", async ({ page }) => {
     await page.goto("http://localhost:3290/");
-    await page.getByRole("link", { name: "Créer un compte" }).click();
+    await page.getByRole("link", { name: "Créer un compte" }).first().click();
     await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("juste-les-cases@example.fr");
     await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
     await page.getByRole("button", { name: "Créer mon compte" }).click();
