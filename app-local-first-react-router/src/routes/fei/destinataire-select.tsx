@@ -25,6 +25,7 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import type { FeiIntermediaire, FeiAndIntermediaireIds } from '@app/types/fei-intermediaire';
 import { EntityWithUserRelation } from '@api/src/types/entity';
+import { UserForFei } from '@api/src/types/user';
 
 export default function DestinataireSelect({
   className = '',
@@ -45,7 +46,7 @@ export default function DestinataireSelect({
   feiAndIntermediaireIds?: FeiAndIntermediaireIds;
   intermediaire?: FeiIntermediaire;
   premierDetenteurEntity?: EntityWithUserRelation | null;
-  premierDetenteurUser?: User;
+  premierDetenteurUser?: UserForFei | null;
 }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;

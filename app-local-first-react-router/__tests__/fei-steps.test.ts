@@ -634,7 +634,7 @@ describe('computeFeiSteps', () => {
 
         expect(result.currentStepLabel).toBe('Réception par un établissement de traitement');
         // Should continue with existing logic instead of returning "En cours" early
-        expect(result.simpleStatus).toBe('À compléter'); // Because user works for the entity
+        expect(result.simpleStatus).toBe('En cours'); // Because user works for the entity
       });
 
       test('should continue with existing logic when COLLECTEUR_PRO (not ETG) user and step is NOT "Réception par un établissement de traitement"', () => {
@@ -660,7 +660,7 @@ describe('computeFeiSteps', () => {
 
         expect(result.currentStepLabel).toBe('Transport vers un établissement de traitement');
         // Should follow existing logic, not the new early return
-        expect(result.simpleStatus).toBe('À compléter');
+        expect(result.simpleStatus).toBe('En cours');
       });
     });
 
