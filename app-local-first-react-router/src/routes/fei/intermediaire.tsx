@@ -19,8 +19,8 @@ import useZustandStore from '@app/zustand/store';
 import {
   getFeiAndIntermediaireIdsFromFeiIntermediaire,
   getFeiAndCarcasseAndIntermediaireIds,
-  type FeiAndCarcasseAndIntermediaireIds,
 } from '@app/utils/get-carcasse-intermediaire-id';
+import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/fei-intermediaire';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -482,7 +482,7 @@ export default function FEICurrentIntermediaire(props: Props) {
                     <CardCarcasse
                       carcasse={carcasse}
                       key={carcasse.numero_bracelet}
-                      className="[zoom:1.3] [&.border-manquante]:border-gray-500! [&_.text-manquante]:text-gray-500!"
+                      className="[zoom:1.3] [&_.text-manquante]:text-gray-500! [&.border-manquante]:border-gray-500!"
                     />
                   </Fragment>
                 );

@@ -206,6 +206,9 @@ export function computeFeiSteps({
               return 'En cours';
             }
           }
+          if (currentStepLabel !== 'Fiche envoyée, pas encore traitée' && currentStepLabel !== 'Transport') {
+            return 'En cours';
+          }
         }
         if (fei.fei_next_owner_entity_id) {
           if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)) {

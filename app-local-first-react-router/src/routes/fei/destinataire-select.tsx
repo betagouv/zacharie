@@ -24,6 +24,7 @@ import Button from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import type { FeiIntermediaire, FeiAndIntermediaireIds } from '@app/types/fei-intermediaire';
+import { EntityWithUserRelation } from '@api/src/types/entity';
 
 export default function DestinataireSelect({
   className = '',
@@ -33,6 +34,7 @@ export default function DestinataireSelect({
   calledFrom,
   feiAndIntermediaireIds,
   intermediaire,
+  premierDetenteurEntity,
 }: {
   className?: string;
   canEdit: boolean;
@@ -41,6 +43,7 @@ export default function DestinataireSelect({
   calledFrom: 'premier-detenteur-need-select-next' | 'current-owner-transfer' | 'intermediaire-next-owner';
   feiAndIntermediaireIds?: FeiAndIntermediaireIds;
   intermediaire?: FeiIntermediaire;
+  premierDetenteurEntity?: EntityWithUserRelation | null;
 }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
@@ -103,15 +106,22 @@ export default function DestinataireSelect({
     }));
   }, [prochainsDetenteurs]);
 
+  const intermediaireEntity = intermediaire?.intermediaire_entity_id
+    ? entities[intermediaire.intermediaire_entity_id]
+    : null;
+  const intermediaireEntityType = intermediaireEntity?.type;
+
   const [prochainDetenteurEntityId, setProchainDetenteurEntityId] = useState(() => {
-    if (fei.fei_current_owner_role === EntityTypes.PREMIER_DETENTEUR) {
+    if (premierDetenteurEntity) {
       if (fei.premier_detenteur_prochain_detenteur_id_cache) {
         return fei.premier_detenteur_prochain_detenteur_id_cache;
       }
-      if (prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache) {
-        return prefilledInfos.premier_detenteur_prochain_detenteur_id_cache;
+      if (fei.fei_current_owner_role === EntityTypes.PREMIER_DETENTEUR) {
+        if (prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache) {
+          return prefilledInfos.premier_detenteur_prochain_detenteur_id_cache;
+        }
       }
-    } else {
+    } else if (intermediaire) {
       if (intermediaire?.intermediaire_prochain_detenteur_id_cache) {
         return intermediaire.intermediaire_prochain_detenteur_id_cache;
       }
@@ -123,41 +133,41 @@ export default function DestinataireSelect({
   const prochainDetenteurType = prochainDetenteur?.type;
   const needTransport = useMemo(() => {
     if (transfer) return false;
-    if (prochainDetenteurType === EntityTypes.SVI) return false;
-    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+    if (premierDetenteurEntity) {
       return prochainDetenteurType !== EntityTypes.COLLECTEUR_PRO;
     }
-    if (fei.fei_current_owner_role === EntityTypes.ETG) {
+    if (prochainDetenteurType === EntityTypes.SVI) return false;
+    if (intermediaireEntityType === EntityTypes.ETG) {
       return prochainDetenteurType === EntityTypes.ETG;
     }
     return false;
-  }, [prochainDetenteurType, fei.fei_current_owner_role, transfer]);
+  }, [transfer, premierDetenteurEntity, prochainDetenteurType, intermediaireEntityType]);
 
   const needDepot = useMemo(() => {
     if (transfer) return false;
-    if (prochainDetenteurType === EntityTypes.SVI) return false;
-    if (fei.fei_current_owner_role === EntityTypes.ETG) {
-      return false;
-    }
+    if (premierDetenteurEntity) return true;
+    if (intermediaireEntityType === EntityTypes.ETG) return false;
     return true;
-  }, [fei.fei_current_owner_role, prochainDetenteurType, transfer]);
+  }, [transfer, premierDetenteurEntity, intermediaireEntityType]);
 
   const [depotEntityId, setDepotEntityId] = useState(() => {
     if (!needDepot) return null;
-    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+    if (premierDetenteurEntity) {
       if (fei.premier_detenteur_depot_entity_id) {
         return fei.premier_detenteur_depot_entity_id;
       }
       if (fei.premier_detenteur_depot_type === DepotType.AUCUN) {
         return null;
       }
-      if (prefilledInfos?.premier_detenteur_depot_entity_id) {
-        if (
-          ccgsWorkingWith.find((entity) => entity.id === prefilledInfos.premier_detenteur_depot_entity_id)
-        ) {
-          return prefilledInfos.premier_detenteur_depot_entity_id;
+      if (fei.fei_current_owner_role === EntityTypes.PREMIER_DETENTEUR) {
+        if (prefilledInfos?.premier_detenteur_depot_entity_id) {
+          if (
+            ccgsWorkingWith.find((entity) => entity.id === prefilledInfos.premier_detenteur_depot_entity_id)
+          ) {
+            return prefilledInfos.premier_detenteur_depot_entity_id;
+          }
+          return null;
         }
-        return null;
       }
     } else {
       if (intermediaire?.intermediaire_depot_entity_id) {
@@ -169,7 +179,7 @@ export default function DestinataireSelect({
 
   const [depotType, setDepotType] = useState(() => {
     if (!needDepot) return null;
-    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+    if (premierDetenteurEntity) {
       if (fei.premier_detenteur_depot_type) {
         return fei.premier_detenteur_depot_type;
       }
@@ -183,8 +193,10 @@ export default function DestinataireSelect({
         }
         return null;
       }
-      if (prefilledInfos?.premier_detenteur_depot_type) {
-        return prefilledInfos.premier_detenteur_depot_type;
+      if (fei.fei_current_owner_role === EntityTypes.PREMIER_DETENTEUR) {
+        if (prefilledInfos?.premier_detenteur_depot_type) {
+          return prefilledInfos.premier_detenteur_depot_type;
+        }
       }
     } else {
       if (intermediaire?.intermediaire_depot_type) {
@@ -195,20 +207,24 @@ export default function DestinataireSelect({
   });
 
   const [transportType, setTransportType] = useState(() => {
-    if (fei.premier_detenteur_transport_type) {
-      return fei.premier_detenteur_transport_type;
-    }
-    if (needTransport) {
-      if (prefilledInfos?.premier_detenteur_transport_type) {
-        return prefilledInfos.premier_detenteur_transport_type;
+    if (premierDetenteurEntity) {
+      if (fei.premier_detenteur_transport_type) {
+        return fei.premier_detenteur_transport_type;
+      }
+      if (needTransport) {
+        if (prefilledInfos?.premier_detenteur_transport_type) {
+          return prefilledInfos.premier_detenteur_transport_type;
+        }
       }
     }
     return null;
   });
 
   const [depotDate, setDepotDate] = useState(() => {
-    if (fei.premier_detenteur_depot_ccg_at) {
-      return dayjs(fei.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm');
+    if (premierDetenteurEntity) {
+      if (fei.premier_detenteur_depot_ccg_at) {
+        return dayjs(fei.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm');
+      }
     }
     return undefined;
   });
@@ -399,7 +415,7 @@ export default function DestinataireSelect({
             <RadioButtons
               legend="Lieu de stockage des carcasses *"
               className={canEdit ? '' : 'radio-black'}
-              disabled={!canEdit || !prochainDetenteurEntityId}
+              disabled={!prochainDetenteurEntityId}
               options={[
                 {
                   label: <span className="inline-block">Pas de stockage</span>,
@@ -532,7 +548,7 @@ export default function DestinataireSelect({
             <RadioButtons
               legend="Qui transporte les carcasses ? *"
               className={canEdit ? '' : 'radio-black'}
-              disabled={!canEdit || !prochainDetenteurEntityId}
+              disabled={!prochainDetenteurEntityId}
               options={[
                 {
                   label: <span className="inline-block">Je transporte les carcasses moi-même</span>,
@@ -567,7 +583,6 @@ export default function DestinataireSelect({
                       setTransportType(TransportType.COLLECTEUR_PRO);
                       setTransportDate(undefined);
                     },
-                    disabled: !canEdit,
                   },
                 },
               ]}

@@ -52,11 +52,11 @@ export default function FeiPremierDetenteur() {
     return true;
   }, [fei, user, premierDetenteurEntity]);
 
-  const showAsDisabled = useMemo(() => {
+  const waitingForPremierDetenteur = useMemo(() => {
     if (canEdit) {
       return false;
     }
-    if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
+    if (fei.fei_next_owner_role !== UserRoles.PREMIER_DETENTEUR) {
       return false;
     }
     if (!user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
@@ -66,6 +66,23 @@ export default function FeiPremierDetenteur() {
       return false;
     }
     return true;
+  }, [canEdit, fei.fei_next_owner_role, user.roles, premierDetenteurEntity?.relation]);
+
+  const showAsDisabled = useMemo(() => {
+    if (canEdit) {
+      return false;
+    }
+    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+      if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+        if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      // just cannot edit
+      return false;
+    }
   }, [fei, user, premierDetenteurEntity, canEdit]);
 
   if (!fei.premier_detenteur_user_id) {
@@ -75,7 +92,7 @@ export default function FeiPremierDetenteur() {
   return (
     <Section title={`Action du Premier détenteur | ${premierDetenteurInput}`}>
       <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'une étoile sont obligatoires.</p>
-      {showAsDisabled && (
+      {waitingForPremierDetenteur && (
         <Alert
           severity="success"
           title="En attente du premier détenteur"
@@ -87,6 +104,7 @@ export default function FeiPremierDetenteur() {
         canEdit={canEdit}
         disabled={showAsDisabled}
         calledFrom="premier-detenteur-need-select-next"
+        premierDetenteurEntity={premierDetenteurEntity}
       />
     </Section>
   );

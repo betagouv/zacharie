@@ -540,14 +540,18 @@ export async function syncFeis() {
     if (!fei.is_synced) {
       if (debug) console.log('syncing fei', fei);
       const controller = new AbortController();
-      feisControllers.set(fei.numero, controller);
-      queue.add(async ({ signal }) => {
-        const existingController = feisControllers.get(fei.numero);
-        if (existingController && !existingController.signal.aborted) {
-          existingController.abort('race condition');
-        }
-        await syncFei(fei, signal!);
-      });
+      queue.add(
+        async ({ signal }) => {
+          const existingController = feisControllers.get(fei.numero);
+          if (existingController && !existingController.signal.aborted) {
+            existingController.abort('race condition in feisControllers');
+          } else {
+            feisControllers.set(fei.numero, controller);
+          }
+          await syncFei(fei, signal!);
+        },
+        { signal: controller.signal },
+      );
     }
   }
 }
@@ -607,14 +611,18 @@ export async function syncCarcasses() {
     if (!carcasse.is_synced) {
       if (debug) console.log('syncing carcasse', carcasse);
       const controller = new AbortController();
-      carcassesControllers.set(carcasse.zacharie_carcasse_id, controller);
-      queue.add(async ({ signal }) => {
-        const existingController = carcassesControllers.get(carcasse.zacharie_carcasse_id);
-        if (existingController && !existingController.signal.aborted) {
-          existingController.abort('race condition');
-        }
-        await syncCarcasse(carcasse, signal!);
-      });
+      queue.add(
+        async ({ signal }) => {
+          const existingController = carcassesControllers.get(carcasse.zacharie_carcasse_id);
+          if (existingController && !existingController.signal.aborted) {
+            existingController.abort('race condition in carcassesControllers');
+          } else {
+            carcassesControllers.set(carcasse.zacharie_carcasse_id, controller);
+          }
+          await syncCarcasse(carcasse, signal!);
+        },
+        { signal: controller.signal },
+      );
     }
   }
 }
@@ -676,9 +684,9 @@ export async function syncCarcassesIntermediaires() {
     if (!carcassesIntermediaire.is_synced) {
       if (debug) console.log('syncing carcasse intermediaire', carcassesIntermediaire);
       const controller = new AbortController();
-      intermediairesControllers.set(
+      console.log(
+        'adding to queue',
         carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
-        controller,
       );
       queue.add(
         async ({ signal }) => {
@@ -686,13 +694,21 @@ export async function syncCarcassesIntermediaires() {
             carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
           );
           if (existingController && !existingController.signal.aborted) {
-            existingController.abort('race condition');
+            console.log(
+              'aborting',
+              carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
+            );
+            existingController.abort('race condition in intermediairesControllers');
+          } else {
+            intermediairesControllers.set(
+              carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
+              controller,
+            );
           }
           // prevent race condition
           await syncCarcasseIntermediaire(carcassesIntermediaire, signal!);
         },
         {
-          id: carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
           signal: controller.signal,
         },
       );
