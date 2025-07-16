@@ -38,7 +38,8 @@ test("Création de compte examinateur initial", async ({ page }) => {
   await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
   await page.getByText("J'autorise le fait que les").click();
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
-  await expect(page.getByText("Merci pour votre inscription à Zacharie!")).toBeVisible();
+  await page.getByRole("button", { name: "Continuer" }).click();
+  await expect(page.getByText("Votre compte est en attente d'activation")).toBeVisible();
 });
 
 test("Création de compte premier détenteur", async ({ page }) => {
@@ -85,6 +86,7 @@ test("Création de compte premier détenteur", async ({ page }) => {
   await page.getByRole("button", { name: "PARIS 18" }).click();
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.getByText("Le CCG identifié dans").click();
+  await page.getByRole("link", { name: "Continuer" }).click();
   await page.getByRole("link", { name: "Continuer" }).click();
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
 });
@@ -136,6 +138,7 @@ test("Création de compte examinateur initial + premier détenteur", async ({ pa
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.getByText("Le CCG identifié dans").click();
   await page.getByRole("link", { name: "Continuer" }).click();
+  await page.getByRole("link", { name: "Continuer" }).click();
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
 });
 
@@ -160,6 +163,7 @@ test("Création de compte collecteur pro", async ({ page }) => {
   await page.getByRole("button", { name: "Ajouter" }).click();
   await page.getByText("J'autorise le fait que les").click();
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Votre compte est en attente d'activation")).toBeVisible();
 });
 
@@ -184,6 +188,7 @@ test("Création de compte établissement de traitement du gibier", async ({ page
   await page.getByRole("button", { name: "Ajouter" }).click();
   await page.getByText("J'autorise le fait que les").click();
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Votre compte est en attente d'activation")).toBeVisible();
 });
 
@@ -212,6 +217,7 @@ test("Création de compte collecteur + établissement de traitement du gibier", 
   await page.getByRole("button", { name: "Ajouter" }).last().click();
   await page.getByText("J'autorise le fait que les").click();
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Votre compte est en attente d'activation")).toBeVisible();
 });
 
@@ -235,5 +241,6 @@ test("Création de compte SVI", async ({ page }) => {
   await page.getByRole("option", { name: "SVI 1 - 75000 Paris" }).click();
   await page.getByRole("button", { name: "Ajouter" }).click();
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Votre compte est en attente d'activation")).toBeVisible();
 });
