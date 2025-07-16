@@ -8,7 +8,9 @@ test.describe("Fiches ETG", () => {
     await resetDb("ETG");
   });
 
-  test("Pas de stockage - Je renvoie au SVI", async ({ page, context }) => {
+  test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
+    // timeout to 10s
+
     // const cdpSession = await context.newCDPSession(page);
     // // @ts-ignore
     // await cdpSession.send("Network.emulateNetworkConditions", NETWORK_PRESETS.PrettyGood);

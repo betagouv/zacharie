@@ -101,6 +101,7 @@ interface Actions {
   updateCarcasse: (
     zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
     carcasse: Partial<Carcasse>,
+    updateFei: boolean,
   ) => void;
   getFeiIntermediairesForFeiNumero: (fei_numero: Fei['numero']) => Array<FeiIntermediaire>;
   getCarcassesIntermediairesForCarcasse: (
@@ -184,6 +185,7 @@ const useZustandStore = create<State & Actions>()(
           fei_numero: FeiWithIntermediaires['numero'],
           partialFei: Partial<FeiWithIntermediaires>,
         ) => {
+          console.log('updateFei', fei_numero, JSON.stringify(partialFei, null, 2));
           const state = useZustandStore.getState();
           const feis = state.feis;
           const carcassefeiCarcasses = (state.carcassesIdsByFei[fei_numero] || []).map(
@@ -233,6 +235,7 @@ const useZustandStore = create<State & Actions>()(
         updateCarcasse: (
           zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
           partialCarcasse: Partial<Carcasse>,
+          updateFei: boolean,
         ) => {
           const carcasses = useZustandStore.getState().carcasses;
           const nextCarcasse = {
@@ -253,7 +256,9 @@ const useZustandStore = create<State & Actions>()(
             },
             dataIsSynced: false,
           });
-          get().updateFei(nextCarcasse.fei_numero, { updated_at: dayjs().toDate() });
+          if (updateFei) {
+            get().updateFei(nextCarcasse.fei_numero, { updated_at: dayjs().toDate() });
+          }
         },
         createFeiIntermediaire: async (newIntermediaire: FeiIntermediaire) => {
           return new Promise((resolve) => {
@@ -472,12 +477,13 @@ let debug = false;
 // playwright is going so fast, and coupled with our local-first and submit-on-blur policies,
 // too many requests are sent to the server,
 // and too many SQL queries are made for the same data
-// so we need to throttle and cancel the sync if it's called too soon
-// let FOR_TEST_ONLY_askedForSync = null;
-// let FOR_TEST_ONLY_started = false;
+// so we need to
+// 1. throttle and cancel the sync if it's called too soon, thanks to intervalCap and interval
+// 2. cancel the sync if it's called too soon, thanks to AbortController
 
-const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 25 });
+const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 30 });
 let count = 0;
+
 queue.on('active', () => {
   if (debug) console.log(`Working on item #${++count}.  Size: ${queue.size}  Pending: ${queue.pending}`);
 });
@@ -491,7 +497,7 @@ queue.on('next', () => {
   console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
 });
 
-export async function syncFei(nextFei: FeiWithIntermediaires) {
+export async function syncFei(nextFei: FeiWithIntermediaires, signal: AbortSignal) {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
     throw new Error('syncFei not online');
@@ -504,10 +510,12 @@ export async function syncFei(nextFei: FeiWithIntermediaires) {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
+    signal,
   })
     .then((res) => res.json())
     .then((res) => res as FeiResponse)
     .then((res) => {
+      if (signal?.aborted) return;
       if (res.ok && res.data?.fei) {
         if (debug) console.log('synced fei', res.data.fei);
         useZustandStore.setState({
@@ -520,6 +528,8 @@ export async function syncFei(nextFei: FeiWithIntermediaires) {
     });
 }
 
+const feisControllers = new Map<string, AbortController>();
+
 export async function syncFeis() {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
@@ -529,14 +539,20 @@ export async function syncFeis() {
   for (const fei of Object.values(feis)) {
     if (!fei.is_synced) {
       if (debug) console.log('syncing fei', fei);
-      queue.add(async () => {
-        await syncFei(fei);
+      const controller = new AbortController();
+      feisControllers.set(fei.numero, controller);
+      queue.add(async ({ signal }) => {
+        const existingController = feisControllers.get(fei.numero);
+        if (existingController && !existingController.signal.aborted) {
+          existingController.abort('race condition');
+        }
+        await syncFei(fei, signal!);
       });
     }
   }
 }
 
-export async function syncCarcasse(nextCarcasse: Carcasse) {
+export async function syncCarcasse(nextCarcasse: Carcasse, signal: AbortSignal) {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
     throw new Error('syncCarcasse not online');
@@ -551,11 +567,13 @@ export async function syncCarcasse(nextCarcasse: Carcasse) {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
+      signal,
     },
   )
     .then((res) => res.json())
     .then((res) => res as CarcasseResponse)
     .then((res) => {
+      if (signal?.aborted) return;
       if (res.ok && res.data.carcasse) {
         const nextCarcassesIdsByFei =
           useZustandStore.getState().carcassesIdsByFei[nextCarcasse.fei_numero] || [];
@@ -577,6 +595,8 @@ export async function syncCarcasse(nextCarcasse: Carcasse) {
     });
 }
 
+const carcassesControllers = new Map<string, AbortController>();
+
 export async function syncCarcasses() {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
@@ -586,14 +606,23 @@ export async function syncCarcasses() {
   for (const carcasse of Object.values(carcasses)) {
     if (!carcasse.is_synced) {
       if (debug) console.log('syncing carcasse', carcasse);
-      queue.add(async () => {
-        await syncCarcasse(carcasse);
+      const controller = new AbortController();
+      carcassesControllers.set(carcasse.zacharie_carcasse_id, controller);
+      queue.add(async ({ signal }) => {
+        const existingController = carcassesControllers.get(carcasse.zacharie_carcasse_id);
+        if (existingController && !existingController.signal.aborted) {
+          existingController.abort('race condition');
+        }
+        await syncCarcasse(carcasse, signal!);
       });
     }
   }
 }
 
-export async function syncCarcasseIntermediaire(nextCarcasseIntermediaire: CarcasseIntermediaire) {
+export async function syncCarcasseIntermediaire(
+  nextCarcasseIntermediaire: CarcasseIntermediaire,
+  signal: AbortSignal,
+) {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
     throw new Error('syncCarcasseIntermediaire not online');
@@ -611,11 +640,13 @@ export async function syncCarcasseIntermediaire(nextCarcasseIntermediaire: Carca
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
+      signal,
     },
   )
     .then((res) => res.json())
     .then((res) => res as CarcasseIntermediaireResponse)
     .then((res) => {
+      if (signal?.aborted) return;
       if (res.ok && res.data.carcasseIntermediaire) {
         nextCarcasseIntermediaire = res.data.carcasseIntermediaire!;
         const feiAndCarcasseAndIntermediaireId =
@@ -633,6 +664,8 @@ export async function syncCarcasseIntermediaire(nextCarcasseIntermediaire: Carca
     });
 }
 
+const intermediairesControllers = new Map<string, AbortController>();
+
 export async function syncCarcassesIntermediaires() {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
@@ -642,9 +675,27 @@ export async function syncCarcassesIntermediaires() {
   for (const carcassesIntermediaire of Object.values(carcassesIntermediaires)) {
     if (!carcassesIntermediaire.is_synced) {
       if (debug) console.log('syncing carcasse intermediaire', carcassesIntermediaire);
-      queue.add(async () => {
-        await syncCarcasseIntermediaire(carcassesIntermediaire);
-      });
+      const controller = new AbortController();
+      intermediairesControllers.set(
+        carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
+        controller,
+      );
+      queue.add(
+        async ({ signal }) => {
+          const existingController = intermediairesControllers.get(
+            carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
+          );
+          if (existingController && !existingController.signal.aborted) {
+            existingController.abort('race condition');
+          }
+          // prevent race condition
+          await syncCarcasseIntermediaire(carcassesIntermediaire, signal!);
+        },
+        {
+          id: carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
+          signal: controller.signal,
+        },
+      );
     }
   }
 }
@@ -685,9 +736,7 @@ export async function syncLogs() {
   for (const log of Object.values(logs)) {
     if (!log.is_synced) {
       if (debug) console.log('syncing log', log);
-      queue.add(async () => {
-        await syncLog(log);
-      });
+      await syncLog(log);
     }
   }
 }

@@ -20,18 +20,21 @@ import CardCarcasse from '@app/components/CardCarcasse';
 export default function FEI_SVI() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
-  const updateFei = state.updateFei;
-  const updateCarcasse = state.updateCarcasse;
-  const addLog = state.addLog;
+  const feis = useZustandStore((state) => state.feis);
+  const carcasses = useZustandStore((state) => state.carcasses);
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const fei = feis[params.fei_numero!];
+  const entities = useZustandStore((state) => state.entities);
+  const updateFei = useZustandStore((state) => state.updateFei);
+  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
+  const addLog = useZustandStore((state) => state.addLog);
   const allCarcassesForFei = useMemo(
     () =>
-      (state.carcassesIdsByFei[params.fei_numero!] || [])
-        .map((cId) => state.carcasses[cId])
+      (carcassesIdsByFei[params.fei_numero!] || [])
+        .map((cId) => carcasses[cId])
         .sort(sortCarcassesApproved)
         .filter((carcasse) => !carcasse.deleted_at),
-    [state.carcassesIdsByFei, params.fei_numero, state.carcasses],
+    [carcassesIdsByFei, params.fei_numero, carcasses],
   );
 
   const carcassesDejaRefusees = useMemo(
@@ -49,14 +52,14 @@ export default function FEI_SVI() {
   const isSviWorkingFor = useMemo(() => {
     if (fei.svi_entity_id) {
       if (user.roles.includes(UserRoles.SVI)) {
-        const svi = state.entities[fei.svi_entity_id];
+        const svi = entities[fei.svi_entity_id];
         if (svi?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           return true;
         }
       }
     }
     return false;
-  }, [fei, user, state.entities]);
+  }, [fei, user, entities]);
 
   const canEdit = useMemo(() => {
     if (fei.automatic_closed_at) {
@@ -168,6 +171,21 @@ export default function FEI_SVI() {
               nextFei.fei_prev_owner_entity_id = fei.fei_current_owner_entity_id || null;
               nextFei.svi_user_id = user.id;
             }
+            for (const carcasse of carcassesAAfficher) {
+              if (
+                !carcasse.svi_carcasse_status ||
+                carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
+              ) {
+                updateCarcasse(
+                  carcasse.zacharie_carcasse_id,
+                  {
+                    svi_carcasse_status: CarcasseStatus.ACCEPTE,
+                    svi_carcasse_status_set_at: dayjs().toDate(),
+                  },
+                  false,
+                );
+              }
+            }
             updateFei(fei.numero, nextFei);
             addLog({
               user_id: user.id,
@@ -180,17 +198,6 @@ export default function FEI_SVI() {
               carcasse_intermediaire_id: null,
               intermediaire_id: null,
             });
-            for (const carcasse of carcassesAAfficher) {
-              if (
-                !carcasse.svi_carcasse_status ||
-                carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
-              ) {
-                updateCarcasse(carcasse.zacharie_carcasse_id, {
-                  svi_carcasse_status: CarcasseStatus.ACCEPTE,
-                  svi_carcasse_status_set_at: dayjs().toDate(),
-                });
-              }
-            }
           }}
         >
           {!fei.automatic_closed_at && (
@@ -245,6 +252,21 @@ export default function FEI_SVI() {
                     nextFei.fei_prev_owner_entity_id = fei.fei_current_owner_entity_id || null;
                     nextFei.svi_user_id = user.id;
                   }
+                  for (const carcasse of carcassesAAfficher) {
+                    if (
+                      !carcasse.svi_carcasse_status ||
+                      carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
+                    ) {
+                      updateCarcasse(
+                        carcasse.zacharie_carcasse_id,
+                        {
+                          svi_carcasse_status: CarcasseStatus.ACCEPTE,
+                          svi_carcasse_status_set_at: dayjs(e.target.value).toDate(),
+                        },
+                        false,
+                      );
+                    }
+                  }
                   updateFei(fei.numero, nextFei);
                   addLog({
                     user_id: user.id,
@@ -257,17 +279,6 @@ export default function FEI_SVI() {
                     carcasse_intermediaire_id: null,
                     intermediaire_id: null,
                   });
-                  for (const carcasse of carcassesAAfficher) {
-                    if (
-                      !carcasse.svi_carcasse_status ||
-                      carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
-                    ) {
-                      updateCarcasse(carcasse.zacharie_carcasse_id, {
-                        svi_carcasse_status: CarcasseStatus.ACCEPTE,
-                        svi_carcasse_status_set_at: dayjs(e.target.value).toDate(),
-                      });
-                    }
-                  }
                 },
                 suppressHydrationWarning: true,
                 defaultValue: dayjs(fei.svi_closed_at).format('YYYY-MM-DDTHH:mm'),

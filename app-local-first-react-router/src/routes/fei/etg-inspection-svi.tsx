@@ -19,15 +19,19 @@ import FEIDonneesDeChasse from './donnees-de-chasse';
 export default function FEI_ETGInspectionSvi() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
-  const updateFei = state.updateFei;
-  const updateCarcasse = state.updateCarcasse;
-  const addLog = state.addLog;
-  const sviUser = fei.svi_user_id ? state.users[fei.svi_user_id] : null;
-  const svi = fei.svi_entity_id ? state.entities[fei.svi_entity_id] : null;
-  const carcassesSorted = (state.carcassesIdsByFei[params.fei_numero!] || [])
-    .map((cId) => state.carcasses[cId])
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+  const updateFei = useZustandStore((state) => state.updateFei);
+  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
+  const addLog = useZustandStore((state) => state.addLog);
+  const users = useZustandStore((state) => state.users);
+  const entities = useZustandStore((state) => state.entities);
+  const sviUser = fei.svi_user_id ? users[fei.svi_user_id] : null;
+  const svi = fei.svi_entity_id ? entities[fei.svi_entity_id] : null;
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const carcasses = useZustandStore((state) => state.carcasses);
+  const carcassesSorted = (carcassesIdsByFei[params.fei_numero!] || [])
+    .map((cId) => carcasses[cId])
     .sort(sortCarcassesApproved)
     .filter((carcasse) => !carcasse.deleted_at && !carcasse.intermediaire_carcasse_refus_intermediaire_id);
 
@@ -36,14 +40,14 @@ export default function FEI_ETGInspectionSvi() {
     // fix: pas besoin d'avoir pris en charge la fiche pour les SVI, elle est prise en charge automatiquement
     if (fei.svi_entity_id) {
       if (user.roles.includes(UserRoles.SVI)) {
-        const svi = state.entities[fei.svi_entity_id];
+        const svi = entities[fei.svi_entity_id];
         if (svi?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           return true;
         }
       }
     }
     return false;
-  }, [fei, user, state]);
+  }, [fei, user, entities]);
 
   const canEdit = useMemo(() => {
     if (isSviWorkingFor) {
@@ -140,6 +144,21 @@ export default function FEI_ETGInspectionSvi() {
                   nextFei.fei_prev_owner_entity_id = fei.fei_current_owner_entity_id || null;
                   nextFei.svi_user_id = user.id;
                 }
+                for (const carcasse of carcassesSorted) {
+                  if (
+                    !carcasse.svi_carcasse_status ||
+                    carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
+                  ) {
+                    updateCarcasse(
+                      carcasse.zacharie_carcasse_id,
+                      {
+                        svi_carcasse_status: CarcasseStatus.ACCEPTE,
+                        svi_carcasse_status_set_at: dayjs(e.target.value).toDate(),
+                      },
+                      false,
+                    );
+                  }
+                }
                 updateFei(fei.numero, nextFei);
                 addLog({
                   user_id: user.id,
@@ -152,17 +171,6 @@ export default function FEI_ETGInspectionSvi() {
                   carcasse_intermediaire_id: null,
                   intermediaire_id: null,
                 });
-                for (const carcasse of carcassesSorted) {
-                  if (
-                    !carcasse.svi_carcasse_status ||
-                    carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
-                  ) {
-                    updateCarcasse(carcasse.zacharie_carcasse_id, {
-                      svi_carcasse_status: CarcasseStatus.ACCEPTE,
-                      svi_carcasse_status_set_at: dayjs(e.target.value).toDate(),
-                    });
-                  }
-                }
               },
               suppressHydrationWarning: true,
               defaultValue: dayjs(fei.svi_closed_at).format('YYYY-MM-DDTHH:mm'),

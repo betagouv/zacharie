@@ -6,7 +6,11 @@ import { sendEmail } from '~/third-parties/brevo';
 import prisma from '../prisma';
 import { IS_TEST } from '~/config';
 
-const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 1000 });
+const queue = new PQueue({
+  concurrency: 1,
+  intervalCap: 1,
+  interval: process.env.NODE_ENV === 'production' ? 1000 : 0,
+});
 let count = 0;
 queue.on('active', () => {
   console.log(`Working on item #${++count}.  Size: ${queue.size}  Pending: ${queue.pending}`);

@@ -73,14 +73,18 @@ export default function CarcasseExaminateurLoader() {
 
 function CarcasseExaminateur() {
   const params = useParams();
-  const state = useZustandStore((state) => state);
   const user = useUser((state) => state.user)!;
-  const fei = state.feis[params.fei_numero!];
-  const carcasse = state.carcasses[params.zacharie_carcasse_id!];
-  const updateStateCarcasse = state.updateCarcasse;
-  const addLog = state.addLog;
-  const updateCarcasse: typeof updateStateCarcasse = (zacharie_carcasse_id, partialCarcasse) => {
-    updateStateCarcasse(zacharie_carcasse_id, partialCarcasse);
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+  const carcasses = useZustandStore((state) => state.carcasses);
+  const carcasse = carcasses[params.zacharie_carcasse_id!];
+  const updateStateCarcasse = useZustandStore((state) => state.updateCarcasse);
+  const addLog = useZustandStore((state) => state.addLog);
+  const updateCarcasse = (
+    zacharie_carcasse_id: Parameters<typeof updateStateCarcasse>[0],
+    partialCarcasse: Parameters<typeof updateStateCarcasse>[1],
+  ) => {
+    updateStateCarcasse(zacharie_carcasse_id, partialCarcasse, true);
     addLog({
       user_id: user.id,
       user_role: UserRoles.EXAMINATEUR_INITIAL,
@@ -94,8 +98,9 @@ function CarcasseExaminateur() {
     });
   };
 
-  const existingsNumeroBracelet = (state.carcassesIdsByFei[fei.numero] || []).map(
-    (zacharie_carcasse_id) => state.carcasses[zacharie_carcasse_id]?.numero_bracelet,
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const existingsNumeroBracelet = (carcassesIdsByFei[fei.numero] || []).map(
+    (zacharie_carcasse_id) => carcasses[zacharie_carcasse_id]?.numero_bracelet,
   );
   const [numeroError, setNumeroError] = useState<string | null>(null);
 

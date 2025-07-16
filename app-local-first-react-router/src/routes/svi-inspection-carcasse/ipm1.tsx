@@ -123,7 +123,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
       svi_ipm1_signed_at: dayjs.utc().toDate(),
       svi_assigned_to_fei_at: carcasse.svi_assigned_to_fei_at ?? dayjs.utc().toDate(),
     };
-    updateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse);
+    updateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse, true);
     if (fei.fei_current_owner_role !== UserRoles.SVI) {
       const nextFei: Partial<Fei> = {
         fei_current_owner_role: UserRoles.SVI,

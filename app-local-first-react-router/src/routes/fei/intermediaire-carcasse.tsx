@@ -100,7 +100,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
       latest_intermediaire_signed_at: dayjs().toDate(),
     };
-    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
     addLog({
       user_id: user.id,
       user_role: intermediaire.intermediaire_role!,
@@ -152,7 +152,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
       latest_intermediaire_signed_at: dayjs().toDate(),
     };
-    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
     addLog({
       user_id: user.id,
       user_role: intermediaire.intermediaire_role!,
@@ -195,7 +195,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_refus_intermediaire_id: null,
       latest_intermediaire_signed_at: dayjs().toDate(),
     };
-    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
     addLog({
       user_id: user.id,
       user_role: intermediaire.intermediaire_role!,
@@ -217,7 +217,7 @@ export default function CarcasseIntermediaireComp({
         forceManquante={!!carcasseManquante}
         forceAccept={!!carcasseIntermediaire.check_manuel}
         onClick={canEdit ? () => refusIntermediaireModal.current.open() : undefined}
-        className="[zoom:1.3] [&.border-manquante]:border-gray-500! [&_.text-manquante]:text-gray-500!"
+        className="[zoom:1.3] [&_.text-manquante]:text-gray-500! [&.border-manquante]:border-gray-500!"
       />
       {canEdit && (
         <refusIntermediaireModal.current.Component

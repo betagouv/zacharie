@@ -223,9 +223,18 @@ export default function DestinataireSelect({
   const Component = canEdit ? Input : InputNotEditable;
 
   const needToSubmit = useMemo(() => {
-    if (!prochainDetenteurEntityId) return true;
-    if (prochainDetenteurEntityId !== fei.fei_next_owner_entity_id) return true;
-    if (prochainDetenteurType === EntityTypes.SVI) return false; // pas de détail pour les SVI
+    if (!prochainDetenteurEntityId) {
+      console.log('prochainDetenteurEntityId is missing');
+      return true;
+    }
+    if (prochainDetenteurEntityId !== fei.fei_next_owner_entity_id) {
+      console.log('prochainDetenteurEntityId is different from fei.fei_next_owner_entity_id');
+      return true;
+    }
+    if (prochainDetenteurType === EntityTypes.SVI) {
+      console.log('prochainDetenteurType is SVI');
+      return false; // pas de détail pour les SVI
+    }
     // if prochain detenteur changed, need to submit
     if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
       if (needTransport && !transportType) return true;
@@ -614,8 +623,6 @@ export default function DestinataireSelect({
             nativeButtonProps={{
               onClick: (event) => {
                 event.preventDefault();
-                console.log('clicked');
-                console.log({ jobIsMissing });
                 if (jobIsMissing) {
                   alert(jobIsMissing);
                   return;
@@ -663,17 +670,21 @@ export default function DestinataireSelect({
                       : null,
                   };
                   for (const carcasse of carcasses) {
-                    updateCarcasse(carcasse.zacharie_carcasse_id, {
-                      premier_detenteur_prochain_detenteur_type_cache:
-                        nextFei.premier_detenteur_prochain_detenteur_type_cache,
-                      premier_detenteur_prochain_detenteur_id_cache:
-                        nextFei.premier_detenteur_prochain_detenteur_id_cache,
-                      premier_detenteur_depot_type: nextFei.premier_detenteur_depot_type,
-                      premier_detenteur_depot_entity_id: nextFei.premier_detenteur_depot_entity_id,
-                      premier_detenteur_depot_ccg_at: nextFei.premier_detenteur_depot_ccg_at,
-                      premier_detenteur_transport_type: nextFei.premier_detenteur_transport_type,
-                      premier_detenteur_transport_date: nextFei.premier_detenteur_transport_date,
-                    });
+                    updateCarcasse(
+                      carcasse.zacharie_carcasse_id,
+                      {
+                        premier_detenteur_prochain_detenteur_type_cache:
+                          nextFei.premier_detenteur_prochain_detenteur_type_cache,
+                        premier_detenteur_prochain_detenteur_id_cache:
+                          nextFei.premier_detenteur_prochain_detenteur_id_cache,
+                        premier_detenteur_depot_type: nextFei.premier_detenteur_depot_type,
+                        premier_detenteur_depot_entity_id: nextFei.premier_detenteur_depot_entity_id,
+                        premier_detenteur_depot_ccg_at: nextFei.premier_detenteur_depot_ccg_at,
+                        premier_detenteur_transport_type: nextFei.premier_detenteur_transport_type,
+                        premier_detenteur_transport_date: nextFei.premier_detenteur_transport_date,
+                      },
+                      false,
+                    );
                   }
                   updateFei(fei.numero, nextFei);
                   addLog({
@@ -698,9 +709,13 @@ export default function DestinataireSelect({
                   };
                   if (prochainDetenteurType === EntityTypes.SVI) {
                     for (const carcasse of carcasses) {
-                      updateCarcasse(carcasse.zacharie_carcasse_id, {
-                        svi_assigned_to_fei_at: nextFei.svi_assigned_at,
-                      });
+                      updateCarcasse(
+                        carcasse.zacharie_carcasse_id,
+                        {
+                          svi_assigned_to_fei_at: nextFei.svi_assigned_at,
+                        },
+                        false,
+                      );
                     }
                   }
                   updateFei(fei.numero, nextFei);
