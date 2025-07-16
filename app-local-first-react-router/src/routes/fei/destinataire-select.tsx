@@ -35,6 +35,7 @@ export default function DestinataireSelect({
   feiAndIntermediaireIds,
   intermediaire,
   premierDetenteurEntity,
+  premierDetenteurUser,
 }: {
   className?: string;
   canEdit: boolean;
@@ -44,6 +45,7 @@ export default function DestinataireSelect({
   feiAndIntermediaireIds?: FeiAndIntermediaireIds;
   intermediaire?: FeiIntermediaire;
   premierDetenteurEntity?: EntityWithUserRelation | null;
+  premierDetenteurUser?: User;
 }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
@@ -112,7 +114,7 @@ export default function DestinataireSelect({
   const intermediaireEntityType = intermediaireEntity?.type;
 
   const [prochainDetenteurEntityId, setProchainDetenteurEntityId] = useState(() => {
-    if (premierDetenteurEntity) {
+    if (premierDetenteurEntity || premierDetenteurUser) {
       if (fei.premier_detenteur_prochain_detenteur_id_cache) {
         return fei.premier_detenteur_prochain_detenteur_id_cache;
       }
@@ -133,7 +135,7 @@ export default function DestinataireSelect({
   const prochainDetenteurType = prochainDetenteur?.type;
   const needTransport = useMemo(() => {
     if (transfer) return false;
-    if (premierDetenteurEntity) {
+    if (premierDetenteurEntity || premierDetenteurUser) {
       return prochainDetenteurType !== EntityTypes.COLLECTEUR_PRO;
     }
     if (prochainDetenteurType === EntityTypes.SVI) return false;
@@ -141,7 +143,13 @@ export default function DestinataireSelect({
       return prochainDetenteurType === EntityTypes.ETG;
     }
     return false;
-  }, [transfer, premierDetenteurEntity, prochainDetenteurType, intermediaireEntityType]);
+  }, [
+    transfer,
+    premierDetenteurEntity,
+    premierDetenteurUser,
+    prochainDetenteurType,
+    intermediaireEntityType,
+  ]);
 
   const needDepot = useMemo(() => {
     if (transfer) return false;
@@ -152,7 +160,7 @@ export default function DestinataireSelect({
 
   const [depotEntityId, setDepotEntityId] = useState(() => {
     if (!needDepot) return null;
-    if (premierDetenteurEntity) {
+    if (premierDetenteurEntity || premierDetenteurUser) {
       if (fei.premier_detenteur_depot_entity_id) {
         return fei.premier_detenteur_depot_entity_id;
       }
@@ -179,7 +187,7 @@ export default function DestinataireSelect({
 
   const [depotType, setDepotType] = useState(() => {
     if (!needDepot) return null;
-    if (premierDetenteurEntity) {
+    if (premierDetenteurEntity || premierDetenteurUser) {
       if (fei.premier_detenteur_depot_type) {
         return fei.premier_detenteur_depot_type;
       }
@@ -207,7 +215,7 @@ export default function DestinataireSelect({
   });
 
   const [transportType, setTransportType] = useState(() => {
-    if (premierDetenteurEntity) {
+    if (premierDetenteurEntity || premierDetenteurUser) {
       if (fei.premier_detenteur_transport_type) {
         return fei.premier_detenteur_transport_type;
       }
@@ -221,7 +229,7 @@ export default function DestinataireSelect({
   });
 
   const [depotDate, setDepotDate] = useState(() => {
-    if (premierDetenteurEntity) {
+    if (premierDetenteurEntity || premierDetenteurUser) {
       if (fei.premier_detenteur_depot_ccg_at) {
         return dayjs(fei.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm');
       }

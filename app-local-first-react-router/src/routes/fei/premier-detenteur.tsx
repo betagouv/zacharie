@@ -105,6 +105,7 @@ export default function FeiPremierDetenteur() {
         disabled={showAsDisabled}
         calledFrom="premier-detenteur-need-select-next"
         premierDetenteurEntity={premierDetenteurEntity}
+        premierDetenteurUser={premierDetenteurUser}
       />
     </Section>
   );

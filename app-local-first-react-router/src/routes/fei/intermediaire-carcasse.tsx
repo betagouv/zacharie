@@ -318,7 +318,11 @@ export default function CarcasseIntermediaireComp({
             {!!carcasseRefusCheckbox && (
               <div className="mb-4">
                 <InputMultiSelect
-                  label="Vous refusez cette carcasse ? Indiquez le motif *"
+                  label={
+                    carcasse.type === CarcasseType.GROS_GIBIER
+                      ? 'Vous refusez cette carcasse ? Indiquez le motif *'
+                      : 'Vous refusez ce lot ? Indiquez le motif *'
+                  }
                   isMulti={false}
                   canEdit
                   data={refusIntermedaire[carcasse.type || CarcasseType.GROS_GIBIER]}
@@ -329,22 +333,6 @@ export default function CarcasseIntermediaireComp({
                   }}
                   values={[refus]}
                 />
-                {/* <InputForSearchPrefilledData
-                  canEdit={canEdit}
-                  data={refusIntermedaire}
-                  label="Vous refusez cette carcasse ? Indiquez le motif *"
-                  hideDataWhenNoSearch={false}
-                  required
-                  name="carcasse-refus"
-                  hintText="Cliquez sur un bouton bleu ciel pour valider le motif"
-                  placeholder="Tapez un motif de refus"
-                  onSelect={(refus) => {
-                    setRefus(refus);
-                    submitCarcasseRefus(refus);
-                  }}
-                  defaultValue={refus ?? ''}
-                  key={refus ?? ''}
-                /> */}
               </div>
             )}
             <Input
