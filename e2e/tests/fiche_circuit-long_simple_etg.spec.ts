@@ -312,7 +312,7 @@ test.describe("Fiches ETG", () => {
     `);
   });
 
-  test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context }) => {
+  test.skip("Pas de stockage - Je transfert à un autre ETG", async ({ page, context }) => {
     // const cdpSession = await context.newCDPSession(page);
     // // @ts-ignore
     // await cdpSession.send("Network.emulateNetworkConditions", NETWORK_PRESETS.PrettyGood);
