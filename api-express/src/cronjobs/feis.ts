@@ -68,6 +68,10 @@ async function automaticClosingOfFeis() {
   });
 
   console.log(`Found ${feisUnderSvi.length} feis under svi that need to be closed`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Skipping feis closing notif in development mode');
+    return;
+  }
   for (const fei of feisUnderSvi) {
     const automaticClosedAt = dayjs().toDate();
     await prisma.fei.update({
@@ -78,10 +82,6 @@ async function automaticClosingOfFeis() {
         automatic_closed_at: automaticClosedAt,
       },
     });
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Skipping feis closing notif in development mode');
-      continue;
-    }
     const email = [
       `La fiche ${fei.numero} a été réceptionnée par le Service Vétérinaire il y a plus de 10 jours, elle est donc automatiquement clôturée.`,
       `Rendez-vous sur Zacharie pour consulter le détail de la fiche\u00A0:`,
