@@ -10,10 +10,7 @@ export default function LandingPage() {
       </title>
       <main>
         {/* Hero Section */}
-        <section
-          className="min-h-screen bg-cover bg-center bg-no-repeat py-16 lg:py-24"
-          style={{ backgroundImage: "url('/landing/gradient-cerf.png')" }}
-        >
+        <section className="min-h-screen bg-[#A38A6C] bg-[url('/landing/gradient-cerf.png')] bg-cover bg-center bg-no-repeat py-16 lg:py-24">
           <div className="fr-container">
             <div className="grid items-center gap-12 lg:grid-cols-2">
               <div className="max-w-[75%] space-y-8">
