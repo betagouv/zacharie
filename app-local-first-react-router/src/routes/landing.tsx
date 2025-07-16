@@ -21,7 +21,7 @@ export default function LandingPage() {
                 <p className="text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl">
                   Simple, rapide et 100% gratuit, Zacharie accélère vos démarches.
                 </p>
-                <div className="flex flex-col gap-4">
+                <div className="mt-8 flex flex-col gap-4">
                   <Button
                     size="large"
                     linkProps={{
@@ -77,7 +77,7 @@ export default function LandingPage() {
                 Un service public <b>gratuit et sans engagement</b>
               </li>
             </ul>
-            <div className="flex w-full justify-center">
+            <div className="my-8 flex w-full justify-center">
               <Button
                 size="large"
                 linkProps={{
