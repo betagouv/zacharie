@@ -75,6 +75,9 @@ export default function CurrentOwnerConfirm() {
     if (fei.fei_next_owner_role === UserRoles.ETG) {
       return user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.COLLECTEUR_PRO);
     }
+    if (fei.fei_next_owner_role === UserRoles.COLLECTEUR_PRO) {
+      return nextOwnerEntity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
+    }
     return true;
   }, [fei, user, nextOwnerEntity]);
 
@@ -355,6 +358,24 @@ export default function CurrentOwnerConfirm() {
               </Button>
             )}
           </>
+        )}
+        {fei.fei_next_owner_role === UserRoles.COLLECTEUR_PRO && nextOwnerCollecteurProEntityId && (
+          <Button
+            type="submit"
+            className="my-4 block"
+            onClick={() => {
+              handlePriseEnCharge({
+                transfer: false,
+                action: 'current-owner-confirm-etg-and-transporteur-transporte',
+                forcedNextRole: UserRoles.COLLECTEUR_PRO,
+                forceNextEntityId: nextOwnerCollecteurProEntityId,
+                forceNextEntityName:
+                  collecteursPro.find((c) => c.id === nextOwnerCollecteurProEntityId)?.nom_d_usage || '',
+              });
+            }}
+          >
+            Je transporte le gibier
+          </Button>
         )}
         {!myNextRoleForThisFeiIsCollecteurPro && (
           <>

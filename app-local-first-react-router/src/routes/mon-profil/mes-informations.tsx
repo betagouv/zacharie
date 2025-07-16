@@ -139,10 +139,10 @@ export default function MesInformations() {
     return false;
   }, [user.roles]);
   const nextTitle = skipCCG ? 'Vos notifications' : 'Vos Centres de Collectes du Gibier sauvage';
-  // const nextPage = skipCCG
-  //   ? '/app/tableau-de-bord/mon-profil/mes-notifications'
-  //   : '/app/tableau-de-bord/mon-profil/mes-ccgs';
-  const nextPage = skipCCG ? '/app/tableau-de-bord' : '/app/tableau-de-bord/mon-profil/mes-ccgs';
+  const nextPage = skipCCG
+    ? '/app/tableau-de-bord/mon-profil/mes-notifications'
+    : '/app/tableau-de-bord/mon-profil/mes-ccgs';
+  // const nextPage = skipCCG ? '/app/tableau-de-bord' : '/app/tableau-de-bord/mon-profil/mes-ccgs';
   const stepCount = skipCCG ? 3 : 4;
 
   const showEntrpriseVisibilityCheckbox =
@@ -480,7 +480,7 @@ export default function MesInformations() {
                   </form>
                 </>
               )}
-              <div className="ml-6 mt-6">
+              <div className="mt-6 ml-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>

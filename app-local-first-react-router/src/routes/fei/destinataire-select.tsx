@@ -224,15 +224,12 @@ export default function DestinataireSelect({
 
   const needToSubmit = useMemo(() => {
     if (!prochainDetenteurEntityId) {
-      console.log('prochainDetenteurEntityId is missing');
       return true;
     }
     if (prochainDetenteurEntityId !== fei.fei_next_owner_entity_id) {
-      console.log('prochainDetenteurEntityId is different from fei.fei_next_owner_entity_id');
       return true;
     }
     if (prochainDetenteurType === EntityTypes.SVI) {
-      console.log('prochainDetenteurType is SVI');
       return false; // pas de détail pour les SVI
     }
     // if prochain detenteur changed, need to submit
@@ -653,6 +650,20 @@ export default function DestinataireSelect({
                   return;
                 }
                 if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+                  const nextDepotEntityId = depotType === DepotType.AUCUN ? null : depotEntityId;
+                  const nextDepotDate = depotDate ? dayjs(depotDate).toDate() : null;
+                  const nextTransportType = needTransport ? transportType : null;
+                  const nextTransportDate = nextTransportType
+                    ? transportDate
+                      ? dayjs(transportDate).toDate()
+                      : null
+                    : null;
+                  setDepotEntityId(nextDepotEntityId);
+                  setDepotDate(nextDepotDate ? dayjs(nextDepotDate).format('YYYY-MM-DDTHH:mm') : undefined);
+                  setTransportType(nextTransportType);
+                  setTransportDate(
+                    nextTransportDate ? dayjs(nextTransportDate).format('YYYY-MM-DDTHH:mm') : undefined,
+                  );
                   let nextFei: Partial<typeof fei> = {
                     fei_next_owner_entity_id: prochainDetenteurEntityId,
                     fei_next_owner_role: entities[prochainDetenteurEntityId]?.type,
@@ -660,14 +671,10 @@ export default function DestinataireSelect({
                     premier_detenteur_prochain_detenteur_type_cache:
                       entities[prochainDetenteurEntityId]?.type,
                     premier_detenteur_depot_type: depotType,
-                    premier_detenteur_depot_entity_id: depotType === DepotType.AUCUN ? null : depotEntityId,
-                    premier_detenteur_depot_ccg_at: depotDate ? dayjs(depotDate).toDate() : null,
-                    premier_detenteur_transport_type: needTransport ? transportType : null,
-                    premier_detenteur_transport_date: needTransport
-                      ? transportDate
-                        ? dayjs(transportDate).toDate()
-                        : null
-                      : null,
+                    premier_detenteur_depot_entity_id: nextDepotEntityId,
+                    premier_detenteur_depot_ccg_at: nextDepotDate,
+                    premier_detenteur_transport_type: nextTransportType,
+                    premier_detenteur_transport_date: nextTransportDate,
                   };
                   for (const carcasse of carcasses) {
                     updateCarcasse(

@@ -774,10 +774,7 @@ export async function syncData(calledFrom: string) {
   syncCarcassesIntermediaires();
   syncLogs();
   queue.on('empty', () => {
-    console.log('TEST_ONLY: queue is empty');
     useZustandStore.setState({ dataIsSynced: true });
-    // FOR_TEST_ONLY_askedForSync = null;
-    // FOR_TEST_ONLY_started = false;
   });
   // queue.add(async () => {
   //   if (debug) {

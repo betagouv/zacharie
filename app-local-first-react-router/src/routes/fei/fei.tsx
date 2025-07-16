@@ -1,6 +1,6 @@
 import { useEffect, useMemo, /* useRef, */ useState } from 'react';
 import { useParams } from 'react-router';
-import { UserRoles } from '@prisma/client';
+import { EntityRelationType, UserRoles } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { loadFei } from '@app/utils/load-fei';
@@ -53,10 +53,10 @@ function Fei() {
   const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
 
-  // const entities = useZustandStore((state) => state.entities);
-  // const nextOwnerEntity = fei.fei_next_owner_entity_id ? state.entities[fei.fei_next_owner_entity_id] : null;
+  const entities = useZustandStore((state) => state.entities);
 
   const nextOwnerCollecteurProEntityId = useNextOwnerCollecteurProEntityId(fei, user);
+  const nextOwnerEntity = fei.fei_next_owner_entity_id ? entities[fei.fei_next_owner_entity_id] : null;
 
   // const refCurrentRole = useRef(fei.fei_current_owner_role);
   // const refCurrentUserId = useRef(fei.fei_current_owner_user_id);
@@ -87,8 +87,6 @@ function Fei() {
       if (fei.examinateur_initial_user_id === user.id) {
         return UserRoles.EXAMINATEUR_INITIAL;
       }
-      console.log('fei.examinateur_initial_user_id', fei.examinateur_initial_user_id);
-      console.log('user.id', user.id);
     }
     if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
       return UserRoles.PREMIER_DETENTEUR;
@@ -102,6 +100,13 @@ function Fei() {
     if (
       fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO &&
       fei.fei_current_owner_user_id === user.id
+    ) {
+      return UserRoles.COLLECTEUR_PRO;
+    }
+    if (
+      fei.fei_next_owner_role === UserRoles.COLLECTEUR_PRO &&
+      nextOwnerCollecteurProEntityId &&
+      nextOwnerEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
     ) {
       return UserRoles.COLLECTEUR_PRO;
     }
@@ -149,19 +154,21 @@ function Fei() {
   //   refCurrentUserId.current = fei.fei_current_owner_user_id;
   // }, [fei.examinateur_initial_user_id, fei.fei_current_owner_role, fei.fei_current_owner_user_id, user.id]);
 
+  console.log({ showInterface });
+
   return (
     <>
       <title>
         {`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
       </title>
       {fei.deleted_at && (
-        <div className="mb-2 bg-error-main-525 py-2 text-center text-white">
+        <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
           <p>Fiche supprimée</p>
         </div>
       )}
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-          <div className="fr-col-12 fr-col-md-10 m-4 bg-alt-blue-france md:m-0 md:p-0 [&_.fr-tabs\\_\\_list]:bg-alt-blue-france">
+          <div className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0">
             {showInterface === UserRoles.SVI && <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>}
             <FeiTransfer />
             {showInterface !== UserRoles.SVI && <CurrentOwnerConfirm />}

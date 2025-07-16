@@ -335,7 +335,7 @@ export default function MesCCGs() {
                   </div>
                 )}
               </div>
-              <div className="mb-16 ml-6 mt-6">
+              <div className="mt-6 mb-16 ml-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>
@@ -347,8 +347,8 @@ export default function MesCCGs() {
                   {
                     children: 'Continuer',
                     linkProps: {
-                      // to: redirect || '/app/tableau-de-bord/mon-profil/mes-notifications',
-                      to: redirect || '/app/tableau-de-bord',
+                      to: redirect || '/app/tableau-de-bord/mon-profil/mes-notifications',
+                      // to: redirect || '/app/tableau-de-bord',
                       href: '#',
                     },
                   },
