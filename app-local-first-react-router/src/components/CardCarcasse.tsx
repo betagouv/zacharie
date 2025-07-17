@@ -87,11 +87,11 @@ export default function CardCarcasse({
   }
 
   if (forceRefus) {
-    statusNewCard = 'refusé';
+    if (!statusNewCard.includes('refusé')) statusNewCard = 'refusé';
   } else if (forceManquante) {
-    statusNewCard = 'manquant';
+    if (!statusNewCard.includes('manquant')) statusNewCard = 'manquant';
   } else if (forceAccept) {
-    statusNewCard = 'accepté';
+    if (!statusNewCard.includes('accepté')) statusNewCard = 'accepté';
   }
   const isEnCours = statusNewCard.includes('cours');
   const isRefus = statusNewCard.includes('refus');

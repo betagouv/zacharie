@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
@@ -31,6 +31,10 @@ export default function MesNotifications() {
     return false;
   }, [user.roles]);
   const stepCount = skipCCG ? 3 : 4;
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
 
   return (
     <form
@@ -132,7 +136,7 @@ export default function MesNotifications() {
                     },
                   ]}
                 />
-                <div className="mb-16 ml-6 mt-6">
+                <div className="mt-6 mb-16 ml-6">
                   <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                     Haut de page
                   </a>

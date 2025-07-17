@@ -222,7 +222,7 @@ export async function setFeiInStore(feiResponse: FeiResponse) {
     }
   }
 
-  const carcassesIntermediaires = fei.CarcasseIntermediaire; // already sorted by created_at desc
+  const carcassesIntermediaires = fei.CarcasseIntermediaire; // already sorted by prise_en_charge_at desc then created_at desc
 
   const users = useZustandStore.getState().users;
   const entities = useZustandStore.getState().entities;

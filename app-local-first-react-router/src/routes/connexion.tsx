@@ -165,7 +165,7 @@ export default function Connexion() {
                 }}
               />
 
-              <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left">
+              <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left block">
                 <li className="flex w-auto justify-start">
                   <Button type="submit" disabled={isLoading}>
                     {connexionType === 'creation-de-compte' ? <>Créer mon compte</> : <>Me connecter</>}

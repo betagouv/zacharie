@@ -20,7 +20,7 @@ import {
   getFeiAndIntermediaireIdsFromFeiIntermediaire,
   getFeiAndCarcasseAndIntermediaireIds,
 } from '@app/utils/get-carcasse-intermediaire-id';
-import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/fei-intermediaire';
+import type { FeiAndCarcasseAndIntermediaireIds, FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -35,6 +35,87 @@ interface Props {
 }
 
 export default function FEICurrentIntermediaire(props: Props) {
+  const params = useParams();
+  const user = useUser((state) => state.user)!;
+  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
+  const feis = useZustandStore((state) => state.feis);
+  const entities = useZustandStore((state) => state.entities);
+  const fei = feis[params.fei_numero!];
+  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+
+  const [intermediaireIndex, setIntermediaireIndex] = useState(() => {
+    const userWasIntermediaire = intermediaires.find((intermediaire) =>
+      intermediaire.intermediaire_user_id.startsWith(user.id),
+    );
+    if (userWasIntermediaire) {
+      return intermediaires.indexOf(userWasIntermediaire);
+    }
+    return 0;
+  });
+  const intermediaire = intermediaires[intermediaireIndex];
+
+  return (
+    <Fragment key={intermediaire?.id}>
+      {user.roles.includes(UserRoles.ETG) && intermediaires.length > 0 && (
+        <nav
+          id="fr-breadcrumb-:r54:"
+          role="navigation"
+          className="fr-breadcrumb"
+          aria-label="vous êtes ici :"
+          data-fr-js-breadcrumb="true"
+        >
+          <button
+            className="fr-breadcrumb__button"
+            aria-expanded="false"
+            aria-controls="breadcrumb-:r55:"
+            data-fr-js-collapse-button="true"
+          >
+            Voir les destinataires
+          </button>
+          <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
+            <ol className="fr-breadcrumb__list">
+              <li>
+                <span className="fr-breadcrumb__link bg-none! no-underline!">Premier Détenteur</span>
+              </li>
+              {intermediaires
+                .map((_intermediaire, index) => {
+                  return (
+                    <li key={_intermediaire.id}>
+                      <button
+                        onClick={() => setIntermediaireIndex(index)}
+                        className="fr-breadcrumb__link"
+                        aria-current={_intermediaire.id === intermediaire?.id ? 'step' : false}
+                        disabled={props.readOnly}
+                      >
+                        {entities[_intermediaire.intermediaire_entity_id!]?.nom_d_usage}
+                      </button>
+                    </li>
+                  );
+                })
+                .reverse()}
+            </ol>
+          </div>
+        </nav>
+      )}
+
+      <Section open={!!intermediaires.length} title="Données de chasse">
+        <FEIDonneesDeChasse />
+      </Section>
+      <FEICurrentIntermediaireContent
+        key={intermediaire?.id}
+        {...props}
+        intermediaire={intermediaire}
+        intermediaireIndex={intermediaireIndex}
+      />
+    </Fragment>
+  );
+}
+
+function FEICurrentIntermediaireContent({
+  intermediaire,
+  intermediaireIndex,
+  ...props
+}: Props & { intermediaire: FeiIntermediaire; intermediaireIndex: number }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
@@ -67,18 +148,6 @@ export default function FEICurrentIntermediaire(props: Props) {
     .filter((c) => !c.deleted_at);
 
   const [showRefusedCarcasses, setShowRefusedCarcasses] = useState(false);
-
-  const [intermediaireIndex, setIntermediaireIndex] = useState(() => {
-    const userWasIntermediaire = intermediaires.find((intermediaire) =>
-      intermediaire.intermediaire_user_id.startsWith(user.id),
-    );
-    if (userWasIntermediaire) {
-      return intermediaires.indexOf(userWasIntermediaire);
-    }
-    return 0;
-  });
-  const intermediaire = intermediaires[intermediaireIndex];
-  console.log({ intermediaireIndex, intermediaires, intermediaire, fei });
 
   const feiAndIntermediaireIds = intermediaire
     ? getFeiAndIntermediaireIdsFromFeiIntermediaire(intermediaire)
@@ -308,20 +377,6 @@ export default function FEICurrentIntermediaire(props: Props) {
     return true;
   }, [couldSelectNextUser, carcassesSorted.carcassesApproved.length, priseEnChargeAt]);
 
-  // const prevCarcassesToCheckCount = useRef(carcassesSorted.carcassesToCheck.length);
-  // const [carcassesAccepteesExpanded, setCarcassesAccepteesExpanded] = useState(false);
-  // const [carcassesRefuseesExpanded, setCarcassesRefuseesExpanded] = useState(false);
-  // const [carcassesManquantesExpanded, setCarcassesManquantesExpanded] = useState(false);
-
-  // useEffect(() => {
-  //   if (prevCarcassesToCheckCount.current > 0 && carcassesSorted.carcassesToCheck.length === 0) {
-  //     setCarcassesAValiderExpanded(false);
-  //     setCarcassesAccepteesExpanded(false);
-  //     setCarcassesRefuseesExpanded(false);
-  //   }
-  //   prevCarcassesToCheckCount.current = carcassesSorted.carcassesToCheck.length;
-  // }, [carcassesSorted.carcassesToCheck.length]);
-
   function handleCheckFinishedAt(_priseEnChargeAt: Date) {
     if (!feiAndIntermediaireIds) {
       return;
@@ -365,52 +420,6 @@ export default function FEICurrentIntermediaire(props: Props) {
 
   return (
     <Fragment key={intermediaire?.id}>
-      {user.roles.includes(UserRoles.ETG) && intermediaires.length > 0 && effectiveCanEdit && (
-        <nav
-          id="fr-breadcrumb-:r54:"
-          role="navigation"
-          className="fr-breadcrumb"
-          aria-label="vous êtes ici :"
-          data-fr-js-breadcrumb="true"
-        >
-          <button
-            className="fr-breadcrumb__button"
-            aria-expanded="false"
-            aria-controls="breadcrumb-:r55:"
-            data-fr-js-collapse-button="true"
-          >
-            Voir les destinataires
-          </button>
-          <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
-            <ol className="fr-breadcrumb__list">
-              <li>
-                <span className="fr-breadcrumb__link bg-none! no-underline!">Premier Détenteur</span>
-              </li>
-              {intermediaires
-                .map((_intermediaire, index) => {
-                  return (
-                    <li key={_intermediaire.id}>
-                      <button
-                        onClick={() => setIntermediaireIndex(index)}
-                        className="fr-breadcrumb__link"
-                        aria-current={_intermediaire.id === intermediaire?.id ? 'step' : false}
-                        disabled={props.readOnly}
-                      >
-                        {entities[_intermediaire.intermediaire_entity_id!]?.nom_d_usage}
-                      </button>
-                    </li>
-                  );
-                })
-                .reverse()}
-            </ol>
-          </div>
-        </nav>
-      )}
-
-      <Section open={!!intermediaires.length} title="Données de chasse">
-        <FEIDonneesDeChasse />
-      </Section>
-
       {intermediaire ? (
         <Section title={`Carcasses (${intermediaireCarcasses.length})`}>
           {effectiveCanEdit && (
@@ -479,7 +488,7 @@ export default function FEICurrentIntermediaire(props: Props) {
 
       {!!labelCheckDone.length && (
         <>
-          <Section title="Prise en charge des carcasses acceptées">
+          <Section title="Prise en charge des carcasses acceptées" key={intermediaire?.id}>
             <form
               method="POST"
               className="flex flex-col gap-y-4"

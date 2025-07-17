@@ -609,7 +609,7 @@ model CarcasseIntermediaire {
   @@index([created_at])
   @@index([intermediaire_entity_id])
   @@index([intermediaire_user_id])
-  @@index([fei_numero, created_at])
+  @@index([fei_numero, prise_en_charge_at, created_at])
 }
 
 model NotificationLog {
