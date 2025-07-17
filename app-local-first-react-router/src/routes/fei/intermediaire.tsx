@@ -69,15 +69,16 @@ export default function FEICurrentIntermediaire(props: Props) {
   const [showRefusedCarcasses, setShowRefusedCarcasses] = useState(false);
 
   const [intermediaireIndex, setIntermediaireIndex] = useState(() => {
-    // const userWasIntermediaire = intermediaires.find((intermediaire) =>
-    //   intermediaire.intermediaire_user_id.startsWith(user.id),
-    // );
-    // if (userWasIntermediaire) {
-    //   return intermediaires.indexOf(userWasIntermediaire);
-    // }
+    const userWasIntermediaire = intermediaires.find((intermediaire) =>
+      intermediaire.intermediaire_user_id.startsWith(user.id),
+    );
+    if (userWasIntermediaire) {
+      return intermediaires.indexOf(userWasIntermediaire);
+    }
     return 0;
   });
   const intermediaire = intermediaires[intermediaireIndex];
+  console.log({ intermediaireIndex, intermediaires, intermediaire, fei });
 
   const feiAndIntermediaireIds = intermediaire
     ? getFeiAndIntermediaireIdsFromFeiIntermediaire(intermediaire)
@@ -123,7 +124,8 @@ export default function FEICurrentIntermediaire(props: Props) {
     return originalCarcasses.filter(
       (c) =>
         !intermediaireCarcassesIds.includes(c.zacharie_carcasse_id) &&
-        c.svi_carcasse_status !== CarcasseStatus.SANS_DECISION,
+        c.svi_carcasse_status !== CarcasseStatus.SANS_DECISION &&
+        c.svi_carcasse_status !== CarcasseStatus.ACCEPTE,
     );
   }, [originalCarcasses, intermediaireCarcasses]);
 
@@ -228,19 +230,6 @@ export default function FEICurrentIntermediaire(props: Props) {
   const carcassesApprovedSorted = useMemo(() => {
     return carcassesSorted.carcassesApproved.sort(sortCarcassesApproved);
   }, [carcassesSorted.carcassesApproved]);
-
-  // const [carcassesAcceptées, carcassesRefusées] = useMemo(() => {
-  //   const _carcassesAcceptées = [];
-  //   const _carcassesRefusées = [];
-  //   for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
-  //     if (carcasse.includes('refusé')) {
-  //       _carcassesRefusées.push(carcasse);
-  //     } else {
-  //       _carcassesAcceptées.push(carcasse);
-  //     }
-  //   }
-  //   return [_carcassesAcceptées, _carcassesRefusées];
-  // }, [fei.resume_nombre_de_carcasses]);
 
   const labelCheckDone = useMemo(() => {
     let label = [];

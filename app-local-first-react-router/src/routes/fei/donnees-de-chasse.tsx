@@ -70,7 +70,9 @@ export default function FEIDonneesDeChasse({
 
   const intermediairesInputs = useMemo(() => {
     const lines = [];
-    for (const intermediaire of intermediaires.reverse()) {
+    console.log({ intermediaires });
+    for (let i = intermediaires.length - 1; i >= 0; i--) {
+      const intermediaire = intermediaires[i];
       const intermediaireLines = [];
       const entity = entities[intermediaire.intermediaire_entity_id!];
       intermediaireLines.push(getUserRoleLabel(intermediaire.intermediaire_role!));
