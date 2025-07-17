@@ -69,12 +69,12 @@ export default function FEICurrentIntermediaire(props: Props) {
   const [showRefusedCarcasses, setShowRefusedCarcasses] = useState(false);
 
   const [intermediaireIndex, setIntermediaireIndex] = useState(() => {
-    const userWasIntermediaire = intermediaires.find((intermediaire) =>
-      intermediaire.intermediaire_user_id.startsWith(user.id),
-    );
-    if (userWasIntermediaire) {
-      return intermediaires.indexOf(userWasIntermediaire);
-    }
+    // const userWasIntermediaire = intermediaires.find((intermediaire) =>
+    //   intermediaire.intermediaire_user_id.startsWith(user.id),
+    // );
+    // if (userWasIntermediaire) {
+    //   return intermediaires.indexOf(userWasIntermediaire);
+    // }
     return 0;
   });
   const intermediaire = intermediaires[intermediaireIndex];
@@ -374,12 +374,9 @@ export default function FEICurrentIntermediaire(props: Props) {
     handleCheckFinishedAt(dayjs().toDate());
   }
 
-  const showCollecteurInterface =
-    fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.fei_current_owner_user_id === user.id;
-
   return (
     <Fragment key={intermediaire?.id}>
-      {!showCollecteurInterface && intermediaires.length > 1 && effectiveCanEdit && (
+      {user.roles.includes(UserRoles.ETG) && intermediaires.length > 0 && effectiveCanEdit && (
         <nav
           id="fr-breadcrumb-:r54:"
           role="navigation"

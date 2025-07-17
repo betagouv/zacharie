@@ -139,18 +139,12 @@ export default function DestinataireSelect({
     if (premierDetenteurEntity || premierDetenteurUser) {
       return prochainDetenteurType !== EntityTypes.COLLECTEUR_PRO;
     }
-    if (prochainDetenteurType === EntityTypes.SVI) return false;
-    if (intermediaireEntityType === EntityTypes.ETG) {
-      return prochainDetenteurType === EntityTypes.ETG;
-    }
+    // if (prochainDetenteurType === EntityTypes.SVI) return false;
+    // if (intermediaireEntityType === EntityTypes.ETG) {
+    //   return prochainDetenteurType === EntityTypes.ETG;
+    // }
     return false;
-  }, [
-    transfer,
-    premierDetenteurEntity,
-    premierDetenteurUser,
-    prochainDetenteurType,
-    intermediaireEntityType,
-  ]);
+  }, [transfer, premierDetenteurEntity, premierDetenteurUser, prochainDetenteurType]);
 
   const needDepot = useMemo(() => {
     if (transfer) return false;

@@ -70,17 +70,17 @@ export function computeFeiSteps({
         nextRole: fei.premier_detenteur_prochain_detenteur_type_cache,
       },
     ];
-    for (const i of intermediaires) {
+    for (let i = intermediaires.length - 1; i >= 0; i--) {
       _steps.push({
-        id: i.id,
-        role: i.intermediaire_role as EntityTypes | UserRoles,
-        nextRole: i.intermediaire_prochain_detenteur_type_cache,
+        id: intermediaires[i].id,
+        role: intermediaires[i].intermediaire_role as EntityTypes | UserRoles,
+        nextRole: intermediaires[i].intermediaire_prochain_detenteur_type_cache,
       });
     }
     if (fei.intermediaire_closed_at) return _steps;
     const lastStepIsEtgToSvi =
       _steps[_steps.length - 1]?.role === UserRoles.ETG &&
-      _steps[_steps.length - 1]?.nextRole === UserRoles.SVI;
+      (!_steps[_steps.length - 1]?.nextRole || _steps[_steps.length - 1]?.nextRole === UserRoles.SVI);
     if (!lastStepIsEtgToSvi) {
       // on simplifie ici : pour montrer à l'utilisateur qu'on anticipe une étape ETG puis SVI
       // mais peut-être que ça va changer, avec les circuits longs, les circuits courts...
@@ -154,10 +154,11 @@ export function computeFeiSteps({
       case 'Validation par le premier détenteur':
         return 'Transport vers un établissement de traitement';
       case 'Fiche envoyée, pas encore traitée':
+        return 'Transport vers / réception par un établissement de traitement';
       case 'Transport vers un établissement de traitement':
       case 'Transport vers un autre établissement de traitement':
       case 'Transport':
-        return 'Transport vers / réception par un établissement de traitement';
+        return 'Réception par un établissement de traitement';
       case 'Réception par un établissement de traitement':
         // return '';
         return 'Inspection par le SVI';
@@ -205,9 +206,12 @@ export function computeFeiSteps({
             if (currentStepLabel === 'Réception par un établissement de traitement') {
               return 'En cours';
             }
-          }
-          if (currentStepLabel !== 'Fiche envoyée, pas encore traitée' && currentStepLabel !== 'Transport') {
-            return 'En cours';
+            if (
+              currentStepLabel !== 'Fiche envoyée, pas encore traitée' &&
+              currentStepLabel !== 'Transport'
+            ) {
+              return 'En cours';
+            }
           }
         }
         if (fei.fei_next_owner_entity_id) {

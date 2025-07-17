@@ -414,7 +414,7 @@ export default function MesInformations() {
             <ListAndSelectEntities
               formId="onboarding-etape-2-collecteur-pro-data"
               setRefreshKey={setRefreshKey}
-              sectionLabel="Vous recevez des carcasses pour un Collecteur Professionnel"
+              sectionLabel="Vous pouvez traiter des carcasses pour un Collecteur Professionnel"
               addLabel={canChange ? 'Ajouter un Collecteur Professionnel' : 'Vos entreprises'}
               selectLabel={canChange ? 'Sélectionnez un Collecteur Professionnel' : ''}
               done={collecteursProDone}
@@ -427,7 +427,7 @@ export default function MesInformations() {
             <ListAndSelectEntities
               formId="onboarding-etape-2-etg-data"
               setRefreshKey={setRefreshKey}
-              sectionLabel="Vous recevez des carcasses pour un Établissement de Traitement du Gibier sauvage (ETG)"
+              sectionLabel="Vous pouvez traiter des carcasses pour un Établissement de Traitement du Gibier sauvage (ETG)"
               addLabel={canChange ? 'Ajouter un ETG' : 'Vos entreprises'}
               selectLabel={canChange ? 'Sélectionnez un ETG' : ''}
               done={etgsDone}
