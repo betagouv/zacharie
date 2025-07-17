@@ -227,9 +227,12 @@ export function computeFeiSteps({
           if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id)) {
             return 'À compléter';
           }
-          if (entitiesIdsWorkingDirectlyAndIndirectlyFor.includes(fei.fei_current_owner_entity_id)) {
-            return 'À compléter';
-          }
+          // if (entitiesIdsWorkingDirectlyAndIndirectlyFor.includes(fei.fei_current_owner_entity_id)) {
+          //   if (fei.numero.includes('221726')) {
+          //     console.log('ici');
+          //   }
+          //   return 'À compléter';
+          // }
         }
         return 'En cours';
       }

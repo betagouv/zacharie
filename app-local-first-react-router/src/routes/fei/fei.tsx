@@ -167,7 +167,10 @@ function Fei() {
       )}
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-          <div className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0">
+          <div
+            className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0"
+            key={fei.fei_current_owner_entity_id! + fei.fei_current_owner_user_id!}
+          >
             {showInterface === UserRoles.SVI && <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>}
             <FeiTransfer />
             {showInterface !== UserRoles.SVI && <CurrentOwnerConfirm />}

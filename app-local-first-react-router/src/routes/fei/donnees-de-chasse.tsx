@@ -77,9 +77,11 @@ export default function FEIDonneesDeChasse({
       intermediaireLines.push(getUserRoleLabel(intermediaire.intermediaire_role!));
       intermediaireLines.push(entity.siret);
       intermediaireLines.push(`${entity.code_postal} ${entity.ville}`);
-      intermediaireLines.push(
-        `Prise en charge\u00A0: ${dayjs(intermediaire.prise_en_charge_at).format('dddd D MMMM à HH:mm')}`,
-      );
+      if (intermediaire.prise_en_charge_at) {
+        intermediaireLines.push(
+          `Prise en charge\u00A0: ${dayjs(intermediaire.prise_en_charge_at).format('dddd D MMMM à HH:mm')}`,
+        );
+      }
       lines.push({ label: entity.nom_d_usage, value: intermediaireLines });
     }
     return lines;
