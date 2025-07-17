@@ -596,6 +596,7 @@ describe('computeFeiSteps', () => {
         const fei = createMockFei({
           fei_current_owner_role: UserRoles.ETG,
           fei_current_owner_entity_id: 'etg-entity',
+          fei_next_owner_entity_id: 'svi-entity',
           // This will result in currentStepLabel being "Réception par un établissement de traitement"
         });
 
@@ -622,6 +623,7 @@ describe('computeFeiSteps', () => {
         const fei = createMockFei({
           fei_current_owner_role: UserRoles.ETG,
           fei_current_owner_entity_id: 'etg-entity',
+          fei_next_owner_entity_id: 'svi-entity',
         });
 
         const result = computeFeiSteps({
