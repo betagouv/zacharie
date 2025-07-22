@@ -160,7 +160,7 @@ test.describe("Fiches ETG", () => {
       `);
     await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées Inspection par le SVI ZACH-\\d+-QZ6E0-\\d+/:
+      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
         - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
         - paragraph: En cours
         - img
@@ -173,7 +173,6 @@ test.describe("Fiches ETG", () => {
         - paragraph: fin de liste
         - img
         - paragraph: 2 carcasses refusées
-        - paragraph: Inspection par le SVI
       `);
   });
 
@@ -295,7 +294,7 @@ test.describe("Fiches ETG", () => {
     `);
     await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
-    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées Transport vers un autre établissement de traitement ZACH-\\d+-QZ6E0-\\d+/:
+    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
       - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
       - paragraph: En cours
       - img
@@ -308,7 +307,6 @@ test.describe("Fiches ETG", () => {
       - paragraph: fin de liste
       - img
       - paragraph: 2 carcasses refusées
-      - paragraph: Transport vers un autre établissement de traitement
     `);
   });
 
@@ -435,7 +433,7 @@ test.describe("Fiches ETG", () => {
       `);
     await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées Transport vers un autre établissement de traitement ZACH-\\d+-QZ6E0-\\d+/:
+      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
         - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
         - paragraph: En cours
         - img
@@ -448,7 +446,6 @@ test.describe("Fiches ETG", () => {
         - paragraph: fin de liste
         - img
         - paragraph: 2 carcasses refusées
-        - paragraph: Transport vers un autre établissement de traitement
       `);
     await page.getByRole("button", { name: "Mon profil" }).click();
     await page.getByRole("button", { name: "Déconnecter etg-1@example.fr" }).click();
@@ -521,7 +518,7 @@ test.describe("Fiches ETG", () => {
 
     await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
-    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées Inspection par le SVI ZACH-\\d+-QZ6E0-\\d+/:
+    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
       - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
       - paragraph: En cours
       - img
@@ -534,7 +531,6 @@ test.describe("Fiches ETG", () => {
       - paragraph: fin de liste
       - img
       - paragraph: 2 carcasses refusées
-      - paragraph: Inspection par le SVI
     `);
   });
 });
