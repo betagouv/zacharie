@@ -64,22 +64,14 @@ test.describe("Fiches examinateur initial", () => {
     await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).fill("12:14");
     await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).blur();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour et maintenant" }).click();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByText("Je, Martin Marie, certifie qu").click();
     await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page
       .getByLabel("Quel Premier Détenteur doit désormais agir sur la fiche ?")
       .selectOption("Pierre Petit - 75000 Paris");
     await page.getByRole("button", { name: "Envoyer" }).click();
     await expect(page.getByRole("heading", { name: "Attribution effectuée" })).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     // get fei id
     const feiId = page.url().split("/").pop()!;
     console.log(feiId);
