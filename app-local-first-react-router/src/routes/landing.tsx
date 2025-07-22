@@ -10,56 +10,55 @@ export default function LandingPage() {
       </title>
       <main>
         {/* Hero Section */}
-        <section className="min-h-screen bg-[#A38A6C] bg-[url('/landing/gradient-cerf.png')] bg-cover bg-center bg-no-repeat py-16 lg:py-24">
-          <div className="fr-container">
-            <div className="grid items-center gap-12 lg:grid-cols-2">
-              <div className="max-w-[75%] space-y-8">
-                <h1 className="text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl">
+        <section className="min-h-96 bg-[#A38A6C] bg-[url('/landing/gradient-cerf.png')] bg-cover bg-center bg-no-repeat py-16 lg:min-h-auto lg:py-24 2xl:py-48">
+          <div className="h-full w-full pl-4 lg:pl-8 xl:pl-[12%]">
+            <div className="grid h-full items-center gap-12 lg:grid-cols-2">
+              <div className="flex h-full max-w-[75vw] flex-col justify-center sm:max-w-[50vw] 2xl:max-w-[35vw]">
+                <h1 className="text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl 2xl:text-5xl">
                   Réalisez vos fiches d'examen initial du gibier directement depuis votre smartphone ou votre
                   ordinateur, où que vous soyez.
                 </h1>
-                <p className="text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl">
+                <p className="mt-8 text-2xl leading-tight font-bold text-white! text-shadow-xs lg:mt-[10%] lg:text-3xl 2xl:text-5xl">
                   Simple, rapide et 100% gratuit, Zacharie accélère vos démarches.
                 </p>
-                <div className="mt-8 flex flex-col gap-4">
-                  <Button
-                    size="large"
-                    linkProps={{
-                      to: '/app/connexion?type=creation-de-compte',
-                      href: '#',
-                    }}
-                  >
-                    Créer un compte
-                  </Button>
-                  <Button
-                    size="large"
-                    priority="secondary"
-                    className="border-white bg-white shadow-none!"
-                    linkProps={{
-                      to: '/app/connexion?type=compte-existant',
-                      href: '#',
-                    }}
-                  >
-                    Se connecter
-                  </Button>
-                </div>
+                <Button
+                  size="large"
+                  className="mt-8 block lg:mt-[10%]"
+                  linkProps={{
+                    to: '/app/connexion?type=creation-de-compte',
+                    href: '#',
+                  }}
+                >
+                  Créer un compte
+                </Button>
+                <Button
+                  size="large"
+                  priority="secondary"
+                  className="mt-4 block border-white bg-white shadow-none!"
+                  linkProps={{
+                    to: '/app/connexion?type=compte-existant',
+                    href: '#',
+                  }}
+                >
+                  Se connecter
+                </Button>
               </div>
             </div>
           </div>
         </section>
 
         {/* Features Section */}
-        <section className="relative grid items-center bg-white lg:grid-cols-2">
-          <div className="relative z-10 -mt-16 flex justify-start lg:-mt-32">
+        <section className="relative grid items-center bg-white lg:flex">
+          <div className="relative z-10 -mt-16 flex justify-start lg:-mt-32 lg:basis-1/2 2xl:basis-1/3">
             {/* Phone mockup */}
             <img
               src="/landing/main-app-mockup.png"
               alt="Mockup de l'application Zacharie sur smartphone"
-              className="h-1/4 w-full max-w-lg"
+              className="h-1/4 w-full max-w-lg 2xl:max-w-3xl"
             />
           </div>
-          <div className="bg-action-high-blue-france/5 flex flex-col space-y-6 p-6 lg:bg-transparent">
-            <ul className="text-action-high-blue-france list-none space-y-4 text-lg">
+          <div className="bg-action-high-blue-france/5 flex flex-col space-y-6 p-6 lg:basis-1/2 lg:bg-transparent 2xl:basis-2/3">
+            <ul className="text-action-high-blue-france list-none space-y-4 text-lg 2xl:text-3xl">
               <li>
                 Une application qui fonctionne <b>même hors réseau</b>
               </li>
@@ -93,47 +92,38 @@ export default function LandingPage() {
         </section>
 
         {/* Testimonials Section */}
-        <section
-          className="bg-cover bg-center bg-no-repeat py-16 lg:py-24"
-          style={{ backgroundImage: "url('/landing/testimonials-bg.png')" }}
-        >
-          <div className="fr-container">
-            <div className="grid items-center gap-12 lg:grid-cols-2">
+        <section className="bg-[url('/landing/testimonials-bg.png')] bg-cover bg-center bg-no-repeat py-16 lg:py-24 2xl:py-48">
+          <div className="h-full w-full pl-4 lg:pl-8 xl:px-[12%]">
+            <div className="grid items-center gap-12 lg:flex">
               {/* Left side - 100% text */}
-              <div className="text-center lg:text-left">
+              <div className="text-center lg:basis-1/2 lg:text-left">
                 <p className="text-action-high-blue-france mb-4 text-6xl font-bold lg:text-8xl">100%</p>
-                <p className="text-action-high-blue-france mb-4 text-xl lg:text-2xl">
+                <p className="text-action-high-blue-france mb-4 text-xl lg:text-2xl 2xl:max-w-[75%] 2xl:text-4xl">
                   des chasseurs ayant utilisé Zacharie recommandent l'application
                 </p>
                 <p className="text-action-high-blue-france">Enquête de février 2025</p>
               </div>
 
               {/* Right side - testimonials */}
-              <div className="grid gap-8">
-                <blockquote className="relative p-6">
-                  <p className="text-action-high-blue-france mb-4 text-2xl">
-                    <span className="text-action-high-blue-france/30 absolute -top-4 -left-4 text-[128px] font-normal italic">
-                      "
-                    </span>
-                    En un clic, je transmets ma fiche et je sais tout de suite si une carcasse est saisie.
-                    <span className="text-action-high-blue-france/30 absolute inline-block h-0 w-0 -translate-x-10 translate-y-15 text-[128px] leading-0 font-normal italic">
-                      "
-                    </span>
-                  </p>
-                </blockquote>
-
-                <blockquote className="relative p-6">
-                  <p className="text-action-high-blue-france mb-4 text-2xl">
-                    <span className="text-action-high-blue-france/30 absolute -top-4 -left-4 text-[128px] font-normal italic">
-                      "
-                    </span>
-                    J'ai rempli une fiche d'examen initial en 15 minutes alors que ça m'aurait pris 1 heure
-                    avec le carnet à souches.
-                    <span className="text-action-high-blue-france/30 absolute inline-block h-0 w-0 -translate-x-10 translate-y-15 text-[128px] leading-0 font-normal italic">
-                      "
-                    </span>
-                  </p>
-                </blockquote>
+              <div className="grid gap-8 lg:basis-1/2 2xl:gap-30">
+                {[
+                  'En un clic, je transmets ma fiche et je sais tout de suite si une carcasse est saisie.',
+                  "J'ai rempli une fiche d'examen initial en 15 minutes alors que ça m'aurait pris 1 heure avec le carnet à souches.",
+                ].map((quote) => {
+                  return (
+                    <blockquote className="relative p-6" key={quote}>
+                      <p className="text-action-high-blue-france mb-4 text-2xl 2xl:text-4xl">
+                        <span className="text-action-high-blue-france/30 absolute -top-4 -left-4 text-[128px] font-normal italic 2xl:-top-8 2xl:-left-8 2xl:text-[180px]">
+                          "
+                        </span>
+                        {quote}
+                        <span className="text-action-high-blue-france/30 absolute inline-block h-0 w-0 -translate-x-10 translate-y-15 text-[128px] leading-0 font-normal italic 2xl:translate-y-20 2xl:text-[180px]">
+                          "
+                        </span>
+                      </p>
+                    </blockquote>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -141,8 +131,8 @@ export default function LandingPage() {
 
         {/* Desktop Additional Content */}
         <section className="bg-action-high-blue-france/5 flex h-screen flex-col justify-between bg-[url('/landing/laptop-scene-2.png')] bg-cover bg-center bg-no-repeat lg:h-auto lg:min-h-0 lg:flex-row lg:bg-none">
-          <div className="flex basis-full flex-col items-center justify-between space-y-12 p-8 lg:justify-center lg:p-16">
-            <h3 className="lg:text-action-high-blue-france rounded text-xl font-medium text-white text-shadow-2xs lg:text-2xl">
+          <div className="flex basis-full flex-col items-center justify-between space-y-12 p-8 lg:justify-center lg:p-16 2xl:space-y-24">
+            <h3 className="lg:text-action-high-blue-france rounded text-xl font-medium text-white text-shadow-2xs lg:text-2xl 2xl:text-4xl">
               Votre compte Zacharie est aussi accessible depuis votre ordinateur.
             </h3>
             <Button
@@ -155,7 +145,7 @@ export default function LandingPage() {
               Créer un compte
             </Button>
           </div>
-          <div className="hidden max-w-2xl justify-end lg:block">
+          <div className="hidden max-w-2xl justify-end lg:block 2xl:max-w-5xl">
             <img
               src="/landing/laptop-scene-1.png"
               alt="Interface desktop de Zacharie"
@@ -167,7 +157,7 @@ export default function LandingPage() {
         {/* CTA Section */}
         <section className="py-16 lg:py-24">
           <div className="fr-container items-center text-center">
-            <h3 className="text-action-high-blue-france mb-8 rounded text-xl font-medium text-shadow-2xs lg:text-2xl">
+            <h3 className="text-action-high-blue-france mb-8 rounded text-xl font-medium text-shadow-2xs lg:text-2xl 2xl:mb-16 2xl:text-4xl">
               Vous avez des questions ? Des remarques ?
             </h3>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
