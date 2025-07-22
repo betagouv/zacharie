@@ -122,7 +122,7 @@ export default function CardFiche({
       className={[
         'relative rounded-sm bg-white',
         'w-full max-w-96',
-        isPrintSelected ? 'border-2 border-action-high-blue-france' : 'border border-gray-200',
+        isPrintSelected ? 'border-action-high-blue-france border-2' : 'border border-gray-200',
         menuOpen ? 'bg-active-tint' : '',
         disabledBecauseOffline ? 'cursor-not-allowed opacity-50' : '',
       ].join(' ')}
@@ -147,16 +147,16 @@ export default function CardFiche({
       <Link
         to={`/app/tableau-de-bord/fei/${fei.numero}`}
         className={[
-          'flex size-full shrink-0 flex-col gap-y-2.5 bg-none p-5 no-underline! hover:bg-active-tint! hover:no-underline!',
+          'hover:bg-active-tint! flex size-full shrink-0 flex-col gap-y-2.5 bg-none p-5 no-underline! hover:no-underline!',
           carcassesRefusées > 0
-            ? 'border-l-3 border-warning-main-525'
+            ? 'border-warning-main-525 border-l-3'
             : simpleStatus === 'Clôturée'
-              ? 'border-l-3 border-action-high-blue-france'
+              ? 'border-action-high-blue-france border-l-3'
               : '',
           disabledBecauseOffline ? 'pointer-events-none' : '',
         ].join(' ')}
       >
-        <div className="absolute right-0 top-0 text-transparent selection:text-gray-200">{fei.numero}</div>
+        <div className="absolute top-0 right-0 text-transparent selection:text-gray-200">{fei.numero}</div>
         <Tag
           small
           className={[
@@ -242,7 +242,7 @@ export default function CardFiche({
                 <>
                   <RefusIcon />
                   <div>
-                    <p className="m-0 text-xl text-warning-main-525">
+                    <p className="text-warning-main-525 m-0 text-xl">
                       {carcassesRefusées} carcasse{carcassesRefusées > 1 ? 's' : ''} refusée
                       {carcassesRefusées > 1 ? 's' : ''}
                     </p>
@@ -252,16 +252,16 @@ export default function CardFiche({
             )}
           </div>
         </div>
-        {simpleStatus === 'En cours' && (
+        {/* {simpleStatus === 'En cours' && (
           <div className="-mb-2 mt-2 flex grow flex-row items-end gap-x-2">
             <p className="text-sm italic text-neutral-700 opacity-50">{currentStepLabel}</p>
           </div>
-        )}
-        <div className="absolute bottom-0 right-0 text-transparent selection:text-gray-200">{fei.numero}</div>
+        )} */}
+        <div className="absolute right-0 bottom-0 text-transparent selection:text-gray-200">{fei.numero}</div>
       </Link>
       {disabledBecauseOffline && (
-        <div className="absolute bottom-0 left-0 flex grow flex-row items-end gap-x-2 bg-action-high-blue-france px-2 py-1">
-          <p className="text-sm italic text-white">
+        <div className="bg-action-high-blue-france absolute bottom-0 left-0 flex grow flex-row items-end gap-x-2 px-2 py-1">
+          <p className="text-sm text-white italic">
             Vous ne pouvez pas accéder au détail de vos fiches clôturées sans connexion internet.
           </p>
         </div>
