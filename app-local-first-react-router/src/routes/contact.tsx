@@ -46,7 +46,7 @@ export default function Stats() {
                   className="space-y-4"
                 >
                   <p className="mb-5 text-sm text-gray-500">
-                    * Les champs marqués d'une étoile sont obligatoires.
+                    * Les champs marqués d'un astérisque (*) sont obligatoires.
                   </p>
                   <Input
                     label="Nom *"

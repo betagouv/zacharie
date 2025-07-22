@@ -235,7 +235,7 @@ export default function MesCCGs() {
                   <div className="rounded-lg border border-gray-300 px-8 py-6">
                     <p className="font-semibold">Pré-enregistrer un nouveau Centre de Collecte</p>
                     <p className="mb-5 text-sm text-gray-500">
-                      * Les champs marqués d'une étoile sont obligatoires.
+                      * Les champs marqués d'un astérisque (*) sont obligatoires.
                     </p>
                     <form id="association_data_form" method="POST" onSubmit={handleNewCCGSubmit}>
                       <Input

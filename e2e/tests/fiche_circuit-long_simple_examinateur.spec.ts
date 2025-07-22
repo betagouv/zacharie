@@ -26,7 +26,7 @@ test.describe("Fiches examinateur initial", () => {
     await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Action de l'Examinateur" })).toBeVisible();
     await expect(page.locator("summary")).toBeVisible();
-    await expect(page.getByText("* Les champs marqués d'une étoile sont obligatoires")).toBeVisible();
+    await expect(page.getByText("* Les champs marqués d'un astérisque (*) sont obligatoires")).toBeVisible();
     await page.getByText("Date de mise à mort (et d'éviscération) *").click();
     await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour", exact: true }).click();
     await expect(page.getByText("Synchronisation en cours")).toBeVisible();

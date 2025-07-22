@@ -770,7 +770,7 @@ export default function DestinataireSelect({
               },
             }}
           >
-            Envoyer
+            Transmettre la fiche
           </Button>
         )}
         {!disabled && !!jobIsMissing?.length && (

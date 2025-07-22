@@ -91,7 +91,9 @@ export default function FeiPremierDetenteur() {
 
   return (
     <Section title={`Action du Premier détenteur | ${premierDetenteurInput}`}>
-      <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'une étoile sont obligatoires.</p>
+      <p className="mb-5 text-sm text-gray-500">
+        * Les champs marqués d'un astérisque (*) sont obligatoires.
+      </p>
       {waitingForPremierDetenteur && (
         <Alert
           severity="success"

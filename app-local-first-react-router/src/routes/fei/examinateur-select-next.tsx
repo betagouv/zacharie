@@ -34,7 +34,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
 
   const isOnline = useIsOnline();
 
-  const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche';
+  const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche *';
   const [nextValue, setNextValue] = useState(
     fei.fei_next_owner_user_id ?? fei.fei_next_owner_entity_id ?? '',
   );
@@ -133,7 +133,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
         }}
       >
         <Select
-          label="Quel Premier Détenteur doit désormais agir sur la fiche ?"
+          label="Quel Premier Détenteur doit désormais agir sur la fiche ? *"
           key={fei.fei_next_owner_user_id ?? 'no-choice-yet'}
           disabled={disabled}
           nativeSelectProps={{
@@ -170,7 +170,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
         {!nextValue ||
           (nextValue !== fei.fei_next_owner_user_id && (
             <Button className="mt-4" type="submit" disabled={!nextValue || disabled}>
-              Envoyer
+              Transmettre la fiche
             </Button>
           ))}
       </form>
@@ -250,7 +250,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
               }}
             />
             <Button type="submit" disabled={isSearchingUser || disabled}>
-              {!isSearchingUser ? 'Envoyer' : 'Recherche en cours...'}
+              {!isSearchingUser ? 'Transmettre la fiche' : 'Recherche en cours...'}
             </Button>
             {!isOnline && (
               <div className="absolute inset-0 z-50 flex items-end bg-white/70">

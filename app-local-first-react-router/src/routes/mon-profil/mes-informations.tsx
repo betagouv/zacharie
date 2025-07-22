@@ -178,7 +178,7 @@ export default function MesInformations() {
                   <CompletedTag done={identityDone} />
                 </h3>
                 <p className="mb-5 text-sm text-gray-500">
-                  * Les champs marqués d'une étoile sont obligatoires.
+                  * Les champs marqués d'un astérisque (*) sont obligatoires.
                 </p>
                 <Input
                   label="Nom *"
@@ -324,7 +324,7 @@ export default function MesInformations() {
                       Enregistrer une nouvelle association / société / domaine de chasse
                     </p>
                     <p className="mb-5 text-sm text-gray-500">
-                      * Les champs marqués d'une étoile sont obligatoires.
+                      * Les champs marqués d'un astérisque (*) sont obligatoires.
                     </p>
                     <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
                       <Input

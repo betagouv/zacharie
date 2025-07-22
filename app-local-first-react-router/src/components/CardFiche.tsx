@@ -38,7 +38,7 @@ export default function CardFiche({
   disabledBecauseOffline = false,
   filter,
 }: CardProps) {
-  const { simpleStatus, currentStepLabel } = useFeiSteps(fei);
+  const { simpleStatus } = useFeiSteps(fei);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 

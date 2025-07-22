@@ -240,7 +240,7 @@ export default function FEIExaminateurInitial() {
       <Section
         title={`Action de l'Examinateur Initial | ${examinateurInitialUser?.prenom} ${examinateurInitialUser?.nom_de_famille}`}
       >
-        <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'une étoile sont obligatoires.</p>
+        <p className="mb-5 text-red-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
         <Component
           label="Date de mise à mort (et d'éviscération)&nbsp;*"
           hintText={
@@ -266,6 +266,7 @@ export default function FEIExaminateurInitial() {
             autoComplete: 'off',
             required: true,
             suppressHydrationWarning: true,
+            placeholder: 'Date de mise à mort *',
             onBlur: (e) => {
               const date = dayjs.utc(e.target.value).startOf('day').toDate();
               updateFei(fei.numero, {
@@ -300,6 +301,7 @@ export default function FEIExaminateurInitial() {
           nativeInputProps={{
             id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
             name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
+            placeholder: 'Commune de mise à mort *',
             type: 'text',
             required: true,
             autoComplete: 'off',
@@ -371,7 +373,7 @@ export default function FEIExaminateurInitial() {
             )}
 
             <Component
-              label="Date de validation de l’examen initial et de mise sur le marché"
+              label="Date de validation de l’examen initial et de mise sur le marché *"
               hintText={
                 canEdit ? (
                   <button
@@ -449,7 +451,7 @@ export default function FEIExaminateurInitial() {
                   }
                 }}
               >
-                Enregistrer
+                Enregistrer la fiche
               </Button>
             )}
             {!!jobIsMissing?.length && (
