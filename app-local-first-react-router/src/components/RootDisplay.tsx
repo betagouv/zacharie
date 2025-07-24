@@ -96,7 +96,7 @@ export default function RootDisplay({
           <>
             Zacharie
             <span className="ml-4 inline-block">
-              <em className="mb-1 block rounded-sm bg-green-300 px-1 text-sm not-italic text-green-900">
+              <em className="mb-1 block rounded-sm bg-green-300 px-1 text-sm text-green-900 not-italic">
                 VERSION BETA
               </em>
             </span>
@@ -178,7 +178,8 @@ export default function RootDisplay({
               },
               {
                 linkProps: {
-                  href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de Zacharie`,
+                  to: '/contact',
+                  href: '#',
                 },
                 text: 'Contactez-nous',
               },
