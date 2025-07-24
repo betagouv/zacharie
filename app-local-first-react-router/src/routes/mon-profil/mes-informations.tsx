@@ -296,6 +296,7 @@ export default function MesInformations() {
               addLabel=""
               selectLabel={canChange ? 'Cherchez ici une entité existante' : ''}
               done
+              canChange
               entityType={EntityTypes.PREMIER_DETENTEUR}
               allEntitiesByTypeAndId={allEntitiesByTypeAndId}
               userEntitiesByTypeAndId={userEntitiesByTypeAndId}
@@ -415,9 +416,10 @@ export default function MesInformations() {
               formId="onboarding-etape-2-collecteur-pro-data"
               setRefreshKey={setRefreshKey}
               sectionLabel="Vous pouvez traiter des carcasses pour un Collecteur Professionnel"
-              addLabel={canChange ? 'Ajouter un Collecteur Professionnel' : 'Vos entreprises'}
-              selectLabel={canChange ? 'Sélectionnez un Collecteur Professionnel' : ''}
+              addLabel={!collecteursProDone ? 'Ajouter un Collecteur Professionnel' : 'Vos entreprises'}
+              selectLabel={!collecteursProDone ? 'Sélectionnez un Collecteur Professionnel' : ''}
               done={collecteursProDone}
+              canChange={!collecteursProDone}
               entityType={EntityTypes.COLLECTEUR_PRO}
               allEntitiesByTypeAndId={allEntitiesByTypeAndId}
               userEntitiesByTypeAndId={userEntitiesByTypeAndId}
@@ -428,9 +430,10 @@ export default function MesInformations() {
               formId="onboarding-etape-2-etg-data"
               setRefreshKey={setRefreshKey}
               sectionLabel="Vous pouvez traiter des carcasses pour un Établissement de Traitement du Gibier sauvage (ETG)"
-              addLabel={canChange ? 'Ajouter un ETG' : 'Vos entreprises'}
-              selectLabel={canChange ? 'Sélectionnez un ETG' : ''}
+              addLabel={!etgsDone ? 'Ajouter un ETG' : 'Vos entreprises'}
+              selectLabel={!etgsDone ? 'Sélectionnez un ETG' : ''}
               done={etgsDone}
+              canChange={!etgsDone}
               entityType={EntityTypes.ETG}
               allEntitiesByTypeAndId={allEntitiesByTypeAndId}
               userEntitiesByTypeAndId={userEntitiesByTypeAndId}
@@ -444,6 +447,7 @@ export default function MesInformations() {
               addLabel="Ajouter un SVI"
               selectLabel="Sélectionnez un SVI"
               done={svisDone}
+              canChange={!svisDone}
               entityType={EntityTypes.SVI}
               allEntitiesByTypeAndId={allEntitiesByTypeAndId}
               userEntitiesByTypeAndId={userEntitiesByTypeAndId}
@@ -517,6 +521,7 @@ export default function MesInformations() {
 
 interface ListAndSelectEntitiesProps {
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
+  canChange: boolean;
   done: boolean;
   entityType: EntityTypes;
   addLabel: string;
@@ -540,9 +545,9 @@ function ListAndSelectEntities({
   allEntitiesByTypeAndId,
   userEntitiesByTypeAndId,
   children,
+  canChange,
 }: ListAndSelectEntitiesProps) {
   const user = useUser((state) => state.user)!;
-  const canChange = true;
   const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
   const remainingEntities = Object.values(allEntitiesByTypeAndId[entityType]).filter(
     (entity) => !userEntitiesByTypeAndId[entityType][entity.id],
