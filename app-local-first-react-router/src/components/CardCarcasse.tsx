@@ -487,7 +487,7 @@ function CarcasseDetails({
   return (
     <>
       <hr className="mt-4 bg-none" />
-      <ItemNotEditable label="Épisodes clés" value={milestones} withDiscs />
+      <ItemNotEditable label="Informations clés" value={milestones} withDiscs />
       {carcasse.examinateur_anomalies_abats?.length > 0 && (
         <ItemNotEditable label="Anomalies abats" value={carcasse.examinateur_anomalies_abats} withDiscs />
       )}

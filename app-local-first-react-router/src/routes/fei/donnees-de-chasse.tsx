@@ -125,7 +125,7 @@ export default function FEIDonneesDeChasse({
         label={carcasses.length > 1 ? 'Espèces' : 'Espèce'}
         value={[...new Set(carcasses.map((c) => c.espece))].join(', ')}
       />
-      <ItemNotEditable label="Épisodes clés" value={milestones} />
+      <ItemNotEditable label="Informations clés" value={milestones} />
       <p className="mb-2 font-bold">Acteurs</p>
       <div className="flex flex-col px-2">
         <ItemNotEditable label="Examinateur Initial" value={examinateurInitialInput} />

@@ -41,7 +41,7 @@ test.describe("Fiches ETG", () => {
         - heading "Données de chasse" [level=3]
         - paragraph: Espèces
         - paragraph: Daim, Pigeons
-        - paragraph: Épisodes clés
+        - paragraph: Informations clés
         - list:
           - listitem:
             - paragraph: "/Commune de mise à mort : \\\\d+ CHASSENARD/"
@@ -203,7 +203,7 @@ test.describe("Fiches ETG", () => {
         - heading "Données de chasse" [level=3]
         - paragraph: Espèces
         - paragraph: Daim, Pigeons
-        - paragraph: Épisodes clés
+        - paragraph: Informations clés
         - list:
           - listitem:
             - paragraph: "/Commune de mise à mort : \\\\d+ CHASSENARD/"
@@ -341,7 +341,7 @@ test.describe("Fiches ETG", () => {
         - heading "Données de chasse" [level=3]
         - paragraph: Espèces
         - paragraph: Daim, Pigeons
-        - paragraph: Épisodes clés
+        - paragraph: Informations clés
         - list:
           - listitem:
             - paragraph: "/Commune de mise à mort : \\\\d+ CHASSENARD/"

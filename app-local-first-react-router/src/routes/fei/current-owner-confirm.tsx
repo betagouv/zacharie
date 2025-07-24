@@ -334,7 +334,7 @@ export default function CurrentOwnerConfirm() {
                     });
                   }}
                 >
-                  Je transporte le gibier
+                  Je contrôle et je transporte le gibier
                 </Button>
                 {user.roles.includes(UserRoles.ETG) && (
                   <Button
@@ -379,7 +379,7 @@ export default function CurrentOwnerConfirm() {
               });
             }}
           >
-            Je transporte le gibier
+            Je contrôle et je transporte le gibier
           </Button>
         )}
         {!myNextRoleForThisFeiIsCollecteurPro && (
