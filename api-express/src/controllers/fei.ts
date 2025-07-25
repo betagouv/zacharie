@@ -290,7 +290,6 @@ router.post(
       nextFei.svi_user_id = body.svi_user_id || null;
     }
 
-    console.log('updating fei', feiNumero, Date.now());
     const savedFei = existingFei
       ? await prisma.fei.update({
           where: { numero: feiNumero },
@@ -617,7 +616,10 @@ router.get(
           },
         ],
       },
-      select: feiDoneSelect,
+      // select: feiDoneSelect,
+      include: {
+        CarcasseIntermediaire: true,
+      },
       orderBy: {
         svi_assigned_at: 'desc',
       },

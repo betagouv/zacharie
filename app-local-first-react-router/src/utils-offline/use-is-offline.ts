@@ -1,12 +1,13 @@
 import useZustandStore from '@app/zustand/store';
 import { useEffect, useRef, useState } from 'react';
 
-export function useIsOnline(callback?: () => void) {
+export function useIsOnline() {
   const [isOnline, setIsOnline] = useState(true);
   const veryBadConnection = useRef(false);
   useEffect(() => {
+    console.log('POPOPOPO');
     function handleOnline(event: Event) {
-      // console.log(event.type);
+      console.log(event.type);
       if (event.type === 'good-connection') {
         veryBadConnection.current = false;
       }
@@ -14,13 +15,10 @@ export function useIsOnline(callback?: () => void) {
       if (!isOnline) {
         navigator.serviceWorker?.controller?.postMessage('SW_MESSAGE_BACK_TO_ONLINE');
         setIsOnline(true);
-        if (callback) {
-          callback();
-        }
       }
     }
     function handleOffline(event: Event) {
-      // console.log(event.type);
+      console.log(event.type);
       if (event.type === 'very-bad-connection') {
         veryBadConnection.current = true;
       }

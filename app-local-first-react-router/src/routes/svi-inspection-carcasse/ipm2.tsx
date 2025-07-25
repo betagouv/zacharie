@@ -254,16 +254,14 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     if (!canEdit) {
       return false;
     }
-    if (carcasse.svi_ipm2_signed_at) {
-      return false;
-    }
+    // if (carcasse.svi_ipm2_signed_at) {
+    //   return false;
+    // }
     if (carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE) {
       return false;
     }
     return true;
-  }, [canEdit, carcasse.svi_ipm1_decision, carcasse.svi_ipm2_signed_at]);
-
-  console.log({ canDoIPM2 });
+  }, [canEdit, carcasse.svi_ipm1_decision]);
 
   const Component = canDoIPM2 ? Input : InputNotEditable;
 

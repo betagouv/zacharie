@@ -4,6 +4,7 @@ import { CarcasseCertificat, CarcasseCertificatType } from '@prisma/client';
 import dayjs from 'dayjs';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import useZustandStore from '@app/zustand/store';
+import { useIsOnline } from '@app/utils-offline/use-is-offline';
 
 type Certificat = CarcasseCertificat & { remplace_par_certificat_id: string };
 
@@ -14,9 +15,12 @@ export default function CarcasseSVICertificats() {
 
   const [certificats, setCertificats] = useState<Array<Certificat>>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const isOnline = useIsOnline();
 
+  console.log({ isOnline });
   useEffect(() => {
-    if (carcasse.is_synced) {
+    if (carcasse.is_synced && isOnline) {
+      console.log('FEEETCHING');
       setIsLoading(true);
       fetch(`${import.meta.env.VITE_API_URL}/certificat/${params.zacharie_carcasse_id}/all`, {
         credentials: 'include',
@@ -27,8 +31,19 @@ export default function CarcasseSVICertificats() {
           setIsLoading(false);
         });
     }
-  }, [params.zacharie_carcasse_id, carcasse.is_synced, carcasse.svi_ipm1_date, carcasse.svi_ipm2_date]);
+  }, [
+    params.zacharie_carcasse_id,
+    carcasse.is_synced,
+    carcasse.svi_ipm1_date,
+    carcasse.svi_ipm2_date,
+    isOnline,
+  ]);
 
+  if (!isOnline) {
+    return (
+      <p>Vous n'êtes pas connecté à internet, les certificats ne sont pas disponibles en mode hors-ligne</p>
+    );
+  }
   if (isLoading) {
     return <p>Chargement des certificats...</p>;
   }

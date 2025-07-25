@@ -114,7 +114,7 @@ export function SviInspectionCarcasse() {
     carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE && !carcasse.svi_ipm2_decision,
   );
 
-  console.log(carcasse.svi_ipm1_decision, canEdit && carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE);
+  console.log('FUCKING KJEY', dayjs(carcasse.updated_at).toISOString());
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -181,8 +181,7 @@ export function SviInspectionCarcasse() {
                 }
               >
                 <div>
-                  {/* <CarcasseIPM2 canEdit={canEdit && carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE} /> */}
-                  <CarcasseIPM2 canEdit={false} />
+                  <CarcasseIPM2 canEdit={canEdit && carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE} />
                 </div>
               </Section>
             </>
@@ -198,12 +197,7 @@ export function SviInspectionCarcasse() {
 
           {user.roles.includes(UserRoles.SVI) && (
             <Section title="Certificats">
-              <CarcasseSVICertificats
-                key={
-                  dayjs(carcasse.svi_ipm1_date || undefined).toISOString() +
-                  dayjs(carcasse.svi_ipm2_date || undefined).toISOString()
-                }
-              />
+              <CarcasseSVICertificats key={dayjs(carcasse.updated_at).toISOString()} />
             </Section>
           )}
 

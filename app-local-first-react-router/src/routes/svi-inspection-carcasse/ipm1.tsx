@@ -102,6 +102,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
     if (missingFields) {
       return;
     }
+    console.log('SAVING IPM1');
     const partialCarcasse: Partial<Carcasse> = {
       svi_ipm1_presentee_inspection: sviIpm1PresenteeInspection,
       svi_ipm1_date: sviIpm1Date,

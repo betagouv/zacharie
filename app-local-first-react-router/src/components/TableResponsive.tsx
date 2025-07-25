@@ -10,13 +10,7 @@ type TableProps = {
   strongId?: boolean;
 };
 
-export default function TableResponsive({
-  headers,
-  data,
-  strongId,
-  onCheckboxClick,
-  checkedItemIds,
-}: TableProps) {
+export default function TableResponsive({ headers, data, onCheckboxClick, checkedItemIds }: TableProps) {
   return (
     <div className="px-4 sm:px-0">
       <div className="-mx-4 sm:-mx-0">
@@ -29,7 +23,7 @@ export default function TableResponsive({
               />
               <th
                 scope="col"
-                className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0"
+                className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-0"
               >
                 {headers[0]}
               </th>
@@ -52,7 +46,7 @@ export default function TableResponsive({
                 {headers[3]}
               </th>
               {headers[4] && (
-                <th scope="col" className="relative py-3.5 pl-3 pr-4 text-left sm:pr-0">
+                <th scope="col" className="relative py-3.5 pr-4 pl-3 text-left sm:pr-0">
                   {headers[4]}
                 </th>
               )}
@@ -84,7 +78,7 @@ export default function TableResponsive({
                       />
                     </td>
                     <td className="w-full max-w-0 overflow-hidden text-sm font-medium text-gray-900 sm:hidden">
-                      <Link to={link!} className="block bg-none py-4 pl-4 pr-3 no-underline!">
+                      <Link to={link!} className="block bg-none py-4 pr-3 pl-4 no-underline!">
                         <dl className="font-normal lg:hidden">
                           <dt className="mt-2">{headers[0]}</dt>
                           <dd className="text-ellipsis text-gray-700">{cols[0]}</dd>
@@ -109,7 +103,7 @@ export default function TableResponsive({
                     </td>
                     <td className="hidden max-w-56 text-sm text-gray-500 lg:table-cell">
                       {!isSynced && (
-                        <div className="absolute left-0 top-0 h-full w-8 border-l-8 border-action-high-blue-france"></div>
+                        <div className="border-action-high-blue-france absolute top-0 left-0 h-full w-8 border-l-8"></div>
                       )}
                       <Link to={link!} className="block bg-none no-underline!">
                         <span className="hidden lg:block">{cols[0]}</span>
@@ -137,7 +131,7 @@ export default function TableResponsive({
                       <td className="hidden h-full max-w-56 items-stretch justify-start text-left text-sm font-medium sm:table-cell sm:pr-0">
                         <Link
                           to={link!}
-                          className="flex h-full items-stretch bg-none py-4 pl-3 pr-4 no-underline!"
+                          className="flex h-full items-stretch bg-none py-4 pr-4 pl-3 no-underline!"
                         >
                           {cols[3]}
                         </Link>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
-import { UserRoles } from '@prisma/client';
+import { EntityRelationType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import useZustandStore, { syncData } from '@app/zustand/store';
@@ -28,6 +28,7 @@ export default function TableauDeBordIndex() {
   const feisDoneNumeros = useZustandStore((state) => state.feisDoneNumeros);
   const feisDone = useZustandStore((state) => state.feisDone);
   const entities = useZustandStore((state) => state.entities);
+  const allEtgIds = useZustandStore((state) => state.etgsIds);
   const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();
   const { onExportToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
@@ -44,7 +45,10 @@ export default function TableauDeBordIndex() {
 
   const isOnlySvi =
     user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
-  const { feiActivesForSvi, feisDoneForSvi, etgIds } = feisDoneNumeros.reduce(
+  const sviWorkingForEtgIds = allEtgIds.filter(
+    (id) => entities[id]?.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
+  );
+  const { feiActivesForSvi, feisDoneForSvi } = feisDoneNumeros.reduce(
     (acc, feiNumero) => {
       const fei = feisDone[feiNumero]!;
       if (fei.automatic_closed_at) {
@@ -56,13 +60,11 @@ export default function TableauDeBordIndex() {
       } else {
         acc.feiActivesForSvi.push(fei);
       }
-      if (fei.latest_intermediaire_entity_id) acc.etgIds.add(fei.latest_intermediaire_entity_id);
       return acc;
     },
     {
       feiActivesForSvi: [] as Array<(typeof feisDone)[string]>,
       feisDoneForSvi: [] as Array<(typeof feisDone)[string]>,
-      etgIds: new Set<string>(),
     },
   );
 
@@ -103,15 +105,15 @@ export default function TableauDeBordIndex() {
   }, [filter]);
   const [filterETG, setFilterETG] = useState<string>('');
   const dropDownMenuFilterTextSvi = useMemo(() => {
-    if (etgIds.has(filterETG)) {
+    if (sviWorkingForEtgIds.includes(filterETG)) {
       return `Fiches de ${entities[filterETG]?.nom_d_usage}`;
     }
     return 'Filtrer par ETG';
-  }, [filterETG, etgIds, entities]);
+  }, [filterETG, sviWorkingForEtgIds, entities]);
 
   function Actions() {
     return (
-      <div className="relative my-2 flex flex-col items-end justify-end gap-2 xs:flex-row">
+      <div className="xs:flex-row relative my-2 flex flex-col items-end justify-end gap-2">
         <Button
           priority="tertiary"
           className="hidden shrink-0 bg-white lg:flex"
@@ -191,7 +193,7 @@ export default function TableauDeBordIndex() {
             },
           ]}
         />
-        {isOnlySvi && etgIds.size > 1 && (
+        {isOnlySvi && sviWorkingForEtgIds.length > 1 && (
           <DropDownMenu
             text={dropDownMenuFilterTextSvi}
             isActive={filterETG !== 'Toutes les fiches'}
@@ -208,7 +210,7 @@ export default function TableauDeBordIndex() {
                 text: 'Toutes les fiches',
                 isActive: !filterETG,
               },
-              ...[...etgIds].map((etgId) => ({
+              ...[...sviWorkingForEtgIds].map((etgId) => ({
                 linkProps: {
                   href: '#',
                   title: `Fiches de ${entities[etgId]?.nom_d_usage}`,
@@ -305,7 +307,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                      disabledBecauseOffline={!isOnline}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -315,6 +317,7 @@ export default function TableauDeBordIndex() {
               <FeisWrapper>
                 {feiActivesForSvi.map((fei) => {
                   if (!fei) return null;
+                  console.log(fei.numero, fei.latest_intermediaire_entity_id, filterETG);
                   if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
                   return (
                     <CardFiche
@@ -323,12 +326,13 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                      disabledBecauseOffline={!isOnline}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
                 {feisDoneForSvi.map((fei) => {
                   if (!fei) return null;
+                  console.log(fei.numero, fei.latest_intermediaire_entity_id, filterETG);
                   if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
                   return (
                     <CardFiche
@@ -337,7 +341,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                      disabledBecauseOffline={!isOnline}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}

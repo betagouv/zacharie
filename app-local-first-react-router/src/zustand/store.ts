@@ -18,7 +18,7 @@ import type {
 } from '~/src/types/responses';
 import type { FeiDone, FeiWithIntermediaires } from '~/src/types/fei';
 import { create } from 'zustand';
-import { devtools, persist, createJSONStorage } from 'zustand/middleware';
+import { devtools, persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
@@ -38,6 +38,23 @@ import type {
   FeiAndIntermediaireIds,
   FeiIntermediaire,
 } from '@app/types/fei-intermediaire';
+import { get, set, del } from 'idb-keyval'; // can use anything: IndexedDB, Ionic Storage, etc.
+
+// Custom storage object
+export const indexDBStorage: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    // console.log(name, 'has been retrieved');
+    return (await get(name)) || null;
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    // console.log(name, 'with value', value, 'has been saved');
+    await set(name, value);
+  },
+  removeItem: async (name: string): Promise<void> => {
+    // console.log(name, 'has been deleted');
+    await del(name);
+  },
+};
 
 export interface State {
   isOnline: boolean;
@@ -185,7 +202,7 @@ const useZustandStore = create<State & Actions>()(
           fei_numero: FeiWithIntermediaires['numero'],
           partialFei: Partial<FeiWithIntermediaires>,
         ) => {
-          console.log('updateFei', fei_numero, JSON.stringify(partialFei, null, 2));
+          // console.log('updateFei', fei_numero, JSON.stringify(partialFei, null, 2));
           const state = useZustandStore.getState();
           const feis = state.feis;
           const carcassefeiCarcasses = (state.carcassesIdsByFei[fei_numero] || []).map(
@@ -238,6 +255,7 @@ const useZustandStore = create<State & Actions>()(
           updateFei: boolean,
         ) => {
           const carcasses = useZustandStore.getState().carcasses;
+          console.log('NOT SYNCED 1');
           const nextCarcasse = {
             ...carcasses[zacharie_carcasse_id],
             ...partialCarcasse,
@@ -445,7 +463,8 @@ const useZustandStore = create<State & Actions>()(
         name: 'zacharie-zustand-store',
         version: 5,
         // storage: createJSONStorage(() => storage),
-        storage: createJSONStorage(() => window.localStorage),
+        storage: createJSONStorage(() => indexDBStorage), // (optional) by default, 'localStorage' is used
+        // storage: createJSONStorage(() => window.localStorage),
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);
         },
@@ -454,10 +473,11 @@ const useZustandStore = create<State & Actions>()(
             Object.entries(state).filter(
               ([key]) =>
                 ![
-                  'feiDone',
+                  'isOnline',
+                  // 'feiDone',
                   // fix the carcasses registry
-                  'carcassesRegistry',
-                  'lastUpdateCarcassesRegistry',
+                  // 'carcassesRegistry',
+                  // 'lastUpdateCarcassesRegistry',
                 ].includes(key),
             ),
           ),

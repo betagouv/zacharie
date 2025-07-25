@@ -33,6 +33,7 @@ export async function loadFei(fei_numero: string) {
 
 export async function setFeiInStore(feiResponse: FeiResponse) {
   const fei = feiResponse.data.fei!;
+  console.log(fei);
   // if (!fei?.numero) {
   //   useZustandStore.setState((state) => {
   //     delete state.feis[fei_numero];
@@ -58,6 +59,7 @@ export async function setFeiInStore(feiResponse: FeiResponse) {
         [fei.numero]: {
           ...oldestFei,
           ...newestFei,
+          is_synced: true,
         },
       },
     }));
@@ -216,6 +218,7 @@ export async function setFeiInStore(feiResponse: FeiResponse) {
           [carcasse.zacharie_carcasse_id]: {
             ...oldestCarcasse,
             ...newestCarcasse,
+            is_synced: true,
           },
         },
       }));
@@ -327,6 +330,7 @@ export async function setFeiInStore(feiResponse: FeiResponse) {
           [feiAndCarcasseAndIntermediaireId]: {
             ...oldestCarcasseIntermediaire,
             ...newestCarcasseIntermediaire,
+            is_synced: true,
           },
         },
         carcassesIntermediaireIdsByIntermediaire: {

@@ -12,6 +12,34 @@ export async function loadFeis() {
   }
   useZustandStore.setState({ dataIsSynced: false });
   try {
+    const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/fei/done`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: new Headers({
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => res as FeisDoneResponse);
+
+    if (!responseDone.ok) {
+      return;
+    }
+
+    const feisDone = responseDone.data.feisDone.reduce(
+      (acc, fei) => {
+        acc[fei.numero] = fei;
+        return acc;
+      },
+      {} as Record<FeiDone['numero'], FeiDone>,
+    );
+
+    useZustandStore.setState({
+      feisDone,
+      feisDoneNumeros: Object.keys(feisDone),
+    });
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/fei`, {
       method: 'GET',
       credentials: 'include',
@@ -36,6 +64,7 @@ export async function loadFeis() {
       ...response.data.feisOngoing,
       ...response.data.feisToTake,
       ...response.data.feisUnderMyResponsability,
+      ...responseDone.data.feisDone,
     ]) {
       const localFei = useZustandStore.getState().feis[fei.numero];
       if (!localFei && !fei.deleted_at) {
@@ -63,34 +92,6 @@ export async function loadFeis() {
     }
 
     useZustandStore.setState({ feis: allFeis });
-
-    const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/fei/done`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
-    })
-      .then((res) => res.json())
-      .then((res) => res as FeisDoneResponse);
-
-    if (!response.ok) {
-      return;
-    }
-
-    const feisDone = responseDone.data.feisDone.reduce(
-      (acc, fei) => {
-        acc[fei.numero] = fei;
-        return acc;
-      },
-      {} as Record<FeiDone['numero'], FeiDone>,
-    );
-
-    useZustandStore.setState({
-      feisDone,
-      feisDoneNumeros: Object.keys(feisDone),
-    });
 
     for (const fei_numero of feisNumerosToLoadAgain) {
       await new Promise((resolve) => setTimeout(resolve, 100)); // to avoid block main thread
