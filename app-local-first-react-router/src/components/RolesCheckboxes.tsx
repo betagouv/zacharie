@@ -60,7 +60,18 @@ export default function RolesCheckBoxes({
 
   const options = [
     {
-      label: 'Examinateur Initial',
+      label: 'Je chasse',
+      hintText: 'Vous êtes un chasseur, une société, une association de chasse',
+      nativeInputProps: {
+        name: Prisma.UserScalarFieldEnum.roles,
+        value: UserRoles.PREMIER_DETENTEUR,
+        onChange: handleCheckboxChange,
+        disabled: withAdmin ? false : isCollecteurProOrEtg || isSvi,
+        checked: checkedRoles.includes(UserRoles.PREMIER_DETENTEUR),
+      },
+    },
+    {
+      label: 'Je réalise des examens initiaux de carcasses',
       hintText:
         "Vous avez été formé par votre fédération à l'examen initial. Munissez-vous de votre numéro d'attestation (de la forme CFEI-DEP-YY-001 ou  DEP-FREI-YY-001) pour l'étape suivante",
       nativeInputProps: {
@@ -72,20 +83,9 @@ export default function RolesCheckBoxes({
       },
     },
     {
-      label: 'Premier Détenteur',
-      hintText: 'Vous êtes un chasseur, une société, une association de chasse',
-      nativeInputProps: {
-        name: Prisma.UserScalarFieldEnum.roles,
-        value: UserRoles.PREMIER_DETENTEUR,
-        onChange: handleCheckboxChange,
-        disabled: withAdmin ? false : isCollecteurProOrEtg || isSvi,
-        checked: checkedRoles.includes(UserRoles.PREMIER_DETENTEUR),
-      },
-    },
-    {
-      label: 'Collecteur Professionnel',
+      label: 'Je contrôle et transporte les carcasses en peau',
       hintText:
-        'Vous récupérez les carcasses en peau auprès de plusieurs premiers détenteurs pour les livrer aux Établissements de Traitement du Gibier sauvage agréés (ETG). Le nom de l’établissement avec lequel vous travaillez sera demandé à l’étape suivante',
+        'Vous récupérez les carcasses en peau auprès de plusieurs premiers détenteurs pour les livrer à des établissements agréés.',
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.COLLECTEUR_PRO,
@@ -95,8 +95,8 @@ export default function RolesCheckBoxes({
       },
     },
     {
-      label: 'Établissement de Traitement du Gibier sauvage (ETG)',
-      hintText: "Le nom de l'établissement pour lequel vous travaillez sera demandé à l'étape suivante",
+      label: 'Je réceptionne des carcasses',
+      hintText: "Vous le faites au nom d'établissement de traitement du gibier sauvage agréés",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.ETG,
@@ -106,8 +106,8 @@ export default function RolesCheckBoxes({
       },
     },
     {
-      label: "Service Vétérinaire d'Inspection (SVI)",
-      hintText: "Le nom de l'établissement pour lequel vous travaillez sera demandé à l'étape suivante",
+      label: "Je suis un Service Vétérinaire d'Inspection (SVI) de l'État",
+      hintText: "Votre département sera demandé à l'étape suivante",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.SVI,
