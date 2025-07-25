@@ -63,6 +63,7 @@ router.get(
     const allEntities = await prisma.entity.findMany({
       where: {
         type: { not: EntityTypes.CCG },
+        ...(user.roles.includes(UserRoles.ADMIN) ? {} : { for_testing: false }),
       },
       orderBy: {
         nom_d_usage: 'asc',
