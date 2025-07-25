@@ -33,7 +33,6 @@ export async function loadFei(fei_numero: string) {
 
 export async function setFeiInStore(feiResponse: FeiResponse) {
   const fei = feiResponse.data.fei!;
-  console.log(fei);
   // if (!fei?.numero) {
   //   useZustandStore.setState((state) => {
   //     delete state.feis[fei_numero];

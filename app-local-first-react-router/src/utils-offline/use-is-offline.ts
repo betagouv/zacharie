@@ -1,24 +1,22 @@
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import { useEffect, useRef, useState } from 'react';
 
 export function useIsOnline() {
   const [isOnline, setIsOnline] = useState(true);
   const veryBadConnection = useRef(false);
   useEffect(() => {
-    console.log('POPOPOPO');
     function handleOnline(event: Event) {
-      console.log(event.type);
       if (event.type === 'good-connection') {
         veryBadConnection.current = false;
       }
-      // console.log({ isOnline });
       if (!isOnline) {
         navigator.serviceWorker?.controller?.postMessage('SW_MESSAGE_BACK_TO_ONLINE');
         setIsOnline(true);
+        useZustandStore.setState({ isOnline: true });
+        syncData('is-online');
       }
     }
     function handleOffline(event: Event) {
-      console.log(event.type);
       if (event.type === 'very-bad-connection') {
         veryBadConnection.current = true;
       }

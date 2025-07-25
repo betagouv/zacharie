@@ -114,8 +114,6 @@ export function SviInspectionCarcasse() {
     carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE && !carcasse.svi_ipm2_decision,
   );
 
-  console.log('FUCKING KJEY', dayjs(carcasse.updated_at).toISOString());
-
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <title>

@@ -17,10 +17,8 @@ export default function CarcasseSVICertificats() {
   const [isLoading, setIsLoading] = useState(true);
   const isOnline = useIsOnline();
 
-  console.log({ isOnline });
   useEffect(() => {
     if (carcasse.is_synced && isOnline) {
-      console.log('FEEETCHING');
       setIsLoading(true);
       fetch(`${import.meta.env.VITE_API_URL}/certificat/${params.zacharie_carcasse_id}/all`, {
         credentials: 'include',
@@ -29,6 +27,10 @@ export default function CarcasseSVICertificats() {
         .then((data) => {
           setCertificats(data);
           setIsLoading(false);
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          console.log({ error });
         });
     }
   }, [
