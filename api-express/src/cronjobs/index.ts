@@ -5,7 +5,7 @@ import * as Sentry from '@sentry/node';
 import { ENVIRONMENT, SENTRY_KEY, VERSION } from '~/config';
 import { initFeisCron } from './feis';
 import { capture } from '~/third-parties/sentry';
-const sentryEnabled = process.env.NODE_ENV !== 'development';
+const sentryEnabled = process.env.NODE_ENV !== 'development' && ENVIRONMENT !== 'test';
 
 if (sentryEnabled) {
   Sentry.init({
