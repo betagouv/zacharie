@@ -3,7 +3,15 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
-import { Carcasse, CarcasseType, DepotType, IPM1Decision, IPM2Decision, UserRoles } from '@prisma/client';
+import {
+  Carcasse,
+  CarcasseType,
+  DepotType,
+  IPM1Decision,
+  IPM2Decision,
+  PoidsType,
+  UserRoles,
+} from '@prisma/client';
 import dayjs from 'dayjs';
 import { useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
@@ -479,7 +487,10 @@ function CarcasseDetails({
       imp2Lines.push(`Poids\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_poids}`);
     }
     if (carcasse.svi_ipm2_poids_saisie) {
-      imp2Lines.push(`Poids\u00A0: ${carcasse.svi_ipm2_poids_saisie}`);
+      let poids = `Poids\u00A0: ${carcasse.svi_ipm2_poids_saisie}`;
+      if (carcasse.svi_ipm2_poids_type === PoidsType.DEPOUILLE) poids += ' (dépouillée/plumée)';
+      if (carcasse.svi_ipm2_poids_type === PoidsType.NON_DEPOUILLE) poids += ' (non dépouillée/non plumée)';
+      imp2Lines.push(poids);
     }
     return imp2Lines;
   }, [carcasse]);

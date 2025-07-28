@@ -1,7 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Prisma, CarcasseType, UserRoles, IPM1Protocole, IPM1Decision, Carcasse, Fei } from '@prisma/client';
+import {
+  Prisma,
+  CarcasseType,
+  UserRoles,
+  IPM1Protocole,
+  IPM1Decision,
+  Carcasse,
+  Fei,
+  PoidsType,
+} from '@prisma/client';
 import { lesionsList, lesionsTree } from '@app/utils/lesions';
 import piecesList from '@app/data/svi/pieces-list.json';
 import piecesTree from '@app/data/svi/pieces-tree.json';
@@ -54,6 +63,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   );
   const [sviIpm1DureeConsigne, setSviIpm1DureeConsigne] = useState(carcasse.svi_ipm1_duree_consigne);
   const [sviIpm1PoidsConsigne, setSviIpm1PoidsConsigne] = useState(carcasse.svi_ipm1_poids_consigne);
+  const [sviIpm1PoidsType, setSviIpm1PoidsType] = useState(carcasse.svi_ipm1_poids_type);
   const [triedToSave, setTriedToSave] = useState(false);
 
   const missingFields = useMemo(() => {
@@ -122,6 +132,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
       svi_ipm1_user_name_cache: carcasse.svi_ipm1_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,
       svi_ipm1_duree_consigne: sviIpm1DureeConsigne,
       svi_ipm1_poids_consigne: sviIpm1PoidsConsigne,
+      svi_ipm1_poids_type: sviIpm1PoidsType,
       svi_ipm1_signed_at: dayjs.utc().toDate(),
       svi_assigned_to_fei_at: carcasse.svi_assigned_to_fei_at ?? dayjs.utc().toDate(),
     };
@@ -428,9 +439,39 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               value: sviIpm1PoidsConsigne || '',
               onChange: (e) => {
                 setSviIpm1PoidsConsigne(Number(e.target.value));
+                if (!sviIpm1PoidsType) {
+                  setSviIpm1PoidsType(PoidsType.DEPOUILLE);
+                }
               },
             }}
           />
+          {sviIpm1PoidsConsigne && sviIpm1PoidsConsigne > 0 && (
+            <RadioButtons
+              orientation="horizontal"
+              options={[
+                {
+                  nativeInputProps: {
+                    required: true,
+                    checked: sviIpm1PoidsType === PoidsType.DEPOUILLE,
+                    onChange: () => {
+                      setSviIpm1PoidsType(PoidsType.DEPOUILLE);
+                    },
+                  },
+                  label: 'Dépouillée/plumée',
+                },
+                {
+                  nativeInputProps: {
+                    required: true,
+                    checked: sviIpm1PoidsType === PoidsType.NON_DEPOUILLE,
+                    onChange: () => {
+                      setSviIpm1PoidsType(PoidsType.NON_DEPOUILLE);
+                    },
+                  },
+                  label: 'Non dépouillée/non plumée',
+                },
+              ]}
+            />
+          )}
         </>
       )}
       <div>

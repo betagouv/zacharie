@@ -11,6 +11,7 @@ import {
   Carcasse,
   Fei,
   IPM1Decision,
+  PoidsType,
 } from '@prisma/client';
 import { lesionsList, lesionsTree } from '@app/utils/lesions';
 import piecesTree from '@app/data/svi/pieces-tree.json';
@@ -77,6 +78,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const [sviIpm2Decision, setSviIpm2Decision] = useState(carcasse.svi_ipm2_decision);
   const [sviIpm2PoidsSaisie, setSviIpm2PoidsSaisie] = useState(
     carcasse.svi_ipm2_date ? carcasse.svi_ipm2_poids_saisie : carcasse.svi_ipm1_poids_consigne,
+  );
+  const [sviIpm2PoidsType, setSviIpm2PoidsType] = useState(
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_poids_type : carcasse.svi_ipm1_poids_type,
   );
   const [sviIpm2TraitementAssainissant, setSviIpm2TraitementAssainissant] = useState(
     carcasse.svi_ipm2_traitement_assainissant || [],
@@ -210,6 +214,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       svi_ipm2_traitement_assainissant_etablissement: sviIpm2TraitementAssainissantEtablissement,
       svi_ipm2_traitement_assainissant_poids: sviIpm2TraitementAssainissantPoids,
       svi_ipm2_poids_saisie: sviIpm2PoidsSaisie,
+      svi_ipm2_poids_type: sviIpm2PoidsType,
       svi_ipm2_user_id: carcasse.svi_ipm2_user_id ?? user.id,
       svi_ipm2_user_name_cache: carcasse.svi_ipm2_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,
       svi_ipm2_signed_at: dayjs.utc().toDate(),
@@ -758,9 +763,39 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               value: sviIpm2PoidsSaisie || '',
               onChange: (e) => {
                 setSviIpm2PoidsSaisie(Number(e.target.value));
+                if (!sviIpm2PoidsType) {
+                  setSviIpm2PoidsType(PoidsType.DEPOUILLE);
+                }
               },
             }}
           />
+          {sviIpm2PoidsSaisie && sviIpm2PoidsSaisie > 0 && (
+            <RadioButtons
+              orientation="horizontal"
+              options={[
+                {
+                  nativeInputProps: {
+                    required: true,
+                    checked: sviIpm2PoidsType === PoidsType.DEPOUILLE,
+                    onChange: () => {
+                      setSviIpm2PoidsType(PoidsType.DEPOUILLE);
+                    },
+                  },
+                  label: 'Dépouillée/plumée',
+                },
+                {
+                  nativeInputProps: {
+                    required: true,
+                    checked: sviIpm2PoidsType === PoidsType.NON_DEPOUILLE,
+                    onChange: () => {
+                      setSviIpm2PoidsType(PoidsType.NON_DEPOUILLE);
+                    },
+                  },
+                  label: 'Non dépouillée/non plumée',
+                },
+              ]}
+            />
+          )}
         </>
       )}
       <div>

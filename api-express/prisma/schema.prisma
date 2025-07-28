@@ -420,6 +420,13 @@ enum IPM2Traitement {
   AUTRE
 }
 
+enum PoidsType {
+  NON_DEPOUILLE
+  DEPOUILLE
+  NON_PLUMEE
+  PLUMEE
+}
+
 model Carcasse {
   zacharie_carcasse_id                               String                  @id // {fei_numero}_{numero_bracelet}
   numero_bracelet                                    String // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
@@ -478,6 +485,7 @@ model Carcasse {
   svi_ipm1_decision                                  IPM1Decision? // "Non renseigné" | "Mise en consigne"
   svi_ipm1_duree_consigne                            Int? // en heures
   svi_ipm1_poids_consigne                            Float? // en kg
+  svi_ipm1_poids_type                                PoidsType?
   svi_ipm1_signed_at                                 DateTime?
   /**
   * SVI IPM2
@@ -502,6 +510,7 @@ model Carcasse {
   svi_ipm2_traitement_assainissant_etablissement     String?
   svi_ipm2_traitement_assainissant_poids             Float?
   svi_ipm2_poids_saisie                              Float?
+  svi_ipm2_poids_type                                PoidsType?
   svi_ipm2_signed_at                                 DateTime?
   // technical fields
   created_at                                         DateTime                @default(now())
