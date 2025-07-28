@@ -12,7 +12,7 @@ import { setupCronJob } from './utils';
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import sendNotificationToUser from '~/service/notifications';
-import { formatCarcasseChasseurEmail } from '~/utils/formatCarcasseEmail';
+import { formatAutomaticClosingEmail, formatCarcasseChasseurEmail } from '~/utils/formatCarcasseEmail';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 
 // /*
@@ -82,12 +82,7 @@ async function automaticClosingOfFeis() {
         automatic_closed_at: automaticClosedAt,
       },
     });
-    const email = [
-      `La fiche ${fei.numero} a été réceptionnée par le Service Vétérinaire il y a plus de 10 jours, elle est donc automatiquement clôturée.`,
-      `Rendez-vous sur Zacharie pour consulter le détail de la fiche\u00A0:`,
-      `https://zacharie.beta.gouv.fr/app/tableau-de-bord/${fei.numero}\n\n\n\n\n`,
-      `Carcasses :\n\n\n`,
-    ];
+    const carcasses = [];
     for (let carcasse of fei.Carcasses) {
       const newStatus = updateCarcasseStatus(carcasse);
       if (newStatus !== carcasse.svi_carcasse_status) {
@@ -101,13 +96,14 @@ async function automaticClosingOfFeis() {
           },
         });
       }
-      email.push(`${await formatCarcasseChasseurEmail(carcasse)}\n\n`);
+      carcasses.push(carcasse);
     }
+    const [object, email] = await formatAutomaticClosingEmail(fei, carcasses);
     // auto close and notify examinateur and premier detenteut
     const notification = {
-      title: 'Fiche clôturée automatiquement',
-      body: 'La fiche a été réceptionnée par le Service Vétérinaire il y a plus de 10 jours, elle est donc automatiquement clôturée.',
-      email: email.filter(Boolean).join('\n'),
+      title: object,
+      body: email,
+      email: email,
       notificationLogAction: `FEI_AUTO_CLOSED_${fei.numero}`,
     };
     if (fei.FeiExaminateurInitialUser) {
