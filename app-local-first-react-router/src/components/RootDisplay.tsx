@@ -52,15 +52,34 @@ export default function RootDisplay({
       iconId: 'fr-icon-add-circle-line',
       text: 'Créer un compte',
     });
+    quickAccessItems.push({
+      iconId: 'fr-icon-mail-fill',
+      linkProps: {
+        to: '/contact',
+        href: '#',
+      },
+      text: 'Contact',
+    });
+  } else {
+    quickAccessItems.push({
+      iconId: 'ri-logout-box-line',
+      buttonProps: {
+        onClick: async () => {
+          fetch(`${import.meta.env.VITE_API_URL}/user/logout`, {
+            method: 'POST',
+            credentials: 'include',
+          }).then(async (res) => {
+            if (res.ok) {
+              await clearCache().then(() => {
+                window.location.href = '/app/connexion?type=compte-existant';
+              });
+            }
+          });
+        },
+      },
+      text: 'Déconnexion',
+    });
   }
-  quickAccessItems.push({
-    iconId: 'fr-icon-mail-fill',
-    linkProps: {
-      to: '/contact',
-      href: '#',
-    },
-    text: 'Contact',
-  });
 
   return (
     <>
