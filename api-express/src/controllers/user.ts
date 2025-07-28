@@ -664,6 +664,10 @@ ${
         const email = [
           `Bonjour,`,
           `Votre compte Zacharie a été activé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant`,
+          "Attention : pour l'instant, seuls certains collecteurs et ateliers de traitement du gibier acceptent des fiches en format numérique. En cas de doute, merci de contacter le destinataire de vos carcasses avant de créer votre première fiche numérique.",
+          // "Des manuels d'utilisation de Zacharie sont disponibles en cliquant ici.",
+          `N’hésitez pas à nous contacter,`,
+          `L’équipe Zacharie`,
           `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,
         ].join('\n\n');
         await sendEmail({
