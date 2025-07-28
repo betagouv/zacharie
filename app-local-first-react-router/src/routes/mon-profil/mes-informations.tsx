@@ -152,6 +152,9 @@ export default function MesInformations() {
 
   const canChange = true;
 
+  const needAddress =
+    user.roles.includes(UserRoles.PREMIER_DETENTEUR) || user.roles.includes(UserRoles.EXAMINATEUR_INITIAL);
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <title>
@@ -221,13 +224,13 @@ export default function MesInformations() {
                   }}
                 />
                 <Input
-                  label="Adresse *"
+                  label={needAddress ? 'Adresse *' : 'Adresse'}
                   hintText="Indication : numéro et voie"
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                     name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                     autoComplete: 'address-line1',
-                    required: true,
+                    required: needAddress,
                     defaultValue: user.addresse_ligne_1 ?? '',
                   }}
                 />
@@ -243,14 +246,14 @@ export default function MesInformations() {
                 />
                 <div className="flex w-full flex-col gap-x-4 md:flex-row">
                   <Input
-                    label="Code postal *"
+                    label={needAddress ? 'Code postal *' : 'Code postal'}
                     hintText="5 chiffres"
                     className="shrink-0 md:basis-1/5"
                     nativeInputProps={{
                       id: Prisma.UserScalarFieldEnum.code_postal,
                       name: Prisma.UserScalarFieldEnum.code_postal,
                       autoComplete: 'postal-code',
-                      required: true,
+                      required: needAddress,
                       defaultValue: user.code_postal ?? '',
                     }}
                   />
@@ -258,13 +261,13 @@ export default function MesInformations() {
                     <InputVille
                       postCode={user.code_postal ?? ''}
                       trimPostCode
-                      label="Ville ou commune *"
+                      label={needAddress ? 'Ville ou commune *' : 'Ville ou commune'}
                       hintText="Exemple : Montpellier"
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.ville,
                         name: Prisma.UserScalarFieldEnum.ville,
                         autoComplete: 'address-level2',
-                        required: true,
+                        required: needAddress,
                         defaultValue: user.ville ?? '',
                       }}
                     />

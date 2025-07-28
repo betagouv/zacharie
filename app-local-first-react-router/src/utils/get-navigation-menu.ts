@@ -116,12 +116,6 @@ export default function useNavigationMenu() {
       // @ts-expect-error problem with MainNavigationProps.Item[]
       menuLinks: profileMenu,
     },
-    // {
-    //   text: 'Contactez-nous',
-    //   linkProps: {
-    //     href: `mailto:contact@zacharie.beta.gouv.fr?subject=Une question à propos de mon tableau de bord à Zacharie`,
-    //   },
-    // },
   ];
 
   if (isAdmin) {
@@ -172,6 +166,14 @@ export default function useNavigationMenu() {
       ],
     });
   }
+
+  navigationBase.push({
+    text: 'Contact',
+    linkProps: {
+      to: '/contact',
+      href: '#',
+    },
+  });
 
   return navigationBase;
 }
