@@ -353,32 +353,6 @@ router.post(
     if (existingFei.fei_next_owner_role !== UserRoles.SVI && savedFei.fei_next_owner_role === UserRoles.SVI) {
       // this is the end of the fiche
       // send notification to examinateur initial
-      const examinateurInitial = await prisma.user.findUnique({
-        where: { id: savedFei.examinateur_initial_user_id! },
-      });
-      await sendNotificationToUser({
-        user: examinateurInitial!,
-        title: `La fiche du ${dayjs(savedFei.date_mise_a_mort).format(
-          'DD/MM/YYYY',
-        )} est prise en charge par l'ETG`,
-        body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié.`,
-        email: `Les carcasses vont être inspectées par le Service Vétérinaire.\nSi une carcasse est saisie, vous serez notifié.\nSi aucune n'est saisie, vous serez notifié de la clôture automatique de la fiche au bout de 10 jours.`,
-        notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
-      });
-      if (savedFei.examinateur_initial_user_id !== savedFei.premier_detenteur_user_id) {
-        const premierDetenteur = await prisma.user.findUnique({
-          where: { id: savedFei.premier_detenteur_user_id! },
-        });
-        await sendNotificationToUser({
-          user: premierDetenteur!,
-          title: `La fiche du ${dayjs(savedFei.date_mise_a_mort).format(
-            'DD/MM/YYYY',
-          )} est prise en charge par l'ETG`,
-          body: `Les carcasses vont être inspectées par le Service Vétérinaire. Si une carcasse est saisie, vous serez notifié.`,
-          email: `Les carcasses vont être inspectées par le Service Vétérinaire.\nSi une carcasse est saisie, vous serez notifié.\nSi aucune n'est saisie, vous serez notifié de la clôture automatique de la fiche au bout de 10 jours.`,
-          notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
-        });
-      }
       const sviUsers = await prisma.user.findMany({
         where: {
           roles: { has: UserRoles.SVI },
