@@ -19,11 +19,11 @@ type SendEmailProps = {
 };
 async function sendEmail(props: SendEmailProps) {
   try {
-    if (IS_DEV_OR_TEST) {
-      console.log('Sending email in development mode');
-      console.log(props);
-      return;
-    }
+    // if (IS_DEV_OR_TEST) {
+    //   console.log('Sending email in development mode');
+    //   console.log(props);
+    //   return;
+    // }
     if (!props.html && !props.text) {
       throw new Error('html or text is required');
     }

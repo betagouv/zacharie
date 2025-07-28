@@ -7,7 +7,7 @@ import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import { EntityRelationType, IPM2Decision, Prisma, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
-import { formatCarcasseChasseurEmail } from '~/utils/formatCarcasseEmail';
+import { formatCarcasseChasseurEmail, formatSaisieEmail } from '~/utils/formatCarcasseEmail';
 import { RequestWithUser } from '~/types/request';
 import { carcasseForRegistrySelect, CarcasseForResponseForRegistry } from '~/types/carcasse';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
@@ -364,7 +364,7 @@ router.post(
           return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
         });
 
-      const email = formatCarcasseChasseurEmail(updatedCarcasse);
+      const email = formatSaisieEmail(updatedCarcasse);
 
       await sendNotificationToUser({
         user: examinateurInitial!,

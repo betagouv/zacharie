@@ -21,7 +21,7 @@ function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
   const vulgarisation = lesion['VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL'];
   const complement = lesion["COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL"];
   if (vulgarisation && complement) {
-    return `${vulgarisation}\n${complement}`;
+    return `${vulgarisation} (${complement})`;
   }
   if (vulgarisation) {
     return vulgarisation;
@@ -77,4 +77,24 @@ export function formatCarcasseChasseurEmail(carcasse: Carcasse) {
     carcasse.svi_carcasse_commentaire ? `Commentaire\u00A0:\n${carcasse.svi_carcasse_commentaire}` : null,
   ];
   return email.filter(Boolean).join('\n');
+}
+
+export function formatSaisieEmail(carcasse: Carcasse) {
+  const saisieLabel = getCarcasseStatusLabelForEmail(carcasse).toLowerCase();
+  const url = `https://zacharie.beta.gouv.fr/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
+  const motifs = carcasse.svi_ipm2_lesions_ou_motifs
+    .map((motif) => `-> ${getMotifForChasseur(motif, carcasse.type)}`)
+    .join('\n');
+
+  const email = [
+    `Bonjour,`,
+    `Le service vétérinaire d’inspection a décidé la ${saisieLabel} de la carcasse de ${carcasse.espece} n°${carcasse.numero_bracelet}.`,
+    `Motif${motifs ? 's' : ''} de la saisie:\n${motifs}`,
+    carcasse.svi_carcasse_commentaire
+      ? `Commentaire du service vétérinaire:\n${carcasse.svi_carcasse_commentaire}`
+      : null,
+    `Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie : ${url}`,
+    `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur cette saisie, merci de contacter l’établissement où a été effectuée l’inspection.`,
+  ];
+  return email.filter(Boolean).join('\n\n');
 }
