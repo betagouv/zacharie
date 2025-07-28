@@ -1,7 +1,8 @@
-import { Carcasse, CarcasseStatus, CarcasseType, IPM2Decision } from '@prisma/client';
+import { Carcasse, CarcasseStatus, CarcasseType, Fei, IPM2Decision } from '@prisma/client';
 import { getCarcasseStatusLabelForEmail } from './get-carcasse-status';
 import lesions from '../assets/lesions.json';
 import prisma from '~/prisma';
+import { formatCountCarcasseByEspece } from './count-carcasses';
 
 function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
   const lesion = lesions[carcasseType]
@@ -159,5 +160,42 @@ Ce message a été généré automatiquement par l’application Zacharie. Si vo
   const object = `${carcasseLabel} de ${carcasse.espece.toLowerCase()} n°${
     carcasse.numero_bracelet
   } est ${manquanteLabel}.`;
+  return [object, email.filter(Boolean).join('\n\n')];
+}
+
+export async function formatSviAssignedEmail(fei: Fei): Promise<[string, string]> {
+  const currentEntity = await prisma.entity.findUnique({
+    where: {
+      id: fei.fei_current_owner_entity_id,
+    },
+  });
+  const feiCarcasses = await prisma.carcasse.findMany({
+    where: {
+      fei_numero: fei.numero,
+      intermediaire_carcasse_manquante: false,
+      intermediaire_carcasse_refus_intermediaire_id: null,
+      deleted_at: null,
+      svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+    },
+    orderBy: {
+      numero_bracelet: 'asc',
+    },
+  });
+
+  const email = [
+    `Bonjour,`,
+    `L’établissement ${currentEntity?.nom_d_usage} vous a transmis une fiche comprenant ${feiCarcasses.length} carcasses (ou lots) à inspecter:`,
+    feiCarcasses
+      .map(
+        (carcasse) =>
+          `-> ${carcasse.type === CarcasseType.PETIT_GIBIER ? `${carcasse.nombre_d_animaux} ` : ''}${
+            carcasse.espece
+          } (${carcasse.numero_bracelet})`,
+      )
+      .join('\n'),
+    `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${fei.numero}`,
+    `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur cette saisie, merci de contacter l’établissement où a été effectuée l’inspection.`,
+  ];
+  const object = `L’établissement ${currentEntity?.nom_d_usage} vous a transmis une fiche comprenant ${feiCarcasses.length} carcasses (ou lots) à inspecter:`;
   return [object, email.filter(Boolean).join('\n\n')];
 }
