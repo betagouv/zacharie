@@ -504,7 +504,7 @@ router.post(
           `Bonjour,`,
           `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
           `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${fei.numero}`,
-          `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur cette saisie, merci de contacter l’établissement où a été effectuée l’inspection.`,
+          `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
         ].join('\n\n');
         await sendNotificationToUser({
           user: nextPremierDetenteur!,
@@ -661,10 +661,16 @@ ${
       }
 
       if (savedUser.activated && !user.activated) {
+        const email = [
+          `Bonjour,`,
+          `Votre compte Zacharie a été activé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant`,
+          `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,
+        ].join('\n\n');
         await sendEmail({
           emails: [savedUser.email],
           subject: 'Votre compte Zacharie a été activé',
-          text: `Votre compte Zacharie a été activé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant`,
+          text: email,
+          html: email,
         });
       }
 
