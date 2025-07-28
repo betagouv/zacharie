@@ -500,11 +500,17 @@ router.post(
       });
 
       if (nextPremierDetenteur.id !== user.id) {
+        const email = [
+          `Bonjour,`,
+          `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
+          `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${fei.numero}`,
+          `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur cette saisie, merci de contacter l’établissement où a été effectuée l’inspection.`,
+        ].join('\n\n');
         await sendNotificationToUser({
           user: nextPremierDetenteur!,
-          title: 'Vous avez une nouvelle fiche à traiter',
-          body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
-          email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${fei?.numero}. Rendez vous sur Zacharie pour la traiter.`,
+          title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${fei?.numero}`,
+          body: email,
+          email: email,
           notificationLogAction: `FEI_ASSIGNED_TO_${UserRelationType.PREMIER_DETENTEUR}_${fei.numero}`,
         });
       }

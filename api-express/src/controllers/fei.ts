@@ -402,23 +402,18 @@ router.post(
         const nextOwner = await prisma.user.findUnique({
           where: { id: nextOwnerId },
         });
+        const email = [
+          `Bonjour,`,
+          `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
+          `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
+          `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur cette saisie, merci de contacter l’établissement où a été effectuée l’inspection.`,
+        ].join('\n\n');
         await sendNotificationToUser({
           user: nextOwner!,
-          title: 'Vous avez une nouvelle fiche à traiter',
-          body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche.\nRendez vous sur Zacharie pour la traiter.`,
-          email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${savedFei?.numero}.\nRendez vous sur Zacharie pour la traiter.`,
+          title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${savedFei?.numero}`,
+          body: email,
+          email: email,
           notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
-        });
-        await sendNotificationToUser({
-          user: user,
-          title: `${nextOwner!.prenom} ${nextOwner!.nom_de_famille} a été notifié`,
-          body: `${nextOwner!.prenom} ${
-            nextOwner!.nom_de_famille
-          } a été notifié que vous lui avez attribué la fiche ${savedFei?.numero}.`,
-          email: `${nextOwner!.prenom} ${
-            nextOwner!.nom_de_famille
-          } a été notifié que vous lui avez attribué la fiche ${savedFei?.numero}.`,
-          notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}_RECEIPT`,
         });
       }
       if (existingFei.fei_next_owner_user_id) {
@@ -426,11 +421,18 @@ router.post(
         const exNextOwner = await prisma.user.findUnique({
           where: { id: existingFei.fei_next_owner_user_id },
         });
+        const email = [
+          `Bonjour,`,
+          `${user.prenom} ${user.nom_de_famille} vous avait attribué par erreur la fiche d’examen initial n° ${savedFei?.numero}.`,
+          'Cette erreur vient d’être corrigée : vous n’êtes plus destinataire de cette fiche.',
+          `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
+          `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur cette saisie, merci de contacter l’établissement où a été effectuée l’inspection.`,
+        ].join('\n\n');
         await sendNotificationToUser({
           user: exNextOwner!,
-          title: 'Une fiche ne vous est plus attribuée',
-          body: `${user.prenom} ${user.nom_de_famille} vous avait attribué une fiche, mais elle a finalement été attribuée à quelqu'un d'autre.`,
-          email: `${user.prenom} ${user.nom_de_famille} vous avait attribué la fiche ${savedFei?.numero}, mais elle a finalement été attribuée à quelqu'un d'autre.`,
+          title: `La fiche n° ${savedFei?.numero} ne vous est plus attribuée`,
+          body: email,
+          email: email,
           notificationLogAction: `FEI_REMOVED_FROM_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
         });
       }
@@ -463,11 +465,17 @@ router.post(
       ).map((relation) => relation.UserRelatedWithEntity);
       for (const nextOwner of usersWorkingForEntity) {
         if (nextOwner.id !== user.id) {
+          const email = [
+            `Bonjour,`,
+            `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
+            `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
+            `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur cette saisie, merci de contacter l’établissement où a été effectuée l’inspection.`,
+          ].join('\n\n');
           await sendNotificationToUser({
             user: nextOwner as User,
-            title: 'Vous avez une nouvelle fiche à traiter',
-            body: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
-            email: `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche, la ${savedFei?.numero}.\nRendez vous sur Zacharie pour la traiter.`,
+            title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${savedFei?.numero}`,
+            body: email,
+            email: email,
             notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
           });
         }
