@@ -340,6 +340,35 @@ export default function CarcasseIntermediaireComp({
               </div>
             )}
             <Input
+              label="Poids de la consigne"
+              hintText="En kg, facultatif"
+              nativeInputProps={{
+                type: 'number',
+                min: 0,
+                name: Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_poids,
+                form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                defaultValue: carcasseIntermediaire.intermediaire_poids || '',
+                onBlur: (e) => {
+                  if (!canEdit) return;
+                  const nextPartialCarcasseIntermediaire = {
+                    intermediaire_poids: Number(e.target.value),
+                  };
+                  updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
+                  addLog({
+                    user_id: user.id,
+                    user_role: intermediaire.intermediaire_role!,
+                    fei_numero: fei.numero,
+                    action: 'carcasse-intermediaire-poids',
+                    history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
+                    entity_id: intermediaire.intermediaire_entity_id,
+                    zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                    intermediaire_id: intermediaire.id,
+                    carcasse_intermediaire_id: carcasseIntermediaireId,
+                  });
+                },
+              }}
+            />
+            <Input
               label="Votre commentaire"
               className="mt-2"
               hintText={

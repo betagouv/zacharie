@@ -589,6 +589,7 @@ model CarcasseIntermediaire {
   manquante                                   Boolean?
   refus                                       String?
   commentaire                                 String?
+  intermediaire_poids                         Float?
   /**
   * new fields
   */

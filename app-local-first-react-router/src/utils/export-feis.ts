@@ -18,6 +18,7 @@ type FeiExcelData = {
 type CarcasseExcelData = {
   'Numéro de bracelet': string;
   Éspèce: string | null;
+  Poids: string | null;
   "Nombre d'animaux": number | null | undefined;
   'Numéro suivi trichine': string | null;
   // Estampille: string | null;
@@ -142,6 +143,7 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       case 'Numéro de fiche':
         return { wch: 40 }; // wider columns for comments
       // case 'Numéro de bracelet':
+      case 'Poids':
       case 'SVI - Saisie totale':
       case 'SVI - Certificat de saisie OK':
       case "Nombre d'animaux":
@@ -315,6 +317,7 @@ export default function useExportFeis() {
             continue;
           }
           const commentaires = [];
+          let poids = undefined;
           for (const intermediaire of intermediaires) {
             const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
             const intermediaireCarcasse = carcassesIntermediaireById[id];
@@ -323,6 +326,9 @@ export default function useExportFeis() {
               commentaires.push(
                 `${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`,
               );
+            }
+            if (intermediaireCarcasse?.intermediaire_poids) {
+              poids = intermediaireCarcasse.intermediaire_poids;
             }
           }
           allCarcasses.push({
@@ -335,6 +341,7 @@ export default function useExportFeis() {
             'Numéro de bracelet': carcasse.numero_bracelet,
             'Commentaires ETG / Transporteurs': commentaires.join('\n'),
             Éspèce: carcasse.espece,
+            Poids: poids ? poids.toString() : null,
             "Nombre d'animaux": carcasse.nombre_d_animaux || 1,
             'Numéro suivi trichine': '',
             // Estampille: '',
