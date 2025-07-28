@@ -9,7 +9,7 @@ import { EntityRelationType, IPM2Decision, Prisma, UserRoles } from '@prisma/cli
 import sendNotificationToUser from '~/service/notifications';
 import {
   formatCarcasseChasseurEmail,
-  formatCarcasseManquanteEmail,
+  formatCarcasseManquanteOrRefusEmail,
   formatSaisieEmail,
 } from '~/utils/formatCarcasseEmail';
 import { RequestWithUser } from '~/types/request';
@@ -407,7 +407,7 @@ router.post(
           return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
         });
 
-      const [object, email] = await formatCarcasseManquanteEmail(updatedCarcasse);
+      const [object, email] = await formatCarcasseManquanteOrRefusEmail(updatedCarcasse);
 
       await sendNotificationToUser({
         user: examinateurInitial!,
@@ -447,10 +447,10 @@ router.post(
           return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
         });
 
-      const email = await formatCarcasseChasseurEmail(updatedCarcasse);
+      const [object, email] = await formatCarcasseManquanteOrRefusEmail(updatedCarcasse);
       await sendNotificationToUser({
         user: examinateurInitial!,
-        title: `Une carcasse de ${updatedCarcasse.espece} est refusée`,
+        title: object,
         body: email,
         email: email,
         notificationLogAction: `CARCASSE_REFUS_${updatedCarcasse.zacharie_carcasse_id}`,
@@ -459,10 +459,10 @@ router.post(
       if (premierDetenteur?.id !== examinateurInitial?.id) {
         await sendNotificationToUser({
           user: premierDetenteur!,
-          title: `Une carcasse de ${updatedCarcasse.espece} est refusée`,
+          title: object,
           body: email,
           email: email,
-          notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
+          notificationLogAction: `CARCASSE_REFUS_${updatedCarcasse.zacharie_carcasse_id}`,
         });
       }
     }

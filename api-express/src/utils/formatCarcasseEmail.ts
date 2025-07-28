@@ -108,58 +108,59 @@ export function formatSaisieEmail(carcasse: Carcasse): [string, string] {
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
-export async function formatCarcasseManquanteEmail(carcasse: Carcasse): Promise<[string, string]> {
-  /* 
-  Bonjour,
-
-{nom de l’entité} a constaté que la carcasse de {espèce) n°{numéro d’identification} était manquante.
-
-Commentaire de {nom de l’entité} :
-{commentaires}
-
-Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie :
-{URL page carcasse}
-
-Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce constat, merci de contacter l’organisme qui a constaté ce manque.
-  */
-  const entite = await prisma.carcasseIntermediaire
-    .findUnique({
-      where: {
-        fei_numero_zacharie_carcasse_id_intermediaire_id: {
-          fei_numero: carcasse.fei_numero,
-          zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-          intermediaire_id: carcasse.intermediaire_carcasse_refus_intermediaire_id!,
+export async function formatCarcasseManquanteOrRefusEmail(carcasse: Carcasse): Promise<[string, string]> {
+  const carcasseIntermediaire = await prisma.carcasseIntermediaire.findUnique({
+    where: {
+      fei_numero_zacharie_carcasse_id_intermediaire_id: {
+        fei_numero: carcasse.fei_numero,
+        zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+        intermediaire_id: carcasse.intermediaire_carcasse_refus_intermediaire_id!,
+      },
+    },
+    select: {
+      commentaire: true,
+      CarcasseIntermediaireEntity: {
+        select: {
+          nom_d_usage: true,
         },
       },
-      include: {
-        CarcasseIntermediaireEntity: true,
-      },
-    })
-    .then((intermedaire) => {
-      return intermedaire!.CarcasseIntermediaireEntity;
-    });
+    },
+  });
+
+  const entite = carcasseIntermediaire?.CarcasseIntermediaireEntity.nom_d_usage;
+  const commentaire = carcasseIntermediaire?.commentaire;
+
   const url = `https://zacharie.beta.gouv.fr/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
 
+  const no = carcasse.numero_bracelet;
   const carcasseLabel = carcasse.type === CarcasseType.GROS_GIBIER ? 'La carcasse' : 'Le lot de carcasses';
   const manquanteLabel = carcasse.type === CarcasseType.GROS_GIBIER ? 'manquante' : 'manquant';
+  const refusLabel = carcasse.type === CarcasseType.GROS_GIBIER ? 'refusée' : 'refusé';
+
+  if (carcasse.intermediaire_carcasse_manquante) {
+    const email = [
+      `Bonjour,`,
+      `${entite} a constaté que ${carcasseLabel.toLowerCase()} de ${carcasse.espece.toLowerCase()} n°${no} était ${manquanteLabel}.`,
+      commentaire ? `Commentaire de ${entite} :\n${commentaire}` : null,
+      `Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie : ${url}`,
+      `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce constat, merci de contacter l’organisme qui a constaté ce manque.`,
+    ];
+
+    const object = `${carcasseLabel} de ${carcasse.espece.toLowerCase()} n°${no} est ${manquanteLabel}.`;
+    return [object, email.filter(Boolean).join('\n\n')];
+  }
 
   const email = [
     `Bonjour,`,
-    `${
-      entite?.nom_d_usage
-    } a constaté que ${carcasseLabel.toLowerCase()} de ${carcasse.espece.toLowerCase()} n°${
-      carcasse.numero_bracelet
-    } était ${manquanteLabel}.`,
+    `${entite} a refusé ${carcasseLabel.toLowerCase()} de ${carcasse.espece.toLowerCase()} n°${no}.`,
     carcasse.intermediaire_carcasse_refus_motif
-      ? `Commentaire de ${entite?.nom_d_usage} :\n${carcasse.intermediaire_carcasse_refus_motif}`
+      ? `Motif de refus :\n${carcasse.intermediaire_carcasse_refus_motif}`
       : null,
+    commentaire ? `Commentaire de ${entite} :\n${commentaire}` : null,
     `Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie : ${url}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce constat, merci de contacter l’organisme qui a constaté ce manque.`,
   ];
-
-  const object = `${carcasseLabel} de ${carcasse.espece.toLowerCase()} n°${
-    carcasse.numero_bracelet
-  } est ${manquanteLabel}.`;
+  const object = `${carcasseLabel} de ${carcasse.espece.toLowerCase()} n°${no} est ${refusLabel}.`;
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
