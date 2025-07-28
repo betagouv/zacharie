@@ -81,7 +81,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(
     cors({
       credentials: true,
-      origin: ['http://localhost:3234', 'http://localhost:3290'],
+      origin: ['http://localhost:3234', 'http://localhost:3290', process.env.VITE_APP_URL ?? ''],
     }),
   );
 }

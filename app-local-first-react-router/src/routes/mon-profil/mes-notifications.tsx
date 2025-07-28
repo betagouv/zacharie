@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
@@ -13,16 +13,42 @@ export default function MesNotifications() {
   const user = useUser((state) => state.user)!;
   const navigate = useNavigate();
 
-  const { subscribeToPush, canSendPush, isSubscribed, pushSubscription, pushAvailable } = usePush();
+  const {
+    subscribeToPush,
+    canSendPush,
+    isSubscribed,
+    pushSubscription,
+    pushAvailable: pushAvailableOnWeb,
+  } = usePush();
+
+  const [nativePushTokenRegistered, setNativePushTokenRegistered] = useState(false);
+  useEffect(() => {
+    if (window.ReactNativeWebView) {
+      window.onNativePushToken = async function handleNativePushToken(token) {
+        setNativePushTokenRegistered(user.native_push_tokens.includes(token));
+      };
+      window.ReactNativeWebView.postMessage('request-native-get-expo-token');
+    }
+  }, [user.native_push_tokens]);
+
+  const pushAvailabledOnThisPlatform = useMemo(() => {
+    if (window.ReactNativeWebView) {
+      return true;
+    }
+    return pushAvailableOnWeb;
+  }, [pushAvailableOnWeb]);
 
   const checkBoxChecked = useMemo(() => {
+    if (window.ReactNativeWebView) {
+      return nativePushTokenRegistered;
+    }
     return (
       canSendPush &&
       isSubscribed &&
       !!pushSubscription &&
       !!user?.web_push_tokens?.find((token) => JSON.parse(token)?.endpoint === pushSubscription?.endpoint)
     );
-  }, [canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
+  }, [nativePushTokenRegistered, canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
 
   const skipCCG = useMemo(() => {
     if (!user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
@@ -81,24 +107,25 @@ export default function MesNotifications() {
                   options={[
                     {
                       label: 'Notification via Zacharie',
-                      hintText: pushAvailable
+                      hintText: pushAvailabledOnThisPlatform
                         ? 'Notification directement sur cet appareil'
                         : "Vous devriez installer l'application sur un appareil compatible pour activer les notifications.",
                       nativeInputProps: {
                         name: 'notifications',
                         value: UserNotifications.PUSH,
                         defaultChecked: checkBoxChecked,
-                        disabled: !pushAvailable,
+                        disabled: !pushAvailabledOnThisPlatform,
                         onClick: async () => {
+                          if (window.ReactNativeWebView) {
+                            window.ReactNativeWebView.postMessage('request-native-expo-push-permission');
+                            // token reading is handled in tableau-de-bord.tsx
+                            // window.onNativePushToken = async function handleNativePushToken(token) { ... }
+                            return;
+                          }
                           const VITE_VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-                          console.log({ VITE_VAPID_PUBLIC_KEY });
                           subscribeToPush(
                             VITE_VAPID_PUBLIC_KEY,
                             async (subscription) => {
-                              console.log({
-                                subscription,
-                                VITE_VAPID_PUBLIC_KEY,
-                              });
                               const response = await fetch(
                                 `${import.meta.env.VITE_API_URL}/user/${user.id}`,
                                 {

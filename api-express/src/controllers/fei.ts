@@ -454,6 +454,7 @@ router.post(
               select: {
                 id: true,
                 web_push_tokens: true,
+                native_push_tokens: true,
                 notifications: true,
                 prenom: true,
                 nom_de_famille: true,

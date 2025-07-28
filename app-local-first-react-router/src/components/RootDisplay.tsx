@@ -68,6 +68,9 @@ export default function RootDisplay({
           fetch(`${import.meta.env.VITE_API_URL}/user/logout`, {
             method: 'POST',
             credentials: 'include',
+            headers: {
+              platform: window.ReactNativeWebView ? 'native' : 'web',
+            },
           }).then(async (res) => {
             if (res.ok) {
               await clearCache().then(() => {

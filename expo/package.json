@@ -1,0 +1,38 @@
+{
+  "name": "zacharie",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "prebuild": "expo prebuild",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "build-eas-then-submit:ios": "eas build -p ios && eas submit -p ios --latest",
+    "build-eas:android-aab": "eas build -p android",
+    "build-local:android-aab": "eas build -p android --local",
+    "build-local:ios-ipa": "eas build -p ios --local",
+    "build-local-then-submit:ios-ipa": "eas build -p ios --local && eas submit -p ios"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.1.2",
+    "expo": "^53.0.0",
+    "expo-dev-client": "~5.2.4",
+    "expo-device": "~7.1.4",
+    "expo-linking": "~7.1.5",
+    "expo-notifications": "~0.31.2",
+    "expo-splash-screen": "~0.30.8",
+    "expo-status-bar": "~2.2.3",
+    "react": "19.0.0",
+    "react-native": "0.79.5",
+    "react-native-edge-to-edge": "1.6.0",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-webview": "13.13.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "~19.0.10",
+    "typescript": "^5.3.3"
+  },
+  "private": true
+}

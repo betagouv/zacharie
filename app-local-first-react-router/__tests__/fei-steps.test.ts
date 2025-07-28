@@ -34,6 +34,7 @@ const createMockUser = (roles: UserRoles[], id = 'user-1'): User => ({
   onboarded_at: null,
   notifications: [],
   web_push_tokens: [],
+  native_push_tokens: [],
   prefilled: false,
   activated: true,
   activated_at: null,

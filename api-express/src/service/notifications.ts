@@ -131,6 +131,50 @@ async function sendNotificationToUser({
           });
       }
     }
+    if (user.native_push_tokens?.length) {
+      const existingNotification = await prisma.notificationLog.findFirst({
+        where: {
+          user_id: user.id,
+          type: 'PUSH',
+          action: notificationLogAction,
+        },
+      });
+      if (existingNotification) {
+        console.log('Notification already sent', user.id);
+        return;
+      }
+      if (IS_TEST) {
+        console.log(
+          'SENDING WEB PUSH NOTIFICATION IN DEV',
+          JSON.stringify({ user, body, title, email, notificationLogAction, img }, null, 2),
+        );
+        await prisma.notificationLog.create({
+          data: {
+            user_id: user.id,
+            payload: JSON.stringify({
+              title,
+              body,
+              email,
+              response: JSON.stringify({ message: 'Web push not sent in dev' }),
+            }),
+            type: 'PUSH',
+            web_push_token: user.web_push_tokens[0],
+            action: notificationLogAction,
+          },
+        });
+        return;
+      }
+      console.log('SENDING WEB PUSH NOTIFICATION FOR REAL', user.id);
+      for (const native_push_token of user.native_push_tokens) {
+        if (!native_push_token) {
+          continue;
+        }
+        if (native_push_token === 'null') {
+          continue;
+        }
+        console.log('SENDING NATIVE PUSH NOTIFICATION FOR REAL', user.id, native_push_token);
+      }
+    }
     // await prisma.user.update({
     //   where: { id: user.id },
     //   data: { badge_count: { increment: 1 } },
