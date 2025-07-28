@@ -1,0 +1,75 @@
+{
+  "expo": {
+    "name": "Zacharie",
+    "slug": "zacharie",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "fr.gouv.zacharie.v1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "associatedDomains": ["applinks:zacharie.beta.gouv.fr"],
+      "buildNumber": "1",
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": ["zacharie"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "fr.gouv.zacharie.v1",
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 1,
+      "permissions": ["android.permission.SCHEDULE_EXACT_ALARM", "android.permission.WRITE_EXTERNAL_STORAGE"],
+      "softwareKeyboardLayoutMode": "pan",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "zacharie"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "plugins": [
+      [
+        "expo-asset",
+        {
+          "defaultChannel": "PUSH-LOCAL-NOTIFICATIONS",
+          "color": "#FFFFFF",
+          "mode": "production"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/splash-icon.png"
+        }
+      ],
+      "react-native-edge-to-edge",
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5c6b710c-a198-48f8-8f82-5597a1bcd0b7"
+      }
+    }
+  }
+}

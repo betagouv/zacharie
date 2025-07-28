@@ -60,7 +60,7 @@ export default function AdminUsers() {
               selectedTabId={selectedTabId}
               tabs={tabs}
               onTabChange={setSelectedTabId}
-              className="mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:bg-alt-blue-france! [&_.fr-tabs\_\_list]:shadow-none!"
+              className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
             >
               <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
                 <Table
@@ -142,6 +142,7 @@ export default function AdminUsers() {
                             headers: new Headers({
                               Accept: 'application/json',
                               'Content-Type': 'application/json',
+                              platform: window.ReactNativeWebView ? 'native' : 'web',
                             }),
                           })
                             .then(() => {

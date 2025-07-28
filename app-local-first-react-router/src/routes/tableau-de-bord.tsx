@@ -15,6 +15,8 @@ import useExportFeis from '@app/utils/export-feis';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
+import useUser from '@app/zustand/user';
+import { UserConnexionResponse } from '@api/src/types/responses';
 
 async function loadData() {
   await syncData('tableau-de-bord');
@@ -36,6 +38,33 @@ export default function TableauDeBordIndex() {
   });
   const [loading, setLoading] = useState(false);
   const isOnline = useIsOnline();
+
+  useEffect(() => {
+    window.onNativePushToken = async function handleNativePushToken(token) {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/user/${user.id}`, {
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify({ native_push_token: token }),
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => data as UserConnexionResponse);
+      if (response.ok && response.data?.user?.id) {
+        useUser.setState({ user: response.data.user });
+      }
+    };
+    if (user.activated_at) {
+      // if user is activated already, either we just take the latest token,
+      // either it's a web user that just installed the app so we need to ask for permission for notifications
+      setTimeout(() => {
+        window.ReactNativeWebView?.postMessage('request-native-expo-push-permission');
+      }, 250);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {

@@ -33,6 +33,20 @@ import Contact from './routes/contact';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
+declare global {
+  interface Window {
+    ReactNativeWebView?: {
+      postMessage: (message: string) => void;
+    };
+    onNativePushToken: (token: string) => void;
+    onAppVersion: (version: string) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onNotificationReceived: (notification: any) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onNotificationResponseReceived: (response: any) => void;
+  }
+}
+
 function App() {
   return (
     <>

@@ -62,6 +62,7 @@ const initialState: State = {
     onboarded_at: null,
     notifications: [UserNotifications.EMAIL, UserNotifications.PUSH],
     web_push_tokens: [],
+    native_push_tokens: [],
     brevo_contact_id: null,
     prefilled: false,
     is_synced: true,
@@ -231,7 +232,7 @@ export default function AdminUser() {
               selectedTabId={selectedTabId}
               tabs={tabs}
               onTabChange={setSelectedTabId}
-              className="mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:bg-alt-blue-france! [&_.fr-tabs\_\_list]:shadow-none!"
+              className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
             >
               {selectedTabId === 'Roles' && (
                 <form
@@ -419,7 +420,7 @@ export default function AdminUser() {
                   setUserResponseData={setUserResponseData}
                 />
               )}
-              <div className="mb-16 ml-6 mt-6">
+              <div className="mt-6 mb-16 ml-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>

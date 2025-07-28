@@ -47,6 +47,7 @@ export default function Connexion() {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
+          platform: window.ReactNativeWebView ? 'native' : 'web',
         },
       })
         .then((response) => response.json())

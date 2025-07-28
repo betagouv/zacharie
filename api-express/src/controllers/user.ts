@@ -236,7 +236,11 @@ router.post(
       data: { last_login_at: new Date() },
     });
     // refreshMaterializedViews();
-    res.cookie('zacharie_express_jwt', token, cookieOptions());
+    res.cookie(
+      'zacharie_express_jwt',
+      token,
+      cookieOptions(req.headers.host.includes('localhost') ? true : false),
+    );
     res
       .status(200)
       .send({ ok: true, data: { user }, message: '', error: '' } satisfies UserConnexionResponse);
@@ -411,7 +415,10 @@ router.post(
   '/logout',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    res.clearCookie('zacharie_express_jwt', logoutCookieOptions());
+    res.clearCookie(
+      'zacharie_express_jwt',
+      logoutCookieOptions(req.headers.host.includes('localhost') ? true : false),
+    );
     res.status(200).send({ ok: true });
   }),
 );
@@ -595,6 +602,13 @@ router.post(
         const existingSubscriptions = user.web_push_tokens || [];
         if (!existingSubscriptions.includes(web_push_token)) {
           nextUser.web_push_tokens = [...existingSubscriptions, web_push_token];
+        }
+      }
+      if (body.hasOwnProperty('native_push_token')) {
+        const native_push_token = body.native_push_token as string;
+        const existingSubscriptions = user.native_push_tokens || [];
+        if (!existingSubscriptions.includes(native_push_token)) {
+          nextUser.native_push_tokens = [...existingSubscriptions, native_push_token];
         }
       }
 

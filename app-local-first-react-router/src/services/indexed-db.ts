@@ -1,9 +1,10 @@
-import { type UseStore, set, get, createStore, keys, delMany } from "idb-keyval";
-import { capture } from "@app/services/sentry";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { type UseStore, set, get, createStore, keys, delMany } from 'idb-keyval';
+import { capture } from '@app/services/sentry';
 
-export const currentCacheKey = "zach-last-refresh-2024-11-25";
-const dbName = "zacharie";
-const storeName = "store";
+export const currentCacheKey = 'zach-last-refresh-2024-11-25';
+const dbName = 'zacharie';
+const storeName = 'store';
 
 let customStore: UseStore | null = null;
 // const savedCacheKey = window.localStorage.getItem("zach-currentCacheKey");
@@ -14,7 +15,7 @@ setupDB();
 // }
 
 function setupDB() {
-  window.localStorage.setItem("zach-currentCacheKey", currentCacheKey);
+  window.localStorage.setItem('zach-currentCacheKey', currentCacheKey);
   customStore = createStore(dbName, storeName);
 }
 
@@ -27,18 +28,16 @@ async function deleteDB() {
   return await delMany(ks, customStore);
 }
 
-export async function clearCache(calledFrom = "not defined", iteration = 0) {
+export async function clearCache(calledFrom = 'not defined', iteration = 0) {
   console.log(`clearing cache from ${calledFrom}, iteration ${iteration}`);
   if (iteration > 10) {
-    throw new Error("Failed to clear cache");
+    throw new Error('Failed to clear cache');
   }
   await deleteDB().catch(console.error);
-  console.log("clearing localStorage");
+  console.log('clearing localStorage');
   window.localStorage?.clear();
-  for (const key in caches.keys()) {
-    caches.delete(key);
-  }
-  console.log("cleared localStorage");
+
+  console.log('cleared localStorage');
   // window.sessionStorage?.clear();
 
   // wait 200ms to make sure the cache is cleared
@@ -48,8 +47,8 @@ export async function clearCache(calledFrom = "not defined", iteration = 0) {
   const localStorageEmpty = window.localStorage.length === 0;
   // const sessionStorageEmpty = window.sessionStorage.length === 0;
   const indexedDBEmpty = customStore ? (await keys(customStore)).length === 0 : true;
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.controller?.postMessage("SW_MESSAGE_CLEAR_CACHE");
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.controller?.postMessage('SW_MESSAGE_CLEAR_CACHE');
   }
   // If the cache is not empty, try again
   return new Promise((resolve) => {
@@ -63,14 +62,14 @@ export async function clearCache(calledFrom = "not defined", iteration = 0) {
       }
       // if (!sessionStorageEmpty) console.log("sessionStorage not empty");
       if (!indexedDBEmpty) {
-        console.log("indexedDB not empty");
+        console.log('indexedDB not empty');
       }
-      clearCache("try again clearCache", iteration + 1).then(resolve);
+      clearCache('try again clearCache', iteration + 1).then(resolve);
     }
   });
 }
 
-type CacheKeys = "user" | "feis";
+type CacheKeys = 'user' | 'feis';
 
 export async function setCacheItem(key: CacheKeys, value: unknown) {
   if (customStore === null) {
@@ -81,7 +80,7 @@ export async function setCacheItem(key: CacheKeys, value: unknown) {
       await set(key, value, customStore);
     }
   } catch (error: any) {
-    if (error instanceof Error && error?.message?.includes("connection is closing")) {
+    if (error instanceof Error && error?.message?.includes('connection is closing')) {
       // Si on a une erreur de type "connection is closing", on va essayer de réinitialiser
       // la connexion à la base de données et de sauvegarder la donnée à nouveau
       setupDB();
@@ -104,7 +103,7 @@ export async function getCacheItem(key: CacheKeys) {
     const data = await get(key, customStore);
     return data;
   } catch (error: any) {
-    if (error instanceof Error && error?.message?.includes("connection is closing")) {
+    if (error instanceof Error && error?.message?.includes('connection is closing')) {
       // Si on a une erreur de type "connection is closing", on va essayer de réinitialiser
       // la connexion à la base de données et de récupérer la donnée à nouveau
       setupDB();

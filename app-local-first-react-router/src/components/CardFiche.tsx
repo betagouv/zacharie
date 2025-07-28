@@ -121,7 +121,7 @@ export default function CardFiche({
     <div
       className={[
         'relative rounded-sm bg-white',
-        'w-full max-w-96',
+        'w-full md:max-w-96',
         isPrintSelected ? 'border-action-high-blue-france border-2' : 'border border-gray-200',
         menuOpen ? 'bg-active-tint' : '',
         disabledBecauseOffline ? 'cursor-not-allowed opacity-50' : '',

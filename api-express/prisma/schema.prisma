@@ -52,6 +52,7 @@ model User {
   onboarded_at                   DateTime?
   notifications                  UserNotifications[]      @default([EMAIL, PUSH])
   web_push_tokens                String[]
+  native_push_tokens             String[]
   prefilled                      Boolean                  @default(false)
   activated                      Boolean                  @default(false)
   activated_at                   DateTime?
