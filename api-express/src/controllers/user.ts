@@ -198,7 +198,7 @@ router.post(
       await updateBrevoChasseurDeal(user);
     }
     const hashedPassword = await hashPassword(passwordUser);
-    console.log('hashedPassword', hashedPassword);
+
     const existingPassword = await prisma.password.findFirst({
       where: { user_id: user.id },
     });
