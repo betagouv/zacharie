@@ -101,7 +101,7 @@ async function automaticClosingOfFeis() {
           },
         });
       }
-      email.push(`${formatCarcasseChasseurEmail(carcasse)}\n\n`);
+      email.push(`${await formatCarcasseChasseurEmail(carcasse)}\n\n`);
     }
     // auto close and notify examinateur and premier detenteut
     const notification = {

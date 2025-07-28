@@ -7,7 +7,11 @@ import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import { EntityRelationType, IPM2Decision, Prisma, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
-import { formatCarcasseChasseurEmail, formatSaisieEmail } from '~/utils/formatCarcasseEmail';
+import {
+  formatCarcasseChasseurEmail,
+  formatCarcasseManquanteEmail,
+  formatSaisieEmail,
+} from '~/utils/formatCarcasseEmail';
 import { RequestWithUser } from '~/types/request';
 import { carcasseForRegistrySelect, CarcasseForResponseForRegistry } from '~/types/carcasse';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
@@ -364,11 +368,11 @@ router.post(
           return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
         });
 
-      const email = formatSaisieEmail(updatedCarcasse);
+      const [object, email] = formatSaisieEmail(updatedCarcasse);
 
       await sendNotificationToUser({
         user: examinateurInitial!,
-        title: `Une carcasse de ${updatedCarcasse.espece} a été saisie`,
+        title: object,
         body: email,
         email: email,
         notificationLogAction: `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`,
@@ -377,7 +381,7 @@ router.post(
       if (premierDetenteur?.id !== examinateurInitial?.id) {
         await sendNotificationToUser({
           user: premierDetenteur!,
-          title: `Une carcasse de ${updatedCarcasse.espece} a été saisie`,
+          title: object,
           body: email,
           email: email,
           notificationLogAction: `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`,
@@ -403,11 +407,11 @@ router.post(
           return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
         });
 
-      const email = formatCarcasseChasseurEmail(updatedCarcasse);
+      const [object, email] = await formatCarcasseManquanteEmail(updatedCarcasse);
 
       await sendNotificationToUser({
         user: examinateurInitial!,
-        title: `Une carcasse de ${updatedCarcasse.espece} est manquante`,
+        title: object,
         body: email,
         email: email,
         notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
@@ -416,7 +420,7 @@ router.post(
       if (premierDetenteur?.id !== examinateurInitial?.id) {
         await sendNotificationToUser({
           user: premierDetenteur!,
-          title: `Une carcasse de ${updatedCarcasse.espece} est manquante`,
+          title: object,
           body: email,
           email: email,
           notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
@@ -443,7 +447,7 @@ router.post(
           return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
         });
 
-      const email = formatCarcasseChasseurEmail(updatedCarcasse);
+      const email = await formatCarcasseChasseurEmail(updatedCarcasse);
       await sendNotificationToUser({
         user: examinateurInitial!,
         title: `Une carcasse de ${updatedCarcasse.espece} est refusée`,
