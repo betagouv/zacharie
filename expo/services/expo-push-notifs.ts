@@ -38,7 +38,8 @@ export async function registerForPushNotificationsAsync({ force = false, expo = 
       });
       finalStatus = status;
     }
-    if (finalStatus !== "granted") {
+    console.log("finalStatus", finalStatus);
+    if (finalStatus !== "granted" && force) {
       Alert.alert(
         "Les notifications sont désactivées",
         "Vous pouvez activer les notifications dans les paramètres de votre téléphone.",

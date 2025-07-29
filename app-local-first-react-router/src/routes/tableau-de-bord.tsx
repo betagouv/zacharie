@@ -56,13 +56,19 @@ export default function TableauDeBordIndex() {
         useUser.setState({ user: response.data.user });
       }
     };
-    if (user.activated_at) {
+    let timeoutId = setTimeout(() => {
       // if user is activated already, either we just take the latest token,
       // either it's a web user that just installed the app so we need to ask for permission for notifications
-      setTimeout(() => {
+      if (user.activated_at) {
         window.ReactNativeWebView?.postMessage('request-native-expo-push-permission');
-      }, 250);
-    }
+      }
+      clearTimeout(timeoutId);
+    }, 250);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
