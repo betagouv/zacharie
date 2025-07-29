@@ -1,3 +1,4 @@
+import 'fake-indexeddb/auto';
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { computeFeiSteps } from '../src/utils/fei-steps';

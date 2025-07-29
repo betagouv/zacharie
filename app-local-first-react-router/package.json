@@ -28,6 +28,7 @@
     "compression": "^1.7.5",
     "dayjs": "^1.11.13",
     "express": "^4.21.1",
+    "fake-indexeddb": "^6.0.1",
     "idb-keyval": "^6.2.2",
     "p-queue": "^8.1.0",
     "react": "^19.1.0",
