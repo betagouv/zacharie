@@ -3,6 +3,7 @@ import type { UserForFei } from '@api/src/types/user';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import useZustandStore from '@app/zustand/store';
 import { EntityRelationType } from '@prisma/client';
+import API from '@app/services/api';
 
 export async function loadMyRelations() {
   const isOnline = useZustandStore.getState().isOnline;
@@ -14,16 +15,9 @@ export async function loadMyRelations() {
   try {
     // we call myRelations
     // for the offline mode to work properly
-    const myRelationsData = await fetch(`${import.meta.env.VITE_API_URL}/user/my-relations`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
-    })
-      .then((res) => res.json())
-      .then((res) => res as UserMyRelationsResponse);
+    const myRelationsData = await API.get({ path: 'user/my-relations' }).then(
+      (res) => res as UserMyRelationsResponse,
+    );
 
     const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};
     const entitiesIdsWorkingDirectlyFor: Array<EntityWithUserRelation['id']> = [];

@@ -10,6 +10,7 @@ import useUser from '@app/zustand/user';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import InputVille from '@app/components/InputVille';
+import API from '@app/services/api';
 
 export default function MesCCGs() {
   // const removeCCGFetcher = useFetcher({ key: 'ccg-remove' });
@@ -19,15 +20,7 @@ export default function MesCCGs() {
   const redirect = searchParams.get('redirect');
 
   function refreshUserCCGs() {
-    fetch(`${import.meta.env.VITE_API_URL}/user/my-ccgs`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((res) => res.json())
+    API.get({ path: 'user/my-ccgs' })
       .then((res) => res as UserCCGsResponse)
       .then((res) => {
         if (res.ok) {
@@ -47,17 +40,10 @@ export default function MesCCGs() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const body: Partial<Entity> = Object.fromEntries(formData.entries());
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/entite/ccg`, {
-      method: 'POST',
-      credentials: 'include',
-      body: JSON.stringify(body),
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => data as UserConnexionResponse);
+    const response = await API.post({
+      path: 'entite/ccg',
+      body,
+    }).then((response) => response as UserConnexionResponse);
     if (response.ok) {
       refreshUserCCGs();
       setCCGPostalCode('');
@@ -173,26 +159,19 @@ export default function MesCCGs() {
                     }}
                     isClosable
                     onClose={() => {
-                      fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
-                        method: 'POST',
-                        credentials: 'include',
-                        body: JSON.stringify({
+                      API.post({
+                        path: `user/user-entity/${user.id}`,
+                        body: {
                           _action: 'delete',
                           [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                           [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
                           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-                        }),
-                        headers: {
-                          Accept: 'application/json',
-                          'Content-Type': 'application/json',
                         },
-                      })
-                        .then((res) => res.json())
-                        .then((res) => {
-                          if (res.ok) {
-                            setUserCCGs((prev) => prev.filter((ccg) => ccg.id !== entity.id));
-                          }
-                        });
+                      }).then((res) => {
+                        if (res.ok) {
+                          setUserCCGs((prev) => prev.filter((ccg) => ccg.id !== entity.id));
+                        }
+                      });
                     }}
                     title={
                       <>
@@ -383,10 +362,9 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
         e.preventDefault();
         setIsSubmitting(true);
         const formData = new FormData(e.currentTarget);
-        fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
-          method: 'POST',
-          credentials: 'include',
-          body: JSON.stringify({
+        API.post({
+          path: `user/user-entity/${user.id}`,
+          body: {
             _action: 'create',
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
             relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
@@ -394,13 +372,8 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
               Prisma.EntityScalarFieldEnum.numero_ddecpp,
             ),
             [Prisma.EntityScalarFieldEnum.type]: EntityTypes.CCG,
-          }),
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
           },
         })
-          .then((res) => res.json())
           .then((res) => res as UserEntityResponse)
           .then((res) => {
             setIsSubmitting(false);

@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import useZustandStore from '@app/zustand/store';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
+import API from '@app/services/api';
 
 type Certificat = CarcasseCertificat & { remplace_par_certificat_id: string };
 
@@ -20,12 +21,9 @@ export default function CarcasseSVICertificats() {
   useEffect(() => {
     if (carcasse.is_synced && isOnline) {
       setIsLoading(true);
-      fetch(`${import.meta.env.VITE_API_URL}/certificat/${params.zacharie_carcasse_id}/all`, {
-        credentials: 'include',
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setCertificats(data);
+      API.get({ path: `certificat/${params.zacharie_carcasse_id}/all` })
+        .then((res) => {
+          setCertificats(res.data);
           setIsLoading(false);
         })
         .catch((error) => {

@@ -8,6 +8,7 @@ import type { UserConnexionResponse } from '@api/src/types/responses';
 import { usePush } from '@app/sw/web-push-notifications';
 import useUser from '@app/zustand/user';
 import { useNavigate } from 'react-router';
+import API from '@app/services/api';
 
 export default function MesNotifications() {
   const user = useUser((state) => state.user)!;
@@ -70,17 +71,10 @@ export default function MesNotifications() {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const notifications = formData.getAll('notifications') as UserNotifications[];
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/user/${user.id}`, {
-          method: 'POST',
-          credentials: 'include',
-          body: JSON.stringify({ notifications, onboarding_finished: true }),
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-        })
-          .then((response) => response.json())
-          .then((data) => data as UserConnexionResponse);
+        const response = await API.post({
+          path: `user/${user.id}`,
+          body: { notifications, onboarding_finished: true },
+        }).then((data) => data as UserConnexionResponse);
         if (response.ok && response.data?.user?.id) {
           useUser.setState({ user: response.data.user });
           navigate('/app/tableau-de-bord');
@@ -126,22 +120,12 @@ export default function MesNotifications() {
                           subscribeToPush(
                             VITE_VAPID_PUBLIC_KEY,
                             async (subscription) => {
-                              const response = await fetch(
-                                `${import.meta.env.VITE_API_URL}/user/${user.id}`,
-                                {
-                                  method: 'POST',
-                                  credentials: 'include',
-                                  body: JSON.stringify({
-                                    web_push_token: JSON.stringify(subscription.toJSON()),
-                                  }),
-                                  headers: {
-                                    Accept: 'application/json',
-                                    'Content-Type': 'application/json',
-                                  },
+                              const response = await API.post({
+                                path: `user/${user.id}`,
+                                body: {
+                                  web_push_token: JSON.stringify(subscription.toJSON()),
                                 },
-                              )
-                                .then((response) => response.json())
-                                .then((data) => data as UserConnexionResponse);
+                              }).then((data) => data as UserConnexionResponse);
                               if (response.ok && response.data?.user?.id) {
                                 useUser.setState({ user: response.data.user });
                               }

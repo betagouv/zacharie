@@ -6,6 +6,7 @@ import { Prisma, EntityTypes } from '@prisma/client';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
 import type { AdminNewEntityResponse } from '@api/src/types/responses';
+import API from '@app/services/api';
 
 export default function AdminNouvelleEntite() {
   const [isLoading, setIsLoading] = useState(false);
@@ -18,16 +19,10 @@ export default function AdminNouvelleEntite() {
         event.preventDefault();
         setIsLoading(true);
         const formData = new FormData(event.target as HTMLFormElement);
-        fetch(`${import.meta.env.VITE_API_URL}/admin/entity/nouvelle`, {
-          method: 'POST',
-          credentials: 'include',
-          body: JSON.stringify(Object.fromEntries(formData)),
-          headers: new Headers({
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          }),
+        API.post({
+          path: 'admin/entity/nouvelle',
+          body: Object.fromEntries(formData),
         })
-          .then((res) => res.json())
           .then((res) => res as AdminNewEntityResponse)
           .then((res) => {
             if (res.ok) {

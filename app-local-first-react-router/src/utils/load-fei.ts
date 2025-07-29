@@ -11,6 +11,7 @@ import type {
   FeiAndIntermediaireIds,
   FeiIntermediaire,
 } from '@app/types/fei-intermediaire';
+import API from '@app/services/api';
 
 export async function loadFei(fei_numero: string) {
   const isOnline = useZustandStore.getState().isOnline;
@@ -18,12 +19,7 @@ export async function loadFei(fei_numero: string) {
     console.log('not loading fei because not online');
     return;
   }
-  const feiData = await fetch(`${import.meta.env.VITE_API_URL}/fei/${fei_numero}`, {
-    method: 'GET',
-    credentials: 'include',
-  })
-    .then((res) => res.json())
-    .then((res) => res as FeiResponse);
+  const feiData = await API.get({ path: `fei/${fei_numero}` }).then((res) => res as FeiResponse);
   if (!feiData.ok) {
     return null;
   }

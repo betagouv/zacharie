@@ -17,6 +17,7 @@ import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
 import useUser from '@app/zustand/user';
 import { UserConnexionResponse } from '@api/src/types/responses';
+import API from '@app/services/api';
 
 async function loadData() {
   await syncData('tableau-de-bord');
@@ -41,17 +42,10 @@ export default function TableauDeBordIndex() {
 
   useEffect(() => {
     window.onNativePushToken = async function handleNativePushToken(token) {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/user/${user.id}`, {
-        method: 'POST',
-        credentials: 'include',
-        body: JSON.stringify({ native_push_token: token }),
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => data as UserConnexionResponse);
+      const response = await API.post({
+        path: `user/${user.id}`,
+        body: { native_push_token: token },
+      }).then((response) => response as UserConnexionResponse);
       if (response.ok && response.data?.user?.id) {
         useUser.setState({ user: response.data.user });
       }

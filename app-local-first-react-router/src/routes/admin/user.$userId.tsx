@@ -21,18 +21,10 @@ import type { AdminUserDataResponse } from '@api/src/types/responses';
 import { Link, useParams } from 'react-router';
 import Chargement from '@app/components/Chargement';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
+import API from '@app/services/api';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
-  fetch(`${import.meta.env.VITE_API_URL}/admin/user/${userId}`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: new Headers({
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    }),
-  })
-    .then((res) => res.json())
-    .then((res) => res as AdminUserDataResponse);
+  API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
 
 type State = NonNullable<AdminUserDataResponse['data']>;
 
@@ -98,26 +90,19 @@ export default function AdminUser() {
         ? { roles: formData.getAll('roles') }
         : Object.fromEntries(formData);
 
-    fetch(`${import.meta.env.VITE_API_URL}/user/${params.userId}`, {
-      method: 'POST',
-      credentials: 'include',
-      body: JSON.stringify(body),
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
-    })
-      .then((res) => res.json())
-      .then(() => {
-        loadData(params.userId!).then((res) => {
-          if (res.ok && res.data) {
-            setUserResponseData(res.data as State);
-          }
-          if (!res.ok) {
-            alert(res.error);
-          }
-        });
+    API.post({
+      path: `user/${params.userId}`,
+      body,
+    }).then(() => {
+      loadData(params.userId!).then((res) => {
+        if (res.ok && res.data) {
+          setUserResponseData(res.data as State);
+        }
+        if (!res.ok) {
+          alert(res.error);
+        }
       });
+    });
   };
 
   const [selectedTabId, setSelectedTabId] = useState('Identité');
@@ -585,26 +570,19 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
               }}
               isClosable={!isSviLinkedToEtg}
               onClose={() => {
-                fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: JSON.stringify({
+                API.post({
+                  path: `user/user-entity/${user.id}`,
+                  body: {
                     _action: 'delete',
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
                     relation,
-                  }),
-                  headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
                   },
-                })
-                  .then((res) => res.json())
-                  .then(() => {
-                    loadData(entity.id).then((response) => {
-                      if (response.data) setUserResponseData(response.data!);
-                    });
+                }).then(() => {
+                  loadData(entity.id).then((response) => {
+                    if (response.data) setUserResponseData(response.data!);
                   });
+                });
               }}
               title={
                 <Link
@@ -641,26 +619,19 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 method="POST"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
-                    method: 'POST',
-                    credentials: 'include',
-                    body: JSON.stringify({
+                  API.post({
+                    path: `user/user-entity/${user.id}`,
+                    body: {
                       _action: 'create',
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                       relation,
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                    }),
-                    headers: {
-                      Accept: 'application/json',
-                      'Content-Type': 'application/json',
                     },
-                  })
-                    .then((res) => res.json())
-                    .then(() => {
-                      loadData(user.id).then((response) => {
-                        if (response.data) setUserResponseData(response.data!);
-                      });
+                  }).then(() => {
+                    loadData(user.id).then((response) => {
+                      if (response.data) setUserResponseData(response.data!);
                     });
+                  });
                 }}
               >
                 <Link

@@ -3,6 +3,7 @@ import type { FeiDone, FeiWithIntermediaires } from '@api/src/types/fei';
 import useZustandStore from '@app/zustand/store';
 import { loadFei } from '@app/utils/load-fei';
 import dayjs from 'dayjs';
+import API from '@app/services/api';
 
 export async function loadFeis() {
   const isOnline = useZustandStore.getState().isOnline;
@@ -12,16 +13,7 @@ export async function loadFeis() {
   }
   useZustandStore.setState({ dataIsSynced: false });
   try {
-    const responseDone = await fetch(`${import.meta.env.VITE_API_URL}/fei/done`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
-    })
-      .then((res) => res.json())
-      .then((res) => res as FeisDoneResponse);
+    const responseDone = await API.get({ path: 'fei/done' }).then((res) => res as FeisDoneResponse);
 
     if (!responseDone.ok) {
       return;
@@ -40,16 +32,7 @@ export async function loadFeis() {
       feisDoneNumeros: Object.keys(feisDone),
     });
 
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/fei`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
-    })
-      .then((res) => res.json())
-      .then((res) => res as FeisResponse);
+    const response = await API.get({ path: 'fei' }).then((res) => res as FeisResponse);
 
     if (!response.ok) {
       return;

@@ -2,6 +2,7 @@ import type { CarcassesGetForRegistryResponse } from '@api/src/types/responses';
 import useZustandStore from '@app/zustand/store';
 import { UserRoles } from '@prisma/client';
 import { mergeItems } from './merge-fetched-items';
+import API from '@app/services/api';
 
 export async function loadCarcasses(role: UserRoles) {
   const isOnline = useZustandStore.getState().isOnline;
@@ -12,26 +13,15 @@ export async function loadCarcasses(role: UserRoles) {
 
   // Get date from server before downloading the data
   // We'll set the `lastUpdateCarcassesRegistry` to this date after all the data is downloaded
-  const serverDate = await fetch(`${import.meta.env.VITE_API_URL}/now`, {
-    credentials: 'include',
-  })
-    .then((res) => res.json())
-    .then((res) => (res.ok ? res.data : null));
+  const serverDate = await API.get({ path: 'now' }).then((res) => (res.ok ? res.data : null));
 
-  const queryString = new URLSearchParams({
-    after: String(useZustandStore.getState().lastUpdateCarcassesRegistry),
-    withDeleted: 'true',
-  }).toString();
-
-  const carcassesData = await fetch(
-    `${import.meta.env.VITE_API_URL}/fei-carcasse/${role.toLocaleLowerCase()}?${queryString}`,
-    {
-      method: 'GET',
-      credentials: 'include',
+  const carcassesData = await API.get({
+    path: `fei-carcasse/${role.toLocaleLowerCase()}`,
+    query: {
+      after: String(useZustandStore.getState().lastUpdateCarcassesRegistry),
+      withDeleted: 'true',
     },
-  )
-    .then((res) => res.json())
-    .then((res) => res as CarcassesGetForRegistryResponse);
+  }).then((res) => res as CarcassesGetForRegistryResponse);
   if (!carcassesData.ok) {
     return null;
   }

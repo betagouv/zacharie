@@ -5,6 +5,7 @@ import RolesCheckBoxes from '@app/components/RolesCheckboxes';
 import { useNavigate } from 'react-router';
 import { useState } from 'react';
 import type { AdminUserDataResponse } from '@api/src/types/responses';
+import API from '@app/services/api';
 
 export default function AdminNewUser() {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,19 +20,13 @@ export default function AdminNewUser() {
         const formData = new FormData(event.target as HTMLFormElement);
         const roles = formData.getAll('roles');
         const email = formData.get(Prisma.UserScalarFieldEnum.email);
-        fetch(`${import.meta.env.VITE_API_URL}/admin/user/nouveau`, {
-          method: 'POST',
-          credentials: 'include',
-          body: JSON.stringify({
+        API.post({
+          path: 'admin/user/nouveau',
+          body: {
             email,
             roles,
-          }),
-          headers: new Headers({
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          }),
+          },
         })
-          .then((res) => res.json())
           .then((res) => res as AdminUserDataResponse)
           .then((res) => {
             if (res.ok && res.data) {

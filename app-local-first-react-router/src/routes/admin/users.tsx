@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import type { AdminUsersResponse } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
+import API from '@app/services/api';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<NonNullable<AdminUsersResponse['data']['users']>>([]);
@@ -26,15 +27,7 @@ export default function AdminUsers() {
   const [selectedTabId, setSelectedTabId] = useState(tabs[0].tabId);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/admin/users`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
-    })
-      .then((res) => res.json())
+    API.get({ path: 'admin/users' })
       .then((res) => res as AdminUsersResponse)
       .then((res) => {
         if (res.ok) {
@@ -133,17 +126,11 @@ export default function AdminUsers() {
                         onSubmit={(event) => {
                           event.preventDefault();
 
-                          fetch(`${import.meta.env.VITE_API_URL}/admin/user/connect-as`, {
-                            method: 'POST',
-                            credentials: 'include',
-                            body: JSON.stringify({
+                          API.post({
+                            path: 'admin/user/connect-as',
+                            body: {
                               email: user.email!,
-                            }),
-                            headers: new Headers({
-                              Accept: 'application/json',
-                              'Content-Type': 'application/json',
-                              platform: window.ReactNativeWebView ? 'native' : 'web',
-                            }),
+                            },
                           })
                             .then(() => {
                               window.localStorage.clear();

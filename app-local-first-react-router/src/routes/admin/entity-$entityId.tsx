@@ -12,17 +12,9 @@ import type { AdminGetEntityResponse, AdminActionEntityResponse } from '@api/src
 import type { EntityForAdmin } from '@api/src/types/entity';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import InputNotEditable from '@app/components/InputNotEditable';
+import API from '@app/services/api';
 const loadData = (entityId: string): Promise<AdminGetEntityResponse> =>
-  fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entityId}`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: new Headers({
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    }),
-  })
-    .then((res) => res.json())
-    .then((res) => res as AdminGetEntityResponse);
+  API.get({ path: `admin/entity/${entityId}` }).then((res) => res as AdminGetEntityResponse);
 
 type State = NonNullable<AdminGetEntityResponse['data']>;
 
@@ -128,7 +120,7 @@ export default function AdminEntity() {
         {`${entity.nom_d_usage} (${entity.type}) | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
       </title>
       {isSaving && (
-        <div className="fixed right-0 top-0 bg-action-high-blue-france">
+        <div className="bg-action-high-blue-france fixed top-0 right-0">
           <span className="p-4 text-white">Enregistrement en cours</span>
         </div>
       )}
@@ -141,7 +133,7 @@ export default function AdminEntity() {
               selectedTabId={selectedTabId}
               tabs={tabs}
               onTabChange={setSelectedTabId}
-              className="mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:bg-alt-blue-france! [&_.fr-tabs\_\_list]:shadow-none!"
+              className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
             >
               {selectedTabId === 'Raison Sociale' && (
                 <form
@@ -153,16 +145,10 @@ export default function AdminEntity() {
                     await new Promise((resolve) => setTimeout(resolve, 300));
                     const formData = new FormData(formRef.current!);
                     setIsSaving(true);
-                    fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${params.entityId}`, {
-                      method: 'POST',
-                      credentials: 'include',
-                      body: JSON.stringify(Object.fromEntries(formData)),
-                      headers: new Headers({
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                      }),
+                    API.post({
+                      path: `admin/entity/${params.entityId}`,
+                      body: Object.fromEntries(formData),
                     })
-                      .then((res) => res.json())
                       .then((res) => res as AdminActionEntityResponse)
                       .then(() => {
                         loadData(params.entityId!).then((response) => {
@@ -377,7 +363,7 @@ export default function AdminEntity() {
                   setIsSaving={setIsSaving}
                 />
               )}
-              <div className="mb-16 ml-6 mt-6">
+              <div className="mt-6 mb-16 ml-6">
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>
@@ -432,21 +418,16 @@ function UserWorkingWithOrFor({
               isClosable
               onClose={() => {
                 setIsSaving(true);
-                fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${owner.id}`, {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: JSON.stringify({
+                API.post({
+                  path: `user/user-entity/${owner.id}`,
+                  body: {
                     _action: 'delete',
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: owner.id,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
                     relation,
-                  }),
-                  headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
                   },
                 })
-                  .then((res) => res.json())
+                  .then((res) => res as AdminActionEntityResponse)
                   .then(() => {
                     loadData(entity.id).then((response) => {
                       if (response.data) setAdminEntityResponse(response.data!);
@@ -488,21 +469,16 @@ function UserWorkingWithOrFor({
               onSubmit={(event) => {
                 event.preventDefault();
                 setIsSaving(true);
-                fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: JSON.stringify({
+                API.post({
+                  path: `user/user-entity/${user.id}`,
+                  body: {
                     _action: 'create',
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     relation,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                  }),
-                  headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
                   },
                 })
-                  .then((res) => res.json())
+                  .then((res) => res as AdminActionEntityResponse)
                   .then(() => {
                     loadData(entity.id).then((response) => {
                       if (response.data) setAdminEntityResponse(response.data!);
@@ -629,19 +605,14 @@ function EntitiesRelatedTo({
             isClosable
             onClose={() => {
               setIsSaving(true);
-              fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entity.id}`, {
-                method: 'POST',
-                credentials: 'include',
-                body: JSON.stringify({
+              API.post({
+                path: `admin/entity/${entity.id}`,
+                body: {
                   _action: 'remove-etg-relation',
                   etg_id_entity_id: `${etg.id}_${otherEntity.id}`,
-                }),
-                headers: new Headers({
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                }),
+                },
               })
-                .then((res) => res.json())
+                .then((res) => res as AdminActionEntityResponse)
                 .then(() => {
                   loadData(entity.id).then((response) => {
                     if (response.data) setAdminEntityResponse(response.data!);
@@ -693,22 +664,17 @@ function EntitiesRelatedTo({
                   onSubmit={(event) => {
                     event.preventDefault();
                     setIsSaving(true);
-                    fetch(`${import.meta.env.VITE_API_URL}/admin/entity/${entity.id}`, {
-                      method: 'POST',
-                      credentials: 'include',
-                      body: JSON.stringify({
+                    API.post({
+                      path: `admin/entity/${entity.id}`,
+                      body: {
                         _action: 'add-etg-relation',
                         etg_id_entity_id: `${etg.id}_${otherEntity.id}`,
                         etg_id: etg.id,
                         entity_id: otherEntity.id,
                         entity_type: otherEntity.type,
-                      }),
-                      headers: new Headers({
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                      }),
+                      },
                     })
-                      .then((res) => res.json())
+                      .then((res) => res as AdminActionEntityResponse)
                       .then(() => {
                         loadData(entity.id).then((response) => {
                           if (response.data) setAdminEntityResponse(response.data!);

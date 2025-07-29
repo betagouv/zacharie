@@ -12,6 +12,7 @@ import Chargement from '@app/components/Chargement';
 import { capture } from '@app/services/sentry';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import API from '@app/services/api';
 
 type ConnexionType = 'creation-de-compte' | 'compte-existant';
 
@@ -33,24 +34,17 @@ export default function Connexion() {
       setIsLoading(true);
       const form = event.currentTarget.closest('form') as HTMLFormElement;
       const formData = new FormData(form);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/user/connexion`, {
-        method: 'POST',
-        credentials: 'include',
-        body: JSON.stringify({
+      const response = await API.post({
+        path: 'user/connexion',
+        body: {
           email: formData.get('email-utilisateur'),
           username: formData.get('name'),
           passwordUser: formData.get('password-utilisateur'),
           connexionType: formData.get('connexion-type'),
           resetPasswordRequest: resetPassword,
           resetPasswordToken: formData.get('reset-password-token'),
-        }),
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          platform: window.ReactNativeWebView ? 'native' : 'web',
         },
       })
-        .then((response) => response.json())
         .then((response) => response as UserConnexionResponse)
         .catch((error) => {
           capture(error, { extra: { formData: Object.fromEntries(formData) } });
