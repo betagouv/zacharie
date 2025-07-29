@@ -61,7 +61,7 @@ test.describe("Fiches premier détenteur", () => {
     await page.getByText("Je transporte les carcasses moi-mêmeN'oubliez pas de notifier le prochain dé").click();
     await page.getByText("Le transport est réalisé par").click();
     await page.getByText("Je transporte les carcasses").click();
-    await page.getByRole("button", { name: "Envoyer" }).click();
+    await page.getByRole("button", { name: "Transmettre la fiche" }).click();
     await expect(page.getByRole("heading", { name: "Attribution effectuée" })).toBeVisible();
     await expect(page.getByText("ETG 1 a été notifié")).toBeVisible();
   });
@@ -92,7 +92,7 @@ test.describe("Fiches premier détenteur", () => {
     await page.getByText("Je transporte les carcasses moi-mêmeN'oubliez pas de notifier le prochain dé").click();
     await expect(page.getByText("Il manque la date de transport")).toBeVisible();
     await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour et maintenant." }).click();
-    await page.getByRole("button", { name: "Envoyer" }).click();
+    await page.getByRole("button", { name: "Transmettre la fiche" }).click();
     await expect(page.getByText("ETG 1 a été notifié")).toBeVisible();
   });
 
@@ -120,7 +120,7 @@ test.describe("Fiches premier détenteur", () => {
     await page.getByRole("button", { name: "CCG Chasseurs" }).click();
     await page.getByRole("button", { name: "Cliquez ici pour définir la" }).click();
     await page.getByText("Le transport est réalisé par un collecteur professionnel").click();
-    await page.getByRole("button", { name: "Envoyer" }).click();
+    await page.getByRole("button", { name: "Transmettre la fiche" }).click();
     await expect(page.getByText("ETG 1 a été notifié")).toBeVisible();
   });
 });

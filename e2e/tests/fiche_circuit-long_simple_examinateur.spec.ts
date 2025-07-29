@@ -66,11 +66,11 @@ test.describe("Fiches examinateur initial", () => {
     await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).blur();
     await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour et maintenant" }).click();
     await page.getByText("Je, Martin Marie, certifie qu").click();
-    await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
+    await page.getByRole("button", { name: "Enregistrer la fiche", exact: true }).click();
     await page
       .getByLabel("Quel Premier Détenteur doit désormais agir sur la fiche ?")
       .selectOption("Pierre Petit - 75000 Paris");
-    await page.getByRole("button", { name: "Envoyer" }).click();
+    await page.getByRole("button", { name: "Transmettre la fiche" }).click();
     await expect(page.getByRole("heading", { name: "Attribution effectuée" })).toBeVisible();
     // get fei id
     const feiId = page.url().split("/").pop()!;

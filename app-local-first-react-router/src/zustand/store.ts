@@ -202,7 +202,7 @@ const useZustandStore = create<State & Actions>()(
           fei_numero: FeiWithIntermediaires['numero'],
           partialFei: Partial<FeiWithIntermediaires>,
         ) => {
-          // console.log('updateFei', fei_numero, JSON.stringify(partialFei, null, 2));
+          console.log('updateFei', fei_numero, JSON.stringify(partialFei, null, 2));
           const state = useZustandStore.getState();
           const feis = state.feis;
           const carcassefeiCarcasses = (state.carcassesIdsByFei[fei_numero] || []).map(
@@ -308,6 +308,7 @@ const useZustandStore = create<State & Actions>()(
                 intermediaire_depot_entity_id: null,
                 intermediaire_prochain_detenteur_type_cache: null,
                 intermediaire_prochain_detenteur_id_cache: null,
+                intermediaire_poids: null,
                 created_at: newIntermediaire.created_at,
                 updated_at: newIntermediaire.created_at,
                 deleted_at: null,

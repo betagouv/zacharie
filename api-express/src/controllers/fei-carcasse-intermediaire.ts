@@ -124,7 +124,7 @@ router.post(
         body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_entity_id];
     }
 
-    let carcasseIntermediaire = await prisma.carcasseIntermediaire.findUnique({
+    let carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
       where: {
         fei_numero_zacharie_carcasse_id_intermediaire_id: {
           fei_numero: fei_numero,
@@ -132,23 +132,9 @@ router.post(
           intermediaire_id: intermediaire_id,
         },
       },
+      create: data,
+      update: data,
     });
-    if (carcasseIntermediaire) {
-      carcasseIntermediaire = await prisma.carcasseIntermediaire.update({
-        where: {
-          fei_numero_zacharie_carcasse_id_intermediaire_id: {
-            fei_numero: fei_numero,
-            zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
-            intermediaire_id: intermediaire_id,
-          },
-        },
-        data,
-      });
-    } else {
-      carcasseIntermediaire = await prisma.carcasseIntermediaire.create({
-        data,
-      });
-    }
 
     res.status(200).send({
       ok: true,

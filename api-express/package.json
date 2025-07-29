@@ -7,6 +7,7 @@
     "pre:dev": "npm run prisma-setup && cross-env NODE_ENV=development npx prisma db push && node ./scripts/copy-schema-to-app-side.js && npm run format && npm run typecheck",
     "dev": "npm run pre:dev && PORT=3235 tsx watch ./src/index.ts",
     "dev-test": "POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest npm run prisma-setup && cross-env NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest npx prisma db push && NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest tsx ./scripts/populate-test-db.ts && NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest PORT=3291 tsx watch ./src/index.ts",
+    "dev-test-short": "NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest tsx ./scripts/populate-test-db.ts && NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest PORT=3291 tsx watch ./src/index.ts",
     "dev-cronjobs": "npm run prisma-setup && cross-env NODE_ENV=development npx prisma db push && node ./scripts/copy-schema-to-app-side.js && npm run pre:dev && tsx watch ./src/cronjobs/index.ts",
     "start": "cross-env NODE_ENV=production npm run prisma-setup && npm run prisma-deploy && PORT=8080 tsx ./src/index.ts",
     "start-local": "cross-env NODE_ENV=development npm run prisma-setup && npm run prisma-deploy && PORT=3235 tsx ./src/index.ts",
