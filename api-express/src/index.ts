@@ -13,7 +13,8 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import logger from 'morgan';
-import passport from './middlewares/passport';
+import passport from 'passport';
+import './middlewares/passport';
 
 import { ENVIRONMENT, PORT, SENTRY_KEY, VERSION } from './config.ts';
 import { sendError } from './middlewares/errors.ts';
@@ -31,6 +32,7 @@ import logRouter from './controllers/log.ts';
 import webhooksRouter from './controllers/webhooks.ts';
 import utilsRouter from './controllers/utils.ts';
 import statsRouter from './controllers/stats.ts';
+import v1Router from './controllers/v1/index.ts';
 import './cronjobs/index.ts';
 import './scripts/migrations.ts';
 
@@ -132,22 +134,22 @@ app.post('/sentry-check', async (req, res) => {
   res.status(200).send({ ok: true, data: 'Sentry checked!' });
 });
 
-// check version before checking other controllers
-passport(app);
+// v1 - REST API used with external clients and api keys
+app.use('/v1', v1Router);
 
-// Routes
-app.use('/user', userRouter);
-app.use('/admin', adminRouter);
-app.use('/entite', entiteRouter);
-app.use('/fei', feiRouter);
-app.use('/fei-carcasse', feiCarcasseRouter);
-app.use('/certificat', certificatsRouter);
-app.use('/fei-carcasse-intermediaire', feiCarcasseIntermediaireRouter);
-app.use('/log', logRouter);
-app.use('/search', searchRouter);
-app.use('/webhooks', webhooksRouter);
-app.use('/stats', statsRouter);
-app.use('/', utilsRouter);
+// Routes used by zacharie.beta.gouv.fr
+app.use('/user', passport.initialize(), userRouter);
+app.use('/admin', passport.initialize(), adminRouter);
+app.use('/entite', passport.initialize(), entiteRouter);
+app.use('/fei', passport.initialize(), feiRouter);
+app.use('/fei-carcassepassport.initialize(),', feiCarcasseRouter);
+app.use('/certificat', passport.initialize(), certificatsRouter);
+app.use('/fei-carcassepassport.initialize(),-intermediaire', feiCarcasseIntermediaireRouter);
+app.use('/log', passport.initialize(), logRouter);
+app.use('/search', passport.initialize(), searchRouter);
+app.use('/webhooks', passport.initialize(), webhooksRouter);
+app.use('/stats', passport.initialize(), statsRouter);
+app.use('/', passport.initialize(), utilsRouter);
 
 app.use(Sentry.Handlers.errorHandler());
 app.use(sendError);

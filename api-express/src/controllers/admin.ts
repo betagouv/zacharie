@@ -4,7 +4,7 @@ const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import jwt from 'jsonwebtoken';
 import createUserId from '~/utils/createUserId';
-import { EntityRelationType, EntityTypes, Prisma, UserRoles } from '@prisma/client';
+import { ApiKeyScope, EntityRelationType, EntityTypes, Prisma, UserRoles } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE } from '~/utils/cookie';
 import { SECRET } from '~/config';
 import { userAdminSelect } from '~/types/user';
@@ -87,6 +87,24 @@ router.post(
       res.status(200).send({ ok: true, data: { user: createdUser }, error: '' });
     },
   ),
+);
+
+router.post(
+  '/api-key/nouvelle',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const createdApiKey = await prisma.apiKey.create({
+      data: {
+        name: 'api-key-test',
+        private_key: 'private-key-test',
+        public_key: 'public-key-test',
+        scopes: [ApiKeyScope.FEI_READ_FOR_USER],
+      },
+    });
+
+    res.status(200).send({ ok: true });
+  }),
 );
 
 router.get(
