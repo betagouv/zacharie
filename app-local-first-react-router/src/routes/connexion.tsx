@@ -47,6 +47,7 @@ export default function Connexion() {
       })
         .then((response) => response as UserConnexionResponse)
         .catch((error) => {
+          console.log('PLAF');
           capture(error, { extra: { formData: Object.fromEntries(formData) } });
           return {
             ok: false,
@@ -56,6 +57,8 @@ export default function Connexion() {
           };
         });
       setIsLoading(false);
+      console.log('response', response);
+      return;
       if (response.message) {
         window.scrollTo(0, 0);
       }

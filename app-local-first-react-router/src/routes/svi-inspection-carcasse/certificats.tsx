@@ -63,12 +63,10 @@ export default function CarcasseSVICertificats() {
 
 function CertificatCard({ certificat }: { certificat: Certificat }) {
   const handleDownload = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/certificat/${certificat.certificat_id}`, {
-      method: 'GET',
-      credentials: 'include',
+    API.get({
+      path: `certificat/${certificat.certificat_id}`,
       headers: {
         Accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       },
     })
       .then((res) => res.blob())

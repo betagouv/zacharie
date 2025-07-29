@@ -10,11 +10,14 @@ but when the url in the browser is http://x.x.x.x:3234, the api needs to be call
 
 so here below is a trick when dev on a browser with localhost
 */
-if (API_URL.protocol === 'http') {
+if (API_URL.protocol === 'http:') {
+  console.log('window.location.origin', window.location.origin);
   if (window.location.origin.includes('localhost')) {
     API_URL = new URL('http://localhost:3235');
   }
 }
+
+console.log('API_URL', API_URL);
 
 interface ApiServiceArgs {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -22,17 +25,26 @@ interface ApiServiceArgs {
   query?: Record<string, string>;
   headers?: Record<string, string>;
   body?: Record<string, unknown> | null;
+  signal?: AbortSignal;
 }
 
 class ApiService {
   origin = import.meta.env.VITE_API_URL;
   getUrl = (path: string, query = {}) => {
+    console.log('API_URL', API_URL);
     const url = new URL(API_URL);
     url.pathname = path;
     url.search = new URLSearchParams(query).toString();
     return url.toString();
   };
-  execute = async ({ method = 'GET', path = '', query = {}, headers = {}, body = null }: ApiServiceArgs) => {
+  execute = async ({
+    method = 'GET',
+    path = '',
+    query = {},
+    headers = {},
+    body = null,
+    signal,
+  }: ApiServiceArgs) => {
     try {
       const config = {
         method,
@@ -44,6 +56,7 @@ class ApiService {
           platform: window.ReactNativeWebView ? 'native' : 'web',
           ...headers,
         },
+        signal: signal,
         body: body ? JSON.stringify(body) : null,
       };
 
@@ -58,6 +71,7 @@ class ApiService {
 
       const url = this.getUrl(path, query);
       console.log('url: ', url);
+      console.log('config: ', config);
 
       const response = await fetch(url, config);
 

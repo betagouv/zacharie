@@ -8,9 +8,12 @@ export function cookieOptions(secureInDev = true) {
   if (IS_DEV_OR_TEST) {
     return {
       maxAge: COOKIE_MAX_AGE,
+      // httpOnly: true,
+      // secure: secureInDev,
+      // sameSite: secureInDev ? ('none' as const) : ('lax' as const),
       httpOnly: true,
-      secure: secureInDev,
-      sameSite: secureInDev ? ('none' as const) : ('lax' as const),
+      secure: true,
+      sameSite: 'none' as const,
     };
   }
   console.log('PROD COOKIE OPTIONS');
