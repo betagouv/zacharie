@@ -1,6 +1,6 @@
 import express from 'express';
 import passport from 'passport';
-import { catchErrors } from '../middlewares/errors';
+import { catchErrors } from '~/middlewares/errors';
 import type { RequestWithUser } from '~/types/request';
 import type { EntitiesWorkingForResponse } from '~/types/responses';
 const router: express.Router = express.Router();

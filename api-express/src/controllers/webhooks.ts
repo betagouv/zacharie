@@ -1,6 +1,6 @@
 import express from 'express';
 import passport from 'passport';
-import { catchErrors } from '../middlewares/errors';
+import { catchErrors } from '~/middlewares/errors';
 const router: express.Router = express.Router();
 import crypto from 'crypto';
 import { SENTRY_SECRET, BREVO_BEARER } from '~/config';
