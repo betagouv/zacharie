@@ -5,6 +5,7 @@ import { Prisma, type User, UserRoles } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import { useNavigate } from 'react-router';
+import API from '@app/services/api';
 
 export default function MesRoles() {
   const user = useUser((state) => state.user)!;
@@ -19,17 +20,10 @@ export default function MesRoles() {
         const formData = new FormData(e.currentTarget);
         const roles = formData.getAll(Prisma.UserScalarFieldEnum.roles);
         const body: Partial<User> = { roles: roles as UserRoles[] };
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/user/${user.id}`, {
-          method: 'POST',
-          credentials: 'include',
-          body: JSON.stringify(body),
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-        })
-          .then((response) => response.json())
-          .then((data) => data as UserConnexionResponse);
+        const response = await API.post({
+          path: `user/${user.id}`,
+          body,
+        }).then((data) => data as UserConnexionResponse);
         if (response.ok && response.data?.user?.id) {
           useUser.setState({ user: response.data.user });
           navigate('/app/tableau-de-bord/mon-profil/mes-informations');

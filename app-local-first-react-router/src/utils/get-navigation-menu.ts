@@ -4,6 +4,7 @@ import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation'
 import { clearCache } from '@app/services/indexed-db';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { createNewFei } from './create-new-fei';
+import API from '@app/services/api';
 
 export default function useNavigationMenu() {
   const location = useLocation();
@@ -13,13 +14,7 @@ export default function useNavigationMenu() {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    fetch(`${import.meta.env.VITE_API_URL}/user/logout`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        platform: window.ReactNativeWebView ? 'native' : 'web',
-      },
-    }).then(async (res) => {
+    API.post({ path: 'user/logout' }).then(async (res) => {
       if (res.ok) {
         await clearCache().then(() => {
           window.location.href = '/app/connexion?type=compte-existant';

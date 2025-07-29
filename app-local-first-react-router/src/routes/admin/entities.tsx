@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Chargement from '@app/components/Chargement';
 import Tabs, { TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { EntityTypes } from '@prisma/client';
+import API from '@app/services/api';
 
 export default function AdminEntites() {
   const [entities, setUsers] = useState<NonNullable<AdminEntitiesResponse['data']['entities']>>([]);
@@ -39,15 +40,9 @@ export default function AdminEntites() {
   const [selectedTabId, setSelectedTabId] = useState(tabs[0].tabId);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/admin/entities`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
+    API.get({
+      path: 'admin/entities',
     })
-      .then((res) => res.json())
       .then((res) => res as AdminEntitiesResponse)
       .then((res) => {
         if (res.ok) {
@@ -71,7 +66,7 @@ export default function AdminEntites() {
               selectedTabId={selectedTabId}
               tabs={tabs}
               onTabChange={setSelectedTabId}
-              className="mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:bg-alt-blue-france! [&_.fr-tabs\_\_list]:shadow-none!"
+              className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
             >
               <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
                 <Table

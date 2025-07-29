@@ -11,6 +11,7 @@ import useUser from '@app/zustand/user';
 import { useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import API from '@app/services/api';
 
 export default function SelectNextForExaminateur({ disabled }: { disabled?: boolean }) {
   const params = useParams();
@@ -183,23 +184,13 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
               event.preventDefault();
               setIsSearchingUser(true);
               const formData = new FormData(event.currentTarget);
-              const userSearchResponse = await fetch(
-                `${import.meta.env.VITE_API_URL}/user/fei/trouver-premier-detenteur`,
-                {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: JSON.stringify({
-                    email: formData.get(Prisma.UserScalarFieldEnum.email) as string,
-                    numero: fei.numero,
-                  }),
-                  headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                  },
+              const userSearchResponse = await API.post({
+                path: 'user/fei/trouver-premier-detenteur',
+                body: {
+                  email: formData.get(Prisma.UserScalarFieldEnum.email) as string,
+                  numero: fei.numero,
                 },
-              )
-                .then((response) => response.json())
-                .then((response) => response as UserForFeiResponse);
+              }).then((response) => response as UserForFeiResponse);
               setIsSearchingUser(false);
               if (userSearchResponse.ok) {
                 const nextPremierDetenteur = userSearchResponse.data?.user;

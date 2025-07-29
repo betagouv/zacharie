@@ -1,3 +1,4 @@
+import API from '@app/services/api';
 import { useEffect, useState } from 'react';
 
 export default function Stats() {
@@ -6,19 +7,19 @@ export default function Stats() {
   const [saisiesUrl, setSaisiesUrl] = useState('');
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/stats/nombre-de-carcasses-cumule`)
-      .then((res) => res.json())
-      .then((data) => {
-        setCarcassesCumuleUrl(data.data.carcassesCumuleUrl);
-        setEspecesUrl(data.data.especesUrl);
-        setSaisiesUrl(data.data.saisiesUrl);
-      });
+    API.get({
+      path: 'stats/nombre-de-carcasses-cumule',
+    }).then((data) => {
+      setCarcassesCumuleUrl(data.data.carcassesCumuleUrl);
+      setEspecesUrl(data.data.especesUrl);
+      setSaisiesUrl(data.data.saisiesUrl);
+    });
   }, []);
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+    <main className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <title>Statistiques | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-      <h1 className="text-3xl font-bold mb-6">Statistiques</h1>
+      <h1 className="mb-6 text-3xl font-bold">Statistiques</h1>
 
       <section className="space-y-4">
         {especesUrl && <iframe src={especesUrl} className="w-full" height={600} allowTransparency={true} />}

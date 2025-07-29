@@ -1,3 +1,4 @@
+import API from '@app/services/api';
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
@@ -33,14 +34,10 @@ export default function Stats() {
                   onSubmit={(e) => {
                     e.preventDefault();
                     setSent(true);
-                    console.log(Object.fromEntries(new FormData(e.currentTarget)));
-                    fetch(`${import.meta.env.VITE_API_URL}/contact`, {
-                      method: 'POST',
-                      body: JSON.stringify(Object.fromEntries(new FormData(e.currentTarget))),
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Accept: 'application/json',
-                      },
+                    const formData = new FormData(e.currentTarget);
+                    API.post({
+                      path: 'contact',
+                      body: Object.fromEntries(formData),
                     });
                   }}
                   className="space-y-4"

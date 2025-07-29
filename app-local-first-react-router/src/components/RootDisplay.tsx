@@ -7,6 +7,7 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef } from 'react';
+import API from '@app/services/api';
 
 export default function RootDisplay({
   navigation,
@@ -65,13 +66,7 @@ export default function RootDisplay({
       iconId: 'ri-logout-box-line',
       buttonProps: {
         onClick: async () => {
-          fetch(`${import.meta.env.VITE_API_URL}/user/logout`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              platform: window.ReactNativeWebView ? 'native' : 'web',
-            },
-          }).then(async (res) => {
+          API.post({ path: '/user/logout' }).then(async (res) => {
             if (res.ok) {
               await clearCache().then(() => {
                 window.location.href = '/app/connexion?type=compte-existant';

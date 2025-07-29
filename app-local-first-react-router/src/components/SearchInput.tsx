@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { SearchResponse } from '@api/src/types/responses';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { CarcasseType } from '@prisma/client';
+import API from '@app/services/api';
 
 interface SearchInputProps {
   className?: string;
@@ -30,24 +31,19 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
       setSuccessData([]);
       setValue(cachedValue);
       setIsLoading(true);
-      fetch(`${import.meta.env.VITE_API_URL}/search?q=${cachedValue}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-        .then((response) => response.json())
-        .then((data: SearchResponse) => {
-          setIsLoading(false);
-          if (data.data?.length) {
-            setSuccessData(data.data);
-          }
-          if (data.error) {
-            setError(data.error);
-            setSuccessData([]);
-          }
-        });
+      API.get({
+        path: 'search',
+        query: { q: cachedValue },
+      }).then((data: SearchResponse) => {
+        setIsLoading(false);
+        if (data.data?.length) {
+          setSuccessData(data.data);
+        }
+        if (data.error) {
+          setError(data.error);
+          setSuccessData([]);
+        }
+      });
     }, 500);
   }, [cachedValue, value]);
 

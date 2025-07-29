@@ -15,6 +15,7 @@ import type { EntitiesByTypeAndId } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
 import { useNavigate } from 'react-router';
 import SelectCustom from '@app/components/SelectCustom';
+import API from '@app/services/api';
 
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.PREMIER_DETENTEUR]: {},
@@ -65,15 +66,7 @@ export default function MesInformations() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/entite/working-for`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
-    })
-      .then((res) => res.json())
+    API.get({ path: 'entite/working-for' })
       .then((res) => res as EntitiesWorkingForResponse)
       .then((res) => {
         if (res.ok) {
@@ -87,17 +80,10 @@ export default function MesInformations() {
     async (event: React.FocusEvent<HTMLFormElement>) => {
       const formData = new FormData(event.currentTarget);
       const body: Partial<User> = Object.fromEntries(formData.entries());
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/user/${user.id}`, {
-        method: 'POST',
-        credentials: 'include',
-        body: JSON.stringify(body),
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => data as UserConnexionResponse);
+      const response = await API.post({
+        path: `user/${user.id}`,
+        body,
+      }).then((data) => data as UserConnexionResponse);
       if (response.ok && response.data?.user?.id) {
         useUser.setState({ user: response.data.user });
       }
@@ -111,17 +97,10 @@ export default function MesInformations() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const body: Partial<Entity> = Object.fromEntries(formData.entries());
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/entite/association-de-chasse`, {
-      method: 'POST',
-      credentials: 'include',
-      body: JSON.stringify(body),
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => data as UserConnexionResponse);
+    const response = await API.post({
+      path: 'entite/association-de-chasse',
+      body,
+    }).then((data) => data as UserConnexionResponse);
     if (response.ok) {
       setRefreshKey((prev) => prev + 1);
       setAssoPostalCode('');
@@ -579,26 +558,19 @@ function ListAndSelectEntities({
                   }}
                   isClosable={canChange ? true : false}
                   onClose={() => {
-                    fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
-                      method: 'POST',
-                      credentials: 'include',
-                      body: JSON.stringify({
+                    API.post({
+                      path: `user/user-entity/${user.id}`,
+                      body: {
                         _action: 'delete',
                         [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                         [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
                         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                      }),
-                      headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
                       },
-                    })
-                      .then((res) => res.json())
-                      .then((res) => {
-                        if (res.ok) {
-                          setRefreshKey((k) => k + 1);
-                        }
-                      });
+                    }).then((res) => {
+                      if (res.ok) {
+                        setRefreshKey((k) => k + 1);
+                      }
+                    });
                   }}
                   title={
                     <>
@@ -649,28 +621,21 @@ function ListAndSelectEntities({
               nativeButtonProps={{ form: formId }}
               onClick={(e) => {
                 e.preventDefault();
-                fetch(`${import.meta.env.VITE_API_URL}/user/user-entity/${user.id}`, {
-                  method: 'POST',
-                  credentials: 'include',
-                  body: JSON.stringify({
+                API.post({
+                  path: `user/user-entity/${user.id}`,
+                  body: {
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     _action: 'create',
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
                       EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entityId,
-                  }),
-                  headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
                   },
-                })
-                  .then((res) => res.json())
-                  .then((res) => {
-                    if (res.ok) {
-                      setRefreshKey((k) => k + 1);
-                      setEntityId(null);
-                    }
-                  });
+                }).then((res) => {
+                  if (res.ok) {
+                    setRefreshKey((k) => k + 1);
+                    setEntityId(null);
+                  }
+                });
               }}
               disabled={!remainingEntities.length}
             >
