@@ -74,6 +74,9 @@ model User {
   CarcasseIntermediaire          CarcasseIntermediaire[]  @relation("CarcasseIntermediaireUser")
   FeiNextUser                    Fei[]                    @relation("FeiNextUser")
   CarcassesIpm1                  Carcasse[]               @relation("SviIpm1User")
+  ApiKeyApprovalByUser           ApiKeyApprovalByUser[]
+  ApiKeyLog                      ApiKeyLog[]
+  ApiKey                         ApiKey[]
 
   @@index([id])
   @@index([email])
@@ -646,4 +649,88 @@ model CronJob {
   active     Boolean  @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
+}
+
+enum ApiKeyScope {
+  FEI_READ_FOR_USER
+  FEI_READ_FOR_ENTITY
+  CARCASSE_READ_FOR_USER
+  CARCASSE_READ_FOR_ENTITY
+}
+
+model ApiKey {
+  id           String        @id @default(uuid())
+  private_key  String        @unique
+  public_key   String        @unique
+  name         String
+  description  String? // Purpose of the API key
+  active       Boolean       @default(true)
+  expires_at   DateTime? // Optional expiration date
+  last_used_at DateTime? // Track when the key was last used
+  scopes       ApiKeyScope[] // Array of permissions/scopes
+  rate_limit   Int? // Requests per minute/hour allowed
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @default(now()) @updatedAt
+  deleted_at   DateTime? // Soft delete support
+
+  // Relations
+  approvals ApiKeyApprovalByUser[]
+  logs      ApiKeyLog[]
+  User      User?                  @relation(fields: [userId], references: [id])
+  userId    String?
+
+  @@index([active, expires_at]) // For checking valid keys
+  @@index([last_used_at]) // For cleanup of unused keys
+}
+
+enum ApiKeyApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ApiKeyApprovalByUser {
+  id         String               @id @default(uuid())
+  api_key_id String
+  user_id    String
+  status     ApiKeyApprovalStatus
+  created_at DateTime             @default(now())
+  updated_at DateTime             @default(now()) @updatedAt
+
+  // Relations
+  ApiKey ApiKey @relation(fields: [api_key_id], references: [id], onDelete: Cascade)
+  User   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([api_key_id, status])
+  @@index([user_id, status])
+}
+
+enum ApiKeyLogAction {
+  CREATED // When the API key is first created
+  USED // When the API key is used to make a request
+  REVOKED // When the API key is manually deactivated
+  EXPIRED // When the API key reaches its expiration date
+  UPDATED // When the API key details are modified
+  RATE_LIMITED // When a request is blocked due to rate limiting
+  INVALID_SCOPE // When a request is blocked due to insufficient permissions
+}
+
+model ApiKeyLog {
+  id          String          @id @default(uuid())
+  api_key_id  String
+  user_id     String
+  action      ApiKeyLogAction // Using enum instead of String
+  ip_address  String? // IP address of the request
+  user_agent  String? // User agent of the request
+  endpoint    String? // Which API endpoint was accessed
+  status_code Int? // Response status code
+  created_at  DateTime        @default(now())
+  updated_at  DateTime        @default(now()) @updatedAt
+
+  // Relations
+  ApiKey ApiKey @relation(fields: [api_key_id], references: [id], onDelete: Cascade)
+  User   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([api_key_id, created_at])
+  @@index([user_id, created_at])
 }

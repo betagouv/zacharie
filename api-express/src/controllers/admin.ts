@@ -1,5 +1,5 @@
 import express from 'express';
-import { catchErrors } from '../middlewares/errors';
+import { catchErrors } from '~/middlewares/errors';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import jwt from 'jsonwebtoken';

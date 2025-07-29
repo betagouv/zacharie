@@ -1,6 +1,6 @@
 import express from 'express';
 import passport from 'passport';
-import { catchErrors } from '../middlewares/errors';
+import { catchErrors } from '~/middlewares/errors';
 const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { createBrevoContactFromContactForm, sendEmail } from '~/third-parties/brevo';
