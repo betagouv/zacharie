@@ -1,5 +1,7 @@
 CREATE INDEX ON department_statistics (department_number);
 
+DROP MATERIALIZED VIEW IF EXISTS department_statistics;
+
 CREATE MATERIALIZED VIEW department_statistics AS
 WITH department_data AS (
   SELECT 
@@ -36,9 +38,7 @@ SELECT
   COUNT(DISTINCT CASE WHEN c.espece = 'Autres petits gibiers à poils' THEN c.zacharie_carcasse_id END) as autres_petits_gibiers_a_poils_count,
   
   -- User role counts
-  COUNT(DISTINCT CASE WHEN 'EXAMINATEUR_INITIAL' = ANY(u.roles) THEN u.id END) as examinateur_initial_count,
-  COUNT(DISTINCT CASE WHEN 'PREMIER_DETENTEUR' = ANY(u.roles) THEN u.id END) as premier_detenteur_count,
-  COUNT(DISTINCT CASE WHEN 'CCG' = ANY(u.roles) THEN u.id END) as ccg_count,
+  COUNT(DISTINCT CASE WHEN 'CHASSEUR' = ANY(u.roles) THEN u.id END) as chasseur_count,
   COUNT(DISTINCT CASE WHEN 'COLLECTEUR_PRO' = ANY(u.roles) THEN u.id END) as collecteur_pro_count,
   COUNT(DISTINCT CASE WHEN 'ETG' = ANY(u.roles) THEN u.id END) as etg_count,
   COUNT(DISTINCT CASE WHEN 'SVI' = ANY(u.roles) THEN u.id END) as svi_count,
