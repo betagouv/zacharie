@@ -11,8 +11,10 @@ but when the url in the browser is http://x.x.x.x:3234, the api needs to be call
 so here below is a trick when dev on a browser with localhost
 */
 if (API_URL.protocol === 'http:') {
-  if (window.location.origin.includes('localhost')) {
-    API_URL = new URL('http://localhost:3235');
+  if (!import.meta.env.VITEST) {
+    if (window.location.origin.includes('localhost')) {
+      API_URL = new URL('http://localhost:3235');
+    }
   }
 }
 
