@@ -161,6 +161,24 @@ export default function useNavigationMenu() {
             href: 'https://metabase.zacharie.beta.gouv.fr/question/27-fiches-creees',
           },
         },
+        ...(isAdmin && import.meta.env.DEV
+          ? [
+              {
+                text: 'Nouvelle API key',
+                isActive: location.pathname === '/app/tableau-de-bord/admin/api-keys',
+                linkProps: {
+                  href: '#',
+                  onClick: () => {
+                    API.post({ path: 'admin/api-key/nouvelle' }).then((res) => {
+                      if (res.ok) {
+                        alert('API key created');
+                      }
+                    });
+                  },
+                },
+              },
+            ]
+          : []),
       ],
     });
   }
