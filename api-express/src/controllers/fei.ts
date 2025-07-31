@@ -212,10 +212,11 @@ router.post(
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
       nextFei.fei_next_owner_entity_id = body.fei_next_owner_entity_id || null;
       if (body.fei_next_owner_entity_id) {
-        const nextRelation = {
+        const nextRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
           entity_id: body.fei_next_owner_entity_id,
           owner_id: user.id,
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          deleted_at: null,
         };
         const existingRelation = await prisma.entityAndUserRelations.findFirst({
           where: nextRelation,
@@ -445,6 +446,7 @@ router.post(
           where: {
             entity_id: body.fei_next_owner_entity_id as string,
             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            deleted_at: null,
           },
           include: {
             UserRelatedWithEntity: {

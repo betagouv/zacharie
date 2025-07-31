@@ -139,6 +139,7 @@ router.get(
         .findMany({
           where: {
             owner_id: user.id,
+            deleted_at: null,
           },
           orderBy: {
             updated_at: 'desc',
@@ -318,6 +319,7 @@ router.get(
                 where: {
                   etg_id: entity.id,
                   entity_type: EntityTypes.SVI,
+                  deleted_at: null,
                 },
                 orderBy: {
                   updated_at: 'desc',
@@ -347,6 +349,7 @@ router.get(
               .findMany({
                 where: {
                   entity_id: entity.id,
+                  deleted_at: null,
                 },
                 orderBy: {
                   updated_at: 'desc',

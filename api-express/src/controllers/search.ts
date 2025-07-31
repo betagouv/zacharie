@@ -30,6 +30,7 @@ router.get(
     const svi_entity_id = await prisma.entityAndUserRelations
       .findFirst({
         where: {
+          deleted_at: null,
           owner_id: user.id,
           EntityRelatedWithUser: {
             type: UserRoles.SVI,

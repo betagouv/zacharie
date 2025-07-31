@@ -73,6 +73,7 @@ router.get(
       where: {
         owner_id: user.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        deleted_at: null,
       },
       orderBy: {
         EntityRelatedWithUser: {
@@ -111,6 +112,7 @@ router.get(
           EntityRelatedWithUser: {
             type: EntityTypes.CCG,
           },
+          deleted_at: null,
         },
         include: {
           EntityRelatedWithUser: true,

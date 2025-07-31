@@ -339,6 +339,7 @@ router.post(
           owner_id: body.owner_id,
           entity_id: entityId,
           relation: body.relation as EntityRelationType,
+          deleted_at: null,
         };
 
         const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
@@ -376,6 +377,7 @@ router.post(
       if (body._action === 'delete') {
         const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
           where: {
+            deleted_at: null,
             owner_id: body.owner_id,
             relation: body.relation as EntityRelationType,
             entity_id: entityId,
@@ -795,6 +797,7 @@ router.get(
           EntityRelatedWithUser: {
             type: EntityTypes.CCG,
           },
+          deleted_at: null,
         },
         include: {
           EntityRelatedWithUser: true,
@@ -836,6 +839,7 @@ router.get(
           where: {
             owner_id: user.id,
             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            deleted_at: null,
           },
           include: {
             EntityRelatedWithUser: true,
@@ -861,6 +865,7 @@ router.get(
                 in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
               },
               entity_type: EntityTypes.SVI,
+              deleted_at: null,
             },
             include: {
               ETGRelatedWithEntity: true,
@@ -875,6 +880,7 @@ router.get(
                 in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
               },
               entity_type: EntityTypes.SVI,
+              deleted_at: null,
             },
             include: {
               EntityRelatedWithETG: true,
@@ -904,6 +910,7 @@ router.get(
           where: {
             owner_id: user.id,
             relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            deleted_at: null,
           },
           include: {
             EntityRelatedWithUser: true,
