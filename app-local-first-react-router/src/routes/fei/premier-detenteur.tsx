@@ -1,6 +1,6 @@
 import { useParams } from 'react-router';
 import { useMemo } from 'react';
-import { EntityRelationType, UserRoles } from '@prisma/client';
+import { EntityRelationType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
@@ -34,10 +34,10 @@ export default function FeiPremierDetenteur() {
     if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
       return false;
     }
-    if (fei.fei_current_owner_role !== UserRoles.PREMIER_DETENTEUR) {
+    if (fei.fei_current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR) {
       return false;
     }
-    if (!user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+    if (!user.roles.includes(UserRoles.CHASSEUR)) {
       return false;
     }
     if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
@@ -56,10 +56,10 @@ export default function FeiPremierDetenteur() {
     if (canEdit) {
       return false;
     }
-    if (fei.fei_next_owner_role !== UserRoles.PREMIER_DETENTEUR) {
+    if (fei.fei_next_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR) {
       return false;
     }
-    if (!user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+    if (!user.roles.includes(UserRoles.CHASSEUR)) {
       return true;
     }
     if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
@@ -72,8 +72,8 @@ export default function FeiPremierDetenteur() {
     if (canEdit) {
       return false;
     }
-    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
-      if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+    if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
+      if (user.roles.includes(UserRoles.CHASSEUR)) {
         if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           return false;
         }

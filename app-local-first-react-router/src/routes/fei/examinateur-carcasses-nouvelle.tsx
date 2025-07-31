@@ -168,6 +168,7 @@ export default function NouvelleCarcasse() {
             premier_detenteur_transport_type: null,
             premier_detenteur_transport_date: null,
             premier_detenteur_prochain_detenteur_type_cache: null,
+            premier_detenteur_prochain_detenteur_role_cache: null,
             premier_detenteur_prochain_detenteur_id_cache: null,
             intermediaire_carcasse_refus_intermediaire_id: null,
             intermediaire_carcasse_refus_motif: null,
@@ -189,6 +190,7 @@ export default function NouvelleCarcasse() {
             svi_ipm1_decision: null,
             svi_ipm1_duree_consigne: null,
             svi_ipm1_poids_consigne: null,
+            svi_ipm1_poids_type: null,
             svi_ipm1_signed_at: null,
             svi_ipm2_date: null,
             svi_ipm2_presentee_inspection: null,
@@ -210,6 +212,7 @@ export default function NouvelleCarcasse() {
             svi_ipm2_traitement_assainissant_etablissement: null,
             svi_ipm2_traitement_assainissant_poids: null,
             svi_ipm2_poids_saisie: null,
+            svi_ipm2_poids_type: null,
             svi_ipm2_signed_at: null,
             created_at: dayjs().toDate(),
             updated_at: dayjs().toDate(),
@@ -219,7 +222,7 @@ export default function NouvelleCarcasse() {
           createCarcasse(newCarcasse);
           addLog({
             user_id: user.id,
-            user_role: UserRoles.EXAMINATEUR_INITIAL,
+            user_role: UserRoles.CHASSEUR,
             fei_numero: fei.numero,
             action: 'examinateur-carcasse-create',
             history: createHistoryInput(null, newCarcasse),

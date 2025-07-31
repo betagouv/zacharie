@@ -26,7 +26,7 @@ prisma.fei
 //   .findMany({
 //     where: {
 //       at_least_one_fei_treated: null,
-//       roles: { hasSome: [UserRoles.PREMIER_DETENTEUR, UserRoles.EXAMINATEUR_INITIAL] },
+//       roles: { hasSome: [UserRoles.CHASSEUR] },
 //     },
 //     include: {
 //       FeiExaminateurInitialUser: true,
@@ -37,7 +37,7 @@ prisma.fei
 //     console.log(users.length);
 //     for (const user of users) {
 //       let atLeastOneFeiTreated = false;
-//       if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+//       if (user.roles.includes(UserRoles.CHASSEUR)) {
 //         if (user.FeiExaminateurInitialUser.length > 0) {
 //           const feis = user.FeiExaminateurInitialUser.filter(
 //             (fei) =>
@@ -64,7 +64,7 @@ prisma.fei
 //       if (atLeastOneFeiTreated) {
 //         continue;
 //       }
-//       if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+//       if (user.roles.includes(UserRoles.CHASSEUR)) {
 //         if (user.FeiPremierDetenteurUser.length > 0) {
 //           const feis = user.FeiPremierDetenteurUser.filter(
 //             (fei) =>

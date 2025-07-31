@@ -1,62 +1,62 @@
-import { EntityTypes, UserRoles } from '@prisma/client';
+import { EntityTypes, FeiOwnerRole, UserRoles } from '@prisma/client';
 
-export function getUserRoleLabel(role: UserRoles | EntityTypes | '') {
+export function getUserRoleLabel(role: UserRoles | FeiOwnerRole | EntityTypes | '') {
   switch (role) {
     case UserRoles.ADMIN:
       return 'Administrateur';
-    case UserRoles.PREMIER_DETENTEUR:
+    case FeiOwnerRole.PREMIER_DETENTEUR:
       return 'Premier Détenteur';
-    case UserRoles.EXAMINATEUR_INITIAL:
+    case FeiOwnerRole.EXAMINATEUR_INITIAL:
       return 'Examinateur Initial';
-    case UserRoles.CCG:
+    case EntityTypes.CCG:
       return 'Centre de Collecte du Gibier sauvage';
-    case UserRoles.COLLECTEUR_PRO:
-      return 'Collecteur Pro';
-    case UserRoles.ETG:
+    case EntityTypes.COLLECTEUR_PRO:
+      return 'Collecteur Professionnel Indépendant';
+    case EntityTypes.ETG:
       return 'Etablissement de Traitement du Gibier sauvage';
-    case UserRoles.SVI:
+    case EntityTypes.SVI:
       return "Service Vétérinaire d'Inspection";
     default:
       return 'Inconnu';
   }
 }
 
-export function getUserRoleLabelPlural(role: UserRoles | '') {
+export function getUserRoleLabelPlural(role: UserRoles | FeiOwnerRole | EntityTypes | '') {
   switch (role) {
     case UserRoles.ADMIN:
       return 'Administrateur';
-    case UserRoles.PREMIER_DETENTEUR:
+    case FeiOwnerRole.PREMIER_DETENTEUR:
       return 'Premiers Détenteurs';
-    case UserRoles.EXAMINATEUR_INITIAL:
+    case FeiOwnerRole.EXAMINATEUR_INITIAL:
       return 'Examinateurs Initiaux';
-    case UserRoles.CCG:
+    case EntityTypes.CCG:
       return 'Centres de Collecte du Gibier sauvage';
-    case UserRoles.COLLECTEUR_PRO:
+    case EntityTypes.COLLECTEUR_PRO:
       return 'Collecteurs Pro';
-    case UserRoles.ETG:
+    case EntityTypes.ETG:
       return 'Etablissements de Traitement du Gibier sauvage';
-    case UserRoles.SVI:
+    case EntityTypes.SVI:
       return "Services Vétérinaire d'Inspection";
     default:
       return 'Inconnu';
   }
 }
 
-export function getUserRoleLabelPrefixed(role: UserRoles | '') {
+export function getUserRoleLabelPrefixed(role: UserRoles | FeiOwnerRole | EntityTypes | '') {
   switch (role) {
     case UserRoles.ADMIN:
       return "de l'Administrateur";
-    case UserRoles.PREMIER_DETENTEUR:
+    case FeiOwnerRole.PREMIER_DETENTEUR:
       return 'du Premier Détenteur';
-    case UserRoles.EXAMINATEUR_INITIAL:
+    case FeiOwnerRole.EXAMINATEUR_INITIAL:
       return "de l'Examinateur Initial";
-    case UserRoles.CCG:
+    case EntityTypes.CCG:
       return "d'un Centre de Collecte du Gibier sauvage";
-    case UserRoles.COLLECTEUR_PRO:
+    case EntityTypes.COLLECTEUR_PRO:
       return "d'un Collecteur Pro";
-    case UserRoles.ETG:
+    case EntityTypes.ETG:
       return "d'un ETG";
-    case UserRoles.SVI:
+    case EntityTypes.SVI:
       return "du Service Vétérinaire d'Inspection";
     default:
       return 'de je ne sais qui';

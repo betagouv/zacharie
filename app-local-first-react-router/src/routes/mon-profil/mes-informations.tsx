@@ -33,10 +33,9 @@ export default function MesInformations() {
     useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const userAssociationsChasses =
-    user.roles.includes(UserRoles.PREMIER_DETENTEUR) || user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)
-      ? Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR])
-      : [];
+  const userAssociationsChasses = user.roles.includes(UserRoles.CHASSEUR)
+    ? Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR])
+    : [];
   const userCollecteursPro = user.roles.includes(UserRoles.COLLECTEUR_PRO)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO])
     : [];
@@ -112,7 +111,7 @@ export default function MesInformations() {
   }, []);
 
   const skipCCG = useMemo(() => {
-    if (!user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+    if (!user.roles.includes(UserRoles.CHASSEUR)) {
       return true;
     }
     return false;
@@ -131,8 +130,7 @@ export default function MesInformations() {
 
   const canChange = true;
 
-  const needAddress =
-    user.roles.includes(UserRoles.PREMIER_DETENTEUR) || user.roles.includes(UserRoles.EXAMINATEUR_INITIAL);
+  const needAddress = user.roles.includes(UserRoles.CHASSEUR);
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -253,7 +251,7 @@ export default function MesInformations() {
                   </div>
                 </div>
 
-                {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
+                {user.roles.includes(UserRoles.CHASSEUR) && (
                   <Input
                     label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
                     hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
@@ -269,8 +267,7 @@ export default function MesInformations() {
               </form>
             </div>
           </div>
-          {(user.roles.includes(UserRoles.PREMIER_DETENTEUR) ||
-            user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) && (
+          {user.roles.includes(UserRoles.CHASSEUR) && (
             <ListAndSelectEntities
               formId="onboarding-etape-2-associations-data"
               setRefreshKey={setRefreshKey}

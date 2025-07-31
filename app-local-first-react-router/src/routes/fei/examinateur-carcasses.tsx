@@ -114,7 +114,7 @@ export function CarcasseExaminateur({
                 updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
                 addLog({
                   user_id: user.id,
-                  user_role: UserRoles.EXAMINATEUR_INITIAL,
+                  user_role: UserRoles.CHASSEUR,
                   fei_numero: fei.numero,
                   action: 'examinateur-carcasse-delete',
                   history: createHistoryInput(carcasse, nextPartialCarcasse),

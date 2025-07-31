@@ -8,6 +8,7 @@ import {
   TransportType,
   CarcasseIntermediaire,
   EntityRelationType,
+  FeiOwnerRole,
 } from '@prisma/client';
 import dayjs from 'dayjs';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -77,7 +78,7 @@ export default function DestinataireSelect({
   const svis = svisIds.map((id) => entities[id]);
 
   const prochainsDetenteurs = useMemo(() => {
-    if (fei.fei_current_owner_role === UserRoles.ETG) {
+    if (fei.fei_current_owner_role === FeiOwnerRole.ETG) {
       return [...svis, ...etgs, ...collecteursPros];
     }
     return [...etgs, ...collecteursPros];
@@ -252,7 +253,7 @@ export default function DestinataireSelect({
       return false; // pas de détail pour les SVI
     }
     // if prochain detenteur changed, need to submit
-    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+    if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
       if (needTransport && !transportType) return true;
       if (!depotType) return true;
       if (depotType === EntityTypes.CCG && !depotEntityId) return true;
@@ -317,7 +318,7 @@ export default function DestinataireSelect({
       }
       if (
         depotType === DepotType.CCG &&
-        fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR &&
+        fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR &&
         !depotDate
       ) {
         return 'Il manque la date de dépôt dans le centre de collecte du gibier sauvage';
@@ -423,7 +424,7 @@ export default function DestinataireSelect({
                 {
                   label: <span className="inline-block">Pas de stockage</span>,
                   hintText:
-                    fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR ? (
+                    fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ? (
                       <span>
                         Sans stockage en chambre froide, les carcasses doivent être transportées{' '}
                         <b>le jour-même du tir</b>
@@ -508,7 +509,7 @@ export default function DestinataireSelect({
                   required
                   name={Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}
                 />
-                {fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR && (
+                {fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR && (
                   <Component
                     label="Date de dépôt dans le Centre de Collecte du Gibier sauvage *"
                     // click here to set now
@@ -647,7 +648,7 @@ export default function DestinataireSelect({
                 if (transfer) {
                   let nextFei: Partial<typeof fei> = {
                     fei_next_owner_entity_id: prochainDetenteurEntityId,
-                    fei_next_owner_role: entities[prochainDetenteurEntityId]?.type,
+                    fei_next_owner_role: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
                     fei_current_owner_wants_to_transfer: false,
                     fei_current_owner_entity_id: fei.fei_prev_owner_entity_id,
                     fei_current_owner_role: fei.fei_prev_owner_role,
@@ -667,7 +668,7 @@ export default function DestinataireSelect({
                   });
                   return;
                 }
-                if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+                if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
                   const nextDepotEntityId = depotType === DepotType.AUCUN ? null : depotEntityId;
                   const nextDepotDate = depotDate ? dayjs(depotDate).toDate() : null;
                   const nextTransportType = needTransport ? transportType : null;
@@ -684,10 +685,12 @@ export default function DestinataireSelect({
                   );
                   let nextFei: Partial<typeof fei> = {
                     fei_next_owner_entity_id: prochainDetenteurEntityId,
-                    fei_next_owner_role: entities[prochainDetenteurEntityId]?.type,
+                    fei_next_owner_role: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
                     premier_detenteur_prochain_detenteur_id_cache: prochainDetenteurEntityId,
-                    premier_detenteur_prochain_detenteur_type_cache:
-                      entities[prochainDetenteurEntityId]?.type,
+                    premier_detenteur_prochain_detenteur_type_cache: entities[prochainDetenteurEntityId]
+                      ?.type as FeiOwnerRole,
+                    premier_detenteur_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
+                      ?.type as FeiOwnerRole,
                     premier_detenteur_depot_type: depotType,
                     premier_detenteur_depot_entity_id: nextDepotEntityId,
                     premier_detenteur_depot_ccg_at: nextDepotDate,
@@ -700,6 +703,8 @@ export default function DestinataireSelect({
                       {
                         premier_detenteur_prochain_detenteur_type_cache:
                           nextFei.premier_detenteur_prochain_detenteur_type_cache,
+                        premier_detenteur_prochain_detenteur_role_cache:
+                          nextFei.premier_detenteur_prochain_detenteur_role_cache,
                         premier_detenteur_prochain_detenteur_id_cache:
                           nextFei.premier_detenteur_prochain_detenteur_id_cache,
                         premier_detenteur_depot_type: nextFei.premier_detenteur_depot_type,
@@ -714,7 +719,7 @@ export default function DestinataireSelect({
                   updateFei(fei.numero, nextFei);
                   addLog({
                     user_id: user.id,
-                    user_role: UserRoles.PREMIER_DETENTEUR,
+                    user_role: UserRoles.CHASSEUR,
                     action: `${calledFrom}-select-destinataire`,
                     fei_numero: fei.numero,
                     history: createHistoryInput(fei, nextFei),
@@ -727,7 +732,7 @@ export default function DestinataireSelect({
                   if (!feiAndIntermediaireIds) return;
                   let nextFei: Partial<typeof fei> = {
                     fei_next_owner_entity_id: prochainDetenteurEntityId,
-                    fei_next_owner_role: entities[prochainDetenteurEntityId]?.type,
+                    fei_next_owner_role: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
                     svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
                     svi_entity_id:
                       prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
@@ -746,7 +751,10 @@ export default function DestinataireSelect({
                   updateFei(fei.numero, nextFei);
                   let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
                     intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
-                    intermediaire_prochain_detenteur_type_cache: entities[prochainDetenteurEntityId]?.type,
+                    intermediaire_prochain_detenteur_type_cache: entities[prochainDetenteurEntityId]
+                      ?.type as FeiOwnerRole,
+                    intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
+                      ?.type as FeiOwnerRole,
                     intermediaire_depot_type: depotType,
                     intermediaire_depot_entity_id: depotType === DepotType.AUCUN ? null : depotEntityId,
                   };

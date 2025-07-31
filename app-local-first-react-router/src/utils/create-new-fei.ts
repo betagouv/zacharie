@@ -1,7 +1,7 @@
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import { UserRoles } from '@prisma/client';
+import { FeiOwnerRole, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { createHistoryInput } from './create-history-entry';
 
@@ -10,7 +10,8 @@ export async function createNewFei(): Promise<FeiWithIntermediaires> {
   if (!user?.id) {
     throw new Error('No user found');
   }
-  if (!user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+  const isExaminateurInitial = user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
+  if (!isExaminateurInitial) {
     throw new Error('Forbidden');
   }
   const newFeiNumero = `ZACH-${dayjs().format('YYYYMMDD')}-${user.id}-${dayjs().format('HHmmss')}`;
@@ -39,6 +40,7 @@ export async function createNewFei(): Promise<FeiWithIntermediaires> {
     premier_detenteur_transport_type: null,
     premier_detenteur_transport_date: null,
     premier_detenteur_prochain_detenteur_type_cache: null,
+    premier_detenteur_prochain_detenteur_role_cache: null,
     premier_detenteur_prochain_detenteur_id_cache: null,
     intermediaire_closed_at: null,
     intermediaire_closed_by_user_id: null,
@@ -55,7 +57,7 @@ export async function createNewFei(): Promise<FeiWithIntermediaires> {
     fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
     fei_current_owner_entity_id: null,
     fei_current_owner_entity_name_cache: null,
-    fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
+    fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
     fei_current_owner_wants_to_transfer: null,
     fei_next_owner_user_id: null,
     fei_next_owner_user_name_cache: null,
@@ -74,7 +76,7 @@ export async function createNewFei(): Promise<FeiWithIntermediaires> {
   useZustandStore.getState().createFei(newFei);
   useZustandStore.getState().addLog({
     user_id: user.id,
-    user_role: UserRoles.EXAMINATEUR_INITIAL,
+    user_role: UserRoles.CHASSEUR,
     fei_numero: newFei.numero,
     action: 'examinateur-create-fei',
     entity_id: null,

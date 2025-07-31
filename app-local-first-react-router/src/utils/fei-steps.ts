@@ -3,14 +3,14 @@ import type { FeiDone } from '@api/src/types/fei';
 import type { FeiStep, FeiStepSimpleStatus } from '@app/types/fei-steps';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import { Entity, EntityTypes, User, UserRoles } from '@prisma/client';
+import { Entity, EntityTypes, FeiOwnerRole, User, UserRoles } from '@prisma/client';
 import { useMemo } from 'react';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 
 type IntermediaireStep = {
   id: string | null;
-  role: EntityTypes | UserRoles;
-  nextRole: EntityTypes | UserRoles | null;
+  role: FeiOwnerRole;
+  nextRole: FeiOwnerRole | null;
 };
 
 type UseFeiStepsReturn = {
@@ -61,38 +61,38 @@ export function computeFeiSteps({
     const _steps: Array<IntermediaireStep> = [
       {
         id: fei.examinateur_initial_user_id,
-        role: UserRoles.EXAMINATEUR_INITIAL,
-        nextRole: UserRoles.PREMIER_DETENTEUR,
+        role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+        nextRole: FeiOwnerRole.PREMIER_DETENTEUR,
       },
       {
         id: fei.premier_detenteur_entity_id || fei.premier_detenteur_user_id,
-        role: UserRoles.PREMIER_DETENTEUR,
-        nextRole: fei.premier_detenteur_prochain_detenteur_type_cache,
+        role: FeiOwnerRole.PREMIER_DETENTEUR,
+        nextRole: fei.premier_detenteur_prochain_detenteur_role_cache,
       },
     ];
     for (let i = intermediaires.length - 1; i >= 0; i--) {
       _steps.push({
         id: intermediaires[i].id,
-        role: intermediaires[i].intermediaire_role as EntityTypes | UserRoles,
-        nextRole: intermediaires[i].intermediaire_prochain_detenteur_type_cache,
+        role: intermediaires[i].intermediaire_role as FeiOwnerRole,
+        nextRole: intermediaires[i].intermediaire_prochain_detenteur_role_cache,
       });
     }
     if (fei.intermediaire_closed_at) return _steps;
     const lastStepIsEtgToSvi =
-      _steps[_steps.length - 1]?.role === UserRoles.ETG &&
-      (!_steps[_steps.length - 1]?.nextRole || _steps[_steps.length - 1]?.nextRole === UserRoles.SVI);
+      _steps[_steps.length - 1]?.role === FeiOwnerRole.ETG &&
+      (!_steps[_steps.length - 1]?.nextRole || _steps[_steps.length - 1]?.nextRole === FeiOwnerRole.SVI);
     if (!lastStepIsEtgToSvi) {
       // on simplifie ici : pour montrer à l'utilisateur qu'on anticipe une étape ETG puis SVI
       // mais peut-être que ça va changer, avec les circuits longs, les circuits courts...
       _steps.push({
         id: null,
-        role: UserRoles.ETG,
-        nextRole: UserRoles.SVI,
+        role: FeiOwnerRole.ETG,
+        nextRole: FeiOwnerRole.SVI,
       });
     }
     _steps.push({
       id: null,
-      role: UserRoles.SVI,
+      role: FeiOwnerRole.SVI,
       nextRole: null,
     });
     return _steps;
@@ -101,8 +101,8 @@ export function computeFeiSteps({
   const currentStepIndex: number = (() => {
     // find role equal to fei.fei_current_owner_role but in reverse order
     if (fei.svi_assigned_at) return steps.length - 1; // step is SVI
-    if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) return 0;
-    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) return 1;
+    if (fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) return 0;
+    if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) return 1;
     if (fei.intermediaire_closed_at) return steps.length - 1; // fei is closed
     const etgStep = steps[steps.length - 2];
     if (etgStep.id) return steps.length - 2; // etg is selected
@@ -114,8 +114,8 @@ export function computeFeiSteps({
       return 'Clôturée';
     }
     if (fei.svi_assigned_at) return 'Inspection par le SVI';
-    if (fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL) return 'Examen initial';
-    if (fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR) {
+    if (fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) return 'Examen initial';
+    if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
       if (!fei.fei_next_owner_role) {
         return 'Validation par le premier détenteur';
       } else {
@@ -128,7 +128,7 @@ export function computeFeiSteps({
     // pour simplifier :
     const currentStep = steps[steps.length - 3];
     if (!currentStep) return 'Examen initial'; // juste pour éviter un bug
-    if (currentStep.role === UserRoles.COLLECTEUR_PRO) {
+    if (currentStep.role === FeiOwnerRole.COLLECTEUR_PRO) {
       if (currentStep.nextRole === EntityTypes.ETG) {
         return 'Transport vers un établissement de traitement';
       } else if (currentStep.nextRole === EntityTypes.COLLECTEUR_PRO) {
@@ -137,7 +137,7 @@ export function computeFeiSteps({
       // pas de nextRole donc on ne sait rien d'autre que : c'est un transport
       return 'Transport';
     }
-    if (currentStep.role === UserRoles.ETG) {
+    if (currentStep.role === FeiOwnerRole.ETG) {
       if (currentStep.nextRole === EntityTypes.ETG || currentStep.nextRole === EntityTypes.COLLECTEUR_PRO) {
         return 'Transport vers un autre établissement de traitement';
       }
@@ -169,10 +169,7 @@ export function computeFeiSteps({
   })();
 
   const simpleStatus: FeiStepSimpleStatus = (() => {
-    if (
-      user?.roles.includes(UserRoles.PREMIER_DETENTEUR) ||
-      user?.roles.includes(UserRoles.EXAMINATEUR_INITIAL)
-    ) {
+    if (user?.roles.includes(UserRoles.CHASSEUR)) {
       switch (currentStepLabel) {
         case 'Examen initial':
         case 'Validation par le premier détenteur':

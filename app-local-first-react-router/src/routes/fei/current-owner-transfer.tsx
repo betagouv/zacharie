@@ -1,4 +1,4 @@
-import { UserRoles } from '@prisma/client';
+import { FeiOwnerRole } from '@prisma/client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import SelectNextForExaminateur from './examinateur-select-next';
@@ -28,7 +28,7 @@ export default function FeiTransfer() {
     <div className="bg-alt-blue-france pb-4">
       <CallOut title="Vous souhaitez transférer cette fiche" className="bg-white">
         <div className="flex w-full flex-col bg-white md:items-start md:[&_ul]:min-w-96">
-          {fei.fei_prev_owner_role === UserRoles.EXAMINATEUR_INITIAL ? (
+          {fei.fei_prev_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ? (
             <SelectNextForExaminateur />
           ) : (
             <DestinataireSelect canEdit transfer calledFrom="current-owner-transfer" />

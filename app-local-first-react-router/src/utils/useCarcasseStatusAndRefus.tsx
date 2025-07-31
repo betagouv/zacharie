@@ -1,4 +1,4 @@
-import { Carcasse, CarcasseStatus, CarcasseType, Fei, UserRoles } from '@prisma/client';
+import { Carcasse, CarcasseStatus, CarcasseType, Fei, FeiOwnerRole } from '@prisma/client';
 import { useMemo } from 'react';
 import useZustandStore from '@app/zustand/store';
 import { getVulgarisationSaisie } from '@app/utils/get-vulgarisation-saisie';
@@ -11,8 +11,8 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
 
   const status: 'en cours de création' | 'en cours de traitement' | 'refusé' | 'accepté' = useMemo(() => {
     if (
-      fei.fei_current_owner_role === UserRoles.EXAMINATEUR_INITIAL ||
-      fei.fei_current_owner_role === UserRoles.PREMIER_DETENTEUR
+      fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
+      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
     ) {
       if (!fei.fei_next_owner_role) {
         return 'en cours de création';

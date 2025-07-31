@@ -52,7 +52,7 @@ export default function MesNotifications() {
   }, [nativePushTokenRegistered, canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
 
   const skipCCG = useMemo(() => {
-    if (!user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+    if (!user.roles.includes(UserRoles.CHASSEUR)) {
       return true;
     }
     return false;

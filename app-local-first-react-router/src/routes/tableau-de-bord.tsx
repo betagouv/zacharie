@@ -156,7 +156,7 @@ export default function TableauDeBordIndex() {
         >
           Mettre à jour
         </Button>
-        {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
+        {user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && (
           <Button
             priority="primary"
             className="block shrink-0 lg:hidden"
@@ -398,7 +398,7 @@ function FeisWrapper({ children }: { children: React.ReactNode }) {
         <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center bg-white p-4 md:p-8">
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <h1 className="fr-h4">Vous n'avez pas encore de fiche</h1>
-            {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ? (
+            {user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei ? (
               <>
                 <p className="fr-text--lead fr-mb-3w lg:hidden">
                   Vous pouvez créer une nouvelle fiche en cliquant sur le bouton ci-dessous.

@@ -58,21 +58,33 @@ async function sendEmail(props: SendEmailProps) {
   }
 }
 
-function formatRoles(role: UserRoles) {
-  switch (role) {
-    case UserRoles.EXAMINATEUR_INITIAL:
-      return 'Examinateur initial';
-    case UserRoles.PREMIER_DETENTEUR:
-      return 'Premier détenteur';
+function formatRoles(user: User) {
+  const roles = [];
+  switch (user.roles.find((role) => role !== UserRoles.ADMIN)) {
+    case UserRoles.CHASSEUR:
+      if (user.numero_cfei) {
+        roles.push('Examinateur initial');
+      } else {
+        roles.push('Premier détenteur');
+      }
+      break;
     case UserRoles.SVI:
-      return 'SVI';
+      roles.push('SVI');
+      break;
     case UserRoles.COLLECTEUR_PRO:
-      return 'Collecteur';
+      roles.push('Collecteur professionnel indépendant');
+      break;
     case UserRoles.ETG:
-      return 'ETG';
+      roles.push('ETG');
+      if (user.roleEtgAndTransport) {
+        roles.push('ETG et transporteur');
+      }
+      break;
     default:
-      return 'Partenaire';
+      roles.push('Partenaire');
+      break;
   }
+  return roles;
 }
 
 interface BrevoContact extends brevo.GetExtendedContactDetails {
@@ -137,7 +149,7 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
     createContact.attributes = {
       CREATED_BY: [createdBy],
       'CREATION DATE': { value: props.created_at.toISOString() },
-      ROLE: props.roles.map(formatRoles),
+      ROLE: formatRoles(props),
     };
 
     const result = await apiInstance.createContact(createContact);
@@ -281,7 +293,7 @@ async function updateBrevoContact(props: User) {
     updateContact.attributes = {
       PRENOM: { value: props.prenom },
       NOM: { value: props.nom_de_famille },
-      ROLE: { value: props.roles.map(formatRoles) },
+      ROLE: { value: formatRoles(props) },
       LANDLINE_NUMBER: { value: LANDLINE_NUMBER },
       SMS: { value: SMS },
       WHATSAPP: { value: WHATSAPP },
@@ -558,9 +570,6 @@ function getChasseurPipelineStep(
   if (!chasseur.addresse_ligne_1) allFieldUpFields = false;
   if (!chasseur.code_postal) allFieldUpFields = false;
   if (!chasseur.ville) allFieldUpFields = false;
-  if (chasseur.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-    if (!chasseur.numero_cfei) allFieldUpFields = false;
-  }
   let isActivated = chasseur.activated;
   if (isActivated) {
     if (chasseur.at_least_one_fei_treated) {
@@ -581,10 +590,7 @@ function getChasseurPipelineStep(
 async function updateBrevoChasseurDeal(chasseur: User) {
   try {
     if (IS_DEV_OR_TEST) return;
-    if (
-      !chasseur.roles.includes(UserRoles.PREMIER_DETENTEUR) &&
-      !chasseur.roles.includes(UserRoles.EXAMINATEUR_INITIAL)
-    ) {
+    if (!chasseur.roles.includes(UserRoles.CHASSEUR)) {
       return;
     }
     if (!chasseur.brevo_contact_id) {

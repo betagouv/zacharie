@@ -23,8 +23,7 @@ export default function useNavigationMenu() {
     });
   };
 
-  const isExaminateurInitial = user?.roles.includes(UserRoles.EXAMINATEUR_INITIAL);
-  const isOnlyExaminateurInitial = isExaminateurInitial && user?.roles.length === 1;
+  const isExaminateurInitial = user?.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
   const isAdmin = user?.roles.includes(UserRoles.ADMIN);
   const isSvi = user?.roles.includes(UserRoles.SVI);
   const isEtg = user?.roles.includes(UserRoles.ETG);
@@ -47,7 +46,7 @@ export default function useNavigationMenu() {
     },
   ];
 
-  if (!isOnlyExaminateurInitial) {
+  if (user?.roles.includes(UserRoles.CHASSEUR)) {
     profileMenu.push({
       text: 'Mes CCGs',
       isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-ccgs',
@@ -74,15 +73,13 @@ export default function useNavigationMenu() {
     },
   });
 
-  const feiMenu: MainNavigationProps.Item[] = isNotActivated
-    ? []
-    : [
-        {
-          text: 'Fiches',
-          isActive: location.pathname === '/app/tableau-de-bord',
-          linkProps: { to: '/app/tableau-de-bord', href: '#' },
-        },
-      ];
+  const feiMenu: MainNavigationProps.Item[] = [
+    {
+      text: 'Fiches',
+      isActive: location.pathname === '/app/tableau-de-bord',
+      linkProps: { to: '/app/tableau-de-bord', href: '#' },
+    },
+  ];
 
   if (isExaminateurInitial && !isNotActivated) {
     feiMenu.unshift({

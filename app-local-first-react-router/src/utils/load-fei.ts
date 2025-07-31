@@ -269,6 +269,8 @@ export async function setFeiInStore(feiResponse: FeiResponse) {
         intermediaire_depot_entity_id: carcasseIntermediaire.intermediaire_depot_entity_id,
         intermediaire_prochain_detenteur_type_cache:
           carcasseIntermediaire.intermediaire_prochain_detenteur_type_cache,
+        intermediaire_prochain_detenteur_role_cache:
+          carcasseIntermediaire.intermediaire_prochain_detenteur_role_cache,
         intermediaire_prochain_detenteur_id_cache:
           carcasseIntermediaire.intermediaire_prochain_detenteur_id_cache,
       };

@@ -21,98 +21,58 @@ export default function RolesCheckBoxes({
       return;
     }
     let nextRoles: Array<UserRoles> = [nextValue];
-    switch (nextValue) {
-      case UserRoles.EXAMINATEUR_INITIAL:
-        if (currentRoles.includes(UserRoles.PREMIER_DETENTEUR)) {
-          nextRoles.push(UserRoles.PREMIER_DETENTEUR);
-        }
-        break;
-      case UserRoles.PREMIER_DETENTEUR:
-        if (currentRoles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-          nextRoles.push(UserRoles.EXAMINATEUR_INITIAL);
-        }
-        break;
-      case UserRoles.COLLECTEUR_PRO:
-        if (currentRoles.includes(UserRoles.ETG)) {
-          nextRoles.push(UserRoles.ETG);
-        }
-        break;
-      case UserRoles.ETG:
-        if (currentRoles.includes(UserRoles.COLLECTEUR_PRO)) {
-          nextRoles.push(UserRoles.COLLECTEUR_PRO);
-        }
-        break;
-      default:
-      case UserRoles.SVI:
-        break;
-    }
     if (currentRoles.includes(UserRoles.ADMIN)) {
       nextRoles.push(UserRoles.ADMIN);
     }
     setCheckedRoles(nextRoles);
   };
 
-  const isSvi = user?.roles.includes(UserRoles.SVI);
-  const isExamOrPremDet =
-    user?.roles.includes(UserRoles.EXAMINATEUR_INITIAL) || user?.roles.includes(UserRoles.PREMIER_DETENTEUR);
-  const isCollecteurProOrEtg =
-    user?.roles.includes(UserRoles.COLLECTEUR_PRO) || user?.roles.includes(UserRoles.ETG);
-
   const options = [
     {
-      label: 'Examinateur Initial',
-      hintText:
-        "Vous avez été formé par votre fédération à l'examen initial. Munissez-vous de votre numéro d'attestation (de la forme CFEI-DEP-YY-001 ou  DEP-FREI-YY-001) pour l'étape suivante",
+      label: 'Chasseur et/ou Examinateur Initial',
+      hintText: (
+        <>
+          Vous êtes chasseur et/ou vous avez été formé par votre fédération à l'examen initial.
+          <br />
+          Munissez-vous de votre numéro d'attestation (de la forme CFEI-DEP-YY-001 ou DEP-FREI-YY-001) pour
+          l'étape suivante
+        </>
+      ),
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
-        value: UserRoles.EXAMINATEUR_INITIAL,
+        value: UserRoles.CHASSEUR,
         onChange: handleCheckboxChange,
-        disabled: withAdmin ? false : isCollecteurProOrEtg || isSvi,
-        checked: checkedRoles.includes(UserRoles.EXAMINATEUR_INITIAL),
+        checked: checkedRoles.includes(UserRoles.CHASSEUR),
       },
     },
     {
-      label: 'Premier Détenteur',
-      hintText: 'Vous êtes un chasseur, une société, une association de chasse',
-      nativeInputProps: {
-        name: Prisma.UserScalarFieldEnum.roles,
-        value: UserRoles.PREMIER_DETENTEUR,
-        onChange: handleCheckboxChange,
-        disabled: withAdmin ? false : isCollecteurProOrEtg || isSvi,
-        checked: checkedRoles.includes(UserRoles.PREMIER_DETENTEUR),
-      },
-    },
-    {
-      label: 'Collecteur Professionnel',
-      hintText:
-        'Vous récupérez les carcasses en peau auprès de plusieurs premiers détenteurs pour les livrer aux Établissements de Traitement du Gibier sauvage agréés (ETG). Le nom de l’établissement avec lequel vous travaillez sera demandé à l’étape suivante',
+      label: 'Collecteur Professionnel Indépendant',
+      hintText: 'Vous êtes salarié ou responsable d’un établissement qui transporte du gibier sauvage',
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.COLLECTEUR_PRO,
         onChange: handleCheckboxChange,
-        disabled: withAdmin ? false : isExamOrPremDet || isSvi,
         checked: checkedRoles.includes(UserRoles.COLLECTEUR_PRO),
       },
     },
     {
       label: 'Établissement de Traitement du Gibier sauvage (ETG)',
-      hintText: "Le nom de l'établissement pour lequel vous travaillez sera demandé à l'étape suivante",
+      hintText:
+        'Vous êtes salarié ou responsable d’un établissement qui peut traiter et transporter du gibier sauvage',
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.ETG,
         onChange: handleCheckboxChange,
-        disabled: withAdmin ? false : isExamOrPremDet || isSvi,
         checked: checkedRoles.includes(UserRoles.ETG),
       },
     },
     {
       label: "Service Vétérinaire d'Inspection (SVI)",
-      hintText: "Le nom de l'établissement pour lequel vous travaillez sera demandé à l'étape suivante",
+      hintText: "Vous êtes agréé par l'État pour effectuer des inspections vétérinaires",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.SVI,
         onChange: handleCheckboxChange,
-        disabled: withAdmin ? false : isCollecteurProOrEtg || isExamOrPremDet || isSvi,
         checked: checkedRoles.includes(UserRoles.SVI),
       },
     },
@@ -122,7 +82,6 @@ export default function RolesCheckBoxes({
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.ADMIN,
-        disabled: user?.roles.includes(UserRoles.ADMIN),
         onChange: handleCheckboxChange,
         checked: checkedRoles.includes(UserRoles.ADMIN),
       },
