@@ -24,18 +24,19 @@ export default function DeleteFei() {
     if (user.roles.includes(UserRoles.ADMIN)) {
       return true;
     }
-    if (!user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+    const isExaminateurInitial = user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
+    if (!isExaminateurInitial) {
       return false;
     }
     return fei.fei_current_owner_user_id === user.id;
-  }, [user.roles, fei.fei_current_owner_user_id, user.id]);
+  }, [user.roles, user.numero_cfei, user.id, fei.fei_current_owner_user_id]);
 
   const currentOwnerRole = useMemo(() => {
     if (user.roles.includes(UserRoles.ADMIN)) {
       return UserRoles.ADMIN;
     }
-    if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
-      return UserRoles.EXAMINATEUR_INITIAL;
+    if (user.roles.includes(UserRoles.CHASSEUR)) {
+      return UserRoles.CHASSEUR;
     }
     return fei.fei_current_owner_role;
   }, [user.roles, fei.fei_current_owner_role]);

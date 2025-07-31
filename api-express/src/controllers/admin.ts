@@ -165,7 +165,7 @@ router.get(
             !!user.addresse_ligne_1 &&
             !!user.code_postal &&
             !!user.ville,
-          examinateurDone: !user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ? true : !!user.numero_cfei,
+          examinateurDone: !user.roles.includes(UserRoles.CHASSEUR) ? true : !!user.numero_cfei,
           allEntities,
           userEntitiesRelations,
         },
@@ -253,7 +253,7 @@ router.get(
           roles:
             entity.type === EntityTypes.PREMIER_DETENTEUR
               ? {
-                  hasSome: [UserRoles.PREMIER_DETENTEUR, UserRoles.EXAMINATEUR_INITIAL],
+                  has: UserRoles.CHASSEUR,
                 }
               : {
                   has: entity.type,
@@ -282,9 +282,9 @@ router.get(
           roles: {
             hasSome:
               entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
-                ? [UserRoles.PREMIER_DETENTEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
+                ? [UserRoles.CHASSEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
                 : entity.type === EntityTypes.PREMIER_DETENTEUR
-                ? [UserRoles.EXAMINATEUR_INITIAL]
+                ? [UserRoles.CHASSEUR]
                 : entity.type === EntityTypes.SVI
                 ? [UserRoles.ETG]
                 : [],

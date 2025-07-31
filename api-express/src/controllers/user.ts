@@ -35,6 +35,7 @@ import {
   UserNotifications,
   UserRelationType,
   UserRoles,
+  FeiOwnerRole,
 } from '@prisma/client';
 import { authorizeUserOrAdmin } from '~/utils/authorizeUserOrAdmin.server';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
@@ -454,7 +455,7 @@ router.post(
       const fei = await prisma.fei.findUnique({
         where: {
           numero: body[Prisma.FeiScalarFieldEnum.numero],
-          fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
+          fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
         },
       });
       if (!fei) {
@@ -656,11 +657,7 @@ router.post(
 - Code postal et ville\u00A0: ${savedUser.code_postal} ${savedUser.ville}
 - Email\u00A0: ${savedUser.email}
 - Téléphone\u00A0: ${savedUser.telephone}
-${
-  savedUser.roles.includes(UserRoles.EXAMINATEUR_INITIAL)
-    ? `- Numéro CFEI\u00A0: ${savedUser.numero_cfei}`
-    : ''
-}
+${savedUser.roles.includes(UserRoles.CHASSEUR) ? `- Numéro CFEI\u00A0: ${savedUser.numero_cfei}` : ''}
           `,
         });
       }
@@ -972,7 +969,7 @@ router.get(
       const detenteursInitiaux = userRelationsWithOtherUsers
         .filter((userRelation) => userRelation.relation === UserRelationType.PREMIER_DETENTEUR)
         .map((userRelation) => userRelation.UserRelatedOfUserRelation);
-      if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+      if (user.roles.includes(UserRoles.CHASSEUR)) {
         detenteursInitiaux.unshift(user);
       }
 

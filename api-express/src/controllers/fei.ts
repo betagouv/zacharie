@@ -53,8 +53,8 @@ router.post(
       }
       const canDelete =
         user.roles.includes(UserRoles.ADMIN) ||
-        (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) &&
-          existingFei.fei_current_owner_user_id === user.id);
+        (user.roles.includes(UserRoles.CHASSEUR) && existingFei.examinateur_initial_user_id === user.id) ||
+        (user.roles.includes(UserRoles.CHASSEUR) && existingFei.fei_current_owner_user_id === user.id);
       if (!canDelete) {
         res.status(401).send({ ok: false, data: { fei: null }, error: 'Unauthorized' });
         return;
@@ -311,7 +311,7 @@ router.post(
     }
 
     if (!user.at_least_one_fei_treated) {
-      if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+      if (user.roles.includes(UserRoles.CHASSEUR)) {
         if (savedFei.examinateur_initial_user_id === user.id) {
           if (savedFei.examinateur_initial_date_approbation_mise_sur_le_marche) {
             const updatedUser = await prisma.user.update({
@@ -322,10 +322,7 @@ router.post(
             });
             await updateBrevoChasseurDeal(updatedUser);
           }
-        }
-      }
-      if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
-        if (savedFei.premier_detenteur_user_id === user.id) {
+        } else if (savedFei.premier_detenteur_user_id === user.id) {
           if (savedFei.fei_current_owner_user_id !== user.id) {
             const updatedUser = await prisma.user.update({
               where: { id: user.id },
@@ -523,23 +520,19 @@ router.get(
           {
             OR: [
               { examinateur_initial_user_id: user.id },
-              ...(user.roles.includes(UserRoles.PREMIER_DETENTEUR)
-                ? [
-                    {
-                      premier_detenteur_user_id: user.id,
+              {
+                premier_detenteur_user_id: user.id,
+              },
+              {
+                FeiPremierDetenteurEntity: {
+                  EntityRelationsWithUsers: {
+                    some: {
+                      owner_id: user.id,
+                      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                     },
-                    {
-                      FeiPremierDetenteurEntity: {
-                        EntityRelationsWithUsers: {
-                          some: {
-                            owner_id: user.id,
-                            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                          },
-                        },
-                      },
-                    },
-                  ]
-                : []),
+                  },
+                },
+              },
               { svi_user_id: user.id },
               {
                 CarcasseIntermediaire: {
@@ -847,23 +840,19 @@ router.get(
               {
                 examinateur_initial_user_id: user.id,
               },
-              ...(user.roles.includes(UserRoles.PREMIER_DETENTEUR)
-                ? [
-                    {
-                      premier_detenteur_user_id: user.id,
+              {
+                premier_detenteur_user_id: user.id,
+              },
+              {
+                FeiPremierDetenteurEntity: {
+                  EntityRelationsWithUsers: {
+                    some: {
+                      owner_id: user.id,
+                      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                     },
-                    {
-                      FeiPremierDetenteurEntity: {
-                        EntityRelationsWithUsers: {
-                          some: {
-                            owner_id: user.id,
-                            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                          },
-                        },
-                      },
-                    },
-                  ]
-                : []),
+                  },
+                },
+              },
               {
                 CarcasseIntermediaire: {
                   some: {

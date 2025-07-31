@@ -4,7 +4,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { computeFeiSteps } from '../src/utils/fei-steps';
 import { FeiDone } from '../../api-express/src/types/fei';
 import { FeiIntermediaire } from '../src/types/fei-intermediaire';
-import { User, UserRoles, EntityTypes } from '@prisma/client';
+import { User, UserRoles, FeiOwnerRole } from '@prisma/client';
 
 // Mock the Sentry capture function using vi.hoisted()
 const mockCapture = vi.hoisted(() => vi.fn());
@@ -13,19 +13,20 @@ vi.mock('@app/services/sentry', () => ({
 }));
 
 // Mock data helpers
-const createMockUser = (roles: UserRoles[], id = 'user-1'): User => ({
-  id,
+const createMockUser = (roles: UserRoles[], numero_cfei: string | null = null): User => ({
+  id: 'user-1',
   email: 'test@example.com',
   telephone: null,
   prenom: 'Test',
   nom_de_famille: 'User',
-  numero_cfei: null,
+  numero_cfei,
   prochain_bracelet_a_utiliser: 1,
   addresse_ligne_1: null,
   addresse_ligne_2: null,
   code_postal: null,
   ville: null,
   user_entities_vivible_checkbox: null,
+  roleEtgAndTransport: false,
   roles,
   created_at: new Date(),
   updated_at: new Date(),
@@ -68,6 +69,7 @@ const createMockFei = (overrides: Partial<FeiDone> = {}): FeiDone => ({
   premier_detenteur_transport_type: null,
   premier_detenteur_transport_date: null,
   premier_detenteur_prochain_detenteur_type_cache: null,
+  premier_detenteur_prochain_detenteur_role_cache: null,
   premier_detenteur_prochain_detenteur_id_cache: null,
   intermediaire_closed_at: null,
   intermediaire_closed_by_user_id: null,
@@ -84,7 +86,7 @@ const createMockFei = (overrides: Partial<FeiDone> = {}): FeiDone => ({
   fei_current_owner_user_name_cache: null,
   fei_current_owner_entity_id: null,
   fei_current_owner_entity_name_cache: null,
-  fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
+  fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
   fei_current_owner_wants_to_transfer: false,
   fei_next_owner_user_id: null,
   fei_next_owner_user_name_cache: null,
@@ -108,11 +110,12 @@ const createMockIntermediaire = (overrides: Partial<FeiIntermediaire> = {}): Fei
   fei_numero: 'FEI-2024-001',
   intermediaire_user_id: 'user-1',
   intermediaire_entity_id: 'entity-1',
-  intermediaire_role: UserRoles.COLLECTEUR_PRO,
+  intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
   prise_en_charge_at: new Date(),
   intermediaire_depot_type: null,
   intermediaire_depot_entity_id: null,
-  intermediaire_prochain_detenteur_type_cache: EntityTypes.ETG,
+  intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.ETG,
+  intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
   intermediaire_prochain_detenteur_id_cache: 'entity-etg',
   ...overrides,
 });
@@ -132,7 +135,7 @@ describe('computeFeiSteps', () => {
   });
 
   describe('Basic step structure', () => {
-    test('should create basic steps with examinateur and premier detenteur', () => {
+    test('should create basic steps with chasseur', () => {
       const fei = createMockFei();
       const result = computeFeiSteps({
         fei,
@@ -142,18 +145,19 @@ describe('computeFeiSteps', () => {
       });
 
       expect(result.steps).toHaveLength(4); // examinateur, premier_detenteur, etg, svi
-      expect(result.steps[0].role).toBe(UserRoles.EXAMINATEUR_INITIAL);
-      expect(result.steps[1].role).toBe(UserRoles.PREMIER_DETENTEUR);
-      expect(result.steps[2].role).toBe(UserRoles.ETG);
-      expect(result.steps[3].role).toBe(UserRoles.SVI);
+      expect(result.steps[0].role).toBe(FeiOwnerRole.EXAMINATEUR_INITIAL);
+      expect(result.steps[1].role).toBe(FeiOwnerRole.PREMIER_DETENTEUR);
+      expect(result.steps[2].role).toBe(FeiOwnerRole.ETG);
+      expect(result.steps[3].role).toBe(FeiOwnerRole.SVI);
     });
 
     test('should add intermediaires to steps', () => {
       const fei = createMockFei();
       const intermediaires = [
         createMockIntermediaire({
-          intermediaire_role: UserRoles.COLLECTEUR_PRO,
-          intermediaire_prochain_detenteur_type_cache: EntityTypes.ETG,
+          intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
+          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.ETG,
+          intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
         }),
       ];
 
@@ -165,7 +169,7 @@ describe('computeFeiSteps', () => {
       });
 
       expect(result.steps).toHaveLength(5); // examinateur, premier_detenteur, collecteur, etg, svi
-      expect(result.steps[2].role).toBe(UserRoles.COLLECTEUR_PRO);
+      expect(result.steps[2].role).toBe(FeiOwnerRole.COLLECTEUR_PRO);
     });
 
     test('should not add ETG/SVI steps when intermediaire is closed', () => {
@@ -187,8 +191,9 @@ describe('computeFeiSteps', () => {
       const fei = createMockFei();
       const intermediaires = [
         createMockIntermediaire({
-          intermediaire_role: UserRoles.ETG,
-          intermediaire_prochain_detenteur_type_cache: EntityTypes.SVI,
+          intermediaire_role: FeiOwnerRole.ETG,
+          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.SVI,
+          intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.SVI,
         }),
       ];
 
@@ -200,15 +205,15 @@ describe('computeFeiSteps', () => {
       });
 
       expect(result.steps).toHaveLength(4); // examinateur, premier_detenteur, etg, svi
-      expect(result.steps[2].role).toBe(UserRoles.ETG);
-      expect(result.steps[3].role).toBe(UserRoles.SVI);
+      expect(result.steps[2].role).toBe(FeiOwnerRole.ETG);
+      expect(result.steps[3].role).toBe(FeiOwnerRole.SVI);
     });
   });
 
   describe('Current step calculation', () => {
     test('should return step 1 for examinateur initial', () => {
       const fei = createMockFei({
-        fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
+        fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
       });
 
       const result = computeFeiSteps({
@@ -223,7 +228,7 @@ describe('computeFeiSteps', () => {
 
     test('should return step 2 for premier detenteur', () => {
       const fei = createMockFei({
-        fei_current_owner_role: UserRoles.PREMIER_DETENTEUR,
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
       });
 
       const result = computeFeiSteps({
@@ -239,7 +244,7 @@ describe('computeFeiSteps', () => {
     test('should return last step when SVI is assigned', () => {
       const fei = createMockFei({
         svi_assigned_at: new Date(),
-        fei_current_owner_role: UserRoles.SVI,
+        fei_current_owner_role: FeiOwnerRole.SVI,
       });
 
       const result = computeFeiSteps({
@@ -257,7 +262,7 @@ describe('computeFeiSteps', () => {
         intermediaire_closed_at: new Date(),
         // When intermediaire is closed, the current owner role should be set appropriately
         // This depends on the business logic - could be ETG or another role after intermediaires
-        fei_current_owner_role: UserRoles.ETG, // or whatever role comes after intermediaires are closed
+        fei_current_owner_role: FeiOwnerRole.ETG, // or whatever role comes after intermediaires are closed
       });
 
       const result = computeFeiSteps({
@@ -289,7 +294,7 @@ describe('computeFeiSteps', () => {
 
     test('should return "Examen initial" for examinateur initial', () => {
       const fei = createMockFei({
-        fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
+        fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
       });
 
       const result = computeFeiSteps({
@@ -304,7 +309,7 @@ describe('computeFeiSteps', () => {
 
     test('should return "Validation par le premier détenteur" when no next owner', () => {
       const fei = createMockFei({
-        fei_current_owner_role: UserRoles.PREMIER_DETENTEUR,
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         fei_next_owner_role: null,
       });
 
@@ -320,8 +325,8 @@ describe('computeFeiSteps', () => {
 
     test('should return "Fiche envoyée, pas encore traitée" when next owner exists', () => {
       const fei = createMockFei({
-        fei_current_owner_role: UserRoles.PREMIER_DETENTEUR,
-        fei_next_owner_role: UserRoles.COLLECTEUR_PRO,
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        fei_next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
       });
 
       const result = computeFeiSteps({
@@ -337,7 +342,7 @@ describe('computeFeiSteps', () => {
     test('should return "Inspection par le SVI" when SVI is assigned', () => {
       const fei = createMockFei({
         svi_assigned_at: new Date(),
-        fei_current_owner_role: UserRoles.SVI,
+        fei_current_owner_role: FeiOwnerRole.SVI,
       });
 
       const result = computeFeiSteps({
@@ -352,13 +357,14 @@ describe('computeFeiSteps', () => {
 
     test('should return "Transport" for collecteur pro', () => {
       const fei = createMockFei({
-        fei_current_owner_role: UserRoles.COLLECTEUR_PRO,
+        fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
         fei_current_owner_entity_id: 'collecteur-entity',
       });
       const intermediaires = [
         createMockIntermediaire({
-          intermediaire_role: UserRoles.COLLECTEUR_PRO,
-          intermediaire_prochain_detenteur_type_cache: EntityTypes.COLLECTEUR_PRO,
+          intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
+          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.COLLECTEUR_PRO,
+          intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.COLLECTEUR_PRO,
         }),
       ];
 
@@ -374,14 +380,15 @@ describe('computeFeiSteps', () => {
 
     test('should return "Réception par un établissement de traitement" for ETG', () => {
       const fei = createMockFei({
-        fei_current_owner_role: UserRoles.ETG,
+        fei_current_owner_role: FeiOwnerRole.ETG,
         fei_current_owner_entity_id: 'etg-entity',
       });
       const intermediaires = [
         createMockIntermediaire({
           id: 'etg-user_123456',
-          intermediaire_role: UserRoles.ETG,
-          intermediaire_prochain_detenteur_type_cache: EntityTypes.SVI,
+          intermediaire_role: FeiOwnerRole.ETG,
+          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.SVI,
+          intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.SVI,
         }),
       ];
 
@@ -399,7 +406,7 @@ describe('computeFeiSteps', () => {
   describe('Next step labels', () => {
     test('should return correct next step for examen initial', () => {
       const fei = createMockFei({
-        fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
+        fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
       });
 
       const result = computeFeiSteps({
@@ -414,7 +421,7 @@ describe('computeFeiSteps', () => {
 
     test('should return correct next step for premier detenteur', () => {
       const fei = createMockFei({
-        fei_current_owner_role: UserRoles.PREMIER_DETENTEUR,
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         fei_next_owner_role: null,
       });
 
@@ -431,7 +438,7 @@ describe('computeFeiSteps', () => {
     test('should return "Clôturée" for SVI inspection', () => {
       const fei = createMockFei({
         svi_assigned_at: new Date(),
-        fei_current_owner_role: UserRoles.SVI,
+        fei_current_owner_role: FeiOwnerRole.SVI,
       });
 
       const result = computeFeiSteps({
@@ -447,11 +454,11 @@ describe('computeFeiSteps', () => {
 
   describe('Simple status calculation', () => {
     describe('For EXAMINATEUR_INITIAL', () => {
-      const examinateurInitialUser = createMockUser([UserRoles.EXAMINATEUR_INITIAL]);
+      const examinateurInitialUser = createMockUser([UserRoles.CHASSEUR], '123456');
 
       test('should return "À compléter" for examen initial', () => {
         const fei = createMockFei({
-          fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
+          fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
         });
 
         const result = computeFeiSteps({
@@ -467,7 +474,7 @@ describe('computeFeiSteps', () => {
       test('should return "En cours" for other steps', () => {
         const fei = createMockFei({
           svi_assigned_at: new Date(),
-          fei_current_owner_role: UserRoles.SVI,
+          fei_current_owner_role: FeiOwnerRole.SVI,
         });
 
         const result = computeFeiSteps({
@@ -482,11 +489,11 @@ describe('computeFeiSteps', () => {
     });
 
     describe('For PREMIER_DETENTEUR', () => {
-      const premierDetenteurUser = createMockUser([UserRoles.PREMIER_DETENTEUR]);
+      const premierDetenteurUser = createMockUser([UserRoles.CHASSEUR]);
 
       test('should return "À compléter" for premier detenteur validation', () => {
         const fei = createMockFei({
-          fei_current_owner_role: UserRoles.PREMIER_DETENTEUR,
+          fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
           fei_next_owner_role: null,
         });
 
@@ -507,7 +514,7 @@ describe('computeFeiSteps', () => {
       test('should return "À compléter" for SVI inspection', () => {
         const fei = createMockFei({
           svi_assigned_at: new Date(),
-          fei_current_owner_role: UserRoles.SVI,
+          fei_current_owner_role: FeiOwnerRole.SVI,
         });
 
         const result = computeFeiSteps({
@@ -522,7 +529,7 @@ describe('computeFeiSteps', () => {
 
       test('should return "En cours" for other steps', () => {
         const fei = createMockFei({
-          fei_current_owner_role: UserRoles.PREMIER_DETENTEUR,
+          fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         });
 
         const result = computeFeiSteps({
@@ -539,13 +546,14 @@ describe('computeFeiSteps', () => {
     describe('For COLLECTEUR_PRO and ETG', () => {
       const collecteurProUser = createMockUser([UserRoles.COLLECTEUR_PRO]);
       const collecteurProIntermediaire = createMockIntermediaire({
-        intermediaire_role: UserRoles.COLLECTEUR_PRO,
-        intermediaire_prochain_detenteur_type_cache: EntityTypes.COLLECTEUR_PRO,
+        intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
+        intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.COLLECTEUR_PRO,
+        intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.COLLECTEUR_PRO,
       });
 
       test('should return "À compléter" when user works directly for next owner entity', () => {
         const fei = createMockFei({
-          fei_current_owner_role: UserRoles.COLLECTEUR_PRO,
+          fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
           fei_next_owner_entity_id: 'entity-1',
         });
 
@@ -562,7 +570,7 @@ describe('computeFeiSteps', () => {
 
       test('should return "À compléter" when user works indirectly for next owner entity', () => {
         const fei = createMockFei({
-          fei_current_owner_role: UserRoles.COLLECTEUR_PRO,
+          fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
           fei_next_owner_entity_id: 'entity-1',
         });
 
@@ -579,7 +587,7 @@ describe('computeFeiSteps', () => {
 
       test('should return "En cours" when user does not work for next owner entity', () => {
         const fei = createMockFei({
-          fei_current_owner_role: UserRoles.COLLECTEUR_PRO,
+          fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
           fei_next_owner_entity_id: 'entity-1',
         });
 
@@ -596,7 +604,7 @@ describe('computeFeiSteps', () => {
 
       test('should return "À compléter" when user works for current owner entity', () => {
         const fei = createMockFei({
-          fei_current_owner_role: UserRoles.COLLECTEUR_PRO,
+          fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
           fei_current_owner_entity_id: 'entity-1',
           fei_next_owner_entity_id: null,
         });
@@ -616,12 +624,13 @@ describe('computeFeiSteps', () => {
         const collecteurProOnlyUser = createMockUser([UserRoles.COLLECTEUR_PRO]);
         const etgIntermediaire = createMockIntermediaire({
           id: 'etg-user_123456',
-          intermediaire_role: UserRoles.ETG,
-          intermediaire_prochain_detenteur_type_cache: EntityTypes.SVI,
+          intermediaire_role: FeiOwnerRole.ETG,
+          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.SVI,
+          intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.SVI,
         });
 
         const fei = createMockFei({
-          fei_current_owner_role: UserRoles.ETG,
+          fei_current_owner_role: FeiOwnerRole.ETG,
           fei_current_owner_entity_id: 'etg-entity',
           fei_next_owner_entity_id: 'svi-entity',
           // This will result in currentStepLabel being "Réception par un établissement de traitement"
@@ -643,12 +652,13 @@ describe('computeFeiSteps', () => {
         const collecteurProEtgUser = createMockUser([UserRoles.COLLECTEUR_PRO, UserRoles.ETG]);
         const etgIntermediaire = createMockIntermediaire({
           id: 'etg-user_123456',
-          intermediaire_role: UserRoles.ETG,
-          intermediaire_prochain_detenteur_type_cache: EntityTypes.SVI,
+          intermediaire_role: FeiOwnerRole.ETG,
+          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.SVI,
+          intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.SVI,
         });
 
         const fei = createMockFei({
-          fei_current_owner_role: UserRoles.ETG,
+          fei_current_owner_role: FeiOwnerRole.ETG,
           fei_current_owner_entity_id: 'etg-entity',
           fei_next_owner_entity_id: 'svi-entity',
         });
@@ -669,12 +679,13 @@ describe('computeFeiSteps', () => {
       test('should continue with existing logic when COLLECTEUR_PRO (not ETG) user and step is NOT "Réception par un établissement de traitement"', () => {
         const collecteurProOnlyUser = createMockUser([UserRoles.COLLECTEUR_PRO]);
         const collecteurProIntermediaire = createMockIntermediaire({
-          intermediaire_role: UserRoles.COLLECTEUR_PRO,
-          intermediaire_prochain_detenteur_type_cache: EntityTypes.ETG,
+          intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
+          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.ETG,
+          intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
         });
 
         const fei = createMockFei({
-          fei_current_owner_role: UserRoles.COLLECTEUR_PRO,
+          fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
           fei_current_owner_entity_id: 'collecteur-entity',
           // This will result in currentStepLabel being "Transport vers un établissement de traitement"
         });
@@ -698,7 +709,7 @@ describe('computeFeiSteps', () => {
         const fei = createMockFei({
           automatic_closed_at: new Date(),
         });
-        const examinateurInitialUser = createMockUser([UserRoles.EXAMINATEUR_INITIAL]);
+        const examinateurInitialUser = createMockUser([UserRoles.CHASSEUR]);
 
         const result = computeFeiSteps({
           fei,
@@ -774,11 +785,11 @@ describe('computeFeiSteps', () => {
       const intermediaires = [
         createMockIntermediaire({
           id: 'user-1_123456',
-          intermediaire_role: UserRoles.COLLECTEUR_PRO,
+          intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
         }),
         createMockIntermediaire({
           id: 'user-2_123457',
-          intermediaire_role: UserRoles.ETG,
+          intermediaire_role: FeiOwnerRole.ETG,
         }),
       ];
 
@@ -794,9 +805,9 @@ describe('computeFeiSteps', () => {
 
     test('should handle user with multiple roles', () => {
       const fei = createMockFei({
-        fei_current_owner_role: UserRoles.EXAMINATEUR_INITIAL,
+        fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
       });
-      const user = createMockUser([UserRoles.EXAMINATEUR_INITIAL, UserRoles.PREMIER_DETENTEUR]);
+      const user = createMockUser([UserRoles.CHASSEUR]);
 
       const result = computeFeiSteps({
         fei,

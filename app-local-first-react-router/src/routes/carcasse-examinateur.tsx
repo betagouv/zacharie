@@ -87,7 +87,7 @@ function CarcasseExaminateur() {
     updateStateCarcasse(zacharie_carcasse_id, partialCarcasse, true);
     addLog({
       user_id: user.id,
-      user_role: UserRoles.EXAMINATEUR_INITIAL,
+      user_role: UserRoles.CHASSEUR,
       fei_numero: fei.numero,
       action: 'examinateur-carcasse-edit',
       history: createHistoryInput(carcasse, partialCarcasse),
@@ -106,7 +106,7 @@ function CarcasseExaminateur() {
 
   const navigate = useNavigate();
   const canEdit = useMemo(() => {
-    // if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
+    // if (fei.fei_current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL) {
     //   return false;
     // }
     if (fei.examinateur_initial_user_id !== user.id) {

@@ -10,6 +10,7 @@ datasource db {
 // Tous les rôles possibles pour un utilisateur au contact de la venaison (gibier)
 enum UserRoles {
   ADMIN
+  CHASSEUR
   EXAMINATEUR_INITIAL
   PREMIER_DETENTEUR // un chasseur, une association de chasse, une structure professionnelle de chasse qui se charge d'indiquer le destinataire final du gibier
   CCG // Centre de Collecte du Gibier sauvage où sont entreposées les venaisons à la fin de la chasse
@@ -44,6 +45,7 @@ model User {
   ville                          String?
   user_entities_vivible_checkbox Boolean?
   roles                          UserRoles[]
+  roleEtgAndTransport            Boolean                  @default(false)
   created_at                     DateTime                 @default(now())
   updated_at                     DateTime                 @default(now()) @updatedAt
   last_login_at                  DateTime?
@@ -267,6 +269,14 @@ enum TransportType {
   AUCUN
 }
 
+enum FeiOwnerRole {
+  EXAMINATEUR_INITIAL
+  PREMIER_DETENTEUR
+  ETG
+  COLLECTEUR_PRO
+  SVI
+}
+
 // Fiche d'Examen Initial
 model Fei {
   id                                                      Int                     @id @default(autoincrement())
@@ -300,7 +310,8 @@ model Fei {
   premier_detenteur_depot_ccg_at                          DateTime?
   premier_detenteur_transport_type                        TransportType?
   premier_detenteur_transport_date                        DateTime?
-  premier_detenteur_prochain_detenteur_type_cache         EntityTypes?
+  premier_detenteur_prochain_detenteur_type_cache         FeiOwnerRole? // TODO: delete after migration
+  premier_detenteur_prochain_detenteur_role_cache         FeiOwnerRole?
   premier_detenteur_prochain_detenteur_id_cache           String? // Entity id
   /**
   * intermediaire
@@ -329,16 +340,16 @@ model Fei {
   fei_current_owner_user_name_cache                       String?
   fei_current_owner_entity_id                             String?
   fei_current_owner_entity_name_cache                     String?
-  fei_current_owner_role                                  UserRoles?
+  fei_current_owner_role                                  FeiOwnerRole?
   fei_current_owner_wants_to_transfer                     Boolean?
   fei_next_owner_user_id                                  String?
   fei_next_owner_user_name_cache                          String?
   fei_next_owner_entity_id                                String?
   fei_next_owner_entity_name_cache                        String?
-  fei_next_owner_role                                     UserRoles?
+  fei_next_owner_role                                     FeiOwnerRole?
   fei_prev_owner_user_id                                  String?
   fei_prev_owner_entity_id                                String?
-  fei_prev_owner_role                                     UserRoles?
+  fei_prev_owner_role                                     FeiOwnerRole?
   /**
   * owners
   */
@@ -457,7 +468,8 @@ model Carcasse {
   premier_detenteur_depot_ccg_at                     DateTime?
   premier_detenteur_transport_type                   TransportType?
   premier_detenteur_transport_date                   DateTime?
-  premier_detenteur_prochain_detenteur_type_cache    EntityTypes?
+  premier_detenteur_prochain_detenteur_type_cache    FeiOwnerRole?
+  premier_detenteur_prochain_detenteur_role_cache    FeiOwnerRole?
   premier_detenteur_prochain_detenteur_id_cache      String? // Entity id
   /**
   * INTERMEDIAIRE
@@ -600,21 +612,22 @@ model CarcasseIntermediaire {
   prise_en_charge_at                          DateTime? // FeiIntermediaire.check_finished_at
   intermediaire_id                            String // {user_id}_{fei_numero}_{HHMMSS} // because a user could be multiple times intermediaire for a same fei
   intermediaire_entity_id                     String
-  intermediaire_role                          UserRoles? // FeiIntermediaire.fei_intermediaire_role
+  intermediaire_role                          FeiOwnerRole? // FeiIntermediaire.fei_intermediaire_role
   intermediaire_user_id                       String
   intermediaire_depot_type                    DepotType? // CCG, ETG, AUCUN
   intermediaire_depot_entity_id               String?
   // intermediaire_depot_ccg_at                  DateTime? // pas besoin de date: c’est le moment de la réception/transport
-  intermediaire_prochain_detenteur_type_cache EntityTypes?
+  intermediaire_prochain_detenteur_type_cache FeiOwnerRole? // SHOULD BE intermediaire_prochain_detenteur_role_cache TODO: delete after migration
+  intermediaire_prochain_detenteur_role_cache FeiOwnerRole?
   intermediaire_prochain_detenteur_id_cache   String?
-  created_at                                  DateTime     @default(now())
-  updated_at                                  DateTime     @default(now()) @updatedAt
+  created_at                                  DateTime      @default(now())
+  updated_at                                  DateTime      @default(now()) @updatedAt
   deleted_at                                  DateTime?
-  is_synced                                   Boolean      @default(true) // just for typing purppose with zustand frontend
-  CarcasseIntermediaireFei                    Fei          @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
-  CarcasseCarcasseIntermediaire               Carcasse     @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
-  CarcasseIntermediaireUser                   User         @relation("CarcasseIntermediaireUser", fields: [intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  CarcasseIntermediaireEntity                 Entity       @relation("CarcasseIntermediaireEntity", fields: [intermediaire_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  is_synced                                   Boolean       @default(true) // just for typing purppose with zustand frontend
+  CarcasseIntermediaireFei                    Fei           @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseCarcasseIntermediaire               Carcasse      @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseIntermediaireUser                   User          @relation("CarcasseIntermediaireUser", fields: [intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseIntermediaireEntity                 Entity        @relation("CarcasseIntermediaireEntity", fields: [intermediaire_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   // Logs                                   Log[]
 
   @@unique([fei_numero, zacharie_carcasse_id, intermediaire_id])

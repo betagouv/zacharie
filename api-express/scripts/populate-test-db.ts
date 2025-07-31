@@ -1,9 +1,12 @@
 import {
   CarcasseStatus,
   CarcasseType,
+  DepotType,
   EntityRelationType,
   EntityTypes,
+  FeiOwnerRole,
   Prisma,
+  TransportType,
   User,
   UserRelationType,
   UserRoles,
@@ -74,7 +77,7 @@ Christine
       {
         id: 'QZ6E0',
         email: 'examinateur@example.fr',
-        roles: [UserRoles.EXAMINATEUR_INITIAL],
+        roles: [UserRoles.CHASSEUR],
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Marie',
@@ -89,12 +92,13 @@ Christine
       {
         id: '0Y545',
         email: 'premier-detenteur@example.fr',
-        roles: [UserRoles.PREMIER_DETENTEUR],
+        roles: [UserRoles.CHASSEUR],
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Pierre',
         nom_de_famille: 'Petit',
         addresse_ligne_1: '2 rue de la paix',
+        numero_cfei: null,
         code_postal: '75000',
         ville: 'Paris',
         telephone: '0606060602',
@@ -103,7 +107,7 @@ Christine
       {
         id: await createUserId(),
         email: 'examinateur-premier-detenteur@example.fr',
-        roles: [UserRoles.EXAMINATEUR_INITIAL, UserRoles.PREMIER_DETENTEUR],
+        roles: [UserRoles.CHASSEUR],
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Pierre',
@@ -378,13 +382,13 @@ Christine
   console.log('ETG and entity relations created for test', etgAndEntityRelations.count);
 
   if (role) {
-    if (role === UserRoles.EXAMINATEUR_INITIAL) {
+    if (role === FeiOwnerRole.EXAMINATEUR_INITIAL) {
       await prisma.fei.createMany({
         data: [],
       });
       console.log('Fei created for test for examinateur initial', feiValidatedByExaminateur.numero);
     }
-    if (role === UserRoles.PREMIER_DETENTEUR) {
+    if (role === FeiOwnerRole.PREMIER_DETENTEUR) {
       await prisma.fei.createMany({
         data: [feiValidatedByExaminateur],
       });
@@ -397,7 +401,7 @@ Christine
       });
       console.log('Carcasses created for test for examinateur initial', carcasses.count);
     }
-    if (role === UserRoles.ETG) {
+    if (role === FeiOwnerRole.ETG) {
       await prisma.fei.createMany({
         data: [feiValidatedByPremierDetenteur],
       });
@@ -430,7 +434,7 @@ const feiValidatedByExaminateur: Prisma.FeiUncheckedCreateInput = {
   created_by_user_id: 'QZ6E0',
   fei_current_owner_user_id: 'QZ6E0',
   fei_current_owner_user_name_cache: 'Marie Martin',
-  fei_current_owner_role: 'EXAMINATEUR_INITIAL',
+  fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
   examinateur_initial_user_id: 'QZ6E0',
   examinateur_initial_approbation_mise_sur_le_marche: true,
   examinateur_initial_date_approbation_mise_sur_le_marche: '2025-07-07T13:52:52.026Z',
@@ -438,7 +442,7 @@ const feiValidatedByExaminateur: Prisma.FeiUncheckedCreateInput = {
   heure_evisceration_derniere_carcasse: '12:14',
   resume_nombre_de_carcasses: '4 daims',
   fei_next_owner_user_id: '0Y545',
-  fei_next_owner_role: 'PREMIER_DETENTEUR',
+  fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
   fei_next_owner_user_name_cache: 'Pierre Petit',
 };
 
@@ -446,19 +450,20 @@ const feiValidatedByPremierDetenteur: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByExaminateur,
   numero: 'ZACH-20250707-QZ6E0-165242',
   fei_current_owner_user_id: '0Y545',
-  fei_current_owner_role: 'PREMIER_DETENTEUR',
+  fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
   fei_next_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-  fei_next_owner_role: 'ETG',
+  fei_next_owner_role: FeiOwnerRole.ETG,
   fei_prev_owner_user_id: 'QZ6E0',
   fei_prev_owner_entity_id: null,
-  fei_prev_owner_role: 'EXAMINATEUR_INITIAL',
+  fei_prev_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
   premier_detenteur_user_id: '0Y545',
   premier_detenteur_depot_entity_id: '4f67364a-8373-49f9-a4f6-31a0d88ba27b',
   fei_current_owner_user_name_cache: 'Pierre Petit',
   premier_detenteur_prochain_detenteur_id_cache: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-  premier_detenteur_prochain_detenteur_type_cache: EntityTypes.ETG,
-  premier_detenteur_depot_type: EntityTypes.CCG,
-  premier_detenteur_transport_type: EntityTypes.COLLECTEUR_PRO,
+  premier_detenteur_prochain_detenteur_type_cache: FeiOwnerRole.ETG,
+  premier_detenteur_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
+  premier_detenteur_depot_type: DepotType.CCG,
+  premier_detenteur_transport_type: TransportType.COLLECTEUR_PRO,
   premier_detenteur_depot_ccg_at: '2025-07-07T15:47:00.000Z',
 };
 

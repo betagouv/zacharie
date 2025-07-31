@@ -1,4 +1,4 @@
-import type { DepotType, EntityTypes, UserRoles, CarcasseIntermediaire } from '@prisma/client';
+import type { DepotType, CarcasseIntermediaire, FeiOwnerRole } from '@prisma/client';
 
 export type FeiIntermediaire = {
   // updated_at: Date;
@@ -12,11 +12,12 @@ export type FeiIntermediaire = {
   fei_numero: string;
   intermediaire_user_id: string;
   intermediaire_entity_id: string;
-  intermediaire_role: UserRoles | null;
+  intermediaire_role: FeiOwnerRole | null;
   prise_en_charge_at: Date | null;
   intermediaire_depot_type: DepotType | null;
   intermediaire_depot_entity_id: string | null;
-  intermediaire_prochain_detenteur_type_cache: EntityTypes | null;
+  intermediaire_prochain_detenteur_type_cache: FeiOwnerRole | null;
+  intermediaire_prochain_detenteur_role_cache: FeiOwnerRole | null;
   intermediaire_prochain_detenteur_id_cache: string | null;
 };
 

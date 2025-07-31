@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Prisma, Entity, UserRoles, EntityTypes } from '@prisma/client';
+import { Prisma, Entity, UserRoles, EntityTypes, FeiOwnerRole } from '@prisma/client';
 import type { UserForFeiResponse } from '@api/src/types/responses';
 import type { UserForFei } from '~/src/types/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -88,7 +88,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
               fei_next_owner_role: null,
               fei_next_owner_entity_id: null,
               fei_next_owner_entity_name_cache: null,
-              fei_current_owner_role: UserRoles.PREMIER_DETENTEUR,
+              fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
               fei_current_owner_user_id: user.id,
               fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
               premier_detenteur_user_id: user.id,
@@ -100,7 +100,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
               fei_next_owner_user_id: null,
               fei_next_owner_role: null,
               fei_next_owner_entity_id: null,
-              fei_current_owner_role: UserRoles.PREMIER_DETENTEUR,
+              fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
               fei_current_owner_entity_id: nextOwnerEntity.id,
               fei_current_owner_entity_name_cache: nextOwnerEntity.nom_d_usage ?? null,
               fei_current_owner_user_id: user.id,
@@ -115,14 +115,14 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
             nextFei = {
               fei_next_owner_user_id: nextOwnerUser?.id,
               fei_next_owner_user_name_cache: nextOwnerName,
-              fei_next_owner_role: UserRoles.PREMIER_DETENTEUR,
+              fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
               fei_next_owner_entity_id: nextOwnerEntity?.id,
             };
           }
           updateFei(fei.numero, nextFei);
           addLog({
             user_id: user.id,
-            user_role: UserRoles.EXAMINATEUR_INITIAL,
+            user_role: UserRoles.CHASSEUR,
             fei_numero: fei.numero,
             action: 'examinateur-select-next',
             history: createHistoryInput(fei, nextFei),
@@ -209,12 +209,12 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
                 const nextFei = {
                   fei_next_owner_user_id: nextPremierDetenteur.id,
                   fei_next_owner_user_name_cache: `${nextPremierDetenteur.prenom} ${nextPremierDetenteur.nom_de_famille}`,
-                  fei_next_owner_role: UserRoles.PREMIER_DETENTEUR,
+                  fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
                 };
                 updateFei(fei.numero, nextFei);
                 addLog({
                   user_id: user.id,
-                  user_role: UserRoles.EXAMINATEUR_INITIAL,
+                  user_role: UserRoles.CHASSEUR,
                   fei_numero: fei.numero,
                   action: 'examinateur-trouver-premier-detenteur',
                   history: createHistoryInput(fei, nextFei),

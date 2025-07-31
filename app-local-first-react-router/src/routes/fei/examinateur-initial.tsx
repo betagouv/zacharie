@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { CarcasseType, EntityRelationType, Prisma, UserRoles } from '@prisma/client';
+import { CarcasseType, EntityRelationType, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -48,7 +48,7 @@ export default function FEIExaminateurInitial() {
     updateFeiState(fei_numero, nextFei);
     addLog({
       user_id: user.id,
-      user_role: UserRoles.EXAMINATEUR_INITIAL,
+      user_role: UserRoles.CHASSEUR,
       fei_numero: fei_numero,
       action: 'examinateur-update-fei',
       history: createHistoryInput(fei, nextFei),
@@ -71,7 +71,7 @@ export default function FEIExaminateurInitial() {
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;
     }
-    if (fei.fei_current_owner_role !== UserRoles.EXAMINATEUR_INITIAL) {
+    if (fei.fei_current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL) {
       return false;
     }
     if (fei.fei_current_owner_user_id !== user.id) {

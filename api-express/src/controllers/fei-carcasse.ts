@@ -179,9 +179,9 @@ router.post(
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_transport_date)) {
       nextCarcasse.premier_detenteur_transport_date = body.premier_detenteur_transport_date || null;
     }
-    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_type_cache)) {
-      nextCarcasse.premier_detenteur_prochain_detenteur_type_cache =
-        body.premier_detenteur_prochain_detenteur_type_cache || null;
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_role_cache)) {
+      nextCarcasse.premier_detenteur_prochain_detenteur_role_cache =
+        body.premier_detenteur_prochain_detenteur_role_cache || null;
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
       nextCarcasse.premier_detenteur_prochain_detenteur_id_cache =

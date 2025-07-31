@@ -41,6 +41,7 @@ const initialState: State = {
     ville: '',
     activated: true,
     roles: [],
+    roleEtgAndTransport: false,
     numero_cfei: '',
     at_least_one_fei_treated: null,
     user_entities_vivible_checkbox: false,
@@ -121,14 +122,7 @@ export default function AdminUser() {
     },
   ];
 
-  if (
-    user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) &&
-    user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1
-  ) {
-    tabs.pop();
-  }
-
-  if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+  if (user.roles.includes(UserRoles.CHASSEUR)) {
     tabs.push({
       tabId: 'CCGs',
       label: `CCGs (${userEntitiesRelations.filter((rel) => rel.type === EntityTypes.CCG).length})`,
@@ -352,7 +346,7 @@ export default function AdminUser() {
                       />
                     </div>
                   </div>
-                  {user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) && (
+                  {user.roles.includes(UserRoles.CHASSEUR) && (
                     <Input
                       label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
                       hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
@@ -492,10 +486,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
         continue;
       }
       if (relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
-        if (
-          user.roles.includes(UserRoles.EXAMINATEUR_INITIAL) ||
-          user.roles.includes(UserRoles.PREMIER_DETENTEUR)
-        ) {
+        if (user.roles.includes(UserRoles.CHASSEUR)) {
           if (
             entity.type === EntityTypes.ETG ||
             entity.type === EntityTypes.COLLECTEUR_PRO ||
@@ -513,7 +504,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
           }
         }
       } else if (relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
-        if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
+        if (user.roles.includes(UserRoles.CHASSEUR)) {
           if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
             entities.push(entity);
           }

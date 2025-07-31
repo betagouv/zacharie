@@ -1,6 +1,6 @@
 import { useEffect, useMemo, /* useRef, */ useState } from 'react';
 import { useParams } from 'react-router';
-import { EntityRelationType, UserRoles } from '@prisma/client';
+import { EntityRelationType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { loadFei } from '@app/utils/load-fei';
@@ -61,73 +61,45 @@ function Fei() {
   // const refCurrentRole = useRef(fei.fei_current_owner_role);
   // const refCurrentUserId = useRef(fei.fei_current_owner_user_id);
 
-  const showInterface = useMemo(() => {
-    /* 
-    deprecated - was good when tabs in a useEffect, but now I dont think so
-    if (fei.fei_current_owner_role !== refCurrentRole.current) {
-      if (fei.fei_current_owner_user_id === user.id) {
-        switch (fei.fei_current_owner_role) {
-          case UserRoles.EXAMINATEUR_INITIAL:
-            return UserRoles.EXAMINATEUR_INITIAL;
-          case UserRoles.PREMIER_DETENTEUR:
-            if (fei.examinateur_initial_user_id === user.id) {
-              return UserRoles.EXAMINATEUR_INITIAL;
-            } else {
-              return UserRoles.PREMIER_DETENTEUR;
-            }
-          case UserRoles.SVI:
-            return UserRoles.SVI;
-          // default:
-          //   return UserRoles.ETG;
-        }
-      }
-    } 
-    */
-    if (user.roles.includes(UserRoles.EXAMINATEUR_INITIAL)) {
+  const showInterface: FeiOwnerRole | null = useMemo(() => {
+    if (user.roles.includes(UserRoles.CHASSEUR)) {
       if (fei.examinateur_initial_user_id === user.id) {
-        return UserRoles.EXAMINATEUR_INITIAL;
+        return FeiOwnerRole.EXAMINATEUR_INITIAL;
       }
+      return FeiOwnerRole.PREMIER_DETENTEUR;
     }
-    if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
-      return UserRoles.PREMIER_DETENTEUR;
-    }
-    if (fei.fei_current_owner_role === UserRoles.SVI || fei.fei_next_owner_role === UserRoles.SVI) {
-      if (user.roles.includes(UserRoles.SVI)) return UserRoles.SVI;
-      if (user.roles.includes(UserRoles.ETG)) return UserRoles.ETG;
-      if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) return UserRoles.COLLECTEUR_PRO;
+
+    if (fei.fei_current_owner_role === FeiOwnerRole.SVI || fei.fei_next_owner_role === FeiOwnerRole.SVI) {
+      if (user.roles.includes(UserRoles.SVI)) return FeiOwnerRole.SVI;
+      if (user.roles.includes(UserRoles.ETG)) return FeiOwnerRole.ETG;
+      if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) return FeiOwnerRole.COLLECTEUR_PRO;
       return null;
     }
     if (
-      fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO &&
+      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
       fei.fei_current_owner_user_id === user.id
     ) {
-      return UserRoles.COLLECTEUR_PRO;
+      return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (
-      fei.fei_next_owner_role === UserRoles.COLLECTEUR_PRO &&
+      fei.fei_next_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
       nextOwnerCollecteurProEntityId &&
       nextOwnerEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
     ) {
-      return UserRoles.COLLECTEUR_PRO;
+      return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (
       nextOwnerCollecteurProEntityId &&
-      fei.fei_next_owner_role === UserRoles.ETG &&
+      fei.fei_next_owner_role === FeiOwnerRole.ETG &&
       (user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.COLLECTEUR_PRO))
     ) {
-      return UserRoles.COLLECTEUR_PRO;
+      return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (
       user.roles.includes(UserRoles.ETG) &&
-      (fei.fei_current_owner_role === UserRoles.ETG || fei.fei_next_owner_role === UserRoles.ETG)
+      (fei.fei_current_owner_role === FeiOwnerRole.ETG || fei.fei_next_owner_role === FeiOwnerRole.ETG)
     ) {
-      return UserRoles.ETG;
-    }
-    if (fei.examinateur_initial_user_id === user.id) {
-      return UserRoles.EXAMINATEUR_INITIAL;
-    }
-    if (user.roles.includes(UserRoles.PREMIER_DETENTEUR)) {
-      return UserRoles.PREMIER_DETENTEUR;
+      return FeiOwnerRole.ETG;
     }
     if (intermediaires.length > 0) {
       const userWasIntermediaire = intermediaires.find(
@@ -171,15 +143,15 @@ function Fei() {
             className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0"
             key={fei.fei_current_owner_entity_id! + fei.fei_current_owner_user_id!}
           >
-            {showInterface === UserRoles.SVI && <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>}
+            {showInterface === FeiOwnerRole.SVI && <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>}
             <FeiTransfer />
-            {showInterface !== UserRoles.SVI && <CurrentOwnerConfirm />}
-            {showInterface !== UserRoles.SVI && <FeiStepper />}
-            {showInterface === UserRoles.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
-            {showInterface === UserRoles.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
-            {showInterface === UserRoles.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
-            {showInterface === UserRoles.ETG && <FEICurrentIntermediaire />}
-            {showInterface === UserRoles.SVI && <FEI_SVI />}
+            {showInterface !== FeiOwnerRole.SVI && <CurrentOwnerConfirm />}
+            {showInterface !== FeiOwnerRole.SVI && <FeiStepper />}
+            {showInterface === FeiOwnerRole.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
+            {showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
+            {showInterface === FeiOwnerRole.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
+            {showInterface === FeiOwnerRole.ETG && <FEICurrentIntermediaire />}
+            {showInterface === FeiOwnerRole.SVI && <FEI_SVI />}
             <div className="m-8 flex flex-col justify-start gap-4">
               <Button
                 linkProps={{
