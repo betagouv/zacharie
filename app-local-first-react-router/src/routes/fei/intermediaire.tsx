@@ -6,6 +6,8 @@ import {
   UserRoles,
   CarcasseStatus,
   EntityRelationType,
+  EntityTypes,
+  FeiOwnerRole,
 } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
@@ -29,6 +31,7 @@ import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carc
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
 import DestinataireSelect from './destinataire-select';
+import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 
 interface Props {
   readOnly?: boolean;
@@ -75,10 +78,21 @@ export default function FEICurrentIntermediaire(props: Props) {
           <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
             <ol className="fr-breadcrumb__list">
               <li>
-                <span className="fr-breadcrumb__link bg-none! no-underline!">Premier Détenteur</span>
+                <span className="fr-breadcrumb__link bg-none! no-underline!">
+                  {fei.premier_detenteur_name_cache}
+                </span>
               </li>
               {intermediaires
                 .map((_intermediaire, index) => {
+                  const entity = entities[_intermediaire.intermediaire_entity_id!];
+                  let label = entity?.nom_d_usage;
+                  if (
+                    entity?.type === EntityTypes.ETG &&
+                    _intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO
+                  ) {
+                    label += ` (${getIntermediaireRoleLabel(FeiOwnerRole.COLLECTEUR_PRO).toLowerCase()})`;
+                  }
+
                   return (
                     <li key={_intermediaire.id}>
                       <button
@@ -87,7 +101,7 @@ export default function FEICurrentIntermediaire(props: Props) {
                         aria-current={_intermediaire.id === intermediaire?.id ? 'step' : false}
                         disabled={props.readOnly}
                       >
-                        {entities[_intermediaire.intermediaire_entity_id!]?.nom_d_usage}
+                        {label}
                       </button>
                     </li>
                   );
