@@ -23,7 +23,9 @@ export default function CarcasseSVICertificats() {
       setIsLoading(true);
       API.get({ path: `certificat/${params.zacharie_carcasse_id}/all` })
         .then((res) => {
-          setCertificats(res.data);
+          if (res.ok && res.data) {
+            setCertificats(res.data);
+          }
           setIsLoading(false);
         })
         .catch((error) => {
@@ -63,9 +65,8 @@ export default function CarcasseSVICertificats() {
 
 function CertificatCard({ certificat }: { certificat: Certificat }) {
   const handleDownload = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/certificat/${certificat.certificat_id}`, {
-      method: 'GET',
-      credentials: 'include',
+    API.get({
+      path: `/certificat/${certificat.certificat_id}`,
       headers: {
         Accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

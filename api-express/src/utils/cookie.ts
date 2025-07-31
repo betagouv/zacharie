@@ -4,8 +4,8 @@ export const JWT_MAX_AGE = 60 * 60 * 24 * 365 * 10; // 10 years in seconds
 export const COOKIE_MAX_AGE = JWT_MAX_AGE * 1000;
 
 export function cookieOptions(secureInDev = true) {
-  console.log('IS_DEV_OR_TEST', IS_DEV_OR_TEST);
   if (IS_DEV_OR_TEST) {
+    console.log('IS_DEV_OR_TEST secureInDev', secureInDev);
     return {
       maxAge: COOKIE_MAX_AGE,
       httpOnly: true,
@@ -13,7 +13,6 @@ export function cookieOptions(secureInDev = true) {
       sameSite: secureInDev ? ('none' as const) : ('lax' as const),
     };
   }
-  console.log('PROD COOKIE OPTIONS');
   return {
     maxAge: COOKIE_MAX_AGE,
     httpOnly: true,
@@ -24,7 +23,7 @@ export function cookieOptions(secureInDev = true) {
 }
 
 export function logoutCookieOptions(secureInDev = true) {
-  console.log('IS_DEV_OR_TEST', IS_DEV_OR_TEST);
+  console.log('IS_DEV_OR_TEST logoutCookieOptions', IS_DEV_OR_TEST);
   if (IS_DEV_OR_TEST) {
     return {
       httpOnly: true,

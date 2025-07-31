@@ -37,7 +37,7 @@ router.get(
           return { ...certificat, remplace_par_certificat_id: replacedIds[certificat.certificat_id] };
         });
       });
-    res.send(certificats);
+    res.status(200).send({ ok: true, data: certificats });
   }),
 );
 

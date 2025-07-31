@@ -39,6 +39,7 @@ import type {
   FeiIntermediaire,
 } from '@app/types/fei-intermediaire';
 import { get, set, del } from 'idb-keyval'; // can use anything: IndexedDB, Ionic Storage, etc.
+import API from '@app/services/api';
 
 // Custom storage object
 export const indexDBStorage: StateStorage = {
@@ -523,17 +524,11 @@ export async function syncFei(nextFei: FeiWithIntermediaires, signal: AbortSigna
   if (!isOnline) {
     throw new Error('syncFei not online');
   }
-  return fetch(`${import.meta.env.VITE_API_URL}/fei/${nextFei.numero}/`, {
-    method: 'POST',
-    credentials: 'include',
-    body: JSON.stringify(nextFei),
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
+  return API.post({
+    path: `/fei/${nextFei.numero}/`,
+    body: nextFei,
     signal,
   })
-    .then((res) => res.json())
     .then((res) => res as FeiResponse)
     .then((res) => {
       if (signal?.aborted) return;
@@ -582,20 +577,11 @@ export async function syncCarcasse(nextCarcasse: Carcasse, signal: AbortSignal) 
   if (!isOnline) {
     throw new Error('syncCarcasse not online');
   }
-  return fetch(
-    `${import.meta.env.VITE_API_URL}/fei-carcasse/${nextCarcasse.fei_numero}/${nextCarcasse.zacharie_carcasse_id}`,
-    {
-      method: 'POST',
-      credentials: 'include',
-      body: JSON.stringify(nextCarcasse),
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      signal,
-    },
-  )
-    .then((res) => res.json())
+  return API.post({
+    path: `/fei-carcasse/${nextCarcasse.fei_numero}/${nextCarcasse.zacharie_carcasse_id}`,
+    body: nextCarcasse,
+    signal,
+  })
     .then((res) => res as CarcasseResponse)
     .then((res) => {
       if (signal?.aborted) return;
@@ -659,20 +645,11 @@ export async function syncCarcasseIntermediaire(
   const feiNumero = nextCarcasseIntermediaire.fei_numero;
   const intermedaireId = nextCarcasseIntermediaire.intermediaire_id;
   const zacharieCarcasseId = nextCarcasseIntermediaire.zacharie_carcasse_id;
-  return fetch(
-    `${import.meta.env.VITE_API_URL}/fei-carcasse-intermediaire/${feiNumero}/${intermedaireId}/${zacharieCarcasseId}`,
-    {
-      method: 'POST',
-      credentials: 'include',
-      body: JSON.stringify(nextCarcasseIntermediaire),
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      signal,
-    },
-  )
-    .then((res) => res.json())
+  return API.post({
+    path: `/fei-carcasse-intermediaire/${feiNumero}/${intermedaireId}/${zacharieCarcasseId}`,
+    body: nextCarcasseIntermediaire,
+    signal,
+  })
     .then((res) => res as CarcasseIntermediaireResponse)
     .then((res) => {
       if (signal?.aborted) return;
@@ -742,16 +719,10 @@ export async function syncLog(nextLog: Log) {
   if (!isOnline) {
     throw new Error('syncLog not online');
   }
-  return fetch(`${import.meta.env.VITE_API_URL}/log`, {
-    method: 'POST',
-    credentials: 'include',
-    body: JSON.stringify(nextLog),
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
+  return API.post({
+    path: '/log',
+    body: nextLog,
   })
-    .then((res) => res.json())
     .then((res) => res as LogResponse)
     .then((res) => {
       if (res.ok) {

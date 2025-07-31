@@ -2,6 +2,7 @@ import type { User } from '@prisma/client';
 import * as Sentry from '@sentry/react';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import API from '@app/services/api';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function useMostFreshUser(_calledFrom: string) {
@@ -37,23 +38,18 @@ export async function refreshUser(_calledFrom: string) {
       }, 5000),
     );
 
-    const fetchPromise = fetch(`${import.meta.env.VITE_API_URL}/user/me`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-      },
-      signal, // Pass the signal to the fetch request
-    }).then(async (response) => {
+    const fetchPromise = API.get({
+      path: '/user/me',
+      signal,
+    }).then(async (userResponse) => {
       // Good connection event only dispatched if no timeout
       window.dispatchEvent(new Event('good-connection'));
-      if (response.status === 401) {
+      if (userResponse.status === 401) {
         useUser.setState({ user: null });
         Sentry.setUser({});
         return null;
       }
 
-      const userResponse = await response.json();
       if (userResponse?.ok && userResponse.data?.user) {
         const user = userResponse.data.user as User;
         useUser.setState({ user });

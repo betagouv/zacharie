@@ -346,7 +346,6 @@ export default function TableauDeBordIndex() {
               <FeisWrapper>
                 {feiActivesForSvi.map((fei) => {
                   if (!fei) return null;
-                  console.log(fei.numero, fei.latest_intermediaire_entity_id, filterETG);
                   if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
                   return (
                     <CardFiche
@@ -361,7 +360,6 @@ export default function TableauDeBordIndex() {
                 })}
                 {feisDoneForSvi.map((fei) => {
                   if (!fei) return null;
-                  console.log(fei.numero, fei.latest_intermediaire_entity_id, filterETG);
                   if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
                   return (
                     <CardFiche
