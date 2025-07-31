@@ -307,7 +307,6 @@ const useZustandStore = create<State & Actions>()(
                 prise_en_charge_at: newIntermediaire.prise_en_charge_at, // will be set by the intermediaire when he confirms all the carcasse
                 intermediaire_depot_type: null,
                 intermediaire_depot_entity_id: null,
-                intermediaire_prochain_detenteur_type_cache: null,
                 intermediaire_prochain_detenteur_role_cache: null,
                 intermediaire_prochain_detenteur_id_cache: null,
                 intermediaire_poids: null,

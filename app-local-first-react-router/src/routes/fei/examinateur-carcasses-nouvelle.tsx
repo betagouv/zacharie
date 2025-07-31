@@ -167,7 +167,6 @@ export default function NouvelleCarcasse() {
             premier_detenteur_depot_ccg_at: null,
             premier_detenteur_transport_type: null,
             premier_detenteur_transport_date: null,
-            premier_detenteur_prochain_detenteur_type_cache: null,
             premier_detenteur_prochain_detenteur_role_cache: null,
             premier_detenteur_prochain_detenteur_id_cache: null,
             intermediaire_carcasse_refus_intermediaire_id: null,

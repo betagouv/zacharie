@@ -55,7 +55,6 @@ export const feiDoneSelect = {
   premier_detenteur_depot_type: true,
   premier_detenteur_depot_entity_id: true,
   premier_detenteur_prochain_detenteur_id_cache: true,
-  premier_detenteur_prochain_detenteur_type_cache: true,
   premier_detenteur_prochain_detenteur_role_cache: true,
   premier_detenteur_transport_type: true,
   premier_detenteur_transport_date: true,

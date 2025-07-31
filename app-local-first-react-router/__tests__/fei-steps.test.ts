@@ -68,7 +68,6 @@ const createMockFei = (overrides: Partial<FeiDone> = {}): FeiDone => ({
   premier_detenteur_depot_ccg_at: null,
   premier_detenteur_transport_type: null,
   premier_detenteur_transport_date: null,
-  premier_detenteur_prochain_detenteur_type_cache: null,
   premier_detenteur_prochain_detenteur_role_cache: null,
   premier_detenteur_prochain_detenteur_id_cache: null,
   intermediaire_closed_at: null,
@@ -114,7 +113,6 @@ const createMockIntermediaire = (overrides: Partial<FeiIntermediaire> = {}): Fei
   prise_en_charge_at: new Date(),
   intermediaire_depot_type: null,
   intermediaire_depot_entity_id: null,
-  intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.ETG,
   intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
   intermediaire_prochain_detenteur_id_cache: 'entity-etg',
   ...overrides,
@@ -156,7 +154,6 @@ describe('computeFeiSteps', () => {
       const intermediaires = [
         createMockIntermediaire({
           intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
-          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.ETG,
           intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
         }),
       ];
@@ -192,7 +189,6 @@ describe('computeFeiSteps', () => {
       const intermediaires = [
         createMockIntermediaire({
           intermediaire_role: FeiOwnerRole.ETG,
-          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.SVI,
           intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.SVI,
         }),
       ];
@@ -363,7 +359,6 @@ describe('computeFeiSteps', () => {
       const intermediaires = [
         createMockIntermediaire({
           intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
-          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.COLLECTEUR_PRO,
           intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.COLLECTEUR_PRO,
         }),
       ];
@@ -387,7 +382,6 @@ describe('computeFeiSteps', () => {
         createMockIntermediaire({
           id: 'etg-user_123456',
           intermediaire_role: FeiOwnerRole.ETG,
-          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.SVI,
           intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.SVI,
         }),
       ];
@@ -547,7 +541,6 @@ describe('computeFeiSteps', () => {
       const collecteurProUser = createMockUser([UserRoles.COLLECTEUR_PRO]);
       const collecteurProIntermediaire = createMockIntermediaire({
         intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
-        intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.COLLECTEUR_PRO,
         intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.COLLECTEUR_PRO,
       });
 
@@ -625,7 +618,6 @@ describe('computeFeiSteps', () => {
         const etgIntermediaire = createMockIntermediaire({
           id: 'etg-user_123456',
           intermediaire_role: FeiOwnerRole.ETG,
-          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.SVI,
           intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.SVI,
         });
 
@@ -653,7 +645,6 @@ describe('computeFeiSteps', () => {
         const etgIntermediaire = createMockIntermediaire({
           id: 'etg-user_123456',
           intermediaire_role: FeiOwnerRole.ETG,
-          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.SVI,
           intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.SVI,
         });
 
@@ -680,7 +671,6 @@ describe('computeFeiSteps', () => {
         const collecteurProOnlyUser = createMockUser([UserRoles.COLLECTEUR_PRO]);
         const collecteurProIntermediaire = createMockIntermediaire({
           intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
-          intermediaire_prochain_detenteur_type_cache: FeiOwnerRole.ETG,
           intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
         });
 

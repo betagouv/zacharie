@@ -165,9 +165,9 @@ router.post(
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_transport_date)) {
       nextFei.premier_detenteur_transport_date = body.premier_detenteur_transport_date || null;
     }
-    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_type_cache)) {
-      nextFei.premier_detenteur_prochain_detenteur_type_cache =
-        body.premier_detenteur_prochain_detenteur_type_cache || null;
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_role_cache)) {
+      nextFei.premier_detenteur_prochain_detenteur_role_cache =
+        body.premier_detenteur_prochain_detenteur_role_cache || null;
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
       nextFei.premier_detenteur_prochain_detenteur_id_cache =

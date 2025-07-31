@@ -460,7 +460,6 @@ const feiValidatedByPremierDetenteur: Prisma.FeiUncheckedCreateInput = {
   premier_detenteur_depot_entity_id: '4f67364a-8373-49f9-a4f6-31a0d88ba27b',
   fei_current_owner_user_name_cache: 'Pierre Petit',
   premier_detenteur_prochain_detenteur_id_cache: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-  premier_detenteur_prochain_detenteur_type_cache: FeiOwnerRole.ETG,
   premier_detenteur_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
   premier_detenteur_depot_type: DepotType.CCG,
   premier_detenteur_transport_type: TransportType.COLLECTEUR_PRO,

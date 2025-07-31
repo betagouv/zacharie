@@ -687,8 +687,6 @@ export default function DestinataireSelect({
                     fei_next_owner_entity_id: prochainDetenteurEntityId,
                     fei_next_owner_role: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
                     premier_detenteur_prochain_detenteur_id_cache: prochainDetenteurEntityId,
-                    premier_detenteur_prochain_detenteur_type_cache: entities[prochainDetenteurEntityId]
-                      ?.type as FeiOwnerRole,
                     premier_detenteur_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
                       ?.type as FeiOwnerRole,
                     premier_detenteur_depot_type: depotType,
@@ -701,8 +699,6 @@ export default function DestinataireSelect({
                     updateCarcasse(
                       carcasse.zacharie_carcasse_id,
                       {
-                        premier_detenteur_prochain_detenteur_type_cache:
-                          nextFei.premier_detenteur_prochain_detenteur_type_cache,
                         premier_detenteur_prochain_detenteur_role_cache:
                           nextFei.premier_detenteur_prochain_detenteur_role_cache,
                         premier_detenteur_prochain_detenteur_id_cache:
@@ -751,8 +747,6 @@ export default function DestinataireSelect({
                   updateFei(fei.numero, nextFei);
                   let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
                     intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
-                    intermediaire_prochain_detenteur_type_cache: entities[prochainDetenteurEntityId]
-                      ?.type as FeiOwnerRole,
                     intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
                       ?.type as FeiOwnerRole,
                     intermediaire_depot_type: depotType,

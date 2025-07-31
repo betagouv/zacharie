@@ -190,13 +190,11 @@ export default function CurrentOwnerConfirm() {
             nextFei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO ? dayjs().toDate() : null,
           intermediaire_depot_type: null,
           intermediaire_depot_entity_id: null,
-          intermediaire_prochain_detenteur_type_cache: null,
           intermediaire_prochain_detenteur_role_cache: null,
           intermediaire_prochain_detenteur_id_cache: null,
         };
         if (willCollecteurProHandleCarcassesForETG) {
           newIntermediaire.intermediaire_prochain_detenteur_id_cache = nextFei.fei_next_owner_entity_id!;
-          newIntermediaire.intermediaire_prochain_detenteur_type_cache = FeiOwnerRole.ETG;
           newIntermediaire.intermediaire_prochain_detenteur_role_cache = FeiOwnerRole.ETG;
           newIntermediaire.intermediaire_depot_type = DepotType.AUCUN;
           newIntermediaire.intermediaire_depot_entity_id = null;
