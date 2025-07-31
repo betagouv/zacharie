@@ -7,7 +7,15 @@ import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
-import { EntityTypes, EntityRelationType, UserRoles, Prisma, User, Entity } from '@prisma/client';
+import {
+  EntityTypes,
+  EntityRelationType,
+  UserRoles,
+  Prisma,
+  User,
+  Entity,
+  UserEtgRoles,
+} from '@prisma/client';
 import InputVille from '@app/components/InputVille';
 import InputNotEditable from '@app/components/InputNotEditable';
 import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
@@ -79,6 +87,7 @@ export default function MesInformations() {
     async (event: React.FocusEvent<HTMLFormElement>) => {
       const formData = new FormData(event.currentTarget);
       const body: Partial<User> = Object.fromEntries(formData.entries());
+      console.log('body', body);
       const response = await API.post({
         path: `user/${user.id}`,
         body,
@@ -416,7 +425,56 @@ export default function MesInformations() {
               entityType={EntityTypes.ETG}
               allEntitiesByTypeAndId={allEntitiesByTypeAndId}
               userEntitiesByTypeAndId={userEntitiesByTypeAndId}
-            />
+            >
+              {etgsDone && (
+                <form
+                  id="etg_roles_form"
+                  className="px-4"
+                  onChange={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    const etgRoles = formData.getAll(Prisma.UserScalarFieldEnum.etg_roles);
+                    const body: Partial<User> = { etg_roles: etgRoles as UserEtgRoles[] };
+                    const response = await API.post({
+                      path: `user/${user.id}`,
+                      body,
+                    }).then((data) => data as UserConnexionResponse);
+                    if (response.ok && response.data?.user?.id) {
+                      useUser.setState({ user: response.data.user });
+                    }
+                  }}
+                  onSubmit={(e) => e.preventDefault()}
+                >
+                  <Checkbox
+                    legend="Que faites-vous au sein de votre ETG ?"
+                    hintText="Préciser vos rôles permettra de mieux vous attribuer les fiches, et de préciser la traçabilité."
+                    key={user.etg_roles.join(',')}
+                    options={[
+                      {
+                        label:
+                          "Je peux transporter les carcasses, ou je gère l'organisation du transport des carcasses",
+                        nativeInputProps: {
+                          name: Prisma.UserScalarFieldEnum.etg_roles,
+                          value: UserEtgRoles.TRANSPORT,
+                          defaultChecked: user.etg_roles.includes(UserEtgRoles.TRANSPORT),
+                          form: 'etg_roles_form',
+                        },
+                      },
+                      {
+                        label: 'Je peux réceptionner les carcasses',
+                        nativeInputProps: {
+                          name: Prisma.UserScalarFieldEnum.etg_roles,
+                          value: UserEtgRoles.RECEPTION,
+                          defaultChecked:
+                            user.etg_roles.includes(UserEtgRoles.RECEPTION) || !user.etg_roles.length,
+                          form: 'etg_roles_form',
+                        },
+                      },
+                    ]}
+                  />
+                </form>
+              )}
+            </ListAndSelectEntities>
           )}
           {user.roles.includes(UserRoles.SVI) && (
             <ListAndSelectEntities

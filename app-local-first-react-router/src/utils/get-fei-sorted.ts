@@ -1,6 +1,5 @@
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import { EntityRelationType, UserRoles } from '@prisma/client';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 
 type FeiSorted = {
@@ -45,28 +44,6 @@ export function getFeisSorted(): FeiSorted {
         // if (debug) console.log('2');
         continue;
       }
-      if (fei.fei_current_owner_role === UserRoles.ETG) {
-        // also collecteurs from this etg can take the lead
-        const etg = state.entities[fei.fei_current_owner_entity_id!];
-        if (etg?.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
-          if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
-            feisSorted.feisUnderMyResponsability.push(fei);
-            // if (debug) console.log('3');
-            continue;
-          }
-        }
-      }
-      if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
-        // also collecteurs from this etg can take the lead
-        const collecteurPro = state.entities[fei.fei_current_owner_entity_id!];
-        if (collecteurPro?.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
-          if (user.roles.includes(UserRoles.ETG)) {
-            feisSorted.feisUnderMyResponsability.push(fei);
-            // if (debug) console.log('4');
-            continue;
-          }
-        }
-      }
     }
     // FEI TO TAKE
     if (!fei.svi_assigned_at && !fei.intermediaire_closed_at) {
@@ -79,35 +56,6 @@ export function getFeisSorted(): FeiSorted {
         feisSorted.feisToTake.push(fei);
         // if (debug) console.log('6');
         continue;
-      }
-      if (fei.fei_next_owner_role === UserRoles.ETG) {
-        // also collecteurs from this etg can take the lead
-        const etg = state.entities[fei.fei_next_owner_entity_id!];
-        if (etg?.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
-          if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
-            if (!user.roles.includes(UserRoles.ETG)) {
-              if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
-                feisSorted.feisOngoing.push(fei);
-                // if (debug) console.log('7.1');
-                continue;
-              }
-            }
-            feisSorted.feisToTake.push(fei);
-            // if (debug) console.log('7');
-            continue;
-          }
-        }
-      }
-      if (fei.fei_next_owner_role === UserRoles.COLLECTEUR_PRO) {
-        // also collecteurs from this etg can take the lead
-        const collecteurPro = state.entities[fei.fei_next_owner_entity_id!];
-        if (collecteurPro?.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
-          if (user.roles.includes(UserRoles.ETG)) {
-            feisSorted.feisToTake.push(fei);
-            // if (debug) console.log('8');
-            continue;
-          }
-        }
       }
     }
     // FEI ONGOING

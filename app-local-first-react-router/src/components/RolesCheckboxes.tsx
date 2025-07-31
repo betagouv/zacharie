@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 export default function RolesCheckBoxes({
   user,
-  legend = 'Sélectionnez tous les rôles qui vous correspondent',
+  legend = 'Sélectionnez l’activité qui vous correspond',
   withAdmin = false,
 }: {
   user?: User;
@@ -24,6 +24,7 @@ export default function RolesCheckBoxes({
     if (currentRoles.includes(UserRoles.ADMIN)) {
       nextRoles.push(UserRoles.ADMIN);
     }
+    console.log({ nextRoles });
     setCheckedRoles(nextRoles);
   };
 
@@ -98,8 +99,8 @@ export default function RolesCheckBoxes({
   return (
     <>
       <Checkbox
-        hintText="Vous pouvez cumuler Examinateur Initial et Premier Détenteur, ou bien Collecteur Professionnel et ETG, mais ce sont les seuls rôles que vous pouvez cumuler."
-        legend={canChange ? legend : 'Voici vos rôles sur Zacharie'}
+        hintText="Vous ne pouvez pas cumuler plusieurs activités dans Zacharie."
+        legend={canChange ? legend : 'Voici votre activité sur Zacharie'}
         disabled={!canChange}
         options={options}
       />

@@ -51,11 +51,9 @@ const initialData: State = {
   canTakeFichesForEntity: [],
   canSendFichesToEntity: [],
   svisRelatedToETG: [],
-  collecteursRelatedToETG: [],
-  etgsRelatedWithEntity: [],
-  potentialCollecteursRelatedToETG: [],
+  etgsRelatedWithSvi: [],
   potentialSvisRelatedToETG: [],
-  potentialEtgsRelatedWithEntity: [],
+  potentialEtgsRelatedWithSvi: [],
 };
 export default function AdminEntity() {
   const params = useParams();
@@ -66,8 +64,7 @@ export default function AdminEntity() {
     canTakeFichesForEntity,
     canSendFichesToEntity,
     svisRelatedToETG,
-    collecteursRelatedToETG,
-    etgsRelatedWithEntity,
+    etgsRelatedWithSvi,
   } = adminEntityResponse ?? initialData;
   const entity = adminEntityResponse.entity as EntityForAdmin;
 
@@ -99,18 +96,14 @@ export default function AdminEntity() {
   }
   if (entity.type === EntityTypes.ETG) {
     tabs.push({
-      tabId: 'Collecteur Pro associé',
-      label: `Collecteur Pro associé (${collecteursRelatedToETG.length})`,
-    });
-    tabs.push({
       tabId: 'SVI associé',
       label: `SVI associé (${svisRelatedToETG.length})`,
     });
   }
-  if (entity.type === EntityTypes.SVI || entity.type === EntityTypes.COLLECTEUR_PRO) {
+  if (entity.type === EntityTypes.SVI) {
     tabs.push({
       tabId: 'ETGs associés',
-      label: `ETGs associés (${etgsRelatedWithEntity.length})`,
+      label: `ETGs associés (${etgsRelatedWithSvi.length})`,
     });
   }
 
@@ -536,44 +529,33 @@ function EntitiesRelatedTo({
 }) {
   const {
     entity,
-    collecteursRelatedToETG,
-    etgsRelatedWithEntity,
+    etgsRelatedWithSvi,
     svisRelatedToETG,
-    potentialCollecteursRelatedToETG,
-    potentialEtgsRelatedWithEntity,
+    potentialEtgsRelatedWithSvi,
     potentialSvisRelatedToETG,
   } = adminEntityResponse;
 
   const entitiesRelated = useMemo(() => {
     switch (entityType) {
-      case EntityTypes.COLLECTEUR_PRO:
-        return collecteursRelatedToETG;
       case EntityTypes.ETG:
-        return etgsRelatedWithEntity;
+        return etgsRelatedWithSvi;
       case EntityTypes.SVI:
         return svisRelatedToETG;
       default:
         return [];
     }
-  }, [collecteursRelatedToETG, entityType, etgsRelatedWithEntity, svisRelatedToETG]);
+  }, [entityType, etgsRelatedWithSvi, svisRelatedToETG]);
 
   const potentialEntitiesRelated = useMemo(() => {
     switch (entityType) {
-      case EntityTypes.COLLECTEUR_PRO:
-        return potentialCollecteursRelatedToETG;
       case EntityTypes.ETG:
-        return potentialEtgsRelatedWithEntity;
+        return potentialEtgsRelatedWithSvi;
       case EntityTypes.SVI:
         return potentialSvisRelatedToETG;
       default:
         return [];
     }
-  }, [
-    potentialCollecteursRelatedToETG,
-    entityType,
-    potentialEtgsRelatedWithEntity,
-    potentialSvisRelatedToETG,
-  ]);
+  }, [entityType, potentialEtgsRelatedWithSvi, potentialSvisRelatedToETG]);
 
   const showTable = useMemo(() => {
     if (entityType !== EntityTypes.ETG) {

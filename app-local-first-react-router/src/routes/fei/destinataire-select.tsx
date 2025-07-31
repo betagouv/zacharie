@@ -86,9 +86,7 @@ export default function DestinataireSelect({
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
-      (entity) =>
-        entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY ||
-        entity.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
     );
   }, [prochainsDetenteurs]);
 
@@ -657,7 +655,11 @@ export default function DestinataireSelect({
                   updateFei(fei.numero, nextFei);
                   addLog({
                     user_id: user.id,
-                    user_role: fei.fei_current_owner_role!,
+                    user_role:
+                      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
+                      fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
+                        ? UserRoles.CHASSEUR
+                        : fei.fei_current_owner_role!,
                     action: `${calledFrom}-select-destinataire-transfer`,
                     fei_numero: fei.numero,
                     history: createHistoryInput(fei, nextFei),
@@ -759,7 +761,10 @@ export default function DestinataireSelect({
                   );
                   addLog({
                     user_id: user.id,
-                    user_role: fei.fei_current_owner_role!,
+                    user_role:
+                      fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
+                        ? UserRoles.CHASSEUR
+                        : fei.fei_current_owner_role!,
                     action: `${calledFrom}-select-destinataire`,
                     fei_numero: fei.numero,
                     history: createHistoryInput(fei, nextFei),

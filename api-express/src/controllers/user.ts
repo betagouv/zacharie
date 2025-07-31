@@ -36,6 +36,7 @@ import {
   UserRelationType,
   UserRoles,
   FeiOwnerRole,
+  UserEtgRoles,
 } from '@prisma/client';
 import { authorizeUserOrAdmin } from '~/utils/authorizeUserOrAdmin.server';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
@@ -593,7 +594,15 @@ router.post(
         nextUser.ville = body[Prisma.UserScalarFieldEnum.ville] as string;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
-        nextUser.roles = body[Prisma.UserScalarFieldEnum.roles] as Array<UserRoles>;
+        nextUser.roles = [...new Set(body[Prisma.UserScalarFieldEnum.roles] as Array<UserRoles>)].sort(
+          (a, b) => b.localeCompare(a),
+        );
+      }
+      console.log('body', body);
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.etg_roles)) {
+        nextUser.etg_roles = [
+          ...new Set(body[Prisma.UserScalarFieldEnum.etg_roles] as Array<UserEtgRoles>),
+        ].sort((a, b) => b.localeCompare(a));
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.notifications)) {
         nextUser.notifications = body[Prisma.UserScalarFieldEnum.notifications] as Array<UserNotifications>;
@@ -844,40 +853,33 @@ router.get(
           ),
         );
 
-      const etgsRelatedWithMyEntities = await prisma.eTGAndEntityRelations.findMany({
-        where: {
-          entity_id: {
-            in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
-          },
-        },
-        include: {
-          ETGRelatedWithEntity: true,
-        },
-      });
+      const etgsRelatedWithMySvis = !user.roles.includes(UserRoles.SVI)
+        ? []
+        : await prisma.eTGAndEntityRelations.findMany({
+            where: {
+              entity_id: {
+                in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
+              },
+              entity_type: EntityTypes.SVI,
+            },
+            include: {
+              ETGRelatedWithEntity: true,
+            },
+          });
 
-      const svisRelatedWithMyETGs = await prisma.eTGAndEntityRelations.findMany({
-        where: {
-          etg_id: {
-            in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
-          },
-          entity_type: EntityTypes.SVI,
-        },
-        include: {
-          EntityRelatedWithETG: true,
-        },
-      });
-
-      const collecteursProsRelatedWithMyETGs = await prisma.eTGAndEntityRelations.findMany({
-        where: {
-          etg_id: {
-            in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
-          },
-          entity_type: EntityTypes.COLLECTEUR_PRO,
-        },
-        include: {
-          EntityRelatedWithETG: true,
-        },
-      });
+      const svisRelatedWithMyETGs = !user.roles.includes(UserRoles.ETG)
+        ? []
+        : await prisma.eTGAndEntityRelations.findMany({
+            where: {
+              etg_id: {
+                in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
+              },
+              entity_type: EntityTypes.SVI,
+            },
+            include: {
+              EntityRelatedWithETG: true,
+            },
+          });
 
       const entitiesWorkingForObject: Record<string, EntityWithUserRelation> = {};
       for (const svi of svisRelatedWithMyETGs.map((r) => r.EntityRelatedWithETG)) {
@@ -886,15 +888,9 @@ router.get(
           relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
         };
       }
-      for (const etg of etgsRelatedWithMyEntities.map((r) => r.ETGRelatedWithEntity)) {
+      for (const etg of etgsRelatedWithMySvis.map((r) => r.ETGRelatedWithEntity)) {
         entitiesWorkingForObject[etg.id] = {
           ...etg,
-          relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
-        };
-      }
-      for (const collecteurPro of collecteursProsRelatedWithMyETGs.map((r) => r.EntityRelatedWithETG)) {
-        entitiesWorkingForObject[collecteurPro.id] = {
-          ...collecteurPro,
           relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
         };
       }
@@ -1016,9 +1012,6 @@ router.get(
           etgs: etgs satisfies Array<EntityWithUserRelation>,
           svis: svis satisfies Array<EntityWithUserRelation>,
           entitiesWorkingFor: entitiesWorkingFor satisfies Array<EntityWithUserRelation>,
-          collecteursProsRelatedWithMyETGs:
-            collecteursProsRelatedWithMyETGs satisfies Array<ETGAndEntityRelations>,
-          etgsRelatedWithMyEntities: etgsRelatedWithMyEntities satisfies Array<ETGAndEntityRelations>,
         },
         error: '',
       });

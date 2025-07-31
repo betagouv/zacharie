@@ -38,9 +38,9 @@ export default function MesRoles() {
               currentStep={1}
               nextTitle="Vos informations personnelles"
               stepCount={4}
-              title="Vos rôles"
+              title="Votre activité"
             />
-            <h1 className="fr-h2 fr-mb-2w">Renseignez vos rôles</h1>
+            <h1 className="fr-h2 fr-mb-2w">Renseignez votre activité</h1>
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 pb-32 md:p-8 md:pb-0">
                 {user.roles.includes(UserRoles.ADMIN) && (
@@ -48,7 +48,7 @@ export default function MesRoles() {
                 )}
                 <RolesCheckBoxes
                   user={user}
-                  legend="Sélectionnez tous les rôles qui vous correspondent"
+                  legend="Sélectionnez l’activité qui vous correspond"
                   withAdmin={user.roles.includes(UserRoles.ADMIN)}
                 />
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">

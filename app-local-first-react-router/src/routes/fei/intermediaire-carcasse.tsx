@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { CarcasseType, Prisma, type Carcasse } from '@prisma/client';
+import { CarcasseType, Prisma, UserRoles, type Carcasse } from '@prisma/client';
 import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
@@ -85,7 +85,7 @@ export default function CarcasseIntermediaireComp({
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.intermediaire_role!,
+      user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
       fei_numero: fei.numero,
       action: 'carcasse-intermediaire-manquante',
       history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
@@ -103,7 +103,7 @@ export default function CarcasseIntermediaireComp({
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.intermediaire_role!,
+      user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
       fei_numero: fei.numero,
       action: 'carcasse-manquante',
       history: createHistoryInput(carcasse, nextPartialCarcasse),
@@ -137,7 +137,7 @@ export default function CarcasseIntermediaireComp({
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.intermediaire_role!,
+      user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
       fei_numero: fei.numero,
       action: 'carcasse-intermediaire-refus',
       history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
@@ -155,7 +155,7 @@ export default function CarcasseIntermediaireComp({
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.intermediaire_role!,
+      user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
       fei_numero: fei.numero,
       action: 'carcasse-refus',
       history: createHistoryInput(carcasse, nextPartialCarcasse),
@@ -180,7 +180,7 @@ export default function CarcasseIntermediaireComp({
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.intermediaire_role!,
+      user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
       fei_numero: fei.numero,
       action: 'carcasse-intermediaire-accept',
       history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
@@ -198,7 +198,7 @@ export default function CarcasseIntermediaireComp({
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
     addLog({
       user_id: user.id,
-      user_role: intermediaire.intermediaire_role!,
+      user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
       fei_numero: fei.numero,
       action: 'carcasse-accept',
       history: createHistoryInput(carcasse, nextPartialCarcasse),
@@ -340,7 +340,7 @@ export default function CarcasseIntermediaireComp({
               </div>
             )}
             <Input
-              label="Poids de la consigne"
+              label="Poids"
               hintText="En kg, facultatif"
               nativeInputProps={{
                 type: 'number',
@@ -356,7 +356,7 @@ export default function CarcasseIntermediaireComp({
                   updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
                   addLog({
                     user_id: user.id,
-                    user_role: intermediaire.intermediaire_role!,
+                    user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
                     fei_numero: fei.numero,
                     action: 'carcasse-intermediaire-poids',
                     history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
@@ -390,7 +390,7 @@ export default function CarcasseIntermediaireComp({
                   updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
                   addLog({
                     user_id: user.id,
-                    user_role: intermediaire.intermediaire_role!,
+                    user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
                     fei_numero: fei.numero,
                     action: 'carcasse-intermediaire-commentaire',
                     history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),

@@ -1,5 +1,5 @@
 import * as brevo from '@getbrevo/brevo';
-import { Entity, EntityTypes, User, UserRoles } from '@prisma/client';
+import { Entity, EntityTypes, User, UserEtgRoles, UserRoles } from '@prisma/client';
 import parsePhoneNumber from 'libphonenumber-js';
 import prisma from '~/prisma';
 import { capture } from './sentry';
@@ -76,8 +76,15 @@ function formatRoles(user: User) {
       break;
     case UserRoles.ETG:
       roles.push('ETG');
-      if (user.roleEtgAndTransport) {
-        roles.push('ETG et transporteur');
+      if (
+        user.etg_roles.includes(UserEtgRoles.RECEPTION) &&
+        user.etg_roles.includes(UserEtgRoles.TRANSPORT)
+      ) {
+        roles.push('ETG transporteur et réception');
+      } else if (user.etg_roles.includes(UserEtgRoles.RECEPTION)) {
+        roles.push('ETG réception');
+      } else if (user.etg_roles.includes(UserEtgRoles.TRANSPORT)) {
+        roles.push('ETG transporteur');
       }
       break;
     default:

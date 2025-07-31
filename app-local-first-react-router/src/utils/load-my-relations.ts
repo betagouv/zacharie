@@ -21,7 +21,6 @@ export async function loadMyRelations() {
 
     const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};
     const entitiesIdsWorkingDirectlyFor: Array<EntityWithUserRelation['id']> = [];
-    const entitiesIdsWorkingDirectlyAndIndirectlyFor: Array<EntityWithUserRelation['id']> = [];
 
     for (const entity of [
       ...(myRelationsData.data?.associationsDeChasse || []),
@@ -34,23 +33,16 @@ export async function loadMyRelations() {
       entities[entity.id] = entity;
       if (entity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         entitiesIdsWorkingDirectlyFor.push(entity.id);
-        entitiesIdsWorkingDirectlyAndIndirectlyFor.push(entity.id);
-      }
-      if (entity.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH) {
-        entitiesIdsWorkingDirectlyAndIndirectlyFor.push(entity.id);
       }
     }
 
     useZustandStore.setState({
       entities,
       entitiesIdsWorkingDirectlyFor,
-      entitiesIdsWorkingDirectlyAndIndirectlyFor,
       ccgsIds: myRelationsData.data?.ccgs.map((ccg) => ccg.id) || [],
       collecteursProIds: myRelationsData.data?.collecteursPro.map((collecteurPro) => collecteurPro.id) || [],
       etgsIds: myRelationsData.data?.etgs.map((etg) => etg.id) || [],
       svisIds: myRelationsData.data?.svis.map((svi) => svi.id) || [],
-      collecteursProsRelatedWithMyETGs: myRelationsData.data?.collecteursProsRelatedWithMyETGs || [],
-      etgsRelatedWithMyEntities: myRelationsData.data?.etgsRelatedWithMyEntities || [],
     });
 
     const detenteursInitiaux: Record<UserForFei['id'], UserForFei> = {};

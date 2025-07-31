@@ -1,6 +1,5 @@
 import type {
   User,
-  ETGAndEntityRelations,
   Entity,
   EntityAndUserRelations,
   Carcasse,
@@ -75,8 +74,6 @@ export interface UserMyRelationsResponse {
     etgs: Array<EntityWithUserRelation>;
     svis: Array<EntityWithUserRelation>;
     entitiesWorkingFor: Array<EntityWithUserRelation>;
-    collecteursProsRelatedWithMyETGs: Array<ETGAndEntityRelations>;
-    etgsRelatedWithMyEntities: Array<ETGAndEntityRelations>;
   };
   error: '';
 }
@@ -132,12 +129,10 @@ export interface AdminGetEntityResponse {
     entity: EntityForAdmin;
     canTakeFichesForEntity: Array<UserForAdmin>;
     canSendFichesToEntity: Array<UserForAdmin>;
-    collecteursRelatedToETG: Array<Entity>;
-    potentialCollecteursRelatedToETG: Array<Entity>;
     svisRelatedToETG: Array<Entity>;
     potentialSvisRelatedToETG: Array<Entity>;
-    etgsRelatedWithEntity: Array<Entity>;
-    potentialEtgsRelatedWithEntity: Array<Entity>;
+    etgsRelatedWithSvi: Array<Entity>;
+    potentialEtgsRelatedWithSvi: Array<Entity>;
   };
   error: string;
 }

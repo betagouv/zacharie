@@ -29,7 +29,7 @@ export default function useNavigationMenu() {
   const isEtg = user?.roles.includes(UserRoles.ETG);
   const profileMenu: MainNavigationProps.Item[] = [
     {
-      text: 'Mes roles',
+      text: 'Mes activités',
       isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-roles',
       linkProps: {
         to: '/app/tableau-de-bord/mon-profil/mes-roles',

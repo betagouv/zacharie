@@ -31,14 +31,14 @@ export default function DeleteFei() {
     return fei.fei_current_owner_user_id === user.id;
   }, [user.roles, user.numero_cfei, user.id, fei.fei_current_owner_user_id]);
 
-  const currentOwnerRole = useMemo(() => {
+  const currentOwnerRole: UserRoles | null = useMemo(() => {
     if (user.roles.includes(UserRoles.ADMIN)) {
       return UserRoles.ADMIN;
     }
     if (user.roles.includes(UserRoles.CHASSEUR)) {
       return UserRoles.CHASSEUR;
     }
-    return fei.fei_current_owner_role;
+    return fei.fei_current_owner_role as UserRoles;
   }, [user.roles, fei.fei_current_owner_role]);
 
   if (!canDeleteFei) {

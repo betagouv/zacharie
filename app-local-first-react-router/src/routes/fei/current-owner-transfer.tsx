@@ -1,4 +1,4 @@
-import { FeiOwnerRole } from '@prisma/client';
+import { FeiOwnerRole, UserRoles } from '@prisma/client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import SelectNextForExaminateur from './examinateur-select-next';
@@ -49,7 +49,7 @@ export default function FeiTransfer() {
             updateFei(fei.numero, nextFei);
             addLog({
               user_id: user.id,
-              user_role: fei.fei_next_owner_role!,
+              user_role: fei.fei_next_owner_role! as UserRoles,
               fei_numero: fei.numero,
               action: 'current-owner-transfer',
               entity_id: fei.fei_next_owner_entity_id,

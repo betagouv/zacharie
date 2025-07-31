@@ -66,13 +66,10 @@ export interface State {
   users: Record<UserForFei['id'], UserForFei>;
   entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
   entitiesIdsWorkingDirectlyFor: Array<EntityWithUserRelation['id']>;
-  entitiesIdsWorkingDirectlyAndIndirectlyFor: Array<EntityWithUserRelation['id']>;
   ccgsIds: Array<EntityWithUserRelation['id']>;
   collecteursProIds: Array<EntityWithUserRelation['id']>;
   etgsIds: Array<EntityWithUserRelation['id']>;
   svisIds: Array<EntityWithUserRelation['id']>;
-  collecteursProsRelatedWithMyETGs: Array<ETGAndEntityRelations>;
-  etgsRelatedWithMyEntities: Array<ETGAndEntityRelations>;
   detenteursInitiaux: Record<UserForFei['id'], UserForFei>;
   entityAndUserRelations: Record<EntityAndUserRelations['entity_id'], EntityAndUserRelations>;
   etgAndEntityRelations: Record<ETGAndEntityRelations['etg_id'], ETGAndEntityRelations>;
@@ -154,13 +151,10 @@ const useZustandStore = create<State & Actions>()(
         users: {},
         entities: {},
         entitiesIdsWorkingDirectlyFor: [],
-        entitiesIdsWorkingDirectlyAndIndirectlyFor: [],
         ccgsIds: [],
         collecteursProIds: [],
         etgsIds: [],
         svisIds: [],
-        collecteursProsRelatedWithMyETGs: [],
-        etgsRelatedWithMyEntities: [],
         detenteursInitiaux: {},
         entityAndUserRelations: {},
         etgAndEntityRelations: {},

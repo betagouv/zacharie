@@ -16,7 +16,7 @@ import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
 
-export async function populateDb(role?: UserRoles) {
+export async function populateDb(role?: FeiOwnerRole) {
   console.log('Populate db', process.env.NODE_ENV, process.env.POSTGRESQL_ADDON_URI);
   if (process.env.NODE_ENV !== 'test') {
     console.log('Not in test environment');
@@ -422,7 +422,7 @@ Christine
 const withRole = process.argv.find((arg) => arg.includes('--role'));
 if (withRole) {
   console.log('Populate db with role', withRole?.split('=')[1]);
-  populateDb(withRole?.split('=')[1] as UserRoles);
+  populateDb(withRole?.split('=')[1] as FeiOwnerRole);
 } else {
   populateDb();
 }

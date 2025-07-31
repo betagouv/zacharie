@@ -41,7 +41,7 @@ const initialState: State = {
     ville: '',
     activated: true,
     roles: [],
-    roleEtgAndTransport: false,
+    etg_roles: [],
     numero_cfei: '',
     at_least_one_fei_treated: null,
     user_entities_vivible_checkbox: false,

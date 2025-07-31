@@ -9,7 +9,6 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import { useGetMyNextRoleForThisFei } from '@app/utils/collecteurs-pros';
 
 export default function CurrentOwner() {
   const params = useParams();
@@ -22,8 +21,6 @@ export default function CurrentOwner() {
   const currentOwnerEntity = fei.fei_current_owner_entity_id
     ? state.entities[fei.fei_current_owner_entity_id]
     : null;
-
-  const myNextRoleForThisFei = useGetMyNextRoleForThisFei(fei, user);
 
   const navigate = useNavigate();
 
@@ -62,7 +59,7 @@ export default function CurrentOwner() {
     );
   }
 
-  if (myNextRoleForThisFei === UserRoles.COLLECTEUR_PRO) {
+  if (fei.fei_next_owner_role === UserRoles.COLLECTEUR_PRO) {
     return null;
   }
   if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO) {
@@ -108,7 +105,7 @@ export default function CurrentOwner() {
               updateFei(fei.numero, nextFei);
               addLog({
                 user_id: user.id,
-                user_role: currentOwnerRole!,
+                user_role: currentOwnerRole! as UserRoles,
                 fei_numero: fei.numero,
                 action: 'current-owner-delete',
                 entity_id: currentOwnerEntity?.id || null,

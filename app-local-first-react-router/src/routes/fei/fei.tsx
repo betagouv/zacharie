@@ -12,7 +12,6 @@ import FEICurrentIntermediaire from './intermediaire';
 import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
 import FEI_SVI from './svi';
-import { useNextOwnerCollecteurProEntityId } from '@app/utils/collecteurs-pros';
 import FeiStepper from '@app/components/FeiStepper';
 import CurrentOwnerConfirm from './current-owner-confirm';
 import DeleteFei from './delete-fei';
@@ -55,7 +54,6 @@ function Fei() {
 
   const entities = useZustandStore((state) => state.entities);
 
-  const nextOwnerCollecteurProEntityId = useNextOwnerCollecteurProEntityId(fei, user);
   const nextOwnerEntity = fei.fei_next_owner_entity_id ? entities[fei.fei_next_owner_entity_id] : null;
 
   // const refCurrentRole = useRef(fei.fei_current_owner_role);
@@ -83,13 +81,12 @@ function Fei() {
     }
     if (
       fei.fei_next_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
-      nextOwnerCollecteurProEntityId &&
       nextOwnerEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
     ) {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (
-      nextOwnerCollecteurProEntityId &&
+      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
       fei.fei_next_owner_role === FeiOwnerRole.ETG &&
       (user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.COLLECTEUR_PRO))
     ) {
@@ -117,7 +114,6 @@ function Fei() {
     fei.fei_next_owner_role,
     fei.fei_current_owner_user_id,
     fei.examinateur_initial_user_id,
-    nextOwnerCollecteurProEntityId,
     nextOwnerEntity?.relation,
     intermediaires,
   ]);

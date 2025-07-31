@@ -393,7 +393,7 @@ function FEICurrentIntermediaireContent({
       history: createHistoryInput(intermediaire, {
         prise_en_charge_at: _priseEnChargeAt,
       }),
-      user_role: intermediaire.intermediaire_role!,
+      user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
       entity_id: intermediaire.intermediaire_entity_id,
       zacharie_carcasse_id: null,
       carcasse_intermediaire_id: null,

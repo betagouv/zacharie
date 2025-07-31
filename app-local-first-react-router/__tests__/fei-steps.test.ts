@@ -26,8 +26,8 @@ const createMockUser = (roles: UserRoles[], numero_cfei: string | null = null): 
   code_postal: null,
   ville: null,
   user_entities_vivible_checkbox: null,
-  roleEtgAndTransport: false,
   roles,
+  etg_roles: [],
   created_at: new Date(),
   updated_at: new Date(),
   last_login_at: null,
@@ -121,7 +121,6 @@ const createMockIntermediaire = (overrides: Partial<FeiIntermediaire> = {}): Fei
 describe('computeFeiSteps', () => {
   const defaultParams = {
     entitiesIdsWorkingDirectlyFor: [],
-    entitiesIdsWorkingDirectlyAndIndirectlyFor: [],
   };
 
   beforeEach(() => {
@@ -555,7 +554,6 @@ describe('computeFeiSteps', () => {
           intermediaires: [collecteurProIntermediaire],
           user: collecteurProUser,
           entitiesIdsWorkingDirectlyFor: ['entity-1'],
-          entitiesIdsWorkingDirectlyAndIndirectlyFor: ['entity-1'],
         });
 
         expect(result.simpleStatus).toBe('À compléter');
@@ -572,7 +570,6 @@ describe('computeFeiSteps', () => {
           intermediaires: [collecteurProIntermediaire],
           user: collecteurProUser,
           entitiesIdsWorkingDirectlyFor: [],
-          entitiesIdsWorkingDirectlyAndIndirectlyFor: ['entity-1'],
         });
 
         expect(result.simpleStatus).toBe('À compléter');
@@ -589,7 +586,6 @@ describe('computeFeiSteps', () => {
           intermediaires: [collecteurProIntermediaire],
           user: collecteurProUser,
           entitiesIdsWorkingDirectlyFor: ['entity-2'],
-          entitiesIdsWorkingDirectlyAndIndirectlyFor: ['entity-2'],
         });
 
         expect(result.simpleStatus).toBe('En cours');
@@ -607,7 +603,6 @@ describe('computeFeiSteps', () => {
           intermediaires: [collecteurProIntermediaire],
           user: collecteurProUser,
           entitiesIdsWorkingDirectlyFor: ['entity-1'],
-          entitiesIdsWorkingDirectlyAndIndirectlyFor: ['entity-1'],
         });
 
         expect(result.simpleStatus).toBe('À compléter');
@@ -633,7 +628,6 @@ describe('computeFeiSteps', () => {
           intermediaires: [etgIntermediaire],
           user: collecteurProOnlyUser,
           entitiesIdsWorkingDirectlyFor: ['etg-entity'],
-          entitiesIdsWorkingDirectlyAndIndirectlyFor: ['etg-entity'],
         });
 
         expect(result.currentStepLabel).toBe('Réception par un établissement de traitement');
@@ -659,7 +653,6 @@ describe('computeFeiSteps', () => {
           intermediaires: [etgIntermediaire],
           user: collecteurProEtgUser,
           entitiesIdsWorkingDirectlyFor: ['etg-entity'],
-          entitiesIdsWorkingDirectlyAndIndirectlyFor: ['etg-entity'],
         });
 
         expect(result.currentStepLabel).toBe('Réception par un établissement de traitement');
@@ -685,7 +678,6 @@ describe('computeFeiSteps', () => {
           intermediaires: [collecteurProIntermediaire],
           user: collecteurProOnlyUser,
           entitiesIdsWorkingDirectlyFor: ['collecteur-entity'],
-          entitiesIdsWorkingDirectlyAndIndirectlyFor: ['collecteur-entity'],
         });
 
         expect(result.currentStepLabel).toBe('Transport vers un établissement de traitement');

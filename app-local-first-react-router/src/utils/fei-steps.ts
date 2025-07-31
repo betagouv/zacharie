@@ -26,19 +26,15 @@ export function useFeiSteps(fei: FeiDone): UseFeiStepsReturn {
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
   const user = useUser((state) => state.user);
   const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
-  const entitiesIdsWorkingDirectlyAndIndirectlyFor = useZustandStore(
-    (state) => state.entitiesIdsWorkingDirectlyAndIndirectlyFor,
-  );
 
   const memoizedComputeFeiSteps = useMemo(() => {
     return computeFeiSteps({
       fei,
       intermediaires,
       entitiesIdsWorkingDirectlyFor,
-      entitiesIdsWorkingDirectlyAndIndirectlyFor,
       user,
     });
-  }, [fei, intermediaires, entitiesIdsWorkingDirectlyFor, entitiesIdsWorkingDirectlyAndIndirectlyFor, user]);
+  }, [fei, intermediaires, entitiesIdsWorkingDirectlyFor, user]);
   return memoizedComputeFeiSteps;
 }
 
@@ -46,7 +42,6 @@ interface ComputeFeiStepsParams {
   fei: FeiDone;
   intermediaires: Array<FeiIntermediaire>;
   entitiesIdsWorkingDirectlyFor: Array<Entity['id']>;
-  entitiesIdsWorkingDirectlyAndIndirectlyFor: Array<Entity['id']>;
   user: User | null;
 }
 
@@ -54,7 +49,6 @@ export function computeFeiSteps({
   fei,
   intermediaires,
   entitiesIdsWorkingDirectlyFor,
-  entitiesIdsWorkingDirectlyAndIndirectlyFor,
   user,
 }: ComputeFeiStepsParams): UseFeiStepsReturn {
   const steps: Array<IntermediaireStep> = (() => {
@@ -215,21 +209,12 @@ export function computeFeiSteps({
           if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)) {
             return 'À compléter';
           }
-          if (entitiesIdsWorkingDirectlyAndIndirectlyFor.includes(fei.fei_next_owner_entity_id)) {
-            return 'À compléter';
-          }
           return 'En cours';
         }
         if (fei.fei_current_owner_entity_id) {
           if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id)) {
             return 'À compléter';
           }
-          // if (entitiesIdsWorkingDirectlyAndIndirectlyFor.includes(fei.fei_current_owner_entity_id)) {
-          //   if (fei.numero.includes('221726')) {
-          //     console.log('ici');
-          //   }
-          //   return 'À compléter';
-          // }
         }
         return 'En cours';
       }

@@ -248,83 +248,67 @@ router.get(
         return;
       }
 
-      const canTakeFichesForEntity = await prisma.user.findMany({
-        where: {
-          roles:
-            entity.type === EntityTypes.PREMIER_DETENTEUR
-              ? {
-                  has: UserRoles.CHASSEUR,
-                }
-              : {
-                  has: entity.type,
-                },
-          id: {
-            notIn: entity.EntityRelationsWithUsers.filter(
-              (entityRelation) =>
-                entityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-            ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
-          },
-        },
-        orderBy: {
-          updated_at: 'desc',
-        },
-        select: userAdminSelect,
-      });
-
-      const canSendFichesToEntity = await prisma.user.findMany({
-        where: {
-          id: {
-            notIn: entity.EntityRelationsWithUsers.filter(
-              (entityRelation) =>
-                entityRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-            ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
-          },
-          roles: {
-            hasSome:
-              entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
-                ? [UserRoles.CHASSEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
-                : entity.type === EntityTypes.PREMIER_DETENTEUR
-                ? [UserRoles.CHASSEUR]
-                : entity.type === EntityTypes.SVI
-                ? [UserRoles.ETG]
-                : [],
-          },
-        },
-        orderBy: {
-          updated_at: 'desc',
-        },
-        select: userAdminSelect,
-      });
-
-      const collecteursRelatedToETG =
-        entity.type !== EntityTypes.ETG
+      const canTakeFichesForEntity =
+        entity.type === EntityTypes.CCG
           ? []
-          : await prisma.eTGAndEntityRelations
-              .findMany({
-                where: {
-                  etg_id: entity.id,
-                  entity_type: EntityTypes.COLLECTEUR_PRO,
+          : await prisma.user.findMany({
+              where: {
+                roles: (() => {
+                  if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
+                    return {
+                      has: UserRoles.CHASSEUR,
+                    };
+                  }
+                  if (
+                    entity.type === EntityTypes.ETG ||
+                    entity.type === EntityTypes.COLLECTEUR_PRO ||
+                    entity.type === EntityTypes.SVI
+                  ) {
+                    return {
+                      has: entity.type,
+                    };
+                  }
+                })(),
+                id: {
+                  notIn: entity.EntityRelationsWithUsers.filter(
+                    (entityRelation) =>
+                      entityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                  ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
                 },
-                orderBy: {
-                  updated_at: 'desc',
-                },
-                include: {
-                  EntityRelatedWithETG: true,
-                },
-              })
-              .then((data) => data.map((rel) => rel.EntityRelatedWithETG));
+              },
+              orderBy: {
+                updated_at: 'desc',
+              },
+              select: userAdminSelect,
+            });
 
-      const potentialCollecteursRelatedToETG = await prisma.entity.findMany({
-        where: {
-          type: EntityTypes.COLLECTEUR_PRO,
-          id: {
-            notIn: collecteursRelatedToETG.map((entity) => entity.id),
-          },
-        },
-        orderBy: {
-          updated_at: 'desc',
-        },
-      });
+      const canSendFichesToEntity =
+        entity.type === EntityTypes.CCG
+          ? []
+          : await prisma.user.findMany({
+              where: {
+                id: {
+                  notIn: entity.EntityRelationsWithUsers.filter(
+                    (entityRelation) =>
+                      entityRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+                  ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
+                },
+                roles: {
+                  hasSome:
+                    entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
+                      ? [UserRoles.CHASSEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
+                      : entity.type === EntityTypes.PREMIER_DETENTEUR
+                      ? [UserRoles.CHASSEUR]
+                      : entity.type === EntityTypes.SVI
+                      ? [UserRoles.ETG]
+                      : [],
+                },
+              },
+              orderBy: {
+                updated_at: 'desc',
+              },
+              select: userAdminSelect,
+            });
 
       const svisRelatedToETG =
         entity.type !== EntityTypes.ETG
@@ -356,8 +340,8 @@ router.get(
         },
       });
 
-      const etgsRelatedWithEntity =
-        entity.type !== EntityTypes.COLLECTEUR_PRO && entity.type !== EntityTypes.SVI
+      const etgsRelatedWithSvi =
+        entity.type !== EntityTypes.SVI
           ? []
           : await prisma.eTGAndEntityRelations
               .findMany({
@@ -373,14 +357,14 @@ router.get(
               })
               .then((data) => data.map((rel) => rel.ETGRelatedWithEntity));
 
-      const potentialEtgsRelatedWithEntity =
-        entity.type !== EntityTypes.COLLECTEUR_PRO && entity.type !== EntityTypes.SVI
+      const potentialEtgsRelatedWithSvi =
+        entity.type !== EntityTypes.SVI
           ? []
           : await prisma.entity.findMany({
               where: {
                 type: EntityTypes.ETG,
                 id: {
-                  notIn: etgsRelatedWithEntity.map((entity) => entity.id),
+                  notIn: etgsRelatedWithSvi.map((entity) => entity.id),
                 },
               },
               orderBy: {
@@ -394,12 +378,10 @@ router.get(
           entity,
           canTakeFichesForEntity,
           canSendFichesToEntity,
-          collecteursRelatedToETG,
-          potentialCollecteursRelatedToETG,
           svisRelatedToETG,
           potentialSvisRelatedToETG,
-          etgsRelatedWithEntity,
-          potentialEtgsRelatedWithEntity,
+          etgsRelatedWithSvi,
+          potentialEtgsRelatedWithSvi,
         },
         error: '',
       });
