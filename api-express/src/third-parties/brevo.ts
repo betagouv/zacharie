@@ -114,7 +114,7 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
         if (brevoContact.attributes.EXT_ID !== props.id) {
           const updateContact = new brevo.UpdateContact();
           updateContact.attributes = {
-            EXT_ID: props.id,
+            EXT_ID: { value: props.id },
           };
           await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
         }
@@ -136,7 +136,7 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
     createContact.extId = props.id;
     createContact.attributes = {
       CREATED_BY: [createdBy],
-      'CREATION DATE': props.created_at.toISOString(),
+      'CREATION DATE': { value: props.created_at.toISOString() },
       ROLE: props.roles.map(formatRoles),
     };
 
@@ -210,14 +210,14 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
     createContact.email = props.email;
     createContact.attributes = {
       CREATED_BY: ['CONTACT FORM'],
-      'CREATION DATE': new Date().toISOString(),
-      PRENOM: props.prenom,
-      NOM: props.nom_de_famille,
-      LANDLINE_NUMBER,
-      SMS,
-      WHATSAPP,
-      TELEPHONE_PORTABLE,
-      TELEPHONE_FIXE,
+      'CREATION DATE': { value: new Date().toISOString() },
+      PRENOM: { value: props.prenom },
+      NOM: { value: props.nom_de_famille },
+      LANDLINE_NUMBER: { value: LANDLINE_NUMBER },
+      SMS: { value: SMS },
+      WHATSAPP: { value: WHATSAPP },
+      TELEPHONE_PORTABLE: { value: TELEPHONE_PORTABLE },
+      TELEPHONE_FIXE: { value: TELEPHONE_FIXE },
     };
 
     const result = await apiInstance.createContact(createContact);
@@ -279,17 +279,17 @@ async function updateBrevoContact(props: User) {
 
     const updateContact = new brevo.UpdateContact();
     updateContact.attributes = {
-      PRENOM: props.prenom,
-      NOM: props.nom_de_famille,
-      ROLE: props.roles.map(formatRoles),
-      LANDLINE_NUMBER,
-      SMS,
-      WHATSAPP,
-      TELEPHONE_PORTABLE,
-      TELEPHONE_FIXE,
-      ADRESSE: ADRESSE ? ADRESSE : '',
-      NUM_EXAMINATEUR: props.numero_cfei,
-      EXT_ID: props.id,
+      PRENOM: { value: props.prenom },
+      NOM: { value: props.nom_de_famille },
+      ROLE: { value: props.roles.map(formatRoles) },
+      LANDLINE_NUMBER: { value: LANDLINE_NUMBER },
+      SMS: { value: SMS },
+      WHATSAPP: { value: WHATSAPP },
+      TELEPHONE_PORTABLE: { value: TELEPHONE_PORTABLE },
+      TELEPHONE_FIXE: { value: TELEPHONE_FIXE },
+      ADRESSE: { value: ADRESSE ? ADRESSE : '' },
+      NUM_EXAMINATEUR: { value: props.numero_cfei },
+      EXT_ID: { value: props.id },
     };
 
     const result = await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
