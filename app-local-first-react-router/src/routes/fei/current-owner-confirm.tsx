@@ -2,7 +2,7 @@ import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { useMemo } from 'react';
-import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
+import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import {
   DepotType,
   EntityRelationType,
@@ -277,7 +277,7 @@ export default function CurrentOwnerConfirm() {
         }
         className="m-0 bg-white"
       >
-        En tant que <b>{getUserRoleLabel(fei.fei_next_owner_role!)}</b>
+        En tant que <b>{getIntermediaireRoleLabel(fei.fei_next_owner_role!)}</b>
         {nextOwnerEntity?.nom_d_usage ? ` (${nextOwnerEntity?.nom_d_usage})` : ''}, vous pouvez prendre en
         charge cette fiche et les carcasses associées.
         <br />

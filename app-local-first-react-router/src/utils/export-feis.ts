@@ -3,7 +3,7 @@ import { utils, writeFile } from '@e965/xlsx';
 import useZustandStore from '@app/zustand/store';
 import type { UserForFei } from '~/src/types/user';
 import { EntityWithUserRelation } from '@api/src/types/entity';
-import { getUserRoleLabel } from './get-user-roles-label';
+import { getIntermediaireRoleLabel } from './get-user-roles-label';
 import dayjs from 'dayjs';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
 import { loadFei } from './load-fei';
@@ -280,7 +280,7 @@ export default function useExportFeis() {
             const intermediaireUser = users[intermediaire.intermediaire_user_id!];
             feiSheetData.push({
               Donnée: `Destinataire ${Number(index) + 1}`,
-              Valeur: `${getUserRoleLabel(intermediaire.intermediaire_role!)}\n${formatEntity(intermediaireEntity)}\n${formatUser(intermediaireUser)}`,
+              Valeur: `${getIntermediaireRoleLabel(intermediaire.intermediaire_role!)}\n${formatEntity(intermediaireEntity)}\n${formatUser(intermediaireUser)}`,
             });
           }
         } else {

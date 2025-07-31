@@ -62,3 +62,14 @@ export function getUserRoleLabelPrefixed(role: UserRoles | FeiOwnerRole | Entity
       return 'de je ne sais qui';
   }
 }
+
+export function getIntermediaireRoleLabel(role: FeiOwnerRole) {
+  switch (role) {
+    case EntityTypes.COLLECTEUR_PRO:
+      return 'Transport des carcasses';
+    case EntityTypes.ETG:
+      return 'Réception des carcasses';
+    default:
+      return 'Inconnu';
+  }
+}

@@ -4,7 +4,7 @@ import { Carcasse, CarcasseType } from '@prisma/client';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import ItemNotEditable from '@app/components/ItemNotEditable';
-import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
+import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 
 export default function FEIDonneesDeChasse({
   carcasseId,
@@ -74,7 +74,7 @@ export default function FEIDonneesDeChasse({
       const intermediaire = intermediaires[i];
       const intermediaireLines = [];
       const entity = entities[intermediaire.intermediaire_entity_id!];
-      intermediaireLines.push(getUserRoleLabel(intermediaire.intermediaire_role!));
+      intermediaireLines.push(getIntermediaireRoleLabel(intermediaire.intermediaire_role!));
       intermediaireLines.push(entity.siret);
       intermediaireLines.push(`${entity.code_postal} ${entity.ville}`);
       if (intermediaire.prise_en_charge_at) {
