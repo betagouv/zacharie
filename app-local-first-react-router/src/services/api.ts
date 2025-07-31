@@ -13,7 +13,7 @@ so here below is a trick when dev on a browser with localhost
 if (API_URL.protocol === 'http:') {
   if (!import.meta.env.VITEST) {
     if (window.location.origin.includes('localhost')) {
-      API_URL = new URL('http://localhost:3235');
+      API_URL = new URL(`http://localhost:${API_URL.port}`);
     }
   }
 }
