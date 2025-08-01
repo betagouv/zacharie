@@ -281,6 +281,7 @@ export default function MesInformations() {
             <ListAndSelectEntities
               formId="onboarding-etape-2-associations-data"
               setRefreshKey={setRefreshKey}
+              refreshKey={refreshKey}
               sectionLabel="Vos associations / sociétés / domaines de chasse"
               addLabel=""
               selectLabel={canChange ? 'Cherchez ici une entité existante' : ''}
@@ -404,6 +405,7 @@ export default function MesInformations() {
             <ListAndSelectEntities
               formId="onboarding-etape-2-collecteur-pro-data"
               setRefreshKey={setRefreshKey}
+              refreshKey={refreshKey}
               sectionLabel="Votre Collecteur Professionnel Indépendant"
               addLabel={!collecteursProDone ? 'Ajouter un Collecteur Professionnel' : 'Vos entreprises'}
               selectLabel={!collecteursProDone ? 'Sélectionnez un Collecteur Professionnel' : ''}
@@ -418,6 +420,7 @@ export default function MesInformations() {
             <ListAndSelectEntities
               formId="onboarding-etape-2-etg-data"
               setRefreshKey={setRefreshKey}
+              refreshKey={refreshKey}
               sectionLabel="Votre Établissement de Traitement du Gibier sauvage (ETG)"
               addLabel={!etgsDone ? 'Ajouter un ETG' : 'Vos entreprises'}
               selectLabel={!etgsDone ? 'Sélectionnez un ETG' : ''}
@@ -481,6 +484,7 @@ export default function MesInformations() {
             <ListAndSelectEntities
               formId="onboarding-etape-2-svi-data"
               setRefreshKey={setRefreshKey}
+              refreshKey={refreshKey}
               sectionLabel="Vous travaillez pour un Service Vétérinaire d'Inspection (SVI)"
               addLabel="Ajouter un SVI"
               selectLabel="Sélectionnez un SVI"
@@ -559,6 +563,7 @@ export default function MesInformations() {
 
 interface ListAndSelectEntitiesProps {
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
+  refreshKey: number;
   canChange: boolean;
   done: boolean;
   entityType: EntityTypes;
@@ -574,6 +579,7 @@ interface ListAndSelectEntitiesProps {
 
 function ListAndSelectEntities({
   setRefreshKey,
+  refreshKey,
   done,
   entityType,
   selectLabel,
@@ -612,13 +618,17 @@ function ListAndSelectEntities({
             if (!relation) return null;
             return (
               <RelationEntityUser
-                key={entity.id}
+                key={relation.id}
+                relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
                 entity={entity}
                 user={user}
                 enableUsersView={relation.status === EntityRelationStatus.ADMIN}
                 displayEntity={true}
                 displayUser={false}
-                onChange={() => setRefreshKey((k) => k + 1)}
+                onChange={() => {
+                  setRefreshKey((k) => k + 1);
+                }}
+                refreshKey={refreshKey}
                 canDelete
               />
             );

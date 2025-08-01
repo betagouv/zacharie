@@ -5,7 +5,7 @@ import type { RequestWithUser } from '~/types/request';
 import type { EntitiesWorkingForResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import { EntityRelationType, EntityTypes, Prisma, UserRoles } from '@prisma/client';
+import { EntityRelationStatus, EntityRelationType, EntityTypes, Prisma, UserRoles } from '@prisma/client';
 import {
   sortEntitiesByTypeAndId,
   sortEntitiesRelationsByTypeAndId,
@@ -169,6 +169,7 @@ router.post(
         owner_id: user.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         entity_id: createdEntity.id,
+        status: EntityRelationStatus.ADMIN,
       },
     });
 
@@ -214,6 +215,7 @@ router.post(
       data: {
         owner_id: user.id,
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        status: EntityRelationStatus.ADMIN,
         entity_id: createdEntity.id,
       },
     });

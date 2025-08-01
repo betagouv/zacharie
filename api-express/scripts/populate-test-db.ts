@@ -2,6 +2,7 @@ import {
   CarcasseStatus,
   CarcasseType,
   DepotType,
+  EntityRelationStatus,
   EntityRelationType,
   EntityTypes,
   FeiOwnerRole,
@@ -335,21 +336,25 @@ Christine
         owner_id: users.find((user) => user.email === 'premier-detenteur@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'Association de chasseurs')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
       },
       {
         owner_id: users.find((user) => user.email === 'examinateur-premier-detenteur@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'Association de chasseurs')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
       },
       {
         owner_id: users.find((user) => user.email === 'etg-1@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
       },
       {
         owner_id: users.find((user) => user.email === 'etg-2@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 2')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
       },
     ],
   });

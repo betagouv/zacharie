@@ -135,25 +135,21 @@ router.get(
           AsEtgRelationsWithOtherEntities: true,
         },
       });
-      const userEntitiesRelations = await prisma.entityAndUserRelations
-        .findMany({
-          where: {
-            owner_id: user.id,
-            deleted_at: null,
+      const userEntitiesRelations = await prisma.entity.findMany({
+        where: {
+          EntityRelationsWithUsers: {
+            some: {
+              owner_id: user.id,
+              deleted_at: null,
+            },
           },
-          orderBy: {
-            updated_at: 'desc',
-          },
-          include: {
-            EntityRelatedWithUser: true,
-          },
-        })
-        .then((data) =>
-          data.map((rel) => ({
-            ...rel.EntityRelatedWithUser,
-            relation: rel.relation,
-          })),
-        );
+          deleted_at: null,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+        include: entityAdminInclude,
+      });
 
       res.status(200).send({
         ok: true,

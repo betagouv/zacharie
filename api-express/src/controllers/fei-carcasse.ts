@@ -5,7 +5,7 @@ import type { CarcasseResponse, CarcassesGetForRegistryResponse } from '~/types/
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
-import { EntityRelationType, IPM2Decision, Prisma, UserRoles } from '@prisma/client';
+import { EntityRelationStatus, EntityRelationType, IPM2Decision, Prisma, UserRoles } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
 import {
   formatCarcasseChasseurEmail,
@@ -513,6 +513,9 @@ router.get(
             some: {
               owner_id: req.user!.id,
               relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              status: {
+                in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+              },
             },
           },
         },
@@ -612,6 +615,9 @@ router.get(
                 some: {
                   owner_id: req.user.id,
                   relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                  status: {
+                    in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                  },
                 },
               },
             },

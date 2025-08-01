@@ -176,7 +176,7 @@ export interface AdminUserDataResponse {
     identityDone: boolean;
     examinateurDone: boolean;
     allEntities: Array<EtgForAdmin>;
-    userEntitiesRelations: Array<EntityWithUserRelation>;
+    userEntitiesRelations: Array<EntityForAdmin>;
   };
   error: string;
 }

@@ -315,7 +315,7 @@ export default function AdminEntity() {
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
                   potentialUsers={canTakeFichesForEntity}
-                  relation={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
+                  relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
                   fetcherKey="working-for"
                   setIsSaving={setIsSaving}
                 />
@@ -325,7 +325,7 @@ export default function AdminEntity() {
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
                   potentialUsers={canSendFichesToEntity}
-                  relation={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+                  relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
                   fetcherKey="working-with"
                   setIsSaving={setIsSaving}
                 />
@@ -373,7 +373,7 @@ export default function AdminEntity() {
 interface WorkingWithOrForProps {
   adminEntityResponse: State;
   setAdminEntityResponse: (state: State) => void;
-  relation: EntityRelationType;
+  relationType: EntityRelationType;
   potentialUsers: Array<{
     id: string;
     email: string | null;
@@ -390,7 +390,7 @@ interface WorkingWithOrForProps {
 function UserWorkingWithOrFor({
   adminEntityResponse,
   setAdminEntityResponse,
-  relation,
+  relationType,
   potentialUsers,
   fetcherKey,
   setIsSaving,
@@ -398,11 +398,12 @@ function UserWorkingWithOrFor({
   const { entity } = adminEntityResponse;
   return (
     <>
-      {entity.EntityRelationsWithUsers.filter((entity) => entity.relation === relation).map(
+      {entity.EntityRelationsWithUsers.filter((entity) => entity.relation === relationType).map(
         (entityRelation) => {
           const owner = entityRelation.UserRelatedWithEntity;
           return (
             <RelationEntityUser
+              relationType={relationType}
               entity={entity}
               key={owner.id}
               user={owner as User}
@@ -440,7 +441,7 @@ function UserWorkingWithOrFor({
                   body: {
                     _action: 'create',
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                    relation,
+                    relation: relationType,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
                   },
                 })

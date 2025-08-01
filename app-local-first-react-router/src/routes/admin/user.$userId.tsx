@@ -2,7 +2,6 @@ import { useState, type RefObject, useRef, useMemo, useEffect } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import {
   Entity,
   EntityRelationType,
@@ -16,12 +15,13 @@ import RolesCheckBoxes from '@app/components/RolesCheckboxes';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Table } from '@codegouvfr/react-dsfr/Table';
-import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
 import type { AdminUserDataResponse } from '@api/src/types/responses';
 import { Link, useParams } from 'react-router';
 import Chargement from '@app/components/Chargement';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import API from '@app/services/api';
+import RelationEntityUser from '@app/components/RelationEntityUser';
+import { EntityWithUserRelations } from '@api/src/types/entity';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
@@ -118,7 +118,7 @@ export default function AdminUser() {
     },
     {
       tabId: 'Peut traiter des fiches au nom de',
-      label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => rel.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY).length})`,
+      label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => rel.EntityRelationsWithUsers.some((r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)).length})`,
     },
   ];
 
@@ -132,7 +132,9 @@ export default function AdminUser() {
   if (!user.roles.includes(UserRoles.SVI)) {
     let numberOfWOrkingWith = userEntitiesRelations.filter(
       (rel) =>
-        rel.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY && rel.type !== EntityTypes.CCG,
+        rel.EntityRelationsWithUsers.some(
+          (r) => r.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        ) && rel.type !== EntityTypes.CCG,
     ).length;
     if (user.roles.includes(UserRoles.ETG)) {
       numberOfWOrkingWith += 1;
@@ -376,7 +378,7 @@ export default function AdminUser() {
               )}
               {selectedTabId === 'Peut traiter des fiches au nom de' && (
                 <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relation={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
+                  relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
                   id={selectedTabId}
                   userResponseData={userResponseData}
                   setUserResponseData={setUserResponseData}
@@ -384,7 +386,7 @@ export default function AdminUser() {
               )}
               {selectedTabId === 'CCGs' && (
                 <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relation={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+                  relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
                   id={selectedTabId}
                   userResponseData={userResponseData}
                   setUserResponseData={setUserResponseData}
@@ -393,7 +395,7 @@ export default function AdminUser() {
               )}
               {selectedTabId === 'Peut envoyer des fiches à' && (
                 <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relation={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+                  relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
                   id={selectedTabId}
                   userResponseData={userResponseData}
                   setUserResponseData={setUserResponseData}
@@ -413,7 +415,7 @@ export default function AdminUser() {
 }
 
 interface PeutEnvoyerDesFichesAOuTraiterAuNomDeProps {
-  relation: EntityRelationType;
+  relationType: EntityRelationType;
   id: string;
   userResponseData: State;
   setUserResponseData: (data: State) => void;
@@ -421,7 +423,7 @@ interface PeutEnvoyerDesFichesAOuTraiterAuNomDeProps {
 }
 
 function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
-  relation,
+  relationType,
   id,
   userResponseData,
   setUserResponseData,
@@ -431,16 +433,18 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
 
   const shouldHaveAssociatedSvi = useMemo(() => {
     if (!user.roles.includes(UserRoles.ETG)) return false;
-    if (relation !== EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) return false;
+    if (relationType !== EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) return false;
     return true;
-  }, [user.roles, relation]);
+  }, [user.roles, relationType]);
 
   const associatedSvi = useMemo(() => {
     if (!shouldHaveAssociatedSvi) return null;
     const etgId = userEntitiesRelations.find((entity) => {
       return (
         entity.type === EntityTypes.ETG &&
-        entity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+        entity.EntityRelationsWithUsers.some(
+          (r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        )
       );
     })?.id;
     if (!etgId) return null;
@@ -460,7 +464,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
   const potentialEntities = useMemo(() => {
     const userEntityIds: Record<Entity['id'], boolean> = {};
     for (const userEntityRelation of userEntitiesRelations) {
-      if (userEntityRelation.relation === relation) {
+      if (userEntityRelation.EntityRelationsWithUsers.some((r) => r.relation === relationType)) {
         userEntityIds[userEntityRelation.id] = forCCG
           ? userEntityRelation.type === EntityTypes.CCG
           : userEntityRelation.type !== EntityTypes.CCG;
@@ -469,7 +473,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
     const entities = [];
     for (const entity of allEntities) {
       if (entity.type === EntityTypes.SVI) {
-        if (relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
+        if (relationType === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
           // cette relation est définie dans l'ETG:
           // si un user a un rôle ETG, alors il peut envoyer une fiche
           // au SVI auquel est rattaché l'ETG via AsEtgRelationsWithOtherEntities
@@ -485,7 +489,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       if (!forCCG && entity.type === EntityTypes.CCG) {
         continue;
       }
-      if (relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
+      if (relationType === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
         if (user.roles.includes(UserRoles.CHASSEUR)) {
           if (
             entity.type === EntityTypes.ETG ||
@@ -503,7 +507,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
             entities.push(entity);
           }
         }
-      } else if (relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
+      } else if (relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         if (user.roles.includes(UserRoles.CHASSEUR)) {
           if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
             entities.push(entity);
@@ -524,7 +528,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       }
     }
     return entities;
-  }, [allEntities, userEntitiesRelations, forCCG, relation, user.roles]);
+  }, [allEntities, userEntitiesRelations, forCCG, relationType, user.roles]);
 
   return (
     <>
@@ -540,61 +544,54 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
             : "Veuillez associer un SVI à l'ETG, il sera automatiquement ajouté à la liste des entités auxquelles l'utilisateur peut envoyer des fiches"}
         </Highlight>
       )}
-      {[associatedSvi, ...userEntitiesRelations]
+      {associatedSvi && (
+        <RelationEntityUser
+          key={associatedSvi.id}
+          relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+          entity={associatedSvi as unknown as EntityWithUserRelations}
+          user={user}
+          displayEntity
+        />
+      )}
+      {userEntitiesRelations
         .filter((entity) => {
           if (!entity) return false;
-          if (entity.relation !== relation) return false;
+          // if (!entity.EntityRelationsWithUsers.some((r) => r.relation === relation)) return false;
           if (forCCG && entity.type !== EntityTypes.CCG) return false;
           if (!forCCG && entity.type === EntityTypes.CCG) return false;
           return true;
         })
         .map((entity) => {
           if (!entity) return null;
+          if (!entity?.EntityRelationsWithUsers) return null;
+          const relation = entity.EntityRelationsWithUsers.find(
+            (relation) => relation.owner_id === user.id && relation.relation === relationType,
+          );
+          if (!relation) return null;
           const isSviLinkedToEtg = associatedSvi?.id === entity.id;
-          return (
-            // @ts-expect-error Types of property 'isClosable' are incompatible. Type 'boolean' is not assignable to type 'true'
-            <Notice
-              key={entity.id}
-              className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice\\\\_\\\\_title]:before:hidden"
-              style={{
-                boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
-              }}
-              isClosable={!isSviLinkedToEtg}
-              onClose={() => {
-                API.post({
-                  path: `user/user-entity/${user.id}`,
-                  body: {
-                    _action: 'delete',
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                    relation,
-                  },
-                }).then(() => {
+
+          try {
+            return (
+              <RelationEntityUser
+                key={entity.id}
+                relationType={relationType}
+                entity={entity}
+                user={user}
+                displayEntity
+                entityLink={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                canApproveRelation={relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
+                canDelete={!isSviLinkedToEtg}
+                onChange={() => {
                   loadData(entity.id).then((response) => {
                     if (response.data) setUserResponseData(response.data!);
                   });
-                });
-              }}
-              title={
-                <Link
-                  to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-                >
-                  {entity.nom_d_usage}
-                  <br />
-                  {getUserRoleLabel(entity.type)}
-                  <br />
-                  {entity.siret}
-                  {entity.numero_ddecpp}
-                  <br />
-                  {entity.code_postal} {entity.ville}
-                  <br />
-                  <br />
-                  {isSviLinkedToEtg && <>(SVI lié à l'ETG, ne peut pas être supprimé)</>}
-                </Link>
-              }
-            />
-          );
+                }}
+              />
+            );
+          } catch (error) {
+            console.error(error);
+            return null;
+          }
         })}
       {!!potentialEntities.length && (
         <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
@@ -615,7 +612,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                     body: {
                       _action: 'create',
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                      relation,
+                      relation: relationType,
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
                     },
                   }).then(() => {

@@ -9,10 +9,13 @@ import API from '@app/services/api';
 import { Link } from 'react-router';
 import SelectCustom from './SelectCustom';
 import useUser from '@app/zustand/user';
+import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
 
 interface RelationEntityUserProps {
   entity: EntityWithUserRelations;
+  refreshKey?: number;
   user: User;
+  relationType?: EntityRelationType;
   enableUsersView?: boolean;
   canApproveRelation?: boolean;
   onChange?: () => void;
@@ -25,9 +28,11 @@ interface RelationEntityUserProps {
 
 export default function RelationEntityUser({
   entity,
+  refreshKey,
   user,
   enableUsersView = false,
   canApproveRelation = false,
+  relationType,
   onChange,
   userLink,
   entityLink,
@@ -45,23 +50,33 @@ export default function RelationEntityUser({
 
   const iAmAdmin = useUser((state) => state.user?.roles.includes(UserRoles.ADMIN));
 
-  const relation = entity.EntityRelationsWithUsers.find(
+  // const canTransmitCarcassesForEntity = entity.EntityRelationsWithUsers.find(
+  //   (relation) =>
+  //     relation.owner_id === user.id &&
+  //     relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+  // );
+  const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers.find(
     (relation) =>
       relation.owner_id === user.id &&
       relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-  )!;
+  );
   const relationsToApprove = entity.EntityRelationsWithUsers.filter(
     (relation) =>
       relation.status === EntityRelationStatus.REQUESTED &&
       relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
   );
-  const isAdminOfEntity =
-    relation.status === EntityRelationStatus.ADMIN &&
-    relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
+
+  const isAdminOfEntity = !canHandleCarcassesForEntity
+    ? false
+    : canHandleCarcassesForEntity.status === EntityRelationStatus.ADMIN &&
+      canHandleCarcassesForEntity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
+
+  const myRelationIsPending = !canHandleCarcassesForEntity
+    ? false
+    : canHandleCarcassesForEntity.status === EntityRelationStatus.REQUESTED;
 
   return (
     <div
-      key={entity.id}
       className={[
         'flex basis-full flex-row items-center justify-between border-solid text-left',
         'bg-contrast-grey mb-2 border-0',
@@ -76,11 +91,21 @@ export default function RelationEntityUser({
               <Link to={entityLink} className="block bg-none px-3 py-4 no-underline!">
                 {entity.nom_d_usage}
                 <br />
+                {getUserRoleLabel(entity.type)}
+                <br />
+                {entity.siret}
+                {entity.numero_ddecpp}
+                <br />
                 {entity.code_postal} {entity.ville}
               </Link>
             ) : (
               <>
                 {entity.nom_d_usage}
+                <br />
+                {getUserRoleLabel(entity.type)}
+                <br />
+                {entity.siret}
+                {entity.numero_ddecpp}
                 <br />
                 {entity.code_postal} {entity.ville}
               </>
@@ -116,6 +141,7 @@ export default function RelationEntityUser({
             {relationsToApprove.length > 0 && (
               <Button
                 type="button"
+                key={refreshKey}
                 iconId="fr-icon-user-setting-fill"
                 onClick={() => entityUsersModal.open()}
                 title="Voir la liste des utilisateurs"
@@ -126,9 +152,21 @@ export default function RelationEntityUser({
             )}
           </div>
         )}
+        {myRelationIsPending &&
+          !canApproveRelation &&
+          relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && (
+            <div className="flex flex-col justify-center gap-2 py-4">
+              <p className="italic">En attente de validation</p>
+            </div>
+          )}
         {canApproveRelation && (
           <div className="flex basis-3xs flex-col justify-center gap-2 py-4">
-            <RelationStatusSelector entity={entity} relation={relation} user={user} onChange={onChange} />
+            <RelationStatusSelector
+              entity={entity}
+              relation={canHandleCarcassesForEntity}
+              user={user}
+              onChange={onChange}
+            />
           </div>
         )}
         {canDelete && (
@@ -185,6 +223,8 @@ export default function RelationEntityUser({
                   enableUsersView={false}
                   displayEntity={false}
                   displayUser={true}
+                  onChange={onChange}
+                  refreshKey={refreshKey}
                   canApproveRelation={iAmAdmin || isAdminOfEntity}
                   canDelete={iAmAdmin || isAdminOfEntity}
                 />
@@ -234,6 +274,10 @@ function RelationStatusSelector({
       getOptionValue={(f) => f.value}
       onChange={(f) => {
         const newStatus = f?.value;
+        if (status === EntityRelationStatus.ADMIN && newStatus !== EntityRelationStatus.ADMIN) {
+          if (!window.confirm("Voulez-vous vraiment retirer les droits d'administrateur à cet utilisateur ?"))
+            return;
+        }
         API.post({
           path: `user/user-entity/${user.id}`,
           body: {
