@@ -66,12 +66,10 @@ export default function RootDisplay({
       iconId: 'ri-logout-box-line',
       buttonProps: {
         onClick: async () => {
-          API.post({ path: '/user/logout' }).then(async (res) => {
-            if (res.ok) {
-              await clearCache().then(() => {
-                window.location.href = '/app/connexion?type=compte-existant';
-              });
-            }
+          API.post({ path: '/user/logout' }).then(async () => {
+            await clearCache().then(() => {
+              window.location.href = '/app/connexion?type=compte-existant';
+            });
           });
         },
       },
