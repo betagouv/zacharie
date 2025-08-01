@@ -386,6 +386,37 @@ router.post(
 
         if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           await linkBrevoCompanyToContact(entity, req.user);
+          if (relation.status === EntityRelationStatus.REQUESTED) {
+            const isAdminSettingRolesToOtherUser =
+              req.user.roles.includes(UserRoles.ADMIN) && req.user.id !== body.owner_id;
+            if (!isAdminSettingRolesToOtherUser) {
+              const entityAdmins = await prisma.entityAndUserRelations.findMany({
+                where: {
+                  entity_id: entityId,
+                  relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                  status: EntityRelationStatus.ADMIN,
+                },
+                include: {
+                  UserRelatedWithEntity: true,
+                },
+              });
+              for (const entityAdminRelation of entityAdmins) {
+                const email = [
+                  'Bonjour,',
+                  `${req.user.prenom} ${req.user.nom_de_famille} (${req.user.email}) vient de s'inscrire sur Zacharie au sein de ${entity.nom_d_usage}.`,
+                  `Pour l'autoriser à traiter des fiches au nom de ${entity.nom_d_usage}, veuillez cliquer sur le lien suivant : https://zacharie.beta.gouv.fr/app/tableau-de-bord/mon-profil/mes-informations?open-entity=${entity.id}`,
+                  `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
+                ].join('\n\n');
+                await sendNotificationToUser({
+                  user: entityAdminRelation.UserRelatedWithEntity,
+                  title: "Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité",
+                  body: email,
+                  email: email,
+                  notificationLogAction: `NEW_USER_IN_ENTITY_${entity.id}`,
+                });
+              }
+            }
+          }
         }
 
         res.status(200).send({ ok: true, data: { relation, entity }, error: '' });

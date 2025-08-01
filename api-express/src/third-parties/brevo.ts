@@ -22,7 +22,7 @@ async function sendEmail(props: SendEmailProps) {
     if (IS_DEV_OR_TEST) {
       console.log('Sending email in development mode');
       console.log(props);
-      return;
+      // return;
     }
     if (!props.html && !props.text) {
       throw new Error('html or text is required');

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { EntityRelationType, EntityRelationStatus, User, Prisma, UserRoles } from '@prisma/client';
@@ -6,7 +6,7 @@ import type { EntityWithUserRelations } from '@api/src/types/entity';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import API from '@app/services/api';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import SelectCustom from './SelectCustom';
 import useUser from '@app/zustand/user';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
@@ -40,6 +40,7 @@ export default function RelationEntityUser({
   displayUser = false,
   canDelete = false,
 }: RelationEntityUserProps) {
+  const [searchParams] = useSearchParams();
   const entityUsersModal = useRef(
     createModal({
       id: `entity-users-modal-${entity.id}`,
@@ -74,6 +75,19 @@ export default function RelationEntityUser({
   const myRelationIsPending = !canHandleCarcassesForEntity
     ? false
     : canHandleCarcassesForEntity.status === EntityRelationStatus.REQUESTED;
+
+  useEffect(() => {
+    if (
+      isAdminOfEntity &&
+      entityUsersModal?.open &&
+      searchParams.get('open-entity') === entity.id.toString()
+    ) {
+      setTimeout(() => {
+        entityUsersModal.open?.();
+        searchParams.delete('open-entity');
+      }, 100);
+    }
+  }, [searchParams, entityUsersModal, entity.id, isAdminOfEntity]);
 
   return (
     <div
@@ -218,6 +232,7 @@ export default function RelationEntityUser({
               }
               return (
                 <RelationEntityUser
+                  key={otherUserRelation.id}
                   entity={entity}
                   user={otherUserRelation.UserRelatedWithEntity as User}
                   enableUsersView={false}
