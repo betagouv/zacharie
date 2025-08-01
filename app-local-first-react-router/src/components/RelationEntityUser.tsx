@@ -80,14 +80,15 @@ export default function RelationEntityUser({
     if (
       isAdminOfEntity &&
       entityUsersModal?.open &&
-      searchParams.get('open-entity') === entity.id.toString()
+      searchParams.get('open-entity') === entity.id.toString() &&
+      !isOpen
     ) {
       setTimeout(() => {
         entityUsersModal.open?.();
         searchParams.delete('open-entity');
       }, 100);
     }
-  }, [searchParams, entityUsersModal, entity.id, isAdminOfEntity]);
+  }, [searchParams, entityUsersModal, entity.id, isAdminOfEntity, isOpen]);
 
   return (
     <div
