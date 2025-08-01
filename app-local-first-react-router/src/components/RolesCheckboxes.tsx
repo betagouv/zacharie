@@ -31,14 +31,7 @@ export default function RolesCheckBoxes({
   const options = [
     {
       label: 'Chasseur et/ou Examinateur Initial',
-      hintText: (
-        <>
-          Vous êtes chasseur et/ou vous avez été formé par votre fédération à l'examen initial.
-          <br />
-          Munissez-vous de votre numéro d'attestation (de la forme CFEI-DEP-YY-001 ou DEP-FREI-YY-001) pour
-          l'étape suivante
-        </>
-      ),
+      hintText: <>Vous êtes chasseur et/ou vous avez été formé par votre fédération à l'examen initial.</>,
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.CHASSEUR,
