@@ -253,7 +253,7 @@ router.post(
 router.post(
   '/user-entity/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
-  authorizeUserOrAdmin,
+  // authorizeUserOrAdmin,
   catchErrors(
     async (req: RequestWithUser, res: express.Response<UserEntityResponse>, next: express.NextFunction) => {
       const body = req.body as {
@@ -266,7 +266,7 @@ router.post(
         status?: EntityRelationStatus;
       };
       const userId = req.params.user_id;
-      let isAdmin = req.isAdmin;
+      let isAdmin = req.user.roles.includes(UserRoles.ADMIN);
 
       if (!body.owner_id) {
         res
