@@ -37,6 +37,7 @@ import {
   UserRoles,
   FeiOwnerRole,
   UserEtgRoles,
+  EntityRelationStatus,
 } from '@prisma/client';
 import { authorizeUserOrAdmin } from '~/utils/authorizeUserOrAdmin.server';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
@@ -260,11 +261,12 @@ router.post(
         entity_id: string;
         numero_ddecpp: string;
         type: EntityTypes;
-        _action: 'create' | 'delete';
+        _action: 'create' | 'delete' | 'update';
         relation: EntityRelationType;
+        status?: EntityRelationStatus;
       };
       const userId = req.params.user_id;
-      const isAdmin = req.isAdmin;
+      let isAdmin = req.isAdmin;
 
       if (!body.owner_id) {
         res
@@ -315,6 +317,20 @@ router.post(
         return;
       }
 
+      if (!isAdmin) {
+        const isCurrentUserAdminOfEntity = await prisma.entityAndUserRelations.findFirst({
+          where: {
+            owner_id: userId,
+            entity_id: entityId,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            status: EntityRelationStatus.ADMIN,
+          },
+        });
+        if (isCurrentUserAdminOfEntity) {
+          isAdmin = true;
+        }
+      }
+
       if (!isAdmin && userId !== body.owner_id) {
         res.status(401).send({
           ok: false,
@@ -338,9 +354,12 @@ router.post(
         const nextEntityRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
           owner_id: body.owner_id,
           entity_id: entityId,
-          relation: body.relation as EntityRelationType,
+          relation: body.relation,
           deleted_at: null,
         };
+        if (body.hasOwnProperty('status')) {
+          nextEntityRelation.status = body.status;
+        }
 
         const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
           where: nextEntityRelation,
@@ -356,6 +375,65 @@ router.post(
         }
 
         const relation = await prisma.entityAndUserRelations.create({
+          data: nextEntityRelation,
+        });
+
+        const entity = await prisma.entity.findUnique({
+          where: {
+            id: entityId,
+          },
+        });
+
+        if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
+          await linkBrevoCompanyToContact(entity, req.user);
+        }
+
+        res.status(200).send({ ok: true, data: { relation, entity }, error: '' });
+        return;
+      }
+
+      // Handle create action
+      if (body._action === 'update') {
+        if (!body.relation) {
+          res.status(400).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error: 'Missing relation',
+          });
+          return;
+        }
+
+        const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
+          where: {
+            owner_id: body.owner_id,
+            entity_id: entityId,
+            relation: body.relation,
+          },
+        });
+
+        if (!existingEntityRelation) {
+          res.status(404).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error: 'Relation non trouvée',
+          });
+          return;
+        }
+
+        const nextEntityRelation: Prisma.EntityAndUserRelationsUncheckedUpdateInput = {
+          owner_id: body.owner_id,
+          entity_id: entityId,
+          relation: body.relation,
+          deleted_at: null,
+        };
+        if (body.hasOwnProperty('status')) {
+          nextEntityRelation.status = body.status;
+        }
+
+        const relation = await prisma.entityAndUserRelations.update({
+          where: {
+            id: existingEntityRelation.id,
+          },
           data: nextEntityRelation,
         });
 

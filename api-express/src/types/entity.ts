@@ -11,13 +11,17 @@ export interface ETGWithEntityIdsRelated extends Entity {
   }>;
 }
 
-export type EntitiesById = Record<Entity['id'], Entity>;
+export type EntitiesById = Record<Entity['id'], EntityWithUserRelations>;
 export type EntitiesByTypeAndId = Record<EntityTypes, EntitiesById>;
 
 export const entityAdminInclude = {
   EntityRelationsWithUsers: {
     select: {
+      id: true,
       relation: true,
+      status: true,
+      owner_id: true,
+      entity_id: true,
       UserRelatedWithEntity: {
         select: {
           id: true,
@@ -43,4 +47,8 @@ export const etgAdminInclude = {
 
 export type EtgForAdmin = Prisma.EntityGetPayload<{
   include: typeof etgAdminInclude;
+}>;
+
+export type EntityWithUserRelations = Prisma.EntityGetPayload<{
+  include: typeof entityAdminInclude;
 }>;

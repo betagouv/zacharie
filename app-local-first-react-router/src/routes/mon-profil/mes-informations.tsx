@@ -1,10 +1,9 @@
-import { useState, useCallback, useEffect, useMemo, Fragment } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
-import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import {
@@ -15,6 +14,7 @@ import {
   User,
   Entity,
   UserEtgRoles,
+  EntityRelationStatus,
 } from '@prisma/client';
 import InputVille from '@app/components/InputVille';
 import InputNotEditable from '@app/components/InputNotEditable';
@@ -24,6 +24,7 @@ import useUser from '@app/zustand/user';
 import { useNavigate } from 'react-router';
 import SelectCustom from '@app/components/SelectCustom';
 import API from '@app/services/api';
+import RelationEntityUser from '@app/components/RelationEntityUser';
 
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.PREMIER_DETENTEUR]: {},
@@ -403,7 +404,7 @@ export default function MesInformations() {
             <ListAndSelectEntities
               formId="onboarding-etape-2-collecteur-pro-data"
               setRefreshKey={setRefreshKey}
-              sectionLabel="Vous pouvez traiter des carcasses pour un Collecteur Professionnel"
+              sectionLabel="Votre Collecteur Professionnel Indépendant"
               addLabel={!collecteursProDone ? 'Ajouter un Collecteur Professionnel' : 'Vos entreprises'}
               selectLabel={!collecteursProDone ? 'Sélectionnez un Collecteur Professionnel' : ''}
               done={collecteursProDone}
@@ -417,7 +418,7 @@ export default function MesInformations() {
             <ListAndSelectEntities
               formId="onboarding-etape-2-etg-data"
               setRefreshKey={setRefreshKey}
-              sectionLabel="Vous pouvez traiter des carcasses pour un Établissement de Traitement du Gibier sauvage (ETG)"
+              sectionLabel="Votre Établissement de Traitement du Gibier sauvage (ETG)"
               addLabel={!etgsDone ? 'Ajouter un ETG' : 'Vos entreprises'}
               selectLabel={!etgsDone ? 'Sélectionnez un ETG' : ''}
               done={etgsDone}
@@ -429,7 +430,7 @@ export default function MesInformations() {
               {etgsDone && (
                 <form
                   id="etg_roles_form"
-                  className="px-4"
+                  className="mt-8 px-4"
                   onChange={async (e) => {
                     e.preventDefault();
                     const formData = new FormData(e.currentTarget);
@@ -603,39 +604,23 @@ function ListAndSelectEntities({
         {userEntities
           .filter((entity) => entity.type === entityType)
           .map((entity) => {
+            const relation = entity.EntityRelationsWithUsers.find(
+              (relation) =>
+                relation.owner_id === user.id &&
+                relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            );
+            if (!relation) return null;
             return (
-              <Fragment key={entity.id}>
-                {/* @ts-expect-error Type 'boolean' is not assignable to type 'true' */}
-                <Notice
-                  className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice\\\\_\\\\_title]:before:hidden"
-                  style={{
-                    boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
-                  }}
-                  isClosable={canChange ? true : false}
-                  onClose={() => {
-                    API.post({
-                      path: `user/user-entity/${user.id}`,
-                      body: {
-                        _action: 'delete',
-                        [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                        [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                      },
-                    }).then((res) => {
-                      if (res.ok) {
-                        setRefreshKey((k) => k + 1);
-                      }
-                    });
-                  }}
-                  title={
-                    <>
-                      {entity.nom_d_usage}
-                      <br />
-                      {entity.code_postal} {entity.ville}
-                    </>
-                  }
-                />
-              </Fragment>
+              <RelationEntityUser
+                key={entity.id}
+                entity={entity}
+                user={user}
+                enableUsersView={relation.status === EntityRelationStatus.ADMIN}
+                displayEntity={true}
+                displayUser={false}
+                onChange={() => setRefreshKey((k) => k + 1)}
+                canDelete
+              />
             );
           })}
         {canChange && (

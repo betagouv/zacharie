@@ -193,18 +193,25 @@ enum EntityRelationType {
   NONE // a user is not related with the entity
 }
 
+enum EntityRelationStatus {
+  REQUESTED
+  MEMBER
+  ADMIN
+}
+
 model EntityAndUserRelations {
-  id                    String             @id @default(uuid())
+  id                    String               @id @default(uuid())
   owner_id              String
   entity_id             String
   relation              EntityRelationType
+  status                EntityRelationStatus @default(REQUESTED)
   brevo_id              String?
-  created_at            DateTime           @default(now())
-  updated_at            DateTime           @default(now()) @updatedAt
+  created_at            DateTime             @default(now())
+  updated_at            DateTime             @default(now()) @updatedAt
   deleted_at            DateTime?
-  is_synced             Boolean            @default(true) // just for typing purppose with zustand frontend
-  UserRelatedWithEntity User               @relation("UserRelatedWithEntity", fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  EntityRelatedWithUser Entity             @relation("EntityRelatedWithUser", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  is_synced             Boolean              @default(true) // just for typing purppose with zustand frontend
+  UserRelatedWithEntity User                 @relation("UserRelatedWithEntity", fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  EntityRelatedWithUser Entity               @relation("EntityRelatedWithUser", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([owner_id, relation])
   @@index([entity_id, relation])

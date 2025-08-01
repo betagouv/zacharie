@@ -260,7 +260,7 @@ export default function AdminUser() {
                       id: Prisma.UserScalarFieldEnum.email,
                       name: Prisma.UserScalarFieldEnum.email,
                       autoComplete: 'off',
-                      required: true,
+                      // required: true,
                       defaultValue: user.email ?? '',
                     }}
                   />
@@ -270,7 +270,7 @@ export default function AdminUser() {
                       id: Prisma.UserScalarFieldEnum.nom_de_famille,
                       name: Prisma.UserScalarFieldEnum.nom_de_famille,
                       autoComplete: 'off',
-                      required: true,
+                      // required: true,
                       defaultValue: user.nom_de_famille ?? '',
                     }}
                   />
@@ -280,7 +280,7 @@ export default function AdminUser() {
                       id: Prisma.UserScalarFieldEnum.prenom,
                       name: Prisma.UserScalarFieldEnum.prenom,
                       autoComplete: 'off',
-                      required: true,
+                      // required: true,
                       defaultValue: user.prenom ?? '',
                     }}
                   />
@@ -301,7 +301,7 @@ export default function AdminUser() {
                       id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                       name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                       autoComplete: 'off',
-                      required: true,
+                      // required: true,
                       defaultValue: user.addresse_ligne_1 ?? '',
                     }}
                   />
@@ -325,7 +325,7 @@ export default function AdminUser() {
                         id: Prisma.UserScalarFieldEnum.code_postal,
                         name: Prisma.UserScalarFieldEnum.code_postal,
                         autoComplete: 'off',
-                        required: true,
+                        // required: true,
                         defaultValue: user.code_postal ?? '',
                       }}
                     />
@@ -340,7 +340,7 @@ export default function AdminUser() {
                           id: Prisma.UserScalarFieldEnum.ville,
                           name: Prisma.UserScalarFieldEnum.ville,
                           autoComplete: 'off',
-                          required: true,
+                          // required: true,
                           defaultValue: user.ville ?? '',
                         }}
                       />
@@ -354,7 +354,7 @@ export default function AdminUser() {
                         id: Prisma.UserScalarFieldEnum.numero_cfei,
                         name: Prisma.UserScalarFieldEnum.numero_cfei,
                         autoComplete: 'off',
-                        required: true,
+                        // required: true,
                         defaultValue: user.numero_cfei ?? '',
                       }}
                     />

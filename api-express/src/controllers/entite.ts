@@ -11,6 +11,7 @@ import {
   sortEntitiesRelationsByTypeAndId,
 } from '~/utils/sort-things-by-type-and-id.server';
 import { linkBrevoCompanyToContact, sendEmail, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
+import { entityAdminInclude } from '~/types/entity';
 
 router.get(
   '/fei/:entity_id/:fei_numero',
@@ -65,26 +66,31 @@ router.get(
         type: { not: EntityTypes.CCG },
         ...(user.roles.includes(UserRoles.ADMIN) ? {} : { for_testing: false }),
       },
+      include: entityAdminInclude,
       orderBy: {
         nom_d_usage: 'asc',
       },
     });
-    const userEntitiesRelationsWorkingFor = await prisma.entityAndUserRelations.findMany({
+
+    const entitiesUserCanHandleOnBehalf = await prisma.entity.findMany({
       where: {
-        owner_id: user.id,
-        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        deleted_at: null,
-      },
-      orderBy: {
-        EntityRelatedWithUser: {
-          nom_d_usage: 'asc',
+        EntityRelationsWithUsers: {
+          some: {
+            owner_id: user.id,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            deleted_at: null,
+          },
         },
+      },
+      include: entityAdminInclude,
+      orderBy: {
+        nom_d_usage: 'asc',
       },
     });
 
     const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
     const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(
-      userEntitiesRelationsWorkingFor,
+      entitiesUserCanHandleOnBehalf,
       allEntitiesIds,
     );
 

@@ -3,7 +3,7 @@ import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
 import { Link, useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
-import { EntityRelationType, EntityTypes, UserRoles, Prisma } from '@prisma/client';
+import { EntityRelationType, EntityTypes, UserRoles, Prisma, User } from '@prisma/client';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import InputVille from '@app/components/InputVille';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -13,6 +13,7 @@ import type { EntityForAdmin } from '@api/src/types/entity';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import InputNotEditable from '@app/components/InputNotEditable';
 import API from '@app/services/api';
+import RelationEntityUser from '@app/components/RelationEntityUser';
 const loadData = (entityId: string): Promise<AdminGetEntityResponse> =>
   API.get({ path: `admin/entity/${entityId}` }).then((res) => res as AdminGetEntityResponse);
 
@@ -395,55 +396,27 @@ function UserWorkingWithOrFor({
   setIsSaving,
 }: WorkingWithOrForProps) {
   const { entity } = adminEntityResponse;
-
   return (
     <>
       {entity.EntityRelationsWithUsers.filter((entity) => entity.relation === relation).map(
         (entityRelation) => {
           const owner = entityRelation.UserRelatedWithEntity;
           return (
-            <Notice
+            <RelationEntityUser
+              entity={entity}
               key={owner.id}
-              className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice\\\\_\\\\_title]:before:hidden"
-              style={{
-                boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
+              user={owner as User}
+              enableUsersView={false}
+              displayEntity={false}
+              displayUser={true}
+              canApproveRelation
+              canDelete
+              userLink={`/app/tableau-de-bord/admin/user/${owner.id}`}
+              onChange={() => {
+                loadData(entity.id).then((response) => {
+                  if (response.data) setAdminEntityResponse(response.data!);
+                });
               }}
-              isClosable
-              onClose={() => {
-                setIsSaving(true);
-                API.post({
-                  path: `user/user-entity/${owner.id}`,
-                  body: {
-                    _action: 'delete',
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: owner.id,
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                    relation,
-                  },
-                })
-                  .then((res) => res as AdminActionEntityResponse)
-                  .then(() => {
-                    loadData(entity.id).then((response) => {
-                      if (response.data) setAdminEntityResponse(response.data!);
-                    });
-                  })
-                  .finally(() => {
-                    setIsSaving(false);
-                  });
-              }}
-              title={
-                <Link
-                  to={`/app/tableau-de-bord/admin/user/${owner.id}`}
-                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-                >
-                  {owner.prenom} {owner.nom_de_famille}
-                  <br />
-                  {owner.email}
-                  <br />
-                  {owner.roles.join(', ')}
-                  <br />
-                  {owner.code_postal} {owner.ville}
-                </Link>
-              }
             />
           );
         },
