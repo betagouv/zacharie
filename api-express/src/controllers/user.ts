@@ -325,6 +325,7 @@ router.post(
             entity_id: entityId,
             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             status: EntityRelationStatus.ADMIN,
+            deleted_at: null,
           },
         });
         if (isCurrentUserAdminOfEntity) {
@@ -397,6 +398,7 @@ router.post(
                   entity_id: entityId,
                   relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                   status: EntityRelationStatus.ADMIN,
+                  deleted_at: null,
                 },
                 include: {
                   UserRelatedWithEntity: true,
@@ -441,6 +443,7 @@ router.post(
             owner_id: body.owner_id,
             entity_id: entityId,
             relation: body.relation,
+            deleted_at: null,
           },
         });
 
