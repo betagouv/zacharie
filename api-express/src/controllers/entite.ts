@@ -37,6 +37,7 @@ router.get(
     const entity = await prisma.entity.findUnique({
       where: {
         id: req.params.entity_id,
+        deleted_at: null,
       },
     });
 
@@ -63,6 +64,7 @@ router.get(
 
     const allEntities = await prisma.entity.findMany({
       where: {
+        deleted_at: null,
         type: { not: EntityTypes.CCG },
         ...(user.roles.includes(UserRoles.ADMIN) ? {} : { for_testing: false }),
       },
@@ -74,6 +76,7 @@ router.get(
 
     const entitiesUserCanHandleOnBehalf = await prisma.entity.findMany({
       where: {
+        deleted_at: null,
         EntityRelationsWithUsers: {
           some: {
             owner_id: user.id,

@@ -293,6 +293,7 @@ router.post(
           : body.numero_ddecpp;
         const entity = await prisma.entity.findFirst({
           where: {
+            deleted_at: null,
             numero_ddecpp: sanitizedNumeroDdecpp,
             type: body.type as EntityTypes,
           },
@@ -381,6 +382,7 @@ router.post(
         const entity = await prisma.entity.findUnique({
           where: {
             id: entityId,
+            deleted_at: null,
           },
         });
 
@@ -471,6 +473,7 @@ router.post(
         const entity = await prisma.entity.findUnique({
           where: {
             id: entityId,
+            deleted_at: null,
           },
         });
 
@@ -505,6 +508,7 @@ router.post(
           const entity = await prisma.entity.findUnique({
             where: {
               id: entityId,
+              deleted_at: null,
             },
           });
 

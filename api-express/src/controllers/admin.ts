@@ -128,6 +128,9 @@ router.get(
         return;
       }
       const allEntities = await prisma.entity.findMany({
+        where: {
+          deleted_at: null,
+        },
         orderBy: {
           updated_at: 'desc',
         },
@@ -203,6 +206,9 @@ router.get(
       next: express.NextFunction,
     ) => {
       const entities = await prisma.entity.findMany({
+        where: {
+          deleted_at: null,
+        },
         orderBy: [
           {
             type: 'asc',
@@ -237,6 +243,7 @@ router.get(
       const entity = await prisma.entity.findUnique({
         where: {
           id: req.params.entity_id,
+          deleted_at: null,
         },
         include: entityAdminInclude,
       });
@@ -332,6 +339,7 @@ router.get(
           id: {
             notIn: svisRelatedToETG.map((entity) => entity.id),
           },
+          deleted_at: null,
         },
         orderBy: {
           updated_at: 'desc',
@@ -362,6 +370,7 @@ router.get(
           : await prisma.entity.findMany({
               where: {
                 type: EntityTypes.ETG,
+                deleted_at: null,
                 id: {
                   notIn: etgsRelatedWithSvi.map((entity) => entity.id),
                 },
@@ -457,6 +466,7 @@ router.post(
         const entity = await prisma.entity.findUnique({
           where: {
             id: req.params.entity_id,
+            deleted_at: null,
           },
           include: entityAdminInclude,
         });
@@ -481,6 +491,7 @@ router.post(
         const entity = await prisma.entity.findUnique({
           where: {
             id: req.params.entity_id,
+            deleted_at: null,
           },
           include: entityAdminInclude,
         });

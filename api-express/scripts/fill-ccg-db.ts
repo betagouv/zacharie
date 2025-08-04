@@ -49,6 +49,7 @@ function insertCCGsDéclarésInDB() {
       const existingEntity = await prisma.entity.findFirst({
         where: {
           numero_ddecpp: numeroDdecpp,
+          deleted_at: null,
         },
       });
       if (!existingEntity) {
@@ -112,6 +113,7 @@ function insertCCGsAgréésInDB() {
       const existingEntity = await prisma.entity.findFirst({
         where: {
           numero_ddecpp: cleanRow.numero_ddecpp,
+          deleted_at: null,
         },
       });
       if (!existingEntity) {

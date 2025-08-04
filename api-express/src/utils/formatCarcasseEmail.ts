@@ -209,6 +209,7 @@ export async function formatSviAssignedEmail(fei: Fei): Promise<[string, string]
   const currentEntity = await prisma.entity.findUnique({
     where: {
       id: fei.fei_current_owner_entity_id,
+      deleted_at: null,
     },
   });
   const feiCarcasses = await prisma.carcasse.findMany({

@@ -347,7 +347,10 @@ router.post(
       savedFei.fei_current_owner_role !== UserRoles.ETG
     ) {
       const etg = await prisma.entity.findUnique({
-        where: { id: savedFei.fei_current_owner_entity_id },
+        where: {
+          id: savedFei.fei_current_owner_entity_id,
+          deleted_at: null,
+        },
       });
       if (etg?.type === EntityTypes.ETG) {
         if (!etg.at_least_one_fei_treated) {
@@ -386,7 +389,10 @@ router.post(
       }
 
       const svi = await prisma.entity.findUnique({
-        where: { id: savedFei.fei_current_owner_entity_id },
+        where: {
+          deleted_at: null,
+          id: savedFei.fei_current_owner_entity_id,
+        },
       });
       if (svi?.type === EntityTypes.SVI) {
         if (!svi.at_least_one_fei_treated) {
