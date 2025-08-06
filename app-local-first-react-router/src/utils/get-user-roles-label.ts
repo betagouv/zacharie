@@ -73,3 +73,14 @@ export function getIntermediaireRoleLabel(role: FeiOwnerRole) {
       return 'Inconnu';
   }
 }
+
+export function getCurrentOwnerRoleLabel(role: FeiOwnerRole) {
+  switch (role) {
+    case EntityTypes.COLLECTEUR_PRO:
+      return 'Collecteur Professionnel Indépendant';
+    case EntityTypes.ETG:
+      return 'Etablissement de Traitement du Gibier sauvage';
+    default:
+      return 'Inconnu';
+  }
+}
