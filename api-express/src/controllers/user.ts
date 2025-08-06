@@ -812,7 +812,6 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) ? `- Numéro CFEI\u00A0: ${savedU
           emails: [savedUser.email],
           subject: 'Votre compte Zacharie a été activé',
           text: email,
-          html: email,
         });
       }
 
