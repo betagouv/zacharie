@@ -172,6 +172,7 @@ function FEICurrentIntermediaireContent({
   );
   useEffect(() => {
     if (!priseEnChargeAt && intermediaire?.prise_en_charge_at) {
+      console.log('RESET PRISE EN CHARGE AT', intermediaire.prise_en_charge_at);
       setPriseEnChargeAt(intermediaire.prise_en_charge_at);
     }
   }, [intermediaire, priseEnChargeAt]);
@@ -260,6 +261,16 @@ function FEICurrentIntermediaireContent({
   }, [fei, user, intermediaire, isEtgWorkingFor]);
 
   const effectiveCanEdit = canEdit && !props.readOnly;
+  const formattedPriseEnChargeAt = priseEnChargeAt
+    ? dayjs(priseEnChargeAt).format('YYYY-MM-DDTHH:mm')
+    : undefined;
+  const formattedInitialPriseEnChargeAt = intermediaire?.prise_en_charge_at
+    ? dayjs(intermediaire.prise_en_charge_at).format('YYYY-MM-DDTHH:mm')
+    : undefined;
+  const submitDisabled =
+    !effectiveCanEdit ||
+    (formattedPriseEnChargeAt && formattedPriseEnChargeAt === formattedInitialPriseEnChargeAt);
+  console.log('submitDisabled', submitDisabled, formattedPriseEnChargeAt, formattedInitialPriseEnChargeAt);
 
   const PriseEnChargeInput = effectiveCanEdit ? Input : InputNotEditable;
 
@@ -429,7 +440,7 @@ function FEICurrentIntermediaireContent({
 
   function handleSubmitCheckFinishedAt(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    handleCheckFinishedAt(dayjs().toDate());
+    handleCheckFinishedAt(priseEnChargeAt || dayjs().toDate());
   }
 
   return (
@@ -511,7 +522,7 @@ function FEICurrentIntermediaireContent({
               onSubmit={handleSubmitCheckFinishedAt}
             >
               <Checkbox
-                className={!priseEnChargeAt ? '' : 'checkbox-black'}
+                className={!intermediaire?.prise_en_charge_at ? '' : 'checkbox-black'}
                 options={[
                   {
                     label: (
@@ -529,10 +540,10 @@ function FEICurrentIntermediaireContent({
                       required: true,
                       name: 'check_finished_at_checked',
                       value: 'true',
-                      disabled: !!priseEnChargeAt,
+                      disabled: !!intermediaire?.prise_en_charge_at,
                       form: 'form_intermediaire_check_finished_at',
-                      readOnly: !!priseEnChargeAt || props.readOnly,
-                      defaultChecked: priseEnChargeAt ? true : false,
+                      readOnly: !!intermediaire?.prise_en_charge_at || props.readOnly,
+                      defaultChecked: intermediaire?.prise_en_charge_at ? true : false,
                     },
                   },
                 ]}
@@ -545,7 +556,7 @@ function FEICurrentIntermediaireContent({
                       className="inline-block"
                       type="button"
                       onClick={() => {
-                        handleCheckFinishedAt(dayjs().toDate());
+                        setPriseEnChargeAt(dayjs().toDate());
                       }}
                     >
                       <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
@@ -565,14 +576,14 @@ function FEICurrentIntermediaireContent({
                   form: 'form_intermediaire_check_finished_at',
                   suppressHydrationWarning: true,
                   autoComplete: 'off',
-                  value: priseEnChargeAt ? dayjs(priseEnChargeAt).format('YYYY-MM-DDTHH:mm') : undefined,
+                  value: formattedPriseEnChargeAt,
                   onChange: (e) => {
                     setPriseEnChargeAt(dayjs(e.target.value).toDate());
                   },
                 }}
               />
               {!!canEdit && (
-                <Button type="submit" disabled={!effectiveCanEdit}>
+                <Button type="submit" disabled={!!submitDisabled}>
                   Enregistrer
                 </Button>
               )}
