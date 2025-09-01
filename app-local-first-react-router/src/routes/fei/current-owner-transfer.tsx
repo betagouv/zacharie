@@ -64,7 +64,7 @@ export default function FeiTransfer() {
               user_id: user.id,
               user_role: fei.fei_next_owner_role! as UserRoles,
               fei_numero: fei.numero,
-              action: 'current-owner-transfer',
+              action: 'current-owner-transfer-change-mind',
               entity_id: fei.fei_next_owner_entity_id,
               zacharie_carcasse_id: null,
               intermediaire_id: null,

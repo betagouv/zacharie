@@ -648,7 +648,7 @@ export default function DestinataireSelect({
                 if (transfer) {
                   let nextFei: Partial<typeof fei> = {
                     fei_next_owner_entity_id: prochainDetenteurEntityId,
-                    fei_next_owner_role: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
+                    fei_next_owner_role: prochainDetenteurType as FeiOwnerRole,
                     fei_current_owner_wants_to_transfer: false,
                     fei_current_owner_entity_id: fei.fei_prev_owner_entity_id,
                     fei_current_owner_role: fei.fei_prev_owner_role,
@@ -749,7 +749,7 @@ export default function DestinataireSelect({
                   if (!feiAndIntermediaireIds) return;
                   let nextFei: Partial<typeof fei> = {
                     fei_next_owner_entity_id: prochainDetenteurEntityId,
-                    fei_next_owner_role: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
+                    fei_next_owner_role: prochainDetenteurType as FeiOwnerRole,
                     svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
                     svi_entity_id:
                       prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
