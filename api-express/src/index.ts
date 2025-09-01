@@ -48,7 +48,7 @@ app.use(
   }),
 );
 
-const sentryEnabled = ENVIRONMENT !== 'development' && ENVIRONMENT !== 'test';
+const sentryEnabled = !!SENTRY_KEY;
 
 if (sentryEnabled) {
   Sentry.init({

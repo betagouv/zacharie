@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node';
-import { ENVIRONMENT } from '../config.js';
+import { SENTRY_KEY } from '../config.js';
 
-const sentryEnabled = ENVIRONMENT !== 'development' && ENVIRONMENT !== 'test';
+const sentryEnabled = !!SENTRY_KEY;
 
 function capture(
   error: string | Error,
