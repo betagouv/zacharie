@@ -382,7 +382,9 @@ export default function CurrentOwnerConfirm() {
               <Button
                 priority="tertiary"
                 type="button"
-                onClick={() => handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer' })}
+                onClick={() =>
+                  handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer-request' })
+                }
               >
                 Transférer la fiche
               </Button>
