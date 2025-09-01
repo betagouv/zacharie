@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Prisma,
   CarcasseIntermediaire,
@@ -32,6 +32,7 @@ import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
 import DestinataireSelect from './destinataire-select';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
+import { capture } from '@app/services/sentry';
 
 interface Props {
   readOnly?: boolean;
@@ -170,9 +171,9 @@ function FEICurrentIntermediaireContent({
   const [priseEnChargeAt, setPriseEnChargeAt] = useState<Date | null>(
     intermediaire?.prise_en_charge_at || null,
   );
+
   useEffect(() => {
     if (!priseEnChargeAt && intermediaire?.prise_en_charge_at) {
-      console.log('RESET PRISE EN CHARGE AT', intermediaire.prise_en_charge_at);
       setPriseEnChargeAt(intermediaire.prise_en_charge_at);
     }
   }, [intermediaire, priseEnChargeAt]);
@@ -180,7 +181,6 @@ function FEICurrentIntermediaireContent({
   const intermediaireCarcasses = useMemo(() => {
     const carcassesIntermediaireIds =
       (!!feiAndIntermediaireIds && carcassesIntermediaireIdsByIntermediaire[feiAndIntermediaireIds]) || [];
-
     return carcassesIntermediaireIds
       .map((id) => carcassesIntermediaireById[id])
       .sort((carcasseIntermediaireA, carcasseIntermediaireB) => {
@@ -197,11 +197,13 @@ function FEICurrentIntermediaireContent({
       })
       .filter((c) => c != null);
   }, [
-    carcassesIntermediaireIdsByIntermediaire,
     feiAndIntermediaireIds,
+    carcassesIntermediaireIdsByIntermediaire,
     carcassesIntermediaireById,
     carcasses,
   ]);
+
+  const warnedForIncoherentNumberOfCarcasses = useRef(false);
 
   const carcassesDejaRefusees = useMemo(() => {
     const intermediaireCarcassesIds = intermediaireCarcasses.map((c) => c.zacharie_carcasse_id);
@@ -212,6 +214,42 @@ function FEICurrentIntermediaireContent({
         c.svi_carcasse_status !== CarcasseStatus.ACCEPTE,
     );
   }, [originalCarcasses, intermediaireCarcasses]);
+
+  useEffect(() => {
+    if (intermediaire?.id) {
+      const carcassesIntermediaireIds =
+        (!!feiAndIntermediaireIds && carcassesIntermediaireIdsByIntermediaire[feiAndIntermediaireIds]) || [];
+      const theoreticalNumberOfCarcassesToCheck = originalCarcasses.length - carcassesDejaRefusees.length;
+      if (
+        carcassesIntermediaireIds.length !== theoreticalNumberOfCarcassesToCheck &&
+        !warnedForIncoherentNumberOfCarcasses.current
+      ) {
+        warnedForIncoherentNumberOfCarcasses.current = true;
+        capture(new Error('Incoherent number of carcasses'), {
+          extra: {
+            carcassesIntermediaireIds,
+            originalCarcassesLength: originalCarcasses.length,
+            theoreticalNumberOfCarcassesToCheck,
+            intermediaireCarcassesLength: intermediaireCarcasses.length,
+            carcassesDejaRefuseesLength: carcassesDejaRefusees.length,
+          },
+          tags: {
+            fei_numero: fei.numero,
+            intermediaire_id: intermediaire?.id,
+          },
+        });
+      }
+    }
+  }, [
+    carcassesDejaRefusees,
+    carcassesDejaRefusees.length,
+    carcassesIntermediaireIdsByIntermediaire,
+    feiAndIntermediaireIds,
+    intermediaireCarcasses,
+    originalCarcasses,
+    fei.numero,
+    intermediaire?.id,
+  ]);
 
   const isEtgWorkingFor = useMemo(() => {
     if (fei.fei_current_owner_role === UserRoles.ETG && !!fei.fei_current_owner_entity_id) {
