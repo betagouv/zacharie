@@ -220,8 +220,6 @@ export default function CurrentOwnerConfirm() {
         }
       }
     } else {
-      console.log('latestIntermediaire', latestIntermediaire);
-      console.log('feiAndIntermediaireIds', feiAndIntermediaireIds);
       if (latestIntermediaire && feiAndIntermediaireIds) {
         let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
           intermediaire_prochain_detenteur_id_cache: nextFei.fei_next_owner_entity_id!,
@@ -230,7 +228,6 @@ export default function CurrentOwnerConfirm() {
           intermediaire_depot_type: DepotType.AUCUN,
           intermediaire_depot_entity_id: null,
         };
-        console.log('nextCarcasseIntermediaire', nextCarcasseIntermediaire);
         updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds, nextCarcasseIntermediaire);
       }
     }

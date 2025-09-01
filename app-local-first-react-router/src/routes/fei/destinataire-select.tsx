@@ -657,8 +657,6 @@ export default function DestinataireSelect({
                     svi_entity_id:
                       prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
                   };
-                  console.log('feiAndIntermediaireIds', feiAndIntermediaireIds);
-                  console.log('intermediaire', intermediaire);
                   if (feiAndIntermediaireIds && intermediaire) {
                     let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
                       intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,

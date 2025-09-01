@@ -362,7 +362,6 @@ router.post(
     if (existingFei.fei_next_owner_role !== UserRoles.SVI && savedFei.fei_next_owner_role === UserRoles.SVI) {
       // this is the end of the fiche
       // send notification to examinateur initial
-      console.log('savedFei.svi_entity_id', savedFei.svi_entity_id);
       const sviUsers = await prisma.user.findMany({
         where: {
           roles: { has: UserRoles.SVI },
