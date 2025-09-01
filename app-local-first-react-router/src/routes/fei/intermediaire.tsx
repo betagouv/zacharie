@@ -518,11 +518,11 @@ function FEICurrentIntermediaireContent({
               method="POST"
               className="flex flex-col gap-y-4"
               id="form_intermediaire_check_finished_at"
-              key={JSON.stringify(priseEnChargeAt || '')}
+              key={JSON.stringify(priseEnChargeAt || '') + JSON.stringify(labelCheckDone)}
               onSubmit={handleSubmitCheckFinishedAt}
             >
               <Checkbox
-                className={!intermediaire?.prise_en_charge_at ? '' : 'checkbox-black'}
+                className={!priseEnChargeAt ? '' : 'checkbox-black'}
                 options={[
                   {
                     label: (
@@ -540,10 +540,10 @@ function FEICurrentIntermediaireContent({
                       required: true,
                       name: 'check_finished_at_checked',
                       value: 'true',
-                      disabled: !!intermediaire?.prise_en_charge_at,
+                      disabled: !!priseEnChargeAt,
                       form: 'form_intermediaire_check_finished_at',
-                      readOnly: !!intermediaire?.prise_en_charge_at || props.readOnly,
-                      defaultChecked: intermediaire?.prise_en_charge_at ? true : false,
+                      readOnly: !!priseEnChargeAt || props.readOnly,
+                      defaultChecked: priseEnChargeAt ? true : false,
                     },
                   },
                 ]}
