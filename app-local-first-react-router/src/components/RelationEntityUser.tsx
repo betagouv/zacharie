@@ -205,7 +205,7 @@ export default function RelationEntityUser({
                   }
                 });
               }}
-              title="Supprimer la carcasse"
+              title="Retirer"
               priority="tertiary no outline"
             />
           </div>
