@@ -23,7 +23,7 @@
     "format": "prettier --write . --ignore-unknown"
   },
   "dependencies": {
-    "@getbrevo/brevo": "^2.2.0",
+    "@getbrevo/brevo": "^3.0.1",
     "@prisma/client": "6.8.2",
     "@sentry/node": "^7.84.0",
     "@sentry/tracing": "^7.84.0",
