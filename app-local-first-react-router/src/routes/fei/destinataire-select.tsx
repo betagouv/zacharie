@@ -132,6 +132,7 @@ export default function DestinataireSelect({
   });
 
   const prochainDetenteur = prochainDetenteurEntityId ? entities[prochainDetenteurEntityId] : null;
+
   const prochainDetenteurType = prochainDetenteur?.type;
   const needTransport = useMemo(() => {
     if (transfer) return false;
@@ -360,6 +361,7 @@ export default function DestinataireSelect({
           canEdit ? '' : 'cursor-not-allowed',
           'space-y-6',
         ].join(' ')}
+        key={prochainDetenteurEntityId}
       >
         <SelectCustom
           label="Prochain détenteur des carcasses *"
@@ -651,7 +653,26 @@ export default function DestinataireSelect({
                     fei_current_owner_entity_id: fei.fei_prev_owner_entity_id,
                     fei_current_owner_role: fei.fei_prev_owner_role,
                     fei_current_owner_user_id: fei.fei_prev_owner_user_id,
+                    svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
+                    svi_entity_id:
+                      prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
                   };
+                  console.log('feiAndIntermediaireIds', feiAndIntermediaireIds);
+                  console.log('intermediaire', intermediaire);
+                  if (feiAndIntermediaireIds && intermediaire) {
+                    let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
+                      intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
+                      intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
+                        ?.type as FeiOwnerRole,
+                      intermediaire_depot_type: depotType,
+                      intermediaire_depot_entity_id: depotType === DepotType.AUCUN ? null : depotEntityId,
+                    };
+                    updateAllCarcasseIntermediaire(
+                      fei.numero,
+                      feiAndIntermediaireIds!,
+                      nextCarcasseIntermediaire,
+                    );
+                  }
                   updateFei(fei.numero, nextFei);
                   addLog({
                     user_id: user.id,

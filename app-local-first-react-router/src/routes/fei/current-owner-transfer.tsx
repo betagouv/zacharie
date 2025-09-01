@@ -8,6 +8,7 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import DestinataireSelect from './destinataire-select';
+import { getFeiAndIntermediaireIdsFromFeiIntermediaire } from '@app/utils/get-carcasse-intermediaire-id';
 
 export default function FeiTransfer() {
   const params = useParams();
@@ -16,6 +17,12 @@ export default function FeiTransfer() {
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
+  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
+  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+  const latestIntermediaire = intermediaires[0];
+  const feiAndIntermediaireIds = latestIntermediaire
+    ? getFeiAndIntermediaireIdsFromFeiIntermediaire(latestIntermediaire)
+    : undefined;
 
   if (!fei.fei_current_owner_wants_to_transfer) {
     return null;
@@ -31,7 +38,13 @@ export default function FeiTransfer() {
           {fei.fei_prev_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ? (
             <SelectNextForExaminateur />
           ) : (
-            <DestinataireSelect canEdit transfer calledFrom="current-owner-transfer" />
+            <DestinataireSelect
+              canEdit
+              transfer
+              calledFrom="current-owner-transfer"
+              feiAndIntermediaireIds={feiAndIntermediaireIds}
+              intermediaire={latestIntermediaire}
+            />
           )}
         </div>
         <span className="text-sm">Vous avez changé d'avis&nbsp;?</span>

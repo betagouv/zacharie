@@ -87,7 +87,7 @@ export default function FEIDonneesDeChasse({
     return lines;
   }, [intermediaires, entities]);
 
-  const etgDate = latestIntermediaire
+  const etgDate = latestIntermediaire?.prise_en_charge_at
     ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
   const sviAssignedToFeiAt = fei.svi_assigned_at
@@ -100,7 +100,7 @@ export default function FEIDonneesDeChasse({
       `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY')}`,
       `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
     ];
-    if (onlyPetitGibier) {
+    if (!onlyPetitGibier) {
       _milestones.push(
         `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${fei.heure_evisceration_derniere_carcasse!}`,
       );

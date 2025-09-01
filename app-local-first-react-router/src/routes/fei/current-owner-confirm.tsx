@@ -4,6 +4,7 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { useMemo } from 'react';
 import { getCurrentOwnerRoleLabel } from '@app/utils/get-user-roles-label';
 import {
+  CarcasseIntermediaire,
   DepotType,
   EntityRelationType,
   EntityTypes,
@@ -17,7 +18,10 @@ import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
+import {
+  getFeiAndIntermediaireIdsFromFeiIntermediaire,
+  getNewCarcasseIntermediaireId,
+} from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import dayjs from 'dayjs';
 
@@ -26,6 +30,7 @@ export default function CurrentOwnerConfirm() {
   const user = useUser((state) => state.user)!;
   const updateFei = useZustandStore((state) => state.updateFei);
   const createFeiIntermediaire = useZustandStore((state) => state.createFeiIntermediaire);
+  const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
@@ -34,6 +39,9 @@ export default function CurrentOwnerConfirm() {
   const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
   const latestIntermediaire = intermediaires[0];
+  const feiAndIntermediaireIds = latestIntermediaire
+    ? getFeiAndIntermediaireIdsFromFeiIntermediaire(latestIntermediaire)
+    : undefined;
 
   const currentOwnerEntity = entities[fei.fei_current_owner_entity_id!];
   const nextOwnerEntity = entities[fei.fei_next_owner_entity_id!];
@@ -210,6 +218,20 @@ export default function CurrentOwnerConfirm() {
             nextFei.fei_next_owner_user_name_cache = null;
           }
         }
+      }
+    } else {
+      console.log('latestIntermediaire', latestIntermediaire);
+      console.log('feiAndIntermediaireIds', feiAndIntermediaireIds);
+      if (latestIntermediaire && feiAndIntermediaireIds) {
+        let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
+          intermediaire_prochain_detenteur_id_cache: nextFei.fei_next_owner_entity_id!,
+          intermediaire_prochain_detenteur_role_cache: entities[nextFei.fei_next_owner_entity_id!]
+            ?.type as FeiOwnerRole,
+          intermediaire_depot_type: DepotType.AUCUN,
+          intermediaire_depot_entity_id: null,
+        };
+        console.log('nextCarcasseIntermediaire', nextCarcasseIntermediaire);
+        updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds, nextCarcasseIntermediaire);
       }
     }
 

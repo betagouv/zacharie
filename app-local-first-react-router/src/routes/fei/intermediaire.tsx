@@ -270,7 +270,6 @@ function FEICurrentIntermediaireContent({
   const submitDisabled =
     !effectiveCanEdit ||
     (formattedPriseEnChargeAt && formattedPriseEnChargeAt === formattedInitialPriseEnChargeAt);
-  console.log('submitDisabled', submitDisabled, formattedPriseEnChargeAt, formattedInitialPriseEnChargeAt);
 
   const PriseEnChargeInput = effectiveCanEdit ? Input : InputNotEditable;
 
@@ -615,6 +614,7 @@ function FEICurrentIntermediaireContent({
                 canEdit={effectiveCanEdit}
                 feiAndIntermediaireIds={feiAndIntermediaireIds}
                 intermediaire={intermediaire}
+                key={intermediaire?.intermediaire_prochain_detenteur_id_cache}
               />
             </Section>
           )}
