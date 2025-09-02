@@ -3,7 +3,9 @@ import { Entity, EntityTypes, User, UserEtgRoles, UserRoles } from '@prisma/clie
 import parsePhoneNumber from 'libphonenumber-js';
 import prisma from '~/prisma';
 import { capture } from './sentry';
-import { IS_DEV_OR_TEST } from '~/config';
+import { IS_DEV_OR_TEST, ENVIRONMENT } from '~/config';
+
+const DISABLED = ENVIRONMENT === 'test' || IS_DEV_OR_TEST;
 
 const API_KEY = process.env.BREVO_API;
 
@@ -19,7 +21,7 @@ type SendEmailProps = {
 };
 async function sendEmail(props: SendEmailProps) {
   try {
-    if (IS_DEV_OR_TEST) {
+    if (DISABLED) {
       console.log('Sending email in development mode');
       console.log(props);
       return;
@@ -111,7 +113,7 @@ interface BrevoContact extends brevo.GetExtendedContactDetails {
 }
 async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
   try {
-    if (IS_DEV_OR_TEST) return;
+    if (DISABLED) return;
     if (props.roles.includes(UserRoles.ADMIN)) {
       return;
     }
@@ -191,7 +193,7 @@ type ContactForm = {
 };
 async function createBrevoContactFromContactForm(props: ContactForm) {
   try {
-    if (IS_DEV_OR_TEST) return;
+    if (DISABLED) return;
     const apiInstance = new brevo.ContactsApi();
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
@@ -251,7 +253,7 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
 
 async function updateBrevoContact(props: User) {
   try {
-    if (IS_DEV_OR_TEST) return;
+    if (DISABLED) return;
     if (props.roles.includes(UserRoles.ADMIN)) return;
     const apiInstance = new brevo.ContactsApi();
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
@@ -411,7 +413,7 @@ function getBrevoCategory(type: EntityTypes) {
 
 async function updateOrCreateBrevoCompany(props: Entity) {
   try {
-    if (IS_DEV_OR_TEST) return;
+    if (DISABLED) return;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
 
@@ -454,7 +456,7 @@ async function updateOrCreateBrevoCompany(props: Entity) {
 
 async function linkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
-    if (IS_DEV_OR_TEST) return;
+    if (DISABLED) return;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
     await apiInstance.companiesLinkUnlinkIdPatch(entity.brevo_id, {
@@ -472,7 +474,7 @@ async function linkBrevoCompanyToContact(entity: Entity, user: User) {
 
 async function unlinkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
-    if (IS_DEV_OR_TEST) return;
+    if (DISABLED) return;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
     await apiInstance.companiesLinkUnlinkIdPatch(entity.brevo_id, {
@@ -596,7 +598,7 @@ function getChasseurPipelineStep(
 
 async function updateBrevoChasseurDeal(chasseur: User) {
   try {
-    if (IS_DEV_OR_TEST) return;
+    if (DISABLED) return;
     if (!chasseur.roles.includes(UserRoles.CHASSEUR)) {
       return;
     }
@@ -658,7 +660,7 @@ async function updateBrevoChasseurDeal(chasseur: User) {
 
 async function updateBrevoETGDealPremiereFiche(etg: Entity) {
   try {
-    if (IS_DEV_OR_TEST) return;
+    if (DISABLED) return;
     if (etg.type !== EntityTypes.ETG) return;
 
     const apiInstance = new brevo.DealsApi();
@@ -704,7 +706,7 @@ async function updateBrevoETGDealPremiereFiche(etg: Entity) {
 
 async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
   try {
-    if (IS_DEV_OR_TEST) return;
+    if (DISABLED) return;
     if (svi.type !== EntityTypes.SVI) return;
 
     const apiInstance = new brevo.DealsApi();

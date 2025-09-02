@@ -11,6 +11,7 @@ if (ENVIRONMENT === 'production') {
   SENTRY_KEY = 'https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175';
 }
 if (ENVIRONMENT === 'test') {
+  // api-test (staging)
   SENTRY_KEY = 'https://cf28d042821d656dcebfad12b576cd46@sentry.incubateur.net/257';
 }
 
@@ -30,8 +31,8 @@ const TIPIMAIL_EMAIL_FROM = 'contact@zacharie.beta.gouv.fr';
 const SECRET = process.env.VITE_SECRET ?? 'not-so-secret';
 const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
-const IS_DEV = process.env.NODE_ENV === 'development';
-const IS_TEST = process.env.NODE_ENV === 'test';
+const IS_DEV = process.env.NODE_ENV === 'development'; // local dev
+const IS_TEST = process.env.NODE_ENV === 'test'; // when e2e testing
 const IS_DEV_OR_TEST = IS_DEV || IS_TEST;
 
 export {
