@@ -10,7 +10,13 @@ import {
   sortEntitiesByTypeAndId,
   sortEntitiesRelationsByTypeAndId,
 } from '~/utils/sort-things-by-type-and-id.server';
-import { linkBrevoCompanyToContact, sendEmail, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
+import {
+  createBrevoContact,
+  linkBrevoCompanyToContact,
+  sendEmail,
+  updateBrevoContact,
+  updateOrCreateBrevoCompany,
+} from '~/third-parties/brevo';
 import { entityAdminInclude } from '~/types/entity';
 
 router.get(

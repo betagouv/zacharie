@@ -113,10 +113,10 @@ interface BrevoContact extends brevo.GetExtendedContactDetails {
   };
 }
 
-async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
+async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Promise<User> {
   try {
-    if (DISABLED) return;
-    if (props.roles.includes(UserRoles.ADMIN)) return;
+    if (DISABLED) return props;
+    if (props.roles.includes(UserRoles.ADMIN)) return props;
     const apiInstance = new brevo.ContactsApi();
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
@@ -146,7 +146,7 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
             text: `Un nouveau compte a été ouvert pour ${props.email}`,
           });
         }
-        return;
+        return props;
       }
     } catch (error) {
       // console.log(error);
@@ -175,12 +175,14 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
         text: `Un nouveau compte a été ouvert pour ${props.email}`,
       });
     }
+    return props;
   } catch (error) {
     capture(error as Error, {
       extra: {
         user: props,
       },
     });
+    return props;
   }
 }
 
@@ -251,10 +253,10 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
   }
 }
 
-async function updateBrevoContact(props: User) {
+async function updateBrevoContact(props: User): Promise<User> {
   try {
-    if (DISABLED) return;
-    if (props.roles.includes(UserRoles.ADMIN)) return;
+    if (DISABLED) return props;
+    if (props.roles.includes(UserRoles.ADMIN)) return props;
     const apiInstance = new brevo.ContactsApi();
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
@@ -262,7 +264,7 @@ async function updateBrevoContact(props: User) {
       const getContact = await apiInstance.getContactInfo(props.email);
       const brevoContact = getContact.body as BrevoContact;
       if (!brevoContact?.id) {
-        return;
+        return props;
       }
       props = await prisma.user.update({
         where: { id: props.id },
@@ -320,12 +322,14 @@ async function updateBrevoContact(props: User) {
     //   where: { id: props.id },
     //   data: { brevo_contact_id: result.body.id },
     // });
+    return props;
   } catch (error) {
     capture(error as Error, {
       extra: {
         user: props,
       },
     });
+    return props;
   }
 }
 
