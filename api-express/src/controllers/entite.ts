@@ -161,11 +161,11 @@ router.post(
       zacharie_compatible: true,
     };
 
-    const createdEntity = await prisma.entity.create({
+    let createdEntity = await prisma.entity.create({
       data,
     });
 
-    await updateOrCreateBrevoCompany(createdEntity);
+    createdEntity = await updateOrCreateBrevoCompany(createdEntity);
 
     const createdEntityRelation = await prisma.entityAndUserRelations.create({
       data: {

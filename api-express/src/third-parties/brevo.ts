@@ -19,6 +19,7 @@ type SendEmailProps = {
     email: string;
   };
 };
+
 async function sendEmail(props: SendEmailProps) {
   try {
     if (DISABLED) {
@@ -111,12 +112,11 @@ interface BrevoContact extends brevo.GetExtendedContactDetails {
     EXT_ID: string;
   };
 }
+
 async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER') {
   try {
     if (DISABLED) return;
-    if (props.roles.includes(UserRoles.ADMIN)) {
-      return;
-    }
+    if (props.roles.includes(UserRoles.ADMIN)) return;
     const apiInstance = new brevo.ContactsApi();
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
@@ -411,9 +411,9 @@ function getBrevoCategory(type: EntityTypes) {
   }
 }
 
-async function updateOrCreateBrevoCompany(props: Entity) {
+async function updateOrCreateBrevoCompany(props: Entity): Promise<Entity> {
   try {
-    if (DISABLED) return;
+    if (DISABLED) return props;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
 
@@ -433,24 +433,25 @@ async function updateOrCreateBrevoCompany(props: Entity) {
         name: props.raison_sociale,
         attributes: brevoCompany.attributes,
       });
-      await prisma.entity.update({
+      const updatedEntity = await prisma.entity.update({
         where: { id: props.id },
         data: { brevo_id: result.body.id },
       });
-      return;
+      return updatedEntity;
     }
 
     console.log('Updating Brevo company');
-    const updateCompany = await apiInstance.companiesIdPatch(props.brevo_id, {
+    await apiInstance.companiesIdPatch(props.brevo_id, {
       attributes: brevoCompany.attributes,
     });
-    return;
+    return props;
   } catch (error) {
     capture(error as Error, {
       extra: {
         entity: props,
       },
     });
+    return props;
   }
 }
 
@@ -459,6 +460,7 @@ async function linkBrevoCompanyToContact(entity: Entity, user: User) {
     if (DISABLED) return;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
+    console.log('Linking Brevo company to contact', entity.brevo_id, user.brevo_contact_id);
     await apiInstance.companiesLinkUnlinkIdPatch(entity.brevo_id, {
       linkContactIds: [user.brevo_contact_id],
     });
