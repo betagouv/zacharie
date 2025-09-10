@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from 'react-router';
 import RootDisplay from '@app/components/RootDisplay';
-import useNavigationMenu from '@app/utils/get-navigation-menu';
+import useLoggedInNavigationMenu from '@app/utils/get-navigation-menu';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import Chargement from '@app/components/Chargement';
 import { useEffect } from 'react';
@@ -10,7 +10,7 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 export default function TableauDeBordLayout() {
   const location = useLocation();
   const user = useMostFreshUser('TableauDeBordLayout');
-  const navigation = useNavigationMenu();
+  const navigation = useLoggedInNavigationMenu();
   const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
   const isOnline = useIsOnline();
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function TableauDeBordLayout() {
 }
 
 function DeactivatedAccount() {
-  const navigation = useNavigationMenu();
+  const navigation = useLoggedInNavigationMenu();
 
   useEffect(() => {
     window.scrollTo(0, 0);

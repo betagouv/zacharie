@@ -6,9 +6,9 @@ import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { createNewFei } from './create-new-fei';
 import API from '@app/services/api';
 
-export default function useNavigationMenu() {
+export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
-  const user = useMostFreshUser('useNavigationMenu');
+  const user = useMostFreshUser('useLoggedInNavigationMenu');
   const isNotActivated = !user?.activated;
 
   const navigate = useNavigate();
@@ -187,4 +187,42 @@ export default function useNavigationMenu() {
   });
 
   return navigationBase;
+}
+
+export function useLandingPageNavigationMenu(): MainNavigationProps.Item[] {
+  const location = useLocation();
+  return [
+    {
+      text: 'Accueil',
+      isActive: location.pathname === '/',
+      linkProps: {
+        to: '/',
+        href: '#',
+      },
+    },
+    {
+      text: 'Vos démarches',
+      isActive: location.pathname === '/demarches',
+      linkProps: {
+        to: '/demarches',
+        href: '#',
+      },
+    },
+    {
+      text: 'Professionnels de la filière',
+      isActive: location.pathname === '/pros',
+      linkProps: {
+        to: '/pros',
+        href: '#',
+      },
+    },
+    // {
+    //   text: 'Aide',
+    //   isActive: location.pathname === '/aide',
+    //   linkProps: {
+    //     to: '/aide',
+    //     href: '#',
+    //   },
+    // },
+  ];
 }

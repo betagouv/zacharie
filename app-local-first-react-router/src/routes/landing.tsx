@@ -1,9 +1,10 @@
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import RootDisplay from '@app/components/RootDisplay';
+import VideoOverlay, { useVideo } from '@app/components/VideoOverlay';
 
 export default function LandingPage() {
+  const setVideoUrl = useVideo((state) => state.setVideoUrl);
   return (
-    <RootDisplay id="landing">
+    <>
       <title>
         Zacharie | Garantir des viandes de gibier sauvage saines et sûres | Ministère de l'Agriculture et de
         la Souveraineté Alimentaire
@@ -21,6 +22,24 @@ export default function LandingPage() {
                 <p className="3xl:text-5xl mt-8 text-2xl leading-tight font-bold text-white! text-shadow-xs lg:mt-[10%] lg:text-3xl 2xl:text-4xl">
                   Simple, rapide et 100% gratuit, Zacharie accélère vos démarches.
                 </p>
+                <div className="mt-16 ml-6 flex items-center justify-start lg:hidden">
+                  <button
+                    onClick={() => setVideoUrl('https://www.youtube.com/embed/TkTd5P6S6ck')}
+                    className="rounded-full transition-transform hover:scale-110 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#A38A6C] focus:outline-none"
+                    aria-label="Regarder la vidéo de démonstration"
+                  >
+                    <svg
+                      width="60"
+                      height="60"
+                      viewBox="0 0 85 85"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M68 42L30.5 63.6506L30.5 20.3494L68 42Z" fill="white" />
+                      <circle cx="42.5" cy="42.5" r="40" stroke="white" strokeWidth="5" />
+                    </svg>
+                  </button>
+                </div>
                 <Button
                   size="large"
                   className="mt-8 block lg:mt-[10%]"
@@ -42,6 +61,24 @@ export default function LandingPage() {
                 >
                   Se connecter
                 </Button>
+              </div>
+              <div className="hidden items-center justify-center lg:flex lg:max-w-[50vw]">
+                <button
+                  onClick={() => setVideoUrl('https://www.youtube.com/embed/TkTd5P6S6ck')}
+                  className="rounded-full transition-transform hover:scale-110 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#A38A6C] focus:outline-none"
+                  aria-label="Regarder la vidéo de démonstration"
+                >
+                  <svg
+                    width="85"
+                    height="85"
+                    viewBox="0 0 85 85"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M68 42L30.5 63.6506L30.5 20.3494L68 42Z" fill="white" />
+                    <circle cx="42.5" cy="42.5" r="40" stroke="white" strokeWidth="5" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -80,12 +117,10 @@ export default function LandingPage() {
               <Button
                 size="large"
                 linkProps={{
-                  to: '/app/connexion?type=creation-de-compte',
-                  href: '#',
+                  href: 'https://zcal.co/zacharie/demo',
                 }}
               >
-                {/* ▷ Regarder la démo */}
-                Créer un compte
+                Participer à une démo
               </Button>
             </div>
           </div>
@@ -154,7 +189,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* CTA Section */}
         <section className="py-16 lg:py-24">
           <div className="flex h-full w-full flex-col items-center justify-center px-4 text-center lg:px-8 xl:px-[12%] 2xl:min-h-96">
             <h3 className="text-action-high-blue-france mb-8 rounded text-xl font-medium text-shadow-2xs lg:text-2xl 2xl:mb-16 2xl:text-4xl">
@@ -173,6 +207,7 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
-    </RootDisplay>
+      <VideoOverlay />
+    </>
   );
 }

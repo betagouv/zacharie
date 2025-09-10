@@ -30,6 +30,9 @@ import RegistreCarcasses from './routes/registre-carcasses';
 import Accessibility from './routes/accessibility';
 import Stats from './routes/stats';
 import Contact from './routes/contact';
+import { useLandingPageNavigationMenu } from './utils/get-navigation-menu';
+import LandingProsPage from './routes/landing-pros';
+import LandingDemarchesPage from './routes/landing-demarches';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -48,63 +51,33 @@ declare global {
 }
 
 function App() {
+  const landingPageNavigationMenu = useLandingPageNavigationMenu();
   return (
     <>
       <SentryRoutes>
-        <Route index element={<LandingPage />} />
         <Route
-          path="test-sentry"
+          path="/"
           element={
-            <RootDisplay id="test-sentry">
-              <TestSentry />
+            <RootDisplay id="landing" navigation={landingPageNavigationMenu}>
+              <Outlet />
             </RootDisplay>
           }
-        />
-        <Route
-          path="mentions-legales"
-          element={
-            <RootDisplay id="mentions-legales">
-              <MentionsLegales />
-            </RootDisplay>
-          }
-        />
-        <Route
-          path="accessibilite"
-          element={
-            <RootDisplay id="accessibilite">
-              <Accessibility />
-            </RootDisplay>
-          }
-        />
-        <Route
-          path="modalites-d-utilisation"
-          element={
-            <RootDisplay id="modalites-d-utilisation">
-              <ModalitesDutilisation />
-            </RootDisplay>
-          }
-        />
-        <Route
-          path="stats"
-          element={
-            <RootDisplay id="stats">
-              <Stats />
-            </RootDisplay>
-          }
-        />
-        <Route
-          path="contact"
-          element={
-            <RootDisplay id="contact">
-              <Contact />
-            </RootDisplay>
-          }
-        />
+        >
+          <Route index element={<LandingPage />} />
+          <Route path="pros" element={<LandingProsPage />} />
+          <Route path="demarches" element={<LandingDemarchesPage />} />
+          <Route path="test-sentry" element={<TestSentry />} />
+          <Route path="mentions-legales" element={<MentionsLegales />} />
+          <Route path="accessibilite" element={<Accessibility />} />
+          <Route path="modalites-d-utilisation" element={<ModalitesDutilisation />} />
+          <Route path="stats" element={<Stats />} />
+          <Route path="contact" element={<Contact />} />
+        </Route>
         <Route path="app" element={<Outlet />}>
           <Route
             path="connexion"
             element={
-              <RootDisplay id="connexion">
+              <RootDisplay id="connexion" navigation={landingPageNavigationMenu}>
                 <Connexion />
               </RootDisplay>
             }
