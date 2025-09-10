@@ -376,10 +376,9 @@ export default function CurrentOwnerConfirm() {
           </Button>
         )}
         <>
-          <div>
-            <span>Il y a une erreur ?</span>
-            <div className="flex items-center gap-2">
-              <Button
+          <div className="flex items-center gap-2">
+            <p className="m-0 text-sm">Il y a une erreur ?</p>
+            {/* <Button
                 priority="tertiary"
                 type="button"
                 onClick={() =>
@@ -387,35 +386,35 @@ export default function CurrentOwnerConfirm() {
                 }
               >
                 Transférer la fiche
-              </Button>
-              <Button
-                priority="tertiary no outline"
-                type="submit"
-                onClick={() => {
-                  const nextFei = {
-                    fei_next_owner_entity_id: null,
-                    fei_next_owner_entity_name_cache: null,
-                    fei_next_owner_user_id: null,
-                    fei_next_owner_user_name_cache: null,
-                    fei_next_owner_role: null,
-                  };
-                  updateFei(fei.numero, nextFei);
-                  addLog({
-                    user_id: user.id,
-                    user_role: fei.fei_next_owner_role as UserRoles,
-                    fei_numero: fei.numero,
-                    action: 'current-owner-renvoi',
-                    entity_id: fei.fei_next_owner_entity_id,
-                    zacharie_carcasse_id: null,
-                    intermediaire_id: null,
-                    carcasse_intermediaire_id: null,
-                    history: createHistoryInput(fei, nextFei),
-                  });
-                }}
-              >
-                Renvoyer la fiche à l'expéditeur
-              </Button>
-            </div>
+              </Button> */}
+            <Button
+              priority="tertiary no outline"
+              className="mt-0 text-sm"
+              type="submit"
+              onClick={() => {
+                const nextFei = {
+                  fei_next_owner_entity_id: null,
+                  fei_next_owner_entity_name_cache: null,
+                  fei_next_owner_user_id: null,
+                  fei_next_owner_user_name_cache: null,
+                  fei_next_owner_role: null,
+                };
+                updateFei(fei.numero, nextFei);
+                addLog({
+                  user_id: user.id,
+                  user_role: fei.fei_next_owner_role as UserRoles,
+                  fei_numero: fei.numero,
+                  action: 'current-owner-renvoi',
+                  entity_id: fei.fei_next_owner_entity_id,
+                  zacharie_carcasse_id: null,
+                  intermediaire_id: null,
+                  carcasse_intermediaire_id: null,
+                  history: createHistoryInput(fei, nextFei),
+                });
+              }}
+            >
+              Renvoyer la fiche à l'expéditeur
+            </Button>
           </div>
         </>
       </CallOut>

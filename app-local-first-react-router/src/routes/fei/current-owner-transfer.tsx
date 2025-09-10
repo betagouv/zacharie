@@ -33,7 +33,10 @@ export default function FeiTransfer() {
 
   return (
     <div className="bg-alt-blue-france pb-4">
-      <CallOut title="Vous souhaitez transférer cette fiche" className="bg-white">
+      <CallOut
+        title="Vous pensez que vous recevez cette fiche par erreur et souhaitez la transférer"
+        className="bg-white"
+      >
         <div className="flex w-full flex-col bg-white md:items-start md:[&_ul]:min-w-96">
           {fei.fei_prev_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ? (
             <SelectNextForExaminateur />
@@ -73,7 +76,7 @@ export default function FeiTransfer() {
             });
           }}
         >
-          Je prends en charge cette fiche
+          Je prends en charge les carcasses
         </Button>
       </CallOut>
     </div>

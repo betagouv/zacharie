@@ -473,7 +473,6 @@ test.describe("Fiches ETG", () => {
       - text: En tant que Etablissement de Traitement du Gibier sauvage (ETG 2), vous pouvez prendre en charge cette fiche et les carcasses associées.
       - button "Je réceptionne le gibier"
       - text: Il y a une erreur ?
-      - button "Transférer la fiche"
       - button "Renvoyer la fiche à l'expéditeur"
     `);
     await page.getByRole("button", { name: "Je réceptionne le gibier" }).click();

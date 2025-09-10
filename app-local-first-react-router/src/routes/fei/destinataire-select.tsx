@@ -304,9 +304,19 @@ export default function DestinataireSelect({
     intermediaire?.intermediaire_depot_entity_id,
   ]);
 
+  const [tryToSubmitAtLeastOnce, setTryTOSubmitAtLeastOnce] = useState(false);
   const jobIsMissing = useMemo(() => {
     if (!prochainDetenteurEntityId) {
       return 'Il manque le prochain détenteur des carcasses';
+    }
+    console.log('fei.fei_current_owner_role', fei.fei_current_owner_role);
+    console.log('prochainDetenteurType', prochainDetenteurType);
+    if (fei.fei_current_owner_wants_to_transfer) {
+      if (prochainDetenteurType === EntityTypes.SVI) {
+        if (intermediaire?.intermediaire_role !== FeiOwnerRole.ETG) {
+          return 'Attention, devez cliquer sur "Je prends en charge cette fiche" avant de transmettre la fiche au Service Vétérinaire';
+        }
+      }
     }
     if (needDepot) {
       if (!depotType) {
@@ -338,6 +348,7 @@ export default function DestinataireSelect({
     return null;
   }, [
     prochainDetenteurEntityId,
+    prochainDetenteurType,
     needDepot,
     needTransport,
     depotType,
@@ -639,6 +650,9 @@ export default function DestinataireSelect({
             nativeButtonProps={{
               onClick: (event) => {
                 event.preventDefault();
+                if (!tryToSubmitAtLeastOnce) {
+                  setTryTOSubmitAtLeastOnce(true);
+                }
                 if (jobIsMissing) {
                   alert(jobIsMissing);
                   return;
@@ -799,6 +813,7 @@ export default function DestinataireSelect({
             Transmettre la fiche
           </Button>
         )}
+        {/* {!disabled && !!jobIsMissing?.length && tryToSubmitAtLeastOnce && ( */}
         {!disabled && !!jobIsMissing?.length && (
           <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
         )}
