@@ -117,6 +117,7 @@ function App() {
               </RestrictedRoute>
             }
           >
+            <Route path="contact" element={<Contact />} />
             <Route
               path="/app/tableau-de-bord"
               element={

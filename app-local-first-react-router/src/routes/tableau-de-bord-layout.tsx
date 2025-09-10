@@ -26,7 +26,12 @@ export default function TableauDeBordLayout() {
 
   return (
     <>
-      <RootDisplay navigation={navigation} hideMinistereName id="tableau-de-bord-layout-activated">
+      <RootDisplay
+        navigation={navigation}
+        hideMinistereName
+        id="tableau-de-bord-layout-activated"
+        contactLink="/app/tableau-de-bord/contact"
+      >
         <main
           role="main"
           id="content"
@@ -36,7 +41,7 @@ export default function TableauDeBordLayout() {
         </main>
       </RootDisplay>
       {!dataIsSynced && isOnline && import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' && (
-        <p className="fixed bottom-0 left-0 right-0 z-50 bg-white px-4 py-1 text-sm text-action-high-blue-france text-opacity-25">
+        <p className="text-action-high-blue-france text-opacity-25 fixed right-0 bottom-0 left-0 z-50 bg-white px-4 py-1 text-sm">
           Synchronisation en cours
         </p>
       )}

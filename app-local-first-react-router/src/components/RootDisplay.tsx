@@ -14,11 +14,13 @@ export default function RootDisplay({
   children,
   hideMinistereName,
   id,
+  contactLink,
 }: {
   navigation?: MainNavigationProps.Item[];
   children: React.ReactNode;
   hideMinistereName?: boolean;
   id: string;
+  contactLink?: string;
 }) {
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
@@ -193,7 +195,7 @@ export default function RootDisplay({
               },
               {
                 linkProps: {
-                  to: '/contact',
+                  to: contactLink ?? '/contact',
                   href: '#',
                 },
                 text: 'Contactez-nous',
