@@ -5,12 +5,16 @@ import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Prisma } from '@prisma/client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Stats() {
   const user = useUser((state) => state.user);
 
   const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
 
   return (
     <main
