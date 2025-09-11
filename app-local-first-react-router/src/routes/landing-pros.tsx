@@ -92,7 +92,7 @@ export default function LandingProsPage() {
                     <p className="mt-1 ml-4 text-sm md:ml-0 md:text-base">
                       Possibilité de partager, d’annoter et de mettre à jour les FEI en temps réel entre
                       collecteurs, établissements de traitement et services vétérinaires. Les décisions sur
-                      les carcasses sont automatiquement transmises aux chasseurs
+                      les carcasses sont automatiquement transmises aux chasseurs.
                     </p>
                   </li>
                   <li className="ml-4 flex flex-col">
@@ -122,7 +122,7 @@ export default function LandingProsPage() {
                   1
                 </p>
                 <div className="flex flex-col">
-                  <p className="mt-1">Créez votre compte en quelques minutes</p>
+                  <p className="mt-1">Créez votre compte en quelques minutes.</p>
                 </div>
               </li>
               <li className="flex items-center gap-4">
@@ -162,8 +162,8 @@ export default function LandingProsPage() {
             </ul>
           </section>
           <CTA mobile />
-          <hr className="mt-8" />
-          <section className="mt-8 w-full">
+          <hr className="mt-8 md:mt-24" />
+          <section className="mt-8 w-full md:mt-24">
             <h2 className="fr-h2 text-action-high-blue-france mx-auto text-center text-balance">
               Quels sont les rôles de chaque acteurs de la chaîne&nbsp;?
               <br />
@@ -174,9 +174,9 @@ export default function LandingProsPage() {
               </div>
             </div>
           </section>
-          <hr className="mt-8 md:mt-16" />
+          <hr className="mt-8 md:mt-24" />
 
-          <section className="py-16 lg:py-24">
+          <section className="py-16 lg:py-16">
             <div className="flex h-full w-full flex-col items-center justify-center px-4 text-center lg:px-8 xl:px-[12%] 2xl:min-h-96">
               <h3 className="text-action-high-blue-france mb-8 rounded text-xl font-medium text-shadow-2xs lg:text-2xl 2xl:mb-16 2xl:text-4xl">
                 Vous avez des questions ? Des remarques ?
@@ -223,7 +223,7 @@ function CTA({ mobile, desktop }: { mobile?: boolean; desktop?: boolean }) {
           href: '#',
         }}
       >
-        {isLoggedIn ? 'Accéder à mon compte' : 'Créer mon compte'}
+        {isLoggedIn ? 'Accéder à mon compte' : 'Créer un compte'}
       </Button>
     </div>
   );

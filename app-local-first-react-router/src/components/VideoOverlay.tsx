@@ -27,7 +27,7 @@ export default function VideoOverlay() {
       ].join(' ')}
       onClick={onClose}
     >
-      <div className="relative aspect-video w-full max-w-4xl">
+      <div className="relative aspect-video w-full max-w-xl">
         <iframe
           className="absolute inset-0 h-full w-full"
           src={videoUrl}

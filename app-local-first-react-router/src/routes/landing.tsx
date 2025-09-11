@@ -97,23 +97,23 @@ export default function LandingPage() {
           <div className="bg-action-high-blue-france/5 flex flex-col space-y-6 p-6 lg:basis-1/2 lg:bg-transparent 2xl:basis-2/3 2xl:py-20 2xl:pr-32 2xl:pl-64">
             <ul className="text-action-high-blue-france list-none space-y-4 text-lg text-balance 2xl:text-3xl">
               <li>
-                Une application qui fonctionne <b>même hors réseau</b>
+                Une application qui fonctionne <b>même hors réseau</b>.
               </li>
               <li>
                 Toute la chasse du jour sur <b>une seule fiche</b>, peu importe le nombre de carcasses ou
-                d'espèces
+                d'espèces.
               </li>
               <li>
-                Des <b>informations pré-enregistrées</b> pour un remplissage rapide et complet à coup sûr
+                Des <b>informations pré-enregistrées</b> pour un remplissage rapide et complet à coup sûr.
               </li>
               <li>
-                Un <b>retour clair et direct</b> sur les carcasses traitées et inspectées
+                Un <b>retour clair et direct</b> sur les carcasses traitées et inspectées.
               </li>
               <li>
-                Un service public <b>gratuit et sans engagement</b>
+                Un service public <b>gratuit et sans engagement</b>.
               </li>
             </ul>
-            <div className="my-8 flex w-full justify-center">
+            <div className="my-8 flex w-full justify-center md:justify-start">
               <Button
                 size="large"
                 linkProps={{
@@ -134,7 +134,7 @@ export default function LandingPage() {
               <div className="text-center lg:basis-1/2 lg:text-left">
                 <p className="text-action-high-blue-france mb-4 text-6xl font-bold lg:text-8xl">100%</p>
                 <p className="text-action-high-blue-france mb-4 text-xl lg:text-2xl 2xl:max-w-[75%] 2xl:text-4xl">
-                  des chasseurs ayant utilisé Zacharie recommandent l'application
+                  des chasseurs ayant utilisé Zacharie recommandent l'application.
                 </p>
                 <p className="text-action-high-blue-france">Enquête de février 2025</p>
               </div>
@@ -189,7 +189,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="py-16 lg:py-24">
+        <section className="py-16 lg:py-16">
           <div className="flex h-full w-full flex-col items-center justify-center px-4 text-center lg:px-8 xl:px-[12%] 2xl:min-h-96">
             <h3 className="text-action-high-blue-france mb-8 rounded text-xl font-medium text-shadow-2xs lg:text-2xl 2xl:mb-16 2xl:text-4xl">
               Vous avez des questions ? Des remarques ?

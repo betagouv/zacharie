@@ -131,7 +131,7 @@ export default function LandingDemarchesPage() {
 
           <hr className="mt-8 md:mt-16" />
 
-          <section className="py-16 lg:py-24">
+          <section className="py-16 lg:py-16">
             <div className="flex h-full w-full flex-col items-center justify-center px-4 text-center lg:px-8 xl:px-[12%] 2xl:min-h-96">
               <h3 className="text-action-high-blue-france mb-8 rounded text-xl font-medium text-shadow-2xs lg:text-2xl 2xl:mb-16 2xl:text-4xl">
                 Vous avez des questions ? Des remarques ?
