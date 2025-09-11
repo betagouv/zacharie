@@ -65,7 +65,7 @@ export default function FeiTransfer() {
             updateFei(fei.numero, nextFei);
             addLog({
               user_id: user.id,
-              user_role: fei.fei_next_owner_role! as UserRoles,
+              user_role: fei.fei_next_owner_role || (user.roles[0] as UserRoles),
               fei_numero: fei.numero,
               action: 'current-owner-transfer-change-mind',
               entity_id: fei.fei_next_owner_entity_id,

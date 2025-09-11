@@ -5,7 +5,6 @@ import {
   type Carcasse,
   type CarcasseIntermediaire,
   type Log,
-  UserRoles,
 } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import type { UserForFei } from '~/src/types/user';
@@ -98,7 +97,7 @@ export interface State {
 
 type CreateLog = {
   user_id: UserForFei['id'];
-  user_role: UserRoles;
+  user_role: string;
   action: string;
   history?: HistoryInput;
   fei_numero: Fei['numero'] | null;

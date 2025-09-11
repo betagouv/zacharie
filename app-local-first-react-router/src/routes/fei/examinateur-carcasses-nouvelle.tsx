@@ -152,6 +152,7 @@ export default function NouvelleCarcasse() {
             zacharie_carcasse_id: zacharieCarcasseId,
             numero_bracelet: numeroBracelet,
             fei_numero: fei.numero,
+            date_mise_a_mort: fei.date_mise_a_mort,
             type: isPetitGibier ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER,
             nombre_d_animaux: isPetitGibier ? Number(nombreDAnimaux) : 1,
             heure_mise_a_mort: null,

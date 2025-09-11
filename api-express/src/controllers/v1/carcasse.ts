@@ -7,52 +7,125 @@ import prisma from '~/prisma';
 import { EntityRelationType, Prisma, UserRoles } from '@prisma/client';
 
 router.get(
-  '/:zacharie_carcasse_id',
+  '/:date_mise_a_mort/:numero_bracelet',
   passport.authenticate('apiKeyLog', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const now = Date.now();
-    const fei = await prisma.fei.findUnique({
+    const fei = await prisma.carcasse.findFirst({
       where: {
-        numero: req.params.fei_numero,
+        numero_bracelet: req.params.numero_bracelet,
+        date_mise_a_mort: req.params.date_mise_a_mort,
+        deleted_at: null,
       },
-      include: {
-        Carcasses: {
-          include: {
-            CarcasseIntermediaire: true,
+      select: {
+        zacharie_carcasse_id: true,
+        numero_bracelet: true,
+        fei_numero: true,
+        espece: true,
+        type: true,
+        nombre_d_animaux: true,
+        heure_mise_a_mort: true,
+        heure_evisceration: true,
+        /**
+         * EXAMINATEUR
+         */
+        examinateur_carcasse_sans_anomalie: true,
+        examinateur_anomalies_carcasse: true,
+        examinateur_anomalies_abats: true,
+        examinateur_commentaire: true,
+        examinateur_signed_at: true,
+        /**
+         * PREMIER DETENTEUR
+         * duplicatas des champs de Fei
+         * anticipation des circuits courts où on pourra envoyer des carcasses éparpillées, d'un même examen initial,
+         */
+        premier_detenteur_depot_type: true, // CCG, ETG, AUCUN
+        premier_detenteur_depot_entity_id: true,
+        premier_detenteur_depot_ccg_at: true,
+        premier_detenteur_transport_type: true,
+        premier_detenteur_transport_date: true,
+        premier_detenteur_prochain_detenteur_role_cache: true,
+        premier_detenteur_prochain_detenteur_id_cache: true, // Entity id
+        /**
+         * INTERMEDIAIRE
+         */
+        intermediaire_carcasse_refus_intermediaire_id: true,
+        intermediaire_carcasse_refus_motif: true,
+        intermediaire_carcasse_manquante: true,
+        latest_intermediaire_signed_at: true,
+        /**
+         * SVI
+         */
+        svi_assigned_to_fei_at: true, // same as svi_assigned_at in fei
+        svi_carcasse_commentaire: true, // cache of ipm1 and ipm2 comments
+        svi_carcasse_status: true,
+        svi_carcasse_status_set_at: true,
+        /**
+         * SVI IPM1
+         */
+        svi_ipm1_date: true,
+        svi_ipm1_presentee_inspection: true,
+        svi_ipm1_user_id: true,
+        svi_ipm1_user_name_cache: true,
+        svi_ipm1_protocole: true,
+        svi_ipm1_pieces: true,
+        svi_ipm1_lesions_ou_motifs: true,
+        svi_ipm1_nombre_animaux: true,
+        svi_ipm1_commentaire: true,
+        svi_ipm1_decision: true,
+        svi_ipm1_duree_consigne: true,
+        svi_ipm1_poids_consigne: true,
+        svi_ipm1_poids_type: true,
+        svi_ipm1_signed_at: true,
+        /**
+         * SVI IPM2
+         */
+        svi_ipm2_date: true,
+        svi_ipm2_presentee_inspection: true,
+        svi_ipm2_user_id: true,
+        svi_ipm2_user_name_cache: true,
+        svi_ipm2_protocole: true,
+        svi_ipm2_pieces: true,
+        svi_ipm2_lesions_ou_motifs: true,
+        svi_ipm2_nombre_animaux: true,
+        svi_ipm2_commentaire: true,
+        svi_ipm2_decision: true,
+        svi_ipm2_traitement_assainissant: true,
+        svi_ipm2_traitement_assainissant_cuisson_temps: true,
+        svi_ipm2_traitement_assainissant_cuisson_temp: true,
+        svi_ipm2_traitement_assainissant_congelation_temps: true,
+        svi_ipm2_traitement_assainissant_congelation_temp: true,
+        svi_ipm2_traitement_assainissant_type: true,
+        svi_ipm2_traitement_assainissant_paramètres: true,
+        svi_ipm2_traitement_assainissant_etablissement: true,
+        svi_ipm2_traitement_assainissant_poids: true,
+        svi_ipm2_poids_saisie: true,
+        svi_ipm2_poids_type: true,
+        svi_ipm2_signed_at: true,
+        created_at: true,
+        updated_at: true,
+        CarcasseCertificats: false,
+        SviIpm1User: false,
+        CarcasseIntermediaire: false,
+        Fei: {
+          select: {
+            id: true,
+            numero: true,
+            date_mise_a_mort: true,
+            commune_mise_a_mort: true,
+            heure_mise_a_mort_premiere_carcasse: true,
+            heure_evisceration_derniere_carcasse: true,
+            resume_nombre_de_carcasses: true,
+            examinateur_initial_approbation_mise_sur_le_marche: true,
+            examinateur_initial_date_approbation_mise_sur_le_marche: true,
+
+            automatic_closed_at: true,
+            intermediaire_closed_at: true, // si toutes les carcasses sont rejetées/manquantes
+            svi_assigned_at: true,
+            svi_closed_at: true,
           },
-        },
-        FeiExaminateurInitialUser: true,
-        FeiPremierDetenteurUser: true,
-        FeiPremierDetenteurEntity: true,
-        FeiDepotEntity: true,
-        FeiCurrentUser: true,
-        FeiCurrentEntity: true,
-        FeiNextUser: true,
-        FeiNextEntity: true,
-        FeiSviUser: true,
-        FeiSviEntity: true,
-        CarcasseIntermediaire: {
-          include: {
-            CarcasseIntermediaireEntity: true,
-            CarcasseIntermediaireUser: true,
-          },
-          orderBy: [{ prise_en_charge_at: Prisma.SortOrder.asc }, { created_at: Prisma.SortOrder.desc }],
         },
       },
     });
-
-    if (!fei) {
-      res.status(404).send({ ok: false, data: null, error: 'Unauthorized' });
-      return;
-    }
-
-    res.status(200).send({
-      ok: true,
-      data: {
-        fei,
-      },
-      error: '',
-    } satisfies FeiResponse);
   }),
 );
 

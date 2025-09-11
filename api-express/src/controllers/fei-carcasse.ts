@@ -133,6 +133,9 @@ router.post(
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.type)) {
       nextCarcasse.type = body[Prisma.CarcasseScalarFieldEnum.type];
     }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.date_mise_a_mort)) {
+      nextCarcasse.date_mise_a_mort = body.date_mise_a_mort;
+    }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.nombre_d_animaux)) {
       nextCarcasse.nombre_d_animaux = Number(body[Prisma.CarcasseScalarFieldEnum.nombre_d_animaux]);
     }

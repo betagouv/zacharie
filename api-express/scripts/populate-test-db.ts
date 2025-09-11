@@ -475,6 +475,7 @@ function getCarcasses(feiNumero: string): Array<Prisma.CarcasseUncheckedCreateIn
   return [
     {
       fei_numero: feiNumero,
+      date_mise_a_mort: '2025-07-07T00:00:00.000Z',
       numero_bracelet: 'MM-001-001',
       espece: 'Daim',
       examinateur_signed_at: '2025-07-07T14:24:19.272Z',
@@ -486,6 +487,7 @@ function getCarcasses(feiNumero: string): Array<Prisma.CarcasseUncheckedCreateIn
     },
     {
       fei_numero: feiNumero,
+      date_mise_a_mort: '2025-07-07T00:00:00.000Z',
       numero_bracelet: 'MM-001-002',
       espece: 'Daim',
       examinateur_anomalies_carcasse: ['Unique - Abcès ou nodules'],
@@ -497,6 +499,7 @@ function getCarcasses(feiNumero: string): Array<Prisma.CarcasseUncheckedCreateIn
     },
     {
       fei_numero: feiNumero,
+      date_mise_a_mort: '2025-07-07T00:00:00.000Z',
       numero_bracelet: 'MM-001-003',
       espece: 'Pigeons',
       examinateur_signed_at: '2025-07-07T14:24:21.272Z',
@@ -507,6 +510,7 @@ function getCarcasses(feiNumero: string): Array<Prisma.CarcasseUncheckedCreateIn
     },
     {
       fei_numero: feiNumero,
+      date_mise_a_mort: '2025-07-07T00:00:00.000Z',
       numero_bracelet: 'MM-001-004',
       espece: 'Daim',
       examinateur_signed_at: '2025-07-07T14:24:22.256Z',

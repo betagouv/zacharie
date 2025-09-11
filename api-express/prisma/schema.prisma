@@ -239,7 +239,7 @@ model ETGAndEntityRelations {
 model Log {
   id                        String    @id @default(uuid())
   user_id                   String?
-  user_role                 UserRoles
+  user_role                 String?
   fei_numero                String?
   entity_id                 String?
   zacharie_carcasse_id      String?
@@ -445,6 +445,7 @@ model Carcasse {
   zacharie_carcasse_id                               String                  @id // {fei_numero}_{numero_bracelet}
   numero_bracelet                                    String // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
   fei_numero                                         String
+  date_mise_a_mort                                   DateTime?               @db.Date // et éviscération
   espece                                             String? // Sanglier, Cerf, etc.
   type                                               CarcasseType?
   nombre_d_animaux                                   Int?
@@ -537,6 +538,7 @@ model Carcasse {
   CarcasseCertificats                                CarcasseCertificat[]
 
   @@index([fei_numero, numero_bracelet])
+  @@index([deleted_at, date_mise_a_mort, numero_bracelet(sort: Desc)])
   @@index([deleted_at, created_at])
   @@index([numero_bracelet])
   @@index([deleted_at, updated_at])

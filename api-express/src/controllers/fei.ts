@@ -318,6 +318,13 @@ router.post(
       existingFei = savedFei;
     }
 
+    if (existingFei.date_mise_a_mort !== savedFei.date_mise_a_mort) {
+      await prisma.carcasse.updateMany({
+        where: { fei_numero: feiNumero },
+        data: { date_mise_a_mort: savedFei.date_mise_a_mort },
+      });
+    }
+
     if (!user.at_least_one_fei_treated) {
       if (user.roles.includes(UserRoles.CHASSEUR)) {
         if (savedFei.examinateur_initial_user_id === user.id) {

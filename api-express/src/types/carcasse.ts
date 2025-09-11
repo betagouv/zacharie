@@ -4,6 +4,7 @@ export const carcasseForRegistrySelect = {
   zacharie_carcasse_id: true,
   numero_bracelet: true,
   fei_numero: true,
+  date_mise_a_mort: true,
   type: true,
   nombre_d_animaux: true,
   heure_mise_a_mort: true,
