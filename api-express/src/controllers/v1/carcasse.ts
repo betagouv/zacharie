@@ -10,7 +10,7 @@ router.get(
   '/:date_mise_a_mort/:numero_bracelet',
   passport.authenticate('apiKeyLog', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const fei = await prisma.carcasse.findFirst({
+    const carcasse = await prisma.carcasse.findFirst({
       where: {
         numero_bracelet: req.params.numero_bracelet,
         date_mise_a_mort: req.params.date_mise_a_mort,

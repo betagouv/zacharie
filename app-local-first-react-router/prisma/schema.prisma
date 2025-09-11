@@ -33,13 +33,13 @@ enum UserNotifications {
 }
 
 model User {
-  id                             String                   @id // new ShortUniqueId({ length: 5, dictionary: "alphanum_upper" }).randomUUID() so that we can use it in FEI numbers (36^5 = 60M possibilities)
-  email                          String?                  @unique // email is optional, we can have users without email like the Collecteur Pro
+  id                             String                         @id // new ShortUniqueId({ length: 5, dictionary: "alphanum_upper" }).randomUUID() so that we can use it in FEI numbers (36^5 = 60M possibilities)
+  email                          String?                        @unique // email is optional, we can have users without email like the Collecteur Pro
   telephone                      String?
   prenom                         String?
   nom_de_famille                 String?
   numero_cfei                    String? // Chasseur Formé à l'Examen Initial (de la forme CFEI-DEP-YY-001)
-  prochain_bracelet_a_utiliser   Int?                     @default(1)
+  prochain_bracelet_a_utiliser   Int?                           @default(1)
   addresse_ligne_1               String?
   addresse_ligne_2               String?
   code_postal                    String?
@@ -47,36 +47,36 @@ model User {
   user_entities_vivible_checkbox Boolean?
   roles                          UserRoles[]
   etg_roles                      UserEtgRoles[]
-  created_at                     DateTime                 @default(now())
-  updated_at                     DateTime                 @default(now()) @updatedAt
+  created_at                     DateTime                       @default(now())
+  updated_at                     DateTime                       @default(now()) @updatedAt
   last_login_at                  DateTime?
   last_seen_at                   DateTime?
   deleted_at                     DateTime?
   onboarded_at                   DateTime?
-  notifications                  UserNotifications[]      @default([EMAIL, PUSH])
+  notifications                  UserNotifications[]            @default([EMAIL, PUSH])
   web_push_tokens                String[]
   native_push_tokens             String[]
-  prefilled                      Boolean                  @default(false)
-  activated                      Boolean                  @default(false)
+  prefilled                      Boolean                        @default(false)
+  activated                      Boolean                        @default(false)
   activated_at                   DateTime?
-  is_synced                      Boolean                  @default(true) // just for typing purppose with zustand frontend
+  is_synced                      Boolean                        @default(true) // just for typing purppose with zustand frontend
   brevo_contact_id               Int?
   at_least_one_fei_treated       DateTime?
   Password                       Password?
-  UserRelationsAsOwner           UserRelations[]          @relation("UserOwnerOfUserRelation")
-  UserRelationsAsRelated         UserRelations[]          @relation("UserRelatedOfUserRelation")
-  EntityAndUserRelations         EntityAndUserRelations[] @relation("UserRelatedWithEntity")
-  FeiCreatedByUser               Fei[]                    @relation("FeiCreatedByUser")
-  FeiCurrentUser                 Fei[]                    @relation("FeiCurrentUser")
-  FeiPremierDetenteurUser        Fei[]                    @relation("FeiPremierDetenteurUser")
-  FeiExaminateurInitialUser      Fei[]                    @relation("FeiExaminateurInitialUser")
-  FeiSviUser                     Fei[]                    @relation("FeiSviUser")
-  FeiSviUserClosedBy             Fei[]                    @relation("FeiSviUserClosedBy")
+  UserRelationsAsOwner           UserRelations[]                @relation("UserOwnerOfUserRelation")
+  UserRelationsAsRelated         UserRelations[]                @relation("UserRelatedOfUserRelation")
+  EntityAndUserRelations         EntityAndUserRelations[]       @relation("UserRelatedWithEntity")
+  FeiCreatedByUser               Fei[]                          @relation("FeiCreatedByUser")
+  FeiCurrentUser                 Fei[]                          @relation("FeiCurrentUser")
+  FeiPremierDetenteurUser        Fei[]                          @relation("FeiPremierDetenteurUser")
+  FeiExaminateurInitialUser      Fei[]                          @relation("FeiExaminateurInitialUser")
+  FeiSviUser                     Fei[]                          @relation("FeiSviUser")
+  FeiSviUserClosedBy             Fei[]                          @relation("FeiSviUserClosedBy")
   NotificationLog                NotificationLog[]
-  CarcasseIntermediaire          CarcasseIntermediaire[]  @relation("CarcasseIntermediaireUser")
-  FeiNextUser                    Fei[]                    @relation("FeiNextUser")
-  CarcassesIpm1                  Carcasse[]               @relation("SviIpm1User")
-  ApiKeyApprovalByUser           ApiKeyApprovalByUser[]
+  CarcasseIntermediaire          CarcasseIntermediaire[]        @relation("CarcasseIntermediaireUser")
+  FeiNextUser                    Fei[]                          @relation("FeiNextUser")
+  CarcassesIpm1                  Carcasse[]                     @relation("SviIpm1User")
+  ApiKeyApprovalByUser           ApiKeyApprovalByUserOrEntity[]
   ApiKeyLog                      ApiKeyLog[]
 
   @@index([id])
@@ -101,7 +101,7 @@ enum EntityTypes {
 }
 
 model Entity {
-  id                              String                   @id @default(uuid())
+  id                              String                         @id @default(uuid())
   // NO EMAIL: an entity needs AT LEAST one user
   raison_sociale                  String?
   nom_d_usage                     String?
@@ -113,32 +113,34 @@ model Entity {
   nom_prenom_responsable          String?
   prefecture_svi                  String?
   ccg_status                      String?
-  zacharie_compatible             Boolean                  @default(false)
-  numero_ddecpp                   String?                  @unique
-  inc_certificat                  Int?                     @default(0)
-  inc_decision                    Int?                     @default(0)
-  code_etbt_certificat            String?                  @unique // Il pourrait s'agir d'un code court unique qui identifie l’établissement (exemple : 01 pour Villette viandes, 02 pour Nemrod et 03 pour Guellier).
+  zacharie_compatible             Boolean                        @default(false)
+  numero_ddecpp                   String?                        @unique
+  inc_certificat                  Int?                           @default(0)
+  inc_decision                    Int?                           @default(0)
+  code_etbt_certificat            String?                        @unique // Il pourrait s'agir d'un code court unique qui identifie l’établissement (exemple : 01 pour Villette viandes, 02 pour Nemrod et 03 pour Guellier).
   type                            EntityTypes
-  created_at                      DateTime                 @default(now())
-  updated_at                      DateTime                 @default(now()) @updatedAt
+  created_at                      DateTime                       @default(now())
+  updated_at                      DateTime                       @default(now()) @updatedAt
   deleted_at                      DateTime?
   onboarded_at                    DateTime?
-  prefilled                       Boolean                  @default(false)
-  is_synced                       Boolean                  @default(true) // just for typing purppose with zustand frontend
-  for_testing                     Boolean                  @default(false)
+  prefilled                       Boolean                        @default(false)
+  is_synced                       Boolean                        @default(true) // just for typing purppose with zustand frontend
+  for_testing                     Boolean                        @default(false)
   // for brevo
   brevo_id                        String?
   at_least_one_fei_treated        DateTime?
   // relations
-  EntityRelationsWithUsers        EntityAndUserRelations[] @relation("EntityRelatedWithUser")
-  FeisCurrentEntity               Fei[]                    @relation("FeiCurrentEntity")
-  FeisNextEntity                  Fei[]                    @relation("FeiNextEntity")
-  FeisDepotEntity                 Fei[]                    @relation("FeiDepotEntity")
-  FeisPremierDetenteurEntity      Fei[]                    @relation("FeiPremierDetenteurEntity")
-  FeisSviEntity                   Fei[]                    @relation("FeiSviEntity")
-  CarcasseIntermediaires          CarcasseIntermediaire[]  @relation("CarcasseIntermediaireEntity")
-  AsEtgRelationsWithOtherEntities ETGAndEntityRelations[]  @relation("ETGRelatedWithEntity")
-  RelationsWithEtgs               ETGAndEntityRelations[]  @relation("EntityRelatedWithETG")
+  EntityRelationsWithUsers        EntityAndUserRelations[]       @relation("EntityRelatedWithUser")
+  FeisCurrentEntity               Fei[]                          @relation("FeiCurrentEntity")
+  FeisNextEntity                  Fei[]                          @relation("FeiNextEntity")
+  FeisDepotEntity                 Fei[]                          @relation("FeiDepotEntity")
+  FeisPremierDetenteurEntity      Fei[]                          @relation("FeiPremierDetenteurEntity")
+  FeisSviEntity                   Fei[]                          @relation("FeiSviEntity")
+  CarcasseIntermediaires          CarcasseIntermediaire[]        @relation("CarcasseIntermediaireEntity")
+  AsEtgRelationsWithOtherEntities ETGAndEntityRelations[]        @relation("ETGRelatedWithEntity")
+  RelationsWithEtgs               ETGAndEntityRelations[]        @relation("EntityRelatedWithETG")
+  ApiKeyApprovals                 ApiKeyApprovalByUserOrEntity[]
+  ApiKeyLogs                      ApiKeyLog[]
 
   @@index([updated_at]) // Time-based ordering
   @@index([nom_d_usage]) // Name-based ordering
@@ -684,7 +686,7 @@ model ApiKey {
   deleted_at   DateTime? // Soft delete support
 
   // Relations
-  approvals ApiKeyApprovalByUser[]
+  approvals ApiKeyApprovalByUserOrEntity[]
   logs      ApiKeyLog[]
 
   @@index([active, expires_at]) // For checking valid keys
@@ -697,20 +699,23 @@ enum ApiKeyApprovalStatus {
   REJECTED
 }
 
-model ApiKeyApprovalByUser {
+model ApiKeyApprovalByUserOrEntity {
   id         String               @id @default(uuid())
   api_key_id String
-  user_id    String
+  user_id    String?
+  entity_id  String?
   status     ApiKeyApprovalStatus
   created_at DateTime             @default(now())
   updated_at DateTime             @default(now()) @updatedAt
 
   // Relations
-  ApiKey ApiKey @relation(fields: [api_key_id], references: [id], onDelete: Cascade)
-  User   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  ApiKey ApiKey  @relation(fields: [api_key_id], references: [id], onDelete: Cascade)
+  User   User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Entity Entity? @relation(fields: [entity_id], references: [id], onDelete: Cascade)
 
   @@index([api_key_id, status])
   @@index([user_id, status])
+  @@index([entity_id, status])
 }
 
 enum ApiKeyLogAction {
@@ -727,6 +732,7 @@ model ApiKeyLog {
   id          String          @id @default(uuid())
   api_key_id  String
   user_id     String?
+  entity_id   String?
   action      ApiKeyLogAction // Using enum instead of String
   ip_address  String? // IP address of the request
   user_agent  String? // User agent of the request
@@ -736,8 +742,9 @@ model ApiKeyLog {
   updated_at  DateTime        @default(now()) @updatedAt
 
   // Relations
-  ApiKey ApiKey @relation(fields: [api_key_id], references: [id], onDelete: Cascade)
-  User   User?  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  ApiKey ApiKey  @relation(fields: [api_key_id], references: [id], onDelete: Cascade)
+  User   User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Entity Entity? @relation(fields: [entity_id], references: [id], onDelete: Cascade)
 
   @@index([api_key_id, created_at])
   @@index([user_id, created_at])
