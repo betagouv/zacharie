@@ -1,6 +1,9 @@
 import { User, UserRoles } from '@prisma/client';
 
 export function hasAllRequiredFields(user: User) {
+  if (!user.onboarded_at) {
+    return false;
+  }
   if (!user.telephone) {
     return false;
   }
