@@ -33,6 +33,9 @@ import Contact from './routes/contact';
 import { useLandingPageNavigationMenu } from './utils/get-navigation-menu';
 import LandingProsPage from './routes/landing-pros';
 import LandingDemarchesPage from './routes/landing-demarches';
+import AdminApiKeys from './routes/admin/api-keys';
+import AdminNewApiKey from './routes/admin/api-key-add';
+import AdminApiKey from './routes/admin/api-key.$apiKeyId';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -209,6 +212,30 @@ function App() {
                 element={
                   <RestrictedRoute id="entity/:entityId" roles={[UserRoles.ADMIN]}>
                     <AdminEntity />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="api-keys"
+                element={
+                  <RestrictedRoute id="api-keys" roles={[UserRoles.ADMIN]}>
+                    <AdminApiKeys />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="api-key-add"
+                element={
+                  <RestrictedRoute id="api-key-add" roles={[UserRoles.ADMIN]}>
+                    <AdminNewApiKey />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="api-key/:apiKeyId"
+                element={
+                  <RestrictedRoute id="api-key/:apiKeyId" roles={[UserRoles.ADMIN]}>
+                    <AdminApiKey />
                   </RestrictedRoute>
                 }
               />

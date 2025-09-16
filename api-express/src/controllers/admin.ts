@@ -1,10 +1,20 @@
 import express from 'express';
 import { catchErrors } from '~/middlewares/errors';
+import crypto from 'crypto';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import jwt from 'jsonwebtoken';
 import createUserId from '~/utils/createUserId';
-import { ApiKeyScope, EntityRelationType, EntityTypes, Prisma, UserRoles } from '@prisma/client';
+import {
+  ApiKeyApprovalStatus,
+  ApiKeyScope,
+  Entity,
+  EntityRelationType,
+  EntityTypes,
+  Prisma,
+  User,
+  UserRoles,
+} from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE } from '~/utils/cookie';
 import { SECRET } from '~/config';
 import { userAdminSelect } from '~/types/user';
@@ -16,6 +26,9 @@ import type {
   AdminEntitiesResponse,
   AdminNewEntityResponse,
   AdminNewUserDataResponse,
+  AdminApiKeysResponse,
+  AdminApiKeyResponse,
+  AdminApiKeyAndApprovalsResponse,
 } from '~/types/responses';
 import passport from 'passport';
 import validateUser from '~/middlewares/validateUser';
@@ -87,24 +100,6 @@ router.post(
       res.status(200).send({ ok: true, data: { user: createdUser }, error: '' });
     },
   ),
-);
-
-router.post(
-  '/api-key/nouvelle',
-  passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
-  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const createdApiKey = await prisma.apiKey.create({
-      data: {
-        name: 'api-key-test',
-        private_key: 'private-key-test',
-        public_key: 'public-key-test',
-        scopes: [ApiKeyScope.FEI_READ_FOR_USER],
-      },
-    });
-
-    res.status(200).send({ ok: true });
-  }),
 );
 
 router.get(
@@ -622,6 +617,252 @@ router.get(
       error: '',
     });
   }),
+);
+
+router.get(
+  '/api-keys',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminApiKeysResponse>, next: express.NextFunction) => {
+      const apiKeys = await prisma.apiKey.findMany({
+        orderBy: {
+          created_at: 'desc',
+        },
+        include: {
+          approvals: {
+            include: {
+              User: true,
+              Entity: true,
+            },
+          },
+        },
+      });
+
+      res.status(200).send({ ok: true, data: { apiKeys }, error: '' });
+    },
+  ),
+);
+
+router.post(
+  '/api-key/:api_key_id',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
+      console.log(req.body, req.params);
+      const apiKey = await prisma.apiKey.findUnique({
+        where: { id: req.params.api_key_id },
+      });
+      if (!apiKey) {
+        res.status(404).send({ ok: false, data: null, error: 'API key not found' });
+        return;
+      }
+      const updateBody: Prisma.ApiKeyUncheckedUpdateInput = {};
+      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.name)) {
+        updateBody[Prisma.ApiKeyScalarFieldEnum.name] = req.body[Prisma.ApiKeyScalarFieldEnum.name];
+      }
+      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.description)) {
+        updateBody[Prisma.ApiKeyScalarFieldEnum.description] =
+          req.body[Prisma.ApiKeyScalarFieldEnum.description];
+      }
+      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.active)) {
+        updateBody[Prisma.ApiKeyScalarFieldEnum.active] = req.body[Prisma.ApiKeyScalarFieldEnum.active];
+      }
+      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.expires_at)) {
+        updateBody[Prisma.ApiKeyScalarFieldEnum.expires_at] =
+          req.body[Prisma.ApiKeyScalarFieldEnum.expires_at];
+      }
+      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.scopes)) {
+        updateBody[Prisma.ApiKeyScalarFieldEnum.scopes] = req.body[
+          Prisma.ApiKeyScalarFieldEnum.scopes
+        ] as ApiKeyScope[];
+      }
+      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.rate_limit)) {
+        updateBody[Prisma.ApiKeyScalarFieldEnum.rate_limit] =
+          req.body[Prisma.ApiKeyScalarFieldEnum.rate_limit];
+      }
+      const updatedApiKey = await prisma.apiKey.update({
+        where: { id: req.params.api_key_id },
+        data: updateBody,
+      });
+      res.status(200).send({ ok: true, data: { apiKey: updatedApiKey }, error: '' });
+    },
+  ),
+);
+
+router.post(
+  '/api-key/nouvelle',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
+      const body = req.body;
+      const createdApiKey = await prisma.apiKey.create({
+        data: {
+          name: body[Prisma.ApiKeyScalarFieldEnum.name],
+          description: body[Prisma.ApiKeyScalarFieldEnum.description],
+          private_key: crypto.randomBytes(32).toString('hex'),
+          public_key: crypto.randomBytes(32).toString('hex'),
+          scopes: body[Prisma.ApiKeyScalarFieldEnum.scopes] as ApiKeyScope[],
+          active: true,
+        },
+      });
+
+      res.status(200).send({ ok: true, data: { apiKey: createdApiKey }, error: '' });
+    },
+  ),
+);
+
+router.get(
+  '/api-key/:api_key_id',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminApiKeyAndApprovalsResponse>,
+      next: express.NextFunction,
+    ) => {
+      const apiKey = await prisma.apiKey.findUnique({
+        where: { id: req.params.api_key_id },
+        include: {
+          approvals: {
+            include: {
+              User: true,
+              Entity: true,
+            },
+          },
+        },
+      });
+      if (!apiKey) {
+        res.status(404).send({ ok: false, data: null, error: 'API key not found' });
+        return;
+      }
+      const approvalsRecord: Record<string, boolean> = {};
+      for (const approval of apiKey.approvals) {
+        if (approval.user_id) {
+          approvalsRecord[approval.user_id] = true;
+        }
+        if (approval.entity_id) {
+          approvalsRecord[approval.entity_id] = true;
+        }
+      }
+      const allUsers = await prisma.user.findMany({ where: { deleted_at: null } }).then((users) => {
+        const allUsersRecord: Record<string, User> = {};
+        for (const user of users) {
+          if (approvalsRecord[user.id]) {
+            continue;
+          }
+          allUsersRecord[user.id] = user;
+        }
+        return allUsersRecord;
+      });
+      const allEntities = await prisma.entity.findMany({ where: { deleted_at: null } }).then((entities) => {
+        const allEntitiesRecord: Record<string, Entity> = {};
+        for (const entity of entities) {
+          if (approvalsRecord[entity.id]) {
+            continue;
+          }
+          allEntitiesRecord[entity.id] = entity;
+        }
+        return allEntitiesRecord;
+      });
+      res.status(200).send({ ok: true, data: { apiKey: apiKey, allUsers, allEntities }, error: '' });
+    },
+  ),
+);
+
+router.post(
+  '/api-key-approval',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminApiKeyAndApprovalsResponse>,
+      next: express.NextFunction,
+    ) => {
+      const action = req.body.action as 'create' | 'delete' | 'update';
+      const body: Prisma.ApiKeyApprovalByUserOrEntityUncheckedCreateInput = {
+        user_id: req.body.user_id,
+        entity_id: req.body.entity_id,
+        api_key_id: req.body.api_key_id,
+        status: req.body.status as ApiKeyApprovalStatus,
+      };
+      const where: Prisma.ApiKeyApprovalByUserOrEntityWhereUniqueInput | undefined = body.user_id
+        ? {
+            api_key_id_user_id: {
+              api_key_id: body.api_key_id,
+              user_id: body.user_id,
+            },
+          }
+        : body.entity_id
+        ? {
+            api_key_id_entity_id: {
+              api_key_id: body.api_key_id,
+              entity_id: body.entity_id,
+            },
+          }
+        : undefined;
+      if (action === 'delete') {
+        await prisma.apiKeyApprovalByUserOrEntity.delete({
+          where,
+        });
+      } else {
+        await prisma.apiKeyApprovalByUserOrEntity.upsert({
+          where,
+          update: body,
+          create: body,
+        });
+      }
+      const apiKey = await prisma.apiKey.findUnique({
+        where: { id: body.api_key_id },
+        include: {
+          approvals: {
+            include: {
+              User: true,
+              Entity: true,
+            },
+          },
+        },
+      });
+      if (!apiKey) {
+        res.status(404).send({ ok: false, data: null, error: 'API key not found' });
+        return;
+      }
+      const approvalsRecord: Record<string, boolean> = {};
+      for (const approval of apiKey.approvals) {
+        if (approval.user_id) {
+          approvalsRecord[approval.user_id] = true;
+        }
+        if (approval.entity_id) {
+          approvalsRecord[approval.entity_id] = true;
+        }
+      }
+      const allUsers = await prisma.user.findMany({ where: { deleted_at: null } }).then((users) => {
+        const allUsersRecord: Record<string, User> = {};
+        for (const user of users) {
+          if (approvalsRecord[user.id]) {
+            continue;
+          }
+          allUsersRecord[user.id] = user;
+        }
+        return allUsersRecord;
+      });
+      const allEntities = await prisma.entity.findMany({ where: { deleted_at: null } }).then((entities) => {
+        const allEntitiesRecord: Record<string, Entity> = {};
+        for (const entity of entities) {
+          if (approvalsRecord[entity.id]) {
+            continue;
+          }
+          allEntitiesRecord[entity.id] = entity;
+        }
+        return allEntitiesRecord;
+      });
+      res.status(200).send({ ok: true, data: { apiKey: apiKey, allUsers, allEntities }, error: '' });
+    },
+  ),
 );
 
 export default router;

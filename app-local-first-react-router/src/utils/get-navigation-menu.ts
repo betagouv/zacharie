@@ -149,6 +149,22 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
           },
         },
         {
+          text: 'Liste des clés API',
+          isActive: location.pathname === '/app/tableau-de-bord/admin/api-keys',
+          linkProps: {
+            href: '#',
+            to: '/app/tableau-de-bord/admin/api-keys',
+          },
+        },
+        {
+          text: '+ Ajouter une clé API',
+          isActive: location.pathname === '/app/tableau-de-bord/admin/api-key-add',
+          linkProps: {
+            href: '#',
+            to: '/app/tableau-de-bord/admin/api-key-add',
+          },
+        },
+        {
           text: 'Liste des fiches',
           isActive: location.pathname === '/app/tableau-de-bord/admin/feis',
           linkProps: {
@@ -156,24 +172,6 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
             href: 'https://metabase.zacharie.beta.gouv.fr/question/27-fiches-creees',
           },
         },
-        ...(isAdmin && import.meta.env.DEV
-          ? [
-              {
-                text: 'Nouvelle API key',
-                isActive: location.pathname === '/app/tableau-de-bord/admin/api-keys',
-                linkProps: {
-                  href: '#',
-                  onClick: () => {
-                    API.post({ path: 'admin/api-key/nouvelle' }).then((res) => {
-                      if (res.ok) {
-                        alert('API key created');
-                      }
-                    });
-                  },
-                },
-              },
-            ]
-          : []),
       ],
     });
   }

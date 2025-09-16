@@ -6,6 +6,8 @@ import type {
   CarcasseIntermediaire,
   Log,
   CarcasseCertificat,
+  ApiKey,
+  ApiKeyApprovalByUserOrEntity,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
 import type { FeiDone, FeiWithIntermediaires, FeiPopulated } from './fei';
@@ -219,6 +221,34 @@ export interface CertificatResponse {
   ok: boolean;
   data: {
     certificat: CarcasseCertificat | null;
+  };
+  error: string;
+}
+
+export interface AdminApiKeysResponse {
+  ok: boolean;
+  data: {
+    apiKeys: Array<
+      ApiKey & { approvals: Array<ApiKeyApprovalByUserOrEntity & { User: User; Entity: Entity }> }
+    >;
+  };
+  error: string;
+}
+
+export interface AdminApiKeyResponse {
+  ok: boolean;
+  data: {
+    apiKey: ApiKey;
+  };
+  error: string;
+}
+
+export interface AdminApiKeyAndApprovalsResponse {
+  ok: boolean;
+  data: {
+    apiKey: ApiKey & { approvals: Array<ApiKeyApprovalByUserOrEntity & { User: User; Entity: Entity }> };
+    allUsers: Record<string, User>;
+    allEntities: Record<string, Entity>;
   };
   error: string;
 }

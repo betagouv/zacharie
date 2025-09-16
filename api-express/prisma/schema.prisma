@@ -713,6 +713,8 @@ model ApiKeyApprovalByUserOrEntity {
   User   User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   Entity Entity? @relation(fields: [entity_id], references: [id], onDelete: Cascade)
 
+  @@unique([api_key_id, entity_id])
+  @@unique([api_key_id, user_id])
   @@index([api_key_id, status])
   @@index([user_id, status])
   @@index([entity_id, status])

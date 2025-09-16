@@ -6,6 +6,7 @@ const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import {
   ApiKeyApprovalStatus,
+  ApiKeyScope,
   EntityRelationType,
   EntityTypes,
   FeiOwnerRole,
@@ -146,8 +147,23 @@ router.get(
       next: express.NextFunction,
     ) => {
       const apiKeyLog = req.apiKeyLog;
+      const apiKey = await prisma.apiKey.findUnique({
+        where: { id: apiKeyLog?.api_key_id },
+      });
       const role: UserRoles = req.params.role_or_entity_type as UserRoles;
       const entityType: EntityTypes = req.params.role_or_entity_type as EntityTypes;
+      if (
+        !apiKey.scopes.includes(ApiKeyScope.CARCASSE_READ_FOR_USER) &&
+        !apiKey.scopes.includes(ApiKeyScope.CARCASSE_READ_FOR_ENTITY)
+      ) {
+        res.status(403).send({
+          ok: false,
+          data: { carcasse: null },
+          error:
+            "Votre clé n'est pas autorisée à accéder aux carcasses. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
+        });
+        return;
+      }
       const approvals = await prisma.apiKeyApprovalByUserOrEntity
         .findMany({
           where: {
