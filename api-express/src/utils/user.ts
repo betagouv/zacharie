@@ -54,7 +54,7 @@ export function autoActivatePremierDetenteur(user: User, calledFrom: string) {
     console.log('user.roles.includes(UserRoles.ADMIN)', user.roles.includes(UserRoles.ADMIN), calledFrom);
     return false;
   }
-  if (!hasAllRequiredFields(user)) {
+  if (!hasAllRequiredFields(user, calledFrom)) {
     console.log('!hasAllRequiredFields(user)', !hasAllRequiredFields(user, calledFrom), calledFrom);
     return false;
   }

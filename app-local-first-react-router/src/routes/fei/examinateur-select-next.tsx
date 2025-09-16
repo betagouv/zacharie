@@ -69,68 +69,72 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
     return null;
   }
 
+  function handleSubmitFromSelect(nextOwnerUserId?: string) {
+    const nextIsMe = nextOwnerUserId === user.id;
+    const nextIsMyAssociation = !!nextOwnerEntity?.id;
+    let nextFei: Partial<typeof fei>;
+    if (nextIsMe) {
+      console.log('nextIsMe');
+      nextFei = {
+        fei_next_owner_user_id: null,
+        fei_next_owner_user_name_cache: null,
+        fei_next_owner_role: null,
+        fei_next_owner_entity_id: null,
+        fei_next_owner_entity_name_cache: null,
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        fei_current_owner_user_id: user.id,
+        fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        premier_detenteur_user_id: user.id,
+        premier_detenteur_offline: navigator.onLine ? false : true,
+        premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+      };
+    } else if (nextIsMyAssociation) {
+      nextFei = {
+        fei_next_owner_user_id: null,
+        fei_next_owner_role: null,
+        fei_next_owner_entity_id: null,
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        fei_current_owner_entity_id: nextOwnerEntity.id,
+        fei_current_owner_entity_name_cache: nextOwnerEntity.nom_d_usage ?? null,
+        fei_current_owner_user_id: user.id,
+        fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        premier_detenteur_user_id: user.id,
+        premier_detenteur_offline: navigator.onLine ? false : true,
+        premier_detenteur_entity_id: nextOwnerEntity.id,
+        premier_detenteur_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
+      };
+    } else {
+      console.log('nextIsSomeoneElse');
+      nextFei = {
+        fei_next_owner_user_id: nextOwnerUser?.id,
+        fei_next_owner_user_name_cache: nextOwnerName,
+        fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        fei_next_owner_entity_id: nextOwnerEntity?.id,
+      };
+    }
+    updateFei(fei.numero, nextFei);
+    addLog({
+      user_id: user.id,
+      user_role: UserRoles.CHASSEUR,
+      fei_numero: fei.numero,
+      action: 'examinateur-select-next',
+      history: createHistoryInput(fei, nextFei),
+      entity_id: null,
+      zacharie_carcasse_id: null,
+      intermediaire_id: null,
+      carcasse_intermediaire_id: null,
+    });
+  }
+
   return (
     <>
       <form
         id="select-next-owner"
         method="POST"
         aria-disabled={disabled}
-        onSubmit={(event) => {
-          event.preventDefault();
-          const nextIsMe = nextOwnerUser?.id === user.id;
-          const nextIsMyAssociation = !!nextOwnerEntity?.id;
-          let nextFei: Partial<typeof fei>;
-          if (nextIsMe) {
-            console.log('nextIsMe');
-            nextFei = {
-              fei_next_owner_user_id: null,
-              fei_next_owner_user_name_cache: null,
-              fei_next_owner_role: null,
-              fei_next_owner_entity_id: null,
-              fei_next_owner_entity_name_cache: null,
-              fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-              fei_current_owner_user_id: user.id,
-              fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-              premier_detenteur_user_id: user.id,
-              premier_detenteur_offline: navigator.onLine ? false : true,
-              premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-            };
-          } else if (nextIsMyAssociation) {
-            nextFei = {
-              fei_next_owner_user_id: null,
-              fei_next_owner_role: null,
-              fei_next_owner_entity_id: null,
-              fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-              fei_current_owner_entity_id: nextOwnerEntity.id,
-              fei_current_owner_entity_name_cache: nextOwnerEntity.nom_d_usage ?? null,
-              fei_current_owner_user_id: user.id,
-              fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-              premier_detenteur_user_id: user.id,
-              premier_detenteur_offline: navigator.onLine ? false : true,
-              premier_detenteur_entity_id: nextOwnerEntity.id,
-              premier_detenteur_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
-            };
-          } else {
-            console.log('nextIsSomeoneElse');
-            nextFei = {
-              fei_next_owner_user_id: nextOwnerUser?.id,
-              fei_next_owner_user_name_cache: nextOwnerName,
-              fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-              fei_next_owner_entity_id: nextOwnerEntity?.id,
-            };
-          }
-          updateFei(fei.numero, nextFei);
-          addLog({
-            user_id: user.id,
-            user_role: UserRoles.CHASSEUR,
-            fei_numero: fei.numero,
-            action: 'examinateur-select-next',
-            history: createHistoryInput(fei, nextFei),
-            entity_id: null,
-            zacharie_carcasse_id: null,
-            intermediaire_id: null,
-            carcasse_intermediaire_id: null,
-          });
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmitFromSelect(nextOwnerUser?.id);
         }}
       >
         <Select
@@ -182,12 +186,19 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
             method="POST"
             onSubmit={async (event) => {
               event.preventDefault();
-              setIsSearchingUser(true);
               const formData = new FormData(event.currentTarget);
+              const email = formData.get(Prisma.UserScalarFieldEnum.email) as string;
+              if (email === user.email) {
+                // it's me !
+                setNextValue(user.id);
+                handleSubmitFromSelect(user.id);
+                return;
+              }
+              setIsSearchingUser(true);
               const userSearchResponse = await API.post({
                 path: 'user/fei/trouver-premier-detenteur',
                 body: {
-                  email: formData.get(Prisma.UserScalarFieldEnum.email) as string,
+                  email: email,
                   numero: fei.numero,
                 },
               }).then((response) => response as UserForFeiResponse);
