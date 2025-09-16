@@ -664,7 +664,20 @@ router.post(
       res: express.Response<UserConnexionResponse>,
       next: express.NextFunction,
     ) => {
-      const user = req.user!;
+      const user = await prisma.user.findUnique({
+        where: {
+          id: req.params.user_id,
+        },
+      });
+      if (!user) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: 'User not found',
+          message: '',
+        });
+        return;
+      }
       const body = req.body;
 
       const nextUser: Prisma.UserUpdateInput = {};
@@ -716,7 +729,6 @@ router.post(
           (a, b) => b.localeCompare(a),
         );
       }
-      console.log('body', body);
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.etg_roles)) {
         nextUser.etg_roles = [
           ...new Set(body[Prisma.UserScalarFieldEnum.etg_roles] as Array<UserEtgRoles>),
@@ -773,7 +785,10 @@ router.post(
       await updateBrevoContact(savedUser);
       await updateBrevoChasseurDeal(savedUser);
 
-      if (!hasAllRequiredFields(user) && hasAllRequiredFields(savedUser)) {
+      if (
+        !hasAllRequiredFields(user, `original user update ${savedUser.id}`) &&
+        hasAllRequiredFields(savedUser, `saved user update ${savedUser.id}`)
+      ) {
         await sendEmail({
           emails: ['contact@zacharie.beta.gouv.fr'],
           subject: `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`,
@@ -789,7 +804,7 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) ? `- Numéro CFEI\u00A0: ${savedU
         });
       }
 
-      if (autoActivatePremierDetenteur(savedUser)) {
+      if (autoActivatePremierDetenteur(savedUser, `check auto activate ${savedUser.id}`)) {
         nextUser.activated = true;
         nextUser.activated_at = new Date();
         savedUser = await prisma.user.update({
