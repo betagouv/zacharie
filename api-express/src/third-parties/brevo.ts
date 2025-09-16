@@ -6,6 +6,7 @@ import { capture } from './sentry';
 import { IS_DEV_OR_TEST, ENVIRONMENT } from '~/config';
 
 const DISABLED = ENVIRONMENT === 'test' || IS_DEV_OR_TEST;
+// const DISABLED = false;
 
 const API_KEY = process.env.BREVO_API;
 
@@ -314,9 +315,8 @@ async function updateBrevoContact(props: User): Promise<User> {
       NUM_EXAMINATEUR: { value: props.numero_cfei },
       EXT_ID: { value: props.id },
     };
-
     const result = await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
-
+    // console.log('result', result);
     // result.body is undefined so we don't update
     // await prisma.user.update({
     //   where: { id: props.id },
