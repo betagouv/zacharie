@@ -676,6 +676,7 @@ model ApiKey {
   public_key   String        @unique
   name         String
   description  String? // Purpose of the API key
+  webhook_url  String? // Webhook URL for the API key
   active       Boolean       @default(true)
   expires_at   DateTime? // Optional expiration date
   last_used_at DateTime? // Track when the key was last used

@@ -6,6 +6,7 @@ import type { AdminApiKeysResponse } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import API from '@app/services/api';
+import { ApiKeyApprovalStatus } from '@prisma/client';
 
 export default function AdminApiKeys() {
   const [apiKeys, setApiKeys] = useState<NonNullable<AdminApiKeysResponse['data']['apiKeys']>>([]);
@@ -70,65 +71,56 @@ export default function AdminApiKeys() {
                       }
                       return true;
                     })
-                    .map((apiKey, index) => [
-                      <div key={apiKey.id} className="flex size-full flex-row items-start">
-                        <span className="p-4">{index + 1}</span>
+                    .map((apiKey, index) => {
+                      const approvedUsers = apiKey.approvals.filter(
+                        (approval) => approval.status === ApiKeyApprovalStatus.APPROVED && approval.User,
+                      ).length;
+                      const approvedEntities = apiKey.approvals.filter(
+                        (approval) => approval.status === ApiKeyApprovalStatus.APPROVED && approval.Entity,
+                      ).length;
+                      return [
+                        <div key={apiKey.id} className="flex size-full flex-row items-start">
+                          <span className="p-4">{index + 1}</span>
+                          <Link
+                            to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
+                            className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
+                            suppressHydrationWarning
+                          >
+                            Clé activée: {apiKey.active ? '✅' : '❌'}
+                            <br />
+                            Création: {dayjs(apiKey.created_at).format('DD/MM/YYYY à HH:mm')}
+                          </Link>
+                        </div>,
                         <Link
+                          key={apiKey.id}
                           to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
                           className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
-                          suppressHydrationWarning
                         >
-                          Clé activée: {apiKey.active ? '✅' : '❌'}
-                          <br />
-                          Création: {dayjs(apiKey.created_at).format('DD/MM/YYYY à HH:mm')}
-                        </Link>
-                      </div>,
-                      <Link
-                        key={apiKey.id}
-                        to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
-                        className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
-                      >
-                        {apiKey.name}
-                        <br />＠ {apiKey.description}
-                      </Link>,
-                      <Link
-                        key={apiKey.id}
-                        to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
-                        className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
-                      >
-                        {apiKey.scopes.join(', ')}
-                      </Link>,
-                      <div
-                        key={apiKey.id}
-                        className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
-                      >
-                        {apiKey.approvals.map((approval) => {
-                          if (approval.User) {
-                            return (
-                              <Link
-                                to={`/app/tableau-de-bord/admin/user/${approval.User.id}`}
-                                key={approval.id}
-                              >
-                                {approval.User.email} ({approval.User.roles.join(', ')})
-                                <br />
-                              </Link>
-                            );
-                          }
-                          if (approval.Entity) {
-                            return (
-                              <Link
-                                to={`/app/tableau-de-bord/admin/entity/${approval.Entity.id}`}
-                                key={approval.id}
-                              >
-                                {approval.Entity.nom_d_usage} ({approval.Entity.type})
-                                <br />
-                              </Link>
-                            );
-                          }
-                          return null;
-                        })}
-                      </div>,
-                    ])}
+                          {apiKey.name}
+                          <br />＠ {apiKey.description}
+                        </Link>,
+                        <Link
+                          key={apiKey.id}
+                          to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
+                          className="size-full items-start justify-start overflow-hidden! bg-none! p-2 text-xs no-underline!"
+                        >
+                          {apiKey.scopes.join(', ')}
+                        </Link>,
+                        <Link
+                          key={apiKey.id}
+                          to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
+                          className="inline-flex! size-full items-start justify-start overflow-hidden bg-none! no-underline!"
+                        >
+                          <ul
+                            key={apiKey.id}
+                            className="size-full list-inside list-disc items-start justify-start bg-none! no-underline!"
+                          >
+                            <li>{approvedEntities} entités</li>
+                            <li>{approvedUsers} utilisateurs</li>
+                          </ul>
+                        </Link>,
+                      ];
+                    })}
                 />
               </div>
               <div className="flex flex-col items-start bg-white px-8 md:[&_ul]:min-w-96">

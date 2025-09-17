@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import API from '@app/services/api';
+import { UserConnexionResponse } from '@api/src/types/responses';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function useMostFreshUser(_calledFrom: string) {
@@ -41,31 +42,35 @@ export async function refreshUser(_calledFrom: string) {
     const fetchPromise = API.get({
       path: '/user/me',
       signal,
-    }).then(async (userResponse) => {
-      // Good connection event only dispatched if no timeout
-      window.dispatchEvent(new Event('good-connection'));
-      if (userResponse.status === 401) {
-        useUser.setState({ user: null });
-        Sentry.setUser({});
+    })
+      .then((res) => res as UserConnexionResponse)
+      .then(async (userResponse) => {
+        window.dispatchEvent(new Event('good-connection'));
+        // @ts-expect-error status is not in the type
+        if (userResponse.status === 401) {
+          useUser.setState({ user: null });
+          Sentry.setUser({});
+          return null;
+        }
+
+        if (userResponse?.ok && userResponse.data?.user) {
+          const user = userResponse.data.user as User;
+          useUser.setState({ user });
+          const apiKeyApprovals = userResponse.data?.apiKeyApprovals || [];
+          useZustandStore.setState((state) => ({
+            apiKeyApprovals,
+            users: {
+              ...state.users,
+              [user.id]: user,
+            },
+          }));
+          Sentry.setUser({ email: user.email!, id: user.id });
+
+          return user;
+        }
+
         return null;
-      }
-
-      if (userResponse?.ok && userResponse.data?.user) {
-        const user = userResponse.data.user as User;
-        useUser.setState({ user });
-        useZustandStore.setState((state) => ({
-          users: {
-            ...state.users,
-            [user.id]: user,
-          },
-        }));
-        Sentry.setUser({ email: user.email!, id: user.id });
-
-        return user;
-      }
-
-      return null;
-    });
+      });
 
     return await Promise.race([timeout, fetchPromise]);
   } catch (error) {

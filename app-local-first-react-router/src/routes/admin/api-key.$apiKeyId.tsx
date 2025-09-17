@@ -26,6 +26,7 @@ const initialState: State = {
     private_key: '',
     public_key: '',
     description: '',
+    webhook_url: '',
     active: false,
     expires_at: null,
     last_used_at: null,
@@ -64,6 +65,7 @@ export default function AdminApiKey() {
     const description = formData.get(Prisma.ApiKeyScalarFieldEnum.description);
     const name = formData.get(Prisma.ApiKeyScalarFieldEnum.name);
     const active = formData.get(Prisma.ApiKeyScalarFieldEnum.active);
+    const webhook_url = formData.get(Prisma.ApiKeyScalarFieldEnum.webhook_url);
 
     const body: Prisma.ApiKeyUncheckedUpdateInput = {};
 
@@ -78,6 +80,9 @@ export default function AdminApiKey() {
     }
     if (active) {
       body[Prisma.ApiKeyScalarFieldEnum.active] = active === 'true';
+    }
+    if (webhook_url) {
+      body[Prisma.ApiKeyScalarFieldEnum.webhook_url] = webhook_url as string;
     }
 
     setIsSaving(true);
@@ -221,6 +226,16 @@ export default function AdminApiKey() {
                       autoComplete: 'off',
                       disabled: true,
                       defaultValue: apiKey.private_key ?? '',
+                    }}
+                  />
+                  <Input
+                    label="URL de webhook"
+                    hintText="URL fournie par le tiers demandeur : lorsqu'une carcasse est mise à jour, on envoie une requête à cette URL. C'est le même fonctionnement qu'un abonnement à des notifications."
+                    nativeInputProps={{
+                      id: Prisma.ApiKeyScalarFieldEnum.webhook_url,
+                      name: Prisma.ApiKeyScalarFieldEnum.webhook_url,
+                      autoComplete: 'off',
+                      defaultValue: apiKey.webhook_url ?? '',
                     }}
                   />
                   <Checkbox

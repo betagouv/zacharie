@@ -5,10 +5,12 @@ import { clearCache } from '@app/services/indexed-db';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { createNewFei } from './create-new-fei';
 import API from '@app/services/api';
+import useZustandStore from '@app/zustand/store';
 
 export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
   const user = useMostFreshUser('useLoggedInNavigationMenu');
+  const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
   const isNotActivated = !user?.activated;
 
   const navigate = useNavigate();
@@ -62,6 +64,16 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       to: '/app/tableau-de-bord/mon-profil/mes-notifications',
     },
   });
+  if (apiKeyApprovals.length > 0) {
+    profileMenu.push({
+      text: 'Mes accès à des tiers',
+      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-acces-a-des-tiers',
+      linkProps: {
+        href: '#',
+        to: '/app/tableau-de-bord/mon-profil/mes-acces-a-des-tiers',
+      },
+    });
+  }
   profileMenu.push({
     text: `Déconnecter ${user?.email}`,
     linkProps: {

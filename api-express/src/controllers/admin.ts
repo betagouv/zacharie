@@ -666,6 +666,10 @@ router.post(
         updateBody[Prisma.ApiKeyScalarFieldEnum.description] =
           req.body[Prisma.ApiKeyScalarFieldEnum.description];
       }
+      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.webhook_url)) {
+        updateBody[Prisma.ApiKeyScalarFieldEnum.webhook_url] =
+          req.body[Prisma.ApiKeyScalarFieldEnum.webhook_url];
+      }
       if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.active)) {
         updateBody[Prisma.ApiKeyScalarFieldEnum.active] = req.body[Prisma.ApiKeyScalarFieldEnum.active];
       }

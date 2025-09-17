@@ -33,6 +33,7 @@ import webhooksRouter from './controllers/webhooks.ts';
 import utilsRouter from './controllers/utils.ts';
 import statsRouter from './controllers/stats.ts';
 import v1Router from './controllers/v1/index.ts';
+import apiKeyApprovalRouter from './controllers/api-key-approval.ts';
 import './cronjobs/index.ts';
 import './scripts/migrations.ts';
 
@@ -149,6 +150,7 @@ app.use('/log', passport.initialize(), logRouter);
 app.use('/search', passport.initialize(), searchRouter);
 app.use('/webhooks', passport.initialize(), webhooksRouter);
 app.use('/stats', passport.initialize(), statsRouter);
+app.use('/api-key-approval', passport.initialize(), apiKeyApprovalRouter);
 app.use('/', passport.initialize(), utilsRouter);
 
 app.use(Sentry.Handlers.errorHandler());

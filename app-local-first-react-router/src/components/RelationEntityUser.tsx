@@ -56,12 +56,12 @@ export default function RelationEntityUser({
   //     relation.owner_id === user.id &&
   //     relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
   // );
-  const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers.find(
+  const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers?.find(
     (relation) =>
       relation.owner_id === user.id &&
       relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
   );
-  const relationsToApprove = entity.EntityRelationsWithUsers.filter(
+  const relationsToApprove = entity.EntityRelationsWithUsers?.filter(
     (relation) =>
       relation.status === EntityRelationStatus.REQUESTED &&
       relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,

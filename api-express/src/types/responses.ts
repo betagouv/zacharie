@@ -34,6 +34,7 @@ export interface UserConnexionResponse {
   ok: boolean;
   data: {
     user: User | null;
+    apiKeyApprovals?: Array<ApiKeyApprovalByUserOrEntity & { ApiKey: ApiKey }>;
   };
   error: string;
   message: string;

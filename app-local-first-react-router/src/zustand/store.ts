@@ -5,6 +5,8 @@ import {
   type Carcasse,
   type CarcasseIntermediaire,
   type Log,
+  type ApiKeyApprovalByUserOrEntity,
+  type ApiKey,
 } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import type { UserForFei } from '~/src/types/user';
@@ -88,6 +90,7 @@ export interface State {
     Array<FeiAndCarcasseAndIntermediaireIds>
   >;
   intermediairesByFei: Record<Fei['numero'], Array<FeiIntermediaire>>;
+  apiKeyApprovals: Array<ApiKeyApprovalByUserOrEntity & { ApiKey: ApiKey }>;
   lastUpdateCarcassesRegistry: number;
   carcassesRegistry: Array<CarcasseForResponseForRegistry>;
   logs: Array<Log>;
@@ -131,6 +134,7 @@ interface Actions {
     feiAndCarcasseAndIntermediaireIds: FeiAndCarcasseAndIntermediaireIds,
     partialCarcasseIntermediaire: Partial<CarcasseIntermediaire>,
   ) => void;
+  setApiKeyApprovals: (apiKeyApprovals: Array<ApiKeyApprovalByUserOrEntity & { ApiKey: ApiKey }>) => void;
   setHasHydrated: (state: boolean) => void;
   addLog: (log: Omit<CreateLog, 'fei_intermediaire_id'>) => Log;
 }
@@ -154,6 +158,7 @@ const useZustandStore = create<State & Actions>()(
         collecteursProIds: [],
         etgsIds: [],
         svisIds: [],
+        apiKeyApprovals: [],
         detenteursInitiaux: {},
         entityAndUserRelations: {},
         etgAndEntityRelations: {},
@@ -420,6 +425,9 @@ const useZustandStore = create<State & Actions>()(
               dataIsSynced: false,
             };
           });
+        },
+        setApiKeyApprovals: (apiKeyApprovals: Array<ApiKeyApprovalByUserOrEntity & { ApiKey: ApiKey }>) => {
+          set({ apiKeyApprovals });
         },
         addLog: (newLog: Omit<CreateLog, 'fei_intermediaire_id'>) => {
           const log = {

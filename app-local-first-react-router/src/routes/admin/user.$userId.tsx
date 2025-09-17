@@ -118,9 +118,11 @@ export default function AdminUser() {
     },
     {
       tabId: 'Peut traiter des fiches au nom de',
-      label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => rel.EntityRelationsWithUsers.some((r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)).length})`,
+      label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => rel.EntityRelationsWithUsers.find((r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && r.owner_id === user.id)).length})`,
     },
   ];
+
+  console.log(userEntitiesRelations);
 
   if (user.roles.includes(UserRoles.CHASSEUR)) {
     tabs.push({
@@ -502,10 +504,6 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
           if (entity.type === EntityTypes.SVI) {
             entities.push(entity);
           }
-        } else if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
-          if (entity.type === EntityTypes.ETG) {
-            entities.push(entity);
-          }
         }
       } else if (relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         if (user.roles.includes(UserRoles.CHASSEUR)) {
@@ -517,7 +515,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
             entities.push(entity);
           }
         } else if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
-          if (entity.type === EntityTypes.COLLECTEUR_PRO || entity.type === EntityTypes.ETG) {
+          if (entity.type === EntityTypes.COLLECTEUR_PRO) {
             entities.push(entity);
           }
         } else if (user.roles.includes(UserRoles.SVI)) {
@@ -593,6 +591,19 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
             return null;
           }
         })}
+      {relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY &&
+        user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
+          <Highlight
+            className="m-0 mt-8"
+            // classes={{
+            //   root: 'fr-highlight--green-emeraude',
+            // }}
+          >
+            Un collecteur indépendant ne peut pas gérer de fiches pour un ETG. <br />
+            Si un ETG a un besoin de transport, c'est dans le profil de l'utilisateur que ça se gère : cet
+            utilisateur n'a que le rôle ETG mais peut cocher la case "Je gère le transport dans mon ETG"
+          </Highlight>
+        )}
       {!!potentialEntities.length && (
         <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
           <Table
