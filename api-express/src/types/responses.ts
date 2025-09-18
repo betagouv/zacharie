@@ -130,6 +130,7 @@ export interface AdminGetEntityResponse {
   ok: boolean;
   data: null | {
     entity: EntityForAdmin;
+    dedicatedApiKey: ApiKey | null;
     canTakeFichesForEntity: Array<UserForAdmin>;
     canSendFichesToEntity: Array<UserForAdmin>;
     svisRelatedToETG: Array<Entity>;

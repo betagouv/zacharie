@@ -180,7 +180,13 @@ export async function getDedicatedEntityLinkedToApiKey(apiKey: ApiKey): Promise<
   if (!approvals.length) return null;
   if (approvals.length > 1) return null;
   if (!approvals[0].Entity) return null;
-  return approvals[0].Entity!;
+
+  const entity = approvals[0].Entity!;
+  if (apiKey.dedicated_to_entity_id !== entity.id) {
+    return null;
+  }
+
+  return entity;
 }
 
 export const checkApiKeyIsValidMiddleware =

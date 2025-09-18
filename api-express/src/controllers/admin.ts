@@ -375,10 +375,17 @@ router.get(
               },
             });
 
+      const dedicatedApiKey = await prisma.apiKey.findFirst({
+        where: {
+          dedicated_to_entity_id: entity.id,
+        },
+      });
+
       res.status(200).send({
         ok: true,
         data: {
           entity,
+          dedicatedApiKey,
           canTakeFichesForEntity,
           canSendFichesToEntity,
           svisRelatedToETG,
@@ -388,6 +395,48 @@ router.get(
         },
         error: '',
       });
+    },
+  ),
+);
+
+router.post(
+  '/entity-dedicated-api-key/:entity_id',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
+      const entity = await prisma.entity.findUnique({
+        where: {
+          id: req.params.entity_id,
+          deleted_at: null,
+        },
+      });
+      if (!entity) {
+        res.status(404).send({ ok: false, data: null, error: 'Entity not found' });
+        return;
+      }
+
+      const createdApiKey = await prisma.apiKey.create({
+        data: {
+          name: `${entity.nom_d_usage} - Clé API dédiée`,
+          dedicated_to_entity_id: entity.id,
+          description: `Clé API dédiée pour l'entité ${entity.nom_d_usage}`,
+          private_key: crypto.randomBytes(32).toString('hex'),
+          public_key: crypto.randomBytes(32).toString('hex'),
+          scopes: [ApiKeyScope.FEI_READ_FOR_ENTITY, ApiKeyScope.CARCASSE_READ_FOR_ENTITY],
+          active: true,
+        },
+      });
+
+      await prisma.apiKeyApprovalByUserOrEntity.create({
+        data: {
+          api_key_id: createdApiKey.id,
+          entity_id: entity.id,
+          status: ApiKeyApprovalStatus.APPROVED,
+        },
+      });
+
+      res.status(200).send({ ok: true, data: { apiKey: createdApiKey }, error: '' });
     },
   ),
 );

@@ -49,6 +49,7 @@ const initialData: State = {
     inc_decision: 0,
     code_etbt_certificat: null,
   },
+  dedicatedApiKey: null,
   canTakeFichesForEntity: [],
   canSendFichesToEntity: [],
   svisRelatedToETG: [],
@@ -62,6 +63,7 @@ export default function AdminEntity() {
   const [isSaving, setIsSaving] = useState(false);
   const {
     // entity,
+    dedicatedApiKey,
     canTakeFichesForEntity,
     canSendFichesToEntity,
     svisRelatedToETG,
@@ -120,8 +122,35 @@ export default function AdminEntity() {
       )}
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center" key={entity.id}>
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <small className="italic">{entity.type}</small>
-          <h1 className="fr-h2 fr-mb-2w">{entity.nom_d_usage}</h1>
+          <small className="mx-8 italic">{entity.type}</small>
+          <div className="mx-8 flex items-center justify-between gap-12">
+            <h1 className="fr-h2 fr-mb-2w">{entity.nom_d_usage}</h1>
+            {dedicatedApiKey ? (
+              <Button
+                linkProps={{
+                  to: `/app/tableau-de-bord/admin/api-key/${dedicatedApiKey.id}`,
+                }}
+              >
+                Aller vers la clé API dédiée
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => {
+                  API.post({
+                    path: `admin/entity-dedicated-api-key/${params.entityId}`,
+                  }).then(() => {
+                    loadData(params.entityId!).then((response) => {
+                      if (response.data) setAdminEntityResponse(response.data!);
+                    });
+                  });
+                }}
+                className="shrink-0"
+              >
+                Activer la clé API dédiée
+              </Button>
+            )}
+          </div>
           <div className="p-4 pb-32 md:p-8 md:pb-0">
             <Tabs
               selectedTabId={selectedTabId}
@@ -154,22 +183,24 @@ export default function AdminEntity() {
                       });
                   }}
                 >
-                  <Checkbox
-                    className="mb-4"
-                    options={[
-                      {
-                        label: 'Prêt pour Zacharie',
-                        hintText:
-                          "Si l'entité peut traiter des fiches Zacharie, recevoir ou en envoyer, cochez la case. Si cette case n'est pas cochée, un message sera affiché à l'utilisateur lorsqu'il voudra transmettre une fiche à cette entité.",
-                        nativeInputProps: {
-                          required: true,
-                          name: Prisma.EntityScalarFieldEnum.zacharie_compatible,
-                          value: 'true',
-                          defaultChecked: entity.zacharie_compatible === true,
+                  <div className="flex items-center gap-12">
+                    <Checkbox
+                      className="mb-4"
+                      options={[
+                        {
+                          label: 'Prêt pour Zacharie',
+                          hintText:
+                            "Si l'entité peut traiter des fiches Zacharie, recevoir ou en envoyer, cochez la case. Si cette case n'est pas cochée, un message sera affiché à l'utilisateur lorsqu'il voudra transmettre une fiche à cette entité.",
+                          nativeInputProps: {
+                            required: true,
+                            name: Prisma.EntityScalarFieldEnum.zacharie_compatible,
+                            value: 'true',
+                            defaultChecked: entity.zacharie_compatible === true,
+                          },
                         },
-                      },
-                    ]}
-                  />
+                      ]}
+                    />
+                  </div>
 
                   <Input
                     label="Nom d'usage"

@@ -16,6 +16,14 @@ export default function AdminApiKeys() {
       label: `Toutes (${apiKeys.length})`,
     },
     {
+      tabId: 'dedicated',
+      label: `Dédiées à une entité (${apiKeys.filter((apiKey) => !!apiKey.dedicated_to_entity_id).length})`,
+    },
+    {
+      tabId: 'not-dedicated',
+      label: `Acteurs tiers (${apiKeys.filter((apiKey) => !apiKey.dedicated_to_entity_id).length})`,
+    },
+    {
       tabId: 'activated',
       label: `Activées (${apiKeys.filter((apiKey) => apiKey.active).length})`,
     },
@@ -68,6 +76,12 @@ export default function AdminApiKeys() {
                       }
                       if (selectedTabId === 'deactivated') {
                         return !apiKey.active;
+                      }
+                      if (selectedTabId === 'not-dedicated') {
+                        return !apiKey.dedicated_to_entity_id;
+                      }
+                      if (selectedTabId === 'dedicated') {
+                        return !!apiKey.dedicated_to_entity_id;
                       }
                       return true;
                     })

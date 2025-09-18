@@ -23,6 +23,7 @@ const initialState: State = {
   apiKey: {
     name: '',
     id: '',
+    dedicated_to_entity_id: null,
     private_key: '',
     public_key: '',
     description: '',
@@ -113,11 +114,15 @@ export default function AdminApiKey() {
     },
     {
       tabId: 'Entités',
-      label: `Entités (${apiKey.approvals.filter((rel) => rel.entity_id).length})`,
+      label: apiKey.dedicated_to_entity_id
+        ? 'Entité (1) 🔒'
+        : `Entités (${apiKey.approvals.filter((rel) => rel.entity_id).length})`,
     },
     {
       tabId: 'Utilisateurs',
-      label: `Utilisateurs (${apiKey.approvals.filter((rel) => rel.user_id).length})`,
+      label: apiKey.dedicated_to_entity_id
+        ? 'Utilisateurs (0) 🔒'
+        : `Utilisateurs (${apiKey.approvals.filter((rel) => rel.user_id).length})`,
     },
   ];
 
@@ -343,7 +348,9 @@ function EntitiesRelatedTo({
           root: 'fr-highlight--green-emeraude',
         }}
       >
-        Cette clé ne pourra accéder qu'aux données des entités sélectionnées ci-dessous.
+        {apiKey.dedicated_to_entity_id
+          ? "Cette clé ne pourra accéder qu'aux données de l'entité sélectionnée ci-dessous."
+          : "Cette clé ne pourra accéder qu'aux données des entités sélectionnées ci-dessous."}
       </Highlight>
       {apiKey.approvals.map((approval) => {
         if (!approval.Entity) {
