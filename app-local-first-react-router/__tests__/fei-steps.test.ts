@@ -559,7 +559,7 @@ describe('computeFeiSteps', () => {
         expect(result.simpleStatus).toBe('À compléter');
       });
 
-      test('should return "À compléter" when user works indirectly for next owner entity', () => {
+      test('should return "En cours" when user is COLLECTEUR_PRO works indirectly for next owner entity', () => {
         const fei = createMockFei({
           fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
           fei_next_owner_entity_id: 'entity-1',
@@ -572,7 +572,7 @@ describe('computeFeiSteps', () => {
           entitiesIdsWorkingDirectlyFor: [],
         });
 
-        expect(result.simpleStatus).toBe('À compléter');
+        expect(result.simpleStatus).toBe('En cours');
       });
 
       test('should return "En cours" when user does not work for next owner entity', () => {
