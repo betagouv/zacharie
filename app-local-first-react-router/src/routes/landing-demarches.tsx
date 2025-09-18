@@ -247,12 +247,12 @@ export default function LandingDemarchesPage() {
               </Section>
               <Section title="Dois-je déclarer la chambre froide où j’entrepose du gibier&nbsp;?">
                 <p>
-                  Oui, si vous y stockez du gibier <b>que vous comptez vendre ou donner</b>. Elle devient un
+                  Oui, si vous y stockez du gibier <b>que vous comptez vendre ou donner</b>. Elle devient un{' '}
                   <b>Centre de Collecte du Gibier sauvage (CCG)</b> et doit être enregistrée auprès des
                   services de l’Etat de votre département (DDPP ou DDETSPP).
                 </p>
                 <p>
-                  Si c’est le cas, votre chambre froide est considérée comme un
+                  Si c’est le cas, votre chambre froide est considérée comme un{' '}
                   <b>Centre de Collecte du Gibier sauvage (CCG)</b> et doit être enregistrée auprès des
                   services de l’Etat de votre département (DDPP ou DDETSPP).
                 </p>
