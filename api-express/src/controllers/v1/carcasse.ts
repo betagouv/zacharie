@@ -1,18 +1,9 @@
 import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors.ts';
-import type { FeiResponse, FeisResponse, FeisDoneResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import {
-  ApiKeyApprovalStatus,
-  ApiKeyScope,
-  EntityRelationType,
-  EntityTypes,
-  FeiOwnerRole,
-  Prisma,
-  UserRoles,
-} from '@prisma/client';
+import { ApiKeyScope, EntityTypes, FeiOwnerRole, Prisma } from '@prisma/client';
 import { RequestWithApiKey } from '~/types/request';
 import { carcasseForApiSelect } from '~/types/carcasse';
 import {
@@ -22,12 +13,22 @@ import {
 } from '~/utils/api';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { feiForApiSelect } from '~/types/fei';
 dayjs.extend(utc);
 
 export type CarcasseForResponseForApi = {
   ok: boolean;
   data: {
     carcasse: ReturnType<typeof mapCarcasseForApi> | null;
+  };
+  error?: string;
+  message?: string;
+};
+
+export type CarcassesForResponseForApi = {
+  ok: boolean;
+  data: {
+    carcasses: Array<ReturnType<typeof mapCarcasseForApi>>;
   };
   error?: string;
   message?: string;
@@ -75,9 +76,7 @@ router.get(
         where: {
           numero: carcasse.fei_numero,
         },
-        include: {
-          CarcasseIntermediaire: true,
-        },
+        select: feiForApiSelect,
       });
 
       let canAccess = false;
@@ -119,7 +118,83 @@ router.get(
 
       res.status(200).send({
         ok: true,
-        data: { carcasse: mapCarcasseForApi(carcasse) },
+        data: { carcasse: mapCarcasseForApi(carcasse, fei) },
+        message:
+          'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
+      });
+    },
+  ),
+);
+
+router.get(
+  '/',
+  passport.authenticate('apiKeyLog', { session: false }),
+  checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY]),
+  catchErrors(
+    async (
+      req: RequestWithApiKey,
+      res: express.Response<CarcassesForResponseForApi>,
+      next: express.NextFunction,
+    ) => {
+      const dateFrom = req.query.date_from as string; // format: 2025-09-17
+      const dateTo = req.query.date_to as string; // format: 2025-09-17
+      const apiKey = req.apiKey;
+
+      const entity = await getDedicatedEntityLinkedToApiKey(apiKey);
+      if (!entity) {
+        const error = new Error(
+          `Votre clé n'est pas autorisée à accéder à des fiches d'examen initial par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+        );
+        res.status(403);
+        return next(error);
+      }
+
+      const feiQuery: Prisma.FeiFindManyArgs = {
+        where: {
+          date_mise_a_mort: {
+            gte: dayjs(dateFrom).utc(true).toISOString(),
+            lte: dayjs(dateTo).utc(true).toISOString(),
+          },
+        },
+      };
+      if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
+        feiQuery.where.premier_detenteur_entity_id = entity.id;
+      } else if (entity.type === EntityTypes.SVI) {
+        feiQuery.where.svi_entity_id = entity.id;
+      } else {
+        feiQuery.where.CarcasseIntermediaire = {
+          some: {
+            intermediaire_entity_id: entity.id,
+          },
+        };
+      }
+
+      const feis = await prisma.fei.findMany({
+        where: {
+          date_mise_a_mort: {
+            gte: dayjs(dateFrom).utc(true).toISOString(),
+            lte: dayjs(dateTo).utc(true).toISOString(),
+          },
+        },
+        select: feiForApiSelect,
+      });
+
+      const carcasses = await prisma.carcasse.findMany({
+        where: {
+          fei_numero: {
+            in: feis.map((fei) => fei.numero),
+          },
+        },
+        select: carcasseForApiSelect,
+      });
+
+      res.status(200).send({
+        ok: true,
+        data: {
+          carcasses: carcasses.map((carcasse) =>
+            mapCarcasseForApi(carcasse, feis.find((fei) => fei.numero === carcasse.fei_numero)!),
+          ),
+        },
         message:
           'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
       });
@@ -210,8 +285,7 @@ router.get(
         where: {
           numero: carcasse.fei_numero,
         },
-        include: {
-          CarcasseIntermediaire: true,
+        select: feiForApiSelect,
         },
       });
 
@@ -275,7 +349,7 @@ router.get(
       }
       res.status(200).send({
         ok: true,
-        data: { carcasse: mapCarcasseForApi(carcasse) },
+        data: { carcasse: mapCarcasseForApi(carcasse, fei) },
         message:
           'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
       });

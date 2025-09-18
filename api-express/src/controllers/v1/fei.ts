@@ -9,6 +9,7 @@ import { checkApiKeyIsValidMiddleware, getDedicatedEntityLinkedToApiKey, mapFeiF
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { feiForApiSelect } from '~/types/fei';
+import { carcasseForApiSelect } from '~/types/carcasse';
 dayjs.extend(utc);
 
 export type FeiGetForApi = {
@@ -69,9 +70,25 @@ router.get(
         select: feiForApiSelect,
       });
 
+      const carcasses = await prisma.carcasse.findMany({
+        where: {
+          fei_numero: {
+            in: feis.map((fei) => fei.numero),
+          },
+        },
+        select: carcasseForApiSelect,
+      });
+
       res.status(200).send({
         ok: true,
-        data: { feis: feis.map(mapFeiForApi) },
+        data: {
+          feis: feis.map((fei) =>
+            mapFeiForApi(
+              fei,
+              carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero),
+            ),
+          ),
+        },
         message:
           'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
       });

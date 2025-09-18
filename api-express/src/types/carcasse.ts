@@ -223,40 +223,6 @@ export const carcasseForApiSelect: Prisma.CarcasseSelect = {
   // CarcasseCertificats: false,
   // SviIpm1User: false,
   // CarcasseIntermediaire: false,
-  Fei: {
-    select: {
-      date_mise_a_mort: true,
-      commune_mise_a_mort: true,
-      heure_mise_a_mort_premiere_carcasse: true,
-      heure_evisceration_derniere_carcasse: true,
-      examinateur_initial_date_approbation_mise_sur_le_marche: true,
-      premier_detenteur_name_cache: true,
-      premier_detenteur_depot_ccg_at: true,
-      svi_assigned_at: true,
-      svi_entity_id: true,
-      svi_user_id: true,
-      svi_closed_at: true,
-      latest_intermediaire_name_cache: true,
-      created_at: true,
-      updated_at: true,
-      deleted_at: true,
-      automatic_closed_at: true,
-      FeiPremierDetenteurUser: {
-        select: {
-          prenom: true,
-          nom_de_famille: true,
-        },
-      },
-      FeiExaminateurInitialUser: {
-        select: {
-          prenom: true,
-          nom_de_famille: true,
-        },
-      },
-      FeiPremierDetenteurEntity: true,
-      FeiSviEntity: true,
-    },
-  },
 } as const;
 
 export type CarcasseGetForApi = Prisma.CarcasseGetPayload<{

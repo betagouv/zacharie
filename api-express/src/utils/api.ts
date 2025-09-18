@@ -5,7 +5,7 @@ import { FeiGetForApi } from '~/types/fei';
 import { RequestWithApiKey } from '~/types/request';
 import express from 'express';
 
-export function mapCarcasseForApi(carcasse: CarcasseGetForApi) {
+export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi) {
   if (!carcasse) {
     return null;
   }
@@ -19,10 +19,10 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi) {
     heure_evisceration: carcasse.heure_evisceration,
     examinateur_name:
       // @ts-ignore
-      carcasse.Fei.FeiExaminateurInitialUser.prenom +
+      fei.FeiExaminateurInitialUser.prenom +
       ' ' +
       // @ts-ignore
-      carcasse.Fei.FeiExaminateurInitialUser.nom_de_famille,
+      fei.FeiExaminateurInitialUser.nom_de_famille,
     examinateur_carcasse_sans_anomalie: carcasse.examinateur_carcasse_sans_anomalie,
     examinateur_anomalies_carcasse: carcasse.examinateur_anomalies_carcasse,
     examinateur_anomalies_abats: carcasse.examinateur_anomalies_abats,
@@ -30,13 +30,13 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi) {
     examinateur_signed_at: carcasse.examinateur_signed_at,
     premier_detenteur_name:
       // @ts-ignore
-      carcasse.Fei.FeiPremierDetenteurUser.prenom + ' ' + carcasse.Fei.FeiPremierDetenteurUser.nom_de_famille,
+      fei.FeiPremierDetenteurUser.prenom + ' ' + fei.FeiPremierDetenteurUser.nom_de_famille,
     premier_detenteur_depot_type: carcasse.premier_detenteur_depot_type,
     premier_detenteur_depot_ccg_at: carcasse.premier_detenteur_depot_ccg_at,
     premier_detenteur_transport_type: carcasse.premier_detenteur_transport_type,
     premier_detenteur_transport_date: carcasse.premier_detenteur_transport_date,
     premier_detenteur_prochain_detenteur_role_cache: carcasse.premier_detenteur_prochain_detenteur_role_cache,
-    // premier_detenteur_prochain_detenteur_name: carcasse.Fei.pro
+    // premier_detenteur_prochain_detenteur_name: fei.pro
     // latest_intermediaire_name
     // latest_intermediaire_poids_carcasse
     latest_intermediaire_carcasse_refus_motif: carcasse.intermediaire_carcasse_refus_motif,
@@ -82,23 +82,23 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi) {
     svi_ipm2_signed_at: carcasse.svi_ipm2_signed_at,
     created_at: carcasse.created_at,
     updated_at: carcasse.updated_at,
-    fei_date_mise_a_mort: carcasse.Fei.date_mise_a_mort,
-    fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort,
-    fei_heure_mise_a_mort_premiere_carcasse: carcasse.Fei.heure_mise_a_mort_premiere_carcasse,
-    fei_heure_evisceration_derniere_carcasse: carcasse.Fei.heure_evisceration_derniere_carcasse,
-    fei_resume_nombre_de_carcasses: carcasse.Fei.resume_nombre_de_carcasses,
+    fei_date_mise_a_mort: fei.date_mise_a_mort,
+    fei_commune_mise_a_mort: fei.commune_mise_a_mort,
+    fei_heure_mise_a_mort_premiere_carcasse: fei.heure_mise_a_mort_premiere_carcasse,
+    fei_heure_evisceration_derniere_carcasse: fei.heure_evisceration_derniere_carcasse,
+    fei_resume_nombre_de_carcasses: fei.resume_nombre_de_carcasses,
     fei_examinateur_initial_approbation_mise_sur_le_marche:
-      carcasse.Fei.examinateur_initial_approbation_mise_sur_le_marche,
+      fei.examinateur_initial_approbation_mise_sur_le_marche,
     fei_examinateur_initial_date_approbation_mise_sur_le_marche:
-      carcasse.Fei.examinateur_initial_date_approbation_mise_sur_le_marche,
-    fei_automatic_closed_at: carcasse.Fei.automatic_closed_at,
-    fei_intermediaire_closed_at: carcasse.Fei.intermediaire_closed_at,
-    fei_svi_assigned_at: carcasse.Fei.svi_assigned_at,
-    fei_svi_closed_at: carcasse.Fei.svi_closed_at,
+      fei.examinateur_initial_date_approbation_mise_sur_le_marche,
+    fei_automatic_closed_at: fei.automatic_closed_at,
+    fei_intermediaire_closed_at: fei.intermediaire_closed_at,
+    fei_svi_assigned_at: fei.svi_assigned_at,
+    fei_svi_closed_at: fei.svi_closed_at,
   };
 }
 
-export function mapFeiForApi(fei: FeiGetForApi) {
+export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) {
   if (!fei) {
     return null;
   }

@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { carcasseForApiSelect } from './carcasse';
 
 export type FeiWithIntermediaires = Prisma.FeiGetPayload<{
   include: {
