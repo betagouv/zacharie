@@ -1,4 +1,4 @@
-import { ApiKey, ApiKeyApprovalStatus, ApiKeyScope, Entity } from '@prisma/client';
+import { ApiKey, ApiKeyApprovalStatus, ApiKeyScope, Entity, User } from '@prisma/client';
 import prisma from '~/prisma';
 import { CarcasseGetForApi } from '~/types/carcasse';
 import { FeiGetForApi } from '~/types/fei';
@@ -187,6 +187,47 @@ export async function getDedicatedEntityLinkedToApiKey(apiKey: ApiKey): Promise<
   }
 
   return entity;
+}
+
+export async function getRequestedUser(
+  apiKey: ApiKey,
+  email: string,
+): Promise<{ error?: string; user?: User }> {
+  if (!email) {
+    return {
+      error: `Il manque l'email dans la requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+    };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email: email,
+    },
+  });
+
+  if (!user) {
+    return {
+      error: `Votre clé n'est pas autorisée à accéder à des carcasses par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+    };
+  }
+
+  const approval = await prisma.apiKeyApprovalByUserOrEntity.findFirst({
+    where: {
+      api_key_id: apiKey?.id,
+      status: ApiKeyApprovalStatus.APPROVED,
+      user_id: user.id,
+    },
+  });
+
+  if (!approval) {
+    return {
+      error: `Votre clé n'est pas autorisée à accéder à des carcasses par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+    };
+  }
+
+  return {
+    user: user,
+  };
 }
 
 export const checkApiKeyIsValidMiddleware =
