@@ -78,19 +78,6 @@ export default function LandingDemarchesPage() {
                 d’examinateur initial pour pouvoir remplir une fiche d’examen initial.
               </p>
             </Section>
-            <Section title="Comment peut-on remplir une fiche d’examen initial&nbsp;?">
-              <p>
-                Contactez votre{' '}
-                <a
-                  href="https://www.chasseurdefrance.com/pratiquer/annuaire-des-federations/"
-                  target="_blank"
-                >
-                  Fédération Départementale des Chasseurs (FDC)
-                </a>{' '}
-                pour connaitre les prochaines dates de formation à l’examen initial. A l’issue de la
-                formation, vous recevrez une attestation avec votre numéro d’examinateur initial.
-              </p>
-            </Section>
             <Section title="Comment peut-on se former et devenir examinateur initial&nbsp;?">
               <h4>En format numérique avec Zacharie</h4>
               <p>
@@ -109,6 +96,19 @@ export default function LandingDemarchesPage() {
                 carnets à souches vendus par votre Fédération Départementale des Chasseurs. Vous devrez
                 remplir une fiche par espèce et attacher la fiche au lot de carcasses concernées. Vous devez
                 conserver le double (papier carbone) 5 ans après la date de mise à mort des carcasses.
+              </p>
+            </Section>
+            <Section title="Comment peut-on remplir une fiche d’examen initial&nbsp;?">
+              <p>
+                Contactez votre{' '}
+                <a
+                  href="https://www.chasseurdefrance.com/pratiquer/annuaire-des-federations/"
+                  target="_blank"
+                >
+                  Fédération Départementale des Chasseurs (FDC)
+                </a>{' '}
+                pour connaitre les prochaines dates de formation à l’examen initial. A l’issue de la
+                formation, vous recevrez une attestation avec votre numéro d’examinateur initial.
               </p>
             </Section>
             <Section title="Dois-je déclarer la chambre froide où j’entrepose du gibier&nbsp;?">
