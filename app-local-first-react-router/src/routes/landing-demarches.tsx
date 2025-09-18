@@ -216,8 +216,7 @@ export default function LandingDemarchesPage() {
                   >
                     Fédération Départementale des Chasseurs (FDC)
                   </a>{' '}
-                  pour connaitre les prochaines dates de formation à l’examen initial. A l’issue de la
-                  formation, vous recevrez une attestation avec votre numéro d’examinateur initial.
+                  pour connaitre les prochaines dates de formation à l’examen initial.
                 </p>
                 <p>
                   À l’issue de la formation, vous recevrez une attestation avec votre numéro d’examinateur
@@ -274,7 +273,7 @@ export default function LandingDemarchesPage() {
                   votre compte, ce numéro sera automatiquement ajouté aux fiches numériques.
                 </p>
                 <p className="mt-8">
-                  Pour en savoir plus sur cette démarche et comment la réaliser vous pouvez
+                  Pour en savoir plus sur cette démarche et comment la réaliser vous pouvez{' '}
                   <a
                     href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w"
                     target="_blank"
