@@ -94,7 +94,7 @@ export default function RootDisplay({
           </span>
         }
         homeLinkProps={{
-          to: user?.activated ? '/app/tableau-de-bord' : '/',
+          to: '/',
           title: "Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire",
         }}
         id="fr-header-header-with-quick-access-items"

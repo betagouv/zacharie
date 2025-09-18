@@ -2,6 +2,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import SchemaPros from '@app/components/SchemaPros';
+import SchemaProsMobile from '@app/components/SchemaProsMobile';
 
 export default function LandingProsPage() {
   return (
@@ -170,7 +171,8 @@ export default function LandingProsPage() {
             </h2>
             <div className="-ml-6 w-screen md:ml-0 md:w-auto">
               <div className="ml-4 justify-center overflow-x-auto md:mx-auto md:ml-0 md:flex md:w-full">
-                <SchemaPros className="h-full w-full max-w-full min-w-[500px] shrink md:max-w-4xl" />
+                <SchemaPros className="hidden h-full w-full max-w-full min-w-[500px] shrink sm:block md:max-w-4xl" />
+                <SchemaProsMobile className="mx-auto my-12 h-[900px] w-[300px] sm:hidden" />
               </div>
             </div>
           </section>
