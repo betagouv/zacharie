@@ -2,7 +2,7 @@ import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt, StrategyOptions } from 'passport-jwt';
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import prisma from '~/prisma';
-import { ApiKeyLog, User } from '@prisma/client';
+import { ApiKey, ApiKeyLog, User } from '@prisma/client';
 import type { Request } from 'express';
 import { SECRET } from '~/config';
 
@@ -75,7 +75,7 @@ passport.use(
     true,
     async (
       apiKey: string,
-      done: (error: Error | null, apiKeyLog?: ApiKeyLog, info?: any) => void,
+      done: (error: Error | null, apiKey?: ApiKey, info?: any) => void,
       req: Request,
     ) => {
       try {
@@ -97,7 +97,7 @@ passport.use(
           data: { last_used_at: new Date() },
         });
 
-        const log = await prisma.apiKeyLog.create({
+        await prisma.apiKeyLog.create({
           data: {
             api_key_id: key.id,
             action: 'USED',
@@ -107,8 +107,7 @@ passport.use(
           },
         });
 
-        // Pass the log as the second parameter
-        return done(null, log);
+        return done(null, key);
       } catch (error) {
         return done(error as Error);
       }

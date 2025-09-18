@@ -14,7 +14,7 @@ export default function validateUser(roles: Array<UserRoles> = []) {
     }
     if (!canAccess) {
       const error = new Error('Unauthorized');
-      res.status(403); // using response here
+      res.status(403);
       return next(error);
     }
     next();

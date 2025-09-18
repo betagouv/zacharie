@@ -1,7 +1,9 @@
-import { ApiKey, ApiKeyApprovalStatus, Entity } from '@prisma/client';
+import { ApiKey, ApiKeyApprovalStatus, ApiKeyScope, Entity } from '@prisma/client';
 import prisma from '~/prisma';
 import { CarcasseGetForApi } from '~/types/carcasse';
 import { FeiGetForApi } from '~/types/fei';
+import { RequestWithApiKey } from '~/types/request';
+import express from 'express';
 
 export function mapCarcasseForApi(carcasse: CarcasseGetForApi) {
   if (!carcasse) {
@@ -164,7 +166,6 @@ export function mapFeiForApi(fei: FeiGetForApi) {
 }
 
 export async function getDedicatedEntityLinkedToApiKey(apiKey: ApiKey): Promise<Entity | null> {
-  if (!apiKey.active || (apiKey.expires_at && apiKey.expires_at < new Date())) return null;
   const approvals = await prisma.apiKeyApprovalByUserOrEntity.findMany({
     where: {
       api_key_id: apiKey.id,
@@ -181,3 +182,24 @@ export async function getDedicatedEntityLinkedToApiKey(apiKey: ApiKey): Promise<
   if (!approvals[0].Entity) return null;
   return approvals[0].Entity!;
 }
+
+export const checkApiKeyIsValidMiddleware =
+  (scopes: Array<ApiKeyScope>) =>
+  async (req: RequestWithApiKey, res: express.Response, next: express.NextFunction) => {
+    const apiKey = req.apiKey;
+    if (!apiKey.active || (apiKey.expires_at && apiKey.expires_at < new Date())) {
+      const error = new Error(
+        "Votre clé n'est pas active. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
+      );
+      res.status(403);
+      return next(error);
+    }
+    if (!scopes.some((scope) => apiKey.scopes.includes(scope))) {
+      const error = new Error(
+        "Votre clé n'est pas autorisée à accéder à cette ressource. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
+      );
+      res.status(403);
+      return next(error);
+    }
+    next();
+  };

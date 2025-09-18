@@ -10,7 +10,7 @@ export async function authorizeUserOrAdmin(
   const user = req.user;
   if (!user) {
     const error = new Error('Unauthorized');
-    res.status(403); // using response here
+    res.status(403);
     return next(error);
   }
 
@@ -22,14 +22,14 @@ export async function authorizeUserOrAdmin(
     // only admins can create new users this way
     if (!isAdmin) {
       const error = new Error('Unauthorized');
-      res.status(403); // using response here
+      res.status(403);
       return next(error);
     }
   }
 
   if (userId !== user.id && !isAdmin) {
     const error = new Error('Unauthorized');
-    res.status(403); // using response here
+    res.status(403);
     return next(error);
   }
   next();

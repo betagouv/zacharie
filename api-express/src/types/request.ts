@@ -1,5 +1,5 @@
 import type express from 'express';
-import type { ApiKeyLog, User } from '@prisma/client';
+import type { ApiKey, User } from '@prisma/client';
 // import type { MatomoEvent } from './matomo-event';
 
 export interface RequestWithUser extends express.Request {
@@ -7,8 +7,8 @@ export interface RequestWithUser extends express.Request {
   isAdmin?: boolean;
 }
 
-export interface RequestWithApiKeyLog extends express.Request {
-  apiKeyLog?: ApiKeyLog;
+export interface RequestWithApiKey extends express.Request {
+  apiKey?: ApiKey;
 }
 
 // export interface RequestWithMatomoEvent extends express.Request {
