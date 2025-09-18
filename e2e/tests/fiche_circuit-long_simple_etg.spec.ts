@@ -88,7 +88,7 @@ test.describe("Fiches ETG", () => {
     await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
     await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
     await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-    await page.getByRole("button", { name: "Je réceptionne le gibier" }).click();
+    await page.getByRole("button", { name: "Je prends en charge les carcasses" }).click();
     await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
     await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
     await page.locator(".cursor-not-allowed").click();
@@ -126,7 +126,8 @@ test.describe("Fiches ETG", () => {
     await page.getByRole("button", { name: "Enregistrer" }).click();
     // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
     await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
-    await page.getByRole("button", { name: "SVI" }).click();
+    await page.locator(".select-prochain-detenteur__input-container").click();
+    await page.getByRole("option", { name: "SVI 1 - 75000 Paris (Service" }).click();
     await page.getByRole("button", { name: "Transmettre la fiche" }).click();
     // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
     await expect(page.getByText("SVI 1 a été notifié")).toBeVisible({ timeout: 5000 });
@@ -254,7 +255,7 @@ test.describe("Fiches ETG", () => {
     await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
     await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
     await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-    await page.getByRole("button", { name: "Je réceptionne le gibier" }).click();
+    await page.getByRole("button", { name: "Je prends en charge les carcasses" }).click();
     await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
     await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
     await page.locator(".cursor-not-allowed").click();
@@ -392,7 +393,7 @@ test.describe("Fiches ETG", () => {
     await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
     await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
     await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-    await page.getByRole("button", { name: "Je réceptionne le gibier" }).click();
+    await page.getByRole("button", { name: "Je prends en charge les carcasses" }).click();
     await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
     await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
     await page.locator(".cursor-not-allowed").click();
@@ -468,26 +469,75 @@ test.describe("Fiches ETG", () => {
     `);
     await page.getByRole("link", { name: "ZACH-20250707-QZ6E0-165242 À" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
-    - heading "🫵 Cette fiche a été attribuée à votre société" [level=3]
-    - paragraph:
-      - text: En tant que Etablissement de Traitement du Gibier sauvage (ETG 2), vous pouvez prendre en charge cette fiche et les carcasses associées.
-      - button "Je réceptionne le gibier"
-      - text: Il y a une erreur ?
-      - button "Renvoyer la fiche à l'expéditeur"
-    `);
-    await page.getByRole("button", { name: "Je réceptionne le gibier" }).click();
+      - heading "🫵 Cette fiche a été attribuée à votre société" [level=3]
+      - paragraph:
+        - text: En tant que Etablissement de Traitement du Gibier sauvage (ETG 2), vous pouvez prendre en charge cette fiche et les carcasses associées.
+        - button "Je prends en charge les carcasses"
+        - paragraph: Il y a une erreur ?
+        - button "Renvoyer la fiche à l'expéditeur"
+      `);
+    await page.getByRole("button", { name: "Je prends en charge les carcasses" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
     - heading "Réception par mon établissement de traitement Étape 4 sur 5" [level=2]
     - paragraph: "Étape suivante : Inspection par le SVI"
     `);
-    await expect(page.locator("ol")).toMatchAriaSnapshot(`
-    - list:
-      - listitem: Premier Détenteur
-      - listitem:
-        - button "ETG 1"
-      - listitem:
-        - button "ETG 2"
-    `);
+    await expect(page.locator("#content")).toMatchAriaSnapshot(`
+      - group:
+        - heading "Données de chasse" [level=3]
+        - paragraph: Espèces
+        - paragraph: Pigeons, Daim
+        - paragraph: Informations clés
+        - list:
+          - listitem:
+            - paragraph: "/Commune de mise à mort : \\\\d+ CHASSENARD/"
+          - listitem:
+            - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
+          - listitem:
+            - paragraph: "/Heure de mise à mort de la première carcasse de la fiche : \\\\d+:\\\\d+/"
+          - listitem:
+            - paragraph: "/Heure d'éviscération de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
+        - paragraph: Acteurs
+        - paragraph: Examinateur Initial
+        - list:
+          - listitem:
+            - paragraph: Marie Martin
+          - listitem:
+            - paragraph: /\\d+/
+          - listitem:
+            - paragraph: examinateur@example.fr
+          - listitem:
+            - paragraph: /CFEI-\\d+-\\d+-\\d+/
+          - listitem:
+            - paragraph: /\\d+ Paris/
+        - paragraph: Premier Détenteur
+        - list:
+          - listitem:
+            - paragraph: Pierre Petit
+          - listitem:
+            - paragraph: /\\d+/
+          - listitem:
+            - paragraph: premier-detenteur@example.fr
+          - listitem:
+            - paragraph: /\\d+ Paris/
+        - paragraph: ETG 1
+        - list:
+          - listitem:
+            - paragraph: Réception des carcasses
+          - listitem:
+            - paragraph: /\\d+/
+          - listitem:
+            - paragraph: /\\d+ Paris/
+          - listitem:
+            - paragraph: "/Prise en charge : jeudi \\\\d+ septembre à \\\\d+:\\\\d+/"
+        - paragraph: ETG 2
+        - list:
+          - listitem:
+            - paragraph: Réception des carcasses
+          - listitem:
+            - paragraph: /\\d+/
+          - listitem:
+            - paragraph: /\\d+ Paris/
+      `);
     await page.getByRole("button", { name: "Afficher les carcasses déjà" }).click();
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
       - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':

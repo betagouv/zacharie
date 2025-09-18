@@ -80,6 +80,8 @@ export function getCurrentOwnerRoleLabel(role: FeiOwnerRole) {
       return 'Collecteur Professionnel Indépendant';
     case EntityTypes.ETG:
       return 'Etablissement de Traitement du Gibier sauvage';
+    case EntityTypes.PREMIER_DETENTEUR:
+      return 'Premier Détenteur';
     default:
       return 'Inconnu';
   }

@@ -6,11 +6,10 @@ test.describe("Conditions sur les cases à cocher pour les rôles", () => {
     await resetDb();
   });
 
-  const examinateurInitial = "Examinateur InitialVous avez";
-  const premierDetenteur = "Premier DétenteurVous êtes un";
-  const collecteurProfessionnel = "Collecteur ProfessionnelVous";
-  const etablissementDeTraitement = "Établissement de Traitement";
-  const serviceVeterinaire = "Service Vétérinaire d'";
+  const chasseur = "Chasseur et/ou Examinateur Initial";
+  const collecteurProfessionnel = "Collecteur Professionnel Indépendant";
+  const etablissementDeTraitement = "Établissement de Traitement du Gibier sauvage (ETG)";
+  const serviceVeterinaire = "Service Vétérinaire d'Inspection (SVI)";
 
   test("Conditions sur les cases à cocher pour les rôles", async ({ page }) => {
     await page.goto("http://localhost:3290/");
@@ -19,74 +18,52 @@ test.describe("Conditions sur les cases à cocher pour les rôles", () => {
     await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
     await page.getByRole("button", { name: "Créer mon compte" }).click();
 
-    await page.getByText(examinateurInitial).click();
-    await expect(page.getByText(examinateurInitial)).toBeChecked();
-    await expect(page.getByText(premierDetenteur)).not.toBeChecked();
-    await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked();
-    await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
-    await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
-
-    await page.getByText(premierDetenteur).click();
-    await expect(page.getByText(examinateurInitial)).toBeChecked(); // on peut être aussi premier détenteur
-    await expect(page.getByText(premierDetenteur)).toBeChecked();
+    await page.getByText(chasseur).click();
+    await expect(page.getByText(chasseur)).toBeChecked();
     await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked();
     await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
     await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
 
     await page.getByText(collecteurProfessionnel).click();
-    await expect(page.getByText(examinateurInitial)).not.toBeChecked();
-    await expect(page.getByText(premierDetenteur)).not.toBeChecked();
+    await expect(page.getByText(chasseur)).not.toBeChecked();
     await expect(page.getByText(collecteurProfessionnel)).toBeChecked();
     await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
     await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
 
     await page.getByText(etablissementDeTraitement).click();
-    await expect(page.getByText(examinateurInitial)).not.toBeChecked();
-    await expect(page.getByText(premierDetenteur)).not.toBeChecked();
-    await expect(page.getByText(collecteurProfessionnel)).toBeChecked(); // on peut être coll et ETG
+    await expect(page.getByText(chasseur)).not.toBeChecked();
+    await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked(); // on peut être coll et ETG
     await expect(page.getByText(etablissementDeTraitement)).toBeChecked();
     await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
 
     await page.getByText(serviceVeterinaire).click();
-    await expect(page.getByText(examinateurInitial)).not.toBeChecked();
-    await expect(page.getByText(premierDetenteur)).not.toBeChecked();
+    await expect(page.getByText(chasseur)).not.toBeChecked();
     await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked();
     await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
     await expect(page.getByText(serviceVeterinaire)).toBeChecked(); // on ne peut que être SVI
 
-    await page.getByText(premierDetenteur).click();
-    await expect(page.getByText(examinateurInitial)).not.toBeChecked();
-    await expect(page.getByText(premierDetenteur)).toBeChecked();
-    await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked();
-    await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
-    await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
-
-    await page.getByText(examinateurInitial).click();
-    await expect(page.getByText(examinateurInitial)).toBeChecked();
-    await expect(page.getByText(premierDetenteur)).toBeChecked();
+    await page.getByText(chasseur).click();
+    await expect(page.getByText(chasseur)).toBeChecked();
     await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked();
     await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
     await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
 
     await page.getByText(serviceVeterinaire).click();
-    await expect(page.getByText(examinateurInitial)).not.toBeChecked();
-    await expect(page.getByText(premierDetenteur)).not.toBeChecked();
+    await expect(page.getByText(chasseur)).not.toBeChecked();
     await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked();
     await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
     await expect(page.getByText(serviceVeterinaire)).toBeChecked();
 
     await page.getByText(etablissementDeTraitement).click();
-    await expect(page.getByText(examinateurInitial)).not.toBeChecked();
-    await expect(page.getByText(premierDetenteur)).not.toBeChecked();
+    await expect(page.getByText(chasseur)).not.toBeChecked();
     await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked();
     await expect(page.getByText(etablissementDeTraitement)).toBeChecked();
     await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
 
     await page.getByText(collecteurProfessionnel).click();
-    await expect(page.getByText(examinateurInitial)).not.toBeChecked();
-    await expect(page.getByText(premierDetenteur)).not.toBeChecked();
+    await expect(page.getByText(chasseur)).not.toBeChecked();
     await expect(page.getByText(collecteurProfessionnel)).toBeChecked();
-    await expect(page.getByText(etablissementDeTraitement)).toBeChecked();
+    await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
     await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
   });
 });
