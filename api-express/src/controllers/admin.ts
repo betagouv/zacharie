@@ -694,6 +694,29 @@ router.get(
 );
 
 router.post(
+  '/api-key/nouvelle',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
+      const body = req.body;
+      const createdApiKey = await prisma.apiKey.create({
+        data: {
+          name: body[Prisma.ApiKeyScalarFieldEnum.name],
+          description: body[Prisma.ApiKeyScalarFieldEnum.description],
+          private_key: crypto.randomBytes(32).toString('hex'),
+          public_key: crypto.randomBytes(32).toString('hex'),
+          scopes: body[Prisma.ApiKeyScalarFieldEnum.scopes] as ApiKeyScope[],
+          active: true,
+        },
+      });
+
+      res.status(200).send({ ok: true, data: { apiKey: createdApiKey }, error: '' });
+    },
+  ),
+);
+
+router.post(
   '/api-key/:api_key_id',
   passport.authenticate('user', { session: false }),
   validateUser([UserRoles.ADMIN]),
@@ -744,29 +767,6 @@ router.post(
   ),
 );
 
-router.post(
-  '/api-key/nouvelle',
-  passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
-  catchErrors(
-    async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
-      const body = req.body;
-      const createdApiKey = await prisma.apiKey.create({
-        data: {
-          name: body[Prisma.ApiKeyScalarFieldEnum.name],
-          description: body[Prisma.ApiKeyScalarFieldEnum.description],
-          private_key: crypto.randomBytes(32).toString('hex'),
-          public_key: crypto.randomBytes(32).toString('hex'),
-          scopes: body[Prisma.ApiKeyScalarFieldEnum.scopes] as ApiKeyScope[],
-          active: true,
-        },
-      });
-
-      res.status(200).send({ ok: true, data: { apiKey: createdApiKey }, error: '' });
-    },
-  ),
-);
-
 router.get(
   '/api-key/:api_key_id',
   passport.authenticate('user', { session: false }),
@@ -811,16 +811,18 @@ router.get(
         }
         return allUsersRecord;
       });
-      const allEntities = await prisma.entity.findMany({ where: { deleted_at: null } }).then((entities) => {
-        const allEntitiesRecord: Record<string, Entity> = {};
-        for (const entity of entities) {
-          if (approvalsRecord[entity.id]) {
-            continue;
+      const allEntities = await prisma.entity
+        .findMany({ where: { deleted_at: null, type: { not: EntityTypes.CCG } } })
+        .then((entities) => {
+          const allEntitiesRecord: Record<string, Entity> = {};
+          for (const entity of entities) {
+            if (approvalsRecord[entity.id]) {
+              continue;
+            }
+            allEntitiesRecord[entity.id] = entity;
           }
-          allEntitiesRecord[entity.id] = entity;
-        }
-        return allEntitiesRecord;
-      });
+          return allEntitiesRecord;
+        });
       res.status(200).send({ ok: true, data: { apiKey: apiKey, allUsers, allEntities }, error: '' });
     },
   ),

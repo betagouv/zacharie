@@ -4,47 +4,7 @@ import { catchErrors } from '~/middlewares/errors';
 import type { RequestWithUser } from '~/types/request';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import jwt from 'jsonwebtoken';
-import dayjs from 'dayjs';
-import {
-  createBrevoContact,
-  linkBrevoCompanyToContact,
-  sendEmail,
-  unlinkBrevoCompanyToContact,
-  updateBrevoChasseurDeal,
-  updateBrevoContact,
-} from '~/third-parties/brevo';
-import { capture } from '~/third-parties/sentry';
-import createUserId from '~/utils/createUserId';
-import { comparePassword, hashPassword } from '~/service/crypto';
-import { userFeiSelect, type UserForFei } from '~/types/user';
-import type {
-  UserConnexionResponse,
-  UserMyRelationsResponse,
-  UserForFeiResponse,
-  UserEntityResponse,
-} from '~/types/responses';
-import type { EntityWithUserRelation } from '~/types/entity';
-import {
-  EntityRelationType,
-  EntityTypes,
-  Prisma,
-  Entity,
-  ETGAndEntityRelations,
-  User,
-  UserNotifications,
-  UserRelationType,
-  UserRoles,
-  FeiOwnerRole,
-  UserEtgRoles,
-  EntityRelationStatus,
-} from '@prisma/client';
-import { authorizeUserOrAdmin } from '~/utils/authorizeUserOrAdmin.server';
-import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
-import sendNotificationToUser from '~/service/notifications';
-import { SECRET } from '~/config';
-import { autoActivatePremierDetenteur, hasAllRequiredFields } from '~/utils/user';
-// import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
+import { EntityRelationType } from '@prisma/client';
 
 router.post(
   '/:id',
@@ -70,7 +30,7 @@ router.post(
       const entityRelatedToUser = await prisma.entityAndUserRelations.findFirst({
         where: {
           owner_id: user.id,
-          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           entity_id: approval.entity_id,
         },
       });
