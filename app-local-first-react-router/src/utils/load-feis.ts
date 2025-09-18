@@ -77,8 +77,7 @@ export async function loadFeis() {
     useZustandStore.setState({ feis: allFeis });
 
     for (const fei_numero of feisNumerosToLoadAgain) {
-      await new Promise((resolve) => setTimeout(resolve, 100)); // to avoid block main thread
-      loadFei(fei_numero);
+      await loadFei(fei_numero);
     }
     if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
       // if it goes too fast, we have a race condition with the sync with the backend and PG doesn'tlike it
