@@ -4,6 +4,7 @@ import { catchErrors } from '~/middlewares/errors.ts';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { ApiKeyScope, EntityTypes, Prisma, UserRoles } from '@prisma/client';
+import { z } from 'zod';
 import { RequestWithApiKey } from '~/types/request';
 import { carcasseForApiSelect } from '~/types/carcasse';
 import {
@@ -45,8 +46,38 @@ router.get(
       res: express.Response<CarcasseForResponseForApi>,
       next: express.NextFunction,
     ) => {
+      const paramsSchema = z.object({
+        date_mise_a_mort: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+        numero_bracelet: z.string(),
+      });
+
+      const paramsResult = paramsSchema.safeParse(req.params);
+      if (!paramsResult.success) {
+        const errors = paramsResult.error.issues.map((i) => i.message).join('. ');
+        const error = new Error(
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+        );
+        res.status(400);
+        return next(error);
+      }
+
+      const querySchema = z.object({
+        // simple regex, just check the @
+        email: z.string().email("Format d'email invalide"),
+      });
+
+      const queryResult = querySchema.safeParse(req.query);
+      if (!queryResult.success) {
+        const errors = queryResult.error.issues.map((i) => i.message).join('. ');
+        const error = new Error(
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+        );
+        res.status(400);
+        return next(error);
+      }
+
       const apiKey = req.apiKey;
-      const { user, error } = await getRequestedUser(apiKey, req.query.email as string);
+      const { user, error } = await getRequestedUser(apiKey, queryResult.data.email);
       if (error) {
         res.status(403);
         return next(error);
@@ -62,12 +93,9 @@ router.get(
       });
 
       if (!carcasse) {
-        res.status(404).send({
-          ok: false,
-          data: { carcasse: null },
-          error: 'Carcasse non trouvée',
-        });
-        return;
+        const error = new Error('Carcasse non trouvée');
+        res.status(404);
+        return next(error);
       }
 
       const fei = await prisma.fei.findUnique({
@@ -123,6 +151,21 @@ router.get(
       res: express.Response<CarcasseForResponseForApi>,
       next: express.NextFunction,
     ) => {
+      const paramsSchema = z.object({
+        date_mise_a_mort: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+        numero_bracelet: z.string(),
+      });
+
+      const paramsResult = paramsSchema.safeParse(req.params);
+      if (!paramsResult.success) {
+        const errors = paramsResult.error.issues.map((i) => i.message).join('. ');
+        const error = new Error(
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+        );
+        res.status(400);
+        return next(error);
+      }
+
       const apiKey = req.apiKey;
       const entity = await getDedicatedEntityLinkedToApiKey(apiKey);
       if (!entity) {
@@ -144,12 +187,9 @@ router.get(
       });
 
       if (!carcasse) {
-        res.status(404).send({
-          ok: false,
-          data: { carcasse: null },
-          error: 'Carcasse non trouvée',
-        });
-        return;
+        const error = new Error('Carcasse non trouvée');
+        res.status(404);
+        return next(error);
       }
 
       const fei = await prisma.fei.findUnique({
@@ -216,10 +256,27 @@ router.get(
       res: express.Response<CarcassesForResponseForApi>,
       next: express.NextFunction,
     ) => {
-      const dateFrom = req.query.date_from as string; // format: 2025-09-17
-      const dateTo = req.query.date_to as string; // format: 2025-09-17
+      // Validate query params inline
+      const querySchema = z.object({
+        date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+        date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+        email: z.string().email("Format d'email invalide"),
+      });
+
+      const queryResult = querySchema.safeParse(req.query);
+      if (!queryResult.success) {
+        const errors = queryResult.error.issues.map((i) => i.message).join('. ');
+        const error = new Error(
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+        );
+        res.status(400);
+        return next(error);
+      }
+
+      const { date_from: dateFrom, date_to: dateTo, email } = queryResult.data;
       const apiKey = req.apiKey;
-      const { user, error } = await getRequestedUser(apiKey, req.query.email as string);
+
+      const { user, error } = await getRequestedUser(apiKey, email);
       if (error) {
         res.status(403);
         return next(error);
@@ -297,8 +354,26 @@ router.get(
       res: express.Response<CarcassesForResponseForApi>,
       next: express.NextFunction,
     ) => {
-      const dateFrom = req.query.date_from as string; // format: 2025-09-17
-      const dateTo = req.query.date_to as string; // format: 2025-09-17
+      // Validate query params inline
+      const querySchema = z.object({
+        date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+        date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+      });
+
+      const queryResult = querySchema.safeParse(req.query);
+      if (!queryResult.success) {
+        const error = new Error(
+          `${queryResult.error.issues
+            .map((i) => i.message)
+            .join(
+              '. ',
+            )}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+        );
+        res.status(400);
+        return next(error);
+      }
+
+      const { date_from: dateFrom, date_to: dateTo } = queryResult.data;
       const apiKey = req.apiKey;
 
       const entity = await getDedicatedEntityLinkedToApiKey(apiKey);
