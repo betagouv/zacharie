@@ -195,7 +195,7 @@ function FEICurrentIntermediaireContent({
         }
         return carcasseA.type!.localeCompare(carcasseB.type!);
       })
-      .filter((c) => c != null);
+      .filter((c) => c != null && !c.deleted_at);
   }, [
     feiAndIntermediaireIds,
     carcassesIntermediaireIdsByIntermediaire,
@@ -327,7 +327,7 @@ function FEICurrentIntermediaireContent({
         continue;
       }
       if (intermediaireCheckById[checkId]) {
-        // console.log("intermediaireCheckById[checkId]", intermediaireCheckById[checkId]);
+        console.log('intermediaireCheckById[checkId]', intermediaireCheckById[checkId]);
         if (intermediaireCheckById[checkId].prise_en_charge) {
           carcassesApproved[checkId] = carcasse;
         } else if (intermediaireCheckById[checkId].manquante) {
@@ -400,6 +400,8 @@ function FEICurrentIntermediaireContent({
     carcassesSorted.carcassesRejetees,
     priseEnChargeAt,
   ]);
+
+  // console.log({ carcassesSorted, carcassesApprovedSorted, labelCheckDone });
 
   const couldSelectNextUser = useMemo(() => {
     if (

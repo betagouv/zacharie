@@ -1,6 +1,6 @@
 import { CarcasseStatus, Fei, Prisma } from '@prisma/client';
 
-export const carcasseForRegistrySelect = {
+export const carcasseForRegistrySelect: Prisma.CarcasseSelect = {
   zacharie_carcasse_id: true,
   numero_bracelet: true,
   fei_numero: true,
@@ -132,7 +132,7 @@ export type CarcasseForResponseForRegistry = Omit<CarcasseGetForRegistry, 'Fei'>
   fei_automatic_closed_at: Fei['automatic_closed_at'];
 };
 
-export const carcasseForApiSelect = {
+export const carcasseForApiSelect: Prisma.CarcasseSelect = {
   // zacharie_carcasse_id: false,
   numero_bracelet: true,
   fei_numero: true,
@@ -219,27 +219,42 @@ export const carcasseForApiSelect = {
   svi_ipm2_signed_at: true,
   created_at: true,
   updated_at: true,
+  date_mise_a_mort: true,
   // CarcasseCertificats: false,
   // SviIpm1User: false,
   // CarcasseIntermediaire: false,
   Fei: {
     select: {
-      // id: false,
-      numero: true,
       date_mise_a_mort: true,
       commune_mise_a_mort: true,
       heure_mise_a_mort_premiere_carcasse: true,
       heure_evisceration_derniere_carcasse: true,
-      resume_nombre_de_carcasses: true,
-      examinateur_initial_approbation_mise_sur_le_marche: true,
       examinateur_initial_date_approbation_mise_sur_le_marche: true,
-      automatic_closed_at: true,
-      intermediaire_closed_at: true, // si toutes les carcasses sont rejetées/manquantes
+      premier_detenteur_name_cache: true,
+      premier_detenteur_depot_ccg_at: true,
       svi_assigned_at: true,
+      svi_entity_id: true,
+      svi_user_id: true,
       svi_closed_at: true,
-      FeiPremierDetenteurUser: true,
+      latest_intermediaire_name_cache: true,
+      created_at: true,
+      updated_at: true,
+      deleted_at: true,
+      automatic_closed_at: true,
+      FeiPremierDetenteurUser: {
+        select: {
+          prenom: true,
+          nom_de_famille: true,
+        },
+      },
+      FeiExaminateurInitialUser: {
+        select: {
+          prenom: true,
+          nom_de_famille: true,
+        },
+      },
       FeiPremierDetenteurEntity: true,
-      FeiExaminateurInitialUser: true,
+      FeiSviEntity: true,
     },
   },
 } as const;

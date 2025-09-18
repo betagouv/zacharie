@@ -16,6 +16,9 @@ import {
 import { RequestWithApiKeyLog } from '~/types/request';
 import { carcasseForApiSelect } from '~/types/carcasse';
 import { mapCarcasseForApi } from '~/utils/api';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
 
 export type CarcasseForResponseForApi = {
   ok: boolean;
@@ -75,8 +78,8 @@ router.get(
         })
         .then((approvals) => {
           return approvals.filter((apiKeyApproval) => {
-            if (apiKeyApproval.User.roles.includes(role)) return true;
-            if (apiKeyApproval.Entity.type === entityType) return true;
+            if (apiKeyApproval.User?.roles?.includes(role)) return true;
+            if (apiKeyApproval.Entity?.type === entityType) return true;
             return false;
           });
         });
@@ -91,7 +94,8 @@ router.get(
       const carcasse = await prisma.carcasse.findFirst({
         where: {
           numero_bracelet: req.params.numero_bracelet,
-          date_mise_a_mort: req.params.date_mise_a_mort,
+          // input: 2025-09-17, output: 2025-09-17T00:00:00.000Z
+          date_mise_a_mort: dayjs(req.params.date_mise_a_mort).utc(true).toISOString(),
           deleted_at: null,
         },
         select: carcasseForApiSelect,

@@ -74,3 +74,55 @@ export const feiDoneSelect = {
 // }>;
 
 export type FeiDone = FeiWithIntermediaires;
+
+export const feiForApiSelect: Prisma.FeiSelect = {
+  numero: true,
+  date_mise_a_mort: true,
+  commune_mise_a_mort: true,
+  heure_mise_a_mort_premiere_carcasse: true,
+  heure_evisceration_derniere_carcasse: true,
+  resume_nombre_de_carcasses: true,
+  // examinateur_initial_name: true,
+  examinateur_initial_approbation_mise_sur_le_marche: true,
+  examinateur_initial_date_approbation_mise_sur_le_marche: true,
+  // premier_detenteur_name: true,
+  premier_detenteur_depot_type: true,
+  // premier_detenteur_depot_name: true,
+  premier_detenteur_depot_ccg_at: true,
+  premier_detenteur_transport_type: true,
+  premier_detenteur_transport_date: true,
+  premier_detenteur_prochain_detenteur_role_cache: true,
+  // premier_detenteur_prochain_detenteur_name: true,
+  intermediaire_closed_at: true,
+  // intermediaire_closed_by_name: true,
+  // latest_intermediaire_name: true,
+  svi_assigned_at: true,
+  // svi_entity_name: true,
+  CarcasseIntermediaire: {
+    orderBy: {
+      created_at: Prisma.SortOrder.desc,
+    },
+    include: {
+      CarcasseIntermediaireEntity: true,
+    },
+  },
+  FeiExaminateurInitialUser: true,
+  FeiPremierDetenteurUser: true,
+  FeiPremierDetenteurEntity: true,
+  FeiDepotEntity: true,
+  // FeiCurrentUser: true,
+  // FeiCurrentEntity: true,
+  // FeiNextUser: true,
+  // FeiNextEntity: true,
+  // FeiSviUser: true,
+  FeiSviEntity: true,
+  svi_closed_at: true,
+  automatic_closed_at: true,
+  created_at: true,
+  updated_at: true,
+  deleted_at: true,
+} as const;
+
+export type FeiGetForApi = Prisma.FeiGetPayload<{
+  select: typeof feiForApiSelect;
+}>;

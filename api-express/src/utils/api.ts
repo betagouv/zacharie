@@ -1,4 +1,7 @@
+import { ApiKey, ApiKeyApprovalStatus, Entity } from '@prisma/client';
+import prisma from '~/prisma';
 import { CarcasseGetForApi } from '~/types/carcasse';
+import { FeiGetForApi } from '~/types/fei';
 
 export function mapCarcasseForApi(carcasse: CarcasseGetForApi) {
   if (!carcasse) {
@@ -13,8 +16,10 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi) {
     heure_mise_a_mort: carcasse.heure_mise_a_mort,
     heure_evisceration: carcasse.heure_evisceration,
     examinateur_name:
+      // @ts-ignore
       carcasse.Fei.FeiExaminateurInitialUser.prenom +
       ' ' +
+      // @ts-ignore
       carcasse.Fei.FeiExaminateurInitialUser.nom_de_famille,
     examinateur_carcasse_sans_anomalie: carcasse.examinateur_carcasse_sans_anomalie,
     examinateur_anomalies_carcasse: carcasse.examinateur_anomalies_carcasse,
@@ -22,6 +27,7 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi) {
     examinateur_commentaire: carcasse.examinateur_commentaire,
     examinateur_signed_at: carcasse.examinateur_signed_at,
     premier_detenteur_name:
+      // @ts-ignore
       carcasse.Fei.FeiPremierDetenteurUser.prenom + ' ' + carcasse.Fei.FeiPremierDetenteurUser.nom_de_famille,
     premier_detenteur_depot_type: carcasse.premier_detenteur_depot_type,
     premier_detenteur_depot_ccg_at: carcasse.premier_detenteur_depot_ccg_at,
@@ -88,4 +94,90 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi) {
     fei_svi_assigned_at: carcasse.Fei.svi_assigned_at,
     fei_svi_closed_at: carcasse.Fei.svi_closed_at,
   };
+}
+
+export function mapFeiForApi(fei: FeiGetForApi) {
+  if (!fei) {
+    return null;
+  }
+  let intermediaireClosedByName = '';
+  let latestIntermediaireByName = '';
+  let premierDetenteurProchainDetenteurName = '';
+  let premierDetenteurProchainDetenteurRole = '';
+  const carcasseIntermediaires: Array<Entity> = [];
+  const carcasseIntermediaireIds = new Set();
+  for (const carcasseIntermediaire of fei.CarcasseIntermediaire) {
+    // sorted by created_at desc, so in order
+    if (carcasseIntermediaire.intermediaire_id) {
+      // @ts-ignore
+      const entity = carcasseIntermediaire.CarcasseIntermediaireEntity as Entity;
+      if (!carcasseIntermediaireIds.has(carcasseIntermediaire.intermediaire_id)) {
+        carcasseIntermediaires.push(entity);
+        carcasseIntermediaireIds.add(carcasseIntermediaire.intermediaire_id);
+      }
+    }
+  }
+  if (fei.intermediaire_closed_at) {
+    intermediaireClosedByName = carcasseIntermediaires.find(
+      (entity) => entity.id === fei.intermediaire_closed_by_entity_id,
+    )?.raison_sociale;
+  }
+  if (fei.CarcasseIntermediaire.length > 0) {
+    latestIntermediaireByName = carcasseIntermediaires[0].raison_sociale;
+    premierDetenteurProchainDetenteurName = carcasseIntermediaires.at(-1)?.raison_sociale;
+    premierDetenteurProchainDetenteurRole = carcasseIntermediaires.at(-1)?.type;
+  }
+  return {
+    numero: fei.numero,
+    date_mise_a_mort: fei.date_mise_a_mort,
+    commune_mise_a_mort: fei.commune_mise_a_mort,
+    heure_mise_a_mort_premiere_carcasse: fei.heure_mise_a_mort_premiere_carcasse,
+    heure_evisceration_derniere_carcasse: fei.heure_evisceration_derniere_carcasse,
+    resume_nombre_de_carcasses: fei.resume_nombre_de_carcasses,
+    examinateur_initial_name:
+      fei.FeiExaminateurInitialUser.prenom + ' ' + fei.FeiExaminateurInitialUser.nom_de_famille,
+    examinateur_initial_approbation_mise_sur_le_marche:
+      fei.examinateur_initial_approbation_mise_sur_le_marche,
+    examinateur_initial_date_approbation_mise_sur_le_marche:
+      fei.examinateur_initial_date_approbation_mise_sur_le_marche,
+    premier_detenteur_name: fei.FeiPremierDetenteurEntity
+      ? fei.FeiPremierDetenteurEntity?.raison_sociale
+      : fei.FeiPremierDetenteurUser?.prenom + ' ' + fei.FeiPremierDetenteurUser?.nom_de_famille,
+    premier_detenteur_depot_type: fei.premier_detenteur_depot_type,
+    premier_detenteur_depot_name: fei.FeiPremierDetenteurEntity.raison_sociale,
+    premier_detenteur_depot_ccg_at: fei.premier_detenteur_depot_ccg_at,
+    premier_detenteur_transport_type: fei.premier_detenteur_transport_type,
+    premier_detenteur_transport_date: fei.premier_detenteur_transport_date,
+    premier_detenteur_prochain_detenteur_name: premierDetenteurProchainDetenteurName,
+    premier_detenteur_prochain_detenteur_role: premierDetenteurProchainDetenteurRole,
+    intermediaire_closed_at: fei.intermediaire_closed_at,
+    intermediaire_closed_by_name: intermediaireClosedByName,
+    latest_intermediaire_name: latestIntermediaireByName,
+    svi_assigned_at: fei.svi_assigned_at,
+    svi_entity_name: fei.FeiSviEntity.raison_sociale,
+    svi_closed_at: fei.svi_closed_at,
+    automatic_closed_at: fei.automatic_closed_at,
+    created_at: fei.created_at,
+    updated_at: fei.updated_at,
+    deleted_at: fei.deleted_at,
+  };
+}
+
+export async function getDedicatedEntityLinkedToApiKey(apiKey: ApiKey): Promise<Entity | null> {
+  if (!apiKey.active || (apiKey.expires_at && apiKey.expires_at < new Date())) return null;
+  const approvals = await prisma.apiKeyApprovalByUserOrEntity.findMany({
+    where: {
+      api_key_id: apiKey.id,
+      status: ApiKeyApprovalStatus.APPROVED,
+    },
+    include: {
+      User: true,
+      Entity: true,
+    },
+  });
+
+  if (!approvals.length) return null;
+  if (approvals.length > 1) return null;
+  if (!approvals[0].Entity) return null;
+  return approvals[0].Entity!;
 }
