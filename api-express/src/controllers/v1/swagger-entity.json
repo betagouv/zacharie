@@ -1,0 +1,339 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Zacharie v1 - Accès Direct Entité",
+    "description": "API REST pour l'accès direct aux données de votre entité. Utilisez cette API si vous êtes une entreprise/organisation qui souhaite accéder à VOS PROPRES données directement.",
+    "version": "1.0.0",
+    "contact": {
+      "url": "https://zacharie.beta.gouv.fr/contact"
+    }
+  },
+  "servers": [
+    {
+      "url": "/v1",
+      "description": "Chemin de base de l'API v1"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Authentification par clé API. Utilisez 'Bearer VOTRE_CLE_API'"
+      }
+    },
+    "schemas": {
+      "FeiResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Indique si la requête s'est bien déroulée"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "feis": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Fei"
+                },
+                "description": "Liste des fiches d'examen initial"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "Message informatif"
+          }
+        }
+      },
+      "CarcasseResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Indique si la requête s'est bien déroulée"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "carcasse": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/Carcasse"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Données de la carcasse ou null si non trouvée"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "Message informatif"
+          }
+        }
+      },
+      "CarcassesResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Indique si la requête s'est bien déroulée"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "carcasses": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Carcasse"
+                },
+                "description": "Liste des carcasses"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "Message informatif"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": false,
+            "description": "Toujours false en cas d'erreur"
+          },
+          "error": {
+            "type": "string",
+            "description": "Message d'erreur"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message informatif additionnel"
+          }
+        }
+      },
+      "Fei": {
+        "type": "object",
+        "description": "Fiche d'Examen Initial avec toutes les données associées"
+      },
+      "Carcasse": {
+        "type": "object",
+        "description": "Données complètes d'une carcasse"
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "paths": {
+    "/fei": {
+      "get": {
+        "summary": "Récupérer les FEI de votre entité",
+        "description": "Récupère toutes les Fiches d'Examen Initial (FEI) qui appartiennent à votre entité dans une plage de dates donnée. Votre clé API détermine automatiquement quelle entité vous représentez.",
+        "parameters": [
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "example": "2025-09-17"
+            },
+            "description": "Date de début (format: AAAA-MM-JJ)"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "example": "2025-09-20"
+            },
+            "description": "Date de fin (format: AAAA-MM-JJ)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès - Liste des FEI récupérées",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erreur de paramètres - Format de date invalide ou paramètres manquants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès interdit - Clé API invalide ou permissions insuffisantes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["FEI - Accès Direct"]
+      }
+    },
+    "/carcasse/{date_mise_a_mort}/{numero_bracelet}": {
+      "get": {
+        "summary": "Récupérer une carcasse spécifique de votre entité",
+        "description": "Récupère une carcasse spécifique qui appartient à votre entité en utilisant la date de mise à mort et le numéro de bracelet. Votre clé API détermine automatiquement quelle entité vous représentez.",
+        "parameters": [
+          {
+            "name": "date_mise_a_mort",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "example": "2025-09-17"
+            },
+            "description": "Date de mise à mort (format: AAAA-MM-JJ)"
+          },
+          {
+            "name": "numero_bracelet",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "FR123456789"
+            },
+            "description": "Numéro de bracelet de la carcasse"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès - Carcasse trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarcasseResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erreur de paramètres - Format invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès interdit - Clé API invalide ou carcasse n'appartenant pas à votre entité",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Carcasse non trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Carcasses - Accès Direct"]
+      }
+    },
+    "/carcasse": {
+      "get": {
+        "summary": "Récupérer toutes les carcasses de votre entité",
+        "description": "Récupère toutes les carcasses qui appartiennent à votre entité dans une plage de dates donnée. Votre clé API détermine automatiquement quelle entité vous représentez.",
+        "parameters": [
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "example": "2025-09-17"
+            },
+            "description": "Date de début (format: AAAA-MM-JJ)"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "example": "2025-09-20"
+            },
+            "description": "Date de fin (format: AAAA-MM-JJ)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès - Liste des carcasses récupérées",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarcassesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erreur de paramètres - Format de date invalide ou paramètres manquants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès interdit - Clé API invalide ou permissions insuffisantes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Carcasses - Accès Direct"]
+      }
+    }
+  }
+}

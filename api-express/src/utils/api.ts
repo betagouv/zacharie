@@ -238,14 +238,14 @@ export const checkApiKeyIsValidMiddleware =
       const error = new Error(
         "Votre clé n'est pas active. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
       );
-      res.status(403);
+      res.status(401);
       return next(error);
     }
     if (!scopes.some((scope) => apiKey.scopes.includes(scope))) {
       const error = new Error(
         "Votre clé n'est pas autorisée à accéder à cette ressource. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
       );
-      res.status(403);
+      res.status(401);
       return next(error);
     }
     next();

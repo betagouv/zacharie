@@ -1,5 +1,6 @@
 import express from 'express';
 import passport from 'passport';
+import { z } from 'zod';
 import { catchErrors } from '~/middlewares/errors.ts';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
@@ -27,8 +28,24 @@ router.get(
   checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY]),
   catchErrors(
     async (req: RequestWithApiKey, res: express.Response<FeiGetForApi>, next: express.NextFunction) => {
-      const dateFrom = req.query.date_from as string; // format: 2025-09-17
-      const dateTo = req.query.date_to as string; // format: 2025-09-17
+      const querySchema = z.object({
+        date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+        date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+      });
+
+      const queryResult = querySchema.safeParse(req.query);
+      console.log({ queryResult });
+      if (!queryResult.success) {
+        const errors = queryResult.error.issues.map((i) => i.message).join('. ');
+        const error = new Error(
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+        );
+        res.status(400);
+        return next(error);
+      }
+
+      const dateFrom = queryResult.data.date_from; // format: 2025-09-17
+      const dateTo = queryResult.data.date_to; // format: 2025-09-17
       const apiKey = req.apiKey;
 
       const entity = await getDedicatedEntityLinkedToApiKey(apiKey);
