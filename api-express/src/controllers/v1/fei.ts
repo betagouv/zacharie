@@ -40,7 +40,6 @@ router.get(
       });
 
       const queryResult = querySchema.safeParse(req.query);
-      console.log({ queryResult });
       if (!queryResult.success) {
         const errors = queryResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
@@ -107,6 +106,8 @@ router.get(
         select: carcasseForApiSelect,
       });
 
+      console.log(carcasses.length);
+
       res.status(200).send({
         ok: true,
         data: {
@@ -136,7 +137,7 @@ router.get(
       });
 
       const queryResult = querySchema.safeParse(req.query);
-      console.log({ queryResult });
+
       if (!queryResult.success) {
         const errors = queryResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(

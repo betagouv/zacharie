@@ -4,6 +4,7 @@ import { CarcasseGetForApi } from '~/types/carcasse';
 import { FeiGetForApi } from '~/types/fei';
 import { RequestWithApiKey } from '~/types/request';
 import express from 'express';
+import dayjs from 'dayjs';
 
 export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi) {
   if (!carcasse) {
@@ -82,7 +83,7 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi
     svi_ipm2_signed_at: carcasse.svi_ipm2_signed_at,
     created_at: carcasse.created_at,
     updated_at: carcasse.updated_at,
-    fei_date_mise_a_mort: fei.date_mise_a_mort,
+    fei_date_mise_a_mort: dayjs(fei.date_mise_a_mort).format('YYYY-MM-DD'),
     fei_commune_mise_a_mort: fei.commune_mise_a_mort,
     fei_heure_mise_a_mort_premiere_carcasse: fei.heure_mise_a_mort_premiere_carcasse,
     fei_heure_evisceration_derniere_carcasse: fei.heure_evisceration_derniere_carcasse,
@@ -108,7 +109,7 @@ export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) 
   let premierDetenteurProchainDetenteurRole = '';
   const carcasseIntermediaires: Array<Entity> = [];
   const carcasseIntermediaireIds = new Set();
-  for (const carcasseIntermediaire of fei.CarcasseIntermediaire) {
+  for (const carcasseIntermediaire of fei?.CarcasseIntermediaire || []) {
     // sorted by created_at desc, so in order
     if (carcasseIntermediaire.intermediaire_id) {
       // @ts-ignore
@@ -125,19 +126,19 @@ export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) 
     )?.raison_sociale;
   }
   if (fei.CarcasseIntermediaire.length > 0) {
-    latestIntermediaireByName = carcasseIntermediaires[0].raison_sociale;
+    latestIntermediaireByName = carcasseIntermediaires[0]?.raison_sociale;
     premierDetenteurProchainDetenteurName = carcasseIntermediaires.at(-1)?.raison_sociale;
     premierDetenteurProchainDetenteurRole = carcasseIntermediaires.at(-1)?.type;
   }
   return {
     numero: fei.numero,
-    date_mise_a_mort: fei.date_mise_a_mort,
+    date_mise_a_mort: dayjs(fei.date_mise_a_mort).format('YYYY-MM-DD'),
     commune_mise_a_mort: fei.commune_mise_a_mort,
     heure_mise_a_mort_premiere_carcasse: fei.heure_mise_a_mort_premiere_carcasse,
     heure_evisceration_derniere_carcasse: fei.heure_evisceration_derniere_carcasse,
     resume_nombre_de_carcasses: fei.resume_nombre_de_carcasses,
     examinateur_initial_name:
-      fei.FeiExaminateurInitialUser.prenom + ' ' + fei.FeiExaminateurInitialUser.nom_de_famille,
+      fei.FeiExaminateurInitialUser?.prenom + ' ' + fei.FeiExaminateurInitialUser?.nom_de_famille,
     examinateur_initial_approbation_mise_sur_le_marche:
       fei.examinateur_initial_approbation_mise_sur_le_marche,
     examinateur_initial_date_approbation_mise_sur_le_marche:
@@ -146,7 +147,7 @@ export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) 
       ? fei.FeiPremierDetenteurEntity?.raison_sociale
       : fei.FeiPremierDetenteurUser?.prenom + ' ' + fei.FeiPremierDetenteurUser?.nom_de_famille,
     premier_detenteur_depot_type: fei.premier_detenteur_depot_type,
-    premier_detenteur_depot_name: fei.FeiPremierDetenteurEntity.raison_sociale,
+    premier_detenteur_depot_name: fei.FeiPremierDetenteurEntity?.raison_sociale,
     premier_detenteur_depot_ccg_at: fei.premier_detenteur_depot_ccg_at,
     premier_detenteur_transport_type: fei.premier_detenteur_transport_type,
     premier_detenteur_transport_date: fei.premier_detenteur_transport_date,
@@ -156,12 +157,13 @@ export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) 
     intermediaire_closed_by_name: intermediaireClosedByName,
     latest_intermediaire_name: latestIntermediaireByName,
     svi_assigned_at: fei.svi_assigned_at,
-    svi_entity_name: fei.FeiSviEntity.raison_sociale,
+    svi_entity_name: fei.FeiSviEntity?.raison_sociale,
     svi_closed_at: fei.svi_closed_at,
     automatic_closed_at: fei.automatic_closed_at,
     created_at: fei.created_at,
     updated_at: fei.updated_at,
     deleted_at: fei.deleted_at,
+    carcasses: carcasses.map((carcasse) => mapCarcasseForApi(carcasse, fei)),
   };
 }
 
@@ -207,21 +209,38 @@ export async function getRequestedUser(
 
   if (!user) {
     return {
-      error: `Votre clé n'est pas autorisée à accéder à des carcasses par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+      error: `Votre clé n'est pas autorisée à accéder à des données de cet utilisateur par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
     };
   }
 
   const approval = await prisma.apiKeyApprovalByUserOrEntity.findFirst({
     where: {
       api_key_id: apiKey?.id,
-      status: ApiKeyApprovalStatus.APPROVED,
       user_id: user.id,
     },
   });
 
   if (!approval) {
     return {
-      error: `Votre clé n'est pas autorisée à accéder à des carcasses par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+      error: `Vous n'avez pas fait de demande d'accès pour cet email. Faites un appel POST /approval-request/user avec l'email de l'utilisateur auparavant. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+    };
+  }
+
+  if (approval.status === ApiKeyApprovalStatus.PENDING) {
+    return {
+      error: `Votre demande d'accès n'a pas encore été approuvée. L'utilisateur doit désormais se rendre sur https://zacharie.beta.gouv.fr/app/tableau-de-bord/mon-profil/partage-de-mes-donnees pour approuver ou rejeter la demande. Il se connecte puis clique sur 'Mon profil' puis 'Partage de mes données'. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+    };
+  }
+
+  if (approval.status === ApiKeyApprovalStatus.REJECTED) {
+    return {
+      error: `Votre demande d'accès a été rejetée par l'utilisateur. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+    };
+  }
+
+  if (approval.status !== ApiKeyApprovalStatus.APPROVED) {
+    return {
+      error: `Votre demande d'accès n'a pas été approuvée. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
     };
   }
 

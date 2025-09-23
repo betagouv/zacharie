@@ -201,17 +201,28 @@ router.get(
 
       let canAccess = false;
 
+      console.log('entity', entity.type);
       switch (entity.type) {
+        case EntityTypes.PREMIER_DETENTEUR:
+          console.log('fei.premier_detenteur_entity_id', fei.premier_detenteur_entity_id, entity.id);
+          if (fei.premier_detenteur_entity_id === entity.id) {
+            canAccess = true;
+            break;
+          }
+          break;
         case EntityTypes.ETG:
         case EntityTypes.COLLECTEUR_PRO:
           const carcasseIntermediaires = fei.CarcasseIntermediaire.filter(
             (c) => c.numero_bracelet === carcasse.numero_bracelet,
           );
+          console.log('carcasseIntermediaires', carcasseIntermediaires.length);
           const intermediaires = carcasseIntermediaires.filter((c) => c.intermediaire_role === entity.type);
+          console.log('intermediaires', intermediaires.length);
           if (!intermediaires.length) {
             break;
           }
           for (const intermediaire of intermediaires) {
+            console.log('intermediaire', intermediaire.intermediaire_entity_id, entity.id);
             if (intermediaire.intermediaire_entity_id === entity.id) {
               canAccess = true;
               break;

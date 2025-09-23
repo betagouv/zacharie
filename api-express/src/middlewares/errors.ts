@@ -81,10 +81,12 @@ const sendError = (
       error: "Désolé, une erreur est survenue, l'équipe technique est prévenue.",
     });
   }
+  console.log('res.statusCode', res.statusCode);
+  console.log('err.message', err);
   return res.status(res.statusCode).send({
     ok: false,
     code: 'APPLICATION_ERROR',
-    error: err.message,
+    error: err.message || err || "Désolé, une erreur est survenue, l'équipe technique est prévenue.",
   });
 };
 

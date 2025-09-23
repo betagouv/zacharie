@@ -123,11 +123,573 @@
       },
       "Fei": {
         "type": "object",
-        "description": "Fiche d'Examen Initial avec toutes les données associées"
+        "description": "Fiche d'Examen Initial avec toutes les données associées",
+        "properties": {
+          "numero": {
+            "type": "string",
+            "description": "Numéro unique de la FEI"
+          },
+          "date_mise_a_mort": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date de mise à mort (format: AAAA-MM-JJ)"
+          },
+          "commune_mise_a_mort": {
+            "type": "string",
+            "nullable": true,
+            "description": "Commune de mise à mort"
+          },
+          "heure_mise_a_mort_premiere_carcasse": {
+            "type": "string",
+            "nullable": true,
+            "description": "Heure de mise à mort de la première carcasse"
+          },
+          "heure_evisceration_derniere_carcasse": {
+            "type": "string",
+            "nullable": true,
+            "description": "Heure d'éviscération de la dernière carcasse"
+          },
+          "resume_nombre_de_carcasses": {
+            "type": "string",
+            "nullable": true,
+            "description": "Résumé du nombre de carcasses"
+          },
+          "examinateur_initial_name": {
+            "type": "string",
+            "description": "Nom complet de l'examinateur initial"
+          },
+          "examinateur_initial_approbation_mise_sur_le_marche": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Approbation de mise sur le marché par l'examinateur initial"
+          },
+          "examinateur_initial_date_approbation_mise_sur_le_marche": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date d'approbation de mise sur le marché"
+          },
+          "premier_detenteur_name": {
+            "type": "string",
+            "description": "Nom du premier détenteur"
+          },
+          "premier_detenteur_depot_type": {
+            "type": "string",
+            "enum": ["CCG", "ETG", "AUCUN"],
+            "nullable": true,
+            "description": "Type de dépôt du premier détenteur"
+          },
+          "premier_detenteur_depot_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Nom de l'entité de dépôt"
+          },
+          "premier_detenteur_depot_ccg_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de dépôt CCG"
+          },
+          "premier_detenteur_transport_type": {
+            "type": "string",
+            "enum": ["PREMIER_DETENTEUR", "ETG", "COLLECTEUR_PRO", "AUCUN"],
+            "nullable": true,
+            "description": "Type de transport"
+          },
+          "premier_detenteur_transport_date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de transport"
+          },
+          "premier_detenteur_prochain_detenteur_name": {
+            "type": "string",
+            "description": "Nom du prochain détenteur"
+          },
+          "premier_detenteur_prochain_detenteur_role": {
+            "type": "string",
+            "description": "Rôle du prochain détenteur"
+          },
+          "intermediaire_closed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de fermeture par l'intermédiaire"
+          },
+          "intermediaire_closed_by_name": {
+            "type": "string",
+            "description": "Nom de l'entité qui a fermé l'intermédiaire"
+          },
+          "latest_intermediaire_name": {
+            "type": "string",
+            "description": "Nom du dernier intermédiaire"
+          },
+          "svi_assigned_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date d'assignation au SVI"
+          },
+          "svi_entity_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Nom de l'entité SVI"
+          },
+          "svi_closed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de fermeture par le SVI"
+          },
+          "automatic_closed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de fermeture automatique"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date de création"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date de dernière mise à jour"
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de suppression"
+          },
+          "carcasses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Carcasse"
+            },
+            "description": "Liste des carcasses associées à cette FEI"
+          }
+        }
       },
       "Carcasse": {
         "type": "object",
-        "description": "Données complètes d'une carcasse"
+        "description": "Données complètes d'une carcasse",
+        "properties": {
+          "numero_bracelet": {
+            "type": "string",
+            "description": "Numéro de bracelet de la carcasse"
+          },
+          "fei_numero": {
+            "type": "string",
+            "description": "Numéro de la FEI associée"
+          },
+          "espece": {
+            "type": "string",
+            "nullable": true,
+            "description": "Espèce de l'animal (Sanglier, Cerf, etc.)"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["PETIT_GIBIER", "GROS_GIBIER"],
+            "nullable": true,
+            "description": "Type de carcasse"
+          },
+          "nombre_d_animaux": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Nombre d'animaux"
+          },
+          "heure_mise_a_mort": {
+            "type": "string",
+            "nullable": true,
+            "description": "Heure de mise à mort"
+          },
+          "heure_evisceration": {
+            "type": "string",
+            "nullable": true,
+            "description": "Heure d'éviscération"
+          },
+          "examinateur_name": {
+            "type": "string",
+            "description": "Nom complet de l'examinateur"
+          },
+          "examinateur_carcasse_sans_anomalie": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Carcasse sans anomalie selon l'examinateur"
+          },
+          "examinateur_anomalies_carcasse": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Liste des anomalies de carcasse détectées"
+          },
+          "examinateur_anomalies_abats": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Liste des anomalies d'abats détectées"
+          },
+          "examinateur_commentaire": {
+            "type": "string",
+            "nullable": true,
+            "description": "Commentaire de l'examinateur"
+          },
+          "examinateur_signed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de signature par l'examinateur"
+          },
+          "premier_detenteur_name": {
+            "type": "string",
+            "description": "Nom du premier détenteur"
+          },
+          "premier_detenteur_depot_type": {
+            "type": "string",
+            "enum": ["CCG", "ETG", "AUCUN"],
+            "nullable": true,
+            "description": "Type de dépôt"
+          },
+          "premier_detenteur_depot_ccg_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de dépôt CCG"
+          },
+          "premier_detenteur_transport_type": {
+            "type": "string",
+            "enum": ["PREMIER_DETENTEUR", "ETG", "COLLECTEUR_PRO", "AUCUN"],
+            "nullable": true,
+            "description": "Type de transport"
+          },
+          "premier_detenteur_transport_date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de transport"
+          },
+          "premier_detenteur_prochain_detenteur_role_cache": {
+            "type": "string",
+            "enum": ["EXAMINATEUR_INITIAL", "PREMIER_DETENTEUR", "ETG", "COLLECTEUR_PRO", "SVI"],
+            "nullable": true,
+            "description": "Rôle du prochain détenteur"
+          },
+          "latest_intermediaire_carcasse_refus_motif": {
+            "type": "string",
+            "nullable": true,
+            "description": "Motif de refus par le dernier intermédiaire"
+          },
+          "latest_intermediaire_carcasse_manquante": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Carcasse manquante selon le dernier intermédiaire"
+          },
+          "latest_intermediaire_decision_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de décision du dernier intermédiaire"
+          },
+          "latest_intermediaire_prise_en_charge_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de prise en charge par le dernier intermédiaire"
+          },
+          "svi_assigned_to_fei_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date d'assignation au SVI"
+          },
+          "carcasse_status": {
+            "type": "string",
+            "enum": [
+              "MANQUANTE_ETG_COLLECTEUR",
+              "REFUS_ETG_COLLECTEUR",
+              "SANS_DECISION",
+              "ACCEPTE",
+              "CONSIGNE",
+              "MANQUANTE_SVI",
+              "SAISIE_TOTALE",
+              "SAISIE_PARTIELLE",
+              "LEVEE_DE_CONSIGNE",
+              "TRAITEMENT_ASSAINISSANT"
+            ],
+            "nullable": true,
+            "description": "Statut de la carcasse"
+          },
+          "carcasse_status_set_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de définition du statut"
+          },
+          "svi_ipm1_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date d'IPM1"
+          },
+          "svi_ipm1_presentee_inspection": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Carcasse présentée à l'inspection IPM1"
+          },
+          "svi_ipm1_protocole": {
+            "type": "string",
+            "enum": ["STANDARD", "RENFORCE"],
+            "nullable": true,
+            "description": "Protocole IPM1"
+          },
+          "svi_ipm1_pieces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Pièces inspectées lors de l'IPM1"
+          },
+          "svi_ipm1_lesions_ou_motifs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Lésions ou motifs IPM1"
+          },
+          "svi_ipm1_nombre_animaux": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Nombre d'animaux IPM1"
+          },
+          "svi_ipm1_commentaire": {
+            "type": "string",
+            "nullable": true,
+            "description": "Commentaire IPM1"
+          },
+          "svi_ipm1_decision": {
+            "type": "string",
+            "enum": ["NON_RENSEIGNEE", "MISE_EN_CONSIGNE", "ACCEPTE"],
+            "nullable": true,
+            "description": "Décision IPM1"
+          },
+          "svi_ipm1_duree_consigne": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Durée de consigne IPM1 (en jours)"
+          },
+          "svi_ipm1_poids_consigne": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Poids de consigne IPM1"
+          },
+          "svi_ipm1_poids_type": {
+            "type": "string",
+            "enum": ["NON_DEPOUILLE", "DEPOUILLE", "NON_PLUMEE", "PLUMEE"],
+            "nullable": true,
+            "description": "Type de poids IPM1"
+          },
+          "svi_ipm1_signed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de signature IPM1"
+          },
+          "svi_ipm2_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date d'IPM2"
+          },
+          "svi_ipm2_presentee_inspection": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Carcasse présentée à l'inspection IPM2"
+          },
+          "svi_ipm2_protocole": {
+            "type": "string",
+            "enum": ["STANDARD", "RENFORCE"],
+            "nullable": true,
+            "description": "Protocole IPM2"
+          },
+          "svi_ipm2_pieces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Pièces inspectées lors de l'IPM2"
+          },
+          "svi_ipm2_lesions_ou_motifs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Lésions ou motifs IPM2"
+          },
+          "svi_ipm2_nombre_animaux": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Nombre d'animaux IPM2"
+          },
+          "svi_ipm2_commentaire": {
+            "type": "string",
+            "nullable": true,
+            "description": "Commentaire IPM2"
+          },
+          "svi_ipm2_decision": {
+            "type": "string",
+            "enum": [
+              "NON_RENSEIGNEE",
+              "LEVEE_DE_LA_CONSIGNE",
+              "SAISIE_TOTALE",
+              "SAISIE_PARTIELLE",
+              "TRAITEMENT_ASSAINISSANT"
+            ],
+            "nullable": true,
+            "description": "Décision IPM2"
+          },
+          "svi_ipm2_traitement_assainissant": {
+            "type": "string",
+            "enum": ["CUISSON", "CONGELATION", "AUTRE"],
+            "nullable": true,
+            "description": "Type de traitement assainissant IPM2"
+          },
+          "svi_ipm2_traitement_assainissant_cuisson_temps": {
+            "type": "string",
+            "nullable": true,
+            "description": "Temps de cuisson pour traitement assainissant"
+          },
+          "svi_ipm2_traitement_assainissant_cuisson_temp": {
+            "type": "string",
+            "nullable": true,
+            "description": "Température de cuisson pour traitement assainissant"
+          },
+          "svi_ipm2_traitement_assainissant_congelation_temps": {
+            "type": "string",
+            "nullable": true,
+            "description": "Temps de congélation pour traitement assainissant"
+          },
+          "svi_ipm2_traitement_assainissant_congelation_temp": {
+            "type": "string",
+            "nullable": true,
+            "description": "Température de congélation pour traitement assainissant"
+          },
+          "svi_ipm2_traitement_assainissant_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Type de traitement assainissant"
+          },
+          "svi_ipm2_traitement_assainissant_paramètres": {
+            "type": "string",
+            "nullable": true,
+            "description": "Paramètres du traitement assainissant"
+          },
+          "svi_ipm2_traitement_assainissant_etablissement": {
+            "type": "string",
+            "nullable": true,
+            "description": "Établissement de traitement assainissant"
+          },
+          "svi_ipm2_traitement_assainissant_poids": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Poids pour traitement assainissant"
+          },
+          "svi_ipm2_poids_saisie": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Poids de saisie IPM2"
+          },
+          "svi_ipm2_poids_type": {
+            "type": "string",
+            "enum": ["NON_DEPOUILLE", "DEPOUILLE", "NON_PLUMEE", "PLUMEE"],
+            "nullable": true,
+            "description": "Type de poids IPM2"
+          },
+          "svi_ipm2_signed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de signature IPM2"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date de création"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date de dernière mise à jour"
+          },
+          "fei_date_mise_a_mort": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date de mise à mort de la FEI"
+          },
+          "fei_commune_mise_a_mort": {
+            "type": "string",
+            "nullable": true,
+            "description": "Commune de mise à mort de la FEI"
+          },
+          "fei_heure_mise_a_mort_premiere_carcasse": {
+            "type": "string",
+            "nullable": true,
+            "description": "Heure de mise à mort de la première carcasse de la FEI"
+          },
+          "fei_heure_evisceration_derniere_carcasse": {
+            "type": "string",
+            "nullable": true,
+            "description": "Heure d'éviscération de la dernière carcasse de la FEI"
+          },
+          "fei_resume_nombre_de_carcasses": {
+            "type": "string",
+            "nullable": true,
+            "description": "Résumé du nombre de carcasses de la FEI"
+          },
+          "fei_examinateur_initial_approbation_mise_sur_le_marche": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Approbation de mise sur le marché de la FEI"
+          },
+          "fei_examinateur_initial_date_approbation_mise_sur_le_marche": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date d'approbation de mise sur le marché de la FEI"
+          },
+          "fei_automatic_closed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de fermeture automatique de la FEI"
+          },
+          "fei_intermediaire_closed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de fermeture par l'intermédiaire de la FEI"
+          },
+          "fei_svi_assigned_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date d'assignation au SVI de la FEI"
+          },
+          "fei_svi_closed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date de fermeture par le SVI de la FEI"
+          }
+        }
       }
     }
   },
