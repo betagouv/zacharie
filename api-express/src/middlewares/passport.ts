@@ -69,7 +69,7 @@ passport.use(
 );
 
 passport.use(
-  'apiKeyLog',
+  'apiKey',
   new HeaderAPIKeyStrategy(
     { header: 'Authorization', prefix: 'Bearer ' },
     true,
@@ -79,7 +79,6 @@ passport.use(
       req: Request,
     ) => {
       try {
-        console.log('BIM');
         const key = await prisma.apiKey.findFirst({
           where: {
             private_key: apiKey,
@@ -88,8 +87,6 @@ passport.use(
             OR: [{ expires_at: null }, { expires_at: { gt: new Date() } }],
           },
         });
-
-        console.log(key);
 
         if (!key) {
           return done(null, undefined);

@@ -22,8 +22,8 @@ export type ApprovalRequestForApi = {
 
 router.post(
   '/user',
-  passport.authenticate('apiKeyLog', { session: false }),
-  checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY]),
+  passport.authenticate('apiKey', { session: false }),
+  checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_USER, ApiKeyScope.FEI_READ_FOR_USER]),
   catchErrors(
     async (
       req: RequestWithApiKey,
@@ -89,8 +89,8 @@ router.post(
 
 router.post(
   '/entite',
-  passport.authenticate('apiKeyLog', { session: false }),
-  checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY]),
+  passport.authenticate('apiKey', { session: false }),
+  checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY, ApiKeyScope.CARCASSE_READ_FOR_ENTITY]),
   catchErrors(
     async (
       req: RequestWithApiKey,

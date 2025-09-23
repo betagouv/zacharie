@@ -9,9 +9,9 @@ import swaggerTiercePartie from './swagger-tierce-partie.json';
 
 const router: express.Router = express.Router();
 
-router.use('/approval-request', passport.initialize({ userProperty: 'apiKeyLog' }), approvalRequestRouter);
-router.use('/fei', passport.initialize({ userProperty: 'apiKeyLog' }), feiRouter);
-router.use('/carcasse', passport.initialize({ userProperty: 'apiKeyLog' }), carcassesRouter);
+router.use('/approval-request', passport.initialize({ userProperty: 'apiKey' }), approvalRequestRouter);
+router.use('/fei', passport.initialize({ userProperty: 'apiKey' }), feiRouter);
+router.use('/carcasse', passport.initialize({ userProperty: 'apiKey' }), carcassesRouter);
 
 // Entity API Documentation (direct access)
 router.use('/docs/cle-dediee', swaggerUi.serveFiles(swaggerCleDediee));
@@ -19,7 +19,7 @@ router.get(
   '/docs/cle-dediee',
   swaggerUi.setup(swaggerCleDediee, {
     customSiteTitle: 'API Zacharie - Accès Direct Entité',
-    customfavIcon: '/favicon.ico',
+    customfavIcon: 'https://zacharie.beta.gouv.fr/favicon.png',
   }),
 );
 
@@ -29,7 +29,7 @@ router.get(
   '/docs/tierces-parties',
   swaggerUi.setup(swaggerTiercePartie, {
     customSiteTitle: 'API Zacharie - Accès Tiers',
-    customfavIcon: '/favicon.ico',
+    customfavIcon: 'https://zacharie.beta.gouv.fr/favicon.png',
   }),
 );
 

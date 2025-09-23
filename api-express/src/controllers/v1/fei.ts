@@ -29,7 +29,7 @@ export type FeiGetForApi = {
 
 router.get(
   '/user',
-  passport.authenticate('apiKeyLog', { session: false }),
+  passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY]),
   catchErrors(
     async (req: RequestWithApiKey, res: express.Response<FeiGetForApi>, next: express.NextFunction) => {
@@ -126,7 +126,7 @@ router.get(
 
 router.get(
   '/',
-  passport.authenticate('apiKeyLog', { session: false }),
+  passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY]),
   catchErrors(
     async (req: RequestWithApiKey, res: express.Response<FeiGetForApi>, next: express.NextFunction) => {

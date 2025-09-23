@@ -51,8 +51,8 @@ const sendError = (
 ) => {
   const { body, query, params, route, method, originalUrl, headers } = req;
   const { auth, appversion, appbuild, appdevice } = headers;
-  if (err.status === 401) {
-    console.log(err.status, 'Unauthorized');
+  if (res.statusCode === 401 || err.status === 401) {
+    console.log(res.statusCode, 'Unauthorized');
   } else if (process.env.NODE_ENV === 'test') {
     console.log(err);
   } else {
@@ -74,10 +74,17 @@ const sendError = (
     });
   }
 
-  return res.status(err.status ?? 500).send({
+  if (!res.statusCode || res.statusCode >= 500) {
+    return res.status(res.statusCode ?? 500).send({
+      ok: false,
+      code: 'SERVER_ERROR',
+      error: "Désolé, une erreur est survenue, l'équipe technique est prévenue.",
+    });
+  }
+  return res.status(res.statusCode).send({
     ok: false,
-    code: 'SERVER_ERROR',
-    error: "Désolé, une erreur est survenue, l'équipe technique est prévenue.",
+    code: 'APPLICATION_ERROR',
+    error: err.message,
   });
 };
 
