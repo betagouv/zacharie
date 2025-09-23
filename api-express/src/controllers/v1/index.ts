@@ -31,9 +31,4 @@ router.get(
   }),
 );
 
-// Keep the old route for backward compatibility, but redirect to entity docs
-router.get('/api-docs', (req, res) => {
-  res.redirect('/v1/docs/entity');
-});
-
 export default router;

@@ -7,6 +7,7 @@ import Chargement from '@app/components/Chargement';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import API from '@app/services/api';
 import { ApiKeyApprovalStatus } from '@prisma/client';
+import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 
 export default function AdminApiKeys() {
   const [apiKeys, setApiKeys] = useState<NonNullable<AdminApiKeysResponse['data']['apiKeys']>>([]);
@@ -53,6 +54,17 @@ export default function AdminApiKeys() {
       <title>
         Clés API | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
+      <CallOut>
+        Accès à la documentation :<br />
+        <a href="https://api.zacharie.beta.gouv.fr/v1/docs/tierces-parties" target="_blank">
+          Pour les tierces parties
+        </a>
+        <br />
+        <a href="https://api.zacharie.beta.gouv.fr/v1/docs/cle-dediee" target="_blank">
+          Pour les entités
+        </a>
+        .
+      </CallOut>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">Clés API</h1>

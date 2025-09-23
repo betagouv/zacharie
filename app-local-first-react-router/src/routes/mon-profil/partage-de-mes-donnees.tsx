@@ -6,7 +6,6 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import SelectCustom from '@app/components/SelectCustom';
 import { ApiKeyApprovalStatus, ApiKeyScope, Entity, User } from '@prisma/client';
-import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import { Link } from 'react-router';
 
@@ -61,13 +60,16 @@ export default function PartageDeMesDonnees() {
                     root: 'fr-highlight--green-emeraude',
                   }}
                 >
-                  Si vous êtes vous-même éditeur de logiciel et que vous avez besoin de la valeur de votre clé
-                  privée, veuillez nous <Link to="/contact">contacter</Link>.<br />
                   La documentation pour l'utilisation de l'API est disponible{' '}
                   <a href="https://api.zacharie.beta.gouv.fr/v1/docs/cle-dediee" target="_blank">
                     ici
                   </a>
-                  .
+                  .<br />
+                  <br />
+                  Si vous êtes vous-même éditeur de logiciel et que vous avez besoin de la valeur de votre clé
+                  privée, veuillez nous <Link to="/contact">contacter</Link>.<br />
+                  Si vous pensez que votre clé est compromise, veuillez la révoquer ci-dessous et nous{' '}
+                  <Link to="/contact">contacter</Link> pour la régénérer.
                 </Highlight>
                 {dedicatedToMyEntities.map((approval) => {
                   const entity = entities[approval.entity_id!];
@@ -121,30 +123,24 @@ export default function PartageDeMesDonnees() {
                     </div>
                   );
                 })}
-                <div className="mt-6 mb-16 ml-6">
-                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                    Haut de page
-                  </a>
-                </div>
               </div>
             </div>
           )}
-          <CallOut
-            className="bg-white"
-            // className="mb-8"
-            // classes={{
-            //   root: 'fr-highlight--green-emeraude',
-            // }}
-          >
-            Certains éditeurs de logiciels souhaitent accéder à vos données Zacharie pour vous proposer des
-            services via leur application. Vous pouvez gérer les autorisations ici.
-          </CallOut>
           {accessToPersonalAccount.length > 0 && (
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
                 <h3 className="text-lg font-semibold text-gray-900">
                   <span>Accès à votre compte personnel</span>
                 </h3>
+                <Highlight
+                  className="mb-8"
+                  classes={{
+                    root: 'fr-highlight--green-emeraude',
+                  }}
+                >
+                  Certains éditeurs de logiciels souhaitent accéder à vos données Zacharie pour vous proposer
+                  des services via leur application. Vous pouvez gérer les autorisations ci-dessous.
+                </Highlight>
                 {accessToPersonalAccount.map((approval) => {
                   if (approval.user_id !== user.id) {
                     return null;
@@ -196,11 +192,6 @@ export default function PartageDeMesDonnees() {
                     </div>
                   );
                 })}
-                <div className="mt-6 mb-16 ml-6">
-                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                    Haut de page
-                  </a>
-                </div>
               </div>
             </div>
           )}
@@ -210,6 +201,15 @@ export default function PartageDeMesDonnees() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   <span>Accès à vos entités (CCG, Collecteur Pro, ETG, SVI)</span>
                 </h3>
+                <Highlight
+                  className="mb-8"
+                  classes={{
+                    root: 'fr-highlight--green-emeraude',
+                  }}
+                >
+                  Certains éditeurs de logiciels souhaitent accéder à vos données Zacharie pour vous proposer
+                  des services via leur application. Vous pouvez gérer les autorisations ci-dessous.
+                </Highlight>
                 {accessToEntities.map((approval) => {
                   const entity = entities[approval.entity_id!];
                   if (!entity) {
@@ -262,11 +262,6 @@ export default function PartageDeMesDonnees() {
                     </div>
                   );
                 })}
-                <div className="mt-6 mb-16 ml-6">
-                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                    Haut de page
-                  </a>
-                </div>
               </div>
             </div>
           )}
