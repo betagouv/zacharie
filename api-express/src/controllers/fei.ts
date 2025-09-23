@@ -22,7 +22,8 @@ import {
   updateBrevoSVIDealPremiereFiche,
 } from '~/third-parties/brevo';
 import { userFeiSelect } from '~/types/user';
-import { formatSviAssignedEmail } from '~/utils/formatCarcasseEmail';
+import { formatManualValidationSviEmail, formatSviAssignedEmail } from '~/utils/formatCarcasseEmail';
+import updateCarcasseStatus from '~/utils/get-carcasse-status';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 router.post(
@@ -503,6 +504,38 @@ router.post(
             body: email,
             email: email,
             notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
+          });
+        }
+      }
+    }
+
+    if (!existingFei.svi_closed_by_user_id && savedFei.svi_closed_by_user_id) {
+      const [object, email] = await formatManualValidationSviEmail(savedFei, savedFei.Carcasses);
+      // auto close and notify examinateur and premier detenteut
+      const notification = {
+        title: object,
+        body: email,
+        email: email,
+        notificationLogAction: `FEI_AUTO_CLOSED_${savedFei.numero}`,
+      };
+      if (savedFei.FeiExaminateurInitialUser) {
+        const examinateur = savedFei.FeiExaminateurInitialUser;
+        if (examinateur) {
+          await sendNotificationToUser({
+            user: examinateur,
+            ...notification,
+          });
+        }
+      }
+      if (
+        savedFei.FeiPremierDetenteurUser &&
+        savedFei.FeiPremierDetenteurUser.id !== savedFei.FeiExaminateurInitialUser?.id
+      ) {
+        const premierDetenteur = savedFei.FeiPremierDetenteurUser;
+        if (premierDetenteur) {
+          await sendNotificationToUser({
+            user: premierDetenteur,
+            ...notification,
           });
         }
       }

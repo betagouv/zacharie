@@ -205,6 +205,47 @@ export async function formatAutomaticClosingEmail(
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
+export async function formatManualValidationSviEmail(
+  fei: Fei,
+  carcasses: Carcasse[],
+): Promise<[string, string]> {
+  let numberOfValidatedCarcasses = 0;
+  let numberOfRefusedCarcasses = 0;
+  for (const carcasse of carcasses) {
+    switch (carcasse.svi_carcasse_status) {
+      case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
+      case CarcasseStatus.REFUS_ETG_COLLECTEUR:
+      case CarcasseStatus.SAISIE_TOTALE:
+      case CarcasseStatus.CONSIGNE: {
+        numberOfRefusedCarcasses++;
+        break;
+      }
+      default:
+      case CarcasseStatus.SANS_DECISION:
+      case CarcasseStatus.ACCEPTE:
+      case CarcasseStatus.MANQUANTE_SVI:
+      case CarcasseStatus.SAISIE_PARTIELLE:
+      case CarcasseStatus.LEVEE_DE_CONSIGNE:
+      case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
+        numberOfValidatedCarcasses++;
+        break;
+    }
+  }
+
+  const email = [
+    `Bonjour,`,
+    `La fiche ${fei.numero} a été prise en charge et traitée par le Service Vétérinaire`,
+    `Bilan de cette fiche:`,
+    `- ${numberOfValidatedCarcasses} carcasses ont été acceptées`,
+    `- ${numberOfRefusedCarcasses} carcasses ont été refusées`,
+    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${fei.numero}`,
+    `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur des saisies ou refus, merci de contacter l’établissement qui a traité votre fiche.`,
+  ];
+
+  const object = `La fiche ${fei.numero} est clôturée.`;
+  return [object, email.filter(Boolean).join('\n\n')];
+}
+
 export async function formatSviAssignedEmail(fei: Fei): Promise<[string, string]> {
   const currentEntity = await prisma.entity.findUnique({
     where: {
