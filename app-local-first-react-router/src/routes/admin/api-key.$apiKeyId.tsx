@@ -14,6 +14,7 @@ import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import SelectCustom from '@app/components/SelectCustom';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
+import { Tag } from '@codegouvfr/react-dsfr/Tag';
 
 const loadData = (apiKeyId: string): Promise<AdminApiKeyAndApprovalsResponse> =>
   API.get({ path: `admin/api-key/${apiKeyId}` }).then((res) => res as AdminApiKeyAndApprovalsResponse);
@@ -144,6 +145,19 @@ export default function AdminApiKey() {
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <div className="p-4 pb-32 md:p-8 md:pb-0">
+            <Tag
+              iconId={
+                apiKey.dedicated_to_entity_id
+                  ? 'fr-icon-checkbox-circle-line'
+                  : 'fr-icon-checkbox-circle-line'
+              }
+              nativeButtonProps={{
+                onClick: function noRefCheck() {},
+                className: '-mt-24 mb-6',
+              }}
+            >
+              {apiKey.dedicated_to_entity_id ? 'Clé dédiée à une entité' : 'Clé pour les tierces parties'}
+            </Tag>
             <div className="flex flex-row items-center justify-between">
               <h1 className="fr-h2 fr-mb-2w">
                 {apiKey.name}
