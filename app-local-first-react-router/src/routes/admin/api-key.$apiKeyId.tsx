@@ -13,6 +13,7 @@ import API from '@app/services/api';
 import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import SelectCustom from '@app/components/SelectCustom';
+import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 
 const loadData = (apiKeyId: string): Promise<AdminApiKeyAndApprovalsResponse> =>
   API.get({ path: `admin/api-key/${apiKeyId}` }).then((res) => res as AdminApiKeyAndApprovalsResponse);
@@ -185,6 +186,18 @@ export default function AdminApiKey() {
                 />
               </form>
             </div>
+            <CallOut>
+              {apiKey.dedicated_to_entity_id ? (
+                <a href={`https://${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
+                  Cliquez ici pour la documentation API pour les clés dédiées à une entité
+                </a>
+              ) : (
+                <a href={`https://${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`} target="_blank">
+                  Cliquez ici pour la documentation API pour les clés pour les tierces parties
+                </a>
+              )}
+              .
+            </CallOut>
             <Tabs
               selectedTabId={selectedTabId}
               tabs={tabs}
