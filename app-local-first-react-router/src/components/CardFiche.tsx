@@ -54,15 +54,16 @@ export default function CardFiche({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const [carcassesAcceptées, carcassesRefusées] = useMemo(() => {
+  const [carcassesAcceptées, carcassesRefusées, _carcassesOuLotsRefusés] = useMemo(() => {
     if (!fei.resume_nombre_de_carcasses) {
       return [[], 0];
     }
     const _carcassesAcceptées = [];
     let _carcassesRefusées = 0;
+    let _carcassesOuLotsRefusés = '';
     for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
       if (carcasse.includes('refusé')) {
-        // soit "10 carcasses" soit "3 lots (23 carcasses)"
+        // soit "10 carcasses refusées" soit "3 lots refusés (23 carcasses)"
         // on veut récupérer 10 et 23, soit le dernier numéro de la phrase
         // et faire la somme de toutes les carcasses refusées
         const nombreDAnimaux =
@@ -72,11 +73,12 @@ export default function CardFiche({
             .filter(Boolean)
             .at(-1) || 0;
         _carcassesRefusées += nombreDAnimaux;
+        _carcassesOuLotsRefusés = carcasse.split(' (')[0];
       } else if (carcasse) {
         _carcassesAcceptées.push(carcasse);
       }
     }
-    return [_carcassesAcceptées, _carcassesRefusées];
+    return [_carcassesAcceptées, _carcassesRefusées, _carcassesOuLotsRefusés];
   }, [fei.resume_nombre_de_carcasses]);
 
   const formattedCarcassesAcceptées = useMemo(() => {
@@ -237,7 +239,7 @@ export default function CardFiche({
                 // <p className="m-0 text-xl text-action-high-blue-france">0 carcasse refusée</p>
               </div>
             )} */}
-            {carcassesRefusées > 0 && (
+            {/* {carcassesRefusées > 0 && (
               <div className="flex shrink basis-1/2 flex-col gap-y-1">
                 <>
                   <RefusIcon />
@@ -246,6 +248,16 @@ export default function CardFiche({
                       {carcassesRefusées} carcasse{carcassesRefusées > 1 ? 's' : ''} refusée
                       {carcassesRefusées > 1 ? 's' : ''}
                     </p>
+                  </div>
+                </>
+              </div>
+            )} */}
+            {!!_carcassesOuLotsRefusés && (
+              <div className="flex shrink basis-1/2 flex-col gap-y-1">
+                <>
+                  <RefusIcon />
+                  <div>
+                    <p className="text-warning-main-525 m-0 text-xl">{_carcassesOuLotsRefusés}</p>
                   </div>
                 </>
               </div>
