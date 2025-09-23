@@ -166,6 +166,13 @@ export function computeFeiSteps({
     if (user?.roles.includes(UserRoles.CHASSEUR)) {
       switch (currentStepLabel) {
         case 'Examen initial':
+          if (fei.fei_next_owner_user_id) {
+            if (fei.fei_next_owner_user_id === user.id) {
+              return 'À compléter';
+            }
+            return 'En cours';
+          }
+          return 'À compléter';
         case 'Validation par le premier détenteur':
           return 'À compléter';
         case 'Clôturée':
