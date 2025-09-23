@@ -50,21 +50,23 @@ export default function AdminApiKeys() {
   }
 
   return (
-    <div className="fr-container fr-container--fluid fr-my-md-14v">
+    <div className="fr-container--fluid fr-my-md-14v">
       <title>
         Clés API | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
-      <CallOut>
-        Accès à la documentation :<br />
-        <a href={`https://${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`} target="_blank">
-          Pour les tierces parties
-        </a>
-        <br />
-        <a href={`https://${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
-          Pour les entités
-        </a>
-        .
-      </CallOut>
+      <div className="fr-container fr-mb-md-14v">
+        <CallOut>
+          Accès à la documentation :<br />
+          <a href={`https://${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`} target="_blank">
+            Pour les tierces parties
+          </a>
+          <br />
+          <a href={`https://${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
+            Pour les entités
+          </a>
+          .
+        </CallOut>
+      </div>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">Clés API</h1>
@@ -109,7 +111,7 @@ export default function AdminApiKeys() {
                           <span className="p-4">{index + 1}</span>
                           <Link
                             to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
-                            className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
+                            className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
                             suppressHydrationWarning
                           >
                             Clé activée: {apiKey.active ? '✅' : '❌'}
@@ -120,22 +122,23 @@ export default function AdminApiKeys() {
                         <Link
                           key={apiKey.id}
                           to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
-                          className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
+                          className="no-scrollbar inline-flex! size-full flex-col items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
                         >
                           {apiKey.name}
-                          <br />＠ {apiKey.description}
+                          <br />
+                          <i className="text-sm text-gray-400">{apiKey.description}</i>
                         </Link>,
                         <Link
                           key={apiKey.id}
                           to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
-                          className="size-full items-start justify-start overflow-hidden! bg-none! p-2 text-xs no-underline!"
+                          className="no-scrollbar size-full items-start justify-start overflow-x-auto! bg-none! p-2 text-xs no-underline!"
                         >
                           {apiKey.scopes.join(', ')}
                         </Link>,
                         <Link
                           key={apiKey.id}
                           to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
-                          className="inline-flex! size-full items-start justify-start overflow-hidden bg-none! no-underline!"
+                          className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! bg-none! no-underline!"
                         >
                           <ul
                             key={apiKey.id}

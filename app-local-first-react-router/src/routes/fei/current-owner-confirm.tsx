@@ -356,7 +356,11 @@ export default function CurrentOwnerConfirm() {
                 type="submit"
                 className="my-4 block"
                 onClick={() => {
-                  handlePriseEnCharge({ transfer: false, action: 'current-owner-confirm-etg-reception' });
+                  handlePriseEnCharge({
+                    transfer: false,
+                    action: 'current-owner-confirm-etg-reception',
+                    etgEmployeeTransportingToETG: user.etg_roles.includes(UserEtgRoles.TRANSPORT),
+                  });
                 }}
               >
                 Je prends en charge les carcasses

@@ -83,6 +83,7 @@
   }
 }
 
+
 @media (max-width: 767px) {
   /* .fr-header__service {
     display: none;
@@ -260,4 +261,15 @@ details {
 
 .drop-down .fr-nav__btn {
   @apply py-0! min-h-10! text-action-high-blue-france! font-medium! text-base!;
+}
+
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }

@@ -56,7 +56,7 @@ export default function AdminEntites() {
   }
 
   return (
-    <div className="fr-container fr-container--fluid fr-my-md-14v">
+    <div className="fr-container--fluid fr-my-md-14v">
       <title>Entités | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
@@ -79,7 +79,10 @@ export default function AdminEntites() {
                       return entity.type === selectedTabId;
                     })
                     .map((entity, index) => [
-                      <div key={entity.id} className="flex size-full flex-row items-start">
+                      <div
+                        key={entity.id}
+                        className="flex size-full flex-row items-start border-r border-r-gray-200"
+                      >
                         <span className="p-4">{index + 1}</span>
                         <div>
                           <span className="text-sm text-gray-500">
@@ -98,7 +101,7 @@ export default function AdminEntites() {
                       <Link
                         key={entity.id}
                         to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                        className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
+                        className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
                       >
                         {entity.nom_d_usage}
                         <br />
@@ -117,7 +120,7 @@ export default function AdminEntites() {
                       <Link
                         key={entity.id}
                         to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                        className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
+                        className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
                       >
                         {entity.type}
                       </Link>,

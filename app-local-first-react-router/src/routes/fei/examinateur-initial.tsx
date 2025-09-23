@@ -398,11 +398,12 @@ export default function FEIExaminateurInitial() {
                 type: 'datetime-local',
                 autoComplete: 'off',
                 suppressHydrationWarning: true,
-                onBlur: (e) =>
+                onBlur: (e) => {
                   updateFei(fei.numero, {
                     examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(e.target.value).toDate(),
                     resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
-                  }),
+                  });
+                },
                 defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
                   ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
                       'YYYY-MM-DDTHH:mm',

@@ -41,7 +41,7 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="fr-container fr-container--fluid fr-my-md-14v">
+    <div className="fr-container--fluid fr-my-md-14v">
       <title>
         Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
@@ -72,29 +72,43 @@ export default function AdminUsers() {
                       return true;
                     })
                     .map((user, index) => [
-                      <div key={user.id} className="flex size-full flex-row items-start">
+                      <div
+                        key={user.id}
+                        className="flex size-full flex-row items-start border-r border-r-gray-200"
+                      >
                         <span className="p-4">{index + 1}</span>
                         <Link
                           to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                          className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
+                          className="inline-flex! size-full flex-col items-start justify-start bg-none! no-underline!"
                           suppressHydrationWarning
                         >
                           Compte activé: {user.activated ? '✅' : '❌'}
                           <br />
-                          Création: {dayjs(user.created_at).format('DD/MM/YYYY à HH:mm')}
+                          Créé le&nbsp;:
                           <br />
-                          {user.activated_at
-                            ? `${user.activated ? 'Activé' : 'Désactivé'} le\u00A0: ${dayjs(user.activated_at).format('DD/MM/YYYY à HH:mm')}`
-                            : 'Activé avant mai 2025'}
+                          <span className="ml-8 text-sm text-gray-500">
+                            {dayjs(user.created_at).format('DD/MM/YYYY à HH:mm')}
+                          </span>
+                          {user.activated_at ? (
+                            <>
+                              {user.activated ? 'Activé' : 'Désactivé'} le&nbsp;:
+                              <span className="ml-8 text-sm text-gray-500">
+                                {dayjs(user.activated_at).format('DD/MM/YYYY à HH:mm')}`
+                              </span>
+                            </>
+                          ) : (
+                            'Activé avant mai 2025'
+                          )}
                         </Link>
                       </div>,
                       <Link
                         key={user.id}
                         to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                        className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
+                        className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
                       >
                         {user.prenom} {user.nom_de_famille}
-                        <br />＠ {user.email}
+                        <br />
+                        ＠&nbsp;{user.email}
                         <br />
                         ☎️ {user.telephone}
                         <br />
@@ -111,7 +125,7 @@ export default function AdminUsers() {
                       <Link
                         key={user.id}
                         to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                        className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
+                        className="no-scrollbar inline-flex! size-full items-center justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
                       >
                         {user.roles.map((role) => (
                           <Fragment key={role}>
@@ -123,6 +137,7 @@ export default function AdminUsers() {
                       <form
                         key={user.email}
                         method="POST"
+                        className="no-scrollbar inline-flex! size-full items-center justify-start overflow-x-auto! border-r border-r-gray-200"
                         onSubmit={(event) => {
                           event.preventDefault();
 
@@ -140,8 +155,13 @@ export default function AdminUsers() {
                             });
                         }}
                       >
-                        <button type="submit" className="fr-btn fr-btn--secondary fr-btn--sm">
-                          Se connecter en tant que {user.email}
+                        <button
+                          type="submit"
+                          className="text-action-high-blue-france h-full w-full text-center"
+                        >
+                          Se connecter en tant que
+                          <br />
+                          {user.email}
                         </button>
                         ,
                       </form>,
