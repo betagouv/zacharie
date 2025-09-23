@@ -24,6 +24,54 @@
       }
     },
     "schemas": {
+      "ApprovalRequestResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Indique si la requête s'est bien déroulée"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "approvalStatus": {
+                "type": "string",
+                "enum": ["PENDING", "APPROVED", "REJECTED"],
+                "description": "Statut de la demande d'approbation"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "Message informatif"
+          }
+        }
+      },
+      "FeiResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Indique si la requête s'est bien déroulée"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "feis": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Fei"
+                },
+                "description": "Liste des fiches d'examen initial"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "Message informatif"
+          }
+        }
+      },
       "CarcasseResponse": {
         "type": "object",
         "properties": {
@@ -96,6 +144,10 @@
           }
         }
       },
+      "Fei": {
+        "type": "object",
+        "description": "Données complètes d'une fiche d'examen initial accessible avec le consentement de l'utilisateur"
+      },
       "Carcasse": {
         "type": "object",
         "description": "Données complètes d'une carcasse accessible avec le consentement de l'utilisateur"
@@ -108,6 +160,196 @@
     }
   ],
   "paths": {
+    "/approval-request/user": {
+      "post": {
+        "summary": "Demander l'approbation d'un utilisateur",
+        "description": "Permet à une application tierce de demander l'approbation d'un utilisateur pour accéder à ses données. L'utilisateur recevra une notification et pourra approuver ou rejeter la demande.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "utilisateur@example.com",
+                    "description": "Email de l'utilisateur dont vous voulez demander l'approbation"
+                  }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès - Demande d'approbation envoyée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalRequestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erreur de paramètres - Format d'email invalide ou utilisateur non trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès interdit - Clé API invalide ou non autorisée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Approbations - Accès Tiers"]
+      }
+    },
+    "/approval-request/entite": {
+      "post": {
+        "summary": "Demander l'approbation d'une entité",
+        "description": "Permet à une application tierce de demander l'approbation d'une entité pour accéder à ses données. L'entité recevra une notification et pourra approuver ou rejeter la demande.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "siret": {
+                    "type": "string",
+                    "pattern": "^\\d{14}$",
+                    "example": "12345678901234",
+                    "description": "Numéro SIRET de l'entité (14 chiffres)"
+                  }
+                },
+                "required": ["siret"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès - Demande d'approbation envoyée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalRequestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erreur de paramètres - Format de SIRET invalide ou entité non trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès interdit - Clé API invalide ou non autorisée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Approbations - Accès Tiers"]
+      }
+    },
+    "/fei/user": {
+      "get": {
+        "summary": "Récupérer les FEI d'un utilisateur",
+        "description": "Récupère toutes les fiches d'examen initial d'un utilisateur dans une plage de dates donnée (nécessite l'email de l'utilisateur et son consentement préalable). Cette route permet aux applications tierces d'accéder aux données d'un utilisateur qui a donné son accord.",
+        "parameters": [
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "example": "2025-09-17"
+            },
+            "description": "Date de début (format: AAAA-MM-JJ)"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "example": "2025-09-20"
+            },
+            "description": "Date de fin (format: AAAA-MM-JJ)"
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "email",
+              "example": "utilisateur@example.com"
+            },
+            "description": "Email de l'utilisateur dont vous voulez accéder aux données (consentement requis)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès - Liste des FEI récupérées",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erreur de paramètres - Format de date invalide, paramètres manquants ou email invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès interdit - Clé API invalide, utilisateur non autorisé ou pas de consentement",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["FEI - Accès Tiers"]
+      }
+    },
     "/carcasse/user/{date_mise_a_mort}/{numero_bracelet}": {
       "get": {
         "summary": "Récupérer une carcasse pour un utilisateur",

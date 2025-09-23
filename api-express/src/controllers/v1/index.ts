@@ -1,13 +1,15 @@
 import express from 'express';
 import feiRouter from './fei.ts';
+import approvalRequestRouter from './approval-request.ts';
 import carcassesRouter from './carcasse.ts';
 import passport from 'passport';
 import swaggerUi from 'swagger-ui-express';
-import swaggerEntityDocument from './swagger-entity.json';
-import swaggerThirdPartyDocument from './swagger-third-party.json';
+import swaggerCleDediee from './swagger-cle-dediee.json';
+import swaggerTiercePartie from './swagger-tierce-partie.json';
 
 const router: express.Router = express.Router();
 
+router.use('/approval-request', passport.initialize({ userProperty: 'apiKeyLog' }), approvalRequestRouter);
 router.use('/fei', passport.initialize({ userProperty: 'apiKeyLog' }), feiRouter);
 router.use('/carcasse', passport.initialize({ userProperty: 'apiKeyLog' }), carcassesRouter);
 
@@ -15,7 +17,7 @@ router.use('/carcasse', passport.initialize({ userProperty: 'apiKeyLog' }), carc
 router.use('/docs/cle-dediee', swaggerUi.serve);
 router.get(
   '/docs/cle-dediee',
-  swaggerUi.setup(swaggerEntityDocument, {
+  swaggerUi.setup(swaggerCleDediee, {
     customSiteTitle: 'API Zacharie - Accès Direct Entité',
     customfavIcon: '/favicon.ico',
   }),
@@ -25,7 +27,7 @@ router.get(
 router.use('/docs/tierces-parties', swaggerUi.serve);
 router.get(
   '/docs/tierces-parties',
-  swaggerUi.setup(swaggerThirdPartyDocument, {
+  swaggerUi.setup(swaggerTiercePartie, {
     customSiteTitle: 'API Zacharie - Accès Tiers',
     customfavIcon: '/favicon.ico',
   }),

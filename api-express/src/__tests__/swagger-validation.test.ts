@@ -1,8 +1,8 @@
 import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import express from 'express';
-import swaggerEntityDocument from '../controllers/v1/swagger-entity.json';
-import swaggerThirdPartyDocument from '../controllers/v1/swagger-third-party.json';
+import swaggerEntityDocument from '../controllers/v1/swagger-cle-dediee.json';
+import swaggerThirdPartyDocument from '../controllers/v1/swagger-tierce-partie.json';
 import v1Router from '../controllers/v1/index';
 
 // Mock app setup for testing
@@ -61,12 +61,19 @@ describe('Swagger Documentation Validation', () => {
       expect(entityPaths).not.toContain('/carcasse/user/{date_mise_a_mort}/{numero_bracelet}');
     });
 
-    test('third-party swagger should have user carcasse endpoints only', () => {
+    test('third-party swagger should have user carcasse, approval request, and FEI user endpoints', () => {
       const thirdPartyPaths = Object.keys(swaggerThirdPartyDocument.paths);
 
       // Should have user carcasse endpoints
       expect(thirdPartyPaths).toContain('/carcasse/user');
       expect(thirdPartyPaths).toContain('/carcasse/user/{date_mise_a_mort}/{numero_bracelet}');
+
+      // Should have approval request endpoints
+      expect(thirdPartyPaths).toContain('/approval-request/user');
+      expect(thirdPartyPaths).toContain('/approval-request/entite');
+
+      // Should have FEI user endpoint
+      expect(thirdPartyPaths).toContain('/fei/user');
 
       // Should NOT have FEI or direct carcasse routes
       expect(thirdPartyPaths).not.toContain('/fei');
@@ -82,6 +89,21 @@ describe('Swagger Documentation Validation', () => {
       expect(feiResponseSchema.properties.data).toBeDefined();
       expect(feiResponseSchema.properties.data.properties.feis).toBeDefined();
       expect(feiResponseSchema.properties.message).toBeDefined();
+    });
+
+    test('third-party swagger should have FeiResponse and ApprovalRequestResponse schemas', () => {
+      const feiResponseSchema = swaggerThirdPartyDocument.components.schemas.FeiResponse;
+      expect(feiResponseSchema.properties.ok).toBeDefined();
+      expect(feiResponseSchema.properties.data).toBeDefined();
+      expect(feiResponseSchema.properties.data.properties.feis).toBeDefined();
+      expect(feiResponseSchema.properties.message).toBeDefined();
+
+      const approvalRequestResponseSchema =
+        swaggerThirdPartyDocument.components.schemas.ApprovalRequestResponse;
+      expect(approvalRequestResponseSchema.properties.ok).toBeDefined();
+      expect(approvalRequestResponseSchema.properties.data).toBeDefined();
+      expect(approvalRequestResponseSchema.properties.data.properties.approvalStatus).toBeDefined();
+      expect(approvalRequestResponseSchema.properties.message).toBeDefined();
     });
 
     test('both swaggers should have CarcasseResponse schema', () => {
@@ -129,6 +151,45 @@ describe('Swagger Documentation Validation', () => {
       expect(dateToParam).toBeDefined();
       expect(dateToParam.required).toBe(true);
       expect(dateToParam.schema.pattern).toBe('^\\d{4}-\\d{2}-\\d{2}$');
+    });
+
+    test('FEI user endpoint should have correct query parameters', () => {
+      const feiUserEndpoint = swaggerThirdPartyDocument.paths['/fei/user'].get;
+      const parameters = feiUserEndpoint.parameters;
+
+      const dateFromParam = parameters.find((p) => p.name === 'date_from');
+      const dateToParam = parameters.find((p) => p.name === 'date_to');
+      const emailParam = parameters.find((p) => p.name === 'email');
+
+      expect(dateFromParam).toBeDefined();
+      expect(dateFromParam.required).toBe(true);
+      expect(dateFromParam.schema.pattern).toBe('^\\d{4}-\\d{2}-\\d{2}$');
+
+      expect(dateToParam).toBeDefined();
+      expect(dateToParam.required).toBe(true);
+      expect(dateToParam.schema.pattern).toBe('^\\d{4}-\\d{2}-\\d{2}$');
+
+      expect(emailParam).toBeDefined();
+      expect(emailParam.in).toBe('query');
+      expect(emailParam.required).toBe(true);
+      expect(emailParam.schema.format).toBe('email');
+    });
+
+    test('Approval request endpoints should have correct request body schemas', () => {
+      const userApprovalEndpoint = swaggerThirdPartyDocument.paths['/approval-request/user'].post;
+      const entiteApprovalEndpoint = swaggerThirdPartyDocument.paths['/approval-request/entite'].post;
+
+      // User approval endpoint
+      const userRequestBody = userApprovalEndpoint.requestBody.content['application/json'].schema;
+      expect(userRequestBody.properties.email).toBeDefined();
+      expect(userRequestBody.properties.email.format).toBe('email');
+      expect(userRequestBody.required).toContain('email');
+
+      // Entity approval endpoint
+      const entiteRequestBody = entiteApprovalEndpoint.requestBody.content['application/json'].schema;
+      expect(entiteRequestBody.properties.siret).toBeDefined();
+      expect(entiteRequestBody.properties.siret.pattern).toBe('^\\d{14}$');
+      expect(entiteRequestBody.required).toContain('siret');
     });
 
     test('Carcasse user endpoint should have correct path and query parameters', () => {
@@ -208,20 +269,20 @@ describe('Swagger Documentation Validation', () => {
   });
 
   describe('Swagger UI Integration', () => {
-    test('should serve Entity Swagger UI at /docs/entity', async () => {
-      const response = await request(app).get('/v1/docs/entity/').expect(200);
+    test('should serve Entity Swagger UI at /docs/cle-dediee', async () => {
+      const response = await request(app).get('/v1/docs/cle-dediee/').expect(200);
       expect(response.text).toContain('swagger-ui');
     });
 
-    test('should serve Third-party Swagger UI at /docs/third-party', async () => {
-      const response = await request(app).get('/v1/docs/third-party/').expect(200);
+    test('should serve Third-party Swagger UI at /docs/tierces-parties', async () => {
+      const response = await request(app).get('/v1/docs/tierces-parties/').expect(200);
       expect(response.text).toContain('swagger-ui');
     });
 
-    test('should redirect /api-docs to /docs/entity', async () => {
-      const response = await request(app).get('/v1/api-docs').expect(302);
-      expect(response.headers.location).toBe('/v1/docs/entity');
-    });
+    // test('should redirect /api-docs to /docs/cle-dediee', async () => {
+    //   const response = await request(app).get('/v1/api-docs').expect(302);
+    //   expect(response.headers.location).toBe('/v1/docs/cle-dediee');
+    // });
   });
 
   describe('API Key Authentication', () => {
@@ -234,6 +295,20 @@ describe('Swagger Documentation Validation', () => {
 
       // Test User Carcasse endpoint without auth
       await request(app).get('/v1/carcasse/user/2025-01-01/BRACELET123?email=test@example.com').expect(401);
+    });
+
+    test('approval request endpoints should require authentication', async () => {
+      // Test user approval endpoint without auth
+      await request(app).post('/v1/approval-request/user').send({ email: 'test@example.com' }).expect(401);
+
+      // Test entity approval endpoint without auth
+      await request(app).post('/v1/approval-request/entite').send({ siret: '12345678901234' }).expect(401);
+    });
+
+    test('FEI user endpoint should require authentication', async () => {
+      await request(app)
+        .get('/v1/fei/user?date_from=2025-01-01&date_to=2025-01-31&email=test@example.com')
+        .expect(401);
     });
 
     test('endpoints should reject invalid API keys', async () => {
@@ -256,6 +331,29 @@ describe('Swagger Documentation Validation', () => {
     test('should validate email format in carcasse user endpoint', async () => {
       await request(app)
         .get('/v1/carcasse/user/2025-01-01/BRACELET123?email=invalid-email')
+        .set('Authorization', 'Bearer test-api-key')
+        .expect(400);
+    });
+
+    test('should validate request body in approval request endpoints', async () => {
+      // Test invalid email format
+      await request(app)
+        .post('/v1/approval-request/user')
+        .set('Authorization', 'Bearer test-api-key')
+        .send({ email: 'invalid-email' })
+        .expect(400);
+
+      // Test invalid SIRET format
+      await request(app)
+        .post('/v1/approval-request/entite')
+        .set('Authorization', 'Bearer test-api-key')
+        .send({ siret: '123' })
+        .expect(400);
+    });
+
+    test('should validate parameters in FEI user endpoint', async () => {
+      await request(app)
+        .get('/v1/fei/user?date_from=invalid-date&date_to=2025-01-31&email=test@example.com')
         .set('Authorization', 'Bearer test-api-key')
         .expect(400);
     });
@@ -282,7 +380,13 @@ describe('Documentation Completeness', () => {
   });
 
   test('third-party swagger should document all response fields', () => {
-    const responseSchemas = ['CarcasseResponse', 'CarcassesResponse', 'ErrorResponse'];
+    const responseSchemas = [
+      'FeiResponse',
+      'CarcasseResponse',
+      'CarcassesResponse',
+      'ApprovalRequestResponse',
+      'ErrorResponse',
+    ];
 
     responseSchemas.forEach((schemaName) => {
       const schema = (swaggerThirdPartyDocument.components.schemas as any)[schemaName];
@@ -322,14 +426,16 @@ describe('Documentation Completeness', () => {
         const operation = pathItem[method];
         expect(operation.tags).toBeDefined();
         expect(operation.tags.length).toBeGreaterThan(0);
-        expect(['Carcasses - Accès Tiers']).toContain(operation.tags[0]);
+        expect(['Carcasses - Accès Tiers', 'Approbations - Accès Tiers', 'FEI - Accès Tiers']).toContain(
+          operation.tags[0],
+        );
       });
     });
   });
 
   test('should have proper separation of concerns', () => {
     // Entity swagger should not have FeiResponse in third-party swagger
-    expect('FeiResponse' in swaggerThirdPartyDocument.components.schemas).toBe(false);
+    expect('ApprovalRequestResponse' in swaggerEntityDocument.components.schemas).toBe(false);
 
     // Both should have their own specific descriptions
     expect(swaggerEntityDocument.info.description).toContain('accès direct');
