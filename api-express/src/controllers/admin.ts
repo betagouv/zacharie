@@ -178,7 +178,7 @@ router.get(
     async (req: express.Request, res: express.Response<AdminUsersResponse>, next: express.NextFunction) => {
       const users = await prisma.user.findMany({
         orderBy: {
-          last_seen_at: 'desc',
+          last_seen_at: { sort: 'desc', nulls: 'last' },
         },
       });
       res.status(200).send({
