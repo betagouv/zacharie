@@ -14,7 +14,7 @@ router.use('/fei', passport.initialize({ userProperty: 'apiKeyLog' }), feiRouter
 router.use('/carcasse', passport.initialize({ userProperty: 'apiKeyLog' }), carcassesRouter);
 
 // Entity API Documentation (direct access)
-router.use('/docs/cle-dediee', swaggerUi.serve);
+router.use('/docs/cle-dediee', swaggerUi.serveFiles(swaggerCleDediee));
 router.get(
   '/docs/cle-dediee',
   swaggerUi.setup(swaggerCleDediee, {
@@ -24,7 +24,7 @@ router.get(
 );
 
 // Third-party API Documentation (user delegation)
-router.use('/docs/tierces-parties', swaggerUi.serve);
+router.use('/docs/tierces-parties', swaggerUi.serveFiles(swaggerTiercePartie));
 router.get(
   '/docs/tierces-parties',
   swaggerUi.setup(swaggerTiercePartie, {
