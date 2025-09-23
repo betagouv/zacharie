@@ -5,8 +5,6 @@ import {
   type Carcasse,
   type CarcasseIntermediaire,
   type Log,
-  type ApiKeyApprovalByUserOrEntity,
-  type ApiKey,
 } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import type { UserForFei } from '~/src/types/user';
@@ -16,6 +14,7 @@ import type {
   CarcasseResponse,
   CarcasseIntermediaireResponse,
   LogResponse,
+  UserConnexionResponse,
 } from '~/src/types/responses';
 import type { FeiDone, FeiWithIntermediaires } from '~/src/types/fei';
 import { create } from 'zustand';
@@ -90,7 +89,7 @@ export interface State {
     Array<FeiAndCarcasseAndIntermediaireIds>
   >;
   intermediairesByFei: Record<Fei['numero'], Array<FeiIntermediaire>>;
-  apiKeyApprovals: Array<ApiKeyApprovalByUserOrEntity & { ApiKey: ApiKey }>;
+  apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
   lastUpdateCarcassesRegistry: number;
   carcassesRegistry: Array<CarcasseForResponseForRegistry>;
   logs: Array<Log>;
@@ -134,7 +133,7 @@ interface Actions {
     feiAndCarcasseAndIntermediaireIds: FeiAndCarcasseAndIntermediaireIds,
     partialCarcasseIntermediaire: Partial<CarcasseIntermediaire>,
   ) => void;
-  setApiKeyApprovals: (apiKeyApprovals: Array<ApiKeyApprovalByUserOrEntity & { ApiKey: ApiKey }>) => void;
+  setApiKeyApprovals: (apiKeyApprovals: UserConnexionResponse['data']['apiKeyApprovals']) => void;
   setHasHydrated: (state: boolean) => void;
   addLog: (log: Omit<CreateLog, 'fei_intermediaire_id'>) => Log;
 }
@@ -426,7 +425,7 @@ const useZustandStore = create<State & Actions>()(
             };
           });
         },
-        setApiKeyApprovals: (apiKeyApprovals: Array<ApiKeyApprovalByUserOrEntity & { ApiKey: ApiKey }>) => {
+        setApiKeyApprovals: (apiKeyApprovals: UserConnexionResponse['data']['apiKeyApprovals']) => {
           set({ apiKeyApprovals });
         },
         addLog: (newLog: Omit<CreateLog, 'fei_intermediaire_id'>) => {

@@ -64,13 +64,13 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       to: '/app/tableau-de-bord/mon-profil/mes-notifications',
     },
   });
-  if (apiKeyApprovals.length > 0) {
+  if (apiKeyApprovals && apiKeyApprovals.length > 0) {
     profileMenu.push({
-      text: 'Mes accès à des tiers',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-acces-a-des-tiers',
+      text: 'Partage des mes données',
+      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/partage-de-mes-donnees',
       linkProps: {
         href: '#',
-        to: '/app/tableau-de-bord/mon-profil/mes-acces-a-des-tiers',
+        to: '/app/tableau-de-bord/mon-profil/partage-de-mes-donnees',
       },
     });
   }

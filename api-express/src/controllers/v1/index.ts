@@ -12,9 +12,9 @@ router.use('/fei', passport.initialize({ userProperty: 'apiKeyLog' }), feiRouter
 router.use('/carcasse', passport.initialize({ userProperty: 'apiKeyLog' }), carcassesRouter);
 
 // Entity API Documentation (direct access)
-router.use('/docs/entity', swaggerUi.serve);
+router.use('/docs/cle-dediee', swaggerUi.serve);
 router.get(
-  '/docs/entity',
+  '/docs/cle-dediee',
   swaggerUi.setup(swaggerEntityDocument, {
     customSiteTitle: 'API Zacharie - Accès Direct Entité',
     customfavIcon: '/favicon.ico',
@@ -22,9 +22,9 @@ router.get(
 );
 
 // Third-party API Documentation (user delegation)
-router.use('/docs/third-party', swaggerUi.serve);
+router.use('/docs/tierces-parties', swaggerUi.serve);
 router.get(
-  '/docs/third-party',
+  '/docs/tierces-parties',
   swaggerUi.setup(swaggerThirdPartyDocument, {
     customSiteTitle: 'API Zacharie - Accès Tiers',
     customfavIcon: '/favicon.ico',

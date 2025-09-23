@@ -36,7 +36,7 @@ import LandingDemarchesPage from './routes/landing-demarches';
 import AdminApiKeys from './routes/admin/api-keys';
 import AdminNewApiKey from './routes/admin/api-key-add';
 import AdminApiKey from './routes/admin/api-key.$apiKeyId';
-import MesAccesATiers from './routes/mon-profil/mes-acces-a-des-tiers';
+import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -168,10 +168,10 @@ function App() {
               }
             />
             <Route
-              path="mon-profil/mes-acces-a-des-tiers"
+              path="mon-profil/partage-de-mes-donnees"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
-                  <MesAccesATiers />
+                  <PartageDeMesDonnees />
                 </RestrictedRoute>
               }
             />
