@@ -1,4 +1,4 @@
-import { CarcasseStatus, Fei, Prisma } from '@prisma/client';
+import { Carcasse, CarcasseIntermediaire, CarcasseStatus, Fei, Prisma } from '@prisma/client';
 
 export const carcasseForRegistrySelect: Prisma.CarcasseSelect = {
   zacharie_carcasse_id: true,
@@ -11,6 +11,7 @@ export const carcasseForRegistrySelect: Prisma.CarcasseSelect = {
   heure_evisceration: true,
   espece: true,
   intermediaire_carcasse_refus_intermediaire_id: true,
+  premier_detenteur_depot_entity_name_cache: true,
   intermediaire_carcasse_refus_motif: true,
   latest_intermediaire_signed_at: true,
   intermediaire_carcasse_manquante: true,
@@ -109,7 +110,60 @@ export type CarcasseGetForRegistry = Prisma.CarcasseGetPayload<{
   select: typeof carcasseForRegistrySelect;
 }>;
 
-export type CarcasseForResponseForRegistry = Omit<CarcasseGetForRegistry, 'Fei'> & {
+export type CarcasseForResponseForRegistry = {
+  zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'];
+  numero_bracelet: Carcasse['numero_bracelet'];
+  fei_numero: Carcasse['fei_numero'];
+  date_mise_a_mort: Carcasse['date_mise_a_mort'];
+  type: Carcasse['type'];
+  nombre_d_animaux: Carcasse['nombre_d_animaux'];
+  heure_mise_a_mort: Carcasse['heure_mise_a_mort'];
+  heure_evisceration: Carcasse['heure_evisceration'];
+  espece: Carcasse['espece'];
+  intermediaire_carcasse_refus_intermediaire_id: Carcasse['intermediaire_carcasse_refus_intermediaire_id'];
+  premier_detenteur_depot_entity_name_cache: Carcasse['premier_detenteur_depot_entity_name_cache'];
+  intermediaire_carcasse_refus_motif: Carcasse['intermediaire_carcasse_refus_motif'];
+  latest_intermediaire_signed_at: Carcasse['latest_intermediaire_signed_at'];
+  intermediaire_carcasse_manquante: Carcasse['intermediaire_carcasse_manquante'];
+  svi_carcasse_commentaire: Carcasse['svi_carcasse_commentaire'];
+  svi_ipm1_date: Carcasse['svi_ipm1_date'];
+  svi_ipm1_presentee_inspection: Carcasse['svi_ipm1_presentee_inspection'];
+  svi_ipm1_user_id: Carcasse['svi_ipm1_user_id'];
+  svi_ipm1_user_name_cache: Carcasse['svi_ipm1_user_name_cache'];
+  svi_ipm1_protocole: Carcasse['svi_ipm1_protocole'];
+  svi_ipm1_pieces: Carcasse['svi_ipm1_pieces'];
+  svi_ipm1_lesions_ou_motifs: Carcasse['svi_ipm1_lesions_ou_motifs'];
+  svi_ipm1_nombre_animaux: Carcasse['svi_ipm1_nombre_animaux'];
+  svi_ipm1_commentaire: Carcasse['svi_ipm1_commentaire'];
+  svi_ipm1_decision: Carcasse['svi_ipm1_decision'];
+  svi_ipm1_duree_consigne: Carcasse['svi_ipm1_duree_consigne'];
+  svi_ipm1_poids_consigne: Carcasse['svi_ipm1_poids_consigne'];
+  svi_ipm1_signed_at: Carcasse['svi_ipm1_signed_at'];
+  svi_ipm2_date: Carcasse['svi_ipm2_date'];
+  svi_ipm2_presentee_inspection: Carcasse['svi_ipm2_presentee_inspection'];
+  svi_ipm2_user_id: Carcasse['svi_ipm2_user_id'];
+  svi_ipm2_user_name_cache: Carcasse['svi_ipm2_user_name_cache'];
+  svi_ipm2_protocole: Carcasse['svi_ipm2_protocole'];
+  svi_ipm2_pieces: Carcasse['svi_ipm2_pieces'];
+  svi_ipm2_lesions_ou_motifs: Carcasse['svi_ipm2_lesions_ou_motifs'];
+  svi_ipm2_nombre_animaux: Carcasse['svi_ipm2_nombre_animaux'];
+  svi_ipm2_commentaire: Carcasse['svi_ipm2_commentaire'];
+  svi_ipm2_decision: Carcasse['svi_ipm2_decision'];
+  svi_ipm2_traitement_assainissant: Carcasse['svi_ipm2_traitement_assainissant'];
+  svi_ipm2_traitement_assainissant_cuisson_temps: Carcasse['svi_ipm2_traitement_assainissant_cuisson_temps'];
+  svi_ipm2_traitement_assainissant_cuisson_temp: Carcasse['svi_ipm2_traitement_assainissant_cuisson_temp'];
+  svi_ipm2_traitement_assainissant_congelation_temps: Carcasse['svi_ipm2_traitement_assainissant_congelation_temps'];
+  svi_ipm2_traitement_assainissant_congelation_temp: Carcasse['svi_ipm2_traitement_assainissant_congelation_temp'];
+  svi_ipm2_traitement_assainissant_type: Carcasse['svi_ipm2_traitement_assainissant_type'];
+  svi_ipm2_traitement_assainissant_paramètres: Carcasse['svi_ipm2_traitement_assainissant_paramètres'];
+  svi_ipm2_traitement_assainissant_etablissement: Carcasse['svi_ipm2_traitement_assainissant_etablissement'];
+  svi_ipm2_traitement_assainissant_poids: Carcasse['svi_ipm2_traitement_assainissant_poids'];
+  svi_ipm2_poids_saisie: Carcasse['svi_ipm2_poids_saisie'];
+  svi_ipm2_signed_at: Carcasse['svi_ipm2_signed_at'];
+  created_at: Carcasse['created_at'];
+  updated_at: Carcasse['updated_at'];
+  deleted_at: Carcasse['deleted_at'];
+  is_synced: Carcasse['is_synced'];
   svi_carcasse_status: CarcasseStatus | null;
   svi_carcasse_status_set_at: Date | null;
   svi_assigned_to_fei_at: Date | null;
@@ -118,9 +172,10 @@ export type CarcasseForResponseForRegistry = Omit<CarcasseGetForRegistry, 'Fei'>
   fei_commune_mise_a_mort: Fei['commune_mise_a_mort'];
   fei_heure_mise_a_mort_premiere_carcasse: Fei['heure_mise_a_mort_premiere_carcasse'];
   fei_heure_evisceration_derniere_carcasse: Fei['heure_evisceration_derniere_carcasse'];
-  // fei_resume_nombre_de_carcasses: Fei['resume_nombre_de_carcasses'];
   fei_examinateur_initial_date_approbation_mise_sur_le_marche: Fei['examinateur_initial_date_approbation_mise_sur_le_marche'];
   fei_premier_detenteur_name_cache: Fei['premier_detenteur_name_cache'];
+  fei_premier_detenteur_depot_ccg_at: Fei['premier_detenteur_depot_ccg_at'];
+  fei_premier_detenteur_depot_entity_name_cache: Fei['premier_detenteur_depot_entity_name_cache'];
   fei_svi_assigned_at: Fei['svi_assigned_at'];
   fei_svi_entity_id: Fei['svi_entity_id'];
   fei_svi_user_id: Fei['svi_user_id'];

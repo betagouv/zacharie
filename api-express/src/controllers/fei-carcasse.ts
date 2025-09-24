@@ -16,6 +16,7 @@ import { RequestWithUser } from '~/types/request';
 import { carcasseForRegistrySelect, CarcasseForResponseForRegistry } from '~/types/carcasse';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { checkGenerateCertificat } from '~/utils/generate-certificats';
+import { mapCarcasseForRegistry } from '~/utils/carcasse-for-registry';
 
 // prisma.carcasse
 //   .findMany({
@@ -169,6 +170,10 @@ router.post(
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id)) {
       nextCarcasse.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id || null;
+    }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_name_cache)) {
+      nextCarcasse.premier_detenteur_depot_entity_name_cache =
+        body.premier_detenteur_depot_entity_name_cache || null;
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_type)) {
       nextCarcasse.premier_detenteur_depot_type = body.premier_detenteur_depot_type || null;
@@ -491,7 +496,7 @@ router.post(
 router.get(
   '/svi',
   passport.authenticate('user', { session: false }),
-  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+  catchErrors(async (req: RequestWithUser, res: express.Response<CarcassesGetForRegistryResponse>) => {
     const userIsSvi = req.user?.roles.includes(UserRoles.SVI);
     if (!userIsSvi) {
       res.status(403).send({ ok: false, data: null, error: 'Unauthorized' });
@@ -553,46 +558,22 @@ router.get(
       }),
     ]);
 
-    const now = dayjs();
-
     res.status(200).json({
       ok: true,
       data: {
-        carcasses: data.map((carcasse): CarcasseForResponseForRegistry => {
-          const fei = carcasse.Fei;
-          const toReturn = {} as CarcasseForResponseForRegistry;
-          for (const key of Object.keys(carcasse)) {
-            if (key === 'Fei') continue;
-            // @ts-expect-error cannot guess fei_* fields
-            toReturn[key] = carcasse[key];
-          }
-          toReturn.svi_carcasse_status = carcasse.svi_carcasse_status || updateCarcasseStatus(carcasse);
-          toReturn.svi_carcasse_status_set_at =
-            carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_closed_at;
-          toReturn.svi_assigned_to_fei_at = carcasse.svi_assigned_to_fei_at || fei.svi_assigned_at;
-          // svi_carcasse_archived = fei.automatic_closed_at || fei.svi_closed_at,
-          toReturn.svi_carcasse_archived =
-            !!fei.automatic_closed_at || dayjs(now).diff(fei.svi_assigned_at, 'day') > 10;
-          toReturn.latest_intermediaire_name_cache = fei.latest_intermediaire_name_cache;
-          for (const key of Object.keys(fei)) {
-            // @ts-expect-error cannot guess fei_* fields
-            toReturn[`fei_${key}`] = fei[key];
-          }
-          // console.log('svi_carcasse_status', toReturn.svi_carcasse_status, updateCarcasseStatus(carcasse));
-          return toReturn as CarcasseForResponseForRegistry;
-        }),
+        carcasses: data.map(mapCarcasseForRegistry),
         hasMore: data.length === parsedLimit,
         total,
       },
       error: '',
-    } satisfies CarcassesGetForRegistryResponse);
+    });
   }),
 );
 
 router.get(
   '/etg',
   passport.authenticate('user', { session: false }),
-  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+  catchErrors(async (req: RequestWithUser, res: express.Response<CarcassesGetForRegistryResponse>) => {
     // Parse and validate query parameters
     const userIsEtg = req.user?.roles.includes(UserRoles.ETG);
     if (!userIsEtg) {
@@ -657,38 +638,15 @@ router.get(
       }),
     ]);
 
-    const now = dayjs();
-
     res.status(200).json({
       ok: true,
       data: {
-        carcasses: data.map((carcasse): CarcasseForResponseForRegistry => {
-          const fei = carcasse.Fei;
-          const toReturn = {} as CarcasseForResponseForRegistry;
-          for (const key of Object.keys(carcasse)) {
-            if (key === 'Fei') continue;
-            // @ts-expect-error cannot guess fei_* fields
-            toReturn[key] = carcasse[key];
-          }
-          toReturn.svi_carcasse_status = carcasse.svi_carcasse_status || updateCarcasseStatus(carcasse);
-          toReturn.svi_carcasse_status_set_at =
-            carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_closed_at;
-          toReturn.svi_assigned_to_fei_at = carcasse.svi_assigned_to_fei_at || fei.svi_assigned_at;
-          // svi_carcasse_archived = fei.automatic_closed_at || fei.svi_closed_at,
-          toReturn.svi_carcasse_archived =
-            !!fei.automatic_closed_at || dayjs(now).diff(fei.svi_assigned_at, 'day') > 10;
-          for (const key of Object.keys(fei)) {
-            // @ts-expect-error cannot guess fei_* fields
-            toReturn[`fei_${key}`] = fei[key];
-          }
-          // console.log('svi_carcasse_status', toReturn.svi_carcasse_status, updateCarcasseStatus(carcasse));
-          return toReturn as CarcasseForResponseForRegistry;
-        }),
+        carcasses: data.map(mapCarcasseForRegistry),
         hasMore: data.length === parsedLimit,
         total,
       },
       error: '',
-    } satisfies CarcassesGetForRegistryResponse);
+    });
   }),
 );
 
