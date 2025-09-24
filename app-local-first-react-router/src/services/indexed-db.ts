@@ -3,8 +3,8 @@ import { type UseStore, set, get, createStore, keys, delMany } from 'idb-keyval'
 import { capture } from '@app/services/sentry';
 
 export const currentCacheKey = 'zach-last-refresh-2024-11-25';
-const dbName = 'zacharie';
-const storeName = 'store';
+const dbName = 'keyval-store';
+const storeName = 'keyval';
 
 let customStore: UseStore | null = null;
 // const savedCacheKey = window.localStorage.getItem("zach-currentCacheKey");

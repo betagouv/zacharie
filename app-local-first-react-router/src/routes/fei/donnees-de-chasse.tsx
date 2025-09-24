@@ -87,6 +87,9 @@ export default function FEIDonneesDeChasse({
     return lines;
   }, [intermediaires, entities]);
 
+  const ccgDate = fei.premier_detenteur_depot_ccg_at
+    ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
+    : null;
   const etgDate = latestIntermediaire?.prise_en_charge_at
     ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
@@ -105,12 +108,20 @@ export default function FEIDonneesDeChasse({
         `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${fei.heure_evisceration_derniere_carcasse!}`,
       );
     }
+    if (ccgDate) {
+      _milestones.push(
+        `Nom du Centre de Collecte (CCG)\u00A0: ${fei.premier_detenteur_depot_entity_name_cache}`,
+      );
+      _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
+    }
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
     if (sviAssignedToFeiAt)
       _milestones.push(`Date et heure d'assignation au SVI\u00A0: ${sviAssignedToFeiAt}`);
     return _milestones;
   }, [
     fei.commune_mise_a_mort,
+    fei.premier_detenteur_depot_entity_name_cache,
+    ccgDate,
     etgDate,
     onlyPetitGibier,
     fei.date_mise_a_mort,

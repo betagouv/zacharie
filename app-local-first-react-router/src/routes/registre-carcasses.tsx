@@ -47,11 +47,15 @@ export default function RegistreCarcasses() {
   const filterableFields = useMemo(() => {
     const motifs = new Set<string>();
     const etgNames = new Set<string>();
+    const ccgNames = new Set<string>();
     for (const carcasse of carcassesRegistry) {
       for (const motif of carcasse.svi_ipm2_lesions_ou_motifs) {
         if (motif) {
           motifs.add(motif);
         }
+      }
+      if (carcasse.premier_detenteur_depot_entity_name_cache) {
+        ccgNames.add(carcasse.premier_detenteur_depot_entity_name_cache);
       }
       if (isSvi) {
         if (carcasse.latest_intermediaire_name_cache) {
@@ -61,7 +65,8 @@ export default function RegistreCarcasses() {
     }
     const sortedMotifs = Array.from(motifs).sort();
     const sortedEtgNames = Array.from(etgNames).sort();
-    return carcasseFilterableFields(sortedMotifs, sortedEtgNames);
+    const sortedCcgNames = Array.from(ccgNames).sort();
+    return carcasseFilterableFields(sortedMotifs, sortedEtgNames, sortedCcgNames);
   }, [carcassesRegistry, isSvi]);
 
   const filteredData = useMemo(() => {

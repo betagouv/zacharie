@@ -13,6 +13,7 @@ import { capture } from '@app/services/sentry';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import API from '@app/services/api';
+import { clearCache } from '@app/services/indexed-db';
 
 type ConnexionType = 'creation-de-compte' | 'compte-existant';
 
@@ -85,14 +86,16 @@ export default function Connexion() {
   const resetPasswordToken = searchParams.get('reset-password-token') || '';
 
   useEffect(() => {
-    refreshUser('connexion').then((user) => {
-      console.log('init user', user);
-      if (!user) {
-        setInitialLoading(false);
-      } else {
-        setUserInitiated(true);
-      }
-    });
+    clearCache('connexion').then(() =>
+      refreshUser('connexion').then((user) => {
+        console.log('init user', user);
+        if (!user) {
+          setInitialLoading(false);
+        } else {
+          setUserInitiated(true);
+        }
+      }),
+    );
   }, []);
   useEffect(() => {
     if (userInitiated && user) {

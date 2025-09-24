@@ -8,6 +8,7 @@ import updateCarcasseStatus, {
 import { Carcasse, CarcasseStatus, CarcasseType, IPM1Decision, IPM2Decision } from '@prisma/client';
 import { CarcasseForResponseForRegistry } from '../../api-express/src/types/carcasse';
 
+// @ts-expect-error cannot guess Carcasse fields
 const createBaseCarcasse = (overrides: Partial<Carcasse> = {}): CarcasseForResponseForRegistry => ({
   zacharie_carcasse_id: 'test-carcasse-id',
   numero_bracelet: '123',
@@ -67,6 +68,7 @@ const createBaseCarcasse = (overrides: Partial<Carcasse> = {}): CarcasseForRespo
   fei_heure_evisceration_derniere_carcasse: null,
   fei_examinateur_initial_date_approbation_mise_sur_le_marche: null,
   fei_premier_detenteur_name_cache: null,
+  fei_premier_detenteur_depot_entity_name_cache: null,
   fei_svi_assigned_at: null,
   fei_svi_entity_id: null,
   fei_svi_user_id: null,

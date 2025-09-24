@@ -309,8 +309,6 @@ export default function DestinataireSelect({
     if (!prochainDetenteurEntityId) {
       return 'Il manque le prochain détenteur des carcasses';
     }
-    console.log('fei.fei_current_owner_role', fei.fei_current_owner_role);
-    console.log('prochainDetenteurType', prochainDetenteurType);
     if (fei.fei_current_owner_wants_to_transfer) {
       if (prochainDetenteurType === EntityTypes.SVI) {
         if (intermediaire?.intermediaire_role !== FeiOwnerRole.ETG) {
@@ -726,6 +724,9 @@ export default function DestinataireSelect({
                       ?.type as FeiOwnerRole,
                     premier_detenteur_depot_type: depotType,
                     premier_detenteur_depot_entity_id: nextDepotEntityId,
+                    premier_detenteur_depot_entity_name_cache: nextDepotEntityId
+                      ? entities[nextDepotEntityId!]?.nom_d_usage
+                      : null,
                     premier_detenteur_depot_ccg_at: nextDepotDate,
                     premier_detenteur_transport_type: nextTransportType,
                     premier_detenteur_transport_date: nextTransportDate,
@@ -740,6 +741,9 @@ export default function DestinataireSelect({
                           nextFei.premier_detenteur_prochain_detenteur_id_cache,
                         premier_detenteur_depot_type: nextFei.premier_detenteur_depot_type,
                         premier_detenteur_depot_entity_id: nextFei.premier_detenteur_depot_entity_id,
+                        premier_detenteur_depot_entity_name_cache: nextFei.premier_detenteur_depot_entity_id
+                          ? entities[nextFei.premier_detenteur_depot_entity_id!]?.nom_d_usage
+                          : null,
                         premier_detenteur_depot_ccg_at: nextFei.premier_detenteur_depot_ccg_at,
                         premier_detenteur_transport_type: nextFei.premier_detenteur_transport_type,
                         premier_detenteur_transport_date: nextFei.premier_detenteur_transport_date,

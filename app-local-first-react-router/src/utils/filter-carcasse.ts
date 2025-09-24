@@ -68,6 +68,7 @@ type CarcasseFilterableField = FilterableField & {
 export function carcasseFilterableFields(
   motifs: Array<string>,
   etgNames: Array<string>,
+  ccgNames: Array<string>,
 ): Array<CarcasseFilterableField> {
   const filters: Array<CarcasseFilterableField> = [
     { name: 'numero_bracelet', label: "Numéro de bracelet ou d'identification", type: 'text' },
@@ -126,9 +127,17 @@ export function carcasseFilterableFields(
   if (etgNames.length) {
     filters.push({
       name: 'latest_intermediaire_name_cache',
-      label: 'ETG',
+      label: "Nom de l'ETG",
       type: 'enum',
       options: etgNames,
+    });
+  }
+  if (ccgNames.length) {
+    filters.push({
+      name: 'premier_detenteur_depot_entity_name_cache',
+      label: 'Nom du Centre de Collecte (CCG)',
+      type: 'enum',
+      options: ccgNames,
     });
   }
   return filters;

@@ -312,6 +312,7 @@ model Fei {
   premier_detenteur_name_cache                            String?
   premier_detenteur_depot_type                            DepotType? // CCG, ETG, AUCUN
   premier_detenteur_depot_entity_id                       String?
+  premier_detenteur_depot_entity_name_cache               String?
   premier_detenteur_depot_ccg_at                          DateTime?
   premier_detenteur_transport_type                        TransportType?
   premier_detenteur_transport_date                        DateTime?
@@ -469,6 +470,7 @@ model Carcasse {
   */
   premier_detenteur_depot_type                       DepotType? // CCG, ETG, AUCUN
   premier_detenteur_depot_entity_id                  String?
+  premier_detenteur_depot_entity_name_cache          String?
   premier_detenteur_depot_ccg_at                     DateTime?
   premier_detenteur_transport_type                   TransportType?
   premier_detenteur_transport_date                   DateTime?

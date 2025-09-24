@@ -65,6 +65,7 @@ const createMockFei = (overrides: Partial<FeiDone> = {}): FeiDone => ({
   premier_detenteur_name_cache: 'Premier Détenteur',
   premier_detenteur_depot_type: null,
   premier_detenteur_depot_entity_id: null,
+  premier_detenteur_depot_entity_name_cache: null,
   premier_detenteur_depot_ccg_at: null,
   premier_detenteur_transport_type: null,
   premier_detenteur_transport_date: null,
