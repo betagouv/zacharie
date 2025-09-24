@@ -62,7 +62,7 @@ export default function CurrentOwnerConfirm() {
       return false;
     }
   }, [latestIntermediaire, fei]);
-  const [checkedTransportFromETG, setCheckedTransportFromETG] = useState(false);
+  const [checkedTransportFromETG, setCheckedTransportFromETG] = useState(needTransportFromETG);
 
   const isETGEmployeeAndTransportingToETG = useMemo(() => {
     if (
