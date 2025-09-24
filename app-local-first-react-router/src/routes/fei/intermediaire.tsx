@@ -327,7 +327,6 @@ function FEICurrentIntermediaireContent({
         continue;
       }
       if (intermediaireCheckById[checkId]) {
-        console.log('intermediaireCheckById[checkId]', intermediaireCheckById[checkId]);
         if (intermediaireCheckById[checkId].prise_en_charge) {
           carcassesApproved[checkId] = carcasse;
         } else if (intermediaireCheckById[checkId].manquante) {

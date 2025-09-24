@@ -94,8 +94,23 @@ export default function CurrentOwnerConfirm() {
       if (!user.roles.includes(UserRoles.SVI)) return false;
     }
     if (user.roles.includes(UserRoles.ETG) || fei.fei_next_owner_role === FeiOwnerRole.ETG) {
+      console.log('ETG');
       if (fei.fei_next_owner_role !== FeiOwnerRole.ETG) return false;
       if (!user.roles.includes(UserRoles.ETG)) return false;
+      if (fei.fei_current_owner_user_id === user.id) {
+        console.log(fei.fei_current_owner_role);
+        if (fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO) {
+          // prise_en_charge is automatic - if the current user can only transport, he cant do anything anymore
+          if (!user.etg_roles.includes(UserEtgRoles.RECEPTION)) {
+            return false;
+          }
+        } else if (fei.fei_current_owner_role === FeiOwnerRole.ETG) {
+          // prise_en_charge is not automatic
+          if (!latestIntermediaire.prise_en_charge_at) {
+            return false;
+          }
+        }
+      }
     }
     if (
       user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
@@ -106,6 +121,8 @@ export default function CurrentOwnerConfirm() {
     }
     return true;
   }, [fei.fei_next_owner_user_id, fei.fei_next_owner_role, user.id, user.roles, nextOwnerEntity]);
+
+  console.log({ canConfirmCurrentOwner });
 
   if (!fei.fei_next_owner_role) {
     return null;
@@ -325,22 +342,23 @@ export default function CurrentOwnerConfirm() {
         {fei.fei_next_owner_role === FeiOwnerRole.ETG && user.roles.includes(UserRoles.ETG) && (
           <>
             {user.etg_roles.includes(UserEtgRoles.RECEPTION) &&
-            user.etg_roles.includes(UserEtgRoles.TRANSPORT) &&
-            needTransportFromETG ? (
+            user.etg_roles.includes(UserEtgRoles.TRANSPORT) ? (
               <>
-                <Button
-                  type="submit"
-                  className="my-4 block"
-                  onClick={() => {
-                    handlePriseEnCharge({
-                      transfer: false,
-                      action: 'current-owner-confirm-etg-transporte',
-                      etgEmployeeTransportingToETG: true,
-                    });
-                  }}
-                >
-                  Je contrôle et transporte les carcasses
-                </Button>
+                {needTransportFromETG && (
+                  <Button
+                    type="submit"
+                    className="my-4 block"
+                    onClick={() => {
+                      handlePriseEnCharge({
+                        transfer: false,
+                        action: 'current-owner-confirm-etg-transporte',
+                        etgEmployeeTransportingToETG: true,
+                      });
+                    }}
+                  >
+                    Je contrôle et transporte les carcasses
+                  </Button>
+                )}
                 <Button
                   type="submit"
                   className="my-4 block"
