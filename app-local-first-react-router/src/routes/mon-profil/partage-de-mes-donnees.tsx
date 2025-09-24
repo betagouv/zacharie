@@ -46,7 +46,7 @@ export default function PartageDeMesDonnees() {
       </title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <h1 className="fr-h2 fr-mb-2w">Partage des mes données</h1>
+          <h1 className="fr-h2 fr-mb-2w">Partage de mes données</h1>
 
           {dedicatedToMyEntities.length > 0 && (
             <div className="mb-6 bg-white md:shadow-sm">

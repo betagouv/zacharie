@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router';
 import SelectCustom from '@app/components/SelectCustom';
 import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
+import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.PREMIER_DETENTEUR]: {},
@@ -88,7 +89,6 @@ export default function MesInformations() {
     async (event: React.FocusEvent<HTMLFormElement>) => {
       const formData = new FormData(event.currentTarget);
       const body: Partial<User> = Object.fromEntries(formData.entries());
-      console.log('body', body);
       const response = await API.post({
         path: `user/${user.id}`,
         body,
@@ -437,8 +437,10 @@ export default function MesInformations() {
                   onChange={async (e) => {
                     e.preventDefault();
                     const formData = new FormData(e.currentTarget);
-                    const etgRoles = formData.getAll(Prisma.UserScalarFieldEnum.etg_roles);
-                    const body: Partial<User> = { etg_roles: etgRoles as UserEtgRoles[] };
+                    const etgRole = formData.get(Prisma.UserScalarFieldEnum.etg_role) as UserEtgRoles;
+                    console.log({ etgRole });
+                    const body: Partial<User> = { etg_role: etgRole as UserEtgRoles };
+                    console.log({ body });
                     const response = await API.post({
                       path: `user/${user.id}`,
                       body,
@@ -449,28 +451,30 @@ export default function MesInformations() {
                   }}
                   onSubmit={(e) => e.preventDefault()}
                 >
-                  <Checkbox
+                  <RadioButtons
                     legend="Que faites-vous au sein de votre ETG ?"
-                    hintText="Préciser vos rôles permettra de mieux vous attribuer les fiches, et de préciser la traçabilité."
-                    key={user.etg_roles.join(',')}
+                    hintText="Préciser votre rôle permettra de mieux vous attribuer les fiches et de préciser la traçabilité."
+                    key={user.etg_role}
                     options={[
                       {
-                        label:
-                          "Je peux transporter les carcasses, ou je gère l'organisation du transport des carcasses",
+                        label: 'Je peux seulement transporter les carcasses',
+                        hintText:
+                          "Si vous faites aussi la réception des carcasses, cochez l'autre option. En cochant cette case, lorsque vous prendrez en charge une fiche, elle sera automatiquement réassignée à votre entreprise pour la réception ultérieure",
                         nativeInputProps: {
-                          name: Prisma.UserScalarFieldEnum.etg_roles,
+                          name: Prisma.UserScalarFieldEnum.etg_role,
                           value: UserEtgRoles.TRANSPORT,
-                          defaultChecked: user.etg_roles.includes(UserEtgRoles.TRANSPORT),
+                          defaultChecked: user.etg_role === UserEtgRoles.TRANSPORT,
                           form: 'etg_roles_form',
                         },
                       },
                       {
                         label: 'Je peux réceptionner les carcasses',
+                        hintText:
+                          'En cochant cette case, vous pourrez réceptionner les carcasses, et vous pourrez aussi préciser le cas échéant que votre entreprise a également transporté les carcasses vers votre entreprise.',
                         nativeInputProps: {
-                          name: Prisma.UserScalarFieldEnum.etg_roles,
+                          name: Prisma.UserScalarFieldEnum.etg_role,
                           value: UserEtgRoles.RECEPTION,
-                          defaultChecked:
-                            user.etg_roles.includes(UserEtgRoles.RECEPTION) || !user.etg_roles.length,
+                          defaultChecked: user.etg_role === UserEtgRoles.RECEPTION || !user.etg_role,
                           form: 'etg_roles_form',
                         },
                       },

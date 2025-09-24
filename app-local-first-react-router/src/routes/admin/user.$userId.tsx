@@ -9,6 +9,7 @@ import {
   Prisma,
   UserNotifications,
   EntityTypes,
+  UserEtgRoles,
 } from '@prisma/client';
 import InputVille from '@app/components/InputVille';
 import RolesCheckBoxes from '@app/components/RolesCheckboxes';
@@ -42,6 +43,7 @@ const initialState: State = {
     activated: true,
     roles: [],
     etg_roles: [],
+    etg_role: UserEtgRoles.RECEPTION,
     numero_cfei: '',
     at_least_one_fei_treated: null,
     user_entities_vivible_checkbox: false,

@@ -80,14 +80,9 @@ function formatRoles(user: User) {
       break;
     case UserRoles.ETG:
       roles.push('ETG');
-      if (
-        user.etg_roles.includes(UserEtgRoles.RECEPTION) &&
-        user.etg_roles.includes(UserEtgRoles.TRANSPORT)
-      ) {
-        roles.push('ETG transporteur et réception');
-      } else if (user.etg_roles.includes(UserEtgRoles.RECEPTION)) {
+      if (user.etg_role === UserEtgRoles.RECEPTION) {
         roles.push('ETG réception');
-      } else if (user.etg_roles.includes(UserEtgRoles.TRANSPORT)) {
+      } else if (user.etg_role === UserEtgRoles.TRANSPORT) {
         roles.push('ETG transporteur');
       }
       break;

@@ -733,10 +733,8 @@ router.post(
           (a, b) => b.localeCompare(a),
         );
       }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.etg_roles)) {
-        nextUser.etg_roles = [
-          ...new Set(body[Prisma.UserScalarFieldEnum.etg_roles] as Array<UserEtgRoles>),
-        ].sort((a, b) => b.localeCompare(a));
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.etg_role)) {
+        nextUser.etg_role = body[Prisma.UserScalarFieldEnum.etg_role] as UserEtgRoles;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.notifications)) {
         nextUser.notifications = body[Prisma.UserScalarFieldEnum.notifications] as Array<UserNotifications>;

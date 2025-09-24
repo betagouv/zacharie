@@ -1,7 +1,7 @@
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { getCurrentOwnerRoleLabel } from '@app/utils/get-user-roles-label';
 import {
   CarcasseIntermediaire,
@@ -24,6 +24,7 @@ import {
 } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import dayjs from 'dayjs';
+import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 
 export default function CurrentOwnerConfirm() {
   const params = useParams();
@@ -61,6 +62,7 @@ export default function CurrentOwnerConfirm() {
       return false;
     }
   }, [latestIntermediaire, fei]);
+  const [checkedTransportFromETG, setCheckedTransportFromETG] = useState(false);
 
   const isETGEmployeeAndTransportingToETG = useMemo(() => {
     if (
@@ -71,8 +73,7 @@ export default function CurrentOwnerConfirm() {
       fei.fei_current_owner_entity_id === fei.fei_next_owner_entity_id &&
       fei.fei_current_owner_user_id === user.id &&
       user.roles.includes(UserRoles.ETG) &&
-      user.etg_roles.includes(UserEtgRoles.TRANSPORT) &&
-      user.etg_roles.includes(UserEtgRoles.RECEPTION)
+      user.etg_role === UserEtgRoles.TRANSPORT
     ) {
       return true;
     }
@@ -94,19 +95,11 @@ export default function CurrentOwnerConfirm() {
       if (!user.roles.includes(UserRoles.SVI)) return false;
     }
     if (user.roles.includes(UserRoles.ETG) || fei.fei_next_owner_role === FeiOwnerRole.ETG) {
-      console.log('ETG');
       if (fei.fei_next_owner_role !== FeiOwnerRole.ETG) return false;
       if (!user.roles.includes(UserRoles.ETG)) return false;
       if (fei.fei_current_owner_user_id === user.id) {
-        console.log(fei.fei_current_owner_role);
         if (fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO) {
-          // prise_en_charge is automatic - if the current user can only transport, he cant do anything anymore
-          if (!user.etg_roles.includes(UserEtgRoles.RECEPTION)) {
-            return false;
-          }
-        } else if (fei.fei_current_owner_role === FeiOwnerRole.ETG) {
-          // prise_en_charge is not automatic
-          if (!latestIntermediaire.prise_en_charge_at) {
+          if (user.etg_role !== UserEtgRoles.RECEPTION) {
             return false;
           }
         }
@@ -120,9 +113,16 @@ export default function CurrentOwnerConfirm() {
       if (!user.roles.includes(UserRoles.COLLECTEUR_PRO)) return false;
     }
     return true;
-  }, [fei.fei_next_owner_user_id, fei.fei_next_owner_role, user.id, user.roles, nextOwnerEntity]);
-
-  console.log({ canConfirmCurrentOwner });
+  }, [
+    fei.fei_next_owner_user_id,
+    fei.fei_next_owner_role,
+    fei.fei_current_owner_user_id,
+    fei.fei_current_owner_role,
+    user.id,
+    user.roles,
+    user.etg_role,
+    nextOwnerEntity,
+  ]);
 
   if (!fei.fei_next_owner_role) {
     return null;
@@ -198,8 +198,7 @@ export default function CurrentOwnerConfirm() {
           intermediaire_role: currentOwnerRole,
           intermediaire_entity_id: fei.fei_next_owner_entity_id || '',
           created_at: dayjs().toDate(),
-          prise_en_charge_at:
-            nextFei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO ? dayjs().toDate() : null,
+          prise_en_charge_at: dayjs().toDate(),
           intermediaire_depot_type: null,
           intermediaire_depot_entity_id: null,
           intermediaire_prochain_detenteur_role_cache: null,
@@ -269,28 +268,14 @@ export default function CurrentOwnerConfirm() {
     }
     const nextName =
       nextOwnerEntity?.nom_d_usage || `${nextOwnerUser?.prenom} ${nextOwnerUser?.nom_de_famille}`;
-    const canReception =
-      user.roles.includes(UserRoles.ETG) && user.etg_roles.includes(UserEtgRoles.RECEPTION);
-    let description = canReception ? (
-      <button
-        onClick={() => {
-          handlePriseEnCharge({ transfer: false });
-        }}
-        type="button"
-      >
-        Bonne route ! Vous êtes arrivé à destination et souhaitez réceptionner le gibier ? <u>Cliquez ici</u>
-      </button>
-    ) : (
-      `Cette fiche lui a déjà été attribuée, il a déjà été notifié, il est prêt à recevoir votre chargement. Bonne route !`
-    );
 
     return (
       <div className="bg-alt-blue-france pb-8">
         <div className="bg-white">
           <Alert
             severity="info"
-            title={`Vous transportez les carcasses vers\u00A0: ${nextName}`}
-            description={description}
+            title={`Les carcasses sont transportées vers\u00A0: ${nextName}`}
+            description="Cette fiche lui a déjà été attribuée, il a déjà été notifié, il est prêt à recevoir votre chargement. Bonne route !"
           />
         </div>
       </div>
@@ -341,43 +326,63 @@ export default function CurrentOwnerConfirm() {
         )}
         {fei.fei_next_owner_role === FeiOwnerRole.ETG && user.roles.includes(UserRoles.ETG) && (
           <>
-            {user.etg_roles.includes(UserEtgRoles.RECEPTION) &&
-            user.etg_roles.includes(UserEtgRoles.TRANSPORT) ? (
+            {user.etg_role === UserEtgRoles.RECEPTION && (
               <>
                 {needTransportFromETG && (
-                  <Button
-                    type="submit"
-                    className="my-4 block"
-                    onClick={() => {
-                      handlePriseEnCharge({
-                        transfer: false,
-                        action: 'current-owner-confirm-etg-transporte',
-                        etgEmployeeTransportingToETG: true,
-                      });
-                    }}
-                  >
-                    Je contrôle et transporte les carcasses
-                  </Button>
+                  <Checkbox
+                    className="mt-4"
+                    options={[
+                      {
+                        label: 'Mes carcasses ont été transportées par mon entreprise',
+                        hintText:
+                          "Vous voyez cette case à cocher parce que le premier détenteur a indiqué que votre entreprise doit les transporter mais aucun transporteur de votre entreprise ne l'a encore indiqué.",
+                        nativeInputProps: {
+                          checked: checkedTransportFromETG,
+                          onChange: () => {
+                            setCheckedTransportFromETG(!checkedTransportFromETG);
+                          },
+                        },
+                      },
+                    ]}
+                  />
                 )}
                 <Button
                   type="submit"
                   className="my-4 block"
-                  onClick={() => {
+                  onClick={async () => {
+                    if (checkedTransportFromETG) {
+                      // FIXME: this is no good, those two actions should be one only
+                      // what is done here is 1. register the fact that the ETG has transported the carcasses
+                      // THEN 2. update the current owner to the ETG reception
+                      // what to do better: handle this process properly, all at once
+                      // why is it like this ? because before, it wasn't a checkbox, it was a button - so there WAS two actions
+                      // but the button was a bad UX< the checkbox is much better - but I didn't take the time to adapt the code
+                      // why a timeout ? because I don't want to overwrite the first setState in zustand state
+                      // so I wait for the first setState to be "done" (I have no listener so timeout will be enough)
+                      // this is a hack, but it works
+                      await handlePriseEnCharge({
+                        transfer: false,
+                        action: 'current-owner-confirm-etg-transport-not-by-me',
+                        etgEmployeeTransportingToETG: true,
+                      });
+                      await new Promise((resolve) => setTimeout(resolve, 300));
+                    }
                     handlePriseEnCharge({ transfer: false, action: 'current-owner-confirm-etg-reception' });
                   }}
                 >
-                  Je réceptionne et traite les carcasses
+                  Je prends en charge les carcasses
                 </Button>
               </>
-            ) : (
+            )}
+            {user.etg_role === UserEtgRoles.TRANSPORT && (
               <Button
                 type="submit"
                 className="my-4 block"
                 onClick={() => {
                   handlePriseEnCharge({
                     transfer: false,
-                    action: 'current-owner-confirm-etg-reception',
-                    etgEmployeeTransportingToETG: user.etg_roles.includes(UserEtgRoles.TRANSPORT),
+                    action: 'current-owner-confirm-etg-transport-by-me',
+                    etgEmployeeTransportingToETG: true,
                   });
                 }}
               >

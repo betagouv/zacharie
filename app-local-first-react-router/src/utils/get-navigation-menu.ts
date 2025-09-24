@@ -66,7 +66,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   });
   if (apiKeyApprovals && apiKeyApprovals.length > 0) {
     profileMenu.push({
-      text: 'Partage des mes données',
+      text: 'Partage de mes données',
       isActive: location.pathname === '/app/tableau-de-bord/mon-profil/partage-de-mes-donnees',
       linkProps: {
         href: '#',

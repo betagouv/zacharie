@@ -47,6 +47,7 @@ model User {
   user_entities_vivible_checkbox Boolean?
   roles                          UserRoles[]
   etg_roles                      UserEtgRoles[]
+  etg_role                       UserEtgRoles                   @default(RECEPTION)
   created_at                     DateTime                       @default(now())
   updated_at                     DateTime                       @default(now()) @updatedAt
   last_login_at                  DateTime?

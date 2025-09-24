@@ -4,7 +4,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { computeFeiSteps } from '../src/utils/fei-steps';
 import { FeiDone } from '../../api-express/src/types/fei';
 import { FeiIntermediaire } from '../src/types/fei-intermediaire';
-import { User, UserRoles, FeiOwnerRole } from '@prisma/client';
+import { User, UserRoles, FeiOwnerRole, UserEtgRoles } from '@prisma/client';
 
 // Mock the Sentry capture function using vi.hoisted()
 const mockCapture = vi.hoisted(() => vi.fn());
@@ -28,6 +28,7 @@ const createMockUser = (roles: UserRoles[], numero_cfei: string | null = null): 
   user_entities_vivible_checkbox: null,
   roles,
   etg_roles: [],
+  etg_role: UserEtgRoles.RECEPTION,
   created_at: new Date(),
   updated_at: new Date(),
   last_login_at: null,
