@@ -27,7 +27,6 @@ const createMockUser = (roles: UserRoles[], numero_cfei: string | null = null): 
   ville: null,
   user_entities_vivible_checkbox: null,
   roles,
-  etg_roles: [],
   etg_role: UserEtgRoles.RECEPTION,
   created_at: new Date(),
   updated_at: new Date(),

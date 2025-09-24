@@ -42,7 +42,6 @@ const initialState: State = {
     ville: '',
     activated: true,
     roles: [],
-    etg_roles: [],
     etg_role: UserEtgRoles.RECEPTION,
     numero_cfei: '',
     at_least_one_fei_treated: null,
