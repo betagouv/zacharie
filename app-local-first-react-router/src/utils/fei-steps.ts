@@ -17,6 +17,7 @@ type UseFeiStepsReturn = {
   currentStep: number;
   currentStepLabel: FeiStep;
   nextStepLabel: FeiStep;
+  currentStepLabelShort: string;
   simpleStatus: FeiStepSimpleStatus;
   steps: Array<IntermediaireStep>;
 };
@@ -235,9 +236,19 @@ export function computeFeiSteps({
     }
   })();
 
+  const currentStepLabelShort = (() => {
+    switch (currentStepLabel) {
+      case 'Transport':
+        return 'Transporté';
+      default:
+        return '';
+    }
+  })();
+
   return {
     currentStep: currentStepIndex + 1,
     currentStepLabel,
+    currentStepLabelShort,
     nextStepLabel,
     simpleStatus,
     steps,

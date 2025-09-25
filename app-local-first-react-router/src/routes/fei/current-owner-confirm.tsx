@@ -2,7 +2,7 @@ import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { useMemo, useState } from 'react';
-import { getCurrentOwnerRoleLabel } from '@app/utils/get-user-roles-label';
+// import { getCurrentOwnerRoleLabel } from '@app/utils/get-user-roles-label';
 import {
   CarcasseIntermediaire,
   DepotType,
@@ -24,7 +24,7 @@ import {
 } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import dayjs from 'dayjs';
-import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
+// import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 
 export default function CurrentOwnerConfirm() {
   const params = useParams();
@@ -62,7 +62,7 @@ export default function CurrentOwnerConfirm() {
       return false;
     }
   }, [latestIntermediaire, fei]);
-  const [checkedTransportFromETG, setCheckedTransportFromETG] = useState(needTransportFromETG);
+  const [checkedTransportFromETG /* setCheckedTransportFromETG */] = useState(needTransportFromETG);
 
   const isETGEmployeeAndTransportingToETG = useMemo(() => {
     if (
@@ -298,10 +298,10 @@ export default function CurrentOwnerConfirm() {
         }
         className="m-0 bg-white"
       >
-        En tant que <b>{getCurrentOwnerRoleLabel(fei.fei_next_owner_role!)}</b>
+        {/* En tant que <b>{getCurrentOwnerRoleLabel(fei.fei_next_owner_role!)}</b>
         {nextOwnerEntity?.nom_d_usage ? ` (${nextOwnerEntity?.nom_d_usage})` : ''}, vous pouvez prendre en
-        charge cette fiche et les carcasses associées.
-        <br />
+        charge cette fiche et les carcasses associées. */}
+        {/* <br /> */}
         {fei.fei_next_owner_role === FeiOwnerRole.PREMIER_DETENTEUR && (
           <Button
             type="submit"
@@ -328,14 +328,27 @@ export default function CurrentOwnerConfirm() {
           <>
             {user.etg_role === UserEtgRoles.RECEPTION && (
               <>
-                {needTransportFromETG && (
+                {/* {needTransportFromETG && (
                   <Checkbox
                     className="mt-4"
                     options={[
                       {
                         label: 'Mes carcasses ont été transportées par mon entreprise',
-                        hintText:
-                          "Le premier détenteur a indiqué que votre entreprise doit les transporter mais aucun transporteur de votre entreprise ne l'a encore indiqué.",
+                        hintText: (
+                          <button
+                            className="text-blue-france text-sm"
+                            type="button"
+                            onClick={() => {
+                              handlePriseEnCharge({
+                                transfer: true,
+                                action: 'current-owner-transfer-request',
+                              });
+                            }}
+                          >
+                            Votre entreprise ne transporte pas les carcasses ? <u>Cliquez ici</u> pour
+                            transférer à un autre collecteur professionnel.
+                          </button>
+                        ),
                         nativeInputProps: {
                           checked: checkedTransportFromETG,
                           onChange: () => {
@@ -345,7 +358,7 @@ export default function CurrentOwnerConfirm() {
                       },
                     ]}
                   />
-                )}
+                )} */}
                 <Button
                   type="submit"
                   className="my-4 block"

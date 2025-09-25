@@ -113,15 +113,16 @@ export default function FEICurrentIntermediaire(props: Props) {
         </nav>
       )}
 
-      <Section open={!!intermediaires.length} title="Données de chasse">
-        <FEIDonneesDeChasse />
-      </Section>
       <FEICurrentIntermediaireContent
         key={intermediaire?.id}
         {...props}
         intermediaire={intermediaire}
         intermediaireIndex={intermediaireIndex}
-      />
+      >
+        <Section open={!!intermediaires.length} title="Données de traçabilité">
+          <FEIDonneesDeChasse />
+        </Section>
+      </FEICurrentIntermediaireContent>
     </Fragment>
   );
 }
@@ -129,8 +130,9 @@ export default function FEICurrentIntermediaire(props: Props) {
 function FEICurrentIntermediaireContent({
   intermediaire,
   intermediaireIndex,
+  children,
   ...props
-}: Props & { intermediaire: FeiIntermediaire; intermediaireIndex: number }) {
+}: Props & { intermediaire: FeiIntermediaire; intermediaireIndex: number; children: React.ReactNode }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
@@ -483,6 +485,41 @@ function FEICurrentIntermediaireContent({
 
   return (
     <Fragment key={intermediaire?.id}>
+      {/* <Section title="Transport" key={intermediaire?.id}>
+        <form
+          method="POST"
+          className="flex flex-col gap-y-4"
+          id="form_intermediaire_check_finished_at"
+          key={JSON.stringify(priseEnChargeAt || '') + JSON.stringify(labelCheckDone)}
+          onSubmit={handleSubmitCheckFinishedAt}
+        >
+          <p>QUi a transporté les carcasses ?</p>
+          {!!canEdit && (
+            <Button type="submit" disabled={!!submitDisabled}>
+              Enregistrer
+            </Button>
+          )}
+          {!carcassesApprovedSorted.length && fei.intermediaire_closed_at && (
+            <>
+              <Alert
+                severity="info"
+                className="mt-6"
+                description="Vous n'avez pas pris en charge de carcasse acceptée, la fiche est donc clôturée."
+                title="Aucune carcasse acceptée"
+              />
+              <Button
+                className="mt-6"
+                linkProps={{
+                  to: `/app/tableau-de-bord/`,
+                }}
+              >
+                Voir toutes mes fiches
+              </Button>
+            </>
+          )}
+        </form>
+      </Section> */}
+      {children}
       {intermediaire ? (
         <Section title={`Carcasses (${intermediaireCarcasses.length})`}>
           {effectiveCanEdit && (
