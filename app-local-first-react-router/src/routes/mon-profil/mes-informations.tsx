@@ -453,13 +453,12 @@ export default function MesInformations() {
                 >
                   <RadioButtons
                     legend="Que faites-vous au sein de votre ETG ?"
-                    hintText="Préciser votre rôle permettra de mieux vous attribuer les fiches et de préciser la traçabilité."
                     key={user.etg_role}
                     options={[
                       {
                         label: 'Je peux seulement transporter les carcasses',
                         hintText:
-                          "Si vous faites aussi la réception des carcasses, cochez l'autre option. En cochant cette case, lorsque vous prendrez en charge une fiche, elle sera automatiquement réassignée à votre entreprise pour la réception ultérieure",
+                          'Si vous cochez cette case, les futures fiches seront automatiquement réassignées à votre entreprise pour la réception ultérieure',
                         nativeInputProps: {
                           name: Prisma.UserScalarFieldEnum.etg_role,
                           value: UserEtgRoles.TRANSPORT,
@@ -468,7 +467,7 @@ export default function MesInformations() {
                         },
                       },
                       {
-                        label: 'Je peux réceptionner les carcasses',
+                        label: 'Je peux réceptionner les carcasses et gérer la logistique',
                         hintText:
                           'En cochant cette case, vous pourrez réceptionner les carcasses, et vous pourrez aussi préciser le cas échéant que votre entreprise a également transporté les carcasses vers votre entreprise.',
                         nativeInputProps: {
@@ -514,9 +513,9 @@ export default function MesInformations() {
                       options={[
                         {
                           label:
-                            "J'autorise le fait que les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartient apparaissent dans les champs de transmission des fiches.",
+                            "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
                           hintText:
-                            'Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les fiches ne pourront pas être attribuées à votre enreprise',
+                            'Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les fiches ne pourront pas être attribuées à votre entreprise',
                           nativeInputProps: {
                             required: true,
                             name: Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox,

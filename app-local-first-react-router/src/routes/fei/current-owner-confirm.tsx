@@ -335,7 +335,7 @@ export default function CurrentOwnerConfirm() {
                       {
                         label: 'Mes carcasses ont été transportées par mon entreprise',
                         hintText:
-                          "Vous voyez cette case à cocher parce que le premier détenteur a indiqué que votre entreprise doit les transporter mais aucun transporteur de votre entreprise ne l'a encore indiqué.",
+                          "Le premier détenteur a indiqué que votre entreprise doit les transporter mais aucun transporteur de votre entreprise ne l'a encore indiqué.",
                         nativeInputProps: {
                           checked: checkedTransportFromETG,
                           onChange: () => {
