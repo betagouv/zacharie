@@ -264,7 +264,7 @@ export default function MesInformations() {
                 {user.roles.includes(UserRoles.CHASSEUR) && (
                   <Input
                     label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                    hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
+                    hintText="De la forme CFEI-DEP-AA-123"
                     nativeInputProps={{
                       id: Prisma.UserScalarFieldEnum.numero_cfei,
                       name: Prisma.UserScalarFieldEnum.numero_cfei,
