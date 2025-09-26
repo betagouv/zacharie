@@ -38,6 +38,7 @@ import {
   FeiOwnerRole,
   UserEtgRoles,
   EntityRelationStatus,
+  ApiKeyApprovalStatus,
 } from '@prisma/client';
 import { authorizeUserOrAdmin } from '~/utils/authorizeUserOrAdmin.server';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
@@ -236,6 +237,90 @@ router.post(
           }
         }
       }
+      const token = jwt.sign({ userId: user.id }, SECRET, {
+        expiresIn: JWT_MAX_AGE,
+      });
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { last_login_at: new Date() },
+      });
+      // refreshMaterializedViews();
+      res.cookie(
+        'zacharie_express_jwt',
+        token,
+        cookieOptions(req.headers.host.includes('localhost') ? true : false),
+      );
+      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+    },
+  ),
+);
+
+router.post(
+  '/access-token',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction,
+    ) => {
+      if (!req.body.accessToken) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Veuillez renseigner votre access token',
+        });
+        return;
+      }
+
+      let user = await prisma.apiKeyApprovalByUserOrEntity
+        .findUnique({
+          where: { access_token: req.body.accessToken as string },
+          include: {
+            User: true,
+          },
+        })
+        .then((approval) => {
+          if (!approval) {
+            res.status(400).send({
+              ok: false,
+              data: { user: null },
+              message: '',
+              error: 'Le lien de connexion est invalide. Veuillez réessayer.',
+            });
+            return;
+          }
+          if (dayjs().diff(approval.access_token_created_at, 'minutes') > 5) {
+            res.status(400).send({
+              ok: false,
+              data: { user: null },
+              message: '',
+              error: 'Le lien de connexion a expiré. Veuillez réessayer.',
+            });
+            return;
+          }
+          if (approval.status !== ApiKeyApprovalStatus.APPROVED) {
+            res.status(400).send({
+              ok: false,
+              data: { user: null },
+              message: '',
+              error: "Le lien de connexion n'a pas été approuvé. Veuillez réessayer.",
+            });
+            return;
+          }
+          return approval.User;
+        });
+
+      if (!user) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Une erreur est survenue. Veuillez réessayer.',
+        });
+        return;
+      }
+
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });

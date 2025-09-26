@@ -61,7 +61,7 @@ describe('Swagger Documentation Validation', () => {
       expect(entityPaths).not.toContain('/carcasse/user/{date_mise_a_mort}/{numero_bracelet}');
     });
 
-    test('third-party swagger should have user carcasse, approval request, and FEI user endpoints', () => {
+    test('third-party swagger should have user carcasse, approval request, access token, and FEI user endpoints', () => {
       const thirdPartyPaths = Object.keys(swaggerThirdPartyDocument.paths);
 
       // Should have user carcasse endpoints
@@ -70,7 +70,10 @@ describe('Swagger Documentation Validation', () => {
 
       // Should have approval request endpoints
       expect(thirdPartyPaths).toContain('/approval-request/user');
-      expect(thirdPartyPaths).toContain('/approval-request/entite');
+      // expect(thirdPartyPaths).toContain('/approval-request/entite');
+
+      // Should have access token endpoint
+      expect(thirdPartyPaths).toContain('/access-token/user');
 
       // Should have FEI user endpoint
       expect(thirdPartyPaths).toContain('/fei/user');
@@ -79,6 +82,52 @@ describe('Swagger Documentation Validation', () => {
       expect(thirdPartyPaths).not.toContain('/fei');
       expect(thirdPartyPaths).not.toContain('/carcasse');
       expect(thirdPartyPaths).not.toContain('/carcasse/{date_mise_a_mort}/{numero_bracelet}');
+
+      // Should have nouvelle-fiche frontend endpoint
+      expect(thirdPartyPaths).toContain('/nouvelle-fiche');
+    });
+
+    test('nouvelle-fiche endpoint should have correct parameters including carcasse format', () => {
+      const nouvelleFicheEndpoint = swaggerThirdPartyDocument.paths['/nouvelle-fiche'].get;
+      const parameters = nouvelleFicheEndpoint.parameters;
+
+      // Check access_token parameter
+      const accessTokenParam = parameters.find((p) => p.name === 'access_token');
+      expect(accessTokenParam).toBeDefined();
+      expect(accessTokenParam.required).toBe(true);
+      expect(accessTokenParam.schema.type).toBe('string');
+
+      // Check carcasse parameter (new comma-separated format)
+      const carcasseParam = parameters.find((p) => p.name === 'carcasse');
+      expect(carcasseParam).toBeDefined();
+      expect(carcasseParam.required).toBe(false);
+      expect(carcasseParam.style).toBe('form');
+      expect(carcasseParam.explode).toBe(true);
+      expect(carcasseParam.schema.type).toBe('array');
+      expect(carcasseParam.schema.items.type).toBe('string');
+      expect(carcasseParam.schema.items.pattern).toBe('^[^,]+,[^,]+(,[^,]*)?$');
+
+      // Check other optional parameters
+      const dateMiseAMortParam = parameters.find((p) => p.name === 'date_mise_a_mort');
+      expect(dateMiseAMortParam).toBeDefined();
+      expect(dateMiseAMortParam.required).toBe(false);
+      expect(dateMiseAMortParam.schema.pattern).toBe('^\\d{4}-\\d{2}-\\d{2}$');
+
+      const communeMiseAMortParam = parameters.find((p) => p.name === 'commune_mise_a_mort');
+      expect(communeMiseAMortParam).toBeDefined();
+      expect(communeMiseAMortParam.required).toBe(false);
+
+      const heureMiseAMortParam = parameters.find((p) => p.name === 'heure_mise_a_mort_premiere_carcasse');
+      expect(heureMiseAMortParam).toBeDefined();
+      expect(heureMiseAMortParam.required).toBe(false);
+      expect(heureMiseAMortParam.schema.pattern).toBe('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
+
+      const heureEviscerationsParam = parameters.find(
+        (p) => p.name === 'heure_evisceration_derniere_carcasse',
+      );
+      expect(heureEviscerationsParam).toBeDefined();
+      expect(heureEviscerationsParam.required).toBe(false);
+      expect(heureEviscerationsParam.schema.pattern).toBe('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
     });
   });
 
@@ -91,7 +140,7 @@ describe('Swagger Documentation Validation', () => {
       expect(feiResponseSchema.properties.message).toBeDefined();
     });
 
-    test('third-party swagger should have FeiResponse and ApprovalRequestResponse schemas', () => {
+    test('third-party swagger should have FeiResponse, ApprovalRequestResponse, and AccessTokenResponse schemas', () => {
       const feiResponseSchema = swaggerThirdPartyDocument.components.schemas.FeiResponse;
       expect(feiResponseSchema.properties.ok).toBeDefined();
       expect(feiResponseSchema.properties.data).toBeDefined();
@@ -104,6 +153,12 @@ describe('Swagger Documentation Validation', () => {
       expect(approvalRequestResponseSchema.properties.data).toBeDefined();
       expect(approvalRequestResponseSchema.properties.data.properties.approvalStatus).toBeDefined();
       expect(approvalRequestResponseSchema.properties.message).toBeDefined();
+
+      const accessTokenResponseSchema = swaggerThirdPartyDocument.components.schemas.AccessTokenResponse;
+      expect(accessTokenResponseSchema.properties.ok).toBeDefined();
+      expect(accessTokenResponseSchema.properties.data).toBeDefined();
+      expect(accessTokenResponseSchema.properties.data.properties.accessToken).toBeDefined();
+      expect(accessTokenResponseSchema.properties.message).toBeDefined();
     });
 
     test('both swaggers should have CarcasseResponse schema', () => {
@@ -177,7 +232,7 @@ describe('Swagger Documentation Validation', () => {
 
     test('Approval request endpoints should have correct request body schemas', () => {
       const userApprovalEndpoint = swaggerThirdPartyDocument.paths['/approval-request/user'].post;
-      const entiteApprovalEndpoint = swaggerThirdPartyDocument.paths['/approval-request/entite'].post;
+      // const entiteApprovalEndpoint = swaggerThirdPartyDocument.paths['/approval-request/entite'].post;
 
       // User approval endpoint
       const userRequestBody = userApprovalEndpoint.requestBody.content['application/json'].schema;
@@ -186,10 +241,10 @@ describe('Swagger Documentation Validation', () => {
       expect(userRequestBody.required).toContain('email');
 
       // Entity approval endpoint
-      const entiteRequestBody = entiteApprovalEndpoint.requestBody.content['application/json'].schema;
-      expect(entiteRequestBody.properties.siret).toBeDefined();
-      expect(entiteRequestBody.properties.siret.pattern).toBe('^\\d{14}$');
-      expect(entiteRequestBody.required).toContain('siret');
+      // const entiteRequestBody = entiteApprovalEndpoint.requestBody.content['application/json'].schema;
+      // expect(entiteRequestBody.properties.siret).toBeDefined();
+      // expect(entiteRequestBody.properties.siret.pattern).toBe('^\\d{14}$');
+      // expect(entiteRequestBody.required).toContain('siret');
     });
 
     test('Carcasse user endpoint should have correct path and query parameters', () => {
@@ -302,7 +357,7 @@ describe('Swagger Documentation Validation', () => {
       await request(app).post('/v1/approval-request/user').send({ email: 'test@example.com' }).expect(401);
 
       // Test entity approval endpoint without auth
-      await request(app).post('/v1/approval-request/entite').send({ siret: '12345678901234' }).expect(401);
+      // await request(app).post('/v1/approval-request/entite').send({ siret: '12345678901234' }).expect(401);
     });
 
     test('FEI user endpoint should require authentication', async () => {
@@ -320,7 +375,7 @@ describe('Swagger Documentation Validation', () => {
     });
   });
 
-  describe('Parameter Validation Integration', () => {
+  describe('Parameter Validation', () => {
     test('should validate date format in FEI endpoint', async () => {
       await request(app)
         .get('/v1/fei?date_from=invalid-date&date_to=2025-01-31')
@@ -344,11 +399,11 @@ describe('Swagger Documentation Validation', () => {
         .expect(400);
 
       // Test invalid SIRET format
-      await request(app)
-        .post('/v1/approval-request/entite')
-        .set('Authorization', 'Bearer test-api-key')
-        .send({ siret: '123' })
-        .expect(400);
+      // await request(app)
+      //   .post('/v1/approval-request/entite')
+      //   .set('Authorization', 'Bearer test-api-key')
+      //   .send({ siret: '123' })
+      //   .expect(400);
     });
 
     test('should validate parameters in FEI user endpoint', async () => {
@@ -356,6 +411,77 @@ describe('Swagger Documentation Validation', () => {
         .get('/v1/fei/user?date_from=invalid-date&date_to=2025-01-31&email=test@example.com')
         .set('Authorization', 'Bearer test-api-key')
         .expect(400);
+    });
+  });
+
+  describe('Access Token Authentication', () => {
+    test('access token endpoint should require authentication', async () => {
+      // Test access token endpoint without auth
+      await request(app).post('/v1/access-token/user').send({ email: 'test@example.com' }).expect(401);
+    });
+
+    test('Access token endpoint should have correct request body schema', () => {
+      const accessTokenEndpoint = swaggerThirdPartyDocument.paths['/access-token/user'].post;
+
+      // Access token endpoint
+      const accessTokenRequestBody = accessTokenEndpoint.requestBody.content['application/json'].schema;
+      expect(accessTokenRequestBody.properties.email).toBeDefined();
+      expect(accessTokenRequestBody.properties.email.format).toBe('email');
+      expect(accessTokenRequestBody.required).toContain('email');
+    });
+
+    test('should validate request body in access token endpoint', async () => {
+      // Test invalid email format
+      await request(app)
+        .post('/v1/access-token/user')
+        .set('Authorization', 'Bearer test-api-key')
+        .send({ email: 'invalid-email' })
+        .expect(400);
+    });
+  });
+
+  describe('nouvelle-fiche endpoint', () => {
+    test('nouvelle-fiche endpoint should have correct parameters including carcasse format', () => {
+      const nouvelleFicheEndpoint = swaggerThirdPartyDocument.paths['/nouvelle-fiche'].get;
+      const parameters = nouvelleFicheEndpoint.parameters;
+
+      // Check access_token parameter
+      const accessTokenParam = parameters.find((p) => p.name === 'access_token');
+      expect(accessTokenParam).toBeDefined();
+      expect(accessTokenParam.required).toBe(true);
+      expect(accessTokenParam.schema.type).toBe('string');
+
+      // Check carcasse parameter (new comma-separated format)
+      const carcasseParam = parameters.find((p) => p.name === 'carcasse');
+      expect(carcasseParam).toBeDefined();
+      expect(carcasseParam.required).toBe(false);
+      expect(carcasseParam.style).toBe('form');
+      expect(carcasseParam.explode).toBe(true);
+      expect(carcasseParam.schema.type).toBe('array');
+      expect(carcasseParam.schema.items.type).toBe('string');
+      expect(carcasseParam.schema.items.pattern).toBe('^[^,]+,[^,]+(,[^,]*)?$');
+
+      // Check other optional parameters
+      const dateMiseAMortParam = parameters.find((p) => p.name === 'date_mise_a_mort');
+      expect(dateMiseAMortParam).toBeDefined();
+      expect(dateMiseAMortParam.required).toBe(false);
+      expect(dateMiseAMortParam.schema.pattern).toBe('^\\d{4}-\\d{2}-\\d{2}$');
+
+      const communeMiseAMortParam = parameters.find((p) => p.name === 'commune_mise_a_mort');
+      expect(communeMiseAMortParam).toBeDefined();
+      expect(communeMiseAMortParam.required).toBe(false);
+
+      const heureMiseAMortParam = parameters.find((p) => p.name === 'heure_mise_a_mort_premiere_carcasse');
+      expect(heureMiseAMortParam).toBeDefined();
+      expect(heureMiseAMortParam.required).toBe(false);
+      expect(heureMiseAMortParam.schema.pattern).toBe('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
+
+      const heureEviscerationsParam = parameters.find(
+        (p) => p.name === 'heure_evisceration_derniere_carcasse',
+      );
+      expect(heureEviscerationsParam).toBeDefined();
+      expect(heureEviscerationsParam.required).toBe(false);
+      expect(heureEviscerationsParam.schema.pattern).toBe('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
     });
   });
 });
@@ -385,6 +511,7 @@ describe('Documentation Completeness', () => {
       'CarcasseResponse',
       'CarcassesResponse',
       'ApprovalRequestResponse',
+      'AccessTokenResponse',
       'ErrorResponse',
     ];
 
@@ -426,9 +553,13 @@ describe('Documentation Completeness', () => {
         const operation = pathItem[method];
         expect(operation.tags).toBeDefined();
         expect(operation.tags.length).toBeGreaterThan(0);
-        expect(['Carcasses - Accès Tiers', 'Approbations - Accès Tiers', 'FEI - Accès Tiers']).toContain(
-          operation.tags[0],
-        );
+        expect([
+          'Carcasses - Accès Tiers',
+          'Approbations - Accès Tiers',
+          'FEI - Accès Tiers',
+          "Token d'accès - Accès Tiers",
+          'Intégration Frontend - Accès Tiers',
+        ]).toContain(operation.tags[0]);
       });
     });
   });

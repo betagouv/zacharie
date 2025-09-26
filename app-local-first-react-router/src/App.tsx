@@ -37,6 +37,7 @@ import AdminApiKeys from './routes/admin/api-keys';
 import AdminNewApiKey from './routes/admin/api-key-add';
 import AdminApiKey from './routes/admin/api-key.$apiKeyId';
 import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
+import NouvelleFiche from './routes/nouvelle-fiche';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -86,6 +87,7 @@ function App() {
               </RootDisplay>
             }
           />
+          <Route path="nouvelle-fiche" element={<NouvelleFiche />} />
           <Route
             path="tableau-de-bord"
             element={

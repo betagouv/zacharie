@@ -87,6 +87,7 @@ router.post(
   ),
 );
 
+/* 
 router.post(
   '/entite',
   passport.authenticate('apiKey', { session: false }),
@@ -154,5 +155,5 @@ router.post(
     },
   ),
 );
-
+ */
 export default router;

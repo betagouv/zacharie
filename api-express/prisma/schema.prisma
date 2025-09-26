@@ -706,13 +706,15 @@ enum ApiKeyApprovalStatus {
 }
 
 model ApiKeyApprovalByUserOrEntity {
-  id         String               @id @default(uuid())
-  api_key_id String
-  user_id    String?
-  entity_id  String?
-  status     ApiKeyApprovalStatus
-  created_at DateTime             @default(now())
-  updated_at DateTime             @default(now()) @updatedAt
+  id                      String               @id @default(uuid())
+  api_key_id              String
+  user_id                 String?
+  entity_id               String?
+  status                  ApiKeyApprovalStatus
+  access_token            String?              @unique
+  access_token_created_at DateTime?
+  created_at              DateTime             @default(now())
+  updated_at              DateTime             @default(now()) @updatedAt
 
   // Relations
   ApiKey ApiKey  @relation(fields: [api_key_id], references: [id], onDelete: Cascade)

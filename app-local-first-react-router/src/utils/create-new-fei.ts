@@ -5,7 +5,14 @@ import { FeiOwnerRole, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { createHistoryInput } from './create-history-entry';
 
-export async function createNewFei(): Promise<FeiWithIntermediaires> {
+type InitialParamsProps = {
+  date_mise_a_mort?: FeiWithIntermediaires['date_mise_a_mort'];
+  commune_mise_a_mort?: FeiWithIntermediaires['commune_mise_a_mort'];
+  heure_mise_a_mort_premiere_carcasse?: FeiWithIntermediaires['heure_mise_a_mort_premiere_carcasse'];
+  heure_evisceration_derniere_carcasse?: FeiWithIntermediaires['heure_evisceration_derniere_carcasse'];
+};
+
+export async function createNewFei(props?: InitialParamsProps): Promise<FeiWithIntermediaires> {
   const user = useUser.getState().user;
   if (!user?.id) {
     throw new Error('No user found');
@@ -19,10 +26,10 @@ export async function createNewFei(): Promise<FeiWithIntermediaires> {
   const newFei: FeiWithIntermediaires = {
     id: Date.now(),
     numero: newFeiNumero,
-    date_mise_a_mort: null,
-    commune_mise_a_mort: null,
-    heure_mise_a_mort_premiere_carcasse: null,
-    heure_evisceration_derniere_carcasse: null,
+    date_mise_a_mort: props?.date_mise_a_mort ?? null,
+    commune_mise_a_mort: props?.commune_mise_a_mort ?? null,
+    heure_mise_a_mort_premiere_carcasse: props?.heure_mise_a_mort_premiere_carcasse ?? null,
+    heure_evisceration_derniere_carcasse: props?.heure_evisceration_derniere_carcasse ?? null,
     created_by_user_id: user.id,
     automatic_closed_at: null,
     resume_nombre_de_carcasses: null,

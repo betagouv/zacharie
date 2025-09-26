@@ -107,7 +107,6 @@ passport.use(
           },
         });
 
-        console.log('Key found:', key);
         return done(null, key);
       } catch (error) {
         console.error('Error in Passport strategy:', error);

@@ -4,12 +4,14 @@ import approvalRequestRouter from './approval-request.ts';
 import carcassesRouter from './carcasse.ts';
 import passport from 'passport';
 import swaggerUi from 'swagger-ui-express';
+import accessTokenRouter from './access-token.ts';
 import swaggerCleDediee from './swagger-cle-dediee.json';
 import swaggerTiercePartie from './swagger-tierce-partie.json';
 
 const router: express.Router = express.Router();
 
 router.use('/approval-request', passport.initialize({ userProperty: 'apiKey' }), approvalRequestRouter);
+router.use('/access-token', passport.initialize({ userProperty: 'apiKey' }), accessTokenRouter);
 router.use('/fei', passport.initialize({ userProperty: 'apiKey' }), feiRouter);
 router.use('/carcasse', passport.initialize({ userProperty: 'apiKey' }), carcassesRouter);
 
