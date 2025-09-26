@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { catchErrors } from '~/middlewares/errors.ts';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import { ApiKeyApprovalStatus, ApiKeyScope } from '@prisma/client';
+import { ApiKeyApprovalStatus, ApiKeyScope, UserRoles } from '@prisma/client';
 import { RequestWithApiKey } from '~/types/request';
 import { checkApiKeyIsValidMiddleware } from '~/utils/api';
 import dayjs from 'dayjs';
@@ -15,6 +15,7 @@ export type ApprovalRequestForApi = {
   ok: boolean;
   data: {
     approvalStatus: ApiKeyApprovalStatus;
+    habilitePourExamenInitial: boolean;
   };
   error?: string;
   message?: string;
@@ -79,6 +80,8 @@ router.post(
         ok: true,
         data: {
           approvalStatus: approval.status,
+          habilitePourExamenInitial:
+            user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && user.activated,
         },
         message:
           "La demande d'approbation a été envoyée. L'utilisateur doit désormais se rendre sur https://zacharie.beta.gouv.fr/app/tableau-de-bord/mon-profil/partage-de-mes-donnees pour approuver ou rejeter la demande. Il se connecte puis clique sur 'Mon profil' puis 'Partage de mes données'. Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",

@@ -152,6 +152,9 @@ describe('Swagger Documentation Validation', () => {
       expect(approvalRequestResponseSchema.properties.ok).toBeDefined();
       expect(approvalRequestResponseSchema.properties.data).toBeDefined();
       expect(approvalRequestResponseSchema.properties.data.properties.approvalStatus).toBeDefined();
+      expect(
+        approvalRequestResponseSchema.properties.data.properties.habilitePourExamenInitial,
+      ).toBeDefined();
       expect(approvalRequestResponseSchema.properties.message).toBeDefined();
 
       const accessTokenResponseSchema = swaggerThirdPartyDocument.components.schemas.AccessTokenResponse;

@@ -44,6 +44,10 @@
                 "type": "string",
                 "enum": ["PENDING", "APPROVED", "REJECTED"],
                 "description": "Statut de la demande d'approbation"
+              },
+              "habilitePourExamenInitial": {
+                "type": "boolean",
+                "description": "Indique si l'utilisateur est habilité pour examen initial"
               }
             }
           },
