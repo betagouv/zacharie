@@ -57,11 +57,11 @@ export default function AdminApiKeys() {
       <div className="fr-container fr-mb-md-14v">
         <CallOut>
           Accès à la documentation :<br />
-          <a href={`https://${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`} target="_blank">
+          <a href={`${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`} target="_blank">
             Pour les tierces parties
           </a>
           <br />
-          <a href={`https://${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
+          <a href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
             Pour les entités
           </a>
           .

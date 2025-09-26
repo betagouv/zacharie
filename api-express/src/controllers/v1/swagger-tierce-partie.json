@@ -780,64 +780,6 @@
         "tags": ["Approbations - Accès Tiers"]
       }
     },
-    "/approval-request/entite": {
-      "post": {
-        "summary": "Demander l'approbation d'une entité",
-        "description": "Permet à une application tierce de demander l'approbation d'une entité pour accéder à ses données. L'entité recevra une notification et pourra approuver ou rejeter la demande.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "siret": {
-                    "type": "string",
-                    "pattern": "^\\d{14}$",
-                    "example": "12345678901234",
-                    "description": "Numéro SIRET de l'entité (14 chiffres)"
-                  }
-                },
-                "required": ["siret"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Succès - Demande d'approbation envoyée",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApprovalRequestResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Erreur de paramètres - Format de SIRET invalide ou entité non trouvée",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Accès interdit - Clé API invalide ou non autorisée",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Approbations - Accès Tiers"]
-      }
-    },
     "/fei/user": {
       "get": {
         "summary": "Récupérer les FEI d'un utilisateur",

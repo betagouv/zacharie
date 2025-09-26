@@ -260,7 +260,7 @@ router.get(
 router.get(
   '/user',
   passport.authenticate('apiKey', { session: false }),
-  checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY]),
+  checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_USER]),
   catchErrors(
     async (
       req: RequestWithApiKey,
@@ -358,7 +358,7 @@ router.get(
 router.get(
   '/',
   passport.authenticate('apiKey', { session: false }),
-  checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY]),
+  checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_ENTITY]),
   catchErrors(
     async (
       req: RequestWithApiKey,

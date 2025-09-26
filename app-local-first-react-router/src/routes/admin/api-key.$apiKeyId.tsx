@@ -202,11 +202,11 @@ export default function AdminApiKey() {
             </div>
             <CallOut>
               {apiKey.dedicated_to_entity_id ? (
-                <a href={`https://${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
+                <a href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
                   Cliquez ici pour la documentation API pour les clés dédiées à une entité
                 </a>
               ) : (
-                <a href={`https://${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`} target="_blank">
+                <a href={`${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`} target="_blank">
                   Cliquez ici pour la documentation API pour les clés pour les tierces parties
                 </a>
               )}

@@ -30,7 +30,7 @@ export type FeiGetForApi = {
 router.get(
   '/user',
   passport.authenticate('apiKey', { session: false }),
-  checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY]),
+  checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_USER]),
   catchErrors(
     async (req: RequestWithApiKey, res: express.Response<FeiGetForApi>, next: express.NextFunction) => {
       const querySchema = z.object({
@@ -40,6 +40,7 @@ router.get(
       });
 
       const queryResult = querySchema.safeParse(req.query);
+      console.log('queryResult', queryResult);
       if (!queryResult.success) {
         const errors = queryResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
@@ -53,6 +54,8 @@ router.get(
       const apiKey = req.apiKey;
 
       const { user, error } = await getRequestedUser(apiKey, email);
+      console.log('user', user);
+      console.log('error', error);
       if (error) {
         res.status(403);
         return next(error);
@@ -105,8 +108,6 @@ router.get(
         },
         select: carcasseForApiSelect,
       });
-
-      console.log(carcasses.length);
 
       res.status(200).send({
         ok: true,
