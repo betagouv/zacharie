@@ -2,6 +2,7 @@ import express from 'express';
 import passport from 'passport';
 import { z } from 'zod';
 import { catchErrors } from '~/middlewares/errors.ts';
+import { apiRateLimit } from '~/middlewares/rate-limit.ts';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { ApiKeyScope, EntityTypes, Prisma, UserRoles } from '@prisma/client';
@@ -29,6 +30,7 @@ export type FeiGetForApi = {
 
 router.get(
   '/user',
+  apiRateLimit,
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_USER]),
   catchErrors(
@@ -131,8 +133,9 @@ router.get(
 
 router.get(
   '/',
+  apiRateLimit,
   passport.authenticate('apiKey', { session: false }),
-  checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY]),
+  checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY, ApiKeyScope.FEI_READ_FOR_USER]),
   catchErrors(
     async (req: RequestWithApiKey, res: express.Response<FeiGetForApi>, next: express.NextFunction) => {
       const querySchema = z.object({

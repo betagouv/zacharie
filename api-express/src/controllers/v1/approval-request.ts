@@ -2,6 +2,7 @@ import express from 'express';
 import passport from 'passport';
 import { z } from 'zod';
 import { catchErrors } from '~/middlewares/errors.ts';
+import { apiRateLimit } from '~/middlewares/rate-limit.ts';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { ApiKeyApprovalStatus, ApiKeyScope, UserRoles } from '@prisma/client';
@@ -23,6 +24,7 @@ export type ApprovalRequestForApi = {
 
 router.post(
   '/user',
+  apiRateLimit,
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_USER, ApiKeyScope.FEI_READ_FOR_USER]),
   catchErrors(

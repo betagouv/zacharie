@@ -1,6 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors.ts';
+import { apiRateLimit } from '~/middlewares/rate-limit.ts';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { ApiKeyScope, EntityTypes, Prisma, UserRoles } from '@prisma/client';
@@ -38,6 +39,7 @@ export type CarcassesForResponseForApi = {
 
 router.get(
   '/user/:date_mise_a_mort/:numero_bracelet',
+  apiRateLimit,
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_USER]),
   catchErrors(
@@ -143,6 +145,7 @@ router.get(
 
 router.get(
   '/:date_mise_a_mort/:numero_bracelet',
+  apiRateLimit,
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_ENTITY]),
   catchErrors(
@@ -259,6 +262,7 @@ router.get(
 
 router.get(
   '/user',
+  apiRateLimit,
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_USER]),
   catchErrors(
@@ -359,6 +363,7 @@ router.get(
 
 router.get(
   '/',
+  apiRateLimit,
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_ENTITY]),
   catchErrors(
