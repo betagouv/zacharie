@@ -75,8 +75,8 @@ export default function FEIDonneesDeChasse({
       const intermediaireLines = [];
       const entity = entities[intermediaire.intermediaire_entity_id!];
       intermediaireLines.push(getIntermediaireRoleLabel(intermediaire.intermediaire_role!));
-      intermediaireLines.push(entity.siret);
-      intermediaireLines.push(`${entity.code_postal} ${entity.ville}`);
+      intermediaireLines.push(entity?.siret);
+      intermediaireLines.push(`${entity?.code_postal} ${entity?.ville}`);
       if (intermediaire.prise_en_charge_at) {
         intermediaireLines.push(
           `Prise en charge\u00A0: ${dayjs(intermediaire.prise_en_charge_at).format('dddd D MMMM à HH:mm')}`,

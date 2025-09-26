@@ -299,6 +299,7 @@ router.get(
             gte: dayjs(dateFrom).utc(true).toISOString(),
             lte: dayjs(dateTo).utc(true).toISOString(),
           },
+          deleted_at: null,
         },
       };
 
@@ -337,6 +338,7 @@ router.get(
           fei_numero: {
             in: feis.map((fei) => fei.numero),
           },
+          deleted_at: null,
         },
         select: carcasseForApiSelect,
       });
@@ -402,6 +404,7 @@ router.get(
             gte: dayjs(dateFrom).utc(true).toISOString(),
             lte: dayjs(dateTo).utc(true).toISOString(),
           },
+          deleted_at: null,
         },
       };
 
@@ -423,6 +426,7 @@ router.get(
             gte: dayjs(dateFrom).utc(true).toISOString(),
             lte: dayjs(dateTo).utc(true).toISOString(),
           },
+          deleted_at: null,
         },
         select: feiForApiSelect,
       });
@@ -432,6 +436,7 @@ router.get(
           fei_numero: {
             in: feis.map((fei) => fei.numero),
           },
+          deleted_at: null,
         },
         select: carcasseForApiSelect,
       });

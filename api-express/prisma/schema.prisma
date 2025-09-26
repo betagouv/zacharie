@@ -731,6 +731,7 @@ model ApiKeyApprovalByUserOrEntity {
 enum ApiKeyLogAction {
   CREATED // When the API key is first created
   USED // When the API key is used to make a request
+  WEBHOOK_SENT // When the API key is used to send a webhook
   REVOKED // When the API key is manually deactivated
   EXPIRED // When the API key reaches its expiration date
   UPDATED // When the API key details are modified

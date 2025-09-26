@@ -1,0 +1,109 @@
+{
+  "components": {
+    "schemas": {
+      "WebhookPayload": {
+        "type": "object",
+        "description": "Payload envoyé par Zacharie lors d'événements webhook",
+        "properties": {
+          "event": {
+            "type": "string",
+            "enum": [
+              "FEI_APPROBATION_MISE_SUR_LE_MARCHE",
+              "FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR",
+              "FEI_ASSIGNEE_AU_SVI",
+              "FEI_PRISE_EN_CHARGE_PAR_PROCHAIN_DETENTEUR",
+              "FEI_CLOTUREE"
+            ],
+            "description": "Type d'événement déclenché"
+          },
+          "fei": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Fei"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Données de la FEI concernée (peut être null selon l'événement)"
+          },
+          "carcasses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Carcasse"
+            },
+            "description": "Liste des carcasses concernées par l'événement"
+          }
+        },
+        "required": ["event", "fei", "carcasses"]
+      },
+      "WebhookResponse": {
+        "type": "object",
+        "description": "Réponse attendue de votre endpoint webhook",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Indique si le webhook a été traité avec succès"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message optionnel de confirmation"
+          }
+        },
+        "required": ["ok"]
+      }
+    }
+  },
+  "paths": {
+    "/webhooks/incoming": {
+      "post": {
+        "summary": "Endpoint webhook pour recevoir les notifications Zacharie",
+        "description": "Cet endpoint doit être implémenté par votre application pour recevoir les notifications en temps réel des événements Zacharie. L'URL de cet endpoint doit être configurée dans votre clé API via le champ `webhook_url`.\n\n**Sécurité:** Zacharie enverra un header `Authorization: Bearer {votre_cle_api}` pour authentifier les requêtes.\n\n**Événements disponibles:**\n- `FEI_APPROBATION_MISE_SUR_LE_MARCHE`: L'examinateur initial a approuvé la mise sur le marché\n- `FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR`: La FEI a été assignée au prochain détenteur\n- `FEI_ASSIGNEE_AU_SVI`: La FEI a été assignée au Service Vétérinaire d'Inspection\n- `FEI_PRISE_EN_CHARGE_PAR_PROCHAIN_DETENTEUR`: Le prochain détenteur a pris en charge la FEI\n- `FEI_CLOTUREE`: La FEI a été clôturée",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook traité avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erreur de traitement du webhook",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification échouée - Clé API invalide"
+          },
+          "500": {
+            "description": "Erreur serveur lors du traitement du webhook"
+          }
+        },
+        "security": [
+          {
+            "WebhookAuth": []
+          }
+        ],
+        "tags": ["Webhooks - Intégration"]
+      }
+    }
+  }
+}

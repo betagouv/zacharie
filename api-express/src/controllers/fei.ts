@@ -24,6 +24,7 @@ import {
 import { userFeiSelect } from '~/types/user';
 import { formatManualValidationSviEmail, formatSviAssignedEmail } from '~/utils/formatCarcasseEmail';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
+import { sendWebhook } from '~/utils/api';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 router.post(
@@ -323,6 +324,18 @@ router.post(
       existingFei = savedFei;
     }
 
+    if (
+      existingFei.examinateur_initial_date_approbation_mise_sur_le_marche !==
+      savedFei.examinateur_initial_date_approbation_mise_sur_le_marche
+    ) {
+      await sendWebhook(
+        savedFei.examinateur_initial_user_id!,
+        'FEI_APPROBATION_MISE_SUR_LE_MARCHE',
+        savedFei.numero,
+        null,
+      );
+    }
+
     if (existingFei.date_mise_a_mort !== savedFei.date_mise_a_mort) {
       await prisma.carcasse.updateMany({
         where: { fei_numero: feiNumero },
@@ -371,6 +384,15 @@ router.post(
       }
     }
 
+    if (existingFei.fei_current_owner_role !== savedFei.fei_current_owner_role) {
+      await sendWebhook(
+        savedFei.fei_current_owner_user_id!,
+        'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR',
+        savedFei.numero,
+        null,
+      );
+    }
+
     if (existingFei.fei_next_owner_role !== UserRoles.SVI && savedFei.fei_next_owner_role === UserRoles.SVI) {
       // this is the end of the fiche
       // send notification to examinateur initial
@@ -410,6 +432,14 @@ router.post(
         if (!svi.at_least_one_fei_treated) {
           await updateBrevoSVIDealPremiereFiche(svi);
         }
+      }
+      const examinateur = savedFei.FeiExaminateurInitialUser;
+      if (examinateur) {
+        await sendWebhook(examinateur.id, 'FEI_ASSIGNEE_AU_SVI', savedFei.numero, null);
+      }
+      const premierDetenteur = savedFei.FeiPremierDetenteurUser;
+      if (premierDetenteur && premierDetenteur.id !== examinateur?.id) {
+        await sendWebhook(premierDetenteur.id, 'FEI_ASSIGNEE_AU_SVI', savedFei.numero, null);
       }
 
       res.status(200).send({
@@ -468,7 +498,6 @@ router.post(
       body.fei_next_owner_entity_id &&
       body.fei_next_owner_entity_id !== existingFei.fei_next_owner_entity_id
     ) {
-      console.log('ENVOI DE NOTIF AU PROCHAIN DETENTEUR');
       const usersWorkingForEntity = (
         await prisma.entityAndUserRelations.findMany({
           where: {
@@ -511,6 +540,14 @@ router.post(
           });
         }
       }
+      const examinateur = savedFei.FeiExaminateurInitialUser;
+      if (examinateur) {
+        await sendWebhook(examinateur.id, 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR', savedFei.numero, null);
+      }
+      const premierDetenteur = savedFei.FeiPremierDetenteurUser;
+      if (premierDetenteur && premierDetenteur.id !== examinateur?.id) {
+        await sendWebhook(premierDetenteur.id, 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR', savedFei.numero, null);
+      }
     }
 
     if (!existingFei.svi_closed_by_user_id && savedFei.svi_closed_by_user_id) {
@@ -529,6 +566,7 @@ router.post(
             user: examinateur,
             ...notification,
           });
+          await sendWebhook(examinateur.id, 'FEI_CLOTUREE', savedFei.numero, null);
         }
       }
       if (
@@ -541,6 +579,25 @@ router.post(
             user: premierDetenteur,
             ...notification,
           });
+          await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', savedFei.numero, null);
+        }
+      }
+    }
+
+    if (!existingFei.intermediaire_closed_at && savedFei.intermediaire_closed_at) {
+      if (savedFei.FeiExaminateurInitialUser) {
+        const examinateur = savedFei.FeiExaminateurInitialUser;
+        if (examinateur) {
+          await sendWebhook(examinateur.id, 'FEI_CLOTUREE', savedFei.numero, null);
+        }
+      }
+      if (
+        savedFei.FeiPremierDetenteurUser &&
+        savedFei.FeiPremierDetenteurUser.id !== savedFei.FeiExaminateurInitialUser?.id
+      ) {
+        const premierDetenteur = savedFei.FeiPremierDetenteurUser;
+        if (premierDetenteur) {
+          await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', savedFei.numero, null);
         }
       }
     }

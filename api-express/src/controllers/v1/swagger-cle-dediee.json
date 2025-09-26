@@ -21,6 +21,12 @@
         "in": "header",
         "name": "Authorization",
         "description": "Authentification par clé API. Utilisez 'Bearer VOTRE_CLE_API'"
+      },
+      "WebhookAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Authentification webhook. Zacharie enverra 'Bearer VOTRE_CLE_API' à votre endpoint"
       }
     },
     "schemas": {
@@ -690,6 +696,76 @@
             "description": "Date de fermeture par le SVI de la FEI"
           }
         }
+      },
+      "WebhookPayload": {
+        "type": "object",
+        "description": "Payload envoyé par Zacharie lors d'événements webhook vers votre endpoint configuré",
+        "properties": {
+          "event": {
+            "type": "string",
+            "enum": [
+              "FEI_APPROBATION_MISE_SUR_LE_MARCHE",
+              "FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR",
+              "FEI_ASSIGNEE_AU_SVI",
+              "FEI_PRISE_EN_CHARGE_PAR_PROCHAIN_DETENTEUR",
+              "FEI_CLOTUREE"
+            ],
+            "description": "Type d'événement déclenché"
+          },
+          "fei": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Fei"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Données complètes de la FEI concernée (peut être null selon l'événement)"
+          },
+          "carcasses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Carcasse"
+            },
+            "description": "Liste des carcasses concernées par l'événement"
+          }
+        },
+        "required": ["event", "fei", "carcasses"],
+        "example": {
+          "event": "FEI_APPROBATION_MISE_SUR_LE_MARCHE",
+          "fei": {
+            "numero": "2025-01-001",
+            "date_mise_a_mort": "2025-01-15",
+            "commune_mise_a_mort": "Fontainebleau"
+          },
+          "carcasses": [
+            {
+              "numero_bracelet": "FR123456789",
+              "espece": "Sanglier",
+              "fei_numero": "2025-01-001"
+            }
+          ]
+        }
+      },
+      "WebhookResponse": {
+        "type": "object",
+        "description": "Réponse attendue de votre endpoint webhook",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Indique si le webhook a été traité avec succès"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message optionnel de confirmation ou d'erreur"
+          }
+        },
+        "required": ["ok"],
+        "example": {
+          "ok": true,
+          "message": "Webhook traité avec succès"
+        }
       }
     }
   },
@@ -895,6 +971,59 @@
           }
         },
         "tags": ["Carcasses - Accès Direct"]
+      }
+    },
+    "/webhooks/votre-endpoint": {
+      "post": {
+        "summary": "Endpoint webhook à implémenter côté client",
+        "description": "**Cet endpoint doit être implémenté par votre application** pour recevoir les notifications en temps réel des événements Zacharie concernant votre entité. L'URL de cet endpoint doit être configurée dans votre clé API via le champ `webhook_url`.\n\n**Configuration:** Ajoutez l'URL de votre endpoint dans votre clé API.\n\n**Sécurité:** Zacharie enverra un header `Authorization: Bearer {votre_cle_api}` pour authentifier les requêtes.\n\n**Événements disponibles:**\n- `FEI_APPROBATION_MISE_SUR_LE_MARCHE`: L'examinateur initial a approuvé la mise sur le marché\n- `FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR`: La FEI a été assignée au prochain détenteur\n- `FEI_ASSIGNEE_AU_SVI`: La FEI a été assignée au Service Vétérinaire d'Inspection\n- `FEI_PRISE_EN_CHARGE_PAR_PROCHAIN_DETENTEUR`: Le prochain détenteur a pris en charge la FEI\n- `FEI_CLOTUREE`: La FEI a été clôturée\n\n**Exemple d'implémentation:**\n```javascript\napp.post('/webhooks/zacharie', (req, res) => {\n  // Vérifier l'authentification\n  const authHeader = req.headers.authorization;\n  if (!authHeader?.startsWith('Bearer ')) {\n    return res.status(401).json({ ok: false });\n  }\n  \n  const token = authHeader.split(' ')[1];\n  if (token !== process.env.ZACHARIE_API_KEY) {\n    return res.status(403).json({ ok: false });\n  }\n  \n  // Traiter le webhook\n  const { event, fei, carcasses } = req.body;\n  console.log(`Événement: ${event}`, { fei, carcasses });\n  \n  // Votre logique métier ici\n  \n  res.json({ ok: true });\n});\n```",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook traité avec succès - Zacharie considérera la notification comme livrée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erreur de validation du payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification échouée - Token Bearer invalide"
+          },
+          "403": {
+            "description": "Accès interdit - Clé API invalide"
+          },
+          "500": {
+            "description": "Erreur serveur lors du traitement du webhook"
+          }
+        },
+        "security": [
+          {
+            "WebhookAuth": []
+          }
+        ],
+        "tags": ["Webhooks - Accès Direct"]
       }
     }
   }

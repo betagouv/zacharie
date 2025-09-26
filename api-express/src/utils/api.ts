@@ -1,7 +1,7 @@
-import { ApiKey, ApiKeyApprovalStatus, ApiKeyScope, Entity, User } from '@prisma/client';
+import { ApiKey, ApiKeyApprovalStatus, ApiKeyLogAction, ApiKeyScope, Entity, User } from '@prisma/client';
 import prisma from '~/prisma';
-import { CarcasseGetForApi } from '~/types/carcasse';
-import { FeiGetForApi } from '~/types/fei';
+import { carcasseForApiSelect, CarcasseGetForApi } from '~/types/carcasse';
+import { feiForApiSelect, FeiGetForApi } from '~/types/fei';
 import { RequestWithApiKey } from '~/types/request';
 import express from 'express';
 import dayjs from 'dayjs';
@@ -269,3 +269,88 @@ export const checkApiKeyIsValidMiddleware =
     }
     next();
   };
+
+type WebhookEvent =
+  | 'FEI_APPROBATION_MISE_SUR_LE_MARCHE'
+  | 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR'
+  | 'FEI_ASSIGNEE_AU_SVI'
+  | 'FEI_PRISE_EN_CHARGE_PAR_PROCHAIN_DETENTEUR'
+  | 'FEI_CLOTUREE';
+
+export async function sendWebhook(
+  userId: string,
+  event: WebhookEvent,
+  feiNumero: string,
+  carcasseZacharieId: string,
+) {
+  const userApprovals = await prisma.apiKeyApprovalByUserOrEntity.findMany({
+    where: {
+      user_id: userId,
+    },
+    include: {
+      ApiKey: true,
+    },
+  });
+  for (const userApproval of userApprovals) {
+    if (userApproval.status !== ApiKeyApprovalStatus.APPROVED) continue;
+    const apiKey = userApproval.ApiKey;
+    if (!apiKey.webhook_url) continue;
+    if (!apiKey.webhook_url.startsWith('https://')) continue;
+    let fei: FeiGetForApi | null = null;
+    let carcasses: CarcasseGetForApi[] = [];
+    if (feiNumero) {
+      fei = await prisma.fei.findUnique({
+        where: {
+          numero: feiNumero,
+          deleted_at: null,
+        },
+        select: feiForApiSelect,
+      });
+
+      carcasses = await prisma.carcasse.findMany({
+        where: {
+          fei_numero: feiNumero,
+          deleted_at: null,
+        },
+        select: carcasseForApiSelect,
+      });
+    }
+    if (carcasseZacharieId) {
+      const carcasse = await prisma.carcasse.findUnique({
+        where: {
+          zacharie_carcasse_id: carcasseZacharieId,
+          deleted_at: null,
+        },
+        select: carcasseForApiSelect,
+      });
+      if (carcasse) {
+        carcasses.push(carcasse);
+      }
+    }
+    const payload = { event, fei, carcasses };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+    fetch(apiKey.webhook_url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey.private_key}`,
+      },
+      signal: controller.signal,
+    })
+      .then((res) => {
+        prisma.apiKeyLog.create({
+          data: {
+            api_key_id: apiKey.id,
+            action: ApiKeyLogAction.WEBHOOK_SENT,
+            endpoint: `POST ${apiKey.webhook_url} ${event} ${feiNumero} ${carcasseZacharieId} ${res.status}`,
+          },
+        });
+      })
+      .catch((err) => {
+        console.error(`Failed to send webhook for event ${event} to ${apiKey.webhook_url}`, err);
+      });
+  }
+}

@@ -14,6 +14,7 @@ import dayjs from 'dayjs';
 import sendNotificationToUser from '~/service/notifications';
 import { formatAutomaticClosingEmail, formatCarcasseChasseurEmail } from '~/utils/formatCarcasseEmail';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
+import { sendWebhook } from '~/utils/api';
 
 // /*
 // *
@@ -113,6 +114,7 @@ async function automaticClosingOfFeis() {
           user: examinateur,
           ...notification,
         });
+        await sendWebhook(examinateur.id, 'FEI_CLOTUREE', fei.numero, null);
       }
     }
     if (fei.FeiPremierDetenteurUser && fei.FeiPremierDetenteurUser.id !== fei.FeiExaminateurInitialUser?.id) {
@@ -122,6 +124,7 @@ async function automaticClosingOfFeis() {
           user: premierDetenteur,
           ...notification,
         });
+        await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', fei.numero, null);
       }
     }
   }
