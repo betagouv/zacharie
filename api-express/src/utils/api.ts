@@ -341,6 +341,7 @@ export async function sendWebhook(
       signal: controller.signal,
     })
       .then((res) => {
+        clearTimeout(timeoutId); // Clear timeout on success
         prisma.apiKeyLog.create({
           data: {
             api_key_id: apiKey.id,
@@ -350,6 +351,7 @@ export async function sendWebhook(
         });
       })
       .catch((err) => {
+        clearTimeout(timeoutId); // Clear timeout on error
         console.error(`Failed to send webhook for event ${event} to ${apiKey.webhook_url}`, err);
       });
   }
