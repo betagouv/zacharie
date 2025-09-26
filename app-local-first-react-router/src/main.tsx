@@ -79,9 +79,7 @@ createRoot(document.getElementById('root')!).render(
         onError={(error, componentStack) => {
           capture(error, { extra: { componentStack } });
         }}
-        onReset={(details) => {
-          console.log('plouf');
-          console.log({ details });
+        onReset={() => {
           clearCache().then(() => {
             window.location.href = '/app/tableau-de-bord';
           });

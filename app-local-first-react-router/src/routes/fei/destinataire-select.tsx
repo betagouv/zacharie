@@ -86,7 +86,9 @@ export default function DestinataireSelect({
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
-      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      (entity) =>
+        entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY ||
+        entity.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
     );
   }, [prochainsDetenteurs]);
 
@@ -346,12 +348,14 @@ export default function DestinataireSelect({
     return null;
   }, [
     prochainDetenteurEntityId,
-    prochainDetenteurType,
+    fei.fei_current_owner_wants_to_transfer,
+    fei.fei_current_owner_role,
     needDepot,
     needTransport,
+    prochainDetenteurType,
+    intermediaire?.intermediaire_role,
     depotType,
     depotEntityId,
-    fei.fei_current_owner_role,
     depotDate,
     transportType,
     transportDate,
@@ -360,6 +364,8 @@ export default function DestinataireSelect({
   if (!fei.premier_detenteur_user_id) {
     return "Il n'y a pas encore de premier détenteur pour cette fiche";
   }
+
+  console.log({ canTransmitCarcassesToEntities, prochainsDetenteurs });
 
   return (
     <>

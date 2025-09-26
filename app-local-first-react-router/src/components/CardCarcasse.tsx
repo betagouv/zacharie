@@ -383,9 +383,17 @@ function CarcasseDetails({
         </>,
       );
     }
-    imp1Lines.push(
-      `Décision IPM1\u00A0: ${carcasse.svi_ipm1_decision === IPM1Decision.NON_RENSEIGNEE ? 'Non renseigné' : 'Mise en consigne'}`,
-    );
+    switch (carcasse.svi_ipm1_decision) {
+      case IPM1Decision.NON_RENSEIGNEE:
+        imp1Lines.push(`Non renseigné`);
+        break;
+      case IPM1Decision.ACCEPTE:
+        imp1Lines.push(`Décision\u00A0: Acceptée`);
+        break;
+      case IPM1Decision.MISE_EN_CONSIGNE:
+        imp1Lines.push(`Décision\u00A0: Mise en consigne`);
+        break;
+    }
     if (carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE) {
       imp1Lines.push(`Durée de la consigne\u00A0: ${carcasse.svi_ipm1_duree_consigne} heures`);
     }

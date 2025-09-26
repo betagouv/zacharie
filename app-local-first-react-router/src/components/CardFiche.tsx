@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { useMemo, useState, useRef, useEffect } from 'react';
+import useZustandStore from '@app/zustand/store';
 
 interface CardProps {
   fei: FeiDone;
@@ -41,6 +42,7 @@ export default function CardFiche({
   const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -128,6 +130,7 @@ export default function CardFiche({
         menuOpen ? 'bg-active-tint' : '',
         disabledBecauseOffline ? 'cursor-not-allowed opacity-50' : '',
       ].join(' ')}
+      key={simpleStatus + currentStepLabelShort + dataIsSynced}
     >
       {/* Print selection checkbox */}
       <div className="absolute top-5 z-20 hidden w-full justify-end pr-5 lg:flex">

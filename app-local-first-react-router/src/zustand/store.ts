@@ -136,39 +136,44 @@ interface Actions {
   setApiKeyApprovals: (apiKeyApprovals: UserConnexionResponse['data']['apiKeyApprovals']) => void;
   setHasHydrated: (state: boolean) => void;
   addLog: (log: Omit<CreateLog, 'fei_intermediaire_id'>) => Log;
+  reset: () => void;
 }
+
+const initialState: State = {
+  isOnline: true,
+  dataIsSynced: true,
+  carcassesRegistry: [],
+  lastUpdateCarcassesRegistry: 0,
+  feisDoneNumeros: [],
+  feisDone: {},
+  logs: [],
+  feis: {},
+  users: {},
+  entities: {},
+  entitiesIdsWorkingDirectlyFor: [],
+  ccgsIds: [],
+  collecteursProIds: [],
+  etgsIds: [],
+  svisIds: [],
+  apiKeyApprovals: [],
+  detenteursInitiaux: {},
+  entityAndUserRelations: {},
+  etgAndEntityRelations: {},
+  entityAndETGRelations: {},
+  carcasses: {},
+  carcassesIdsByFei: {},
+  carcassesIntermediaireById: {},
+  carcassesIntermediairesIdsByCarcasse: {},
+  carcassesIntermediaireIdsByIntermediaire: {},
+  intermediairesByFei: {},
+  _hasHydrated: false,
+};
 
 const useZustandStore = create<State & Actions>()(
   devtools(
     persist(
       (set, get): State & Actions => ({
-        isOnline: true,
-        dataIsSynced: true,
-        carcassesRegistry: [],
-        lastUpdateCarcassesRegistry: 0,
-        feisDoneNumeros: [],
-        feisDone: {},
-        logs: [],
-        feis: {},
-        users: {},
-        entities: {},
-        entitiesIdsWorkingDirectlyFor: [],
-        ccgsIds: [],
-        collecteursProIds: [],
-        etgsIds: [],
-        svisIds: [],
-        apiKeyApprovals: [],
-        detenteursInitiaux: {},
-        entityAndUserRelations: {},
-        etgAndEntityRelations: {},
-        entityAndETGRelations: {},
-        carcasses: {},
-        carcassesIdsByFei: {},
-        carcassesIntermediaireById: {},
-        // feisIntermediaires: {},
-        carcassesIntermediairesIdsByCarcasse: {},
-        carcassesIntermediaireIdsByIntermediaire: {},
-        intermediairesByFei: {},
+        ...initialState,
         getFeiIntermediairesForFeiNumero: (fei_numero: Fei['numero']) => {
           return get().intermediairesByFei[fei_numero] || [];
         },
@@ -459,6 +464,9 @@ const useZustandStore = create<State & Actions>()(
           set({
             _hasHydrated: state,
           });
+        },
+        reset: () => {
+          set(initialState);
         },
       }),
       {

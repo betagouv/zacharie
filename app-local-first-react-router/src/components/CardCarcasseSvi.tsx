@@ -157,9 +157,9 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
               })}
               <span className="m-0 ml-2 block font-medium">
                 - Décision IPM1 :{' '}
-                {carcasse.svi_ipm1_decision === IPM1Decision.NON_RENSEIGNEE
-                  ? 'Non renseigné'
-                  : 'Mise en consigne'}
+                {carcasse.svi_ipm1_decision === IPM1Decision.NON_RENSEIGNEE && 'Non renseigné'}
+                {carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE && 'Acceptée'}
+                {carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE && 'Mise en consigne'}
               </span>
               {carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE && (
                 <span className="m-0 ml-2 block font-medium">

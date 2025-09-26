@@ -1,15 +1,15 @@
 import { Fragment, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import dayjs from 'dayjs';
 import type { AdminUsersResponse } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import API from '@app/services/api';
+import { clearCache } from '@app/services/indexed-db';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<NonNullable<AdminUsersResponse['data']['users']>>([]);
-  const navigate = useNavigate();
   const tabs: TabsProps['tabs'] = [
     {
       tabId: 'all',
@@ -147,11 +147,9 @@ export default function AdminUsers() {
                               email: user.email!,
                             },
                           })
+                            .then(clearCache)
                             .then(() => {
-                              window.localStorage.clear();
-                            })
-                            .then(() => {
-                              navigate('/app/tableau-de-bord');
+                              window.location.href = '/app/tableau-de-bord';
                             });
                         }}
                       >
