@@ -99,6 +99,14 @@ app.get('/healthz', async (req, res) => {
 // hello world
 const now = new Date();
 app.get('/', async (req, res) => {
+  // Log suspicious requests with User-Agent
+  const ip = req.ip || req.connection.remoteAddress;
+  const userAgent = req.headers['user-agent'];
+
+  if (ip?.match(/^(172\.233\.|45\.79\.|172\.104\.|50\.116\.|209\.38\.|66\.228\.)/)) {
+    console.log(`🔍 Linode request from ${ip}: ${userAgent}`);
+  }
+
   res.send(`Hello World at ${now.toISOString()} version ${packageJson.version}`);
 });
 
