@@ -403,9 +403,9 @@ router.post(
             some: {
               entity_id: savedFei.svi_entity_id!,
               relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-              // status: {
-              //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-              // },
+              status: {
+                in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+              },
             },
           },
         },
@@ -503,9 +503,9 @@ router.post(
           where: {
             entity_id: body.fei_next_owner_entity_id as string,
             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-            // status: {
-            //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-            // },
+            status: {
+              in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+            },
             deleted_at: null,
           },
           include: {
@@ -651,9 +651,9 @@ router.get(
                     some: {
                       owner_id: user.id,
                       relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                      // status: {
-                      //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                      // },
+                      status: {
+                        in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                      },
                     },
                   },
                 },
@@ -674,9 +674,9 @@ router.get(
                         some: {
                           owner_id: user.id,
                           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                          // status: {
-                          //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                          // },
+                          status: {
+                            in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                          },
                         },
                       },
                     },
@@ -694,9 +694,9 @@ router.get(
                               some: {
                                 owner_id: user.id,
                                 relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                                // status: {
-                                //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                                // },
+                                status: {
+                                  in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                                },
                               },
                             },
                           },
@@ -712,9 +712,9 @@ router.get(
                     some: {
                       owner_id: user.id,
                       relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                      // status: {
-                      //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                      // },
+                      status: {
+                        in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                      },
                     },
                   },
                 },
@@ -840,9 +840,9 @@ router.get(
                 some: {
                   owner_id: user.id,
                   relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                  // status: {
-                  //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                  // },
+                  status: {
+                    in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                  },
                 },
               },
             },
@@ -862,9 +862,9 @@ router.get(
                           some: {
                             owner_id: user.id,
                             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                            // status: {
-                            //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                            // },
+                            status: {
+                              in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                            },
                           },
                         },
                       },
@@ -900,9 +900,9 @@ router.get(
                 some: {
                   owner_id: user.id,
                   relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                  // status: {
-                  //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                  // },
+                  status: {
+                    in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                  },
                 },
               },
             },
@@ -921,9 +921,9 @@ router.get(
                           some: {
                             owner_id: user.id,
                             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                            // status: {
-                            //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                            // },
+                            status: {
+                              in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                            },
                           },
                         },
                       },
@@ -998,9 +998,9 @@ router.get(
                     some: {
                       owner_id: user.id,
                       relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                      // status: {
-                      //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                      // },
+                      status: {
+                        in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                      },
                     },
                   },
                 },
@@ -1020,9 +1020,9 @@ router.get(
                         some: {
                           owner_id: user.id,
                           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                          // status: {
-                          //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                          // },
+                          status: {
+                            in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                          },
                         },
                       },
                     },
@@ -1040,9 +1040,9 @@ router.get(
                               some: {
                                 owner_id: user.id,
                                 relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                                // status: {
-                                //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                                // },
+                                status: {
+                                  in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                                },
                               },
                             },
                           },

@@ -521,9 +521,9 @@ router.get(
             some: {
               owner_id: req.user!.id,
               relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-              // status: {
-              //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-              // },
+              status: {
+                in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+              },
             },
           },
         },
@@ -599,9 +599,9 @@ router.get(
                 some: {
                   owner_id: req.user.id,
                   relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                  // status: {
-                  //   in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                  // },
+                  status: {
+                    in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                  },
                 },
               },
             },
