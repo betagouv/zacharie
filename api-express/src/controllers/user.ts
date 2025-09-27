@@ -185,7 +185,6 @@ router.post(
         }
       }
       if (!user) {
-        console.log('email', email);
         if (connexionType === 'compte-existant') {
           res.status(400).send({
             ok: false,
@@ -195,6 +194,13 @@ router.post(
           });
           return;
         }
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Les inscriptions sont fermées pour le moment',
+        });
+        return;
         user = await prisma.user.create({
           data: {
             id: await createUserId(),
