@@ -66,7 +66,7 @@ function DeactivatedAccount() {
         <div className="fr-container">
           <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center">
             <div className="fr-py-0 fr-col-12 fr-col-md-6">
-              <h1 className="fr-h1">Merci pour votre inscription à Zacharie!</h1>
+              <h1 className="fr-h1">Merci pour votre inscription à Zacharie&nbsp;!</h1>
               <p className="fr-text--lead fr-mb-3w">Votre compte est en attente d'activation.</p>
               <p className="fr-text--sm">
                 Nous vérifions les informations que vous avez renseignées.

@@ -1008,6 +1008,17 @@ router.get(
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         },
       });
+      if (user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.SVI)) {
+        const approvedRelations = entites?.filter(
+          (entity) =>
+            entity.status === EntityRelationStatus.MEMBER || entity.status === EntityRelationStatus.ADMIN,
+        );
+        if (!approvedRelations?.length) {
+          req.user.activated = false;
+          res.status(200).send({ ok: true, data: { user: req.user }, error: null, message: '' });
+          return;
+        }
+      }
       const apiKeyApprovals = await prisma.apiKeyApprovalByUserOrEntity.findMany({
         where: {
           OR: [
