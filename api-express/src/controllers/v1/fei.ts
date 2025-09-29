@@ -42,7 +42,7 @@ router.get(
       });
 
       const queryResult = querySchema.safeParse(req.query);
-      console.log('queryResult', queryResult);
+
       if (!queryResult.success) {
         const errors = queryResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
@@ -56,8 +56,7 @@ router.get(
       const apiKey = req.apiKey;
 
       const { user, error } = await getRequestedUser(apiKey, email);
-      console.log('user', user);
-      console.log('error', error);
+
       if (error) {
         res.status(403);
         return next(error);

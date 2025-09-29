@@ -365,8 +365,6 @@ export default function DestinataireSelect({
     return "Il n'y a pas encore de premier détenteur pour cette fiche";
   }
 
-  console.log({ canTransmitCarcassesToEntities, prochainsDetenteurs });
-
   return (
     <>
       <div

@@ -87,6 +87,29 @@ export default function FEIDonneesDeChasse({
     return lines;
   }, [intermediaires, entities]);
 
+  const sviInput = useMemo(() => {
+    const lines = [];
+    const sviEntity = entities[fei.svi_entity_id!];
+    lines.push(sviEntity?.nom_d_usage);
+    lines.push(`${sviEntity?.code_postal} ${sviEntity?.ville}`);
+    if (fei.svi_assigned_at) {
+      lines.push(
+        `Date et heure d'assignation au SVI\u00A0: ${dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')}`,
+      );
+    }
+    if (fei.svi_closed_at) {
+      lines.push(
+        `Date et heure de clôture manuelle du SVI\u00A0: ${dayjs(fei.svi_closed_at).format('dddd D MMMM YYYY à HH:mm')}`,
+      );
+    }
+    if (fei.automatic_closed_at) {
+      lines.push(
+        `Date et heure de clôture automatique du SVI\u00A0: ${dayjs(fei.automatic_closed_at).format('dddd D MMMM YYYY à HH:mm')}`,
+      );
+    }
+    return lines;
+  }, [fei.svi_entity_id, entities, fei.svi_assigned_at, fei.svi_closed_at, fei.automatic_closed_at]);
+
   const ccgDate = fei.premier_detenteur_depot_ccg_at
     ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
@@ -146,6 +169,7 @@ export default function FEIDonneesDeChasse({
             <ItemNotEditable key={index} label={intermediaireInput.label!} value={intermediaireInput.value} />
           );
         })}
+        <ItemNotEditable label="Service d'Inspection Vétérinaire (SVI)" value={sviInput} />
       </div>
     </>
   );
