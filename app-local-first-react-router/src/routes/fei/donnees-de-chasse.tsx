@@ -90,8 +90,10 @@ export default function FEIDonneesDeChasse({
   const sviInput = useMemo(() => {
     const lines = [];
     const sviEntity = entities[fei.svi_entity_id!];
-    lines.push(sviEntity?.nom_d_usage);
-    lines.push(`${sviEntity?.code_postal} ${sviEntity?.ville}`);
+    if (sviEntity) {
+      lines.push(sviEntity?.nom_d_usage);
+      lines.push(`${sviEntity?.code_postal} ${sviEntity?.ville}`);
+    }
     if (fei.svi_assigned_at) {
       lines.push(
         `Date et heure d'assignation au SVI\u00A0: ${dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')}`,
