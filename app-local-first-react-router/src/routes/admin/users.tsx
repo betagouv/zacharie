@@ -59,7 +59,7 @@ export default function AdminUsers() {
                 <Table
                   fixed
                   noCaption
-                  className="[&_td]:h-px"
+                  className="[&_td]:align-top"
                   headers={['Dates', 'Identité', 'Roles', 'Actions']}
                   data={users
                     .filter((user) => {
@@ -104,7 +104,7 @@ export default function AdminUsers() {
                       <Link
                         key={user.id}
                         to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                        className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
+                        className="no-scrollbar inline-flex! size-full items-start justify-start self-stretch overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
                       >
                         {user.prenom} {user.nom_de_famille}
                         <br />

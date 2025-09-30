@@ -72,7 +72,7 @@ export default function AdminEntites() {
                 <Table
                   fixed
                   noCaption
-                  className="[&_td]:h-px"
+                  className="[&_td]:align-middle"
                   data={entities
                     .filter((entity) => {
                       if (selectedTabId === 'all') return true;

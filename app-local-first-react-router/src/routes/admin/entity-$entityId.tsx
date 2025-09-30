@@ -457,7 +457,7 @@ function UserWorkingWithOrFor({
         <Table
           fixed
           noCaption
-          className="[&_td]:h-px"
+          className="[&_td]:align-middle"
           data={potentialUsers.map((user) => [
             <form
               key={user.id}
@@ -638,7 +638,7 @@ function EntitiesRelatedTo({
           <Table
             fixed
             noCaption
-            className="[&_td]:h-px"
+            className="[&_td]:align-middle"
             data={potentialEntitiesRelated.map((potentialEntityRelated) => {
               const etg = entity.type === EntityTypes.ETG ? entity : potentialEntityRelated;
               const otherEntity = entity.type === EntityTypes.ETG ? potentialEntityRelated : entity;

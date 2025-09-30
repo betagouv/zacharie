@@ -610,7 +610,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
           <Table
             fixed
             noCaption
-            className="[&_td]:h-px"
+            className="[&_td]:align-middle"
             data={potentialEntities.map((entity) => [
               <form
                 key={entity.id}

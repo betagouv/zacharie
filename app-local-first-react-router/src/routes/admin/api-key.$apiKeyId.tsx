@@ -445,7 +445,7 @@ function EntitiesRelatedTo({
         <Table
           fixed
           noCaption
-          className="[&_td]:h-px"
+          className="[&_td]:align-middle"
           data={Object.values(allEntities).map((entity) => {
             return [
               <form
@@ -608,7 +608,7 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
         <Table
           fixed
           noCaption
-          className="[&_td]:h-px"
+          className="[&_td]:align-middle"
           data={Object.values(allUsers).map((user) => {
             return [
               <form

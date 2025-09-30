@@ -81,7 +81,7 @@ export default function AdminApiKeys() {
                 <Table
                   fixed
                   noCaption
-                  className="[&_td]:h-px"
+                  className="[&_td]:align-middle"
                   headers={['Dates', 'Identité', 'Scopes', 'Approbations']}
                   data={apiKeys
                     .filter((apiKey) => {
