@@ -728,7 +728,7 @@ router.get(
         CarcasseIntermediaire: true,
       },
       orderBy: {
-        svi_assigned_at: 'desc',
+        updated_at: 'desc',
       },
     });
 
@@ -736,7 +736,19 @@ router.get(
       ok: true,
       data: {
         user,
-        feisDone,
+        feisDone: feisDone.sort((a, b) => {
+          const aDate =
+            a.automatic_closed_at ||
+            a.intermediaire_closed_at ||
+            a.svi_closed_at ||
+            a.examinateur_initial_date_approbation_mise_sur_le_marche;
+          const bDate =
+            b.automatic_closed_at ||
+            b.intermediaire_closed_at ||
+            b.svi_closed_at ||
+            b.examinateur_initial_date_approbation_mise_sur_le_marche;
+          return bDate < aDate ? -1 : 1;
+        }),
       },
       error: '',
     } satisfies FeisDoneResponse);
