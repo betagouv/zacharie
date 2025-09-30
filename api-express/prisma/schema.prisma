@@ -684,6 +684,8 @@ model ApiKey {
   active                 Boolean       @default(true)
   expires_at             DateTime? // Optional expiration date
   last_used_at           DateTime? // Track when the key was last used
+  access_token           String?       @unique
+  access_token_read_at   DateTime?
   scopes                 ApiKeyScope[] // Array of permissions/scopes
   rate_limit             Int? // Requests per minute/hour allowed
   created_at             DateTime      @default(now())

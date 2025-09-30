@@ -717,12 +717,11 @@ router.post(
 );
 
 router.post(
-  '/api-key/:api_key_id',
+  '/api-key/new-access-token/:api_key_id',
   passport.authenticate('user', { session: false }),
   validateUser([UserRoles.ADMIN]),
   catchErrors(
     async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
-      console.log(req.body, req.params);
       const apiKey = await prisma.apiKey.findUnique({
         where: { id: req.params.api_key_id },
       });
@@ -730,37 +729,13 @@ router.post(
         res.status(404).send({ ok: false, data: null, error: 'API key not found' });
         return;
       }
-      const updateBody: Prisma.ApiKeyUncheckedUpdateInput = {};
-      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.name)) {
-        updateBody[Prisma.ApiKeyScalarFieldEnum.name] = req.body[Prisma.ApiKeyScalarFieldEnum.name];
-      }
-      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.description)) {
-        updateBody[Prisma.ApiKeyScalarFieldEnum.description] =
-          req.body[Prisma.ApiKeyScalarFieldEnum.description];
-      }
-      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.webhook_url)) {
-        updateBody[Prisma.ApiKeyScalarFieldEnum.webhook_url] =
-          req.body[Prisma.ApiKeyScalarFieldEnum.webhook_url];
-      }
-      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.active)) {
-        updateBody[Prisma.ApiKeyScalarFieldEnum.active] = req.body[Prisma.ApiKeyScalarFieldEnum.active];
-      }
-      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.expires_at)) {
-        updateBody[Prisma.ApiKeyScalarFieldEnum.expires_at] =
-          req.body[Prisma.ApiKeyScalarFieldEnum.expires_at];
-      }
-      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.scopes)) {
-        updateBody[Prisma.ApiKeyScalarFieldEnum.scopes] = req.body[
-          Prisma.ApiKeyScalarFieldEnum.scopes
-        ] as ApiKeyScope[];
-      }
-      if (req.body.hasOwnProperty(Prisma.ApiKeyScalarFieldEnum.rate_limit)) {
-        updateBody[Prisma.ApiKeyScalarFieldEnum.rate_limit] =
-          req.body[Prisma.ApiKeyScalarFieldEnum.rate_limit];
-      }
+      const accessToken = crypto.randomBytes(32).toString('hex');
       const updatedApiKey = await prisma.apiKey.update({
         where: { id: req.params.api_key_id },
-        data: updateBody,
+        data: {
+          access_token: accessToken,
+          access_token_read_at: null,
+        },
       });
       res.status(200).send({ ok: true, data: { apiKey: updatedApiKey }, error: '' });
     },

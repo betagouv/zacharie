@@ -7,9 +7,10 @@ import swaggerUi from 'swagger-ui-express';
 import accessTokenRouter from './access-token.ts';
 import swaggerCleDediee from './swagger-cle-dediee.json';
 import swaggerTiercePartie from './swagger-tierce-partie.json';
-
+import apiKeyRouter from './api-key.ts';
 const router: express.Router = express.Router();
 
+router.use('/api-key', apiKeyRouter);
 router.use('/approval-request', passport.initialize({ userProperty: 'apiKey' }), approvalRequestRouter);
 router.use('/access-token', passport.initialize({ userProperty: 'apiKey' }), accessTokenRouter);
 router.use('/fei', passport.initialize({ userProperty: 'apiKey' }), feiRouter);

@@ -26,6 +26,8 @@ const initialState: State = {
     name: '',
     id: '',
     dedicated_to_entity_id: null,
+    access_token: null,
+    access_token_read_at: null,
     private_key: '',
     public_key: '',
     description: '',
@@ -260,6 +262,24 @@ export default function AdminApiKey() {
                       defaultValue: apiKey.private_key ?? '',
                     }}
                   />
+                  <div className="my-4 flex w-full flex-row items-center justify-between">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        API.post({
+                          path: `admin/api-key/new-access-token/${apiKey.id}`,
+                        }).then((res) => {
+                          const link = `${import.meta.env.VITE_API_URL}/v1/api-key/access-token/${res.data.apiKey.access_token}`;
+                          window.open(
+                            `mailto:?subject=Votre lien pour accéder à la clé privée de l'API Zacharie&body=Bonjour%0A%0AVoici votre lien pour accéder à la clé privée de l'API Zacharie: ${link}%0AUne fois ouvert, ce lien ne sera plus valide. Si vous avez perdu votre clé et que vous avez besoin d'un nouveau lien, veuillez nous contacter.%0A%0AN'hésitez pas à nous contacter si vous avez des questions.%0A%0ACordialement,%0AL'équipe Zacharie.`,
+                            '_blank',
+                          );
+                        });
+                      }}
+                    >
+                      Envoyer un mail avec un lien pour accéder à la clé privée
+                    </Button>
+                  </div>
                   <Input
                     label="URL de webhook"
                     hintText="URL fournie par le tiers demandeur : lorsqu'une carcasse est mise à jour, on envoie une requête à cette URL. C'est le même fonctionnement qu'un abonnement à des notifications."

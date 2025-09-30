@@ -35,7 +35,9 @@ export interface UserConnexionResponse {
   data: {
     user: User | null;
     apiKeyApprovals?: Array<
-      ApiKeyApprovalByUserOrEntity & { ApiKey: Omit<ApiKey, 'private_key' | 'public_key'> }
+      ApiKeyApprovalByUserOrEntity & {
+        ApiKey: Omit<ApiKey, 'private_key' | 'public_key' | 'access_token' | 'access_token_read_at'>;
+      }
     >;
   };
   error: string;
