@@ -55,9 +55,9 @@ router.post(
       res: express.Response<UserConnexionResponse>,
       next: express.NextFunction,
     ) => {
-      const { email, username, passwordUser, connexionType, resetPasswordRequest, resetPasswordToken } =
+      let { email, username, passwordUser, connexionType, resetPasswordRequest, resetPasswordToken } =
         req.body;
-
+      email = email.toLowerCase();
       if (username) {
         capture(new Error('Spam detected'), {
           extra: { email, message: 'Spam detected' },
@@ -675,7 +675,7 @@ router.post(
       }
       const nextPremierDetenteur = await prisma.user.findUnique({
         where: {
-          email: body[Prisma.UserScalarFieldEnum.email],
+          email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
         },
       });
       if (!nextPremierDetenteur) {
@@ -732,7 +732,7 @@ router.post(
 
       const nextPremierDetenteurForFei = await prisma.user.findUnique({
         where: {
-          email: body[Prisma.UserScalarFieldEnum.email],
+          email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
         },
         select: userFeiSelect,
       });
@@ -798,7 +798,7 @@ router.post(
         nextUser.telephone = body[Prisma.UserScalarFieldEnum.telephone] as string;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
-        nextUser.email = body[Prisma.UserScalarFieldEnum.email] as string;
+        nextUser.email = body[Prisma.UserScalarFieldEnum.email].toLowerCase() as string;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_1)) {
         nextUser.addresse_ligne_1 = body[Prisma.UserScalarFieldEnum.addresse_ligne_1] as string;
