@@ -175,7 +175,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
         {!nextValue ||
           (nextValue !== fei.fei_next_owner_user_id && (
             <Button className="mt-4" type="submit" disabled={!nextValue || disabled}>
-              Transmettre la fiche
+              Valider l’examen initial
             </Button>
           ))}
       </form>
@@ -252,7 +252,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
               }}
             />
             <Button type="submit" disabled={isSearchingUser || disabled}>
-              {!isSearchingUser ? 'Transmettre la fiche' : 'Recherche en cours...'}
+              {!isSearchingUser ? 'Valider l’examen initial' : 'Recherche en cours...'}
             </Button>
             {!isOnline && (
               <div className="absolute inset-0 z-50 flex items-end bg-white/70">

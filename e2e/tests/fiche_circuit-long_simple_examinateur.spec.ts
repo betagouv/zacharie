@@ -70,7 +70,7 @@ test.describe("Fiches examinateur initial", () => {
     await page
       .getByLabel("Quel Premier Détenteur doit désormais agir sur la fiche ?")
       .selectOption("Pierre Petit - 75000 Paris");
-    await page.getByRole("button", { name: "Transmettre la fiche" }).click();
+    await page.getByRole("button", { name: "Valider l’examen initial" }).click();
     await expect(page.getByRole("heading", { name: "Attribution effectuée" })).toBeVisible();
     // get fei id
     const feiId = page.url().split("/").pop()!;
