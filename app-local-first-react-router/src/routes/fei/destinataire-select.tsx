@@ -563,7 +563,7 @@ export default function DestinataireSelect({
         {needTransport && (
           <>
             <RadioButtons
-              legend="Transport des carcasses *"
+              legend="Transport des carcasses jusqu’au destinataire *"
               className={canEdit ? '' : 'radio-black'}
               disabled={!prochainDetenteurEntityId}
               options={[
