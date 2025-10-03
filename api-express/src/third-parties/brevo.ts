@@ -206,20 +206,20 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
       // console.log(error);
     }
 
-    let LANDLINE_NUMBER = '';
-    let SMS = '';
-    let WHATSAPP = '';
+    // let LANDLINE_NUMBER = '';
+    // let SMS = '';
+    // let WHATSAPP = '';
     let TELEPHONE_PORTABLE = '';
     let TELEPHONE_FIXE = '';
     if (props.telephone) {
       const phoneNumber = parsePhoneNumber(props.telephone, 'FR');
       if (phoneNumber?.isPossible()) {
         if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
-          SMS = phoneNumber.number;
-          WHATSAPP = phoneNumber.number;
+          // SMS = phoneNumber.number;
+          // WHATSAPP = phoneNumber.number;
           TELEPHONE_PORTABLE = phoneNumber.number;
         } else {
-          LANDLINE_NUMBER = phoneNumber.number;
+          // LANDLINE_NUMBER = phoneNumber.number;
           TELEPHONE_FIXE = phoneNumber.number;
         }
       }
@@ -232,9 +232,9 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
       'CREATION DATE': new Date().toISOString(),
       PRENOM: props.prenom,
       NOM: props.nom_de_famille,
-      LANDLINE_NUMBER: LANDLINE_NUMBER,
-      SMS: SMS,
-      WHATSAPP: WHATSAPP,
+      // LANDLINE_NUMBER: LANDLINE_NUMBER,
+      // SMS: SMS,
+      // WHATSAPP: WHATSAPP,
       TELEPHONE_PORTABLE: TELEPHONE_PORTABLE,
       TELEPHONE_FIXE: TELEPHONE_FIXE,
     };
@@ -251,7 +251,7 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
 
 async function updateBrevoContact(props: User): Promise<User> {
   try {
-    if (DISABLED) return props;
+    // if (DISABLED) return props;
     if (props.roles.includes(UserRoles.ADMIN)) return props;
     const apiInstance = new brevo.ContactsApi();
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
@@ -268,20 +268,20 @@ async function updateBrevoContact(props: User): Promise<User> {
       });
     }
 
-    let LANDLINE_NUMBER = '';
-    let SMS = '';
-    let WHATSAPP = '';
+    // let LANDLINE_NUMBER = '';
+    // let SMS = '';
+    // let WHATSAPP = '';
     let TELEPHONE_PORTABLE = '';
     let TELEPHONE_FIXE = '';
     if (props.telephone) {
       const phoneNumber = parsePhoneNumber(props.telephone, 'FR');
       if (phoneNumber?.isPossible()) {
         if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
-          SMS = phoneNumber.number;
-          WHATSAPP = phoneNumber.number;
+          // SMS = phoneNumber.number;
+          // WHATSAPP = phoneNumber.number;
           TELEPHONE_PORTABLE = phoneNumber.number;
         } else {
-          LANDLINE_NUMBER = phoneNumber.number;
+          // LANDLINE_NUMBER = phoneNumber.number;
           TELEPHONE_FIXE = phoneNumber.number;
         }
       }
@@ -301,9 +301,9 @@ async function updateBrevoContact(props: User): Promise<User> {
       PRENOM: props.prenom,
       NOM: props.nom_de_famille,
       ROLE: formatRoles(props),
-      LANDLINE_NUMBER: LANDLINE_NUMBER,
-      SMS: SMS,
-      WHATSAPP: WHATSAPP,
+      // LANDLINE_NUMBER: LANDLINE_NUMBER,
+      // SMS: SMS,
+      // WHATSAPP: WHATSAPP,
       TELEPHONE_PORTABLE: TELEPHONE_PORTABLE,
       TELEPHONE_FIXE: TELEPHONE_FIXE,
       ADRESSE: ADRESSE ? ADRESSE : '',
@@ -311,6 +311,7 @@ async function updateBrevoContact(props: User): Promise<User> {
       EXT_ID: props.id,
     };
     const result = await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
+    console.log('updated brevo contact', props.brevo_contact_id);
     // console.log('result', result);
     // result.body is undefined so we don't update
     // await prisma.user.update({
