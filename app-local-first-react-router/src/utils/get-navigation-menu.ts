@@ -29,30 +29,44 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   const isEtg = user?.roles.includes(UserRoles.ETG);
   const profileMenu: MainNavigationProps.Item[] = [
     {
-      text: 'Mes activités',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-roles',
+      text: 'Mon activité',
+      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mon-activite',
       linkProps: {
-        to: '/app/tableau-de-bord/mon-profil/mes-roles',
+        to: '/app/tableau-de-bord/mon-profil/mon-activite',
         href: '#',
       },
     },
     {
-      text: 'Mes informations',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-informations',
+      text: 'Mes coordonnées',
+      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-coordonnees',
       linkProps: {
         href: '#',
-        to: '/app/tableau-de-bord/mon-profil/mes-informations',
+        to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
       },
     },
   ];
 
   if (user?.roles.includes(UserRoles.CHASSEUR)) {
     profileMenu.push({
-      text: 'Mes CCGs',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-ccgs',
+      text: 'Mes informations de chasse',
+      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-informations-de-chasse',
       linkProps: {
         href: '#',
-        to: '/app/tableau-de-bord/mon-profil/mes-ccgs',
+        to: '/app/tableau-de-bord/mon-profil/mes-informations-de-chasse',
+      },
+    });
+  }
+  if (
+    user?.roles.includes(UserRoles.COLLECTEUR_PRO) ||
+    user?.roles.includes(UserRoles.ETG) ||
+    user?.roles.includes(UserRoles.SVI)
+  ) {
+    profileMenu.push({
+      text: user?.roles.includes(UserRoles.SVI) ? 'Mon service' : 'Mon entreprise',
+      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mon-entreprise',
+      linkProps: {
+        href: '#',
+        to: '/app/tableau-de-bord/mon-profil/mon-entreprise',
       },
     });
   }

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { resetDb } from "../scripts/reset-db";
 
-test.describe("Conditions sur les cases à cocher pour les rôles", () => {
+test.describe("Conditions sur les cases à cocher pour les activités", () => {
   test.beforeAll(async () => {
     await resetDb();
   });
@@ -11,7 +11,7 @@ test.describe("Conditions sur les cases à cocher pour les rôles", () => {
   const etablissementDeTraitement = "Établissement de Traitement du Gibier sauvage (ETG)";
   const serviceVeterinaire = "Service Vétérinaire d'Inspection (SVI)";
 
-  test("Conditions sur les cases à cocher pour les rôles", async ({ page }) => {
+  test("Conditions sur les cases à cocher pour les activités", async ({ page }) => {
     await page.goto("http://localhost:3290/");
     await page.getByRole("link", { name: "Créer un compte" }).first().click();
     await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("juste-les-cases@example.fr");

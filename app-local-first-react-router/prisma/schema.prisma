@@ -39,6 +39,7 @@ model User {
   prenom                         String?
   nom_de_famille                 String?
   numero_cfei                    String? // Chasseur Formé à l'Examen Initial (de la forme CFEI-DEP-YY-001)
+  est_forme_a_l_examen_initial   Boolean?                       @default(false)
   prochain_bracelet_a_utiliser   Int?                           @default(1)
   addresse_ligne_1               String?
   addresse_ligne_2               String?

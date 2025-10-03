@@ -10,6 +10,7 @@ export const userFeiSelect = {
   addresse_ligne_2: true,
   code_postal: true,
   ville: true,
+  est_forme_a_l_examen_initial: true,
   numero_cfei: true,
 } as const;
 

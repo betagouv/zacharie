@@ -84,6 +84,7 @@ Christine
         prenom: 'Marie',
         nom_de_famille: 'Martin',
         addresse_ligne_1: '1 rue de la paix',
+        est_forme_a_l_examen_initial: true,
         numero_cfei: 'CFEI-075-25-001',
         code_postal: '75000',
         ville: 'Paris',
@@ -96,6 +97,7 @@ Christine
         roles: [UserRoles.CHASSEUR],
         activated: true,
         activated_at: dayjs().toDate(),
+        user_entities_vivible_checkbox: true,
         prenom: 'Pierre',
         nom_de_famille: 'Petit',
         addresse_ligne_1: '2 rue de la paix',
@@ -345,6 +347,12 @@ Christine
         status: EntityRelationStatus.ADMIN,
       },
       {
+        owner_id: users.find((user) => user.email === 'collecteur-pro@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'Collecteur Pro 1')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
+      {
         owner_id: users.find((user) => user.email === 'etg-1@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
@@ -356,6 +364,12 @@ Christine
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: EntityRelationStatus.ADMIN,
       },
+      {
+        owner_id: users.find((user) => user.email === 'svi@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 1')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
     ],
   });
   console.log('Entity and user relations created for test', entityAndUserRelations.count);
@@ -364,18 +378,8 @@ Christine
     data: [
       {
         etg_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
-        entity_type: EntityTypes.COLLECTEUR_PRO,
-        entity_id: entities.find((entity) => entity.raison_sociale === 'Collecteur Pro 1')?.id,
-      },
-      {
-        etg_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
         entity_type: EntityTypes.SVI,
         entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 1')?.id,
-      },
-      {
-        etg_id: entities.find((entity) => entity.raison_sociale === 'ETG 2')?.id,
-        entity_type: EntityTypes.COLLECTEUR_PRO,
-        entity_id: entities.find((entity) => entity.raison_sociale === 'Collecteur Pro 2')?.id,
       },
       {
         etg_id: entities.find((entity) => entity.raison_sociale === 'ETG 2')?.id,

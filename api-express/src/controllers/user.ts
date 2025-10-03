@@ -447,7 +447,7 @@ router.post(
           relation: body.relation,
           deleted_at: null,
         };
-        if (body.hasOwnProperty('status')) {
+        if (body.hasOwnProperty(Prisma.EntityAndUserRelationsScalarFieldEnum.status)) {
           nextEntityRelation.status = body.status;
         }
 
@@ -496,7 +496,7 @@ router.post(
                 const email = [
                   'Bonjour,',
                   `${req.user.prenom} ${req.user.nom_de_famille} (${req.user.email}) vient de s'inscrire sur Zacharie au sein de ${entity.nom_d_usage}.`,
-                  `Pour l'autoriser à traiter des fiches au nom de ${entity.nom_d_usage}, veuillez cliquer sur le lien suivant : https://zacharie.beta.gouv.fr/app/tableau-de-bord/mon-profil/mes-informations?open-entity=${entity.id}`,
+                  `Pour l'autoriser à traiter des fiches au nom de ${entity.nom_d_usage}, veuillez cliquer sur le lien suivant : https://zacharie.beta.gouv.fr/app/tableau-de-bord/mon-profil/mes-coordonnees?open-entity=${entity.id}`,
                   `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
                 ].join('\n\n');
                 await sendNotificationToUser({
@@ -845,6 +845,17 @@ router.post(
           if (nextUser.activated_at) nextUser.activated_at = new Date();
         }
       }
+
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
+        nextUser.est_forme_a_l_examen_initial =
+          body[Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial] === 'true' ? true : false;
+        if (!nextUser.est_forme_a_l_examen_initial && user.numero_cfei) {
+          nextUser.activated = false;
+          nextUser.numero_cfei = null;
+          if (nextUser.activated_at) nextUser.activated_at = new Date();
+        }
+      }
+
       if (body.hasOwnProperty('onboarding_finished')) {
         nextUser.onboarded_at = new Date();
       }
@@ -863,6 +874,7 @@ router.post(
         return;
       }
 
+      console.log('nextUser', nextUser);
       // user update / self-update
       savedUser = await prisma.user.update({
         where: { id: userId },
@@ -885,7 +897,12 @@ router.post(
 - Code postal et ville\u00A0: ${savedUser.code_postal} ${savedUser.ville}
 - Email\u00A0: ${savedUser.email}
 - Téléphone\u00A0: ${savedUser.telephone}
-${savedUser.roles.includes(UserRoles.CHASSEUR) ? `- Numéro CFEI\u00A0: ${savedUser.numero_cfei}` : ''}
+- Formé à l'examen initial\u00A0: ${savedUser.est_forme_a_l_examen_initial ? 'Oui' : 'Non'}
+${
+  savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen_initial
+    ? `- Numéro CFEI\u00A0: ${savedUser.numero_cfei}`
+    : ''
+}
           `,
         });
       }
@@ -974,6 +991,7 @@ router.get(
               code_postal: '12345',
               ville: 'La Forêt',
               numero_cfei: '1234567890123456',
+              est_forme_a_l_examen_initial: true,
             },
           },
           error: '',
@@ -1008,7 +1026,11 @@ router.get(
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         },
       });
-      if (user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.SVI)) {
+      if (
+        user.roles.includes(UserRoles.ETG) ||
+        user.roles.includes(UserRoles.SVI) ||
+        user.roles.includes(UserRoles.COLLECTEUR_PRO)
+      ) {
         const approvedRelations = entites?.filter(
           (entity) =>
             entity.status === EntityRelationStatus.MEMBER || entity.status === EntityRelationStatus.ADMIN,

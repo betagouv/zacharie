@@ -361,15 +361,6 @@ export default function AdminEntity() {
                   setIsSaving={setIsSaving}
                 />
               )}
-              {selectedTabId === 'Collecteur Pro associé' && (
-                <EntitiesRelatedTo
-                  adminEntityResponse={adminEntityResponse}
-                  setAdminEntityResponse={setAdminEntityResponse}
-                  entityType={EntityTypes.COLLECTEUR_PRO}
-                  description="Si une fiche est envoyée à cet ETG, un Collecteur Pro associé sera aussi en capacité de la traiter"
-                  setIsSaving={setIsSaving}
-                />
-              )}
               {selectedTabId === 'ETGs associés' && (
                 <EntitiesRelatedTo
                   adminEntityResponse={adminEntityResponse}
