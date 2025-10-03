@@ -14,9 +14,9 @@ export default function ModalitesDutilisation() {
           <title>
             Modalités d’utilisation | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
           </title>
-          <h1 className="mb-3 mt-0 text-2xl font-bold">Modalités d’utilisation de « Zacharie »</h1>
+          <h1 className="mt-0 mb-3 text-2xl font-bold">Modalités d’utilisation de « Zacharie »</h1>
 
-          <h2 className="mb-2 mt-6 text-xl font-semibold">Article 1 - Champ d’application </h2>
+          <h2 className="mt-6 mb-2 text-xl font-semibold">Article 1 - Champ d’application </h2>
 
           <p>
             Les présentes modalités d’utilisation sont mises en œuvre conformément à l’article L. 112-9 du
@@ -25,7 +25,7 @@ export default function ModalitesDutilisation() {
             l’Utilisateur.
           </p>
 
-          <h2 className="mb-2 mt-6 text-xl font-semibold">Article 2 - Présentation de la Plateforme</h2>
+          <h2 className="mt-6 mb-2 text-xl font-semibold">Article 2 - Présentation de la Plateforme</h2>
 
           <p>
             Zacharie (ci-après la “Plateforme”) est un service numérique mis en œuvre par la Direction
@@ -39,7 +39,7 @@ export default function ModalitesDutilisation() {
           </p>
           <p></p>
 
-          <h2 className="mb-2 mt-6 text-xl font-semibold">Article 3 - Définitions</h2>
+          <h2 className="mt-6 mb-2 text-xl font-semibold">Article 3 - Définitions</h2>
 
           <p>
             “Éditeur” désigne la personne morale qui met à la disposition du public la Plateforme, à savoir la
@@ -51,11 +51,11 @@ export default function ModalitesDutilisation() {
           </p>
           <p>
             “Utilisateur” désigne toute personne physique, partie prenante de la filière de valorisation des
-            viandes de gibier sauvage, qui s’inscrit sur la Plateforme et sélectionne un rôle
+            viandes de gibier sauvage, qui s’inscrit sur la Plateforme et sélectionne une activité
           </p>
           <p></p>
 
-          <h2 className="mb-2 mt-6 text-xl font-semibold">Article 4 - Fonctionnalités</h2>
+          <h2 className="mt-6 mb-2 text-xl font-semibold">Article 4 - Fonctionnalités</h2>
 
           <p>
             Toute personne qui navigue en tant que visiteur sur la Plateforme peut s’inscrire en tant que beta
@@ -71,7 +71,7 @@ export default function ModalitesDutilisation() {
           <p>
             Chaque Utilisateur sélectionne le ou les rôles qu’il peut juridiquement endosser sur la Plateforme
             dès la configuration de son compte, pour gérer les fiches d’accompagnement du gibier sauvage.
-            Chaque rôle dispose de fonctionnalités précises décrites ci-dessous et de responsabilités
+            Chaque activité dispose de fonctionnalités précises décrites ci-dessous et de responsabilités
             spécifiques.
           </p>
           <p>
@@ -79,12 +79,12 @@ export default function ModalitesDutilisation() {
             Vétérinaire d’Inspection”.
           </p>
           <p>
-            <h3 className="mb-3 mt-3 text-lg font-bold">4.1 Examinateur initial</h3>
+            <h3 className="mt-3 mb-3 text-lg font-bold">4.1 Examinateur initial</h3>
           </p>
           <p>
             L’Examinateur initial possède et communique un numéro de formateur référent ou de personne formée
             valide et délivré par la Fédération Nationale des Chasseurs ou par une Fédération Départementale
-            des Chasseurs. Ce rôle ouvre le droit d’usage aux fonctionnalités de création d’une fiche
+            des Chasseurs. Cette activité ouvre le droit d’usage aux fonctionnalités de création d’une fiche
             d’accompagnement du gibier sauvage sous format numérique et d’enregistrement du compte-rendu de
             l’examen initial sur la fiche d’accompagnement du gibier sauvage sous format numérique.
           </p>
@@ -104,7 +104,7 @@ export default function ModalitesDutilisation() {
             Ces modifications sont envisageables uniquement avant l’intervention d’un autre Utilisateur.
           </p>
           <p>
-            <h3 className="mb-3 mt-3 text-lg font-bold">4.2 Premier détenteur </h3>
+            <h3 className="mt-3 mb-3 text-lg font-bold">4.2 Premier détenteur </h3>
           </p>
           <p>
             Le Premier détenteur est le propriétaire légal des carcasses en poils/plumes de gibier sauvage
@@ -114,18 +114,18 @@ export default function ModalitesDutilisation() {
             l’Examinateur initial.
           </p>
           <p>
-            Ce rôle ouvre le droit d’attribution du gibier à un Destinataire qu’il soit Destinataire
+            Cette activité ouvre le droit d’attribution du gibier à un Destinataire qu’il soit Destinataire
             Collecteur Professionnel ou Destinataire Établissement de Traitement du Gibier sauvage qui
             assurera le transport ou le traitement du gibier sauvage.
           </p>
           <p>
-            Ce rôle engage le Premier détenteur à réaliser l’examen initial du gibier sauvage et à reporter
-            l’ensemble des observations relevées avec exactitude sur la fiche d’accompagnement du gibier
-            sauvage numérique. Il atteste que l’examen initial n’a pas révélé d’anomalie incompatible à la
-            mise sur le marché des carcasses en poils/plumes.
+            Cette activité engage le Premier détenteur à réaliser l’examen initial du gibier sauvage et à
+            reporter l’ensemble des observations relevées avec exactitude sur la fiche d’accompagnement du
+            gibier sauvage numérique. Il atteste que l’examen initial n’a pas révélé d’anomalie incompatible à
+            la mise sur le marché des carcasses en poils/plumes.
           </p>
           <p>
-            <h3 className="mb-3 mt-3 text-lg font-bold">4.3 Destinataire collecteur professionnel</h3>
+            <h3 className="mt-3 mb-3 text-lg font-bold">4.3 Destinataire collecteur professionnel</h3>
           </p>
           <p>
             Le Destinataire collecteur professionnel possède et communique un numéro de SIRET affilié à
@@ -143,13 +143,13 @@ export default function ModalitesDutilisation() {
             (rejet d’une carcasse ou absence sur le lieu de prise en charge, les cas échéants).
           </p>
           <p>
-            Ce rôle ouvre le droit à l’usage de la fonctionnalité d’annotation de la fiche d’accompagnement du
-            gibier sauvage ainsi que le droit à l’usage de la fonctionnalité d’attribution d’un « Destinataire
-            » qu’il soit un « Destinataire Établissement de Traitement du Gibier sauvage » ou un autre «
-            Destinataire Collecteur Professionnel ».
+            Cette activité ouvre le droit à l’usage de la fonctionnalité d’annotation de la fiche
+            d’accompagnement du gibier sauvage ainsi que le droit à l’usage de la fonctionnalité d’attribution
+            d’un « Destinataire » qu’il soit un « Destinataire Établissement de Traitement du Gibier sauvage »
+            ou un autre « Destinataire Collecteur Professionnel ».
           </p>
           <p>
-            <h3 className="mb-3 mt-3 text-lg font-bold">
+            <h3 className="mt-3 mb-3 text-lg font-bold">
               4.4 Destinataire établissement de traitement du gibier sauvage
             </h3>
           </p>
@@ -180,24 +180,24 @@ export default function ModalitesDutilisation() {
             (rejet d’une carcasse ou absence sur le lieu de prise en charge, les cas échéants).
           </p>
           <p>
-            Ce rôle ouvre le droit à l’usage de la fonctionnalité d’annotation de la fiche d’accompagnement du
-            gibier sauvage ainsi que le droit à l’usage de la fonctionnalité d’attribution d’un « Service
-            Vétérinaire d’Inspection ».
+            Cette activité ouvre le droit à l’usage de la fonctionnalité d’annotation de la fiche
+            d’accompagnement du gibier sauvage ainsi que le droit à l’usage de la fonctionnalité d’attribution
+            d’un « Service Vétérinaire d’Inspection ».
           </p>
           <p>
-            <h3 className="mb-3 mt-3 text-lg font-bold">4.5 Service vétérinaire d’inspection </h3>
+            <h3 className="mt-3 mb-3 text-lg font-bold">4.5 Service vétérinaire d’inspection </h3>
           </p>
           <p>
-            Le Service vétérinaire d’inspection est un rôle réservé aux agents du MASAF, affiliés à une
+            Le Service vétérinaire d’inspection est une activité réservée aux agents du MASAF, affiliés à une
             Direction Départementale en charge de la Protection des Populations et dont l’identité est
             reconnue par l’Éditeur.
           </p>
           <p>
-            Ce rôle engage à la déclaration des conclusions de l’inspection
+            Cette activité engage à la déclaration des conclusions de l’inspection
             <em>post mortem</em> du gibier sauvage comprenant le contrôle des fiches numériques
-            d’accompagnement du gibier sauvage et l’inspection des carcasses et des éventuels abats. Ce rôle
-            ouvre le droit à l’usage de la fonctionnalité d’enregistrement des saisies sanitaires et de
-            clôture de fiche.
+            d’accompagnement du gibier sauvage et l’inspection des carcasses et des éventuels abats. Cette
+            activité ouvre le droit à l’usage de la fonctionnalité d’enregistrement des saisies sanitaires et
+            de clôture de fiche.
           </p>
           <p>
             Il peut enregistrer les constats et décisions établis lors de la prise en charge des carcasses.
@@ -210,7 +210,7 @@ export default function ModalitesDutilisation() {
             classée comme close 10 jours après la confirmation de prise en charge de la fiche.
           </p>
           <p>
-            <h3 className="mb-3 mt-3 text-lg font-bold">4.6 Fonctionnalités liées aux fiches</h3>
+            <h3 className="mt-3 mb-3 text-lg font-bold">4.6 Fonctionnalités liées aux fiches</h3>
           </p>
           <p>
             Pour que les fiches suivent les carcasses qu’elles concernent, chaque Utilisateur doit attribuer
@@ -239,10 +239,10 @@ export default function ModalitesDutilisation() {
             statut, elles sont consultables à tout moment dans l’onglet “Mes Fiches”.
           </p>
 
-          <h2 className="mb-2 mt-6 text-xl font-semibold">Article 5 - Responsabilités </h2>
+          <h2 className="mt-6 mb-2 text-xl font-semibold">Article 5 - Responsabilités </h2>
 
           <p>
-            <h3 className="mb-3 mt-3 text-lg font-bold">5.1 L’Éditeur de la Plateforme </h3>
+            <h3 className="mt-3 mb-3 text-lg font-bold">5.1 L’Éditeur de la Plateforme </h3>
           </p>
           <p>
             Les sources des informations diffusées sur la Plateforme sont réputées fiables mais elle ne
@@ -263,7 +263,7 @@ export default function ModalitesDutilisation() {
             supprimer le compte de l’Utilisateur responsable.
           </p>
           <p>
-            <h3 className="mb-3 mt-3 text-lg font-bold">5.2 L’Utilisateur de la Plateforme</h3>
+            <h3 className="mt-3 mb-3 text-lg font-bold">5.2 L’Utilisateur de la Plateforme</h3>
           </p>
           <p>
             L’Utilisateur s’assure de garder son mot de passe secret. Toute divulgation du mot de passe,
@@ -271,9 +271,9 @@ export default function ModalitesDutilisation() {
             courriel et de son mot de passe.
           </p>
           <p>
-            En créant un compte sur la Plateforme et en sélectionnant un rôle, l’Utilisateur certifie qu’il
-            est habilité à réaliser les actions nécessaires et à prendre connaissance du cadre juridique en
-            vigueur qui lui est applicable. Il est seul responsable de tout contenu qu’il déclare sur la
+            En créant un compte sur la Plateforme et en sélectionnant une activité, l’Utilisateur certifie
+            qu’il est habilité à réaliser les actions nécessaires et à prendre connaissance du cadre juridique
+            en vigueur qui lui est applicable. Il est seul responsable de tout contenu qu’il déclare sur la
             Plateforme.
           </p>
           <p>
@@ -299,7 +299,7 @@ export default function ModalitesDutilisation() {
             obligation de moyens et doit consacrer le temps nécessaire pour compléter la fiche
             d’accompagnement du gibier sauvage avec soin, responsabilité et sincérité.
           </p>
-          <h2 className="mb-2 mt-6 text-xl font-semibold">
+          <h2 className="mt-6 mb-2 text-xl font-semibold">
             Article 6 - Mise à jour des modalités d’utilisation
           </h2>
           <p>

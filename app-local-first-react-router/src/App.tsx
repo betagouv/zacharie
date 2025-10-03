@@ -11,10 +11,10 @@ import Fei from './routes/fei/fei';
 import OfflineMode from './components/OfflineMode';
 import CarcasseExaminateur from './routes/carcasse-examinateur';
 import SviInspectionCarcasse from './routes/svi-inspection-carcasse/svi-inspection-carcasse';
-import MesRoles from './routes/mon-profil/mes-roles';
-import MesCCGs from './routes/mon-profil/mes-ccgs';
-import MesInformations from './routes/mon-profil/mes-informations';
-import MesNotifications from './routes/mon-profil/mes-notifications';
+import MesRoles from './routes/mon-profil/1-mon-activite';
+import MesInformationsDeChasse from './routes/mon-profil/3-mes-informations-de-chasse';
+import MesCoordonnees from './routes/mon-profil/2-mes-coordonnees';
+import MesNotifications from './routes/mon-profil/4-mes-notifications';
 import * as Sentry from '@sentry/react';
 import { capture } from './services/sentry';
 import { UserRoles } from '@prisma/client';
@@ -38,6 +38,7 @@ import AdminNewApiKey from './routes/admin/api-key-add';
 import AdminApiKey from './routes/admin/api-key.$apiKeyId';
 import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
 import NouvelleFiche from './routes/nouvelle-fiche';
+import MonEntreprise from './routes/mon-profil/3-mon-entreprise';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -138,7 +139,7 @@ function App() {
               }
             />
             <Route
-              path="mon-profil/mes-roles"
+              path="mon-profil/mon-activite"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
                   <MesRoles />
@@ -146,18 +147,26 @@ function App() {
               }
             />
             <Route
-              path="mon-profil/mes-informations"
+              path="mon-profil/mes-coordonnees"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
-                  <MesInformations />
+                  <MesCoordonnees />
                 </RestrictedRoute>
               }
             />
             <Route
-              path="mon-profil/mes-ccgs"
+              path="mon-profil/mes-informations-de-chasse"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
-                  <MesCCGs />
+                  <MesInformationsDeChasse />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="mon-profil/mon-entreprise"
+              element={
+                <RestrictedRoute id="zacharie_carcasse_id">
+                  <MonEntreprise />
                 </RestrictedRoute>
               }
             />

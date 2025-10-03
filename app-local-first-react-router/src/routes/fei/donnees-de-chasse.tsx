@@ -171,7 +171,9 @@ export default function FEIDonneesDeChasse({
             <ItemNotEditable key={index} label={intermediaireInput.label!} value={intermediaireInput.value} />
           );
         })}
-        <ItemNotEditable label="Service d'Inspection Vétérinaire (SVI)" value={sviInput} />
+        {sviInput.length > 0 && (
+          <ItemNotEditable label="Service d'Inspection Vétérinaire (SVI)" value={sviInput} />
+        )}
       </div>
     </>
   );

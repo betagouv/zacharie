@@ -66,7 +66,7 @@ function formatRoles(user: User) {
   const roles = [];
   switch (user.roles.find((role) => role !== UserRoles.ADMIN)) {
     case UserRoles.CHASSEUR:
-      if (user.numero_cfei) {
+      if (user.est_forme_a_l_examen_initial) {
         roles.push('Examinateur initial');
       } else {
         roles.push('Premier détenteur');

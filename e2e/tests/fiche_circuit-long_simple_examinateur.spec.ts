@@ -66,6 +66,8 @@ test.describe("Fiches examinateur initial", () => {
     await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).blur();
     await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour et maintenant" }).click();
     await page.getByText("Je, Martin Marie, certifie qu").click();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    await expect(page.getByRole("button", { name: "Enregistrer la fiche", exact: true })).not.toBeDisabled();
     await page.getByRole("button", { name: "Enregistrer la fiche", exact: true }).click();
     await page
       .getByLabel("Quel Premier Détenteur doit désormais agir sur la fiche ?")
@@ -77,7 +79,7 @@ test.describe("Fiches examinateur initial", () => {
     console.log(feiId);
     await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
     await expect(page.getByRole("link", { name: feiId })).toBeVisible();
-    await expect(page.getByRole("link", { name: feiId })).toContainText("À compléter");
+    await expect(page.getByRole("link", { name: feiId })).toContainText("En cours");
     await expect(page.getByRole("link", { name: feiId })).toContainText("chassenard");
     await expect(page.getByRole("link", { name: feiId })).toContainText("4 daims");
     await expect(page.getByRole("link", { name: feiId })).toContainText("À renseigner");

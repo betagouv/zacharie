@@ -19,6 +19,7 @@ export default function UserNtEditable({
         | 'code_postal'
         | 'ville'
         | 'numero_cfei'
+        | 'est_forme_a_l_examen_initial'
       >;
   withCfei?: boolean;
 }) {
@@ -105,7 +106,7 @@ export default function UserNtEditable({
           defaultValue: user?.ville ?? '',
         }}
       />
-      {withCfei && (
+      {withCfei && user?.est_forme_a_l_examen_initial && (
         <InputNotEditable
           label="Numéro CFEI"
           hintText="Chasseur Formé à l'Examen Initial"

@@ -43,6 +43,7 @@ const initialState: State = {
     activated: true,
     roles: [],
     etg_role: UserEtgRoles.RECEPTION,
+    est_forme_a_l_examen_initial: false,
     numero_cfei: '',
     at_least_one_fei_treated: null,
     user_entities_vivible_checkbox: false,

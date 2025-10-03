@@ -83,7 +83,10 @@ router.post(
         data: {
           approvalStatus: approval.status,
           habilitePourExamenInitial:
-            user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && user.activated,
+            user.roles.includes(UserRoles.CHASSEUR) &&
+            !!user.est_forme_a_l_examen_initial &&
+            !!user.numero_cfei &&
+            user.activated,
         },
         message:
           "La demande d'approbation a été envoyée. L'utilisateur doit désormais se rendre sur https://zacharie.beta.gouv.fr/app/tableau-de-bord/mon-profil/partage-de-mes-donnees pour approuver ou rejeter la demande. Il se connecte puis clique sur 'Mon profil' puis 'Partage de mes données'. Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",

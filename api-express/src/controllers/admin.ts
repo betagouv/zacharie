@@ -160,7 +160,9 @@ router.get(
             !!user.addresse_ligne_1 &&
             !!user.code_postal &&
             !!user.ville,
-          examinateurDone: !user.roles.includes(UserRoles.CHASSEUR) ? true : !!user.numero_cfei,
+          examinateurDone: !user.roles.includes(UserRoles.CHASSEUR)
+            ? true
+            : !!user.est_forme_a_l_examen_initial && !!user.numero_cfei,
           allEntities,
           userEntitiesRelations,
         },

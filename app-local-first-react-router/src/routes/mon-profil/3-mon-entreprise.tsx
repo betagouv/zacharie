@@ -1,8 +1,7 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
@@ -12,12 +11,9 @@ import {
   UserRoles,
   Prisma,
   User,
-  Entity,
   UserEtgRoles,
   EntityRelationStatus,
 } from '@prisma/client';
-import InputVille from '@app/components/InputVille';
-import InputNotEditable from '@app/components/InputNotEditable';
 import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
 import type { EntitiesByTypeAndId } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
@@ -35,7 +31,7 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.SVI]: {},
 };
 
-export default function MesInformations() {
+export default function MonEntreprise() {
   const user = useUser((state) => state.user)!;
   const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] =
     useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
@@ -43,9 +39,6 @@ export default function MesInformations() {
     useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const userAssociationsChasses = user.roles.includes(UserRoles.CHASSEUR)
-    ? Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR])
-    : [];
   const userCollecteursPro = user.roles.includes(UserRoles.COLLECTEUR_PRO)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO])
     : [];
@@ -55,14 +48,6 @@ export default function MesInformations() {
   const userSvis = user.roles.includes(UserRoles.SVI)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.SVI])
     : [];
-
-  const identityDone =
-    !!user.nom_de_famille &&
-    !!user.prenom &&
-    !!user.telephone &&
-    !!user.addresse_ligne_1 &&
-    !!user.code_postal &&
-    !!user.ville;
 
   const collecteursProDone = user.roles.includes(UserRoles.COLLECTEUR_PRO)
     ? userCollecteursPro.length > 0
@@ -85,6 +70,10 @@ export default function MesInformations() {
       });
   }, [refreshKey]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const handleUserFormBlur = useCallback(
     async (event: React.FocusEvent<HTMLFormElement>) => {
       const formData = new FormData(event.currentTarget);
@@ -100,314 +89,37 @@ export default function MesInformations() {
     [user.id],
   );
 
-  const [assoExpanded, setAssoExpanded] = useState(false);
-  const [assoPostalCode, setAssoPostalCode] = useState('');
-  const handleEntitySubmit = useCallback(async (event: React.FocusEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const body: Partial<Entity> = Object.fromEntries(formData.entries());
-    const response = await API.post({
-      path: 'entite/association-de-chasse',
-      body,
-    }).then((data) => data as UserConnexionResponse);
-    if (response.ok) {
-      setRefreshKey((prev) => prev + 1);
-      setAssoPostalCode('');
-      setAssoExpanded(false);
-      document
-        .getElementById('onboarding-etape-2-associations-data-title')
-        ?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
-
-  const skipCCG = useMemo(() => {
-    if (!user.roles.includes(UserRoles.CHASSEUR)) {
-      return true;
-    }
-    return false;
-  }, [user.roles]);
-  const nextTitle = skipCCG ? 'Vos notifications' : 'Vos Centres de Collectes du Gibier sauvage';
-  const nextPage = skipCCG
-    ? '/app/tableau-de-bord/mon-profil/mes-notifications'
-    : '/app/tableau-de-bord/mon-profil/mes-ccgs';
-  // const nextPage = skipCCG ? '/app/tableau-de-bord' : '/app/tableau-de-bord/mon-profil/mes-ccgs';
-  const stepCount = skipCCG ? 3 : 4;
+  const nextTitle = 'Mes notifications';
+  const nextPage = '/app/tableau-de-bord/mon-profil/mes-notifications';
 
   const showEntrpriseVisibilityCheckbox =
-    userAssociationsChasses.length > 0 ||
-    user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
-    user.roles.includes(UserRoles.ETG);
+    user.roles.includes(UserRoles.COLLECTEUR_PRO) || user.roles.includes(UserRoles.ETG);
 
-  const canChange = true;
-
-  const needAddress = user.roles.includes(UserRoles.CHASSEUR);
+  const title = user.roles.includes(UserRoles.SVI) ? 'Mon service' : 'Mon entreprise';
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
-      <title>
-        Mes informations | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
-      </title>
+      <title>{title} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper currentStep={2} nextTitle={nextTitle} stepCount={stepCount} title="Vos informations" />
-          <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations</h1>
-          <CallOut title="✍️ Pour pouvoir remplir les fiches qui vont sont attribuées" className="bg-white">
-            Qui êtes-vous ? À quelles entités êtes-vous rattaché ? <br />
-            Lorsqu'une fiche sera attribuée à laquelle vous êtes rattachée, vous pourrez la prendre en charge.
+          <Stepper currentStep={3} nextTitle={nextTitle} stepCount={4} title={title} />
+          <h1 className="fr-h2 fr-mb-2w">
+            Renseignez {user.roles.includes(UserRoles.SVI) ? 'votre service' : 'votre entreprise'}
+          </h1>
+          <CallOut title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées" className="bg-white">
+            {user.roles.includes(UserRoles.SVI)
+              ? "Quel est votre service vétérinaire d'inspection (SVI) ?"
+              : 'Quelle est votre entreprise ?'}
+            <br />
+            Lorsqu'une fiche lui sera attribuée, vous pourrez la prendre en charge.
           </CallOut>
-          <div className="mb-6 bg-white md:shadow-sm">
-            <div className="p-4 md:p-8">
-              <form
-                id="user_data_form"
-                method="POST"
-                onBlur={handleUserFormBlur}
-                onSubmit={(e) => e.preventDefault()}
-              >
-                <h3 className="text-lg font-semibold text-gray-900">
-                  <span>Votre identité</span>
-                  <CompletedTag done={identityDone} />
-                </h3>
-                <p className="mb-5 text-sm text-gray-500">
-                  * Les champs marqués d'un astérisque (*) sont obligatoires.
-                </p>
-                <Input
-                  label="Nom *"
-                  nativeInputProps={{
-                    id: Prisma.UserScalarFieldEnum.nom_de_famille,
-                    name: Prisma.UserScalarFieldEnum.nom_de_famille,
-                    autoComplete: 'family-name',
-                    required: true,
-                    defaultValue: user.nom_de_famille ?? '',
-                  }}
-                />
-                <Input
-                  label="Prénom *"
-                  nativeInputProps={{
-                    id: Prisma.UserScalarFieldEnum.prenom,
-                    name: Prisma.UserScalarFieldEnum.prenom,
-                    autoComplete: 'given-name',
-                    required: true,
-                    defaultValue: user.prenom ?? '',
-                  }}
-                />
-                <InputNotEditable
-                  label="Email *"
-                  nativeInputProps={{
-                    id: Prisma.UserScalarFieldEnum.email,
-                    name: Prisma.UserScalarFieldEnum.email,
-                    required: true,
-                    defaultValue: user.email ?? '',
-                  }}
-                />
-                <Input
-                  label="Téléphone *"
-                  hintText="Format attendu : 01 22 33 44 55"
-                  nativeInputProps={{
-                    id: Prisma.UserScalarFieldEnum.telephone,
-                    name: Prisma.UserScalarFieldEnum.telephone,
-                    autoComplete: 'tel',
-                    required: true,
-                    defaultValue: user.telephone ?? '',
-                  }}
-                />
-                <Input
-                  label={needAddress ? 'Adresse *' : 'Adresse'}
-                  hintText="Indication : numéro et voie"
-                  nativeInputProps={{
-                    id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                    name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                    autoComplete: 'address-line1',
-                    required: needAddress,
-                    defaultValue: user.addresse_ligne_1 ?? '',
-                  }}
-                />
-                <Input
-                  label="Complément d'adresse (optionnel)"
-                  hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                  nativeInputProps={{
-                    id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                    name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                    autoComplete: 'address-line2',
-                    defaultValue: user.addresse_ligne_2 ?? '',
-                  }}
-                />
-                <div className="flex w-full flex-col gap-x-4 md:flex-row">
-                  <Input
-                    label={needAddress ? 'Code postal *' : 'Code postal'}
-                    hintText="5 chiffres"
-                    className="shrink-0 md:basis-1/5"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.code_postal,
-                      name: Prisma.UserScalarFieldEnum.code_postal,
-                      autoComplete: 'postal-code',
-                      required: needAddress,
-                      defaultValue: user.code_postal ?? '',
-                    }}
-                  />
-                  <div className="basis-4/5">
-                    <InputVille
-                      postCode={user.code_postal ?? ''}
-                      trimPostCode
-                      label={needAddress ? 'Ville ou commune *' : 'Ville ou commune'}
-                      hintText="Exemple : Montpellier"
-                      nativeInputProps={{
-                        id: Prisma.UserScalarFieldEnum.ville,
-                        name: Prisma.UserScalarFieldEnum.ville,
-                        autoComplete: 'address-level2',
-                        required: needAddress,
-                        defaultValue: user.ville ?? '',
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {user.roles.includes(UserRoles.CHASSEUR) && (
-                  <Input
-                    label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                    hintText="De la forme CFEI-DEP-AA-123"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.numero_cfei,
-                      name: Prisma.UserScalarFieldEnum.numero_cfei,
-                      autoComplete: 'off',
-                      required: true,
-                      defaultValue: user.numero_cfei ?? '',
-                    }}
-                  />
-                )}
-              </form>
-            </div>
-          </div>
-          {user.roles.includes(UserRoles.CHASSEUR) && (
-            <ListAndSelectEntities
-              formId="onboarding-etape-2-associations-data"
-              setRefreshKey={setRefreshKey}
-              refreshKey={refreshKey}
-              sectionLabel="Vos associations / sociétés / domaines de chasse"
-              addLabel=""
-              selectLabel={canChange ? 'Cherchez ici une entité existante' : ''}
-              done
-              canChange
-              entityType={EntityTypes.PREMIER_DETENTEUR}
-              allEntitiesByTypeAndId={allEntitiesByTypeAndId}
-              userEntitiesByTypeAndId={userEntitiesByTypeAndId}
-            >
-              <div className="mt-8">
-                {!assoExpanded ? (
-                  <>
-                    {!userAssociationsChasses.length && (
-                      <>
-                        Votre entité n'est pas encore enregistrée dans Zacharie ?<br />
-                      </>
-                    )}
-                    <Button
-                      priority="secondary"
-                      className="mt-4"
-                      nativeButtonProps={{
-                        onClick: () => setAssoExpanded(true),
-                      }}
-                    >
-                      Enregistrer mon entité
-                    </Button>
-                  </>
-                ) : (
-                  <div className="rounded-lg border border-gray-300 px-8 py-6">
-                    <p className="font-semibold">
-                      Enregistrer une nouvelle association / société / domaine de chasse
-                    </p>
-                    <p className="mb-5 text-sm text-gray-500">
-                      * Les champs marqués d'un astérisque (*) sont obligatoires.
-                    </p>
-                    <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
-                      <Input
-                        label="Raison Sociale *"
-                        nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.raison_sociale,
-                          name: Prisma.EntityScalarFieldEnum.raison_sociale,
-                          autoComplete: 'off',
-                          required: true,
-                          defaultValue: '',
-                        }}
-                      />
-                      <Input
-                        label="SIRET"
-                        nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.siret,
-                          name: Prisma.EntityScalarFieldEnum.siret,
-                          autoComplete: 'off',
-                          defaultValue: '',
-                        }}
-                      />
-                      <Input
-                        label="Adresse *"
-                        hintText="Indication : numéro et voie"
-                        nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                          name: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                          autoComplete: 'off',
-                          required: true,
-                          defaultValue: '',
-                        }}
-                      />
-                      <Input
-                        label="Complément d'adresse (optionnel)"
-                        hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                        nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                          name: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                          autoComplete: 'off',
-                          defaultValue: '',
-                        }}
-                      />
-
-                      <div className="flex w-full flex-col gap-x-4 md:flex-row">
-                        <Input
-                          label="Code postal *"
-                          hintText="5 chiffres"
-                          className="shrink-0 md:basis-1/5"
-                          nativeInputProps={{
-                            id: Prisma.EntityScalarFieldEnum.code_postal,
-                            name: Prisma.EntityScalarFieldEnum.code_postal,
-                            autoComplete: 'off',
-                            required: true,
-                            value: assoPostalCode,
-                            onChange: (e) => {
-                              setAssoPostalCode(e.currentTarget.value);
-                            },
-                          }}
-                        />
-                        <div className="basis-4/5">
-                          <InputVille
-                            postCode={assoPostalCode}
-                            trimPostCode
-                            label="Ville ou commune *"
-                            hintText="Exemple : Montpellier"
-                            nativeInputProps={{
-                              id: Prisma.EntityScalarFieldEnum.ville,
-                              name: Prisma.EntityScalarFieldEnum.ville,
-                              autoComplete: 'off',
-                              required: true,
-                              defaultValue: '',
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
-                        Enregistrer
-                      </Button>
-                    </form>
-                  </div>
-                )}
-              </div>
-            </ListAndSelectEntities>
-          )}
-
           {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
             <ListAndSelectEntities
               formId="onboarding-etape-2-collecteur-pro-data"
               setRefreshKey={setRefreshKey}
               refreshKey={refreshKey}
-              sectionLabel="Votre Collecteur Professionnel Indépendant"
-              addLabel={!collecteursProDone ? 'Ajouter un Collecteur Professionnel' : 'Vos entreprises'}
+              sectionLabel="Mon Collecteur Professionnel Indépendant"
+              addLabel={!collecteursProDone ? 'Ajouter un Collecteur Professionnel' : 'Mon entreprise'}
               selectLabel={!collecteursProDone ? 'Sélectionnez un Collecteur Professionnel' : ''}
               done={collecteursProDone}
               canChange={!collecteursProDone}
@@ -421,8 +133,8 @@ export default function MesInformations() {
               formId="onboarding-etape-2-etg-data"
               setRefreshKey={setRefreshKey}
               refreshKey={refreshKey}
-              sectionLabel="Votre Établissement de Traitement du Gibier sauvage (ETG)"
-              addLabel={!etgsDone ? 'Ajouter un ETG' : 'Vos entreprises'}
+              sectionLabel="Mon Établissement de Traitement du Gibier sauvage (ETG)"
+              addLabel={!etgsDone ? 'Ajouter un ETG' : 'Mon entreprise'}
               selectLabel={!etgsDone ? 'Sélectionnez un ETG' : ''}
               done={etgsDone}
               canChange={!etgsDone}
@@ -488,7 +200,7 @@ export default function MesInformations() {
               formId="onboarding-etape-2-svi-data"
               setRefreshKey={setRefreshKey}
               refreshKey={refreshKey}
-              sectionLabel="Vous travaillez pour un Service Vétérinaire d'Inspection (SVI)"
+              sectionLabel="Mon Service Vétérinaire d'Inspection (SVI)"
               addLabel="Ajouter un SVI"
               selectLabel="Sélectionnez un SVI"
               done={svisDone}
@@ -547,9 +259,9 @@ export default function MesInformations() {
                     },
                   },
                   {
-                    children: 'Modifier mes rôles',
+                    children: 'Modifier mes coordonnées',
                     linkProps: {
-                      to: '/app/tableau-de-bord/mon-profil/mes-roles',
+                      to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
                       href: '#',
                     },
                     priority: 'secondary',
@@ -583,7 +295,6 @@ interface ListAndSelectEntitiesProps {
 function ListAndSelectEntities({
   setRefreshKey,
   refreshKey,
-  done,
   entityType,
   selectLabel,
   sectionLabel,
@@ -607,7 +318,6 @@ function ListAndSelectEntities({
       <div className="p-4 md:p-8">
         <h3 className="mb-8 text-lg font-semibold text-gray-900" id={`${formId}-title`}>
           {sectionLabel}
-          <CompletedTag done={done} />
         </h3>
         {description}
         {userEntities
@@ -682,6 +392,7 @@ function ListAndSelectEntities({
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
                       EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entityId,
+                    [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.REQUESTED,
                   },
                 }).then((res) => {
                   if (res.ok) {
@@ -699,16 +410,5 @@ function ListAndSelectEntities({
         {children}
       </div>
     </div>
-  );
-}
-
-function CompletedTag({ done }: { done: boolean }) {
-  if (done) {
-    return null;
-  }
-  return (
-    <span className="fr-background-contrast--grey fr-text-default--grey mr-6 inline-flex shrink-0 rounded-full px-3 py-1 text-xs">
-      À compléter
-    </span>
   );
 }

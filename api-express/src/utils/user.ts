@@ -58,6 +58,10 @@ export function autoActivatePremierDetenteur(user: User, calledFrom: string) {
     // console.log('!hasAllRequiredFields(user)', !hasAllRequiredFields(user, calledFrom), calledFrom);
     return false;
   }
+  if (user.est_forme_a_l_examen_initial) {
+    // si formé à l'examen initial, on doit vérifier que le numéro CFEI est renseigné
+    return false;
+  }
   // console.log('autoActivatePremierDetenteur', calledFrom);
   return true;
 }

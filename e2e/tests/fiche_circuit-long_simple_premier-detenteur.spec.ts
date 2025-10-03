@@ -26,7 +26,6 @@ test.describe("Fiches premier détenteur", () => {
     await expect(page.getByRole("link", { name: feiId })).toContainText("À renseigner");
     await page.getByRole("link", { name: feiId }).click();
     await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
-    await expect(page.getByText("En tant que Premier Détenteur")).toBeVisible();
     await expect(page.getByRole("button", { name: "Je prends en charge cette" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Examen initial Étape 1 sur" })).toBeVisible();
     await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
@@ -82,8 +81,8 @@ test.describe("Fiches premier détenteur", () => {
     await page.getByText("Aucun résultat").click();
     await page.getByRole("link", { name: "Vous n'avez pas encore" }).click();
     await page.getByRole("textbox", { name: "Si vous utilisez un CCG" }).fill("CCG-01");
-    await page.getByRole("button", { name: "Ajouter" }).click();
-    await page.getByRole("link", { name: "Continuer" }).click();
+    await page.locator("#onboarding-etape-2-ccgs-data").getByRole("button", { name: "Ajouter" }).click();
+    await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
     await page.locator(".select-prochain-detenteur__input-container").click();
     await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
     await page.getByText("J'ai déposé mes carcasses").click();
@@ -112,8 +111,8 @@ test.describe("Fiches premier détenteur", () => {
     await page.getByText("Aucun résultat").click();
     await page.getByRole("link", { name: "Vous n'avez pas encore" }).click();
     await page.getByRole("textbox", { name: "Si vous utilisez un CCG" }).fill("CCG-01");
-    await page.getByRole("button", { name: "Ajouter" }).click();
-    await page.getByRole("link", { name: "Continuer" }).click();
+    await page.locator("#onboarding-etape-2-ccgs-data").getByRole("button", { name: "Ajouter" }).click();
+    await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
     await page.locator(".select-prochain-detenteur__input-container").click();
     await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
     await page.getByText("J'ai déposé mes carcasses").click();
