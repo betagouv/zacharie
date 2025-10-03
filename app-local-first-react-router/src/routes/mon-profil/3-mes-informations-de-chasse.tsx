@@ -150,9 +150,6 @@ export default function MesCoordonnees() {
                 <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
                   <span>Examen initial</span>
                 </h3>
-                <p className="mb-5 text-sm text-gray-500">
-                  * Les champs marqués d'un astérisque (*) sont obligatoires.
-                </p>
                 <RadioButtons
                   legend="Êtes-vous formé à l'examen initial ? *"
                   orientation="horizontal"
