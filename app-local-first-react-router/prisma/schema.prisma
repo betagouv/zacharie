@@ -225,7 +225,7 @@ model ETGAndEntityRelations {
   etg_id_entity_id     String      @id @default(uuid())
   etg_id               String
   entity_id            String
-  entity_type          EntityTypes
+  entity_type          EntityTypes // now only SVI - before we had also COLLECTEUR_PRO
   created_at           DateTime    @default(now())
   updated_at           DateTime    @default(now()) @updatedAt
   deleted_at           DateTime?
