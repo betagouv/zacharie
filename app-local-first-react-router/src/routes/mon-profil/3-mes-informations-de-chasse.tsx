@@ -138,196 +138,217 @@ export default function MesCoordonnees() {
       </title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper currentStep={3} nextTitle={nextTitle} stepCount={4} title="Mes informations de chasse" />
-          <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations de chasse</h1>
-          <CallOut title="✍️ Pour pouvoir remplir les fiches qui vont sont attribuées" className="bg-white">
-            Votre numéro d'examen initial, votre chambre froide, votre association / société / domaine de
-            chasse, etc.
-          </CallOut>
-          <div className="mb-6 bg-white md:shadow-sm">
-            <div className="p-4 md:p-8">
-              <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()}>
-                <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
-                  <span>Examen initial</span>
-                </h3>
-                <RadioButtons
-                  legend="Êtes-vous formé à l'examen initial ? *"
-                  orientation="horizontal"
-                  options={[
-                    {
-                      nativeInputProps: {
-                        required: true,
-                        checked: isExaminateurInitial,
-                        name: Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial,
-                        onChange: () => {
-                          setIsExaminateurInitial(true);
-                          handleUserSubmit({ isExaminateurInitial: true, numeroCfei, visibilityChecked });
+          <Stepper
+            currentStep={3}
+            nextTitle={nextTitle}
+            stepCount={4}
+            title={
+              user.roles.includes(UserRoles.CHASSEUR)
+                ? 'Mes informations de chasse'
+                : 'Mes centres de collecte'
+            }
+          />
+          {user.roles.includes(UserRoles.CHASSEUR) && (
+            <>
+              <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations de chasse</h1>
+              <CallOut
+                title="✍️ Pour pouvoir remplir les fiches qui vont sont attribuées"
+                className="bg-white"
+              >
+                Votre numéro d'examen initial, votre chambre froide, votre association / société / domaine de
+                chasse, etc.
+              </CallOut>
+              <div className="mb-6 bg-white md:shadow-sm">
+                <div className="p-4 md:p-8">
+                  <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()}>
+                    <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
+                      <span>Examen initial</span>
+                    </h3>
+                    <RadioButtons
+                      legend="Êtes-vous formé à l'examen initial ? *"
+                      orientation="horizontal"
+                      options={[
+                        {
+                          nativeInputProps: {
+                            required: true,
+                            checked: isExaminateurInitial,
+                            name: Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial,
+                            onChange: () => {
+                              setIsExaminateurInitial(true);
+                              handleUserSubmit({ isExaminateurInitial: true, numeroCfei, visibilityChecked });
+                            },
+                          },
+                          label: 'Oui',
                         },
-                      },
-                      label: 'Oui',
-                    },
-                    {
-                      nativeInputProps: {
-                        required: true,
-                        checked: !isExaminateurInitial,
-                        name: 'pas_forme_a_l_examen_initial',
-                        onChange: () => {
-                          if (
-                            !user.numero_cfei ||
-                            window.confirm("N'êtes vous vraiment pas formé à l'examen initial ?")
-                          ) {
-                            setIsExaminateurInitial(false);
-                            handleUserSubmit({ isExaminateurInitial: false, numeroCfei, visibilityChecked });
-                          }
+                        {
+                          nativeInputProps: {
+                            required: true,
+                            checked: !isExaminateurInitial,
+                            name: 'pas_forme_a_l_examen_initial',
+                            onChange: () => {
+                              if (
+                                !user.numero_cfei ||
+                                window.confirm("N'êtes vous vraiment pas formé à l'examen initial ?")
+                              ) {
+                                setIsExaminateurInitial(false);
+                                handleUserSubmit({
+                                  isExaminateurInitial: false,
+                                  numeroCfei,
+                                  visibilityChecked,
+                                });
+                              }
+                            },
+                          },
+                          label: 'Non',
                         },
-                      },
-                      label: 'Non',
-                    },
-                  ]}
-                />
-                {user.roles.includes(UserRoles.CHASSEUR) && isExaminateurInitial && (
-                  <Input
-                    label="Numéro d'attestation de Chasseur Formé à l'Examen Initial *"
-                    hintText="De la forme CFEI-DEP-AA-123"
-                    key={isExaminateurInitial ? 'true' : 'false'}
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.numero_cfei,
-                      name: Prisma.UserScalarFieldEnum.numero_cfei,
-                      onBlur: () => handleUserSubmit({ isExaminateurInitial, numeroCfei, visibilityChecked }),
-                      autoComplete: 'off',
-                      required: true,
-                      value: numeroCfei,
-                      onChange: (e) => {
-                        setNumeroCfei(e.currentTarget.value);
-                      },
-                    }}
-                  />
-                )}
-              </form>
-            </div>
-          </div>
-
-          <ListAndSelectEntities
-            formId="onboarding-etape-2-associations-data"
-            setRefreshKey={setRefreshKey}
-            refreshKey={refreshKey}
-            sectionLabel="Mon association / société / domaine de chasse"
-            addLabel=""
-            selectLabel={canChange ? 'Cherchez ici une entité existante' : ''}
-            done
-            canChange
-            entityType={EntityTypes.PREMIER_DETENTEUR}
-            allEntitiesByTypeAndId={allEntitiesByTypeAndId}
-            userEntitiesByTypeAndId={userEntitiesByTypeAndId}
-          >
-            <div className="mt-8">
-              {!assoExpanded ? (
-                <>
-                  {!userAssociationsChasses.length && (
-                    <>
-                      Votre entité n'est pas encore enregistrée dans Zacharie ?<br />
-                    </>
-                  )}
-                  <Button
-                    priority="secondary"
-                    className="mt-4"
-                    nativeButtonProps={{
-                      onClick: () => setAssoExpanded(true),
-                    }}
-                  >
-                    Enregistrer mon entité
-                  </Button>
-                </>
-              ) : (
-                <div className="rounded-lg border border-gray-300 px-8 py-6">
-                  <p className="font-semibold">
-                    Enregistrer une nouvelle association / société / domaine de chasse
-                  </p>
-                  <p className="mb-5 text-sm text-gray-500">
-                    * Les champs marqués d'un astérisque (*) sont obligatoires.
-                  </p>
-                  <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
-                    <Input
-                      label="Raison Sociale *"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.raison_sociale,
-                        name: Prisma.EntityScalarFieldEnum.raison_sociale,
-                        autoComplete: 'off',
-                        required: true,
-                        defaultValue: '',
-                      }}
+                      ]}
                     />
-                    <Input
-                      label="SIRET"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.siret,
-                        name: Prisma.EntityScalarFieldEnum.siret,
-                        autoComplete: 'off',
-                        defaultValue: '',
-                      }}
-                    />
-                    <Input
-                      label="Adresse *"
-                      hintText="Indication : numéro et voie"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                        name: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                        autoComplete: 'off',
-                        required: true,
-                        defaultValue: '',
-                      }}
-                    />
-                    <Input
-                      label="Complément d'adresse (optionnel)"
-                      hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                        name: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                        autoComplete: 'off',
-                        defaultValue: '',
-                      }}
-                    />
-
-                    <div className="flex w-full flex-col gap-x-4 md:flex-row">
+                    {user.roles.includes(UserRoles.CHASSEUR) && isExaminateurInitial && (
                       <Input
-                        label="Code postal *"
-                        hintText="5 chiffres"
-                        className="shrink-0 md:basis-1/5"
+                        label="Numéro d'attestation de Chasseur Formé à l'Examen Initial *"
+                        hintText="De la forme CFEI-DEP-AA-123"
+                        key={isExaminateurInitial ? 'true' : 'false'}
                         nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.code_postal,
-                          name: Prisma.EntityScalarFieldEnum.code_postal,
+                          id: Prisma.UserScalarFieldEnum.numero_cfei,
+                          name: Prisma.UserScalarFieldEnum.numero_cfei,
+                          onBlur: () =>
+                            handleUserSubmit({ isExaminateurInitial, numeroCfei, visibilityChecked }),
                           autoComplete: 'off',
                           required: true,
-                          value: assoPostalCode,
+                          value: numeroCfei,
                           onChange: (e) => {
-                            setAssoPostalCode(e.currentTarget.value);
+                            setNumeroCfei(e.currentTarget.value);
                           },
                         }}
                       />
-                      <div className="basis-4/5">
-                        <InputVille
-                          postCode={assoPostalCode}
-                          trimPostCode
-                          label="Ville ou commune *"
-                          hintText="Exemple : Montpellier"
+                    )}
+                  </form>
+                </div>
+              </div>
+
+              <ListAndSelectEntities
+                formId="onboarding-etape-2-associations-data"
+                setRefreshKey={setRefreshKey}
+                refreshKey={refreshKey}
+                sectionLabel="Mon association / société / domaine de chasse"
+                addLabel=""
+                selectLabel={canChange ? 'Cherchez ici une entité existante' : ''}
+                done
+                canChange
+                entityType={EntityTypes.PREMIER_DETENTEUR}
+                allEntitiesByTypeAndId={allEntitiesByTypeAndId}
+                userEntitiesByTypeAndId={userEntitiesByTypeAndId}
+              >
+                <div className="mt-8">
+                  {!assoExpanded ? (
+                    <>
+                      {!userAssociationsChasses.length && (
+                        <>
+                          Votre entité n'est pas encore enregistrée dans Zacharie ?<br />
+                        </>
+                      )}
+                      <Button
+                        priority="secondary"
+                        className="mt-4"
+                        nativeButtonProps={{
+                          onClick: () => setAssoExpanded(true),
+                        }}
+                      >
+                        Enregistrer mon entité
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="rounded-lg border border-gray-300 px-8 py-6">
+                      <p className="font-semibold">
+                        Enregistrer une nouvelle association / société / domaine de chasse
+                      </p>
+                      <p className="mb-5 text-sm text-gray-500">
+                        * Les champs marqués d'un astérisque (*) sont obligatoires.
+                      </p>
+                      <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
+                        <Input
+                          label="Raison Sociale *"
                           nativeInputProps={{
-                            id: Prisma.EntityScalarFieldEnum.ville,
-                            name: Prisma.EntityScalarFieldEnum.ville,
+                            id: Prisma.EntityScalarFieldEnum.raison_sociale,
+                            name: Prisma.EntityScalarFieldEnum.raison_sociale,
                             autoComplete: 'off',
                             required: true,
                             defaultValue: '',
                           }}
                         />
-                      </div>
+                        <Input
+                          label="SIRET"
+                          nativeInputProps={{
+                            id: Prisma.EntityScalarFieldEnum.siret,
+                            name: Prisma.EntityScalarFieldEnum.siret,
+                            autoComplete: 'off',
+                            defaultValue: '',
+                          }}
+                        />
+                        <Input
+                          label="Adresse *"
+                          hintText="Indication : numéro et voie"
+                          nativeInputProps={{
+                            id: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                            name: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                            autoComplete: 'off',
+                            required: true,
+                            defaultValue: '',
+                          }}
+                        />
+                        <Input
+                          label="Complément d'adresse (optionnel)"
+                          hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                          nativeInputProps={{
+                            id: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                            name: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                            autoComplete: 'off',
+                            defaultValue: '',
+                          }}
+                        />
+
+                        <div className="flex w-full flex-col gap-x-4 md:flex-row">
+                          <Input
+                            label="Code postal *"
+                            hintText="5 chiffres"
+                            className="shrink-0 md:basis-1/5"
+                            nativeInputProps={{
+                              id: Prisma.EntityScalarFieldEnum.code_postal,
+                              name: Prisma.EntityScalarFieldEnum.code_postal,
+                              autoComplete: 'off',
+                              required: true,
+                              value: assoPostalCode,
+                              onChange: (e) => {
+                                setAssoPostalCode(e.currentTarget.value);
+                              },
+                            }}
+                          />
+                          <div className="basis-4/5">
+                            <InputVille
+                              postCode={assoPostalCode}
+                              trimPostCode
+                              label="Ville ou commune *"
+                              hintText="Exemple : Montpellier"
+                              nativeInputProps={{
+                                id: Prisma.EntityScalarFieldEnum.ville,
+                                name: Prisma.EntityScalarFieldEnum.ville,
+                                autoComplete: 'off',
+                                required: true,
+                                defaultValue: '',
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                          Enregistrer
+                        </Button>
+                      </form>
                     </div>
-                    <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
-                      Enregistrer
-                    </Button>
-                  </form>
+                  )}
                 </div>
-              )}
-            </div>
-          </ListAndSelectEntities>
+              </ListAndSelectEntities>
+            </>
+          )}
 
           <MesCCGs />
           <div className="mb-6 bg-white md:shadow-sm">

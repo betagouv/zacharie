@@ -163,6 +163,14 @@ function App() {
               }
             />
             <Route
+              path="mon-profil/mes-ccgs"
+              element={
+                <RestrictedRoute id="zacharie_carcasse_id">
+                  <MesInformationsDeChasse />
+                </RestrictedRoute>
+              }
+            />
+            <Route
               path="mon-profil/mon-entreprise"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">

@@ -56,6 +56,16 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       },
     });
   }
+  if (user?.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+    profileMenu.push({
+      text: 'Mes centres de collecte',
+      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-ccgs',
+      linkProps: {
+        href: '#',
+        to: '/app/tableau-de-bord/mon-profil/mes-ccgs',
+      },
+    });
+  }
   if (
     user?.roles.includes(UserRoles.COLLECTEUR_PRO) ||
     user?.roles.includes(UserRoles.ETG) ||
