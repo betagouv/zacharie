@@ -650,7 +650,7 @@ export default function DestinataireSelect({
             type="submit"
             disabled={disabled || !needToSubmit}
             nativeButtonProps={{
-              onClick: (event) => {
+              onClick: async (event) => {
                 event.preventDefault();
                 if (!tryToSubmitAtLeastOnce) {
                   setTryTOSubmitAtLeastOnce(true);
