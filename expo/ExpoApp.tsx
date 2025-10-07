@@ -56,7 +56,7 @@ function App() {
 
   const source = useMemo(
     () => ({
-      uri: `${APP_URL}app/connexion?type=compte-existant`,
+      uri: `${APP_URL}app/tableau-de-bord`,
     }),
     [APP_URL]
   );

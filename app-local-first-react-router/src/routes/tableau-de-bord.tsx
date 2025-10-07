@@ -57,7 +57,7 @@ export default function TableauDeBordIndex() {
         window.ReactNativeWebView?.postMessage('request-native-expo-push-permission');
       }
       clearTimeout(timeoutId);
-    }, 250);
+    }, 1000);
 
     return () => {
       clearTimeout(timeoutId);
