@@ -6,8 +6,10 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Prisma } from '@prisma/client';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 
 export default function Stats() {
+  const [searchParams] = useSearchParams();
   const user = useUser((state) => state.user);
 
   const [sent, setSent] = useState(false);
@@ -28,6 +30,9 @@ export default function Stats() {
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
             <h1 className="fr-h2 fr-mb-2w">Contact</h1>
             <CallOut className="bg-white">
+              {searchParams.get('for-delete-account')
+                ? 'Vous souhaitez supprimer votre compte Zacharie ? '
+                : ''}
               Vous pouvez nous contacter en écrivant à{' '}
               <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a> ou en
               remplissant le formulaire ci-dessous.
@@ -112,6 +117,7 @@ export default function Stats() {
                     <option>Je rencontre un problème lors de l'utilisation de Zacharie</option>
                     <option>Je n'arrive pas à me connecter à Zacharie</option>
                     <option>Je souhaite proposer une amélioration</option>
+                    <option>Je souhaite supprimer mon compte</option>
                     <option>Autre</option>
                   </Select>
                   <Input
@@ -129,6 +135,10 @@ export default function Stats() {
                 </form>
               </div>
             </div>
+            <CallOut className="bg-white">
+              Les informations que vous avez transmises via les fiches d'examen initial seront toutefois
+              conservées pour archive.
+            </CallOut>
           </div>
         </div>
       </div>
