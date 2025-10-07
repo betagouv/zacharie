@@ -117,6 +117,12 @@ export default function FEIExaminateurInitial() {
   }, [carcasses]);
 
   const canEdit = useMemo(() => {
+    if (
+      fei.fei_current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
+      fei.fei_current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
+    ) {
+      return false;
+    }
     if (fei.automatic_closed_at || fei.svi_closed_at || fei.svi_assigned_at || fei.intermediaire_closed_at) {
       return false;
     }
@@ -157,6 +163,12 @@ export default function FEIExaminateurInitial() {
   }, [fei, user]);
 
   const canEditAsPremierDetenteur = useMemo(() => {
+    if (
+      fei.fei_current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
+      fei.fei_current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
+    ) {
+      return false;
+    }
     if (fei.svi_closed_at || fei.automatic_closed_at || fei.svi_assigned_at || fei.intermediaire_closed_at) {
       return false;
     }
