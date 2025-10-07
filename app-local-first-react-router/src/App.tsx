@@ -39,6 +39,7 @@ import AdminApiKey from './routes/admin/api-key.$apiKeyId';
 import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
 import NouvelleFiche from './routes/nouvelle-fiche';
 import MonEntreprise from './routes/mon-profil/3-mon-entreprise';
+import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -75,6 +76,7 @@ function App() {
           <Route path="test-sentry" element={<TestSentry />} />
           <Route path="mentions-legales" element={<MentionsLegales />} />
           <Route path="accessibilite" element={<Accessibility />} />
+          <Route path="politique-de-confidentialite" element={<PolitiqueDeConfidentialite />} />
           <Route path="modalites-d-utilisation" element={<ModalitesDutilisation />} />
           <Route path="stats" element={<Stats />} />
           <Route path="contact" element={<Contact />} />

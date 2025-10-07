@@ -163,6 +163,13 @@ export default function RootDisplay({
               },
               {
                 linkProps: {
+                  to: '/politique-de-confidentialite',
+                  href: '#',
+                },
+                text: 'Politique de confidentialité',
+              },
+              {
+                linkProps: {
                   to: '/mentions-legales',
                   href: '#',
                 },
