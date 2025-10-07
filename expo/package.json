@@ -4,15 +4,21 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "prebuild": "expo prebuild",
+    "prebuild": "/bin/sh -c 'export $(grep -v ^'#' .env.local | xargs) && yarn eas-build-pre-install && npx expo prebuild --clean && rm -f ./google-services.json' && rm -f ./ios/.xcode.env.local",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "eas-build-pre-install": "echo \"This command is also run before `eas build` locally or in the cloud'\" && echo \"This command is also run before `eas build` locally or in the cloud'\" && node generate-google-service-json.js",
+    "eas-build-post-install": "rm -f ./ios/.xcode.env.local",
+    "load-env": "/bin/sh -c 'export $(grep -v ^'#' .env.production | xargs)'",
+    "build-eas:ios": "eas build -p ios",
     "build-eas-then-submit:ios": "eas build -p ios && eas submit -p ios --latest",
     "build-eas:android-aab": "eas build -p android",
-    "build-local:android-aab": "eas build -p android --local",
-    "build-local:ios-ipa": "eas build -p ios --local",
-    "build-local-then-submit:ios-ipa": "eas build -p ios --local && eas submit -p ios"
+    "build-local:ios-ipa": "/bin/sh -c 'export $(grep -v ^'#' .env.production | xargs) && eas build -p ios --local'",
+    "build-local-then-submit:ios-ipa": "/bin/sh -c 'export $(grep -v ^'#' .env.production | xargs) && eas build -p ios --local' && eas submit -p ios",
+    "build-local:ios-ipa:debug": "echo \"This script retains XCode logs for debugging build failures. Look for a message like 'Skipping cleanup, {path/to/logs} won't be removed.'\" && /bin/sh -c 'export $(grep -v ^'#' .env.production | xargs) && EAS_LOCAL_BUILD_SKIP_CLEANUP=1 eas build -p ios --local'",
+    "build-local:android-aab": "/bin/sh -c 'export $(grep -v ^'#' .env.production | xargs) && eas build -p android --local'",
+    "expo-config": "npx expo config"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",

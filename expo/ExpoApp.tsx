@@ -7,7 +7,7 @@ import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
-const APP_URL = __DEV__ ? process.env.EXPO_PUBLIC_APP_URL : "https://zacharie.beta.gouv.fr";
+const APP_URL = __DEV__ ? process.env.EXPO_PUBLIC_APP_URL : "https://zacharie.beta.gouv.fr/";
 // const APP_URL = "https://zacharie.beta.gouv.fr/";
 // EXPO_PUBLIC_APP_URL should be set in .env and should be like http://x.x.x.x:3234/ - get the IP with `ipconfig getifaddr en0` on macos for example
 
