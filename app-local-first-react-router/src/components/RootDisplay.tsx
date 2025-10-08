@@ -112,11 +112,11 @@ export default function RootDisplay({
         serviceTitle={
           <>
             Zacharie
-            <span className="ml-4 inline-block">
+            {/* <span className="ml-4 inline-block">
               <em className="mb-1 block rounded-sm bg-green-300 px-1 text-sm text-green-900 not-italic">
                 VERSION BETA
               </em>
-            </span>
+            </span> */}
           </>
         }
       />
