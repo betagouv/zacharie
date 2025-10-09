@@ -840,7 +840,7 @@ router.post(
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
         nextUser.numero_cfei = body[Prisma.UserScalarFieldEnum.numero_cfei] as string;
-        if (nextUser.numero_cfei !== user.numero_cfei) {
+        if (!req.isAdmin && nextUser.numero_cfei !== user.numero_cfei) {
           nextUser.activated = false;
           if (nextUser.activated_at) nextUser.activated_at = new Date();
         }
@@ -849,7 +849,7 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
         nextUser.est_forme_a_l_examen_initial =
           body[Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial] === 'true' ? true : false;
-        if (!nextUser.est_forme_a_l_examen_initial && user.numero_cfei) {
+        if (!req.isAdmin && !nextUser.est_forme_a_l_examen_initial && user.numero_cfei) {
           nextUser.activated = false;
           nextUser.numero_cfei = null;
           if (nextUser.activated_at) nextUser.activated_at = new Date();

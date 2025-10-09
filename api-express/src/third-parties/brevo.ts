@@ -207,16 +207,21 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
     }
 
     // let LANDLINE_NUMBER = '';
-    // let SMS = '';
-    // let WHATSAPP = '';
+    let SMS = '';
+    let WHATSAPP = '';
     let TELEPHONE_PORTABLE = '';
     let TELEPHONE_FIXE = '';
     if (props.telephone) {
       const phoneNumber = parsePhoneNumber(props.telephone, 'FR');
       if (phoneNumber?.isPossible()) {
         if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
-          // SMS = phoneNumber.number;
-          // WHATSAPP = phoneNumber.number;
+          const existingUser = await prisma.user.findFirst({
+            where: { telephone: phoneNumber.number },
+          });
+          if (!existingUser) {
+            SMS = phoneNumber.number;
+            WHATSAPP = phoneNumber.number;
+          }
           TELEPHONE_PORTABLE = phoneNumber.number;
         } else {
           // LANDLINE_NUMBER = phoneNumber.number;
@@ -233,8 +238,8 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
       PRENOM: props.prenom,
       NOM: props.nom_de_famille,
       // LANDLINE_NUMBER: LANDLINE_NUMBER,
-      // SMS: SMS,
-      // WHATSAPP: WHATSAPP,
+      SMS: SMS,
+      WHATSAPP: WHATSAPP,
       TELEPHONE_PORTABLE: TELEPHONE_PORTABLE,
       TELEPHONE_FIXE: TELEPHONE_FIXE,
     };
@@ -251,7 +256,7 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
 
 async function updateBrevoContact(props: User): Promise<User> {
   try {
-    // if (DISABLED) return props;
+    if (DISABLED) return props;
     if (props.roles.includes(UserRoles.ADMIN)) return props;
     const apiInstance = new brevo.ContactsApi();
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
@@ -269,16 +274,18 @@ async function updateBrevoContact(props: User): Promise<User> {
     }
 
     // let LANDLINE_NUMBER = '';
-    // let SMS = '';
-    // let WHATSAPP = '';
+    let SMS = '';
+    let WHATSAPP = '';
     let TELEPHONE_PORTABLE = '';
     let TELEPHONE_FIXE = '';
     if (props.telephone) {
       const phoneNumber = parsePhoneNumber(props.telephone, 'FR');
       if (phoneNumber?.isPossible()) {
         if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
-          // SMS = phoneNumber.number;
-          // WHATSAPP = phoneNumber.number;
+          if (props.roles.includes(UserRoles.CHASSEUR)) {
+            SMS = phoneNumber.number;
+            WHATSAPP = phoneNumber.number;
+          }
           TELEPHONE_PORTABLE = phoneNumber.number;
         } else {
           // LANDLINE_NUMBER = phoneNumber.number;
@@ -302,8 +309,8 @@ async function updateBrevoContact(props: User): Promise<User> {
       NOM: props.nom_de_famille,
       ROLE: formatRoles(props),
       // LANDLINE_NUMBER: LANDLINE_NUMBER,
-      // SMS: SMS,
-      // WHATSAPP: WHATSAPP,
+      SMS: SMS,
+      WHATSAPP: WHATSAPP,
       TELEPHONE_PORTABLE: TELEPHONE_PORTABLE,
       TELEPHONE_FIXE: TELEPHONE_FIXE,
       ADRESSE: ADRESSE ? ADRESSE : '',
@@ -311,13 +318,6 @@ async function updateBrevoContact(props: User): Promise<User> {
       EXT_ID: props.id,
     };
     const result = await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
-    console.log('updated brevo contact', props.brevo_contact_id);
-    // console.log('result', result);
-    // result.body is undefined so we don't update
-    // await prisma.user.update({
-    //   where: { id: props.id },
-    //   data: { brevo_contact_id: result.body.id },
-    // });
     return props;
   } catch (error) {
     capture(error as Error, {
@@ -769,3 +769,20 @@ export {
   updateBrevoETGDealPremiereFiche,
   updateBrevoSVIDealPremiereFiche,
 };
+
+prisma.user
+  .findMany({
+    where: {
+      brevo_contact_id: { not: null },
+      roles: { has: UserRoles.CHASSEUR },
+    },
+  })
+  .then(async (users) => {
+    console.log(`Updating ${users.length} Brevo contacts`);
+    for (const user of users) {
+      console.log(`Updating Brevo contact for ${user.email}`);
+      await updateBrevoContact(user);
+      console.log(`Updated Brevo contact for ${user.email}`);
+    }
+    console.log('Done');
+  });
