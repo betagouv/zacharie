@@ -770,19 +770,19 @@ export {
   updateBrevoSVIDealPremiereFiche,
 };
 
-prisma.user
-  .findMany({
-    where: {
-      brevo_contact_id: { not: null },
-      roles: { has: UserRoles.CHASSEUR },
-    },
-  })
-  .then(async (users) => {
-    console.log(`Updating ${users.length} Brevo contacts`);
-    for (const user of users) {
-      console.log(`Updating Brevo contact for ${user.email}`);
-      await updateBrevoContact(user);
-      console.log(`Updated Brevo contact for ${user.email}`);
-    }
-    console.log('Done');
-  });
+// prisma.user
+//   .findMany({
+//     where: {
+//       brevo_contact_id: { not: null },
+//       roles: { has: UserRoles.CHASSEUR },
+//     },
+//   })
+//   .then(async (users) => {
+//     console.log(`Updating ${users.length} Brevo contacts`);
+//     for (const user of users) {
+//       console.log(`Updating Brevo contact for ${user.email}`);
+//       await updateBrevoContact(user);
+//       console.log(`Updated Brevo contact for ${user.email}`);
+//     }
+//     console.log('Done');
+//   });
