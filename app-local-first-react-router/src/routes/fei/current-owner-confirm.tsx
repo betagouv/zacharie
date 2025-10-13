@@ -417,20 +417,25 @@ export default function CurrentOwnerConfirm() {
         )}
         <>
           <div className="flex items-center gap-2">
-            <p className="m-0 text-sm">Il y a une erreur ?</p>
-            {/* <Button
-                priority="tertiary"
-                type="button"
-                onClick={() =>
-                  handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer-request' })
-                }
-              >
-                Transférer la fiche
-              </Button> */}
             <Button
-              priority="tertiary no outline"
-              className="mt-0 text-sm"
-              type="submit"
+              priority="tertiary"
+              type="button"
+              className="mt-0"
+              onClick={() =>
+                handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer-request' })
+              }
+            >
+              Je sous-traite le transport
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* <p className="m-0 text-sm">Il y a une erreur ?</p> */}
+            <Button
+              // priority="tertiary no outline"
+              className="mt-0]"
+              // type="submit"
+              priority="tertiary"
+              type="button"
               onClick={() => {
                 const nextFei = {
                   fei_next_owner_entity_id: null,
@@ -453,7 +458,7 @@ export default function CurrentOwnerConfirm() {
                 });
               }}
             >
-              Renvoyer la fiche à l'expéditeur
+              Je renvoie la fiche à l'expéditeur
             </Button>
           </div>
         </>
