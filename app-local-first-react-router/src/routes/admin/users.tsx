@@ -96,8 +96,10 @@ export default function AdminUsers() {
                                 {dayjs(user.activated_at).format('DD/MM/YYYY à HH:mm')}`
                               </span>
                             </>
+                          ) : user.activated ? (
+                            'Activé avant août 2025'
                           ) : (
-                            'Activé avant mai 2025'
+                            ''
                           )}
                         </Link>
                       </div>,
