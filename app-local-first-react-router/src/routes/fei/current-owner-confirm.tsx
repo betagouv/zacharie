@@ -328,37 +328,6 @@ export default function CurrentOwnerConfirm() {
           <>
             {user.etg_role === UserEtgRoles.RECEPTION && (
               <>
-                {/* {needTransportFromETG && (
-                  <Checkbox
-                    className="mt-4"
-                    options={[
-                      {
-                        label: 'Mes carcasses ont été transportées par mon entreprise',
-                        hintText: (
-                          <button
-                            className="text-blue-france text-sm"
-                            type="button"
-                            onClick={() => {
-                              handlePriseEnCharge({
-                                transfer: true,
-                                action: 'current-owner-transfer-request',
-                              });
-                            }}
-                          >
-                            Votre entreprise ne transporte pas les carcasses ? <u>Cliquez ici</u> pour
-                            transférer à un autre collecteur professionnel.
-                          </button>
-                        ),
-                        nativeInputProps: {
-                          checked: checkedTransportFromETG,
-                          onChange: () => {
-                            setCheckedTransportFromETG(!checkedTransportFromETG);
-                          },
-                        },
-                      },
-                    ]}
-                  />
-                )} */}
                 <Button
                   type="submit"
                   className="my-4 block"
@@ -368,8 +337,6 @@ export default function CurrentOwnerConfirm() {
                       // what is done here is 1. register the fact that the ETG has transported the carcasses
                       // THEN 2. update the current owner to the ETG reception
                       // what to do better: handle this process properly, all at once
-                      // why is it like this ? because before, it wasn't a checkbox, it was a button - so there WAS two actions
-                      // but the button was a bad UX< the checkbox is much better - but I didn't take the time to adapt the code
                       // why a timeout ? because I don't want to overwrite the first setState in zustand state
                       // so I wait for the first setState to be "done" (I have no listener so timeout will be enough)
                       // this is a hack, but it works
@@ -385,6 +352,18 @@ export default function CurrentOwnerConfirm() {
                 >
                   Je prends en charge les carcasses
                 </Button>
+                {needTransportFromETG && (
+                  <Button
+                    priority="tertiary"
+                    type="button"
+                    className="mt-0"
+                    onClick={() =>
+                      handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer-request' })
+                    }
+                  >
+                    Je sous-traite le transport
+                  </Button>
+                )}
               </>
             )}
             {user.etg_role === UserEtgRoles.TRANSPORT && (
@@ -416,18 +395,6 @@ export default function CurrentOwnerConfirm() {
           </Button>
         )}
         <>
-          <div className="flex items-center gap-2">
-            <Button
-              priority="tertiary"
-              type="button"
-              className="mt-0"
-              onClick={() =>
-                handlePriseEnCharge({ transfer: true, action: 'current-owner-transfer-request' })
-              }
-            >
-              Je sous-traite le transport
-            </Button>
-          </div>
           <div className="flex items-center gap-2">
             {/* <p className="m-0 text-sm">Il y a une erreur ?</p> */}
             <Button
