@@ -1,5 +1,5 @@
 import useUser from '@app/zustand/user';
-import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
+import { Checkbox, CheckboxProps } from '@codegouvfr/react-dsfr/Checkbox';
 import { Prisma, UserRoles, User } from '@prisma/client';
 import { useState } from 'react';
 
@@ -16,9 +16,9 @@ export default function RolesCheckBoxes({
   const [checkedRoles, setCheckedRoles] = useState(user?.roles || []);
 
   let canChange = me?.roles.includes(UserRoles.ADMIN);
-  if (!me.activated) {
-    canChange = true;
-  }
+  // if (!me.activated) {
+  //   canChange = true;
+  // }
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nextValue = e.target.value as UserRoles;
@@ -34,22 +34,23 @@ export default function RolesCheckBoxes({
     setCheckedRoles(nextRoles);
   };
 
-  const options = [
+  // type of option props of Checkbox component
+  const options: CheckboxProps['options'] = [
     {
       label: 'Chasseur et/ou Examinateur Initial',
       hintText: <>Vous êtes chasseur et/ou vous avez été formé par votre fédération à l'examen initial.</>,
       nativeInputProps: {
+        className: me?.roles.includes(UserRoles.ADMIN)
+          ? ''
+          : me.activated
+            ? 'pointer-events-none cursor-not-allowed opacity-50'
+            : me.roles?.length > 0
+              ? 'pointer-events-none cursor-not-allowed opacity-50'
+              : '',
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.CHASSEUR,
         onChange: handleCheckboxChange,
         checked: checkedRoles.includes(UserRoles.CHASSEUR),
-        disabled: me?.roles.includes(UserRoles.ADMIN)
-          ? false
-          : me.activated
-            ? true
-            : me.roles?.length > 0
-              ? true
-              : false,
       },
     },
     {
@@ -60,7 +61,9 @@ export default function RolesCheckBoxes({
         value: UserRoles.COLLECTEUR_PRO,
         onChange: handleCheckboxChange,
         checked: checkedRoles.includes(UserRoles.COLLECTEUR_PRO),
-        disabled: me?.roles.includes(UserRoles.ADMIN) ? false : true,
+        className: me?.roles.includes(UserRoles.ADMIN)
+          ? ''
+          : 'pointer-events-none cursor-not-allowed opacity-50',
       },
     },
     {
@@ -75,7 +78,9 @@ export default function RolesCheckBoxes({
         // il y a un nombre limité de ETG en France (26-27), et
         // chaque nouvel utilisateur ETG doit être invité par un membre de son entreprise/service
         // donc si un utilisateur est ETG, il ne peut pas changer son rôle
-        disabled: me?.roles.includes(UserRoles.ADMIN) ? false : true,
+        className: me?.roles.includes(UserRoles.ADMIN)
+          ? ''
+          : 'pointer-events-none cursor-not-allowed opacity-50',
       },
     },
     {
@@ -88,7 +93,9 @@ export default function RolesCheckBoxes({
         checked: checkedRoles.includes(UserRoles.SVI),
         // chaque nouvel utilisateur SVI doit être invité par un membre de son service
         // donc si un utilisateur est SVI, il ne peut pas changer son rôle
-        disabled: me?.roles.includes(UserRoles.ADMIN) ? false : true,
+        className: me?.roles.includes(UserRoles.ADMIN)
+          ? ''
+          : 'pointer-events-none cursor-not-allowed opacity-50',
       },
     },
     {
@@ -99,7 +106,7 @@ export default function RolesCheckBoxes({
         value: UserRoles.ADMIN,
         onChange: handleCheckboxChange,
         checked: checkedRoles.includes(UserRoles.ADMIN),
-        disabled: !me.activated,
+        className: !me.activated ? 'pointer-events-none cursor-not-allowed opacity-50' : '',
       },
     },
   ];
@@ -113,7 +120,8 @@ export default function RolesCheckBoxes({
       <Checkbox
         hintText="Vous ne pouvez pas cumuler plusieurs activités dans Zacharie."
         legend={canChange ? legend : 'Voici votre activité sur Zacharie'}
-        disabled={!canChange}
+        // disabled={!canChange}
+        className={!canChange ? 'pointer-events-none cursor-not-allowed opacity-50' : ''}
         options={options}
       />
     </>

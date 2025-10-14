@@ -21,7 +21,10 @@ export default function MesRoles() {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const roles = formData.getAll(Prisma.UserScalarFieldEnum.roles);
-        const body: Partial<User> = { roles: roles as UserRoles[] };
+        const body: Partial<User> = { roles: roles.length === 0 ? user.roles : (roles as UserRoles[]) };
+        if (body.roles?.length === 0) {
+          return;
+        }
         const response = await API.post({
           path: `user/${user.id}`,
           body,

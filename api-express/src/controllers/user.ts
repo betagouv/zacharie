@@ -200,6 +200,11 @@ router.post(
             email,
             activated: false,
             prefilled: false,
+            // depuis le 14 octobre 2025, on ne peut plus créer de compte ETG/SVI/COLLECTEUR_PRO
+            // sans avoir au préalable été invité par un membre de son entreprise/service
+            // de sorte que tous les utilisateurs créés depuis le 14 octobre 2025 sont CHASSEURS
+            // et qu'en mettant ce rôle ici, on permet de passer à l'étape suivante dans l'onboarding (ie. mes coordonnées)
+            roles: [UserRoles.CHASSEUR],
           },
         });
         await createBrevoContact(user, 'USER');
