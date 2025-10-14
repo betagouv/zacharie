@@ -91,6 +91,7 @@ export default function MonEntreprise() {
 
   const nextTitle = 'Mes notifications';
   const nextPage = '/app/tableau-de-bord/mon-profil/mes-notifications';
+  const isFromProfil = location.pathname.includes('/app/tableau-de-bord/mon-profil');
 
   const showEntrpriseVisibilityCheckbox =
     user.roles.includes(UserRoles.COLLECTEUR_PRO) || user.roles.includes(UserRoles.ETG);
@@ -98,181 +99,199 @@ export default function MonEntreprise() {
   const title = user.roles.includes(UserRoles.SVI) ? 'Mon service' : 'Mon entreprise';
 
   return (
-    <div className="fr-container fr-container--fluid fr-my-md-14v">
-      <title>{title} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper currentStep={3} nextTitle={nextTitle} stepCount={4} title={title} />
-          <h1 className="fr-h2 fr-mb-2w">
-            Renseignez {user.roles.includes(UserRoles.SVI) ? 'votre service' : 'votre entreprise'}
-          </h1>
-          <CallOut title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées" className="bg-white">
-            {user.roles.includes(UserRoles.SVI)
-              ? "Quel est votre service vétérinaire d'inspection (SVI) ?"
-              : 'Quelle est votre entreprise ?'}
-            <br />
-            Lorsqu'une fiche lui sera attribuée, vous pourrez la prendre en charge.
-          </CallOut>
-          {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
-            <ListAndSelectEntities
-              formId="onboarding-etape-2-collecteur-pro-data"
-              setRefreshKey={setRefreshKey}
-              refreshKey={refreshKey}
-              sectionLabel="Mon Collecteur Professionnel Indépendant"
-              addLabel={!collecteursProDone ? 'Ajouter un Collecteur Professionnel' : 'Mon entreprise'}
-              selectLabel={!collecteursProDone ? 'Sélectionnez un Collecteur Professionnel' : ''}
-              done={collecteursProDone}
-              canChange={!collecteursProDone}
-              entityType={EntityTypes.COLLECTEUR_PRO}
-              allEntitiesByTypeAndId={allEntitiesByTypeAndId}
-              userEntitiesByTypeAndId={userEntitiesByTypeAndId}
-            />
-          )}
-          {user.roles.includes(UserRoles.ETG) && (
-            <ListAndSelectEntities
-              formId="onboarding-etape-2-etg-data"
-              setRefreshKey={setRefreshKey}
-              refreshKey={refreshKey}
-              sectionLabel="Mon Établissement de Traitement du Gibier sauvage (ETG)"
-              addLabel={!etgsDone ? 'Ajouter un ETG' : 'Mon entreprise'}
-              selectLabel={!etgsDone ? 'Sélectionnez un ETG' : ''}
-              done={etgsDone}
-              canChange={!etgsDone}
-              entityType={EntityTypes.ETG}
-              allEntitiesByTypeAndId={allEntitiesByTypeAndId}
-              userEntitiesByTypeAndId={userEntitiesByTypeAndId}
-            >
-              {etgsDone && (
-                <form
-                  id="etg_roles_form"
-                  className="mt-8 px-4"
-                  onChange={async (e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    const etgRole = formData.get(Prisma.UserScalarFieldEnum.etg_role) as UserEtgRoles;
-                    console.log({ etgRole });
-                    const body: Partial<User> = { etg_role: etgRole as UserEtgRoles };
-                    console.log({ body });
-                    const response = await API.post({
-                      path: `user/${user.id}`,
-                      body,
-                    }).then((data) => data as UserConnexionResponse);
-                    if (response.ok && response.data?.user?.id) {
-                      useUser.setState({ user: response.data.user });
-                    }
-                  }}
-                  onSubmit={(e) => e.preventDefault()}
-                >
-                  <RadioButtons
-                    legend="Que faites-vous au sein de votre ETG ?"
-                    key={user.etg_role}
-                    options={[
-                      {
-                        label: 'Je peux seulement transporter les carcasses',
-                        hintText:
-                          'Si vous cochez cette case, les futures fiches seront automatiquement réassignées à votre entreprise pour la réception ultérieure',
-                        nativeInputProps: {
-                          name: Prisma.UserScalarFieldEnum.etg_role,
-                          value: UserEtgRoles.TRANSPORT,
-                          defaultChecked: user.etg_role === UserEtgRoles.TRANSPORT,
-                          form: 'etg_roles_form',
-                        },
-                      },
-                      {
-                        label: 'Je peux réceptionner les carcasses et gérer la logistique',
-                        hintText:
-                          'En cochant cette case, vous pourrez réceptionner les carcasses, et vous pourrez aussi préciser le cas échéant que votre entreprise a également transporté les carcasses vers votre entreprise.',
-                        nativeInputProps: {
-                          name: Prisma.UserScalarFieldEnum.etg_role,
-                          value: UserEtgRoles.RECEPTION,
-                          defaultChecked: user.etg_role === UserEtgRoles.RECEPTION || !user.etg_role,
-                          form: 'etg_roles_form',
-                        },
-                      },
-                    ]}
-                  />
-                </form>
-              )}
-            </ListAndSelectEntities>
-          )}
-          {user.roles.includes(UserRoles.SVI) && (
-            <ListAndSelectEntities
-              formId="onboarding-etape-2-svi-data"
-              setRefreshKey={setRefreshKey}
-              refreshKey={refreshKey}
-              sectionLabel="Mon Service Vétérinaire d'Inspection (SVI)"
-              addLabel="Ajouter un SVI"
-              selectLabel="Sélectionnez un SVI"
-              done={svisDone}
-              canChange={!svisDone}
-              entityType={EntityTypes.SVI}
-              allEntitiesByTypeAndId={allEntitiesByTypeAndId}
-              userEntitiesByTypeAndId={userEntitiesByTypeAndId}
-            />
-          )}
-          <div className="mb-6 bg-white md:shadow-sm">
-            <div className="p-4 md:p-8">
-              {showEntrpriseVisibilityCheckbox && (
-                <>
+    <>
+      <title>{`${title} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
+      <div className="fr-container fr-container--fluid fr-my-md-14v">
+        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+          <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+            {isFromProfil && <Stepper currentStep={3} nextTitle={nextTitle} stepCount={4} title={title} />}
+            <h1 className="fr-h2 fr-mb-2w">
+              {isFromProfil
+                ? 'Renseignez ' + (user.roles.includes(UserRoles.SVI) ? 'votre service' : 'votre entreprise')
+                : title}
+            </h1>
+            {isFromProfil && (
+              <CallOut
+                title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées"
+                className="bg-white"
+              >
+                {user.roles.includes(UserRoles.SVI)
+                  ? "Quel est votre service vétérinaire d'inspection (SVI) ?"
+                  : 'Quelle est votre entreprise ?'}
+                <br />
+                Lorsqu'une fiche lui sera attribuée, vous pourrez la prendre en charge.
+              </CallOut>
+            )}
+            {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
+              <ListAndSelectEntities
+                formId="onboarding-etape-2-collecteur-pro-data"
+                setRefreshKey={setRefreshKey}
+                refreshKey={refreshKey}
+                sectionLabel="Mon Collecteur Professionnel Indépendant"
+                addLabel={!collecteursProDone ? 'Ajouter un Collecteur Professionnel' : 'Mon entreprise'}
+                selectLabel={!collecteursProDone ? 'Sélectionnez un Collecteur Professionnel' : ''}
+                done={collecteursProDone}
+                canChange={!collecteursProDone}
+                entityType={EntityTypes.COLLECTEUR_PRO}
+                allEntitiesByTypeAndId={allEntitiesByTypeAndId}
+                userEntitiesByTypeAndId={userEntitiesByTypeAndId}
+              />
+            )}
+            {user.roles.includes(UserRoles.ETG) && (
+              <ListAndSelectEntities
+                formId="onboarding-etape-2-etg-data"
+                setRefreshKey={setRefreshKey}
+                refreshKey={refreshKey}
+                sectionLabel="Mon Établissement de Traitement du Gibier sauvage (ETG)"
+                addLabel={!etgsDone ? 'Ajouter un ETG' : 'Mon entreprise'}
+                selectLabel={!etgsDone ? 'Sélectionnez un ETG' : ''}
+                done={etgsDone}
+                canChange={!etgsDone}
+                entityType={EntityTypes.ETG}
+                allEntitiesByTypeAndId={allEntitiesByTypeAndId}
+                userEntitiesByTypeAndId={userEntitiesByTypeAndId}
+              >
+                {etgsDone && (
                   <form
-                    id="user_entities_vivible_checkbox"
-                    method="POST"
-                    onChange={handleUserFormBlur}
+                    id="etg_roles_form"
+                    className="mt-8 px-4"
+                    onChange={async (e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget);
+                      const etgRole = formData.get(Prisma.UserScalarFieldEnum.etg_role) as UserEtgRoles;
+                      console.log({ etgRole });
+                      const body: Partial<User> = { etg_role: etgRole as UserEtgRoles };
+                      console.log({ body });
+                      const response = await API.post({
+                        path: `user/${user.id}`,
+                        body,
+                      }).then((data) => data as UserConnexionResponse);
+                      if (response.ok && response.data?.user?.id) {
+                        useUser.setState({ user: response.data.user });
+                      }
+                    }}
                     onSubmit={(e) => e.preventDefault()}
-                    className="px-8"
                   >
-                    <Checkbox
+                    <RadioButtons
+                      legend="Que faites-vous au sein de votre ETG ?"
+                      key={user.etg_role}
                       options={[
                         {
-                          label:
-                            "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+                          label: 'Je peux seulement transporter les carcasses',
                           hintText:
-                            'Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les fiches ne pourront pas être attribuées à votre entreprise',
+                            'Si vous cochez cette case, les futures fiches seront automatiquement réassignées à votre entreprise pour la réception ultérieure',
                           nativeInputProps: {
-                            required: true,
-                            name: Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox,
-                            value: 'true',
-                            onChange: () => setVisibilityChecked(!visibilityChecked),
-                            checked: visibilityChecked,
+                            name: Prisma.UserScalarFieldEnum.etg_role,
+                            value: UserEtgRoles.TRANSPORT,
+                            defaultChecked: user.etg_role === UserEtgRoles.TRANSPORT,
+                            form: 'etg_roles_form',
+                          },
+                        },
+                        {
+                          label: 'Je peux réceptionner les carcasses et gérer la logistique',
+                          hintText:
+                            'En cochant cette case, vous pourrez réceptionner les carcasses, et vous pourrez aussi préciser le cas échéant que votre entreprise a également transporté les carcasses vers votre entreprise.',
+                          nativeInputProps: {
+                            name: Prisma.UserScalarFieldEnum.etg_role,
+                            value: UserEtgRoles.RECEPTION,
+                            defaultChecked: user.etg_role === UserEtgRoles.RECEPTION || !user.etg_role,
+                            form: 'etg_roles_form',
                           },
                         },
                       ]}
                     />
                   </form>
-                </>
-              )}
-              <div className="mt-6 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                  Haut de page
-                </a>
-              </div>
-            </div>
-            <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: 'Enregistrer et Continuer',
-                    disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
-                    type: 'button',
-                    nativeButtonProps: {
-                      onClick: () => navigate(nextPage),
-                    },
-                  },
-                  {
-                    children: 'Modifier mes coordonnées',
-                    linkProps: {
-                      to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
-                      href: '#',
-                    },
-                    priority: 'secondary',
-                  },
-                ]}
+                )}
+              </ListAndSelectEntities>
+            )}
+            {user.roles.includes(UserRoles.SVI) && (
+              <ListAndSelectEntities
+                formId="onboarding-etape-2-svi-data"
+                setRefreshKey={setRefreshKey}
+                refreshKey={refreshKey}
+                sectionLabel="Mon Service Vétérinaire d'Inspection (SVI)"
+                addLabel="Ajouter un SVI"
+                selectLabel="Sélectionnez un SVI"
+                done={svisDone}
+                canChange={!svisDone}
+                entityType={EntityTypes.SVI}
+                allEntitiesByTypeAndId={allEntitiesByTypeAndId}
+                userEntitiesByTypeAndId={userEntitiesByTypeAndId}
               />
+            )}
+            <div className="mb-6 bg-white md:shadow-sm">
+              <div className="p-4 md:p-8">
+                {showEntrpriseVisibilityCheckbox && (
+                  <>
+                    <form
+                      id="user_entities_vivible_checkbox"
+                      method="POST"
+                      onChange={handleUserFormBlur}
+                      onSubmit={(e) => e.preventDefault()}
+                      className="px-8"
+                    >
+                      <Checkbox
+                        options={[
+                          {
+                            label:
+                              "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+                            hintText:
+                              'Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les fiches ne pourront pas être attribuées à votre entreprise',
+                            nativeInputProps: {
+                              required: true,
+                              name: Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox,
+                              value: 'true',
+                              onChange: () => setVisibilityChecked(!visibilityChecked),
+                              checked: visibilityChecked,
+                            },
+                          },
+                        ]}
+                      />
+                    </form>
+                  </>
+                )}
+                <div className="mt-6 ml-6">
+                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                    Haut de page
+                  </a>
+                </div>
+              </div>
+              <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
+                <ButtonsGroup
+                  // @ts-expect-error priority is not typed
+                  buttons={[
+                    {
+                      children: isFromProfil ? 'Enregistrer et Continuer' : 'Enregistrer',
+                      disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
+                      type: 'button',
+                      nativeButtonProps: {
+                        onClick: () => {
+                          if (isFromProfil) {
+                            navigate(nextPage);
+                          }
+                        },
+                      },
+                    },
+                    ...(isFromProfil
+                      ? [
+                          {
+                            children: 'Modifier mes coordonnées',
+                            linkProps: {
+                              to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
+                              href: '#',
+                            },
+                            priority: 'secondary',
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

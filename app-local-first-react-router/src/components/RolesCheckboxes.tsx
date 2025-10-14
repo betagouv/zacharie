@@ -1,3 +1,4 @@
+import useUser from '@app/zustand/user';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Prisma, UserRoles, User } from '@prisma/client';
 import { useState } from 'react';
@@ -6,14 +7,18 @@ export default function RolesCheckBoxes({
   user,
   legend = 'Sélectionnez l’activité qui vous correspond',
   withAdmin = false,
-  onlyChasseur = false,
 }: {
   user?: User;
   legend?: string;
   withAdmin?: boolean;
-  onlyChasseur?: boolean;
 }) {
+  const me = useUser((state) => state.user!);
   const [checkedRoles, setCheckedRoles] = useState(user?.roles || []);
+
+  let canChange = me?.roles.includes(UserRoles.ADMIN);
+  if (!me.activated) {
+    canChange = true;
+  }
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nextValue = e.target.value as UserRoles;
@@ -26,99 +31,83 @@ export default function RolesCheckBoxes({
     if (currentRoles.includes(UserRoles.ADMIN)) {
       nextRoles.push(UserRoles.ADMIN);
     }
-    console.log({ nextRoles });
     setCheckedRoles(nextRoles);
   };
 
-  const options = onlyChasseur
-    ? [
-        {
-          label: 'Chasseur et/ou Examinateur Initial',
-          hintText: (
-            <>Vous êtes chasseur et/ou vous avez été formé par votre fédération à l'examen initial.</>
-          ),
-          nativeInputProps: {
-            name: Prisma.UserScalarFieldEnum.roles,
-            value: UserRoles.CHASSEUR,
-            onChange: handleCheckboxChange,
-            checked: checkedRoles.includes(UserRoles.CHASSEUR),
-          },
-        },
-        {
-          label: 'Administrateur',
-          hintText: "Vous avez accès à la création d'entités et d'utilisateurs de Zacharie",
-          nativeInputProps: {
-            name: Prisma.UserScalarFieldEnum.roles,
-            value: UserRoles.ADMIN,
-            onChange: handleCheckboxChange,
-            checked: checkedRoles.includes(UserRoles.ADMIN),
-          },
-        },
-      ]
-    : [
-        {
-          label: 'Chasseur et/ou Examinateur Initial',
-          hintText: (
-            <>Vous êtes chasseur et/ou vous avez été formé par votre fédération à l'examen initial.</>
-          ),
-          nativeInputProps: {
-            name: Prisma.UserScalarFieldEnum.roles,
-            value: UserRoles.CHASSEUR,
-            onChange: handleCheckboxChange,
-            checked: checkedRoles.includes(UserRoles.CHASSEUR),
-          },
-        },
-        {
-          label: 'Collecteur Professionnel Indépendant',
-          hintText: 'Vous êtes salarié ou responsable d’un établissement qui transporte du gibier sauvage',
-          nativeInputProps: {
-            name: Prisma.UserScalarFieldEnum.roles,
-            value: UserRoles.COLLECTEUR_PRO,
-            onChange: handleCheckboxChange,
-            checked: checkedRoles.includes(UserRoles.COLLECTEUR_PRO),
-          },
-        },
-        {
-          label: 'Établissement de Traitement du Gibier sauvage (ETG)',
-          hintText:
-            'Vous êtes salarié ou responsable d’un établissement qui peut traiter et transporter du gibier sauvage',
-          nativeInputProps: {
-            name: Prisma.UserScalarFieldEnum.roles,
-            value: UserRoles.ETG,
-            onChange: handleCheckboxChange,
-            checked: checkedRoles.includes(UserRoles.ETG),
-          },
-        },
-        {
-          label: "Service Vétérinaire d'Inspection (SVI)",
-          hintText: "Vous êtes agréé par l'État pour effectuer des inspections vétérinaires",
-          nativeInputProps: {
-            name: Prisma.UserScalarFieldEnum.roles,
-            value: UserRoles.SVI,
-            onChange: handleCheckboxChange,
-            checked: checkedRoles.includes(UserRoles.SVI),
-          },
-        },
-        {
-          label: 'Administrateur',
-          hintText: "Vous avez accès à la création d'entités et d'utilisateurs de Zacharie",
-          nativeInputProps: {
-            name: Prisma.UserScalarFieldEnum.roles,
-            value: UserRoles.ADMIN,
-            onChange: handleCheckboxChange,
-            checked: checkedRoles.includes(UserRoles.ADMIN),
-          },
-        },
-      ];
+  const options = [
+    {
+      label: 'Chasseur et/ou Examinateur Initial',
+      hintText: <>Vous êtes chasseur et/ou vous avez été formé par votre fédération à l'examen initial.</>,
+      nativeInputProps: {
+        name: Prisma.UserScalarFieldEnum.roles,
+        value: UserRoles.CHASSEUR,
+        onChange: handleCheckboxChange,
+        checked: checkedRoles.includes(UserRoles.CHASSEUR),
+        disabled: me?.roles.includes(UserRoles.ADMIN)
+          ? false
+          : me.activated
+            ? true
+            : me.roles?.length > 0
+              ? true
+              : false,
+      },
+    },
+    {
+      label: 'Collecteur Professionnel Indépendant',
+      hintText: 'Vous êtes salarié ou responsable d’un établissement qui transporte du gibier sauvage',
+      nativeInputProps: {
+        name: Prisma.UserScalarFieldEnum.roles,
+        value: UserRoles.COLLECTEUR_PRO,
+        onChange: handleCheckboxChange,
+        checked: checkedRoles.includes(UserRoles.COLLECTEUR_PRO),
+        disabled: me?.roles.includes(UserRoles.ADMIN) ? false : true,
+      },
+    },
+    {
+      label: 'Établissement de Traitement du Gibier sauvage (ETG)',
+      hintText:
+        'Vous êtes salarié ou responsable d’un établissement qui peut traiter et transporter du gibier sauvage',
+      nativeInputProps: {
+        name: Prisma.UserScalarFieldEnum.roles,
+        value: UserRoles.ETG,
+        onChange: handleCheckboxChange,
+        checked: checkedRoles.includes(UserRoles.ETG),
+        // il y a un nombre limité de ETG en France (26-27), et
+        // chaque nouvel utilisateur ETG doit être invité par un membre de son entreprise/service
+        // donc si un utilisateur est ETG, il ne peut pas changer son rôle
+        disabled: me?.roles.includes(UserRoles.ADMIN) ? false : true,
+      },
+    },
+    {
+      label: "Service Vétérinaire d'Inspection (SVI)",
+      hintText: "Vous êtes agréé par l'État pour effectuer des inspections vétérinaires",
+      nativeInputProps: {
+        name: Prisma.UserScalarFieldEnum.roles,
+        value: UserRoles.SVI,
+        onChange: handleCheckboxChange,
+        checked: checkedRoles.includes(UserRoles.SVI),
+        // chaque nouvel utilisateur SVI doit être invité par un membre de son service
+        // donc si un utilisateur est SVI, il ne peut pas changer son rôle
+        disabled: me?.roles.includes(UserRoles.ADMIN) ? false : true,
+      },
+    },
+    {
+      label: 'Administrateur',
+      hintText: "Vous avez accès à la création d'entités et d'utilisateurs de Zacharie",
+      nativeInputProps: {
+        name: Prisma.UserScalarFieldEnum.roles,
+        value: UserRoles.ADMIN,
+        onChange: handleCheckboxChange,
+        checked: checkedRoles.includes(UserRoles.ADMIN),
+        disabled: !me.activated,
+      },
+    },
+  ];
 
   if (!withAdmin) {
     options.pop();
   }
 
-  // const canChange = me?.roles.includes(UserRoles.ADMIN);
-  const canChange = true;
-
-  console.log(options);
   return (
     <>
       <Checkbox

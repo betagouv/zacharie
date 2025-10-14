@@ -107,7 +107,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     },
   });
 
-  const feiMenu: MainNavigationProps.Item[] = [
+  const mainMenu: MainNavigationProps.Item[] = [
     {
       text: 'Fiches',
       isActive: location.pathname === '/app/tableau-de-bord',
@@ -116,7 +116,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   ];
 
   if (isExaminateurInitial && !isNotActivated) {
-    feiMenu.unshift({
+    mainMenu.unshift({
       text: 'Nouvelle fiche',
       linkProps: {
         href: '#',
@@ -129,7 +129,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   }
 
   if (isSvi || isEtg) {
-    feiMenu.push({
+    mainMenu.push({
       text: 'Carcasses',
       isActive: location.pathname === '/app/tableau-de-bord/registre-carcasses',
       linkProps: { to: '/app/tableau-de-bord/registre-carcasses', href: '#' },
@@ -138,7 +138,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
 
   const navigationBase: MainNavigationProps.Item[] = [
     // @ts-expect-error problem with MainNavigationProps.Item[]
-    ...feiMenu,
+    ...mainMenu,
     {
       text: 'Mon profil',
       isActive: location.pathname.startsWith('/app/tableau-de-bord/mon-profil'),
@@ -146,6 +146,28 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       menuLinks: profileMenu,
     },
   ];
+  if (
+    user?.roles.includes(UserRoles.SVI) ||
+    user?.roles.includes(UserRoles.ETG) ||
+    user?.roles.includes(UserRoles.COLLECTEUR_PRO)
+  ) {
+    navigationBase.push({
+      text: user?.roles.includes(UserRoles.SVI) ? 'Mon service' : 'Mon entreprise',
+      isActive: location.pathname.startsWith('/app/tableau-de-bord/mon-entreprise'),
+      menuLinks: [
+        {
+          text: 'Informations',
+          isActive: location.pathname === '/app/tableau-de-bord/mon-entreprise/informations',
+          linkProps: { to: '/app/tableau-de-bord/mon-entreprise/informations', href: '#' },
+        },
+        {
+          text: 'Ajouter un utilisateur',
+          isActive: location.pathname === '/app/tableau-de-bord/mon-entreprise/utilisateurs',
+          linkProps: { to: '/app/tableau-de-bord/mon-entreprise/utilisateurs', href: '#' },
+        },
+      ],
+    });
+  }
 
   if (isAdmin) {
     navigationBase.push({

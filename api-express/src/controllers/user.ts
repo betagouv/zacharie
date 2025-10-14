@@ -743,6 +743,81 @@ router.post(
 );
 
 router.post(
+  '/invite-user',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user!;
+    const body = req.body;
+    const email = body[Prisma.UserScalarFieldEnum.email]?.toLowerCase()?.trim();
+    if (!email) {
+      const error = new Error('Email non valide');
+      res.status(400);
+      return next(error);
+    }
+    const entity_id = body[Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id];
+    const entity = await prisma.entity.findUnique({
+      where: {
+        id: entity_id,
+      },
+    });
+    if (!entity) {
+      const error = new Error('Entité non trouvée');
+      res.status(400);
+      return next(error);
+    }
+    const myRelation = await prisma.entityAndUserRelations.findFirst({
+      where: {
+        owner_id: user.id,
+        entity_id: entity_id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      },
+    });
+    if (myRelation?.status !== EntityRelationStatus.ADMIN) {
+      const error = new Error("Vous n'avez pas les permissions pour inviter des utilisateurs à cette entité");
+      res.status(400);
+      return next(error);
+    }
+    let newUser = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    if (!newUser) {
+      newUser = await prisma.user.create({
+        data: {
+          id: await createUserId(),
+          email,
+          roles: req.user.roles.filter((role) => role !== UserRoles.ADMIN),
+          activated: true,
+          prefilled: false,
+        },
+      });
+    }
+    await prisma.entityAndUserRelations.create({
+      data: {
+        owner_id: newUser.id,
+        entity_id: entity_id,
+        status: EntityRelationStatus.MEMBER,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      },
+    });
+    const invitationEmail = [
+      `Bonjour,`,
+      `Votre compte Zacharie a été créé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant.`,
+      `N’hésitez pas à nous contacter si besoin,`,
+      `L’équipe Zacharie`,
+      `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,
+    ].join('\n\n');
+    await sendEmail({
+      emails: [newUser.email],
+      subject: `${user.prenom} ${user.nom_de_famille} vous a invité à rejoindre Zacharie`,
+      text: invitationEmail,
+    });
+    res.status(200).send({ ok: true, error: '', data: { newUser } });
+  }),
+);
+
+router.post(
   '/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
   authorizeUserOrAdmin,

@@ -40,6 +40,7 @@ import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
 import NouvelleFiche from './routes/nouvelle-fiche';
 import MonEntreprise from './routes/mon-profil/3-mon-entreprise';
 import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
+import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-mon-entreprise';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -177,6 +178,22 @@ function App() {
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
                   <MonEntreprise />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="mon-entreprise/informations"
+              element={
+                <RestrictedRoute id="zacharie_carcasse_id">
+                  <MonEntreprise />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="mon-entreprise/utilisateurs"
+              element={
+                <RestrictedRoute id="zacharie_carcasse_id">
+                  <UtilisateursDeMonEntreprise />
                 </RestrictedRoute>
               }
             />

@@ -47,7 +47,6 @@ export default function MesRoles() {
                   user={user}
                   legend="Sélectionnez l’activité qui vous correspond"
                   withAdmin={user.roles.includes(UserRoles.ADMIN)}
-                  onlyChasseur={!user.roles.length || user.roles.includes(UserRoles.CHASSEUR)}
                 />
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page

@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { EntityRelationType, EntityRelationStatus, User, Prisma, UserRoles } from '@prisma/client';
+import { EntityRelationType, EntityRelationStatus, User, Prisma } from '@prisma/client';
 import type { EntityWithUserRelations } from '@api/src/types/entity';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import API from '@app/services/api';
 import { Link, useSearchParams } from 'react-router';
 import SelectCustom from './SelectCustom';
-import useUser from '@app/zustand/user';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
+import RelationEntityUsersList from './RelationEntityUsersList';
+import useUser from '@app/zustand/user';
 
 interface RelationEntityUserProps {
   entity: EntityWithUserRelations;
@@ -40,6 +41,7 @@ export default function RelationEntityUser({
   displayUser = false,
   canDelete = false,
 }: RelationEntityUserProps) {
+  const me = useUser((state) => state.user)!;
   const [searchParams] = useSearchParams();
   const entityUsersModal = useRef(
     createModal({
@@ -48,8 +50,6 @@ export default function RelationEntityUser({
     }),
   ).current;
   const isOpen = useIsModalOpen(entityUsersModal);
-
-  const iAmAdmin = useUser((state) => state.user?.roles.includes(UserRoles.ADMIN));
 
   // const canTransmitCarcassesForEntity = entity.EntityRelationsWithUsers.find(
   //   (relation) =>
@@ -131,11 +131,17 @@ export default function RelationEntityUser({
           <>
             {userLink ? (
               <Link to={userLink} className="block bg-none px-3 py-4 no-underline!">
-                {user.prenom} {user.nom_de_famille}
+                <span className="font-bold">
+                  {user.prenom} {user.nom_de_famille} {user.id === me.id ? ' (Vous)' : ''}
+                </span>
+                <small className="text-sm font-normal">{user.email}</small>
               </Link>
             ) : (
               <>
-                {user.prenom} {user.nom_de_famille}
+                <span className="font-bold">
+                  {user.prenom} {user.nom_de_famille} {user.id === me.id ? ' (Vous)' : ''}
+                </span>
+                <small className="text-sm font-normal">{user.email}</small>
               </>
             )}
           </>
@@ -223,29 +229,12 @@ export default function RelationEntityUser({
           ]}
         >
           <div className={isOpen ? '' : 'pointer-events-none'}>
-            {entity.EntityRelationsWithUsers.sort((a, b) => {
-              const userA = `${a.UserRelatedWithEntity.prenom} ${a.UserRelatedWithEntity.nom_de_famille}`;
-              const userB = `${b.UserRelatedWithEntity.prenom} ${b.UserRelatedWithEntity.nom_de_famille}`;
-              return userA.localeCompare(userB);
-            }).map((otherUserRelation) => {
-              if (otherUserRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
-                return null;
-              }
-              return (
-                <RelationEntityUser
-                  key={otherUserRelation.id}
-                  entity={entity}
-                  user={otherUserRelation.UserRelatedWithEntity as User}
-                  enableUsersView={false}
-                  displayEntity={false}
-                  displayUser={true}
-                  onChange={onChange}
-                  refreshKey={refreshKey}
-                  canApproveRelation={iAmAdmin || isAdminOfEntity}
-                  canDelete={iAmAdmin || isAdminOfEntity}
-                />
-              );
-            })}
+            <RelationEntityUsersList
+              entity={entity}
+              refreshKey={refreshKey}
+              user={user}
+              onChange={onChange}
+            />
           </div>
         </entityUsersModal.Component>
       )}
