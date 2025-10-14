@@ -57,7 +57,7 @@ router.post(
     ) => {
       let { email, username, passwordUser, connexionType, resetPasswordRequest, resetPasswordToken } =
         req.body;
-      email = email.toLowerCase();
+      email = email.toLowerCase().trim();
       if (username) {
         capture(new Error('Spam detected'), {
           extra: { email, message: 'Spam detected' },
