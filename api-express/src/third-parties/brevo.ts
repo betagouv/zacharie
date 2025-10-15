@@ -23,7 +23,7 @@ type SendEmailProps = {
 
 async function sendEmail(props: SendEmailProps) {
   try {
-    if (DISABLED) {
+    if (IS_DEV_OR_TEST) {
       console.log('Sending email in development mode');
       console.log(props);
       return;
