@@ -407,8 +407,10 @@ const useZustandStore = create<State & Actions>()(
             };
           });
           // FIXME: pourquoi on n'envoie pas de syncData ici ?
-          // explication: vu que juste avant on fait un updateFei, on a peur qu'il y ait un problème de concurrency...
-          // mais c'est pas bien : il FAUT envoyer au serveur bon dieu
+          // explication : parce qu'on fait un syncData après updateFei seulement
+          // et qu'on appelle TOUT LE TEMPS updateFei APRÈS updateAllCarcasseIntermediaire
+          // à vérifier toutefois : que c'est bien la dernière version du store
+          // qui est envoyée
         },
         updateCarcasseIntermediaire: (
           feiAndCarcasseAndIntermediaireIds: FeiAndCarcasseAndIntermediaireIds,

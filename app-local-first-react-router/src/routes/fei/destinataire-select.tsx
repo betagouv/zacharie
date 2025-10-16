@@ -787,7 +787,6 @@ export default function DestinataireSelect({
                       );
                     }
                   }
-                  updateFei(fei.numero, nextFei);
                   let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
                     intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
                     intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
@@ -800,6 +799,7 @@ export default function DestinataireSelect({
                     feiAndIntermediaireIds,
                     nextCarcasseIntermediaire,
                   );
+                  updateFei(fei.numero, nextFei);
                   addLog({
                     user_id: user.id,
                     user_role:
