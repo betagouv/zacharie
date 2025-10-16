@@ -7,7 +7,7 @@ import { loadFei } from '@app/utils/load-fei';
 import FEIExaminateurInitial from './examinateur-initial';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { loadMyRelations } from '@app/utils/load-my-relations';
-import FeiTransfer from './current-owner-transfer';
+import FeiSousTraite from './current-owner-sous-traite';
 import FEICurrentIntermediaire from './intermediaire';
 import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
@@ -135,7 +135,7 @@ function Fei() {
             key={fei.fei_current_owner_entity_id! + fei.fei_current_owner_user_id!}
           >
             {showInterface === FeiOwnerRole.SVI && <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>}
-            <FeiTransfer />
+            <FeiSousTraite />
             {showInterface !== FeiOwnerRole.SVI && <CurrentOwnerConfirm />}
             {showInterface !== FeiOwnerRole.SVI && <FeiStepper />}
             {showInterface === FeiOwnerRole.COLLECTEUR_PRO && <FEICurrentIntermediaire />}

@@ -31,7 +31,7 @@ import { UserForFei } from '@api/src/types/user';
 export default function DestinataireSelect({
   className = '',
   canEdit,
-  transfer,
+  sousTraite,
   disabled,
   calledFrom,
   feiAndIntermediaireIds,
@@ -41,9 +41,9 @@ export default function DestinataireSelect({
 }: {
   className?: string;
   canEdit: boolean;
-  transfer?: boolean;
+  sousTraite?: boolean;
   disabled?: boolean;
-  calledFrom: 'premier-detenteur-need-select-next' | 'current-owner-transfer' | 'intermediaire-next-owner';
+  calledFrom: 'premier-detenteur-need-select-next' | 'current-owner-sous-traite' | 'intermediaire-next-owner';
   feiAndIntermediaireIds?: FeiAndIntermediaireIds;
   intermediaire?: FeiIntermediaire;
   premierDetenteurEntity?: EntityWithUserRelation | null;
@@ -137,7 +137,7 @@ export default function DestinataireSelect({
 
   const prochainDetenteurType = prochainDetenteur?.type;
   const needTransport = useMemo(() => {
-    if (transfer) return false;
+    if (sousTraite) return false;
     if (premierDetenteurEntity || premierDetenteurUser) {
       return prochainDetenteurType !== EntityTypes.COLLECTEUR_PRO;
     }
@@ -146,14 +146,14 @@ export default function DestinataireSelect({
     //   return prochainDetenteurType === EntityTypes.ETG;
     // }
     return false;
-  }, [transfer, premierDetenteurEntity, premierDetenteurUser, prochainDetenteurType]);
+  }, [sousTraite, premierDetenteurEntity, premierDetenteurUser, prochainDetenteurType]);
 
   const needDepot = useMemo(() => {
-    if (transfer) return false;
+    if (sousTraite) return false;
     if (premierDetenteurEntity) return true;
     if (intermediaireEntityType === EntityTypes.ETG) return false;
     return true;
-  }, [transfer, premierDetenteurEntity, intermediaireEntityType]);
+  }, [sousTraite, premierDetenteurEntity, intermediaireEntityType]);
 
   const [depotEntityId, setDepotEntityId] = useState(() => {
     if (!needDepot) return null;
@@ -311,7 +311,7 @@ export default function DestinataireSelect({
     if (!prochainDetenteurEntityId) {
       return 'Il manque le prochain détenteur des carcasses';
     }
-    if (fei.fei_current_owner_wants_to_transfer) {
+    if (fei.fei_next_owner_wants_to_sous_traite) {
       if (prochainDetenteurType === EntityTypes.SVI) {
         if (intermediaire?.intermediaire_role !== FeiOwnerRole.ETG) {
           return 'Attention, devez cliquer sur "Je prends en charge cette fiche" avant de transmettre la fiche au Service Vétérinaire';
@@ -348,7 +348,7 @@ export default function DestinataireSelect({
     return null;
   }, [
     prochainDetenteurEntityId,
-    fei.fei_current_owner_wants_to_transfer,
+    fei.fei_next_owner_wants_to_sous_traite,
     fei.fei_current_owner_role,
     needDepot,
     needTransport,
@@ -661,11 +661,14 @@ export default function DestinataireSelect({
                 }
                 // for typescript only
                 if (!prochainDetenteurEntityId) return;
-                if (transfer) {
+                if (sousTraite) {
                   let nextFei: Partial<typeof fei> = {
                     fei_next_owner_entity_id: prochainDetenteurEntityId,
                     fei_next_owner_role: prochainDetenteurType as FeiOwnerRole,
-                    fei_current_owner_wants_to_transfer: false,
+                    fei_next_owner_wants_to_sous_traite: false,
+                    fei_next_owner_sous_traite_at: dayjs().toDate(),
+                    fei_next_owner_sous_traite_by_user_id: user.id,
+                    fei_next_owner_sous_traite_by_entity_id: fei.fei_next_owner_entity_id,
                     fei_current_owner_entity_id: fei.fei_prev_owner_entity_id,
                     fei_current_owner_role: fei.fei_prev_owner_role,
                     fei_current_owner_user_id: fei.fei_prev_owner_user_id,
@@ -695,7 +698,7 @@ export default function DestinataireSelect({
                       fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
                         ? UserRoles.CHASSEUR
                         : fei.fei_current_owner_role!,
-                    action: `${calledFrom}-select-destinataire-transfer`,
+                    action: `${calledFrom}-select-destinataire-sous-traite`,
                     fei_numero: fei.numero,
                     history: createHistoryInput(fei, nextFei),
                     entity_id: fei.premier_detenteur_entity_id,

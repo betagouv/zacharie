@@ -88,7 +88,7 @@ export const carcasseForRegistrySelect: Prisma.CarcasseSelect = {
       // fei_current_owner_entity_id: false,
       // fei_current_owner_entity_name_cache: false,
       // fei_current_owner_role: false,
-      // fei_current_owner_wants_to_transfer: false,
+      // fei_next_owner_wants_to_sous_traite: false,
       // fei_next_owner_user_id: false,
       // fei_next_owner_user_name_cache: false,
       // fei_next_owner_entity_id: false,

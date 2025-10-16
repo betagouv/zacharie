@@ -77,6 +77,12 @@ export function getFeisSorted(): FeiSorted {
           continue;
         }
       }
+      if (fei.fei_next_owner_sous_traite_by_entity_id) {
+        if (state.entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_sous_traite_by_entity_id)) {
+          feisSorted.feisOngoing.push(fei);
+          continue;
+        }
+      }
       let isIntermediaire = false;
       for (const intermediaire of intermediairesByFei[fei.numero] || []) {
         if (intermediaire.intermediaire_user_id === user.id) {

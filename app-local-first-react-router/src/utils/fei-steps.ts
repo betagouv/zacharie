@@ -237,6 +237,17 @@ export function computeFeiSteps({
   })();
 
   const currentStepLabelShort = (() => {
+    if (fei.fei_next_owner_sous_traite_by_entity_id) {
+      if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_sous_traite_by_entity_id)) {
+        const wasSoustraitant =
+          fei.fei_prev_owner_entity_id === fei.fei_next_owner_sous_traite_by_entity_id ||
+          fei.fei_current_owner_entity_id === fei.fei_next_owner_sous_traite_by_entity_id;
+        const feiIsStillSoutraitée = !wasSoustraitant;
+        if (feiIsStillSoutraitée) {
+          return 'Sous-traitée';
+        }
+      }
+    }
     switch (currentStepLabel) {
       case 'Transport':
         return 'Transporté';

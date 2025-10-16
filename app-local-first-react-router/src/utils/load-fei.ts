@@ -111,6 +111,16 @@ export function setFeiInStore(feiResponse: FeiResponse) {
     }
   }
 
+  if (fei.fei_next_owner_sous_traite_by_entity_id) {
+    if (!prevState.entities[fei.fei_next_owner_sous_traite_by_entity_id]) {
+      const nextOwnerEntity = fei.FeiSoustraiteByEntity!;
+      prevState.entities[fei.fei_next_owner_sous_traite_by_entity_id!] = {
+        ...nextOwnerEntity,
+        relation: 'NONE',
+      } satisfies EntityWithUserRelation;
+    }
+  }
+
   const sviUser = fei.FeiSviUser;
   if (sviUser) {
     prevState.users[sviUser.id] = sviUser;

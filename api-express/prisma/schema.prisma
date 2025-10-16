@@ -76,6 +76,7 @@ model User {
   NotificationLog                NotificationLog[]
   CarcasseIntermediaire          CarcasseIntermediaire[]        @relation("CarcasseIntermediaireUser")
   FeiNextUser                    Fei[]                          @relation("FeiNextUser")
+  FeiSoustraiteByUser            Fei[]                          @relation("FeiSoustraiteByUser")
   CarcassesIpm1                  Carcasse[]                     @relation("SviIpm1User")
   ApiKeyApprovalByUser           ApiKeyApprovalByUserOrEntity[]
   ApiKeyLog                      ApiKeyLog[]
@@ -134,6 +135,7 @@ model Entity {
   EntityRelationsWithUsers        EntityAndUserRelations[]       @relation("EntityRelatedWithUser")
   FeisCurrentEntity               Fei[]                          @relation("FeiCurrentEntity")
   FeisNextEntity                  Fei[]                          @relation("FeiNextEntity")
+  FeisSoustraiteByEntity          Fei[]                          @relation("FeiSoustraiteByEntity")
   FeisDepotEntity                 Fei[]                          @relation("FeiDepotEntity")
   FeisPremierDetenteurEntity      Fei[]                          @relation("FeiPremierDetenteurEntity")
   FeisSviEntity                   Fei[]                          @relation("FeiSviEntity")
@@ -347,7 +349,10 @@ model Fei {
   fei_current_owner_entity_id                             String?
   fei_current_owner_entity_name_cache                     String?
   fei_current_owner_role                                  FeiOwnerRole?
-  fei_current_owner_wants_to_transfer                     Boolean?
+  fei_next_owner_wants_to_sous_traite                     Boolean?
+  fei_next_owner_sous_traite_at                           DateTime?
+  fei_next_owner_sous_traite_by_user_id                   String?
+  fei_next_owner_sous_traite_by_entity_id                 String?
   fei_next_owner_user_id                                  String?
   fei_next_owner_user_name_cache                          String?
   fei_next_owner_entity_id                                String?
@@ -378,7 +383,9 @@ model Fei {
   FeiCurrentUser                                          User?                   @relation("FeiCurrentUser", fields: [fei_current_owner_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiCurrentEntity                                        Entity?                 @relation("FeiCurrentEntity", fields: [fei_current_owner_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiNextEntity                                           Entity?                 @relation("FeiNextEntity", fields: [fei_next_owner_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  FeiSoustraiteByEntity                                   Entity?                 @relation("FeiSoustraiteByEntity", fields: [fei_next_owner_sous_traite_by_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiNextUser                                             User?                   @relation("FeiNextUser", fields: [fei_next_owner_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  FeiSoustraiteByUser                                     User?                   @relation("FeiSoustraiteByUser", fields: [fei_next_owner_sous_traite_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaire                                   CarcasseIntermediaire[]
 
   @@index([created_by_user_id])

@@ -203,9 +203,6 @@ router.post(
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache)) {
       nextFei.fei_current_owner_user_name_cache = body.fei_current_owner_user_name_cache || null;
     }
-    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_wants_to_transfer)) {
-      nextFei.fei_current_owner_wants_to_transfer = body.fei_current_owner_wants_to_transfer || null;
-    }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
       nextFei.fei_current_owner_entity_id = body.fei_current_owner_entity_id || null;
     }
@@ -214,6 +211,19 @@ router.post(
     }
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_role)) {
       nextFei.fei_current_owner_role = body.fei_current_owner_role || null;
+    }
+    /* Sous-traitance */
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_wants_to_sous_traite)) {
+      nextFei.fei_next_owner_wants_to_sous_traite = body.fei_next_owner_wants_to_sous_traite || null;
+    }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_at)) {
+      nextFei.fei_next_owner_sous_traite_at = body.fei_next_owner_sous_traite_at || null;
+    }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_by_user_id)) {
+      nextFei.fei_next_owner_sous_traite_by_user_id = body.fei_next_owner_sous_traite_by_user_id || null;
+    }
+    if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_by_entity_id)) {
+      nextFei.fei_next_owner_sous_traite_by_entity_id = body.fei_next_owner_sous_traite_by_entity_id || null;
     }
     /*  Next Owner */
     if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
@@ -658,6 +668,19 @@ router.get(
                   },
                 },
               },
+              {
+                FeiSoustraiteByEntity: {
+                  EntityRelationsWithUsers: {
+                    some: {
+                      owner_id: user.id,
+                      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                      status: {
+                        in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                      },
+                    },
+                  },
+                },
+              },
               { svi_user_id: user.id },
               {
                 CarcasseIntermediaire: {
@@ -785,6 +808,8 @@ router.get(
         FeiCurrentEntity: true,
         FeiNextUser: true,
         FeiNextEntity: true,
+        FeiSoustraiteByEntity: true,
+        FeiSoustraiteByUser: true,
         FeiSviUser: true,
         FeiSviEntity: true,
         CarcasseIntermediaire: {
@@ -1006,6 +1031,19 @@ router.get(
               },
               {
                 FeiPremierDetenteurEntity: {
+                  EntityRelationsWithUsers: {
+                    some: {
+                      owner_id: user.id,
+                      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                      status: {
+                        in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                      },
+                    },
+                  },
+                },
+              },
+              {
+                FeiSoustraiteByEntity: {
                   EntityRelationsWithUsers: {
                     some: {
                       owner_id: user.id,

@@ -21,6 +21,8 @@ export const feiPopulatedInclude = {
   FeiCurrentEntity: true,
   FeiNextUser: true,
   FeiNextEntity: true,
+  FeiSoustraiteByEntity: true,
+  FeiSoustraiteByUser: true,
   FeiSviUser: true,
   FeiSviEntity: true,
   CarcasseIntermediaire: {
