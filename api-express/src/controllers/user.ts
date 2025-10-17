@@ -892,11 +892,11 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.ville)) {
         nextUser.ville = body[Prisma.UserScalarFieldEnum.ville] as string;
       }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
-        nextUser.roles = [...new Set(body[Prisma.UserScalarFieldEnum.roles] as Array<UserRoles>)].sort(
-          (a, b) => b.localeCompare(a),
-        );
-      }
+      // if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
+      //   nextUser.roles = [...new Set(body[Prisma.UserScalarFieldEnum.roles] as Array<UserRoles>)].sort(
+      //     (a, b) => b.localeCompare(a),
+      //   );
+      // }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.etg_role)) {
         nextUser.etg_role = body[Prisma.UserScalarFieldEnum.etg_role] as UserEtgRoles;
       }
