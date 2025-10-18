@@ -1,4 +1,4 @@
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useMemo, useState } from 'react';
 import {
   UserRoles,
@@ -50,6 +50,7 @@ export default function DestinataireSelect({
   premierDetenteurUser?: UserForFei | null;
 }) {
   const params = useParams();
+  const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
   const isOnline = useIsOnline();
   const updateFei = useZustandStore((state) => state.updateFei);
@@ -93,10 +94,17 @@ export default function DestinataireSelect({
   }, [prochainsDetenteurs]);
 
   const ccgsOptions = useMemo(() => {
-    return ccgs.map((entity) => ({
-      label: getEntityDisplay(entity),
-      value: entity.id,
-    }));
+    return [
+      ...ccgs.map((entity) => ({
+        label: getEntityDisplay(entity),
+        value: entity.id,
+      })),
+      {
+        label: 'Ajouter une autre chambre froide (CCG)',
+        value: 'add_new',
+        isLink: true,
+      },
+    ];
   }, [ccgs]);
 
   const ccgsWorkingWith = useMemo(() => {
@@ -507,6 +515,11 @@ export default function DestinataireSelect({
                     getOptionLabel={(f) => f.label!}
                     getOptionValue={(f) => f.value}
                     onChange={(f) => {
+                      if (f?.value === 'add_new') {
+                        navigate(
+                          `/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`,
+                        );
+                      }
                       setDepotEntityId(f?.value ?? null);
                     }}
                     isClearable={!!depotEntityId}
