@@ -863,6 +863,13 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prefilled)) {
         nextUser.prefilled = body[Prisma.UserScalarFieldEnum.prefilled] === 'true' ? true : false;
       }
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse)) {
+        nextUser.checked_has_asso_de_chasse =
+          body[Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse] === 'true' ? new Date() : null;
+      }
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_ccg)) {
+        nextUser.checked_has_ccg = new Date();
+      }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.nom_de_famille)) {
         nextUser.nom_de_famille = body[Prisma.UserScalarFieldEnum.nom_de_famille] as string;
       }

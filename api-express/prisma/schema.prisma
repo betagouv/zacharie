@@ -63,6 +63,8 @@ model User {
   is_synced                      Boolean                        @default(true) // just for typing purppose with zustand frontend
   brevo_contact_id               Int?
   at_least_one_fei_treated       DateTime?
+  checked_has_asso_de_chasse     DateTime?
+  checked_has_ccg                DateTime?
   Password                       Password?
   UserRelationsAsOwner           UserRelations[]                @relation("UserOwnerOfUserRelation")
   UserRelationsAsRelated         UserRelations[]                @relation("UserRelatedOfUserRelation")

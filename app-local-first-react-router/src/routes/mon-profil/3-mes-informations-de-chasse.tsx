@@ -25,6 +25,7 @@ import RelationEntityUser from '@app/components/RelationEntityUser';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import type { UserCCGsResponse, UserEntityResponse } from '@api/src/types/responses';
+import InputNotEditable from '@app/components/InputNotEditable';
 
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.PREMIER_DETENTEUR]: {},
@@ -34,7 +35,7 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.SVI]: {},
 };
 
-export default function MesCoordonnees() {
+export default function MesInformationsDeChasse() {
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');
 
@@ -50,10 +51,6 @@ export default function MesCoordonnees() {
   );
   const [numeroCfei, setNumeroCfei] = useState(user.numero_cfei ?? '');
   const [visibilityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
-
-  const userAssociationsChasses = user.roles.includes(UserRoles.CHASSEUR)
-    ? Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR])
-    : [];
 
   const navigate = useNavigate();
 
@@ -101,35 +98,13 @@ export default function MesCoordonnees() {
     [user.id],
   );
 
-  const [assoExpanded, setAssoExpanded] = useState(false);
-  const [assoPostalCode, setAssoPostalCode] = useState('');
-  const handleEntitySubmit = useCallback(async (event: React.FocusEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const body: Partial<Entity> = Object.fromEntries(formData.entries());
-    const response = await API.post({
-      path: 'entite/association-de-chasse',
-      body,
-    }).then((data) => data as UserConnexionResponse);
-    if (response.ok) {
-      setRefreshKey((prev) => prev + 1);
-      setAssoPostalCode('');
-      setAssoExpanded(false);
-      document
-        .getElementById('onboarding-etape-2-associations-data-title')
-        ?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
-
   const nextTitle = 'Mes notifications';
   const nextPage = '/app/tableau-de-bord/mon-profil/mes-notifications';
 
   const showEntrpriseVisibilityCheckbox =
-    userAssociationsChasses.length > 0 ||
+    Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).length > 0 ||
     user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
     user.roles.includes(UserRoles.ETG);
-
-  const canChange = true;
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -151,12 +126,8 @@ export default function MesCoordonnees() {
           {user.roles.includes(UserRoles.CHASSEUR) && (
             <>
               <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations de chasse</h1>
-              <CallOut
-                title="✍️ Pour pouvoir remplir les fiches qui vont sont attribuées"
-                className="bg-white"
-              >
-                Votre numéro d'examen initial, votre chambre froide, votre association / société / domaine de
-                chasse, etc.
+              <CallOut title="⚠️ Informations essentielles pour faire des fiches" className="bg-white">
+                Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer.
               </CallOut>
               <div className="mb-6 bg-white md:shadow-sm">
                 <div className="p-4 md:p-8">
@@ -226,127 +197,12 @@ export default function MesCoordonnees() {
                 </div>
               </div>
 
-              <ListAndSelectEntities
-                formId="onboarding-etape-2-associations-data"
+              <MesAssociationsDeChasse
                 setRefreshKey={setRefreshKey}
                 refreshKey={refreshKey}
-                sectionLabel="Mon association / société / domaine de chasse"
-                addLabel=""
-                selectLabel={canChange ? 'Cherchez ici une entité existante' : ''}
-                done
-                canChange
-                entityType={EntityTypes.PREMIER_DETENTEUR}
                 allEntitiesByTypeAndId={allEntitiesByTypeAndId}
                 userEntitiesByTypeAndId={userEntitiesByTypeAndId}
-              >
-                <div className="mt-8">
-                  {!assoExpanded ? (
-                    <>
-                      {!userAssociationsChasses.length && (
-                        <>
-                          Votre entité n'est pas encore enregistrée dans Zacharie ?<br />
-                        </>
-                      )}
-                      <Button
-                        priority="secondary"
-                        className="mt-4"
-                        nativeButtonProps={{
-                          onClick: () => setAssoExpanded(true),
-                        }}
-                      >
-                        Enregistrer mon entité
-                      </Button>
-                    </>
-                  ) : (
-                    <div className="rounded-lg border border-gray-300 px-8 py-6">
-                      <p className="font-semibold">
-                        Enregistrer une nouvelle association / société / domaine de chasse
-                      </p>
-                      <p className="mb-5 text-sm text-gray-500">
-                        * Les champs marqués d'un astérisque (*) sont obligatoires.
-                      </p>
-                      <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
-                        <Input
-                          label="Raison Sociale *"
-                          nativeInputProps={{
-                            id: Prisma.EntityScalarFieldEnum.raison_sociale,
-                            name: Prisma.EntityScalarFieldEnum.raison_sociale,
-                            autoComplete: 'off',
-                            required: true,
-                            defaultValue: '',
-                          }}
-                        />
-                        <Input
-                          label="SIRET"
-                          nativeInputProps={{
-                            id: Prisma.EntityScalarFieldEnum.siret,
-                            name: Prisma.EntityScalarFieldEnum.siret,
-                            autoComplete: 'off',
-                            defaultValue: '',
-                          }}
-                        />
-                        <Input
-                          label="Adresse *"
-                          hintText="Indication : numéro et voie"
-                          nativeInputProps={{
-                            id: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                            name: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                            autoComplete: 'off',
-                            required: true,
-                            defaultValue: '',
-                          }}
-                        />
-                        <Input
-                          label="Complément d'adresse (optionnel)"
-                          hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                          nativeInputProps={{
-                            id: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                            name: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                            autoComplete: 'off',
-                            defaultValue: '',
-                          }}
-                        />
-
-                        <div className="flex w-full flex-col gap-x-4 md:flex-row">
-                          <Input
-                            label="Code postal *"
-                            hintText="5 chiffres"
-                            className="shrink-0 md:basis-1/5"
-                            nativeInputProps={{
-                              id: Prisma.EntityScalarFieldEnum.code_postal,
-                              name: Prisma.EntityScalarFieldEnum.code_postal,
-                              autoComplete: 'off',
-                              required: true,
-                              value: assoPostalCode,
-                              onChange: (e) => {
-                                setAssoPostalCode(e.currentTarget.value);
-                              },
-                            }}
-                          />
-                          <div className="basis-4/5">
-                            <InputVille
-                              postCode={assoPostalCode}
-                              trimPostCode
-                              label="Ville ou commune *"
-                              hintText="Exemple : Montpellier"
-                              nativeInputProps={{
-                                id: Prisma.EntityScalarFieldEnum.ville,
-                                name: Prisma.EntityScalarFieldEnum.ville,
-                                autoComplete: 'off',
-                                required: true,
-                                defaultValue: '',
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
-                          Enregistrer
-                        </Button>
-                      </form>
-                    </div>
-                  )}
-                </div>
-              </ListAndSelectEntities>
+              />
             </>
           )}
 
@@ -423,52 +279,163 @@ export default function MesCoordonnees() {
   );
 }
 
-interface ListAndSelectEntitiesProps {
+interface MesAssociationsDeChasseProps {
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   refreshKey: number;
-  canChange: boolean;
-  done: boolean;
-  entityType: EntityTypes;
-  addLabel: string;
-  selectLabel: string;
-  sectionLabel: string;
-  formId: string;
-  description?: React.ReactNode;
   allEntitiesByTypeAndId: EntitiesByTypeAndId;
   userEntitiesByTypeAndId: EntitiesByTypeAndId;
-  children?: React.ReactNode;
 }
 
-function ListAndSelectEntities({
+function MesAssociationsDeChasse({
   setRefreshKey,
   refreshKey,
-  entityType,
-  selectLabel,
-  sectionLabel,
-  formId,
-  description,
   allEntitiesByTypeAndId,
   userEntitiesByTypeAndId,
-  children,
-  canChange,
-}: ListAndSelectEntitiesProps) {
+}: MesAssociationsDeChasseProps) {
   const user = useUser((state) => state.user)!;
-  const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
-  const remainingEntities = Object.values(allEntitiesByTypeAndId[entityType]).filter(
-    (entity) => !userEntitiesByTypeAndId[entityType][entity.id],
+  console.log(user.checked_has_asso_de_chasse);
+  const handleUserSubmit = useCallback(
+    async (checked_has_asso_de_chasse: boolean) => {
+      const body: Record<string, string | null> = {};
+      body.checked_has_asso_de_chasse = checked_has_asso_de_chasse ? 'true' : 'false';
+      const response = await API.post({
+        path: `user/${user.id}`,
+        body,
+      }).then((data) => data as UserConnexionResponse);
+      if (response.ok && response.data?.user?.id) {
+        useUser.setState({ user: response.data.user });
+      }
+    },
+    [user.id],
   );
 
-  const [entityId, setEntityId] = useState<string | null>(null);
+  const userEntities = Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]);
+  const remainingEntities = Object.values(allEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).filter(
+    (entity) => !userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR][entity.id],
+  );
+
+  const userHasAssociationsChasses =
+    Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).length > 0;
+
+  const [showForm, setShowForm] = useState(!userHasAssociationsChasses);
+  useEffect(() => {
+    setShowForm(!userHasAssociationsChasses);
+  }, [userHasAssociationsChasses]);
+
+  const [currentEntityId, setCurrentEntityId] = useState<string | null>(null);
+  const currentEntity = remainingEntities.find((entity) => entity.id === currentEntityId);
+  const [newEntityNomDUsage, setNewEntityNomDUsage] = useState('');
+  const [isUnregisteredEntity, setIsUnregisteredEntity] = useState(false);
+
+  const newEntity = newEntityNomDUsage
+    ? ({
+        nom_d_usage: newEntityNomDUsage,
+        id: 'nouvelle',
+      } as (typeof remainingEntities)[number])
+    : undefined;
+  const selectOptions = newEntity ? [newEntity, ...remainingEntities] : remainingEntities;
+  const selectValue = newEntityNomDUsage
+    ? (selectOptions.find((option) => option.id === 'nouvelle') ?? undefined)
+    : (selectOptions.find((option) => option.id === currentEntityId) ?? undefined);
+
+  const isAdminOfEntity =
+    newEntityNomDUsage ||
+    !currentEntityId ||
+    userEntities
+      .find((entity) => entity.id === currentEntityId)
+      ?.EntityRelationsWithUsers.find(
+        (relation) =>
+          relation.owner_id === user.id &&
+          relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      )?.status === EntityRelationStatus.ADMIN;
+
+  const ComponentToDisplay = isAdminOfEntity ? Input : InputNotEditable;
+
+  const [assoPostalCode, setAssoPostalCode] = useState('');
+  const handleEntitySubmit = useCallback(
+    async (event: React.FocusEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (isUnregisteredEntity) {
+        const formData = new FormData(event.currentTarget);
+        const body: Partial<Entity> = Object.fromEntries(formData.entries());
+        body.raison_sociale = newEntityNomDUsage;
+        const response = await API.post({
+          path: 'entite/association-de-chasse',
+          body,
+        }).then((data) => data as UserConnexionResponse);
+        if (response.ok) {
+          setRefreshKey((prev) => prev + 1);
+          setCurrentEntityId(null);
+          setAssoPostalCode('');
+          setShowForm(false);
+          document
+            .getElementById('onboarding-etape-2-associations-data-title')
+            ?.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        API.post({
+          path: `user/user-entity/${user.id}`,
+          body: {
+            [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
+            _action: 'create',
+            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
+              EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
+          },
+        }).then((res) => {
+          if (res.ok) {
+            setRefreshKey((k) => k + 1);
+            setCurrentEntityId(null);
+            setShowForm(false);
+          }
+        });
+      }
+    },
+    [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage],
+  );
 
   return (
-    <div className="mb-6 bg-white md:shadow-sm">
+    <div className="mb-6 bg-white md:shadow-sm" key={refreshKey}>
       <div className="p-4 md:p-8">
-        <h3 className="mb-8 text-lg font-semibold text-gray-900" id={`${formId}-title`}>
-          {sectionLabel}
+        <h3
+          className="mb-8 text-lg font-semibold text-gray-900"
+          id={`onboarding-etape-2-associations-data-title`}
+        >
+          Mon association / société / domaine de chasse
         </h3>
-        {description}
+
+        {!userHasAssociationsChasses && (
+          <RadioButtons
+            legend="Êtes-vous rattaché à une association / une société / un domaine de chasse ? *"
+            orientation="horizontal"
+            options={[
+              {
+                nativeInputProps: {
+                  required: true,
+                  checked: !!user.checked_has_asso_de_chasse,
+                  name: Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse,
+                  onChange: () => {
+                    handleUserSubmit(true);
+                  },
+                },
+                label: 'Oui',
+              },
+              {
+                nativeInputProps: {
+                  required: true,
+                  checked: !user.checked_has_asso_de_chasse,
+                  name: 'not_checked_has_asso_de_chasse',
+                  onChange: () => {
+                    handleUserSubmit(false);
+                  },
+                },
+                label: 'Non',
+              },
+            ]}
+          />
+        )}
         {userEntities
-          .filter((entity) => entity.type === entityType)
+          .filter((entity) => entity.type === EntityTypes.PREMIER_DETENTEUR)
           .map((entity) => {
             const relation = entity.EntityRelationsWithUsers.find(
               (relation) =>
@@ -493,67 +460,208 @@ function ListAndSelectEntities({
               />
             );
           })}
-        {canChange && (
-          <form
-            id={formId}
-            className="flex w-full flex-col gap-4 md:flex-row [&_.fr-select-group]:mb-0"
-            method="POST"
-          >
-            <SelectCustom
-              options={remainingEntities.map((entity) => ({
-                label: `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
-                value: entity.id,
-              }))}
-              placeholder={selectLabel}
-              value={
-                entityId
-                  ? {
-                      label: remainingEntities
-                        .filter((entity) => entity.id === entityId)
-                        .map(
-                          (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
-                        )?.[0],
-                      value: entityId,
-                    }
-                  : null
-              }
-              getOptionLabel={(f) => f.label!}
-              getOptionValue={(f) => f.value}
-              onChange={(f) => (f ? setEntityId(f.value) : setEntityId(null))}
-              isClearable={!!entityId}
-              inputId={`select-${formId}`}
-              classNamePrefix={`select-${formId}`}
-              className="basis-2/3"
-            />
-            <Button
-              type="submit"
-              className="flex basis-1/3 items-center justify-center"
-              nativeButtonProps={{ form: formId }}
-              onClick={(e) => {
-                e.preventDefault();
-                API.post({
-                  path: `user/user-entity/${user.id}`,
-                  body: {
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                    _action: 'create',
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
-                      EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entityId,
-                  },
-                }).then((res) => {
-                  if (res.ok) {
-                    setRefreshKey((k) => k + 1);
-                    setEntityId(null);
+
+        {(userHasAssociationsChasses || user.checked_has_asso_de_chasse) && (
+          <>
+            {!showForm ? (
+              <>
+                <Button
+                  priority="secondary"
+                  className="mt-4"
+                  nativeButtonProps={{
+                    onClick: () => setShowForm(true),
+                  }}
+                >
+                  Me rattacher à une autre entité
+                </Button>
+              </>
+            ) : (
+              <div className="mt-8">
+                <div className="rounded-lg border border-gray-300 px-8 py-6">
+                  <p className="mb-5 text-sm text-gray-500">
+                    * Les champs marqués d'un astérisque (*) sont obligatoires.
+                  </p>
+                  <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
+                    <SelectCustom
+                      key={'Raison Sociale *' + currentEntityId}
+                      options={selectOptions}
+                      getOptionLabel={(entity) =>
+                        `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
+                      }
+                      getOptionValue={(entity) => entity.id}
+                      formatOptionLabel={(entity, options) => {
+                        if (options.context === 'menu') {
+                          // @ts-expect-error - __isNew__ and value are not typed
+                          if (entity.__isNew__) return entity.value;
+                          if (!entity.code_postal) return entity.nom_d_usage;
+                          return `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`;
+                        }
+                        return entity.nom_d_usage;
+                      }}
+                      // @ts-expect-error - onCreateOption is not typed
+                      onCreateOption={async (raison_sociale) => {
+                        setNewEntityNomDUsage(raison_sociale);
+                        setIsUnregisteredEntity(true);
+                        setAssoPostalCode('');
+                        setCurrentEntityId(null);
+                      }}
+                      label="Raison Sociale *"
+                      name={Prisma.EntityScalarFieldEnum.raison_sociale}
+                      placeholder=""
+                      creatable={true}
+                      value={selectValue}
+                      onBlur={(event) => {
+                        if (!currentEntityId) {
+                          if (event.target.value) {
+                            setNewEntityNomDUsage(event.target.value);
+                            setIsUnregisteredEntity(true);
+                          }
+                        }
+                      }}
+                      onChange={(newEntity) => {
+                        if (newEntity?.id) {
+                          setCurrentEntityId(newEntity.id);
+                          setAssoPostalCode(newEntity.code_postal || '');
+                          setNewEntityNomDUsage('');
+                          setIsUnregisteredEntity(false);
+                        }
+                        if (!newEntity) {
+                          setCurrentEntityId(null);
+                          setAssoPostalCode('');
+                          setNewEntityNomDUsage('');
+                          setIsUnregisteredEntity(false);
+                        }
+                      }}
+                      isClearable={!!currentEntityId}
+                      required={true}
+                      inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
+                      classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
+                      className="mb-6"
+                    />
+                    {/* <SelectCustom
+                key={'SIRET select' + currentEntityId}
+                options={selectOptions}
+                getOptionLabel={(entity) =>
+                  `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville} - ${entity.siret}`
+                }
+                getOptionValue={(entity) => entity.id}
+                formatOptionLabel={(entity, options) => {
+                  if (options.context === 'menu') {
+                    if (!entity.code_postal) return `${entity.nom_d_usage} - ${entity.siret}`;
+                    return `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville} - ${entity.siret}`;
                   }
-                });
-              }}
-              disabled={!remainingEntities.length}
-            >
-              Ajouter
-            </Button>
-          </form>
+                  return entity.siret;
+                }}
+                label="SIRET"
+                name={Prisma.EntityScalarFieldEnum.siret}
+                placeholder=""
+                creatable={false}
+                value={selectValue}
+                onChange={(newEntity) => {
+                  if (newEntity?.id) {
+                    setCurrentEntityId(newEntity.id);
+                    setAssoPostalCode(newEntity.code_postal || '');
+                    setNewEntityNomDUsage('');
+                  }
+                }}
+                isClearable={!!currentEntityId}
+                required={true}
+                inputId={Prisma.EntityScalarFieldEnum.siret}
+                classNamePrefix={Prisma.EntityScalarFieldEnum.siret}
+                className="mb-6"
+              /> */}
+                    <ComponentToDisplay
+                      label="SIRET"
+                      key={'SIRET' + currentEntityId}
+                      nativeInputProps={{
+                        id: Prisma.EntityScalarFieldEnum.siret,
+                        name: Prisma.EntityScalarFieldEnum.siret,
+                        autoComplete: 'off',
+                        defaultValue: currentEntity?.siret ?? '',
+                      }}
+                    />
+                    <ComponentToDisplay
+                      label="Adresse *"
+                      key={'Adresse *' + currentEntityId}
+                      hintText="Indication : numéro et voie"
+                      nativeInputProps={{
+                        id: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                        name: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                        autoComplete: 'off',
+                        required: true,
+                        defaultValue: currentEntity?.address_ligne_1 ?? '',
+                      }}
+                    />
+                    <ComponentToDisplay
+                      label="Complément d'adresse (optionnel)"
+                      hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                      key={"Complément d'adresse (optionnel)" + currentEntityId}
+                      nativeInputProps={{
+                        id: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                        name: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                        autoComplete: 'off',
+                        defaultValue: currentEntity?.address_ligne_2 ?? '',
+                      }}
+                    />
+
+                    <div className="flex w-full flex-col gap-x-4 md:flex-row">
+                      <ComponentToDisplay
+                        label="Code postal *"
+                        hintText="5 chiffres"
+                        className="shrink-0 md:basis-1/5"
+                        key={'Code postal *' + currentEntityId}
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.code_postal,
+                          name: Prisma.EntityScalarFieldEnum.code_postal,
+                          autoComplete: 'off',
+                          required: true,
+                          value: assoPostalCode,
+                          onChange: (e) => {
+                            setAssoPostalCode(e.currentTarget.value);
+                          },
+                        }}
+                      />
+                      <div className="basis-4/5">
+                        {isAdminOfEntity ? (
+                          <InputVille
+                            postCode={assoPostalCode}
+                            trimPostCode
+                            key={'Ville ou commune *' + currentEntityId}
+                            label="Ville ou commune *"
+                            hintText="Exemple : Montpellier"
+                            nativeInputProps={{
+                              id: Prisma.EntityScalarFieldEnum.ville,
+                              name: Prisma.EntityScalarFieldEnum.ville,
+                              autoComplete: 'off',
+                              required: true,
+                              defaultValue: currentEntity?.ville ?? '',
+                            }}
+                          />
+                        ) : (
+                          <InputNotEditable
+                            label="Ville ou commune *"
+                            key={'Ville ou commune *' + currentEntityId}
+                            hintText="Exemple : Montpellier"
+                            nativeInputProps={{
+                              id: Prisma.EntityScalarFieldEnum.ville,
+                              name: Prisma.EntityScalarFieldEnum.ville,
+                              autoComplete: 'off',
+                              required: true,
+                              defaultValue: currentEntity?.ville ?? '',
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                      Me rattacher à cette entité
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            )}
+          </>
         )}
-        {children}
       </div>
     </div>
   );
