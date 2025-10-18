@@ -35,9 +35,20 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.SVI]: {},
 };
 
-export default function MesInformationsDeChasse() {
+type InformationsDeChasseProps = {
+  withExaminateurInitial?: boolean;
+  withAssociationsDeChasse?: boolean;
+  withCCGs?: boolean;
+};
+
+export default function MesInformationsDeChasse({
+  withExaminateurInitial = false,
+  withAssociationsDeChasse = false,
+  withCCGs = false,
+}: InformationsDeChasseProps) {
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');
+  let withEverything = withExaminateurInitial && withAssociationsDeChasse && withCCGs;
 
   const user = useUser((state) => state.user)!;
   const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] =
@@ -106,29 +117,47 @@ export default function MesInformationsDeChasse() {
     user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
     user.roles.includes(UserRoles.ETG);
 
+  let title = '';
+  if (withEverything) {
+    title = 'Mes informations de chasse';
+  } else if (withAssociationsDeChasse) {
+    title = 'Mes associations de chasse';
+  } else if (withCCGs) {
+    title = 'Mes chambres froides (CCGs)';
+  }
+
+  let calloutTitle = '';
+  if (withEverything) {
+    calloutTitle = 'Renseignez vos informations de chasse';
+  } else if (withAssociationsDeChasse) {
+    calloutTitle = 'Renseignez vos associations de chasse';
+  } else if (withCCGs) {
+    calloutTitle = 'Renseignez vos chambres froides (CCGs)';
+  }
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
-      <title>
-        Mes Informations de chasse | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
-      </title>
+      <title>{`${title} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper
-            currentStep={3}
-            nextTitle={nextTitle}
-            stepCount={4}
-            title={
-              user.roles.includes(UserRoles.CHASSEUR)
-                ? 'Mes informations de chasse'
-                : 'Mes centres de collecte'
-            }
-          />
-          {user.roles.includes(UserRoles.CHASSEUR) && (
+          {withEverything && (
+            <Stepper
+              currentStep={3}
+              nextTitle={nextTitle}
+              stepCount={4}
+              title={
+                user.roles.includes(UserRoles.CHASSEUR)
+                  ? 'Mes informations de chasse'
+                  : 'Mes centres de collecte'
+              }
+            />
+          )}
+          <h1 className="fr-h2 fr-mb-2w">{calloutTitle}</h1>
+          <CallOut title="⚠️ Informations essentielles pour faire des fiches" className="bg-white">
+            Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer.
+          </CallOut>
+          {withExaminateurInitial && user.roles.includes(UserRoles.CHASSEUR) && (
             <>
-              <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations de chasse</h1>
-              <CallOut title="⚠️ Informations essentielles pour faire des fiches" className="bg-white">
-                Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer.
-              </CallOut>
               <div className="mb-6 bg-white md:shadow-sm">
                 <div className="p-4 md:p-8">
                   <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()}>
@@ -196,17 +225,19 @@ export default function MesInformationsDeChasse() {
                   </form>
                 </div>
               </div>
-
-              <MesAssociationsDeChasse
-                setRefreshKey={setRefreshKey}
-                refreshKey={refreshKey}
-                allEntitiesByTypeAndId={allEntitiesByTypeAndId}
-                userEntitiesByTypeAndId={userEntitiesByTypeAndId}
-              />
             </>
           )}
 
-          <MesCCGs />
+          {withAssociationsDeChasse && (
+            <MesAssociationsDeChasse
+              setRefreshKey={setRefreshKey}
+              refreshKey={refreshKey}
+              allEntitiesByTypeAndId={allEntitiesByTypeAndId}
+              userEntitiesByTypeAndId={userEntitiesByTypeAndId}
+            />
+          )}
+
+          {withCCGs && <MesCCGs />}
           <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
               {showEntrpriseVisibilityCheckbox && (
@@ -262,7 +293,7 @@ export default function MesInformationsDeChasse() {
                     },
                   },
                   {
-                    children: 'Modifier mes coordonnées',
+                    children: redirect ? 'Retour' : 'Modifier mes coordonnées',
                     linkProps: {
                       to: redirect ?? '/app/tableau-de-bord/mon-profil/mes-coordonnees',
                       href: '#',
@@ -763,15 +794,15 @@ function MesCCGs() {
     <div className="mb-6 bg-white md:shadow-sm" id="onboarding-etape-2-ccgs-data">
       <div className="p-4 md:p-8">
         <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
-          <span>Centres de collecte du gibier sauvage</span>
+          <span>Chambre froide (centre de collecte du gibier sauvage)</span>
         </h3>
-        <CallOut className="bg-white">
+        {/* <CallOut className="bg-white">
           <strong>Qu’est ce qu’un centre de collecte du gibier sauvage (CCG) ?</strong>
           <br />
           <br />
           C’est une chambre froide utilisée par les chasseurs pour déposer le gibier prélevé dans de bonnes
           conditions d’hygiène et de conservation avant sa cession.
-        </CallOut>
+        </CallOut> */}
         {!userCCGs.length && (
           <p className="mb-4 text-lg font-bold">
             Cette étape est facultative.

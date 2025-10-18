@@ -161,7 +161,15 @@ function App() {
               path="mon-profil/mes-informations-de-chasse"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
-                  <MesInformationsDeChasse />
+                  <MesInformationsDeChasse withExaminateurInitial withAssociationsDeChasse withCCGs />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="mon-profil/mes-associations-de-chasse"
+              element={
+                <RestrictedRoute id="zacharie_carcasse_id">
+                  <MesInformationsDeChasse withAssociationsDeChasse />
                 </RestrictedRoute>
               }
             />
@@ -169,7 +177,7 @@ function App() {
               path="mon-profil/mes-ccgs"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
-                  <MesInformationsDeChasse />
+                  <MesInformationsDeChasse withCCGs />
                 </RestrictedRoute>
               }
             />

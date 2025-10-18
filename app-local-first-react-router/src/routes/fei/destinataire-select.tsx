@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
 import {
   UserRoles,
@@ -470,94 +470,98 @@ export default function DestinataireSelect({
                 },
               ]}
             />
-            {depotType === DepotType.CCG && (
-              <>
-                <SelectCustom
-                  label="Centre de Collecte du Gibier sauvage *"
-                  isDisabled={depotType !== DepotType.CCG}
-                  isReadOnly={!canEdit}
-                  hint={
-                    <>
-                      {!depotEntityId && depotType === DepotType.CCG && ccgsWorkingWith.length > 0 ? (
-                        <div>
-                          {ccgsWorkingWith.map((entity) => {
-                            return (
-                              <Tag
-                                key={entity.id}
-                                iconId="fr-icon-checkbox-circle-line"
-                                className="mr-2"
-                                nativeButtonProps={{
-                                  onClick: () => {
-                                    setDepotEntityId(entity.id);
-                                  },
-                                }}
-                              >
-                                {entity.nom_d_usage}
-                              </Tag>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <Link
-                          className="bg-none! text-left no-underline!"
-                          to={`/app/tableau-de-bord/mon-profil/${user.roles.includes(UserRoles.CHASSEUR) ? 'mes-informations-de-chasse' : 'mes-ccgs'}?redirect=/app/tableau-de-bord/fei/${fei.numero}`}
-                        >
-                          Vous n'avez pas encore renseigné votre centre de collecte ? Vous pouvez le faire en{' '}
-                          <u className="inline">cliquant ici</u>
-                        </Link>
-                      )}
-                    </>
-                  }
-                  options={ccgsOptions}
-                  placeholder="Sélectionnez le Centre de Collecte du Gibier sauvage"
-                  value={ccgsOptions.find((option) => option.value === depotEntityId) ?? null}
-                  getOptionLabel={(f) => f.label!}
-                  getOptionValue={(f) => f.value}
-                  onChange={(f) => {
-                    setDepotEntityId(f?.value ?? null);
-                  }}
-                  isClearable={!!depotEntityId}
-                  inputId={Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}
-                  classNamePrefix={`select-ccg`}
-                  required
-                  name={Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}
-                />
-                {fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR && (
-                  <Component
-                    label="Date de dépôt dans le Centre de Collecte du Gibier sauvage *"
-                    // click here to set now
-                    disabled={depotType !== DepotType.CCG}
-                    hintText={
-                      canEdit ? (
-                        <button
-                          className="inline-block text-left"
-                          type="button"
-                          disabled={depotType !== DepotType.CCG}
-                          onClick={() => {
-                            setDepotDate(dayjs().format('YYYY-MM-DDTHH:mm'));
-                          }}
-                        >
-                          <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
-                        </button>
-                      ) : null
+            {depotType === DepotType.CCG &&
+              (ccgsWorkingWith.length > 0 ? (
+                <>
+                  <SelectCustom
+                    label="Chambre froide (centre de collecte du gibier sauvage) *"
+                    isDisabled={depotType !== DepotType.CCG}
+                    isReadOnly={!canEdit}
+                    hint={
+                      <>
+                        {!depotEntityId && depotType === DepotType.CCG ? (
+                          <div>
+                            {ccgsWorkingWith.map((entity) => {
+                              return (
+                                <Tag
+                                  key={entity.id}
+                                  iconId="fr-icon-checkbox-circle-line"
+                                  className="mr-2"
+                                  nativeButtonProps={{
+                                    onClick: () => {
+                                      setDepotEntityId(entity.id);
+                                    },
+                                  }}
+                                >
+                                  {entity.nom_d_usage}
+                                </Tag>
+                              );
+                            })}
+                          </div>
+                        ) : null}
+                      </>
                     }
-                    nativeInputProps={{
-                      id: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at,
-                      name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at,
-                      type: 'datetime-local',
-                      required: true,
-                      autoComplete: 'off',
-                      suppressHydrationWarning: true,
-                      disabled: depotType !== DepotType.CCG,
-                      value: depotDate,
-                      onChange: (e) => {
-                        setDepotDate(dayjs(e.target.value).format('YYYY-MM-DDTHH:mm'));
-                      },
+                    options={ccgsOptions}
+                    placeholder="Sélectionnez le Centre de Collecte du Gibier sauvage"
+                    value={ccgsOptions.find((option) => option.value === depotEntityId) ?? null}
+                    getOptionLabel={(f) => f.label!}
+                    getOptionValue={(f) => f.value}
+                    onChange={(f) => {
+                      setDepotEntityId(f?.value ?? null);
                     }}
+                    isClearable={!!depotEntityId}
+                    inputId={Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}
+                    classNamePrefix={`select-ccg`}
+                    required
+                    name={Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}
                   />
-                )}
-              </>
-            )}
+                  {fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR && (
+                    <Component
+                      label="Date de dépôt dans le Centre de Collecte du Gibier sauvage *"
+                      // click here to set now
+                      disabled={depotType !== DepotType.CCG}
+                      hintText={
+                        canEdit ? (
+                          <button
+                            className="inline-block text-left"
+                            type="button"
+                            disabled={depotType !== DepotType.CCG}
+                            onClick={() => {
+                              setDepotDate(dayjs().format('YYYY-MM-DDTHH:mm'));
+                            }}
+                          >
+                            <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
+                          </button>
+                        ) : null
+                      }
+                      nativeInputProps={{
+                        id: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at,
+                        name: Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at,
+                        type: 'datetime-local',
+                        required: true,
+                        autoComplete: 'off',
+                        suppressHydrationWarning: true,
+                        disabled: depotType !== DepotType.CCG,
+                        value: depotDate,
+                        onChange: (e) => {
+                          setDepotDate(dayjs(e.target.value).format('YYYY-MM-DDTHH:mm'));
+                        },
+                      }}
+                    />
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-start gap-2">
+                  <label>Chambre froide (centre de collecte du gibier sauvage) *</label>
+                  <Button
+                    linkProps={{
+                      to: `/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`,
+                    }}
+                  >
+                    Renseigner ma chambre froide (CCG)
+                  </Button>
+                </div>
+              ))}
           </>
         )}
         {needTransport && (
