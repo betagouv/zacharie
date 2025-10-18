@@ -8,35 +8,42 @@ import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import API from '@app/services/api';
+import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
+import { Tag } from '@codegouvfr/react-dsfr/Tag';
 
 export default function SelectNextForExaminateur({ disabled }: { disabled?: boolean }) {
   const params = useParams();
+  const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
-  const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
-  const detenteursInitiaux = state.detenteursInitiaux;
+  const feis = useZustandStore((state) => state.feis);
+  const entities = useZustandStore((state) => state.entities);
+  const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
+  const fei = feis[params.fei_numero!];
+  const detenteursInitiaux = useZustandStore((state) => state.detenteursInitiaux);
+  const [showSearchUserByEmail, setShowSearchUserByEmail] = useState(false);
+  const prefilledInfos = usePrefillPremierDétenteurInfos();
   const associationsDeChasse = useMemo(() => {
-    const associationsDeChasse: typeof state.entities = {};
-    for (const entityId of Object.values(state.entitiesIdsWorkingDirectlyFor)) {
-      const entity = state.entities[entityId];
+    const associationsDeChasse: typeof entities = {};
+    for (const entityId of Object.values(entitiesIdsWorkingDirectlyFor)) {
+      const entity = entities[entityId];
       if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
         associationsDeChasse[entityId] = entity;
       }
     }
     return associationsDeChasse;
-  }, [state]);
+  }, [entities, entitiesIdsWorkingDirectlyFor]);
 
-  const updateFei = state.updateFei;
-  const addLog = state.addLog;
+  const updateFei = useZustandStore((state) => state.updateFei);
+  const addLog = useZustandStore((state) => state.addLog);
 
   const isOnline = useIsOnline();
 
   const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche *';
-  const [nextValue, setNextValue] = useState(
+  const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(
     fei.fei_next_owner_user_id ?? fei.fei_next_owner_entity_id ?? '',
   );
 
@@ -44,16 +51,16 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
   const [searchingUserError, setSearchingUserError] = useState<string | null>(null);
 
   const { nextOwnerUser, nextOwnerEntity } = useMemo(() => {
-    const _nextOwner = detenteursInitiaux[nextValue];
+    const _nextOwner = detenteursInitiaux[nextOwnerUserOrEntityId];
     if (_nextOwner) {
       return { nextOwnerUser: _nextOwner, nextOwnerEntity: null };
     }
-    const _nextEntity = associationsDeChasse[nextValue];
+    const _nextEntity = associationsDeChasse[nextOwnerUserOrEntityId];
     if (_nextEntity) {
       return { nextOwnerUser: null, nextOwnerEntity: _nextEntity };
     }
     return { nextOwnerUser: null, nextOwnerEntity: null };
-  }, [detenteursInitiaux, associationsDeChasse, nextValue]);
+  }, [detenteursInitiaux, associationsDeChasse, nextOwnerUserOrEntityId]);
 
   const nextOwnerName = useMemo(() => {
     if (nextOwnerUser) {
@@ -74,7 +81,6 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
     const nextIsMyAssociation = !!nextOwnerEntity?.id;
     let nextFei: Partial<typeof fei>;
     if (nextIsMe) {
-      console.log('nextIsMe');
       nextFei = {
         fei_next_owner_user_id: null,
         fei_next_owner_user_name_cache: null,
@@ -126,63 +132,142 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
     });
   }
 
+  const isFirstFei =
+    !prefilledInfos?.premier_detenteur_entity_id && !prefilledInfos?.premier_detenteur_user_id;
+
   return (
     <>
-      <form
-        id="select-next-owner"
-        method="POST"
-        aria-disabled={disabled}
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmitFromSelect(nextOwnerUser?.id);
-        }}
-      >
-        <Select
-          label="Quel Premier Détenteur doit désormais agir sur la fiche ? *"
-          key={fei.fei_next_owner_user_id ?? 'no-choice-yet'}
-          disabled={disabled}
-          nativeSelectProps={{
-            name: 'next_owner',
-            value: nextValue,
-            disabled,
-            onChange: (event) => {
-              setNextValue(event.target.value);
-            },
+      <label className="mb-4 block">Quel Premier Détenteur doit désormais agir sur la fiche ? *</label>
+      {isFirstFei && !Object.values(associationsDeChasse).length ? (
+        <>
+          {!showSearchUserByEmail && (
+            <div>
+              <div className="mt-4 flex flex-col gap-2">
+                <Button
+                  priority="primary"
+                  linkProps={{
+                    to: `/app/tableau-de-bord/mon-profil/mes-associations-de-chasse?redirect=/app/tableau-de-bord/fei/${fei.numero}`,
+                  }}
+                >
+                  Ajouter une association / société / domaine de chasse
+                </Button>
+                <Button priority="secondary" type="button" onClick={() => setShowSearchUserByEmail(true)}>
+                  Chercher un Premier Détenteur par email
+                </Button>
+                <Button priority="tertiary" type="button" onClick={() => handleSubmitFromSelect(user.id)}>
+                  Je suis le Premier Détenteur
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <form
+          id="select-next-owner"
+          method="POST"
+          aria-disabled={disabled}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmitFromSelect(nextOwnerUser?.id);
           }}
         >
-          <option value="">{nextOwnerSelectLabel}</option>
-          {Object.values(associationsDeChasse).map((potentielOwner) => {
-            return (
-              <NextOwnerOption
-                nextOwnerIsEntity
-                key={potentielOwner.id}
-                potentielOwner={potentielOwner}
-                user={user}
-              />
-            );
-          })}
-          {Object.values(detenteursInitiaux).map((potentielOwner) => {
-            return (
-              <NextOwnerOption
-                nextOwnerIsUser
-                key={potentielOwner.id}
-                potentielOwner={potentielOwner}
-                user={user}
-              />
-            );
-          })}
-        </Select>
-        {!nextValue ||
-          (nextValue !== fei.fei_next_owner_user_id && (
-            <Button className="mt-4" type="submit" disabled={!nextValue || disabled}>
+          <Select
+            label=""
+            key={fei.fei_next_owner_user_id ?? 'no-choice-yet'}
+            disabled={disabled}
+            hint={
+              <>
+                {!nextOwnerUserOrEntityId && !disabled ? (
+                  <div>
+                    {Object.values(associationsDeChasse).map((entity) => {
+                      return (
+                        <Tag
+                          key={entity.id}
+                          iconId="fr-icon-checkbox-circle-line"
+                          className="mr-2"
+                          nativeButtonProps={{
+                            onClick: () => {
+                              setNextOwnerUserOrEntityId(entity.id);
+                            },
+                          }}
+                        >
+                          {entity.nom_d_usage}
+                        </Tag>
+                      );
+                    })}
+                    {Object.values(detenteursInitiaux).map((user) => {
+                      return (
+                        <Tag
+                          key={user.id}
+                          iconId="fr-icon-checkbox-circle-line"
+                          className="mr-2"
+                          nativeButtonProps={{
+                            onClick: () => {
+                              setNextOwnerUserOrEntityId(user.id);
+                            },
+                          }}
+                        >
+                          {`${user.prenom} ${user.nom_de_famille}`}
+                        </Tag>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </>
+            }
+            nativeSelectProps={{
+              name: 'next_owner',
+              value: nextOwnerUserOrEntityId,
+              disabled,
+              onChange: (event) => {
+                if (event.target.value === 'new-user') {
+                  setShowSearchUserByEmail(true);
+                } else if (event.target.value === 'new-entity') {
+                  navigate(
+                    `/app/tableau-de-bord/mon-profil/mes-associations-de-chasse?redirect=/app/tableau-de-bord/fei/${fei.numero}`,
+                  );
+                } else {
+                  setNextOwnerUserOrEntityId(event.target.value);
+                }
+              },
+            }}
+          >
+            <option value="">{nextOwnerSelectLabel}</option>
+            {Object.values(associationsDeChasse).map((potentielOwner) => {
+              return (
+                <NextOwnerOption
+                  nextOwnerIsEntity
+                  key={potentielOwner.id}
+                  potentielOwner={potentielOwner}
+                  user={user}
+                />
+              );
+            })}
+            {Object.values(detenteursInitiaux).map((potentielOwner) => {
+              return (
+                <NextOwnerOption
+                  nextOwnerIsUser
+                  key={potentielOwner.id}
+                  potentielOwner={potentielOwner}
+                  user={user}
+                />
+              );
+            })}
+            <option value="new-entity">+ Ajouter une association / société / domaine de chasse</option>
+            <option value="new-user">+ Ajouter un nouveau Premier Détenteur par email</option>
+          </Select>
+          {(!nextOwnerUserOrEntityId || nextOwnerUserOrEntityId !== fei.fei_next_owner_user_id) && (
+            <Button type="submit" disabled={!nextOwnerUserOrEntityId || disabled}>
               Valider l’examen initial
             </Button>
-          ))}
-      </form>
-      {!fei.fei_next_owner_user_id && !nextValue && (
+          )}
+        </form>
+      )}
+
+      {showSearchUserByEmail && (
         <>
           <form
-            className="relative mt-4 flex w-full flex-row items-end gap-4"
+            className="mt-4"
             method="POST"
             onSubmit={async (event) => {
               event.preventDefault();
@@ -190,7 +275,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
               const email = formData.get(Prisma.UserScalarFieldEnum.email) as string;
               if (email === user.email) {
                 // it's me !
-                setNextValue(user.id);
+                setNextOwnerUserOrEntityId(user.id);
                 handleSubmitFromSelect(user.id);
                 return;
               }
@@ -217,34 +302,34 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
                     },
                   },
                 }));
-                const nextFei = {
-                  fei_next_owner_user_id: nextPremierDetenteur.id,
-                  fei_next_owner_user_name_cache: `${nextPremierDetenteur.prenom} ${nextPremierDetenteur.nom_de_famille}`,
-                  fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-                };
-                updateFei(fei.numero, nextFei);
-                addLog({
-                  user_id: user.id,
-                  user_role: UserRoles.CHASSEUR,
-                  fei_numero: fei.numero,
-                  action: 'examinateur-trouver-premier-detenteur',
-                  history: createHistoryInput(fei, nextFei),
-                  entity_id: null,
-                  zacharie_carcasse_id: null,
-                  intermediaire_id: null,
-                  carcasse_intermediaire_id: null,
-                });
-                setNextValue(nextPremierDetenteur.id);
+                setShowSearchUserByEmail(false);
+                // const nextFei = {
+                //   fei_next_owner_user_id: nextPremierDetenteur.id,
+                //   fei_next_owner_user_name_cache: `${nextPremierDetenteur.prenom} ${nextPremierDetenteur.nom_de_famille}`,
+                //   fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+                // };
+                // updateFei(fei.numero, nextFei);
+                // addLog({
+                //   user_id: user.id,
+                //   user_role: UserRoles.CHASSEUR,
+                //   fei_numero: fei.numero,
+                //   action: 'examinateur-trouver-premier-detenteur',
+                //   history: createHistoryInput(fei, nextFei),
+                //   entity_id: null,
+                //   zacharie_carcasse_id: null,
+                //   intermediaire_id: null,
+                //   carcasse_intermediaire_id: null,
+                // });
+                setNextOwnerUserOrEntityId(nextPremierDetenteur.id);
               } else {
                 setSearchingUserError(userSearchResponse.error ?? 'Erreur inconnue');
               }
             }}
           >
             <Input
-              label="...ou saisissez l'email du Premier Détenteur si vous ne le trouvez pas"
-              className="mb-0!"
+              label="Saisissez l'email du Premier Détenteur"
               disabled={disabled}
-              hintText="Nous l'ajouterons automatiquement à la liste de vos partenaires pour la prochaine fois"
+              hintText="Nous l'ajouterons automatiquement à la liste de vos partenaires pour la prochaine fiche"
               nativeInputProps={{
                 id: Prisma.UserScalarFieldEnum.email,
                 name: Prisma.UserScalarFieldEnum.email,
@@ -252,7 +337,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
               }}
             />
             <Button type="submit" disabled={isSearchingUser || disabled}>
-              {!isSearchingUser ? 'Valider l’examen initial' : 'Recherche en cours...'}
+              {!isSearchingUser ? 'Rechercher' : 'Recherche en cours...'}
             </Button>
             {!isOnline && (
               <div className="absolute inset-0 z-50 flex items-end bg-white/70">
@@ -266,9 +351,27 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
             <Alert
               severity="error"
               title="Nous ne connaissons pas cet email"
-              description="Vérifiez avec le Premier Détenteur s'il est avec vous ?"
+              description="Vérifiez avec le Premier Détenteur s'il est à côté de vous ?"
+              className="mt-4"
             />
           )}
+          <Button
+            priority="secondary"
+            className="mt-4 block"
+            linkProps={{
+              to: `/app/tableau-de-bord/mon-profil/mes-associations-de-chasse?redirect=/app/tableau-de-bord/fei/${fei.numero}`,
+            }}
+          >
+            Ajouter une association / société / domaine de chasse
+          </Button>
+          <Button
+            priority="tertiary no outline"
+            className="mt-4 block"
+            type="button"
+            onClick={() => setShowSearchUserByEmail(false)}
+          >
+            Retour
+          </Button>
         </>
       )}
 

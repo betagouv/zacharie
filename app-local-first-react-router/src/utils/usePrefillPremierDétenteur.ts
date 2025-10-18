@@ -10,6 +10,8 @@ interface PrefillPremierDétenteurInfos {
   premier_detenteur_prochain_detenteur_role_cache: Fei['premier_detenteur_prochain_detenteur_role_cache'];
   premier_detenteur_prochain_detenteur_id_cache: Fei['premier_detenteur_prochain_detenteur_id_cache'];
   premier_detenteur_transport_type: Fei['premier_detenteur_transport_type'];
+  premier_detenteur_user_id: Fei['premier_detenteur_user_id'];
+  premier_detenteur_entity_id: Fei['premier_detenteur_entity_id'];
 }
 
 export function usePrefillPremierDétenteurInfos(): PrefillPremierDétenteurInfos | null {
@@ -29,6 +31,8 @@ export function usePrefillPremierDétenteurInfos(): PrefillPremierDétenteurInfo
         premier_detenteur_prochain_detenteur_id_cache: null,
         premier_detenteur_prochain_detenteur_role_cache: null,
         premier_detenteur_transport_type: null,
+        premier_detenteur_user_id: null,
+        premier_detenteur_entity_id: null,
       };
     }
     const latestFeiDone = Object.values(feisDone).find(
@@ -44,6 +48,8 @@ export function usePrefillPremierDétenteurInfos(): PrefillPremierDétenteurInfo
         premier_detenteur_prochain_detenteur_role_cache:
           latestFeiDone.premier_detenteur_prochain_detenteur_role_cache,
         premier_detenteur_transport_type: latestFeiDone.premier_detenteur_transport_type,
+        premier_detenteur_user_id: latestFeiDone.premier_detenteur_user_id,
+        premier_detenteur_entity_id: latestFeiDone.premier_detenteur_entity_id,
       };
     }
     const latestFei = Object.values(feis).find(
@@ -59,6 +65,8 @@ export function usePrefillPremierDétenteurInfos(): PrefillPremierDétenteurInfo
         premier_detenteur_prochain_detenteur_role_cache:
           latestFei.premier_detenteur_prochain_detenteur_role_cache,
         premier_detenteur_transport_type: latestFei.premier_detenteur_transport_type,
+        premier_detenteur_user_id: latestFei.premier_detenteur_user_id,
+        premier_detenteur_entity_id: latestFei.premier_detenteur_entity_id,
       };
     }
     return {
@@ -68,6 +76,8 @@ export function usePrefillPremierDétenteurInfos(): PrefillPremierDétenteurInfo
       premier_detenteur_prochain_detenteur_id_cache: null,
       premier_detenteur_prochain_detenteur_role_cache: null,
       premier_detenteur_transport_type: null,
+      premier_detenteur_user_id: null,
+      premier_detenteur_entity_id: null,
     };
   });
 
@@ -81,5 +91,7 @@ export function usePrefillPremierDétenteurInfos(): PrefillPremierDétenteurInfo
     premier_detenteur_prochain_detenteur_id_cache: state.premier_detenteur_prochain_detenteur_id_cache,
     premier_detenteur_prochain_detenteur_role_cache: state.premier_detenteur_prochain_detenteur_role_cache,
     premier_detenteur_transport_type: state.premier_detenteur_transport_type,
+    premier_detenteur_user_id: state.premier_detenteur_user_id,
+    premier_detenteur_entity_id: state.premier_detenteur_entity_id,
   };
 }

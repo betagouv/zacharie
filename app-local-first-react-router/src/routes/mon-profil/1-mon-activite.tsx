@@ -6,12 +6,15 @@ import useUser from '@app/zustand/user';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import { useNavigate } from 'react-router';
 import API from '@app/services/api';
+import { useEffect } from 'react';
 
 export default function MesRoles() {
   const user = useUser((state) => state.user)!;
   const navigate = useNavigate();
 
-  console.log(user.roles);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <form

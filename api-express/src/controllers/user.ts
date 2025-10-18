@@ -645,7 +645,6 @@ router.post(
       const body = req.body as Record<'email' | 'numero', string>;
       const userId = req.params.user_id;
 
-      console.log('body', body);
       if (!body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
         res.status(400).send({
           ok: false,

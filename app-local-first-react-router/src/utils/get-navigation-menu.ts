@@ -49,7 +49,10 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   if (user?.roles.includes(UserRoles.CHASSEUR)) {
     profileMenu.push({
       text: 'Mes informations de chasse',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-informations-de-chasse',
+      isActive:
+        location.pathname === '/app/tableau-de-bord/mon-profil/mes-informations-de-chasse' ||
+        location.pathname === '/app/tableau-de-bord/mon-profil/mes-associations-de-chasse' ||
+        location.pathname === '/app/tableau-de-bord/mon-profil/mes-ccgs',
       linkProps: {
         href: '#',
         to: '/app/tableau-de-bord/mon-profil/mes-informations-de-chasse',
