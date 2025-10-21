@@ -970,14 +970,22 @@ router.post(
       await updateBrevoContact(savedUser);
       await updateBrevoChasseurDeal(savedUser);
 
-      if (
+      const userHasNowAllRequiredFields =
         !hasAllRequiredFields(user, `original user update ${savedUser.id}`) &&
-        hasAllRequiredFields(savedUser, `saved user update ${savedUser.id}`)
-      ) {
+        hasAllRequiredFields(savedUser, `saved user update ${savedUser.id}`);
+      const userChangedCFEINumber = user.numero_cfei !== savedUser.numero_cfei;
+
+      if (userHasNowAllRequiredFields || userChangedCFEINumber) {
+        let subject = `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`;
+        if (userChangedCFEINumber) {
+          subject = `Numéro CFEI changé pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`;
+        }
         await sendEmail({
           emails: ['contact@zacharie.beta.gouv.fr'],
           subject: `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`,
-          text: `L'utilisateur ${savedUser.email} a fini son inscription :
+          text: `L'utilisateur ${savedUser.email} a ${
+            userHasNowAllRequiredFields ? 'fini son inscription' : 'changé son numéro CFEI'
+          } :
 - Roles\u00A0: ${savedUser.roles.join(', ')}
 - Prénom et nom\u00A0: ${savedUser.prenom} ${savedUser.nom_de_famille}
 - Adresse\u00A0: ${savedUser.addresse_ligne_1}
