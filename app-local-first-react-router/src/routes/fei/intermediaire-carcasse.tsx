@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { CarcasseType, Prisma, UserRoles, type Carcasse } from '@prisma/client';
@@ -209,6 +209,22 @@ export default function CarcasseIntermediaireComp({
     });
   };
 
+  let commentaireHint = [];
+  if (carcasseManquante) {
+    commentaireHint.push(`Un commentaire à ajouter\u00A0?`);
+  } else {
+    commentaireHint.push(
+      `Un commentaire à ajouter\u00A0? Une carcasse retirée d'un lot de petit gibier\u00A0? Indiquez le ici et précisez-en les motifs le cas échéant.`,
+    );
+  }
+  if (commentairesIntermediaires.length) {
+    commentaireHint.push(``);
+    commentaireHint.push(`Commentaires des autres intermédiaires :`);
+    commentairesIntermediaires.forEach((commentaire) => {
+      commentaireHint.push(`- ${commentaire}`);
+    });
+  }
+
   return (
     <>
       <CardCarcasse
@@ -372,9 +388,14 @@ export default function CarcasseIntermediaireComp({
               label="Votre commentaire"
               className="mt-2"
               hintText={
-                carcasseManquante
-                  ? `Un commentaire à ajouter\u00A0?`
-                  : `Un commentaire à ajouter\u00A0? Une carcasse retirée d'un lot de petit gibier\u00A0? Indiquez le ici et précisez-en les motifs le cas échéant.`
+                <>
+                  {commentaireHint.map((sentence) => (
+                    <Fragment key={sentence}>
+                      {sentence}
+                      <br />
+                    </Fragment>
+                  ))}
+                </>
               }
               textArea
               nativeTextAreaProps={{
