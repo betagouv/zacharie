@@ -189,6 +189,16 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     if (missingFields) {
       return;
     }
+    let newCarcasseCommentaire = '';
+    if (carcasse.svi_ipm1_commentaire) {
+      newCarcasseCommentaire += `IPM1\u00A0: ${carcasse.svi_ipm1_commentaire}`;
+      if (sviIpm2Commentaire) {
+        newCarcasseCommentaire += `\n\n`;
+      }
+    }
+    if (sviIpm2Commentaire) {
+      newCarcasseCommentaire += `IPM2\u00A0: ${sviIpm2Commentaire}`;
+    }
     const partialCarcasse: Partial<Carcasse> = {
       svi_ipm2_date: sviIpm2Date,
       svi_ipm2_presentee_inspection: sviIpm2PresenteeInspection,
@@ -197,12 +207,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       svi_ipm2_lesions_ou_motifs: sviIpm2LesionsOuMotifs,
       svi_ipm2_nombre_animaux: sviIpm2NombreAnimaux,
       svi_ipm2_commentaire: sviIpm2Commentaire,
-      svi_carcasse_commentaire:
-        sviIpm2Commentaire !== carcasse.svi_carcasse_commentaire
-          ? carcasse.svi_carcasse_commentaire
-            ? `${carcasse.svi_carcasse_commentaire}\n\nIPM2\u00A0: ${sviIpm2Commentaire}`
-            : `IPM2\u00A0: ${sviIpm2Commentaire}`
-          : carcasse.svi_carcasse_commentaire,
+      svi_carcasse_commentaire: newCarcasseCommentaire,
       svi_ipm2_decision: sviIpm2Decision,
       svi_ipm2_traitement_assainissant: sviIpm2TraitementAssainissant,
       svi_ipm2_traitement_assainissant_cuisson_temps: sviIpm2TraitementAssainissantCuissonTemps,

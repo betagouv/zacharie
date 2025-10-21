@@ -275,7 +275,13 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
           <br />
           <span className="m-0 block font-bold">Commentaire du SVI&nbsp;:</span>
           <span className="m-0 ml-2 block border-l-2 border-l-gray-400 pl-4 font-medium">
-            {carcasse.svi_carcasse_commentaire}
+            {carcasse.svi_carcasse_commentaire.split('\n').map((line, index) => {
+              return (
+                <span key={line + index} className="block">
+                  {line}
+                </span>
+              );
+            })}
           </span>
         </>
       )}
