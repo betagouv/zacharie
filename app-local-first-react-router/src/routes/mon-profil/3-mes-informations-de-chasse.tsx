@@ -133,7 +133,7 @@ export default function MesInformationsDeChasse({
               title={
                 user.roles.includes(UserRoles.CHASSEUR)
                   ? 'Mes informations de chasse'
-                  : 'Mes centres de collecte'
+                  : 'Mes chambres froides (CCGs)'
               }
             />
           )}
@@ -686,9 +686,24 @@ export function MesAssociationsDeChasse() {
 }
 
 function MesCCGs() {
-  // const removeCCGFetcher = useFetcher({ key: 'ccg-remove' });
   const [userCCGs, setUserCCGs] = useState<Array<Entity>>([]);
   const user = useUser((state) => state.user)!;
+
+  // Add this handler for CCG radio buttons
+  const handleUserSubmit = useCallback(
+    async (checked_has_ccg: boolean) => {
+      const body: Record<string, string | null> = {};
+      body.checked_has_ccg = checked_has_ccg ? 'true' : 'false';
+      const response = await API.post({
+        path: `user/${user.id}`,
+        body,
+      }).then((data) => data as UserConnexionResponse);
+      if (response.ok && response.data?.user?.id) {
+        useUser.setState({ user: response.data.user });
+      }
+    },
+    [user.id],
+  );
 
   function refreshUserCCGs() {
     API.get({ path: 'user/my-ccgs' })
@@ -749,188 +764,226 @@ function MesCCGs() {
     <div className="mb-6 bg-white md:shadow-sm" id="onboarding-etape-2-ccgs-data">
       <div className="p-4 md:p-8">
         <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
-          <span>Chambre froide (centre de collecte du gibier sauvage)</span>
+          <span>Chambres froides (centres de collecte du gibier sauvage)</span>
         </h3>
-        {/* <CallOut className="bg-white">
-          <strong>Qu’est ce qu’un centre de collecte du gibier sauvage (CCG) ?</strong>
-          <br />
-          <br />
-          C’est une chambre froide utilisée par les chasseurs pour déposer le gibier prélevé dans de bonnes
-          conditions d’hygiène et de conservation avant sa cession.
-        </CallOut> */}
         {!userCCGs.length && (
-          <p className="mb-4 text-lg font-bold">
-            Cette étape est facultative.
-            <br />
-            Vous pouvez la passer si vous n'avez aucun lien avec un CCG.
-            <br />
-            Vous pouvez aussi la faire plus tard.
-          </p>
-        )}
-        {userCCGs.map((entity) => {
-          return (
-            <Notice
-              className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice__title]:before:hidden"
-              style={{
-                boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
-              }}
-              isClosable
-              onClose={() => {
-                API.post({
-                  path: `user/user-entity/${user.id}`,
-                  body: {
-                    _action: 'delete',
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                    relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          <>
+            <RadioButtons
+              legend="Utilisez-vous une ou plusieurs chambres froides pour entreposer votre gibier avant son transport ?"
+              hintText="Une chambre froide est aussi appelée Centre de Collecte du Gibier sauvage (CCG)."
+              orientation="horizontal"
+              options={[
+                {
+                  nativeInputProps: {
+                    required: true,
+                    checked: !!user.checked_has_ccg,
+                    name: Prisma.UserScalarFieldEnum.checked_has_ccg,
+                    onChange: () => {
+                      handleUserSubmit(true);
+                    },
                   },
-                }).then((res) => {
-                  if (res.ok) {
-                    setUserCCGs((prev) => prev.filter((ccg) => ccg.id !== entity.id));
-                  }
-                });
-              }}
-              title={
-                <>
-                  {entity.numero_ddecpp}
-                  <br />
-                  {entity.nom_d_usage}
-                  <br />
-                  {entity.code_postal} {entity.ville}
-                  {entity.ccg_status === 'Pré-enregistré dans Zacharie' && (
-                    <>
-                      <RegisterCCG />
-                      <p className="mt-4 text-sm">
-                        Si vous avez déjà fait la démarche, vous pouvez ignorer ce message.
-                      </p>
-                    </>
-                  )}
-                </>
-              }
+                  label: 'Oui',
+                },
+                {
+                  nativeInputProps: {
+                    required: true,
+                    checked: !user.checked_has_ccg,
+                    name: 'not_checked_has_ccg',
+                    onChange: () => {
+                      handleUserSubmit(false);
+                    },
+                  },
+                  label: 'Non',
+                },
+              ]}
             />
-          );
-        })}
-        <InputCCG addCCG={(ccg) => setUserCCGs([...userCCGs, ccg])} />
-        <div className="mt-8">
-          {!newCCGExpanded ? (
-            <>
-              Si vous utilisez un CCG non encore enregistré auprès des services de l’Etat, vous pouvez
-              l’identifier ici.
-              <br />
-              <Button
-                priority="secondary"
-                className="mt-4"
-                nativeButtonProps={{
-                  onClick: () => setNewCCGExpanded(true),
-                }}
-              >
-                Pré-enregistrer mon CCG
-              </Button>
-            </>
-          ) : (
-            <div className="rounded-lg border border-gray-300 px-8 py-6">
-              <p className="font-semibold">Pré-enregistrer un nouveau Centre de Collecte</p>
-              <p className="mb-5 text-sm text-gray-500">
-                * Les champs marqués d'un astérisque (*) sont obligatoires.
-              </p>
-              <form id="association_data_form" method="POST" onSubmit={handleNewCCGSubmit}>
-                <Input
-                  label="Nom usuel *"
-                  nativeInputProps={{
-                    id: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                    name: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                    autoComplete: 'off',
-                    required: true,
-                    defaultValue: '',
-                  }}
-                />
-                <Input
-                  label="SIRET"
-                  hintText="Si vous n'en n'avez pas, laissez vide."
-                  nativeInputProps={{
-                    id: Prisma.EntityScalarFieldEnum.siret,
-                    name: Prisma.EntityScalarFieldEnum.siret,
-                    autoComplete: 'off',
-                    defaultValue: '',
-                  }}
-                />
-                <Input
-                  label="Numéro d'identification du CCG"
-                  hintText="De la forme 03-CCG-123. Si vous ne le connaissez pas, laissez vide."
-                  nativeInputProps={{
-                    id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
-                    name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
-                    autoComplete: 'off',
-                    defaultValue: '',
-                  }}
-                />
-                <Input
-                  label="Adresse *"
-                  hintText="Indication : numéro et voie"
-                  nativeInputProps={{
-                    id: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                    name: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                    autoComplete: 'off',
-                    required: true,
-                    defaultValue: '',
-                  }}
-                />
-                <Input
-                  label="Complément d'adresse (optionnel)"
-                  hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                  nativeInputProps={{
-                    id: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                    name: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                    autoComplete: 'off',
-                    defaultValue: '',
-                  }}
-                />
+          </>
+        )}
 
-                <div className="flex w-full flex-col gap-x-4 md:flex-row">
-                  <Input
-                    label="Code postal *"
-                    hintText="5 chiffres"
-                    className="shrink-0 md:basis-1/5"
-                    nativeInputProps={{
-                      id: Prisma.EntityScalarFieldEnum.code_postal,
-                      name: Prisma.EntityScalarFieldEnum.code_postal,
-                      autoComplete: 'off',
-                      required: true,
-                      value: ccgPostalCode,
-                      onChange: (e) => {
-                        setCCGPostalCode(e.currentTarget.value);
+        {/* Only show CCG list and add buttons if user has CCGs or checked_has_ccg is true */}
+        {(userCCGs.length > 0 || user.checked_has_ccg) && (
+          <>
+            {userCCGs.map((entity) => {
+              return (
+                <Notice
+                  className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice__title]:before:hidden"
+                  style={{
+                    boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
+                  }}
+                  isClosable
+                  onClose={() => {
+                    API.post({
+                      path: `user/user-entity/${user.id}`,
+                      body: {
+                        _action: 'delete',
+                        [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
+                        [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+                        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
                       },
+                    }).then((res) => {
+                      if (res.ok) {
+                        setUserCCGs((prev) => prev.filter((ccg) => ccg.id !== entity.id));
+                      }
+                    });
+                  }}
+                  title={
+                    <>
+                      {entity.numero_ddecpp}
+                      <br />
+                      {entity.nom_d_usage}
+                      <br />
+                      {entity.code_postal} {entity.ville}
+                      {entity.ccg_status === 'Pré-enregistré dans Zacharie' && (
+                        <>
+                          <RegisterCCG />
+                          <p className="mt-4 text-sm">
+                            Si vous avez déjà fait la démarche, vous pouvez ignorer ce message.
+                          </p>
+                        </>
+                      )}
+                    </>
+                  }
+                />
+              );
+            })}
+            <div className="mt-8">
+              {!newCCGExpanded ? (
+                <>
+                  <InputCCG key={userCCGs.length} addCCG={(ccg) => setUserCCGs([...userCCGs, ccg])} />
+                  <p className="mt-8">
+                    Si vous utilisez un CCG non encore enregistré auprès des services de l’Etat, vous pouvez
+                    l’identifier ici.
+                  </p>
+                  <Button
+                    priority="secondary"
+                    className="mt-4"
+                    nativeButtonProps={{
+                      onClick: () => setNewCCGExpanded(true),
                     }}
-                  />
-                  <div className="basis-4/5">
-                    <InputVille
-                      postCode={ccgPostalCode}
-                      trimPostCode
-                      label="Ville ou commune *"
-                      hintText="Exemple : Montpellier"
+                  >
+                    Pré-enregistrer ma chambre froide
+                  </Button>
+                </>
+              ) : (
+                <div className="rounded-lg border border-gray-300 px-8 py-6">
+                  <p className="font-semibold">Pré-enregistrer une nouvelle chambre froide (CCG)</p>
+                  <p className="mb-5 text-sm text-gray-500">
+                    * Les champs marqués d'un astérisque (*) sont obligatoires.
+                  </p>
+                  <form id="association_data_form" method="POST" onSubmit={handleNewCCGSubmit}>
+                    <Input
+                      label="Nom usuel *"
                       nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.ville,
-                        name: Prisma.EntityScalarFieldEnum.ville,
+                        id: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                        name: Prisma.EntityScalarFieldEnum.nom_d_usage,
                         autoComplete: 'off',
                         required: true,
                         defaultValue: '',
                       }}
                     />
-                  </div>
+                    <Input
+                      label="SIRET"
+                      hintText="Si vous n'en n'avez pas, laissez vide."
+                      nativeInputProps={{
+                        id: Prisma.EntityScalarFieldEnum.siret,
+                        name: Prisma.EntityScalarFieldEnum.siret,
+                        autoComplete: 'off',
+                        defaultValue: '',
+                      }}
+                    />
+                    <Input
+                      label="Numéro d'identification du CCG"
+                      hintText="De la forme 03-CCG-123, ou encore 03.564.345. Si vous ne le connaissez pas, laissez vide."
+                      nativeInputProps={{
+                        id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+                        name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+                        autoComplete: 'off',
+                        defaultValue: '',
+                      }}
+                    />
+                    <Input
+                      label="Adresse *"
+                      hintText="Indication : numéro et voie"
+                      nativeInputProps={{
+                        id: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                        name: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                        autoComplete: 'off',
+                        required: true,
+                        defaultValue: '',
+                      }}
+                    />
+                    <Input
+                      label="Complément d'adresse (optionnel)"
+                      hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                      nativeInputProps={{
+                        id: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                        name: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                        autoComplete: 'off',
+                        defaultValue: '',
+                      }}
+                    />
+
+                    <div className="flex w-full flex-col gap-x-4 md:flex-row">
+                      <Input
+                        label="Code postal *"
+                        hintText="5 chiffres"
+                        className="shrink-0 md:basis-1/5"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.code_postal,
+                          name: Prisma.EntityScalarFieldEnum.code_postal,
+                          autoComplete: 'off',
+                          required: true,
+                          value: ccgPostalCode,
+                          onChange: (e) => {
+                            setCCGPostalCode(e.currentTarget.value);
+                          },
+                        }}
+                      />
+                      <div className="basis-4/5">
+                        <InputVille
+                          postCode={ccgPostalCode}
+                          trimPostCode
+                          label="Ville ou commune *"
+                          hintText="Exemple : Montpellier"
+                          nativeInputProps={{
+                            id: Prisma.EntityScalarFieldEnum.ville,
+                            name: Prisma.EntityScalarFieldEnum.ville,
+                            autoComplete: 'off',
+                            required: true,
+                            defaultValue: '',
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <p className="my-4">
+                      Ceci ne remplace pas la déclaration officielle du CCG. Cela permet simplement de pouvoir
+                      en faire référence dans Zacharie, en attendant son enregistrement (voir ci-dessous).
+                    </p>
+                    <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                      Enregistrer ma chambre froide (CCG)
+                    </Button>
+                    <RegisterCCG />
+                  </form>
+                  <Button
+                    type="button"
+                    priority="tertiary no outline"
+                    className="mt-4"
+                    nativeButtonProps={{
+                      onClick: () => {
+                        setNewCCGExpanded(false);
+                        document
+                          .getElementById('onboarding-etape-2-ccgs-data')
+                          ?.scrollIntoView({ behavior: 'smooth' });
+                      },
+                    }}
+                  >
+                    Annuler
+                  </Button>
                 </div>
-                <p className="my-4">
-                  Ceci ne remplace pas la déclaration officielle du centre de collecte du gibier sauvage
-                  (CCG). Cela permet simplement de pouvoir en faire référence dans Zacharie, en attendant son
-                  enregistrement (voir ci-dessous).
-                </p>
-                <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
-                  Enregistrer
-                </Button>
-                <RegisterCCG />
-              </form>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -981,12 +1034,13 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
         nativeInputProps={{
           type: 'text',
           placeholder: 'Exemples : 03-CCG-123, ou encore 03.564.345',
+          id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
           required: true,
           name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
         }}
       />
       <Button type="submit" disabled={isSubmitting}>
-        {!isSubmitting ? 'Ajouter' : 'Recherche en cours...'}
+        {!isSubmitting ? 'Ajouter cette chambre froide' : 'Recherche en cours...'}
       </Button>
     </form>
   );

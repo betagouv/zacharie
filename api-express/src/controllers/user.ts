@@ -867,7 +867,8 @@ router.post(
           body[Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse] === 'true' ? new Date() : null;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_ccg)) {
-        nextUser.checked_has_ccg = new Date();
+        nextUser.checked_has_ccg =
+          body[Prisma.UserScalarFieldEnum.checked_has_ccg] === 'true' ? new Date() : null;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.nom_de_famille)) {
         nextUser.nom_de_famille = body[Prisma.UserScalarFieldEnum.nom_de_famille] as string;
