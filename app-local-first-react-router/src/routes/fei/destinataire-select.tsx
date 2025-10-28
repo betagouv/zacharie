@@ -80,9 +80,16 @@ export default function DestinataireSelect({
 
   const prochainsDetenteurs = useMemo(() => {
     if (fei.fei_current_owner_role === FeiOwnerRole.ETG) {
-      return [...svis, ...etgs, ...collecteursPros];
+      return [
+        ...svis.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
+        ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
+        ...collecteursPros.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
+      ];
     }
-    return [...etgs, ...collecteursPros];
+    return [
+      ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
+      ...collecteursPros.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
+    ];
   }, [etgs, collecteursPros, svis, fei.fei_current_owner_role]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
