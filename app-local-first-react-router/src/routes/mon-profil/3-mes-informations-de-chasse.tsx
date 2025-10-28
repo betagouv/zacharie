@@ -720,6 +720,7 @@ function MesCCGs() {
     refreshUserCCGs();
   }, []);
 
+  const [explicitelySaidNoCCG, setExplicitelySaidNoCCG] = useState(false);
   const [newCCGExpanded, setNewCCGExpanded] = useState(false);
   const [registerOneMoreCCG, setRegisterOneMoreCCG] = useState(false);
   const [ccgPostalCode, setCCGPostalCode] = useState('');
@@ -783,6 +784,7 @@ function MesCCGs() {
                     handleUserSubmit(true);
                     setNewCCGExpanded(false);
                     setRegisterOneMoreCCG(true);
+                    setExplicitelySaidNoCCG(false);
                   },
                 },
                 label: 'Oui et la chambre froide a un numéro d’identification',
@@ -796,6 +798,7 @@ function MesCCGs() {
                     handleUserSubmit(true);
                     setNewCCGExpanded(true);
                     setRegisterOneMoreCCG(true);
+                    setExplicitelySaidNoCCG(false);
                   },
                 },
                 label: 'Oui mais la chambre froide n’a pas de numéro d’identification',
@@ -803,12 +806,13 @@ function MesCCGs() {
               {
                 nativeInputProps: {
                   required: true,
-                  checked: !user.checked_has_ccg,
+                  checked: explicitelySaidNoCCG,
                   name: 'not_checked_has_ccg',
                   onClick: () => {
                     handleUserSubmit(false);
                     setNewCCGExpanded(false);
                     setRegisterOneMoreCCG(false);
+                    setExplicitelySaidNoCCG(true);
                   },
                 },
                 label: 'Non, je n’utilise pas de chambre froide',
