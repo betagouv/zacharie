@@ -1148,19 +1148,32 @@ ${
   ),
 );
 
+const feiUserGetSchema = z.object({
+  fei_numero: z.string(),
+  user_id: z.string(),
+});
 router.get(
   '/fei/:fei_numero/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(
     async (req: RequestWithUser, res: express.Response<UserForFeiResponse>, next: express.NextFunction) => {
-      const user = req.user!;
-      if (!req.params.fei_numero) {
+      let result = feiUserGetSchema.safeParse(req.params);
+      if (!result.success) {
+        res.status(400).send({
+          ok: false,
+          data: null,
+          error: result.error.message,
+        });
+        return;
+      }
+      let params = result.data;
+      if (!params.fei_numero) {
         res.status(401).send({ ok: false, data: null, error: 'Missing fei_numero' });
         return;
       }
       const fei = await prisma.fei.findUnique({
         where: {
-          numero: req.params.fei_numero as string,
+          numero: params.fei_numero as string,
           deleted_at: null,
         },
       });
@@ -1172,7 +1185,7 @@ router.get(
         });
         return;
       }
-      if (!req.params.user_id) {
+      if (!params.user_id) {
         res.status(400).send({
           ok: false,
           data: null,
@@ -1182,7 +1195,7 @@ router.get(
       }
       const feiUser = await prisma.user.findUnique({
         where: {
-          id: req.params.user_id,
+          id: params.user_id,
         },
         select: userFeiSelect,
       });
@@ -1191,7 +1204,7 @@ router.get(
           ok: true,
           data: {
             user: {
-              id: req.params.user_id,
+              id: params.user_id,
               prenom: 'Jean',
               nom_de_famille: 'Le Chasseur',
               telephone: '0123456789',
