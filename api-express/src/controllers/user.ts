@@ -46,6 +46,17 @@ import sendNotificationToUser from '~/service/notifications';
 import { SECRET } from '~/config';
 import { autoActivatePremierDetenteur, hasAllRequiredFields } from '~/utils/user';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
+import { z } from 'zod';
+// import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
+
+const connexionSchema = z.object({
+  email: z.string().email(),
+  username: z.string().optional(),
+  passwordUser: z.string(),
+  connexionType: z.enum(['creation-de-compte', 'compte-existant']),
+  resetPasswordRequest: z.boolean().optional(),
+  resetPasswordToken: z.string().optional(),
+});
 
 router.post(
   '/connexion',
@@ -55,8 +66,19 @@ router.post(
       res: express.Response<UserConnexionResponse>,
       next: express.NextFunction,
     ) => {
+      let result = connexionSchema.safeParse(req.body);
       let { email, username, passwordUser, connexionType, resetPasswordRequest, resetPasswordToken } =
-        req.body;
+        result.data;
+      if (!result.success) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: result.error.message,
+        });
+        return;
+      }
+
       email = email.toLowerCase().trim();
       if (username) {
         capture(new Error('Spam detected'), {
@@ -259,6 +281,9 @@ router.post(
   ),
 );
 
+const accessTokenSchema = z.object({
+  accessToken: z.string(),
+});
 router.post(
   '/access-token',
   catchErrors(
@@ -267,7 +292,18 @@ router.post(
       res: express.Response<UserConnexionResponse>,
       next: express.NextFunction,
     ) => {
-      if (!req.body.accessToken) {
+      let result = accessTokenSchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: result.error.message,
+        });
+        return;
+      }
+      let { accessToken } = result.data;
+      if (!accessToken) {
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -279,7 +315,7 @@ router.post(
 
       let user = await prisma.apiKeyApprovalByUserOrEntity
         .findUnique({
-          where: { access_token: req.body.accessToken as string },
+          where: { access_token: accessToken },
           include: {
             User: true,
           },
@@ -343,21 +379,34 @@ router.post(
   ),
 );
 
+const userEntitySchema = z.object({
+  owner_id: z.string(),
+  entity_id: z.string(),
+  numero_ddecpp: z.string().optional(),
+  type: z.enum(Object.values(EntityTypes) as [EntityTypes, ...EntityTypes[]]),
+  _action: z.enum(['create', 'delete', 'update']),
+  relation: z.enum(Object.values(EntityRelationType) as [EntityRelationType, ...EntityRelationType[]]),
+  status: z
+    .enum(Object.values(EntityRelationStatus) as [EntityRelationStatus, ...EntityRelationStatus[]])
+    .optional(),
+});
+
 router.post(
   '/user-entity/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
   // authorizeUserOrAdmin,
   catchErrors(
     async (req: RequestWithUser, res: express.Response<UserEntityResponse>, next: express.NextFunction) => {
-      const body = req.body as {
-        owner_id: string;
-        entity_id: string;
-        numero_ddecpp: string;
-        type: EntityTypes;
-        _action: 'create' | 'delete' | 'update';
-        relation: EntityRelationType;
-        status?: EntityRelationStatus;
-      };
+      let result = userEntitySchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(400).send({
+          ok: false,
+          data: { relation: null, entity: null },
+          error: result.error.message,
+        });
+        return;
+      }
+      let body = result.data;
       const userId = req.params.user_id;
       let isAdmin = req.user.roles.includes(UserRoles.ADMIN);
 
