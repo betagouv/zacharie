@@ -47,6 +47,7 @@ import { SECRET } from '~/config';
 import { autoActivatePremierDetenteur, hasAllRequiredFields } from '~/utils/user';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 import { z } from 'zod';
+import { sanitize } from '~/utils/sanitize';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 const connexionSchema = z.object({
@@ -685,14 +686,26 @@ router.post(
   }),
 );
 
+const trouverPremierDetenteurBodySchema = z.object({
+  email: z.string().email(),
+  numero: z.string(),
+});
 router.post(
   '/fei/trouver-premier-detenteur',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(
     async (req: RequestWithUser, res: express.Response<UserForFeiResponse>, next: express.NextFunction) => {
       const user = req.user!;
-      const body = req.body as Record<'email' | 'numero', string>;
-      const userId = req.params.user_id;
+      let result = trouverPremierDetenteurBodySchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: result.error.message,
+        });
+        return;
+      }
+      let body = result.data;
 
       if (!body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
         res.status(400).send({
@@ -795,12 +808,26 @@ router.post(
   ),
 );
 
+const inviteUserBodySchema = z.object({
+  email: z.string().email(),
+  entity_id: z.string(),
+});
+
 router.post(
   '/invite-user',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
-    const body = req.body;
+    let result = inviteUserBodySchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).send({
+        ok: false,
+        data: { newUser: null },
+        error: result.error.message,
+      });
+      return;
+    }
+    let body = result.data;
     const email = body[Prisma.UserScalarFieldEnum.email]?.toLowerCase()?.trim();
     if (!email) {
       const error = new Error('Email non valide');
@@ -870,6 +897,33 @@ router.post(
   }),
 );
 
+const userUpdateSchema = z.object({
+  [Prisma.UserScalarFieldEnum.activated]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.prefilled]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.checked_has_ccg]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.nom_de_famille]: z.string().optional(),
+  [Prisma.UserScalarFieldEnum.prenom]: z.string().optional(),
+  [Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser]: z.number().optional(),
+  [Prisma.UserScalarFieldEnum.telephone]: z.string().optional(),
+  [Prisma.UserScalarFieldEnum.email]: z.string().email().optional(),
+  [Prisma.UserScalarFieldEnum.addresse_ligne_1]: z.string().optional(),
+  [Prisma.UserScalarFieldEnum.addresse_ligne_2]: z.string().optional(),
+  [Prisma.UserScalarFieldEnum.code_postal]: z.string().optional(),
+  [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
+  [Prisma.UserScalarFieldEnum.etg_role]: z
+    .enum(Object.values(UserEtgRoles) as [UserEtgRoles, ...UserEtgRoles[]])
+    .optional(),
+  [Prisma.UserScalarFieldEnum.notifications]: z
+    .enum(Object.values(UserNotifications) as [UserNotifications, ...UserNotifications[]])
+    .optional(),
+  web_push_token: z.string().optional(),
+  native_push_token: z.string().optional(),
+  [Prisma.UserScalarFieldEnum.numero_cfei]: z.string().optional(),
+  [Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial]: z.enum(['true', 'false']).optional(),
+  onboarding_finished: z.boolean().optional(),
+});
 router.post(
   '/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
@@ -880,6 +934,17 @@ router.post(
       res: express.Response<UserConnexionResponse>,
       next: express.NextFunction,
     ) => {
+      let result = userUpdateSchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: result.error.message,
+          message: '',
+        });
+        return;
+      }
+      let body = result.data;
       const user = await prisma.user.findUnique({
         where: {
           id: req.params.user_id,
@@ -894,7 +959,6 @@ router.post(
         });
         return;
       }
-      const body = req.body;
 
       const nextUser: Prisma.UserUpdateInput = {};
 
@@ -920,10 +984,10 @@ router.post(
           body[Prisma.UserScalarFieldEnum.checked_has_ccg] === 'true' ? new Date() : null;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.nom_de_famille)) {
-        nextUser.nom_de_famille = body[Prisma.UserScalarFieldEnum.nom_de_famille] as string;
+        nextUser.nom_de_famille = sanitize(body[Prisma.UserScalarFieldEnum.nom_de_famille] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prenom)) {
-        nextUser.prenom = body[Prisma.UserScalarFieldEnum.prenom] as string;
+        nextUser.prenom = sanitize(body[Prisma.UserScalarFieldEnum.prenom] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser)) {
         nextUser.prochain_bracelet_a_utiliser = body[
@@ -937,16 +1001,16 @@ router.post(
         nextUser.email = body[Prisma.UserScalarFieldEnum.email].toLowerCase() as string;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_1)) {
-        nextUser.addresse_ligne_1 = body[Prisma.UserScalarFieldEnum.addresse_ligne_1] as string;
+        nextUser.addresse_ligne_1 = sanitize(body[Prisma.UserScalarFieldEnum.addresse_ligne_1] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_2)) {
-        nextUser.addresse_ligne_2 = body[Prisma.UserScalarFieldEnum.addresse_ligne_2] as string;
+        nextUser.addresse_ligne_2 = sanitize(body[Prisma.UserScalarFieldEnum.addresse_ligne_2] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.code_postal)) {
         nextUser.code_postal = body[Prisma.UserScalarFieldEnum.code_postal] as string;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.ville)) {
-        nextUser.ville = body[Prisma.UserScalarFieldEnum.ville] as string;
+        nextUser.ville = sanitize(body[Prisma.UserScalarFieldEnum.ville] as string);
       }
       // if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
       //   nextUser.roles = [...new Set(body[Prisma.UserScalarFieldEnum.roles] as Array<UserRoles>)].sort(
@@ -957,17 +1021,19 @@ router.post(
         nextUser.etg_role = body[Prisma.UserScalarFieldEnum.etg_role] as UserEtgRoles;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.notifications)) {
-        nextUser.notifications = body[Prisma.UserScalarFieldEnum.notifications] as Array<UserNotifications>;
+        nextUser.notifications = body[
+          Prisma.UserScalarFieldEnum.notifications
+        ] as unknown as UserNotifications[];
       }
       if (body.hasOwnProperty('web_push_token')) {
-        const web_push_token = body.web_push_token as string;
+        const web_push_token = sanitize(body.web_push_token as string);
         const existingSubscriptions = user.web_push_tokens || [];
         if (!existingSubscriptions.includes(web_push_token)) {
           nextUser.web_push_tokens = [...existingSubscriptions, web_push_token];
         }
       }
       if (body.hasOwnProperty('native_push_token')) {
-        const native_push_token = body.native_push_token as string;
+        const native_push_token = sanitize(body.native_push_token as string);
         const existingSubscriptions = user.native_push_tokens || [];
         if (!existingSubscriptions.includes(native_push_token)) {
           nextUser.native_push_tokens = [...existingSubscriptions, native_push_token];
@@ -975,7 +1041,7 @@ router.post(
       }
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
-        nextUser.numero_cfei = body[Prisma.UserScalarFieldEnum.numero_cfei] as string;
+        nextUser.numero_cfei = sanitize(body[Prisma.UserScalarFieldEnum.numero_cfei] as string);
         if (!req.isAdmin && nextUser.numero_cfei !== user.numero_cfei) {
           nextUser.activated = false;
           if (nextUser.activated_at) nextUser.activated_at = new Date();
