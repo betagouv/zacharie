@@ -721,6 +721,7 @@ function MesCCGs() {
   }, []);
 
   const [newCCGExpanded, setNewCCGExpanded] = useState(false);
+  const [registerOneMoreCCG, setRegisterOneMoreCCG] = useState(false);
   const [ccgPostalCode, setCCGPostalCode] = useState('');
   const handleNewCCGSubmit = useCallback(async (event: React.FocusEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -734,6 +735,7 @@ function MesCCGs() {
       refreshUserCCGs();
       setCCGPostalCode('');
       setNewCCGExpanded(false);
+      setRegisterOneMoreCCG(false);
       document.getElementById('onboarding-etape-2-ccgs-data')?.scrollIntoView({ behavior: 'smooth' });
     }
   }, []);
@@ -764,40 +766,55 @@ function MesCCGs() {
     <div className="mb-6 bg-white md:shadow-sm" id="onboarding-etape-2-ccgs-data">
       <div className="p-4 md:p-8">
         <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
-          <span>Chambres froides (centres de collecte du gibier sauvage)</span>
+          <span>Chambres froides (Centres de Collecte du Gibier sauvage)</span>
         </h3>
         {!userCCGs.length && (
-          <>
-            <RadioButtons
-              legend="Utilisez-vous une ou plusieurs chambres froides pour entreposer votre gibier avant son transport ?"
-              hintText="Une chambre froide est aussi appelée Centre de Collecte du Gibier sauvage (CCG)."
-              orientation="horizontal"
-              options={[
-                {
-                  nativeInputProps: {
-                    required: true,
-                    checked: !!user.checked_has_ccg,
-                    name: Prisma.UserScalarFieldEnum.checked_has_ccg,
-                    onChange: () => {
-                      handleUserSubmit(true);
-                    },
+          <RadioButtons
+            legend="Utilisez-vous une ou plusieurs chambres froides pour entreposer votre gibier avant son transport ?"
+            hintText="Une chambre froide est aussi appelée Centre de Collecte du Gibier sauvage (CCG)."
+            orientation="vertical"
+            options={[
+              {
+                nativeInputProps: {
+                  required: true,
+                  checked: !!user.checked_has_ccg && !newCCGExpanded,
+                  name: Prisma.UserScalarFieldEnum.checked_has_ccg,
+                  onClick: () => {
+                    handleUserSubmit(true);
+                    setNewCCGExpanded(false);
+                    setRegisterOneMoreCCG(true);
                   },
-                  label: 'Oui',
                 },
-                {
-                  nativeInputProps: {
-                    required: true,
-                    checked: !user.checked_has_ccg,
-                    name: 'not_checked_has_ccg',
-                    onChange: () => {
-                      handleUserSubmit(false);
-                    },
+                label: 'Oui et la chambre froide a un numéro d’identification',
+              },
+              {
+                nativeInputProps: {
+                  required: true,
+                  checked: !!user.checked_has_ccg && newCCGExpanded,
+                  name: Prisma.UserScalarFieldEnum.checked_has_ccg,
+                  onClick: () => {
+                    handleUserSubmit(true);
+                    setNewCCGExpanded(true);
+                    setRegisterOneMoreCCG(true);
                   },
-                  label: 'Non',
                 },
-              ]}
-            />
-          </>
+                label: 'Oui mais la chambre froide n’a pas de numéro d’identification',
+              },
+              {
+                nativeInputProps: {
+                  required: true,
+                  checked: !user.checked_has_ccg,
+                  name: 'not_checked_has_ccg',
+                  onClick: () => {
+                    handleUserSubmit(false);
+                    setNewCCGExpanded(false);
+                    setRegisterOneMoreCCG(false);
+                  },
+                },
+                label: 'Non, je n’utilise pas de chambre froide',
+              },
+            ]}
+          />
         )}
 
         {/* Only show CCG list and add buttons if user has CCGs or checked_has_ccg is true */}
@@ -806,6 +823,7 @@ function MesCCGs() {
             {userCCGs.map((entity) => {
               return (
                 <Notice
+                  key={entity.id}
                   className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice__title]:before:hidden"
                   style={{
                     boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
@@ -822,7 +840,13 @@ function MesCCGs() {
                       },
                     }).then((res) => {
                       if (res.ok) {
-                        setUserCCGs((prev) => prev.filter((ccg) => ccg.id !== entity.id));
+                        const nextCCGs = userCCGs.filter((ccg) => ccg.id !== entity.id);
+                        if (nextCCGs.length === 0) {
+                          handleUserSubmit(false);
+                          setNewCCGExpanded(false);
+                          setRegisterOneMoreCCG(false);
+                        }
+                        setUserCCGs(nextCCGs);
                       }
                     });
                   }}
@@ -847,24 +871,59 @@ function MesCCGs() {
               );
             })}
             <div className="mt-8">
-              {!newCCGExpanded ? (
-                <>
-                  <InputCCG key={userCCGs.length} addCCG={(ccg) => setUserCCGs([...userCCGs, ccg])} />
-                  <p className="mt-8">
-                    Si vous utilisez un CCG non encore enregistré auprès des services de l’Etat, vous pouvez
-                    l’identifier ici.
-                  </p>
-                  <Button
-                    priority="secondary"
-                    className="mt-4"
-                    nativeButtonProps={{
-                      onClick: () => setNewCCGExpanded(true),
-                    }}
-                  >
-                    Pré-enregistrer ma chambre froide
-                  </Button>
-                </>
-              ) : (
+              {!registerOneMoreCCG && userCCGs?.length > 0 && (
+                <Button
+                  type="button"
+                  priority="primary"
+                  className="mt-4"
+                  nativeButtonProps={{
+                    onClick: () => setRegisterOneMoreCCG(true),
+                  }}
+                >
+                  Ajouter une chambre froide
+                </Button>
+              )}
+              {!!registerOneMoreCCG && userCCGs?.length > 0 && (
+                <RadioButtons
+                  legend=""
+                  hintText=""
+                  orientation="vertical"
+                  options={[
+                    {
+                      nativeInputProps: {
+                        required: true,
+                        checked: !!user.checked_has_ccg && !newCCGExpanded,
+                        name: Prisma.UserScalarFieldEnum.checked_has_ccg,
+                        onClick: () => {
+                          setNewCCGExpanded(false);
+                        },
+                      },
+                      label: 'Ma chambre froide a un numéro d’identification',
+                    },
+                    {
+                      nativeInputProps: {
+                        required: true,
+                        checked: !!user.checked_has_ccg && newCCGExpanded,
+                        name: Prisma.UserScalarFieldEnum.checked_has_ccg,
+                        onClick: () => {
+                          setNewCCGExpanded(true);
+                        },
+                      },
+                      label: 'Ma chambre froide n’a pas de numéro d’identification',
+                    },
+                  ]}
+                />
+              )}
+              {!newCCGExpanded && !!registerOneMoreCCG && (
+                <InputCCG
+                  key={userCCGs.length}
+                  addCCG={(ccg) => {
+                    setUserCCGs([...userCCGs, ccg]);
+                    setRegisterOneMoreCCG(false);
+                  }}
+                />
+              )}
+              {!!newCCGExpanded && !!registerOneMoreCCG && (
                 <div className="rounded-lg border border-gray-300 px-8 py-6">
                   <p className="font-semibold">Pré-enregistrer une nouvelle chambre froide (CCG)</p>
                   <p className="mb-5 text-sm text-gray-500">
@@ -891,7 +950,7 @@ function MesCCGs() {
                         defaultValue: '',
                       }}
                     />
-                    <Input
+                    {/* <Input
                       label="Numéro d'identification du CCG"
                       hintText="De la forme 03-CCG-123, ou encore 03.564.345. Si vous ne le connaissez pas, laissez vide."
                       nativeInputProps={{
@@ -900,7 +959,7 @@ function MesCCGs() {
                         autoComplete: 'off',
                         defaultValue: '',
                       }}
-                    />
+                    /> */}
                     <Input
                       label="Adresse *"
                       hintText="Indication : numéro et voie"
@@ -971,9 +1030,13 @@ function MesCCGs() {
                     nativeButtonProps={{
                       onClick: () => {
                         setNewCCGExpanded(false);
-                        document
-                          .getElementById('onboarding-etape-2-ccgs-data')
-                          ?.scrollIntoView({ behavior: 'smooth' });
+                        handleUserSubmit(false);
+                        setRegisterOneMoreCCG(false);
+                        setTimeout(() => {
+                          document
+                            .getElementById('onboarding-etape-2-ccgs-data')
+                            ?.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
                       },
                     }}
                   >
@@ -1028,7 +1091,7 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
       }}
     >
       <Input
-        label="Numéro d'identification."
+        label="Numéro d'identification"
         state={error ? 'error' : 'default'}
         stateRelatedMessage={error}
         nativeInputProps={{
