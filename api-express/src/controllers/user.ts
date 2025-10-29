@@ -995,10 +995,10 @@ router.post(
         ] as number;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.telephone)) {
-        nextUser.telephone = body[Prisma.UserScalarFieldEnum.telephone] as string;
+        nextUser.telephone = sanitize(body[Prisma.UserScalarFieldEnum.telephone] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
-        nextUser.email = body[Prisma.UserScalarFieldEnum.email].toLowerCase() as string;
+        nextUser.email = sanitize(body[Prisma.UserScalarFieldEnum.email].toLowerCase() as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_1)) {
         nextUser.addresse_ligne_1 = sanitize(body[Prisma.UserScalarFieldEnum.addresse_ligne_1] as string);
@@ -1007,7 +1007,7 @@ router.post(
         nextUser.addresse_ligne_2 = sanitize(body[Prisma.UserScalarFieldEnum.addresse_ligne_2] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.code_postal)) {
-        nextUser.code_postal = body[Prisma.UserScalarFieldEnum.code_postal] as string;
+        nextUser.code_postal = sanitize(body[Prisma.UserScalarFieldEnum.code_postal] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.ville)) {
         nextUser.ville = sanitize(body[Prisma.UserScalarFieldEnum.ville] as string);
