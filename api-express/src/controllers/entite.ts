@@ -163,12 +163,11 @@ router.post(
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
 
-    console.log(req.body);
     const result = associationDeChasseSchema.safeParse(req.body);
     if (!result.success) {
-      console.log(result.error);
-      res.status(400).send({ ok: false, error: result.error.message });
-      return;
+      const error = new Error(result.error.message);
+      res.status(400);
+      return next(error);
     }
     const body = result.data;
 
@@ -230,8 +229,9 @@ router.post(
 
     const result = ccgSchema.safeParse(req.body);
     if (!result.success) {
-      res.status(400).send({ ok: false, error: result.error.message });
-      return;
+      const error = new Error(result.error.message);
+      res.status(400);
+      return next(error);
     }
     const body = result.data;
 

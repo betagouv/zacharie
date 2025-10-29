@@ -71,13 +71,9 @@ router.post(
       let { email, username, passwordUser, connexionType, resetPasswordRequest, resetPasswordToken } =
         result.data;
       if (!result.success) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: result.error.message,
-        });
-        return;
+        const error = new Error(result.error.message);
+        res.status(400);
+        return next(error);
       }
 
       email = email.toLowerCase().trim();
@@ -295,13 +291,9 @@ router.post(
     ) => {
       let result = accessTokenSchema.safeParse(req.body);
       if (!result.success) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: result.error.message,
-        });
-        return;
+        const error = new Error(result.error.message);
+        res.status(400);
+        return next(error);
       }
       let { accessToken } = result.data;
       if (!accessToken) {
@@ -400,12 +392,9 @@ router.post(
     async (req: RequestWithUser, res: express.Response<UserEntityResponse>, next: express.NextFunction) => {
       let result = userEntitySchema.safeParse(req.body);
       if (!result.success) {
-        res.status(400).send({
-          ok: false,
-          data: { relation: null, entity: null },
-          error: result.error.message,
-        });
-        return;
+        const error = new Error(result.error.message);
+        res.status(400);
+        return next(error);
       }
       let body = result.data;
       const userId = req.params.user_id;
@@ -698,12 +687,9 @@ router.post(
       const user = req.user!;
       let result = trouverPremierDetenteurBodySchema.safeParse(req.body);
       if (!result.success) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          error: result.error.message,
-        });
-        return;
+        const error = new Error(result.error.message);
+        res.status(400);
+        return next(error);
       }
       let body = result.data;
 
@@ -820,12 +806,9 @@ router.post(
     const user = req.user!;
     let result = inviteUserBodySchema.safeParse(req.body);
     if (!result.success) {
-      res.status(400).send({
-        ok: false,
-        data: { newUser: null },
-        error: result.error.message,
-      });
-      return;
+      const error = new Error(result.error.message);
+      res.status(400);
+      return next(error);
     }
     let body = result.data;
     const email = body[Prisma.UserScalarFieldEnum.email]?.toLowerCase()?.trim();
@@ -936,13 +919,9 @@ router.post(
     ) => {
       let result = userUpdateSchema.safeParse(req.body);
       if (!result.success) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          error: result.error.message,
-          message: '',
-        });
-        return;
+        const error = new Error(result.error.message);
+        res.status(400);
+        return next(error);
       }
       let body = result.data;
       const user = await prisma.user.findUnique({
@@ -1159,12 +1138,9 @@ router.get(
     async (req: RequestWithUser, res: express.Response<UserForFeiResponse>, next: express.NextFunction) => {
       let result = feiUserGetSchema.safeParse(req.params);
       if (!result.success) {
-        res.status(400).send({
-          ok: false,
-          data: null,
-          error: result.error.message,
-        });
-        return;
+        const error = new Error(result.error.message);
+        res.status(400);
+        return next(error);
       }
       let params = result.data;
       if (!params.fei_numero) {
