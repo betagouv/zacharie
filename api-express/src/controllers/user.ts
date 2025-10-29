@@ -374,7 +374,7 @@ router.post(
 
 const userEntitySchema = z.object({
   owner_id: z.string(),
-  entity_id: z.string(),
+  entity_id: z.string().optional(),
   numero_ddecpp: z.string().optional(),
   type: z.enum(Object.values(EntityTypes) as [EntityTypes, ...EntityTypes[]]),
   _action: z.enum(['create', 'delete', 'update']),
