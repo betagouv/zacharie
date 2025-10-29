@@ -18,6 +18,8 @@ import {
   updateOrCreateBrevoCompany,
 } from '~/third-parties/brevo';
 import { entityAdminInclude } from '~/types/entity';
+import { sanitize } from '~/utils/sanitize';
+import { z } from 'zod';
 
 router.get(
   '/fei/:entity_id/:fei_numero',
@@ -145,25 +147,40 @@ router.get(
   }),
 );
 
+const associationDeChasseSchema = z.object({
+  raison_sociale: z.string(),
+  address_ligne_1: z.string(),
+  address_ligne_2: z.string(),
+  code_postal: z.string(),
+  ville: z.string(),
+  siret: z.string().optional(),
+  zacharie_compatible: z.boolean().optional(),
+});
+
 router.post(
   '/association-de-chasse',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
 
-    const body = req.body;
+    console.log(req.body);
+    const result = associationDeChasseSchema.safeParse(req.body);
+    if (!result.success) {
+      console.log(result.error);
+      res.status(400).send({ ok: false, error: result.error.message });
+      return;
+    }
+    const body = result.data;
 
     const data: Prisma.EntityUncheckedCreateInput = {
-      raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
-      nom_d_usage: body[Prisma.EntityScalarFieldEnum.raison_sociale],
+      raison_sociale: sanitize(body[Prisma.EntityScalarFieldEnum.raison_sociale]),
+      nom_d_usage: sanitize(body[Prisma.EntityScalarFieldEnum.raison_sociale]),
       type: EntityTypes.PREMIER_DETENTEUR,
-      address_ligne_1: body[Prisma.EntityScalarFieldEnum.address_ligne_1],
-      address_ligne_2: body[Prisma.EntityScalarFieldEnum.address_ligne_2],
-      code_postal: body[Prisma.EntityScalarFieldEnum.code_postal],
-      prefecture_svi: body[Prisma.EntityScalarFieldEnum.prefecture_svi],
-      nom_prenom_responsable: body[Prisma.EntityScalarFieldEnum.nom_prenom_responsable],
-      ville: body[Prisma.EntityScalarFieldEnum.ville],
-      siret: body[Prisma.EntityScalarFieldEnum.siret] || null,
+      address_ligne_1: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_1]),
+      address_ligne_2: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_2]),
+      code_postal: sanitize(body[Prisma.EntityScalarFieldEnum.code_postal]),
+      ville: sanitize(body[Prisma.EntityScalarFieldEnum.ville]),
+      siret: sanitize(body[Prisma.EntityScalarFieldEnum.siret]) || null,
       zacharie_compatible: true,
     };
 
@@ -194,25 +211,41 @@ router.post(
   }),
 );
 
+const ccgSchema = z.object({
+  nom_d_usage: z.string(),
+  address_ligne_1: z.string(),
+  address_ligne_2: z.string(),
+  code_postal: z.string(),
+  ville: z.string(),
+  siret: z.string().optional(),
+  numero_ddecpp: z.string().optional(),
+  zacharie_compatible: z.boolean().optional(),
+});
+
 router.post(
   '/ccg',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
 
-    const body = req.body;
+    const result = ccgSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).send({ ok: false, error: result.error.message });
+      return;
+    }
+    const body = result.data;
 
     const data: Prisma.EntityUncheckedCreateInput = {
-      raison_sociale: body[Prisma.EntityScalarFieldEnum.nom_d_usage],
-      nom_d_usage: body[Prisma.EntityScalarFieldEnum.nom_d_usage],
+      raison_sociale: sanitize(body[Prisma.EntityScalarFieldEnum.nom_d_usage]),
+      nom_d_usage: sanitize(body[Prisma.EntityScalarFieldEnum.nom_d_usage]),
       type: EntityTypes.CCG,
       ccg_status: 'Pré-enregistré dans Zacharie',
-      address_ligne_1: body[Prisma.EntityScalarFieldEnum.address_ligne_1],
-      address_ligne_2: body[Prisma.EntityScalarFieldEnum.address_ligne_2],
-      code_postal: body[Prisma.EntityScalarFieldEnum.code_postal],
-      ville: body[Prisma.EntityScalarFieldEnum.ville],
-      siret: body[Prisma.EntityScalarFieldEnum.siret] || null,
-      numero_ddecpp: body[Prisma.EntityScalarFieldEnum.numero_ddecpp] || null,
+      address_ligne_1: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_1]),
+      address_ligne_2: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_2]),
+      code_postal: sanitize(body[Prisma.EntityScalarFieldEnum.code_postal]),
+      ville: sanitize(body[Prisma.EntityScalarFieldEnum.ville]),
+      siret: sanitize(body[Prisma.EntityScalarFieldEnum.siret]) || null,
+      numero_ddecpp: sanitize(body[Prisma.EntityScalarFieldEnum.numero_ddecpp]) || null,
       zacharie_compatible: true,
     };
 
