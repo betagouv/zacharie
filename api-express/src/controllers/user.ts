@@ -1076,7 +1076,7 @@ router.post(
         }
         await sendEmail({
           emails: ['contact@zacharie.beta.gouv.fr'],
-          subject: `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`,
+          subject,
           text: `L'utilisateur ${savedUser.email} a ${
             userHasNowAllRequiredFields ? 'fini son inscription' : 'changé son numéro CFEI'
           } :
