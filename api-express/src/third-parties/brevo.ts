@@ -282,7 +282,10 @@ async function updateBrevoContact(props: User): Promise<User> {
       const phoneNumber = parsePhoneNumber(props.telephone, 'FR');
       if (phoneNumber?.isPossible()) {
         if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
-          if (props.roles.includes(UserRoles.CHASSEUR)) {
+          const existingUsersWithSamePhoneNumber = await prisma.user.findMany({
+            where: { telephone: props.telephone },
+          });
+          if (existingUsersWithSamePhoneNumber.length === 1) {
             SMS = phoneNumber.number;
             WHATSAPP = phoneNumber.number;
           }
@@ -317,6 +320,7 @@ async function updateBrevoContact(props: User): Promise<User> {
       NUM_EXAMINATEUR: props.numero_cfei,
       EXT_ID: props.id,
     };
+    console.log(updateContact.attributes);
     const result = await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
     return props;
   } catch (error) {
