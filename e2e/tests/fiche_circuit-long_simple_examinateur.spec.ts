@@ -69,9 +69,7 @@ test.describe("Fiches examinateur initial", () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
     await expect(page.getByRole("button", { name: "Enregistrer la fiche", exact: true })).not.toBeDisabled();
     await page.getByRole("button", { name: "Enregistrer la fiche", exact: true }).click();
-    await page
-      .getByLabel("Quel Premier Détenteur doit désormais agir sur la fiche ?")
-      .selectOption("Pierre Petit - 75000 Paris");
+    await page.getByLabel("Qui est le premier détenteur ?").selectOption("Pierre Petit - 75000 Paris");
     await page.getByRole("button", { name: "Valider l’examen initial" }).click();
     await expect(page.getByRole("heading", { name: "Attribution effectuée" })).toBeVisible();
     // get fei id

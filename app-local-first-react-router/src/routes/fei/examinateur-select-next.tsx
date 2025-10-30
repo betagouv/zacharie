@@ -137,7 +137,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
 
   return (
     <>
-      <label className="mb-4 block">Quel Premier Détenteur doit désormais agir sur la fiche ? *</label>
+      <label className="mb-4 block">Qui est le premier détenteur&nbsp;?&nbsp;*</label>
       {isFirstFei && !Object.values(associationsDeChasse).length ? (
         <>
           {!showSearchUserByEmail && (
