@@ -138,7 +138,7 @@ export function computeFeiSteps({
       }
       return 'Réception par un établissement de traitement';
     }
-    capture(`bug dans currentStepLabel for fei ${fei.numero}`, { extra: { fei, steps, currentStep } });
+    // capture(`bug dans currentStepLabel for fei ${fei.numero}`, { extra: { fei, steps, currentStep } });
     return 'En cours';
   })();
 

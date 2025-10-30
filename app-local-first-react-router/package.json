@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@af-utils/scrollend-polyfill": "^0.0.14",
-    "@codegouvfr/react-dsfr": "1.23.10",
+    "@codegouvfr/react-dsfr": "1.28.0",
     "@e965/xlsx": "^0.20.3",
     "@prisma/client": "6.8.2",
     "@react-hookz/web": "^25.1.1",
