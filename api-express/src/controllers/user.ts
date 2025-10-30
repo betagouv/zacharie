@@ -901,7 +901,7 @@ const userUpdateSchema = z.object({
     .enum(Object.values(UserEtgRoles) as [UserEtgRoles, ...UserEtgRoles[]])
     .optional(),
   [Prisma.UserScalarFieldEnum.notifications]: z
-    .enum(Object.values(UserNotifications) as [UserNotifications, ...UserNotifications[]])
+    .array(z.enum(Object.values(UserNotifications) as [UserNotifications, ...UserNotifications[]]))
     .optional(),
   web_push_token: z.string().optional(),
   native_push_token: z.string().optional(),
@@ -919,6 +919,7 @@ router.post(
       res: express.Response<UserConnexionResponse>,
       next: express.NextFunction,
     ) => {
+      console.log('req.body', req.body);
       let result = userUpdateSchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
@@ -1002,9 +1003,7 @@ router.post(
         nextUser.etg_role = body[Prisma.UserScalarFieldEnum.etg_role] as UserEtgRoles;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.notifications)) {
-        nextUser.notifications = body[
-          Prisma.UserScalarFieldEnum.notifications
-        ] as unknown as UserNotifications[];
+        nextUser.notifications = body[Prisma.UserScalarFieldEnum.notifications];
       }
       if (body.hasOwnProperty('web_push_token')) {
         const web_push_token = sanitize(body.web_push_token as string);

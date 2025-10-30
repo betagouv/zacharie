@@ -1,4 +1,3 @@
-import { capture } from '@app/services/sentry';
 import type { FeiDone } from '@api/src/types/fei';
 import type { FeiStep, FeiStepSimpleStatus } from '@app/types/fei-steps';
 import useZustandStore from '@app/zustand/store';
