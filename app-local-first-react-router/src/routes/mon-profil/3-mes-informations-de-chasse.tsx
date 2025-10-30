@@ -68,7 +68,7 @@ export default function MesInformationsDeChasse({
       numeroCfei,
       visibilityChecked,
     }: {
-      isExaminateurInitial: boolean;
+      isExaminateurInitial: boolean | null;
       numeroCfei: string;
       visibilityChecked: boolean;
     }) => {
@@ -317,7 +317,7 @@ export function MesAssociationsDeChasse() {
       });
   }, [refreshKey]);
   const handleUserSubmit = useCallback(
-    async (checked_has_asso_de_chasse: boolean | null) => {
+    async (checked_has_asso_de_chasse: boolean) => {
       const body: Record<string, string | null> = {};
       body.checked_has_asso_de_chasse =
         checked_has_asso_de_chasse == null ? null : checked_has_asso_de_chasse ? 'true' : 'false';
