@@ -58,6 +58,7 @@ const sendError = (
   } else {
     capture(err, {
       extra: {
+        statusCode: res.statusCode,
         body,
         query,
         params,
@@ -74,7 +75,12 @@ const sendError = (
     });
   }
 
-  if (!res.statusCode || res.statusCode >= 500) {
+  if (
+    err.message.includes("Can't reach database server") ||
+    !res.statusCode ||
+    res.statusCode === 406 ||
+    res.statusCode >= 500
+  ) {
     return res.status(res.statusCode ?? 500).send({
       ok: false,
       code: 'SERVER_ERROR',

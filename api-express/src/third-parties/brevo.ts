@@ -778,7 +778,7 @@ export {
 //   .findMany({
 //     where: {
 //       brevo_contact_id: { not: null },
-//       roles: { has: UserRoles.CHASSEUR },
+//       roles: { has: UserRoles.COLLECTEUR_PRO },
 //     },
 //   })
 //   .then(async (users) => {

@@ -68,13 +68,13 @@ router.post(
       next: express.NextFunction,
     ) => {
       let result = connexionSchema.safeParse(req.body);
-      let { email, username, passwordUser, connexionType, resetPasswordRequest, resetPasswordToken } =
-        result.data;
       if (!result.success) {
         const error = new Error(result.error.message);
-        res.status(400);
+        res.status(406);
         return next(error);
       }
+      let { email, username, passwordUser, connexionType, resetPasswordRequest, resetPasswordToken } =
+        result.data;
 
       email = email.toLowerCase().trim();
       if (username) {
@@ -292,7 +292,7 @@ router.post(
       let result = accessTokenSchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
-        res.status(400);
+        res.status(406);
         return next(error);
       }
       let { accessToken } = result.data;
@@ -395,7 +395,7 @@ router.post(
       let result = userEntitySchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
-        res.status(400);
+        res.status(406);
         return next(error);
       }
       let body = result.data;
@@ -690,7 +690,7 @@ router.post(
       let result = trouverPremierDetenteurBodySchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
-        res.status(400);
+        res.status(406);
         return next(error);
       }
       let body = result.data;
@@ -809,14 +809,14 @@ router.post(
     let result = inviteUserBodySchema.safeParse(req.body);
     if (!result.success) {
       const error = new Error(result.error.message);
-      res.status(400);
+      res.status(406);
       return next(error);
     }
     let body = result.data;
     const email = body[Prisma.UserScalarFieldEnum.email]?.toLowerCase()?.trim();
     if (!email) {
       const error = new Error('Email non valide');
-      res.status(400);
+      res.status(406);
       return next(error);
     }
     const entity_id = body[Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id];
@@ -827,7 +827,7 @@ router.post(
     });
     if (!entity) {
       const error = new Error('Entité non trouvée');
-      res.status(400);
+      res.status(406);
       return next(error);
     }
     const myRelation = await prisma.entityAndUserRelations.findFirst({
@@ -922,7 +922,7 @@ router.post(
       let result = userUpdateSchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
-        res.status(400);
+        res.status(406);
         return next(error);
       }
       let body = result.data;
@@ -1141,7 +1141,7 @@ router.get(
       let result = feiUserGetSchema.safeParse(req.params);
       if (!result.success) {
         const error = new Error(result.error.message);
-        res.status(400);
+        res.status(406);
         return next(error);
       }
       let params = result.data;

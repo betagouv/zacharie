@@ -166,7 +166,7 @@ router.post(
     const result = associationDeChasseSchema.safeParse(req.body);
     if (!result.success) {
       const error = new Error(result.error.message);
-      res.status(400);
+      res.status(406);
       return next(error);
     }
     const body = result.data;
@@ -230,7 +230,7 @@ router.post(
     const result = ccgSchema.safeParse(req.body);
     if (!result.success) {
       const error = new Error(result.error.message);
-      res.status(400);
+      res.status(406);
       return next(error);
     }
     const body = result.data;
