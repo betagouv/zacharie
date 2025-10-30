@@ -52,9 +52,7 @@ export default function MesInformationsDeChasse({
 
   const user = useUser((state) => state.user)!;
 
-  const [isExaminateurInitial, setIsExaminateurInitial] = useState(
-    user.est_forme_a_l_examen_initial === true,
-  );
+  const [isExaminateurInitial, setIsExaminateurInitial] = useState(user.est_forme_a_l_examen_initial);
   const [numeroCfei, setNumeroCfei] = useState(user.numero_cfei ?? '');
   const [visibilityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
 
@@ -156,7 +154,7 @@ export default function MesInformationsDeChasse({
                         {
                           nativeInputProps: {
                             required: true,
-                            checked: isExaminateurInitial,
+                            checked: isExaminateurInitial === true,
                             name: Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial,
                             onChange: () => {
                               setIsExaminateurInitial(true);
@@ -168,7 +166,7 @@ export default function MesInformationsDeChasse({
                         {
                           nativeInputProps: {
                             required: true,
-                            checked: !isExaminateurInitial,
+                            checked: isExaminateurInitial === false,
                             name: 'pas_forme_a_l_examen_initial',
                             onChange: () => {
                               if (
@@ -319,9 +317,10 @@ export function MesAssociationsDeChasse() {
       });
   }, [refreshKey]);
   const handleUserSubmit = useCallback(
-    async (checked_has_asso_de_chasse: boolean) => {
+    async (checked_has_asso_de_chasse: boolean | null) => {
       const body: Record<string, string | null> = {};
-      body.checked_has_asso_de_chasse = checked_has_asso_de_chasse ? 'true' : 'false';
+      body.checked_has_asso_de_chasse =
+        checked_has_asso_de_chasse == null ? null : checked_has_asso_de_chasse ? 'true' : 'false';
       const response = await API.post({
         path: `user/${user.id}`,
         body,

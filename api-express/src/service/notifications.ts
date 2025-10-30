@@ -216,7 +216,7 @@ async function sendNotificationToUser({
     }
     console.log('SENDING EMAIL NOTIFICATION FOR REAL', user.id);
     sendEmail({
-      emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
+      emails: [user.email!],
       subject: title,
       text: email,
     })

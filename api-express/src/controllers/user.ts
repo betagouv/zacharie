@@ -904,7 +904,7 @@ const userUpdateSchema = z.object({
     .optional(),
   web_push_token: z.string().optional(),
   native_push_token: z.string().optional(),
-  [Prisma.UserScalarFieldEnum.numero_cfei]: z.string().optional(),
+  [Prisma.UserScalarFieldEnum.numero_cfei]: z.string().optional().nullable(),
   [Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial]: z.enum(['true', 'false']).optional(),
   onboarding_finished: z.boolean().optional(),
 });
