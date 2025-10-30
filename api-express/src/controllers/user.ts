@@ -639,17 +639,16 @@ router.post(
               id: existingEntityRelation.id,
             },
           });
-        }
+          if (existingEntityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
+            const entity = await prisma.entity.findUnique({
+              where: {
+                id: entityId,
+                deleted_at: null,
+              },
+            });
 
-        if (existingEntityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
-          const entity = await prisma.entity.findUnique({
-            where: {
-              id: entityId,
-              deleted_at: null,
-            },
-          });
-
-          await unlinkBrevoCompanyToContact(entity, req.user);
+            await unlinkBrevoCompanyToContact(entity, req.user);
+          }
         }
 
         res.status(200).send({ ok: true, data: { relation: null, entity: null }, error: '' });
