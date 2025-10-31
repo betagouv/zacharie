@@ -119,7 +119,7 @@ router.get(
         },
       });
       if (!user) {
-        res.status(401).send({ ok: false, data: null, error: 'Unauthorized' });
+        res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
         return;
       }
       const allEntities = await prisma.entity.findMany({
@@ -245,7 +245,7 @@ router.get(
         include: entityAdminInclude,
       });
       if (!entity) {
-        res.status(401).send({ ok: false, data: null, error: 'Unauthorized' });
+        res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
         return;
       }
 

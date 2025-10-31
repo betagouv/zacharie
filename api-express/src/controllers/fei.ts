@@ -65,7 +65,7 @@ router.post(
         (user.roles.includes(UserRoles.CHASSEUR) && existingFei.examinateur_initial_user_id === user.id) ||
         (user.roles.includes(UserRoles.CHASSEUR) && existingFei.fei_current_owner_user_id === user.id);
       if (!canDelete) {
-        res.status(401).send({ ok: false, data: { fei: null }, error: 'Unauthorized' });
+        res.status(400).send({ ok: false, data: { fei: null }, error: 'Unauthorized' });
         return;
       }
       const deletedFei = await prisma.fei.update({

@@ -50,7 +50,7 @@ router.get(
     });
 
     if (!entity) {
-      res.status(401).send({ ok: false, data: null, error: 'Unauthorized' });
+      res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
       return;
     }
 

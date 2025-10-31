@@ -103,7 +103,7 @@ function DeactivatedAccount() {
                 <ul className="fr-btns-group fr-btns-group--inline-md">
                   <li>
                     <a className="fr-btn" href="/app/tableau-de-bord/mon-profil/mes-coordonnees">
-                      Renseigner vos coordonnées
+                      Renseignez vos coordonnées
                     </a>
                   </li>
                   {needToCompleteExaminateurInitial && (

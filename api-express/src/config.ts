@@ -28,7 +28,7 @@ const TIPIMAIL_API_KEY = process.env.TIPIMAIL_API_KEY;
 const TIPIMAIL_EMAIL_TO = 'contact@zacharie.beta.gouv.fr';
 const TIPIMAIL_EMAIL_FROM = 'contact@zacharie.beta.gouv.fr';
 
-const SECRET = process.env.VITE_SECRET ?? 'not-so-secret';
+const SECRET = process.env.VITE_SECRET ?? 'not-so-secret-lalalala';
 const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
 const IS_DEV = process.env.NODE_ENV === 'development'; // local dev

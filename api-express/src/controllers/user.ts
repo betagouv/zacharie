@@ -468,7 +468,7 @@ router.post(
       }
 
       if (!isAdmin && userId !== body.owner_id) {
-        res.status(401).send({
+        res.status(400).send({
           ok: false,
           data: { relation: null, entity: null },
           error: 'Unauthorized',
@@ -1144,7 +1144,7 @@ router.get(
       }
       let params = result.data;
       if (!params.fei_numero) {
-        res.status(401).send({ ok: false, data: null, error: 'Missing fei_numero' });
+        res.status(400).send({ ok: false, data: null, error: 'Missing fei_numero' });
         return;
       }
       const fei = await prisma.fei.findUnique({
@@ -1154,7 +1154,7 @@ router.get(
         },
       });
       if (!fei) {
-        res.status(401).send({
+        res.status(400).send({
           ok: false,
           data: null,
           error: 'Unauthorized',

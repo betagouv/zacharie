@@ -83,7 +83,9 @@ export default function Connexion() {
   };
 
   const resetPasswordMessage = searchParams.get('reset-password-message');
+  const communication = searchParams.get('communication');
   const resetPasswordToken = searchParams.get('reset-password-token') || '';
+  const redirect = searchParams.get('redirect');
 
   useEffect(() => {
     clearCache('connexion').then(() =>
@@ -99,9 +101,11 @@ export default function Connexion() {
   }, []);
   useEffect(() => {
     if (userInitiated && user) {
-      navigate(getUserOnboardingRoute(user!) ?? '/app/tableau-de-bord');
+      if (redirect) {
+        navigate(redirect);
+      } else navigate(getUserOnboardingRoute(user!) ?? '/app/tableau-de-bord');
     }
-  }, [userInitiated, user, navigate]);
+  }, [userInitiated, user, navigate, redirect]);
 
   if (initialLoading) {
     return <Chargement />;
@@ -116,6 +120,7 @@ export default function Connexion() {
             {resetPasswordMessage && (
               <CallOut>Réinitialisation de mot de passe {resetPasswordMessage}</CallOut>
             )}
+            {communication && <CallOut>{decodeURIComponent(communication)}</CallOut>}
             {resetPasswordToken && <CallOut>Vous pouvez rentrer votre nouveau mot de passe</CallOut>}
             {userResponse?.message && <CallOut>{userResponse?.message}</CallOut>}
             <form

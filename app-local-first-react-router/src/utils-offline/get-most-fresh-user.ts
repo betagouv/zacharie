@@ -46,12 +46,6 @@ export async function refreshUser(_calledFrom: string) {
       .then((res) => res as UserConnexionResponse)
       .then(async (userResponse) => {
         window.dispatchEvent(new Event('good-connection'));
-        // @ts-expect-error status is not in the type
-        if (userResponse.status === 401) {
-          useUser.setState({ user: null });
-          Sentry.setUser({});
-          return null;
-        }
 
         if (userResponse?.ok && userResponse.data?.user) {
           const user = userResponse.data.user as User;
