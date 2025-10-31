@@ -505,7 +505,7 @@ router.post(
         });
       }
     } else {
-      console.log('no next owner id', nextOwnerId, existingFei.fei_next_owner_user_id, existingFei);
+      // console.log('no next owner id', nextOwnerId, existingFei.fei_next_owner_user_id, existingFei);
     }
 
     if (
@@ -553,7 +553,7 @@ router.post(
             notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
           });
         } else {
-          console.log('next owner is the same user', nextOwner.id, user.id);
+          // console.log('next owner is the same user', nextOwner.id, user.id);
         }
       }
       const examinateur = savedFei.FeiExaminateurInitialUser;
@@ -565,12 +565,12 @@ router.post(
         await sendWebhook(premierDetenteur.id, 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR', savedFei.numero, null);
       }
     } else {
-      console.log(
-        'no next owner entity id',
-        body.fei_next_owner_entity_id,
-        existingFei.fei_next_owner_entity_id,
-        existingFei,
-      );
+      // console.log(
+      //   'no next owner entity id',
+      //   body.fei_next_owner_entity_id,
+      //   existingFei.fei_next_owner_entity_id,
+      //   existingFei,
+      // );
     }
 
     if (!existingFei.svi_closed_by_user_id && savedFei.svi_closed_by_user_id) {
