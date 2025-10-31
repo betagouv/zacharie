@@ -198,7 +198,7 @@ export default function RelationEntityUser({
               onClick={() => {
                 if (!window.confirm('Voulez-vous vraiment supprimer cette relation ?')) return;
                 API.post({
-                  path: `user/user-entity/${user.id}`,
+                  path: `/user/user-entity/${user.id}`,
                   body: {
                     _action: 'delete',
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
@@ -284,7 +284,7 @@ function RelationStatusSelector({
             return;
         }
         API.post({
-          path: `user/user-entity/${user.id}`,
+          path: `/user/user-entity/${user.id}`,
           body: {
             _action: 'update',
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,

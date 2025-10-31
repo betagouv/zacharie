@@ -72,7 +72,7 @@ export default function MesNotifications() {
         const formData = new FormData(e.currentTarget);
         const notifications = formData.getAll('notifications') as UserNotifications[];
         const response = await API.post({
-          path: `user/${user.id}`,
+          path: `/user/${user.id}`,
           body: { notifications, onboarding_finished: true },
         }).then((data) => data as UserConnexionResponse);
         if (response.ok && response.data?.user?.id) {
@@ -121,7 +121,7 @@ export default function MesNotifications() {
                             VITE_VAPID_PUBLIC_KEY,
                             async (subscription) => {
                               const response = await API.post({
-                                path: `user/${user.id}`,
+                                path: `/user/${user.id}`,
                                 body: {
                                   web_push_token: JSON.stringify(subscription.toJSON()),
                                 },

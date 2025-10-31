@@ -37,6 +37,8 @@ const initialState: State = {
     prenom: '',
     telephone: '',
     addresse_ligne_1: '',
+    checked_has_asso_de_chasse: null,
+    checked_has_ccg: null,
     addresse_ligne_2: '',
     code_postal: '',
     ville: '',
@@ -94,7 +96,7 @@ export default function AdminUser() {
         : Object.fromEntries(formData);
 
     API.post({
-      path: `user/${params.userId}`,
+      path: `/user/${params.userId}`,
       body,
     }).then(() => {
       loadData(params.userId!).then((res) => {
@@ -186,8 +188,6 @@ export default function AdminUser() {
                 onBlur={handleUserFormBlur(activeFormRef)}
                 onSubmit={(event) => event.preventDefault()}
               >
-                <input type="hidden" name="route" value={`/api/action/user/${user.id}`} />
-
                 <RadioButtons
                   key={user.activated ? 'true' : 'false'}
                   options={[
@@ -227,7 +227,6 @@ export default function AdminUser() {
                   onBlur={handleUserFormBlur(rolesFormRef)}
                   onSubmit={(event) => event.preventDefault()}
                 >
-                  <input type="hidden" name="route" value={`/api/action/user/${user.id}`} />
                   {user.roles.includes(UserRoles.ADMIN) && (
                     <input type="hidden" name={Prisma.UserScalarFieldEnum.roles} value={UserRoles.ADMIN} />
                   )}
@@ -621,7 +620,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 onSubmit={(event) => {
                   event.preventDefault();
                   API.post({
-                    path: `user/user-entity/${user.id}`,
+                    path: `/user/user-entity/${user.id}`,
                     body: {
                       _action: 'create',
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,

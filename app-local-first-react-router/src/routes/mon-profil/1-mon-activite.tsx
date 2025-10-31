@@ -29,7 +29,7 @@ export default function MesRoles() {
           return;
         }
         const response = await API.post({
-          path: `user/${user.id}`,
+          path: `/user/${user.id}`,
           body,
         }).then((data) => data as UserConnexionResponse);
         if (response.ok && response.data?.user?.id) {

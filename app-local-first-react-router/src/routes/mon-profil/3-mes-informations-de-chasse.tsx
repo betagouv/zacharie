@@ -82,7 +82,7 @@ export default function MesInformationsDeChasse({
       }
       body.user_entities_vivible_checkbox = visibilityChecked ? 'true' : 'false';
       const response = await API.post({
-        path: `user/${user.id}`,
+        path: `/user/${user.id}`,
         body,
       }).then((data) => data as UserConnexionResponse);
       if (response.ok && response.data?.user?.id) {
@@ -322,7 +322,7 @@ export function MesAssociationsDeChasse() {
       body.checked_has_asso_de_chasse =
         checked_has_asso_de_chasse == null ? null : checked_has_asso_de_chasse ? 'true' : 'false';
       const response = await API.post({
-        path: `user/${user.id}`,
+        path: `/user/${user.id}`,
         body,
       }).then((data) => data as UserConnexionResponse);
       if (response.ok && response.data?.user?.id) {
@@ -397,7 +397,7 @@ export function MesAssociationsDeChasse() {
         }
       } else {
         API.post({
-          path: `user/user-entity/${user.id}`,
+          path: `/user/user-entity/${user.id}`,
           body: {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
             _action: 'create',
@@ -694,7 +694,7 @@ function MesCCGs() {
       const body: Record<string, string | null> = {};
       body.checked_has_ccg = checked_has_ccg ? 'true' : 'false';
       const response = await API.post({
-        path: `user/${user.id}`,
+        path: `/user/${user.id}`,
         body,
       }).then((data) => data as UserConnexionResponse);
       if (response.ok && response.data?.user?.id) {
@@ -834,7 +834,7 @@ function MesCCGs() {
                   isClosable
                   onClose={() => {
                     API.post({
-                      path: `user/user-entity/${user.id}`,
+                      path: `/user/user-entity/${user.id}`,
                       body: {
                         _action: 'delete',
                         [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
@@ -1069,7 +1069,7 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
         setIsSubmitting(true);
         const formData = new FormData(e.currentTarget);
         API.post({
-          path: `user/user-entity/${user.id}`,
+          path: `/user/user-entity/${user.id}`,
           body: {
             _action: 'create',
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,

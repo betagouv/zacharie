@@ -22,7 +22,7 @@ export default function MesCoordonnees() {
       const formData = new FormData(event.currentTarget);
       const body: Partial<User> = Object.fromEntries(formData.entries());
       const response = await API.post({
-        path: `user/${user.id}`,
+        path: `/user/${user.id}`,
         body,
       }).then((data) => data as UserConnexionResponse);
       if (response.ok && response.data?.user?.id) {

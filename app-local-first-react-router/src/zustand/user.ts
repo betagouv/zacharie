@@ -49,7 +49,7 @@ export async function syncProchainBraceletAUtiliser() {
   const needSyncProchainBraceletAUtiliser = useUser.getState().needSyncProchainBraceletAUtiliser;
   if (!user || !needSyncProchainBraceletAUtiliser) return;
   return API.post({
-    path: `user/${user.id}`,
+    path: `/user/${user.id}`,
     body: {
       prochain_bracelet_a_utiliser: user.prochain_bracelet_a_utiliser,
     },

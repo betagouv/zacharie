@@ -43,7 +43,7 @@ export default function TableauDeBordIndex() {
   useEffect(() => {
     window.onNativePushToken = async function handleNativePushToken(token) {
       const response = await API.post({
-        path: `user/${user.id}`,
+        path: `/user/${user.id}`,
         body: { native_push_token: token },
       }).then((response) => response as UserConnexionResponse);
       if (response.ok && response.data?.user?.id) {

@@ -79,7 +79,7 @@ export default function MonEntreprise() {
       const formData = new FormData(event.currentTarget);
       const body: Partial<User> = Object.fromEntries(formData.entries());
       const response = await API.post({
-        path: `user/${user.id}`,
+        path: `/user/${user.id}`,
         body,
       }).then((data) => data as UserConnexionResponse);
       if (response.ok && response.data?.user?.id) {
@@ -159,11 +159,9 @@ export default function MonEntreprise() {
                       e.preventDefault();
                       const formData = new FormData(e.currentTarget);
                       const etgRole = formData.get(Prisma.UserScalarFieldEnum.etg_role) as UserEtgRoles;
-                      console.log({ etgRole });
                       const body: Partial<User> = { etg_role: etgRole as UserEtgRoles };
-                      console.log({ body });
                       const response = await API.post({
-                        path: `user/${user.id}`,
+                        path: `/user/${user.id}`,
                         body,
                       }).then((data) => data as UserConnexionResponse);
                       if (response.ok && response.data?.user?.id) {
@@ -404,7 +402,7 @@ function ListAndSelectEntities({
               onClick={(e) => {
                 e.preventDefault();
                 API.post({
-                  path: `user/user-entity/${user.id}`,
+                  path: `/user/user-entity/${user.id}`,
                   body: {
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     _action: 'create',

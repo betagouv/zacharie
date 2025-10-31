@@ -22,6 +22,7 @@ export default function TableauDeBordLayout() {
   if (!user) {
     return <Chargement />;
   }
+  console.log('user', user.activated);
   if (!user?.activated && !location.pathname.includes('mon-profil') && !location.pathname.includes('admin')) {
     return <DeactivatedAccount />;
   }
@@ -78,20 +79,22 @@ function DeactivatedAccount() {
                   <>Le profil de votre compte doit être complété</>
                 )}
               </h1>
-              <p className="fr-text--lead fr-mb-3w">
-                Afin de valider votre compte, vous devez{' '}
-                <Link to="/app/tableau-de-bord/mon-profil/mes-coordonnees">renseigner vos coordonnées</Link>
-                {needToCompleteExaminateurInitial && (
-                  <>
-                    {' '}
-                    et/ou{' '}
-                    <Link to="/app/tableau-de-bord/mon-profil/mes-informations-de-chasse">
-                      indiquer votre numéro de personne formée à l’examen initial
-                    </Link>
-                  </>
-                )}
-                .
-              </p>
+              {!isProfileCompleted && (
+                <p className="fr-text--lead fr-mb-3w">
+                  Afin de valider votre compte, vous devez{' '}
+                  <Link to="/app/tableau-de-bord/mon-profil/mes-coordonnees">renseigner vos coordonnées</Link>
+                  {needToCompleteExaminateurInitial && (
+                    <>
+                      {' '}
+                      et/ou{' '}
+                      <Link to="/app/tableau-de-bord/mon-profil/mes-informations-de-chasse">
+                        indiquer votre numéro de personne formée à l’examen initial
+                      </Link>
+                    </>
+                  )}
+                  .
+                </p>
+              )}
               {isProfileCompleted ? (
                 <p className="fr-text--sm">
                   Nous vérifions les informations que vous avez renseignées.
