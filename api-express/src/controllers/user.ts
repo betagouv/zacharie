@@ -908,6 +908,7 @@ const userUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial]: z.enum(['true', 'false']).optional(),
   onboarding_finished: z.boolean().optional(),
 });
+
 router.post(
   '/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
@@ -944,9 +945,11 @@ router.post(
       const nextUser: Prisma.UserUpdateInput = {};
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
-        nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
-        if (nextUser.activated && !user.activated) {
-          nextUser.activated_at = new Date();
+        if (req.isAdmin) {
+          nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
+          if (nextUser.activated && !user.activated) {
+            nextUser.activated_at = new Date();
+          }
         }
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox)) {
@@ -1021,9 +1024,11 @@ router.post(
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
         nextUser.numero_cfei = sanitize(body[Prisma.UserScalarFieldEnum.numero_cfei] as string);
-        if (!req.isAdmin && nextUser.numero_cfei !== user.numero_cfei) {
-          nextUser.activated = false;
-          if (nextUser.activated_at) nextUser.activated_at = new Date();
+        if (nextUser.numero_cfei !== user.numero_cfei) {
+          if (!req.isAdmin) {
+            nextUser.activated = false;
+            if (nextUser.activated_at) nextUser.activated_at = new Date();
+          }
         }
       }
 
@@ -1055,7 +1060,6 @@ router.post(
         return;
       }
 
-      console.log('nextUser', nextUser);
       // user update / self-update
       savedUser = await prisma.user.update({
         where: { id: userId },
