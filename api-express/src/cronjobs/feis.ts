@@ -114,7 +114,7 @@ async function automaticClosingOfFeis() {
           user: examinateur,
           ...notification,
         });
-        await sendWebhook(examinateur.id, 'FEI_CLOTUREE', fei.numero, null);
+        await sendWebhook(examinateur.id, 'FEI_CLOTUREE', { feiNumero: fei.numero });
       }
     }
     if (fei.FeiPremierDetenteurUser && fei.FeiPremierDetenteurUser.id !== fei.FeiExaminateurInitialUser?.id) {
@@ -124,7 +124,7 @@ async function automaticClosingOfFeis() {
           user: premierDetenteur,
           ...notification,
         });
-        await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', fei.numero, null);
+        await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', { feiNumero: fei.numero });
       }
     }
   }

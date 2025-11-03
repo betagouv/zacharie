@@ -344,12 +344,9 @@ router.post(
         existingFei.examinateur_initial_date_approbation_mise_sur_le_marche !==
         savedFei.examinateur_initial_date_approbation_mise_sur_le_marche
       ) {
-        await sendWebhook(
-          savedFei.examinateur_initial_user_id!,
-          'FEI_APPROBATION_MISE_SUR_LE_MARCHE',
-          savedFei.numero,
-          null,
-        );
+        await sendWebhook(savedFei.examinateur_initial_user_id!, 'FEI_APPROBATION_MISE_SUR_LE_MARCHE', {
+          feiNumero: savedFei.numero,
+        });
       }
 
       if (existingFei.date_mise_a_mort !== savedFei.date_mise_a_mort) {
@@ -401,12 +398,9 @@ router.post(
       }
 
       if (existingFei.fei_current_owner_role !== savedFei.fei_current_owner_role) {
-        await sendWebhook(
-          savedFei.fei_current_owner_user_id!,
-          'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR',
-          savedFei.numero,
-          null,
-        );
+        await sendWebhook(savedFei.fei_current_owner_user_id!, 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR', {
+          feiNumero: savedFei.numero,
+        });
       }
 
       if (
@@ -454,11 +448,11 @@ router.post(
         }
         const examinateur = savedFei.FeiExaminateurInitialUser;
         if (examinateur) {
-          await sendWebhook(examinateur.id, 'FEI_ASSIGNEE_AU_SVI', savedFei.numero, null);
+          await sendWebhook(examinateur.id, 'FEI_ASSIGNEE_AU_SVI', { feiNumero: savedFei.numero });
         }
         const premierDetenteur = savedFei.FeiPremierDetenteurUser;
         if (premierDetenteur && premierDetenteur.id !== examinateur?.id) {
-          await sendWebhook(premierDetenteur.id, 'FEI_ASSIGNEE_AU_SVI', savedFei.numero, null);
+          await sendWebhook(premierDetenteur.id, 'FEI_ASSIGNEE_AU_SVI', { feiNumero: savedFei.numero });
         }
 
         res.status(200).send({
@@ -567,11 +561,15 @@ router.post(
         }
         const examinateur = savedFei.FeiExaminateurInitialUser;
         if (examinateur) {
-          await sendWebhook(examinateur.id, 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR', savedFei.numero, null);
+          await sendWebhook(examinateur.id, 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR', {
+            feiNumero: savedFei.numero,
+          });
         }
         const premierDetenteur = savedFei.FeiPremierDetenteurUser;
         if (premierDetenteur && premierDetenteur.id !== examinateur?.id) {
-          await sendWebhook(premierDetenteur.id, 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR', savedFei.numero, null);
+          await sendWebhook(premierDetenteur.id, 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR', {
+            feiNumero: savedFei.numero,
+          });
         }
       } else {
         // console.log(
@@ -598,7 +596,7 @@ router.post(
               user: examinateur,
               ...notification,
             });
-            await sendWebhook(examinateur.id, 'FEI_CLOTUREE', savedFei.numero, null);
+            await sendWebhook(examinateur.id, 'FEI_CLOTUREE', { feiNumero: savedFei.numero });
           }
         }
         if (
@@ -611,7 +609,7 @@ router.post(
               user: premierDetenteur,
               ...notification,
             });
-            await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', savedFei.numero, null);
+            await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', { feiNumero: savedFei.numero });
           }
         }
       }
@@ -620,7 +618,7 @@ router.post(
         if (savedFei.FeiExaminateurInitialUser) {
           const examinateur = savedFei.FeiExaminateurInitialUser;
           if (examinateur) {
-            await sendWebhook(examinateur.id, 'FEI_CLOTUREE', savedFei.numero, null);
+            await sendWebhook(examinateur.id, 'FEI_CLOTUREE', { feiNumero: savedFei.numero });
           }
         }
         if (
@@ -629,7 +627,7 @@ router.post(
         ) {
           const premierDetenteur = savedFei.FeiPremierDetenteurUser;
           if (premierDetenteur) {
-            await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', savedFei.numero, null);
+            await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', { feiNumero: savedFei.numero });
           }
         }
       }

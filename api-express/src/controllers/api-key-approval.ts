@@ -4,7 +4,8 @@ import { catchErrors } from '~/middlewares/errors';
 import type { RequestWithUser } from '~/types/request';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import { EntityRelationType } from '@prisma/client';
+import { ApiKeyApprovalStatus, EntityRelationType } from '@prisma/client';
+import { sendWebhook, WebhookEvent } from '~/utils/api';
 
 router.post(
   '/:id',
@@ -49,7 +50,18 @@ router.post(
       data: {
         status: req.body.status,
       },
+      include: {
+        ApiKey: true,
+      },
     });
+
+    let event: WebhookEvent | undefined = undefined;
+    if (req.body.status === ApiKeyApprovalStatus.APPROVED) event = 'USER_APPROVED_ACCESS';
+    if (req.body.status === ApiKeyApprovalStatus.REJECTED) event = 'USER_REJECTED_ACCESS';
+
+    if (event) {
+      await sendWebhook(user.id, event, { userApprovals: [updatedApproval] });
+    }
 
     res.status(200).send({ ok: true, data: { apiKeyApproval: updatedApproval }, error: null });
   }),

@@ -1,4 +1,12 @@
-import { ApiKey, ApiKeyApprovalStatus, ApiKeyLogAction, ApiKeyScope, Entity, User } from '@prisma/client';
+import {
+  ApiKey,
+  ApiKeyApprovalByUserOrEntity,
+  ApiKeyApprovalStatus,
+  ApiKeyLogAction,
+  ApiKeyScope,
+  Entity,
+  User,
+} from '@prisma/client';
 import prisma from '~/prisma';
 import { carcasseForApiSelect, CarcasseGetForApi } from '~/types/carcasse';
 import { feiForApiSelect, FeiGetForApi } from '~/types/fei';
@@ -270,7 +278,9 @@ export const checkApiKeyIsValidMiddleware =
     next();
   };
 
-type WebhookEvent =
+export type WebhookEvent =
+  | 'USER_APPROVED_ACCESS'
+  | 'USER_REJECTED_ACCESS'
   | 'FEI_APPROBATION_MISE_SUR_LE_MARCHE'
   | 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR'
   | 'FEI_ASSIGNEE_AU_SVI'
@@ -280,17 +290,26 @@ type WebhookEvent =
 export async function sendWebhook(
   userId: string,
   event: WebhookEvent,
-  feiNumero: string,
-  carcasseZacharieId: string,
+  {
+    feiNumero = undefined,
+    carcasseZacharieId = undefined,
+    userApprovals = undefined,
+  }: {
+    feiNumero?: string;
+    carcasseZacharieId?: string;
+    userApprovals?: Array<ApiKeyApprovalByUserOrEntity & { ApiKey: ApiKey }>;
+  },
 ) {
-  const userApprovals = await prisma.apiKeyApprovalByUserOrEntity.findMany({
-    where: {
-      user_id: userId,
-    },
-    include: {
-      ApiKey: true,
-    },
-  });
+  if (!userApprovals) {
+    userApprovals = await prisma.apiKeyApprovalByUserOrEntity.findMany({
+      where: {
+        user_id: userId,
+      },
+      include: {
+        ApiKey: true,
+      },
+    });
+  }
   for (const userApproval of userApprovals) {
     if (userApproval.status !== ApiKeyApprovalStatus.APPROVED) continue;
     const apiKey = userApproval.ApiKey;
