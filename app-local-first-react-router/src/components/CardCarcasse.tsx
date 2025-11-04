@@ -518,7 +518,11 @@ function CarcasseDetails({
         />
       )}
       {statusNewCard.includes('refus') && motifRefus && (
-        <ItemNotEditable label={motifRefus.split(':')[0]} value={motifRefus.split(':')[1]} withDiscs />
+        <ItemNotEditable
+          label={motifRefus.split(':')[0]}
+          value={motifRefus.split(':')[1] || "Aucun motif de refus n'a été renseigné"}
+          withDiscs
+        />
       )}
       {commentairesIntermediaires.length > 0 && (
         <ItemNotEditable
