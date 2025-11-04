@@ -21,6 +21,8 @@ const createMockUser = (roles: UserRoles[], numero_cfei: string | null = null): 
   nom_de_famille: 'User',
   est_forme_a_l_examen_initial: !!numero_cfei,
   numero_cfei,
+  checked_has_asso_de_chasse: null,
+  checked_has_ccg: null,
   prochain_bracelet_a_utiliser: 1,
   addresse_ligne_1: null,
   addresse_ligne_2: null,

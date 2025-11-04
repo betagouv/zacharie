@@ -794,6 +794,7 @@ export default function DestinataireSelect({
                     carcasse_intermediaire_id: null,
                     intermediaire_id: null,
                   });
+                  navigate(`/app/tableau-de-bord/fei/${fei.numero}/envoyée`);
                 } else {
                   if (!feiAndIntermediaireIds) return;
                   let nextFei: Partial<typeof fei> = {

@@ -41,6 +41,7 @@ import NouvelleFiche from './routes/nouvelle-fiche';
 import MonEntreprise from './routes/mon-profil/3-mon-entreprise';
 import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
 import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-mon-entreprise';
+import FeiEnvoyée from './routes/fei/envoyée';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -114,6 +115,14 @@ function App() {
               element={
                 <RestrictedRoute id="fei_numero">
                   <Fei />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="fei/:fei_numero/envoyée"
+              element={
+                <RestrictedRoute id="fei_numero">
+                  <FeiEnvoyée />
                 </RestrictedRoute>
               }
             />

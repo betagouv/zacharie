@@ -67,6 +67,7 @@ export function setFeiInStore(feiResponse: FeiResponse) {
       prevState.entities[fei.premier_detenteur_entity_id!] = {
         ...premierDetenteurEntity,
         relation: 'NONE',
+        relationStatus: undefined,
       } satisfies EntityWithUserRelation;
     }
   }
@@ -77,6 +78,7 @@ export function setFeiInStore(feiResponse: FeiResponse) {
       prevState.entities[fei.premier_detenteur_depot_entity_id!] = {
         ...depotEntity,
         relation: 'NONE',
+        relationStatus: undefined,
       } satisfies EntityWithUserRelation;
     }
   }
@@ -92,6 +94,7 @@ export function setFeiInStore(feiResponse: FeiResponse) {
       prevState.entities[fei.fei_current_owner_entity_id!] = {
         ...currentOwnerEntity,
         relation: 'NONE',
+        relationStatus: undefined,
       } satisfies EntityWithUserRelation;
     }
   }
@@ -107,6 +110,7 @@ export function setFeiInStore(feiResponse: FeiResponse) {
       prevState.entities[fei.fei_next_owner_entity_id!] = {
         ...nextOwnerEntity,
         relation: 'NONE',
+        relationStatus: undefined,
       } satisfies EntityWithUserRelation;
     }
   }
@@ -117,6 +121,7 @@ export function setFeiInStore(feiResponse: FeiResponse) {
       prevState.entities[fei.fei_next_owner_sous_traite_by_entity_id!] = {
         ...nextOwnerEntity,
         relation: 'NONE',
+        relationStatus: undefined,
       } satisfies EntityWithUserRelation;
     }
   }
@@ -132,6 +137,7 @@ export function setFeiInStore(feiResponse: FeiResponse) {
       prevState.entities[fei.svi_entity_id!] = {
         ...svi,
         relation: 'NONE',
+        relationStatus: undefined,
       } satisfies EntityWithUserRelation;
     }
   }
@@ -178,6 +184,7 @@ export function setFeiInStore(feiResponse: FeiResponse) {
       prevState.entities[carcasseIntermediaire.intermediaire_entity_id!] = {
         ...intermediaireEntity,
         relation: 'NONE',
+        relationStatus: undefined,
       } satisfies EntityWithUserRelation;
     }
 
