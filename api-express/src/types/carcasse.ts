@@ -1,4 +1,4 @@
-import { Carcasse, CarcasseIntermediaire, CarcasseStatus, Fei, Prisma } from '@prisma/client';
+import { Carcasse, CarcasseStatus, Fei, Prisma } from '@prisma/client';
 
 export const carcasseForRegistrySelect: Prisma.CarcasseSelect = {
   zacharie_carcasse_id: true,

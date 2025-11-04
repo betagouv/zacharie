@@ -1351,6 +1351,7 @@ router.get(
             (rel): EntityWithUserRelation => ({
               ...rel.EntityRelatedWithUser,
               relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              relationStatus: rel.status,
             }),
           ),
         );
@@ -1390,12 +1391,14 @@ router.get(
         entitiesWorkingForObject[svi.id] = {
           ...svi,
           relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
+          relationStatus: undefined,
         };
       }
       for (const etg of etgsRelatedWithMySvis.map((r) => r.ETGRelatedWithEntity)) {
         entitiesWorkingForObject[etg.id] = {
           ...etg,
           relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
+          relationStatus: undefined,
         };
       }
       for (const entity of entitiesWorkingDirectlyFor) {
@@ -1422,6 +1425,7 @@ router.get(
             (rel): EntityWithUserRelation => ({
               ...rel.EntityRelatedWithUser,
               relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+              relationStatus: undefined,
             }),
           ),
         );
@@ -1450,7 +1454,9 @@ router.get(
           },
         })
         .then((entities) =>
-          entities.map((entity): EntityWithUserRelation => ({ ...entity, relation: 'NONE' })),
+          entities.map(
+            (entity): EntityWithUserRelation => ({ ...entity, relation: 'NONE', relationStatus: undefined }),
+          ),
         );
 
       const userRelationsWithOtherUsers = await prisma.userRelations.findMany({

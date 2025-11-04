@@ -1,7 +1,8 @@
-import type { Prisma, Entity, EntityTypes, EntityRelationType } from '@prisma/client';
+import type { Prisma, Entity, EntityTypes, EntityRelationType, EntityRelationStatus } from '@prisma/client';
 
 export interface EntityWithUserRelation extends Entity {
   relation: EntityRelationType;
+  relationStatus: EntityRelationStatus | undefined;
 }
 
 export interface ETGWithEntityIdsRelated extends Entity {
