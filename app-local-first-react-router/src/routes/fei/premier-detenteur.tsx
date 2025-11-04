@@ -1,6 +1,11 @@
 import { useParams } from 'react-router';
 import { useMemo } from 'react';
-import { EntityRelationStatus, EntityRelationType, FeiOwnerRole, UserRoles } from '@prisma/client';
+import {
+  //  EntityRelationStatus,
+  EntityRelationType,
+  FeiOwnerRole,
+  UserRoles,
+} from '@prisma/client';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
@@ -41,13 +46,14 @@ export default function FeiPremierDetenteur() {
       return false;
     }
     if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
-      if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.ADMIN) {
-        return true;
-      }
-      if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.MEMBER) {
-        return true;
-      }
-      return false;
+      // if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.ADMIN) {
+      //   return true;
+      // }
+      // if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.MEMBER) {
+      //   return true;
+      // }
+      // return false;
+      return true;
     }
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
@@ -69,13 +75,14 @@ export default function FeiPremierDetenteur() {
       return true;
     }
     if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
-      if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.ADMIN) {
-        return false;
-      }
-      if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.MEMBER) {
-        return false;
-      }
-      return true;
+      // if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.ADMIN) {
+      //   return false;
+      // }
+      // if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.MEMBER) {
+      //   return false;
+      // }
+      // return true;
+      return false;
     }
     return true;
   }, [canEdit, fei.fei_next_owner_role, user.roles, premierDetenteurEntity]);
@@ -87,12 +94,13 @@ export default function FeiPremierDetenteur() {
     if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
       if (user.roles.includes(UserRoles.CHASSEUR)) {
         if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
-          if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.ADMIN) {
-            return false;
-          }
-          if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.MEMBER) {
-            return false;
-          }
+          // if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.ADMIN) {
+          //   return false;
+          // }
+          // if (premierDetenteurEntity?.relationStatus === EntityRelationStatus.MEMBER) {
+          //   return false;
+          // }
+          return false;
         }
       }
       return true;

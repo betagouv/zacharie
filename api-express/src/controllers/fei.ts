@@ -101,6 +101,9 @@ router.post(
       if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
         nextFei.date_mise_a_mort = body.date_mise_a_mort || null;
       }
+      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.creation_context)) {
+        nextFei.creation_context = body.creation_context || 'zacharie';
+      }
       if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
         nextFei.commune_mise_a_mort = body.commune_mise_a_mort || null;
       }

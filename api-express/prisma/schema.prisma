@@ -299,6 +299,7 @@ model Fei {
   heure_mise_a_mort_premiere_carcasse                     String?
   heure_evisceration_derniere_carcasse                    String?
   created_by_user_id                                      String
+  creation_context                                        String?                 @default("zacharie") // zacharie, api 
   resume_nombre_de_carcasses                              String?
   automatic_closed_at                                     DateTime?
   /**
