@@ -312,7 +312,7 @@ export default function useExportFeis() {
             console.error('carcasse manquante', carcasseId);
             continue;
           }
-          if (carcasse.intermediaire_carcasse_refus_motif) {
+          if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
             console.error('carcasse refusée', carcasseId);
             continue;
           }
