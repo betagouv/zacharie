@@ -48,6 +48,7 @@ import { autoActivatePremierDetenteur, hasAllRequiredFields } from '~/utils/user
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 import { z } from 'zod';
 import { sanitize } from '~/utils/sanitize';
+import { captureException } from '@sentry/node';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 const connexionSchema = z.object({
@@ -895,6 +896,9 @@ const userUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.addresse_ligne_1]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.addresse_ligne_2]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.code_postal]: z.string().optional(),
+  [Prisma.UserScalarFieldEnum.roles]: z
+    .enum(Object.values(UserRoles) as [UserRoles, ...UserRoles[]])
+    .optional(),
   [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.etg_role]: z
     .enum(Object.values(UserEtgRoles) as [UserEtgRoles, ...UserEtgRoles[]])
@@ -996,11 +1000,15 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.ville)) {
         nextUser.ville = sanitize(body[Prisma.UserScalarFieldEnum.ville] as string);
       }
-      // if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
-      //   nextUser.roles = [...new Set(body[Prisma.UserScalarFieldEnum.roles] as Array<UserRoles>)].sort(
-      //     (a, b) => b.localeCompare(a),
-      //   );
-      // }
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
+        if (req.isAdmin) {
+          nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort(
+            (a, b) => b.localeCompare(a),
+          );
+        } else {
+          throw new Error('User tried to update roles without being admin');
+        }
+      }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.etg_role)) {
         nextUser.etg_role = body[Prisma.UserScalarFieldEnum.etg_role] as UserEtgRoles;
       }
