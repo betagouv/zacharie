@@ -22,6 +22,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
     (state) => state.getCarcassesIntermediairesForCarcasse,
   );
   const carcasseIntermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
+  const latestIntermediaire = carcasseIntermediaires[0];
 
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];
@@ -45,6 +46,11 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
     : {};
 
   const status = getSimplifiedCarcasseStatus(carcasse);
+  const isEcarteePourInspection =
+    status === 'en cours de traitement' &&
+    !!latestIntermediaire?.ecarte_pour_inspection &&
+    !carcasse.svi_ipm1_date &&
+    !carcasse.svi_ipm2_date;
 
   let espece = carcasse.espece;
   if (carcasse.nombre_d_animaux! > 1) espece = espece += ` (${carcasse.nombre_d_animaux})`;
@@ -63,6 +69,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
       className={[
         'bg-contrast-grey flex basis-full flex-col items-start justify-between border-0 p-4 text-left',
         status === 'refusé' && 'border-l-3! border-solid border-red-500!',
+        isEcarteePourInspection && 'border-l-3! border-solid border-red-500!',
         status === 'accepté' && 'border-action-high-blue-france! border-l-3! border-solid',
         // priseEnCharge && 'border-action-high-blue-france!',
       ]
@@ -75,14 +82,17 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
       <p
         className={[
           'text-sm first-letter:uppercase',
-          status === 'en cours de traitement' && 'text-transparent!',
+          status === 'en cours de traitement' && !isEcarteePourInspection && 'text-transparent!',
+          isEcarteePourInspection && 'text-error-main-525 font-bold',
           status === 'refusé' && 'text-error-main-525 font-bold',
           status === 'accepté' && 'text-action-high-blue-france font-bold',
         ]
           .filter(Boolean)
           .join(' ')}
       >
-        {status}
+        {isEcarteePourInspection
+          ? "Écarté par l'établissement de traitement pour inspection par le service vétérinaire"
+          : status}
       </p>
       {!!carcasse.examinateur_anomalies_abats?.length && (
         <p className="mt-2 text-sm">

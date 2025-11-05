@@ -619,6 +619,7 @@ model CarcasseIntermediaire {
   check_manuel                                Boolean?
   manquante                                   Boolean?
   refus                                       String?
+  ecarte_pour_inspection                      Boolean?
   commentaire                                 String?
   intermediaire_poids                         Float?
   /**

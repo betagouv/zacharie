@@ -54,6 +54,7 @@ export default function CardCarcasse({
     (state) => state.getCarcassesIntermediairesForCarcasse,
   );
   const carcassesIntermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
+  const latestIntermediaire = carcassesIntermediaires[0];
   const entities = useZustandStore((state) => state.entities);
 
   const commentairesIntermediaires = useMemo(() => {
@@ -101,10 +102,21 @@ export default function CardCarcasse({
   } else if (forceAccept) {
     if (!statusNewCard.includes('accepté')) statusNewCard = 'accepté';
   }
-  const isEnCours = statusNewCard.includes('cours');
+  const isEcarteePourInspection =
+    !!latestIntermediaire?.ecarte_pour_inspection && statusNewCard.includes('cours');
+  const isEnCours = !latestIntermediaire?.ecarte_pour_inspection && statusNewCard.includes('cours');
   const isRefus = statusNewCard.includes('refus');
   const isManquante = statusNewCard.includes('manquant');
   const isAccept = statusNewCard.includes('accepté');
+
+  if (carcasse.numero_bracelet === 'AA4556-242') {
+    console.log(
+      `{isEcarteePourInspection ? 'Écarté pour inspection' : statusNewCard}`,
+      isEcarteePourInspection ? 'Écarté pour inspection' : statusNewCard,
+    );
+    console.log('intermediaires', carcassesIntermediaires);
+    console.log('intermediaires', carcassesIntermediaires);
+  }
 
   return (
     <>
@@ -112,6 +124,7 @@ export default function CardCarcasse({
         className={[
           'flex basis-full flex-row items-center justify-between border-solid text-left',
           'bg-contrast-grey border-0',
+          isEcarteePourInspection && 'border-error-main-525 border-l-3',
           isRefus && 'border-error-main-525 border-l-3',
           isManquante && 'border-manquante border-error-main-525 border-l-3',
           isAccept && 'border-action-high-blue-france border-l-3',
@@ -133,6 +146,7 @@ export default function CardCarcasse({
               'text-sm/4',
               !descriptionLine && 'text-transparent',
               isEnCours ? 'order-4' : 'order-6',
+              isEcarteePourInspection && 'text-error-main-525',
               isRefus && 'text-error-main-525',
               isManquante && 'text-error-main-525',
               isAccept && 'text-action-high-blue-france',
@@ -145,6 +159,7 @@ export default function CardCarcasse({
               'order-5 text-sm/4 first-letter:uppercase',
               isEnCours && 'text-transparent!',
               !isEnCours && 'font-bold', // bold pour accepté et refusé et manquant
+              isEcarteePourInspection && 'text-error-main-525',
               isRefus && 'text-error-main-525',
               isManquante && 'text-manquante text-error-main-525',
               isAccept && 'text-action-high-blue-france',
@@ -152,7 +167,7 @@ export default function CardCarcasse({
               .filter(Boolean)
               .join(' ')}
           >
-            {statusNewCard}
+            {isEcarteePourInspection ? 'Écarté pour inspection' : statusNewCard}
           </p>
         </button>
         {(onEdit || onDelete) && (

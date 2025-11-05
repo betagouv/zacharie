@@ -67,6 +67,9 @@ export default function CarcasseIntermediaireComp({
 
   const [carcasseManquante, setCarcasseManquante] = useState(!!carcasse.intermediaire_carcasse_manquante);
   const [carcasseRefusCheckbox, setCarcasseRefusCheckbox] = useState(!!carcasseIntermediaire.refus);
+  const [carcasseEcarteePourInspectionCheckbox, setCarcasseEcarteePourInspectionCheckbox] = useState(
+    !!carcasseIntermediaire.ecarte_pour_inspection,
+  );
   const [refus, setRefus] = useState(
     carcasse.intermediaire_carcasse_refus_motif ?? carcasseIntermediaire.refus ?? '',
   );
@@ -74,11 +77,13 @@ export default function CarcasseIntermediaireComp({
   const submitCarcasseManquante = () => {
     setCarcasseManquante(true);
     setCarcasseRefusCheckbox(false);
+    setCarcasseEcarteePourInspectionCheckbox(false);
     setRefus('');
     const nextPartialCarcasseIntermediaire = {
       manquante: true,
       refus: null,
       prise_en_charge: false,
+      ecarte_pour_inspection: false,
       check_manuel: false,
       decision_at: dayjs().toDate(),
     };
@@ -117,6 +122,7 @@ export default function CarcasseIntermediaireComp({
   const submitCarcasseRefus = (refusToRemember?: string) => {
     setCarcasseManquante(false);
     setCarcasseRefusCheckbox(true);
+    setCarcasseEcarteePourInspectionCheckbox(false);
     // with custom value for InputForSearchPrefilledData, sometimes the user doesnt press on the blue tag to confirm the refus
     // so we need to get the value from the input directly
     const refusInputValue = (document.getElementsByName('carcasse-refus')?.[0] as HTMLInputElement)?.value;
@@ -130,6 +136,7 @@ export default function CarcasseIntermediaireComp({
       manquante: false,
       refus: refusToRemember,
       prise_en_charge: false,
+      ecarte_pour_inspection: false,
       check_manuel: false,
       decision_at: dayjs().toDate(),
     };
@@ -166,14 +173,62 @@ export default function CarcasseIntermediaireComp({
     });
   };
 
+  const submitCarcasseEcarteePourInspection = () => {
+    setCarcasseManquante(false);
+    setCarcasseRefusCheckbox(false);
+    setCarcasseEcarteePourInspectionCheckbox(true);
+
+    const nextPartialCarcasseIntermediaire = {
+      manquante: false,
+      refus: null,
+      prise_en_charge: false,
+      ecarte_pour_inspection: true,
+      check_manuel: false,
+      decision_at: dayjs().toDate(),
+    };
+
+    updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
+    addLog({
+      user_id: user.id,
+      user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
+      fei_numero: fei.numero,
+      action: 'carcasse-intermediaire-ecarte-pour-inspection',
+      history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
+      entity_id: intermediaire.intermediaire_entity_id,
+      zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+      intermediaire_id: intermediaire.id,
+      carcasse_intermediaire_id: carcasseIntermediaireId,
+    });
+    const nextPartialCarcasse: Partial<Carcasse> = {
+      intermediaire_carcasse_manquante: false,
+      intermediaire_carcasse_refus_motif: null,
+      intermediaire_carcasse_refus_intermediaire_id: null,
+      latest_intermediaire_signed_at: dayjs().toDate(),
+    };
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+    addLog({
+      user_id: user.id,
+      user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
+      fei_numero: fei.numero,
+      action: 'carcasse-ecarte-pour-inspection',
+      history: createHistoryInput(carcasse, nextPartialCarcasse),
+      entity_id: intermediaire.intermediaire_entity_id,
+      zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+      intermediaire_id: intermediaire.id,
+      carcasse_intermediaire_id: carcasseIntermediaireId,
+    });
+  };
+
   const submitCarcasseAccept = () => {
     setCarcasseManquante(false);
     setCarcasseRefusCheckbox(false);
+    setCarcasseEcarteePourInspectionCheckbox(false);
     setRefus('');
     const nextPartialCarcasseIntermediaire = {
       manquante: false,
       refus: null,
       prise_en_charge: true,
+      ecarte_pour_inspection: false,
       check_manuel: true,
       decision_at: dayjs().toDate(),
     };
@@ -310,6 +365,7 @@ export default function CarcasseIntermediaireComp({
                       onChange: () => {
                         setCarcasseManquante(false);
                         setCarcasseRefusCheckbox(true);
+                        setCarcasseEcarteePourInspectionCheckbox(false);
                       },
                       disabled: !canEdit,
                     },
@@ -319,6 +375,30 @@ export default function CarcasseIntermediaireComp({
                         ? "Si vous refusez seulement quelques animaux, ne cochez pas cette case, précisez le nombre d'animaux refusés dans le commentaire"
                         : '',
                   },
+                  ...(!user.roles.includes(UserRoles.ETG)
+                    ? []
+                    : [
+                        {
+                          nativeInputProps: {
+                            required: true,
+                            name: 'carcasse-status',
+                            checked: !!carcasseEcarteePourInspectionCheckbox && !carcasseManquante,
+                            onChange: () => {
+                              refusIntermediaireModal.current.close();
+                              submitCarcasseEcarteePourInspection();
+                            },
+                            disabled: !canEdit,
+                          },
+                          label:
+                            carcasse.type === CarcasseType.GROS_GIBIER
+                              ? 'Carcasse écartée pour inspection'
+                              : 'Lot écarté pour inspection',
+                          hintText:
+                            carcasse.type === CarcasseType.PETIT_GIBIER
+                              ? "Si vous écartez seulement quelques animaux, ne cochez pas cette case, précisez le nombre d'animaux écartés pour inspection dans le commentaire"
+                              : '',
+                        },
+                      ]),
                   {
                     nativeInputProps: {
                       required: true,

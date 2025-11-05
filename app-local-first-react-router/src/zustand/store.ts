@@ -305,6 +305,7 @@ const useZustandStore = create<State & Actions>()(
                 refus: null,
                 commentaire: null,
                 decision_at: null,
+                ecarte_pour_inspection: false,
                 prise_en_charge: true, // always true by default, confirmed by the intermediaire globally
                 prise_en_charge_at: newIntermediaire.prise_en_charge_at, // will be set by the intermediaire when he confirms all the carcasse
                 intermediaire_depot_type: null,

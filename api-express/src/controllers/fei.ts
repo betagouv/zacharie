@@ -859,7 +859,7 @@ router.get(
               CarcasseIntermediaireEntity: true,
               CarcasseIntermediaireUser: true,
             },
-            orderBy: [{ prise_en_charge_at: Prisma.SortOrder.asc }, { created_at: Prisma.SortOrder.desc }],
+            orderBy: [{ prise_en_charge_at: Prisma.SortOrder.desc }, { created_at: Prisma.SortOrder.desc }],
           },
         },
       });
