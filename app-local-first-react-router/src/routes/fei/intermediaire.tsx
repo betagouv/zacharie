@@ -321,6 +321,7 @@ function FEICurrentIntermediaireContent({
     const carcassesApproved: Record<string, Carcasse> = {};
     const carcassesRejetees: Record<string, Carcasse> = {};
     const carcassesManquantes: Record<string, Carcasse> = {};
+    const carcassesEcarteesPourInspection: Record<string, Carcasse> = {};
     // const carcassesToCheck: Record<string, Carcasse> = {};
     for (const intermediaireCarcasse of intermediaireCarcasses) {
       const checkId = getFeiAndCarcasseAndIntermediaireIds(intermediaireCarcasse);
@@ -334,6 +335,9 @@ function FEICurrentIntermediaireContent({
         } else if (intermediaireCheckById[checkId].manquante) {
           // console.log("MANQUANTE ICI", intermediaireCheckById[checkId]);
           carcassesManquantes[checkId] = carcasse;
+        } else if (intermediaireCheckById[checkId].ecarte_pour_inspection) {
+          // console.log("MANQUANTE ICI", intermediaireCheckById[checkId]);
+          carcassesEcarteesPourInspection[checkId] = carcasse;
         } else {
           carcassesRejetees[checkId] = carcasse;
         }
@@ -355,6 +359,7 @@ function FEICurrentIntermediaireContent({
       carcassesApproved: Object.values(carcassesApproved),
       carcassesRejetees: Object.values(carcassesRejetees),
       carcassesManquantes: Object.values(carcassesManquantes),
+      carcassesEcarteesPourInspection: Object.values(carcassesEcarteesPourInspection),
       // carcassesToCheck: Object.values(carcassesToCheck),
     };
   }, [intermediaireCarcasses, intermediaire, carcasses]);
@@ -394,10 +399,16 @@ function FEICurrentIntermediaireContent({
         `J'ai signalé ${nbCarcassesManquantes} ${addAnSToWord('carcasse', nbCarcassesManquantes)} ${addAnSToWord('manquante', nbCarcassesManquantes)}.`,
       );
     }
+    if (carcassesSorted.carcassesEcarteesPourInspection.length > 0) {
+      label.push(
+        `J'ai écarté ${formatCountCarcasseByEspece(carcassesSorted.carcassesEcarteesPourInspection)} pour inspection.`,
+      );
+    }
     return label;
   }, [
     carcassesApprovedSorted,
     carcassesSorted.carcassesManquantes.length,
+    carcassesSorted.carcassesEcarteesPourInspection,
     carcassesSorted.carcassesRejetees,
     priseEnChargeAt,
   ]);
@@ -433,14 +444,22 @@ function FEICurrentIntermediaireContent({
     if (!couldSelectNextUser) {
       return false;
     }
-    if (carcassesSorted.carcassesApproved.length === 0) {
+    if (
+      carcassesSorted.carcassesApproved.length === 0 &&
+      carcassesSorted.carcassesEcarteesPourInspection.length === 0
+    ) {
       return false;
     }
     if (!priseEnChargeAt) {
       return false;
     }
     return true;
-  }, [couldSelectNextUser, carcassesSorted.carcassesApproved.length, priseEnChargeAt]);
+  }, [
+    couldSelectNextUser,
+    carcassesSorted.carcassesApproved.length,
+    carcassesSorted.carcassesEcarteesPourInspection.length,
+    priseEnChargeAt,
+  ]);
 
   function handleCheckFinishedAt(_priseEnChargeAt: Date) {
     if (!feiAndIntermediaireIds) {
@@ -463,7 +482,10 @@ function FEICurrentIntermediaireContent({
       zacharie_carcasse_id: null,
       carcasse_intermediaire_id: null,
     });
-    if (!carcassesSorted.carcassesApproved.length) {
+    if (
+      !carcassesSorted.carcassesApproved.length &&
+      !carcassesSorted.carcassesEcarteesPourInspection.length
+    ) {
       updateFei(fei.numero, {
         intermediaire_closed_at: _priseEnChargeAt,
         intermediaire_closed_by_entity_id: intermediaire.intermediaire_entity_id,
@@ -640,7 +662,8 @@ function FEICurrentIntermediaireContent({
                   ) : null
                 }
                 label={
-                  carcassesSorted.carcassesApproved.length > 0
+                  carcassesSorted.carcassesApproved.length > 0 ||
+                  carcassesSorted.carcassesEcarteesPourInspection.length > 0
                     ? 'Date de prise en charge'
                     : 'Date de décision'
                 }
@@ -662,24 +685,26 @@ function FEICurrentIntermediaireContent({
                   Enregistrer
                 </Button>
               )}
-              {!carcassesApprovedSorted.length && fei.intermediaire_closed_at && (
-                <>
-                  <Alert
-                    severity="info"
-                    className="mt-6"
-                    description="Vous n'avez pas pris en charge de carcasse acceptée, la fiche est donc clôturée."
-                    title="Aucune carcasse acceptée"
-                  />
-                  <Button
-                    className="mt-6"
-                    linkProps={{
-                      to: `/app/tableau-de-bord/`,
-                    }}
-                  >
-                    Voir toutes mes fiches
-                  </Button>
-                </>
-              )}
+              {!carcassesApprovedSorted.length &&
+                !carcassesSorted.carcassesEcarteesPourInspection.length &&
+                fei.intermediaire_closed_at && (
+                  <>
+                    <Alert
+                      severity="info"
+                      className="mt-6"
+                      description="Vous n'avez pas pris en charge de carcasse acceptée, la fiche est donc clôturée."
+                      title="Aucune carcasse acceptée"
+                    />
+                    <Button
+                      className="mt-6"
+                      linkProps={{
+                        to: `/app/tableau-de-bord/`,
+                      }}
+                    >
+                      Voir toutes mes fiches
+                    </Button>
+                  </>
+                )}
             </form>
           </Section>
           {couldSelectNextUser && (
