@@ -126,7 +126,7 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
 }
 
 export function addAnSToWord(word: string, count: number) {
-  if (count === 1 || word.endsWith('s') || word.endsWith('x') || word.endsWith('z') || word.endsWith('.')) {
+  if (count <= 1 || word.endsWith('s') || word.endsWith('x') || word.endsWith('z') || word.endsWith('.')) {
     return word;
   }
   return `${word}s`;
@@ -134,7 +134,7 @@ export function addAnSToWord(word: string, count: number) {
 
 export const abbreviations: Record<NonNullable<Carcasse['espece']>, string> = {
   'Cerf élaphe': 'cerf ela.',
-  'Cerf sika': 'cerf sikas',
+  'Cerf sika': 'cerf sika',
   Chevreuil: 'chevreuil',
   Daim: 'daim',
   Sanglier: 'sanglier',

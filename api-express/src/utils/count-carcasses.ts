@@ -102,7 +102,7 @@ export function addAnSToWord(word: string, count: number) {
 
 export const abbreviations: Record<NonNullable<Carcasse['espece']>, string> = {
   'Cerf élaphe': 'cerf ela.',
-  'Cerf sika': 'cerf sikas',
+  'Cerf sika': 'cerf sika',
   Chevreuil: 'chevreuil',
   Daim: 'daim',
   Sanglier: 'sanglier',

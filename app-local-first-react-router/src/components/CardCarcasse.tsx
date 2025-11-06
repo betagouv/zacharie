@@ -109,15 +109,6 @@ export default function CardCarcasse({
   const isManquante = statusNewCard.includes('manquant');
   const isAccept = statusNewCard.includes('accepté');
 
-  if (carcasse.numero_bracelet === 'AA4556-242') {
-    console.log(
-      `{isEcarteePourInspection ? 'Écarté pour inspection' : statusNewCard}`,
-      isEcarteePourInspection ? 'Écarté pour inspection' : statusNewCard,
-    );
-    console.log('intermediaires', carcassesIntermediaires);
-    console.log('intermediaires', carcassesIntermediaires);
-  }
-
   return (
     <>
       <div
