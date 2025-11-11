@@ -240,7 +240,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   navigationBase.push({
     text: 'Contact',
     linkProps: {
-      to: '/contact',
+      to: '/app/tableau-de-bord/contact',
       href: '#',
     },
   });
