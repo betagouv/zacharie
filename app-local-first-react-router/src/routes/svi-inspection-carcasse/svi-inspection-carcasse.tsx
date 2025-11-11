@@ -162,6 +162,13 @@ export function SviInspectionCarcasse() {
               />
             </>
           </Section>
+          <Section title="Résumé de la décision">
+            <CardCarcasseSvi
+              carcasse={carcasse}
+              canClick={false}
+              key={dayjs(carcasse.updated_at).toISOString()}
+            />
+          </Section>
           {canEdit && (
             <>
               <Section
@@ -184,14 +191,6 @@ export function SviInspectionCarcasse() {
               </Section>
             </>
           )}
-
-          <Section title="Résumé de la décision">
-            <CardCarcasseSvi
-              carcasse={carcasse}
-              canClick={false}
-              key={dayjs(carcasse.updated_at).toISOString()}
-            />
-          </Section>
 
           {user.roles.includes(UserRoles.SVI) && (
             <Section title="Certificats">
