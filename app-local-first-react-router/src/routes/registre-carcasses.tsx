@@ -108,11 +108,11 @@ export default function RegistreCarcasses() {
       return;
     }
     hackForCounterDoubleEffectInDevMode.current = true;
-    let role = user.roles.includes(UserRoles.SVI)
-      ? UserRoles.SVI
-      : user.roles.includes(UserRoles.ETG)
-        ? UserRoles.ETG
-        : null;
+    let role = null;
+    if (user.roles.includes(UserRoles.SVI)) role = UserRoles.SVI;
+    else if (user.roles.includes(UserRoles.ETG)) role = UserRoles.ETG;
+    else if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) role = UserRoles.COLLECTEUR_PRO;
+
     if (!role) {
       throw new Error('User has no role');
     }
