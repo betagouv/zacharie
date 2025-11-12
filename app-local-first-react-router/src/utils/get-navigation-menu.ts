@@ -27,6 +27,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   const isAdmin = user?.roles.includes(UserRoles.ADMIN);
   const isSvi = user?.roles.includes(UserRoles.SVI);
   const isEtg = user?.roles.includes(UserRoles.ETG);
+  const isCollecteurPro = user?.roles.includes(UserRoles.COLLECTEUR_PRO);
   const profileMenu: MainNavigationProps.Item[] = [
     {
       text: 'Mon activité',
@@ -131,7 +132,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     });
   }
 
-  if (isSvi || isEtg) {
+  if (isSvi || isEtg || isCollecteurPro) {
     mainMenu.push({
       text: 'Carcasses',
       isActive: location.pathname === '/app/tableau-de-bord/registre-carcasses',
