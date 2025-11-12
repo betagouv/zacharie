@@ -97,12 +97,6 @@ describe('Swagger Documentation Validation', () => {
       expect(accessTokenParam.required).toBe(true);
       expect(accessTokenParam.schema.type).toBe('string');
 
-      // Check contexte parameter
-      const contextSlugParam = parameters.find((p) => p.name === 'contexte');
-      expect(contextSlugParam).toBeDefined();
-      expect(contextSlugParam.required).toBe(true);
-      expect(contextSlugParam.schema.type).toBe('string');
-
       // Check carcasse parameter (new comma-separated format)
       const carcasseParam = parameters.find((p) => p.name === 'carcasse');
       expect(carcasseParam).toBeDefined();

@@ -252,18 +252,6 @@ export default function AdminApiKey() {
                     }}
                   />
                   <Input
-                    label="Paramètre d'URL pour le contexte"
-                    hintText="Lorsque cette clé API sera utilisée via la requête GET /nouvelle-fiche, le paramètre `contexte` sera obligatoire et doit valoir cette valeur."
-                    disabled
-                    nativeInputProps={{
-                      id: Prisma.ApiKeyScalarFieldEnum.slug_for_context,
-                      name: Prisma.ApiKeyScalarFieldEnum.slug_for_context,
-                      autoComplete: 'off',
-                      disabled: true,
-                      defaultValue: apiKey.slug_for_context ?? '',
-                    }}
-                  />
-                  <Input
                     label="Clé privée"
                     hintText="Clé privée de la clé API, à utiliser pour les appels API par le tiers demandeur"
                     disabled
@@ -290,8 +278,7 @@ export default function AdminApiKey() {
                         });
                       }}
                     >
-                      Envoyer un mail avec un lien pour accéder à la clé privée (et au paramètre d'URL pour le
-                      contexte)
+                      Envoyer un mail avec un lien pour accéder à la clé privée
                     </Button>
                   </div>
                   <Input

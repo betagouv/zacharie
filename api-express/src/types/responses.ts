@@ -42,6 +42,7 @@ export interface UserConnexionResponse {
         >;
       }
     >;
+    contexte?: string;
   };
   error: string;
   message: string;

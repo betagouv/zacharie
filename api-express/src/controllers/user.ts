@@ -281,7 +281,6 @@ router.post(
 
 const accessTokenSchema = z.object({
   accessToken: z.string(),
-  contexte: z.string().optional(),
 });
 router.post(
   '/access-token',
@@ -297,7 +296,7 @@ router.post(
         res.status(406);
         return next(error);
       }
-      let { accessToken, contexte } = result.data;
+      let { accessToken } = result.data;
       if (!accessToken) {
         res.status(400).send({
           ok: false,
@@ -343,15 +342,6 @@ router.post(
         });
         return;
       }
-      if (approval.ApiKey.slug_for_context !== contexte) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Le contexte est invalide. Veuillez réessayer.',
-        });
-        return;
-      }
 
       let user = approval.User;
 
@@ -378,7 +368,12 @@ router.post(
         token,
         cookieOptions(req.headers.host.includes('localhost') ? true : false),
       );
-      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+      res.status(200).send({
+        ok: true,
+        data: { user, contexte: approval.ApiKey.slug_for_context },
+        message: '',
+        error: '',
+      });
     },
   ),
 );
