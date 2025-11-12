@@ -77,7 +77,7 @@ describe('Swagger Documentation Validation', () => {
 
       // Should have FEI user endpoint
       expect(thirdPartyPaths).toContain('/fei/user');
-
+      expect(thirdPartyPaths).toContain('/fei/user/{fei_numero}');
       // Should NOT have FEI or direct carcasse routes
       expect(thirdPartyPaths).not.toContain('/fei');
       expect(thirdPartyPaths).not.toContain('/carcasse');
@@ -233,6 +233,24 @@ describe('Swagger Documentation Validation', () => {
       expect(emailParam.schema.format).toBe('email');
     });
 
+    test('FEI user by numero endpoint should have correct parameters', () => {
+      const feiUserByNumeroEndpoint = swaggerThirdPartyDocument.paths['/fei/user/{fei_numero}'].get;
+      const parameters = feiUserByNumeroEndpoint.parameters;
+
+      const feiNumeroParam = parameters.find((p) => p.name === 'fei_numero');
+      const emailParam = parameters.find((p) => p.name === 'email');
+
+      expect(feiNumeroParam).toBeDefined();
+      expect(feiNumeroParam.in).toBe('path');
+      expect(feiNumeroParam.required).toBe(true);
+      expect(feiNumeroParam.schema.type).toBe('string');
+
+      expect(emailParam).toBeDefined();
+      expect(emailParam.in).toBe('query');
+      expect(emailParam.required).toBe(true);
+      expect(emailParam.schema.format).toBe('email');
+    });
+
     test('Approval request endpoints should have correct request body schemas', () => {
       const userApprovalEndpoint = swaggerThirdPartyDocument.paths['/approval-request/user'].post;
       // const entiteApprovalEndpoint = swaggerThirdPartyDocument.paths['/approval-request/entite'].post;
@@ -324,6 +342,11 @@ describe('Swagger Documentation Validation', () => {
         swaggerThirdPartyDocument.paths['/carcasse/user/{date_mise_a_mort}/{numero_bracelet}'].get;
       expect(thirdPartySpecificEndpoint.responses['404']).toBeDefined();
     });
+
+    test('FEI user by numero endpoint should have 404 response', () => {
+      const feiUserByNumeroEndpoint = swaggerThirdPartyDocument.paths['/fei/user/{fei_numero}'].get;
+      expect(feiUserByNumeroEndpoint.responses['404']).toBeDefined();
+    });
   });
 
   describe('Swagger UI Integration', () => {
@@ -369,6 +392,10 @@ describe('Swagger Documentation Validation', () => {
         .expect(401);
     });
 
+    test('FEI user by numero endpoint should require authentication', async () => {
+      await request(app).get('/v1/fei/user/2025-01-001?email=test@example.com').expect(401);
+    });
+
     test('endpoints should reject invalid API keys', async () => {
       // Test with invalid API key
       await request(app)
@@ -412,6 +439,20 @@ describe('Swagger Documentation Validation', () => {
     test('should validate parameters in FEI user endpoint', async () => {
       await request(app)
         .get('/v1/fei/user?date_from=invalid-date&date_to=2025-01-31&email=test@example.com')
+        .set('Authorization', 'Bearer test-api-key')
+        .expect(400);
+    });
+
+    test('should validate parameters in FEI user by numero endpoint', async () => {
+      // Test invalid email format
+      await request(app)
+        .get('/v1/fei/user/2025-01-001?email=invalid-email')
+        .set('Authorization', 'Bearer test-api-key')
+        .expect(400);
+
+      // Test missing email
+      await request(app)
+        .get('/v1/fei/user/2025-01-001')
         .set('Authorization', 'Bearer test-api-key')
         .expect(400);
     });
