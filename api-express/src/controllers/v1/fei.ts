@@ -93,13 +93,7 @@ router.get(
       }
 
       const feis = await prisma.fei.findMany({
-        where: {
-          date_mise_a_mort: {
-            gte: dayjs(dateFrom).utc(true).toISOString(),
-            lte: dayjs(dateTo).utc(true).toISOString(),
-          },
-          deleted_at: null,
-        },
+        where: feiQuery.where,
         select: feiForApiSelect,
       });
 
@@ -188,13 +182,7 @@ router.get(
       }
 
       const feis = await prisma.fei.findMany({
-        where: {
-          date_mise_a_mort: {
-            gte: dayjs(dateFrom).utc(true).toISOString(),
-            lte: dayjs(dateTo).utc(true).toISOString(),
-          },
-          deleted_at: null,
-        },
+        where: feiQuery.where,
         select: feiForApiSelect,
       });
 
