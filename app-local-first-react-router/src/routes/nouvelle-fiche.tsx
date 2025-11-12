@@ -29,6 +29,7 @@ const carcasseSchema = z.object({
 // Zod schema for search params validation
 const searchParamsSchema = z.object({
   access_token: z.string().min(1, 'Access token requis'),
+  contexte: z.string().min(1, 'Contexte requis'),
   date_mise_a_mort: z
     .string()
     .optional()
@@ -104,6 +105,7 @@ export default function NouvelleFiche() {
       path: 'user/access-token',
       body: {
         accessToken: validatedParams.access_token,
+        contexte: validatedParams.contexte,
       },
     })
       .then((response) => response as UserConnexionResponse)
@@ -114,6 +116,7 @@ export default function NouvelleFiche() {
           useZustandStore.setState((state) => ({ users: { ...state.users, [user.id]: user } }));
 
           const newFei = await createNewFei({
+            contexte: validatedParams.contexte,
             date_mise_a_mort: validatedParams.date_mise_a_mort
               ? dayjs(validatedParams.date_mise_a_mort).toDate()
               : undefined,

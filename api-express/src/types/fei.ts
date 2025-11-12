@@ -81,6 +81,7 @@ export type FeiDone = FeiWithIntermediaires;
 export const feiForApiSelect: Prisma.FeiSelect = {
   numero: true,
   date_mise_a_mort: true,
+  creation_context: true,
   commune_mise_a_mort: true,
   heure_mise_a_mort_premiere_carcasse: true,
   heure_evisceration_derniere_carcasse: true,

@@ -962,6 +962,16 @@
             "description": "Token d'accès généré via /access-token/user"
           },
           {
+            "name": "contexte",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "my-context-slug"
+            },
+            "description": "Paramètre d'URL `contexte` à remplir lors de l'appel à GET /nouvelle-fiche, reçu en même temps que la clé privée"
+          },
+          {
             "name": "date_mise_a_mort",
             "in": "query",
             "required": false,

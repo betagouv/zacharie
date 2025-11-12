@@ -281,6 +281,7 @@ router.post(
 
 const accessTokenSchema = z.object({
   accessToken: z.string(),
+  contexte: z.string().optional(),
 });
 router.post(
   '/access-token',
@@ -296,7 +297,7 @@ router.post(
         res.status(406);
         return next(error);
       }
-      let { accessToken } = result.data;
+      let { accessToken, contexte } = result.data;
       if (!accessToken) {
         res.status(400).send({
           ok: false,
@@ -307,43 +308,52 @@ router.post(
         return;
       }
 
-      let user = await prisma.apiKeyApprovalByUserOrEntity
-        .findUnique({
-          where: { access_token: accessToken },
-          include: {
-            User: true,
-          },
-        })
-        .then((approval) => {
-          if (!approval) {
-            res.status(400).send({
-              ok: false,
-              data: { user: null },
-              message: '',
-              error: 'Le lien de connexion est invalide. Veuillez réessayer.',
-            });
-            return;
-          }
-          if (dayjs().diff(approval.access_token_created_at, 'minutes') > 5) {
-            res.status(400).send({
-              ok: false,
-              data: { user: null },
-              message: '',
-              error: 'Le lien de connexion a expiré. Veuillez réessayer.',
-            });
-            return;
-          }
-          if (approval.status !== ApiKeyApprovalStatus.APPROVED) {
-            res.status(400).send({
-              ok: false,
-              data: { user: null },
-              message: '',
-              error: "Le lien de connexion n'a pas été approuvé. Veuillez réessayer.",
-            });
-            return;
-          }
-          return approval.User;
+      let approval = await prisma.apiKeyApprovalByUserOrEntity.findUnique({
+        where: { access_token: accessToken },
+        include: {
+          User: true,
+          ApiKey: true,
+        },
+      });
+
+      if (!approval) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Le lien de connexion est invalide. Veuillez réessayer.',
         });
+        return;
+      }
+      if (dayjs().diff(approval.access_token_created_at, 'minutes') > 5) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Le lien de connexion a expiré. Veuillez réessayer.',
+        });
+        return;
+      }
+      if (approval.status !== ApiKeyApprovalStatus.APPROVED) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: "Le lien de connexion n'a pas été approuvé. Veuillez réessayer.",
+        });
+        return;
+      }
+      if (approval.ApiKey.slug_for_context !== contexte) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Le contexte est invalide. Veuillez réessayer.',
+        });
+        return;
+      }
+
+      let user = approval.User;
 
       if (!user) {
         res.status(400).send({

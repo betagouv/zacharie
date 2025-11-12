@@ -34,6 +34,7 @@ import passport from 'passport';
 import validateUser from '~/middlewares/validateUser';
 import { entityAdminInclude } from '~/types/entity';
 import { createBrevoContact, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
+import slugify from 'slugify';
 
 router.post(
   '/user/connect-as',
@@ -421,6 +422,14 @@ router.post(
       const createdApiKey = await prisma.apiKey.create({
         data: {
           name: `${entity.nom_d_usage} - Clé API dédiée`,
+          slug_for_context: slugify(entity.nom_d_usage, {
+            replacement: '-', // replace spaces with replacement character
+            remove: undefined, // remove colons and parentheses
+            lower: true, // convert to lower case, defaults to `false`
+            strict: true, // strip special characters except replacement, defaults to `false`
+            locale: 'fr',
+            trim: true, // trim leading and trailing replacement chars, defaults to `true`
+          }),
           dedicated_to_entity_id: entity.id,
           description: `Clé API dédiée pour l'entité ${entity.nom_d_usage}`,
           private_key: crypto.randomBytes(32).toString('hex'),
@@ -705,6 +714,14 @@ router.post(
       const createdApiKey = await prisma.apiKey.create({
         data: {
           name: body[Prisma.ApiKeyScalarFieldEnum.name],
+          slug_for_context: slugify(body[Prisma.ApiKeyScalarFieldEnum.name], {
+            replacement: '-', // replace spaces with replacement character
+            remove: undefined, // remove colons and parentheses
+            lower: true, // convert to lower case, defaults to `false`
+            strict: true, // strip special characters except replacement, defaults to `false`
+            locale: 'fr',
+            trim: true, // trim leading and trailing replacement chars, defaults to `true`
+          }),
           description: body[Prisma.ApiKeyScalarFieldEnum.description],
           private_key: crypto.randomBytes(32).toString('hex'),
           public_key: crypto.randomBytes(32).toString('hex'),

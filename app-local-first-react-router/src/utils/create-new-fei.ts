@@ -7,6 +7,7 @@ import { createHistoryInput } from './create-history-entry';
 
 type InitialParamsProps = {
   date_mise_a_mort?: FeiWithIntermediaires['date_mise_a_mort'];
+  contexte?: FeiWithIntermediaires['creation_context'];
   commune_mise_a_mort?: FeiWithIntermediaires['commune_mise_a_mort'];
   heure_mise_a_mort_premiere_carcasse?: FeiWithIntermediaires['heure_mise_a_mort_premiere_carcasse'];
   heure_evisceration_derniere_carcasse?: FeiWithIntermediaires['heure_evisceration_derniere_carcasse'];
@@ -25,6 +26,7 @@ export async function createNewFei(props?: InitialParamsProps): Promise<FeiWithI
 
   const newFei: FeiWithIntermediaires = {
     id: Date.now(),
+    creation_context: props?.contexte ?? null,
     numero: newFeiNumero,
     date_mise_a_mort: props?.date_mise_a_mort ?? null,
     commune_mise_a_mort: props?.commune_mise_a_mort ?? null,
