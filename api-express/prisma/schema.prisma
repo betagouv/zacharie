@@ -691,6 +691,7 @@ model ApiKey {
   public_key             String        @unique
   dedicated_to_entity_id String?
   name                   String
+  slug_for_context       String?
   description            String? // Purpose of the API key
   webhook_url            String? // Webhook URL for the API key
   active                 Boolean       @default(true)

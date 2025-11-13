@@ -108,12 +108,14 @@ export default function NouvelleFiche() {
     })
       .then((response) => response as UserConnexionResponse)
       .then(async (response) => {
-        if (response.ok && response.data?.user?.id) {
+        if (response.ok && response.data?.user?.id && response.data?.contexte) {
           const user = response.data.user;
+          const contexte = response.data.contexte;
           useUser.setState({ user });
           useZustandStore.setState((state) => ({ users: { ...state.users, [user.id]: user } }));
 
           const newFei = await createNewFei({
+            contexte: contexte,
             date_mise_a_mort: validatedParams.date_mise_a_mort
               ? dayjs(validatedParams.date_mise_a_mort).toDate()
               : undefined,

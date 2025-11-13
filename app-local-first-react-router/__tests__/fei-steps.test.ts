@@ -51,6 +51,7 @@ const createMockUser = (roles: UserRoles[], numero_cfei: string | null = null): 
 const createMockFei = (overrides: Partial<FeiDone> = {}): FeiDone => ({
   id: 1,
   numero: 'FEI-2024-001',
+  creation_context: 'test-context',
   date_mise_a_mort: new Date(),
   commune_mise_a_mort: 'Test City',
   heure_mise_a_mort_premiere_carcasse: '10:00',

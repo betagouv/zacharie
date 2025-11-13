@@ -36,9 +36,13 @@ export interface UserConnexionResponse {
     user: User | null;
     apiKeyApprovals?: Array<
       ApiKeyApprovalByUserOrEntity & {
-        ApiKey: Omit<ApiKey, 'private_key' | 'public_key' | 'access_token' | 'access_token_read_at'>;
+        ApiKey: Omit<
+          ApiKey,
+          'private_key' | 'public_key' | 'access_token' | 'access_token_read_at' | 'slug_for_context'
+        >;
       }
     >;
+    contexte?: string;
   };
   error: string;
   message: string;

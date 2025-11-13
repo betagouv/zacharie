@@ -25,6 +25,7 @@ const initialState: State = {
   apiKey: {
     name: '',
     id: '',
+    slug_for_context: null,
     dedicated_to_entity_id: null,
     access_token: null,
     access_token_read_at: null,
