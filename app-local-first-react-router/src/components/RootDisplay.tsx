@@ -8,6 +8,7 @@ import SearchInput from '@app/components/SearchInput';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef } from 'react';
 import API from '@app/services/api';
+import { useSearchParams } from 'react-router';
 
 export default function RootDisplay({
   navigation,
@@ -22,6 +23,8 @@ export default function RootDisplay({
   id: string;
   contactLink?: string;
 }) {
+  const [searchParams] = useSearchParams();
+  const embedded = searchParams.get('embedded') === 'true';
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
   // there is a bug on user's first connexion where user is not defined
@@ -99,10 +102,10 @@ export default function RootDisplay({
         }}
         id="fr-header-header-with-quick-access-items"
         className="[&_.fr-header\\_\\_service-title]:flex [&_.fr-header\\_\\_service-title]:items-end"
-        navigation={navigation}
+        navigation={embedded ? undefined : navigation}
         allowEmptySearch={false}
         renderSearchInput={RenderedSearchInput}
-        quickAccessItems={quickAccessItems}
+        quickAccessItems={embedded ? undefined : quickAccessItems}
         operatorLogo={{
           alt: 'Logo de Zacharie - un bois de cerf bland sur fond bleu avec liseré rouge',
           imgUrl: '/logo_zacharie_solo_small.svg',
@@ -136,80 +139,84 @@ export default function RootDisplay({
         websiteMapLinkProps={{
           href: '#',
         }}
-        linkList={[
-          {
-            categoryName: 'Connexion',
-            links: [
-              {
-                linkProps: {
-                  to: '/app/connexion?type=compte-existant',
-                  href: '#',
+        linkList={
+          embedded
+            ? undefined
+            : [
+                {
+                  categoryName: 'Connexion',
+                  links: [
+                    {
+                      linkProps: {
+                        to: '/app/connexion?type=compte-existant',
+                        href: '#',
+                      },
+                      text: 'Se connecter',
+                    },
+                    {
+                      linkProps: {
+                        to: '/app/tableau-de-bord',
+                        href: '#',
+                      },
+                      text: 'Accéder à mon compte',
+                    },
+                    {
+                      linkProps: {
+                        to: '/modalites-d-utilisation',
+                        href: '#',
+                      },
+                      text: "Modalités d'utilisation",
+                    },
+                    {
+                      linkProps: {
+                        to: '/politique-de-confidentialite',
+                        href: '#',
+                      },
+                      text: 'Politique de confidentialité',
+                    },
+                    {
+                      linkProps: {
+                        to: '/mentions-legales',
+                        href: '#',
+                      },
+                      text: 'Mentions légales',
+                    },
+                    {
+                      linkProps: {
+                        to: '/stats',
+                        href: '#',
+                      },
+                      text: 'Statistiques',
+                    },
+                  ],
                 },
-                text: 'Se connecter',
-              },
-              {
-                linkProps: {
-                  to: '/app/tableau-de-bord',
-                  href: '#',
+                {
+                  categoryName: 'Assistance',
+                  links: [
+                    {
+                      linkProps: {
+                        href: '#',
+                        onClick: () => {
+                          if (isOnline) {
+                            clearCache().then(() => window.location.reload());
+                          } else {
+                            alert('Vous devez être connecté à internet pour effectuer cette action');
+                          }
+                        },
+                      },
+                      text: "Obtenir la dernière version de l'app",
+                    },
+                    {
+                      linkProps: {
+                        to: contactLink ?? '/contact',
+                        href: '#',
+                      },
+                      text: 'Contactez-nous',
+                    },
+                  ],
                 },
-                text: 'Accéder à mon compte',
-              },
-              {
-                linkProps: {
-                  to: '/modalites-d-utilisation',
-                  href: '#',
-                },
-                text: "Modalités d'utilisation",
-              },
-              {
-                linkProps: {
-                  to: '/politique-de-confidentialite',
-                  href: '#',
-                },
-                text: 'Politique de confidentialité',
-              },
-              {
-                linkProps: {
-                  to: '/mentions-legales',
-                  href: '#',
-                },
-                text: 'Mentions légales',
-              },
-              {
-                linkProps: {
-                  to: '/stats',
-                  href: '#',
-                },
-                text: 'Statistiques',
-              },
-            ],
-          },
-          {
-            categoryName: 'Assistance',
-            links: [
-              {
-                linkProps: {
-                  href: '#',
-                  onClick: () => {
-                    if (isOnline) {
-                      clearCache().then(() => window.location.reload());
-                    } else {
-                      alert('Vous devez être connecté à internet pour effectuer cette action');
-                    }
-                  },
-                },
-                text: "Obtenir la dernière version de l'app",
-              },
-              {
-                linkProps: {
-                  to: contactLink ?? '/contact',
-                  href: '#',
-                },
-                text: 'Contactez-nous',
-              },
-            ],
-          },
-        ]}
+              ]
+        }
       />
     </>
   );
