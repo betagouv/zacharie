@@ -204,7 +204,6 @@ router.get(
 
       let canAccess = false;
 
-      console.log('entity', entity.type);
       switch (entity.type) {
         case EntityTypes.PREMIER_DETENTEUR:
           console.log('fei.premier_detenteur_entity_id', fei.premier_detenteur_entity_id, entity.id);
@@ -328,12 +327,7 @@ router.get(
       }
 
       const feis = await prisma.fei.findMany({
-        where: {
-          date_mise_a_mort: {
-            gte: dayjs(dateFrom).utc(true).toISOString(),
-            lte: dayjs(dateTo).utc(true).toISOString(),
-          },
-        },
+        where: feiQuery.where,
         select: feiForApiSelect,
       });
 
@@ -426,13 +420,7 @@ router.get(
       }
 
       const feis = await prisma.fei.findMany({
-        where: {
-          date_mise_a_mort: {
-            gte: dayjs(dateFrom).utc(true).toISOString(),
-            lte: dayjs(dateTo).utc(true).toISOString(),
-          },
-          deleted_at: null,
-        },
+        where: feiQuery.where,
         select: feiForApiSelect,
       });
 
