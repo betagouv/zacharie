@@ -5,7 +5,7 @@ import type { CertificatResponse, CarcassesGetForRegistryResponse } from '~/type
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
-import { CarcasseCertificatType, EntityTypes, IPM1Decision, Prisma, User } from '@prisma/client';
+import { CarcasseCertificatType, EntityTypes, IPM1Decision, Prisma, User, UserRoles } from '@prisma/client';
 import { generateConsigneDocx } from '~/templates/get-consigne-docx';
 import { generateCertficatId, generateDBCertificat, generateDecisionId } from '~/utils/generate-certificats';
 import { generateSaisieDocx } from '~/templates/get-saisie-docx';
@@ -16,6 +16,22 @@ router.get(
   '/:zacharie_carcasse_id/all',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (!req.user.activated) {
+      res.status(400).send({
+        ok: false,
+        data: null,
+        error: "Le compte n'est pas activé",
+      });
+      return;
+    }
+    if (!req.user.roles.includes(UserRoles.SVI)) {
+      res.status(403).send({
+        ok: false,
+        data: null,
+        error: 'Seul un service vétérinaire peut accéder à cette ressource',
+      });
+      return;
+    }
     const { zacharie_carcasse_id } = req.params;
     const certificats = await prisma.carcasseCertificat
       .findMany({
@@ -48,6 +64,23 @@ router.get(
     const { zacharie_carcasse_id } = req.params;
     const certificatType = req.params.certificat as CarcasseCertificatType;
     const user = req.user;
+    if (!user.activated) {
+      res.status(400).send({
+        ok: false,
+        data: null,
+        error: "Le compte n'est pas activé",
+      });
+      return;
+    }
+    if (!user.roles.includes(UserRoles.SVI)) {
+      res.status(403).send({
+        ok: false,
+        data: null,
+        error: 'Seul un service vétérinaire peut accéder à cette ressource',
+      });
+      return;
+    }
+
     const certificatResponse = await generateDBCertificat(certificatType, zacharie_carcasse_id);
     if (!certificatResponse.ok) {
       res.status(400).send(certificatResponse);
@@ -90,6 +123,23 @@ router.get(
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const { certificat_id } = req.params;
     const user = req.user;
+    if (!user.activated) {
+      res.status(400).send({
+        ok: false,
+        data: null,
+        error: "Le compte n'est pas activé",
+      });
+      return;
+    }
+    if (!user.roles.includes(UserRoles.SVI)) {
+      res.status(403).send({
+        ok: false,
+        data: null,
+        error: 'Seul un service vétérinaire peut accéder à cette ressource',
+      });
+      return;
+    }
+
     const certificat = await prisma.carcasseCertificat.findUnique({
       where: {
         certificat_id: certificat_id,
