@@ -604,8 +604,10 @@ router.post(
           relation: body.relation,
           deleted_at: null,
         };
-        if (body.hasOwnProperty('status')) {
-          nextEntityRelation.status = body.status;
+        if (body.hasOwnProperty(Prisma.EntityAndUserRelationsScalarFieldEnum.status)) {
+          if (isAdmin) {
+            nextEntityRelation.status = body.status;
+          }
         }
 
         const relation = await prisma.entityAndUserRelations.update({
