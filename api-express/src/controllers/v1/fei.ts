@@ -28,6 +28,15 @@ export type FeiGetForApi = {
   message?: string;
 };
 
+export type FeiGetByNumeroForApi = {
+  ok: boolean;
+  data: {
+    fei: ReturnType<typeof mapFeiForApi>;
+  };
+  error?: string;
+  message?: string;
+};
+
 router.get(
   '/user',
   apiRateLimit,
@@ -121,6 +130,119 @@ router.get(
               fei,
               carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero),
             ),
+          ),
+        },
+        message:
+          'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
+      });
+    },
+  ),
+);
+
+router.get(
+  '/user/:fei_numero',
+  apiRateLimit,
+  passport.authenticate('apiKey', { session: false }),
+  checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_USER]),
+  catchErrors(
+    async (
+      req: RequestWithApiKey,
+      res: express.Response<FeiGetByNumeroForApi>,
+      next: express.NextFunction,
+    ) => {
+      const querySchema = z.object({
+        email: z.string().email("Format d'email invalide"),
+      });
+
+      const queryResult = querySchema.safeParse(req.query);
+
+      if (!queryResult.success) {
+        const errors = queryResult.error.issues.map((i) => i.message).join('. ');
+        const error = new Error(
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+        );
+        res.status(400);
+        return next(error);
+      }
+
+      const paramsSchema = z.object({
+        fei_numero: z.string(),
+      });
+
+      const paramsResult = paramsSchema.safeParse(req.params);
+
+      if (!paramsResult.success) {
+        const errors = paramsResult.error.issues.map((i) => i.message).join('. ');
+        const error = new Error(
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+        );
+        res.status(400);
+        return next(error);
+      }
+
+      const { fei_numero } = paramsResult.data;
+      const { email } = queryResult.data;
+      const apiKey = req.apiKey;
+
+      const { user, error } = await getRequestedUser(apiKey, email);
+
+      if (error) {
+        res.status(403);
+        return next(error);
+      }
+
+      const feiQuery: Prisma.FeiFindFirstArgs = {
+        where: {
+          numero: fei_numero,
+          deleted_at: null,
+        },
+      };
+
+      const role = user.roles.find((role) => role !== UserRoles.ADMIN);
+      if (role === UserRoles.CHASSEUR) {
+        feiQuery.where.OR = [
+          {
+            examinateur_initial_user_id: user.id,
+          },
+          {
+            premier_detenteur_user_id: user.id,
+          },
+        ];
+      } else if (role === UserRoles.ETG || role === UserRoles.COLLECTEUR_PRO) {
+        feiQuery.where.CarcasseIntermediaire = {
+          some: {
+            intermediaire_user_id: user.id,
+          },
+        };
+      } else if (role === UserRoles.SVI) {
+        feiQuery.where.svi_user_id = user.id;
+      }
+
+      const fei = await prisma.fei.findFirst({
+        where: feiQuery.where,
+        select: feiForApiSelect,
+      });
+
+      if (!fei) {
+        const error = new Error("Fiche d'examen initial non trouvée");
+        res.status(404);
+        return next(error);
+      }
+
+      const carcasses = await prisma.carcasse.findMany({
+        where: {
+          fei_numero: fei.numero,
+          deleted_at: null,
+        },
+        select: carcasseForApiSelect,
+      });
+
+      res.status(200).send({
+        ok: true,
+        data: {
+          fei: mapFeiForApi(
+            fei,
+            carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero),
           ),
         },
         message:

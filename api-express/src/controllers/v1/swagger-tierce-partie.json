@@ -1125,6 +1125,96 @@
         "tags": ["FEI - Accès Tiers"]
       }
     },
+    "/fei/user/{fei_numero}": {
+      "get": {
+        "summary": "Récupérer une FEI spécifique d'un utilisateur par numéro",
+        "description": "Récupère une fiche d'examen initial spécifique par son numéro pour un utilisateur (nécessite l'email de l'utilisateur et son consentement préalable). Cette route permet aux applications tierces d'accéder à une FEI spécifique d'un utilisateur qui a donné son accord.",
+        "parameters": [
+          {
+            "name": "fei_numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "2025-01-001"
+            },
+            "description": "Numéro unique de la FEI"
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "email",
+              "example": "utilisateur@example.com"
+            },
+            "description": "Email de l'utilisateur dont vous voulez accéder aux données (consentement requis)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès - FEI trouvée et accessible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "description": "Indique si la requête s'est bien déroulée"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "fei": {
+                          "$ref": "#/components/schemas/Fei"
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Message informatif"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erreur de paramètres - Format invalide ou email manquant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès interdit - Clé API invalide, utilisateur non autorisé ou pas de consentement",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "FEI non trouvée ou utilisateur n'a pas accès à cette FEI",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["FEI - Accès Tiers"]
+      }
+    },
     "/carcasse/user/{date_mise_a_mort}/{numero_bracelet}": {
       "get": {
         "summary": "Récupérer une carcasse pour un utilisateur",
