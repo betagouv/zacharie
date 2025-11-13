@@ -15,10 +15,14 @@ import InputNotEditable from '@app/components/InputNotEditable';
 
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.PREMIER_DETENTEUR]: {},
+  // UNUSED - just for typing purposes with the API
   [EntityTypes.CCG]: {},
   [EntityTypes.COLLECTEUR_PRO]: {},
   [EntityTypes.ETG]: {},
   [EntityTypes.SVI]: {},
+  [EntityTypes.COMMERCE_DE_DETAIL]: {},
+  [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: {},
+  [EntityTypes.CONSOMMATEUR_FINAL]: {},
 };
 
 export default function MesAssociationsDeChasse() {

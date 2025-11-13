@@ -11,7 +11,13 @@ import type {
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
 import type { FeiDone, FeiWithIntermediaires, FeiPopulated } from './fei';
-import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EtgForAdmin } from './entity';
+import type {
+  EntityForAdmin,
+  EntityWithUserRelation,
+  EntitiesByTypeAndId,
+  EtgForAdmin,
+  EntitiesById,
+} from './entity';
 import { CarcasseForResponseForRegistry } from './carcasse';
 
 export interface SearchResponse {
@@ -122,6 +128,15 @@ export interface EntitiesWorkingForResponse {
   data: {
     allEntitiesByTypeAndId: EntitiesByTypeAndId;
     userEntitiesByTypeAndId: EntitiesByTypeAndId;
+  };
+  error: '';
+}
+
+export interface PartenairesResponse {
+  ok: true;
+  data: {
+    allEntitiesById: EntitiesById;
+    userEntitiesById: EntitiesById;
   };
   error: '';
 }

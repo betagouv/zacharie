@@ -2,10 +2,17 @@ import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
 import type { RequestWithUser } from '~/types/request';
-import type { EntitiesWorkingForResponse } from '~/types/responses';
+import type { EntitiesWorkingForResponse, PartenairesResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import { EntityRelationStatus, EntityRelationType, EntityTypes, Prisma, UserRoles } from '@prisma/client';
+import {
+  EntityRelationStatus,
+  EntityRelationType,
+  EntityTypes,
+  Prisma,
+  User,
+  UserRoles,
+} from '@prisma/client';
 import {
   sortEntitiesByTypeAndId,
   sortEntitiesRelationsByTypeAndId,
@@ -17,9 +24,10 @@ import {
   updateBrevoContact,
   updateOrCreateBrevoCompany,
 } from '~/third-parties/brevo';
-import { entityAdminInclude } from '~/types/entity';
+import { EntitiesById, entityAdminInclude } from '~/types/entity';
 import { sanitize } from '~/utils/sanitize';
 import { z } from 'zod';
+import createUserId from '~/utils/createUserId';
 
 router.get(
   '/fei/:entity_id/:fei_numero',
@@ -67,53 +75,130 @@ router.get(
 router.get(
   '/working-for',
   passport.authenticate('user', { session: false }),
-  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
-    const user = req.user!;
+  catchErrors(
+    async (
+      req: RequestWithUser,
+      res: express.Response<EntitiesWorkingForResponse>,
+      next: express.NextFunction,
+    ) => {
+      const user = req.user!;
 
-    const allEntities = await prisma.entity.findMany({
-      where: {
-        deleted_at: null,
-        type: { not: EntityTypes.CCG },
-        ...(user.roles.includes(UserRoles.ADMIN) ? {} : { for_testing: false }),
-      },
-      include: entityAdminInclude,
-      orderBy: {
-        nom_d_usage: 'asc',
-      },
-    });
+      const allEntities = await prisma.entity.findMany({
+        where: {
+          deleted_at: null,
+          type: { not: EntityTypes.CCG },
+          ...(user.roles.includes(UserRoles.ADMIN) ? {} : { for_testing: false }),
+        },
+        include: entityAdminInclude,
+        orderBy: {
+          nom_d_usage: 'asc',
+        },
+      });
 
-    const entitiesUserCanHandleOnBehalf = await prisma.entity.findMany({
-      where: {
-        deleted_at: null,
-        EntityRelationsWithUsers: {
-          some: {
-            owner_id: user.id,
-            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-            deleted_at: null,
+      const entitiesUserCanHandleOnBehalf = await prisma.entity.findMany({
+        where: {
+          deleted_at: null,
+          EntityRelationsWithUsers: {
+            some: {
+              owner_id: user.id,
+              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              deleted_at: null,
+            },
           },
         },
-      },
-      include: entityAdminInclude,
-      orderBy: {
-        nom_d_usage: 'asc',
-      },
-    });
+        include: entityAdminInclude,
+        orderBy: {
+          nom_d_usage: 'asc',
+        },
+      });
 
-    const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
-    const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(
-      entitiesUserCanHandleOnBehalf,
-      allEntitiesIds,
-    );
+      const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
+      const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(
+        entitiesUserCanHandleOnBehalf,
+        allEntitiesIds,
+      );
 
-    res.status(200).send({
-      ok: true,
-      data: {
-        allEntitiesByTypeAndId,
-        userEntitiesByTypeAndId,
-      },
-      error: '',
-    } satisfies EntitiesWorkingForResponse);
-  }),
+      res.status(200).send({
+        ok: true,
+        data: {
+          allEntitiesByTypeAndId,
+          userEntitiesByTypeAndId,
+        },
+        error: '',
+      });
+    },
+  ),
+);
+
+router.get(
+  '/partenaires',
+  passport.authenticate('user', { session: false }),
+  catchErrors(
+    async (req: RequestWithUser, res: express.Response<PartenairesResponse>, next: express.NextFunction) => {
+      const user = req.user!;
+
+      const allEntities = await prisma.entity.findMany({
+        where: {
+          deleted_at: null,
+          type: {
+            in: [
+              EntityTypes.COMMERCE_DE_DETAIL,
+              EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+              EntityTypes.CONSOMMATEUR_FINAL,
+            ],
+          },
+          ...(user.roles.includes(UserRoles.ADMIN) ? {} : { for_testing: false }),
+        },
+        include: entityAdminInclude,
+        orderBy: {
+          nom_d_usage: 'asc',
+        },
+      });
+
+      const entitiesUserCanHandleOnBehalf = await prisma.entity.findMany({
+        where: {
+          deleted_at: null,
+          EntityRelationsWithUsers: {
+            some: {
+              owner_id: user.id,
+              relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+              deleted_at: null,
+              EntityRelatedWithUser: {
+                type: {
+                  in: [
+                    EntityTypes.COMMERCE_DE_DETAIL,
+                    EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+                    EntityTypes.CONSOMMATEUR_FINAL,
+                  ],
+                },
+              },
+            },
+          },
+        },
+        include: entityAdminInclude,
+        orderBy: {
+          nom_d_usage: 'asc',
+        },
+      });
+
+      const allEntitiesById: EntitiesById = {};
+      for (const entity of allEntities) {
+        allEntitiesById[entity.id] = entity;
+      }
+      const userEntitiesById: EntitiesById = {};
+      for (const entity of entitiesUserCanHandleOnBehalf) {
+        userEntitiesById[entity.id] = entity;
+      }
+      res.status(200).send({
+        ok: true,
+        data: {
+          allEntitiesById,
+          userEntitiesById,
+        },
+        error: '',
+      });
+    },
+  ),
 );
 
 router.get(
@@ -207,6 +292,126 @@ router.post(
     await linkBrevoCompanyToContact(createdEntity, user);
 
     res.status(200).send({ ok: true, error: '', data: { createdEntity, createdEntityRelation } });
+  }),
+);
+
+const partenaireSchema = z.object({
+  raison_sociale: z.string(),
+  address_ligne_1: z.string(),
+  address_ligne_2: z.string(),
+  code_postal: z.string(),
+  email: z.string(),
+  nom_de_famille: z.string(),
+  prenom: z.string(),
+  ville: z.string(),
+  siret: z.string().optional(),
+  zacharie_compatible: z.boolean().optional(),
+  type: z.enum([
+    EntityTypes.COMMERCE_DE_DETAIL,
+    EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+    EntityTypes.CONSOMMATEUR_FINAL,
+  ]),
+});
+
+router.post(
+  '/partenaire',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user!;
+
+    const result = partenaireSchema.safeParse(req.body);
+    if (!result.success) {
+      const error = new Error(result.error.message);
+      res.status(406);
+      return next(error);
+    }
+    const body = result.data;
+
+    const data: Prisma.EntityUncheckedCreateInput = {
+      raison_sociale: sanitize(body[Prisma.EntityScalarFieldEnum.raison_sociale]),
+      nom_d_usage: sanitize(body[Prisma.EntityScalarFieldEnum.raison_sociale]),
+      type: body[Prisma.EntityScalarFieldEnum.type] as EntityTypes,
+      address_ligne_1: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_1]),
+      address_ligne_2: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_2]),
+      code_postal: sanitize(body[Prisma.EntityScalarFieldEnum.code_postal]),
+      ville: sanitize(body[Prisma.EntityScalarFieldEnum.ville]),
+      siret: sanitize(body[Prisma.EntityScalarFieldEnum.siret]) || null,
+      zacharie_compatible: true,
+    };
+
+    const existingEntity = await prisma.entity.findFirst({
+      where: {
+        raison_sociale: data.raison_sociale,
+        type: data.type,
+        code_postal: data.code_postal,
+        ville: data.ville,
+        siret: data.siret,
+      },
+    });
+
+    if (existingEntity) {
+      const error = new Error('Entité déjà existante');
+      res.status(406);
+      return next(error);
+    }
+
+    let createdEntity = await prisma.entity.create({ data });
+
+    createdEntity = await updateOrCreateBrevoCompany(createdEntity);
+
+    let ownerUser = await prisma.user.findUnique({
+      where: {
+        email: body[Prisma.UserScalarFieldEnum.email],
+      },
+    });
+    if (!ownerUser) {
+      ownerUser = await prisma.user.create({
+        data: {
+          id: await createUserId(),
+          email: body[Prisma.UserScalarFieldEnum.email],
+          nom_de_famille: body[Prisma.UserScalarFieldEnum.nom_de_famille],
+          prenom: body[Prisma.UserScalarFieldEnum.prenom],
+          roles: [body[Prisma.EntityScalarFieldEnum.type] as UserRoles],
+        },
+      });
+    } else {
+      if (!ownerUser.roles.includes(body[Prisma.EntityScalarFieldEnum.type] as UserRoles)) {
+        ownerUser.roles.push(body[Prisma.EntityScalarFieldEnum.type] as UserRoles);
+        await prisma.user.update({
+          where: { id: ownerUser.id },
+          data: { roles: ownerUser.roles },
+        });
+      }
+    }
+
+    await prisma.entityAndUserRelations.create({
+      data: {
+        owner_id: ownerUser.id,
+        entity_id: createdEntity.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
+    });
+
+    await prisma.entityAndUserRelations.create({
+      data: {
+        owner_id: user.id,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        entity_id: createdEntity.id,
+        status: EntityRelationStatus.MEMBER,
+      },
+    });
+
+    await sendEmail({
+      emails: ['contact@zacharie.beta.gouv.fr'],
+      subject: `Nouveau partenaire pré-enregistré dans Zacharie`,
+      text: `Un nouveau partenaire a été pré-enregistré dans Zacharie\u00A0: ${createdEntity.nom_d_usage}`,
+    });
+
+    // FIXME: doit-on lier le partenaire au contact dans Brevo ?
+    // await linkBrevoCompanyToContact(createdEntity, user);
+
+    res.status(200).send({ ok: true, error: '' });
   }),
 );
 
