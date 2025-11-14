@@ -47,14 +47,17 @@ export default function CarcasseIntermediaireComp({
 
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];
-    for (const carcasseIntermediaire of carcassesIntermediaires) {
-      if (carcasseIntermediaire?.commentaire) {
-        const intermediaireEntity = entities[carcasseIntermediaire.intermediaire_entity_id];
-        commentaires.push(`${intermediaireEntity?.nom_d_usage}\u00A0: ${carcasseIntermediaire?.commentaire}`);
+    for (const _carcasseIntermediaire of carcassesIntermediaires) {
+      if (_carcasseIntermediaire.intermediaire_id === carcasseIntermediaire.intermediaire_id) continue;
+      if (_carcasseIntermediaire?.commentaire) {
+        const intermediaireEntity = entities[_carcasseIntermediaire.intermediaire_entity_id];
+        commentaires.push(
+          `${intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`,
+        );
       }
     }
     return commentaires;
-  }, [carcassesIntermediaires, entities]);
+  }, [carcassesIntermediaires, entities, carcasseIntermediaire]);
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -73,6 +76,8 @@ export default function CarcasseIntermediaireComp({
   const [refus, setRefus] = useState(
     carcasse.intermediaire_carcasse_refus_motif ?? carcasseIntermediaire.refus ?? '',
   );
+  const [commentaire, setCommentaire] = useState(carcasseIntermediaire.commentaire ?? '');
+  const [poids, setPoids] = useState(carcasseIntermediaire.intermediaire_poids ?? '');
 
   const submitCarcasseManquante = () => {
     setCarcasseManquante(true);
@@ -86,6 +91,8 @@ export default function CarcasseIntermediaireComp({
       ecarte_pour_inspection: false,
       check_manuel: false,
       decision_at: dayjs().toDate(),
+      commentaire,
+      intermediaire_poids: poids ? Number(poids) : null,
     };
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
@@ -139,6 +146,8 @@ export default function CarcasseIntermediaireComp({
       ecarte_pour_inspection: false,
       check_manuel: false,
       decision_at: dayjs().toDate(),
+      commentaire,
+      intermediaire_poids: poids ? Number(poids) : null,
     };
 
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
@@ -185,6 +194,8 @@ export default function CarcasseIntermediaireComp({
       ecarte_pour_inspection: true,
       check_manuel: false,
       decision_at: dayjs().toDate(),
+      commentaire,
+      intermediaire_poids: poids ? Number(poids) : null,
     };
 
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
@@ -231,6 +242,8 @@ export default function CarcasseIntermediaireComp({
       ecarte_pour_inspection: false,
       check_manuel: true,
       decision_at: dayjs().toDate(),
+      commentaire,
+      intermediaire_poids: poids ? Number(poids) : null,
     };
     updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
     addLog({
@@ -443,24 +456,10 @@ export default function CarcasseIntermediaireComp({
                 min: 0,
                 name: Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_poids,
                 form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                defaultValue: carcasseIntermediaire.intermediaire_poids || '',
-                onBlur: (e) => {
+                value: poids || '',
+                onChange: (e) => {
                   if (!canEdit) return;
-                  const nextPartialCarcasseIntermediaire = {
-                    intermediaire_poids: Number(e.target.value),
-                  };
-                  updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
-                  addLog({
-                    user_id: user.id,
-                    user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
-                    fei_numero: fei.numero,
-                    action: 'carcasse-intermediaire-poids',
-                    history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
-                    entity_id: intermediaire.intermediaire_entity_id,
-                    zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-                    intermediaire_id: intermediaire.id,
-                    carcasse_intermediaire_id: carcasseIntermediaireId,
-                  });
+                  setPoids(e.currentTarget.value);
                 },
               }}
             />
@@ -483,23 +482,9 @@ export default function CarcasseIntermediaireComp({
                 form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
                 defaultValue: carcasseIntermediaire.commentaire || '',
                 disabled: !canEdit,
-                onBlur: (e) => {
+                onChange: (e) => {
                   if (!canEdit) return;
-                  const nextPartialCarcasseIntermediaire = {
-                    commentaire: e.target.value,
-                  };
-                  updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
-                  addLog({
-                    user_id: user.id,
-                    user_role: intermediaire.intermediaire_role! as UserRoles, // ETG or COLLECTEUR_PRO
-                    fei_numero: fei.numero,
-                    action: 'carcasse-intermediaire-commentaire',
-                    history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
-                    entity_id: intermediaire.intermediaire_entity_id,
-                    zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-                    intermediaire_id: intermediaire.id,
-                    carcasse_intermediaire_id: carcasseIntermediaireId,
-                  });
+                  setCommentaire(e.currentTarget.value);
                 },
               }}
             />
