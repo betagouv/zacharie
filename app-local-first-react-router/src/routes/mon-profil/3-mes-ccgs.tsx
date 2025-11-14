@@ -280,16 +280,16 @@ export default function MesCCGs() {
                         defaultValue: '',
                       }}
                     />
-                    {/* <Input
+                    <Input
                       label="Numéro d'identification du CCG"
-                      hintText="De la forme 03-CCG-123, ou encore 03.564.345. Si vous ne le connaissez pas, laissez vide."
+                      hintText="De la forme 03-CCG-123, ou encore 03.564.345. Remplissez-le si vous le connaissez."
                       nativeInputProps={{
                         id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
                         name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
                         autoComplete: 'off',
                         defaultValue: '',
                       }}
-                    /> */}
+                    />
                     <Input
                       label="Adresse *"
                       hintText="Indication : numéro et voie"
