@@ -21,6 +21,7 @@ import {
 } from '~/third-parties/brevo';
 import { formatManualValidationSviEmail, formatSviAssignedEmail } from '~/utils/formatCarcasseEmail';
 import { sendWebhook } from '~/utils/api';
+import { capture } from '~/third-parties/sentry';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 router.post(
@@ -51,6 +52,25 @@ router.post(
         where: { numero: feiNumero },
         include: feiPopulatedInclude,
       });
+      if (!existingFei) {
+        const isExaminateurInitial =
+          user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && !!user.activated;
+        if (!isExaminateurInitial) {
+          res.status(400).send({
+            ok: false,
+            data: { fei: null },
+            error: 'Seul un examinateur initial peut créer une fiche',
+          });
+          capture(new Error('Tentative de hack: seul un examinateur initial peut créer une fiche'), {
+            extra: {
+              body: body,
+              feiNumero,
+            },
+            user,
+          });
+          return;
+        }
+      }
       if (existingFei?.deleted_at) {
         res.status(200).send({
           ok: true,
