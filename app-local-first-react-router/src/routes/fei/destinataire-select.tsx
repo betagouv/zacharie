@@ -77,7 +77,7 @@ export default function DestinataireSelect({
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
   const collecteursPros = collecteursProIds.map((id) => entities[id]);
-  const circuitCourts = circuitCourtIds.map((id) => entities[id]);
+  const circuitCourt = circuitCourtIds.map((id) => entities[id]);
   const svis = svisIds.map((id) => entities[id]);
 
   const prochainsDetenteurs = useMemo(() => {
@@ -86,15 +86,15 @@ export default function DestinataireSelect({
         ...svis.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
         ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
         ...collecteursPros.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
-        ...circuitCourts.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
+        ...circuitCourt.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
       ];
     }
     return [
-      ...circuitCourts.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
+      ...circuitCourt.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
       ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
       ...collecteursPros.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
     ];
-  }, [etgs, collecteursPros, svis, fei.fei_current_owner_role, circuitCourts]);
+  }, [etgs, collecteursPros, svis, fei.fei_current_owner_role, circuitCourt]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
