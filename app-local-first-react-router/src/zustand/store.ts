@@ -70,6 +70,7 @@ export interface State {
   collecteursProIds: Array<EntityWithUserRelation['id']>;
   etgsIds: Array<EntityWithUserRelation['id']>;
   svisIds: Array<EntityWithUserRelation['id']>;
+  circuitCourtIds: Array<EntityWithUserRelation['id']>;
   detenteursInitiaux: Record<UserForFei['id'], UserForFei>;
   entityAndUserRelations: Record<EntityAndUserRelations['entity_id'], EntityAndUserRelations>;
   etgAndEntityRelations: Record<ETGAndEntityRelations['etg_id'], ETGAndEntityRelations>;
@@ -154,6 +155,7 @@ const initialState: State = {
   ccgsIds: [],
   collecteursProIds: [],
   etgsIds: [],
+  circuitCourtIds: [],
   svisIds: [],
   apiKeyApprovals: [],
   detenteursInitiaux: {},

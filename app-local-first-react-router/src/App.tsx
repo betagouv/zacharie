@@ -170,7 +170,12 @@ function App() {
               path="mon-profil/mes-informations-de-chasse"
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
-                  <MesInformationsDeChasse withExaminateurInitial withAssociationsDeChasse withCCGs />
+                  <MesInformationsDeChasse
+                    withExaminateurInitial
+                    withAssociationsDeChasse
+                    withCCGs
+                    withPartenaires
+                  />
                 </RestrictedRoute>
               }
             />
@@ -179,6 +184,14 @@ function App() {
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
                   <MesInformationsDeChasse withAssociationsDeChasse />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="mon-profil/mes-partenaires"
+              element={
+                <RestrictedRoute id="zacharie_carcasse_id">
+                  <MesInformationsDeChasse withPartenaires />
                 </RestrictedRoute>
               }
             />

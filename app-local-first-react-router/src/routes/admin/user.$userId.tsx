@@ -39,6 +39,7 @@ const initialState: State = {
     addresse_ligne_1: '',
     checked_has_asso_de_chasse: null,
     checked_has_ccg: null,
+    checked_has_partenaires: null,
     addresse_ligne_2: '',
     code_postal: '',
     ville: '',

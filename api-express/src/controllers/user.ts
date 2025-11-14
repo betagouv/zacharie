@@ -897,6 +897,7 @@ const userUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.prefilled]: z.enum(['true', 'false']).optional(),
   [Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse]: z.enum(['true', 'false']).optional(),
   [Prisma.UserScalarFieldEnum.checked_has_ccg]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.checked_has_partenaires]: z.enum(['true', 'false']).optional(),
   [Prisma.UserScalarFieldEnum.nom_de_famille]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.prenom]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser]: z.number().optional(),
@@ -979,6 +980,10 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_ccg)) {
         nextUser.checked_has_ccg =
           body[Prisma.UserScalarFieldEnum.checked_has_ccg] === 'true' ? new Date() : null;
+      }
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_partenaires)) {
+        nextUser.checked_has_partenaires =
+          body[Prisma.UserScalarFieldEnum.checked_has_partenaires] === 'true' ? new Date() : null;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.nom_de_famille)) {
         nextUser.nom_de_famille = sanitize(body[Prisma.UserScalarFieldEnum.nom_de_famille] as string);
@@ -1528,6 +1533,13 @@ router.get(
           ['CAN_TRANSMIT_CARCASSES_TO_ENTITY', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
       );
 
+      const circuitCourt = allEntities.filter(
+        (entity) =>
+          entity.type === EntityTypes.COMMERCE_DE_DETAIL ||
+          entity.type === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
+          entity.type === EntityTypes.CONSOMMATEUR_FINAL,
+      );
+
       res.status(200).send({
         ok: true,
         data: {
@@ -1540,6 +1552,7 @@ router.get(
           etgs: etgs satisfies Array<EntityWithUserRelation>,
           svis: svis satisfies Array<EntityWithUserRelation>,
           entitiesWorkingFor: entitiesWorkingFor satisfies Array<EntityWithUserRelation>,
+          circuitCourt: circuitCourt satisfies Array<EntityWithUserRelation>,
         },
         error: '',
       });

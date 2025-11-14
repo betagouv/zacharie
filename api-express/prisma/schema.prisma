@@ -14,11 +14,9 @@ enum UserRoles {
   COLLECTEUR_PRO // Transporteur de Gibier
   ETG // Etablissement de Traitement du Gibier sauvage
   SVI // Service Vétérinaire d'Inspection
-  // COMMERCE_DE_DETAIL // Commerce de détail
-  // REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
-  // CONSOMMATEUR_FINAL // Je chasse pour ma consommation personnelle
-  // BOUCHER
-  // RESTAURATEUR
+  COMMERCE_DE_DETAIL // Commerce de détail, boucherie, charcuterie, restaurateur, associatino carritative
+  REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
+  CONSOMMATEUR_FINAL // Je chasse pour ma consommation personnelle
 }
 
 enum UserEtgRoles {
@@ -65,6 +63,7 @@ model User {
   at_least_one_fei_treated       DateTime?
   checked_has_asso_de_chasse     DateTime?
   checked_has_ccg                DateTime?
+  checked_has_partenaires        DateTime?
   Password                       Password?
   UserRelationsAsOwner           UserRelations[]                @relation("UserOwnerOfUserRelation")
   UserRelationsAsRelated         UserRelations[]                @relation("UserRelatedOfUserRelation")
@@ -98,10 +97,9 @@ enum EntityTypes {
   CCG
   ETG
   SVI
-  // COMMERCE_DE_DETAIL
-  // REPAS_DE_CHASSE_OU_ASSOCIATIF
-  // BOUCHER
-  // RESTAURATEUR
+  COMMERCE_DE_DETAIL // Commerce de détail, boucherie, charcuterie, restaurateur, associatino carritative
+  REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
+  CONSOMMATEUR_FINAL // Je chasse pour ma consommation personnelle
 }
 
 model Entity {
@@ -285,6 +283,9 @@ enum FeiOwnerRole {
   ETG
   COLLECTEUR_PRO
   SVI
+  COMMERCE_DE_DETAIL
+  REPAS_DE_CHASSE_OU_ASSOCIATIF
+  CONSOMMATEUR_FINAL
 }
 
 // Fiche d'Examen Initial

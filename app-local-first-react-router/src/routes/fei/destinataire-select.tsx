@@ -63,6 +63,7 @@ export default function DestinataireSelect({
   const etgsIds = useZustandStore((state) => state.etgsIds);
   const svisIds = useZustandStore((state) => state.svisIds);
   const collecteursProIds = useZustandStore((state) => state.collecteursProIds);
+  const circuitCourtIds = useZustandStore((state) => state.circuitCourtIds);
 
   const fei = feis[params.fei_numero!];
   const prefilledInfos = usePrefillPremierDétenteurInfos();
@@ -76,6 +77,7 @@ export default function DestinataireSelect({
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
   const collecteursPros = collecteursProIds.map((id) => entities[id]);
+  const circuitCourt = circuitCourtIds.map((id) => entities[id]);
   const svis = svisIds.map((id) => entities[id]);
 
   const prochainsDetenteurs = useMemo(() => {
@@ -84,13 +86,15 @@ export default function DestinataireSelect({
         ...svis.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
         ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
         ...collecteursPros.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
+        ...circuitCourt.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
       ];
     }
     return [
+      ...circuitCourt.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
       ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
       ...collecteursPros.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
     ];
-  }, [etgs, collecteursPros, svis, fei.fei_current_owner_role]);
+  }, [etgs, collecteursPros, svis, fei.fei_current_owner_role, circuitCourt]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
@@ -432,6 +436,13 @@ export default function DestinataireSelect({
           inputId={Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
           classNamePrefix={`select-prochain-detenteur`}
           required
+          creatable
+          // @ts-expect-error - onCreateOption is not typed
+          onCreateOption={(newOption) => {
+            navigate(
+              `/app/tableau-de-bord/mon-profil/mes-partenaires?redirect=/app/tableau-de-bord/fei/${fei.numero}&raison-sociale=${newOption}`,
+            );
+          }}
           isReadOnly={!canEdit}
           name={Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
         />
