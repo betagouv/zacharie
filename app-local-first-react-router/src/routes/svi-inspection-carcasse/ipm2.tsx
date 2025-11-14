@@ -436,6 +436,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               placeholder="Commencez à taper une pièce"
               onChange={setSviIpm2Pieces}
               values={sviIpm2Pieces}
+              creatable
             />
             <ModalTreeDisplay
               data={piecesTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}

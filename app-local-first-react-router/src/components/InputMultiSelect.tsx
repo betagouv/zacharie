@@ -19,6 +19,7 @@ interface InputMultiSelectProps<T> {
   canEdit?: boolean;
   isMulti?: boolean;
   disabled?: boolean;
+  creatable?: boolean;
 }
 
 export default function InputMultiSelect<T extends string>({
@@ -33,6 +34,7 @@ export default function InputMultiSelect<T extends string>({
   disabled = false,
   required = false,
   isMulti = true,
+  creatable = false,
 }: InputMultiSelectProps<T>) {
   return (
     <div className={['fr-input-group', disabled ? 'fr-input-group--disabled' : ''].join(' ')}>
@@ -64,6 +66,12 @@ export default function InputMultiSelect<T extends string>({
         isDisabled={!canEdit || disabled}
         required={required}
         classNamePrefix={`${name}`}
+        creatable={creatable}
+        // @ts-expect-error - onCreateOption is not typed
+        onCreateOption={(newOption) => {
+          console.log({ newOption });
+          onChange([...values, newOption as T]);
+        }}
         className="mt-2"
         // components={{
         //   MultiValueContainer: (props) => {
