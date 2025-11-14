@@ -104,12 +104,14 @@ router.post(
       if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.creation_context)) {
         const contextSlug = body.creation_context;
         if (contextSlug) {
-          const apiKey = await prisma.apiKey.findFirst({
-            where: { slug_for_context: contextSlug },
-          });
-          if (!apiKey) {
-            res.status(400).send({ ok: false, data: { fei: null }, error: 'Invalid context slug' });
-            return;
+          if (contextSlug !== 'zacharie') {
+            const apiKey = await prisma.apiKey.findFirst({
+              where: { slug_for_context: contextSlug },
+            });
+            if (!apiKey) {
+              res.status(400).send({ ok: false, data: { fei: null }, error: 'Invalid context slug' });
+              return;
+            }
           }
           nextFei.creation_context = contextSlug;
         }
