@@ -12,6 +12,7 @@ import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import InputNotEditable from '@app/components/InputNotEditable';
+import { useSearchParams } from 'react-router';
 
 const empytEntitiesByTypeAndId: EntitiesById = {};
 
@@ -20,6 +21,7 @@ export default function MesPartenaires() {
   const [allEntitiesById, setAllEntitiesById] = useState<EntitiesById>(empytEntitiesByTypeAndId);
   const [userEntitiesById, setUserEntitiesById] = useState<EntitiesById>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     API.get({ path: 'entite/partenaires' })
@@ -52,17 +54,18 @@ export default function MesPartenaires() {
 
   const userHasPartenaires = userEntities.length > 0;
 
-  const [showForm, setShowForm] = useState(!userHasPartenaires);
+  const [showForm, setShowForm] = useState(searchParams.get('raison-sociale') || !userHasPartenaires);
+  console.log({ showForm, searchParams: Object.fromEntries(searchParams.entries()) });
   useEffect(() => {
-    setShowForm(!userHasPartenaires);
-  }, [userHasPartenaires]);
+    setShowForm(searchParams.get('raison-sociale') || !userHasPartenaires);
+  }, [userHasPartenaires, searchParams]);
 
   const [currentEntityId, setCurrentEntityId] = useState<string | null>(null);
   const currentEntity = remainingEntities.find((entity) => entity.id === currentEntityId);
   const currentEntityUser = currentEntity?.EntityRelationsWithUsers.find(
     (relation) => relation.status === EntityRelationStatus.ADMIN,
   )?.UserRelatedWithEntity;
-  const [newEntityNomDUsage, setNewEntityNomDUsage] = useState('');
+  const [newEntityNomDUsage, setNewEntityNomDUsage] = useState(searchParams.get('raison-sociale'));
   const [isUnregisteredEntity, setIsUnregisteredEntity] = useState(false);
 
   const newEntity = newEntityNomDUsage
@@ -91,6 +94,7 @@ export default function MesPartenaires() {
 
   const [assoPostalCode, setAssoPostalCode] = useState('');
   const [entityType, setEntityType] = useState<EntityTypes | undefined>(undefined);
+
   const handleEntitySubmit = useCallback(
     async (event: React.FocusEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -139,7 +143,7 @@ export default function MesPartenaires() {
         });
       }
     },
-    [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage],
+    [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage, entityType],
   );
 
   return (

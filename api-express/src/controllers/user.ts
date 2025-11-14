@@ -1533,6 +1533,13 @@ router.get(
           ['CAN_TRANSMIT_CARCASSES_TO_ENTITY', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
       );
 
+      const circuitCourt = allEntities.filter(
+        (entity) =>
+          entity.type === EntityTypes.COMMERCE_DE_DETAIL ||
+          entity.type === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
+          entity.type === EntityTypes.CONSOMMATEUR_FINAL,
+      );
+
       res.status(200).send({
         ok: true,
         data: {
@@ -1545,6 +1552,7 @@ router.get(
           etgs: etgs satisfies Array<EntityWithUserRelation>,
           svis: svis satisfies Array<EntityWithUserRelation>,
           entitiesWorkingFor: entitiesWorkingFor satisfies Array<EntityWithUserRelation>,
+          circuitCourt: circuitCourt satisfies Array<EntityWithUserRelation>,
         },
         error: '',
       });

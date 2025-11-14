@@ -91,6 +91,7 @@ export interface UserMyRelationsResponse {
     etgs: Array<EntityWithUserRelation>;
     svis: Array<EntityWithUserRelation>;
     entitiesWorkingFor: Array<EntityWithUserRelation>;
+    circuitCourt: Array<EntityWithUserRelation>;
   };
   error: '';
 }

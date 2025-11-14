@@ -28,6 +28,7 @@ export async function loadMyRelations() {
       ...(myRelationsData.data?.collecteursPro || []),
       ...(myRelationsData.data?.etgs || []),
       ...(myRelationsData.data?.svis || []),
+      ...(myRelationsData.data?.circuitCourt || []),
       ...(myRelationsData.data?.entitiesWorkingFor || []),
     ]) {
       entities[entity.id] = entity;
@@ -43,6 +44,7 @@ export async function loadMyRelations() {
       collecteursProIds: myRelationsData.data?.collecteursPro.map((collecteurPro) => collecteurPro.id) || [],
       etgsIds: myRelationsData.data?.etgs.map((etg) => etg.id) || [],
       svisIds: myRelationsData.data?.svis.map((svi) => svi.id) || [],
+      circuitCourtIds: myRelationsData.data?.circuitCourt.map((circuitCourt) => circuitCourt.id) || [],
     });
 
     const detenteursInitiaux: Record<UserForFei['id'], UserForFei> = {};
