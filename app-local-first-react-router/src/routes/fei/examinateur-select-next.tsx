@@ -138,7 +138,9 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
   return (
     <>
       <label className="mb-4 block">Qui est le premier détenteur&nbsp;?&nbsp;*</label>
-      {isFirstFei && !Object.values(associationsDeChasse).length ? (
+      {isFirstFei &&
+      !Object.values(associationsDeChasse).length &&
+      !Object.values(detenteursInitiaux).length ? (
         <>
           {!showSearchUserByEmail && (
             <div>
@@ -151,7 +153,12 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
                 >
                   Ajouter une association / société / domaine de chasse
                 </Button>
-                <Button priority="secondary" type="button" onClick={() => setShowSearchUserByEmail(true)}>
+                <Button
+                  priority="secondary"
+                  type="button"
+                  onClick={() => setShowSearchUserByEmail(true)}
+                  className="text-left"
+                >
                   Chercher un Premier Détenteur par email
                 </Button>
                 <Button priority="tertiary" type="button" onClick={() => handleSubmitFromSelect(user.id)}>
