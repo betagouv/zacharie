@@ -330,9 +330,13 @@ const useZustandStore = create<State & Actions>()(
 
               byId[feiAndCarcasseAndIntermediaireId] = ci;
               if (!byCarcasseId[ci.zacharie_carcasse_id]) byCarcasseId[ci.zacharie_carcasse_id] = [];
-              byCarcasseId[ci.zacharie_carcasse_id].push(feiAndCarcasseAndIntermediaireId);
+              if (!byCarcasseId[ci.zacharie_carcasse_id].includes(feiAndCarcasseAndIntermediaireId)) {
+                byCarcasseId[ci.zacharie_carcasse_id].push(feiAndCarcasseAndIntermediaireId);
+              }
               if (!byIntermediaireId[feiAndIntermediaireId]) byIntermediaireId[feiAndIntermediaireId] = [];
-              byIntermediaireId[feiAndIntermediaireId].push(feiAndCarcasseAndIntermediaireId);
+              if (!byIntermediaireId[feiAndIntermediaireId].includes(feiAndCarcasseAndIntermediaireId)) {
+                byIntermediaireId[feiAndIntermediaireId].push(feiAndCarcasseAndIntermediaireId);
+              }
             }
             useZustandStore.setState((state) => {
               return {
