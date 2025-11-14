@@ -141,7 +141,6 @@ function Fei() {
             {showInterface === FeiOwnerRole.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
             {showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
-            {showInterface === FeiOwnerRole.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.ETG && <FEICurrentIntermediaire />}
             {showInterface === FeiOwnerRole.SVI && <FEI_SVI />}
             <div className="m-8 flex flex-col justify-start gap-4">
