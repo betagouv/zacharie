@@ -445,6 +445,7 @@ export default function CarcasseIntermediaireComp({
                     submitCarcasseRefus(refus);
                   }}
                   values={[refus]}
+                  creatable
                 />
               </div>
             )}
