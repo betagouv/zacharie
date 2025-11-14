@@ -197,13 +197,15 @@ function FEICurrentIntermediaireContent({
         }
         return carcasseA.type!.localeCompare(carcasseB.type!);
       })
-      .filter((c) => c != null && !c.deleted_at);
+      .filter((c) => c != null && !c.deleted_at && !carcasses[c.zacharie_carcasse_id]?.deleted_at);
   }, [
     feiAndIntermediaireIds,
     carcassesIntermediaireIdsByIntermediaire,
     carcassesIntermediaireById,
     carcasses,
   ]);
+
+  console.log({ intermediaireCarcasses });
 
   const warnedForIncoherentNumberOfCarcasses = useRef(false);
 
@@ -544,16 +546,23 @@ function FEICurrentIntermediaireContent({
       {children}
       {intermediaire ? (
         <Section title={`Carcasses (${intermediaireCarcasses.length})`}>
-          {effectiveCanEdit && (
+          {effectiveCanEdit && intermediaireCarcasses.length > 0 ? (
             <div className="mb-8">
               <p className="text-sm text-gray-600">
                 Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
+              </p>
+            </div>
+          ) : (
+            <div className="mb-8">
+              <p className="text-sm text-gray-600">
+                Le chasseur a dû supprimer la carcasse sans supprimer la fiche, désolé pour le dérangement.
               </p>
             </div>
           )}
           <div className="flex flex-col gap-4">
             {intermediaireCarcasses.map((intermediaireCarcasse) => {
               const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
+              console.log({ carcasse });
               return (
                 <Fragment key={carcasse.numero_bracelet}>
                   <CarcasseIntermediaireComp
