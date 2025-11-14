@@ -546,18 +546,23 @@ function FEICurrentIntermediaireContent({
       {children}
       {intermediaire ? (
         <Section title={`Carcasses (${intermediaireCarcasses.length})`}>
-          {effectiveCanEdit && intermediaireCarcasses.length > 0 ? (
-            <div className="mb-8">
-              <p className="text-sm text-gray-600">
-                Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
-              </p>
-            </div>
-          ) : (
-            <div className="mb-8">
-              <p className="text-sm text-gray-600">
-                Le chasseur a dû supprimer la carcasse sans supprimer la fiche, désolé pour le dérangement.
-              </p>
-            </div>
+          {effectiveCanEdit && (
+            <>
+              {intermediaireCarcasses.length > 0 ? (
+                <div className="mb-8">
+                  <p className="text-sm text-gray-600">
+                    Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
+                  </p>
+                </div>
+              ) : (
+                <div className="mb-8">
+                  <p className="text-sm text-gray-600">
+                    Le chasseur a dû supprimer la carcasse sans supprimer la fiche, désolé pour le
+                    dérangement.
+                  </p>
+                </div>
+              )}
+            </>
           )}
           <div className="flex flex-col gap-4">
             {intermediaireCarcasses.map((intermediaireCarcasse) => {

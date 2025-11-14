@@ -95,12 +95,14 @@ export default function CardCarcasse({
     if (commentairesIntermediaires.length > 1) descriptionLine += 's';
   }
 
-  if (forceRefus) {
-    if (!statusNewCard.includes('refusé')) statusNewCard = 'refusé';
-  } else if (forceManquante) {
-    if (!statusNewCard.includes('manquant')) statusNewCard = 'manquant';
-  } else if (forceAccept) {
-    if (!statusNewCard.includes('accepté')) statusNewCard = 'accepté';
+  if (!carcasse.svi_ipm1_date && !carcasse.svi_ipm2_date) {
+    if (forceRefus) {
+      if (!statusNewCard.includes('refusé')) statusNewCard = 'refusé';
+    } else if (forceManquante) {
+      if (!statusNewCard.includes('manquant')) statusNewCard = 'manquant';
+    } else if (forceAccept) {
+      if (!statusNewCard.includes('accepté')) statusNewCard = 'accepté';
+    }
   }
   const isEcarteePourInspection =
     !!latestIntermediaire?.ecarte_pour_inspection && statusNewCard.includes('cours');
