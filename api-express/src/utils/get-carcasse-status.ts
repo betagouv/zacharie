@@ -91,11 +91,12 @@ export function getSimplifiedCarcasseStatus(carcasse: Carcasse) {
     case CarcasseStatus.LEVEE_DE_CONSIGNE:
     case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
       return 'accepté';
+    case CarcasseStatus.SAISIE_PARTIELLE:
+      return 'saisie partielle';
     case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
     case CarcasseStatus.REFUS_ETG_COLLECTEUR:
     case CarcasseStatus.MANQUANTE_SVI:
     case CarcasseStatus.SAISIE_TOTALE:
-    case CarcasseStatus.SAISIE_PARTIELLE:
       return 'refusé';
   }
 }

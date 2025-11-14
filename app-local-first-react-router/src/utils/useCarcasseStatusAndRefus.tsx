@@ -9,7 +9,12 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
   const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaires = useZustandStore((state) => state.carcassesIntermediaireById);
 
-  const status: 'en cours de création' | 'en cours de traitement' | 'refusé' | 'accepté' = useMemo(() => {
+  const status:
+    | 'en cours de création'
+    | 'en cours de traitement'
+    | 'refusé'
+    | 'accepté'
+    | 'saisie partielle' = useMemo(() => {
     if (
       fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
       fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR

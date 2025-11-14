@@ -107,7 +107,7 @@ export default function CardCarcasse({
   const isEnCours = !latestIntermediaire?.ecarte_pour_inspection && statusNewCard.includes('cours');
   const isRefus = statusNewCard.includes('refus');
   const isManquante = statusNewCard.includes('manquant');
-  const isAccept = statusNewCard.includes('accepté');
+  const isAccept = statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle');
 
   return (
     <>

@@ -15,7 +15,7 @@ export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarc
             CarcasseStatus.REFUS_ETG_COLLECTEUR,
             CarcasseStatus.MANQUANTE_SVI,
             CarcasseStatus.SAISIE_TOTALE,
-            CarcasseStatus.SAISIE_PARTIELLE,
+            // CarcasseStatus.SAISIE_PARTIELLE,
           ] as Array<CarcasseStatus>
         ).includes(carcasse.svi_carcasse_status!)
       ) {

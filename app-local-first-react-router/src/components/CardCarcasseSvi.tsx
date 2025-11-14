@@ -71,6 +71,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
         status === 'refusé' && 'border-l-3! border-solid border-red-500!',
         isEcarteePourInspection && 'border-l-3! border-solid border-red-500!',
         status === 'accepté' && 'border-action-high-blue-france! border-l-3! border-solid',
+        status === 'saisie partielle' && 'border-action-high-blue-france! border-l-3! border-solid',
         // priseEnCharge && 'border-action-high-blue-france!',
       ]
         .filter(Boolean)
@@ -85,6 +86,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
           status === 'en cours de traitement' && !isEcarteePourInspection && 'text-transparent!',
           isEcarteePourInspection && 'text-error-main-525 font-bold',
           status === 'refusé' && 'text-error-main-525 font-bold',
+          status === 'saisie partielle' && 'text-action-high-blue-france font-bold',
           status === 'accepté' && 'text-action-high-blue-france font-bold',
         ]
           .filter(Boolean)
