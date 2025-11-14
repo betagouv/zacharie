@@ -9,6 +9,7 @@ import {
   Prisma,
   TransportType,
   User,
+  UserEtgRoles,
   UserRelationType,
   UserRoles,
 } from '@prisma/client';
@@ -137,8 +138,16 @@ Christine
       },
       {
         id: await createUserId(),
+        email: 'collecteur-pro-nouveau@example.fr',
+        roles: [UserRoles.COLLECTEUR_PRO],
+        activated: true,
+        activated_at: dayjs().toDate(),
+      },
+      {
+        id: await createUserId(),
         email: 'etg-1@example.fr',
         roles: [UserRoles.ETG],
+        etg_role: UserEtgRoles.RECEPTION,
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Thomas',
@@ -153,6 +162,7 @@ Christine
         id: await createUserId(),
         email: 'etg-2@example.fr',
         roles: [UserRoles.ETG],
+        etg_role: UserEtgRoles.RECEPTION,
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Matthias',
@@ -166,7 +176,8 @@ Christine
       {
         id: await createUserId(),
         email: 'collecteur-pro-1-etg-1@example.fr',
-        roles: [UserRoles.COLLECTEUR_PRO, UserRoles.ETG],
+        roles: [UserRoles.ETG],
+        etg_role: UserEtgRoles.TRANSPORT,
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Nicolas',
@@ -176,6 +187,13 @@ Christine
         ville: 'Paris',
         telephone: '0606060606',
         onboarded_at: dayjs().toDate(),
+      },
+      {
+        id: await createUserId(),
+        email: 'etg-nouveau@example.fr',
+        roles: [UserRoles.ETG],
+        activated: true,
+        activated_at: dayjs().toDate(),
       },
       {
         id: await createUserId(),
@@ -190,6 +208,13 @@ Christine
         ville: 'Paris',
         telephone: '0606060607',
         onboarded_at: dayjs().toDate(),
+      },
+      {
+        id: await createUserId(),
+        email: 'svi-nouveau@example.fr',
+        roles: [UserRoles.SVI],
+        activated: true,
+        activated_at: dayjs().toDate(),
       },
     ],
   });
@@ -353,6 +378,12 @@ Christine
         status: EntityRelationStatus.ADMIN,
       },
       {
+        owner_id: users.find((user) => user.email === 'collecteur-pro-nouveau@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'Collecteur Pro 1')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
+      },
+      {
         owner_id: users.find((user) => user.email === 'etg-1@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
@@ -365,10 +396,22 @@ Christine
         status: EntityRelationStatus.ADMIN,
       },
       {
+        owner_id: users.find((user) => user.email === 'etg-nouveau@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
+      },
+      {
         owner_id: users.find((user) => user.email === 'svi@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 1')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: EntityRelationStatus.ADMIN,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'svi-nouveau@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 1')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
       },
     ],
   });
