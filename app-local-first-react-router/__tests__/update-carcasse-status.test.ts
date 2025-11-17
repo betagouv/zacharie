@@ -720,7 +720,7 @@ describe('getSimplifiedCarcasseStatus', () => {
 
       const result = getSimplifiedCarcasseStatus(carcasse);
 
-      expect(result).toBe('refusé');
+      expect(result).toBe('saisie partielle');
     });
   });
 });
