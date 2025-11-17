@@ -261,7 +261,9 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
               );
             })}
             <option value="new-entity">+ Ajouter une association / société / domaine de chasse</option>
-            <option value="new-user">+ Ajouter un nouveau Premier Détenteur par email</option>
+            <option value="new-user">
+              + Chercher par email un autre Premier Détenteur inscrit dans Zacharie
+            </option>
           </Select>
           {(!nextOwnerUserOrEntityId || nextOwnerUserOrEntityId !== fei.fei_next_owner_user_id) && (
             <Button type="submit" disabled={!nextOwnerUserOrEntityId || disabled}>
@@ -340,6 +342,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
               nativeInputProps={{
                 id: Prisma.UserScalarFieldEnum.email,
                 name: Prisma.UserScalarFieldEnum.email,
+                type: 'email',
                 autoComplete: 'off',
               }}
             />
@@ -354,13 +357,19 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
               </div>
             )}
           </form>
-          {searchingUserError === "L'utilisateur n'existe pas" && (
-            <Alert
-              severity="error"
-              title="Nous ne connaissons pas cet email"
-              description="Vérifiez avec le Premier Détenteur s'il est à côté de vous ?"
-              className="mt-4"
-            />
+          {searchingUserError && (
+            <>
+              {searchingUserError === "L'utilisateur n'existe pas" ? (
+                <Alert
+                  severity="error"
+                  title="Nous ne connaissons pas cet email"
+                  description="Vérifiez avec le Premier Détenteur s'il est à côté de vous ?"
+                  className="mt-4"
+                />
+              ) : (
+                <Alert severity="error" title={searchingUserError} className="mt-4" />
+              )}
+            </>
           )}
           <Button
             priority="secondary"
