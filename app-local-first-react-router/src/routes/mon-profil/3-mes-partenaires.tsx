@@ -95,10 +95,12 @@ export default function MesPartenaires() {
   const [assoPostalCode, setAssoPostalCode] = useState('');
   const [entityType, setEntityType] = useState<EntityTypes | undefined>(undefined);
 
+  console.log({ currentEntityId });
+
   const handleEntitySubmit = useCallback(
     async (event: React.FocusEvent<HTMLFormElement>) => {
       event.preventDefault();
-      if (isUnregisteredEntity) {
+      if (isUnregisteredEntity || !currentEntityId) {
         const formData = new FormData(event.currentTarget);
         const body: Partial<Entity> = Object.fromEntries(formData.entries());
         body.raison_sociale = newEntityNomDUsage;
