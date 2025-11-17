@@ -362,8 +362,8 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
               {searchingUserError === "L'utilisateur n'existe pas" ? (
                 <Alert
                   severity="error"
-                  title="Nous ne connaissons pas cet email"
-                  description="Vérifiez avec le Premier Détenteur s'il est à côté de vous ?"
+                  title="Aucun premier détenteur est inscrit avec cette adresse mail."
+                  description="Merci de vérifier cette adresse auprès du premier détenteur."
                   className="mt-4"
                 />
               ) : (
