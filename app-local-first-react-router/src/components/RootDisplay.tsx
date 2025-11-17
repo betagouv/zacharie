@@ -89,9 +89,11 @@ export default function RootDisplay({
           <span className={hideMinistereName ? 'hidden md:inline' : ''}>
             Ministère
             <br />
-            de l'Agriculture et
+            de l'Agriculture,
             <br />
-            de la Souveraineté
+            de l’Agro-alimentaire
+            <br />
+            et de la Souveraineté
             <br />
             Alimentaire
           </span>
