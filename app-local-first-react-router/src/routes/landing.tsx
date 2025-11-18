@@ -113,7 +113,7 @@ export default function LandingPage() {
                 Un service public <b>gratuit et sans engagement</b>.
               </li>
             </ul>
-            <div className="my-8 flex w-full justify-center md:justify-start">
+            <div className="my-8 flex w-full flex-col items-center gap-4 md:items-start">
               <Button
                 size="large"
                 linkProps={{
@@ -122,6 +122,34 @@ export default function LandingPage() {
               >
                 Participer à une démo
               </Button>
+              <div className="flex items-center gap-3 lg:hidden">
+                <a
+                  href="https://apps.apple.com/fr/app/id6753714911"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ backgroundImage: 'none' }}
+                  className="inline-block border-none transition-opacity after:content-none hover:opacity-80"
+                >
+                  <img
+                    src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                    alt="Télécharger sur l'App Store"
+                    className="h-10 w-auto"
+                  />
+                </a>
+                <a
+                  href="https://play.google.com/store/apps/details?id=fr.gouv.zacharie.v1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ backgroundImage: 'none' }}
+                  className="inline-block transition-opacity after:content-none hover:opacity-80"
+                >
+                  <img
+                    src="https://play.google.com/intl/en_us/badges/static/images/badges/fr_badge_web_generic.png"
+                    alt="Disponible sur Google Play"
+                    className="h-12 w-auto"
+                  />
+                </a>
+              </div>
             </div>
           </div>
         </section>
