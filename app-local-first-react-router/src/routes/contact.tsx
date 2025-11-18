@@ -114,6 +114,7 @@ export default function Stats() {
                     <option value="">-- Sélectionnez un objet --</option>
                     {/* <hr /> */}
                     <option>Je veux plus d'informations sur Zacharie</option>
+                    <option>Je souhaite ajouter une entreprise à mon profil</option>
                     <option>Je rencontre un problème lors de l'utilisation de Zacharie</option>
                     <option>Je n'arrive pas à me connecter à Zacharie</option>
                     <option>Je souhaite proposer une amélioration</option>

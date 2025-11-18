@@ -22,8 +22,13 @@ export default function TableauDeBordLayout() {
   if (!user) {
     return <Chargement />;
   }
-  console.log('user', user.activated);
-  if (!user?.activated && !location.pathname.includes('mon-profil') && !location.pathname.includes('admin')) {
+
+  if (
+    !user?.activated &&
+    !location.pathname.includes('mon-profil') &&
+    !location.pathname.includes('admin') &&
+    !location.pathname.includes('contact')
+  ) {
     return <DeactivatedAccount />;
   }
 
