@@ -504,10 +504,7 @@ router.post(
 
       if (existingFei.fei_next_owner_role !== savedFei.fei_next_owner_role) {
         let isCircuitCourt = false;
-        if (savedFei.fei_next_owner_role === FeiOwnerRole.COMMERCE_DE_DETAIL) isCircuitCourt = true;
-        if (savedFei.fei_next_owner_role === FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF)
-          isCircuitCourt = true;
-        if (savedFei.fei_next_owner_role === FeiOwnerRole.CONSOMMATEUR_FINAL) isCircuitCourt = true;
+       const isCircuitCourt = [FeiOwnerRole.COMMERCE_DE_DETAIL, FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF, FeiOwnerRole.CONSOMMATEUR_FINAL].includes(savedFei.fei_next_owner_role)
         if (isCircuitCourt) {
           const usersWorkingForEntity = (
             await prisma.entityAndUserRelations.findMany({
