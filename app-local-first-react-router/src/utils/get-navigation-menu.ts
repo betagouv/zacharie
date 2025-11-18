@@ -72,6 +72,10 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   }
   if (
     user?.roles.includes(UserRoles.COLLECTEUR_PRO) ||
+    user?.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE) ||
+    user?.roles.includes(UserRoles.ASSOCIATION_CARITATIVE) ||
+    user?.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
+    user?.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
     user?.roles.includes(UserRoles.ETG) ||
     user?.roles.includes(UserRoles.SVI)
   ) {
@@ -216,6 +220,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
 
   navigationBase.push({
     text: 'Contact',
+    isActive: location.pathname === '/app/tableau-de-bord/contact',
     linkProps: {
       to: '/app/tableau-de-bord/contact',
       href: '#',
