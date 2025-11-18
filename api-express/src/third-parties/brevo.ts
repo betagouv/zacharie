@@ -19,6 +19,7 @@ type SendEmailProps = {
     name: string;
     email: string;
   };
+  attachments?: brevo.SendSmtpEmailAttachmentInner[];
 };
 
 async function sendEmail(props: SendEmailProps) {
@@ -49,6 +50,9 @@ async function sendEmail(props: SendEmailProps) {
         name: 'Zacharie',
         email: 'contact@zacharie.beta.gouv.fr',
       };
+    }
+    if (props.attachments) {
+      sendSmtpEmail.attachment = props.attachments;
     }
     sendSmtpEmail.to = props.emails.map((email) => ({ email }));
     const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
