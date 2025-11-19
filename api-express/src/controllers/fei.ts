@@ -8,6 +8,7 @@ import {
   EntityRelationStatus,
   EntityRelationType,
   EntityTypes,
+  FeiOwnerRole,
   Prisma,
   User,
   UserRoles,
@@ -22,6 +23,7 @@ import {
 import { formatManualValidationSviEmail, formatSviAssignedEmail } from '~/utils/formatCarcasseEmail';
 import { sendWebhook } from '~/utils/api';
 import { capture } from '~/third-parties/sentry';
+import { getFichePdf } from '~/templates/get-fiche-pdf';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 router.post(
@@ -439,8 +441,8 @@ router.post(
       }
 
       if (
-        existingFei.fei_next_owner_role !== UserRoles.SVI &&
-        savedFei.fei_next_owner_role === UserRoles.SVI
+        existingFei.fei_next_owner_role !== FeiOwnerRole.SVI &&
+        savedFei.fei_next_owner_role === FeiOwnerRole.SVI
       ) {
         // this is the end of the fiche
         // send notification to examinateur initial
@@ -498,6 +500,86 @@ router.post(
           error: '',
         });
         return;
+      }
+
+      if (existingFei.fei_next_owner_role !== savedFei.fei_next_owner_role) {
+        const isCircuitCourt = (
+          [
+            FeiOwnerRole.COMMERCE_DE_DETAIL,
+            FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+            FeiOwnerRole.CONSOMMATEUR_FINAL,
+          ] as Array<FeiOwnerRole>
+        ).includes(savedFei.fei_next_owner_role);
+        if (isCircuitCourt) {
+          const usersWorkingForEntity = (
+            await prisma.entityAndUserRelations.findMany({
+              where: {
+                entity_id: body.fei_next_owner_entity_id as string,
+                relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                status: {
+                  in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                },
+                deleted_at: null,
+              },
+              include: {
+                UserRelatedWithEntity: {
+                  select: {
+                    id: true,
+                    web_push_tokens: true,
+                    native_push_tokens: true,
+                    notifications: true,
+                    prenom: true,
+                    nom_de_famille: true,
+                    email: true,
+                  },
+                },
+              },
+            })
+          ).map((relation) => relation.UserRelatedWithEntity);
+          for (const nextOwner of usersWorkingForEntity) {
+            if (nextOwner.id !== user.id) {
+              const email = [
+                `Bonjour,`,
+                `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Vous trouverez un résumé en pièce jointe, à conserver pour votre enregistrement.`,
+                `Pour consulter la fiche, rendez-vous sur Zacharie avec votre email ${nextOwner.email} : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
+                `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
+              ].join('\n\n');
+              await sendNotificationToUser({
+                user: nextOwner as User,
+                title: `${user.prenom} ${user.nom_de_famille} vous a attribué une fiche d'examen initial du gibier sauvage n° ${savedFei?.numero}`,
+                body: email,
+                email: email,
+                notificationLogAction: `FEI_ASSIGNED_TO_${savedFei.fei_next_owner_role}_${savedFei.numero}`,
+                attachments: [
+                  {
+                    content: await getFichePdf(savedFei),
+                    name: `${savedFei.numero}.pdf`,
+                  },
+                ],
+              });
+            }
+          }
+          const examinateur = savedFei.FeiExaminateurInitialUser;
+          if (examinateur) {
+            await sendWebhook(examinateur.id, 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR', {
+              feiNumero: savedFei.numero,
+            });
+          }
+          const premierDetenteur = savedFei.FeiPremierDetenteurUser;
+          if (premierDetenteur && premierDetenteur.id !== examinateur?.id) {
+            await sendWebhook(premierDetenteur.id, 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR', {
+              feiNumero: savedFei.numero,
+            });
+          }
+          res.status(200).send({
+            ok: true,
+            data: {
+              fei: savedFei,
+            },
+            error: '',
+          });
+          return;
+        }
       }
 
       const nextOwnerId = body.fei_next_owner_user_id as string;

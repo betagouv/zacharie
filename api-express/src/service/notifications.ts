@@ -1,4 +1,5 @@
 import webpush from 'web-push';
+import * as brevo from '@getbrevo/brevo';
 import { type User, UserNotifications } from '@prisma/client';
 import * as Sentry from '@sentry/node';
 import PQueue from 'p-queue';
@@ -31,6 +32,7 @@ type WebPushNotification = {
   email: string;
   notificationLogAction: string;
   img?: string;
+  attachments?: brevo.SendSmtpEmailAttachmentInner[];
 };
 
 export default async function queueSendNotificationToUser({
@@ -39,10 +41,11 @@ export default async function queueSendNotificationToUser({
   title,
   email,
   notificationLogAction,
+  attachments,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: WebPushNotification) {
   await queue.add(async () => {
-    await sendNotificationToUser({ user, body, title, email, notificationLogAction, img });
+    await sendNotificationToUser({ user, body, title, email, notificationLogAction, attachments, img });
   });
 }
 
@@ -52,6 +55,7 @@ async function sendNotificationToUser({
   title,
   email,
   notificationLogAction,
+  attachments,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: WebPushNotification) {
   if (user.notifications.includes(UserNotifications.PUSH)) {
@@ -219,6 +223,7 @@ async function sendNotificationToUser({
       emails: [user.email!],
       subject: title,
       text: email,
+      attachments: attachments,
     })
       .then(async (response) => {
         await prisma.notificationLog.create({
