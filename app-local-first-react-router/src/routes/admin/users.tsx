@@ -1,6 +1,9 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Table } from '@codegouvfr/react-dsfr/Table';
+import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Select } from '@codegouvfr/react-dsfr/Select';
+import { UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import type { AdminUsersResponse } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
@@ -10,18 +13,63 @@ import { clearCache } from '@app/services/indexed-db';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<NonNullable<AdminUsersResponse['data']['users']>>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRole, setSelectedRole] = useState<string>('');
+
+  // Extract unique roles from all users
+  const uniqueRoles = useMemo(() => {
+    const rolesSet = new Set<UserRoles>();
+    users.forEach((user) => {
+      user.roles?.forEach((role) => rolesSet.add(role));
+    });
+    return Array.from(rolesSet).sort();
+  }, [users]);
+
+  const filteredUsers = users.filter((user) => {
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const searchableText = [
+        user.prenom,
+        user.nom_de_famille,
+        user.email,
+        user.telephone,
+        user.addresse_ligne_1,
+        user.addresse_ligne_2,
+        user.code_postal,
+        user.ville,
+        ...user.roles,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (!searchableText.includes(query)) {
+        return false;
+      }
+    }
+
+    // Role filter
+    if (selectedRole) {
+      if (!user.roles?.includes(selectedRole as UserRoles)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
   const tabs: TabsProps['tabs'] = [
     {
       tabId: 'all',
-      label: `Tous (${users.length})`,
+      label: `Tous (${filteredUsers.length})`,
     },
     {
       tabId: 'activated',
-      label: `Activés (${users.filter((user) => user.activated).length})`,
+      label: `Activés (${filteredUsers.filter((user) => user.activated).length})`,
     },
     {
       tabId: 'deactivated',
-      label: `Désactivés (${users.filter((user) => !user.activated).length})`,
+      label: `Désactivés (${filteredUsers.filter((user) => !user.activated).length})`,
     },
   ];
   const [selectedTabId, setSelectedTabId] = useState(tabs[0].tabId);
@@ -49,6 +97,33 @@ export default function AdminUsers() {
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">Utilisateurs</h1>
           <section className="mb-6 bg-white md:shadow-sm">
+            <div className="space-y-4 p-4 md:p-8 md:pb-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Input
+                  label="Rechercher un utilisateur"
+                  nativeInputProps={{
+                    type: 'search',
+                    value: searchQuery,
+                    onChange: (e) => setSearchQuery(e.target.value),
+                    placeholder: 'Rechercher par nom, email, téléphone, adresse, rôle...',
+                  }}
+                />
+                <Select
+                  label="Filtrer par rôle"
+                  nativeSelectProps={{
+                    value: selectedRole,
+                    onChange: (e) => setSelectedRole(e.target.value),
+                  }}
+                >
+                  <option value="">Tous les rôles</option>
+                  {uniqueRoles.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
             <Tabs
               selectedTabId={selectedTabId}
               tabs={tabs}
@@ -61,7 +136,7 @@ export default function AdminUsers() {
                   noCaption
                   className="[&_td]:align-top"
                   headers={['Dates', 'Identité', 'Roles', 'Actions']}
-                  data={users
+                  data={filteredUsers
                     .filter((user) => {
                       if (selectedTabId === 'activated') {
                         return user.activated;
