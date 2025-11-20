@@ -87,11 +87,11 @@ export default function Filters<T extends Filter = Filter>({
           })}
         </ul>
       </div>
-      <div className="z-10 mb-4 flex w-full flex-col justify-center gap-2 self-center border-b border-gray-300 pb-2 print:hidden">
+      <div className="z-10 mb-4 flex w-full flex-col justify-center gap-2 self-center overflow-x-auto border-b border-gray-300 pb-2 print:hidden">
         <div className="flex flex-wrap">
           <p className="m-0">{title}</p>
         </div>
-        <div className="w-full">
+        <div className="w-full min-w-0">
           {filters.map((filter: T, index: number) => {
             // filter: field, value, type
             const filterValues = getFilterOptionsByField(filter.field!, base, index);
@@ -133,13 +133,13 @@ export default function Filters<T extends Filter = Filter>({
             return (
               <div
                 data-test-id={`filter-${index}`}
-                className="mx-auto mb-2.5 flex items-center gap-2"
+                className="mx-auto mb-2.5 flex flex-col gap-2 sm:flex-row sm:items-center"
                 key={`${filter.field || 'empty'}${index}`}
               >
-                <div className="min-w-[85px] shrink-0">
-                  <p className="m-0 w-full pr-2 text-right">{index === 0 ? 'Filtrer par' : 'ET'}</p>
+                <div className="min-w-[85px] shrink-0 sm:pr-2">
+                  <p className="m-0 w-full text-left sm:text-right">{index === 0 ? 'Filtrer par' : 'ET'}</p>
                 </div>
-                <div className="w-96 min-w-[384px]">
+                <div className="w-full sm:w-96 sm:min-w-[200px]">
                   {/* <Select
                     label=""
                     nativeSelectProps={{
@@ -162,7 +162,7 @@ export default function Filters<T extends Filter = Filter>({
                       );
                     })}
                   </Select> */}
-                  <div className="tw-w-96 tw-min-w-[384px]">
+                  <div className="sm:tw-w-96 sm:tw-min-w-[200px] w-full">
                     <SelectCustom
                       // @ts-expect-error: The expected type comes from property 'options' which is declared here on type 'IntrinsicAttributes & SelectCustomProps<T, false, GroupBase<T>>'
                       options={filterFields}
@@ -179,7 +179,7 @@ export default function Filters<T extends Filter = Filter>({
                     />
                   </div>
                 </div>
-                <div className="grow">
+                <div className="w-full grow sm:w-auto">
                   <ValueSelector
                     index={index}
                     field={filter.field}
@@ -189,11 +189,11 @@ export default function Filters<T extends Filter = Filter>({
                     onChangeValue={onChangeValue}
                   />
                 </div>
-                <div className="shrink-0">
+                <div className="w-full shrink-0 sm:w-auto">
                   {!!filters.filter((_filter: T) => Boolean(_filter.field)).length && (
                     <button
                       type="button"
-                      className="h-full w-full rounded-sm border border-gray-300 bg-white px-2.5 py-2 text-sm text-error-main-525 hover:bg-error-850"
+                      className="text-error-main-525 hover:bg-error-850 h-full w-full rounded-sm border border-gray-300 bg-white px-2.5 py-2 text-sm"
                       onClick={onRemoveFilter}
                     >
                       Retirer
@@ -281,7 +281,7 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
 
   if (['text', 'textarea'].includes(type)) {
     return (
-      <div className="flex">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           name={name}
           className={`tailwindui grow ${unfilledChecked ? 'text-gray-400!' : ''}`}
@@ -293,7 +293,7 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
             onChangeValue(e.target.value);
           }}
         />
-        <div className="ml-2 flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 sm:ml-2">
           <input
             type="checkbox"
             id="unfilled"
@@ -314,11 +314,11 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
 
   if (['date-with-time', 'date', 'duration'].includes(type)) {
     return (
-      <div className="-mx-4 flex flex-wrap items-stretch">
+      <div className="flex flex-wrap items-stretch sm:-mx-4">
         <div
           className={[
-            'h-full pl-4',
-            value?.comparator !== 'unfilled' ? 'basis-1/2 pr-2' : 'basis-full pr-4',
+            'h-full sm:pl-4',
+            value?.comparator !== 'unfilled' ? 'w-full sm:basis-1/2 sm:pr-2' : 'w-full sm:basis-full sm:pr-4',
           ].join(' ')}
         >
           {/* <Select
@@ -352,10 +352,10 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
           />
         </div>
         {value?.comparator !== 'unfilled' && (
-          <div className="basis-1/2 pr-4">
+          <div className="w-full sm:basis-1/2 sm:pr-4">
             <input
               id={name}
-              className="tailwindui"
+              className="tailwindui w-full"
               type="date"
               value={value?.date ? dayjs(value?.date).format('YYYY-MM-DD') : ''}
               onChange={(e) => onChangeValue({ date: e.target.value, comparator })}
@@ -368,13 +368,13 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
 
   if (['number'].includes(type)) {
     return (
-      <div className="-mx-4 flex flex-wrap items-center">
+      <div className="flex flex-wrap items-center sm:-mx-4">
         <div
           className={[
-            'pl-4 pr-2',
-            value?.comparator === 'unfilled' ? 'basis-full' : '',
-            value?.comparator === 'between' ? 'basis-5/12' : '',
-            !['unfilled', 'between'].includes(value?.comparator) ? 'basis-1/2' : '',
+            'sm:pr-2 sm:pl-4',
+            value?.comparator === 'unfilled' ? 'w-full sm:basis-full' : '',
+            value?.comparator === 'between' ? 'w-full sm:basis-5/12' : '',
+            !['unfilled', 'between'].includes(value?.comparator) ? 'w-full sm:basis-1/2' : '',
           ].join(' ')}
         >
           {/* <Select
@@ -408,10 +408,15 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
           />
         </div>
         {value?.comparator !== 'unfilled' && (
-          <div className={['pr-4', value?.comparator === 'between' ? 'basis-3/12' : 'basis-1/2'].join(' ')}>
+          <div
+            className={[
+              'w-full sm:pr-4',
+              value?.comparator === 'between' ? 'sm:basis-3/12' : 'sm:basis-1/2',
+            ].join(' ')}
+          >
             <input
               name={name}
-              className="tailwindui"
+              className="tailwindui w-full"
               type="number"
               min="0"
               value={value?.number || ''}
@@ -423,11 +428,11 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
         )}
         {value?.comparator === 'between' && (
           <>
-            <div>et</div>
-            <div className="basis-3/12 px-4">
+            <div className="w-full text-center sm:w-auto">et</div>
+            <div className="w-full sm:basis-3/12 sm:px-4">
               <input
                 name={name}
-                className="tailwindui"
+                className="tailwindui w-full"
                 type="number"
                 min="0"
                 value={value?.number2 || ''}

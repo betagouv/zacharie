@@ -125,20 +125,113 @@ export default function RegistreCarcasses() {
 
   useSaveScroll('registre-carcasses-scrollY');
 
+  const renderMobileCarcasse = (carcasse: (typeof carcassesRegistry)[number], _index: number) => {
+    const isChecked = selectedCarcassesIds.includes(carcasse.zacharie_carcasse_id);
+    return (
+      <tr
+        key={carcasse.zacharie_carcasse_id}
+        className={`border-b border-gray-200 ${isChecked ? 'bg-blue-50' : ''}`}
+      >
+        <td className="p-3">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                className="checked:accent-action-high-blue-france mt-1 border-2"
+                checked={isChecked}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedCarcassesIds([...selectedCarcassesIds, carcasse.zacharie_carcasse_id]);
+                  } else {
+                    setSelectedCarcassesIds(
+                      selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id),
+                    );
+                  }
+                }}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-col gap-1">
+                  <Link
+                    to={`/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
+                    className="font-semibold break-words text-blue-600 hover:underline"
+                  >
+                    {carcasse.numero_bracelet}
+                  </Link>
+                  <span className="text-xs text-gray-500">{carcasse.espece}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1 pl-7 text-sm">
+              <div>
+                <span className="font-semibold">Premier détenteur: </span>
+                <span>{carcasse.fei_premier_detenteur_name_cache || '-'}</span>
+              </div>
+              <div>
+                <span className="font-semibold">Statut: </span>
+                <span>{getCarcasseStatusLabel(carcasse)}</span>
+              </div>
+              <div>
+                <span className="font-semibold">Date transmission SVI: </span>
+                <span>
+                  {carcasse.fei_svi_assigned_at
+                    ? new Date(carcasse.fei_svi_assigned_at).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '-'}
+                </span>
+              </div>
+              <div>
+                <span className="font-semibold">Date décision: </span>
+                <span>
+                  {carcasse.svi_carcasse_status_set_at
+                    ? new Date(carcasse.svi_carcasse_status_set_at).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '-'}
+                </span>
+              </div>
+              <div>
+                <span className="font-semibold">Archivé: </span>
+                <span>{carcasse.svi_carcasse_archived ? 'Oui' : 'Non'}</span>
+              </div>
+              <div>
+                <span className="font-semibold">Fiche: </span>
+                <Link
+                  to={`/app/tableau-de-bord/fei/${carcasse.fei_numero}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  {carcasse.fei_numero}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
   if (loading) {
     return <Chargement />;
   }
 
   return (
-    <div className="fr-container--fluid fr-my-md-14v">
+    <div className="fr-container--fluid fr-my-4 sm:fr-my-md-14v">
       <title>
         Registre de carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
 
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 p-4">
-          <h1 className="fr-h2 fr-container mx-auto mb-8 flex flex-col">Registre des carcasses</h1>
-          <section className="fr-container mb-6 bg-white p-4">
+        <div className="fr-col-12 p-2 sm:p-4">
+          <h1 className="fr-h2 fr-container mx-auto mb-4 flex flex-col sm:mb-8">Registre des carcasses</h1>
+          <section className="fr-container mb-4 overflow-x-auto bg-white p-2 sm:mb-6 sm:p-4">
             <Filters
               onChange={setFilters}
               base={filterableFields}
@@ -146,33 +239,38 @@ export default function RegistreCarcasses() {
               saveInURLParams={false}
             />
           </section>
-          <section className="flex flex-row justify-between">
-            <p className="mb-6 text-sm opacity-50">
-              {filteredData.length !== carcassesRegistry.length ? (
-                <>
-                  Nombre d'éléments filtrés: {filteredData.length}
-                  <br />
-                  (total: {carcassesRegistry.length})
-                  <br />
-                </>
-              ) : (
-                <>Total: {carcassesRegistry.length}</>
-              )}
-              <br />
-              Nombre d'éléments par page:
-              {itemsPerPageOptions.map((option) => {
-                return (
-                  <button
-                    className={['px-4 py-2', itemsPerPage === option ? 'underline' : ''].join(' ')}
-                    onClick={() => setItemsPerPage(option)}
-                    key={option}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </p>
-            <div className="my-2 hidden items-center justify-end gap-2 sm:flex">
+          <section className="mb-4 flex flex-col gap-4 sm:mb-0 sm:flex-row sm:justify-between">
+            <div className="flex flex-col">
+              <p className="mb-2 text-sm opacity-50 sm:mb-6">
+                {filteredData.length !== carcassesRegistry.length ? (
+                  <>
+                    Nombre d'éléments filtrés: {filteredData.length}
+                    <br />
+                    (total: {carcassesRegistry.length})
+                  </>
+                ) : (
+                  <>Total: {carcassesRegistry.length}</>
+                )}
+              </p>
+              <div className="flex flex-wrap items-center gap-1 sm:gap-0">
+                <span className="mr-2 text-sm opacity-50">Nombre d'éléments par page:</span>
+                {itemsPerPageOptions.map((option) => {
+                  return (
+                    <button
+                      className={[
+                        'px-2 py-1 text-sm sm:px-4 sm:py-2',
+                        itemsPerPage === option ? 'font-semibold underline' : '',
+                      ].join(' ')}
+                      onClick={() => setItemsPerPage(option)}
+                      key={option}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex items-center justify-start gap-2 sm:justify-end">
               <Button
                 onClick={() => {
                   const selectedCarcassesObject: Record<string, boolean> = {};
@@ -184,18 +282,24 @@ export default function RegistreCarcasses() {
                   );
                 }}
                 disabled={selectedCarcassesIds.length === 0 || isExporting}
+                className="w-full sm:w-auto"
               >
-                Télécharger un fichier Excel avec les carcasses sélectionnées ({selectedCarcassesIds.length})
+                <span className="hidden sm:inline">
+                  Télécharger un fichier Excel avec les carcasses sélectionnées ({selectedCarcassesIds.length}
+                  )
+                </span>
+                <span className="sm:hidden">Exporter ({selectedCarcassesIds.length})</span>
               </Button>
             </div>
           </section>
-          <section className="mb-6 bg-white md:shadow-sm">
+          <section className="mb-4 overflow-x-auto bg-white sm:mb-6 md:shadow-sm">
             <TableFilterable
               data={paginatedData}
               rowKey="zacharie_carcasse_id"
               withCheckbox
               onCheck={setSelectedCarcassesIds}
               checked={selectedCarcassesIds}
+              renderCellSmallDevices={renderMobileCarcasse}
               columns={[
                 {
                   dataKey: 'zacharie_carcasse_id',
@@ -286,9 +390,9 @@ export default function RegistreCarcasses() {
               // onSort={() => {}}
               // onCheck={() => {}}
             />
-            <div className="flex justify-evenly py-6">
+            <div className="flex justify-center overflow-x-auto py-4 sm:justify-start sm:py-6">
               <Pagination
-                className="mt-6 flex justify-start"
+                className="mt-4 flex justify-center sm:mt-6 sm:justify-start"
                 count={Math.ceil(filteredData.length / itemsPerPage)}
                 defaultPage={page}
                 getPageLinkProps={(pageNumber) => {
