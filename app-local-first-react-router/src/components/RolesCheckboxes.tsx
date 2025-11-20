@@ -84,6 +84,72 @@ export default function RolesCheckBoxes({
       },
     },
     {
+      label: 'Commerce de détail',
+      hintText:
+        'Boucherie, charcuterie, restaurant, traiteur, alimentation générale, supérette, grande et moyenne surface...',
+      nativeInputProps: {
+        name: Prisma.UserScalarFieldEnum.roles,
+        value: UserRoles.ETG,
+        onChange: handleCheckboxChange,
+        checked: checkedRoles.includes(UserRoles.COMMERCE_DE_DETAIL),
+        className: me?.roles.includes(UserRoles.ADMIN)
+          ? ''
+          : 'pointer-events-none cursor-not-allowed opacity-50',
+      },
+    },
+    {
+      label: 'Cantine ou restauration collective',
+      hintText: 'Cantine, restauration collective, etc.',
+      nativeInputProps: {
+        name: Prisma.UserScalarFieldEnum.roles,
+        value: UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE,
+        onChange: handleCheckboxChange,
+        checked: checkedRoles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE),
+        className: me?.roles.includes(UserRoles.ADMIN)
+          ? ''
+          : 'pointer-events-none cursor-not-allowed opacity-50',
+      },
+    },
+    {
+      label: 'Association caritative',
+      hintText: 'Association caritative, etc.',
+      nativeInputProps: {
+        name: Prisma.UserScalarFieldEnum.roles,
+        value: UserRoles.ASSOCIATION_CARITATIVE,
+        onChange: handleCheckboxChange,
+        checked: checkedRoles.includes(UserRoles.ASSOCIATION_CARITATIVE),
+        className: me?.roles.includes(UserRoles.ADMIN)
+          ? ''
+          : 'pointer-events-none cursor-not-allowed opacity-50',
+      },
+    },
+    {
+      label: 'Repas de chasse ou associatif',
+      hintText: 'Repas de chasse ou associatif, etc.',
+      nativeInputProps: {
+        name: Prisma.UserScalarFieldEnum.roles,
+        value: UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+        onChange: handleCheckboxChange,
+        checked: checkedRoles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF),
+        className: me?.roles.includes(UserRoles.ADMIN)
+          ? ''
+          : 'pointer-events-none cursor-not-allowed opacity-50',
+      },
+    },
+    {
+      label: 'Consommateur final',
+      hintText: 'Je suis consommateur final et je chasse pour ma consommation personnelle',
+      nativeInputProps: {
+        name: Prisma.UserScalarFieldEnum.roles,
+        value: UserRoles.CONSOMMATEUR_FINAL,
+        onChange: handleCheckboxChange,
+        checked: checkedRoles.includes(UserRoles.CONSOMMATEUR_FINAL),
+        className: me?.roles.includes(UserRoles.ADMIN)
+          ? ''
+          : 'pointer-events-none cursor-not-allowed opacity-50',
+      },
+    },
+    {
       label: "Service Vétérinaire d'Inspection (SVI)",
       hintText: "Vous êtes agréé par l'État pour effectuer des inspections vétérinaires",
       nativeInputProps: {

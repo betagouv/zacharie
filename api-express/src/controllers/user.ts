@@ -1544,6 +1544,8 @@ router.get(
       const circuitCourt = allEntities.filter(
         (entity) =>
           entity.type === EntityTypes.COMMERCE_DE_DETAIL ||
+          entity.type === EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE ||
+          entity.type === EntityTypes.ASSOCIATION_CARITATIVE ||
           entity.type === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
           entity.type === EntityTypes.CONSOMMATEUR_FINAL,
       );

@@ -15,8 +15,10 @@ enum UserRoles {
   ETG // Etablissement de Traitement du Gibier sauvage
   SVI // Service Vétérinaire d'Inspection
   COMMERCE_DE_DETAIL // Commerce de détail, boucherie, charcuterie, restaurateur, associatino carritative
+  CANTINE_OU_RESTAURATION_COLLECTIVE // Repas de chasse ou associatif
+  ASSOCIATION_CARITATIVE // Repas de chasse ou associatif
   REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
-  CONSOMMATEUR_FINAL // Je chasse pour ma consommation personnelle
+  CONSOMMATEUR_FINAL // Je suis consommateur final 
 }
 
 enum UserEtgRoles {
@@ -97,9 +99,11 @@ enum EntityTypes {
   CCG
   ETG
   SVI
-  COMMERCE_DE_DETAIL // Commerce de détail, boucherie, charcuterie, restaurateur, associatino carritative
-  REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
-  CONSOMMATEUR_FINAL // Je chasse pour ma consommation personnelle
+  COMMERCE_DE_DETAIL
+  CANTINE_OU_RESTAURATION_COLLECTIVE
+  ASSOCIATION_CARITATIVE
+  REPAS_DE_CHASSE_OU_ASSOCIATIF
+  CONSOMMATEUR_FINAL
 }
 
 model Entity {
@@ -284,6 +288,8 @@ enum FeiOwnerRole {
   COLLECTEUR_PRO
   SVI
   COMMERCE_DE_DETAIL
+  CANTINE_OU_RESTAURATION_COLLECTIVE
+  ASSOCIATION_CARITATIVE
   REPAS_DE_CHASSE_OU_ASSOCIATIF
   CONSOMMATEUR_FINAL
 }
