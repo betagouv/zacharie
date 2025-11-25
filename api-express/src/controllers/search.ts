@@ -21,24 +21,55 @@ router.get(
       return;
     }
 
-    if (!user.roles.includes(UserRoles.SVI)) {
-      // console.log('user is not svi');
+    if (![UserRoles.SVI, UserRoles.CHASSEUR].some((role) => user.roles.includes(role))) {
+      // console.log('user is not svi or chasseur');
       res.status(200).send({ ok: false, data: [], error: '' });
       return;
     }
 
-    const svi_entity_id = await prisma.entityAndUserRelations
-      .findFirst({
-        where: {
-          deleted_at: null,
-          owner_id: user.id,
-          EntityRelatedWithUser: {
-            type: UserRoles.SVI,
-          },
-        },
-      })
-      .then((relation) => relation?.entity_id);
+    const isSvi = user.roles.includes(UserRoles.SVI);
+    const isChasseur = user.roles.includes(UserRoles.CHASSEUR);
 
+    // Build FEI filter based on user role
+    let feiWhereFilter: any = {
+      deleted_at: null,
+    };
+
+    if (isSvi) {
+      const svi_entity_id = await prisma.entityAndUserRelations
+        .findFirst({
+          where: {
+            deleted_at: null,
+            owner_id: user.id,
+            EntityRelatedWithUser: {
+              type: UserRoles.SVI,
+            },
+          },
+        })
+        .then((relation) => relation?.entity_id);
+
+      feiWhereFilter = {
+        ...feiWhereFilter,
+        svi_entity_id,
+        svi_assigned_at: {
+          gte: dayjs().subtract(20, 'days').toDate(),
+        },
+      };
+    } else if (isChasseur) {
+      feiWhereFilter = {
+        ...feiWhereFilter,
+        OR: [
+          {
+            examinateur_initial_user_id: user.id,
+          },
+          {
+            premier_detenteur_user_id: user.id,
+          },
+        ],
+      };
+    }
+
+    // Search by carcasse numero_bracelet
     const carcasses = await prisma.carcasse.findMany({
       where: {
         numero_bracelet: searchQuery,
@@ -52,12 +83,7 @@ router.get(
             intermediaire_carcasse_manquante: null,
           },
         ],
-        Fei: {
-          svi_entity_id,
-          svi_assigned_at: {
-            gte: dayjs().subtract(2, 'months').toDate(),
-          },
-        },
+        Fei: feiWhereFilter,
       },
       include: {
         Fei: {
@@ -77,13 +103,17 @@ router.get(
         ok: true,
         data: carcasses.map((carcasse) => ({
           searchQuery,
-          redirectUrl: `/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
+          redirectUrl: isSvi
+            ? `/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`
+            : `/app/tableau-de-bord/fei/${carcasse.fei_numero}`,
           carcasse_numero_bracelet: carcasse.numero_bracelet,
           carcasse_espece: carcasse.espece || '',
           carcasse_type: carcasse.type,
           fei_numero: carcasse.fei_numero,
           fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
-          fei_svi_assigned_at: dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY'),
+          fei_svi_assigned_at: carcasse.Fei.svi_assigned_at
+            ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY')
+            : '',
           fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
         })),
         error: '',
@@ -91,6 +121,7 @@ router.get(
       return;
     }
 
+    // Search by carcasseIntermediaire commentaire
     const carcasseIntermediaires = await prisma.carcasseIntermediaire.findMany({
       where: {
         commentaire: {
@@ -105,12 +136,7 @@ router.get(
         const carcassesFound = await prisma.carcasse.findMany({
           where: {
             numero_bracelet: carcasseIntermediaire.numero_bracelet,
-            Fei: {
-              svi_entity_id,
-              svi_assigned_at: {
-                gte: dayjs().subtract(20, 'days').toDate(),
-              },
-            },
+            Fei: feiWhereFilter,
           },
           include: {
             Fei: {
@@ -133,13 +159,17 @@ router.get(
           ok: true,
           data: carcasses.map((carcasse) => ({
             searchQuery,
-            redirectUrl: `/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
+            redirectUrl: isSvi
+              ? `/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`
+              : `/app/tableau-de-bord/fei/${carcasse.fei_numero}`,
             carcasse_numero_bracelet: carcasse.numero_bracelet,
             carcasse_espece: carcasse.espece || '',
             carcasse_type: carcasse.type,
             fei_numero: carcasse.fei_numero,
             fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
-            fei_svi_assigned_at: dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY'),
+            fei_svi_assigned_at: carcasse.Fei.svi_assigned_at
+              ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY')
+              : '',
             fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
           })),
           error: '',
@@ -148,15 +178,13 @@ router.get(
       }
     }
 
+    // Search by FEI numero
     const feis = await prisma.fei.findMany({
       where: {
         numero: {
           contains: searchQuery,
         },
-        svi_entity_id: svi_entity_id,
-        svi_assigned_at: {
-          gte: dayjs().subtract(20, 'days').toDate(),
-        },
+        ...feiWhereFilter,
       },
     });
 
@@ -171,7 +199,7 @@ router.get(
           carcasse_type: '',
           fei_numero: fei.numero,
           fei_date_mise_a_mort: dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
-          fei_svi_assigned_at: dayjs(fei.svi_assigned_at).format('DD/MM/YYYY'),
+          fei_svi_assigned_at: fei.svi_assigned_at ? dayjs(fei.svi_assigned_at).format('DD/MM/YYYY') : '',
           fei_commune_mise_a_mort: fei.commune_mise_a_mort!,
         })),
         error: '',
