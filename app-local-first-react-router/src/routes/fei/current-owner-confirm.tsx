@@ -20,15 +20,13 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import dayjs from 'dayjs';
+import { useIsCircuitCourt } from '@app/utils/circuit-court';
 // import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 
 export default function CurrentOwnerConfirm() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const isCircuitCourt =
-    user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
-    user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
-    user.roles.includes(UserRoles.CONSOMMATEUR_FINAL);
+  const isCircuitCourt = useIsCircuitCourt();
   const updateFei = useZustandStore((state) => state.updateFei);
   const createFeiIntermediaire = useZustandStore((state) => state.createFeiIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);

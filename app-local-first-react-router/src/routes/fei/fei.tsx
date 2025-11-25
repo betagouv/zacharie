@@ -17,6 +17,7 @@ import CurrentOwnerConfirm from './current-owner-confirm';
 import DeleteFei from './delete-fei';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import CircuitCourt from './circuirt-court';
+import { useIsCircuitCourt } from '@app/utils/circuit-court';
 
 export default function FeiLoader() {
   const params = useParams();
@@ -48,10 +49,7 @@ export default function FeiLoader() {
 function Fei() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const isCircuitCourt =
-    user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
-    user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
-    user.roles.includes(UserRoles.CONSOMMATEUR_FINAL);
+  const isCircuitCourt = useIsCircuitCourt();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
@@ -111,9 +109,6 @@ function Fei() {
         return userWasIntermediaire.intermediaire_role;
       }
     }
-    if (isCircuitCourt) {
-      return user.roles[0] as FeiOwnerRole;
-    }
     return null;
   }, [
     user.roles,
@@ -124,7 +119,6 @@ function Fei() {
     fei.examinateur_initial_user_id,
     nextOwnerEntity?.relation,
     intermediaires,
-    isCircuitCourt,
   ]);
 
   return (

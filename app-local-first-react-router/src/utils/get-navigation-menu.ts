@@ -6,13 +6,14 @@ import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { createNewFei } from './create-new-fei';
 import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
+import { useIsCircuitCourt } from './circuit-court';
 
 export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
   const user = useMostFreshUser('useLoggedInNavigationMenu');
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
   const isNotActivated = !user?.activated;
-
+  const isCircuitCourt = useIsCircuitCourt();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -71,11 +72,8 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     });
   }
   if (
+    isCircuitCourt ||
     user?.roles.includes(UserRoles.COLLECTEUR_PRO) ||
-    user?.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE) ||
-    user?.roles.includes(UserRoles.ASSOCIATION_CARITATIVE) ||
-    user?.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
-    user?.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
     user?.roles.includes(UserRoles.ETG) ||
     user?.roles.includes(UserRoles.SVI)
   ) {

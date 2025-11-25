@@ -7,8 +7,7 @@ import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import useZustandStore from '@app/zustand/store';
-import useUser from '@app/zustand/user';
-import { UserRoles } from '@prisma/client';
+import { useIsCircuitCourt } from '@app/utils/circuit-court';
 
 interface CardProps {
   fei: FeiDone;
@@ -42,11 +41,7 @@ export default function CardFiche({
   filter,
 }: CardProps) {
   const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
-  const me = useUser((state) => state.user!);
-  const isCircuitCourt =
-    me.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
-    me.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
-    me.roles.includes(UserRoles.CONSOMMATEUR_FINAL);
+  const isCircuitCourt = useIsCircuitCourt();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dataIsSynced = useZustandStore((state) => state.dataIsSynced);

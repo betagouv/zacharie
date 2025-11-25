@@ -16,6 +16,7 @@ import dayjs from 'dayjs';
 import { useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
 import ItemNotEditable from './ItemNotEditable';
+import { useIsCircuitCourt } from '@app/utils/circuit-court';
 
 interface CardCarcasseProps {
   carcasse: Carcasse;
@@ -217,10 +218,7 @@ function CarcasseDetails({
   motifRefus: string;
 }) {
   const user = useUser((state) => state.user)!;
-  const isCircuitCourt =
-    user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
-    user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
-    user.roles.includes(UserRoles.CONSOMMATEUR_FINAL);
+  const isCircuitCourt = useIsCircuitCourt();
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const users = useZustandStore((state) => state.users);
