@@ -343,13 +343,8 @@ function CarcasseExaminateur() {
                             <InputMultiSelect
                               data={referentielAnomaliesCarcasseList}
                               label="Ajouter une nouvelle anomalie"
-                              hintText={
-                                <button type="button" onClick={() => anomaliesCarcasseModal.open()}>
-                                  Voir le référentiel des saisies de carcasse en{' '}
-                                  <u className="inline">cliquant ici</u>
-                                </button>
-                              }
                               canEdit
+                              creatable
                               placeholder="Tapez une anomalie carcasse"
                               onChange={(newAnomalies) => {
                                 setAnomaliesCarcasse(newAnomalies);
@@ -361,6 +356,13 @@ function CarcasseExaminateur() {
                               }}
                               values={anomaliesCarcasse}
                             />
+                            <Button
+                              priority="secondary"
+                              type="button"
+                              onClick={() => anomaliesCarcasseModal.open()}
+                            >
+                              Ajouter depuis le référentiel des anomalies carcasse
+                            </Button>
                             <ModalTreeDisplay
                               data={referentielAnomaliesCarcasseTree}
                               modal={anomaliesCarcasseModal}
@@ -399,14 +401,9 @@ function CarcasseExaminateur() {
                             <div className="mt-4">
                               <InputMultiSelect
                                 data={grandGibierAbatsList}
-                                label="Observations (lésions) *"
-                                hintText={
-                                  <button type="button" onClick={() => anomaliesAbatsModal.open()}>
-                                    Voir le référentiel des saisies d'abats en{' '}
-                                    <u className="inline">cliquant ici</u>
-                                  </button>
-                                }
+                                label="Ajouter une nouvelle anomalie"
                                 canEdit
+                                creatable
                                 placeholder="Tapez une anomalie abats"
                                 onChange={(newAnomalies) => {
                                   setAnomaliesAbats(newAnomalies);
@@ -418,6 +415,13 @@ function CarcasseExaminateur() {
                                 }}
                                 values={anomaliesAbats}
                               />
+                              <Button
+                                priority="secondary"
+                                type="button"
+                                onClick={() => anomaliesAbatsModal.open()}
+                              >
+                                Ajouter depuis le référentiel des anomalies abats
+                              </Button>
                               <ModalTreeDisplay
                                 data={grandGibierAbatstree}
                                 modal={anomaliesAbatsModal}
