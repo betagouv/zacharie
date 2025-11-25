@@ -142,7 +142,7 @@ export default function TableauDeBordIndex() {
 
   function Actions() {
     return (
-      <div className="xs:flex-row relative my-2 flex flex-col items-end justify-end gap-2">
+      <div className="relative my-2 flex flex-col items-end justify-end gap-2 lg:flex-row">
         <Button
           priority="tertiary"
           className="hidden shrink-0 bg-white lg:flex"
@@ -255,8 +255,8 @@ export default function TableauDeBordIndex() {
           />
         )}
         <DropDownMenu
-          className="hidden lg:block"
           text="Action sur les fiches sélectionnées"
+          className="max-w-[321px]"
           isActive={selectedFeis.length > 0}
           menuLinks={[
             {
@@ -424,5 +424,7 @@ function FeisWrapper({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">{children}</div>;
+  return (
+    <div className="grid grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">{children}</div>
+  );
 }

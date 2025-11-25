@@ -125,7 +125,7 @@ export default function CardFiche({
     <div
       className={[
         'relative rounded-sm bg-white',
-        'w-full md:max-w-96',
+        'w-full max-w-96',
         isPrintSelected ? 'border-action-high-blue-france border-2' : 'border border-gray-200',
         menuOpen ? 'bg-active-tint' : '',
         disabledBecauseOffline ? 'cursor-not-allowed opacity-50' : '',
@@ -133,7 +133,7 @@ export default function CardFiche({
       key={simpleStatus + currentStepLabelShort + dataIsSynced}
     >
       {/* Print selection checkbox */}
-      <div className="absolute top-5 z-20 hidden w-full justify-end pr-5 lg:flex">
+      <div className="absolute top-5 z-20 flex w-full justify-end pr-5">
         <Checkbox
           small
           className="card-checkbox"
