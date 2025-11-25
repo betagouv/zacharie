@@ -247,6 +247,15 @@ export default function FEIExaminateurInitial() {
 
   const communesDeChasseFavorites = useGetCommunesDeChasseFavorites(!fei?.commune_mise_a_mort);
 
+  const isDateMiseAMortAfterToday = useMemo(() => {
+    if (!fei.date_mise_a_mort) {
+      return false;
+    }
+    const today = dayjs().startOf('day');
+    const dateMiseAMort = dayjs(fei.date_mise_a_mort).startOf('day');
+    return dateMiseAMort.isAfter(today);
+  }, [fei.date_mise_a_mort]);
+
   return (
     <>
       <Section
@@ -288,6 +297,14 @@ export default function FEIExaminateurInitial() {
             defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('YYYY-MM-DD') : '',
           }}
         />
+        {isDateMiseAMortAfterToday && (
+          <Alert
+            title="Attention"
+            className="mt-4"
+            severity="warning"
+            description="La date de mise à mort ne peut pas être postérieure à aujourd'hui."
+          />
+        )}
         <VilleComponent
           label="Commune de mise à mort&nbsp;*"
           key={fei?.commune_mise_a_mort}
