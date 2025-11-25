@@ -567,7 +567,6 @@ function FEICurrentIntermediaireContent({
           <div className="flex flex-col gap-4">
             {intermediaireCarcasses.map((intermediaireCarcasse) => {
               const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
-              console.log({ carcasse });
               return (
                 <Fragment key={carcasse.numero_bracelet}>
                   <CarcasseIntermediaireComp

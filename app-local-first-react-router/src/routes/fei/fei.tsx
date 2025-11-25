@@ -16,6 +16,7 @@ import FeiStepper from '@app/components/FeiStepper';
 import CurrentOwnerConfirm from './current-owner-confirm';
 import DeleteFei from './delete-fei';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import CircuitCourt from './circuirt-court';
 
 export default function FeiLoader() {
   const params = useParams();
@@ -47,6 +48,10 @@ export default function FeiLoader() {
 function Fei() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
+  const isCircuitCourt =
+    user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
+    user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
+    user.roles.includes(UserRoles.CONSOMMATEUR_FINAL);
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
@@ -106,6 +111,9 @@ function Fei() {
         return userWasIntermediaire.intermediaire_role;
       }
     }
+    if (isCircuitCourt) {
+      return user.roles[0] as FeiOwnerRole;
+    }
     return null;
   }, [
     user.roles,
@@ -116,6 +124,7 @@ function Fei() {
     fei.examinateur_initial_user_id,
     nextOwnerEntity?.relation,
     intermediaires,
+    isCircuitCourt,
   ]);
 
   return (
@@ -134,15 +143,18 @@ function Fei() {
             className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0"
             key={fei.fei_current_owner_entity_id! + fei.fei_current_owner_user_id!}
           >
-            {showInterface === FeiOwnerRole.SVI && <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>}
+            {(showInterface === FeiOwnerRole.SVI || isCircuitCourt) && (
+              <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>
+            )}
             <FeiSousTraite />
             {showInterface !== FeiOwnerRole.SVI && <CurrentOwnerConfirm />}
-            {showInterface !== FeiOwnerRole.SVI && <FeiStepper />}
+            {showInterface !== FeiOwnerRole.SVI && !isCircuitCourt && <FeiStepper />}
             {showInterface === FeiOwnerRole.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
             {showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.ETG && <FEICurrentIntermediaire />}
             {showInterface === FeiOwnerRole.SVI && <FEI_SVI />}
+            {isCircuitCourt && <CircuitCourt />}
             <div className="m-8 flex flex-col justify-start gap-4">
               <Button
                 linkProps={{

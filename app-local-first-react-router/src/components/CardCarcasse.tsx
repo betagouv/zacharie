@@ -217,6 +217,10 @@ function CarcasseDetails({
   motifRefus: string;
 }) {
   const user = useUser((state) => state.user)!;
+  const isCircuitCourt =
+    user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
+    user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
+    user.roles.includes(UserRoles.CONSOMMATEUR_FINAL);
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const users = useZustandStore((state) => state.users);
@@ -552,7 +556,7 @@ function CarcasseDetails({
             withDiscs
           />
         </>
-      ) : (
+      ) : isCircuitCourt ? null : (
         <>
           <ItemNotEditable
             label="Inspection du Service Vétérinaire"

@@ -25,6 +25,10 @@ import dayjs from 'dayjs';
 export default function CurrentOwnerConfirm() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
+  const isCircuitCourt =
+    user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
+    user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
+    user.roles.includes(UserRoles.CONSOMMATEUR_FINAL);
   const updateFei = useZustandStore((state) => state.updateFei);
   const createFeiIntermediaire = useZustandStore((state) => state.createFeiIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
@@ -126,6 +130,9 @@ export default function CurrentOwnerConfirm() {
     nextOwnerEntity,
   ]);
 
+  if (isCircuitCourt) {
+    return null;
+  }
   if (!fei.fei_next_owner_role) {
     return null;
   }
