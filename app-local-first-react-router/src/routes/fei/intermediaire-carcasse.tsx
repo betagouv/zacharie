@@ -404,8 +404,8 @@ export default function CarcasseIntermediaireComp({
                           },
                           label:
                             carcasse.type === CarcasseType.GROS_GIBIER
-                              ? 'Carcasse écartée pour inspection'
-                              : 'Lot écarté pour inspection',
+                              ? 'Carcasse en peau écartée pour avis du SVI'
+                              : 'Lot en plume écarté pour avis du SVI',
                           hintText:
                             carcasse.type === CarcasseType.PETIT_GIBIER
                               ? "Si vous écartez seulement quelques animaux, ne cochez pas cette case, précisez le nombre d'animaux écartés pour inspection dans le commentaire"
