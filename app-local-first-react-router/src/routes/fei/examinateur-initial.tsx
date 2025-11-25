@@ -18,6 +18,7 @@ import Alert from '@codegouvfr/react-dsfr/Alert';
 import useGetCommunesDeChasseFavorites from '@app/utils/useGetCommunesDeChasseFavorites';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import Section from '@app/components/Section';
+import DateHeureValidationAlerts from './date-heure-validation-alerts';
 
 export default function FEIExaminateurInitial() {
   const params = useParams();
@@ -247,15 +248,6 @@ export default function FEIExaminateurInitial() {
 
   const communesDeChasseFavorites = useGetCommunesDeChasseFavorites(!fei?.commune_mise_a_mort);
 
-  const isDateMiseAMortAfterToday = useMemo(() => {
-    if (!fei.date_mise_a_mort) {
-      return false;
-    }
-    const today = dayjs().startOf('day');
-    const dateMiseAMort = dayjs(fei.date_mise_a_mort).startOf('day');
-    return dateMiseAMort.isAfter(today);
-  }, [fei.date_mise_a_mort]);
-
   return (
     <>
       <Section
@@ -297,14 +289,11 @@ export default function FEIExaminateurInitial() {
             defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('YYYY-MM-DD') : '',
           }}
         />
-        {isDateMiseAMortAfterToday && (
-          <Alert
-            title="Attention"
-            className="mt-4"
-            severity="warning"
-            description="La date de mise à mort ne peut pas être postérieure à aujourd'hui."
-          />
-        )}
+        <DateHeureValidationAlerts
+          fei={fei}
+          showHeureMiseAMortAlert={false}
+          showHeureEviscerationAlert={false}
+        />
         <VilleComponent
           label="Commune de mise à mort&nbsp;*"
           key={fei?.commune_mise_a_mort}
@@ -363,6 +352,7 @@ export default function FEIExaminateurInitial() {
             defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
           }}
         />
+        <DateHeureValidationAlerts fei={fei} showDateAlert={false} showHeureEviscerationAlert={false} />
         <hr className="mt-8" />
         <CarcassesExaminateur canEdit={canEdit} canEditAsPremierDetenteur={canEditAsPremierDetenteur} />
 
@@ -371,34 +361,37 @@ export default function FEIExaminateurInitial() {
             <hr className="mt-8" />
             <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
             {!onlyPetitGibier && (
-              <Component
-                label="Heure d'éviscération de la dernière carcasse&nbsp;*"
-                nativeInputProps={{
-                  id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                  name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                  type: 'time',
-                  required: true,
-                  autoComplete: 'off',
-                  onBlur: (e) => {
-                    const heure_evisceration_derniere_carcasse = e.target.value;
-                    if (!fei.heure_mise_a_mort_premiere_carcasse) {
-                      updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
-                    } else if (
-                      fei.heure_mise_a_mort_premiere_carcasse >= heure_evisceration_derniere_carcasse
-                    ) {
-                      alert(
-                        "L'heure d'éviscération de la dernière carcasse doit être supérieure à l'heure de mise à mort de la première carcasse",
-                      );
-                      // reset input
-                      e.target.value = '';
-                      updateFei(fei.numero, { heure_evisceration_derniere_carcasse: '' });
-                    } else {
-                      updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
-                    }
-                  },
-                  defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
-                }}
-              />
+              <>
+                <Component
+                  label="Heure d'éviscération de la dernière carcasse&nbsp;*"
+                  nativeInputProps={{
+                    id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                    name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                    type: 'time',
+                    required: true,
+                    autoComplete: 'off',
+                    onBlur: (e) => {
+                      const heure_evisceration_derniere_carcasse = e.target.value;
+                      if (!fei.heure_mise_a_mort_premiere_carcasse) {
+                        updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
+                      } else if (
+                        fei.heure_mise_a_mort_premiere_carcasse >= heure_evisceration_derniere_carcasse
+                      ) {
+                        alert(
+                          "L'heure d'éviscération de la dernière carcasse doit être supérieure à l'heure de mise à mort de la première carcasse",
+                        );
+                        // reset input
+                        e.target.value = '';
+                        updateFei(fei.numero, { heure_evisceration_derniere_carcasse: '' });
+                      } else {
+                        updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
+                      }
+                    },
+                    defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
+                  }}
+                />
+                <DateHeureValidationAlerts fei={fei} showDateAlert={false} showHeureMiseAMortAlert={false} />
+              </>
             )}
 
             <Component
