@@ -503,7 +503,7 @@ export async function getFichePdf(fei: Fei) {
           négatifs).
         </Text>
         <Text style={styles.footer}>
-          Signé électroniquement, le{' '}
+          Validée le{' '}
           {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format('DD/MM/YYYY à HH:mm')},
           via le service public Zacharie.beta.gouv.fr
         </Text>
