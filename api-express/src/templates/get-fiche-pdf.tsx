@@ -471,10 +471,10 @@ export async function getFichePdf(fei: Fei) {
                 N° identification: {centreDeCollecteEntity.numero_ddecpp}
               </Text>
             </View>
-            <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess, styles.rowHeader]}>
-              Adresse:{'\n'}
+            <View style={[styles.fieldValue]}>
+              <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>Adresse :</Text>
               {centreDeCollecteAdresse}
-            </Text>
+            </View>
           </View>
         )}
         <View style={styles.row} wrap={false}>
