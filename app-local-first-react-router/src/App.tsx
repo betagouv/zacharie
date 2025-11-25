@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet, useNavigate } from 'react-router';
+import { Routes, Route, Outlet, useNavigate, useLocation } from 'react-router';
 import LandingPage from './routes/landing';
 import RootDisplay from './components/RootDisplay';
 import Connexion from './routes/connexion';
@@ -336,17 +336,20 @@ function RestrictedRoute({
 }) {
   const user = useMostFreshUser('RestrictedRoute ' + id);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // console.log(id, 'restricted route user', user);
 
   useEffect(() => {
     if (!user?.id) {
-      navigate('/app/connexion?type=compte-existant');
+      const currentPath = location.pathname + location.search;
+      navigate(`/app/connexion?type=compte-existant&redirect=${encodeURIComponent(currentPath)}`);
     }
     if (roles.length > 0 && !roles.some((role) => user?.roles.includes(role))) {
-      navigate('/app/connexion?type=compte-existant');
+      const currentPath = location.pathname + location.search;
+      navigate(`/app/connexion?type=compte-existant&redirect=${encodeURIComponent(currentPath)}`);
     }
-  }, [user, navigate, roles]);
+  }, [user, navigate, roles, location]);
 
   if (!user?.id) {
     return <Chargement />;
