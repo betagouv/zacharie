@@ -42,6 +42,7 @@ import MonEntreprise from './routes/mon-profil/3-mon-entreprise';
 import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
 import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-mon-entreprise';
 import FeiEnvoyée from './routes/fei/envoyée';
+import DeactivatedAccount from './routes/deactivated';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -353,6 +354,10 @@ function RestrictedRoute({
 
   if (!user?.id) {
     return <Chargement />;
+  }
+
+  if (!user?.activated && !location.pathname.includes('mon-profil') && !location.pathname.includes('admin')) {
+    return <DeactivatedAccount />;
   }
 
   return children;
