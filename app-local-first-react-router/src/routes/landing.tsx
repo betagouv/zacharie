@@ -44,7 +44,7 @@ export default function LandingPage() {
                   size="large"
                   className="mt-8 block lg:mt-[10%]"
                   linkProps={{
-                    to: '/app/connexion?type=creation-de-compte',
+                    to: '/app/connexion/creation-de-compte',
                     href: '#',
                   }}
                 >
@@ -55,7 +55,7 @@ export default function LandingPage() {
                   priority="secondary"
                   className="mt-4 block border-white bg-white shadow-none!"
                   linkProps={{
-                    to: '/app/connexion?type=compte-existant',
+                    to: '/app/connexion',
                     href: '#',
                   }}
                 >
@@ -201,7 +201,7 @@ export default function LandingPage() {
             <Button
               size="large"
               linkProps={{
-                to: '/app/connexion?type=compte-existant',
+                to: '/app/connexion/creation-de-compte',
                 href: '#',
               }}
             >
