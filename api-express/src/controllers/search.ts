@@ -55,7 +55,7 @@ router.get(
         Fei: {
           svi_entity_id,
           svi_assigned_at: {
-            gte: dayjs().subtract(20, 'days').toDate(),
+            gte: dayjs().subtract(2, 'months').toDate(),
           },
         },
       },
