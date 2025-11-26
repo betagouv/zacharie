@@ -57,9 +57,16 @@ type CarcasseExcelData = {
   // Commentaires: string;
 };
 
-function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
-  data: Array<Record<T, unknown>>,
-) {
+type SimplifiedCarcasseExcelData = {
+  'Premier détenteur': string;
+  'Date de chasse': string;
+  'Numéro de bracelet': string;
+  Éspèce: string | null;
+};
+
+function createSheet<
+  T extends keyof CarcasseExcelData | keyof FeiExcelData | keyof SimplifiedCarcasseExcelData,
+>(data: Array<Record<T, unknown>>) {
   /*
   [
     [the, first, array, is, the, header],
@@ -204,6 +211,18 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
     return carcasseA['Numéro de bracelet'].localeCompare(carcasseB['Numéro de bracelet']);
   }
   return carcasseA.Éspèce!.localeCompare(carcasseB.Éspèce!);
+}
+
+function sortSimplifiedCarcasses(
+  carcasseA: SimplifiedCarcasseExcelData,
+  carcasseB: SimplifiedCarcasseExcelData,
+) {
+  if (carcasseA.Éspèce === carcasseB.Éspèce) {
+    return carcasseA['Numéro de bracelet'].localeCompare(carcasseB['Numéro de bracelet']);
+  }
+  if (!carcasseA.Éspèce) return 1;
+  if (!carcasseB.Éspèce) return -1;
+  return carcasseA.Éspèce.localeCompare(carcasseB.Éspèce);
 }
 
 export default function useExportFeis() {
@@ -414,8 +433,91 @@ export default function useExportFeis() {
     setIsExporting(false);
   }
 
+  async function onExportSimplifiedToXlsx(feiNumbers: Array<string>) {
+    setIsExporting(true);
+    // just to trigger the loading state, sorry Raph :)
+    await new Promise((res) => setTimeout(res));
+
+    const workbook = utils.book_new();
+    const simplifiedCarcasses: Array<SimplifiedCarcasseExcelData> = [];
+
+    try {
+      for (const feiId of feiNumbers) {
+        let fei = null;
+        fei = feis[feiId!];
+        if (!fei) {
+          fei = await loadFei(feiId);
+          if (!fei) {
+            console.error('fei not found', feiId);
+            continue;
+          }
+        }
+
+        const premierDetenteur = users[fei.premier_detenteur_user_id!];
+        const premierDetenteurEntity = entities[fei.premier_detenteur_entity_id!];
+        const fournisseur =
+          premierDetenteurEntity?.nom_d_usage ||
+          (premierDetenteur?.nom_de_famille
+            ? `${premierDetenteur?.prenom} ${premierDetenteur?.nom_de_famille}`
+            : '');
+
+        for (const carcasseId of carcassesIdsByFei[fei.numero] || []) {
+          const carcasse = carcasses[carcasseId];
+          if (!carcasse) {
+            console.error('carcasse not found', carcasseId);
+            continue;
+          }
+          if (carcasse.deleted_at) {
+            console.error('carcasse deleted', carcasseId);
+            continue;
+          }
+          if (carcasse.intermediaire_carcasse_manquante) {
+            console.error('carcasse manquante', carcasseId);
+            continue;
+          }
+          if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
+            console.error('carcasse refusée', carcasseId);
+            continue;
+          }
+
+          simplifiedCarcasses.push({
+            'Premier détenteur': fournisseur,
+            'Date de chasse': dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
+            'Numéro de bracelet': carcasse.numero_bracelet,
+            Éspèce: carcasse.espece,
+          });
+        }
+      }
+
+      const worksheet = createSheet(simplifiedCarcasses.sort(sortSimplifiedCarcasses));
+
+      // Set column widths for simplified export
+      worksheet['!cols'] = [
+        { wch: 40 }, // Fournisseur
+        { wch: 15 }, // Date de chasse
+        { wch: 25 }, // Numéro d'identification
+        { wch: 20 }, // Espèce
+      ];
+
+      utils.book_append_sheet(workbook, worksheet, 'Carcasses', true);
+
+      writeFile(workbook, `export-carcasses-simplifie-zacharie-${dayjs().format('YYYY-MM-DD-HH-mm')}.xlsx`, {
+        cellStyles: true,
+        bookSST: true,
+      });
+      return setIsExporting(false);
+    } catch (e: unknown) {
+      capture(e as Error);
+      alert(
+        "Une erreur est survenue lors de l'exportation simplifiée des fiches. L'équipe technique a été notifiée. Veuillez nous excuser pour la gêne occasionnée, et réessayer plus tard",
+      );
+    }
+    setIsExporting(false);
+  }
+
   return {
     isExporting,
     onExportToXlsx,
+    onExportSimplifiedToXlsx,
   };
 }
