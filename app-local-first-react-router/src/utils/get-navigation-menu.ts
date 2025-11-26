@@ -187,14 +187,6 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
           },
         },
         {
-          text: '+ Ajouter des utilisateurs',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/add-user',
-          linkProps: {
-            href: '#',
-            to: '/app/tableau-de-bord/admin/add-user',
-          },
-        },
-        {
           text: 'Liste des entités',
           isActive: location.pathname === '/app/tableau-de-bord/admin/entities',
           linkProps: {
@@ -203,27 +195,11 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
           },
         },
         {
-          text: '+ Ajouter des entités (SVI, ETG, etc.)',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/add-entity',
-          linkProps: {
-            href: '#',
-            to: '/app/tableau-de-bord/admin/add-entity',
-          },
-        },
-        {
           text: 'Liste des clés API',
           isActive: location.pathname === '/app/tableau-de-bord/admin/api-keys',
           linkProps: {
             href: '#',
             to: '/app/tableau-de-bord/admin/api-keys',
-          },
-        },
-        {
-          text: '+ Ajouter une clé API',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/api-key-add',
-          linkProps: {
-            href: '#',
-            to: '/app/tableau-de-bord/admin/api-key-add',
           },
         },
         {
