@@ -35,6 +35,8 @@ const IS_DEV = process.env.NODE_ENV === 'development'; // local dev
 const IS_TEST = process.env.NODE_ENV === 'test'; // when e2e testing
 const IS_DEV_OR_TEST = IS_DEV || IS_TEST;
 
+const APP_URL = process.env.APP_URL ?? 'https://zacharie.beta.gouv.fr';
+
 export {
   PORT,
   ENVIRONMENT,
@@ -52,4 +54,5 @@ export {
   IS_DEV_OR_TEST,
   IS_DEV,
   IS_TEST,
+  APP_URL,
 };

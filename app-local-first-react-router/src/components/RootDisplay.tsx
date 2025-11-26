@@ -42,7 +42,7 @@ export default function RootDisplay({
   const quickAccessItems: Array<HeaderProps.QuickAccessItem> = [
     {
       linkProps: {
-        to: user?.email ? '/app/tableau-de-bord' : '/app/connexion?type=compte-existant',
+        to: user?.email ? '/app/tableau-de-bord' : '/app/connexion',
         href: '#',
       },
       iconId: 'ri-account-box-line',
@@ -52,7 +52,7 @@ export default function RootDisplay({
   if (!user) {
     quickAccessItems.push({
       linkProps: {
-        to: '/app/connexion?type=creation-de-compte',
+        to: '/app/connexion/creation-de-compte',
         href: '#',
       },
       iconId: 'fr-icon-add-circle-line',
@@ -73,7 +73,7 @@ export default function RootDisplay({
         onClick: async () => {
           API.post({ path: '/user/logout' }).then(async () => {
             await clearCache().then(() => {
-              window.location.href = '/app/connexion?type=compte-existant';
+              window.location.href = '/app/connexion';
             });
           });
         },
@@ -150,7 +150,7 @@ export default function RootDisplay({
                   links: [
                     {
                       linkProps: {
-                        to: '/app/connexion?type=compte-existant',
+                        to: '/app/connexion',
                         href: '#',
                       },
                       text: 'Se connecter',

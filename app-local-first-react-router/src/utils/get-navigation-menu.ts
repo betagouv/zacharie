@@ -19,7 +19,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   const handleLogout = async () => {
     API.post({ path: 'user/logout' }).then(async () => {
       await clearCache().then(() => {
-        window.location.href = '/app/connexion?type=compte-existant';
+        window.location.href = '/app/connexion';
       });
     });
   };

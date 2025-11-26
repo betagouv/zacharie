@@ -197,12 +197,12 @@ export default function Connexion() {
                 {connexionType === 'creation-de-compte' ? (
                   <>
                     Vous avez déjà un compte ? <br />
-                    <Link to="/app/connexion?type=compte-existant">Cliquez ici pour vous connecter</Link>
+                    <Link to="/app/connexion">Cliquez ici pour vous connecter</Link>
                   </>
                 ) : (
                   <>
                     Vous n'avez pas encore de compte ? <br />
-                    <Link to="/app/connexion?type=creation-de-compte">Cliquez ici pour en créer un</Link>
+                    <Link to="/app/connexion/creation-de-compte">Cliquez ici pour en créer un</Link>
                     {/* <Link
                       to={`mailto:contact@zacharie.beta.gouv.fr?subject=Je souhaite devenir utilisateur-testeur de Zacharie`}
                     >
