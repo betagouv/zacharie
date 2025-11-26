@@ -220,7 +220,10 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
       if (phoneNumber?.isPossible()) {
         if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
           const existingUser = await prisma.user.findFirst({
-            where: { telephone: phoneNumber.number },
+            where: {
+              telephone: phoneNumber.number,
+              deleted_at: null,
+            },
           });
           if (!existingUser) {
             SMS = phoneNumber.number;
@@ -287,7 +290,10 @@ async function updateBrevoContact(props: User): Promise<User> {
       if (phoneNumber?.isPossible()) {
         if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
           const existingUsersWithSamePhoneNumber = await prisma.user.findMany({
-            where: { telephone: props.telephone },
+            where: {
+              telephone: props.telephone,
+              deleted_at: null,
+            },
           });
           if (existingUsersWithSamePhoneNumber.length === 1) {
             SMS = phoneNumber.number;

@@ -96,7 +96,12 @@ router.post(
         return;
       }
       if (resetPasswordRequest) {
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findFirst({
+          where: {
+            email,
+            deleted_at: null,
+          },
+        });
         if (user?.email) {
           const password = await prisma.password.findFirst({
             where: { user_id: user.id },
@@ -192,7 +197,12 @@ router.post(
         return;
       }
 
-      let user = await prisma.user.findUnique({ where: { email } });
+      let user = await prisma.user.findFirst({
+        where: {
+          email,
+          deleted_at: null,
+        },
+      });
       if (user) {
         if (connexionType === 'creation-de-compte') {
           res.status(400).send({
@@ -736,9 +746,10 @@ router.post(
         });
         return;
       }
-      const nextPremierDetenteur = await prisma.user.findUnique({
+      const nextPremierDetenteur = await prisma.user.findFirst({
         where: {
           email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
+          deleted_at: null,
         },
       });
       if (!nextPremierDetenteur) {
@@ -801,12 +812,22 @@ router.post(
       //   });
       // }
 
-      const nextPremierDetenteurForFei = await prisma.user.findUnique({
+      const nextPremierDetenteurForFei = await prisma.user.findFirst({
         where: {
           email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
+          deleted_at: null,
         },
         select: userFeiSelect,
       });
+
+      if (!nextPremierDetenteurForFei) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: "L'utilisateur n'existe pas",
+        });
+        return;
+      }
 
       res.status(200).send({ ok: true, data: { user: nextPremierDetenteurForFei }, error: '' });
     },
@@ -859,9 +880,10 @@ router.post(
       res.status(400);
       return next(error);
     }
-    let newUser = await prisma.user.findUnique({
+    let newUser = await prisma.user.findFirst({
       where: {
         email: email,
+        deleted_at: null,
       },
     });
     if (!newUser) {
@@ -949,9 +971,10 @@ router.post(
         return next(error);
       }
       let body = result.data;
-      const user = await prisma.user.findUnique({
+      const user = await prisma.user.findFirst({
         where: {
           id: req.params.user_id,
+          deleted_at: null,
         },
       });
       if (!user) {
@@ -1203,9 +1226,10 @@ router.get(
         });
         return;
       }
-      const feiUser = await prisma.user.findUnique({
+      const feiUser = await prisma.user.findFirst({
         where: {
           id: params.user_id,
+          deleted_at: null,
         },
         select: userFeiSelect,
       });

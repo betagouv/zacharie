@@ -448,6 +448,7 @@ router.post(
         // send notification to examinateur initial
         const sviUsers = await prisma.user.findMany({
           where: {
+            deleted_at: null,
             roles: { has: UserRoles.SVI },
             EntityAndUserRelations: {
               some: {
@@ -585,8 +586,11 @@ router.post(
       const nextOwnerId = body.fei_next_owner_user_id as string;
       if (nextOwnerId && nextOwnerId !== existingFei.fei_next_owner_user_id) {
         if (nextOwnerId !== user.id) {
-          const nextOwner = await prisma.user.findUnique({
-            where: { id: nextOwnerId },
+          const nextOwner = await prisma.user.findFirst({
+            where: {
+              id: nextOwnerId,
+              deleted_at: null,
+            },
           });
           const email = [
             `Bonjour,`,
@@ -606,8 +610,11 @@ router.post(
         }
         if (existingFei.fei_next_owner_user_id) {
           console.log('need to send notification remove fiche');
-          const exNextOwner = await prisma.user.findUnique({
-            where: { id: existingFei.fei_next_owner_user_id },
+          const exNextOwner = await prisma.user.findFirst({
+            where: {
+              id: existingFei.fei_next_owner_user_id,
+              deleted_at: null,
+            },
           });
           const email = [
             `Bonjour,`,

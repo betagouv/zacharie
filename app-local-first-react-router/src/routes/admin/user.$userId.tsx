@@ -181,38 +181,103 @@ export default function AdminUser() {
                 ) : (
                   <small>✅ Utilisateur activé</small>
                 )}
+                {user.deleted_at && (
+                  <>
+                    <br />
+                    <small className="text-red-600">
+                      🗑️ Utilisateur supprimé le {new Date(user.deleted_at).toLocaleDateString('fr-FR')}
+                    </small>
+                  </>
+                )}
               </h1>
-              <form
-                id="user_active_form"
-                method="POST"
-                ref={activeFormRef}
-                onBlur={handleUserFormBlur(activeFormRef)}
-                onSubmit={(event) => event.preventDefault()}
-              >
-                <RadioButtons
-                  key={user.activated ? 'true' : 'false'}
-                  options={[
-                    {
-                      label: 'Utilisateur activé',
-                      nativeInputProps: {
-                        name: Prisma.UserScalarFieldEnum.activated,
-                        value: 'true',
-                        onChange: !user.activated ? handleUserFormBlur(activeFormRef) : undefined,
-                        defaultChecked: user.activated,
+              <div className="flex flex-col gap-4">
+                <form
+                  id="user_active_form"
+                  method="POST"
+                  ref={activeFormRef}
+                  onBlur={handleUserFormBlur(activeFormRef)}
+                  onSubmit={(event) => event.preventDefault()}
+                >
+                  <RadioButtons
+                    key={user.activated ? 'true' : 'false'}
+                    options={[
+                      {
+                        label: 'Utilisateur activé',
+                        nativeInputProps: {
+                          name: Prisma.UserScalarFieldEnum.activated,
+                          value: 'true',
+                          onChange: !user.activated ? handleUserFormBlur(activeFormRef) : undefined,
+                          defaultChecked: user.activated,
+                        },
                       },
-                    },
-                    {
-                      label: 'Utilisateur inactif',
-                      nativeInputProps: {
-                        name: Prisma.UserScalarFieldEnum.activated,
-                        value: 'false',
-                        onChange: user.activated ? handleUserFormBlur(activeFormRef) : undefined,
-                        defaultChecked: !user.activated,
+                      {
+                        label: 'Utilisateur inactif',
+                        nativeInputProps: {
+                          name: Prisma.UserScalarFieldEnum.activated,
+                          value: 'false',
+                          onChange: user.activated ? handleUserFormBlur(activeFormRef) : undefined,
+                          defaultChecked: !user.activated,
+                        },
                       },
-                    },
-                  ]}
-                />
-              </form>
+                    ]}
+                  />
+                </form>
+                {user.deleted_at ? (
+                  <form
+                    method="POST"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      if (confirm('Êtes-vous sûr de vouloir restaurer cet utilisateur ?')) {
+                        API.post({
+                          path: `admin/user/${params.userId}/restore`,
+                        })
+                          .then(() => {
+                            loadData(params.userId!).then((res) => {
+                              if (res.ok && res.data) {
+                                setUserResponseData(res.data as State);
+                              }
+                            });
+                          })
+                          .catch((error) => {
+                            alert('Erreur lors de la restauration : ' + error.message);
+                          });
+                      }
+                    }}
+                  >
+                    <Button type="submit">Restaurer l'utilisateur</Button>
+                  </form>
+                ) : (
+                  <form
+                    method="POST"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      if (
+                        confirm(
+                          "Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action peut être annulée en restaurant l'utilisateur.",
+                        )
+                      ) {
+                        API.post({
+                          path: `admin/user/${params.userId}/delete`,
+                        })
+                          .then(() => {
+                            loadData(params.userId!).then((res) => {
+                              if (res.ok && res.data) {
+                                setUserResponseData(res.data as State);
+                              }
+                            });
+                          })
+                          .catch((error) => {
+                            alert('Erreur lors de la suppression : ' + error.message);
+                          });
+                      }
+                    }}
+                  >
+                    <Button type="submit" priority="secondary">
+                      Supprimer l'utilisateur
+                    </Button>
+                  </form>
+                )}
+              </div>
             </div>
             <Tabs
               selectedTabId={selectedTabId}

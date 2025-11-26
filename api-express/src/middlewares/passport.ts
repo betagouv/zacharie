@@ -43,17 +43,17 @@ passport.use(
         }
 
         // console.log('Attempting to find user with ID:', jwt_payload.userId);
-        const user = await prisma.user.findUnique({
-          where: { id: jwt_payload.userId },
+        const user = await prisma.user.findFirst({
+          where: {
+            id: jwt_payload.userId,
+            deleted_at: null,
+          },
         });
 
         if (user) {
           // console.log('User found:', user.email);
           // console.log('User found:', user.id);
-          if (user.deleted_at) {
-            // console.log('User has been deleted');
-            return done(null, null);
-          }
+          // User is not deleted (checked in where clause)
           // console.log('Authentication successful');
           return done(null, user);
         } else {

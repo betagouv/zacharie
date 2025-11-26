@@ -49,9 +49,10 @@ router.post(
 
       const { email } = bodyResult.data;
 
-      const user = await prisma.user.findUnique({
+      const user = await prisma.user.findFirst({
         where: {
           email: email,
+          deleted_at: null,
         },
       });
 

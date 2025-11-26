@@ -248,9 +248,10 @@ export async function getFichePdf(fei: Fei) {
       },
     });
   }
-  const premierDetenteurUser = await prisma.user.findUnique({
+  const premierDetenteurUser = await prisma.user.findFirst({
     where: {
       id: fei.premier_detenteur_user_id,
+      deleted_at: null,
     },
   });
   const address_ligne_1 = premierDetenteurEntity
@@ -263,9 +264,10 @@ export async function getFichePdf(fei: Fei) {
     ? premierDetenteurEntity!.code_postal
     : premierDetenteurUser!.code_postal;
   const ville = premierDetenteurEntity ? premierDetenteurEntity!.ville : premierDetenteurUser!.ville;
-  const examinateurInitialUser = await prisma.user.findUnique({
+  const examinateurInitialUser = await prisma.user.findFirst({
     where: {
       id: fei.examinateur_initial_user_id,
+      deleted_at: null,
     },
   });
   const destinataireFinalEntity = await prisma.entity.findUnique({
@@ -275,9 +277,10 @@ export async function getFichePdf(fei: Fei) {
   });
   let destinataireFinalUser: User | null = null;
   if (fei.fei_next_owner_user_id) {
-    destinataireFinalUser = await prisma.user.findUnique({
+    destinataireFinalUser = await prisma.user.findFirst({
       where: {
         id: fei.fei_next_owner_user_id,
+        deleted_at: null,
       },
     });
   } else {

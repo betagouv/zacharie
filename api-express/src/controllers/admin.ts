@@ -54,7 +54,12 @@ router.post(
       });
       return;
     }
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+        deleted_at: null,
+      },
+    });
     if (!user) {
       res.status(400).send({
         ok: false,
@@ -99,6 +104,88 @@ router.post(
       await createBrevoContact(createdUser, 'ADMIN');
 
       res.status(200).send({ ok: true, data: { user: createdUser }, error: '' });
+    },
+  ),
+);
+
+router.post(
+  '/user/:user_id/delete',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminUserDataResponse>,
+      next: express.NextFunction,
+    ) => {
+      const userId = req.params.user_id;
+      const user = await prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+      if (!user) {
+        res.status(404).send({ ok: false, data: null, error: 'User not found' });
+        return;
+      }
+      if (user.deleted_at) {
+        res.status(400).send({ ok: false, data: null, error: 'User already deleted' });
+        return;
+      }
+      const deletedUser = await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          deleted_at: new Date(),
+        },
+      });
+      res.status(200).send({
+        ok: true,
+        data: { user: deletedUser },
+        error: '',
+      });
+    },
+  ),
+);
+
+router.post(
+  '/user/:user_id/restore',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminUserDataResponse>,
+      next: express.NextFunction,
+    ) => {
+      const userId = req.params.user_id;
+      const user = await prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+      if (!user) {
+        res.status(404).send({ ok: false, data: null, error: 'User not found' });
+        return;
+      }
+      if (!user.deleted_at) {
+        res.status(400).send({ ok: false, data: null, error: 'User is not deleted' });
+        return;
+      }
+      const restoredUser = await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          deleted_at: null,
+        },
+      });
+      res.status(200).send({
+        ok: true,
+        data: { user: restoredUser },
+        error: '',
+      });
     },
   ),
 );
@@ -180,6 +267,9 @@ router.get(
   catchErrors(
     async (req: express.Request, res: express.Response<AdminUsersResponse>, next: express.NextFunction) => {
       const users = await prisma.user.findMany({
+        where: {
+          deleted_at: null,
+        },
         orderBy: {
           last_seen_at: { sort: 'desc', nulls: 'last' },
         },
@@ -255,6 +345,7 @@ router.get(
           ? []
           : await prisma.user.findMany({
               where: {
+                deleted_at: null,
                 roles: (() => {
                   if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
                     return {
@@ -289,6 +380,7 @@ router.get(
           ? []
           : await prisma.user.findMany({
               where: {
+                deleted_at: null,
                 id: {
                   notIn: entity.EntityRelationsWithUsers.filter(
                     (entityRelation) =>

@@ -359,9 +359,10 @@ router.post(
 
     createdEntity = await updateOrCreateBrevoCompany(createdEntity);
 
-    let ownerUser = await prisma.user.findUnique({
+    let ownerUser = await prisma.user.findFirst({
       where: {
         email: body[Prisma.UserScalarFieldEnum.email],
+        deleted_at: null,
       },
     });
     if (!ownerUser) {
