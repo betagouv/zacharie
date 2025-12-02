@@ -33,7 +33,7 @@ export default function TableauDeBordIndex() {
   const entities = useZustandStore((state) => state.entities);
   const allEtgIds = useZustandStore((state) => state.etgsIds);
   const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();
-  const { onExportToXlsx, isExporting } = useExportFeis();
+  const { onExportToXlsx, onExportSimplifiedToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
@@ -275,7 +275,25 @@ export default function TableauDeBordIndex() {
                   onExportToXlsx(selectedFeis);
                 },
               },
-              text: 'Télécharger un fichier Excel avec les fiches sélectionnées',
+              text: 'Télécharger un fichier Excel avec les fiches sélectionnées (complètes)',
+            },
+            {
+              linkProps: {
+                href: '#',
+                'aria-disabled': selectedFeis.length === 0,
+                className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                title:
+                  selectedFeis.length === 0
+                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                    : '',
+                onClick: (e) => {
+                  e.preventDefault();
+                  if (selectedFeis.length === 0) return;
+                  if (isExporting) return;
+                  onExportSimplifiedToXlsx(selectedFeis);
+                },
+              },
+              text: 'Télécharger un fichier Excel avec les fiches sélectionnées (simplifiées)',
             },
           ]}
         />
