@@ -81,6 +81,42 @@ export default function CarcasseIntermediaireComp({
   const [commentaire, setCommentaire] = useState(carcasseIntermediaire.commentaire ?? '');
   const [poids, setPoids] = useState(carcasseIntermediaire.intermediaire_poids ?? '');
 
+  const nombreAnimauxTotal = carcasse.nombre_d_animaux ?? 0;
+  const nombreAnimauxAccepteFromDb = carcasse.nombre_d_animaux_acceptes;
+
+  // Calculer le nombre d'animaux refusés depuis le nombre accepté si disponible
+  // Si le lot est refusé, préremplir avec tous les animaux refusés (0 acceptés)
+  const isLotRefuse = !!carcasseIntermediaire.refus;
+  const initialNombreAnimauxRefuses =
+    carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0
+      ? isLotRefuse
+        ? nombreAnimauxTotal // Si le lot est refusé, tous les animaux sont refusés
+        : nombreAnimauxAccepteFromDb !== null
+          ? Math.max(0, nombreAnimauxTotal - nombreAnimauxAccepteFromDb)
+          : null
+      : null;
+
+  const [nombreAnimauxRefuses, setNombreAnimauxRefuses] = useState<number | null>(
+    initialNombreAnimauxRefuses,
+  );
+  const [nombreAnimauxAcceptes, setNombreAnimauxAcceptes] = useState<number | null>(
+    carcasse.type === CarcasseType.PETIT_GIBIER
+      ? isLotRefuse
+        ? 0 // Si le lot est refusé, 0 animaux acceptés
+        : (nombreAnimauxAccepteFromDb ??
+          (nombreAnimauxTotal > 0 && initialNombreAnimauxRefuses !== null
+            ? Math.max(0, nombreAnimauxTotal - initialNombreAnimauxRefuses)
+            : null))
+      : null,
+  );
+
+  // Calculer dynamiquement le nombre d'animaux acceptés si le nombre refusés change
+  // Utiliser la valeur calculée si disponible, sinon utiliser la valeur du state
+  const nombreAnimauxAcceptesFinal =
+    carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0 && nombreAnimauxRefuses !== null
+      ? Math.max(0, nombreAnimauxTotal - nombreAnimauxRefuses)
+      : nombreAnimauxAcceptes;
+
   const submitCarcasseManquante = () => {
     setCarcasseManquante(true);
     setCarcasseRefusCheckbox(false);
@@ -113,6 +149,10 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
       latest_intermediaire_signed_at: dayjs().toDate(),
+      nombre_d_animaux_acceptes:
+        carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxAcceptesFinal !== null
+          ? nombreAnimauxAcceptesFinal
+          : null,
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
     addLog({
@@ -140,6 +180,12 @@ export default function CarcasseIntermediaireComp({
       setRefus(refusInputValue);
     }
     if (!refusToRemember) refusToRemember = refus || refusInputValue;
+
+    // Si c'est un petit gibier et que le lot est refusé, préremplir automatiquement les valeurs
+    if (carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0) {
+      setNombreAnimauxRefuses(nombreAnimauxTotal);
+      setNombreAnimauxAcceptes(0);
+    }
 
     const nextPartialCarcasseIntermediaire = {
       manquante: false,
@@ -169,6 +215,10 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_refus_motif: refusToRemember,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
       latest_intermediaire_signed_at: dayjs().toDate(),
+      nombre_d_animaux_acceptes:
+        carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxAcceptesFinal !== null
+          ? nombreAnimauxAcceptesFinal
+          : null,
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
     addLog({
@@ -217,6 +267,10 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: null,
       latest_intermediaire_signed_at: dayjs().toDate(),
+      nombre_d_animaux_acceptes:
+        carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxAcceptesFinal !== null
+          ? nombreAnimauxAcceptesFinal
+          : null,
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
     addLog({
@@ -264,6 +318,10 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: null,
       latest_intermediaire_signed_at: dayjs().toDate(),
+      nombre_d_animaux_acceptes:
+        carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxAcceptesFinal !== null
+          ? nombreAnimauxAcceptesFinal
+          : null,
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
     addLog({
