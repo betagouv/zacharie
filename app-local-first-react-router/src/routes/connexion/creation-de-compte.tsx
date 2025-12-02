@@ -135,7 +135,7 @@ export default function CreationDeCompte() {
                 nativeInputProps={{
                   name: 'email-utilisateur',
                   type: 'email',
-                  autoComplete: 'username',
+                  autoComplete: 'email',
                   placeholder: 'votre@email.com',
                   defaultValue: import.meta.env.VITE_TEST ? '' : (import.meta.env.VITE_EMAIL ?? ''),
                 }}
