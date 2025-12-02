@@ -51,7 +51,6 @@ import { z } from 'zod';
 import { sanitize } from '~/utils/sanitize';
 import { captureException } from '@sentry/node';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
-import { APP_URL } from '~/config';
 
 // Schemas for validation
 const loginSchema = z.object({
@@ -336,7 +335,7 @@ router.post(
             reset_password_last_email_sent_at: new Date(),
           },
         });
-        const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : ${APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`;
+        const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : ${process.env.VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`;
         sendEmail({
           emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
           subject: '[Zacharie] Réinitialisation de votre mot de passe',
