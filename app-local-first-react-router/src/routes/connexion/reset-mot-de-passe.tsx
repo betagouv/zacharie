@@ -5,23 +5,16 @@ import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { type User } from '@prisma/client';
 import { type UserConnexionResponse } from '@api/src/types/responses';
-import { useEffect, useState } from 'react';
-import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
-import Chargement from '@app/components/Chargement';
+import { useState } from 'react';
 import { capture } from '@app/services/sentry';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import API from '@app/services/api';
-import { clearCache } from '@app/services/indexed-db';
 
 export default function ResetMotDePasse() {
   const [searchParams] = useSearchParams();
-  const [initialLoading, setInitialLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [userInitiated, setUserInitiated] = useState(false);
   const [userResponse, setUserResponse] = useState<UserConnexionResponse | null>(null);
-  // we don't user   useMostFreshUser() here on purpose to avoid infinite loop
-  const user = useUser((state) => state.user);
   const navigate = useNavigate();
 
   const resetPasswordToken = searchParams.get('reset-password-token') || '';
@@ -71,7 +64,8 @@ export default function ResetMotDePasse() {
       const user = response.data.user as User;
       useUser.setState({ user });
       useZustandStore.setState((state) => ({ users: { ...state.users, [user.id]: user } }));
-      setUserInitiated(true);
+      const redirectPath = redirect || getUserOnboardingRoute(user) || '/app/tableau-de-bord';
+      navigate(redirectPath);
     } else {
       useUser.setState({ user: null });
       setUserResponse(response);
@@ -88,30 +82,6 @@ export default function ResetMotDePasse() {
     }
     return '';
   };
-
-  useEffect(() => {
-    clearCache('connexion').then(() =>
-      refreshUser('connexion').then((user) => {
-        console.log('init user', user);
-        if (!user) {
-          setInitialLoading(false);
-        } else {
-          setUserInitiated(true);
-        }
-      }),
-    );
-  }, []);
-  useEffect(() => {
-    if (userInitiated && user) {
-      if (redirect) {
-        navigate(redirect);
-      } else navigate(getUserOnboardingRoute(user!) ?? '/app/tableau-de-bord');
-    }
-  }, [userInitiated, user, navigate, redirect]);
-
-  if (initialLoading) {
-    return <Chargement />;
-  }
 
   if (!resetPasswordToken) {
     return (
