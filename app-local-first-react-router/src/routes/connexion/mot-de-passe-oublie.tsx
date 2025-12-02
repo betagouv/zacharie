@@ -3,16 +3,12 @@ import { Link, useSearchParams } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { type UserConnexionResponse } from '@api/src/types/responses';
-import { useEffect, useState } from 'react';
-import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
-import Chargement from '@app/components/Chargement';
+import { useState } from 'react';
 import { capture } from '@app/services/sentry';
 import API from '@app/services/api';
-import { clearCache } from '@app/services/indexed-db';
 
 export default function MotDePasseOublie() {
   const [searchParams] = useSearchParams();
-  const [initialLoading, setInitialLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [userResponse, setUserResponse] = useState<UserConnexionResponse | null>(null);
 
@@ -59,19 +55,6 @@ export default function MotDePasseOublie() {
     }
     return '';
   };
-
-  useEffect(() => {
-    clearCache('connexion').then(() =>
-      refreshUser('connexion').then((user) => {
-        console.log('init user', user);
-        setInitialLoading(false);
-      }),
-    );
-  }, []);
-
-  if (initialLoading) {
-    return <Chargement />;
-  }
 
   return (
     <main role="main" id="content">
