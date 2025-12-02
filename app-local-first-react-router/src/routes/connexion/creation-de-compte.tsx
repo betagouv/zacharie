@@ -57,6 +57,8 @@ export default function CreationDeCompte() {
       useUser.setState({ user });
       useZustandStore.setState((state) => ({ users: { ...state.users, [user.id]: user } }));
       setUserInitiated(true);
+      const redirectPath = redirect || getUserOnboardingRoute(user) || '/app/tableau-de-bord';
+      navigate(redirectPath);
     } else {
       useUser.setState({ user: null });
       setUserResponse(response);
@@ -89,11 +91,11 @@ export default function CreationDeCompte() {
       }),
     );
   }, []);
+
   useEffect(() => {
     if (userInitiated && user) {
-      if (redirect) {
-        navigate(redirect);
-      } else navigate(getUserOnboardingRoute(user!) ?? '/app/tableau-de-bord');
+      const redirectPath = redirect || getUserOnboardingRoute(user) || '/app/tableau-de-bord';
+      navigate(redirectPath);
     }
   }, [userInitiated, user, navigate, redirect]);
 
