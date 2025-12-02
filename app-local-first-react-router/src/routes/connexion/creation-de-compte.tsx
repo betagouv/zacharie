@@ -17,7 +17,7 @@ import { clearCache } from '@app/services/indexed-db';
 
 export default function CreationDeCompte() {
   const [searchParams] = useSearchParams();
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(!!user);
   const [isLoading, setIsLoading] = useState(false);
   const [userInitiated, setUserInitiated] = useState(false);
   const [userResponse, setUserResponse] = useState<UserConnexionResponse | null>(null);
