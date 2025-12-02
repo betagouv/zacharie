@@ -300,47 +300,7 @@ router.post(
       }
 
       const user = await prisma.user.findUnique({ where: { email } });
-      if (user?.email) {
-        const password = await prisma.password.findFirst({
-          where: { user_id: user.id },
-        });
-        if (!password) {
-          res.status(200).send({
-            ok: true,
-            data: { user: null },
-            error: '',
-            message: 'Vous pouvez désormais vous connecter avec votre email et créer un mot de passe',
-          });
-          return;
-        }
-        // if (password?.reset_password_last_email_sent_at) {
-        //   const sentMinutesAgo = dayjs().diff(password.reset_password_last_email_sent_at, 'minute');
-        //   if (sentMinutesAgo < 5) {
-        //     res.status(400).send({
-        //       ok: false,
-        //       data: { user: null },
-        //       error: '',
-        //       message: `Un email de réinitialisation a déjà été envoyé, veuillez patienter encore ${
-        //         5 - sentMinutesAgo
-        //       } minutes`,
-        //     });
-        //     return;
-        //   }
-        // }
-        const token = crypto.randomUUID();
-        await prisma.password.update({
-          where: { user_id: user.id },
-          data: {
-            reset_password_token: token,
-            reset_password_last_email_sent_at: new Date(),
-          },
-        });
-        const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : ${process.env.VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`;
-        sendEmail({
-          emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
-          subject: '[Zacharie] Réinitialisation de votre mot de passe',
-          text,
-        });
+      if (!user) {
         res.status(200).send({
           ok: true,
           data: { user: null },
@@ -350,6 +310,21 @@ router.post(
         });
         return;
       }
+
+      const token = crypto.randomUUID();
+      await prisma.password.update({
+        where: { user_id: user.id },
+        data: {
+          reset_password_token: token,
+          reset_password_last_email_sent_at: new Date(),
+        },
+      });
+      const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : ${process.env.VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`;
+      sendEmail({
+        emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
+        subject: '[Zacharie] Réinitialisation de votre mot de passe',
+        text,
+      });
 
       // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
       res.status(200).send({
