@@ -39,7 +39,7 @@ export async function resetDb(role?: "EXAMINATEUR_INITIAL" | "PREMIER_DETENTEUR"
   try {
     console.log("Resetting database...");
     // const command =
-    //   "cd ../api-express && NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest npm exec prisma migrate reset --force --skip-generate";
+    //   "cd ../api-express && NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest npm exec prisma -- migrate reset --force --skip-generate";
     // await execAsync(command);
 
     // Populate the test database
