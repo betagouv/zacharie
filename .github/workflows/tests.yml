@@ -34,21 +34,21 @@ jobs:
           cd app-local-first-react-router
           npm i
 
-      - name: Install api dependencies
-        run: |
-          cd api-express
-          npm i
-          node ./scripts/copy-schema-to-app-side.js
       - name: Run app vitest tests
         run: |
           cd app-local-first-react-router
           npm run vitest
 
+      - name: Install api dependencies
+        run: |
+          cd api-express
+          npm i
+
       - name: Install Playwright Browsers
         run: |
           cd e2e
           npm i
-          npm exec playwright -- install --with-deps
+          npx playwright install --with-deps
 
       - name: Init DB
         run: |
@@ -61,7 +61,7 @@ jobs:
       - name: Run Playwright tests
         run: |
           cd e2e
-          npm exec playwright -- test
+          npx playwright test
         env:
           PGBASEURL: postgres://postgres:postgres@localhost:5432
           POSTGRESQL_ADDON_URI: postgres://postgres:postgres@localhost:5432/zacharietest
