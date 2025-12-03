@@ -31,10 +31,10 @@ jobs:
           # cache: yarn
           # cache-dependency-path: "**/yarn.lock"
 
-      - name: Install app dependencies
+      - name: Install api dependencies
         run: |
-          cd app-local-first-react-router
-          npm i
+          cd api-express
+          npm i --ignore-scripts
 
       - name: Run app vitest tests
         run: |
@@ -50,7 +50,7 @@ jobs:
         run: |
           cd e2e
           npm ci --ignore-scripts
-          npm exec playwright install --with-deps
+          npm exec playwright -- install --with-deps
 
       - name: Init DB
         run: |
