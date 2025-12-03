@@ -43,7 +43,7 @@ export async function resetDb(role?: "EXAMINATEUR_INITIAL" | "PREMIER_DETENTEUR"
     // await execAsync(command);
 
     // Populate the test database
-    const populateCommand = `cd ../api-express && NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest  npm exec tsx ./scripts/populate-test-db.ts ${
+    const populateCommand = `cd ../api-express && NODE_ENV=test POSTGRESQL_ADDON_URI=postgres://postgres:postgres@localhost:5432/zacharietest npm exec tsx -- ./scripts/populate-test-db.ts ${
       role ? `--role=${role}` : ""
     }`;
 
