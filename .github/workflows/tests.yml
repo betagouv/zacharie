@@ -36,15 +36,15 @@ jobs:
           cd api-express
           npm i --ignore-scripts
 
-      - name: Run app vitest tests
-        run: |
-          cd app-local-first-react-router
-          npm run vitest
-
       - name: Install app dependencies
         run: |
           cd app-local-first-react-router
           npm ci --ignore-scripts
+
+      - name: Run app vitest tests
+        run: |
+          cd app-local-first-react-router
+          npm run vitest
 
       - name: Install Playwright Browsers
         run: |
