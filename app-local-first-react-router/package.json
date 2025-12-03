@@ -10,7 +10,7 @@
     "dev": "prisma generate && vite --port 3234 --host",
     "dev-test": "VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 vite --port 3290",
     "vitest": "VITE_API_URL=http://localhost:3234 vitest",
-    "build": "npm install && npm run prebuild && vite build && npm exec prisma -- generate",
+    "build": "npm install && npm run prebuild && vite build && npx prisma generate",
     "lint": "eslint .",
     "preview": "vite preview --port 3234",
     "start": "NODE_ENV=production PORT=8080 node ./server-app.js",
