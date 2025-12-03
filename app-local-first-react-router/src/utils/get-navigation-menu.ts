@@ -6,13 +6,14 @@ import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { createNewFei } from './create-new-fei';
 import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
+import { useIsCircuitCourt } from './circuit-court';
 
 export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
   const user = useMostFreshUser('useLoggedInNavigationMenu');
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
   const isNotActivated = !user?.activated;
-
+  const isCircuitCourt = useIsCircuitCourt();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -71,6 +72,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     });
   }
   if (
+    isCircuitCourt ||
     user?.roles.includes(UserRoles.COLLECTEUR_PRO) ||
     user?.roles.includes(UserRoles.ETG) ||
     user?.roles.includes(UserRoles.SVI)
@@ -187,14 +189,6 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
           },
         },
         {
-          text: '+ Ajouter des utilisateurs',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/add-user',
-          linkProps: {
-            href: '#',
-            to: '/app/tableau-de-bord/admin/add-user',
-          },
-        },
-        {
           text: 'Liste des entités',
           isActive: location.pathname === '/app/tableau-de-bord/admin/entities',
           linkProps: {
@@ -203,27 +197,11 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
           },
         },
         {
-          text: '+ Ajouter des entités (SVI, ETG, etc.)',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/add-entity',
-          linkProps: {
-            href: '#',
-            to: '/app/tableau-de-bord/admin/add-entity',
-          },
-        },
-        {
           text: 'Liste des clés API',
           isActive: location.pathname === '/app/tableau-de-bord/admin/api-keys',
           linkProps: {
             href: '#',
             to: '/app/tableau-de-bord/admin/api-keys',
-          },
-        },
-        {
-          text: '+ Ajouter une clé API',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/api-key-add',
-          linkProps: {
-            href: '#',
-            to: '/app/tableau-de-bord/admin/api-key-add',
           },
         },
         {
@@ -240,6 +218,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
 
   navigationBase.push({
     text: 'Contact',
+    isActive: location.pathname === '/app/tableau-de-bord/contact',
     linkProps: {
       to: '/app/tableau-de-bord/contact',
       href: '#',

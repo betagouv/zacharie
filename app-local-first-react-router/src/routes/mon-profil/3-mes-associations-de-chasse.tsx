@@ -21,6 +21,8 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.ETG]: {},
   [EntityTypes.SVI]: {},
   [EntityTypes.COMMERCE_DE_DETAIL]: {},
+  [EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE]: {},
+  [EntityTypes.ASSOCIATION_CARITATIVE]: {},
   [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: {},
   [EntityTypes.CONSOMMATEUR_FINAL]: {},
 };

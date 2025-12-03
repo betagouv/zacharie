@@ -17,7 +17,7 @@ import {
 import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
 import type { EntitiesByTypeAndId } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import SelectCustom from '@app/components/SelectCustom';
 import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
@@ -27,6 +27,11 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.PREMIER_DETENTEUR]: {},
   [EntityTypes.CCG]: {},
   [EntityTypes.COLLECTEUR_PRO]: {},
+  [EntityTypes.COMMERCE_DE_DETAIL]: {},
+  [EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE]: {},
+  [EntityTypes.ASSOCIATION_CARITATIVE]: {},
+  [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: {},
+  [EntityTypes.CONSOMMATEUR_FINAL]: {},
   [EntityTypes.ETG]: {},
   [EntityTypes.SVI]: {},
 };
@@ -48,10 +53,38 @@ export default function MonEntreprise() {
   const userSvis = user.roles.includes(UserRoles.SVI)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.SVI])
     : [];
-
+  const userCommerceDeDetail = user.roles.includes(UserRoles.COMMERCE_DE_DETAIL)
+    ? Object.values(userEntitiesByTypeAndId[EntityTypes.COMMERCE_DE_DETAIL])
+    : [];
+  const userCantineOuRestaurationCollective = user.roles.includes(
+    UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE,
+  )
+    ? Object.values(userEntitiesByTypeAndId[EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE])
+    : [];
+  const userAssociationCaritative = user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE)
+    ? Object.values(userEntitiesByTypeAndId[EntityTypes.ASSOCIATION_CARITATIVE])
+    : [];
+  const userRepasDeChasseOuAssociatif = user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF)
+    ? Object.values(userEntitiesByTypeAndId[EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF])
+    : [];
   const collecteursProDone = user.roles.includes(UserRoles.COLLECTEUR_PRO)
     ? userCollecteursPro.length > 0
     : true;
+  const commerceDeDetailDone = user.roles.includes(UserRoles.COMMERCE_DE_DETAIL)
+    ? userCommerceDeDetail.length > 0
+    : true;
+  const cantineOuRestaurationCollectiveDone = user.roles.includes(
+    UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE,
+  )
+    ? userCantineOuRestaurationCollective.length > 0
+    : true;
+  const associationCaritativeDone = user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE)
+    ? userAssociationCaritative.length > 0
+    : true;
+  const repasDeChasseOuAssociatifDone = user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF)
+    ? userRepasDeChasseOuAssociatif.length > 0
+    : true;
+
   const etgsDone = user.roles.includes(UserRoles.ETG) ? userEtgs.length > 0 : true;
   const svisDone = user.roles.includes(UserRoles.SVI) ? userSvis.length > 0 : true;
 
@@ -133,6 +166,76 @@ export default function MonEntreprise() {
                 done={collecteursProDone}
                 canChange={!collecteursProDone}
                 entityType={EntityTypes.COLLECTEUR_PRO}
+                allEntitiesByTypeAndId={allEntitiesByTypeAndId}
+                userEntitiesByTypeAndId={userEntitiesByTypeAndId}
+              />
+            )}
+            {user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) && (
+              <ListAndSelectEntities
+                formId="onboarding-etape-2-collecteur-pro-data"
+                setRefreshKey={setRefreshKey}
+                refreshKey={refreshKey}
+                sectionLabel="Mon Commerce de Détail"
+                addLabel={!commerceDeDetailDone ? 'Ajouter un Commerce de Détail' : 'Mon entreprise'}
+                selectLabel="Cherchez un autre Commerce de Détail"
+                done={commerceDeDetailDone}
+                canChange
+                entityType={EntityTypes.COMMERCE_DE_DETAIL}
+                allEntitiesByTypeAndId={allEntitiesByTypeAndId}
+                userEntitiesByTypeAndId={userEntitiesByTypeAndId}
+              />
+            )}
+            {user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE) && (
+              <ListAndSelectEntities
+                formId="onboarding-etape-2-collecteur-pro-data"
+                setRefreshKey={setRefreshKey}
+                refreshKey={refreshKey}
+                sectionLabel="Mon Cantine ou Restauration Collective"
+                addLabel={
+                  !cantineOuRestaurationCollectiveDone
+                    ? 'Ajouter un Cantine ou Restauration Collective'
+                    : 'Mon entreprise'
+                }
+                selectLabel="Cherchez une autre Cantine ou Restauration Collective"
+                done={cantineOuRestaurationCollectiveDone}
+                canChange
+                entityType={EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE}
+                allEntitiesByTypeAndId={allEntitiesByTypeAndId}
+                userEntitiesByTypeAndId={userEntitiesByTypeAndId}
+              />
+            )}
+            {user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE) && (
+              <ListAndSelectEntities
+                formId="onboarding-etape-2-collecteur-pro-data"
+                setRefreshKey={setRefreshKey}
+                refreshKey={refreshKey}
+                sectionLabel="Mon Association Caritative"
+                addLabel={
+                  !associationCaritativeDone ? 'Ajouter une Association Caritative' : 'Mon entreprise'
+                }
+                selectLabel="Cherchez une autre Association Caritative"
+                done={associationCaritativeDone}
+                canChange
+                entityType={EntityTypes.ASSOCIATION_CARITATIVE}
+                allEntitiesByTypeAndId={allEntitiesByTypeAndId}
+                userEntitiesByTypeAndId={userEntitiesByTypeAndId}
+              />
+            )}
+            {user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) && (
+              <ListAndSelectEntities
+                formId="onboarding-etape-2-collecteur-pro-data"
+                setRefreshKey={setRefreshKey}
+                refreshKey={refreshKey}
+                sectionLabel="Mon Repas de Chasse ou Associatif"
+                addLabel={
+                  !repasDeChasseOuAssociatifDone
+                    ? 'Ajouter un Repas de Chasse ou Associatif'
+                    : 'Mon entreprise'
+                }
+                selectLabel="Cherchez un autre Repas de Chasse ou Associatif"
+                done={repasDeChasseOuAssociatifDone}
+                canChange
+                entityType={EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF}
                 allEntitiesByTypeAndId={allEntitiesByTypeAndId}
                 userEntitiesByTypeAndId={userEntitiesByTypeAndId}
               />
@@ -364,64 +467,68 @@ function ListAndSelectEntities({
             );
           })}
         {canChange && (
-          <form
-            id={formId}
-            className="flex w-full flex-col gap-4 md:flex-row [&_.fr-select-group]:mb-0"
-            method="POST"
-          >
-            <SelectCustom
-              options={remainingEntities.map((entity) => ({
-                label: `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
-                value: entity.id,
-              }))}
-              placeholder={selectLabel}
-              value={
-                entityId
-                  ? {
-                      label: remainingEntities
-                        .filter((entity) => entity.id === entityId)
-                        .map(
-                          (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
-                        )?.[0],
-                      value: entityId,
+          <form id={formId} className="flex w-full flex-col gap-4" method="POST">
+            <p className="py-5 pr-5">
+              Vous pouvez en ajouter d'autre via la liste ci-dessous.
+              <br />
+              Si vous ne trouvez pas votre entreprise, veuillez nous contacter via{' '}
+              <Link to="/app/tableau-de-bord/contact">le formulaire de contact</Link>.
+            </p>
+            <div className="flex w-full flex-col gap-4 md:flex-row [&_.fr-select-group]:mb-0">
+              <SelectCustom
+                options={remainingEntities.map((entity) => ({
+                  label: `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
+                  value: entity.id,
+                }))}
+                placeholder={selectLabel}
+                value={
+                  entityId
+                    ? {
+                        label: remainingEntities
+                          .filter((entity) => entity.id === entityId)
+                          .map(
+                            (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
+                          )?.[0],
+                        value: entityId,
+                      }
+                    : null
+                }
+                getOptionLabel={(f) => f.label!}
+                getOptionValue={(f) => f.value}
+                onChange={(f) => (f ? setEntityId(f.value) : setEntityId(null))}
+                isClearable={!!entityId}
+                inputId={`select-${formId}`}
+                classNamePrefix={`select-${formId}`}
+                className="basis-2/3"
+              />
+              <Button
+                type="submit"
+                className="flex basis-1/3 items-center justify-center"
+                nativeButtonProps={{ form: formId }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  API.post({
+                    path: `/user/user-entity/${user.id}`,
+                    body: {
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
+                      _action: 'create',
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
+                        EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entityId,
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.REQUESTED,
+                    },
+                  }).then((res) => {
+                    if (res.ok) {
+                      setRefreshKey((k) => k + 1);
+                      setEntityId(null);
                     }
-                  : null
-              }
-              getOptionLabel={(f) => f.label!}
-              getOptionValue={(f) => f.value}
-              onChange={(f) => (f ? setEntityId(f.value) : setEntityId(null))}
-              isClearable={!!entityId}
-              inputId={`select-${formId}`}
-              classNamePrefix={`select-${formId}`}
-              className="basis-2/3"
-            />
-            <Button
-              type="submit"
-              className="flex basis-1/3 items-center justify-center"
-              nativeButtonProps={{ form: formId }}
-              onClick={(e) => {
-                e.preventDefault();
-                API.post({
-                  path: `/user/user-entity/${user.id}`,
-                  body: {
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                    _action: 'create',
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
-                      EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entityId,
-                    [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.REQUESTED,
-                  },
-                }).then((res) => {
-                  if (res.ok) {
-                    setRefreshKey((k) => k + 1);
-                    setEntityId(null);
-                  }
-                });
-              }}
-              disabled={!remainingEntities.length}
-            >
-              Ajouter
-            </Button>
+                  });
+                }}
+                disabled={!remainingEntities.length}
+              >
+                Ajouter
+              </Button>
+            </div>
           </form>
         )}
         {children}

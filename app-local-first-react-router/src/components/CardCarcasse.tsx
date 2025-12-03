@@ -16,6 +16,7 @@ import dayjs from 'dayjs';
 import { useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
 import ItemNotEditable from './ItemNotEditable';
+import { useIsCircuitCourt } from '@app/utils/circuit-court';
 
 interface CardCarcasseProps {
   carcasse: Carcasse;
@@ -217,6 +218,7 @@ function CarcasseDetails({
   motifRefus: string;
 }) {
   const user = useUser((state) => state.user)!;
+  const isCircuitCourt = useIsCircuitCourt();
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const users = useZustandStore((state) => state.users);
@@ -552,7 +554,7 @@ function CarcasseDetails({
             withDiscs
           />
         </>
-      ) : (
+      ) : isCircuitCourt ? null : (
         <>
           <ItemNotEditable
             label="Inspection du Service Vétérinaire"

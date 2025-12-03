@@ -1,1 +1,0 @@
-now I've split my remix app into two folders: remix-api (that at some point I will turn into a basic express app maybe) and app, which is remix SPA mode that I want to turn into a react-router app cause I don'tlike the big fatty vite-config file there, the DX is awful, whereas I could have a very simple one with a good DX

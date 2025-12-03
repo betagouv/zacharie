@@ -7,6 +7,7 @@ import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import useZustandStore from '@app/zustand/store';
+import { useIsCircuitCourt } from '@app/utils/circuit-court';
 
 interface CardProps {
   fei: FeiDone;
@@ -40,6 +41,7 @@ export default function CardFiche({
   filter,
 }: CardProps) {
   const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
+  const isCircuitCourt = useIsCircuitCourt();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
@@ -162,30 +164,32 @@ export default function CardFiche({
         ].join(' ')}
       >
         <div className="absolute top-0 right-0 text-transparent selection:text-gray-200">{fei.numero}</div>
-        <div className="flex flex-row gap-x-2">
-          <Tag
-            small
-            className={[
-              'items-center rounded-[4px] font-semibold uppercase',
-              statusColors[simpleStatus].bg,
-              statusColors[simpleStatus].text,
-            ].join(' ')}
-          >
-            {simpleStatus}
-          </Tag>
-          {currentStepLabelShort && (
+        {!isCircuitCourt && (
+          <div className="flex flex-row gap-x-2">
             <Tag
               small
               className={[
                 'items-center rounded-[4px] font-semibold uppercase',
-                // statusColors[simpleStatus].bg,
-                // statusColors[simpleStatus].text,
+                statusColors[simpleStatus].bg,
+                statusColors[simpleStatus].text,
               ].join(' ')}
             >
-              {currentStepLabelShort}
+              {simpleStatus}
             </Tag>
-          )}
-        </div>
+            {currentStepLabelShort && (
+              <Tag
+                small
+                className={[
+                  'items-center rounded-[4px] font-semibold uppercase',
+                  // statusColors[simpleStatus].bg,
+                  // statusColors[simpleStatus].text,
+                ].join(' ')}
+              >
+                {currentStepLabelShort}
+              </Tag>
+            )}
+          </div>
+        )}
         <div className="text-xl font-bold">
           {dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}
         </div>

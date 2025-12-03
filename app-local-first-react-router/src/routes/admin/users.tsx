@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
+import { Button } from '@codegouvfr/react-dsfr/Button';
 import { UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import type { AdminUsersResponse } from '@api/src/types/responses';
@@ -95,7 +96,16 @@ export default function AdminUsers() {
       </title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <h1 className="fr-h2 fr-mb-2w">Utilisateurs</h1>
+          <div className="fr-mb-2w flex items-center justify-between gap-4">
+            <h1 className="fr-h2">Utilisateurs</h1>
+            <Button
+              linkProps={{
+                to: '/app/tableau-de-bord/admin/add-user',
+              }}
+            >
+              + Ajouter des utilisateurs
+            </Button>
+          </div>
           <section className="mb-6 bg-white md:shadow-sm">
             <div className="space-y-4 p-4 md:p-8 md:pb-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

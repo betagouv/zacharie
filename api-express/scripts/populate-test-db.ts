@@ -433,6 +433,8 @@ Christine
   });
   console.log('ETG and entity relations created for test', etgAndEntityRelations.count);
 
+  console.log('role', role);
+
   if (role) {
     if (role === FeiOwnerRole.EXAMINATEUR_INITIAL) {
       await prisma.fei.createMany({
