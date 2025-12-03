@@ -118,10 +118,6 @@ test.describe("Fiches ETG", () => {
     await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
     await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
     // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
-    await page
-      .locator("#form_intermediaire_check_finished_at p")
-      .filter({ hasText: "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (1 daim)." })
-      .click();
     await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
     // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
     // await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -607,11 +603,9 @@ test.describe("Fiches ETG", () => {
       - paragraph: manquant pour ETG 1
     `);
     await expect(
-      page
-        .locator("p")
-        .filter({
-          hasText: "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (1 daim).",
-        })
+      page.locator("p").filter({
+        hasText: "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (1 daim).",
+      })
     ).toBeVisible();
     await page.locator(".select-prochain-detenteur__input-container").click();
     await page.getByRole("option", { name: "SVI 2 - 75000 Paris (Service" }).click();
