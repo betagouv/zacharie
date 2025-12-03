@@ -16,13 +16,13 @@ import API from '@app/services/api';
 import { clearCache } from '@app/services/indexed-db';
 
 export default function CreationDeCompte() {
+  const user = useUser((state) => state.user);
   const [searchParams] = useSearchParams();
   const [initialLoading, setInitialLoading] = useState(!!user);
   const [isLoading, setIsLoading] = useState(false);
   const [userInitiated, setUserInitiated] = useState(false);
   const [userResponse, setUserResponse] = useState<UserConnexionResponse | null>(null);
   // we don't user   useMostFreshUser() here on purpose to avoid infinite loop
-  const user = useUser((state) => state.user);
   const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
