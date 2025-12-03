@@ -39,7 +39,7 @@ jobs:
       - name: Install app dependencies
         run: |
           cd app-local-first-react-router
-          npm ci --ignore-scripts
+          npm i --ignore-scripts
 
       - name: Run app vitest tests
         run: |
