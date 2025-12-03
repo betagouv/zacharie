@@ -28,23 +28,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          # cache: yarn
-          # cache-dependency-path: "**/yarn.lock"
 
       - name: Install app dependencies
         run: |
           cd app-local-first-react-router
           npm i
 
-      - name: Run app vitest tests
-        run: |
-          cd app-local-first-react-router
-          npm run vitest
-
       - name: Install api dependencies
         run: |
           cd api-express
           npm i
+          node ./scripts/copy-schema-to-app-side.js
+      - name: Run app vitest tests
+        run: |
+          cd app-local-first-react-router
+          npm run vitest
 
       - name: Install Playwright Browsers
         run: |
