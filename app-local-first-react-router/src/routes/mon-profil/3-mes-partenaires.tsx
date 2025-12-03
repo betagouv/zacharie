@@ -303,6 +303,27 @@ export default function MesPartenaires() {
                       },
                       {
                         nativeInputProps: {
+                          checked:
+                            entityType === EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE ? true : false,
+                          name: EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
+                          onChange: () => {
+                            setEntityType(EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE);
+                          },
+                        },
+                        label: 'Cantine ou restauration collective',
+                      },
+                      {
+                        nativeInputProps: {
+                          checked: entityType === EntityTypes.ASSOCIATION_CARITATIVE ? true : false,
+                          name: EntityTypes.ASSOCIATION_CARITATIVE,
+                          onChange: () => {
+                            setEntityType(EntityTypes.ASSOCIATION_CARITATIVE);
+                          },
+                        },
+                        label: 'Association caritative',
+                      },
+                      {
+                        nativeInputProps: {
                           checked: entityType === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ? true : false,
                           name: EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
                           onChange: () => {

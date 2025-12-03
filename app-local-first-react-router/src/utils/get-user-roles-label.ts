@@ -8,6 +8,10 @@ export function getUserRoleLabel(role: UserRoles | FeiOwnerRole | EntityTypes | 
       return 'Premier Détenteur';
     case FeiOwnerRole.COMMERCE_DE_DETAIL:
       return 'Commerce de Détail';
+    case FeiOwnerRole.CANTINE_OU_RESTAURATION_COLLECTIVE:
+      return 'Cantine ou Restauration Collective';
+    case FeiOwnerRole.ASSOCIATION_CARITATIVE:
+      return 'Association Caritative';
     case FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF:
       return 'Repas de Chasse ou Associatif';
     case FeiOwnerRole.CONSOMMATEUR_FINAL:
