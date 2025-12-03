@@ -3,7 +3,6 @@ import readline from 'readline';
 
 // Configuration de la connexion DB
 // Vous pouvez soit passer la connexion en variable d'environnement :
-// POSTGRESQL_ADDON_URI=postgres://... node scripts/251203-clean-old-users.js
 // Soit la modifier directement dans ce fichier
 const DATABASE_URL = process.env.POSTGRESQL_ADDON_URI;
 
