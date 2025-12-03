@@ -9,8 +9,5 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  },
-  "dependencies": {
-    "@getbrevo/brevo": "^3.0.1"
   }
 }
