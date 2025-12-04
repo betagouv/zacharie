@@ -113,7 +113,9 @@ test.describe("Fiches ETG", () => {
     await page.getByLabel("Daim - N° MM-001-004").getByText("Carcasse manquante").click();
     await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
     await expect(
-      page.getByText("Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (1 daim).")
+      page.getByText(
+        "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim)."
+      )
     ).toBeVisible();
     await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
     await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
@@ -277,14 +279,12 @@ test.describe("Fiches ETG", () => {
     await page.getByLabel("Daim - N° MM-001-004").getByText("Carcasse manquante").click();
     await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
     await expect(
-      page.getByText("Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (1 daim).")
+      page.getByText(
+        "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim)."
+      )
     ).toBeVisible();
     await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
     await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
-    await page
-      .locator("#form_intermediaire_check_finished_at p")
-      .filter({ hasText: "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (1 daim)." })
-      .click();
     await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
     // await page.getByRole("button", { name: "Enregistrer" }).click();
     await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
@@ -414,14 +414,12 @@ test.describe("Fiches ETG", () => {
     await page.getByLabel("Daim - N° MM-001-004").getByText("Carcasse manquante").click();
     await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
     await expect(
-      page.getByText("Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (1 daim).")
+      page.getByText(
+        "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim)."
+      )
     ).toBeVisible();
     await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
     await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
-    await page
-      .locator("#form_intermediaire_check_finished_at p")
-      .filter({ hasText: "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (1 daim)." })
-      .click();
     await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
     // await page.getByRole("button", { name: "Enregistrer" }).click();
     await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
@@ -604,7 +602,8 @@ test.describe("Fiches ETG", () => {
     `);
     await expect(
       page.locator("p").filter({
-        hasText: "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (1 daim).",
+        hasText:
+          "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
       })
     ).toBeVisible();
     await page.locator(".select-prochain-detenteur__input-container").click();
