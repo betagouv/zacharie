@@ -82,7 +82,8 @@ export default function RootDisplay({
     });
   }
 
-  const environment = import.meta.env.MODE || import.meta.env.VITE_ENV || 'production';
+  const environment = import.meta.env.VITE_ENV || 'production';
+  console.log('✌️ ~ environment:', environment);
 
   return (
     <>
