@@ -44,7 +44,7 @@ test.describe("Fiches premier détenteur", () => {
     await expect(page.getByText("Unique - Abcès ou nodules")).toBeVisible();
     await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
     await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
-    await page.getByLabel("Pigeons (10) - N° MM-001-").getByTitle("Fermer").click();
+    await page.getByLabel("Pigeons - N° MM-001-").getByTitle("Fermer").click();
     await page.getByRole("button", { name: "Je prends en charge cette" }).click();
     await expect(page.getByRole("heading", { name: "Validation par le premier dé" })).toBeVisible();
     await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
