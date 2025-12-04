@@ -3,6 +3,8 @@ import { resetDb } from "../scripts/reset-db";
 import { connectWith } from "../utils/connect-with";
 import { NETWORK_PRESETS } from "../utils/network-throttling";
 
+console.log("test file loaded");
+
 test.describe("Fiches ETG", () => {
   test.beforeEach(async () => {
     await resetDb("ETG");
