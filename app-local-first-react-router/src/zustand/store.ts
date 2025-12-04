@@ -794,11 +794,6 @@ export async function syncData(calledFrom: string) {
   //   FOR_TEST_ONLY_started = true;
   // }
   console.log('syncing data from', calledFrom);
-
-  // Set dataIsSynced to false at the start of synchronization
-  // This ensures the "Synchronisation en cours" message appears in tests
-  useZustandStore.setState({ dataIsSynced: false });
-
   queue.add(async () => {
     await syncProchainBraceletAUtiliser();
   });
