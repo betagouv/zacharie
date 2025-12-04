@@ -78,7 +78,9 @@ test.describe("Fiches ETG", () => {
     await expect(page.getByRole("heading", { name: "Fiche envoyée, pas encore" })).toBeVisible();
     await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
     await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
+    await expect(page.locator(`dialog#carcasse-modal-${feiId}_MM-001-004`)).toBeVisible();
     await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
+    await expect(page.locator(`dialog#carcasse-modal-${feiId}_MM-001-004`)).not.toBeVisible();
     await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
     await page.getByRole("heading", { name: "Pigeons (10) - N° MM-001-" }).click();
     await page.getByLabel("Pigeons (10) - N° MM-001-").getByTitle("Fermer").click();
@@ -244,7 +246,9 @@ test.describe("Fiches ETG", () => {
     await expect(page.getByRole("heading", { name: "Fiche envoyée, pas encore" })).toBeVisible();
     await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
     await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
+    await expect(page.locator(`dialog#carcasse-modal-${feiId}_MM-001-004`)).toBeVisible();
     await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
+    await expect(page.locator(`dialog#carcasse-modal-${feiId}_MM-001-004`)).not.toBeVisible();
     await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
     await page.getByRole("heading", { name: "Pigeons (10) - N° MM-001-" }).click();
     await page.getByLabel("Pigeons (10) - N° MM-001-").getByTitle("Fermer").click();
@@ -381,7 +385,9 @@ test.describe("Fiches ETG", () => {
     await expect(page.getByRole("heading", { name: "Fiche envoyée, pas encore" })).toBeVisible();
     await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
     await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
+    await expect(page.locator(`dialog#carcasse-modal-${feiId}_MM-001-004`)).toBeVisible();
     await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
+    await expect(page.locator(`dialog#carcasse-modal-${feiId}_MM-001-004`)).not.toBeVisible();
     await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
     await page.getByRole("heading", { name: "Pigeons (10) - N° MM-001-" }).click();
     await page.getByLabel("Pigeons (10) - N° MM-001-").getByTitle("Fermer").click();
