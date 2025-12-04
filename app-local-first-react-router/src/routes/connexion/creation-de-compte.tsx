@@ -20,10 +20,18 @@ export default function CreationDeCompte() {
   const [searchParams] = useSearchParams();
   const [initialLoading, setInitialLoading] = useState(!!user);
   const [isLoading, setIsLoading] = useState(false);
-  const [userInitiated, setUserInitiated] = useState(false);
   const [userResponse, setUserResponse] = useState<UserConnexionResponse | null>(null);
+  const redirect = searchParams.get('redirect');
+  const communication = searchParams.get('communication');
   // we don't user   useMostFreshUser() here on purpose to avoid infinite loop
   const navigate = useNavigate();
+
+  const handleRedirect = (user: User) => {
+    if (user) {
+      const redirectPath = redirect || getUserOnboardingRoute(user) || '/app/tableau-de-bord';
+      navigate(redirectPath);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -56,9 +64,7 @@ export default function CreationDeCompte() {
       const user = response.data.user as User;
       useUser.setState({ user });
       useZustandStore.setState((state) => ({ users: { ...state.users, [user.id]: user } }));
-      setUserInitiated(true);
-      const redirectPath = redirect || getUserOnboardingRoute(user) || '/app/tableau-de-bord';
-      navigate(redirectPath);
+      handleRedirect(user);
     } else {
       useUser.setState({ user: null });
       setUserResponse(response);
@@ -76,9 +82,6 @@ export default function CreationDeCompte() {
     return '';
   };
 
-  const redirect = searchParams.get('redirect');
-  const communication = searchParams.get('communication');
-
   useEffect(() => {
     clearCache('connexion').then(() =>
       refreshUser('connexion').then((user) => {
@@ -86,18 +89,12 @@ export default function CreationDeCompte() {
         if (!user) {
           setInitialLoading(false);
         } else {
-          setUserInitiated(true);
+          handleRedirect(user);
         }
       }),
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (userInitiated && user) {
-      const redirectPath = redirect || getUserOnboardingRoute(user) || '/app/tableau-de-bord';
-      navigate(redirectPath);
-    }
-  }, [userInitiated, user, navigate, redirect]);
 
   if (initialLoading) {
     return <Chargement />;
