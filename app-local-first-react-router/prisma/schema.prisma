@@ -471,7 +471,6 @@ model Carcasse {
   espece                                             String? // Sanglier, Cerf, etc.
   type                                               CarcasseType?
   nombre_d_animaux                                   Int?
-  nombre_d_animaux_acceptes                          Int?
   heure_mise_a_mort                                  String?
   heure_evisceration                                 String?
   /**
@@ -630,6 +629,7 @@ model CarcasseIntermediaire {
   ecarte_pour_inspection                      Boolean?
   commentaire                                 String?
   intermediaire_poids                         Float?
+  nombre_d_animaux_acceptes                   Int?
   /**
    * new fields
    */
