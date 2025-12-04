@@ -42,6 +42,11 @@ test.describe("Connexion avec email incorrect", () => {
     await connectWith(page, "examinateur-pas-encore-existe@example.fr", "secret-mauvais-secret");
     await page.getByText("L'email est incorrect, ou vous n'avez pas encore de compte").click();
     await page.getByRole("link", { name: "Cliquez ici pour en créer un" }).click();
+    await page.getByRole("button", { name: "Créer mon compte" }).waitFor({ state: "visible" });
+    await page
+      .getByRole("textbox", { name: "Mon email Renseignez votre" })
+      .fill("examinateur-pas-encore-existe@example.fr");
+    await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-mauvais-secret");
     await page.getByRole("button", { name: "Créer mon compte" }).click();
     await expect(page.getByRole("heading", { name: "Renseignez vos coordonnées" })).toBeVisible();
   });
