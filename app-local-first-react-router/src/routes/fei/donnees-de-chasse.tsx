@@ -157,6 +157,7 @@ export default function FEIDonneesDeChasse({
 
   return (
     <>
+      <ItemNotEditable label="Fiche d'Examen Initial n°" value={fei.numero} />
       <ItemNotEditable
         label={carcasses.length > 1 ? 'Espèces' : 'Espèce'}
         value={[...new Set(carcasses.map((c) => c.espece))].join(', ')}
