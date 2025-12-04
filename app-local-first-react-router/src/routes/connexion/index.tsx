@@ -94,7 +94,7 @@ export default function Connexion() {
         }
       }),
     );
-  }, [user]);
+  }, []);
 
   if (initialLoading) {
     return <Chargement />;
