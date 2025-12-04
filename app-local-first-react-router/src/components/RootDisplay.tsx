@@ -82,8 +82,17 @@ export default function RootDisplay({
     });
   }
 
+  const environment = import.meta.env.MODE || import.meta.env.VITE_ENV || 'production';
+
   return (
     <>
+      {environment !== 'production' && (
+        <div className="sticky top-0 z-[999]">
+          <div className="fixed bottom-0 z-[999] rounded-tr-md border border-red-200 bg-red-50/75 px-4 py-2 text-center backdrop-blur-xs">
+            <span className="text-xs text-red-700">Environnement {environment.toUpperCase()}</span>
+          </div>
+        </div>
+      )}
       <Header
         brandTop={
           <span className={hideMinistereName ? 'hidden md:inline' : ''}>
@@ -91,7 +100,7 @@ export default function RootDisplay({
             <br />
             de l'Agriculture,
             <br />
-            de l’Agro-alimentaire
+            de l'Agro-alimentaire
             <br />
             et de la Souveraineté
             <br />
