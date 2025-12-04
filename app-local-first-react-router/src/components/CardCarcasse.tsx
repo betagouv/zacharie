@@ -113,6 +113,15 @@ export default function CardCarcasse({
   const isManquante = statusNewCard.includes('manquant');
   const isAccept = statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle');
 
+  const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
+  const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
+  const nombreDAnimauxDisplay =
+    CarcasseType.PETIT_GIBIER === carcasse.type
+      ? nombreDAnimaux > 1 && nombreDAnimauxAcceptes > 0
+        ? `(${nombreDAnimauxAcceptes} sur ${nombreDAnimaux})`
+        : `(${nombreDAnimaux})`
+      : '';
+
   return (
     <>
       <div
@@ -134,12 +143,7 @@ export default function CardCarcasse({
           onClick={onClick ? onClick : cacasseModal.open}
         >
           <p className="order-1 text-base font-bold">
-            {carcasse.espece}
-            {CarcasseType.PETIT_GIBIER === carcasse.type &&
-              ((n, a) => (n > 1 && a > 0 ? ` (${a} sur ${n})` : ` (${n})`))(
-                carcasse.nombre_d_animaux ?? 0,
-                latestIntermediaire?.nombre_d_animaux_acceptes ?? 0,
-              )}
+            {carcasse.espece} {nombreDAnimauxDisplay}
           </p>
           <p className="order-2 text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
           {miseAMort && <p className="order-3 text-sm/4">{miseAMort}</p>}
