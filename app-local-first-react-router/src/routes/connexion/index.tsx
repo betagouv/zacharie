@@ -27,9 +27,9 @@ export default function Connexion() {
   const redirect = searchParams.get('redirect');
   const communication = searchParams.get('communication');
 
-  const handleRedirect = (user: User) => {
-    if (user) {
-      const redirectPath = redirect || getUserOnboardingRoute(user) || '/app/tableau-de-bord';
+  const handleRedirect = (u: User) => {
+    if (u) {
+      const redirectPath = redirect || getUserOnboardingRoute(u) || '/app/tableau-de-bord';
       navigate(redirectPath);
     }
   };
@@ -94,8 +94,7 @@ export default function Connexion() {
         }
       }),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   if (initialLoading) {
     return <Chargement />;
