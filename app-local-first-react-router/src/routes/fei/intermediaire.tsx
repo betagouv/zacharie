@@ -10,7 +10,6 @@ import {
   FeiOwnerRole,
 } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
-import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import dayjs from 'dayjs';
@@ -374,7 +373,7 @@ function FEICurrentIntermediaireContent({
     let label = [];
     if (carcassesApprovedSorted.length > 0) {
       label.push(
-        `${priseEnChargeAt ? "J'ai pris" : 'Je prends'} en charge les carcasses que j'ai acceptées (${formatCountCarcasseByEspece(
+        `Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (${formatCountCarcasseByEspece(
           carcassesApprovedSorted,
         )
           .filter((c) => !c?.includes('refus'))
@@ -383,7 +382,7 @@ function FEICurrentIntermediaireContent({
     }
     if (carcassesSorted.carcassesRejetees.length > 0) {
       label.push(
-        `J'ai refusé ${formatCountCarcasseByEspece(carcassesSorted.carcassesRejetees)
+        `Je refuse ${formatCountCarcasseByEspece(carcassesSorted.carcassesRejetees)
           .filter((c) => c?.includes('refus'))
           .filter((c) => c != null)
           .map((c) =>
@@ -398,12 +397,12 @@ function FEICurrentIntermediaireContent({
     const nbCarcassesManquantes = carcassesSorted.carcassesManquantes.length;
     if (nbCarcassesManquantes > 0) {
       label.push(
-        `J'ai signalé ${nbCarcassesManquantes} ${addAnSToWord('carcasse', nbCarcassesManquantes)} ${addAnSToWord('manquante', nbCarcassesManquantes)}.`,
+        `Je signale ${nbCarcassesManquantes} ${addAnSToWord('carcasse', nbCarcassesManquantes)} ${addAnSToWord('manquante', nbCarcassesManquantes)}.`,
       );
     }
     if (carcassesSorted.carcassesEcarteesPourInspection.length > 0) {
       label.push(
-        `J'ai écarté ${formatCountCarcasseByEspece(carcassesSorted.carcassesEcarteesPourInspection)} pour inspection.`,
+        `J'écarte ${formatCountCarcasseByEspece(carcassesSorted.carcassesEcarteesPourInspection)} pour inspection.`,
       );
     }
     return label;
@@ -412,7 +411,6 @@ function FEICurrentIntermediaireContent({
     carcassesSorted.carcassesManquantes.length,
     carcassesSorted.carcassesEcarteesPourInspection,
     carcassesSorted.carcassesRejetees,
-    priseEnChargeAt,
   ]);
 
   // console.log({ carcassesSorted, carcassesApprovedSorted, labelCheckDone });
@@ -631,33 +629,16 @@ function FEICurrentIntermediaireContent({
               key={JSON.stringify(priseEnChargeAt || '') + JSON.stringify(labelCheckDone)}
               onSubmit={handleSubmitCheckFinishedAt}
             >
-              <Checkbox
-                className={!priseEnChargeAt ? '' : 'checkbox-black'}
-                options={[
-                  {
-                    label: (
-                      <>
-                        {labelCheckDone.map((line) => {
-                          return (
-                            <span className="block basis-full" key={line}>
-                              {line}
-                            </span>
-                          );
-                        })}
-                      </>
-                    ),
-                    nativeInputProps: {
-                      required: true,
-                      name: 'check_finished_at_checked',
-                      value: 'true',
-                      disabled: !!priseEnChargeAt,
-                      form: 'form_intermediaire_check_finished_at',
-                      readOnly: !!priseEnChargeAt || props.readOnly,
-                      defaultChecked: priseEnChargeAt ? true : false,
-                    },
-                  },
-                ]}
-              />
+              <p>
+                {labelCheckDone.map((line) => {
+                  return (
+                    <Fragment key={line}>
+                      {line}
+                      <br />
+                    </Fragment>
+                  );
+                })}
+              </p>
               <PriseEnChargeInput
                 className={effectiveCanEdit ? '' : 'pointer-events-none'}
                 hintText={
