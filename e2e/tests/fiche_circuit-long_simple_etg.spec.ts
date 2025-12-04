@@ -80,8 +80,8 @@ test.describe("Fiches ETG", () => {
     await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
     await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
     await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
-    await page.getByRole("heading", { name: "Pigeons (10) - N° MM-001-" }).click();
-    await page.getByLabel("Pigeons (10) - N° MM-001-").getByTitle("Fermer").click();
+    await page.getByRole("heading", { name: "Pigeons - N° MM-001-" }).click();
+    await page.getByLabel("Pigeons - N° MM-001-").getByTitle("Fermer").click();
     await page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" }).click();
     await expect(page.getByText("Unique - Abcès ou nodules")).toBeVisible();
     await page.getByLabel("Daim - N° MM-001-002").getByTitle("Fermer").click();
@@ -246,8 +246,8 @@ test.describe("Fiches ETG", () => {
     await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
     await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
     await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
-    await page.getByRole("heading", { name: "Pigeons (10) - N° MM-001-" }).click();
-    await page.getByLabel("Pigeons (10) - N° MM-001-").getByTitle("Fermer").click();
+    await page.getByRole("heading", { name: "Pigeons - N° MM-001-" }).click();
+    await page.getByLabel("Pigeons - N° MM-001-").getByTitle("Fermer").click();
     await page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" }).click();
     await expect(page.getByText("Unique - Abcès ou nodules")).toBeVisible();
     await page.getByLabel("Daim - N° MM-001-002").getByTitle("Fermer").click();
@@ -383,8 +383,8 @@ test.describe("Fiches ETG", () => {
     await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
     await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
     await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
-    await page.getByRole("heading", { name: "Pigeons (10) - N° MM-001-" }).click();
-    await page.getByLabel("Pigeons (10) - N° MM-001-").getByTitle("Fermer").click();
+    await page.getByRole("heading", { name: "Pigeons - N° MM-001-" }).click();
+    await page.getByLabel("Pigeons - N° MM-001-").getByTitle("Fermer").click();
     await page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" }).click();
     await expect(page.getByText("Unique - Abcès ou nodules")).toBeVisible();
     await page.getByLabel("Daim - N° MM-001-002").getByTitle("Fermer").click();
