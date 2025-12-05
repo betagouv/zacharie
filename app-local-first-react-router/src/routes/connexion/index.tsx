@@ -87,17 +87,12 @@ export default function Connexion() {
   };
 
   useEffect(() => {
-    clearCache('connexion').then(() =>
-      refreshUser('connexion').then((user) => {
-        console.log('init user', user);
-        if (!user) {
-          setInitialLoading(false);
-        } else {
-          handleRedirect(user);
-        }
-      }),
-    );
-  }, []);
+    if (user) {
+      handleRedirect(user);
+    } else {
+      setInitialLoading(false);
+    }
+  }, [user]);
 
   if (initialLoading) {
     return <Chargement />;
