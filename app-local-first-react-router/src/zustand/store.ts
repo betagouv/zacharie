@@ -794,6 +794,7 @@ export async function syncData(calledFrom: string) {
   //   FOR_TEST_ONLY_started = true;
   // }
   console.log('syncing data from', calledFrom);
+
   queue.add(async () => {
     await syncProchainBraceletAUtiliser();
   });
