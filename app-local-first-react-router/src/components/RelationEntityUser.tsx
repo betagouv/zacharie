@@ -203,7 +203,7 @@ export default function RelationEntityUser({
                     _action: 'delete',
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                    relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                    relation: relationType,
                   },
                 }).then((res) => {
                   if (res.ok) {
