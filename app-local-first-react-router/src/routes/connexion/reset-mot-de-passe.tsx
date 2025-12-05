@@ -63,7 +63,10 @@ export default function ResetMotDePasse() {
     if (response.ok && response.data?.user?.id) {
       const user = response.data.user as User;
       useUser.setState({ user });
-      useZustandStore.setState((state) => ({ users: { ...state.users, [user.id]: user } }));
+      useZustandStore.setState((state) => ({
+        users: { ...state.users, [user.id]: user },
+        dataIsSynced: false,
+      }));
       const redirectPath = redirect || getUserOnboardingRoute(user) || '/app/tableau-de-bord';
       navigate(redirectPath);
     } else {

@@ -63,7 +63,10 @@ export default function CreationDeCompte() {
     if (response.ok && response.data?.user?.id) {
       const user = response.data.user as User;
       useUser.setState({ user });
-      useZustandStore.setState((state) => ({ users: { ...state.users, [user.id]: user } }));
+      useZustandStore.setState((state) => ({
+        users: { ...state.users, [user.id]: user },
+        dataIsSynced: false,
+      }));
       handleRedirect(user);
     } else {
       useUser.setState({ user: null });
