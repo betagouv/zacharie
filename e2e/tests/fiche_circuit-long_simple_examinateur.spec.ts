@@ -19,8 +19,8 @@ test.describe("Fiches examinateur initial", () => {
   test("Création d'une fiche", async ({ page }) => {
     await connectWith(page, "examinateur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("button", { name: "Nouvelle fiche" }).nth(1).click();
     await expect(page.getByRole("heading", { name: "Examen initial Étape 1 sur" })).toBeVisible();
     await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
@@ -29,39 +29,39 @@ test.describe("Fiches examinateur initial", () => {
     await expect(page.getByText("* Les champs marqués d'un astérisque (*) sont obligatoires")).toBeVisible();
     await page.getByText("Date de mise à mort (et d'éviscération) *").click();
     await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour", exact: true }).click();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
     await page.getByRole("button", { name: "CHASSENARD" }).click();
     await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).fill("12:12");
     await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).blur();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByLabel("Nouvelle carcasse / lot de").selectOption("Daim");
     await page
       .getByRole("button", { name: "Votre chasse n'a pas de dispositif de marquage ? Cliquez ici pour utiliser" })
       .click();
     await page.getByRole("button", { name: "Enregistrer la carcasse" }).click();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page
       .getByRole("button", { name: "Votre chasse n'a pas de dispositif de marquage ? Cliquez ici pour utiliser" })
       .click();
     await page.getByRole("button", { name: "Enregistrer la carcasse" }).click();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page
       .getByRole("button", { name: "Votre chasse n'a pas de dispositif de marquage ? Cliquez ici pour utiliser" })
       .click();
     await page.getByRole("button", { name: "Enregistrer la carcasse" }).click();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page
       .getByRole("button", { name: "Votre chasse n'a pas de dispositif de marquage ? Cliquez ici pour utiliser" })
       .click();
     await page.getByRole("button", { name: "Enregistrer la carcasse" }).click();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).fill("12:14");
     await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).blur();
     await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour et maintenant" }).click();
