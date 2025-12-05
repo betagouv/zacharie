@@ -60,14 +60,14 @@ test.describe("Fiches examinateur initial", () => {
       .getByRole("button", { name: "Votre chasse n'a pas de dispositif de marquage ? Cliquez ici pour utiliser" })
       .click();
     await page.getByRole("button", { name: "Enregistrer la carcasse" }).click();
-    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).fill("12:14");
     await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).blur();
     await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour et maintenant" }).click();
     await page.getByText("Je, Martin Marie, certifie qu").click();
-    await new Promise((resolve) => setTimeout(resolve, 100));
     await expect(page.getByRole("button", { name: "Enregistrer la fiche", exact: true })).not.toBeDisabled();
+    await new Promise((resolve) => setTimeout(resolve, 100));
     await page.getByRole("button", { name: "Enregistrer la fiche", exact: true }).click();
     await page.getByRole("button", { name: "Pierre Petit" }).click();
     await page.getByRole("button", { name: "Valider l’examen initial" }).click();
