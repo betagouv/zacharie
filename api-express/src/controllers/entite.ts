@@ -2,7 +2,7 @@ import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
 import type { RequestWithUser } from '~/types/request';
-import type { EntitiesWorkingForResponse, PartenairesResponse } from '~/types/responses';
+import type { EntitiesWorkingForResponse, PartenairesResponse, UserEntityResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import {
@@ -320,103 +320,107 @@ const partenaireSchema = z.object({
 router.post(
   '/partenaire',
   passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
-    const user = req.user!;
+  catchErrors(
+    async (req: RequestWithUser, res: express.Response<UserEntityResponse>, next: express.NextFunction) => {
+      const user = req.user!;
 
-    const result = partenaireSchema.safeParse(req.body);
-    if (!result.success) {
-      const error = new Error(result.error.message);
-      res.status(406);
-      return next(error);
-    }
-    const body = result.data;
+      const result = partenaireSchema.safeParse(req.body);
+      if (!result.success) {
+        const error = new Error(result.error.message);
+        res.status(406);
+        return next(error);
+      }
+      const body = result.data;
 
-    const data: Prisma.EntityUncheckedCreateInput = {
-      raison_sociale: sanitize(body[Prisma.EntityScalarFieldEnum.raison_sociale]),
-      nom_d_usage: sanitize(body[Prisma.EntityScalarFieldEnum.raison_sociale]),
-      type: body[Prisma.EntityScalarFieldEnum.type] as EntityTypes,
-      address_ligne_1: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_1]),
-      address_ligne_2: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_2]),
-      code_postal: sanitize(body[Prisma.EntityScalarFieldEnum.code_postal]),
-      ville: sanitize(body[Prisma.EntityScalarFieldEnum.ville]),
-      siret: sanitize(body[Prisma.EntityScalarFieldEnum.siret]) || null,
-      zacharie_compatible: true,
-    };
+      const data: Prisma.EntityUncheckedCreateInput = {
+        raison_sociale: sanitize(body[Prisma.EntityScalarFieldEnum.raison_sociale]),
+        nom_d_usage: sanitize(body[Prisma.EntityScalarFieldEnum.raison_sociale]),
+        type: body[Prisma.EntityScalarFieldEnum.type] as EntityTypes,
+        address_ligne_1: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_1]),
+        address_ligne_2: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_2]),
+        code_postal: sanitize(body[Prisma.EntityScalarFieldEnum.code_postal]),
+        ville: sanitize(body[Prisma.EntityScalarFieldEnum.ville]),
+        siret: sanitize(body[Prisma.EntityScalarFieldEnum.siret]) || null,
+        zacharie_compatible: true,
+      };
 
-    const existingEntity = await prisma.entity.findFirst({
-      where: {
-        raison_sociale: data.raison_sociale,
-        type: data.type,
-        code_postal: data.code_postal,
-        ville: data.ville,
-        siret: data.siret,
-      },
-    });
-
-    if (existingEntity) {
-      const error = new Error('Entité déjà existante');
-      res.status(406);
-      return next(error);
-    }
-
-    let createdEntity = await prisma.entity.create({ data });
-
-    createdEntity = await updateOrCreateBrevoCompany(createdEntity);
-
-    let ownerUser = await prisma.user.findUnique({
-      where: {
-        email: body[Prisma.UserScalarFieldEnum.email],
-      },
-    });
-    if (!ownerUser) {
-      ownerUser = await prisma.user.create({
-        data: {
-          id: await createUserId(),
-          email: body[Prisma.UserScalarFieldEnum.email],
-          nom_de_famille: body[Prisma.UserScalarFieldEnum.nom_de_famille],
-          prenom: body[Prisma.UserScalarFieldEnum.prenom],
-          roles: [body[Prisma.EntityScalarFieldEnum.type] as UserRoles],
+      const existingEntity = await prisma.entity.findFirst({
+        where: {
+          raison_sociale: data.raison_sociale,
+          type: data.type,
+          code_postal: data.code_postal,
+          ville: data.ville,
+          siret: data.siret,
         },
       });
-    } else {
-      if (!ownerUser.roles.includes(body[Prisma.EntityScalarFieldEnum.type] as UserRoles)) {
-        ownerUser.roles.push(body[Prisma.EntityScalarFieldEnum.type] as UserRoles);
-        await prisma.user.update({
-          where: { id: ownerUser.id },
-          data: { roles: ownerUser.roles },
-        });
+
+      if (existingEntity) {
+        const error = new Error('Entité déjà existante');
+        res.status(406);
+        return next(error);
       }
-    }
 
-    await prisma.entityAndUserRelations.create({
-      data: {
-        owner_id: ownerUser.id,
-        entity_id: createdEntity.id,
-        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        status: EntityRelationStatus.ADMIN,
-      },
-    });
+      let createdEntity = await prisma.entity.create({ data });
 
-    await prisma.entityAndUserRelations.create({
-      data: {
-        owner_id: user.id,
-        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        entity_id: createdEntity.id,
-        status: EntityRelationStatus.MEMBER,
-      },
-    });
+      createdEntity = await updateOrCreateBrevoCompany(createdEntity);
 
-    await sendEmail({
-      emails: ['contact@zacharie.beta.gouv.fr'],
-      subject: `Nouveau partenaire pré-enregistré dans Zacharie`,
-      text: `Un nouveau partenaire a été pré-enregistré dans Zacharie\u00A0: ${createdEntity.nom_d_usage}`,
-    });
+      let ownerUser = await prisma.user.findUnique({
+        where: {
+          email: body[Prisma.UserScalarFieldEnum.email],
+        },
+      });
+      if (!ownerUser) {
+        ownerUser = await prisma.user.create({
+          data: {
+            id: await createUserId(),
+            email: body[Prisma.UserScalarFieldEnum.email],
+            nom_de_famille: body[Prisma.UserScalarFieldEnum.nom_de_famille],
+            prenom: body[Prisma.UserScalarFieldEnum.prenom],
+            roles: [body[Prisma.EntityScalarFieldEnum.type] as UserRoles],
+          },
+        });
+      } else {
+        if (!ownerUser.roles.includes(body[Prisma.EntityScalarFieldEnum.type] as UserRoles)) {
+          ownerUser.roles.push(body[Prisma.EntityScalarFieldEnum.type] as UserRoles);
+          await prisma.user.update({
+            where: { id: ownerUser.id },
+            data: { roles: ownerUser.roles },
+          });
+        }
+      }
 
-    // FIXME: doit-on lier le partenaire au contact dans Brevo ?
-    // await linkBrevoCompanyToContact(createdEntity, user);
+      await prisma.entityAndUserRelations.create({
+        data: {
+          owner_id: ownerUser.id,
+          entity_id: createdEntity.id,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          status: EntityRelationStatus.ADMIN,
+        },
+      });
 
-    res.status(200).send({ ok: true, error: '' });
-  }),
+      const createdEntityRelation = await prisma.entityAndUserRelations.create({
+        data: {
+          owner_id: user.id,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          entity_id: createdEntity.id,
+          status: EntityRelationStatus.MEMBER,
+        },
+      });
+
+      await sendEmail({
+        emails: ['contact@zacharie.beta.gouv.fr'],
+        subject: `Nouveau partenaire pré-enregistré dans Zacharie`,
+        text: `Un nouveau partenaire a été pré-enregistré dans Zacharie\u00A0: ${createdEntity.nom_d_usage}`,
+      });
+
+      // FIXME: doit-on lier le partenaire au contact dans Brevo ?
+      // await linkBrevoCompanyToContact(createdEntity, user);
+
+      res
+        .status(200)
+        .send({ ok: true, error: '', data: { entity: createdEntity, relation: createdEntityRelation } });
+    },
+  ),
 );
 
 const ccgSchema = z.object({

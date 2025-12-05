@@ -27,6 +27,13 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import type { FeiIntermediaire, FeiAndIntermediaireIds } from '@app/types/fei-intermediaire';
 import { EntityWithUserRelation } from '@api/src/types/entity';
 import { UserForFei } from '@api/src/types/user';
+import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import PartenaireNouveau from '@app/components/PartenaireNouveau';
+
+const partenaireModal = createModal({
+  isOpenedByDefault: false,
+  id: 'partenaire-modal',
+});
 
 export default function DestinataireSelect({
   className = '',
@@ -151,6 +158,7 @@ export default function DestinataireSelect({
     }
     return null;
   });
+  const [newEntityNomDUsage, setNewEntityNomDUsage] = useState<string | null>(null);
 
   const prochainDetenteur = prochainDetenteurEntityId ? entities[prochainDetenteurEntityId] : null;
 
@@ -439,9 +447,8 @@ export default function DestinataireSelect({
           creatable
           // @ts-expect-error - onCreateOption is not typed
           onCreateOption={(newOption) => {
-            navigate(
-              `/app/tableau-de-bord/mon-profil/mes-partenaires?redirect=/app/tableau-de-bord/fei/${fei.numero}&raison-sociale=${newOption}`,
-            );
+            setNewEntityNomDUsage(newOption);
+            partenaireModal.open();
           }}
           isReadOnly={!canEdit}
           name={Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
@@ -875,6 +882,16 @@ export default function DestinataireSelect({
           </>
         )}
       </div>
+      <partenaireModal.Component title="Ajouter un partenaire">
+        <PartenaireNouveau
+          key={newEntityNomDUsage ?? ''}
+          newEntityNomDUsageProps={newEntityNomDUsage ?? undefined}
+          onFinish={(newEntity) => {
+            partenaireModal.close();
+            if (newEntity) setProchainDetenteurEntityId(newEntity.id);
+          }}
+        />
+      </partenaireModal.Component>
     </>
   );
 }
