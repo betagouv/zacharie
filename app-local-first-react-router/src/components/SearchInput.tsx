@@ -62,7 +62,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
         <div className="flex w-full flex-row justify-start">
           <Alert
             onClose={() => setError('')}
-            description="La recherche s'effectue sur les fiches transmises au SVI dans les 20 derniers jours."
+            description="La recherche s'effectue sur les fiches transmises au SVI dans les 2 derniers mois."
             closable
             id="search-error"
             severity="warning"
@@ -75,7 +75,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
         <div className="flex w-full flex-row justify-start">
           <Alert
             onClose={() => setError('')}
-            description="La recherche s'effectue sur les fiches transmises au SVI dans les 20 derniers jours."
+            description="La recherche s'effectue sur les fiches transmises au SVI dans les 2 derniers mois."
             closable
             id="search-loading"
             severity="info"
