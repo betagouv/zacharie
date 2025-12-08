@@ -37,7 +37,13 @@ export default function RootDisplay({
   // 2. useMemo                    useMemo
   // 3. undefined                  useState
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  const RenderedSearchInput = useRef(user?.roles.includes(UserRoles.SVI) ? SearchInput : undefined).current;
+  const RenderedSearchInput = useRef(
+    user?.roles.includes(UserRoles.SVI) ||
+      user?.roles.includes(UserRoles.CHASSEUR) ||
+      user?.roles.includes(UserRoles.ETG)
+      ? SearchInput
+      : undefined,
+  ).current;
   // console.log("root display user " + id, user);
   const quickAccessItems: Array<HeaderProps.QuickAccessItem> = [
     {

@@ -48,7 +48,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
   }, [cachedValue, value]);
 
   return (
-    <div className="flex w-full flex-col">
+    <div className="relative flex w-full flex-col">
       <input
         ref={searchRef}
         className={className}
@@ -58,67 +58,76 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
         value={cachedValue}
         onChange={(event) => setCachedValue(event.target.value)}
       />
-      {!!error && (
-        <div className="flex w-full flex-row justify-start">
-          <Alert
-            onClose={() => setError('')}
-            description="La recherche s'effectue sur les fiches transmises au SVI dans les 20 derniers jours."
-            closable
-            id="search-error"
-            severity="warning"
-            title={error}
-            className="w-full text-left"
-          />
+      {(!!error || isLoading || successData.length > 0) && (
+        <div className="absolute top-full right-0 left-0 z-50 mt-1 flex w-full flex-col">
+          {!!error && (
+            <div className="flex w-full flex-row justify-start">
+              <Alert
+                onClose={() => setError('')}
+                description="La recherche s'effectue sur les fiches des 2 derniers mois."
+                closable
+                id="search-error"
+                severity="warning"
+                title={error}
+                className="w-full text-left"
+              />
+            </div>
+          )}
+          {isLoading && (
+            <div className="flex w-full flex-row justify-start">
+              <Alert
+                onClose={() => setError('')}
+                description="La recherche s'effectue sur les fiches des 2 derniers mois."
+                closable
+                id="search-loading"
+                severity="info"
+                title="Recherche en cours..."
+                className="w-full text-left"
+              />
+            </div>
+          )}
+          {successData.map((data) => {
+            return (
+              <div
+                key={`${data.fei_numero || data.carcasse_numero_bracelet}`}
+                className="flex w-full flex-row justify-start bg-white"
+              >
+                <Alert
+                  onClose={() => setError('')}
+                  description={error}
+                  closable
+                  id="search-success"
+                  severity="success"
+                  title={
+                    <a href={data.redirectUrl} className="flex flex-col">
+                      {data.carcasse_numero_bracelet && (
+                        <span className="text-base font-bold">
+                          {data.carcasse_type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'}{' '}
+                          {data.carcasse_numero_bracelet}: {data.carcasse_espece}
+                        </span>
+                      )}
+                      {data.fei_numero && (
+                        <span className="text-base font-normal">Fiche {data.fei_numero}</span>
+                      )}
+                      {data.fei_svi_assigned_at && (
+                        <span className="font-sm text-base font-normal italic opacity-50">
+                          Fiche transmise le {data.fei_svi_assigned_at}
+                        </span>
+                      )}
+                      {data.fei_date_mise_a_mort && (
+                        <span className="font-sm text-base font-normal italic opacity-50">
+                          Chasse du {data.fei_date_mise_a_mort}
+                        </span>
+                      )}
+                    </a>
+                  }
+                  className="w-full text-left"
+                />
+              </div>
+            );
+          })}
         </div>
       )}
-      {isLoading && (
-        <div className="flex w-full flex-row justify-start">
-          <Alert
-            onClose={() => setError('')}
-            description="La recherche s'effectue sur les fiches transmises au SVI dans les 20 derniers jours."
-            closable
-            id="search-loading"
-            severity="info"
-            title="Recherche en cours..."
-            className="w-full text-left"
-          />
-        </div>
-      )}
-      {successData.map((data) => {
-        return (
-          <div className="flex w-full flex-row justify-start">
-            <Alert
-              onClose={() => setError('')}
-              description={error}
-              closable
-              id="search-success"
-              severity="success"
-              title={
-                <a href={data.redirectUrl} className="flex flex-col">
-                  {data.carcasse_numero_bracelet && (
-                    <span className="text-base font-bold">
-                      {data.carcasse_type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'}{' '}
-                      {data.carcasse_numero_bracelet}: {data.carcasse_espece}
-                    </span>
-                  )}
-                  {data.fei_numero && <span className="text-base font-normal">Fiche {data.fei_numero}</span>}
-                  {data.fei_svi_assigned_at && (
-                    <span className="font-sm text-base font-normal italic opacity-50">
-                      Fiche transmise le {data.fei_svi_assigned_at}
-                    </span>
-                  )}
-                  {data.fei_date_mise_a_mort && (
-                    <span className="font-sm text-base font-normal italic opacity-50">
-                      Chasse du {data.fei_date_mise_a_mort}
-                    </span>
-                  )}
-                </a>
-              }
-              className="w-full text-left"
-            />
-          </div>
-        );
-      })}
     </div>
   );
 }
