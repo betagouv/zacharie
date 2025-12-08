@@ -25,6 +25,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   };
 
   const isExaminateurInitial = user?.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
+  const isChasseur = user?.roles.includes(UserRoles.CHASSEUR);
   const isAdmin = user?.roles.includes(UserRoles.ADMIN);
   const isSvi = user?.roles.includes(UserRoles.SVI);
   const isEtg = user?.roles.includes(UserRoles.ETG);
@@ -120,6 +121,14 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       linkProps: { to: '/app/tableau-de-bord', href: '#' },
     },
   ];
+
+  if (isChasseur) {
+    mainMenu.unshift({
+      text: 'Mes chasses',
+      isActive: location.pathname === '/app/tableau-de-bord/mes-chasses',
+      linkProps: { to: '/app/tableau-de-bord/mes-chasses', href: '#' },
+    });
+  }
 
   if (isExaminateurInitial && !isNotActivated) {
     mainMenu.unshift({
