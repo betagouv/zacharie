@@ -1,7 +1,6 @@
 import { Footer } from '@codegouvfr/react-dsfr/Footer';
 import { Header, type HeaderProps } from '@codegouvfr/react-dsfr/Header';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
-import { UserRoles } from '@prisma/client';
 import { clearCache } from '@app/services/indexed-db';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
@@ -27,23 +26,8 @@ export default function RootDisplay({
   const embedded = searchParams.get('embedded') === 'true';
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
-  // there is a bug on user's first connexion where user is not defined
-  // RENDER 1. user is not connected -> renderSearchInput is undefined
-  // RENDER 2. user is connected -> renderSearchInput is SearchInput -> ERROR of number of hooks somewhere
-  // Error: Rendered more hooks than during the previous render. at SearchInput
-  // Previous render            Next render
-  // ------------------------------------------------------
-  // 1. useMemo                    useMemo
-  // 2. useMemo                    useMemo
-  // 3. undefined                  useState
-  // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  const RenderedSearchInput = useRef(
-    user?.roles.includes(UserRoles.SVI) ||
-      user?.roles.includes(UserRoles.CHASSEUR) ||
-      user?.roles.includes(UserRoles.ETG)
-      ? SearchInput
-      : undefined,
-  ).current;
+  // SearchInput is now displayed for all users
+  const RenderedSearchInput = useRef(SearchInput).current;
   // console.log("root display user " + id, user);
   const quickAccessItems: Array<HeaderProps.QuickAccessItem> = [
     {

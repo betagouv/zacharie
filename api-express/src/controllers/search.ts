@@ -543,11 +543,6 @@ router.get(
       return;
     }
 
-    if (![UserRoles.SVI, UserRoles.CHASSEUR, UserRoles.ETG].some((role) => user.roles.includes(role))) {
-      res.status(200).send({ ok: false, data: [], error: '' });
-      return;
-    }
-
     // Route to appropriate handler based on user role
     let result: SearchResponse;
     switch (true) {
@@ -555,6 +550,9 @@ router.get(
         result = await handleSviSearch(searchQuery, user.id);
         break;
       case user.roles.includes(UserRoles.ETG):
+        result = await handleEtgSearch(searchQuery, user.id);
+        break;
+      case user.roles.includes(UserRoles.COLLECTEUR_PRO):
         result = await handleEtgSearch(searchQuery, user.id);
         break;
       case user.roles.includes(UserRoles.CHASSEUR):
