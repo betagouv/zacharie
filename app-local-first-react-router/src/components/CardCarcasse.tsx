@@ -218,7 +218,7 @@ export default function CardCarcasse({
             ) : acceptInfo && acceptInfo.entity?.nom_d_usage ? (
               <>
                 {statusNewCard} par {acceptInfo.entity.nom_d_usage}{' '}
-                <Badge severity="new" small noIcon>
+                <Badge severity="new" small noIcon as="span">
                   {acceptInfo.type}
                 </Badge>
               </>
