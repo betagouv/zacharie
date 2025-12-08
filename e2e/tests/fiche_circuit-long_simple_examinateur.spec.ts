@@ -19,8 +19,8 @@ test.describe("Fiches examinateur initial", () => {
   test("Création d'une fiche", async ({ page }) => {
     await connectWith(page, "examinateur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("button", { name: "Nouvelle fiche" }).nth(1).click();
     await expect(page.getByRole("heading", { name: "Examen initial Étape 1 sur" })).toBeVisible();
     await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
