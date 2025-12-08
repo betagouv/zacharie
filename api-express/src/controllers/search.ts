@@ -6,7 +6,7 @@ import prisma from '~/prisma';
 import type { SearchResponse } from '~/types/responses';
 import dayjs from 'dayjs';
 import { RequestWithUser } from '~/types/request';
-import { UserRoles, EntityRelationType, EntityRelationStatus } from '@prisma/client';
+import { UserRoles, EntityRelationType, EntityRelationStatus, Prisma } from '@prisma/client';
 
 /**
  * Search handler for SVI users
@@ -25,7 +25,7 @@ async function handleSviSearch(searchQuery: string, userId: string): Promise<Sea
     })
     .then((relation) => relation?.entity_id);
 
-  const feiWhereFilter: any = {
+  const feiWhereFilter: Prisma.FeiWhereInput = {
     deleted_at: null,
     svi_entity_id,
     svi_assigned_at: {
@@ -176,7 +176,7 @@ async function handleSviSearch(searchQuery: string, userId: string): Promise<Sea
  */
 async function handleEtgSearch(searchQuery: string, userId: string): Promise<SearchResponse> {
   // Build FEI filter for ETG - FEIs that have carcasses handled by the ETG user's entity
-  const feiWhereFilter: any = {
+  const feiWhereFilter: Prisma.FeiWhereInput = {
     deleted_at: null,
     CarcasseIntermediaire: {
       some: {
@@ -381,7 +381,7 @@ async function handleEtgSearch(searchQuery: string, userId: string): Promise<Sea
  */
 async function handleChasseurSearch(searchQuery: string, userId: string): Promise<SearchResponse> {
   // Build FEI filter for CHASSEUR
-  const feiWhereFilter: any = {
+  const feiWhereFilter: Prisma.FeiWhereInput = {
     deleted_at: null,
     OR: [
       {
