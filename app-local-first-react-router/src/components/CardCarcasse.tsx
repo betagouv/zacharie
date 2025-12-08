@@ -3,10 +3,12 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import {
   Carcasse,
   CarcasseType,
   DepotType,
+  FeiOwnerRole,
   IPM1Decision,
   IPM2Decision,
   PoidsType,
@@ -106,6 +108,44 @@ export default function CardCarcasse({
       if (!statusNewCard.includes('accepté')) statusNewCard = 'accepté';
     }
   }
+
+  // Déterminer qui a accepté en dernier (SVI ou ETG) et récupérer les informations de l'entité
+  let acceptInfo: { type: 'SVI' | 'ETG'; entity: (typeof entities)[string] | null } | null = null;
+  if (statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle')) {
+    const isSviAccepted =
+      carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE ||
+      carcasse.svi_ipm2_decision?.includes(IPM2Decision.LEVEE_DE_LA_CONSIGNE);
+    const sviAcceptDate = isSviAccepted
+      ? carcasse.svi_ipm1_signed_at ||
+        carcasse.svi_ipm2_signed_at ||
+        carcasse.svi_ipm1_date ||
+        carcasse.svi_ipm2_date
+      : null;
+    const sviEntity = isSviAccepted && fei.svi_entity_id ? entities[fei.svi_entity_id] : null;
+
+    const isEtgAccepted =
+      latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG;
+    const etgAcceptDate = isEtgAccepted ? latestIntermediaire.decision_at : null;
+    const etgEntity =
+      isEtgAccepted && latestIntermediaire?.intermediaire_entity_id
+        ? entities[latestIntermediaire.intermediaire_entity_id]
+        : null;
+
+    // Déterminer qui a accepté en dernier en comparant les dates
+    if (sviAcceptDate && etgAcceptDate) {
+      // Les deux ont accepté, comparer les dates
+      if (dayjs(sviAcceptDate).isAfter(dayjs(etgAcceptDate))) {
+        acceptInfo = { type: 'SVI', entity: sviEntity };
+      } else {
+        acceptInfo = { type: 'ETG', entity: etgEntity };
+      }
+    } else if (isSviAccepted) {
+      acceptInfo = { type: 'SVI', entity: sviEntity };
+    } else if (isEtgAccepted) {
+      acceptInfo = { type: 'ETG', entity: etgEntity };
+    }
+  }
+
   const isEcarteePourInspection =
     !!latestIntermediaire?.ecarte_pour_inspection && statusNewCard.includes('cours');
   const isEnCours = !latestIntermediaire?.ecarte_pour_inspection && statusNewCard.includes('cours');
@@ -173,7 +213,18 @@ export default function CardCarcasse({
               .filter(Boolean)
               .join(' ')}
           >
-            {isEcarteePourInspection ? 'Écarté pour inspection' : statusNewCard}
+            {isEcarteePourInspection ? (
+              'Écarté pour inspection'
+            ) : acceptInfo && acceptInfo.entity?.nom_d_usage ? (
+              <>
+                {statusNewCard} par {acceptInfo.entity.nom_d_usage}{' '}
+                <Badge severity="new" small noIcon>
+                  {acceptInfo.type}
+                </Badge>
+              </>
+            ) : (
+              statusNewCard
+            )}
           </p>
         </button>
         {(onEdit || onDelete) && (
