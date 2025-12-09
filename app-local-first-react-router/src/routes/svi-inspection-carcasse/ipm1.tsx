@@ -348,19 +348,28 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             />
           </div>
           <div>
-            <InputMultiSelect
-              data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
-              label="Observations (lésions) *"
-              hintText={
-                <button type="button" onClick={() => lesionsOuMotifsConsigneModal.open()}>
-                  Voir le référentiel des lésions de carcasse en <u className="inline">cliquant ici</u>
-                </button>
-              }
-              canEdit
-              placeholder="Commencez à taper une lésion"
-              onChange={setSviIpm1LesionsOuMotifs}
-              values={sviIpm1LesionsOuMotifs}
-            />
+            <div className="mb-6 flex flex-row items-end gap-6">
+              <div className="flex-1">
+                <InputMultiSelect
+                  data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
+                  label="Observations (lésions) *"
+                  canEdit
+                  placeholder="Commencez à taper une lésion"
+                  onChange={setSviIpm1LesionsOuMotifs}
+                  values={sviIpm1LesionsOuMotifs}
+                />
+              </div>
+              <p className="mb-3 text-sm">ou</p>
+              <div className="flex-1">
+                <Button
+                  type="button"
+                  priority="tertiary no outline"
+                  onClick={() => lesionsOuMotifsConsigneModal.open()}
+                >
+                  Filtrez par catégorie de lésion en&nbsp;<u className="inline">cliquant ici</u>
+                </Button>
+              </div>
+            </div>
             <ModalTreeDisplay
               data={lesionsTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               skipParent
