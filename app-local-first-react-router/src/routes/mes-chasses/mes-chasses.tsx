@@ -6,6 +6,8 @@ import RefusalCausesCard from './components/RefusalCausesCard';
 import SeizureRateCard from './components/SeizureRateCard';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
+import { Button } from '@codegouvfr/react-dsfr/Button';
+const environment = import.meta.env.VITE_ENV;
 
 interface DashboardData {
   totalCarcasses: number;
@@ -25,6 +27,23 @@ interface DashboardResponse {
 }
 
 export default function MesChasses() {
+  if (environment === 'prod') {
+    return (
+      <div className="fr-container fr-container--fluid flex flex-col items-center justify-center gap-4 p-34">
+        <div className="fr-alert fr-alert--info">
+          <p>Mes chasses non disponible en production</p>
+        </div>
+        <Button
+          priority="primary"
+          linkProps={{
+            to: '/app/tableau-de-bord',
+          }}
+        >
+          Aller à la page d'accueil
+        </Button>
+      </div>
+    );
+  }
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

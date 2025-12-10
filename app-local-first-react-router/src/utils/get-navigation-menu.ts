@@ -7,6 +7,7 @@ import { createNewFei } from './create-new-fei';
 import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from './circuit-court';
+const environment = import.meta.env.VITE_ENV;
 
 export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
@@ -122,7 +123,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     },
   ];
 
-  if (isChasseur) {
+  if (isChasseur && environment !== 'prod') {
     mainMenu.unshift({
       text: 'Mes chasses',
       isActive: location.pathname === '/app/tableau-de-bord/mes-chasses',
