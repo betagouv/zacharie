@@ -1,5 +1,6 @@
 import React from 'react';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 
 export type TreeNode = {
   [key: string]: string[] | TreeNode;
@@ -21,7 +22,7 @@ const renderNestedDetails = (
 ): React.ReactNode => {
   if (Array.isArray(data)) {
     if (data.length === 0) {
-      return <p className="text-sm italic text-gray-500">Aucune donnée disponible</p>;
+      return <p className="text-sm text-gray-500 italic">Aucune donnée disponible</p>;
     }
     return (
       <ul className="ml-4 list-inside list-disc">
@@ -68,10 +69,10 @@ const renderNestedDetails = (
     }
     return (
       <details key={key} className="mb-2">
-        <summary className="cursor-pointer font-semibold hover:text-action-high-blue-france focus:outline-hidden">
+        <summary className="hover:text-action-high-blue-france cursor-pointer font-semibold focus:outline-hidden">
           {key}
         </summary>
-        <div className="ml-4 mt-2">{renderNestedDetails(value, onItemClick, skipParent, key)}</div>
+        <div className="mt-2 ml-4">{renderNestedDetails(value, onItemClick, skipParent, key)}</div>
       </details>
     );
   });
@@ -89,6 +90,8 @@ const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({
     modal.close();
   };
 
+  const isModalOpen = useIsModalOpen(modal);
+
   return (
     <modal.Component
       title={` ${title}`}
@@ -100,9 +103,11 @@ const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({
         },
       ]}
     >
-      <div className="max-h-[70vh] overflow-y-auto p-4">
-        {renderNestedDetails(data, _onItemClick, skipParent, '')}
-      </div>
+      {isModalOpen && (
+        <div className="max-h-[70vh] overflow-y-auto p-4">
+          {renderNestedDetails(data, _onItemClick, skipParent, '')}
+        </div>
+      )}
     </modal.Component>
   );
 };
