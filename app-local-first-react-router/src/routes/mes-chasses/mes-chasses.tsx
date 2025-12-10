@@ -4,6 +4,7 @@ import CarcassBreakdownCard from './components/CarcassBreakdownCard';
 import HygieneScoreCard from './components/HygieneScoreCard';
 import RefusalCausesCard from './components/RefusalCausesCard';
 import SeizureRateCard from './components/SeizureRateCard';
+import SeizureRateCardPersonal from './components/SeizureRateCardPersonal';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -95,12 +96,12 @@ export default function MesChasses() {
     <div className="fr-container fr-container--fluid min-h-screen">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
         <div className="fr-col-12 p-4 md:p-0">
-          <div className="mb-6 grid grid-cols-2 gap-4">
+          <div className="mb-6 grid grid-cols-2 gap-8">
             <TotalCarcassesCard total={dashboardData.totalCarcasses} season={dashboardData.season} />
             <CarcassBreakdownCard bigGame={dashboardData.bigGame} smallGame={dashboardData.smallGame} />
             <HygieneScoreCard score={dashboardData.hygieneScore} />
             <RefusalCausesCard causes={dashboardData.refusalCauses} />
-            <SeizureRateCard
+            <SeizureRateCardPersonal
               rate={dashboardData.personalSeizureRate}
               label="taux de saisie personnel grand gibier"
             />

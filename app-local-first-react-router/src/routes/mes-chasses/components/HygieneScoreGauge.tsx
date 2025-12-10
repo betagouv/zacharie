@@ -1,3 +1,5 @@
+import { Badge } from '@codegouvfr/react-dsfr/Badge';
+
 interface HygieneScoreGaugeProps {
   score: number;
   maxScore?: number;
@@ -5,10 +7,10 @@ interface HygieneScoreGaugeProps {
 
 export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScoreGaugeProps) {
   const percentage = Math.min(Math.max((score / maxScore) * 100, 0), 100);
-  const radius = 50;
+  const radius = 55;
   const startX = 20;
   const startY = 70;
-  const endX = 120;
+  const endX = 130;
   const endY = 70;
 
   // Calculate the circumference of the semicircle
@@ -41,6 +43,12 @@ export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScor
     return 'text-red-600';
   };
 
+  const getScoreBackgroundColor = () => {
+    if (score >= 80) return 'bg-green-100';
+    if (score >= 60) return 'bg-yellow-100';
+    return 'bg-red-100';
+  };
+
   const getScoreLabel = () => {
     if (score >= 80) return 'EXCELLENT';
     if (score >= 60) return 'BON';
@@ -53,10 +61,16 @@ export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScor
     return '#f87171';
   };
 
+  const getScoreIconColor = () => {
+    if (score >= 75) return '#18753C';
+    if (score >= 30) return '#D69E2E';
+    return '#D62E2E';
+  };
+
   return (
     <div className="flex flex-col items-center">
-      <div className="relative w-full max-w-[140px]">
-        <svg width="140" height="80" viewBox="0 0 140 80" className="overflow-visible">
+      <div className="relative w-full max-w-[150px]">
+        <svg width="150" height="80" viewBox="0 0 150 80" className="overflow-visible">
           <defs className="">
             <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#f87171" />
@@ -68,36 +82,33 @@ export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScor
           <path
             d={`M ${startX} ${startY} A ${radius} ${radius} 0 0 1 ${endX} ${endY}`}
             stroke="url(#gaugeGradient)"
-            strokeWidth="8"
+            strokeWidth="16"
             fill="none"
-            strokeLinecap="round"
-            className="opacity-50"
+            strokeLinecap="square"
+            className="opacity-30"
           />
           {/* Score arc using stroke-dasharray for precise control */}
-          <path
+          {/* <path
             d={`M ${startX} ${startY} A ${radius} ${radius} 0 0 1 ${endX} ${endY}`}
             stroke={getScoreColorClass()}
-            strokeWidth="8"
+            strokeWidth="16"
             fill="none"
-            strokeLinecap="round"
+            strokeLinecap="square"
             strokeDasharray={strokeDasharray}
             strokeDashoffset={strokeDashoffset}
             className="transition-all duration-500"
-          />
+          /> */}
           {/* Score indicator dot */}
-          <circle cx={scoreEndX} cy={scoreEndY} r="6" fill={getScoreColorClass()} />
+          <circle cx={scoreEndX} cy={scoreEndY} r="6" fill={getScoreIconColor()} />
         </svg>
         {/* Score text */}
-        <div className="absolute right-0 bottom-0 left-0 flex items-center justify-center pt-2">
-          <div className={`text-3xl font-bold ${getScoreColor()}`}>{score}</div>
+        <div className="absolute right-0 bottom-0 left-0 -mb-2 flex items-center justify-center">
+          <div className={`text-5xl font-bold ${getScoreColor()}`}>{score}</div>
         </div>
       </div>
       {/* Label */}
-      <div className={`mt-2 flex items-center gap-1 text-sm font-semibold ${getScoreColor()}`}>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 0L10 6H16L11 9L13 15L8 12L3 15L5 9L0 6H6L8 0Z" />
-        </svg>
-        {getScoreLabel()}
+      <div className="mt-4">
+        <Badge className={`${getScoreBackgroundColor()} ${getScoreColor()}`}>{getScoreLabel()}</Badge>
       </div>
     </div>
   );
