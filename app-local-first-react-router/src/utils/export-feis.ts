@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
 import { loadFei } from './load-fei';
 import { capture } from '@app/services/sentry';
-import { IPM1Decision, IPM2Decision } from '@prisma/client';
+import { IPM1Decision, IPM2Decision, FeiOwnerRole } from '@prisma/client';
 
 type FeiExcelData = {
   Donnée: string;
@@ -43,6 +43,7 @@ type CarcasseExcelData = {
   'Numéro de fiche': string;
   // Observations ETG
   'Commentaires ETG / Transporteurs': string | null;
+  'Nom du collecteur': string | null;
   // Plus d'infos
   'Heure de première mise à mort': string | null;
   'Heure de dernière éviscération': string | null;
@@ -138,6 +139,7 @@ function createSheet<
       case 'Donnée':
       case 'Valeur':
       case 'Commentaires ETG / Transporteurs':
+      case 'Nom du collecteur':
       case 'SVI - Commentaire':
       case 'SVI - Saisie motif':
       case 'Premier détenteur':
@@ -337,6 +339,7 @@ export default function useExportFeis() {
           }
           const commentaires = [];
           let poids = undefined;
+          const collecteursPro: string[] = [];
           for (const intermediaire of intermediaires) {
             const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
             const intermediaireCarcasse = carcassesIntermediaireById[id];
@@ -349,6 +352,13 @@ export default function useExportFeis() {
             if (intermediaireCarcasse?.intermediaire_poids) {
               poids = intermediaireCarcasse.intermediaire_poids;
             }
+            // Récupérer le nom du collecteur pro si présent
+            if (intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
+              const collecteurEntity = entities[intermediaire.intermediaire_entity_id];
+              if (collecteurEntity?.nom_d_usage) {
+                collecteursPro.push(collecteurEntity.nom_d_usage);
+              }
+            }
           }
           allCarcasses.push({
             'Premier détenteur':
@@ -359,6 +369,7 @@ export default function useExportFeis() {
             'Date de la chasse': dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
             'Numéro de bracelet': carcasse.numero_bracelet,
             'Commentaires ETG / Transporteurs': commentaires.join('\n'),
+            'Nom du collecteur': collecteursPro.length > 0 ? collecteursPro.join(', ') : null,
             Éspèce: carcasse.espece,
             Poids: poids ? poids.toString() : null,
             "Nombre d'animaux": carcasse.nombre_d_animaux || 1,
