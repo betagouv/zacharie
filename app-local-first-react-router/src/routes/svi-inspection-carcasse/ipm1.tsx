@@ -366,7 +366,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                   priority="tertiary no outline"
                   onClick={() => lesionsOuMotifsConsigneModal.open()}
                 >
-                  Filtrez par catégorie de lésion en&nbsp;<u className="inline">cliquant ici</u>
+                  Filtrez par catégorie de lésion
                 </Button>
               </div>
             </div>
