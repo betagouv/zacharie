@@ -106,7 +106,6 @@ export default function CarcasseIntermediaireComp({
     setCarcasseEcarteePourInspectionCheckbox(false);
     setCarcasseAcceptCheckbox(false);
     setRefus('');
-    const nombreAcceptes = carcasse.type === CarcasseType.PETIT_GIBIER ? nombreAnimauxAcceptes : null;
     const nextPartialCarcasseIntermediaire = {
       manquante: true,
       refus: null,
