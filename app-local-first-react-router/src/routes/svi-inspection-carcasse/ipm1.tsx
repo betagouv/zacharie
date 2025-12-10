@@ -348,8 +348,8 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             />
           </div>
           <div>
-            <div className="mb-6 flex flex-row items-end gap-6">
-              <div className="flex-1">
+            <div className="mb-6 flex flex-col items-center gap-2 md:flex-row md:items-end md:gap-6">
+              <div className="w-full flex-1">
                 <InputMultiSelect
                   data={lesionsList[carcasse.type ?? CarcasseType.GROS_GIBIER]}
                   label="Observations (lésions) *"
@@ -359,7 +359,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                   values={sviIpm1LesionsOuMotifs}
                 />
               </div>
-              <p className="mb-3 text-sm">ou</p>
+              <p className="text-sm md:mb-3">ou</p>
               <div className="flex-1">
                 <Button
                   type="button"
