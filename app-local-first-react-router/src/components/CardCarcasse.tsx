@@ -17,6 +17,7 @@ import { useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
 import ItemNotEditable from './ItemNotEditable';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 
 interface CardCarcasseProps {
   carcasse: Carcasse;
@@ -47,6 +48,8 @@ export default function CardCarcasse({
       isOpenedByDefault: false,
     }),
   ).current;
+
+  const isCarcasseModalOpen = useIsModalOpen(cacasseModal);
 
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
@@ -198,11 +201,13 @@ export default function CardCarcasse({
           },
         ]}
       >
-        <CarcasseDetails
-          carcasseId={carcasse.zacharie_carcasse_id}
-          statusNewCard={statusNewCard}
-          motifRefus={motifRefus}
-        />
+        {isCarcasseModalOpen && (
+          <CarcasseDetails
+            carcasseId={carcasse.zacharie_carcasse_id}
+            statusNewCard={statusNewCard}
+            motifRefus={motifRefus}
+          />
+        )}
       </cacasseModal.Component>
     </>
   );

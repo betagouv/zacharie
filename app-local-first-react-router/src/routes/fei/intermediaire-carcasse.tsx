@@ -15,6 +15,7 @@ import useUser from '@app/zustand/user';
 import dayjs from 'dayjs';
 import CardCarcasse from '@app/components/CardCarcasse';
 import InputMultiSelect from '@app/components/InputMultiSelect';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 
 interface CarcasseIntermediaireProps {
   carcasse: Carcasse;
@@ -66,7 +67,8 @@ export default function CarcasseIntermediaireComp({
       isOpenedByDefault: false,
       id: `refus-intermediaire-modal-carcasse-${carcasseIntermediaireId}`,
     }),
-  );
+  ).current;
+  const isRefusIntermediaireModalOpen = useIsModalOpen(refusIntermediaireModal);
 
   const [carcasseManquante, setCarcasseManquante] = useState(!!carcasse.intermediaire_carcasse_manquante);
   const [carcasseRefusCheckbox, setCarcasseRefusCheckbox] = useState(!!carcasseIntermediaire.refus);
@@ -300,11 +302,11 @@ export default function CarcasseIntermediaireComp({
         forceRefus={!!refus}
         forceManquante={!!carcasseManquante}
         forceAccept={!!carcasseIntermediaire.check_manuel}
-        onClick={canEdit ? () => refusIntermediaireModal.current.open() : undefined}
+        onClick={canEdit ? () => refusIntermediaireModal.open() : undefined}
         className="[zoom:1.3] [&_.text-manquante]:text-gray-500! [&.border-manquante]:border-gray-500!"
       />
       {canEdit && (
-        <refusIntermediaireModal.current.Component
+        <refusIntermediaireModal.Component
           title={
             <>
               {carcasse.espece} - N° {carcasse.numero_bracelet}
@@ -345,214 +347,217 @@ export default function CarcasseIntermediaireComp({
             </>
           }
         >
-          <form
-            method="POST"
-            ref={formRef}
-            onSubmit={(e) => e.preventDefault()}
-            id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-          >
-            <div className="mt-4">
-              <RadioButtons
-                options={[
-                  {
-                    nativeInputProps: {
-                      required: true,
-                      name: 'carcasse-status',
-                      checked:
-                        !carcasseRefusCheckbox &&
-                        !carcasseManquante &&
-                        (carcasseIntermediaire.check_manuel ? true : false),
-                      onChange: () => {
-                        refusIntermediaireModal.current.close();
-                        submitCarcasseAccept();
-                      },
-                      disabled: !canEdit,
-                    },
-                    label: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse acceptée' : 'Lot accepté',
-                  },
-                  {
-                    nativeInputProps: {
-                      required: true,
-                      name: 'carcasse-status',
-                      checked: !!carcasseRefusCheckbox && !carcasseManquante,
-                      onChange: () => {
-                        setCarcasseManquante(false);
-                        setCarcasseRefusCheckbox(true);
-                        setCarcasseEcarteePourInspectionCheckbox(false);
-                      },
-                      disabled: !canEdit,
-                    },
-                    label: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé',
-                    hintText:
-                      carcasse.type === CarcasseType.PETIT_GIBIER
-                        ? "Si vous refusez seulement quelques animaux, ne cochez pas cette case, précisez le nombre d'animaux refusés dans le commentaire"
-                        : '',
-                  },
-                  ...(!user.roles.includes(UserRoles.ETG)
-                    ? []
-                    : [
-                        {
-                          nativeInputProps: {
-                            required: true,
-                            name: 'carcasse-status',
-                            checked: !!carcasseEcarteePourInspectionCheckbox && !carcasseManquante,
-                            onChange: () => {
-                              refusIntermediaireModal.current.close();
-                              submitCarcasseEcarteePourInspection();
-                            },
-                            disabled: !canEdit,
-                          },
-                          label:
-                            carcasse.type === CarcasseType.GROS_GIBIER
-                              ? 'Carcasse en peau écartée pour avis du SVI'
-                              : 'Lot en plume écarté pour avis du SVI',
-                          hintText:
-                            carcasse.type === CarcasseType.PETIT_GIBIER
-                              ? "Si vous écartez seulement quelques animaux, ne cochez pas cette case, précisez le nombre d'animaux écartés pour inspection dans le commentaire"
-                              : '',
+          {isRefusIntermediaireModalOpen && (
+            <form
+              method="POST"
+              ref={formRef}
+              onSubmit={(e) => e.preventDefault()}
+              id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
+            >
+              <div className="mt-4">
+                <RadioButtons
+                  options={[
+                    {
+                      nativeInputProps: {
+                        required: true,
+                        name: 'carcasse-status',
+                        checked:
+                          !carcasseRefusCheckbox &&
+                          !carcasseManquante &&
+                          (carcasseIntermediaire.check_manuel ? true : false),
+                        onChange: () => {
+                          refusIntermediaireModal.close();
+                          submitCarcasseAccept();
                         },
-                      ]),
-                  {
-                    nativeInputProps: {
-                      required: true,
-                      name: 'carcasse-status',
-                      checked: carcasseManquante && !refus,
-                      onChange: () => {
-                        refusIntermediaireModal.current.close();
-                        submitCarcasseManquante();
+                        disabled: !canEdit,
                       },
-                      disabled: !canEdit,
+                      label: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse acceptée' : 'Lot accepté',
                     },
-                    label: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse manquante' : 'Lot manquant',
-                  },
-                ]}
-              />
-            </div>
-            {!!carcasseRefusCheckbox && (
-              <div className="mb-4">
-                <InputMultiSelect
-                  label={
-                    carcasse.type === CarcasseType.GROS_GIBIER
-                      ? 'Vous refusez cette carcasse ? Indiquez le motif *'
-                      : 'Vous refusez ce lot ? Indiquez le motif *'
-                  }
-                  isMulti={false}
-                  canEdit
-                  data={refusIntermedaire[carcasse.type || CarcasseType.GROS_GIBIER]}
-                  placeholder="Tapez un motif de refus"
-                  onChange={([refus]) => {
-                    setRefus(refus);
-                    submitCarcasseRefus(refus);
-                  }}
-                  values={[refus]}
-                  creatable
+                    {
+                      nativeInputProps: {
+                        required: true,
+                        name: 'carcasse-status',
+                        checked: !!carcasseRefusCheckbox && !carcasseManquante,
+                        onChange: () => {
+                          setCarcasseManquante(false);
+                          setCarcasseRefusCheckbox(true);
+                          setCarcasseEcarteePourInspectionCheckbox(false);
+                        },
+                        disabled: !canEdit,
+                      },
+                      label: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé',
+                      hintText:
+                        carcasse.type === CarcasseType.PETIT_GIBIER
+                          ? "Si vous refusez seulement quelques animaux, ne cochez pas cette case, précisez le nombre d'animaux refusés dans le commentaire"
+                          : '',
+                    },
+                    ...(!user.roles.includes(UserRoles.ETG)
+                      ? []
+                      : [
+                          {
+                            nativeInputProps: {
+                              required: true,
+                              name: 'carcasse-status',
+                              checked: !!carcasseEcarteePourInspectionCheckbox && !carcasseManquante,
+                              onChange: () => {
+                                refusIntermediaireModal.close();
+                                submitCarcasseEcarteePourInspection();
+                              },
+                              disabled: !canEdit,
+                            },
+                            label:
+                              carcasse.type === CarcasseType.GROS_GIBIER
+                                ? 'Carcasse en peau écartée pour avis du SVI'
+                                : 'Lot en plume écarté pour avis du SVI',
+                            hintText:
+                              carcasse.type === CarcasseType.PETIT_GIBIER
+                                ? "Si vous écartez seulement quelques animaux, ne cochez pas cette case, précisez le nombre d'animaux écartés pour inspection dans le commentaire"
+                                : '',
+                          },
+                        ]),
+                    {
+                      nativeInputProps: {
+                        required: true,
+                        name: 'carcasse-status',
+                        checked: carcasseManquante && !refus,
+                        onChange: () => {
+                          refusIntermediaireModal.close();
+                          submitCarcasseManquante();
+                        },
+                        disabled: !canEdit,
+                      },
+                      label:
+                        carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse manquante' : 'Lot manquant',
+                    },
+                  ]}
                 />
               </div>
-            )}
-            <Input
-              label="Poids"
-              hintText="En kg, facultatif"
-              nativeInputProps={{
-                type: 'number',
-                min: 0,
-                name: Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_poids,
-                form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                value: poids || '',
-                onChange: (e) => {
-                  if (!canEdit) return;
-                  setPoids(e.currentTarget.value);
-                },
-              }}
-            />
-            <Input
-              label="Votre commentaire"
-              className="mt-2"
-              hintText={
-                <>
-                  {commentaireHint.map((sentence) => (
-                    <Fragment key={sentence}>
-                      {sentence}
-                      <br />
-                    </Fragment>
-                  ))}
-                </>
-              }
-              textArea
-              nativeTextAreaProps={{
-                name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
-                form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                defaultValue: carcasseIntermediaire.commentaire || '',
-                disabled: !canEdit,
-                onChange: (e) => {
-                  if (!canEdit) return;
-                  setCommentaire(e.currentTarget.value);
-                },
-              }}
-            />
-
-            <div className="mt-8 flex flex-col items-start bg-white md:[&_ul]:min-w-96">
-              <ButtonsGroup
-                buttons={
-                  carcasseIntermediaire.refus
-                    ? [
-                        {
-                          children: 'Enregistrer',
-                          type: 'submit',
-                          disabled: !canEdit,
-                          nativeButtonProps: {
-                            onClick: (e) => {
-                              e.preventDefault();
-                              refusIntermediaireModal.current.close();
-                              submitCarcasseRefus();
-                            },
-                          },
-                        },
-                        {
-                          children: 'Annuler',
-                          priority: 'secondary',
-                          type: 'button',
-                          disabled: !canEdit,
-                          nativeButtonProps: {
-                            onClick: (e) => {
-                              e.preventDefault();
-                              refusIntermediaireModal.current.close();
-                              submitCarcasseAccept();
-                            },
-                          },
-                        },
-                      ]
-                    : [
-                        {
-                          children: carcasseRefusCheckbox ? 'Refuser' : 'Enregistrer',
-                          type: 'submit',
-                          disabled: !canEdit,
-                          nativeButtonProps: {
-                            form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                            disabled: carcasseRefusCheckbox && !refus,
-                            onClick: (e) => {
-                              console.log('submit refus');
-                              e.preventDefault();
-                              if (carcasseRefusCheckbox) {
-                                submitCarcasseRefus();
-                              }
-                              refusIntermediaireModal.current.close();
-                            },
-                          },
-                        },
-                        // {
-                        //   children: 'Fermer',
-                        //   priority: 'secondary',
-                        //   type: 'button',
-                        //   nativeButtonProps: {
-                        //     onClick: () => refusIntermediaireModal.current.close(),
-                        //   },
-                        // },
-                      ]
-                }
+              {!!carcasseRefusCheckbox && (
+                <div className="mb-4">
+                  <InputMultiSelect
+                    label={
+                      carcasse.type === CarcasseType.GROS_GIBIER
+                        ? 'Vous refusez cette carcasse ? Indiquez le motif *'
+                        : 'Vous refusez ce lot ? Indiquez le motif *'
+                    }
+                    isMulti={false}
+                    canEdit
+                    data={refusIntermedaire[carcasse.type || CarcasseType.GROS_GIBIER]}
+                    placeholder="Tapez un motif de refus"
+                    onChange={([refus]) => {
+                      setRefus(refus);
+                      submitCarcasseRefus(refus);
+                    }}
+                    values={[refus]}
+                    creatable
+                  />
+                </div>
+              )}
+              <Input
+                label="Poids"
+                hintText="En kg, facultatif"
+                nativeInputProps={{
+                  type: 'number',
+                  min: 0,
+                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_poids,
+                  form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                  value: poids || '',
+                  onChange: (e) => {
+                    if (!canEdit) return;
+                    setPoids(e.currentTarget.value);
+                  },
+                }}
               />
-            </div>
-          </form>
-        </refusIntermediaireModal.current.Component>
+              <Input
+                label="Votre commentaire"
+                className="mt-2"
+                hintText={
+                  <>
+                    {commentaireHint.map((sentence) => (
+                      <Fragment key={sentence}>
+                        {sentence}
+                        <br />
+                      </Fragment>
+                    ))}
+                  </>
+                }
+                textArea
+                nativeTextAreaProps={{
+                  name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
+                  form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                  defaultValue: carcasseIntermediaire.commentaire || '',
+                  disabled: !canEdit,
+                  onChange: (e) => {
+                    if (!canEdit) return;
+                    setCommentaire(e.currentTarget.value);
+                  },
+                }}
+              />
+
+              <div className="mt-8 flex flex-col items-start bg-white md:[&_ul]:min-w-96">
+                <ButtonsGroup
+                  buttons={
+                    carcasseIntermediaire.refus
+                      ? [
+                          {
+                            children: 'Enregistrer',
+                            type: 'submit',
+                            disabled: !canEdit,
+                            nativeButtonProps: {
+                              onClick: (e) => {
+                                e.preventDefault();
+                                refusIntermediaireModal.close();
+                                submitCarcasseRefus();
+                              },
+                            },
+                          },
+                          {
+                            children: 'Annuler',
+                            priority: 'secondary',
+                            type: 'button',
+                            disabled: !canEdit,
+                            nativeButtonProps: {
+                              onClick: (e) => {
+                                e.preventDefault();
+                                refusIntermediaireModal.close();
+                                submitCarcasseAccept();
+                              },
+                            },
+                          },
+                        ]
+                      : [
+                          {
+                            children: carcasseRefusCheckbox ? 'Refuser' : 'Enregistrer',
+                            type: 'submit',
+                            disabled: !canEdit,
+                            nativeButtonProps: {
+                              form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                              disabled: carcasseRefusCheckbox && !refus,
+                              onClick: (e) => {
+                                console.log('submit refus');
+                                e.preventDefault();
+                                if (carcasseRefusCheckbox) {
+                                  submitCarcasseRefus();
+                                }
+                                refusIntermediaireModal.close();
+                              },
+                            },
+                          },
+                          // {
+                          //   children: 'Fermer',
+                          //   priority: 'secondary',
+                          //   type: 'button',
+                          //   nativeButtonProps: {
+                          //     onClick: () => refusIntermediaireModal.close(),
+                          //   },
+                          // },
+                        ]
+                  }
+                />
+              </div>
+            </form>
+          )}
+        </refusIntermediaireModal.Component>
       )}
     </>
   );

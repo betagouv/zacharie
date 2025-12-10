@@ -29,6 +29,7 @@ import { EntityWithUserRelation } from '@api/src/types/entity';
 import { UserForFei } from '@api/src/types/user';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
@@ -71,6 +72,8 @@ export default function DestinataireSelect({
   const svisIds = useZustandStore((state) => state.svisIds);
   const collecteursProIds = useZustandStore((state) => state.collecteursProIds);
   const circuitCourtIds = useZustandStore((state) => state.circuitCourtIds);
+
+  const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
 
   const fei = feis[params.fei_numero!];
   const prefilledInfos = usePrefillPremierDétenteurInfos();
@@ -883,14 +886,16 @@ export default function DestinataireSelect({
         )}
       </div>
       <partenaireModal.Component title="Ajouter un partenaire">
-        <PartenaireNouveau
-          key={newEntityNomDUsage ?? ''}
-          newEntityNomDUsageProps={newEntityNomDUsage ?? undefined}
-          onFinish={(newEntity) => {
-            partenaireModal.close();
-            if (newEntity) setProchainDetenteurEntityId(newEntity.id);
-          }}
-        />
+        {isPartenaireModalOpen && (
+          <PartenaireNouveau
+            key={newEntityNomDUsage ?? ''}
+            newEntityNomDUsageProps={newEntityNomDUsage ?? undefined}
+            onFinish={(newEntity) => {
+              partenaireModal.close();
+              if (newEntity) setProchainDetenteurEntityId(newEntity.id);
+            }}
+          />
+        )}
       </partenaireModal.Component>
     </>
   );
