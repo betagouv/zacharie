@@ -75,7 +75,6 @@ class ApiService {
         if (!window.location.href.includes('/app/connexion')) {
           const URLParams = new URLSearchParams(window.location.search);
           URLParams.set('communication', 'Votre session a expiré, veuillez vous reconnecter.');
-          URLParams.set('type', 'compte-existant');
           URLParams.set('redirect', window.location.pathname + window.location.search);
           console.log('URLParams: ', URLParams.toString());
           window.location.href = '/app/connexion?' + URLParams.toString();

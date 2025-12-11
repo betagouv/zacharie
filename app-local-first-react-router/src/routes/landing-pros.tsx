@@ -220,8 +220,7 @@ function CTA({ mobile, desktop }: { mobile?: boolean; desktop?: boolean }) {
         className="m-0"
         priority={isLoggedIn ? 'tertiary no outline' : 'primary'}
         linkProps={{
-          // to: "/app/connexion?type=creation-de-compte",
-          to: isLoggedIn ? '/app/connexion?type=compte-existant' : '/app/connexion?type=creation-de-compte',
+          to: isLoggedIn ? '/app/connexion' : '/app/connexion/creation-de-compte',
           href: '#',
         }}
       >

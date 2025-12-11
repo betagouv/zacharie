@@ -150,6 +150,9 @@ function FEICurrentIntermediaireContent({
   const fei = feis[params.fei_numero!];
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
 
+  console.log({ intermediaires });
+  console.log('intermediaire created_at', intermediaire?.created_at);
+
   const originalCarcasses = (carcassesIdsByFei[params.fei_numero!] || [])
     .map((cId) => carcasses[cId])
     .sort((a, b) => {
@@ -203,8 +206,6 @@ function FEICurrentIntermediaireContent({
     carcassesIntermediaireById,
     carcasses,
   ]);
-
-  console.log({ intermediaireCarcasses });
 
   const warnedForIncoherentNumberOfCarcasses = useRef(false);
 
