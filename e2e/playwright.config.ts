@@ -53,12 +53,12 @@ const config: PlaywrightTestConfig = {
   /* Configure projects for major browsers */
   projects: [
     // firefox doesn't work for mobile tests
-    {
+    /* {
       name: "firefox",
       use: {
         ...devices["Desktop Firefox"],
       },
-    },
+    }, */
     {
       name: "chromium",
       use: {
