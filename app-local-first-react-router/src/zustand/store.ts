@@ -818,6 +818,13 @@ export async function syncData(calledFrom: string) {
   //   FOR_TEST_ONLY_started = true;
   // }
   console.log('syncing data from', calledFrom);
+  // FIXME: in tests, we need to wait for the banner "Syncrhonisation en cours" to be displayed
+  // so that
+  if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+    if (!useZustandStore.getState().dataIsSynced) {
+      await new Promise((resolve) => setTimeout(resolve, 50)); // time for playwright to notice the banner "Syncrhonisation en cours"
+    }
+  }
   queue.add(async () => {
     await syncProchainBraceletAUtiliser();
   });
