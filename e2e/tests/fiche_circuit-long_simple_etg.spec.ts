@@ -14,6 +14,9 @@ test.describe("Fiches ETG", () => {
     // const cdpSession = await context.newCDPSession(page);
     // // @ts-ignore
     // await cdpSession.send("Network.emulateNetworkConditions", NETWORK_PRESETS.PrettyGood);
+    page.on("console", (msg) => {
+      console.log(`[BROWSER ${msg.type()}]:`, msg.text());
+    });
 
     const feiId = "ZACH-20250707-QZ6E0-165242";
     await connectWith(page, "etg-1@example.fr");

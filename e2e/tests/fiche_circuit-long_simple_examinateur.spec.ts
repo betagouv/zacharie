@@ -18,6 +18,10 @@ test.describe("Fiches examinateur initial", () => {
   });
 
   test("Création d'une fiche", async ({ page }) => {
+    page.on("console", (msg) => {
+      console.log(`[BROWSER ${msg.type()}]:`, msg.text());
+    });
+
     await connectWith(page, "examinateur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
     await expect(page.getByText("Synchronisation en cours")).toBeVisible();
