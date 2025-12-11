@@ -165,8 +165,8 @@ const config: PlaywrightTestConfig = {
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
       /* Enhanced server logging in CI */
-      stdout: process.env.CI ? "pipe" : "ignore",
-      stderr: process.env.CI ? "pipe" : "ignore",
+      stdout: "ignore",
+      stderr: "ignore",
       env: {
         PORT: "3290",
         VITE_HOST: "127.0.0.1:3290",
