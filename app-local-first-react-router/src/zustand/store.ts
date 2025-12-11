@@ -195,6 +195,9 @@ const useZustandStore = create<State & Actions>()(
         createFei: (newFei: FeiWithIntermediaires) => {
           newFei.is_synced = false;
           newFei.updated_at = dayjs().toDate();
+          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+            console.log('TEST_ONLY: setting dataIsSynced to false in createFei');
+          }
           useZustandStore.setState((state) => ({
             ...state,
             feis: { ...state.feis, [newFei.numero]: newFei },
@@ -221,6 +224,9 @@ const useZustandStore = create<State & Actions>()(
             updated_at: dayjs().toDate(),
             is_synced: false,
           };
+          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+            console.log('TEST_ONLY: setting dataIsSynced to false in updateFei');
+          }
           useZustandStore.setState({
             feis: {
               ...feis,
@@ -237,6 +243,9 @@ const useZustandStore = create<State & Actions>()(
             useZustandStore.getState().carcassesIdsByFei[newCarcasse.fei_numero] || [];
           if (!nextCarcassesIdsByFei.includes(newCarcasse.zacharie_carcasse_id)) {
             nextCarcassesIdsByFei.unshift(newCarcasse.zacharie_carcasse_id);
+          }
+          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+            console.log('TEST_ONLY: setting dataIsSynced to false in createCarcasse');
           }
           useZustandStore.setState((state) => {
             return {
@@ -271,6 +280,9 @@ const useZustandStore = create<State & Actions>()(
           if (nextStatus !== nextCarcasse.svi_carcasse_status) {
             nextCarcasse.svi_carcasse_status = nextStatus;
             nextCarcasse.svi_carcasse_status_set_at = dayjs().toDate();
+          }
+          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+            console.log('TEST_ONLY: setting dataIsSynced to false in updateCarcasse');
           }
           useZustandStore.setState({
             carcasses: {
@@ -341,6 +353,9 @@ const useZustandStore = create<State & Actions>()(
                 byIntermediaireId[feiAndIntermediaireId].push(feiAndCarcasseAndIntermediaireId);
               }
             }
+            if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+              console.log('TEST_ONLY: setting dataIsSynced to false in createFeiIntermediaire');
+            }
             useZustandStore.setState((state) => {
               return {
                 ...state,
@@ -388,6 +403,9 @@ const useZustandStore = create<State & Actions>()(
               is_synced: false,
             };
           }
+          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+            console.log('TEST_ONLY: setting dataIsSynced to false in updateAllCarcasseIntermediaire');
+          }
           useZustandStore.setState((state) => {
             return {
               ...state,
@@ -426,7 +444,9 @@ const useZustandStore = create<State & Actions>()(
         ) => {
           const carcasseIntermediaire =
             useZustandStore.getState().carcassesIntermediaireById[feiAndCarcasseAndIntermediaireIds];
-
+          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+            console.log('TEST_ONLY: setting dataIsSynced to false in updateCarcasseIntermediaire');
+          }
           useZustandStore.setState((state) => {
             return {
               ...state,
@@ -465,6 +485,9 @@ const useZustandStore = create<State & Actions>()(
             updated_at: dayjs().toDate(),
             deleted_at: null,
           };
+          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+            console.log('TEST_ONLY: setting dataIsSynced to false in addLog');
+          }
           useZustandStore.setState((state) => ({
             ...state,
             logs: [...state.logs, log],
