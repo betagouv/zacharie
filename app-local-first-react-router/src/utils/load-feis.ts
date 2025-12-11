@@ -13,8 +13,9 @@ export async function loadFeis() {
   }
   if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
     console.log('TEST_ONLY: setting dataIsSynced to false');
+    useZustandStore.setState({ dataIsSynced: false });
+    await new Promise((resolve) => setTimeout(resolve, 200)); // time for playwright to notice the banner "Syncrhonisation en cours"
   }
-  useZustandStore.setState({ dataIsSynced: false });
   try {
     const responseDone = await API.get({ path: 'fei/done' }).then((res) => res as FeisDoneResponse);
 
@@ -89,8 +90,8 @@ export async function loadFeis() {
     }
     if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
       console.log('TEST_ONLY: setting dataIsSynced to true in loadFeis');
+      useZustandStore.setState({ dataIsSynced: true });
     }
-    useZustandStore.setState({ dataIsSynced: true });
 
     console.log('chargement feis fini');
   } catch (error) {
