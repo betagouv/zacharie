@@ -86,6 +86,7 @@ test.describe("Fiches examinateur initial", () => {
     await expect(page.getByRole("link", { name: feiId })).toContainText("À renseigner");
     // await page.getByRole("button", { name: "Menu" }).click();
     // await page.getByRole("button", { name: "Mon profil" }).click();
+    // await expect(page).toHaveURL("http://localhost:3290/app/connexion");
     // await page.getByRole("button", { name: "Déconnecter examinateur@example.fr" }).click();
   });
 });
