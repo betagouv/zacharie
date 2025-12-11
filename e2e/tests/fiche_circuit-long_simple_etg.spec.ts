@@ -448,6 +448,7 @@ test.describe("Fiches ETG", () => {
       `);
     await page.getByRole("button", { name: "Mon profil" }).click();
     await page.getByRole("button", { name: "Déconnecter etg-1@example.fr" }).click();
+    await expect(page).toHaveURL("http://localhost:3290/app/connexion");
     await connectWith(page, "etg-2@example.fr");
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
     - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
