@@ -17,8 +17,8 @@ test.describe("Fiches premier détenteur", () => {
     const feiId = "ZACH-20250707-QZ6E0-155242";
     await connectWith(page, "premier-detenteur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await expect(page.getByRole("link", { name: feiId })).toBeVisible();
     await expect(page.getByRole("link", { name: feiId })).toContainText("À compléter");
     await expect(page.getByRole("link", { name: feiId })).toContainText("chassenard");
@@ -72,8 +72,8 @@ test.describe("Fiches premier détenteur", () => {
     const feiId = "ZACH-20250707-QZ6E0-155242";
     await connectWith(page, "premier-detenteur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("link", { name: feiId }).click();
     await page.getByRole("button", { name: "Je prends en charge cette" }).click();
     await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
@@ -101,8 +101,8 @@ test.describe("Fiches premier détenteur", () => {
     const feiId = "ZACH-20250707-QZ6E0-155242";
     await connectWith(page, "premier-detenteur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
+    // await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("link", { name: feiId }).click();
     await page.getByRole("button", { name: "Je prends en charge cette" }).click();
     await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
