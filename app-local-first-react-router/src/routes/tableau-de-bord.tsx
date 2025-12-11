@@ -20,6 +20,7 @@ import { UserConnexionResponse } from '@api/src/types/responses';
 import API from '@app/services/api';
 
 async function loadData() {
+  // FIXME: await syncData is useless, as syncData queues stuff - so there will be bugs
   await syncData('tableau-de-bord');
   await loadMyRelations();
   await loadFeis();
