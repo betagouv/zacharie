@@ -29,7 +29,8 @@ router.get(
     const user = req.user;
     if (!user) {
       res.status(401);
-      return next(new Error('Utilisateur non authentifié'));
+      next(new Error('Utilisateur non authentifié'));
+      return;
     }
 
     // Calculate current season (hunting season typically runs from July to June)
@@ -60,7 +61,7 @@ router.get(
     const feiNumeros = feis.map((fei) => fei.numero);
 
     if (feiNumeros.length === 0) {
-      return res.status(200).send({
+      res.status(200).send({
         ok: true,
         data: {
           totalCarcasses: 0,
@@ -73,6 +74,7 @@ router.get(
           nationalSeizureRate: 10.44, // Default national average
         },
       });
+      return;
     }
 
     // Get all carcasses for these FEIs
