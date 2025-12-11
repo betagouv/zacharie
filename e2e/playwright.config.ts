@@ -156,4 +156,4 @@ firefox doesn't work for mobile tests
   ],
 };
 
-export default defaultFastConfig;
+export default debugConfig;
