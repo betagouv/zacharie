@@ -28,7 +28,6 @@ import { EntityWithUserRelation } from '@api/src/types/entity';
 import { UserForFei } from '@api/src/types/user';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
-import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import CardCarcasse from '@app/components/CardCarcasse';
 
 const partenaireModal = createModal({
@@ -301,14 +300,6 @@ export default function DestinataireSelect({
     });
     setDestinataires(newDestinataires);
   };
-
-  // Toutes les carcasses assignées
-  const allAssignedCarcasseIds = useMemo(() => destinataires.flatMap((d) => d.carcasseIds), [destinataires]);
-  // Carcasses non assignées
-  const unassignedCarcasses = useMemo(
-    () => carcasses.filter((c) => !allAssignedCarcasseIds.includes(c.zacharie_carcasse_id)),
-    [carcasses, allAssignedCarcasseIds],
-  );
 
   // Validation : vérifier que toutes les carcasses sont assignées et que chaque détenteur a toutes les infos nécessaires
   const needToSubmit = useMemo(() => {
