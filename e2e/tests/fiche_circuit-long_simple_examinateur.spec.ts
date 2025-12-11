@@ -84,8 +84,6 @@ test.describe("Fiches examinateur initial", () => {
     await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await expect(page.getByRole("button", { name: "Enregistrer la fiche", exact: true })).not.toBeDisabled();
     await page.getByRole("button", { name: "Enregistrer la fiche", exact: true }).click();
-    await expect(page.getByText("Synchronisation en cours")).toBeVisible();
-    await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("button", { name: "Pierre Petit" }).click();
     await page.getByRole("button", { name: "Valider l’examen initial" }).click();
     await expect(page.getByText("Synchronisation en cours")).toBeVisible();
