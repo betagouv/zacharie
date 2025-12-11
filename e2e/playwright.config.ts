@@ -14,7 +14,7 @@ const config: PlaywrightTestConfig = {
   },
   fullyParallel: true,
   forbidOnly: process.env.CI ? true : false,
-  retries: 0,
+  retries: 0, // 0 prevents flaky tests to be retried, so its better for tests stability
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [

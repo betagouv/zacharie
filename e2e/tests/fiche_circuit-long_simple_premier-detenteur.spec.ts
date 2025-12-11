@@ -65,9 +65,6 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
 });
 
 test("Stockage - Je transporte les carcasses moi-même", async ({ page }) => {
-  page.on("console", (msg) => {
-    console.log(`[BROWSER ${msg.type()}]:`, msg.text());
-  });
   const feiId = "ZACH-20250707-QZ6E0-155242";
   await connectWith(page, "premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");

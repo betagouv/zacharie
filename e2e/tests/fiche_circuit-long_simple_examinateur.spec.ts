@@ -2,9 +2,6 @@ import { test, expect } from "@playwright/test";
 import dayjs from "dayjs";
 import { resetDb } from "../scripts/reset-db";
 import { connectWith } from "../utils/connect-with";
-import { NETWORK_PRESETS } from "../utils/network-throttling";
-
-// test.describe.configure({ mode: "serial" }); // TODO: remove this and make the tests parallel
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -20,10 +17,6 @@ test.beforeAll(async () => {
 });
 
 test("Création d'une fiche", async ({ page }) => {
-  page.on("console", (msg) => {
-    console.log(`[BROWSER ${msg.type()}]:`, msg.text());
-  });
-
   await connectWith(page, "examinateur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
   await page.getByRole("button", { name: "Nouvelle fiche" }).nth(1).click();
@@ -36,11 +29,8 @@ test("Création d'une fiche", async ({ page }) => {
   await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour", exact: true }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
-  console.log("ON MET LA HEURE DE MISE A MORT");
   await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).fill(dayjs().add(-3, "hour").format("HH:mm"));
-  console.log("ON BLUR LA HEURE DE MISE A MORT");
   await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).blur();
-  console.log("ON VEUT SYNC");
   await page.getByLabel("Nouvelle carcasse / lot de").selectOption("Daim");
   await page
     .getByRole("button", { name: "Votre chasse n'a pas de dispositif de marquage ? Cliquez ici pour utiliser" })
@@ -69,15 +59,10 @@ test("Création d'une fiche", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Attribution effectuée" })).toBeVisible();
   // get fei id
   const feiId = page.url().split("/").pop()!;
-  console.log(feiId);
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
   await expect(page.getByRole("link", { name: feiId })).toBeVisible();
   await expect(page.getByRole("link", { name: feiId })).toContainText("En cours");
   await expect(page.getByRole("link", { name: feiId })).toContainText("chassenard");
   await expect(page.getByRole("link", { name: feiId })).toContainText("4 daims");
   await expect(page.getByRole("link", { name: feiId })).toContainText("À renseigner");
-  // await page.getByRole("button", { name: "Menu" }).click();
-  // await page.getByRole("button", { name: "Mon profil" }).click();
-  // await expect(page).toHaveURL("http://localhost:3290/app/connexion");
-  // await page.getByRole("button", { name: "Déconnecter examinateur@example.fr" }).click();
 });
