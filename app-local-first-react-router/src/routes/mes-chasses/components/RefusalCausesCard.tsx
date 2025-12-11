@@ -9,7 +9,7 @@ interface RefusalCausesCardProps {
 
 export default function RefusalCausesCard({ causes }: RefusalCausesCardProps) {
   return (
-    <div className="flex flex-col rounded-3xl bg-white p-6 shadow-sm">
+    <div className="col-span-2 flex flex-col rounded-3xl bg-white p-6 shadow-sm md:col-span-1">
       <div className="text-action-high-blue-france-light mb-4 text-xl font-bold">
         Causes de refus fréquents
       </div>
