@@ -2,16 +2,6 @@
 
 import type { PlaywrightTestConfig } from "@playwright/test";
 import { devices } from "@playwright/test";
-import dotenv from "dotenv";
-
-// Read from default ".env" file.
-dotenv.config();
-
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// require('dotenv').config();
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -23,7 +13,7 @@ const config: PlaywrightTestConfig = {
     timeout: 5000,
   },
   fullyParallel: true,
-  forbidOnly: true,
+  forbidOnly: process.env.CI ? true : false,
   retries: 0,
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
