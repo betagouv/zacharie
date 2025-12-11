@@ -10,6 +10,9 @@ test.use({
   viewport: { width: 350, height: 667 },
   hasTouch: true,
   isMobile: true,
+  launchOptions: {
+    slowMo: 100,
+  },
 });
 
 test.beforeAll(async () => {
