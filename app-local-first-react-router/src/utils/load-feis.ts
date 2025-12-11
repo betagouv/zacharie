@@ -11,6 +11,9 @@ export async function loadFeis() {
     console.log('not loading feis because not online');
     return;
   }
+  if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+    console.log('TEST_ONLY: setting dataIsSynced to false');
+  }
   useZustandStore.setState({ dataIsSynced: false });
   try {
     const responseDone = await API.get({ path: 'fei/done' }).then((res) => res as FeisDoneResponse);
@@ -83,6 +86,9 @@ export async function loadFeis() {
       // if it goes too fast, we have a race condition with the sync with the backend and PG doesn'tlike it
       // again, "cache lookup failed for type" problem
       await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+      console.log('TEST_ONLY: setting dataIsSynced to true in loadFeis');
     }
     useZustandStore.setState({ dataIsSynced: true });
 
