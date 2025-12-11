@@ -65,7 +65,6 @@ export default function CreationDeCompte() {
       useUser.setState({ user });
       useZustandStore.setState((state) => ({
         users: { ...state.users, [user.id]: user },
-        dataIsSynced: false,
       }));
       handleRedirect(user);
     } else {
