@@ -6,7 +6,7 @@ interface HygieneScoreCardProps {
 
 export default function HygieneScoreCard({ score }: HygieneScoreCardProps) {
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-sm">
+    <div className="col-span-2 rounded-3xl bg-white p-6 shadow-sm md:col-span-1">
       <div className="flex flex-col items-center">
         <HygieneScoreGauge score={score} />
         <div className="mt-4 text-center">

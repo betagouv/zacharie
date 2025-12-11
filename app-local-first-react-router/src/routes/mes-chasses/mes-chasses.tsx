@@ -95,8 +95,8 @@ export default function MesChasses() {
   return (
     <div className="fr-container fr-container--fluid min-h-screen">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
-        <div className="fr-col-12 p-4 md:p-0">
-          <div className="mb-6 grid grid-cols-2 gap-8">
+        <div className="fr-col-12 p-2 md:p-0">
+          <div className="mb-6 grid grid-cols-2 gap-3 md:gap-8">
             <TotalCarcassesCard total={dashboardData.totalCarcasses} season={dashboardData.season} />
             <CarcassBreakdownCard bigGame={dashboardData.bigGame} smallGame={dashboardData.smallGame} />
             <HygieneScoreCard score={dashboardData.hygieneScore} />
@@ -108,7 +108,6 @@ export default function MesChasses() {
             <SeizureRateCard
               rate={dashboardData.nationalSeizureRate}
               label="taux de saisie national en 2024"
-              isNational
             />
           </div>
         </div>
