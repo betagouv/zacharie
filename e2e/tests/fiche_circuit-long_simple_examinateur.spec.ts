@@ -18,6 +18,10 @@ test.describe("Fiches examinateur initial", () => {
   });
 
   test("Création d'une fiche", async ({ page }) => {
+    page.on("console", (msg) => {
+      console.log(`[BROWSER ${msg.type()}]:`, msg.text());
+    });
+
     await connectWith(page, "examinateur@example.fr");
     await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
     // await expect(page.getByText("Synchronisation en cours")).toBeVisible();
@@ -34,10 +38,13 @@ test.describe("Fiches examinateur initial", () => {
     await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
     await page.getByRole("button", { name: "CHASSENARD" }).click();
+    console.log("ON MET LA HEURE DE MISE A MORT");
     await page
       .getByRole("textbox", { name: "Heure de mise à mort de la" })
       .fill(dayjs().add(-3, "hour").format("HH:mm"));
+    console.log("ON BLUR LA HEURE DE MISE A MORT");
     await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).blur();
+    console.log("ON VEUT SYNC");
     await expect(page.getByText("Synchronisation en cours")).toBeVisible();
     await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByLabel("Nouvelle carcasse / lot de").selectOption("Daim");
