@@ -803,6 +803,9 @@ export async function syncData(calledFrom: string) {
   syncCarcassesIntermediaires();
   syncLogs();
   queue.on('empty', () => {
+    if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+      console.log('TEST_ONLY: setting dataIsSynced to true in syncData');
+    }
     useZustandStore.setState({ dataIsSynced: true });
   });
   // queue.add(async () => {
