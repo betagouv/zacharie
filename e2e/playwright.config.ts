@@ -102,8 +102,8 @@ const defaultFastConfig: PlaywrightTestConfig = {
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0, // put 2 if you don't care about flaky tests. 0 won't make flaky pass, so you'll need to fix them.
-  workers: "100%",
-  reporter: process.env.CI ? "dot" : "list",
+  workers: undefined,
+  reporter: "list",
   use: {
     actionTimeout: 0,
     baseURL: "http://localhost:3290",
