@@ -68,16 +68,16 @@ jobs:
           PGBASEURL: postgres://postgres:postgres@localhost:5432
           POSTGRESQL_ADDON_URI: postgres://postgres:postgres@localhost:5432/zacharietest
 
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report
-          path: e2e/playwright-report/
-          retention-days: 30
+      # - uses: actions/upload-artifact@v4
+      #   if: ${{ !cancelled() }}
+      #   with:
+      #     name: playwright-report
+      #     path: e2e/playwright-report/
+      #     retention-days: 30
 
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: test-results
-          path: e2e/test-results/
-          retention-days: 30
+      # - uses: actions/upload-artifact@v4
+      #   if: ${{ !cancelled() }}
+      #   with:
+      #     name: test-results
+      #     path: e2e/test-results/
+      #     retention-days: 30
