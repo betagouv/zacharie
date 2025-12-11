@@ -36,9 +36,9 @@ const config: PlaywrightTestConfig = {
   use: {
     actionTimeout: 0,
     baseURL: "http://localhost:3290",
-    // trace: "retain-on-failure",
-    // screenshot: "only-on-failure",
-    // video: "retain-on-failure",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
     // launchOptions: {
     //   logger: {
     //     isEnabled: () => true,
