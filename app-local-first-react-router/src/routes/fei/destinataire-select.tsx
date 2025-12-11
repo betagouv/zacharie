@@ -239,6 +239,7 @@ export default function DestinataireSelect({
 
   const [newEntityNomDUsage, setNewEntityNomDUsage] = useState<string | null>(null);
   const [editingDetenteurIndex, setEditingDetenteurIndex] = useState<number | null>(null);
+  const [expandedCarcassesSections, setExpandedCarcassesSections] = useState<Set<number>>(new Set());
 
   // Pour la rétrocompatibilité, on garde une référence au premier détenteur si un seul existe
   // const prochainDetenteurEntityId = destinataires.length === 1 ? destinataires[0].entityId : null;
@@ -366,7 +367,7 @@ export default function DestinataireSelect({
   }, [destinataires, carcasses, fei, entities, needDepot]);
 
   const [tryToSubmitAtLeastOnce, setTryTOSubmitAtLeastOnce] = useState(false);
-  const jobIsMissing = useMemo(() => {
+  const alertMessage = useMemo(() => {
     // Vérifier que toutes les carcasses sont assignées
     const allCarcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);
     const assignedCarcasseIds = destinataires.flatMap((d) => d.carcasseIds);
@@ -461,44 +462,12 @@ export default function DestinataireSelect({
         ].join(' ')}
       >
         <div className="mb-6">
-          <h3 className="mb-4 text-lg font-semibold">Répartition des carcasses entre les détenteurs</h3>
-          <p className="mb-4 text-sm text-gray-600">
-            Vous pouvez assigner différentes carcasses à différents détenteurs. Chaque détenteur recevra
-            uniquement les carcasses qui lui sont assignées.
-          </p>
-
-          {unassignedCarcasses.length > 0 && (
-            <Alert
-              severity="warning"
-              title="Carcasses non assignées"
-              description={`${unassignedCarcasses.length} carcasse${unassignedCarcasses.length > 1 ? 's' : ''} ${unassignedCarcasses.length > 1 ? 'ne sont pas' : "n'est pas"} encore assignée${unassignedCarcasses.length > 1 ? 's' : ''} à un détenteur.`}
-              className="mb-4"
-            />
-          )}
-
           {destinataires.map((dest, index) => {
             const detenteurEntity = dest.entityId ? entities[dest.entityId] : null;
             const needsTransport = dest.entityId ? needTransportForDetenteur(dest.entityId) : false;
 
             return (
               <div key={index} className="mb-6 rounded-lg border border-gray-300 bg-gray-50 p-4">
-                <div className="mb-4 flex items-center justify-between">
-                  <h4 className="text-base font-semibold">
-                    Détenteur {index + 1} {detenteurEntity && `- ${getEntityDisplay(detenteurEntity as any)}`}
-                  </h4>
-                  {canEdit && destinataires.length > 1 && (
-                    <Button
-                      priority="tertiary"
-                      iconId="fr-icon-delete-line"
-                      nativeButtonProps={{
-                        onClick: () => removeDestinataire(index),
-                      }}
-                    >
-                      Supprimer
-                    </Button>
-                  )}
-                </div>
-
                 <div className="space-y-4">
                   <SelectCustom
                     label="Prochain détenteur des carcasses *"
@@ -563,66 +532,79 @@ export default function DestinataireSelect({
                   {dest.entityId && (
                     <div className="space-y-4">
                       <div>
-                        <label className="mb-2 block text-sm font-medium">
-                          Carcasses assignées à ce détenteur * ({dest.carcasseIds.length} carcasse
-                          {dest.carcasseIds.length > 1 ? 's' : ''})
-                        </label>
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
-                          {carcasses.map((carcasse) => {
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExpandedCarcassesSections((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(index)) {
+                                next.delete(index);
+                              } else {
+                                next.add(index);
+                              }
+                              return next;
+                            });
+                          }}
+                          className="hover:text-action-high-blue-france mb-2 flex w-full items-center justify-between text-left text-sm font-medium"
+                        >
+                          <span>{dest.carcasseIds.length} carcasse(s) assignée(s) à ce détenteur *</span>
+                          <span
+                            className={`fr-icon-arrow-down-s-line transition-transform duration-300 ${expandedCarcassesSections.has(index) ? 'rotate-180' : ''}`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                        <div
+                          className={`grid grid-cols-1 gap-2 overflow-hidden transition-all duration-500 ease-in-out sm:grid-cols-2 md:grid-cols-3 ${
+                            expandedCarcassesSections.has(index)
+                              ? 'max-h-[5000px] opacity-100'
+                              : 'max-h-0 opacity-0'
+                          }`}
+                        >
+                          {carcasses.map((carcasse, carcasseIndex) => {
                             const isAssigned = dest.carcasseIds.includes(carcasse.zacharie_carcasse_id);
-                            return (
-                              <CardCarcasse
-                                key={carcasse.zacharie_carcasse_id}
-                                carcasse={carcasse}
-                                onClick={() => {
-                                  if (isAssigned) {
-                                    updateDestinataire(index, {
-                                      carcasseIds: dest.carcasseIds.filter(
-                                        (id) => id !== carcasse.zacharie_carcasse_id,
-                                      ),
-                                    });
-                                  } else {
-                                    assignCarcassesToDestinataire(index, [
-                                      ...dest.carcasseIds,
-                                      carcasse.zacharie_carcasse_id,
-                                    ]);
-                                  }
-                                }}
-                                className={
-                                  isAssigned
-                                    ? 'border-action-high-blue-france !bg-action-high-blue-france/10 border-l-3 border-solid'
-                                    : ''
-                                }
-                              />
+                            const isAssignedToOther = Boolean(
+                              destinataires.find(
+                                (d, idx) =>
+                                  idx !== index && d.carcasseIds.includes(carcasse.zacharie_carcasse_id),
+                              ),
                             );
+
                             return (
-                              <Checkbox
+                              <div
                                 key={carcasse.zacharie_carcasse_id}
-                                options={[
-                                  {
-                                    label: `Bracelet ${carcasse.numero_bracelet} ${carcasse.espece ? `(${carcasse.espece})` : ''}`,
-                                    nativeInputProps: {
-                                      checked: isAssigned,
-                                      onChange: (e) => {
-                                        const checked = e.target.checked;
-                                        if (checked) {
-                                          assignCarcassesToDestinataire(index, [
-                                            ...dest.carcasseIds,
-                                            carcasse.zacharie_carcasse_id,
-                                          ]);
-                                        } else {
-                                          updateDestinataire(index, {
-                                            carcasseIds: dest.carcasseIds.filter(
-                                              (id) => id !== carcasse.zacharie_carcasse_id,
-                                            ),
-                                          });
-                                        }
-                                      },
-                                      disabled: !canEdit || disabled,
-                                    },
-                                  },
-                                ]}
-                              />
+                                className={`transition-all duration-300 ease-out ${
+                                  expandedCarcassesSections.has(index)
+                                    ? 'translate-y-0 opacity-100'
+                                    : '-translate-y-4 opacity-0'
+                                }`}
+                                style={{
+                                  transitionDelay: expandedCarcassesSections.has(index)
+                                    ? `${carcasseIndex * 50}ms`
+                                    : '0ms',
+                                }}
+                              >
+                                <div className={`relative ${isAssignedToOther ? 'opacity-50' : ''}`}>
+                                  <CardCarcasseSelectionItem
+                                    carcasse={carcasse}
+                                    onClick={() => {
+                                      if (isAssigned) {
+                                        updateDestinataire(index, {
+                                          carcasseIds: dest.carcasseIds.filter(
+                                            (id) => id !== carcasse.zacharie_carcasse_id,
+                                          ),
+                                        });
+                                      } else {
+                                        assignCarcassesToDestinataire(index, [
+                                          ...dest.carcasseIds,
+                                          carcasse.zacharie_carcasse_id,
+                                        ]);
+                                      }
+                                    }}
+                                    isAssigned={isAssigned}
+                                    isAssignedToOther={isAssignedToOther}
+                                  />
+                                </div>
+                              </div>
                             );
                           })}
                         </div>
@@ -882,6 +864,19 @@ export default function DestinataireSelect({
                       )}
                     </div>
                   )}
+                  <div className="flex justify-end">
+                    {canEdit && destinataires.length > 1 && (
+                      <Button
+                        priority="tertiary"
+                        iconId="fr-icon-delete-line"
+                        nativeButtonProps={{
+                          onClick: () => removeDestinataire(index),
+                        }}
+                      >
+                        Supprimer
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -910,8 +905,8 @@ export default function DestinataireSelect({
                 if (!tryToSubmitAtLeastOnce) {
                   setTryTOSubmitAtLeastOnce(true);
                 }
-                if (jobIsMissing) {
-                  alert(jobIsMissing);
+                if (alertMessage) {
+                  alert(alertMessage);
                   return;
                 }
 
@@ -1110,9 +1105,9 @@ export default function DestinataireSelect({
             Transmettre la fiche
           </Button>
         )}
-        {/* {!disabled && !!jobIsMissing?.length && tryToSubmitAtLeastOnce && ( */}
-        {!disabled && jobIsMissing && (
-          <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing || ''} />
+        {/* {!disabled && !!alertMessage?.length && tryToSubmitAtLeastOnce && ( */}
+        {!disabled && alertMessage && (
+          <Alert title="Attention" className="mt-4" severity="error" description={alertMessage || ''} />
         )}
         {canEdit &&
           !needToSubmit &&
@@ -1153,3 +1148,39 @@ export default function DestinataireSelect({
     </>
   );
 }
+
+type CardCarcasseSelectionItemProps = React.ComponentProps<typeof CardCarcasse> & {
+  isAssigned: boolean;
+  isAssignedToOther: boolean;
+};
+
+const CardCarcasseSelectionItem = (props: CardCarcasseSelectionItemProps) => {
+  return (
+    <div className="relative">
+      <CardCarcasse
+        {...props}
+        className={
+          props.isAssigned
+            ? 'border-action-high-blue-france !bg-action-high-blue-france/10 border-l-3 border-solid'
+            : ''
+        }
+      />
+      {props.isAssignedToOther && (
+        <div className="absolute inset-0 flex items-center justify-center rounded-lg">
+          <div className="mx-2 max-w-[200px] rounded-lg bg-white p-3 text-center shadow-lg">
+            <p className="mb-1 text-sm font-medium text-gray-900">Déjà assignée</p>
+          </div>
+        </div>
+      )}
+      <div className={`absolute top-0 right-0`}>
+        <Button
+          type="button"
+          iconId={props.isAssigned ? 'fr-icon-checkbox-circle-fill' : 'fr-icon-checkbox-circle-line'}
+          onClick={props.onClick}
+          title={props.isAssigned ? 'Désassigner la carcasse' : 'Assigner la carcasse'}
+          priority="tertiary no outline"
+        />
+      </div>
+    </div>
+  );
+};
