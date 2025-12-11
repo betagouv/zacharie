@@ -36,7 +36,7 @@ test.describe("Fiches examinateur initial", () => {
     await page.getByRole("button", { name: "CHASSENARD" }).click();
     await page
       .getByRole("textbox", { name: "Heure de mise à mort de la" })
-      .fill(dayjs().add(-1, "hour").format("HH:mm"));
+      .fill(dayjs().add(-3, "hour").format("HH:mm"));
     await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).blur();
     await expect(page.getByText("Synchronisation en cours")).toBeVisible();
     await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
@@ -65,7 +65,9 @@ test.describe("Fiches examinateur initial", () => {
     await page.getByRole("button", { name: "Enregistrer la carcasse" }).click();
     await expect(page.getByText("Synchronisation en cours")).toBeVisible();
     await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
-    await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).fill("12:14");
+    await page
+      .getByRole("textbox", { name: "Heure d'éviscération de la" })
+      .fill(dayjs().add(-1, "hour").format("HH:mm"));
     await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).blur();
     await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour et maintenant" }).click();
     await page.getByText("Je, Martin Marie, certifie qu").click();
