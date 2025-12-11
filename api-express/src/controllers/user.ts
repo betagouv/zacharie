@@ -6,6 +6,7 @@ const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import jwt from 'jsonwebtoken';
 import dayjs from 'dayjs';
+import crypto from 'crypto';
 import {
   createBrevoContact,
   linkBrevoCompanyToContact,
@@ -51,31 +52,46 @@ import { sanitize } from '~/utils/sanitize';
 import { captureException } from '@sentry/node';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
-const connexionSchema = z.object({
+// Schemas for validation
+const loginSchema = z.object({
   email: z.string().email(),
   username: z.string().optional(),
   passwordUser: z.string(),
-  connexionType: z.enum(['creation-de-compte', 'compte-existant']),
-  resetPasswordRequest: z.boolean().optional(),
-  resetPasswordToken: z.string().optional(),
 });
 
+const signupSchema = z.object({
+  email: z.string().email(),
+  username: z.string().optional(),
+  passwordUser: z.string(),
+});
+
+const forgetPasswordSchema = z.object({
+  email: z.string().email(),
+  username: z.string().optional(),
+});
+
+const resetPasswordSchema = z.object({
+  username: z.string().optional(),
+  passwordUser: z.string(),
+  resetPasswordToken: z.string(),
+});
+
+// Route: POST /user/login - Connexion (compte existant)
 router.post(
-  '/connexion',
+  '/login',
   catchErrors(
     async (
       req: express.Request,
       res: express.Response<UserConnexionResponse>,
       next: express.NextFunction,
     ) => {
-      let result = connexionSchema.safeParse(req.body);
+      let result = loginSchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
         res.status(406);
         return next(error);
       }
-      let { email, username, passwordUser, connexionType, resetPasswordRequest, resetPasswordToken } =
-        result.data;
+      let { email, username, passwordUser } = result.data;
 
       email = email.toLowerCase().trim();
       if (username) {
@@ -95,83 +111,102 @@ router.post(
         });
         return;
       }
-      if (resetPasswordRequest) {
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (user?.email) {
-          const password = await prisma.password.findFirst({
-            where: { user_id: user.id },
-          });
-          if (!password) {
-            res.status(200).send({
-              ok: true,
-              data: { user: null },
-              error: '',
-              message: 'Vous pouvez désormais vous connecter avec votre email et créer un mot de passe',
-            });
-            return;
-          }
-          if (password?.reset_password_last_email_sent_at) {
-            const sentMinutesAgo = dayjs().diff(password.reset_password_last_email_sent_at, 'minute');
-            if (sentMinutesAgo < 5) {
-              res.status(400).send({
-                ok: false,
-                data: { user: null },
-                error: '',
-                message: `Un email de réinitialisation a déjà été envoyé, veuillez patienter encore ${
-                  5 - sentMinutesAgo
-                } minutes`,
-              });
-              return;
-            }
-          }
-          const token = crypto.randomUUID();
-          await prisma.password.update({
-            where: { user_id: user.id },
-            data: {
-              reset_password_token: token,
-              reset_password_last_email_sent_at: new Date(),
-            },
-          });
-          const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : https://zacharie.beta.gouv.fr/app/connexion?reset-password-token=${token}&type=compte-existant`;
-          sendEmail({
-            emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
-            subject: '[Zacharie] Réinitialisation de votre mot de passe',
-            text,
-          });
-          res.status(200).send({
-            ok: true,
-            data: { user: null },
-            error: '',
-            message: 'Un email de réinitialisation de mot de passe a été envoyé',
-          });
-          return;
-        }
+      if (!passwordUser) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Veuillez renseigner votre mot de passe',
+        });
+        return;
       }
-      if (resetPasswordToken) {
-        const password = await prisma.password.findFirst({
-          where: { reset_password_token: resetPasswordToken },
+
+      let user = await prisma.user.findUnique({ where: { email } });
+      if (!user) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: "L'email est incorrect, ou vous n'avez pas encore de compte",
         });
-        if (!password) {
-          res.status(400).send({
-            ok: false,
-            data: { user: null },
-            error: '',
-            message: 'Le lien de réinitialisation de mot de passe est invalide. Veuillez réessayer.',
-          });
-          return;
-        }
-        if (dayjs().diff(password.reset_password_last_email_sent_at, 'minutes') > 60) {
-          res.status(400).send({
-            ok: false,
-            data: { user: null },
-            error: '',
-            message: 'Le lien de réinitialisation de mot de passe a expiré. Veuillez réessayer.',
-          });
-          return;
-        }
-        await prisma.password.delete({
-          where: { user_id: password.user_id },
+        return;
+      }
+
+      const existingPassword = await prisma.password.findFirst({
+        where: { user_id: user.id },
+      });
+      if (!existingPassword) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: "L'email est incorrect, ou vous n'avez pas encore de compte",
         });
+        return;
+      }
+
+      const isOk = await comparePassword(passwordUser, existingPassword.password);
+      if (!isOk) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Le mot de passe est incorrect',
+        });
+        return;
+      }
+
+      const token = jwt.sign({ userId: user.id }, SECRET, {
+        expiresIn: JWT_MAX_AGE,
+      });
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { last_login_at: new Date() },
+      });
+      res.cookie(
+        'zacharie_express_jwt',
+        token,
+        cookieOptions(req.headers.host.includes('localhost') ? true : false),
+      );
+      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+    },
+  ),
+);
+
+// Route: POST /user/signup - Création de compte
+router.post(
+  '/signup',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction,
+    ) => {
+      let result = signupSchema.safeParse(req.body);
+      if (!result.success) {
+        const error = new Error(result.error.message);
+        res.status(406);
+        return next(error);
+      }
+      let { email, username, passwordUser } = result.data;
+
+      email = email.toLowerCase().trim();
+      if (username) {
+        capture(new Error('Spam detected'), {
+          extra: { email, message: 'Spam detected' },
+        });
+        // honey pot
+        res.status(200).send({ ok: true, data: null, message: null, error: null });
+        return;
+      }
+      if (!email) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Veuillez renseigner votre email',
+        });
+        return;
       }
       if (!passwordUser) {
         res.status(400).send({
@@ -182,99 +217,218 @@ router.post(
         });
         return;
       }
-      if (!connexionType) {
+
+      let user = await prisma.user.findUnique({ where: { email } });
+      if (user) {
         res.status(400).send({
           ok: false,
           data: { user: null },
           message: '',
-          error: "L'URL de connexion est incorrecte",
+          error: 'Un compte existe déjà avec cet email',
         });
         return;
       }
 
-      let user = await prisma.user.findUnique({ where: { email } });
-      if (user) {
-        if (connexionType === 'creation-de-compte') {
-          res.status(400).send({
-            ok: false,
-            data: { user: null },
-            message: '',
-            error: 'Un compte existe déjà avec cet email',
-          });
-          return;
-        }
-      }
-      if (!user) {
-        if (connexionType === 'compte-existant') {
-          res.status(400).send({
-            ok: false,
-            data: { user: null },
-            message: '',
-            error: "L'email est incorrect, ou vous n'avez pas encore de compte",
-          });
-          return;
-        }
-        user = await prisma.user.create({
-          data: {
-            id: await createUserId(),
-            email,
-            activated: false,
-            prefilled: false,
-            // depuis le 14 octobre 2025, on ne peut plus créer de compte ETG/SVI/COLLECTEUR_PRO
-            // sans avoir au préalable été invité par un membre de son entreprise/service
-            // de sorte que tous les utilisateurs créés depuis le 14 octobre 2025 sont CHASSEURS
-            // et qu'en mettant ce rôle ici, on permet de passer à l'étape suivante dans l'onboarding (ie. mes coordonnées)
-            roles: [UserRoles.CHASSEUR],
-          },
-        });
-        await createBrevoContact(user, 'USER');
-        await updateBrevoChasseurDeal(user);
-      }
-      const hashedPassword = await hashPassword(passwordUser);
-
-      const existingPassword = await prisma.password.findFirst({
-        where: { user_id: user.id },
+      user = await prisma.user.create({
+        data: {
+          id: await createUserId(),
+          email,
+          activated: false,
+          prefilled: false,
+          // depuis le 14 octobre 2025, on ne peut plus créer de compte ETG/SVI/COLLECTEUR_PRO
+          // sans avoir au préalable été invité par un membre de son entreprise/service
+          // de sorte que tous les utilisateurs créés depuis le 14 octobre 2025 sont CHASSEURS
+          // et qu'en mettant ce rôle ici, on permet de passer à l'étape suivante dans l'onboarding (ie. mes coordonnées)
+          roles: [UserRoles.CHASSEUR],
+        },
       });
-      if (!existingPassword) {
-        await prisma.password.create({
-          data: { user_id: user.id, password: hashedPassword },
-        });
-      } else {
-        const isOk = await comparePassword(passwordUser, existingPassword.password);
-        if (!isOk) {
-          if (connexionType === 'compte-existant') {
-            res.status(400).send({
-              ok: false,
-              data: { user: null },
-              message: '',
-              error: 'Le mot de passe est incorrect',
-            });
-            return;
-          } else {
-            res.status(400).send({
-              ok: false,
-              data: { user: null },
-              message: '',
-              error: 'Un compte existe déjà avec cet email',
-            });
-            return;
-          }
-        }
-      }
+      await createBrevoContact(user, 'USER');
+      await updateBrevoChasseurDeal(user);
+
+      const hashedPassword = await hashPassword(passwordUser);
+      await prisma.password.create({
+        data: { user_id: user.id, password: hashedPassword },
+      });
+
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { last_login_at: new Date() },
-      });
-      // refreshMaterializedViews();
       res.cookie(
         'zacharie_express_jwt',
         token,
         cookieOptions(req.headers.host.includes('localhost') ? true : false),
       );
       res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+    },
+  ),
+);
+
+// Route: POST /user/forget-password - Demande de réinitialisation de mot de passe
+router.post(
+  '/forget-password',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction,
+    ) => {
+      let result = forgetPasswordSchema.safeParse(req.body);
+      if (!result.success) {
+        const error = new Error(result.error.message);
+        res.status(406);
+        return next(error);
+      }
+      let { email, username } = result.data;
+
+      email = email.toLowerCase().trim();
+      if (username) {
+        capture(new Error('Spam detected'), {
+          extra: { email, message: 'Spam detected' },
+        });
+        // honey pot
+        res.status(200).send({ ok: true, data: null, message: null, error: null });
+        return;
+      }
+      if (!email) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Veuillez renseigner votre email',
+        });
+        return;
+      }
+
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user) {
+        res.status(200).send({
+          ok: true,
+          data: { user: null },
+          error: '',
+          message:
+            'Si cet email existe, un email de réinitialisation de mot de passe a été envoyé\nCliquez sur le lien dans cet email pour réinitialiser votre mot de passe',
+        });
+        return;
+      }
+
+      const token = crypto.randomUUID();
+      await prisma.password.update({
+        where: { user_id: user.id },
+        data: {
+          reset_password_token: token,
+          reset_password_last_email_sent_at: new Date(),
+        },
+      });
+      const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : ${process.env.VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`;
+      sendEmail({
+        emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
+        subject: '[Zacharie] Réinitialisation de votre mot de passe',
+        text,
+      });
+
+      // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
+      res.status(200).send({
+        ok: true,
+        data: { user: null },
+        error: '',
+        message:
+          'Si cet email existe, un email de réinitialisation de mot de passe a été envoyé\nCliquez sur le lien dans cet email pour réinitialiser votre mot de passe',
+      });
+    },
+  ),
+);
+
+// Route: POST /user/reset-mot-de-passe - Réinitialisation de mot de passe avec token
+router.post(
+  '/reset-password',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction,
+    ) => {
+      let result = resetPasswordSchema.safeParse(req.body);
+      if (!result.success) {
+        const error = new Error(result.error.message);
+        res.status(406);
+        return next(error);
+      }
+      let { username, passwordUser, resetPasswordToken } = result.data;
+
+      if (username) {
+        capture(new Error('Spam detected'), {
+          extra: { message: 'Spam detected' },
+        });
+        // honey pot
+        res.status(200).send({ ok: true, data: null, message: null, error: null });
+        return;
+      }
+      if (!passwordUser) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Veuillez renseigner votre mot de passe',
+        });
+        return;
+      }
+      if (!resetPasswordToken) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Le token de réinitialisation est requis',
+        });
+        return;
+      }
+
+      const password = await prisma.password.findFirst({
+        where: { reset_password_token: resetPasswordToken },
+        include: { User: true },
+      });
+      if (!password) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: '',
+          message: 'Le lien de réinitialisation de mot de passe est invalide. Veuillez réessayer.',
+        });
+        return;
+      }
+      if (dayjs().diff(password.reset_password_last_email_sent_at, 'minutes') > 60) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: '',
+          message: 'Le lien de réinitialisation de mot de passe a expiré. Veuillez réessayer.',
+        });
+        return;
+      }
+
+      const hashedPassword = await hashPassword(passwordUser);
+      await prisma.password.update({
+        where: { user_id: password.user_id },
+        data: {
+          password: hashedPassword,
+          reset_password_token: null,
+          reset_password_last_email_sent_at: null,
+        },
+      });
+
+      const user = password.User;
+      const token = jwt.sign({ userId: user.id }, SECRET, {
+        expiresIn: JWT_MAX_AGE,
+      });
+      const updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: { last_login_at: new Date() },
+      });
+      res.cookie(
+        'zacharie_express_jwt',
+        token,
+        cookieOptions(req.headers.host.includes('localhost') ? true : false),
+      );
+      res.status(200).send({ ok: true, data: { user: updatedUser }, message: '', error: '' });
     },
   ),
 );

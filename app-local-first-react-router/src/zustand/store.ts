@@ -347,7 +347,7 @@ const useZustandStore = create<State & Actions>()(
                 intermediairesByFei: {
                   ...state.intermediairesByFei,
                   [newIntermediaire.fei_numero]: nextIntermediairesForFei.sort((a, b) =>
-                    a.created_at < b.created_at ? 1 : -1,
+                    dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1,
                   ),
                 },
                 carcassesIntermediaireById: {

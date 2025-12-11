@@ -254,7 +254,7 @@ export function setFeiInStore(feiResponse: FeiResponse) {
   }
 
   prevState.intermediairesByFei[fei.numero] = Object.values(intermediairesByFei).sort((a, b) =>
-    a.created_at < b.created_at ? 1 : -1,
+    dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1,
   );
 
   useZustandStore.setState(prevState, true);

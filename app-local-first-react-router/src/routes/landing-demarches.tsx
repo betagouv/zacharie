@@ -180,7 +180,7 @@ export default function LandingDemarchesPage() {
                   l’application Zacharie. Toutes vos fiches seront enregistrées et accessibles à tout moment.
                   Ce service du Ministère chargé de l’Agriculture est gratuit, facile et rapide d’utilisation.
                   On peut créer son compte sur Zacharie en{' '}
-                  <Link to="/app/connexion?type=creation-de-compte">cliquant ici</Link>.
+                  <Link to="/app/connexion/creation-de-compte">cliquant ici</Link>.
                 </p>
                 <h4 className="mt-8">
                   En format papier avec le carnet à souches distribué par la Fédération Départementale des
@@ -329,8 +329,7 @@ export default function LandingDemarchesPage() {
 //         className="m-0"
 //         priority={isLoggedIn ? 'tertiary no outline' : 'primary'}
 //         linkProps={{
-//           // to: "/app/connexion?type=creation-de-compte",
-//           to: isLoggedIn ? '/app/connexion?type=compte-existant' : '/app/connexion?type=creation-de-compte',
+//           to: isLoggedIn ? '/app/connexion' : '/app/connexion/creation-de-compte',
 //           href: '#',
 //         }}
 //       >

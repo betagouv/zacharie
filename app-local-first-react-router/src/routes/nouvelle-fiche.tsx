@@ -194,7 +194,7 @@ function CantCreateNewFiche({ validationError }: { validationError?: string | nu
             </p>
             <Button
               linkProps={{
-                to: `/app/connexion?type=compte-existant`,
+                to: `/app/connexion`,
               }}
             >
               Me connecter
