@@ -5,13 +5,13 @@ import { connectWith } from "../utils/connect-with";
 test.beforeAll(async () => {
   await resetDb();
 });
+test.use({
+  launchOptions: {
+    slowMo: 100,
+  },
+});
 
 test("Création de compte examinateur initial", async ({ page }) => {
-  test.use({
-    launchOptions: {
-      slowMo: 100,
-    },
-  });
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur-nouveau@example.fr");
