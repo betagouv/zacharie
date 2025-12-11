@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import dayjs from "dayjs";
 import { resetDb } from "../scripts/reset-db";
 import { connectWith } from "../utils/connect-with";
 import { NETWORK_PRESETS } from "../utils/network-throttling";
@@ -33,7 +34,9 @@ test.describe("Fiches examinateur initial", () => {
     await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
     await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
     await page.getByRole("button", { name: "CHASSENARD" }).click();
-    await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).fill("12:12");
+    await page
+      .getByRole("textbox", { name: "Heure de mise à mort de la" })
+      .fill(dayjs().add(-1, "hour").format("HH:mm"));
     await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).blur();
     await expect(page.getByText("Synchronisation en cours")).toBeVisible();
     await expect(page.getByText("Synchronisation en cours")).not.toBeVisible();
