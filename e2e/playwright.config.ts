@@ -71,7 +71,7 @@ const config: PlaywrightTestConfig = {
       port: 3290,
       timeout: 120 * 1000,
       reuseExistingServer: false,
-      /* Enhanced server logging in CI */
+      // server logs are too verbose, only display when current browser logs are not enough
       stdout: "ignore",
       stderr: "ignore",
       env: {
@@ -87,7 +87,6 @@ const config: PlaywrightTestConfig = {
       port: 3291,
       timeout: 120 * 1000,
       reuseExistingServer: false,
-      /* Enhanced server logging in CI */
       stdout: "pipe",
       stderr: "pipe",
       env: {
