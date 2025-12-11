@@ -67,7 +67,7 @@ const debugConfig: PlaywrightTestConfig = {
       port: 3290,
       timeout: 120 * 1000,
       reuseExistingServer: false,
-      stdout: "pipe",
+      stdout: "ignore",
       stderr: "pipe",
       env: {
         PORT: "3290",
