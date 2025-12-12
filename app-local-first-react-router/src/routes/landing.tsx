@@ -201,7 +201,7 @@ export default function LandingPage() {
             <Button
               size="large"
               linkProps={{
-                to: '/app/connexion/creation-de-compte',
+                to: '/app/connexion',
                 href: '#',
               }}
             >
