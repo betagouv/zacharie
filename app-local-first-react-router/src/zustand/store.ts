@@ -195,9 +195,6 @@ const useZustandStore = create<State & Actions>()(
         createFei: (newFei: FeiWithIntermediaires) => {
           newFei.is_synced = false;
           newFei.updated_at = dayjs().toDate();
-          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-            console.log('TEST_ONLY: setting dataIsSynced to false in createFei');
-          }
           useZustandStore.setState((state) => ({
             ...state,
             feis: { ...state.feis, [newFei.numero]: newFei },
@@ -224,9 +221,7 @@ const useZustandStore = create<State & Actions>()(
             updated_at: dayjs().toDate(),
             is_synced: false,
           };
-          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-            console.log('TEST_ONLY: setting dataIsSynced to false in updateFei');
-          }
+
           useZustandStore.setState({
             feis: {
               ...feis,
@@ -244,9 +239,7 @@ const useZustandStore = create<State & Actions>()(
           if (!nextCarcassesIdsByFei.includes(newCarcasse.zacharie_carcasse_id)) {
             nextCarcassesIdsByFei.unshift(newCarcasse.zacharie_carcasse_id);
           }
-          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-            console.log('TEST_ONLY: setting dataIsSynced to false in createCarcasse');
-          }
+
           useZustandStore.setState((state) => {
             return {
               ...state,
@@ -281,9 +274,7 @@ const useZustandStore = create<State & Actions>()(
             nextCarcasse.svi_carcasse_status = nextStatus;
             nextCarcasse.svi_carcasse_status_set_at = dayjs().toDate();
           }
-          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-            console.log('TEST_ONLY: setting dataIsSynced to false in updateCarcasse');
-          }
+
           useZustandStore.setState({
             carcasses: {
               ...carcasses,
@@ -353,9 +344,7 @@ const useZustandStore = create<State & Actions>()(
                 byIntermediaireId[feiAndIntermediaireId].push(feiAndCarcasseAndIntermediaireId);
               }
             }
-            if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-              console.log('TEST_ONLY: setting dataIsSynced to false in createFeiIntermediaire');
-            }
+
             useZustandStore.setState((state) => {
               return {
                 ...state,
@@ -403,9 +392,7 @@ const useZustandStore = create<State & Actions>()(
               is_synced: false,
             };
           }
-          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-            console.log('TEST_ONLY: setting dataIsSynced to false in updateAllCarcasseIntermediaire');
-          }
+
           useZustandStore.setState((state) => {
             return {
               ...state,
@@ -444,9 +431,7 @@ const useZustandStore = create<State & Actions>()(
         ) => {
           const carcasseIntermediaire =
             useZustandStore.getState().carcassesIntermediaireById[feiAndCarcasseAndIntermediaireIds];
-          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-            console.log('TEST_ONLY: setting dataIsSynced to false in updateCarcasseIntermediaire');
-          }
+
           useZustandStore.setState((state) => {
             return {
               ...state,
@@ -485,9 +470,6 @@ const useZustandStore = create<State & Actions>()(
             updated_at: dayjs().toDate(),
             deleted_at: null,
           };
-          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-            console.log('TEST_ONLY: setting dataIsSynced to false in addLog');
-          }
           useZustandStore.setState((state) => ({
             ...state,
             logs: [...state.logs, log],
@@ -799,32 +781,9 @@ export async function syncData(calledFrom: string) {
     console.log('not syncing data because not online');
     return;
   }
-  // if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-  //   if (FOR_TEST_ONLY_started) {
-  //     console.log('TEST_ONLY: waiting for queue to be empty');
-  //     await new Promise((resolve) => queue.on('empty', resolve));
-  //   }
-  //   let FOR_TEST_ONLY_curentTryAskForSync = Date.now();
-  //   FOR_TEST_ONLY_askedForSync = FOR_TEST_ONLY_curentTryAskForSync;
-  //   // just wait one second to avoid race condition
-  //   await new Promise((resolve) => setTimeout(resolve, 1000));
-  //   if (FOR_TEST_ONLY_askedForSync !== FOR_TEST_ONLY_curentTryAskForSync) {
-  //     console.log(
-  //       'TEST_ONLY: not syncing data because another request has been made since this one was started',
-  //     );
-  //     // it means another request has been made since this one was started
-  //     return;
-  //   }
-  //   FOR_TEST_ONLY_started = true;
-  // }
+
   console.log('syncing data from', calledFrom);
-  // FIXME: in tests, we need to wait for the banner "Syncrhonisation en cours" to be displayed
-  // so that
-  if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-    if (!useZustandStore.getState().dataIsSynced) {
-      await new Promise((resolve) => setTimeout(resolve, 50)); // time for playwright to notice the banner "Syncrhonisation en cours"
-    }
-  }
+
   queue.add(async () => {
     await syncProchainBraceletAUtiliser();
   });
@@ -833,35 +792,6 @@ export async function syncData(calledFrom: string) {
   syncCarcassesIntermediaires();
   syncLogs();
   queue.on('empty', () => {
-    if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-      console.log('TEST_ONLY: setting dataIsSynced to true in syncData');
-      useZustandStore.setState({ dataIsSynced: true });
-    }
+    useZustandStore.setState({ dataIsSynced: true });
   });
-  // queue.add(async () => {
-  //   if (debug) {
-  //     console.log('------------------------------------------');
-  //     console.log('------------------------------------------');
-  //     console.log('------------------------------------------');
-  //     console.log('------------------------------------------');
-  //     console.log(`--------SYNCING DATA called from ${calledFrom}----------------------`);
-  //     console.log('------------------------------------------');
-  //     console.log('------------------------------------------');
-  //     console.log('------------------------------------------');
-  //   }
-  //   await syncProchainBraceletAUtiliser();
-  //   if (debug) console.log('synced dernier bracelet utilise');
-  //   await syncFeis();
-  //   if (debug) console.log('synced feis finito');
-  //   await syncCarcasses();
-  //   if (debug) console.log('synced intermediaires finito');
-  //   await syncCarcassesIntermediaires();
-  //   if (debug) console.log('synced carcasses intermediaires finito');
-  //   await syncLogs();
-  //   if (debug) console.log('synced logs finito');
-  //   if (debug) console.log('synced data finito');
-  //   useZustandStore.setState({ dataIsSynced: true });
-  //   FOR_TEST_ONLY_askedForSync = null;
-  //   FOR_TEST_ONLY_started = false;
-  // });
 }

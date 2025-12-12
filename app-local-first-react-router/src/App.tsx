@@ -44,6 +44,7 @@ import NouvelleFiche from './routes/nouvelle-fiche';
 import MonEntreprise from './routes/mon-profil/3-mon-entreprise';
 import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
 import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-mon-entreprise';
+import MesChasses from './routes/mes-chasses/mes-chasses';
 import FeiEnvoyée from './routes/fei/envoyée';
 import DeactivatedAccount from './routes/deactivated';
 
@@ -111,6 +112,14 @@ function App() {
                 <RootDisplay id="mot-de-passe-oublie" navigation={landingPageNavigationMenu}>
                   <MotDePasseOublie />
                 </RootDisplay>
+              }
+            />
+            <Route
+              path="mes-chasses"
+              element={
+                <RestrictedRoute id="mes-chasses">
+                  <MesChasses />
+                </RestrictedRoute>
               }
             />
             <Route

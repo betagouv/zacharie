@@ -27,24 +27,9 @@ export default function RootDisplay({
   const embedded = searchParams.get('embedded') === 'true';
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
-  // there is a bug on user's first connexion where user is not defined
-  // RENDER 1. user is not connected -> renderSearchInput is undefined
-  // RENDER 2. user is connected -> renderSearchInput is SearchInput -> ERROR of number of hooks somewhere
-  // Error: Rendered more hooks than during the previous render. at SearchInput
-  // Previous render            Next render
-  // ------------------------------------------------------
-  // 1. useMemo                    useMemo
-  // 2. useMemo                    useMemo
-  // 3. undefined                  useState
-  // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  const RenderedSearchInput = useRef(
-    user?.roles.includes(UserRoles.SVI) ||
-      user?.roles.includes(UserRoles.CHASSEUR) ||
-      user?.roles.includes(UserRoles.ETG)
-      ? SearchInput
-      : undefined,
-  ).current;
-  // console.log("root display user " + id, user);
+
+  const RenderedSearchInput = useRef(SearchInput).current;
+
   const quickAccessItems: Array<HeaderProps.QuickAccessItem> = [
     {
       linkProps: {
@@ -88,7 +73,7 @@ export default function RootDisplay({
     });
   }
 
-  const environment = import.meta.env.VITE_ENV || 'prod';
+  const environment = import.meta.env.VITE_ENV;
   console.log('✌️ ~ environment:', environment);
 
   return (
