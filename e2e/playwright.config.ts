@@ -87,8 +87,8 @@ const config: PlaywrightTestConfig = {
       port: 3291,
       timeout: 120 * 1000,
       reuseExistingServer: false,
-      stdout: "pipe",
-      stderr: "pipe",
+      stdout: "ignore",
+      stderr: "ignore",
       env: {
         PORT: "3291",
         NODE_ENV: "test",
