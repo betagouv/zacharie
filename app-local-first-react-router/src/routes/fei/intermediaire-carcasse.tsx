@@ -75,11 +75,6 @@ export default function CarcasseIntermediaireComp({
   const [carcasseEcarteePourInspectionCheckbox, setCarcasseEcarteePourInspectionCheckbox] = useState(
     !!carcasseIntermediaire.ecarte_pour_inspection,
   );
-  const [carcasseAcceptCheckbox, setCarcasseAcceptCheckbox] = useState(
-    !!carcasseIntermediaire.check_manuel &&
-      !carcasseIntermediaire.refus &&
-      !carcasse.intermediaire_carcasse_manquante,
-  );
   const [carcasseAcceptPartielCheckbox, setCarcasseAcceptPartielCheckbox] = useState(
     !!carcasseIntermediaire.check_manuel &&
       !carcasseIntermediaire.refus &&
@@ -112,7 +107,7 @@ export default function CarcasseIntermediaireComp({
     setCarcasseManquante(true);
     setCarcasseRefusCheckbox(false);
     setCarcasseEcarteePourInspectionCheckbox(false);
-    setCarcasseAcceptCheckbox(false);
+    setCarcasseAcceptPartielCheckbox(false);
     setRefus('');
     const nextPartialCarcasseIntermediaire = {
       manquante: true,
@@ -160,7 +155,7 @@ export default function CarcasseIntermediaireComp({
     setCarcasseManquante(false);
     setCarcasseRefusCheckbox(true);
     setCarcasseEcarteePourInspectionCheckbox(false);
-    setCarcasseAcceptCheckbox(false);
+    setCarcasseAcceptPartielCheckbox(false);
     // with custom value for InputForSearchPrefilledData, sometimes the user doesnt press on the blue tag to confirm the refus
     // so we need to get the value from the input directly
     const refusInputValue = (document.getElementsByName('carcasse-refus')?.[0] as HTMLInputElement)?.value;
@@ -170,17 +165,13 @@ export default function CarcasseIntermediaireComp({
     }
     if (!refusToRemember) refusToRemember = refus || refusInputValue;
 
-    // Si c'est un petit gibier et que le lot est refusé, préremplir automatiquement à 0 acceptés seulement si aucune valeur n'a été définie
-    if (
-      carcasse.type === CarcasseType.PETIT_GIBIER &&
-      nombreAnimauxTotal > 0 &&
-      nombreAnimauxAcceptes === null
-    ) {
+    // Si c'est un petit gibier et que le lot est refusé, mettre automatiquement à 0 acceptés
+    if (carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0) {
       setNombreAnimauxAcceptes(0);
     }
 
-    // Utiliser la valeur actuelle de l'état (qui peut avoir été modifiée par l'utilisateur)
-    const nombreAcceptes = carcasse.type === CarcasseType.PETIT_GIBIER ? (nombreAnimauxAcceptes ?? 0) : null;
+    // Utiliser 0 pour un refus de petit gibier, sinon null
+    const nombreAcceptes = carcasse.type === CarcasseType.PETIT_GIBIER ? 0 : null;
     const nextPartialCarcasseIntermediaire = {
       manquante: false,
       refus: refusToRemember,
@@ -229,7 +220,7 @@ export default function CarcasseIntermediaireComp({
     setCarcasseManquante(false);
     setCarcasseRefusCheckbox(false);
     setCarcasseEcarteePourInspectionCheckbox(true);
-    setCarcasseAcceptCheckbox(false);
+    setCarcasseAcceptPartielCheckbox(false);
     const nombreAcceptes = carcasse.type === CarcasseType.PETIT_GIBIER ? nombreAnimauxAcceptes : null;
 
     const nextPartialCarcasseIntermediaire = {
@@ -280,7 +271,6 @@ export default function CarcasseIntermediaireComp({
     setCarcasseManquante(false);
     setCarcasseRefusCheckbox(false);
     setCarcasseEcarteePourInspectionCheckbox(false);
-    setCarcasseAcceptCheckbox(true);
     setCarcasseAcceptPartielCheckbox(false);
     setRefus('');
     // Pour une acceptation complète, utiliser le nombre total d'animaux
@@ -332,7 +322,6 @@ export default function CarcasseIntermediaireComp({
     setCarcasseManquante(false);
     setCarcasseRefusCheckbox(false);
     setCarcasseEcarteePourInspectionCheckbox(false);
-    setCarcasseAcceptCheckbox(false);
     setCarcasseAcceptPartielCheckbox(true);
     setRefus('');
     // Pour une acceptation partielle, utiliser la valeur saisie par l'utilisateur
@@ -378,7 +367,33 @@ export default function CarcasseIntermediaireComp({
       intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    refusIntermediaireModal.close();
+  };
+
+  const updateNombreAnimauxAcceptes = (nouveauNombre: number | null) => {
+    if (!canEdit) return;
+
+    // Mettre à jour l'état local
+    setNombreAnimauxAcceptes(nouveauNombre);
+
+    // Sauvegarder automatiquement si c'est une acceptation partielle ou un refus
+    if (carcasseAcceptPartielCheckbox || carcasseRefusCheckbox) {
+      const nombreAcceptes = nouveauNombre ?? 0;
+      const nextPartialCarcasseIntermediaire = {
+        nombre_d_animaux_acceptes: nombreAcceptes,
+      };
+      updateCarcasseIntermediaire(carcasseIntermediaireId, nextPartialCarcasseIntermediaire);
+      addLog({
+        user_id: user.id,
+        user_role: intermediaire.intermediaire_role! as UserRoles,
+        fei_numero: fei.numero,
+        action: 'carcasse-intermediaire-nombre-animaux-acceptes-update',
+        history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
+        entity_id: intermediaire.intermediaire_entity_id,
+        zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+        intermediaire_id: intermediaire.id,
+        carcasse_intermediaire_id: carcasseIntermediaireId,
+      });
+    }
   };
 
   let commentaireHint = [];
@@ -467,7 +482,13 @@ export default function CarcasseIntermediaireComp({
                           !carcasseRefusCheckbox &&
                           !carcasseManquante &&
                           !carcasseAcceptPartielCheckbox &&
-                          (carcasseIntermediaire.check_manuel ? true : false),
+                          !carcasseEcarteePourInspectionCheckbox &&
+                          !!carcasseIntermediaire.check_manuel &&
+                          !carcasseIntermediaire.refus &&
+                          !carcasse.intermediaire_carcasse_manquante &&
+                          (carcasse.type === CarcasseType.PETIT_GIBIER
+                            ? carcasseIntermediaire.nombre_d_animaux_acceptes === nombreAnimauxTotal
+                            : true),
                         onChange: () => {
                           refusIntermediaireModal.close();
                           submitCarcasseAccept();
@@ -485,15 +506,7 @@ export default function CarcasseIntermediaireComp({
                               name: 'carcasse-status',
                               checked: !!carcasseAcceptPartielCheckbox && !carcasseManquante,
                               onChange: () => {
-                                setCarcasseManquante(false);
-                                setCarcasseRefusCheckbox(false);
-                                setCarcasseEcarteePourInspectionCheckbox(false);
-                                setCarcasseAcceptCheckbox(false);
-                                setCarcasseAcceptPartielCheckbox(true);
-                                // Initialiser le nombre d'animaux acceptés si pas encore défini
-                                if (nombreAnimauxAcceptes === null && nombreAnimauxTotal > 0) {
-                                  setNombreAnimauxAcceptes(nombreAnimauxTotal);
-                                }
+                                submitCarcasseAcceptPartiel();
                               },
                               disabled: !canEdit,
                             },
@@ -504,11 +517,21 @@ export default function CarcasseIntermediaireComp({
                       nativeInputProps: {
                         required: true,
                         name: 'carcasse-status',
-                        checked: !!carcasseRefusCheckbox && !carcasseManquante,
+                        checked:
+                          (!!carcasseRefusCheckbox || !!carcasseIntermediaire.refus) &&
+                          !carcasseManquante &&
+                          !carcasseAcceptPartielCheckbox &&
+                          !carcasseEcarteePourInspectionCheckbox,
                         onChange: () => {
                           setCarcasseManquante(false);
                           setCarcasseRefusCheckbox(true);
                           setCarcasseEcarteePourInspectionCheckbox(false);
+                          setCarcasseAcceptPartielCheckbox(false);
+                          // Mettre automatiquement 0 animaux acceptés pour un refus de petit gibier
+                          if (carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0) {
+                            setNombreAnimauxAcceptes(0);
+                            updateNombreAnimauxAcceptes(0);
+                          }
                         },
                         disabled: !canEdit,
                       },
@@ -582,7 +605,7 @@ export default function CarcasseIntermediaireComp({
               )}
               {carcasse.type === CarcasseType.PETIT_GIBIER &&
                 nombreAnimauxTotal > 0 &&
-                (carcasseAcceptPartielCheckbox || carcasseRefusCheckbox) && (
+                carcasseAcceptPartielCheckbox && (
                   <Input
                     label="Nombre d'animaux acceptés"
                     hintText={`Nombre total d'animaux dans le lot : ${nombreAnimauxTotal}`}
@@ -595,9 +618,8 @@ export default function CarcasseIntermediaireComp({
                       value: nombreAnimauxAcceptes ?? '',
                       disabled: !canEdit || carcasseManquante,
                       onChange: (e) => {
-                        if (!canEdit) return;
                         const value = e.currentTarget.value === '' ? null : Number(e.currentTarget.value);
-                        setNombreAnimauxAcceptes(value);
+                        updateNombreAnimauxAcceptes(value);
                       },
                     }}
                   />
@@ -686,6 +708,7 @@ export default function CarcasseIntermediaireComp({
                                 onClick: (e) => {
                                   e.preventDefault();
                                   submitCarcasseAcceptPartiel();
+                                  refusIntermediaireModal.close();
                                 },
                               },
                             },
