@@ -6,6 +6,11 @@ import { NETWORK_PRESETS } from "../utils/network-throttling";
 test.beforeEach(async () => {
   await resetDb("ETG");
 });
+test.use({
+  launchOptions: {
+    slowMo: 100,
+  },
+});
 
 test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   const feiId = "ZACH-20250707-QZ6E0-165242";
