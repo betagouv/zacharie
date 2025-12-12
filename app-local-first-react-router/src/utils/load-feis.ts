@@ -11,7 +11,9 @@ export async function loadFeis() {
     console.log('not loading feis because not online');
     return;
   }
+
   useZustandStore.setState({ dataIsSynced: false });
+
   try {
     const responseDone = await API.get({ path: 'fei/done' }).then((res) => res as FeisDoneResponse);
 
@@ -84,6 +86,7 @@ export async function loadFeis() {
       // again, "cache lookup failed for type" problem
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
+
     useZustandStore.setState({ dataIsSynced: true });
 
     console.log('chargement feis fini');

@@ -1,6 +1,7 @@
 import { Footer } from '@codegouvfr/react-dsfr/Footer';
 import { Header, type HeaderProps } from '@codegouvfr/react-dsfr/Header';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
+import { UserRoles } from '@prisma/client';
 import { clearCache } from '@app/services/indexed-db';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
@@ -26,13 +27,13 @@ export default function RootDisplay({
   const embedded = searchParams.get('embedded') === 'true';
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
-  // SearchInput is now displayed for all users
+
   const RenderedSearchInput = useRef(SearchInput).current;
-  // console.log("root display user " + id, user);
+
   const quickAccessItems: Array<HeaderProps.QuickAccessItem> = [
     {
       linkProps: {
-        to: user?.email ? '/app/tableau-de-bord' : '/app/connexion?type=compte-existant',
+        to: user?.email ? '/app/tableau-de-bord' : '/app/connexion',
         href: '#',
       },
       iconId: 'ri-account-box-line',
@@ -42,7 +43,7 @@ export default function RootDisplay({
   if (!user) {
     quickAccessItems.push({
       linkProps: {
-        to: '/app/connexion?type=creation-de-compte',
+        to: '/app/connexion/creation-de-compte',
         href: '#',
       },
       iconId: 'fr-icon-add-circle-line',
@@ -63,7 +64,7 @@ export default function RootDisplay({
         onClick: async () => {
           API.post({ path: '/user/logout' }).then(async () => {
             await clearCache().then(() => {
-              window.location.href = '/app/connexion?type=compte-existant';
+              window.location.href = '/app/connexion';
             });
           });
         },
@@ -72,7 +73,7 @@ export default function RootDisplay({
     });
   }
 
-  const environment = import.meta.env.VITE_ENV || 'development';
+  const environment = import.meta.env.VITE_ENV;
   console.log('✌️ ~ environment:', environment);
 
   return (
@@ -150,7 +151,7 @@ export default function RootDisplay({
                   links: [
                     {
                       linkProps: {
-                        to: '/app/connexion?type=compte-existant',
+                        to: '/app/connexion',
                         href: '#',
                       },
                       text: 'Se connecter',

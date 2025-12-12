@@ -2,9 +2,11 @@ import { test, expect } from "@playwright/test";
 import { resetDb } from "../scripts/reset-db";
 import { connectWith } from "../utils/connect-with";
 
-// test.beforeAll(async () => {
-//   await resetDb();
-// });
+test.use({
+  launchOptions: {
+    slowMo: 100,
+  },
+});
 
 test("Connexion avec succès", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
@@ -26,6 +28,12 @@ test("Création de compte avec email existant", async ({ page }) => {
   await page.getByRole("button", { name: "Créer mon compte" }).click();
   await page.getByText("Un compte existe déjà avec").click();
   await page.getByRole("link", { name: "Cliquez ici pour vous" }).click();
+  await expect(page).toHaveURL("http://localhost:3290/app/connexion");
+  await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).click();
+  await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur@example.fr");
+  await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
+  await expect(page.getByRole("textbox", { name: "Mon email Renseignez votre" })).toHaveValue("examinateur@example.fr");
+  await expect(page.getByRole("textbox", { name: "Mon mot de passe Veuillez" })).toHaveValue("secret-secret");
   await page.getByRole("button", { name: "Me connecter" }).click();
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
 });
@@ -39,6 +47,16 @@ test.describe("Connexion avec email incorrect", () => {
     await connectWith(page, "examinateur-pas-encore-existe@example.fr", "secret-mauvais-secret");
     await page.getByText("L'email est incorrect, ou vous n'avez pas encore de compte").click();
     await page.getByRole("link", { name: "Cliquez ici pour en créer un" }).click();
+    await expect(page).toHaveURL("http://localhost:3290/app/connexion/creation-de-compte");
+    await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).click();
+    await page
+      .getByRole("textbox", { name: "Mon email Renseignez votre" })
+      .fill("examinateur-pas-encore-existe@example.fr");
+    await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-mauvais-secret");
+    await expect(page.getByRole("textbox", { name: "Mon email Renseignez votre" })).toHaveValue(
+      "examinateur-pas-encore-existe@example.fr"
+    );
+    await expect(page.getByRole("textbox", { name: "Mon mot de passe Veuillez" })).toHaveValue("secret-mauvais-secret");
     await page.getByRole("button", { name: "Créer mon compte" }).click();
     await expect(page.getByRole("heading", { name: "Renseignez vos coordonnées" })).toBeVisible();
   });

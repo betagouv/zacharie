@@ -5,6 +5,11 @@ import { connectWith } from "../utils/connect-with";
 test.beforeAll(async () => {
   await resetDb();
 });
+test.use({
+  launchOptions: {
+    slowMo: 100,
+  },
+});
 
 test("Création de compte examinateur initial", async ({ page }) => {
   await page.goto("http://localhost:3290/");
@@ -95,6 +100,9 @@ test("Création de compte collecteur pro", async ({ page }) => {
   await page.getByRole("button", { name: "Créer mon compte" }).click();
   await page.getByText("Un compte existe déjà avec").click();
   await page.getByRole("link", { name: "Cliquez ici pour vous" }).click();
+  await page.getByRole("button", { name: "Me connecter" }).waitFor({ state: "visible" });
+  await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("collecteur-pro-nouveau@example.fr");
+  await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Me connecter" }).click();
   await page.getByRole("textbox", { name: "Nom *", exact: true }).fill("Marcel");
   await page.getByRole("textbox", { name: "Prénom *" }).fill("Maurice");
@@ -128,6 +136,9 @@ test("Création de compte établissement de traitement du gibier", async ({ page
   await page.getByRole("button", { name: "Créer mon compte" }).click();
   await page.getByText("Un compte existe déjà avec").click();
   await page.getByRole("link", { name: "Cliquez ici pour vous" }).click();
+  await page.getByRole("button", { name: "Me connecter" }).waitFor({ state: "visible" });
+  await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("etg-nouveau@example.fr");
+  await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Me connecter" }).click();
   await page.getByRole("textbox", { name: "Nom *", exact: true }).fill("Marcel");
   await page.getByRole("textbox", { name: "Prénom *" }).fill("Maurice");
@@ -166,6 +177,9 @@ test("Création de compte SVI", async ({ page }) => {
   await page.getByRole("button", { name: "Créer mon compte" }).click();
   await page.getByText("Un compte existe déjà avec").click();
   await page.getByRole("link", { name: "Cliquez ici pour vous" }).click();
+  await page.getByRole("button", { name: "Me connecter" }).waitFor({ state: "visible" });
+  await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("svi-nouveau@example.fr");
+  await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Me connecter" }).click();
   await page.getByRole("textbox", { name: "Nom *", exact: true }).fill("Marcel");
   await page.getByRole("textbox", { name: "Prénom *" }).fill("Maurice");
