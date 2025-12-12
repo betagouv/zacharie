@@ -17,12 +17,12 @@ const config: PlaywrightTestConfig = {
   retries: 0, // 0 prevents flaky tests to be retried, so its better for tests stability
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [
-    ["html"], // HTML report for artifacts
-    ["github"], // GitHub Actions integration
-    ["list"], // Detailed console output
-    ["junit", { outputFile: "test-results/junit.xml" }], // For CI integration
-  ],
+  // reporter: [
+  //   ["html"], // HTML report for artifacts
+  //   ["github"], // GitHub Actions integration
+  //   ["list"], // Detailed console output
+  //   ["junit", { outputFile: "test-results/junit.xml" }], // For CI integration
+  // ],
   use: {
     actionTimeout: 0,
     baseURL: "http://localhost:3290",
