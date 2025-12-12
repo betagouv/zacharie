@@ -40,17 +40,27 @@ test.describe("Connexion avec email incorrect", () => {
   test.beforeAll(async () => {
     await resetDb();
   });
+  test.use({
+    launchOptions: {
+      slowMo: 100,
+    },
+  });
 
   test("Connexion avec email incorrect", async ({ page }) => {
     await connectWith(page, "examinateur-pas-encore-existe@example.fr", "secret-mauvais-secret");
     await page.getByText("L'email est incorrect, ou vous n'avez pas encore de compte").click();
     await page.getByRole("link", { name: "Cliquez ici pour en créer un" }).click();
     await expect(page).toHaveURL("http://localhost:3290/app/connexion/creation-de-compte");
+    await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).click();
     await page
       .getByRole("textbox", { name: "Mon email Renseignez votre" })
       .fill("examinateur-pas-encore-existe@example.fr");
     await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-mauvais-secret");
     await page.getByRole("button", { name: "Créer mon compte" }).click();
+    await expect(page.getByRole("textbox", { name: "Mon email Renseignez votre" })).toHaveValue(
+      "examinateur-pas-encore-existe@example.fr"
+    );
+    await expect(page.getByRole("textbox", { name: "Mon mot de passe Veuillez" })).toHaveValue("secret-mauvais-secret");
     await expect(page.getByRole("heading", { name: "Renseignez vos coordonnées" })).toBeVisible();
   });
 });
