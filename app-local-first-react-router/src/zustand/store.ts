@@ -305,6 +305,7 @@ const useZustandStore = create<State & Actions>()(
                 check_manuel: null,
                 manquante: null,
                 refus: null,
+                nombre_d_animaux_acceptes: null,
                 commentaire: null,
                 decision_at: null,
                 ecarte_pour_inspection: false,

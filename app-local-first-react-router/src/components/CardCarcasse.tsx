@@ -76,8 +76,6 @@ export default function CardCarcasse({
 
   let { statusNewCard, motifRefus } = useCarcasseStatusAndRefus(carcasse, fei);
 
-  let espece = carcasse.espece;
-  if (carcasse.nombre_d_animaux! > 1) espece = espece += ` (${carcasse.nombre_d_animaux})`;
   let miseAMort = '';
   if (!hideDateMiseAMort) {
     miseAMort += `Mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
@@ -115,6 +113,15 @@ export default function CardCarcasse({
   const isManquante = statusNewCard.includes('manquant');
   const isAccept = statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle');
 
+  const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
+  const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
+  const nombreDAnimauxDisplay =
+    CarcasseType.PETIT_GIBIER === carcasse.type
+      ? nombreDAnimaux > 1 && nombreDAnimauxAcceptes > 0
+        ? `(${nombreDAnimauxAcceptes} sur ${nombreDAnimaux})`
+        : `(${nombreDAnimaux})`
+      : '';
+
   return (
     <>
       <div
@@ -135,7 +142,9 @@ export default function CardCarcasse({
           type="button"
           onClick={onClick ? onClick : cacasseModal.open}
         >
-          <p className="order-1 text-base font-bold">{espece}</p>
+          <p className="order-1 text-base font-bold">
+            {carcasse.espece} {nombreDAnimauxDisplay}
+          </p>
           <p className="order-2 text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
           {miseAMort && <p className="order-3 text-sm/4">{miseAMort}</p>}
           <p
@@ -193,7 +202,7 @@ export default function CardCarcasse({
 
       <cacasseModal.Component
         size="large"
-        title={`${espece} - N° ${carcasse.numero_bracelet}`}
+        title={`${carcasse.espece} - N° ${carcasse.numero_bracelet}`}
         buttons={[
           {
             children: 'Fermer',

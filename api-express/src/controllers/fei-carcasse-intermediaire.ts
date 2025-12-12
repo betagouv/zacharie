@@ -140,6 +140,10 @@ router.post(
         data.intermediaire_depot_entity_id =
           body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_entity_id];
       }
+      if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes)) {
+        data.nombre_d_animaux_acceptes =
+          body[Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes] ?? null;
+      }
 
       let carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
         where: {
