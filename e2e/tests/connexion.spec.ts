@@ -2,9 +2,11 @@ import { test, expect } from "@playwright/test";
 import { resetDb } from "../scripts/reset-db";
 import { connectWith } from "../utils/connect-with";
 
-// test.beforeAll(async () => {
-//   await resetDb();
-// });
+test.use({
+  launchOptions: {
+    slowMo: 100,
+  },
+});
 
 test("Connexion avec succès", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
@@ -39,11 +41,6 @@ test("Création de compte avec email existant", async ({ page }) => {
 test.describe("Connexion avec email incorrect", () => {
   test.beforeAll(async () => {
     await resetDb();
-  });
-  test.use({
-    launchOptions: {
-      slowMo: 100,
-    },
   });
 
   test("Connexion avec email incorrect", async ({ page }) => {
