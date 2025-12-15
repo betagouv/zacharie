@@ -6,6 +6,7 @@ import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import {
   Carcasse,
+  CarcasseStatus,
   CarcasseType,
   DepotType,
   FeiOwnerRole,
@@ -112,16 +113,9 @@ export default function CardCarcasse({
   // Déterminer qui a accepté en dernier (SVI ou ETG) et récupérer les informations de l'entité
   let acceptInfo: { type: 'SVI' | 'ETG'; entity: (typeof entities)[string] | null } | null = null;
   if (statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle')) {
-    const isSviAccepted =
-      carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE ||
-      carcasse.svi_ipm2_decision?.includes(IPM2Decision.LEVEE_DE_LA_CONSIGNE);
-    const sviAcceptDate = isSviAccepted
-      ? carcasse.svi_ipm1_signed_at ||
-        carcasse.svi_ipm2_signed_at ||
-        carcasse.svi_ipm1_date ||
-        carcasse.svi_ipm2_date
-      : null;
-    const sviEntity = isSviAccepted && fei.svi_entity_id ? entities[fei.svi_entity_id] : null;
+    const hasSviStatus = !!carcasse.svi_carcasse_status;
+    const svi_carcasse_status_set_at = carcasse.svi_carcasse_status_set_at ?? null;
+    const sviEntity = hasSviStatus && fei.svi_entity_id ? entities[fei.svi_entity_id] : null;
 
     const isEtgAccepted =
       latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG;
@@ -132,14 +126,14 @@ export default function CardCarcasse({
         : null;
 
     // Déterminer qui a accepté en dernier en comparant les dates
-    if (sviAcceptDate && etgAcceptDate) {
+    if (svi_carcasse_status_set_at && etgAcceptDate) {
       // Les deux ont accepté, comparer les dates
-      if (dayjs(sviAcceptDate).isAfter(dayjs(etgAcceptDate))) {
+      if (dayjs(svi_carcasse_status_set_at).isAfter(dayjs(etgAcceptDate))) {
         acceptInfo = { type: 'SVI', entity: sviEntity };
       } else {
         acceptInfo = { type: 'ETG', entity: etgEntity };
       }
-    } else if (isSviAccepted) {
+    } else if (hasSviStatus) {
       acceptInfo = { type: 'SVI', entity: sviEntity };
     } else if (isEtgAccepted) {
       acceptInfo = { type: 'ETG', entity: etgEntity };
