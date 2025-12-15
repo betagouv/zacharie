@@ -618,8 +618,15 @@ export default function CarcasseIntermediaireComp({
                       value: nombreAnimauxAcceptes ?? '',
                       disabled: !canEdit || carcasseManquante,
                       onChange: (e) => {
-                        const value = e.currentTarget.value === '' ? null : Number(e.currentTarget.value);
-                        updateNombreAnimauxAcceptes(value);
+                        const rawValue = e.currentTarget.value;
+                        if (rawValue === '') {
+                          updateNombreAnimauxAcceptes(null);
+                          return;
+                        }
+                        const numValue = Number(rawValue);
+                        // Clamp value between 0 and nombreAnimauxTotal
+                        const clampedValue = Math.max(0, Math.min(numValue, nombreAnimauxTotal));
+                        updateNombreAnimauxAcceptes(clampedValue);
                       },
                     }}
                   />
@@ -703,7 +710,10 @@ export default function CarcasseIntermediaireComp({
                               children: 'Enregistrer',
                               type: 'submit',
                               disabled:
-                                !canEdit || nombreAnimauxAcceptes === null || nombreAnimauxAcceptes < 0,
+                                !canEdit ||
+                                nombreAnimauxAcceptes === null ||
+                                nombreAnimauxAcceptes < 0 ||
+                                nombreAnimauxAcceptes > nombreAnimauxTotal,
                               nativeButtonProps: {
                                 onClick: (e) => {
                                   e.preventDefault();
