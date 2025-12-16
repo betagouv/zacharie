@@ -595,11 +595,7 @@ export default function CarcasseIntermediaireComp({
                       {!!carcasseRefusCheckbox && (
                         <div className="mb-4">
                           <InputMultiSelect
-                            label={
-                              carcasse.type === CarcasseType.GROS_GIBIER
-                                ? 'Vous refusez cette carcasse ? Indiquez le motif *'
-                                : 'Vous refusez ce lot ? Indiquez le motif *'
-                            }
+                            label="Motif de refus *"
                             isMulti={false}
                             canEdit
                             data={refusIntermedaire[carcasse.type || CarcasseType.GROS_GIBIER]}
