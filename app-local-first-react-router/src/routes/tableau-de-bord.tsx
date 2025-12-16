@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { EntityRelationType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -18,12 +19,34 @@ import DropDownMenu from '@app/components/DropDownMenu';
 import useUser from '@app/zustand/user';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import API from '@app/services/api';
+import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
+import { Tag } from '@codegouvfr/react-dsfr/Tag';
+import { useFeiSteps } from '@app/utils/fei-steps';
+import { useIsCircuitCourt } from '@app/utils/circuit-court';
+import type { FeiDone } from '@api/src/types/fei';
 
 async function loadData() {
   await syncData('tableau-de-bord');
   await loadMyRelations();
   await loadFeis();
 }
+
+type ViewType = 'grid' | 'table';
+
+const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
+  'À compléter': {
+    bg: 'bg-[#FEE7FC]',
+    text: 'text-[#6E445A]',
+  },
+  'En cours': {
+    bg: 'bg-[#FFECBD]',
+    text: 'text-[#73603F]',
+  },
+  Clôturée: {
+    bg: 'bg-[#E8EDFF]',
+    text: 'text-[#01008B]',
+  },
+};
 
 export default function TableauDeBordIndex() {
   const navigate = useNavigate();
@@ -118,6 +141,26 @@ export default function TableauDeBordIndex() {
     });
   };
 
+  const handleSelectAll = (visibleFeis?: string[]) => {
+    const feisToToggle = visibleFeis || [];
+    const allSelected = feisToToggle.every((numero) => selectedFeis.includes(numero));
+    if (allSelected) {
+      // Désélectionner toutes les fiches visibles
+      setSelectedFeis((prev) => prev.filter((numero) => !feisToToggle.includes(numero)));
+    } else {
+      // Sélectionner toutes les fiches visibles
+      setSelectedFeis((prev) => {
+        const newSelection = [...prev];
+        feisToToggle.forEach((numero) => {
+          if (!newSelection.includes(numero)) {
+            newSelection.push(numero);
+          }
+        });
+        return newSelection;
+      });
+    }
+  };
+
   const [filter, setFilter] = useState<FeiStepSimpleStatus | 'Toutes les fiches'>(() => {
     const savedFilter = localStorage.getItem('tableau-de-bord-filter');
     if (
@@ -126,7 +169,7 @@ export default function TableauDeBordIndex() {
         savedFilter as FeiStepSimpleStatus | 'Toutes les fiches',
       )
     ) {
-      return savedFilter;
+      return savedFilter as FeiStepSimpleStatus | 'Toutes les fiches';
     }
     return 'Toutes les fiches';
   });
@@ -134,6 +177,18 @@ export default function TableauDeBordIndex() {
   useEffect(() => {
     localStorage.setItem('tableau-de-bord-filter', filter);
   }, [filter]);
+
+  const [viewType, setViewType] = useState<ViewType>(() => {
+    const savedViewType = localStorage.getItem('tableau-de-bord-view-type');
+    if (savedViewType === 'grid' || savedViewType === 'table') {
+      return savedViewType as ViewType;
+    }
+    return 'grid';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('tableau-de-bord-view-type', viewType);
+  }, [viewType]);
 
   const dropDownMenuFilterText = useMemo(() => {
     switch (filter) {
@@ -313,6 +368,31 @@ export default function TableauDeBordIndex() {
             },
           ]}
         />
+        <SegmentedControl
+          hideLegend
+          segments={[
+            {
+              label: 'Grille',
+              iconId: 'ri-grid-line',
+              nativeInputProps: {
+                checked: viewType === 'grid',
+                onChange: () => setViewType('grid'),
+                name: 'view-type',
+                value: 'grid',
+              },
+            },
+            {
+              label: 'Table',
+              iconId: 'ri-table-line',
+              nativeInputProps: {
+                checked: viewType === 'table',
+                onChange: () => setViewType('table'),
+                name: 'view-type',
+                value: 'table',
+              },
+            },
+          ]}
+        />
       </div>
     );
   }
@@ -334,7 +414,12 @@ export default function TableauDeBordIndex() {
           <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
             <Actions />
             {!isOnlySvi && (
-              <FeisWrapper>
+              <FeisWrapper
+                viewType={viewType}
+                handleSelectAll={handleSelectAll}
+                selectedFeis={selectedFeis}
+                filter={filter}
+              >
                 {feisAssigned.map((fei) => {
                   if (!fei) return null;
                   return (
@@ -377,7 +462,12 @@ export default function TableauDeBordIndex() {
               </FeisWrapper>
             )}
             {isOnlySvi && (
-              <FeisWrapper>
+              <FeisWrapper
+                viewType={viewType}
+                handleSelectAll={handleSelectAll}
+                selectedFeis={selectedFeis}
+                filter={filter}
+              >
                 {feiActivesForSvi.map((fei) => {
                   if (!fei) return null;
                   if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
@@ -420,7 +510,19 @@ export default function TableauDeBordIndex() {
   );
 }
 
-function FeisWrapper({ children }: { children: React.ReactNode }) {
+function FeisWrapper({
+  children,
+  viewType,
+  handleSelectAll,
+  selectedFeis,
+  filter,
+}: {
+  children: React.ReactNode;
+  viewType: 'grid' | 'table';
+  handleSelectAll?: (visibleFeis?: string[]) => void;
+  selectedFeis?: string[];
+  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
+}) {
   const user = useMostFreshUser('tableau de bord index')!;
   const navigate = useNavigate();
   const nothingToShow =
@@ -458,9 +560,245 @@ function FeisWrapper({ children }: { children: React.ReactNode }) {
     );
   }
 
+  if (viewType === 'table') {
+    return (
+      <FeisTable
+        handleSelectAll={handleSelectAll}
+        selectedFeis={selectedFeis}
+        filter={filter as FeiStepSimpleStatus | 'Toutes les fiches'}
+      >
+        {children}
+      </FeisTable>
+    );
+  }
+
   return (
     <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">
       {children}
+    </div>
+  );
+}
+
+function FeisTableRow({
+  fei,
+  isSelected,
+  onPrintSelect,
+  navigate,
+  filter,
+  onVisibilityChange,
+}: {
+  fei: FeiDone;
+  isSelected: boolean;
+  onPrintSelect?: (feiNumber: string, selected: boolean) => void;
+  navigate: ReturnType<typeof useNavigate>;
+  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
+  onVisibilityChange?: (feiNumero: string, isVisible: boolean) => void;
+}) {
+  const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
+  const isCircuitCourt = useIsCircuitCourt();
+
+  // Notifier le parent de la visibilité de cette ligne
+  useEffect(() => {
+    const isVisible = !filter || filter === 'Toutes les fiches' || filter === simpleStatus;
+    onVisibilityChange?.(fei.numero, isVisible);
+  }, [filter, simpleStatus, fei.numero, onVisibilityChange]);
+
+  const [carcassesAcceptées, , _carcassesOuLotsRefusés] = useMemo(() => {
+    if (!fei.resume_nombre_de_carcasses) {
+      return [[], 0, ''];
+    }
+    const _carcassesAcceptées: string[] = [];
+    let _carcassesRefusées = 0;
+    let _carcassesOuLotsRefusés = '';
+    for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
+      if (carcasse.includes('refusé')) {
+        const nombreDAnimaux =
+          carcasse
+            .split(' ')
+            .map((w: string) => parseInt(w, 10))
+            .filter(Boolean)
+            .at(-1) || 0;
+        _carcassesRefusées += nombreDAnimaux;
+        _carcassesOuLotsRefusés = carcasse.split(' (')[0];
+      } else if (carcasse) {
+        _carcassesAcceptées.push(carcasse);
+      }
+    }
+    return [_carcassesAcceptées, _carcassesRefusées, _carcassesOuLotsRefusés];
+  }, [fei.resume_nombre_de_carcasses]);
+
+  // Filtrer selon le statut si un filtre est défini - APRÈS tous les hooks
+  if (filter && filter !== 'Toutes les fiches' && filter !== simpleStatus) {
+    return null;
+  }
+
+  return (
+    <tr
+      key={fei.numero}
+      className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
+      onClick={() => navigate(`/app/tableau-de-bord/fei/${fei.numero}`)}
+    >
+      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+        <Checkbox
+          small
+          options={[
+            {
+              label: '',
+              nativeInputProps: {
+                checked: isSelected,
+                onChange: () => onPrintSelect?.(fei.numero, !isSelected),
+              },
+            },
+          ]}
+        />
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col gap-1">
+          <span className="text-action-high-blue-france text-lg font-semibold">
+            {dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}
+          </span>
+          <span className="text-sm">{fei.numero}</span>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap gap-2">
+          {!isCircuitCourt && (
+            <Tag
+              small
+              className={`items-center rounded-[4px] font-semibold uppercase ${statusColors[simpleStatus].bg} ${statusColors[simpleStatus].text}`}
+            >
+              {simpleStatus}
+            </Tag>
+          )}
+          {currentStepLabelShort && (
+            <Tag small className="items-center rounded-[4px] font-semibold uppercase">
+              {currentStepLabelShort}
+            </Tag>
+          )}
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col gap-1 text-sm">
+          <span className="capitalize">
+            {fei.commune_mise_a_mort
+              ?.split(' ')
+              .slice(1)
+              .map((w: string) => w.toLocaleLowerCase())
+              .join(' ') || 'À renseigner'}
+          </span>
+          <span className="text-gray-600">{fei.premier_detenteur_name_cache || 'À renseigner'}</span>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col gap-1 text-sm">
+          {carcassesAcceptées.length > 0 ? (
+            <div>
+              {carcassesAcceptées.map((carcasse) => (
+                <p className="m-0 text-sm" key={carcasse}>
+                  {carcasse}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <span className="text-gray-400">À renseigner</span>
+          )}
+          {_carcassesOuLotsRefusés && (
+            <span className="text-warning-main-525 font-semibold">{_carcassesOuLotsRefusés}</span>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function FeisTable({
+  children,
+  handleSelectAll,
+  selectedFeis,
+  filter,
+}: {
+  children: React.ReactNode;
+  handleSelectAll?: (visibleFeis?: string[]) => void;
+  selectedFeis?: string[];
+  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
+}) {
+  const navigate = useNavigate();
+  const [visibleFeisNumbers, setVisibleFeisNumbers] = useState<string[]>([]);
+
+  // Extract CardFiche components from children to get fei data
+  const feis = React.Children.toArray(children).filter(
+    (child): child is React.ReactElement => React.isValidElement(child) && child.type === CardFiche,
+  );
+
+  if (feis.length === 0) {
+    return null;
+  }
+
+  const allSelected =
+    visibleFeisNumbers.length > 0
+      ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero))
+      : false;
+
+  const handleSelectAllInTable = () => {
+    if (handleSelectAll) {
+      handleSelectAll(visibleFeisNumbers);
+    }
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse bg-white">
+        <thead>
+          <tr className="border-b-2 border-gray-300">
+            <th className="px-4 py-3 text-left text-sm font-semibold">
+              {handleSelectAll && (
+                <Checkbox
+                  small
+                  options={[
+                    {
+                      label: '',
+                      nativeInputProps: {
+                        checked: allSelected,
+                        onChange: handleSelectAllInTable,
+                        'aria-label': allSelected ? 'Tout désélectionner' : 'Tout sélectionner',
+                      },
+                    },
+                  ]}
+                />
+              )}
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">Fiche</th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">Statut</th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">Localisation</th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">Carcasses</th>
+          </tr>
+        </thead>
+        <tbody>
+          {feis.map((feiElement) => {
+            const fei = feiElement.props.fei;
+            const isSelected = feiElement.props.isPrintSelected;
+            const onPrintSelect = feiElement.props.onPrintSelect;
+            return (
+              <FeisTableRow
+                key={fei.numero}
+                fei={fei}
+                isSelected={isSelected}
+                onPrintSelect={onPrintSelect}
+                navigate={navigate}
+                filter={filter}
+                onVisibilityChange={(feiNumero, isVisible) => {
+                  setVisibleFeisNumbers((prev) => {
+                    if (isVisible) {
+                      return prev.includes(feiNumero) ? prev : [...prev, feiNumero];
+                    }
+                    return prev.filter((n) => n !== feiNumero);
+                  });
+                }}
+              />
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
