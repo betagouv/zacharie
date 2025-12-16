@@ -118,7 +118,23 @@ export default function TableauDeBordIndex() {
     });
   };
 
-  const [filter, setFilter] = useState<FeiStepSimpleStatus | 'Toutes les fiches'>('Toutes les fiches');
+  const [filter, setFilter] = useState<FeiStepSimpleStatus | 'Toutes les fiches'>(() => {
+    const savedFilter = localStorage.getItem('tableau-de-bord-filter');
+    if (
+      savedFilter &&
+      ['Toutes les fiches', 'À compléter', 'En cours', 'Clôturée'].includes(
+        savedFilter as FeiStepSimpleStatus | 'Toutes les fiches',
+      )
+    ) {
+      return savedFilter;
+    }
+    return 'Toutes les fiches';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('tableau-de-bord-filter', filter);
+  }, [filter]);
+
   const dropDownMenuFilterText = useMemo(() => {
     switch (filter) {
       case 'Toutes les fiches':
@@ -443,6 +459,8 @@ function FeisWrapper({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">{children}</div>
+    <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">
+      {children}
+    </div>
   );
 }
