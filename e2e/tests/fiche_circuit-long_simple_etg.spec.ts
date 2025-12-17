@@ -136,7 +136,7 @@ test.describe("Fiches ETG", () => {
         - paragraph: /N° MM-\\d+-\\d+/
         - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
         - paragraph: 1 anomalie
-        - paragraph: accepté par ETG 1 ETG
+        - paragraph: accepté par SVI 1 SVI
       `);
     await expect(page.locator("#content")).toMatchAriaSnapshot(`
         - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':
