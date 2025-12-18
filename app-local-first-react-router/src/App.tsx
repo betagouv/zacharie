@@ -383,10 +383,12 @@ function RestrictedRoute({
   useEffect(() => {
     if (!user?.id) {
       const currentPath = location.pathname + location.search;
+      console.log('CONNEXION REQUIRED because no user');
       navigate(`/app/connexion?redirect=${encodeURIComponent(currentPath)}`);
     }
     if (roles.length > 0 && !roles.some((role) => user?.roles.includes(role))) {
       const currentPath = location.pathname + location.search;
+      console.log('CONNEXION REQUIRED because no role', roles);
       navigate(`/app/connexion?redirect=${encodeURIComponent(currentPath)}`);
     }
   }, [user, navigate, roles, location]);

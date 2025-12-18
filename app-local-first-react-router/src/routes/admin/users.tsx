@@ -11,6 +11,7 @@ import Chargement from '@app/components/Chargement';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import API from '@app/services/api';
 import { clearCache } from '@app/services/indexed-db';
+import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<NonNullable<AdminUsersResponse['data']['users']>>([]);
@@ -234,7 +235,10 @@ export default function AdminUsers() {
                               email: user.email!,
                             },
                           })
-                            .then(clearCache)
+                            .then(async () => {
+                              await clearCache();
+                              await refreshUser('admin/user/connect-as');
+                            })
                             .then(() => {
                               window.location.href = '/app/tableau-de-bord';
                             });
