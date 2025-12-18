@@ -1,7 +1,7 @@
 import { Routes, Route, Outlet, useNavigate, useLocation } from 'react-router';
 import LandingPage from './routes/landing';
 import RootDisplay from './components/RootDisplay';
-import Connexion from './routes/connexion';
+import Connexion from './routes/connexion/connexion';
 import CreationDeCompte from './routes/connexion/creation-de-compte';
 import MotDePasseOublie from './routes/connexion/mot-de-passe-oublie';
 import ResetMotDePasse from './routes/connexion/reset-mot-de-passe';
