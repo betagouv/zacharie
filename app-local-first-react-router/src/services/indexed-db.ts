@@ -15,7 +15,9 @@ setupDB();
 // }
 
 function setupDB() {
-  window.localStorage.setItem('zach-currentCacheKey', currentCacheKey);
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem('zach-currentCacheKey', currentCacheKey);
+  }
   customStore = createStore(dbName, storeName);
 }
 
