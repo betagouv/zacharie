@@ -16,7 +16,7 @@ test.beforeAll(async () => {
   await resetDb("EXAMINATEUR_INITIAL");
 });
 
-test.skip("Création d'une fiche", async ({ page }) => {
+test("Création d'une fiche", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
   await page.getByRole("button", { name: "Nouvelle fiche" }).nth(1).click();

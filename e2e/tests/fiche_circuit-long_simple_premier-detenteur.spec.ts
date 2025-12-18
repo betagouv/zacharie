@@ -12,7 +12,7 @@ test.beforeEach(async () => {
   await resetDb("PREMIER_DETENTEUR");
 });
 
-test.skip("Pas de stockage - Je transporte les carcasses moi-même", async ({ page }) => {
+test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-155242";
   await connectWith(page, "premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
@@ -62,7 +62,7 @@ test.skip("Pas de stockage - Je transporte les carcasses moi-même", async ({ pa
   await expect(page.getByText("ETG 1 a été notifié")).toBeVisible();
 });
 
-test.skip("Stockage - Je transporte les carcasses moi-même", async ({ page }) => {
+test("Stockage - Je transporte les carcasses moi-même", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-155242";
   await connectWith(page, "premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
@@ -89,7 +89,7 @@ test.skip("Stockage - Je transporte les carcasses moi-même", async ({ page }) =
   await expect(page.getByText("ETG 1 a été notifié")).toBeVisible();
 });
 
-test.skip("Stockage - Le transport est réalisé par un collecteur professionnel", async ({ page }) => {
+test("Stockage - Le transport est réalisé par un collecteur professionnel", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-155242";
   await connectWith(page, "premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
