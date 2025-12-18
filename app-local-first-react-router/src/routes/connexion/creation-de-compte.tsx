@@ -142,7 +142,7 @@ export default function CreationDeCompte() {
                 }}
               />
               <PasswordInput
-                hintText="Veuillez entrer votre mot de passe"
+                hintText="Veuillez créer votre mot de passe"
                 label="Mon mot de passe"
                 nativeInputProps={{
                   name: 'password-utilisateur',
