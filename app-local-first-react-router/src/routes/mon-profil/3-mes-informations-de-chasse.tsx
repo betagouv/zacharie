@@ -130,9 +130,9 @@ export default function MesInformationsDeChasse({
               <div className="mb-6 bg-white md:shadow-sm">
                 <div className="p-4 md:p-8">
                   <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()}>
-                    <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
+                    {/* <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
                       <span>Examen initial</span>
-                    </h3>
+                    </h3> */}
                     <RadioButtons
                       legend="Êtes-vous formé à l'examen initial ? *"
                       orientation="horizontal"

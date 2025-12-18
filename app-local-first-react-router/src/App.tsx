@@ -114,14 +114,7 @@ function App() {
                 </RootDisplay>
               }
             />
-            <Route
-              path="mes-chasses"
-              element={
-                <RestrictedRoute id="mes-chasses">
-                  <MesChasses />
-                </RestrictedRoute>
-              }
-            />
+
             <Route
               path="reset-mot-de-passe"
               element={
@@ -146,6 +139,14 @@ function App() {
               element={
                 <RestrictedRoute id="tableau-de-bord-path">
                   <TableauDeBordIndex />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="mes-chasses"
+              element={
+                <RestrictedRoute id="mes-chasses">
+                  <MesChasses />
                 </RestrictedRoute>
               }
             />
