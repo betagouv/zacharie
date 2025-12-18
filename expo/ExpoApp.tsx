@@ -145,8 +145,8 @@ function App() {
           onContentProcessDidTerminate={() => ref.current?.reload()}
           // onNavigationStateChange={onNavigationStateChange}
           onMessage={onMessage}
-          sharedCookiesEnabled={__DEV__}
-          thirdPartyCookiesEnabled={__DEV__}
+          sharedCookiesEnabled={true}
+          thirdPartyCookiesEnabled={true}
           domStorageEnabled
           javaScriptEnabled
           injectedJavaScript={initScript}
