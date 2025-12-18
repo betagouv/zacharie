@@ -1,3 +1,5 @@
+import { clearCache } from './indexed-db';
+
 let API_URL = new URL(import.meta.env.VITE_API_URL);
 
 /* 
@@ -72,6 +74,7 @@ class ApiService {
 
       const response = await fetch(url, config);
       if (response.status === 401) {
+        await clearCache();
         if (!window.location.href.includes('/app/connexion')) {
           const URLParams = new URLSearchParams(window.location.search);
           URLParams.set('communication', 'Votre session a expiré, veuillez vous reconnecter.');
