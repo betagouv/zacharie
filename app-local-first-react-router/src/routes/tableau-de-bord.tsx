@@ -127,7 +127,7 @@ export default function TableauDeBordIndex() {
         savedFilter as FeiStepSimpleStatus | 'Toutes les fiches',
       )
     ) {
-      return savedFilter;
+      return savedFilter as FeiStepSimpleStatus | 'Toutes les fiches';
     }
     return 'Toutes les fiches';
   });
