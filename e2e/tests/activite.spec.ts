@@ -12,6 +12,10 @@ const etablissementDeTraitement = "Établissement de Traitement du Gibier sauvag
 const serviceVeterinaire = "Service Vétérinaire d'Inspection (SVI)";
 
 test("Examinateur initial", async ({ page }) => {
+  page.on("console", (message) => {
+    console.log(`[${message.type()}] ${message.text()}`);
+  });
+
   await connectWith(page, "examinateur@example.fr");
   await page.getByRole("button", { name: "Mon profil" }).click();
   await page.getByRole("link", { name: "Mon activité" }).click();

@@ -70,7 +70,7 @@ const config: PlaywrightTestConfig = {
         "VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 PORT=3290 npm run dev-test --prefix ../app-local-first-react-router",
       port: 3290,
       timeout: 120 * 1000,
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       // server logs are too verbose, only display when current browser logs are not enough
       stdout: "pipe",
       stderr: "pipe",
@@ -86,7 +86,7 @@ const config: PlaywrightTestConfig = {
       command: "PORT=3291 NODE_ENV=test PGDATABASE=zacharietest npm run dev-test --prefix ../api-express",
       port: 3291,
       timeout: 120 * 1000,
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       stdout: "pipe",
       stderr: "pipe",
       env: {
