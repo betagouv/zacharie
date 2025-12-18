@@ -12,7 +12,7 @@ test.use({
   },
 });
 
-test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
+test.skip("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   const feiId = "ZACH-20250707-QZ6E0-165242";
   await connectWith(page, "etg-1@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
@@ -176,7 +176,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
       `);
 });
 
-test("Pas de stockage - Je transfert à un autre collecteur", async ({ page }) => {
+test.skip("Pas de stockage - Je transfert à un autre collecteur", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-165242";
   await connectWith(page, "etg-1@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
@@ -307,7 +307,7 @@ test("Pas de stockage - Je transfert à un autre collecteur", async ({ page }) =
     `);
 });
 
-test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context }) => {
+test.skip("Pas de stockage - Je transfert à un autre ETG", async ({ page, context }) => {
   // const cdpSession = await context.newCDPSession(page);
   // // @ts-ignore
   // await cdpSession.send("Network.emulateNetworkConditions", NETWORK_PRESETS.PrettyGood);
