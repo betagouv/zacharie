@@ -4,7 +4,6 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { CarcasseType, Prisma, UserRoles, type Carcasse } from '@prisma/client';
 import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
-import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 // import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import useZustandStore from '@app/zustand/store';
@@ -472,13 +471,17 @@ export default function CarcasseIntermediaireComp({
               id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
             >
               <div className="mt-4">
-                <RadioButtons
-                  options={[
-                    {
-                      nativeInputProps: {
-                        required: true,
-                        name: 'carcasse-status',
-                        checked:
+                {/* cutsom radio buttons en reprenant le code de @codegouvfr/react-dsfr/RadioButtons pour y insérer un input pour le nombre d'animaux acceptés */}
+                <fieldset className="fr-fieldset">
+                  <div className="fr-fieldset__content">
+                    {/* Radio: Lot accepté / Carcasse acceptée */}
+                    <div className="fr-radio-group">
+                      <input
+                        type="radio"
+                        id="carcasse-status-accept"
+                        name="carcasse-status"
+                        required
+                        checked={
                           !carcasseRefusCheckbox &&
                           !carcasseManquante &&
                           !carcasseAcceptPartielCheckbox &&
@@ -488,149 +491,177 @@ export default function CarcasseIntermediaireComp({
                           !carcasse.intermediaire_carcasse_manquante &&
                           (carcasse.type === CarcasseType.PETIT_GIBIER
                             ? carcasseIntermediaire.nombre_d_animaux_acceptes === nombreAnimauxTotal
-                            : true),
-                        onChange: () => {
+                            : true)
+                        }
+                        onChange={() => {
                           refusIntermediaireModal.close();
                           submitCarcasseAccept();
-                        },
-                        disabled: !canEdit,
-                      },
-                      label: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse acceptée' : 'Lot accepté',
-                    },
-                    ...(carcasse.type !== CarcasseType.PETIT_GIBIER
-                      ? []
-                      : [
-                          {
-                            nativeInputProps: {
-                              required: true,
-                              name: 'carcasse-status',
-                              checked: !!carcasseAcceptPartielCheckbox && !carcasseManquante,
-                              onChange: () => {
-                                submitCarcasseAcceptPartiel();
-                              },
-                              disabled: !canEdit,
-                            },
-                            label: 'Lot partiellement accepté',
-                          },
-                        ]),
-                    {
-                      nativeInputProps: {
-                        required: true,
-                        name: 'carcasse-status',
-                        checked:
-                          (!!carcasseRefusCheckbox || !!carcasseIntermediaire.refus) &&
-                          !carcasseManquante &&
-                          !carcasseAcceptPartielCheckbox &&
-                          !carcasseEcarteePourInspectionCheckbox,
-                        onChange: () => {
-                          setCarcasseManquante(false);
-                          setCarcasseRefusCheckbox(true);
-                          setCarcasseEcarteePourInspectionCheckbox(false);
-                          setCarcasseAcceptPartielCheckbox(false);
-                          // Mettre automatiquement 0 animaux acceptés pour un refus de petit gibier
-                          if (carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0) {
-                            setNombreAnimauxAcceptes(0);
-                            updateNombreAnimauxAcceptes(0);
+                        }}
+                        disabled={!canEdit}
+                      />
+                      <label className="fr-label" htmlFor="carcasse-status-accept">
+                        {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse acceptée' : 'Lot accepté'}
+                      </label>
+                    </div>
+
+                    {/* Radio: Lot partiellement accepté (uniquement pour petit gibier) */}
+                    {carcasse.type === CarcasseType.PETIT_GIBIER && (
+                      <>
+                        <div className="fr-radio-group">
+                          <input
+                            type="radio"
+                            id="carcasse-status-accept-partiel"
+                            name="carcasse-status"
+                            required
+                            checked={!!carcasseAcceptPartielCheckbox && !carcasseManquante}
+                            onChange={() => {
+                              submitCarcasseAcceptPartiel();
+                            }}
+                            disabled={!canEdit}
+                          />
+                          <label className="fr-label" htmlFor="carcasse-status-accept-partiel">
+                            Lot partiellement accepté
+                          </label>
+                        </div>
+                        {/* Input pour le nombre d'animaux acceptés - affiché uniquement si "Lot partiellement accepté" est sélectionné */}
+                        {carcasseAcceptPartielCheckbox && !carcasseManquante && (
+                          <div className="mb-4 ml-8">
+                            <Input
+                              label="Nombre d'animaux acceptés"
+                              hintText={`Nombre total d'animaux dans le lot : ${nombreAnimauxTotal}`}
+                              nativeInputProps={{
+                                type: 'number',
+                                min: 0,
+                                max: nombreAnimauxTotal,
+                                name: Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes,
+                                form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                                value: nombreAnimauxAcceptes ?? '',
+                                disabled: !canEdit || carcasseManquante,
+                                onChange: (e) => {
+                                  const rawValue = e.currentTarget.value;
+                                  if (rawValue === '') {
+                                    updateNombreAnimauxAcceptes(null);
+                                    return;
+                                  }
+                                  const numValue = Number(rawValue);
+                                  // Clamp value between 0 and nombreAnimauxTotal
+                                  const clampedValue = Math.max(0, Math.min(numValue, nombreAnimauxTotal));
+                                  updateNombreAnimauxAcceptes(clampedValue);
+                                },
+                              }}
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Radio: Lot refusé / Carcasse refusée */}
+                    <>
+                      <div className="fr-radio-group">
+                        <input
+                          type="radio"
+                          id="carcasse-status-refus"
+                          name="carcasse-status"
+                          required
+                          checked={
+                            (!!carcasseRefusCheckbox || !!carcasseIntermediaire.refus) &&
+                            !carcasseManquante &&
+                            !carcasseAcceptPartielCheckbox &&
+                            !carcasseEcarteePourInspectionCheckbox
                           }
-                        },
-                        disabled: !canEdit,
-                      },
-                      label: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé',
-                      hintText:
-                        carcasse.type === CarcasseType.PETIT_GIBIER
-                          ? "Si vous refusez seulement quelques animaux, ne cochez pas cette case, précisez le nombre d'animaux refusés dans le commentaire"
-                          : '',
-                    },
-                    ...(!user.roles.includes(UserRoles.ETG)
-                      ? []
-                      : [
-                          {
-                            nativeInputProps: {
-                              required: true,
-                              name: 'carcasse-status',
-                              checked: !!carcasseEcarteePourInspectionCheckbox && !carcasseManquante,
-                              onChange: () => {
-                                refusIntermediaireModal.close();
-                                submitCarcasseEcarteePourInspection();
-                              },
-                              disabled: !canEdit,
-                            },
-                            label:
-                              carcasse.type === CarcasseType.GROS_GIBIER
-                                ? 'Carcasse en peau écartée pour avis du SVI'
-                                : 'Lot en plume écarté pour avis du SVI',
-                            hintText:
-                              carcasse.type === CarcasseType.PETIT_GIBIER
-                                ? "Si vous écartez seulement quelques animaux, ne cochez pas cette case, précisez le nombre d'animaux écartés pour inspection dans le commentaire"
-                                : '',
-                          },
-                        ]),
-                    {
-                      nativeInputProps: {
-                        required: true,
-                        name: 'carcasse-status',
-                        checked: carcasseManquante && !refus,
-                        onChange: () => {
+                          onChange={() => {
+                            setCarcasseManquante(false);
+                            setCarcasseRefusCheckbox(true);
+                            setCarcasseEcarteePourInspectionCheckbox(false);
+                            setCarcasseAcceptPartielCheckbox(false);
+                            // Mettre automatiquement 0 animaux acceptés pour un refus de petit gibier
+                            if (carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0) {
+                              setNombreAnimauxAcceptes(0);
+                              updateNombreAnimauxAcceptes(0);
+                            }
+                          }}
+                          disabled={!canEdit}
+                        />
+                        <label className="fr-label" htmlFor="carcasse-status-refus">
+                          {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé'}
+                        </label>
+                        {carcasse.type === CarcasseType.PETIT_GIBIER && (
+                          <p className="fr-hint-text">
+                            Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot
+                            partiellement accepté"
+                          </p>
+                        )}
+                      </div>
+                      {!!carcasseRefusCheckbox && (
+                        <div className="mb-4">
+                          <InputMultiSelect
+                            label="Motif de refus *"
+                            isMulti={false}
+                            canEdit
+                            data={refusIntermedaire[carcasse.type || CarcasseType.GROS_GIBIER]}
+                            placeholder="Tapez un motif de refus"
+                            onChange={([refus]) => {
+                              setRefus(refus);
+                              submitCarcasseRefus(refus);
+                            }}
+                            values={[refus]}
+                            creatable
+                          />
+                        </div>
+                      )}
+                    </>
+
+                    {/* Radio: Lot écarté pour inspection (uniquement pour ETG) */}
+                    {user.roles.includes(UserRoles.ETG) && (
+                      <div className="fr-radio-group">
+                        <input
+                          type="radio"
+                          id="carcasse-status-ecarte-inspection"
+                          name="carcasse-status"
+                          required
+                          checked={!!carcasseEcarteePourInspectionCheckbox && !carcasseManquante}
+                          onChange={() => {
+                            refusIntermediaireModal.close();
+                            submitCarcasseEcarteePourInspection();
+                          }}
+                          disabled={!canEdit}
+                        />
+                        <label className="fr-label" htmlFor="carcasse-status-ecarte-inspection">
+                          {carcasse.type === CarcasseType.GROS_GIBIER
+                            ? 'Carcasse en peau écartée pour avis du SVI'
+                            : 'Lot en plume écarté pour avis du SVI'}
+                        </label>
+                        {carcasse.type === CarcasseType.PETIT_GIBIER && (
+                          <p className="fr-hint-text">
+                            Si vous écartez seulement quelques animaux, ne cochez pas cette case, précisez le
+                            nombre d'animaux écartés pour inspection dans le commentaire
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Radio: Lot manquant / Carcasse manquante */}
+                    <div className="fr-radio-group">
+                      <input
+                        type="radio"
+                        id="carcasse-status-manquante"
+                        name="carcasse-status"
+                        required
+                        checked={carcasseManquante && !refus}
+                        onChange={() => {
                           refusIntermediaireModal.close();
                           submitCarcasseManquante();
-                        },
-                        disabled: !canEdit,
-                      },
-                      label:
-                        carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse manquante' : 'Lot manquant',
-                    },
-                  ]}
-                />
+                        }}
+                        disabled={!canEdit}
+                      />
+                      <label className="fr-label" htmlFor="carcasse-status-manquante">
+                        {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse manquante' : 'Lot manquant'}
+                      </label>
+                    </div>
+                  </div>
+                </fieldset>
               </div>
-              {!!carcasseRefusCheckbox && (
-                <div className="mb-4">
-                  <InputMultiSelect
-                    label={
-                      carcasse.type === CarcasseType.GROS_GIBIER
-                        ? 'Vous refusez cette carcasse ? Indiquez le motif *'
-                        : 'Vous refusez ce lot ? Indiquez le motif *'
-                    }
-                    isMulti={false}
-                    canEdit
-                    data={refusIntermedaire[carcasse.type || CarcasseType.GROS_GIBIER]}
-                    placeholder="Tapez un motif de refus"
-                    onChange={([refus]) => {
-                      setRefus(refus);
-                      submitCarcasseRefus(refus);
-                    }}
-                    values={[refus]}
-                    creatable
-                  />
-                </div>
-              )}
-              {carcasse.type === CarcasseType.PETIT_GIBIER &&
-                nombreAnimauxTotal > 0 &&
-                carcasseAcceptPartielCheckbox && (
-                  <Input
-                    label="Nombre d'animaux acceptés"
-                    hintText={`Nombre total d'animaux dans le lot : ${nombreAnimauxTotal}`}
-                    nativeInputProps={{
-                      type: 'number',
-                      min: 0,
-                      max: nombreAnimauxTotal,
-                      name: Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes,
-                      form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                      value: nombreAnimauxAcceptes ?? '',
-                      disabled: !canEdit || carcasseManquante,
-                      onChange: (e) => {
-                        const rawValue = e.currentTarget.value;
-                        if (rawValue === '') {
-                          updateNombreAnimauxAcceptes(null);
-                          return;
-                        }
-                        const numValue = Number(rawValue);
-                        // Clamp value between 0 and nombreAnimauxTotal
-                        const clampedValue = Math.max(0, Math.min(numValue, nombreAnimauxTotal));
-                        updateNombreAnimauxAcceptes(clampedValue);
-                      },
-                    }}
-                  />
-                )}
+
               <Input
                 label="Poids"
                 hintText="En kg, facultatif"
