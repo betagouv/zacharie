@@ -72,8 +72,8 @@ const config: PlaywrightTestConfig = {
       timeout: 120 * 1000,
       reuseExistingServer: true,
       // server logs are too verbose, only display when current browser logs are not enough
-      stdout: "ignore",
-      stderr: "ignore",
+      stdout: "pipe",
+      stderr: "pipe",
       env: {
         PORT: "3290",
         VITE_HOST: "127.0.0.1:3290",
@@ -87,8 +87,8 @@ const config: PlaywrightTestConfig = {
       port: 3291,
       timeout: 120 * 1000,
       reuseExistingServer: true,
-      stdout: "pipe",
-      stderr: "pipe",
+      stdout: "ignore",
+      stderr: "ignore",
       env: {
         PORT: "3291",
         NODE_ENV: "test",
