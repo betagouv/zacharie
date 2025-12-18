@@ -2,17 +2,15 @@
 
 import type { PlaywrightTestConfig } from "@playwright/test";
 import { devices } from "@playwright/test";
-import dotenv from "dotenv";
 
-// Read from default ".env" file.
-dotenv.config();
+// uncomment many things if you need to debug
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 const config: PlaywrightTestConfig = {
   testDir: "./tests",
-  timeout: 20 * 1000,
+  timeout: 60 * 1000,
   expect: {
     timeout: 5000,
   },
@@ -23,9 +21,9 @@ const config: PlaywrightTestConfig = {
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ["html"], // HTML report for artifacts
-    ["github"], // GitHub Actions integration
-    ["list"], // Detailed console output
-    ["junit", { outputFile: "test-results/junit.xml" }], // For CI integration
+    // ["github"], // GitHub Actions integration // ONLY FOR DEBUG
+    // ["list"], // Detailed console output // ONLY FOR DEBUG
+    // ["junit", { outputFile: "test-results/junit.xml" }], // For CI integration // ONLY FOR DEBUG
   ],
   use: {
     actionTimeout: 0,
@@ -74,10 +72,10 @@ const config: PlaywrightTestConfig = {
         "VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 PORT=3290 npm run dev-test --prefix ../app-local-first-react-router",
       port: 3290,
       timeout: 120 * 1000,
-      reuseExistingServer: false,
+      reuseExistingServer: true, // FALSE FOR DEBUG
       // server logs are too verbose, only display when current browser logs are not enough
-      stdout: "pipe",
-      stderr: "pipe",
+      stdout: "ignore", // PIPE FOR DEBUG
+      stderr: "ignore", // PIPE FOR DEBUG
       env: {
         PORT: "3290",
         VITE_HOST: "127.0.0.1:3290",
@@ -90,9 +88,10 @@ const config: PlaywrightTestConfig = {
       command: "PORT=3291 NODE_ENV=test PGDATABASE=zacharietest npm run dev-test --prefix ../api-express",
       port: 3291,
       timeout: 120 * 1000,
-      reuseExistingServer: false,
-      stdout: "pipe",
-      stderr: "pipe",
+      reuseExistingServer: true, // FALSE FOR DEBUG
+      // server logs are too verbose, only display when current browser logs are not enough
+      stdout: "ignore", // PIPE FOR DEBUG
+      stderr: "ignore", // PIPE FOR DEBUG
       env: {
         PORT: "3291",
         NODE_ENV: "test",
