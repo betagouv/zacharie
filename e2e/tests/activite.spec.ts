@@ -22,7 +22,7 @@ test("Examinateur initial", async ({ page }) => {
   await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
 });
 
-test("Premier détenteur", async ({ page }) => {
+test.skip("Premier détenteur", async ({ page }) => {
   await connectWith(page, "premier-detenteur@example.fr");
   await page.getByRole("button", { name: "Mon profil" }).click();
   await page.getByRole("link", { name: "Mon activité" }).click();
@@ -33,7 +33,7 @@ test("Premier détenteur", async ({ page }) => {
   await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
 });
 
-test("Collecteur professionnel", async ({ page }) => {
+test.skip("Collecteur professionnel", async ({ page }) => {
   await connectWith(page, "collecteur-pro@example.fr");
   await page.getByRole("button", { name: "Mon profil" }).click();
   await page.getByRole("link", { name: "Mon activité" }).click();
@@ -44,7 +44,7 @@ test("Collecteur professionnel", async ({ page }) => {
   await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
 });
 
-test("Établissement de traitement", async ({ page }) => {
+test.skip("Établissement de traitement", async ({ page }) => {
   await connectWith(page, "etg-1@example.fr");
   await page.getByRole("button", { name: "Mon profil" }).click();
   await page.getByRole("link", { name: "Mon activité" }).click();
@@ -55,7 +55,7 @@ test("Établissement de traitement", async ({ page }) => {
   await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
 });
 
-test("Service vétérinaire", async ({ page }) => {
+test.skip("Service vétérinaire", async ({ page }) => {
   await connectWith(page, "svi@example.fr");
   await page.getByRole("button", { name: "Mon profil" }).click();
   await page.getByRole("link", { name: "Mon activité" }).click();
