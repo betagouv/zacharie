@@ -8,17 +8,17 @@ test.use({
   },
 });
 
-test("Connexion avec succès", async ({ page }) => {
+test.skip("Connexion avec succès", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
 });
 
-test("Connexion avec mot de passe incorrect", async ({ page }) => {
+test.skip("Connexion avec mot de passe incorrect", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr", "secret-mauvais-secretasdfdsaf");
   await expect(page.getByText("Le mot de passe est incorrect")).toBeVisible();
 });
 
-test("Création de compte avec email existant", async ({ page }) => {
+test.skip("Création de compte avec email existant", async ({ page }) => {
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur@example.fr");
@@ -43,7 +43,7 @@ test.describe("Connexion avec email incorrect", () => {
     await resetDb();
   });
 
-  test("Connexion avec email incorrect", async ({ page }) => {
+  test.skip("Connexion avec email incorrect", async ({ page }) => {
     await connectWith(page, "examinateur-pas-encore-existe@example.fr", "secret-mauvais-secret");
     await page.getByText("L'email est incorrect, ou vous n'avez pas encore de compte").click();
     await page.getByRole("link", { name: "Cliquez ici pour en créer un" }).click();

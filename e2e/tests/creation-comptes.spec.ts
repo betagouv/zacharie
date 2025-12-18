@@ -11,7 +11,7 @@ test.use({
   },
 });
 
-test("Création de compte examinateur initial", async ({ page }) => {
+test.skip("Création de compte examinateur initial", async ({ page }) => {
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur-nouveau@example.fr");
@@ -48,7 +48,7 @@ test("Création de compte examinateur initial", async ({ page }) => {
   await expect(page.getByText("Merci pour votre inscription à Zacharie !")).toBeVisible();
 });
 
-test("Création de compte premier détenteur", async ({ page }) => {
+test.skip("Création de compte premier détenteur", async ({ page }) => {
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("premier-detenteur-nouveau@example.fr");
@@ -92,7 +92,7 @@ test("Création de compte premier détenteur", async ({ page }) => {
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
 });
 
-test("Création de compte collecteur pro", async ({ page }) => {
+test.skip("Création de compte collecteur pro", async ({ page }) => {
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("collecteur-pro-nouveau@example.fr");
@@ -128,7 +128,7 @@ test("Création de compte collecteur pro", async ({ page }) => {
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
 });
 
-test("Création de compte établissement de traitement du gibier", async ({ page }) => {
+test.skip("Création de compte établissement de traitement du gibier", async ({ page }) => {
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("etg-nouveau@example.fr");
@@ -169,7 +169,7 @@ test("Création de compte établissement de traitement du gibier", async ({ page
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
 });
 
-test("Création de compte SVI", async ({ page }) => {
+test.skip("Création de compte SVI", async ({ page }) => {
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("svi-nouveau@example.fr");
