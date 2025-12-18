@@ -1,7 +1,6 @@
 import { Footer } from '@codegouvfr/react-dsfr/Footer';
 import { Header, type HeaderProps } from '@codegouvfr/react-dsfr/Header';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
-import { UserRoles } from '@prisma/client';
 import { clearCache } from '@app/services/indexed-db';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
@@ -81,7 +80,7 @@ export default function RootDisplay({
       {environment !== 'prod' && (
         <div className="sticky top-0 z-[999]">
           <div className="fixed bottom-0 z-[999] rounded-tr-md border border-red-200 bg-red-50/75 px-4 py-2 text-center backdrop-blur-xs">
-            <span className="text-xs text-red-700">Environnement {environment.toUpperCase?.()}</span>
+            <span className="text-xs text-red-700">Environnement {environment.toUpperCase()}</span>
           </div>
         </div>
       )}

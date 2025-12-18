@@ -2,6 +2,10 @@
 
 import type { PlaywrightTestConfig } from "@playwright/test";
 import { devices } from "@playwright/test";
+import dotenv from "dotenv";
+
+// Read from default ".env" file.
+dotenv.config();
 
 /**
  * See https://playwright.dev/docs/test-configuration.
