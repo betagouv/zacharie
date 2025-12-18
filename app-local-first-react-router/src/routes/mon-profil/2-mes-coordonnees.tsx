@@ -191,14 +191,6 @@ export default function MesCoordonnees() {
                       onClick: () => navigate(nextPage),
                     },
                   },
-                  {
-                    children: 'Modifier mes rôles',
-                    linkProps: {
-                      to: '/app/tableau-de-bord/mon-profil/mon-activite',
-                      href: '#',
-                    },
-                    priority: 'secondary',
-                  },
                 ]}
               />
             </div>
