@@ -271,6 +271,11 @@ export default function DestinataireSelect({
       },
     ]);
     setEditingDetenteurIndex(destinataires.length);
+    setExpandedCarcassesSections((prev) => {
+      const next = new Set(prev);
+      next.add(destinataires.length);
+      return next;
+    });
   };
 
   const removeDestinataire = (index: number) => {
@@ -449,68 +454,74 @@ export default function DestinataireSelect({
           className,
           disabled ? 'cursor-not-allowed opacity-50' : '',
           canEdit ? '' : 'cursor-not-allowed',
-          'space-y-6',
+          'space-y-8',
+          '',
         ].join(' ')}
       >
-        <div className="mb-6">
+        <div className="mb-8">
           {destinataires.map((dest, index) => {
             const detenteurEntity = dest.entityId ? entities[dest.entityId] : null;
             const needsTransport = dest.entityId ? needTransportForDetenteur(dest.entityId) : false;
 
             return (
-              <div key={index} className="mb-6 rounded-lg border border-gray-300 bg-gray-50 p-4">
-                <div className="space-y-4">
-                  <SelectCustom
-                    label="Prochain détenteur des carcasses *"
-                    isDisabled={disabled}
-                    hint={
-                      <>
-                        <span>
-                          Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre
-                          en charge le gibier.
-                        </span>
-                        {!dest.entityId && !disabled && (
-                          <div className="mt-2">
-                            {canTransmitCarcassesToEntities.map((entity) => {
-                              return (
-                                <Tag
-                                  key={entity.id}
-                                  iconId="fr-icon-checkbox-circle-line"
-                                  className="mr-2"
-                                  nativeButtonProps={{
-                                    onClick: () => updateDestinataire(index, { entityId: entity.id }),
-                                  }}
-                                >
-                                  {entity.nom_d_usage}
-                                </Tag>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </>
-                    }
-                    options={prochainsDetenteursOptions}
-                    placeholder="Sélectionnez le prochain détenteur des carcasses"
-                    value={
-                      prochainsDetenteursOptions.find((option) => option.value === dest.entityId) ?? null
-                    }
-                    getOptionLabel={(f) => f.label!}
-                    getOptionValue={(f) => f.value}
-                    onChange={(f) => updateDestinataire(index, { entityId: f?.value ?? '' })}
-                    isClearable={!!dest.entityId}
-                    inputId={`select-prochain-detenteur-${index}`}
-                    classNamePrefix={`select-prochain-detenteur-${index}`}
-                    required
-                    creatable
-                    // @ts-expect-error - onCreateOption is not typed
-                    onCreateOption={(newOption) => {
-                      setEditingDetenteurIndex(index);
-                      setNewEntityNomDUsage(newOption);
-                      partenaireModal.open();
-                    }}
-                    isReadOnly={!canEdit}
-                    name={`prochain_detenteur_${index}`}
-                  />
+              <div
+                key={index}
+                className="mb-8 rounded-xl border border-gray-200 p-5 shadow-md transition-shadow hover:shadow-md"
+              >
+                <div className="space-y-8">
+                  <div className="rounded-lg bg-white p-2">
+                    <SelectCustom
+                      label="Prochain détenteur des carcasses *"
+                      isDisabled={disabled}
+                      hint={
+                        <>
+                          <span className="text-gray-700">
+                            Indiquez ici la personne ou la structure avec qui vous êtes en contact pour
+                            prendre en charge le gibier.
+                          </span>
+                          {!dest.entityId && !disabled && (
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              {canTransmitCarcassesToEntities.map((entity) => {
+                                return (
+                                  <Tag
+                                    key={entity.id}
+                                    iconId="fr-icon-checkbox-circle-line"
+                                    className="mr-2"
+                                    nativeButtonProps={{
+                                      onClick: () => updateDestinataire(index, { entityId: entity.id }),
+                                    }}
+                                  >
+                                    {entity.nom_d_usage}
+                                  </Tag>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </>
+                      }
+                      options={prochainsDetenteursOptions}
+                      placeholder="Sélectionnez le prochain détenteur des carcasses"
+                      value={
+                        prochainsDetenteursOptions.find((option) => option.value === dest.entityId) ?? null
+                      }
+                      getOptionLabel={(f) => f.label!}
+                      getOptionValue={(f) => f.value}
+                      onChange={(f) => updateDestinataire(index, { entityId: f?.value ?? '' })}
+                      isClearable={!!dest.entityId}
+                      inputId={`select-prochain-detenteur-${index}`}
+                      classNamePrefix={`select-prochain-detenteur-${index}`}
+                      required
+                      creatable
+                      // @ts-expect-error - onCreateOption is not typed
+                      onCreateOption={(newOption) => {
+                        setEditingDetenteurIndex(index);
+                        setNewEntityNomDUsage(newOption);
+                        partenaireModal.open();
+                      }}
+                      isReadOnly={!canEdit}
+                      name={`prochain_detenteur_${index}`}
+                    />
+                  </div>
 
                   {detenteurEntity && !detenteurEntity?.zacharie_compatible && (
                     <Alert
@@ -538,14 +549,18 @@ export default function DestinataireSelect({
                           }}
                           className="hover:text-action-high-blue-france mb-2 flex w-full items-center justify-between text-left text-sm font-medium"
                         >
-                          <span>{dest.carcasseIds.length} carcasse(s) assignée(s) à ce détenteur *</span>
+                          <span>
+                            {dest.carcasseIds.length} carcasse{dest.carcasseIds.length > 1 ? 's' : ''}{' '}
+                            assignée
+                            {dest.carcasseIds.length > 1 ? 's' : ''} à ce détenteur *
+                          </span>
                           <span
                             className={`fr-icon-arrow-down-s-line transition-transform duration-300 ${expandedCarcassesSections.has(index) ? 'rotate-180' : ''}`}
                             aria-hidden="true"
                           />
                         </button>
                         <div
-                          className={`grid grid-cols-1 gap-2 overflow-hidden transition-all duration-500 ease-in-out sm:grid-cols-2 md:grid-cols-3 ${
+                          className={`grid grid-cols-1 gap-4 overflow-hidden transition-all duration-500 ease-in-out sm:grid-cols-2 md:grid-cols-3 ${
                             expandedCarcassesSections.has(index)
                               ? 'max-h-[5000px] opacity-100'
                               : 'max-h-0 opacity-0'
@@ -559,7 +574,6 @@ export default function DestinataireSelect({
                                   idx !== index && d.carcasseIds.includes(carcasse.zacharie_carcasse_id),
                               ),
                             );
-
                             return (
                               <div
                                 key={carcasse.zacharie_carcasse_id}
@@ -574,7 +588,7 @@ export default function DestinataireSelect({
                                     : '0ms',
                                 }}
                               >
-                                <div className={`relative ${isAssignedToOther ? 'opacity-50' : ''}`}>
+                                <div className={`relative`}>
                                   <CardCarcasseSelectionItem
                                     carcasse={carcasse}
                                     onClick={() => {
@@ -602,7 +616,7 @@ export default function DestinataireSelect({
                       </div>
 
                       {needDepot && (
-                        <>
+                        <div className="bg-[#eee] p-6">
                           <RadioButtons
                             legend="Lieu de stockage des carcasses *"
                             className={canEdit ? '' : 'radio-black'}
@@ -646,7 +660,7 @@ export default function DestinataireSelect({
                           />
                           {dest.depotType === DepotType.CCG &&
                             (ccgsWorkingWith.length > 0 ? (
-                              <>
+                              <div className="mt-6 space-y-6">
                                 <SelectCustom
                                   label="Chambre froide (centre de collecte du gibier sauvage) *"
                                   isDisabled={dest.depotType !== DepotType.CCG}
@@ -654,7 +668,7 @@ export default function DestinataireSelect({
                                   hint={
                                     <>
                                       {!dest.depotEntityId && dest.depotType === DepotType.CCG ? (
-                                        <div>
+                                        <div className="mt-3 flex flex-wrap gap-2">
                                           {ccgsWorkingWith.map((entity) => {
                                             return (
                                               <Tag
@@ -734,10 +748,12 @@ export default function DestinataireSelect({
                                     }}
                                   />
                                 )}
-                              </>
+                              </div>
                             ) : (
-                              <div className="flex flex-col items-start gap-2">
-                                <label>Chambre froide (centre de collecte du gibier sauvage) *</label>
+                              <div className="mt-6 flex flex-col items-start gap-3">
+                                <label className="text-base font-medium text-gray-900">
+                                  Chambre froide (centre de collecte du gibier sauvage) *
+                                </label>
                                 <Button
                                   linkProps={{
                                     to: `/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`,
@@ -747,11 +763,11 @@ export default function DestinataireSelect({
                                 </Button>
                               </div>
                             ))}
-                        </>
+                        </div>
                       )}
 
                       {needsTransport && (
-                        <>
+                        <div className="bg-[#eee] p-6">
                           <RadioButtons
                             legend="Transport des carcasses jusqu'au destinataire *"
                             className={canEdit ? '' : 'radio-black'}
@@ -804,54 +820,56 @@ export default function DestinataireSelect({
                           />
                           {dest.transportType === TransportType.PREMIER_DETENTEUR &&
                             dest.depotType === DepotType.CCG && (
-                              <Component
-                                label="Date à laquelle je transporte les carcasses"
-                                disabled={
-                                  dest.transportType !== TransportType.PREMIER_DETENTEUR ||
-                                  dest.depotType !== DepotType.CCG
-                                }
-                                hintText={
-                                  canEdit ? (
-                                    <>
-                                      <button
-                                        className="mr-1 inline-block text-left"
-                                        type="button"
-                                        disabled={
-                                          dest.transportType !== TransportType.PREMIER_DETENTEUR ||
-                                          dest.depotType !== DepotType.CCG
-                                        }
-                                        onClick={() => {
-                                          updateDestinataire(index, {
-                                            transportDate: dayjs().format('YYYY-MM-DDTHH:mm'),
-                                          });
-                                        }}
-                                      >
-                                        <u className="inline">Cliquez ici</u> pour définir la date du jour et
-                                        maintenant.
-                                      </button>
-                                      À ne remplir que si vous êtes le transporteur et que vous stockez les
-                                      carcasses dans un CCG. Indiquer une date permettra au prochain détenteur
-                                      de s'organiser.
-                                    </>
-                                  ) : null
-                                }
-                                nativeInputProps={{
-                                  id: `transport-date-${index}`,
-                                  name: `transport_date_${index}`,
-                                  type: 'datetime-local',
-                                  required: true,
-                                  autoComplete: 'off',
-                                  suppressHydrationWarning: true,
-                                  value: dest.transportDate,
-                                  onChange: (e) => {
-                                    updateDestinataire(index, {
-                                      transportDate: dayjs(e.target.value).format('YYYY-MM-DDTHH:mm'),
-                                    });
-                                  },
-                                }}
-                              />
+                              <div className="mt-6">
+                                <Component
+                                  label="Date à laquelle je transporte les carcasses"
+                                  disabled={
+                                    dest.transportType !== TransportType.PREMIER_DETENTEUR ||
+                                    dest.depotType !== DepotType.CCG
+                                  }
+                                  hintText={
+                                    canEdit ? (
+                                      <>
+                                        <button
+                                          className="mr-1 inline-block text-left"
+                                          type="button"
+                                          disabled={
+                                            dest.transportType !== TransportType.PREMIER_DETENTEUR ||
+                                            dest.depotType !== DepotType.CCG
+                                          }
+                                          onClick={() => {
+                                            updateDestinataire(index, {
+                                              transportDate: dayjs().format('YYYY-MM-DDTHH:mm'),
+                                            });
+                                          }}
+                                        >
+                                          <u className="inline">Cliquez ici</u> pour définir la date du jour
+                                          et maintenant.
+                                        </button>
+                                        À ne remplir que si vous êtes le transporteur et que vous stockez les
+                                        carcasses dans un CCG. Indiquer une date permettra au prochain
+                                        détenteur de s'organiser.
+                                      </>
+                                    ) : null
+                                  }
+                                  nativeInputProps={{
+                                    id: `transport-date-${index}`,
+                                    name: `transport_date_${index}`,
+                                    type: 'datetime-local',
+                                    required: true,
+                                    autoComplete: 'off',
+                                    suppressHydrationWarning: true,
+                                    value: dest.transportDate,
+                                    onChange: (e) => {
+                                      updateDestinataire(index, {
+                                        transportDate: dayjs(e.target.value).format('YYYY-MM-DDTHH:mm'),
+                                      });
+                                    },
+                                  }}
+                                />
+                              </div>
                             )}
-                        </>
+                        </div>
                       )}
                     </div>
                   )}
@@ -874,56 +892,198 @@ export default function DestinataireSelect({
           })}
 
           {canEdit && (
-            <Button
-              priority="secondary"
-              iconId="fr-icon-add-line"
-              nativeButtonProps={{
-                onClick: addDestinataire,
-              }}
-            >
-              Ajouter un autre détenteur
-            </Button>
+            <div className="mt-8 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50/50 p-6">
+              <Button
+                priority="secondary"
+                iconId="fr-icon-add-line"
+                nativeButtonProps={{
+                  onClick: addDestinataire,
+                }}
+              >
+                Ajouter un autre détenteur
+              </Button>
+            </div>
           )}
         </div>
         {canEdit && (
-          <Button
-            className="mt-4"
-            type="submit"
-            disabled={disabled || !needToSubmit}
-            nativeButtonProps={{
-              onClick: async (event) => {
-                event.preventDefault();
-                if (!tryToSubmitAtLeastOnce) {
-                  setTryTOSubmitAtLeastOnce(true);
-                }
-                if (alertMessage) {
-                  alert(alertMessage);
-                  return;
-                }
+          <div className="mt-8 rounded-lg bg-blue-50/50 p-6">
+            <Button
+              className="w-full sm:w-auto"
+              type="submit"
+              disabled={disabled || !needToSubmit}
+              nativeButtonProps={{
+                onClick: async (event) => {
+                  event.preventDefault();
+                  if (!tryToSubmitAtLeastOnce) {
+                    setTryTOSubmitAtLeastOnce(true);
+                  }
+                  if (alertMessage) {
+                    alert(alertMessage);
+                    return;
+                  }
 
-                if (destinataires.length === 0) return;
+                  if (destinataires.length === 0) return;
 
-                // Pour la rétrocompatibilité, utiliser le premier détenteur pour le FEI principal
-                const firstDest = destinataires[0];
-                const firstDetenteurEntity = entities[firstDest.entityId];
-                const firstDetenteurType = firstDetenteurEntity?.type as FeiOwnerRole;
+                  // Pour la rétrocompatibilité, utiliser le premier détenteur pour le FEI principal
+                  const firstDest = destinataires[0];
+                  const firstDetenteurEntity = entities[firstDest.entityId];
+                  const firstDetenteurType = firstDetenteurEntity?.type as FeiOwnerRole;
 
-                if (sousTraite) {
-                  // Cas sous-traite : traiter uniquement le premier détenteur pour la compatibilité
-                  let nextFei: Partial<typeof fei> = {
-                    fei_next_owner_entity_id: firstDest.entityId,
-                    fei_next_owner_role: firstDetenteurType,
-                    fei_next_owner_wants_to_sous_traite: false,
-                    fei_next_owner_sous_traite_at: dayjs().toDate(),
-                    fei_next_owner_sous_traite_by_user_id: user.id,
-                    fei_next_owner_sous_traite_by_entity_id: fei.fei_next_owner_entity_id,
-                    fei_current_owner_entity_id: fei.fei_prev_owner_entity_id,
-                    fei_current_owner_role: fei.fei_prev_owner_role,
-                    fei_current_owner_user_id: fei.fei_prev_owner_user_id,
-                    svi_assigned_at: firstDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
-                    svi_entity_id: firstDetenteurType === EntityTypes.SVI ? firstDest.entityId : null,
-                  };
-                  if (feiAndIntermediaireIds && intermediaire) {
+                  if (sousTraite) {
+                    // Cas sous-traite : traiter uniquement le premier détenteur pour la compatibilité
+                    let nextFei: Partial<typeof fei> = {
+                      fei_next_owner_entity_id: firstDest.entityId,
+                      fei_next_owner_role: firstDetenteurType,
+                      fei_next_owner_wants_to_sous_traite: false,
+                      fei_next_owner_sous_traite_at: dayjs().toDate(),
+                      fei_next_owner_sous_traite_by_user_id: user.id,
+                      fei_next_owner_sous_traite_by_entity_id: fei.fei_next_owner_entity_id,
+                      fei_current_owner_entity_id: fei.fei_prev_owner_entity_id,
+                      fei_current_owner_role: fei.fei_prev_owner_role,
+                      fei_current_owner_user_id: fei.fei_prev_owner_user_id,
+                      svi_assigned_at: firstDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
+                      svi_entity_id: firstDetenteurType === EntityTypes.SVI ? firstDest.entityId : null,
+                    };
+                    if (feiAndIntermediaireIds && intermediaire) {
+                      let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
+                        intermediaire_prochain_detenteur_id_cache: firstDest.entityId,
+                        intermediaire_prochain_detenteur_role_cache: firstDetenteurType,
+                        intermediaire_depot_type: firstDest.depotType ?? null,
+                        intermediaire_depot_entity_id:
+                          firstDest.depotType === DepotType.AUCUN ? null : (firstDest.depotEntityId ?? null),
+                      };
+                      updateAllCarcasseIntermediaire(
+                        fei.numero,
+                        feiAndIntermediaireIds!,
+                        nextCarcasseIntermediaire,
+                      );
+                    }
+                    updateFei(fei.numero, nextFei);
+                    addLog({
+                      user_id: user.id,
+                      user_role:
+                        fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
+                        fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
+                          ? UserRoles.CHASSEUR
+                          : fei.fei_current_owner_role!,
+                      action: `${calledFrom}-select-destinataire-sous-traite`,
+                      fei_numero: fei.numero,
+                      history: createHistoryInput(fei, nextFei),
+                      entity_id: fei.premier_detenteur_entity_id,
+                      zacharie_carcasse_id: null,
+                      carcasse_intermediaire_id: null,
+                      intermediaire_id: null,
+                    });
+                    return;
+                  }
+
+                  if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
+                    // Mettre à jour chaque carcasse avec son détenteur assigné
+                    for (const dest of destinataires) {
+                      const detenteurEntity = entities[dest.entityId];
+                      if (!detenteurEntity) continue;
+
+                      const nextDepotEntityId =
+                        dest.depotType === DepotType.AUCUN ? null : dest.depotEntityId;
+                      const nextDepotDate = dest.depotDate ? dayjs(dest.depotDate).toDate() : null;
+                      const nextTransportType = needTransportForDetenteur(dest.entityId)
+                        ? dest.transportType
+                        : null;
+                      const nextTransportDate =
+                        nextTransportType && dest.transportDate ? dayjs(dest.transportDate).toDate() : null;
+
+                      // Mettre à jour chaque carcasse assignée à ce détenteur
+                      for (const carcasseId of dest.carcasseIds) {
+                        const carcasse = carcasses.find((c) => c.zacharie_carcasse_id === carcasseId);
+                        if (!carcasse) continue;
+
+                        updateCarcasse(
+                          carcasse.zacharie_carcasse_id,
+                          {
+                            premier_detenteur_prochain_detenteur_role_cache:
+                              detenteurEntity.type as FeiOwnerRole,
+                            premier_detenteur_prochain_detenteur_id_cache: dest.entityId,
+                            premier_detenteur_depot_type: dest.depotType ?? null,
+                            premier_detenteur_depot_entity_id: nextDepotEntityId,
+                            premier_detenteur_depot_entity_name_cache: nextDepotEntityId
+                              ? (entities[nextDepotEntityId]?.nom_d_usage ?? null)
+                              : null,
+                            premier_detenteur_depot_ccg_at: nextDepotDate,
+                            premier_detenteur_transport_type: nextTransportType,
+                            premier_detenteur_transport_date: nextTransportDate,
+                          },
+                          false,
+                        );
+                      }
+                    }
+
+                    // Mettre à jour le FEI avec les infos du premier détenteur (rétrocompatibilité)
+                    const firstDest = destinataires[0];
+                    const firstDetenteurEntity = entities[firstDest.entityId];
+                    const nextDepotEntityId =
+                      firstDest.depotType === DepotType.AUCUN ? null : firstDest.depotEntityId;
+                    const nextDepotDate = firstDest.depotDate ? dayjs(firstDest.depotDate).toDate() : null;
+                    const nextTransportType = needTransportForDetenteur(firstDest.entityId)
+                      ? firstDest.transportType
+                      : null;
+                    const nextTransportDate =
+                      nextTransportType && firstDest.transportDate
+                        ? dayjs(firstDest.transportDate).toDate()
+                        : null;
+
+                    let nextFei: Partial<typeof fei> = {
+                      fei_next_owner_entity_id: firstDest.entityId,
+                      fei_next_owner_role: firstDetenteurEntity?.type as FeiOwnerRole,
+                      premier_detenteur_prochain_detenteur_id_cache: firstDest.entityId,
+                      premier_detenteur_prochain_detenteur_role_cache:
+                        firstDetenteurEntity?.type as FeiOwnerRole,
+                      premier_detenteur_depot_type: firstDest.depotType ?? null,
+                      premier_detenteur_depot_entity_id: nextDepotEntityId,
+                      premier_detenteur_depot_entity_name_cache: nextDepotEntityId
+                        ? entities[nextDepotEntityId!]?.nom_d_usage
+                        : null,
+                      premier_detenteur_depot_ccg_at: nextDepotDate,
+                      premier_detenteur_transport_type: nextTransportType,
+                      premier_detenteur_transport_date: nextTransportDate,
+                    };
+                    updateFei(fei.numero, nextFei);
+                    addLog({
+                      user_id: user.id,
+                      user_role: UserRoles.CHASSEUR,
+                      action: `${calledFrom}-select-destinataire`,
+                      fei_numero: fei.numero,
+                      history: createHistoryInput(fei, nextFei),
+                      entity_id: fei.premier_detenteur_entity_id,
+                      zacharie_carcasse_id: null,
+                      carcasse_intermediaire_id: null,
+                      intermediaire_id: null,
+                    });
+                    navigate(`/app/tableau-de-bord/fei/${fei.numero}/envoyée`);
+                  } else {
+                    if (!feiAndIntermediaireIds) return;
+                    // Pour les intermédiaires, on utilise aussi le premier détenteur
+                    const firstDest = destinataires[0];
+                    const firstDetenteurEntity = entities[firstDest.entityId];
+                    const firstDetenteurType = firstDetenteurEntity?.type as FeiOwnerRole;
+
+                    let nextFei: Partial<typeof fei> = {
+                      fei_next_owner_entity_id: firstDest.entityId,
+                      fei_next_owner_role: firstDetenteurType,
+                      svi_assigned_at: firstDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
+                      svi_entity_id: firstDetenteurType === EntityTypes.SVI ? firstDest.entityId : null,
+                    };
+                    if (firstDetenteurType === EntityTypes.SVI) {
+                      // Mettre à jour toutes les carcasses pour le SVI
+                      for (const carcasse of carcasses) {
+                        updateCarcasse(
+                          carcasse.zacharie_carcasse_id,
+                          {
+                            svi_assigned_to_fei_at: nextFei.svi_assigned_at,
+                          },
+                          false,
+                        );
+                      }
+                    }
                     let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
                       intermediaire_prochain_detenteur_id_cache: firstDest.entityId,
                       intermediaire_prochain_detenteur_role_cache: firstDetenteurType,
@@ -933,168 +1093,31 @@ export default function DestinataireSelect({
                     };
                     updateAllCarcasseIntermediaire(
                       fei.numero,
-                      feiAndIntermediaireIds!,
+                      feiAndIntermediaireIds,
                       nextCarcasseIntermediaire,
                     );
+                    updateFei(fei.numero, nextFei);
+                    addLog({
+                      user_id: user.id,
+                      user_role:
+                        fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
+                          ? UserRoles.CHASSEUR
+                          : fei.fei_current_owner_role!,
+                      action: `${calledFrom}-select-destinataire`,
+                      fei_numero: fei.numero,
+                      history: createHistoryInput(fei, nextFei),
+                      entity_id: fei.fei_current_owner_entity_id,
+                      zacharie_carcasse_id: null,
+                      carcasse_intermediaire_id: null,
+                      intermediaire_id: feiAndIntermediaireIds.split('_')[1],
+                    });
                   }
-                  updateFei(fei.numero, nextFei);
-                  addLog({
-                    user_id: user.id,
-                    user_role:
-                      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
-                      fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
-                        ? UserRoles.CHASSEUR
-                        : fei.fei_current_owner_role!,
-                    action: `${calledFrom}-select-destinataire-sous-traite`,
-                    fei_numero: fei.numero,
-                    history: createHistoryInput(fei, nextFei),
-                    entity_id: fei.premier_detenteur_entity_id,
-                    zacharie_carcasse_id: null,
-                    carcasse_intermediaire_id: null,
-                    intermediaire_id: null,
-                  });
-                  return;
-                }
-
-                if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
-                  // Mettre à jour chaque carcasse avec son détenteur assigné
-                  for (const dest of destinataires) {
-                    const detenteurEntity = entities[dest.entityId];
-                    if (!detenteurEntity) continue;
-
-                    const nextDepotEntityId = dest.depotType === DepotType.AUCUN ? null : dest.depotEntityId;
-                    const nextDepotDate = dest.depotDate ? dayjs(dest.depotDate).toDate() : null;
-                    const nextTransportType = needTransportForDetenteur(dest.entityId)
-                      ? dest.transportType
-                      : null;
-                    const nextTransportDate =
-                      nextTransportType && dest.transportDate ? dayjs(dest.transportDate).toDate() : null;
-
-                    // Mettre à jour chaque carcasse assignée à ce détenteur
-                    for (const carcasseId of dest.carcasseIds) {
-                      const carcasse = carcasses.find((c) => c.zacharie_carcasse_id === carcasseId);
-                      if (!carcasse) continue;
-
-                      updateCarcasse(
-                        carcasse.zacharie_carcasse_id,
-                        {
-                          premier_detenteur_prochain_detenteur_role_cache:
-                            detenteurEntity.type as FeiOwnerRole,
-                          premier_detenteur_prochain_detenteur_id_cache: dest.entityId,
-                          premier_detenteur_depot_type: dest.depotType ?? null,
-                          premier_detenteur_depot_entity_id: nextDepotEntityId,
-                          premier_detenteur_depot_entity_name_cache: nextDepotEntityId
-                            ? (entities[nextDepotEntityId]?.nom_d_usage ?? null)
-                            : null,
-                          premier_detenteur_depot_ccg_at: nextDepotDate,
-                          premier_detenteur_transport_type: nextTransportType,
-                          premier_detenteur_transport_date: nextTransportDate,
-                        },
-                        false,
-                      );
-                    }
-                  }
-
-                  // Mettre à jour le FEI avec les infos du premier détenteur (rétrocompatibilité)
-                  const firstDest = destinataires[0];
-                  const firstDetenteurEntity = entities[firstDest.entityId];
-                  const nextDepotEntityId =
-                    firstDest.depotType === DepotType.AUCUN ? null : firstDest.depotEntityId;
-                  const nextDepotDate = firstDest.depotDate ? dayjs(firstDest.depotDate).toDate() : null;
-                  const nextTransportType = needTransportForDetenteur(firstDest.entityId)
-                    ? firstDest.transportType
-                    : null;
-                  const nextTransportDate =
-                    nextTransportType && firstDest.transportDate
-                      ? dayjs(firstDest.transportDate).toDate()
-                      : null;
-
-                  let nextFei: Partial<typeof fei> = {
-                    fei_next_owner_entity_id: firstDest.entityId,
-                    fei_next_owner_role: firstDetenteurEntity?.type as FeiOwnerRole,
-                    premier_detenteur_prochain_detenteur_id_cache: firstDest.entityId,
-                    premier_detenteur_prochain_detenteur_role_cache:
-                      firstDetenteurEntity?.type as FeiOwnerRole,
-                    premier_detenteur_depot_type: firstDest.depotType ?? null,
-                    premier_detenteur_depot_entity_id: nextDepotEntityId,
-                    premier_detenteur_depot_entity_name_cache: nextDepotEntityId
-                      ? entities[nextDepotEntityId!]?.nom_d_usage
-                      : null,
-                    premier_detenteur_depot_ccg_at: nextDepotDate,
-                    premier_detenteur_transport_type: nextTransportType,
-                    premier_detenteur_transport_date: nextTransportDate,
-                  };
-                  updateFei(fei.numero, nextFei);
-                  addLog({
-                    user_id: user.id,
-                    user_role: UserRoles.CHASSEUR,
-                    action: `${calledFrom}-select-destinataire`,
-                    fei_numero: fei.numero,
-                    history: createHistoryInput(fei, nextFei),
-                    entity_id: fei.premier_detenteur_entity_id,
-                    zacharie_carcasse_id: null,
-                    carcasse_intermediaire_id: null,
-                    intermediaire_id: null,
-                  });
-                  navigate(`/app/tableau-de-bord/fei/${fei.numero}/envoyée`);
-                } else {
-                  if (!feiAndIntermediaireIds) return;
-                  // Pour les intermédiaires, on utilise aussi le premier détenteur
-                  const firstDest = destinataires[0];
-                  const firstDetenteurEntity = entities[firstDest.entityId];
-                  const firstDetenteurType = firstDetenteurEntity?.type as FeiOwnerRole;
-
-                  let nextFei: Partial<typeof fei> = {
-                    fei_next_owner_entity_id: firstDest.entityId,
-                    fei_next_owner_role: firstDetenteurType,
-                    svi_assigned_at: firstDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
-                    svi_entity_id: firstDetenteurType === EntityTypes.SVI ? firstDest.entityId : null,
-                  };
-                  if (firstDetenteurType === EntityTypes.SVI) {
-                    // Mettre à jour toutes les carcasses pour le SVI
-                    for (const carcasse of carcasses) {
-                      updateCarcasse(
-                        carcasse.zacharie_carcasse_id,
-                        {
-                          svi_assigned_to_fei_at: nextFei.svi_assigned_at,
-                        },
-                        false,
-                      );
-                    }
-                  }
-                  let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
-                    intermediaire_prochain_detenteur_id_cache: firstDest.entityId,
-                    intermediaire_prochain_detenteur_role_cache: firstDetenteurType,
-                    intermediaire_depot_type: firstDest.depotType ?? null,
-                    intermediaire_depot_entity_id:
-                      firstDest.depotType === DepotType.AUCUN ? null : (firstDest.depotEntityId ?? null),
-                  };
-                  updateAllCarcasseIntermediaire(
-                    fei.numero,
-                    feiAndIntermediaireIds,
-                    nextCarcasseIntermediaire,
-                  );
-                  updateFei(fei.numero, nextFei);
-                  addLog({
-                    user_id: user.id,
-                    user_role:
-                      fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
-                        ? UserRoles.CHASSEUR
-                        : fei.fei_current_owner_role!,
-                    action: `${calledFrom}-select-destinataire`,
-                    fei_numero: fei.numero,
-                    history: createHistoryInput(fei, nextFei),
-                    entity_id: fei.fei_current_owner_entity_id,
-                    zacharie_carcasse_id: null,
-                    carcasse_intermediaire_id: null,
-                    intermediaire_id: feiAndIntermediaireIds.split('_')[1],
-                  });
-                }
-              },
-            }}
-          >
-            Transmettre la fiche
-          </Button>
+                },
+              }}
+            >
+              Transmettre la fiche
+            </Button>
+          </div>
         )}
         {/* {!disabled && !!alertMessage?.length && tryToSubmitAtLeastOnce && ( */}
         {!disabled && alertMessage && (
@@ -1148,22 +1171,17 @@ type CardCarcasseSelectionItemProps = React.ComponentProps<typeof CardCarcasse> 
 const CardCarcasseSelectionItem = (props: CardCarcasseSelectionItemProps) => {
   return (
     <div className="relative">
-      <CardCarcasse
-        {...props}
-        className={
-          props.isAssigned
-            ? 'border-action-high-blue-france !bg-action-high-blue-france/10 border-l-3 border-solid'
-            : ''
-        }
-      />
+      {/* Badge "Déjà assignée" - positioned at top-left to avoid overlap */}
       {props.isAssignedToOther && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-lg">
-          <div className="mx-2 max-w-[200px] rounded-lg bg-white p-3 text-center shadow-lg">
-            <p className="mb-1 text-sm font-medium text-gray-900">Déjà assignée</p>
+        <div className="absolute bottom-1 left-2 z-10">
+          <div className="bg-warning-main-525 rounded-md px-3 py-1.5 shadow-md">
+            <p className="text-xs font-semibold text-white">Déjà assignée</p>
           </div>
         </div>
       )}
-      <div className={`absolute top-0 right-0`}>
+
+      {/* Checkbox button - positioned at top-right with better visibility */}
+      <div className="absolute top-2 right-2 z-10">
         <Button
           type="button"
           iconId={props.isAssigned ? 'fr-icon-checkbox-circle-fill' : 'fr-icon-checkbox-circle-line'}
@@ -1172,6 +1190,18 @@ const CardCarcasseSelectionItem = (props: CardCarcasseSelectionItemProps) => {
           priority="tertiary no outline"
         />
       </div>
+
+      {/* Card with visual state indication */}
+      <CardCarcasse
+        {...props}
+        className={
+          props.isAssigned
+            ? 'border-action-high-blue-france !bg-action-high-blue-france/10 border-l-4 border-solid'
+            : props.isAssignedToOther
+              ? 'border-warning-main-525 border-l-4 border-solid'
+              : 'border-l-4 border-solid border-gray-300'
+        }
+      />
     </div>
   );
 };
