@@ -639,18 +639,14 @@ function FeisTableRow({
       onClick={() => navigate(`/app/tableau-de-bord/fei/${fei.numero}`)}
     >
       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-        <Checkbox
-          small
-          options={[
-            {
-              label: '',
-              nativeInputProps: {
-                checked: isSelected,
-                onChange: () => onPrintSelect?.(fei.numero, !isSelected),
-              },
-            },
-          ]}
-        />
+        <div className="flex h-full items-center justify-center">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            className="checked:accent-action-high-blue-france h-4 w-4 border-2"
+            onChange={() => onPrintSelect?.(fei.numero, !isSelected)}
+          />
+        </div>
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1">
@@ -750,22 +746,18 @@ function FeisTable({
       <table className="w-full border-collapse bg-white">
         <thead>
           <tr className="border-b-2 border-gray-300">
-            <th className="px-4 py-3 text-left text-sm font-semibold">
-              {handleSelectAll && (
-                <Checkbox
-                  small
-                  options={[
-                    {
-                      label: '',
-                      nativeInputProps: {
-                        checked: allSelected,
-                        onChange: handleSelectAllInTable,
-                        'aria-label': allSelected ? 'Tout désélectionner' : 'Tout sélectionner',
-                      },
-                    },
-                  ]}
-                />
-              )}
+            <th className="text-center text-sm font-semibold">
+              <div className="flex h-full items-center justify-center">
+                {handleSelectAll && (
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    className="checked:accent-action-high-blue-france h-4 w-4 border-2"
+                    onChange={handleSelectAllInTable}
+                    aria-label={allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+                  />
+                )}
+              </div>
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold">Fiche</th>
             <th className="px-4 py-3 text-left text-sm font-semibold">Statut</th>
