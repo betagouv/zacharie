@@ -132,7 +132,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
         - paragraph: /N° MM-\\d+-\\d+/
         - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
         - paragraph: 1 anomalie
-        - paragraph: accepté
+        - paragraph: accepté par SVI 1 SVI
       `);
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
         - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':
