@@ -114,26 +114,16 @@ export default function CardCarcasse({
   let acceptInfo: { type: 'SVI' | 'ETG'; entity: (typeof entities)[string] | null } | null = null;
   if (statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle')) {
     const hasSviStatus = !!carcasse.svi_carcasse_status;
-    const svi_carcasse_status_set_at = carcasse.svi_carcasse_status_set_at ?? null;
     const sviEntity = hasSviStatus && fei.svi_entity_id ? entities[fei.svi_entity_id] : null;
 
     const isEtgAccepted =
       latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG;
-    const etgAcceptDate = isEtgAccepted ? latestIntermediaire.decision_at : null;
     const etgEntity =
       isEtgAccepted && latestIntermediaire?.intermediaire_entity_id
         ? entities[latestIntermediaire.intermediaire_entity_id]
         : null;
 
-    // Déterminer qui a accepté en dernier en comparant les dates
-    if (svi_carcasse_status_set_at && etgAcceptDate) {
-      // Les deux ont accepté, comparer les dates
-      if (dayjs(svi_carcasse_status_set_at).isAfter(dayjs(etgAcceptDate))) {
-        acceptInfo = { type: 'SVI', entity: sviEntity };
-      } else {
-        acceptInfo = { type: 'ETG', entity: etgEntity };
-      }
-    } else if (hasSviStatus) {
+    if (hasSviStatus) {
       acceptInfo = { type: 'SVI', entity: sviEntity };
     } else if (isEtgAccepted) {
       acceptInfo = { type: 'ETG', entity: etgEntity };
