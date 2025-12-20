@@ -370,6 +370,7 @@ export default function TableauDeBordIndex() {
           ]}
         />
         <SegmentedControl
+          className="hidden md:block"
           hideLegend
           segments={[
             {
