@@ -19,7 +19,6 @@ import DropDownMenu from '@app/components/DropDownMenu';
 import useUser from '@app/zustand/user';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import API from '@app/services/api';
-import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { useFeiSteps } from '@app/utils/fei-steps';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
@@ -195,7 +194,7 @@ export default function TableauDeBordIndex() {
     switch (filter) {
       case 'Toutes les fiches':
       default:
-        return 'Filtrer par statut';
+        return 'Filtrer';
       case 'À compléter':
         return 'Fiches à compléter';
       case 'En cours':
@@ -212,198 +211,244 @@ export default function TableauDeBordIndex() {
     return 'Filtrer par ETG';
   }, [filterETG, sviWorkingForEtgIds, entities]);
 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter fiches by search query
+  const filterFeiBySearch = (fei: FeiDone): boolean => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase().trim();
+    const numero = fei.numero?.toLowerCase() || '';
+    const date = dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY');
+    const commune = fei.commune_mise_a_mort?.toLowerCase() || '';
+    const premierDetenteur = fei.premier_detenteur_name_cache?.toLowerCase() || '';
+
+    return (
+      numero.includes(query) ||
+      date.includes(query) ||
+      commune.includes(query) ||
+      premierDetenteur.includes(query)
+    );
+  };
+
   function Actions() {
     return (
-      <div className="relative my-2 flex flex-col items-end justify-end gap-2 lg:flex-row">
-        <Button
-          priority="tertiary"
-          className="hidden shrink-0 bg-white lg:flex"
-          iconId="ri-refresh-line"
-          disabled={!isOnline || loading}
-          onClick={async () => {
-            setLoading(true);
-            await loadData();
-            setLoading(false);
-          }}
-        >
-          Mettre à jour
-        </Button>
-        {user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && (
-          <Button
-            priority="primary"
-            className="block shrink-0 lg:hidden"
-            onClick={async () => {
-              const newFei = await createNewFei();
-              navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
-            }}
-          >
-            Nouvelle fiche
-          </Button>
-        )}
-        <DropDownMenu
-          text={dropDownMenuFilterText}
-          isActive={filter !== 'Toutes les fiches'}
-          menuLinks={[
-            {
-              linkProps: {
-                href: '#',
-                title: 'Toutes les fiches',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setFilter('Toutes les fiches');
+      <div className="flex flex-col gap-2 py-2 md:gap-3 md:py-3">
+        {/* Top row: Search + CTA + View toggle */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex-1">
+            {/* <input
+              type="search"
+              placeholder="Rechercher..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="fr-input w-full"
+              title="Rechercher par numéro, date, commune..."
+            /> */}
+          </div>
+        </div>
+
+        {/* Bottom row: Filters + Actions */}
+        <div className="flex flex-col justify-between gap-1.5 md:flex-row md:gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+            <DropDownMenu
+              text={dropDownMenuFilterText}
+              isActive={filter !== 'Toutes les fiches'}
+              className="w-full md:w-auto"
+              menuLinks={[
+                {
+                  linkProps: {
+                    href: '#',
+                    title: 'Toutes les fiches',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      setFilter('Toutes les fiches');
+                    },
+                  },
+                  text: 'Toutes les fiches',
+                  isActive: filter === 'Toutes les fiches',
                 },
-              },
-              text: 'Toutes les fiches',
-              isActive: filter === 'Toutes les fiches',
-            },
-            {
-              linkProps: {
-                href: '#',
-                title: 'Fiches à compléter',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setFilter('À compléter');
+                {
+                  linkProps: {
+                    href: '#',
+                    title: 'Fiches à compléter',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      setFilter('À compléter');
+                    },
+                  },
+                  text: 'Fiches à compléter',
+                  isActive: filter === 'À compléter',
                 },
-              },
-              text: 'Fiches à compléter',
-              isActive: filter === 'À compléter',
-            },
-            {
-              linkProps: {
-                href: '#',
-                title: 'Fiches en cours',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setFilter('En cours');
+                {
+                  linkProps: {
+                    href: '#',
+                    title: 'Fiches en cours',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      setFilter('En cours');
+                    },
+                  },
+                  text: 'Fiches en cours',
+                  isActive: filter === 'En cours',
                 },
-              },
-              text: 'Fiches en cours',
-              isActive: filter === 'En cours',
-            },
-            {
-              linkProps: {
-                href: '#',
-                title: 'Fiches à compléter',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setFilter('Clôturée');
+                {
+                  linkProps: {
+                    href: '#',
+                    title: 'Fiches à compléter',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      setFilter('Clôturée');
+                    },
+                  },
+                  text: 'Fiches clôturées',
+                  isActive: filter === 'Clôturée',
                 },
-              },
-              text: 'Fiches clôturées',
-              isActive: filter === 'Clôturée',
-            },
-          ]}
-        />
-        {isOnlySvi && sviWorkingForEtgIds.length > 1 && (
-          <DropDownMenu
-            text={dropDownMenuFilterTextSvi}
-            isActive={filterETG !== 'Toutes les fiches'}
-            menuLinks={[
-              {
-                linkProps: {
-                  href: '#',
-                  title: 'Toutes les fiches',
-                  onClick: (e) => {
-                    e.preventDefault();
-                    setFilterETG('');
+              ]}
+            />
+            {isOnlySvi && sviWorkingForEtgIds.length > 1 && (
+              <DropDownMenu
+                text={dropDownMenuFilterTextSvi}
+                isActive={filterETG !== 'Toutes les fiches'}
+                className="w-full md:w-auto"
+                menuLinks={[
+                  {
+                    linkProps: {
+                      href: '#',
+                      title: 'Toutes les fiches',
+                      onClick: (e) => {
+                        e.preventDefault();
+                        setFilterETG('');
+                      },
+                    },
+                    text: 'Toutes les fiches',
+                    isActive: !filterETG,
+                  },
+                  ...[...sviWorkingForEtgIds].map((etgId) => ({
+                    linkProps: {
+                      href: '#',
+                      title: `Fiches de ${entities[etgId]?.nom_d_usage}`,
+                      onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+                        e.preventDefault();
+                        setFilterETG(etgId);
+                      },
+                    },
+                    text: `Fiches de ${entities[etgId]?.nom_d_usage}`,
+                    isActive: filterETG === etgId,
+                  })),
+                ]}
+              />
+            )}
+            <DropDownMenu
+              text="Actions"
+              className="max-w-[321px]"
+              isActive={selectedFeis.length > 0}
+              menuLinks={[
+                {
+                  linkProps: {
+                    href: '#',
+                    'aria-disabled': selectedFeis.length === 0,
+                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                    title:
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                        : '',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      if (selectedFeis.length === 0) return;
+                      if (isExporting) return;
+                      onExportToXlsx(selectedFeis);
+                    },
+                  },
+                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (complètes)',
+                },
+                {
+                  linkProps: {
+                    href: '#',
+                    'aria-disabled': selectedFeis.length === 0,
+                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                    title:
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                        : '',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      if (selectedFeis.length === 0) return;
+                      if (isExporting) return;
+                      onExportSimplifiedToXlsx(selectedFeis);
+                    },
+                  },
+                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (simplifiées)',
+                },
+              ]}
+            />
+            <Button
+              priority="tertiary"
+              className="w-full shrink-0 bg-white md:w-auto"
+              iconId="ri-refresh-line"
+              disabled={!isOnline || loading}
+              onClick={async () => {
+                setLoading(true);
+                await loadData();
+                setLoading(false);
+              }}
+              title="Mettre à jour"
+            >
+              <span>Mettre à jour</span>
+            </Button>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <SegmentedControl
+              hideLegend
+              className="hidden md:block"
+              segments={[
+                {
+                  label: 'Grille',
+                  iconId: 'ri-grid-line',
+                  nativeInputProps: {
+                    checked: viewType === 'grid',
+                    onChange: () => setViewType('grid'),
+                    name: 'view-type',
+                    value: 'grid',
                   },
                 },
-                text: 'Toutes les fiches',
-                isActive: !filterETG,
-              },
-              ...[...sviWorkingForEtgIds].map((etgId) => ({
-                linkProps: {
-                  href: '#',
-                  title: `Fiches de ${entities[etgId]?.nom_d_usage}`,
-                  onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-                    e.preventDefault();
-                    setFilterETG(etgId);
+                {
+                  label: 'Table',
+                  iconId: 'ri-table-line',
+                  nativeInputProps: {
+                    checked: viewType === 'table',
+                    onChange: () => setViewType('table'),
+                    name: 'view-type',
+                    value: 'table',
                   },
                 },
-                text: `Fiches de ${entities[etgId]?.nom_d_usage}`,
-                isActive: filterETG === etgId,
-              })),
-            ]}
-          />
-        )}
-        <DropDownMenu
-          text="Action sur les fiches sélectionnées"
-          className="max-w-[321px]"
-          isActive={selectedFeis.length > 0}
-          menuLinks={[
-            {
-              linkProps: {
-                href: '#',
-                'aria-disabled': selectedFeis.length === 0,
-                className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                title:
-                  selectedFeis.length === 0
-                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                    : '',
-                onClick: (e) => {
-                  e.preventDefault();
-                  if (selectedFeis.length === 0) return;
-                  if (isExporting) return;
-                  onExportToXlsx(selectedFeis);
-                },
-              },
-              text: 'Télécharger un fichier Excel avec les fiches sélectionnées (complètes)',
-            },
-            {
-              linkProps: {
-                href: '#',
-                'aria-disabled': selectedFeis.length === 0,
-                className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                title:
-                  selectedFeis.length === 0
-                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                    : '',
-                onClick: (e) => {
-                  e.preventDefault();
-                  if (selectedFeis.length === 0) return;
-                  if (isExporting) return;
-                  onExportSimplifiedToXlsx(selectedFeis);
-                },
-              },
-              text: 'Télécharger un fichier Excel avec les fiches sélectionnées (simplifiées)',
-            },
-          ]}
-        />
-        <SegmentedControl
-          hideLegend
-          segments={[
-            {
-              label: 'Grille',
-              iconId: 'ri-grid-line',
-              nativeInputProps: {
-                checked: viewType === 'grid',
-                onChange: () => setViewType('grid'),
-                name: 'view-type',
-                value: 'grid',
-              },
-            },
-            {
-              label: 'Table',
-              iconId: 'ri-table-line',
-              nativeInputProps: {
-                checked: viewType === 'table',
-                onChange: () => setViewType('table'),
-                name: 'view-type',
-                value: 'table',
-              },
-            },
-          ]}
-        />
+              ]}
+            />
+            {user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && (
+              <Button
+                iconId="fr-icon-add-circle-line"
+                priority="primary"
+                className="w-full shrink-0 md:w-auto"
+                onClick={async () => {
+                  const newFei = await createNewFei();
+                  navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+                }}
+                title="Nouvelle fiche"
+              >
+                <span>Nouvelle fiche</span>
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="fixed top-0 z-30 w-full bg-white shadow-md">
+    <div className="relative">
+      <div className="top-0 z-30 block w-full bg-white shadow-md md:sticky">
         <div className="fr-container mx-auto">
           <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-            <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+            <div className="fr-col-12 fr-col-md-10 px-3 py-2 md:p-0">
               <Actions />
             </div>
           </div>
@@ -411,9 +456,8 @@ export default function TableauDeBordIndex() {
       </div>
       <div className="fr-container fr-container--fluid">
         <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
+        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4 md:pt-8">
           <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
-            <Actions />
             {!isOnlySvi && (
               <FeisWrapper
                 viewType={viewType}
@@ -421,7 +465,7 @@ export default function TableauDeBordIndex() {
                 selectedFeis={selectedFeis}
                 filter={filter}
               >
-                {feisAssigned.map((fei) => {
+                {feisAssigned.filter(filterFeiBySearch).map((fei) => {
                   if (!fei) return null;
                   return (
                     <CardFiche
@@ -433,7 +477,7 @@ export default function TableauDeBordIndex() {
                     />
                   );
                 })}
-                {feisOngoing.map((fei) => {
+                {feisOngoing.filter(filterFeiBySearch).map((fei) => {
                   if (!fei) return null;
                   return (
                     <CardFiche
@@ -446,20 +490,21 @@ export default function TableauDeBordIndex() {
                   );
                 })}
 
-                {feisDoneNumeros.map((feiNumero) => {
-                  const fei = feisDone[feiNumero]!;
-                  if (!fei) return null;
-                  return (
-                    <CardFiche
-                      key={fei.numero}
-                      fei={fei}
-                      filter={filter}
-                      onPrintSelect={handleCheckboxClick}
-                      isPrintSelected={selectedFeis.includes(fei.numero)}
-                      // disabledBecauseOffline={!isOnline}
-                    />
-                  );
-                })}
+                {feisDoneNumeros
+                  .map((feiNumero) => feisDone[feiNumero])
+                  .filter((fei): fei is FeiDone => fei !== undefined && filterFeiBySearch(fei))
+                  .map((fei) => {
+                    return (
+                      <CardFiche
+                        key={fei.numero}
+                        fei={fei}
+                        filter={filter}
+                        onPrintSelect={handleCheckboxClick}
+                        isPrintSelected={selectedFeis.includes(fei.numero)}
+                        // disabledBecauseOffline={!isOnline}
+                      />
+                    );
+                  })}
               </FeisWrapper>
             )}
             {isOnlySvi && (
@@ -469,34 +514,42 @@ export default function TableauDeBordIndex() {
                 selectedFeis={selectedFeis}
                 filter={filter}
               >
-                {feiActivesForSvi.map((fei) => {
-                  if (!fei) return null;
-                  if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
-                  return (
-                    <CardFiche
-                      key={fei.numero}
-                      fei={fei}
-                      filter={filter}
-                      onPrintSelect={handleCheckboxClick}
-                      isPrintSelected={selectedFeis.includes(fei.numero)}
-                      // disabledBecauseOffline={!isOnline}
-                    />
-                  );
-                })}
-                {feisDoneForSvi.map((fei) => {
-                  if (!fei) return null;
-                  if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
-                  return (
-                    <CardFiche
-                      key={fei.numero}
-                      fei={fei}
-                      filter={filter}
-                      onPrintSelect={handleCheckboxClick}
-                      isPrintSelected={selectedFeis.includes(fei.numero)}
-                      // disabledBecauseOffline={!isOnline}
-                    />
-                  );
-                })}
+                {feiActivesForSvi
+                  .filter((fei) => {
+                    if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return false;
+                    return filterFeiBySearch(fei);
+                  })
+                  .map((fei) => {
+                    if (!fei) return null;
+                    return (
+                      <CardFiche
+                        key={fei.numero}
+                        fei={fei}
+                        filter={filter}
+                        onPrintSelect={handleCheckboxClick}
+                        isPrintSelected={selectedFeis.includes(fei.numero)}
+                        // disabledBecauseOffline={!isOnline}
+                      />
+                    );
+                  })}
+                {feisDoneForSvi
+                  .filter((fei) => {
+                    if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return false;
+                    return filterFeiBySearch(fei);
+                  })
+                  .map((fei) => {
+                    if (!fei) return null;
+                    return (
+                      <CardFiche
+                        key={fei.numero}
+                        fei={fei}
+                        filter={filter}
+                        onPrintSelect={handleCheckboxClick}
+                        isPrintSelected={selectedFeis.includes(fei.numero)}
+                        // disabledBecauseOffline={!isOnline}
+                      />
+                    );
+                  })}
               </FeisWrapper>
             )}
             <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
@@ -507,7 +560,7 @@ export default function TableauDeBordIndex() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

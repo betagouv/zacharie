@@ -125,22 +125,9 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
 
   if (isChasseur && environment !== 'prod') {
     mainMenu.unshift({
-      text: 'Mes chasses',
+      text: 'Tableau de bord',
       isActive: location.pathname === '/app/tableau-de-bord/mes-chasses',
       linkProps: { to: '/app/tableau-de-bord/mes-chasses', href: '#' },
-    });
-  }
-
-  if (isExaminateurInitial && !isNotActivated) {
-    mainMenu.unshift({
-      text: 'Nouvelle fiche',
-      linkProps: {
-        href: '#',
-        onClick: async () => {
-          const newFei = await createNewFei();
-          navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
-        },
-      },
     });
   }
 

@@ -7,7 +7,9 @@ import SearchInput from '@app/components/SearchInput';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef } from 'react';
 import API from '@app/services/api';
-import { useSearchParams } from 'react-router';
+import { useSearchParams, useNavigate } from 'react-router';
+import { createNewFei } from '@app/utils/create-new-fei';
+import { HeaderQuickAccessItem } from '@codegouvfr/react-dsfr/Header';
 
 export default function RootDisplay({
   navigation,
@@ -26,38 +28,33 @@ export default function RootDisplay({
   const embedded = searchParams.get('embedded') === 'true';
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
+  const navigate = useNavigate();
 
   const RenderedSearchInput = useRef(SearchInput).current;
 
-  const quickAccessItems: Array<HeaderProps.QuickAccessItem> = [
+  const quickAccessItemsConnected = [
+    <HeaderQuickAccessItem
+      id={`new-fei-button`}
+      quickAccessItem={{
+        iconId: 'fr-icon-add-circle-line',
+        buttonProps: {
+          onClick: async () => {
+            const newFei = await createNewFei();
+            navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+          },
+        },
+        text: 'Nouvelle fiche',
+      }}
+    />,
     {
       linkProps: {
-        to: user?.email ? '/app/tableau-de-bord' : '/app/connexion',
+        to: '/app/tableau-de-bord',
         href: '#',
       },
       iconId: 'ri-account-box-line',
-      text: user?.email ?? 'Se connecter',
+      text: 'Mon espace',
     },
-  ];
-  if (!user) {
-    quickAccessItems.push({
-      linkProps: {
-        to: '/app/connexion/creation-de-compte',
-        href: '#',
-      },
-      iconId: 'fr-icon-add-circle-line',
-      text: 'Créer un compte',
-    });
-    quickAccessItems.push({
-      iconId: 'fr-icon-mail-fill',
-      linkProps: {
-        to: '/contact',
-        href: '#',
-      },
-      text: 'Contact',
-    });
-  } else {
-    quickAccessItems.push({
+    {
       iconId: 'ri-logout-box-line',
       buttonProps: {
         onClick: async () => {
@@ -69,11 +66,39 @@ export default function RootDisplay({
         },
       },
       text: 'Déconnexion',
-    });
-  }
+    },
+  ];
+
+  const quickAccessItemsDisconnected: Array<HeaderProps.QuickAccessItem> = [
+    {
+      linkProps: {
+        to: '/app/connexion',
+        href: '#',
+      },
+      iconId: 'ri-account-box-line',
+      text: 'Se connecter',
+    },
+    {
+      linkProps: {
+        to: '/app/connexion/creation-de-compte',
+        href: '#',
+      },
+      iconId: 'fr-icon-add-circle-line',
+      text: 'Créer un compte',
+    },
+    {
+      iconId: 'fr-icon-mail-fill',
+      linkProps: {
+        to: '/contact',
+        href: '#',
+      },
+      text: 'Contact',
+    },
+  ];
+
+  const quickAccessItems = user ? quickAccessItemsConnected : quickAccessItemsDisconnected;
 
   const environment = import.meta.env.VITE_ENV || 'development';
-  console.log('✌️ ~ environment:', environment);
 
   return (
     <>
@@ -114,16 +139,7 @@ export default function RootDisplay({
           orientation: 'vertical',
         }}
         serviceTagline="Garantir des viandes de gibier sauvage saines et sûres"
-        serviceTitle={
-          <>
-            Zacharie
-            {/* <span className="ml-4 inline-block">
-              <em className="mb-1 block rounded-sm bg-green-300 px-1 text-sm text-green-900 not-italic">
-                VERSION BETA
-              </em>
-            </span> */}
-          </>
-        }
+        serviceTitle={<>Zacharie</>}
       />
       {children}
       <Footer
