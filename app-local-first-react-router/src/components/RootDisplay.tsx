@@ -11,6 +11,8 @@ import { useSearchParams, useNavigate } from 'react-router';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { HeaderQuickAccessItem } from '@codegouvfr/react-dsfr/Header';
 
+const environment = import.meta.env.VITE_ENV || 'development';
+
 export default function RootDisplay({
   navigation,
   children,
@@ -33,26 +35,27 @@ export default function RootDisplay({
   const RenderedSearchInput = useRef(SearchInput).current;
 
   const quickAccessItemsConnected = [
-    <HeaderQuickAccessItem
-      id={`new-fei-button`}
-      quickAccessItem={{
-        iconId: 'fr-icon-add-circle-line',
-        buttonProps: {
-          onClick: async () => {
-            const newFei = await createNewFei();
-            navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
-          },
-        },
-        text: 'Nouvelle fiche',
-      }}
-    />,
+    // TODO : change when team is ok
+    // <HeaderQuickAccessItem
+    //   id={`new-fei-button`}
+    //   quickAccessItem={{
+    //     iconId: 'fr-icon-add-circle-line',
+    //     buttonProps: {
+    //       onClick: async () => {
+    //         const newFei = await createNewFei();
+    //         navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+    //       },
+    //     },
+    //     text: 'Nouvelle fiche',
+    //   }}
+    // />,
     {
       linkProps: {
         to: '/app/tableau-de-bord',
         href: '#',
       },
       iconId: 'ri-account-box-line',
-      text: 'Mon espace',
+      text: user?.email || '',
     },
     {
       iconId: 'ri-logout-box-line',
@@ -97,8 +100,6 @@ export default function RootDisplay({
   ];
 
   const quickAccessItems = user ? quickAccessItemsConnected : quickAccessItemsDisconnected;
-
-  const environment = import.meta.env.VITE_ENV || 'development';
 
   return (
     <>
