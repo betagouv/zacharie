@@ -19,7 +19,7 @@ test.beforeAll(async () => {
 test("Création d'une fiche", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
-  await page.getByRole("button", { name: "Nouvelle fiche" }).nth(1).click();
+  await page.getByRole("button", { name: "Nouvelle fiche" }).click();
   await expect(page.getByRole("heading", { name: "Examen initial Étape 1 sur" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Action de l'Examinateur" })).toBeVisible();
