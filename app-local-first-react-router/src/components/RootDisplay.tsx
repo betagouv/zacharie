@@ -34,7 +34,7 @@ export default function RootDisplay({
 
   const RenderedSearchInput = useRef(SearchInput).current;
 
-  const quickAccessItemsConnected = [
+  const quickAccessItemsConnected: Array<HeaderProps.QuickAccessItem> = [
     // TODO : change when team is ok
     // <HeaderQuickAccessItem
     //   id={`new-fei-button`}
@@ -99,7 +99,9 @@ export default function RootDisplay({
     },
   ];
 
-  const quickAccessItems = user ? quickAccessItemsConnected : quickAccessItemsDisconnected;
+  const quickAccessItems: Array<HeaderProps.QuickAccessItem> | undefined = user
+    ? quickAccessItemsConnected
+    : quickAccessItemsDisconnected;
 
   return (
     <>
