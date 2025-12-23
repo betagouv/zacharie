@@ -125,7 +125,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
 
   if (isChasseur && environment !== 'prod') {
     mainMenu.unshift({
-      text: 'Mes chasses',
+      text: 'Tableau de bord',
       isActive: location.pathname === '/app/tableau-de-bord/mes-chasses',
       linkProps: { to: '/app/tableau-de-bord/mes-chasses', href: '#' },
     });

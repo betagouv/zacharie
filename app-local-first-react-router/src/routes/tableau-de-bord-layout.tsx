@@ -28,11 +28,7 @@ export default function TableauDeBordLayout() {
         id="tableau-de-bord-layout-activated"
         contactLink="/app/tableau-de-bord/contact"
       >
-        <main
-          role="main"
-          id="content"
-          className="fr-background-alt--blue-france relative min-h-full overflow-auto"
-        >
+        <main role="main" id="content" className="fr-background-alt--blue-france relative min-h-full">
           <Outlet />
         </main>
       </RootDisplay>
