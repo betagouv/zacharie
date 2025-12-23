@@ -51,7 +51,7 @@ export default function NouvelleCarcasse() {
   return (
     <form method="POST" className="flex w-full flex-col items-stretch">
       <Select
-        label="Nouvelle carcasse / lot de carcasses *"
+        label="Espèce (grand et petit gibier) *"
         className="group grow"
         nativeSelectProps={{
           name: Prisma.CarcasseScalarFieldEnum.espece,
@@ -156,7 +156,7 @@ export default function NouvelleCarcasse() {
           setError(null);
         }}
       >
-        {isPetitGibier ? 'Enregistrer le lot de carcasses' : 'Enregistrer la carcasse'}
+        {isPetitGibier ? 'Ajouter un lot de carcasses' : 'Ajouter une carcasse'}
       </Button>
     </form>
   );

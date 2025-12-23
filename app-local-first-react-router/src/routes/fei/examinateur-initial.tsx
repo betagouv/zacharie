@@ -254,6 +254,7 @@ export default function FEIExaminateurInitial() {
         title={`Action de l'Examinateur Initial | ${examinateurInitialUser?.prenom} ${examinateurInitialUser?.nom_de_famille}`}
       >
         <p className="mb-5 text-red-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
+        <h4 className="fr-h5">Informations de chasse</h4>
         <Component
           label="Date de mise à mort (et d'éviscération)&nbsp;*"
           hintText={
@@ -354,6 +355,8 @@ export default function FEIExaminateurInitial() {
         />
         <DateHeureValidationAlerts fei={fei} showDateAlert={false} showHeureEviscerationAlert={false} />
         <hr className="mt-8" />
+        <h4 className="fr-h5">Mes carcasses</h4>
+
         <CarcassesExaminateur canEdit={canEdit} canEditAsPremierDetenteur={canEditAsPremierDetenteur} />
 
         {examinateurInitialUser && (
