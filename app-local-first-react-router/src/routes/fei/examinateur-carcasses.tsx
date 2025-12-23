@@ -40,8 +40,8 @@ export default function CarcassesExaminateur({
         <NouvelleCarcasse key={fei.commune_mise_a_mort} />
       </div>
       {canEdit && carcasses.length > 0 && (
-        <p className="mb-4 ml-4 text-sm text-gray-500">
-          Déjà rentrés&nbsp;:
+        <p className="my-4 ml-4 text-sm text-gray-500">
+          Rappel des carcasses enregistrées sur cette fiche&nbsp;:
           {countCarcassesByEspece.map((line) => (
             <span className="ml-4 block" key={line}>
               {line}
