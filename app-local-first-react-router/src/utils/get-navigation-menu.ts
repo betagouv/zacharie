@@ -131,6 +131,19 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     });
   }
 
+  if (isExaminateurInitial && !isNotActivated) {
+    mainMenu.unshift({
+      text: 'Nouvelle fiche',
+      linkProps: {
+        href: '#',
+        onClick: async () => {
+          const newFei = await createNewFei();
+          navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+        },
+      },
+    });
+  }
+
   if (isSvi || isEtg || isCollecteurPro) {
     mainMenu.push({
       text: 'Carcasses',
