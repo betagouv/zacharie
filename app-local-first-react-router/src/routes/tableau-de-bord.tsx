@@ -211,43 +211,9 @@ export default function TableauDeBordIndex() {
     return 'Filtrer par ETG';
   }, [filterETG, sviWorkingForEtgIds, entities]);
 
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Filter fiches by search query
-  const filterFeiBySearch = (fei: FeiDone): boolean => {
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase().trim();
-    const numero = fei.numero?.toLowerCase() || '';
-    const date = dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY');
-    const commune = fei.commune_mise_a_mort?.toLowerCase() || '';
-    const premierDetenteur = fei.premier_detenteur_name_cache?.toLowerCase() || '';
-
-    return (
-      numero.includes(query) ||
-      date.includes(query) ||
-      commune.includes(query) ||
-      premierDetenteur.includes(query)
-    );
-  };
-
   function Actions() {
     return (
       <div className="flex flex-col gap-2 py-2 md:gap-3 md:py-3">
-        {/* Top row: Search + CTA + View toggle */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="flex-1">
-            {/* <input
-              type="search"
-              placeholder="Rechercher..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="fr-input w-full"
-              title="Rechercher par numéro, date, commune..."
-            /> */}
-          </div>
-        </div>
-
-        {/* Bottom row: Filters + Actions */}
         <div className="flex flex-col justify-between gap-1.5 md:flex-row md:gap-2">
           <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
             <DropDownMenu
@@ -465,7 +431,7 @@ export default function TableauDeBordIndex() {
                 selectedFeis={selectedFeis}
                 filter={filter}
               >
-                {feisAssigned.filter(filterFeiBySearch).map((fei) => {
+                {feisAssigned.map((fei) => {
                   if (!fei) return null;
                   return (
                     <CardFiche
@@ -477,7 +443,7 @@ export default function TableauDeBordIndex() {
                     />
                   );
                 })}
-                {feisOngoing.filter(filterFeiBySearch).map((fei) => {
+                {feisOngoing.map((fei) => {
                   if (!fei) return null;
                   return (
                     <CardFiche
@@ -489,22 +455,20 @@ export default function TableauDeBordIndex() {
                     />
                   );
                 })}
-
-                {feisDoneNumeros
-                  .map((feiNumero) => feisDone[feiNumero])
-                  .filter((fei): fei is FeiDone => fei !== undefined && filterFeiBySearch(fei))
-                  .map((fei) => {
-                    return (
-                      <CardFiche
-                        key={fei.numero}
-                        fei={fei}
-                        filter={filter}
-                        onPrintSelect={handleCheckboxClick}
-                        isPrintSelected={selectedFeis.includes(fei.numero)}
-                        // disabledBecauseOffline={!isOnline}
-                      />
-                    );
-                  })}
+                {feisDoneNumeros.map((feiNumero) => {
+                  const fei = feisDone[feiNumero]!;
+                  if (!fei) return null;
+                  return (
+                    <CardFiche
+                      key={fei.numero}
+                      fei={fei}
+                      filter={filter}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                      // disabledBecauseOffline={!isOnline}
+                    />
+                  );
+                })}
               </FeisWrapper>
             )}
             {isOnlySvi && (
@@ -514,42 +478,34 @@ export default function TableauDeBordIndex() {
                 selectedFeis={selectedFeis}
                 filter={filter}
               >
-                {feiActivesForSvi
-                  .filter((fei) => {
-                    if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return false;
-                    return filterFeiBySearch(fei);
-                  })
-                  .map((fei) => {
-                    if (!fei) return null;
-                    return (
-                      <CardFiche
-                        key={fei.numero}
-                        fei={fei}
-                        filter={filter}
-                        onPrintSelect={handleCheckboxClick}
-                        isPrintSelected={selectedFeis.includes(fei.numero)}
-                        // disabledBecauseOffline={!isOnline}
-                      />
-                    );
-                  })}
-                {feisDoneForSvi
-                  .filter((fei) => {
-                    if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return false;
-                    return filterFeiBySearch(fei);
-                  })
-                  .map((fei) => {
-                    if (!fei) return null;
-                    return (
-                      <CardFiche
-                        key={fei.numero}
-                        fei={fei}
-                        filter={filter}
-                        onPrintSelect={handleCheckboxClick}
-                        isPrintSelected={selectedFeis.includes(fei.numero)}
-                        // disabledBecauseOffline={!isOnline}
-                      />
-                    );
-                  })}
+                {feiActivesForSvi.map((fei) => {
+                  if (!fei) return null;
+                  if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
+                  return (
+                    <CardFiche
+                      key={fei.numero}
+                      fei={fei}
+                      filter={filter}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                      // disabledBecauseOffline={!isOnline}
+                    />
+                  );
+                })}
+                {feisDoneForSvi.map((fei) => {
+                  if (!fei) return null;
+                  if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
+                  return (
+                    <CardFiche
+                      key={fei.numero}
+                      fei={fei}
+                      filter={filter}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                      // disabledBecauseOffline={!isOnline}
+                    />
+                  );
+                })}
               </FeisWrapper>
             )}
             <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
