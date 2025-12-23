@@ -47,6 +47,7 @@ import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-m
 import MesChasses from './routes/mes-chasses/mes-chasses';
 import FeiEnvoyée from './routes/fei/envoyée';
 import DeactivatedAccount from './routes/deactivated';
+import { hasAllRequiredFields } from './utils/user';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -397,7 +398,15 @@ function RestrictedRoute({
     return <Chargement />;
   }
 
-  if (!user?.activated && !location.pathname.includes('mon-profil') && !location.pathname.includes('admin')) {
+  const isProfileCompleted = hasAllRequiredFields(user!);
+  const needToCompleteExaminateurInitial =
+    user?.roles.includes(UserRoles.CHASSEUR) && user?.est_forme_a_l_examen_initial == null;
+
+  if (
+    (!isProfileCompleted || needToCompleteExaminateurInitial) &&
+    !location.pathname.includes('mon-profil') &&
+    !location.pathname.includes('admin')
+  ) {
     return <DeactivatedAccount />;
   }
 
