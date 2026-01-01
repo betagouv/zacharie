@@ -1,7 +1,7 @@
 import { ExpoConfig, ConfigContext } from "expo/config";
 
-const version = "1.0.1";
-const buildNumber = "5";
+const version = "1.0.2";
+const buildNumber = "6";
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "Zacharie",
