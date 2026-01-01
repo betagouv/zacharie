@@ -1,4 +1,4 @@
-import { StyleSheet, Platform, BackHandler, Linking, Modal, View, TouchableOpacity, Text } from "react-native";
+import { StyleSheet, Platform, BackHandler, Modal, View, TouchableOpacity, Text } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { registerForPushNotificationsAsync } from "./services/expo-push-notifs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -37,7 +37,7 @@ function App() {
         .then((response) => {
           console.log("getLastNotificationResponseAsync", response);
           if (response) {
-            ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
+            // ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
             Notifications.clearLastNotificationResponseAsync();
           }
         })
@@ -61,7 +61,7 @@ function App() {
       if (!token) {
         return;
       }
-      ref.current?.injectJavaScript(`window.onNativePushToken('${JSON.stringify(token)}');`);
+      ref.current?.injectJavaScript(`window.onNativePushToken('${JSON.stringify(token)}');true`);
     });
   };
 
@@ -104,7 +104,7 @@ function App() {
       }
       switch (event.nativeEvent.data) {
         case "request-native-get-inset-bottom-height":
-          ref.current?.injectJavaScript(`window.onGetInsetBottomHeight('${insets.bottom}');`);
+          // ref.current?.injectJavaScript(`window.onGetInsetBottomHeight('${insets.bottom}');`);
           break;
         case "request-native-push-permission":
         case "request-native-expo-push-permission":
@@ -124,7 +124,7 @@ function App() {
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       console.log("responseListener", response);
       setTimeout(() => {
-        ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
+        // ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
       }, 1500);
     });
 
@@ -138,72 +138,76 @@ function App() {
   useEffect(() => {
     setTimeout(() => {
       console.log("Constants.expoConfig?.version", Constants.expoConfig?.version);
-      ref.current?.injectJavaScript(`window.onAppVersion('${JSON.stringify(Constants.expoConfig?.version)}');`);
+      // ref.current?.injectJavaScript(`window.onAppVersion('${JSON.stringify(Constants.expoConfig?.version)}');`);
     }, 3000);
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.safeContainer} edges={["left", "right", "top", "bottom"]}>
-        <WebView
-          ref={ref}
-          style={styles.container}
-          startInLoadingState
-          onLoadEnd={onLoadEnd}
-          renderError={(errorName) => {
-            console.log("WebView error:", errorName);
-            if (offlineHtml) {
-              return (
-                <WebView
-                  style={styles.container}
-                  source={{ html: offlineHtml, baseUrl: getLocalBaseUrl() }}
-                  originWhitelist={["*"]}
-                  javaScriptEnabled
-                  domStorageEnabled
-                  onMessage={onMessage} // We might want to handle messages from offline app too
-                  injectedJavaScript={initScript}
-                />
-              );
-            }
+    <SafeAreaView style={styles.safeContainer} edges={["left", "right", "top", "bottom"]}>
+      <WebView
+        ref={ref}
+        style={styles.container}
+        startInLoadingState
+        onLoadEnd={onLoadEnd}
+        renderError={(errorName) => {
+          console.log("WebView error:", errorName);
+          if (offlineHtml) {
             return (
-              <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
-                <Text>Pas de connexion internet et pas de cache disponible.</Text>
-              </View>
+              <WebView
+                style={styles.containerOffline}
+                source={{ html: offlineHtml, baseUrl: getLocalBaseUrl() }}
+                originWhitelist={["*"]}
+                pullToRefreshEnabled
+                allowsBackForwardNavigationGestures
+                onContentProcessDidTerminate={() => ref.current?.reload()}
+                // onNavigationStateChange={onNavigationStateChange}
+                onMessage={onMessage}
+                sharedCookiesEnabled={true}
+                thirdPartyCookiesEnabled={true}
+                domStorageEnabled
+                javaScriptEnabled
+                injectedJavaScript={initScript}
+              />
             );
-          }}
-          source={source}
-          pullToRefreshEnabled
-          allowsBackForwardNavigationGestures
-          onContentProcessDidTerminate={() => ref.current?.reload()}
-          // onNavigationStateChange={onNavigationStateChange}
-          onMessage={onMessage}
-          sharedCookiesEnabled={true}
-          thirdPartyCookiesEnabled={true}
-          domStorageEnabled
-          javaScriptEnabled
-          injectedJavaScript={initScript}
-        />
-        <Modal
-          visible={!!externalLink}
-          onRequestClose={() => setExternalLink(null)}
-          animationType="slide"
-          presentationStyle="formSheet"
-        >
-          <SafeAreaView style={styles.safeContainer}>
-            <View style={styles.modalContainer}>
-              <TouchableOpacity onPress={() => setExternalLink(null)} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>Fermer</Text>
-              </TouchableOpacity>
+          }
+          return (
+            <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+              <Text>Pas de connexion internet et pas de cache disponible.</Text>
             </View>
-            <WebView source={{ uri: externalLink ?? "" }} style={styles.safeContainer} />
-          </SafeAreaView>
-        </Modal>
-      </SafeAreaView>
-    </SafeAreaProvider>
+          );
+        }}
+        source={source}
+        pullToRefreshEnabled
+        allowsBackForwardNavigationGestures
+        onContentProcessDidTerminate={() => ref.current?.reload()}
+        // onNavigationStateChange={onNavigationStateChange}
+        onMessage={onMessage}
+        sharedCookiesEnabled={true}
+        thirdPartyCookiesEnabled={true}
+        domStorageEnabled
+        javaScriptEnabled
+        injectedJavaScript={initScript}
+      />
+      <Modal
+        visible={!!externalLink}
+        onRequestClose={() => setExternalLink(null)}
+        animationType="slide"
+        presentationStyle="formSheet"
+      >
+        <SafeAreaView style={styles.safeContainer}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity onPress={() => setExternalLink(null)} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+          <WebView source={{ uri: externalLink ?? "" }} style={styles.container} />
+        </SafeAreaView>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
-export default function () {
+export default function AppWrapped() {
   return (
     <SafeAreaProvider>
       <App />
@@ -218,6 +222,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  containerOffline: {
+    flex: 1,
+    borderWidth: 5,
+    borderColor: "#000091",
   },
   closeButton: {
     padding: 8,
