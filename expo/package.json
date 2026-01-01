@@ -25,6 +25,7 @@
     "expo": "^54.0.12",
     "expo-dev-client": "~6.0.13",
     "expo-device": "~8.0.9",
+    "expo-file-system": "^19.0.21",
     "expo-linking": "~8.0.8",
     "expo-notifications": "~0.32.12",
     "expo-splash-screen": "~31.0.10",
