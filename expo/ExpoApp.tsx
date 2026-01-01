@@ -7,8 +7,10 @@ import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
-const APP_URL = __DEV__ ? process.env.EXPO_PUBLIC_APP_URL : "https://zacharie.beta.gouv.fr/";
-// const APP_URL = "https://zacharie.beta.gouv.fr/";
+import { checkAndDownloadSpa, getLocalBaseUrl, getOfflineHtml } from "./utils/offline-spa";
+
+// const APP_URL = __DEV__ ? process.env.EXPO_PUBLIC_APP_URL : "https://zacharie.beta.gouv.fr/";
+const APP_URL = "https://zacharie.beta.gouv.fr/";
 // EXPO_PUBLIC_APP_URL should be set in .env and should be like http://x.x.x.x:3234/ - get the IP with `ipconfig getifaddr en0` on macos for example
 
 SplashScreen.preventAutoHideAsync();
@@ -17,6 +19,15 @@ const initScript = `window.ENV = {};window.ENV.APP_PLATFORM = "native";true`;
 function App() {
   const ref = useRef<WebView>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
+  const [offlineHtml, setOfflineHtml] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkAndDownloadSpa().then(() => {
+      getOfflineHtml().then((html) => {
+        if (html) setOfflineHtml(html);
+      });
+    });
+  }, []);
 
   const onLoadEnd = () => {
     ref.current?.injectJavaScript(`if (window.ENV) { window.ENV.PLATFORM_OS = "${Platform.OS}"; }true`);
@@ -139,6 +150,27 @@ function App() {
           style={styles.container}
           startInLoadingState
           onLoadEnd={onLoadEnd}
+          renderError={(errorName) => {
+            console.log("WebView error:", errorName);
+            if (offlineHtml) {
+              return (
+                <WebView
+                  style={styles.container}
+                  source={{ html: offlineHtml, baseUrl: getLocalBaseUrl() }}
+                  originWhitelist={["*"]}
+                  javaScriptEnabled
+                  domStorageEnabled
+                  onMessage={onMessage} // We might want to handle messages from offline app too
+                  injectedJavaScript={initScript}
+                />
+              );
+            }
+            return (
+              <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+                <Text>Pas de connexion internet et pas de cache disponible.</Text>
+              </View>
+            );
+          }}
           source={source}
           pullToRefreshEnabled
           allowsBackForwardNavigationGestures
