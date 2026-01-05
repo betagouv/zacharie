@@ -1,4 +1,4 @@
-import { StyleSheet, Platform, BackHandler, Modal, View, TouchableOpacity, Text } from "react-native";
+import { StyleSheet, Platform, BackHandler, Linking, Modal, View, TouchableOpacity, Text } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { registerForPushNotificationsAsync } from "./services/expo-push-notifs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -7,10 +7,8 @@ import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
-import { checkAndDownloadSpa, getLocalBaseUrl, getOfflineHtml } from "./utils/offline-spa";
-
-// const APP_URL = __DEV__ ? process.env.EXPO_PUBLIC_APP_URL : "https://zacharie.beta.gouv.fr/";
-const APP_URL = "https://zacharie.beta.gouv.fr/";
+const APP_URL = __DEV__ ? process.env.EXPO_PUBLIC_APP_URL : "https://zacharie.beta.gouv.fr/";
+// const APP_URL = "https://zacharie.beta.gouv.fr/";
 // EXPO_PUBLIC_APP_URL should be set in .env and should be like http://x.x.x.x:3234/ - get the IP with `ipconfig getifaddr en0` on macos for example
 
 SplashScreen.preventAutoHideAsync();
@@ -19,15 +17,6 @@ const initScript = `window.ENV = {};window.ENV.APP_PLATFORM = "native";true`;
 function App() {
   const ref = useRef<WebView>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
-  const [offlineHtml, setOfflineHtml] = useState<string | null>(null);
-
-  useEffect(() => {
-    checkAndDownloadSpa().then(() => {
-      getOfflineHtml().then((html) => {
-        if (html) setOfflineHtml(html);
-      });
-    });
-  }, []);
 
   const onLoadEnd = () => {
     ref.current?.injectJavaScript(`if (window.ENV) { window.ENV.PLATFORM_OS = "${Platform.OS}"; }true`);
@@ -37,7 +26,7 @@ function App() {
         .then((response) => {
           console.log("getLastNotificationResponseAsync", response);
           if (response) {
-            // ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
+            ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
             Notifications.clearLastNotificationResponseAsync();
           }
         })
@@ -61,7 +50,7 @@ function App() {
       if (!token) {
         return;
       }
-      ref.current?.injectJavaScript(`window.onNativePushToken('${JSON.stringify(token)}');true`);
+      ref.current?.injectJavaScript(`window.onNativePushToken('${JSON.stringify(token)}');`);
     });
   };
 
@@ -104,7 +93,7 @@ function App() {
       }
       switch (event.nativeEvent.data) {
         case "request-native-get-inset-bottom-height":
-          // ref.current?.injectJavaScript(`window.onGetInsetBottomHeight('${insets.bottom}');`);
+          ref.current?.injectJavaScript(`window.onGetInsetBottomHeight('${insets.bottom}');`);
           break;
         case "request-native-push-permission":
         case "request-native-expo-push-permission":
@@ -124,7 +113,7 @@ function App() {
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       console.log("responseListener", response);
       setTimeout(() => {
-        // ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
+        ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
       }, 1500);
     });
 
@@ -138,76 +127,51 @@ function App() {
   useEffect(() => {
     setTimeout(() => {
       console.log("Constants.expoConfig?.version", Constants.expoConfig?.version);
-      // ref.current?.injectJavaScript(`window.onAppVersion('${JSON.stringify(Constants.expoConfig?.version)}');`);
+      ref.current?.injectJavaScript(`window.onAppVersion('${JSON.stringify(Constants.expoConfig?.version)}');`);
     }, 3000);
   }, []);
 
   return (
-    <SafeAreaView style={styles.safeContainer} edges={["left", "right", "top", "bottom"]}>
-      <WebView
-        ref={ref}
-        style={styles.container}
-        startInLoadingState
-        onLoadEnd={onLoadEnd}
-        renderError={(errorName) => {
-          console.log("WebView error:", errorName);
-          if (offlineHtml) {
-            return (
-              <WebView
-                style={styles.containerOffline}
-                source={{ html: offlineHtml, baseUrl: getLocalBaseUrl() }}
-                originWhitelist={["*"]}
-                pullToRefreshEnabled
-                allowsBackForwardNavigationGestures
-                onContentProcessDidTerminate={() => ref.current?.reload()}
-                // onNavigationStateChange={onNavigationStateChange}
-                onMessage={onMessage}
-                sharedCookiesEnabled={true}
-                thirdPartyCookiesEnabled={true}
-                domStorageEnabled
-                javaScriptEnabled
-                injectedJavaScript={initScript}
-              />
-            );
-          }
-          return (
-            <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
-              <Text>Pas de connexion internet et pas de cache disponible.</Text>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.safeContainer} edges={["left", "right", "top", "bottom"]}>
+        <WebView
+          ref={ref}
+          style={styles.container}
+          startInLoadingState
+          onLoadEnd={onLoadEnd}
+          source={source}
+          pullToRefreshEnabled
+          allowsBackForwardNavigationGestures
+          onContentProcessDidTerminate={() => ref.current?.reload()}
+          // onNavigationStateChange={onNavigationStateChange}
+          onMessage={onMessage}
+          sharedCookiesEnabled={true}
+          thirdPartyCookiesEnabled={true}
+          domStorageEnabled
+          javaScriptEnabled
+          injectedJavaScript={initScript}
+        />
+        <Modal
+          visible={!!externalLink}
+          onRequestClose={() => setExternalLink(null)}
+          animationType="slide"
+          presentationStyle="formSheet"
+        >
+          <SafeAreaView style={styles.safeContainer}>
+            <View style={styles.modalContainer}>
+              <TouchableOpacity onPress={() => setExternalLink(null)} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>Fermer</Text>
+              </TouchableOpacity>
             </View>
-          );
-        }}
-        source={source}
-        pullToRefreshEnabled
-        allowsBackForwardNavigationGestures
-        onContentProcessDidTerminate={() => ref.current?.reload()}
-        // onNavigationStateChange={onNavigationStateChange}
-        onMessage={onMessage}
-        sharedCookiesEnabled={true}
-        thirdPartyCookiesEnabled={true}
-        domStorageEnabled
-        javaScriptEnabled
-        injectedJavaScript={initScript}
-      />
-      <Modal
-        visible={!!externalLink}
-        onRequestClose={() => setExternalLink(null)}
-        animationType="slide"
-        presentationStyle="formSheet"
-      >
-        <SafeAreaView style={styles.safeContainer}>
-          <View style={styles.modalContainer}>
-            <TouchableOpacity onPress={() => setExternalLink(null)} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-          <WebView source={{ uri: externalLink ?? "" }} style={styles.container} />
-        </SafeAreaView>
-      </Modal>
-    </SafeAreaView>
+            <WebView source={{ uri: externalLink ?? "" }} style={styles.safeContainer} />
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
-export default function AppWrapped() {
+export default function () {
   return (
     <SafeAreaProvider>
       <App />
@@ -222,11 +186,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-  },
-  containerOffline: {
-    flex: 1,
-    borderWidth: 5,
-    borderColor: "#000091",
   },
   closeButton: {
     padding: 8,
