@@ -27,7 +27,7 @@
     "@uidotdev/usehooks": "^2.4.1",
     "compression": "^1.8.1",
     "dayjs": "^1.11.13",
-    "express": "^4.21.1",
+    "express": "^4.22.1",
     "fake-indexeddb": "^6.0.1",
     "idb-keyval": "^6.2.2",
     "p-queue": "^8.1.0",
