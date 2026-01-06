@@ -895,7 +895,7 @@ export default function DestinataireSelect({
           })}
 
           {canEdit && (
-            <div className="mt-8 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50/50 p-6">
+            <div className="">
               <Button
                 priority="secondary"
                 iconId="fr-icon-add-line"
@@ -909,7 +909,7 @@ export default function DestinataireSelect({
           )}
         </div>
         {canEdit && (
-          <div className="mt-8 rounded-lg bg-blue-50/50 p-6">
+          <div className="">
             <Button
               className="w-full sm:w-auto"
               type="submit"
