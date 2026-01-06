@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { UserRoles, Prisma } from '@prisma/client';
@@ -44,6 +43,10 @@ export default function MesInformationsDeChasse({
     window.scrollTo(0, 0);
   }, []);
 
+  const handleSubmit = () => {
+    console.log('submit');
+  };
+
   const handleUserSubmit = useCallback(
     async ({
       isExaminateurInitial,
@@ -73,9 +76,6 @@ export default function MesInformationsDeChasse({
     },
     [user.id],
   );
-
-  const nextTitle = 'Mes notifications';
-  const nextPage = '/app/tableau-de-bord/mon-profil/mes-notifications';
 
   const showEntrpriseVisibilityCheckbox =
     !!user.checked_has_asso_de_chasse ||
@@ -109,18 +109,6 @@ export default function MesInformationsDeChasse({
       <title>{`${title} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          {withEverything && (
-            <Stepper
-              currentStep={3}
-              nextTitle={nextTitle}
-              stepCount={4}
-              title={
-                user.roles.includes(UserRoles.CHASSEUR)
-                  ? 'Mes informations de chasse'
-                  : 'Mes chambres froides (CCGs)'
-              }
-            />
-          )}
           <h1 className="fr-h2 fr-mb-2w">{calloutTitle}</h1>
           <CallOut title="⚠️ Informations essentielles pour faire des fiches" className="bg-white">
             Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer.
@@ -273,21 +261,25 @@ export default function MesInformationsDeChasse({
               <ButtonsGroup
                 buttons={[
                   {
-                    children: 'Enregistrer et Continuer',
+                    children: 'Enregistrer',
                     disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
                     type: 'button',
                     nativeButtonProps: {
-                      onClick: () => navigate(redirect ?? nextPage),
+                      onClick: () => (redirect ? navigate(redirect) : handleSubmit()),
                     },
                   },
-                  {
-                    children: redirect ? 'Retour' : 'Modifier mes coordonnées',
-                    linkProps: {
-                      to: redirect ?? '/app/tableau-de-bord/mon-profil/mes-coordonnees',
-                      href: '#',
-                    },
-                    priority: 'secondary',
-                  },
+                  ...(redirect
+                    ? [
+                        {
+                          children: 'Retour',
+                          linkProps: {
+                            to: redirect,
+                            href: '#',
+                          },
+                          priority: 'secondary' as const,
+                        },
+                      ]
+                    : []),
                 ]}
               />
             </div>

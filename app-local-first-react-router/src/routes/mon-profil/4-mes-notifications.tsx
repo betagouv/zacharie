@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
-import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
-import { UserNotifications, UserRoles } from '@prisma/client';
+import { UserNotifications } from '@prisma/client';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import { usePush } from '@app/sw/web-push-notifications';
 import useUser from '@app/zustand/user';
@@ -51,14 +50,6 @@ export default function MesNotifications() {
     );
   }, [nativePushTokenRegistered, canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
 
-  const skipCCG = useMemo(() => {
-    if (!user.roles.includes(UserRoles.CHASSEUR)) {
-      return true;
-    }
-    return false;
-  }, [user.roles]);
-  const stepCount = skipCCG ? 3 : 4;
-
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
@@ -77,7 +68,6 @@ export default function MesNotifications() {
         }).then((data) => data as UserConnexionResponse);
         if (response.ok && response.data?.user?.id) {
           useUser.setState({ user: response.data.user });
-          navigate('/app/tableau-de-bord');
         }
       }}
     >
@@ -87,7 +77,6 @@ export default function MesNotifications() {
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-            <Stepper currentStep={stepCount} stepCount={stepCount} title="Vos notifications" />
             <h1 className="fr-h2 fr-mb-2w">Activez les notifications</h1>
             <CallOut title="🔔 Soyez notifié d'une fiche qui vous est attribuée" className="bg-white">
               Vous pouvez être notifié par mail ou par une notification sur votre smartphone dès qu'une Fiche
@@ -157,18 +146,10 @@ export default function MesNotifications() {
                 <ButtonsGroup
                   buttons={[
                     {
-                      children: 'Continuer',
+                      children: 'Enregistrer',
                       nativeButtonProps: {
                         type: 'submit',
                       },
-                    },
-                    {
-                      children: 'Précédent',
-                      type: 'button',
-                      nativeButtonProps: {
-                        onClick: () => navigate(-1),
-                      },
-                      priority: 'secondary',
                     },
                   ]}
                 />
