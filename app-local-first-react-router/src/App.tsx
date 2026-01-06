@@ -14,10 +14,6 @@ import Fei from './routes/fei/fei';
 import OfflineMode from './components/OfflineMode';
 import CarcasseExaminateur from './routes/carcasse-examinateur';
 import SviInspectionCarcasse from './routes/svi-inspection-carcasse/svi-inspection-carcasse';
-import MesRoles from './routes/mon-profil/1-mon-activite';
-import MesInformationsDeChasse from './routes/mon-profil/3-mes-informations-de-chasse';
-import MesCoordonnees from './routes/mon-profil/2-mes-coordonnees';
-import MesNotifications from './routes/mon-profil/4-mes-notifications';
 import * as Sentry from '@sentry/react';
 import { capture } from './services/sentry';
 import { UserRoles } from '@prisma/client';
@@ -39,15 +35,27 @@ import LandingDemarchesPage from './routes/landing-demarches';
 import AdminApiKeys from './routes/admin/api-keys';
 import AdminNewApiKey from './routes/admin/api-key-add';
 import AdminApiKey from './routes/admin/api-key.$apiKeyId';
-import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
 import NouvelleFiche from './routes/nouvelle-fiche';
-import MonEntreprise from './routes/mon-profil/3-mon-entreprise';
 import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
-import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-mon-entreprise';
 import MesChasses from './routes/mes-chasses/mes-chasses';
 import FeiEnvoyée from './routes/fei/envoyée';
 import DeactivatedAccount from './routes/deactivated';
 import { MatomoTracker } from './components/MatomoTracker';
+
+// mon profil routes
+import MesRoles from './routes/mon-profil/1-mon-activite';
+import MesCoordonnees from './routes/mon-profil/2-mes-coordonnees';
+import MesInformationsDeChasse from './routes/mon-profil/3-mes-informations-de-chasse';
+import MonEntreprise from './routes/mon-profil/3-mon-entreprise';
+import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-mon-entreprise';
+import MesNotifications from './routes/mon-profil/4-mes-notifications';
+import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
+
+// onboarding routes
+import OnboardingMesRoles from './routes/onboarding/1-mon-activite';
+import OnboardingMesCoordonnees from './routes/onboarding/2-mes-coordonnees';
+import OnboardingMesInformationsDeChasse from './routes/onboarding/3-mes-informations-de-chasse';
+import OnboardingMesNotifications from './routes/onboarding/4-mes-notifications';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -134,6 +142,29 @@ function App() {
               </RestrictedRoute>
             }
           >
+            <Route
+              path="onboarding"
+              element={
+                <RestrictedRoute id="onboarding">
+                  <Outlet />
+                </RestrictedRoute>
+              }
+            >
+              <Route path="mon-activite" element={<OnboardingMesRoles />} />
+              <Route path="mes-coordonnees" element={<OnboardingMesCoordonnees />} />
+              <Route
+                path="mes-informations-de-chasse"
+                element={
+                  <OnboardingMesInformationsDeChasse
+                    withExaminateurInitial
+                    withAssociationsDeChasse
+                    withCCGs
+                    withPartenaires
+                  />
+                }
+              />
+              <Route path="mes-notifications" element={<OnboardingMesNotifications />} />
+            </Route>
             <Route path="contact" element={<Contact />} />
             <Route
               path="/app/tableau-de-bord"
@@ -399,7 +430,12 @@ function RestrictedRoute({
     return <Chargement />;
   }
 
-  if (!user?.activated && !location.pathname.includes('mon-profil') && !location.pathname.includes('admin')) {
+  if (
+    !user?.activated &&
+    !location.pathname.includes('mon-profil') &&
+    !location.pathname.includes('onboarding') &&
+    !location.pathname.includes('admin')
+  ) {
     return <DeactivatedAccount />;
   }
 
