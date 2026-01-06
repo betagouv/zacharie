@@ -45,7 +45,7 @@ test("Création de compte examinateur initial", async ({ page }) => {
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
   await expect(page.getByRole("heading", { name: "Activez les notifications" })).toBeVisible();
   await page.getByRole("button", { name: "Continuer" }).click();
-  await expect(page.getByText("Merci pour votre inscription à Zacharie !")).toBeVisible();
+  await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
 });
 
 test("Création de compte premier détenteur", async ({ page }) => {
