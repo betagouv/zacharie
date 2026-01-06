@@ -6,12 +6,11 @@ import { UserNotifications } from '@prisma/client';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import { usePush } from '@app/sw/web-push-notifications';
 import useUser from '@app/zustand/user';
-import { useNavigate } from 'react-router';
 import API from '@app/services/api';
+import { toast } from 'react-toastify';
 
 export default function MesNotifications() {
   const user = useUser((state) => state.user)!;
-  const navigate = useNavigate();
 
   const {
     subscribeToPush,
@@ -53,6 +52,10 @@ export default function MesNotifications() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
+
+  const handleSubmit = () => {
+    toast.success('Notifications enregistrées');
+  };
 
   return (
     <form
@@ -149,6 +152,7 @@ export default function MesNotifications() {
                       children: 'Enregistrer',
                       nativeButtonProps: {
                         type: 'submit',
+                        onClick: handleSubmit,
                       },
                     },
                   ]}

@@ -13,6 +13,7 @@ import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import MesCCGs from './3-mes-ccgs';
 import MesAssociationsDeChasse from './3-mes-associations-de-chasse';
 import MesPartenaires from './3-mes-partenaires';
+import { toast } from 'react-toastify';
 
 type InformationsDeChasseProps = {
   withExaminateurInitial?: boolean;
@@ -44,7 +45,7 @@ export default function MesInformationsDeChasse({
   }, []);
 
   const handleSubmit = () => {
-    console.log('submit');
+    toast.success('Informations de chasse enregistrées');
   };
 
   const handleUserSubmit = useCallback(

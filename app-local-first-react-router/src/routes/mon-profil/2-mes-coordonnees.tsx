@@ -9,6 +9,7 @@ import InputNotEditable from '@app/components/InputNotEditable';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
+import { toast } from 'react-toastify';
 
 export default function MesCoordonnees() {
   const user = useUser((state) => state.user)!;
@@ -29,7 +30,7 @@ export default function MesCoordonnees() {
   );
 
   const handleSubmit = () => {
-    console.log('submit');
+    toast.success('Coordonnées enregistrées');
   };
 
   const needAddress = user.roles.includes(UserRoles.CHASSEUR);
