@@ -228,14 +228,14 @@ export default function RelationEntityUser({
             },
           ]}
         >
-          <div className={isOpen ? '' : 'pointer-events-none'}>
+          {isOpen && (
             <RelationEntityUsersList
               entity={entity}
               refreshKey={refreshKey}
               user={user}
               onChange={onChange}
             />
-          </div>
+          )}
         </entityUsersModal.Component>
       )}
     </div>

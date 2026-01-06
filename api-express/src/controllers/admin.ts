@@ -29,6 +29,7 @@ import type {
   AdminApiKeysResponse,
   AdminApiKeyResponse,
   AdminApiKeyAndApprovalsResponse,
+  UserConnexionResponse,
 } from '~/types/responses';
 import passport from 'passport';
 import validateUser from '~/middlewares/validateUser';
@@ -40,40 +41,51 @@ router.post(
   '/user/connect-as',
   passport.authenticate('user', { session: false }),
   validateUser([UserRoles.ADMIN]),
-  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const body = req.body;
-    const email = body.email;
-    console.log('body', body);
-    console.log('Email:', email);
-    if (!email) {
-      res.status(400).send({
-        ok: false,
-        data: null,
-        message: null,
-        error: 'Veuillez renseigner votre email',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction,
+    ) => {
+      const body = req.body;
+      const email = body.email;
+      console.log('body', body);
+      console.log('Email:', email);
+      if (!email) {
+        res.status(400).send({
+          ok: false,
+          data: null,
+          message: null,
+          error: 'Veuillez renseigner votre email',
+        });
+        return;
+      }
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user) {
+        res.status(400).send({
+          ok: false,
+          data: null,
+          message: null,
+          error: "Cet utilisateur n'existe pas",
+        });
+        return;
+      }
+      const token = jwt.sign({ userId: user.id }, SECRET, {
+        expiresIn: JWT_MAX_AGE,
       });
-      return;
-    }
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      res.status(400).send({
-        ok: false,
-        data: null,
-        message: null,
-        error: "Cet utilisateur n'existe pas",
+      res.cookie(
+        'zacharie_express_jwt',
+        token,
+        cookieOptions(req.headers.platform === 'native' ? false : true),
+      );
+      res.status(200).send({
+        ok: true,
+        data: { user },
+        error: null,
+        message: '',
       });
-      return;
-    }
-    const token = jwt.sign({ userId: user.id }, SECRET, {
-      expiresIn: JWT_MAX_AGE,
-    });
-    res.cookie(
-      'zacharie_express_jwt',
-      token,
-      cookieOptions(req.headers.platform === 'native' ? false : true),
-    );
-    res.status(200).send({ ok: true, data: { user }, error: null });
-  }),
+    },
+  ),
 );
 
 router.post(

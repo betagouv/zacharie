@@ -2,6 +2,9 @@ import { Routes, Route, Outlet, useNavigate, useLocation } from 'react-router';
 import LandingPage from './routes/landing';
 import RootDisplay from './components/RootDisplay';
 import Connexion from './routes/connexion';
+import CreationDeCompte from './routes/connexion/creation-de-compte';
+import MotDePasseOublie from './routes/connexion/mot-de-passe-oublie';
+import ResetMotDePasse from './routes/connexion/reset-mot-de-passe';
 import { useEffect, type ReactElement } from 'react';
 import Chargement from './components/Chargement';
 import TableauDeBordIndex from './routes/tableau-de-bord';
@@ -41,6 +44,7 @@ import NouvelleFiche from './routes/nouvelle-fiche';
 import MonEntreprise from './routes/mon-profil/3-mon-entreprise';
 import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
 import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-mon-entreprise';
+import MesChasses from './routes/mes-chasses/mes-chasses';
 import FeiEnvoyée from './routes/fei/envoyée';
 import DeactivatedAccount from './routes/deactivated';
 
@@ -85,14 +89,41 @@ function App() {
           <Route path="contact" element={<Contact />} />
         </Route>
         <Route path="app" element={<Outlet />}>
-          <Route
-            path="connexion"
-            element={
-              <RootDisplay id="connexion" navigation={landingPageNavigationMenu}>
-                <Connexion />
-              </RootDisplay>
-            }
-          />
+          <Route path="connexion" element={<Outlet />}>
+            <Route
+              index
+              element={
+                <RootDisplay id="connexion" navigation={landingPageNavigationMenu}>
+                  <Connexion />
+                </RootDisplay>
+              }
+            />
+            <Route
+              path="creation-de-compte"
+              element={
+                <RootDisplay id="creation-de-compte" navigation={landingPageNavigationMenu}>
+                  <CreationDeCompte />
+                </RootDisplay>
+              }
+            />
+            <Route
+              path="mot-de-passe-oublie"
+              element={
+                <RootDisplay id="mot-de-passe-oublie" navigation={landingPageNavigationMenu}>
+                  <MotDePasseOublie />
+                </RootDisplay>
+              }
+            />
+
+            <Route
+              path="reset-mot-de-passe"
+              element={
+                <RootDisplay id="reset-mot-de-passe" navigation={landingPageNavigationMenu}>
+                  <ResetMotDePasse />
+                </RootDisplay>
+              }
+            />
+          </Route>
           <Route path="nouvelle-fiche" element={<NouvelleFiche />} />
           <Route
             path="tableau-de-bord"
@@ -108,6 +139,14 @@ function App() {
               element={
                 <RestrictedRoute id="tableau-de-bord-path">
                   <TableauDeBordIndex />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="mes-chasses"
+              element={
+                <RestrictedRoute id="mes-chasses">
+                  <MesChasses />
                 </RestrictedRoute>
               }
             />
@@ -344,11 +383,13 @@ function RestrictedRoute({
   useEffect(() => {
     if (!user?.id) {
       const currentPath = location.pathname + location.search;
-      navigate(`/app/connexion?type=compte-existant&redirect=${encodeURIComponent(currentPath)}`);
+      console.log('CONNEXION REQUIRED because no user');
+      navigate(`/app/connexion?redirect=${encodeURIComponent(currentPath)}`);
     }
     if (roles.length > 0 && !roles.some((role) => user?.roles.includes(role))) {
       const currentPath = location.pathname + location.search;
-      navigate(`/app/connexion?type=compte-existant&redirect=${encodeURIComponent(currentPath)}`);
+      console.log('CONNEXION REQUIRED because no role', roles);
+      navigate(`/app/connexion?redirect=${encodeURIComponent(currentPath)}`);
     }
   }, [user, navigate, roles, location]);
 

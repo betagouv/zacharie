@@ -82,7 +82,7 @@ export default function FEIDonneesDeChasse({
           `Prise en charge\u00A0: ${dayjs(intermediaire.prise_en_charge_at).format('dddd D MMMM à HH:mm')}`,
         );
       }
-      lines.push({ label: entity.nom_d_usage, value: intermediaireLines });
+      lines.push({ label: entity?.nom_d_usage, value: intermediaireLines });
     }
     return lines;
   }, [intermediaires, entities]);

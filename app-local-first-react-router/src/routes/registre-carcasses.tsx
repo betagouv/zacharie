@@ -7,7 +7,7 @@ import { useSaveScroll } from '@app/services/useSaveScroll';
 import { getCarcasseStatusLabel } from '@app/utils/get-carcasse-status';
 import { Link, useSearchParams } from 'react-router';
 import { loadCarcasses } from '@app/utils/load-carcasses';
-import { UserRoles } from '@prisma/client';
+import { UserRoles, FeiOwnerRole } from '@prisma/client';
 import Filters from '@app/components/Filters';
 import {
   CarcasseFilter,
@@ -18,12 +18,16 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
 import Button from '@codegouvfr/react-dsfr/Button';
 import useExportCarcasses from '@app/utils/export-carcasses';
+import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function RegistreCarcasses() {
   const user = useMostFreshUser('registre-carcasses')!;
   const isSvi = user.roles.includes(UserRoles.SVI);
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const intermediairesByFei = useZustandStore((state) => state.intermediairesByFei);
+  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+  const entities = useZustandStore((state) => state.entities);
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
 
@@ -125,6 +129,28 @@ export default function RegistreCarcasses() {
 
   useSaveScroll('registre-carcasses-scrollY');
 
+  const getCollecteurName = (carcasse: (typeof carcassesRegistry)[number]): string | null => {
+    const intermediaires = intermediairesByFei[carcasse.fei_numero] || [];
+    const collecteursPro: string[] = [];
+
+    for (const intermediaire of intermediaires) {
+      if (intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
+        const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
+        const carcasseIntermediaire = carcassesIntermediaireById[id];
+        // Vérifier que l'intermédiaire a bien traité cette carcasse
+        if (carcasseIntermediaire) {
+          const collecteurEntity = entities[intermediaire.intermediaire_entity_id];
+          if (collecteurEntity?.nom_d_usage) {
+            collecteursPro.push(collecteurEntity.nom_d_usage);
+          }
+        }
+      }
+    }
+
+    if (collecteursPro.length === 0) return null;
+    return collecteursPro.join(', ');
+  };
+
   const renderMobileCarcasse = (carcasse: (typeof carcassesRegistry)[number], _index: number) => {
     const isChecked = selectedCarcassesIds.includes(carcasse.zacharie_carcasse_id);
     return (
@@ -211,6 +237,12 @@ export default function RegistreCarcasses() {
                   {carcasse.fei_numero}
                 </Link>
               </div>
+              {getCollecteurName(carcasse) && (
+                <div>
+                  <span className="font-semibold">Collecteur: </span>
+                  <span>{getCollecteurName(carcasse)}</span>
+                </div>
+              )}
             </div>
           </div>
         </td>
@@ -385,6 +417,11 @@ export default function RegistreCarcasses() {
                   render: (carcasse) => (
                     <Link to={`/app/tableau-de-bord/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>
                   ),
+                },
+                {
+                  dataKey: 'collecteur' as keyof (typeof carcassesRegistry)[number],
+                  title: 'Collecteur',
+                  render: (carcasse) => getCollecteurName(carcasse) || '-',
                 },
               ]}
               // onSort={() => {}}

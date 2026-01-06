@@ -8,6 +8,8 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
+import { CarcasseType } from '@prisma/client';
+import { abbreviations } from '@app/utils/count-carcasses';
 
 interface CardProps {
   fei: FeiDone;
@@ -45,6 +47,11 @@ export default function CardFiche({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
+  const carcasses = useZustandStore((state) => state.carcasses);
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const getCarcassesIntermediairesForCarcasse = useZustandStore(
+    (state) => state.getCarcassesIntermediairesForCarcasse,
+  );
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -89,27 +96,58 @@ export default function CardFiche({
     if (!carcassesAcceptées.length) {
       return ['À renseigner'];
     }
+    const feiCarcasses = (carcassesIdsByFei[fei.numero] || []).map((id) => carcasses[id]);
     const lines = [];
     let nombreDEspecesApres3Lignes = 0;
     for (const line of carcassesAcceptées) {
+      let enrichedLine = line;
+
+      // Chercher l'espèce et le nombre accepté
+      for (const [espece, abbreviation] of Object.entries(abbreviations)) {
+        if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
+          const carcasse = feiCarcasses.find(
+            (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece,
+          );
+          if (carcasse) {
+            const intermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id!);
+            const dernierAccepte = intermediaires
+              .filter((ci) => !!ci.prise_en_charge_at)
+              .sort((a, b) => {
+                const dateA = a.prise_en_charge_at ? new Date(a.prise_en_charge_at).getTime() : 0;
+                const dateB = b.prise_en_charge_at ? new Date(b.prise_en_charge_at).getTime() : 0;
+                return dateB - dateA;
+              })[0];
+
+            if (dernierAccepte?.nombre_d_animaux_acceptes != null) {
+              const match = line.match(/^(\d+)/);
+              const total = match ? parseInt(match[1], 10) : null;
+              if (total) {
+                enrichedLine = `${dernierAccepte.nombre_d_animaux_acceptes}/${total} ${abbreviation}`;
+              }
+            }
+          }
+          break;
+        }
+      }
+
       if (lines.length >= maxDetailedLines) {
         nombreDEspecesApres3Lignes++;
       } else {
-        lines.push(line);
+        lines.push(enrichedLine);
       }
     }
-    for (let i = 0; i < maxDetailedLines; i++) {
-      if (!lines[i]) {
-        lines.push('fin de liste'); // juste pour garder la bonne hauteur de carte
-      }
+
+    while (lines.length < maxDetailedLines) {
+      lines.push('fin de liste');
     }
-    if (nombreDEspecesApres3Lignes) {
-      lines.push(`+ ${nombreDEspecesApres3Lignes} espèce${nombreDEspecesApres3Lignes > 1 ? 's' : ''}`);
-    } else {
-      lines.push('fin de liste'); // juste pour garder la bonne hauteur de carte
-    }
+    lines.push(
+      nombreDEspecesApres3Lignes
+        ? `+ ${nombreDEspecesApres3Lignes} espèce${nombreDEspecesApres3Lignes > 1 ? 's' : ''}`
+        : 'fin de liste',
+    );
+
     return lines;
-  }, [carcassesAcceptées]);
+  }, [carcassesAcceptées, carcasses, carcassesIdsByFei, fei.numero, getCarcassesIntermediairesForCarcasse]);
 
   /* 
   {!isOnline && (

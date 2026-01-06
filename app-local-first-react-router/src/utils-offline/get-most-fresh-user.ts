@@ -39,6 +39,11 @@ export async function refreshUser(_calledFrom: string) {
       }, 5000),
     );
 
+    const cachedUser = useUser.getState().user;
+    if (!cachedUser) {
+      return null;
+    }
+
     const fetchPromise = API.get({
       path: '/user/me',
       signal,

@@ -7,6 +7,7 @@ import { createNewFei } from './create-new-fei';
 import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from './circuit-court';
+const environment = import.meta.env.VITE_ENV;
 
 export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
@@ -19,13 +20,14 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   const handleLogout = async () => {
     API.post({ path: 'user/logout' }).then(async () => {
       await clearCache().then(() => {
-        window.location.href = '/app/connexion?type=compte-existant';
+        window.location.href = '/app/connexion';
       });
     });
   };
 
   const isExaminateurInitial = user?.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
   const isAdmin = user?.roles.includes(UserRoles.ADMIN);
+  const isChasseur = user?.roles.includes(UserRoles.CHASSEUR);
   const isSvi = user?.roles.includes(UserRoles.SVI);
   const isEtg = user?.roles.includes(UserRoles.ETG);
   const isCollecteurPro = user?.roles.includes(UserRoles.COLLECTEUR_PRO);
@@ -120,6 +122,14 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       linkProps: { to: '/app/tableau-de-bord', href: '#' },
     },
   ];
+
+  if (isChasseur && environment !== 'prod') {
+    mainMenu.unshift({
+      text: 'Tableau de bord',
+      isActive: location.pathname === '/app/tableau-de-bord/mes-chasses',
+      linkProps: { to: '/app/tableau-de-bord/mes-chasses', href: '#' },
+    });
+  }
 
   if (isExaminateurInitial && !isNotActivated) {
     mainMenu.unshift({

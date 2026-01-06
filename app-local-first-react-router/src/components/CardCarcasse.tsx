@@ -3,10 +3,13 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import {
   Carcasse,
+  CarcasseStatus,
   CarcasseType,
   DepotType,
+  FeiOwnerRole,
   IPM1Decision,
   IPM2Decision,
   PoidsType,
@@ -17,6 +20,7 @@ import { useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
 import ItemNotEditable from './ItemNotEditable';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 
 interface CardCarcasseProps {
   carcasse: Carcasse;
@@ -48,6 +52,8 @@ export default function CardCarcasse({
     }),
   ).current;
 
+  const isCarcasseModalOpen = useIsModalOpen(cacasseModal);
+
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
@@ -73,8 +79,6 @@ export default function CardCarcasse({
 
   let { statusNewCard, motifRefus } = useCarcasseStatusAndRefus(carcasse, fei);
 
-  let espece = carcasse.espece;
-  if (carcasse.nombre_d_animaux! > 1) espece = espece += ` (${carcasse.nombre_d_animaux})`;
   let miseAMort = '';
   if (!hideDateMiseAMort) {
     miseAMort += `Mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
@@ -105,12 +109,42 @@ export default function CardCarcasse({
       if (!statusNewCard.includes('accepté')) statusNewCard = 'accepté';
     }
   }
+
+  // Déterminer qui a accepté en dernier (SVI ou ETG) et récupérer les informations de l'entité
+  let acceptInfo: { type: 'SVI' | 'ETG'; entity: (typeof entities)[string] | null } | null = null;
+  if (statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle')) {
+    const hasSviStatus = !!carcasse.svi_carcasse_status;
+    const sviEntity = hasSviStatus && fei.svi_entity_id ? entities[fei.svi_entity_id] : null;
+
+    const isEtgAccepted =
+      latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG;
+    const etgEntity =
+      isEtgAccepted && latestIntermediaire?.intermediaire_entity_id
+        ? entities[latestIntermediaire.intermediaire_entity_id]
+        : null;
+
+    if (hasSviStatus) {
+      acceptInfo = { type: 'SVI', entity: sviEntity };
+    } else if (isEtgAccepted) {
+      acceptInfo = { type: 'ETG', entity: etgEntity };
+    }
+  }
+
   const isEcarteePourInspection =
     !!latestIntermediaire?.ecarte_pour_inspection && statusNewCard.includes('cours');
   const isEnCours = !latestIntermediaire?.ecarte_pour_inspection && statusNewCard.includes('cours');
   const isRefus = statusNewCard.includes('refus');
   const isManquante = statusNewCard.includes('manquant');
   const isAccept = statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle');
+
+  const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
+  const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
+  const nombreDAnimauxDisplay =
+    CarcasseType.PETIT_GIBIER === carcasse.type
+      ? nombreDAnimaux > 1 && nombreDAnimauxAcceptes > 0
+        ? `(${nombreDAnimauxAcceptes} sur ${nombreDAnimaux})`
+        : `(${nombreDAnimaux})`
+      : '';
 
   return (
     <>
@@ -132,7 +166,9 @@ export default function CardCarcasse({
           type="button"
           onClick={onClick ? onClick : cacasseModal.open}
         >
-          <p className="order-1 text-base font-bold">{espece}</p>
+          <p className="order-1 text-base font-bold">
+            {carcasse.espece} {nombreDAnimauxDisplay}
+          </p>
           <p className="order-2 text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
           {miseAMort && <p className="order-3 text-sm/4">{miseAMort}</p>}
           <p
@@ -161,7 +197,18 @@ export default function CardCarcasse({
               .filter(Boolean)
               .join(' ')}
           >
-            {isEcarteePourInspection ? 'Écarté pour inspection' : statusNewCard}
+            {isEcarteePourInspection ? (
+              'Écarté pour inspection'
+            ) : acceptInfo && acceptInfo.entity?.nom_d_usage ? (
+              <>
+                {statusNewCard} par {acceptInfo.entity.nom_d_usage}{' '}
+                <Badge severity="new" small noIcon as="span">
+                  {acceptInfo.type}
+                </Badge>
+              </>
+            ) : (
+              statusNewCard
+            )}
           </p>
         </button>
         {(onEdit || onDelete) && (
@@ -190,7 +237,7 @@ export default function CardCarcasse({
 
       <cacasseModal.Component
         size="large"
-        title={`${espece} - N° ${carcasse.numero_bracelet}`}
+        title={`${carcasse.espece} - N° ${carcasse.numero_bracelet}`}
         buttons={[
           {
             children: 'Fermer',
@@ -198,11 +245,13 @@ export default function CardCarcasse({
           },
         ]}
       >
-        <CarcasseDetails
-          carcasseId={carcasse.zacharie_carcasse_id}
-          statusNewCard={statusNewCard}
-          motifRefus={motifRefus}
-        />
+        {isCarcasseModalOpen && (
+          <CarcasseDetails
+            carcasseId={carcasse.zacharie_carcasse_id}
+            statusNewCard={statusNewCard}
+            motifRefus={motifRefus}
+          />
+        )}
       </cacasseModal.Component>
     </>
   );

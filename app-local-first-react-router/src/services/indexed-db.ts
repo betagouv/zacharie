@@ -11,10 +11,15 @@ let customStore: UseStore | null = null;
 // if (savedCacheKey !== currentCacheKey) {
 //   clearCache("savedCacheKey diff currentCacheKey");
 // } else {
-setupDB();
+if (typeof window !== 'undefined') {
+  setupDB();
+}
 // }
 
 function setupDB() {
+  if (typeof window === 'undefined') {
+    return;
+  }
   window.localStorage.setItem('zach-currentCacheKey', currentCacheKey);
   customStore = createStore(dbName, storeName);
 }

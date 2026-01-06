@@ -29,6 +29,7 @@ import { UserForFei } from '@api/src/types/user';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import CardCarcasse from '@app/components/CardCarcasse';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
@@ -81,6 +82,8 @@ export default function DestinataireSelect({
   const svisIds = useZustandStore((state) => state.svisIds);
   const collecteursProIds = useZustandStore((state) => state.collecteursProIds);
   const circuitCourtIds = useZustandStore((state) => state.circuitCourtIds);
+
+  const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
 
   const fei = feis[params.fei_numero!];
   const prefilledInfos = usePrefillPremierDétenteurInfos();

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 
 interface ConfirmModalProps {
   title: string;
@@ -32,6 +33,8 @@ export default function ConfirmModal({
       isOpenedByDefault: false,
     }),
   ).current;
+
+  const isModalOpen = useIsModalOpen(modal);
 
   return (
     <>
@@ -73,7 +76,7 @@ export default function ConfirmModal({
           },
         ]}
       >
-        {children}
+        {isModalOpen && children}
       </modal.Component>
     </>
   );
