@@ -403,7 +403,7 @@ function RestrictedRoute({
     user?.roles.includes(UserRoles.CHASSEUR) && user?.est_forme_a_l_examen_initial == null;
 
   if (
-    (!isProfileCompleted || needToCompleteExaminateurInitial) &&
+    (!isProfileCompleted || needToCompleteExaminateurInitial || !user?.activated) &&
     !location.pathname.includes('mon-profil') &&
     !location.pathname.includes('admin')
   ) {
