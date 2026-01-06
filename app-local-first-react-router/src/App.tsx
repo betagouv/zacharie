@@ -55,6 +55,7 @@ import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
 import OnboardingMesRoles from './routes/onboarding/1-mon-activite';
 import OnboardingMesCoordonnees from './routes/onboarding/2-mes-coordonnees';
 import OnboardingMesInformationsDeChasse from './routes/onboarding/3-mes-informations-de-chasse';
+import OnboardingMonEntreprise from './routes/onboarding/3-mon-entreprise';
 import OnboardingMesNotifications from './routes/onboarding/4-mes-notifications';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
@@ -163,6 +164,7 @@ function App() {
                   />
                 }
               />
+              <Route path="mon-entreprise" element={<OnboardingMonEntreprise />} />
               <Route path="mes-notifications" element={<OnboardingMesNotifications />} />
             </Route>
             <Route path="contact" element={<Contact />} />
