@@ -106,14 +106,6 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       },
     });
   }
-  profileMenu.push({
-    text: `Déconnecter ${user?.email}`,
-    linkProps: {
-      onClick: handleLogout,
-      type: 'submit',
-      href: '#',
-    },
-  });
 
   const mainMenu: MainNavigationProps.Item[] = [
     {
