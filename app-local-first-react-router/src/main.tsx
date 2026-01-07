@@ -15,6 +15,7 @@ import { initMatomo } from './services/matomo.ts';
 import 'dayjs/locale/fr';
 import dayjs from 'dayjs';
 dayjs.locale('fr');
+import { ToastContainer } from 'react-toastify';
 
 startReactDsfr({
   // defaultColorScheme: "system",
@@ -91,6 +92,7 @@ createRoot(document.getElementById('root')!).render(
         }}
       >
         <App />
+        <ToastContainer />
       </ErrorBoundary>
     </BrowserRouter>
   </StrictMode>,
