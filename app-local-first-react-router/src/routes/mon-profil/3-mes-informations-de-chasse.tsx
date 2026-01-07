@@ -262,7 +262,7 @@ export default function MesInformationsDeChasse({
               <ButtonsGroup
                 buttons={[
                   {
-                    children: 'Enregistrer',
+                    children: redirect ? 'Enregistrer et Continuer' : 'Enregistrer',
                     disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
                     type: 'button',
                     nativeButtonProps: {

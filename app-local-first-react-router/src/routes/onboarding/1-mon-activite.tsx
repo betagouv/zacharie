@@ -34,7 +34,7 @@ export default function MesRoles() {
         }).then((data) => data as UserConnexionResponse);
         if (response.ok && response.data?.user?.id) {
           useUser.setState({ user: response.data.user });
-          navigate('/app/tableau-de-bord/mon-profil/mes-coordonnees');
+          navigate('/app/tableau-de-bord/onboarding/mes-coordonnees');
         }
       }}
     >

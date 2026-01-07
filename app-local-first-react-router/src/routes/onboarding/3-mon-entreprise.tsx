@@ -123,8 +123,7 @@ export default function MonEntreprise() {
   );
 
   const nextTitle = 'Mes notifications';
-  const nextPage = '/app/tableau-de-bord/mon-profil/mes-notifications';
-  const isFromProfil = location.pathname.includes('/app/tableau-de-bord/mon-profil');
+  const nextPage = '/app/tableau-de-bord/onboarding/mes-notifications';
 
   const showEntrpriseVisibilityCheckbox =
     user.roles.includes(UserRoles.COLLECTEUR_PRO) || user.roles.includes(UserRoles.ETG);
@@ -137,24 +136,18 @@ export default function MonEntreprise() {
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-            {isFromProfil && <Stepper currentStep={3} nextTitle={nextTitle} stepCount={4} title={title} />}
+            <Stepper currentStep={3} nextTitle={nextTitle} stepCount={4} title={title} />
             <h1 className="fr-h2 fr-mb-2w">
-              {isFromProfil
-                ? 'Renseignez ' + (user.roles.includes(UserRoles.SVI) ? 'votre service' : 'votre entreprise')
-                : title}
+              {'Renseignez ' + (user.roles.includes(UserRoles.SVI) ? 'votre service' : 'votre entreprise')}
             </h1>
-            {isFromProfil && (
-              <CallOut
-                title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées"
-                className="bg-white"
-              >
-                {user.roles.includes(UserRoles.SVI)
-                  ? "Quel est votre service vétérinaire d'inspection (SVI) ?"
-                  : 'Quelle est votre entreprise ?'}
-                <br />
-                Lorsqu'une fiche lui sera attribuée, vous pourrez la prendre en charge.
-              </CallOut>
-            )}
+            <CallOut title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées" className="bg-white">
+              {user.roles.includes(UserRoles.SVI)
+                ? "Quel est votre service vétérinaire d'inspection (SVI) ?"
+                : 'Quelle est votre entreprise ?'}
+              <br />
+              Lorsqu'une fiche lui sera attribuée, vous pourrez la prendre en charge.
+            </CallOut>
+
             {user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
               <ListAndSelectEntities
                 formId="onboarding-etape-2-collecteur-pro-data"
@@ -359,32 +352,25 @@ export default function MonEntreprise() {
               </div>
               <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
                 <ButtonsGroup
-                  // @ts-expect-error priority is not typed
                   buttons={[
                     {
-                      children: isFromProfil ? 'Enregistrer et Continuer' : 'Enregistrer',
+                      children: 'Enregistrer et Continuer',
                       disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
                       type: 'button',
                       nativeButtonProps: {
                         onClick: () => {
-                          if (isFromProfil) {
-                            navigate(nextPage);
-                          }
+                          navigate(nextPage);
                         },
                       },
                     },
-                    ...(isFromProfil
-                      ? [
-                          {
-                            children: 'Modifier mes coordonnées',
-                            linkProps: {
-                              to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
-                              href: '#',
-                            },
-                            priority: 'secondary',
-                          },
-                        ]
-                      : []),
+                    {
+                      children: 'Modifier mes coordonnées',
+                      linkProps: {
+                        to: '/app/tableau-de-bord/onboarding/mes-coordonnees',
+                        href: '#',
+                      },
+                      priority: 'secondary',
+                    },
                   ]}
                 />
               </div>
