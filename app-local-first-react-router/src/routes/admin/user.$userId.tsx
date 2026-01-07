@@ -23,6 +23,7 @@ import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 import { EntityWithUserRelations } from '@api/src/types/entity';
+import { toast } from 'react-toastify';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
@@ -99,14 +100,19 @@ export default function AdminUser() {
     API.post({
       path: `/user/${params.userId}`,
       body,
-    }).then(() => {
+    }).then((res) => {
+      if (!res.ok) {
+        return toast.error("Une erreur est survenue lors de la mise à jour de l'utilisateur");
+      }
+
       loadData(params.userId!).then((res) => {
         if (res.ok && res.data) {
           setUserResponseData(res.data as State);
         }
         if (!res.ok) {
-          alert(res.error);
+          return toast.error(res.error);
         }
+        toast.success("L'utilisateur a été mis à jour avec succès");
       });
     });
   };
