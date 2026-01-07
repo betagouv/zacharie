@@ -32,6 +32,7 @@ import CardCarcasse from '@app/components/CardCarcasse';
 import DestinataireSelect from './destinataire-select';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { capture } from '@app/services/sentry';
+import { toast } from 'react-toastify';
 
 interface Props {
   readOnly?: boolean;
@@ -518,6 +519,7 @@ function FEICurrentIntermediaireContent({
       zacharie_carcasse_id: null,
       carcasse_intermediaire_id: null,
     });
+    toast.success('La fiche a été clôturée avec succès');
   }
 
   function handleCheckFinishedAt(_priseEnChargeAt: Date) {
