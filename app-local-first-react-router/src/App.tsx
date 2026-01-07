@@ -47,6 +47,7 @@ import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-m
 import MesChasses from './routes/mes-chasses/mes-chasses';
 import FeiEnvoyée from './routes/fei/envoyée';
 import DeactivatedAccount from './routes/deactivated';
+import { MatomoTracker } from './components/MatomoTracker';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -360,6 +361,7 @@ function App() {
           </Route>
         </Route>
       </SentryRoutes>
+      <MatomoTracker />
       <OfflineMode />
     </>
   );
