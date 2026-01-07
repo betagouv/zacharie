@@ -313,7 +313,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                 value: sviIpm1NombreAnimaux ?? '',
                 // max: Number(carcasse.nombre_d_animaux),
                 onChange: (e) => {
-                  setSviIpm1NombreAnimaux(Number(e.target.value));
+                  const clampedValue = Math.max(
+                    0,
+                    Math.min(Number(e.target.value), Number(carcasse.nombre_d_animaux)),
+                  );
+                  setSviIpm1NombreAnimaux(clampedValue);
                 },
               }}
             />
