@@ -10,7 +10,7 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import Section from '@app/components/Section';
-import DestinataireSelect from './destinataire-select';
+import DestinataireMultiSelect from './destinataire-multiselect';
 
 export default function FeiPremierDetenteur() {
   const params = useParams();
@@ -127,12 +127,13 @@ export default function FeiPremierDetenteur() {
           className="mb-5"
         />
       )}
-      <DestinataireSelect
+      <DestinataireMultiSelect
         canEdit={canEdit}
         disabled={showAsDisabled}
         calledFrom="premier-detenteur-need-select-next"
         premierDetenteurEntity={premierDetenteurEntity}
         premierDetenteurUser={premierDetenteurUser}
+        className="flex flex-col"
       />
     </Section>
   );
