@@ -41,7 +41,7 @@ export default function CarcassesExaminateur({
       </div>
       {canEdit && carcasses.length > 0 && (
         <p className="my-4 ml-4 text-sm text-gray-500">
-          Rappel des carcasses enregistrées sur cette fiche&nbsp;:
+          Carcasses enregistrées sur cette fiche&nbsp;:
           {countCarcassesByEspece.map((line) => (
             <span className="ml-4 block" key={line}>
               {line}
