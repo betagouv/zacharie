@@ -1,18 +1,21 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { UserRoles, Prisma, User } from '@prisma/client';
 import InputVille from '@app/components/InputVille';
 import InputNotEditable from '@app/components/InputNotEditable';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
+import { useNavigate } from 'react-router';
 import API from '@app/services/api';
-import { toast } from 'react-toastify';
 
 export default function MesCoordonnees() {
   const user = useUser((state) => state.user)!;
+
+  const navigate = useNavigate();
 
   const handleUserFormBlur = useCallback(
     async (event: React.FocusEvent<HTMLFormElement>) => {
@@ -29,9 +32,21 @@ export default function MesCoordonnees() {
     [user.id],
   );
 
-  const handleSubmit = () => {
-    toast.success('Coordonnées enregistrées');
-  };
+  const nextTitle = useMemo(() => {
+    if (user.roles.includes(UserRoles.CHASSEUR)) {
+      return 'Mes informations de chasse';
+    }
+    if (user.roles.includes(UserRoles.SVI)) {
+      return 'Mon service';
+    }
+    return 'Mon entreprise';
+  }, [user.roles]);
+  const nextPage = useMemo(() => {
+    if (user.roles.includes(UserRoles.CHASSEUR)) {
+      return '/app/tableau-de-bord/onboarding/mes-informations-de-chasse';
+    }
+    return '/app/tableau-de-bord/onboarding/mon-entreprise';
+  }, [user.roles]);
 
   const needAddress = user.roles.includes(UserRoles.CHASSEUR);
 
@@ -44,7 +59,8 @@ export default function MesCoordonnees() {
       <title>Mes coordonnées | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <h1 className="fr-h2 fr-mb-2w">Mes coordonnées</h1>
+          <Stepper currentStep={2} nextTitle={nextTitle} stepCount={4} title="Mes coordonnées" />
+          <h1 className="fr-h2 fr-mb-2w">Renseignez vos coordonnées</h1>
           <CallOut title="✍️ Pour pouvoir remplir les fiches qui vont sont attribuées" className="bg-white">
             Qui êtes-vous ?<br />
             Lorsqu'une fiche sera attribuée à laquelle vous êtes rattachée, vous pourrez la prendre en charge.
@@ -169,10 +185,10 @@ export default function MesCoordonnees() {
               <ButtonsGroup
                 buttons={[
                   {
-                    children: 'Enregistrer',
+                    children: 'Enregistrer et Continuer',
                     type: 'button',
                     nativeButtonProps: {
-                      onClick: handleSubmit,
+                      onClick: () => navigate(nextPage),
                     },
                   },
                 ]}
