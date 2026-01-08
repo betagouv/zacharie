@@ -251,6 +251,14 @@ export default function DestinataireSelect({
   const needTransport = useMemo(() => {
     if (sousTraite) return false;
     if (premierDetenteurEntity || premierDetenteurUser) {
+      // Ne pas afficher la question sur le transport pour particulier, commerce de détail ou repas associatif (circuit court)
+      if (
+        prochainDetenteurType === EntityTypes.CONSOMMATEUR_FINAL ||
+        prochainDetenteurType === EntityTypes.COMMERCE_DE_DETAIL ||
+        prochainDetenteurType === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF
+      ) {
+        return false;
+      }
       return prochainDetenteurType !== EntityTypes.COLLECTEUR_PRO;
     }
     // if (prochainDetenteurType === EntityTypes.SVI) return false;
@@ -370,18 +378,27 @@ export default function DestinataireSelect({
       if (needTransport && !transportType) return true;
       if (!depotType) return true;
       if (depotType === EntityTypes.CCG && !depotEntityId) return true;
-      if (transportType === TransportType.PREMIER_DETENTEUR && depotType === DepotType.CCG && !depotDate) {
+      if (
+        needTransport &&
+        transportType === TransportType.PREMIER_DETENTEUR &&
+        depotType === DepotType.CCG &&
+        !depotDate
+      ) {
         return true;
       }
       if (depotType !== fei.premier_detenteur_depot_type) return true;
       if (depotEntityId !== fei.premier_detenteur_depot_entity_id) return true;
-      if (transportType !== fei.premier_detenteur_transport_type) return true;
+      // Si le transport n'est plus nécessaire mais qu'il y avait un transport type précédemment, il faut soumettre pour le nettoyer
+      if (!needTransport && fei.premier_detenteur_transport_type) return true;
+      if (needTransport && transportType !== fei.premier_detenteur_transport_type) return true;
       if (depotDate || fei.premier_detenteur_depot_ccg_at) {
         if (!depotDate) return !fei.premier_detenteur_depot_ccg_at;
         if (!fei.premier_detenteur_depot_ccg_at) return !depotDate;
         if (depotDate !== dayjs(fei.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm')) return true;
       }
-      if (transportDate || fei.premier_detenteur_transport_date) {
+      // Si le transport n'est plus nécessaire mais qu'il y avait une date de transport précédemment, il faut soumettre pour la nettoyer
+      if (!needTransport && fei.premier_detenteur_transport_date) return true;
+      if (needTransport && (transportDate || fei.premier_detenteur_transport_date)) {
         if (!transportDate) return !fei.premier_detenteur_transport_date;
         if (!fei.premier_detenteur_transport_date) return !transportDate;
         if (transportDate !== dayjs(fei.premier_detenteur_transport_date).format('YYYY-MM-DDTHH:mm'))
