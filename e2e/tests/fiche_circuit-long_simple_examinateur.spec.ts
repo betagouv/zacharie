@@ -33,23 +33,23 @@ test("Création d'une fiche", async ({ page }) => {
     .getByRole("textbox", { name: "Heure de mise à mort de la" })
     .fill(dayjs().startOf("day").add(1, "hour").format("HH:mm"));
   await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).blur();
-  await page.getByLabel("Nouvelle carcasse / lot de").selectOption("Daim");
+  await page.getByLabel("Espèce (grand et petit gibier)").selectOption("Daim");
   await page
     .getByRole("button", { name: "Votre chasse n'a pas de dispositif de marquage ? Cliquez ici pour utiliser" })
     .click();
-  await page.getByRole("button", { name: "Enregistrer la carcasse" }).click();
+  await page.getByRole("button", { name: "Ajouter une carcasse" }).click();
   await page
     .getByRole("button", { name: "Votre chasse n'a pas de dispositif de marquage ? Cliquez ici pour utiliser" })
     .click();
-  await page.getByRole("button", { name: "Enregistrer la carcasse" }).click();
+  await page.getByRole("button", { name: "Ajouter une carcasse" }).click();
   await page
     .getByRole("button", { name: "Votre chasse n'a pas de dispositif de marquage ? Cliquez ici pour utiliser" })
     .click();
-  await page.getByRole("button", { name: "Enregistrer la carcasse" }).click();
+  await page.getByRole("button", { name: "Ajouter une carcasse" }).click();
   await page
     .getByRole("button", { name: "Votre chasse n'a pas de dispositif de marquage ? Cliquez ici pour utiliser" })
     .click();
-  await page.getByRole("button", { name: "Enregistrer la carcasse" }).click();
+  await page.getByRole("button", { name: "Ajouter une carcasse" }).click();
   await page
     .getByRole("textbox", { name: "Heure d'éviscération de la" })
     .fill(dayjs().startOf("day").add(2, "hour").format("HH:mm"));
