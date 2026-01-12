@@ -1,3 +1,5 @@
+import { Tooltip } from '@codegouvfr/react-dsfr/Tooltip';
+
 interface RefusalCause {
   label: string;
   count: number;
@@ -14,7 +16,7 @@ export default function RefusalCausesCard({ causes }: RefusalCausesCardProps) {
         Causes de refus fréquents
       </div>
       <div className="space-y-3">
-        {causes.map((cause, index) => (
+        {causes.slice(0, 3).map((cause, index) => (
           <div
             key={index}
             className="text-action-high-blue-france-light flex flex-row items-center justify-between"
@@ -23,15 +25,14 @@ export default function RefusalCausesCard({ causes }: RefusalCausesCardProps) {
             <span className="ml-3 flex-1 text-base">{cause.label}</span>
           </div>
         ))}
+        {causes.length === 0 && <div className="italic">Aucune raison de refus trouvée</div>}
       </div>
       <div className="mt-auto flex justify-center">
-        <button
-          type="button"
-          className="text-action-high-blue-france-light inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-          aria-label="Plus d'informations"
-        >
-          <span className="text-xs font-bold">?</span>
-        </button>
+        <Tooltip
+          style={{ textAlign: 'center' }}
+          kind="hover"
+          title="Principales raisons de refus des carcasses de grand gibier sauvage lors du contrôle sanitaire."
+        />
       </div>
     </div>
   );

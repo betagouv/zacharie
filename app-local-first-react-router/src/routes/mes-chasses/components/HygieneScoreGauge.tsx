@@ -40,29 +40,27 @@ export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScor
   const getScoreColor = () => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
+    if (score >= 30) return 'text-orange-600';
     return 'text-red-600';
   };
 
   const getScoreBackgroundColor = () => {
     if (score >= 80) return 'bg-green-100';
     if (score >= 60) return 'bg-yellow-100';
+    if (score >= 30) return 'bg-orange-100';
     return 'bg-red-100';
   };
 
   const getScoreLabel = () => {
     if (score >= 80) return 'EXCELLENT';
     if (score >= 60) return 'BON';
+    if (score >= 30) return 'MOYEN';
     return 'À AMÉLIORER';
   };
 
-  const getScoreColorClass = () => {
-    if (score >= 75) return '#16a34a';
-    if (score >= 30) return '#fbbf24';
-    return '#f87171';
-  };
-
   const getScoreIconColor = () => {
-    if (score >= 75) return '#18753C';
+    if (score >= 80) return '#18753C';
+    if (score >= 60) return '#D69E2E';
     if (score >= 30) return '#D69E2E';
     return '#D62E2E';
   };
