@@ -5,7 +5,7 @@ const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { getIframeUrl } from '~/service/metabase-embed';
 import prisma from '~/prisma';
-import { CarcasseType, CarcasseStatus, DepotType } from '@prisma/client';
+import { CarcasseType, CarcasseStatus, FeiOwnerRole } from '@prisma/client';
 import dayjs from 'dayjs';
 
 // BPH-related motifs (bonnes pratiques d'hygiène) for hygiene score calculation
@@ -132,8 +132,22 @@ router.get(
 
     // Calculate hygiene score based on BPH (Bonnes Pratiques d'Hygiène)
     // Formula: 100 × (1 - (personal BPH seizure rate / (2 × national BPH seizure rate)))
-    // Only considers carcasses sent to ETG (not circuit court)
-    const carcassesSentToEtg = carcasses.filter((c) => c.premier_detenteur_depot_type === DepotType.ETG);
+    // Only considers carcasses sent to ETG (at least one intermediary was an ETG)
+
+    // Find carcasses that went through an ETG (have at least one CarcasseIntermediaire with role ETG)
+    const carcasseIdsWithEtg = await prisma.carcasseIntermediaire.findMany({
+      where: {
+        zacharie_carcasse_id: { in: carcasses.map((c) => c.zacharie_carcasse_id) },
+        intermediaire_role: FeiOwnerRole.ETG,
+        deleted_at: null,
+      },
+      select: {
+        zacharie_carcasse_id: true,
+      },
+      distinct: ['zacharie_carcasse_id'],
+    });
+    const etgCarcasseIds = new Set(carcasseIdsWithEtg.map((c) => c.zacharie_carcasse_id));
+    const carcassesSentToEtg = carcasses.filter((c) => etgCarcasseIds.has(c.zacharie_carcasse_id));
     const etgCarcassesCount = carcassesSentToEtg.length;
 
     // Count BPH-related lesions from SVI inspections for user's carcasses
@@ -144,13 +158,29 @@ router.get(
       etgCarcassesCount > 0 ? (personalBphLesionsCount / etgCarcassesCount) * 100 : 0;
 
     // Calculate national BPH seizure rate for the current season
+    // Find all carcasses that went through an ETG this season
+    const nationalEtgCarcasseIds = await prisma.carcasseIntermediaire.findMany({
+      where: {
+        intermediaire_role: FeiOwnerRole.ETG,
+        deleted_at: null,
+        CarcasseCarcasseIntermediaire: {
+          date_mise_a_mort: {
+            gte: seasonStart.toDate(),
+            lte: seasonEnd.toDate(),
+          },
+          deleted_at: null,
+        },
+      },
+      select: {
+        zacharie_carcasse_id: true,
+      },
+      distinct: ['zacharie_carcasse_id'],
+    });
+    const nationalEtgIds = nationalEtgCarcasseIds.map((c) => c.zacharie_carcasse_id);
+
     const nationalEtgCarcasses = await prisma.carcasse.findMany({
       where: {
-        premier_detenteur_depot_type: DepotType.ETG,
-        date_mise_a_mort: {
-          gte: seasonStart.toDate(),
-          lte: seasonEnd.toDate(),
-        },
+        zacharie_carcasse_id: { in: nationalEtgIds },
         deleted_at: null,
       },
       select: {
