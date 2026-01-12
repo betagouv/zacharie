@@ -1,3 +1,5 @@
+import { Tooltip } from '@codegouvfr/react-dsfr/Tooltip';
+
 interface SeizureRateCardProps {
   rate: number;
   label: string;
@@ -11,13 +13,11 @@ export default function SeizureRateCard({ rate, label }: SeizureRateCardProps) {
       </div>
       <div className="text-action-high-blue-france-light mb-4 text-base font-bold">{label}</div>
       <div className="flex justify-end">
-        <button
-          type="button"
-          className="text-action-high-blue-france-light mt-auto inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
-          aria-label="Plus d'informations"
-        >
-          <span className="text-xs font-bold">?</span>
-        </button>
+        <Tooltip
+          style={{ textAlign: 'center' }}
+          kind="hover"
+          title="Ce taux correspond au nombre de carcasses de grand gibier sauvage qui ont été retirées de la consommation humaine par les services vétérinaires en établissement de traitement du gibier sauvage. Une saisie traduit un problème sanitaire rendant la viande impropre à la consommation. "
+        />
       </div>
     </div>
   );
