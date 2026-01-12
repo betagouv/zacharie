@@ -312,9 +312,15 @@ router.post(
       }
 
       const token = crypto.randomUUID();
-      await prisma.password.update({
+      await prisma.password.upsert({
         where: { user_id: user.id },
-        data: {
+        update: {
+          reset_password_token: token,
+          reset_password_last_email_sent_at: new Date(),
+        },
+        create: {
+          User: { connect: { id: user.id } },
+          password: '',
           reset_password_token: token,
           reset_password_last_email_sent_at: new Date(),
         },
