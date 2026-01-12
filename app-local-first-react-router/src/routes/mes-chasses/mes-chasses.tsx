@@ -9,6 +9,8 @@ import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
+import { createNewFei } from '@app/utils/create-new-fei';
+import { useNavigate } from 'react-router';
 const environment = import.meta.env.VITE_ENV;
 
 interface DashboardData {
@@ -49,7 +51,7 @@ export default function MesChasses() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -94,6 +96,36 @@ export default function MesChasses() {
   }
 
   const isSmallGameOnly = dashboardData.bigGame === 0 && dashboardData.smallGame > 0;
+
+  if (dashboardData.totalCarcasses === 0) {
+    return (
+      <div className="fr-container fr-container--fluid min-h-screen">
+        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
+          <div className="fr-col-12 p-2 md:p-0">
+            <div className="flex min-h-[60vh] flex-col items-center justify-center">
+              <h2 className="mb-3 text-center text-4xl font-bold text-gray-800">
+                Pas encore de carcasses cette saison
+              </h2>
+              <p className="mb-6 max-w-md text-center text-gray-600">
+                Vos statistiques apparaîtront ici dès que vous aurez enregistré votre première fiche d'examen
+                initial.
+              </p>
+              <Button
+                priority="primary"
+                iconId="fr-icon-add-circle-line"
+                onClick={async () => {
+                  const newFei = await createNewFei();
+                  navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+                }}
+              >
+                Créer une fiche
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fr-container fr-container--fluid min-h-screen">
