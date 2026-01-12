@@ -8,6 +8,7 @@ import SeizureRateCardPersonal from './components/SeizureRateCardPersonal';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
 const environment = import.meta.env.VITE_ENV;
 
 interface DashboardData {
@@ -15,9 +16,9 @@ interface DashboardData {
   season: string;
   bigGame: number;
   smallGame: number;
-  hygieneScore: number;
+  hygieneScore: number | null;
   refusalCauses: Array<{ label: string; count: number }>;
-  personalSeizureRate: number;
+  personalSeizureRate: number | null;
   nationalSeizureRate: number;
 }
 
@@ -92,6 +93,8 @@ export default function MesChasses() {
     );
   }
 
+  const isSmallGameOnly = dashboardData.bigGame === 0 && dashboardData.smallGame > 0;
+
   return (
     <div className="fr-container fr-container--fluid min-h-screen">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
@@ -99,16 +102,32 @@ export default function MesChasses() {
           <div className="mb-6 grid grid-cols-2 gap-3 md:gap-8">
             <TotalCarcassesCard total={dashboardData.totalCarcasses} season={dashboardData.season} />
             <CarcassBreakdownCard bigGame={dashboardData.bigGame} smallGame={dashboardData.smallGame} />
-            <HygieneScoreCard score={dashboardData.hygieneScore} />
-            <RefusalCausesCard causes={dashboardData.refusalCauses} />
-            <SeizureRateCardPersonal
-              rate={dashboardData.personalSeizureRate}
-              label="taux de saisie personnel grand gibier"
-            />
-            <SeizureRateCard
-              rate={dashboardData.nationalSeizureRate}
-              label="taux de saisie national en 2024"
-            />
+            {isSmallGameOnly ? (
+              <div className="col-span-2">
+                <Alert
+                  severity="info"
+                  title=""
+                  description="Les indicateurs de tableau de bord pour le petit gibier sont en cours de développement. Vous verrez bientôt votre taux de saisie et les principales raisons de refus et de saisie."
+                />
+              </div>
+            ) : (
+              <>
+                {dashboardData.hygieneScore !== null && (
+                  <HygieneScoreCard score={dashboardData.hygieneScore} />
+                )}
+                <RefusalCausesCard causes={dashboardData.refusalCauses} />
+                {dashboardData.personalSeizureRate !== null && (
+                  <SeizureRateCardPersonal
+                    rate={dashboardData.personalSeizureRate}
+                    label="taux de saisie personnel grand gibier"
+                  />
+                )}
+                <SeizureRateCard
+                  rate={dashboardData.nationalSeizureRate}
+                  label="taux de saisie national en 2024"
+                />
+              </>
+            )}
           </div>
         </div>
       </div>
