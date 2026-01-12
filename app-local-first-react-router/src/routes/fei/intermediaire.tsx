@@ -463,19 +463,20 @@ function FEICurrentIntermediaireContent({
     priseEnChargeAt,
   ]);
 
-  const canCloseFeiWithOnlyManquantes = useMemo(() => {
+  const canCloseFeiWithOnlyManquantesOrRejetees = useMemo(() => {
     if (!effectiveCanEdit) {
       return false;
     }
     if (fei.intermediaire_closed_at || fei.svi_closed_at || fei.automatic_closed_at) {
       return false;
     }
-    if (carcassesSorted.carcassesManquantes.length === 0) {
+    // Il faut au moins une carcasse manquante ou refusée
+    if (carcassesSorted.carcassesManquantes.length === 0 && carcassesSorted.carcassesRejetees.length === 0) {
       return false;
     }
+    // Pas de carcasses acceptées ou écartées pour inspection
     if (
       carcassesSorted.carcassesApproved.length > 0 ||
-      carcassesSorted.carcassesRejetees.length > 0 ||
       carcassesSorted.carcassesEcarteesPourInspection.length > 0
     ) {
       return false;
@@ -507,7 +508,7 @@ function FEICurrentIntermediaireContent({
     });
     addLog({
       user_id: user.id,
-      action: 'intermediaire-close-fei-manquantes',
+      action: 'intermediaire-close-fei-manquantes-ou-rejetees',
       fei_numero: fei.numero,
       intermediaire_id: intermediaire.id,
       history: createHistoryInput(intermediaire, {
@@ -657,10 +658,17 @@ function FEICurrentIntermediaireContent({
               })}
             </div>
           )}
-          {canCloseFeiWithOnlyManquantes && (
+          {canCloseFeiWithOnlyManquantesOrRejetees && (
             <div className="my-8 flex justify-center">
               <Button onClick={handleCloseFei} priority="primary">
-                Clôturer la fiche (toutes les carcasses sont manquantes)
+                Clôturer la fiche (
+                {carcassesSorted.carcassesManquantes.length > 0 &&
+                carcassesSorted.carcassesRejetees.length > 0
+                  ? 'toutes les carcasses sont manquantes ou refusées'
+                  : carcassesSorted.carcassesManquantes.length > 0
+                    ? 'toutes les carcasses sont manquantes'
+                    : 'toutes les carcasses sont refusées'}
+                )
               </Button>
             </div>
           )}
