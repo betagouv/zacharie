@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
-import { EntityRelationType, UserRoles } from '@prisma/client';
+import { CarcasseType, EntityRelationType, UserRoles } from '@prisma/client';
+import { abbreviations } from '@app/utils/count-carcasses';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import useZustandStore, { syncData } from '@app/zustand/store';
@@ -606,6 +607,11 @@ function FeisTableRow({
 }) {
   const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
   const isCircuitCourt = useIsCircuitCourt();
+  const carcasses = useZustandStore((state) => state.carcasses);
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const getCarcassesIntermediairesForCarcasse = useZustandStore(
+    (state) => state.getCarcassesIntermediairesForCarcasse,
+  );
 
   // Notifier le parent de la visibilité de cette ligne
   useEffect(() => {
@@ -636,6 +642,43 @@ function FeisTableRow({
     }
     return [_carcassesAcceptées, _carcassesRefusées, _carcassesOuLotsRefusés];
   }, [fei.resume_nombre_de_carcasses]);
+
+  // Enrichir les carcasses acceptées pour afficher le nombre accepté pour le petit gibier
+  // Même logique que dans CardCarcasse.tsx : format "(X sur Y)"
+  const formattedCarcassesAcceptées = useMemo(() => {
+    if (!carcassesAcceptées.length) {
+      return [];
+    }
+    const feiCarcasses = (carcassesIdsByFei[fei.numero] || []).map((id) => carcasses[id]);
+    const lines = [];
+    for (const line of carcassesAcceptées) {
+      let enrichedLine = line;
+
+      // Chercher l'espèce et le nombre accepté pour le petit gibier
+      for (const [espece, abbreviation] of Object.entries(abbreviations)) {
+        if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
+          const carcasse = feiCarcasses.find(
+            (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece,
+          );
+          if (carcasse) {
+            const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
+            const intermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id!);
+            const latestIntermediaire = intermediaires[0];
+            const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
+
+            // Même logique que CardCarcasse.tsx
+            if (nombreDAnimaux > 1 && nombreDAnimauxAcceptes > 0) {
+              enrichedLine = `${nombreDAnimauxAcceptes} sur ${nombreDAnimaux} ${abbreviation}`;
+            }
+          }
+          break;
+        }
+      }
+
+      lines.push(enrichedLine);
+    }
+    return lines;
+  }, [carcassesAcceptées, carcasses, carcassesIdsByFei, fei.numero, getCarcassesIntermediairesForCarcasse]);
 
   // Filtrer selon le statut si un filtre est défini - APRÈS tous les hooks
   if (filter && filter !== 'Toutes les fiches' && filter !== simpleStatus) {
@@ -697,10 +740,10 @@ function FeisTableRow({
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1 text-sm">
-          {carcassesAcceptées.length > 0 ? (
+          {formattedCarcassesAcceptées.length > 0 ? (
             <div>
-              {carcassesAcceptées.map((carcasse) => (
-                <p className="m-0 text-sm" key={carcasse}>
+              {formattedCarcassesAcceptées.map((carcasse, index) => (
+                <p className="m-0 text-sm" key={carcasse + index}>
                   {carcasse}
                 </p>
               ))}
