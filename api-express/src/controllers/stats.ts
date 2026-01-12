@@ -5,8 +5,46 @@ const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { getIframeUrl } from '~/service/metabase-embed';
 import prisma from '~/prisma';
-import { CarcasseType, CarcasseStatus } from '@prisma/client';
+import { CarcasseType, CarcasseStatus, DepotType } from '@prisma/client';
 import dayjs from 'dayjs';
+
+// BPH-related motifs (bonnes pratiques d'hygiène) for hygiene score calculation
+// These are SVI lesion motifs that indicate hygiene issues attributable to the hunter
+const BPH_RELATED_MOTIFS = [
+  // Balle d'abdomen
+  "Souillures d'origine digestive liées à une balle d'abdomen",
+  // Souillures d'éviscération (includes balle d'abdomen non avérée)
+  "Souillures d'origine digestive",
+  // Souillures telluriques
+  'Souillures autres que liées au contenu digestif : souillures telluriques',
+  // Anomalies d'odeur
+  'Odeur anormale',
+  // Putréfaction
+  'Putréfaction superficielle',
+  'Putréfaction profonde',
+  // Moisissures
+  'Moisissures',
+  // Œufs ou larves de mouche
+  'Œufs ou larves de mouche',
+  // Morsure de chien
+  'Morsure de chien',
+  // Viande à évolution anormale
+  'Viande à évolution anormale : myopathie exsudative dépigmentaire',
+  'Viande à évolution anormale : viande fiévreuse',
+  'Viande à évolution anormale : viande surmenée',
+];
+
+/**
+ * Count BPH-related lesions in a carcasse's SVI inspection results
+ * Checks both IPM1 and IPM2 lesions
+ */
+function countBphLesions(carcasse: {
+  svi_ipm1_lesions_ou_motifs: string[];
+  svi_ipm2_lesions_ou_motifs: string[];
+}): number {
+  const allLesions = [...carcasse.svi_ipm1_lesions_ou_motifs, ...carcasse.svi_ipm2_lesions_ou_motifs];
+  return allLesions.filter((lesion) => BPH_RELATED_MOTIFS.includes(lesion)).length;
+}
 
 router.get(
   '/nombre-de-carcasses-cumule',
@@ -92,15 +130,57 @@ router.get(
     const bigGame = carcasses.filter((c) => c.type === CarcasseType.GROS_GIBIER).length;
     const smallGame = carcasses.filter((c) => c.type === CarcasseType.PETIT_GIBIER).length;
 
-    // Calculate hygiene score (based on examinateur anomalies)
-    // Score = 100 - (number of carcasses with anomalies / total) * 100
-    const carcassesWithAnomalies = carcasses.filter(
-      (c) =>
-        (c.examinateur_anomalies_carcasse && c.examinateur_anomalies_carcasse.length > 0) ||
-        (c.examinateur_anomalies_abats && c.examinateur_anomalies_abats.length > 0),
-    ).length;
-    const hygieneScore =
-      totalCarcasses > 0 ? Math.round(100 - (carcassesWithAnomalies / totalCarcasses) * 100) : 100;
+    // Calculate hygiene score based on BPH (Bonnes Pratiques d'Hygiène)
+    // Formula: 100 × (1 - (personal BPH seizure rate / (2 × national BPH seizure rate)))
+    // Only considers carcasses sent to ETG (not circuit court)
+    const carcassesSentToEtg = carcasses.filter((c) => c.premier_detenteur_depot_type === DepotType.ETG);
+    const etgCarcassesCount = carcassesSentToEtg.length;
+
+    // Count BPH-related lesions from SVI inspections for user's carcasses
+    const personalBphLesionsCount = carcassesSentToEtg.reduce((count, c) => count + countBphLesions(c), 0);
+
+    // Calculate personal BPH seizure rate
+    const personalBphSeizureRate =
+      etgCarcassesCount > 0 ? (personalBphLesionsCount / etgCarcassesCount) * 100 : 0;
+
+    // Calculate national BPH seizure rate for the current season
+    const nationalEtgCarcasses = await prisma.carcasse.findMany({
+      where: {
+        premier_detenteur_depot_type: DepotType.ETG,
+        date_mise_a_mort: {
+          gte: seasonStart.toDate(),
+          lte: seasonEnd.toDate(),
+        },
+        deleted_at: null,
+      },
+      select: {
+        svi_ipm1_lesions_ou_motifs: true,
+        svi_ipm2_lesions_ou_motifs: true,
+      },
+    });
+
+    const nationalBphLesionsCount = nationalEtgCarcasses.reduce((count, c) => count + countBphLesions(c), 0);
+    const nationalEtgCount = nationalEtgCarcasses.length;
+    const nationalBphSeizureRate =
+      nationalEtgCount > 0 ? (nationalBphLesionsCount / nationalEtgCount) * 100 : 5; // Default 5% if no data
+
+    // Calculate hygiene score
+    // Score = 50 means equal to national average
+    // Score > 50 means better than average
+    // Score < 50 means worse than average
+    let hygieneScore: number;
+    if (etgCarcassesCount === 0) {
+      // No carcasses sent to ETG, cannot calculate
+      hygieneScore = 0;
+    } else if (nationalBphSeizureRate === 0) {
+      // No national BPH issues, perfect score if personal rate is also 0
+      hygieneScore = personalBphSeizureRate === 0 ? 100 : 0;
+    } else {
+      // Formula: 100 × (1 - (personal rate / (2 × national rate)))
+      hygieneScore = Math.round(100 * (1 - personalBphSeizureRate / (2 * nationalBphSeizureRate)));
+      // Clamp between 0 and 100
+      hygieneScore = Math.max(0, Math.min(100, hygieneScore));
+    }
 
     // Get refusal causes from intermediaire refusals
     const refusalCausesMap = new Map<string, number>();
