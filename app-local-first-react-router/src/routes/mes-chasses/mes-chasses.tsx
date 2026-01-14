@@ -128,7 +128,7 @@ export default function MesChasses() {
   }
 
   return (
-    <div className="fr-container fr-container--fluid min-h-screen">
+    <div className="fr-container fr-container--fluid min-h-screen max-w-4xl">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
         <div className="fr-col-12 p-2 md:p-0">
           <div className="mb-6 grid grid-cols-2 gap-3 md:gap-8">
@@ -158,6 +158,14 @@ export default function MesChasses() {
                   rate={dashboardData.nationalSeizureRate}
                   label="taux de saisie national en 2024"
                 />
+                <div className="col-span-2">
+                  <Alert
+                    className="w-full bg-white"
+                    severity="info"
+                    title="Données personnelles"
+                    description="Ces statistiques sont réservées à votre usage personnel et ne sont pas partagées avec l'administration. Elles reflètent uniquement les données enregistrées sur Zacharie."
+                  />
+                </div>
               </>
             )}
           </div>
