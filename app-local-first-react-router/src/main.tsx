@@ -11,9 +11,11 @@ import { ErrorBoundary } from 'react-error-boundary';
 import UnexpectedError from './components/UnexpectedError.tsx';
 import { capture } from './services/sentry.ts';
 import { clearCache } from './services/indexed-db.ts';
+import { initMatomo } from './services/matomo.ts';
 import 'dayjs/locale/fr';
 import dayjs from 'dayjs';
 dayjs.locale('fr');
+import { ToastContainer } from 'react-toastify';
 
 startReactDsfr({
   // defaultColorScheme: "system",
@@ -22,6 +24,9 @@ startReactDsfr({
 });
 
 registerServiceWorker();
+
+// Initialize Matomo tracking
+initMatomo();
 
 //Only in TypeScript projects
 declare module '@codegouvfr/react-dsfr/spa' {
@@ -87,6 +92,7 @@ createRoot(document.getElementById('root')!).render(
         }}
       >
         <App />
+        <ToastContainer />
       </ErrorBoundary>
     </BrowserRouter>
   </StrictMode>,

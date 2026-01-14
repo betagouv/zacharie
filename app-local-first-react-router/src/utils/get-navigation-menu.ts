@@ -106,14 +106,6 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       },
     });
   }
-  profileMenu.push({
-    text: `Déconnecter ${user?.email}`,
-    linkProps: {
-      onClick: handleLogout,
-      type: 'submit',
-      href: '#',
-    },
-  });
 
   const mainMenu: MainNavigationProps.Item[] = [
     {
@@ -123,7 +115,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     },
   ];
 
-  if (isChasseur && environment !== 'prod') {
+  if (isChasseur) {
     mainMenu.unshift({
       text: 'Tableau de bord',
       isActive: location.pathname === '/app/tableau-de-bord/mes-chasses',

@@ -30,10 +30,16 @@ import { UserForFei } from '@api/src/types/user';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
+import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
   id: 'partenaire-modal',
+});
+
+const trichineModal = createModal({
+  isOpenedByDefault: false,
+  id: 'trichine-modal',
 });
 
 export default function DestinataireSelect({
@@ -74,6 +80,8 @@ export default function DestinataireSelect({
   const circuitCourtIds = useZustandStore((state) => state.circuitCourtIds);
 
   const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
+  const isTrichineModalOpen = useIsModalOpen(trichineModal);
+  const [dontShowTrichineAgain, setDontShowTrichineAgain] = useState(false);
 
   const fei = feis[params.fei_numero!];
   const prefilledInfos = usePrefillPremierDétenteurInfos();
@@ -166,9 +174,91 @@ export default function DestinataireSelect({
   const prochainDetenteur = prochainDetenteurEntityId ? entities[prochainDetenteurEntityId] : null;
 
   const prochainDetenteurType = prochainDetenteur?.type;
+
+  // Check if recipient is circuit court
+  const isRecipientCircuitCourt = useMemo(() => {
+    if (!prochainDetenteurType) return false;
+    return (
+      prochainDetenteurType === EntityTypes.COMMERCE_DE_DETAIL ||
+      prochainDetenteurType === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
+      prochainDetenteurType === EntityTypes.CONSOMMATEUR_FINAL ||
+      prochainDetenteurType === EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE ||
+      prochainDetenteurType === EntityTypes.ASSOCIATION_CARITATIVE
+    );
+  }, [prochainDetenteurType]);
+
+  // Check if at least one carcasse is sanglier
+  const hasSanglier = useMemo(() => {
+    return carcasses.some((carcasse) => carcasse.espece === 'Sanglier');
+  }, [carcasses]);
+
+  // Get the appropriate message based on recipient type
+  const trichineMessage = useMemo(() => {
+    if (!prochainDetenteurType) return null;
+    if (
+      prochainDetenteurType === EntityTypes.COMMERCE_DE_DETAIL ||
+      prochainDetenteurType === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
+      prochainDetenteurType === EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE ||
+      prochainDetenteurType === EntityTypes.ASSOCIATION_CARITATIVE
+    ) {
+      return {
+        title: 'Rappel : test trichine obligatoire',
+        content: (
+          <>
+            <p className="mb-3">
+              <strong>Les carcasses de sanglier transmises nécessitent un test trichine obligatoire.</strong>
+            </p>
+            <p>
+              Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé
+              avant toute mise sur le marché ou consommation de ces carcasses.
+            </p>
+          </>
+        ),
+      };
+    }
+    if (prochainDetenteurType === EntityTypes.CONSOMMATEUR_FINAL) {
+      return {
+        title: 'Rappel : test trichine recommandé',
+        content: (
+          <>
+            <p className="mb-3">
+              <strong>Les carcasses de sanglier transmises nécessitent un test trichine recommandé.</strong>
+            </p>
+            <p className="mb-3">
+              Si le test trichine n'a pas été réalisé, vous devez impérativement informer le consommateur du
+              risque trichine et de l'obligation de cuisson complète de la viande avant consommation.
+            </p>
+            <p className="text-sm text-gray-600">
+              <strong>Important :</strong> La cuisson doit être complète (cœur de la viande à 70°C minimum)
+              pour éliminer tout risque de contamination.
+            </p>
+          </>
+        ),
+      };
+    }
+    return null;
+  }, [prochainDetenteurType]);
+
+  // Check if we should show trichine modal
+  const shouldShowTrichineModal = useMemo(() => {
+    if (!isRecipientCircuitCourt || !hasSanglier) return false;
+    if (!trichineMessage) return false;
+    // Check localStorage to see if user has chosen to not show this again
+    const dontShowKey = 'trichine-modal-dont-show-again';
+    return localStorage.getItem(dontShowKey) !== 'true';
+  }, [isRecipientCircuitCourt, hasSanglier, trichineMessage]);
+
   const needTransport = useMemo(() => {
     if (sousTraite) return false;
     if (premierDetenteurEntity || premierDetenteurUser) {
+      // Ne pas afficher la question sur le transport pour particulier, commerce de détail ou repas associatif (circuit court)
+      if (
+        prochainDetenteurType === EntityTypes.CONSOMMATEUR_FINAL ||
+        prochainDetenteurType === EntityTypes.COMMERCE_DE_DETAIL ||
+        prochainDetenteurType === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF
+      ) {
+        return false;
+      }
       return prochainDetenteurType !== EntityTypes.COLLECTEUR_PRO;
     }
     // if (prochainDetenteurType === EntityTypes.SVI) return false;
@@ -288,18 +378,27 @@ export default function DestinataireSelect({
       if (needTransport && !transportType) return true;
       if (!depotType) return true;
       if (depotType === EntityTypes.CCG && !depotEntityId) return true;
-      if (transportType === TransportType.PREMIER_DETENTEUR && depotType === DepotType.CCG && !depotDate) {
+      if (
+        needTransport &&
+        transportType === TransportType.PREMIER_DETENTEUR &&
+        depotType === DepotType.CCG &&
+        !depotDate
+      ) {
         return true;
       }
       if (depotType !== fei.premier_detenteur_depot_type) return true;
       if (depotEntityId !== fei.premier_detenteur_depot_entity_id) return true;
-      if (transportType !== fei.premier_detenteur_transport_type) return true;
+      // Si le transport n'est plus nécessaire mais qu'il y avait un transport type précédemment, il faut soumettre pour le nettoyer
+      if (!needTransport && fei.premier_detenteur_transport_type) return true;
+      if (needTransport && transportType !== fei.premier_detenteur_transport_type) return true;
       if (depotDate || fei.premier_detenteur_depot_ccg_at) {
         if (!depotDate) return !fei.premier_detenteur_depot_ccg_at;
         if (!fei.premier_detenteur_depot_ccg_at) return !depotDate;
         if (depotDate !== dayjs(fei.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm')) return true;
       }
-      if (transportDate || fei.premier_detenteur_transport_date) {
+      // Si le transport n'est plus nécessaire mais qu'il y avait une date de transport précédemment, il faut soumettre pour la nettoyer
+      if (!needTransport && fei.premier_detenteur_transport_date) return true;
+      if (needTransport && (transportDate || fei.premier_detenteur_transport_date)) {
         if (!transportDate) return !fei.premier_detenteur_transport_date;
         if (!fei.premier_detenteur_transport_date) return !transportDate;
         if (transportDate !== dayjs(fei.premier_detenteur_transport_date).format('YYYY-MM-DDTHH:mm'))
@@ -337,6 +436,159 @@ export default function DestinataireSelect({
   ]);
 
   const [tryToSubmitAtLeastOnce, setTryTOSubmitAtLeastOnce] = useState(false);
+
+  // Function to handle the actual submission
+  const handleSubmit = () => {
+    // for typescript only
+    if (!prochainDetenteurEntityId) return;
+    if (sousTraite) {
+      let nextFei: Partial<typeof fei> = {
+        fei_next_owner_entity_id: prochainDetenteurEntityId,
+        fei_next_owner_role: prochainDetenteurType as FeiOwnerRole,
+        fei_next_owner_wants_to_sous_traite: false,
+        fei_next_owner_sous_traite_at: dayjs().toDate(),
+        fei_next_owner_sous_traite_by_user_id: user.id,
+        fei_next_owner_sous_traite_by_entity_id: fei.fei_next_owner_entity_id,
+        fei_current_owner_entity_id: fei.fei_prev_owner_entity_id,
+        fei_current_owner_role: fei.fei_prev_owner_role,
+        fei_current_owner_user_id: fei.fei_prev_owner_user_id,
+        svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
+        svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
+      };
+      if (feiAndIntermediaireIds && intermediaire) {
+        let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
+          intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
+          intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
+            ?.type as FeiOwnerRole,
+          intermediaire_depot_type: depotType,
+          intermediaire_depot_entity_id: depotType === DepotType.AUCUN ? null : depotEntityId,
+        };
+        updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds!, nextCarcasseIntermediaire);
+      }
+      updateFei(fei.numero, nextFei);
+      addLog({
+        user_id: user.id,
+        user_role:
+          fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
+          fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
+            ? UserRoles.CHASSEUR
+            : fei.fei_current_owner_role!,
+        action: `${calledFrom}-select-destinataire-sous-traite`,
+        fei_numero: fei.numero,
+        history: createHistoryInput(fei, nextFei),
+        entity_id: fei.premier_detenteur_entity_id,
+        zacharie_carcasse_id: null,
+        carcasse_intermediaire_id: null,
+        intermediaire_id: null,
+      });
+      return;
+    }
+    if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
+      const nextDepotEntityId = depotType === DepotType.AUCUN ? null : depotEntityId;
+      const nextDepotDate = depotDate ? dayjs(depotDate).toDate() : null;
+      const nextTransportType = needTransport ? transportType : null;
+      const nextTransportDate = nextTransportType
+        ? transportDate
+          ? dayjs(transportDate).toDate()
+          : null
+        : null;
+      setDepotEntityId(nextDepotEntityId);
+      setDepotDate(nextDepotDate ? dayjs(nextDepotDate).format('YYYY-MM-DDTHH:mm') : undefined);
+      setTransportType(nextTransportType);
+      setTransportDate(nextTransportDate ? dayjs(nextTransportDate).format('YYYY-MM-DDTHH:mm') : undefined);
+      let nextFei: Partial<typeof fei> = {
+        fei_next_owner_entity_id: prochainDetenteurEntityId,
+        fei_next_owner_role: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
+        premier_detenteur_prochain_detenteur_id_cache: prochainDetenteurEntityId,
+        premier_detenteur_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
+          ?.type as FeiOwnerRole,
+        premier_detenteur_depot_type: depotType,
+        premier_detenteur_depot_entity_id: nextDepotEntityId,
+        premier_detenteur_depot_entity_name_cache: nextDepotEntityId
+          ? entities[nextDepotEntityId!]?.nom_d_usage
+          : null,
+        premier_detenteur_depot_ccg_at: nextDepotDate,
+        premier_detenteur_transport_type: nextTransportType,
+        premier_detenteur_transport_date: nextTransportDate,
+      };
+      for (const carcasse of carcasses) {
+        updateCarcasse(
+          carcasse.zacharie_carcasse_id,
+          {
+            premier_detenteur_prochain_detenteur_role_cache:
+              nextFei.premier_detenteur_prochain_detenteur_role_cache,
+            premier_detenteur_prochain_detenteur_id_cache:
+              nextFei.premier_detenteur_prochain_detenteur_id_cache,
+            premier_detenteur_depot_type: nextFei.premier_detenteur_depot_type,
+            premier_detenteur_depot_entity_id: nextFei.premier_detenteur_depot_entity_id,
+            premier_detenteur_depot_entity_name_cache: nextFei.premier_detenteur_depot_entity_id
+              ? entities[nextFei.premier_detenteur_depot_entity_id!]?.nom_d_usage
+              : null,
+            premier_detenteur_depot_ccg_at: nextFei.premier_detenteur_depot_ccg_at,
+            premier_detenteur_transport_type: nextFei.premier_detenteur_transport_type,
+            premier_detenteur_transport_date: nextFei.premier_detenteur_transport_date,
+          },
+          false,
+        );
+      }
+      updateFei(fei.numero, nextFei);
+      addLog({
+        user_id: user.id,
+        user_role: UserRoles.CHASSEUR,
+        action: `${calledFrom}-select-destinataire`,
+        fei_numero: fei.numero,
+        history: createHistoryInput(fei, nextFei),
+        entity_id: fei.premier_detenteur_entity_id,
+        zacharie_carcasse_id: null,
+        carcasse_intermediaire_id: null,
+        intermediaire_id: null,
+      });
+      navigate(`/app/tableau-de-bord/fei/${fei.numero}/envoyée`);
+    } else {
+      if (!feiAndIntermediaireIds) return;
+      let nextFei: Partial<typeof fei> = {
+        fei_next_owner_entity_id: prochainDetenteurEntityId,
+        fei_next_owner_role: prochainDetenteurType as FeiOwnerRole,
+        svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
+        svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
+      };
+      if (prochainDetenteurType === EntityTypes.SVI) {
+        for (const carcasse of carcasses) {
+          updateCarcasse(
+            carcasse.zacharie_carcasse_id,
+            {
+              svi_assigned_to_fei_at: nextFei.svi_assigned_at,
+            },
+            false,
+          );
+        }
+      }
+      let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
+        intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
+        intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
+          ?.type as FeiOwnerRole,
+        intermediaire_depot_type: depotType,
+        intermediaire_depot_entity_id: depotType === DepotType.AUCUN ? null : depotEntityId,
+      };
+      updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds, nextCarcasseIntermediaire);
+      updateFei(fei.numero, nextFei);
+      addLog({
+        user_id: user.id,
+        user_role:
+          fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
+            ? UserRoles.CHASSEUR
+            : fei.fei_current_owner_role!,
+        action: `${calledFrom}-select-destinataire`,
+        fei_numero: fei.numero,
+        history: createHistoryInput(fei, nextFei),
+        entity_id: fei.fei_current_owner_entity_id,
+        zacharie_carcasse_id: null,
+        carcasse_intermediaire_id: null,
+        intermediaire_id: feiAndIntermediaireIds.split('_')[1],
+      });
+    }
+  };
+
   const jobIsMissing = useMemo(() => {
     if (!prochainDetenteurEntityId) {
       return 'Il manque le prochain détenteur des carcasses';
@@ -704,166 +956,13 @@ export default function DestinataireSelect({
                   alert(jobIsMissing);
                   return;
                 }
-                // for typescript only
-                if (!prochainDetenteurEntityId) return;
-                if (sousTraite) {
-                  let nextFei: Partial<typeof fei> = {
-                    fei_next_owner_entity_id: prochainDetenteurEntityId,
-                    fei_next_owner_role: prochainDetenteurType as FeiOwnerRole,
-                    fei_next_owner_wants_to_sous_traite: false,
-                    fei_next_owner_sous_traite_at: dayjs().toDate(),
-                    fei_next_owner_sous_traite_by_user_id: user.id,
-                    fei_next_owner_sous_traite_by_entity_id: fei.fei_next_owner_entity_id,
-                    fei_current_owner_entity_id: fei.fei_prev_owner_entity_id,
-                    fei_current_owner_role: fei.fei_prev_owner_role,
-                    fei_current_owner_user_id: fei.fei_prev_owner_user_id,
-                    svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
-                    svi_entity_id:
-                      prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
-                  };
-                  if (feiAndIntermediaireIds && intermediaire) {
-                    let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
-                      intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
-                      intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
-                        ?.type as FeiOwnerRole,
-                      intermediaire_depot_type: depotType,
-                      intermediaire_depot_entity_id: depotType === DepotType.AUCUN ? null : depotEntityId,
-                    };
-                    updateAllCarcasseIntermediaire(
-                      fei.numero,
-                      feiAndIntermediaireIds!,
-                      nextCarcasseIntermediaire,
-                    );
-                  }
-                  updateFei(fei.numero, nextFei);
-                  addLog({
-                    user_id: user.id,
-                    user_role:
-                      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
-                      fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
-                        ? UserRoles.CHASSEUR
-                        : fei.fei_current_owner_role!,
-                    action: `${calledFrom}-select-destinataire-sous-traite`,
-                    fei_numero: fei.numero,
-                    history: createHistoryInput(fei, nextFei),
-                    entity_id: fei.premier_detenteur_entity_id,
-                    zacharie_carcasse_id: null,
-                    carcasse_intermediaire_id: null,
-                    intermediaire_id: null,
-                  });
+                // Check if we should show trichine modal
+                if (shouldShowTrichineModal) {
+                  trichineModal.open();
                   return;
                 }
-                if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
-                  const nextDepotEntityId = depotType === DepotType.AUCUN ? null : depotEntityId;
-                  const nextDepotDate = depotDate ? dayjs(depotDate).toDate() : null;
-                  const nextTransportType = needTransport ? transportType : null;
-                  const nextTransportDate = nextTransportType
-                    ? transportDate
-                      ? dayjs(transportDate).toDate()
-                      : null
-                    : null;
-                  setDepotEntityId(nextDepotEntityId);
-                  setDepotDate(nextDepotDate ? dayjs(nextDepotDate).format('YYYY-MM-DDTHH:mm') : undefined);
-                  setTransportType(nextTransportType);
-                  setTransportDate(
-                    nextTransportDate ? dayjs(nextTransportDate).format('YYYY-MM-DDTHH:mm') : undefined,
-                  );
-                  let nextFei: Partial<typeof fei> = {
-                    fei_next_owner_entity_id: prochainDetenteurEntityId,
-                    fei_next_owner_role: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
-                    premier_detenteur_prochain_detenteur_id_cache: prochainDetenteurEntityId,
-                    premier_detenteur_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
-                      ?.type as FeiOwnerRole,
-                    premier_detenteur_depot_type: depotType,
-                    premier_detenteur_depot_entity_id: nextDepotEntityId,
-                    premier_detenteur_depot_entity_name_cache: nextDepotEntityId
-                      ? entities[nextDepotEntityId!]?.nom_d_usage
-                      : null,
-                    premier_detenteur_depot_ccg_at: nextDepotDate,
-                    premier_detenteur_transport_type: nextTransportType,
-                    premier_detenteur_transport_date: nextTransportDate,
-                  };
-                  for (const carcasse of carcasses) {
-                    updateCarcasse(
-                      carcasse.zacharie_carcasse_id,
-                      {
-                        premier_detenteur_prochain_detenteur_role_cache:
-                          nextFei.premier_detenteur_prochain_detenteur_role_cache,
-                        premier_detenteur_prochain_detenteur_id_cache:
-                          nextFei.premier_detenteur_prochain_detenteur_id_cache,
-                        premier_detenteur_depot_type: nextFei.premier_detenteur_depot_type,
-                        premier_detenteur_depot_entity_id: nextFei.premier_detenteur_depot_entity_id,
-                        premier_detenteur_depot_entity_name_cache: nextFei.premier_detenteur_depot_entity_id
-                          ? entities[nextFei.premier_detenteur_depot_entity_id!]?.nom_d_usage
-                          : null,
-                        premier_detenteur_depot_ccg_at: nextFei.premier_detenteur_depot_ccg_at,
-                        premier_detenteur_transport_type: nextFei.premier_detenteur_transport_type,
-                        premier_detenteur_transport_date: nextFei.premier_detenteur_transport_date,
-                      },
-                      false,
-                    );
-                  }
-                  updateFei(fei.numero, nextFei);
-                  addLog({
-                    user_id: user.id,
-                    user_role: UserRoles.CHASSEUR,
-                    action: `${calledFrom}-select-destinataire`,
-                    fei_numero: fei.numero,
-                    history: createHistoryInput(fei, nextFei),
-                    entity_id: fei.premier_detenteur_entity_id,
-                    zacharie_carcasse_id: null,
-                    carcasse_intermediaire_id: null,
-                    intermediaire_id: null,
-                  });
-                  navigate(`/app/tableau-de-bord/fei/${fei.numero}/envoyée`);
-                } else {
-                  if (!feiAndIntermediaireIds) return;
-                  let nextFei: Partial<typeof fei> = {
-                    fei_next_owner_entity_id: prochainDetenteurEntityId,
-                    fei_next_owner_role: prochainDetenteurType as FeiOwnerRole,
-                    svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
-                    svi_entity_id:
-                      prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
-                  };
-                  if (prochainDetenteurType === EntityTypes.SVI) {
-                    for (const carcasse of carcasses) {
-                      updateCarcasse(
-                        carcasse.zacharie_carcasse_id,
-                        {
-                          svi_assigned_to_fei_at: nextFei.svi_assigned_at,
-                        },
-                        false,
-                      );
-                    }
-                  }
-                  let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
-                    intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
-                    intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
-                      ?.type as FeiOwnerRole,
-                    intermediaire_depot_type: depotType,
-                    intermediaire_depot_entity_id: depotType === DepotType.AUCUN ? null : depotEntityId,
-                  };
-                  updateAllCarcasseIntermediaire(
-                    fei.numero,
-                    feiAndIntermediaireIds,
-                    nextCarcasseIntermediaire,
-                  );
-                  updateFei(fei.numero, nextFei);
-                  addLog({
-                    user_id: user.id,
-                    user_role:
-                      fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
-                        ? UserRoles.CHASSEUR
-                        : fei.fei_current_owner_role!,
-                    action: `${calledFrom}-select-destinataire`,
-                    fei_numero: fei.numero,
-                    history: createHistoryInput(fei, nextFei),
-                    entity_id: fei.fei_current_owner_entity_id,
-                    zacharie_carcasse_id: null,
-                    carcasse_intermediaire_id: null,
-                    intermediaire_id: feiAndIntermediaireIds.split('_')[1],
-                  });
-                }
+                // Otherwise proceed with submission
+                handleSubmit();
               },
             }}
           >
@@ -897,6 +996,39 @@ export default function DestinataireSelect({
           />
         )}
       </partenaireModal.Component>
+      <trichineModal.Component
+        title={trichineMessage?.title || 'Rappel trichine'}
+        buttons={[
+          {
+            children: "J'ai compris",
+            onClick: () => {
+              if (dontShowTrichineAgain) {
+                localStorage.setItem('trichine-modal-dont-show-again', 'true');
+              }
+              trichineModal.close();
+              setDontShowTrichineAgain(false);
+              handleSubmit();
+            },
+          },
+        ]}
+      >
+        {isTrichineModalOpen && trichineMessage && (
+          <div className="space-y-4">
+            <div className="text-base leading-relaxed">{trichineMessage.content}</div>
+            <Checkbox
+              options={[
+                {
+                  label: "J'ai compris, ne plus afficher ce message",
+                  nativeInputProps: {
+                    checked: dontShowTrichineAgain,
+                    onChange: (e) => setDontShowTrichineAgain(e.target.checked),
+                  },
+                },
+              ]}
+            />
+          </div>
+        )}
+      </trichineModal.Component>
     </>
   );
 }

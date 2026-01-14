@@ -51,7 +51,7 @@ export default function NouvelleCarcasse() {
   return (
     <form method="POST" className="flex w-full flex-col items-stretch">
       <Select
-        label="Nouvelle carcasse / lot de carcasses *"
+        label="Espèce (grand et petit gibier) *"
         className="group grow"
         nativeSelectProps={{
           name: Prisma.CarcasseScalarFieldEnum.espece,
@@ -132,31 +132,39 @@ export default function NouvelleCarcasse() {
         type="submit"
         disabled={!espece || !numeroBracelet}
         onClick={async (e) => {
-          e.preventDefault();
-          const newCarcasse = await createNewCarcasse({
-            zacharieCarcasseId,
-            numeroBracelet,
-            espece,
-            nombreDAnimaux,
-            fei,
-          });
-          addLog({
-            user_id: user.id,
-            user_role: UserRoles.CHASSEUR,
-            fei_numero: fei.numero,
-            action: 'examinateur-carcasse-create',
-            history: createHistoryInput(null, newCarcasse),
-            entity_id: fei.fei_current_owner_entity_id,
-            zacharie_carcasse_id: newCarcasse.zacharie_carcasse_id,
-            intermediaire_id: null,
-            carcasse_intermediaire_id: null,
-          });
-          setNumeroBracelet('');
+          try {
+            e.preventDefault();
+            const newCarcasse = await createNewCarcasse({
+              zacharieCarcasseId,
+              numeroBracelet,
+              espece,
+              nombreDAnimaux,
+              fei,
+            });
+            addLog({
+              user_id: user.id,
+              user_role: UserRoles.CHASSEUR,
+              fei_numero: fei.numero,
+              action: 'examinateur-carcasse-create',
+              history: createHistoryInput(null, newCarcasse),
+              entity_id: fei.fei_current_owner_entity_id,
+              zacharie_carcasse_id: newCarcasse.zacharie_carcasse_id,
+              intermediaire_id: null,
+              carcasse_intermediaire_id: null,
+            });
+            setNumeroBracelet('');
 
-          setError(null);
+            setError(null);
+          } catch (error) {
+            if (error instanceof Error) {
+              setError(error.message);
+            } else {
+              setError('Une erreur inconnue est survenue');
+            }
+          }
         }}
       >
-        {isPetitGibier ? 'Enregistrer le lot de carcasses' : 'Enregistrer la carcasse'}
+        {isPetitGibier ? 'Ajouter un lot de carcasses' : 'Ajouter une carcasse'}
       </Button>
     </form>
   );

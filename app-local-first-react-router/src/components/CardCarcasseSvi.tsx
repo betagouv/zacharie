@@ -53,7 +53,11 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
     !carcasse.svi_ipm2_date;
 
   let espece = carcasse.espece;
-  if (carcasse.nombre_d_animaux! > 1) espece = espece += ` (${carcasse.nombre_d_animaux})`;
+  if (carcasse.type === CarcasseType.PETIT_GIBIER && latestIntermediaire?.nombre_d_animaux_acceptes) {
+    espece += ` (${latestIntermediaire.nombre_d_animaux_acceptes}/${carcasse.nombre_d_animaux} acceptés)`;
+  } else if (carcasse.nombre_d_animaux! > 1) {
+    espece += ` (${carcasse.nombre_d_animaux})`;
+  }
   let miseAMort = `Mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
   if (carcasse.heure_mise_a_mort) {
     miseAMort += ` à ${carcasse.heure_mise_a_mort}`;

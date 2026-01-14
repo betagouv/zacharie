@@ -32,6 +32,7 @@ import CardCarcasse from '@app/components/CardCarcasse';
 import DestinataireSelect from './destinataire-select';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { capture } from '@app/services/sentry';
+import { toast } from 'react-toastify';
 
 interface Props {
   readOnly?: boolean;
@@ -462,6 +463,66 @@ function FEICurrentIntermediaireContent({
     priseEnChargeAt,
   ]);
 
+  const canCloseFeiWithOnlyManquantesOrRejetees = useMemo(() => {
+    if (!effectiveCanEdit) {
+      return false;
+    }
+    if (fei.intermediaire_closed_at || fei.svi_closed_at || fei.automatic_closed_at) {
+      return false;
+    }
+    // Il faut au moins une carcasse manquante ou refusée
+    if (carcassesSorted.carcassesManquantes.length === 0 && carcassesSorted.carcassesRejetees.length === 0) {
+      return false;
+    }
+    // Pas de carcasses acceptées ou écartées pour inspection
+    if (
+      carcassesSorted.carcassesApproved.length > 0 ||
+      carcassesSorted.carcassesEcarteesPourInspection.length > 0
+    ) {
+      return false;
+    }
+    return true;
+  }, [
+    effectiveCanEdit,
+    fei.intermediaire_closed_at,
+    fei.svi_closed_at,
+    fei.automatic_closed_at,
+    carcassesSorted.carcassesManquantes.length,
+    carcassesSorted.carcassesApproved.length,
+    carcassesSorted.carcassesRejetees.length,
+    carcassesSorted.carcassesEcarteesPourInspection.length,
+  ]);
+
+  function handleCloseFei() {
+    if (!intermediaire || !feiAndIntermediaireIds) {
+      return;
+    }
+    const now = dayjs().toDate();
+    updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds, {
+      prise_en_charge_at: now,
+    });
+    updateFei(fei.numero, {
+      intermediaire_closed_at: now,
+      intermediaire_closed_by_entity_id: intermediaire.intermediaire_entity_id,
+      intermediaire_closed_by_user_id: intermediaire.intermediaire_user_id,
+    });
+    addLog({
+      user_id: user.id,
+      action: 'intermediaire-close-fei-manquantes-ou-rejetees',
+      fei_numero: fei.numero,
+      intermediaire_id: intermediaire.id,
+      history: createHistoryInput(intermediaire, {
+        prise_en_charge_at: now,
+        intermediaire_closed_at: now,
+      }),
+      user_role: intermediaire.intermediaire_role! as UserRoles,
+      entity_id: intermediaire.intermediaire_entity_id,
+      zacharie_carcasse_id: null,
+      carcasse_intermediaire_id: null,
+    });
+    toast.success('La fiche a été clôturée avec succès');
+  }
+
   function handleCheckFinishedAt(_priseEnChargeAt: Date) {
     if (!feiAndIntermediaireIds) {
       return;
@@ -595,6 +656,20 @@ function FEICurrentIntermediaireContent({
               {carcassesDejaRefusees.map((carcasse) => {
                 return <CardCarcasse carcasse={carcasse} key={carcasse.numero_bracelet} />;
               })}
+            </div>
+          )}
+          {canCloseFeiWithOnlyManquantesOrRejetees && (
+            <div className="my-8 flex justify-center">
+              <Button onClick={handleCloseFei} priority="primary">
+                Clôturer la fiche (
+                {carcassesSorted.carcassesManquantes.length > 0 &&
+                carcassesSorted.carcassesRejetees.length > 0
+                  ? 'toutes les carcasses sont manquantes ou refusées'
+                  : carcassesSorted.carcassesManquantes.length > 0
+                    ? 'toutes les carcasses sont manquantes'
+                    : 'toutes les carcasses sont refusées'}
+                )
+              </Button>
             </div>
           )}
         </Section>

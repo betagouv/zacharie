@@ -89,22 +89,13 @@ router.get(
     const totalCarcasses = carcasses.length;
 
     // Calculate big game vs small game
-    const bigGame = carcasses.filter((c) => c.type === CarcasseType.GROS_GIBIER).length;
+    const bigGameCarcasses = carcasses.filter((c) => c.type === CarcasseType.GROS_GIBIER);
+    const bigGame = bigGameCarcasses.length;
     const smallGame = carcasses.filter((c) => c.type === CarcasseType.PETIT_GIBIER).length;
-
-    // Calculate hygiene score (based on examinateur anomalies)
-    // Score = 100 - (number of carcasses with anomalies / total) * 100
-    const carcassesWithAnomalies = carcasses.filter(
-      (c) =>
-        (c.examinateur_anomalies_carcasse && c.examinateur_anomalies_carcasse.length > 0) ||
-        (c.examinateur_anomalies_abats && c.examinateur_anomalies_abats.length > 0),
-    ).length;
-    const hygieneScore =
-      totalCarcasses > 0 ? Math.round(100 - (carcassesWithAnomalies / totalCarcasses) * 100) : 100;
 
     // Get refusal causes from intermediaire refusals
     const refusalCausesMap = new Map<string, number>();
-    for (const carcasse of carcasses) {
+    for (const carcasse of bigGameCarcasses) {
       if (carcasse.intermediaire_carcasse_refus_motif) {
         const motif = carcasse.intermediaire_carcasse_refus_motif;
         refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
@@ -115,15 +106,15 @@ router.get(
       .sort((a, b) => b.count - a.count)
       .slice(0, 5); // Top 5 causes
 
-    // Calculate personal seizure rate for big game
-    const bigGameCarcasses = carcasses.filter((c) => c.type === CarcasseType.GROS_GIBIER);
+    // Calculate personal seizure rate for big game carcasses
     const seizedBigGame = bigGameCarcasses.filter(
       (c) =>
         c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
-        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE,
-    ).length;
+        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE ||
+        c.svi_carcasse_status === CarcasseStatus.REFUS_ETG_COLLECTEUR,
+    );
     const personalSeizureRate =
-      bigGameCarcasses.length > 0 ? (seizedBigGame / bigGameCarcasses.length) * 100 : 0;
+      bigGameCarcasses.length > 0 ? (seizedBigGame.length / bigGameCarcasses.length) * 100 : 0;
 
     // Calculate national seizure rate (all big game carcasses in 2024)
     const nationalBigGame2024 = await prisma.carcasse.count({
@@ -155,6 +146,25 @@ router.get(
     const nationalSeizureRate =
       nationalBigGame2024 > 0 ? (nationalSeizedBigGame2024 / nationalBigGame2024) * 100 : 10.44;
 
+    // Calculate hygiene score based on BPH (Bonnes Pratiques d'Hygiène)
+    // Formula: 100 × (1 - (personal seizure rate / (2 × national seizure rate)))
+    // Score = 50 means equal to national average
+    // Score > 50 means better than average
+    // Score < 50 means worse than average
+    let hygieneScore: number;
+    if (bigGameCarcasses.length === 0) {
+      // No big game carcasses, cannot calculate
+      hygieneScore = 0;
+    } else if (nationalSeizureRate === 0) {
+      // No national seizures, perfect score if personal rate is also 0
+      hygieneScore = personalSeizureRate === 0 ? 100 : 0;
+    } else {
+      // Formula: 100 × (1 - (personal rate / (2 × national rate)))
+      hygieneScore = Math.round(100 * (1 - personalSeizureRate / (2 * nationalSeizureRate)));
+      // Clamp between 0 and 100
+      hygieneScore = Math.max(0, Math.min(100, hygieneScore));
+    }
+
     res.status(200).send({
       ok: true,
       data: {
@@ -166,6 +176,25 @@ router.get(
         refusalCauses,
         personalSeizureRate: Math.round(personalSeizureRate * 10) / 10, // Round to 1 decimal
         nationalSeizureRate: Math.round(nationalSeizureRate * 100) / 100, // Round to 2 decimals
+        // Calculation details for debugging
+        calculationDetails: {
+          seasonStart,
+          seasonEnd,
+          // Personal seizure rate calculation
+          bigGameCarcassesCount: bigGameCarcasses.length,
+          seizedBigGameCount: seizedBigGame,
+          personalSeizureRateRaw: personalSeizureRate,
+          // National seizure rate calculation
+          nationalBigGame2024Count: nationalBigGame2024,
+          nationalSeizedBigGame2024Count: nationalSeizedBigGame2024,
+          nationalSeizureRateRaw: nationalSeizureRate,
+          // Hygiene score calculation
+          formula: '100 × (1 - (personalSeizureRate / (2 × nationalSeizureRate)))',
+          divisor: 2 * nationalSeizureRate,
+          ratio: nationalSeizureRate > 0 ? personalSeizureRate / (2 * nationalSeizureRate) : 0,
+          hygieneScoreBeforeClamp:
+            nationalSeizureRate > 0 ? 100 * (1 - personalSeizureRate / (2 * nationalSeizureRate)) : 0,
+        },
       },
     });
   }),
