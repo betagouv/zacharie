@@ -1,4 +1,4 @@
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { useMemo } from 'react';
 import {
   //  EntityRelationStatus,
@@ -123,7 +123,13 @@ export default function FeiPremierDetenteur() {
         <Alert
           severity="warning"
           title="Compte non activé"
-          description="Vous devez être activé pour transmettre une fiche. Veuillez contacter un administrateur pour activer votre compte."
+          description={
+            <>
+              Vous devez être activé pour transmettre une fiche. Veuillez contacter un administrateur via{' '}
+              <Link to="/app/tableau-de-bord/contact">le formulaire de contact</Link> pour activer votre
+              compte.
+            </>
+          }
         />
       </Section>
     );
