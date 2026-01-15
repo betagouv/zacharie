@@ -433,17 +433,19 @@ function RestrictedRoute({
     return <Chargement />;
   }
 
-  const isProfileCompleted = hasAllRequiredFields(user!);
-  const needToCompleteExaminateurInitial =
-    user?.roles.includes(UserRoles.CHASSEUR) && user?.est_forme_a_l_examen_initial == null;
-
-  if (
-    (!isProfileCompleted || needToCompleteExaminateurInitial) &&
+  const isRestrictedPage =
     !location.pathname.includes('mon-profil') &&
     !location.pathname.includes('onboarding') &&
-    !location.pathname.includes('admin')
-  ) {
-    return <DeactivatedAccount />;
+    !location.pathname.includes('admin');
+
+  if (isRestrictedPage) {
+    const needToCompleteExaminateurInitial =
+      user?.roles.includes(UserRoles.CHASSEUR) && user?.est_forme_a_l_examen_initial == null;
+    const isProfileCompleted = hasAllRequiredFields(user!) && !needToCompleteExaminateurInitial;
+
+    if (!isProfileCompleted) {
+      return <DeactivatedAccount />;
+    }
   }
 
   return children;
