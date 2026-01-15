@@ -145,7 +145,7 @@ export default function MesChasses() {
                     className="w-full bg-white"
                     severity="info"
                     title="Données personnelles"
-                    description="Ces statistiques sont réservées à votre usage personnel et ne sont pas partagées avec l'administration. Elles reflètent uniquement les données enregistrées sur Zacharie."
+                    description="Ces statistiques sont réservées à votre usage personnel et ne sont pas partagées avec les services de contrôle. Elles reflètent uniquement les données enregistrées sur Zacharie."
                   />
                 </div>
               </>
