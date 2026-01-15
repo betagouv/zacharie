@@ -1,13 +1,11 @@
 import { UserRoles } from '@prisma/client';
 import { useLocation, useNavigate } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
-import { clearCache } from '@app/services/indexed-db';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { createNewFei } from './create-new-fei';
-import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from './circuit-court';
-const environment = import.meta.env.VITE_ENV;
+import { capture } from '@app/services/sentry';
 
 export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
@@ -16,14 +14,6 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   const isNotActivated = !user?.activated;
   const isCircuitCourt = useIsCircuitCourt();
   const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    API.post({ path: 'user/logout' }).then(async () => {
-      await clearCache().then(() => {
-        window.location.href = '/app/connexion';
-      });
-    });
-  };
 
   const isExaminateurInitial = user?.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
   const isAdmin = user?.roles.includes(UserRoles.ADMIN);
@@ -214,6 +204,19 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
             href: 'https://metabase.zacharie.beta.gouv.fr/question/27-fiches-creees',
           },
         },
+        ...(user?.prenom?.includes('Arnaud') || user?.prenom?.includes('Tangi')
+          ? [
+              {
+                text: 'Test Sentry',
+                linkProps: {
+                  href: '#',
+                  onClick: () => {
+                    capture('Test Sentry');
+                  },
+                },
+              },
+            ]
+          : []),
       ],
     });
   }
