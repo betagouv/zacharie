@@ -1,15 +1,21 @@
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { startReactDsfr } from '@codegouvfr/react-dsfr/spa';
-import { BrowserRouter, Link } from 'react-router';
 import * as Sentry from '@sentry/react';
 import App from './App.tsx';
 import { registerServiceWorker } from './sw/register.ts';
 import '@af-utils/scrollend-polyfill';
-import { createRoutesFromChildren, matchRoutes, useLocation, useNavigationType } from 'react-router';
+import {
+  BrowserRouter,
+  Link,
+  createRoutesFromChildren,
+  matchRoutes,
+  useLocation,
+  useNavigationType,
+} from 'react-router';
 import { ErrorBoundary } from 'react-error-boundary';
 import UnexpectedError from './components/UnexpectedError.tsx';
-import { capture } from './services/sentry.ts';
+import { capture, getPerformanceContext } from './services/sentry.ts';
 import { clearCache } from './services/indexed-db.ts';
 import { initMatomo } from './services/matomo.ts';
 import 'dayjs/locale/fr';
@@ -74,6 +80,27 @@ if (import.meta.env.VITE_ENV === 'prod' || import.meta.env.VITE_ENV === 'test') 
       'TypeError: cancelled',
       'TypeError: annulé',
     ],
+    beforeSend(event) {
+      try {
+        const { metrics, tags } = getPerformanceContext();
+
+        // Add as context (detailed data)
+        event.contexts = {
+          ...event.contexts,
+          performance: metrics as unknown as Record<string, unknown>,
+        };
+
+        // Add as tags (easy filtering in Sentry UI)
+        event.tags = {
+          ...event.tags,
+          ...tags,
+        };
+      } catch (e) {
+        console.error('Failed to add performance context to Sentry event', e);
+      }
+
+      return event;
+    },
   });
 } else {
   console.log('Sentry not init', import.meta.env.VITE_ENV);
