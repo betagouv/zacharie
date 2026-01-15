@@ -11,9 +11,14 @@ export function capture(err: ErrorType, context: Context | string = {}): void {
   let parsedContext: Context;
 
   if (import.meta.env.VITEST) {
+    console.log('capture import.meta.env.VITEST');
     return console.log('capture', err, JSON.stringify(context, null, 2));
   }
   if (import.meta.env.VITE_ENV !== 'prod' && import.meta.env.VITE_ENV !== 'test') {
+    console.log(
+      'capture import.meta.env.VITE_ENV !== prod && import.meta.env.VITE_ENV !== test',
+      import.meta.env.VITE_ENV,
+    );
     return console.log('capture', err, context);
   }
   if (typeof context === 'string') {
@@ -41,6 +46,7 @@ export function capture(err: ErrorType, context: Context | string = {}): void {
       Sentry.captureMessage(String(e), parsedContext);
     }
   }
+  console.log('capture going to Sentry', err, parsedContext);
 
   if (typeof err === 'string') {
     Sentry.captureMessage(err, parsedContext);
