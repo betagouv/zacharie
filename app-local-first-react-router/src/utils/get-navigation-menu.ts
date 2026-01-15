@@ -216,6 +216,16 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
                   },
                 },
               },
+              {
+                text: 'Test Crash for Sentry',
+                linkProps: {
+                  href: '#',
+                  onClick: () => {
+                    // @ts-expect-error I need a real crash
+                    user.error.includes('test');
+                  },
+                },
+              },
             ]
           : []),
       ],
