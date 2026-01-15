@@ -20,6 +20,7 @@ export async function loadMyRelations() {
     );
 
     const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};
+    const entitiesDeleted: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};
     const entitiesIdsWorkingDirectlyFor: Array<EntityWithUserRelation['id']> = [];
 
     for (const entity of [
@@ -31,26 +32,36 @@ export async function loadMyRelations() {
       ...(myRelationsData.data?.circuitCourt || []),
       ...(myRelationsData.data?.entitiesWorkingFor || []),
     ]) {
-      entities[entity.id] = entity;
-      if (entity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
-        entitiesIdsWorkingDirectlyFor.push(entity.id);
+      if (entity.deleted_at) {
+        entitiesDeleted[entity.id] = entity;
+      } else {
+        entities[entity.id] = entity;
+        if (entity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
+          entitiesIdsWorkingDirectlyFor.push(entity.id);
+        }
       }
     }
 
     useZustandStore.setState({
       entities,
       entitiesIdsWorkingDirectlyFor,
-      ccgsIds: myRelationsData.data?.ccgs.map((ccg) => ccg.id) || [],
-      collecteursProIds: myRelationsData.data?.collecteursPro.map((collecteurPro) => collecteurPro.id) || [],
-      etgsIds: myRelationsData.data?.etgs.map((etg) => etg.id) || [],
-      svisIds: myRelationsData.data?.svis.map((svi) => svi.id) || [],
-      circuitCourtIds: myRelationsData.data?.circuitCourt.map((circuitCourt) => circuitCourt.id) || [],
+      ccgsIds: myRelationsData.data?.ccgs.filter((e) => !e.deleted_at).map((ccg) => ccg.id) || [],
+      collecteursProIds:
+        myRelationsData.data?.collecteursPro
+          .filter((e) => !e.deleted_at)
+          .map((collecteurPro) => collecteurPro.id) || [],
+      etgsIds: myRelationsData.data?.etgs.filter((e) => !e.deleted_at).map((etg) => etg.id) || [],
+      svisIds: myRelationsData.data?.svis.filter((e) => !e.deleted_at).map((svi) => svi.id) || [],
+      circuitCourtIds:
+        myRelationsData.data?.circuitCourt
+          .filter((e) => !e.deleted_at)
+          .map((circuitCourt) => circuitCourt.id) || [],
     });
 
     const detenteursInitiaux: Record<UserForFei['id'], UserForFei> = {};
     const users = useZustandStore.getState().users;
 
-    for (const detenteurInitial of [...(myRelationsData.data?.detenteursInitiaux || [])]) {
+    for (const detenteurInitial of myRelationsData.data?.detenteursInitiaux || []) {
       detenteursInitiaux[detenteurInitial.id] = detenteurInitial;
       users[detenteurInitial.id] = detenteurInitial;
     }
