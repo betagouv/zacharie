@@ -113,7 +113,8 @@ export default function CardCarcasse({
   // Déterminer qui a accepté en dernier (SVI ou ETG) et récupérer les informations de l'entité
   let acceptInfo: { type: 'SVI' | 'ETG'; entity: (typeof entities)[string] | null } | null = null;
   if (statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle')) {
-    const hasSviStatus = !!carcasse.svi_carcasse_status;
+    const hasSviStatus =
+      !!carcasse.svi_carcasse_status && carcasse.svi_carcasse_status !== CarcasseStatus.SANS_DECISION;
     const sviEntity = hasSviStatus && fei.svi_entity_id ? entities[fei.svi_entity_id] : null;
 
     const isEtgAccepted =
