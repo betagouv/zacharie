@@ -67,7 +67,7 @@ export default function CardFiche({
 
   const [carcassesAcceptées, carcassesRefusées, _carcassesOuLotsRefusés] = useMemo(() => {
     if (!fei.resume_nombre_de_carcasses) {
-      return [[], 0];
+      return [[], 0, ''];
     }
     const _carcassesAcceptées = [];
     let _carcassesRefusées = 0;
@@ -92,62 +92,55 @@ export default function CardFiche({
     return [_carcassesAcceptées, _carcassesRefusées, _carcassesOuLotsRefusés];
   }, [fei.resume_nombre_de_carcasses]);
 
+  // Formattage simple des lignes pour l'affichage
   const formattedCarcassesAcceptées = useMemo(() => {
-    if (!carcassesAcceptées.length) {
-      return ['À renseigner'];
-    }
-    const feiCarcasses = (carcassesIdsByFei[fei.numero] || []).map((id) => carcasses[id]);
-    const lines = [];
-    let nombreDEspecesApres3Lignes = 0;
-    for (const line of carcassesAcceptées) {
-      let enrichedLine = line;
+    if (!carcassesAcceptées.length) return ['À renseigner'];
 
-      // Chercher l'espèce et le nombre accepté
-      for (const [espece, abbreviation] of Object.entries(abbreviations)) {
-        if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
-          const carcasse = feiCarcasses.find(
-            (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece,
-          );
-          if (carcasse) {
-            const intermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id!);
-            const dernierAccepte = intermediaires
-              .filter((ci) => !!ci.prise_en_charge_at)
-              .sort((a, b) => {
-                const dateA = a.prise_en_charge_at ? new Date(a.prise_en_charge_at).getTime() : 0;
-                const dateB = b.prise_en_charge_at ? new Date(b.prise_en_charge_at).getTime() : 0;
-                return dateB - dateA;
-              })[0];
+    const visibleLines = carcassesAcceptées.slice(0, maxDetailedLines);
+    const hiddenCount = carcassesAcceptées.length - maxDetailedLines;
 
-            if (dernierAccepte?.nombre_d_animaux_acceptes != null) {
-              const match = line.match(/^(\d+)/);
-              const total = match ? parseInt(match[1], 10) : null;
-              if (total) {
-                enrichedLine = `${dernierAccepte.nombre_d_animaux_acceptes}/${total} ${abbreviation}`;
-              }
-            }
-          }
-          break;
-        }
-      }
-
-      if (lines.length >= maxDetailedLines) {
-        nombreDEspecesApres3Lignes++;
-      } else {
-        lines.push(enrichedLine);
-      }
+    // Compléter avec des lignes vides si nécessaire
+    while (visibleLines.length < maxDetailedLines) {
+      visibleLines.push('fin de liste');
     }
 
-    while (lines.length < maxDetailedLines) {
-      lines.push('fin de liste');
-    }
-    lines.push(
-      nombreDEspecesApres3Lignes
-        ? `+ ${nombreDEspecesApres3Lignes} espèce${nombreDEspecesApres3Lignes > 1 ? 's' : ''}`
-        : 'fin de liste',
+    visibleLines.push(
+      hiddenCount > 0 ? `+ ${hiddenCount} espèce${hiddenCount > 1 ? 's' : ''}` : 'fin de liste',
     );
 
-    return lines;
-  }, [carcassesAcceptées, carcasses, carcassesIdsByFei, fei.numero, getCarcassesIntermediairesForCarcasse]);
+    return visibleLines;
+  }, [carcassesAcceptées]);
+
+  // Calcul des refus partiels (lots dont une partie a été refusée)
+  const partialRefusals = useMemo(() => {
+    const feiCarcasses = (carcassesIdsByFei[fei.numero] || []).map((id) => carcasses[id]);
+    const refusals: string[] = [];
+
+    for (const carcasse of feiCarcasses) {
+      if (carcasse?.type !== CarcasseType.PETIT_GIBIER) continue;
+
+      const abbreviation = abbreviations[carcasse.espece as keyof typeof abbreviations];
+      if (!abbreviation) continue;
+
+      const intermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id!);
+      const dernierAccepte = intermediaires
+        .filter((ci) => !!ci.prise_en_charge_at)
+        .sort(
+          (a, b) => new Date(b.prise_en_charge_at!).getTime() - new Date(a.prise_en_charge_at!).getTime(),
+        )[0];
+
+      if (dernierAccepte?.nombre_d_animaux_acceptes == null) continue;
+
+      const total = carcasse.nombre_d_animaux ?? 0;
+      const acceptes = dernierAccepte.nombre_d_animaux_acceptes;
+
+      if (acceptes < total) {
+        refusals.push(`${total - acceptes} ${abbreviation}`);
+      }
+    }
+
+    return refusals;
+  }, [carcasses, carcassesIdsByFei, fei.numero, getCarcassesIntermediairesForCarcasse]);
 
   /* 
   {!isOnline && (
@@ -319,12 +312,19 @@ export default function CardFiche({
                 </>
               </div>
             )} */}
-            {!!_carcassesOuLotsRefusés && (
+            {(!!_carcassesOuLotsRefusés || partialRefusals.length > 0) && (
               <div className="flex shrink basis-1/2 flex-col gap-y-1">
                 <>
                   <RefusIcon />
                   <div>
-                    <p className="text-warning-main-525 m-0 text-xl">{_carcassesOuLotsRefusés}</p>
+                    {!!_carcassesOuLotsRefusés && (
+                      <p className="text-warning-main-525 m-0 text-xl">{_carcassesOuLotsRefusés}</p>
+                    )}
+                    {partialRefusals.map((refusal, index) => (
+                      <p key={index} className="text-warning-main-525 m-0 text-xl">
+                        {refusal} refusé{parseInt(refusal, 10) > 1 ? 's' : ''}
+                      </p>
+                    ))}
                   </div>
                 </>
               </div>
