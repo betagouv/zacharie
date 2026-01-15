@@ -211,6 +211,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
                 linkProps: {
                   href: '#',
                   onClick: () => {
+                    console.log('Test Sentry');
                     capture('Test Sentry');
                   },
                 },

@@ -13,7 +13,7 @@ export function capture(err: ErrorType, context: Context | string = {}): void {
   if (import.meta.env.VITEST) {
     return console.log('capture', err, JSON.stringify(context, null, 2));
   }
-  if (import.meta.env.DEV) {
+  if (import.meta.env.VITE_ENV !== 'prod' || import.meta.env.VITE_ENV !== 'test') {
     return console.log('capture', err, context);
   }
   if (typeof context === 'string') {

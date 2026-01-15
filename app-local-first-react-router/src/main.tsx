@@ -35,7 +35,7 @@ declare module '@codegouvfr/react-dsfr/spa' {
   }
 }
 
-if (import.meta.env.PROD) {
+if (import.meta.env.VITE_ENV === 'prod' || import.meta.env.VITE_ENV === 'test') {
   Sentry.init({
     dsn: 'https://1d9011c5042e5a03ff25dec68be1be2b@sentry.incubateur.net/199',
     environment: `app-local-first-react-router-${import.meta.env.VITE_ENV}`,
