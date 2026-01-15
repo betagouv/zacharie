@@ -55,7 +55,7 @@ if (sentryEnabled) {
   console.log('Sentry init', SENTRY_KEY);
   Sentry.init({
     dsn: SENTRY_KEY,
-    environment: `api-express-${ENVIRONMENT}`,
+    environment: `api-express-${ENVIRONMENT}-2`,
     release: VERSION,
     integrations: [
       // enable HTTP calls tracing

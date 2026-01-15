@@ -39,7 +39,7 @@ declare module '@codegouvfr/react-dsfr/spa' {
 console.log('Sentry init', import.meta.env.VITE_ENV);
 Sentry.init({
   dsn: 'https://1d9011c5042e5a03ff25dec68be1be2b@sentry.incubateur.net/199',
-  environment: `app-local-first-react-router-${import.meta.env.VITE_ENV}`,
+  environment: `app-local-first-react-router-${import.meta.env.VITE_ENV}-2`,
   release: __VITE_BUILD_ID__,
   integrations: [
     Sentry.reactRouterV6BrowserTracingIntegration({
