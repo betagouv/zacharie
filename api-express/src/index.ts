@@ -52,6 +52,7 @@ app.use(
 const sentryEnabled = !!SENTRY_KEY;
 
 if (sentryEnabled) {
+  console.log('Sentry init', SENTRY_KEY);
   Sentry.init({
     dsn: SENTRY_KEY,
     environment: `api-express-${ENVIRONMENT}`,

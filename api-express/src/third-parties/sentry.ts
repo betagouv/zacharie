@@ -46,6 +46,7 @@ function capture(
     }
   }
 
+  console.log('capture going to Sentry', error, context);
   if (typeof error === 'string') {
     Sentry.captureMessage(error, context);
   } else {
