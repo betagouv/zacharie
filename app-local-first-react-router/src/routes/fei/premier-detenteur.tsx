@@ -1,4 +1,4 @@
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { useMemo } from 'react';
 import {
   //  EntityRelationStatus,
@@ -33,6 +33,9 @@ export default function FeiPremierDetenteur() {
   }, [premierDetenteurEntity, premierDetenteurUser]);
 
   const canEdit = useMemo(() => {
+    if (!user.activated) {
+      return false;
+    }
     if (fei.automatic_closed_at || fei.svi_closed_at || fei.svi_assigned_at || fei.intermediaire_closed_at) {
       return false;
     }
@@ -112,6 +115,24 @@ export default function FeiPremierDetenteur() {
 
   if (!fei.premier_detenteur_user_id) {
     return "Il n'y a pas encore de premier détenteur pour cette fiche";
+  }
+
+  if (!user.activated) {
+    return (
+      <Section title={`Action du Premier détenteur | ${premierDetenteurInput}`}>
+        <Alert
+          severity="warning"
+          title="Compte non activé"
+          description={
+            <>
+              Vous devez être activé pour transmettre une fiche. Veuillez contacter un administrateur via{' '}
+              <Link to="/app/tableau-de-bord/contact">le formulaire de contact</Link> pour activer votre
+              compte.
+            </>
+          }
+        />
+      </Section>
+    );
   }
 
   return (

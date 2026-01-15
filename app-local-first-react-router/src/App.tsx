@@ -40,6 +40,7 @@ import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
 import MesChasses from './routes/mes-chasses/mes-chasses';
 import FeiEnvoyée from './routes/fei/envoyée';
 import DeactivatedAccount from './routes/deactivated';
+import { hasAllRequiredFields } from './utils/user';
 import { MatomoTracker } from './components/MatomoTracker';
 
 // mon profil routes
@@ -432,13 +433,19 @@ function RestrictedRoute({
     return <Chargement />;
   }
 
-  if (
-    !user?.activated &&
+  const isRestrictedPage =
     !location.pathname.includes('mon-profil') &&
     !location.pathname.includes('onboarding') &&
-    !location.pathname.includes('admin')
-  ) {
-    return <DeactivatedAccount />;
+    !location.pathname.includes('admin');
+
+  if (isRestrictedPage) {
+    const needToCompleteExaminateurInitial =
+      user?.roles.includes(UserRoles.CHASSEUR) && user?.est_forme_a_l_examen_initial == null;
+    const isProfileCompleted = hasAllRequiredFields(user!) && !needToCompleteExaminateurInitial;
+
+    if (!isProfileCompleted) {
+      return <DeactivatedAccount />;
+    }
   }
 
   return children;

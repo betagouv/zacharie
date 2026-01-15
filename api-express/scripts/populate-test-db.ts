@@ -99,6 +99,7 @@ Christine
         activated: true,
         activated_at: dayjs().toDate(),
         user_entities_vivible_checkbox: true,
+        est_forme_a_l_examen_initial: false,
         prenom: 'Pierre',
         nom_de_famille: 'Petit',
         addresse_ligne_1: '2 rue de la paix',
