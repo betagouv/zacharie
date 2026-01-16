@@ -151,12 +151,12 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
         - paragraph: manquant pour ETG 1
       `);
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - 'button /Pigeons \\(\\d+\\) N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie en cours de traitement/':
-        - paragraph: /Pigeons \\(\\d+\\)/
+      - 'button /Pigeons \\(\\d+ sur \\d+\\) N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie/':
+        - paragraph: /Pigeons \\(\\d+ sur \\d+\\)/
         - paragraph: /N° MM-\\d+-\\d+/
         - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
         - paragraph: Aucune anomalie
-        - paragraph: en cours de traitement
+        - paragraph: accepté par ETG 1 ETG
       `);
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
