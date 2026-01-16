@@ -572,6 +572,7 @@ export default function DestinataireSelect({
           for (const carcasseIntermediaireId of carcassesIntermediaireIds) {
             const carcasseIntermediaire = carcassesIntermediaireById[carcasseIntermediaireId];
             if (!carcasseIntermediaire) continue;
+            if (carcasseIntermediaire.check_manuel) continue;
             if (carcasseIntermediaire.manquante) continue;
             if (carcasseIntermediaire.refus) continue;
             if (carcasseIntermediaire.ecarte_pour_inspection) continue;
