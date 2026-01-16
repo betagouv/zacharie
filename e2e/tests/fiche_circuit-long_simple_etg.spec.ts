@@ -156,7 +156,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
         - paragraph: /N° MM-\\d+-\\d+/
         - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
         - paragraph: Aucune anomalie
-        - paragraph: en cours de traitement
+        - paragraph: accepté par ETG 1 ETG
       `);
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
