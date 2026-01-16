@@ -63,21 +63,6 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       },
     });
   }
-  if (
-    isCircuitCourt ||
-    user?.roles.includes(UserRoles.COLLECTEUR_PRO) ||
-    user?.roles.includes(UserRoles.ETG) ||
-    user?.roles.includes(UserRoles.SVI)
-  ) {
-    profileMenu.push({
-      text: user?.roles.includes(UserRoles.SVI) ? 'Mon service' : 'Mon entreprise',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mon-entreprise',
-      linkProps: {
-        href: '#',
-        to: '/app/tableau-de-bord/mon-profil/mon-entreprise',
-      },
-    });
-  }
   profileMenu.push({
     text: 'Mes notifications',
     isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-notifications',
@@ -145,6 +130,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     },
   ];
   if (
+    isCircuitCourt ||
     user?.roles.includes(UserRoles.SVI) ||
     user?.roles.includes(UserRoles.ETG) ||
     user?.roles.includes(UserRoles.COLLECTEUR_PRO)
