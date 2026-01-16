@@ -56,7 +56,7 @@ if (sentryEnabled) {
   Sentry.init({
     dsn: SENTRY_KEY,
     environment: `api-express-${ENVIRONMENT}-2`,
-    maxValueLength: 1000,
+    maxValueLength: 10000,
     release: VERSION,
     integrations: [
       // enable HTTP calls tracing
