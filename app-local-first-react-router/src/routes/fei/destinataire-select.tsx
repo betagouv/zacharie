@@ -9,6 +9,7 @@ import {
   CarcasseIntermediaire,
   EntityRelationType,
   FeiOwnerRole,
+  CarcasseType,
 } from '@prisma/client';
 import dayjs from 'dayjs';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -24,7 +25,11 @@ import { getEntityDisplay } from '@app/utils/get-entity-display';
 import Button from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
-import type { FeiIntermediaire, FeiAndIntermediaireIds } from '@app/types/fei-intermediaire';
+import type {
+  FeiIntermediaire,
+  FeiAndIntermediaireIds,
+  FeiAndCarcasseAndIntermediaireIds,
+} from '@app/types/fei-intermediaire';
 import { EntityWithUserRelation } from '@api/src/types/entity';
 import { UserForFei } from '@api/src/types/user';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
@@ -70,6 +75,11 @@ export default function DestinataireSelect({
   const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
+  const updateCarcasseIntermediaire = useZustandStore((state) => state.updateCarcasseIntermediaire);
+  const carcassesIntermediaireIdsByIntermediaire = useZustandStore(
+    (state) => state.carcassesIntermediaireIdsByIntermediaire,
+  );
+  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
@@ -553,6 +563,70 @@ export default function DestinataireSelect({
         svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
       };
       if (prochainDetenteurType === EntityTypes.SVI) {
+        // Auto-accept carcasses that haven't been explicitly accepted/rejected/manquante
+        // when transmitting to SVI (ETG workflow)
+        // This simulates the submitCarcasseAccept function from intermediaire-carcasse.tsx
+        if (intermediaire?.id && feiAndIntermediaireIds) {
+          const carcassesIntermediaireIds =
+            carcassesIntermediaireIdsByIntermediaire[feiAndIntermediaireIds] || [];
+          for (const carcasseIntermediaireId of carcassesIntermediaireIds) {
+            const carcasseIntermediaire = carcassesIntermediaireById[carcasseIntermediaireId];
+            if (!carcasseIntermediaire) continue;
+            if (carcasseIntermediaire.manquante) continue;
+            if (carcasseIntermediaire.refus) continue;
+            if (carcasseIntermediaire.ecarte_pour_inspection) continue;
+
+            // Auto-accept this carcasse (simulating submitCarcasseAccept)
+            const carcasse = carcassesState[carcasseIntermediaire.zacharie_carcasse_id];
+            if (!carcasse || carcasse.deleted_at) continue;
+
+            const nombreAcceptes =
+              carcasse.type === CarcasseType.PETIT_GIBIER ? (carcasse.nombre_d_animaux ?? 0) : null;
+            const nextPartialCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
+              manquante: false,
+              refus: null,
+              prise_en_charge: true,
+              ecarte_pour_inspection: false,
+              check_manuel: true,
+              decision_at: dayjs().toDate(),
+              nombre_d_animaux_acceptes: nombreAcceptes,
+            };
+            updateCarcasseIntermediaire(
+              carcasseIntermediaireId as FeiAndCarcasseAndIntermediaireIds,
+              nextPartialCarcasseIntermediaire,
+            );
+            addLog({
+              user_id: user.id,
+              user_role: intermediaire.intermediaire_role! as UserRoles,
+              fei_numero: fei.numero,
+              action: 'carcasse-intermediaire-accept',
+              history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
+              entity_id: intermediaire.intermediaire_entity_id,
+              zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+              intermediaire_id: intermediaire.id,
+              carcasse_intermediaire_id: carcasseIntermediaireId,
+            });
+            // Also update the carcasse itself
+            const nextPartialCarcasse = {
+              intermediaire_carcasse_manquante: false,
+              intermediaire_carcasse_refus_motif: null,
+              intermediaire_carcasse_refus_intermediaire_id: null,
+              latest_intermediaire_signed_at: dayjs().toDate(),
+            };
+            updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+            addLog({
+              user_id: user.id,
+              user_role: intermediaire.intermediaire_role! as UserRoles,
+              fei_numero: fei.numero,
+              action: 'carcasse-accept',
+              history: createHistoryInput(carcasse, nextPartialCarcasse),
+              entity_id: intermediaire.intermediaire_entity_id,
+              zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+              intermediaire_id: intermediaire.id,
+              carcasse_intermediaire_id: carcasseIntermediaireId,
+            });
+          }
+        }
         for (const carcasse of carcasses) {
           updateCarcasse(
             carcasse.zacharie_carcasse_id,
