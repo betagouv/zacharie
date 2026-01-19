@@ -34,6 +34,14 @@ export default function UtilisateursDeMonEntreprise() {
     entityType = EntityTypes.ETG;
   } else if (user.roles.includes(UserRoles.SVI)) {
     entityType = EntityTypes.SVI;
+  } else if (user.roles.includes(UserRoles.COMMERCE_DE_DETAIL)) {
+    entityType = EntityTypes.COMMERCE_DE_DETAIL;
+  } else if (user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE)) {
+    entityType = EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE;
+  } else if (user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE)) {
+    entityType = EntityTypes.ASSOCIATION_CARITATIVE;
+  } else if (user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF)) {
+    entityType = EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF;
   }
   const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
 
