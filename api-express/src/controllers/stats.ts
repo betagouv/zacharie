@@ -110,8 +110,7 @@ router.get(
     const seizedBigGame = bigGameCarcasses.filter(
       (c) =>
         c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
-        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE ||
-        c.svi_carcasse_status === CarcasseStatus.REFUS_ETG_COLLECTEUR,
+        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE,
     );
     const personalSeizureRate =
       bigGameCarcasses.length > 0 ? (seizedBigGame.length / bigGameCarcasses.length) * 100 : 0;
