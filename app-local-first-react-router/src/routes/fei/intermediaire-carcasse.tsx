@@ -556,7 +556,6 @@ export default function CarcasseIntermediaireComp({
                     )}
 
                     {/* Radio: Lot refusé / Carcasse refusée */}
-                    <>
                       <div className="fr-radio-group">
                         <input
                           type="radio"
@@ -609,7 +608,6 @@ export default function CarcasseIntermediaireComp({
                           />
                         </div>
                       )}
-                    </>
 
                     {/* Radio: Lot écarté pour inspection (uniquement pour ETG) */}
                     {user.roles.includes(UserRoles.ETG) && (
@@ -695,7 +693,7 @@ export default function CarcasseIntermediaireComp({
                 nativeTextAreaProps={{
                   name: Prisma.CarcasseIntermediaireScalarFieldEnum.commentaire,
                   form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                  defaultValue: carcasseIntermediaire.commentaire || '',
+                  value: commentaire,
                   disabled: !canEdit,
                   onChange: (e) => {
                     if (!canEdit) return;
@@ -778,6 +776,14 @@ export default function CarcasseIntermediaireComp({
                                   e.preventDefault();
                                   if (carcasseRefusCheckbox) {
                                     submitCarcasseRefus();
+                                  } else if (carcasseAcceptPartielCheckbox) {
+                                    submitCarcasseAcceptPartiel();
+                                  } else if (carcasseEcarteePourInspectionCheckbox) {
+                                    submitCarcasseEcarteePourInspection();
+                                  } else if (carcasseManquante) {
+                                    submitCarcasseManquante();
+                                  } else {
+                                    submitCarcasseAccept();
                                   }
                                   refusIntermediaireModal.close();
                                 },
