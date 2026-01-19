@@ -3,6 +3,7 @@ import type { UserConnexionResponse } from '@api/src/types/responses';
 import { create } from 'zustand';
 import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import API from '@app/services/api';
+import useZustandStore from './store';
 
 interface State {
   user: User | null;
@@ -47,7 +48,8 @@ export default useUser;
 export async function syncProchainBraceletAUtiliser() {
   const user = useUser.getState().user;
   const needSyncProchainBraceletAUtiliser = useUser.getState().needSyncProchainBraceletAUtiliser;
-  if (!user || !needSyncProchainBraceletAUtiliser) return;
+  const isOnline = useZustandStore.getState().isOnline;
+  if (!user || !needSyncProchainBraceletAUtiliser || !isOnline) return;
   return API.post({
     path: `/user/${user.id}`,
     body: {
@@ -63,5 +65,5 @@ export async function syncProchainBraceletAUtiliser() {
           needSyncProchainBraceletAUtiliser: false,
         }));
       }
-    });
+    })
 }
