@@ -4,7 +4,6 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { CarcasseType, Prisma, UserRoles, type Carcasse } from '@prisma/client';
 import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
-// import InputForSearchPrefilledData from '@app/components/InputForSearchPrefilledData';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import useZustandStore from '@app/zustand/store';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
