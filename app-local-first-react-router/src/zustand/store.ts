@@ -40,6 +40,7 @@ import type {
 } from '@app/types/fei-intermediaire';
 import { get, set, del } from 'idb-keyval'; // can use anything: IndexedDB, Ionic Storage, etc.
 import API from '@app/services/api';
+import { capture } from '@app/services/sentry';
 
 // Custom storage object
 export const indexDBStorage: StateStorage = {
@@ -541,14 +542,14 @@ queue.on('add', () => {
 });
 
 queue.on('next', () => {
-  // if (debug) console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
-  console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
+  if (debug) console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
 });
 
 export async function syncFei(nextFei: FeiWithIntermediaires, signal: AbortSignal) {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
-    throw new Error('syncFei not online');
+    console.error('syncFei not online');
+    return;
   }
   return API.post({
     path: `/fei/${nextFei.numero}/`,
@@ -575,7 +576,8 @@ const feisControllers = new Map<string, AbortController>();
 export async function syncFeis() {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
-    throw new Error('syncFeis not online');
+    console.error('syncFeis not online');
+    return;
   }
   const feis = useZustandStore.getState().feis;
   for (const fei of Object.values(feis)) {
@@ -601,7 +603,8 @@ export async function syncFeis() {
 export async function syncCarcasse(nextCarcasse: Carcasse, signal: AbortSignal) {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
-    throw new Error('syncCarcasse not online');
+    console.error('syncCarcasse not online');
+    return;
   }
   return API.post({
     path: `/fei-carcasse/${nextCarcasse.fei_numero}/${nextCarcasse.zacharie_carcasse_id}`,
@@ -637,7 +640,8 @@ const carcassesControllers = new Map<string, AbortController>();
 export async function syncCarcasses() {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
-    throw new Error('syncCarcasses not online');
+    console.error('syncCarcasses not online');
+    return;
   }
   const carcasses = useZustandStore.getState().carcasses;
   for (const carcasse of Object.values(carcasses)) {
@@ -646,6 +650,13 @@ export async function syncCarcasses() {
       const controller = new AbortController();
       queue.add(
         async ({ signal }) => {
+          // Check dependencies at execution time (not queue-add time)
+          // so the FEI sync task has already completed
+          const fei = useZustandStore.getState().feis[carcasse.fei_numero];
+          if (!fei?.is_synced) {
+            if (debug) console.log('skipping carcasse sync - FEI not synced yet', carcasse.fei_numero);
+            return; // Will be synced on next syncData call
+          }
           const existingController = carcassesControllers.get(carcasse.zacharie_carcasse_id);
           if (existingController && !existingController.signal.aborted) {
             existingController.abort('race condition in carcassesControllers');
@@ -666,7 +677,8 @@ export async function syncCarcasseIntermediaire(
 ) {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
-    throw new Error('syncCarcasseIntermediaire not online');
+    console.error('syncCarcasseIntermediaire not online');
+    return;
   }
   const feiNumero = nextCarcasseIntermediaire.fei_numero;
   const intermedaireId = nextCarcasseIntermediaire.intermediaire_id;
@@ -692,6 +704,18 @@ export async function syncCarcasseIntermediaire(
             },
           },
         }));
+      } else if (!res.ok) {
+        capture(
+          new Error('syncCarcasseIntermediaire failed'),
+          {
+            extra: {
+              fei_numero: feiNumero,
+              intermedaire_id: intermedaireId,
+              zacharie_carcasse_id: zacharieCarcasseId,
+              error: res.error,
+            }
+          }
+        );
       }
     });
 }
@@ -701,27 +725,46 @@ const intermediairesControllers = new Map<string, AbortController>();
 export async function syncCarcassesIntermediaires() {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
-    throw new Error('syncCarcassesIntermediaires not online');
+    console.error('syncCarcassesIntermediaires not online');
+    return;
   }
   const carcassesIntermediaires = useZustandStore.getState().carcassesIntermediaireById;
+
   for (const carcassesIntermediaire of Object.values(carcassesIntermediaires)) {
     if (!carcassesIntermediaire.is_synced) {
       if (debug) console.log('syncing carcasse intermediaire', carcassesIntermediaire);
       const controller = new AbortController();
-      console.log(
-        'adding to queue',
-        carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
-      );
+      if (debug)
+        console.log(
+          'adding to queue',
+          carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
+        );
       queue.add(
         async ({ signal }) => {
+          // Check dependencies at execution time (not queue-add time)
+          // so the FEI and Carcasse sync tasks have already completed
+          const state = useZustandStore.getState();
+          const fei = state.feis[carcassesIntermediaire.fei_numero];
+          const carcasse = state.carcasses[carcassesIntermediaire.zacharie_carcasse_id];
+          if (!fei?.is_synced || !carcasse?.is_synced) {
+            if (debug)
+              console.log(
+                'skipping carcasseIntermediaire sync - FEI or Carcasse not synced yet',
+                carcassesIntermediaire.fei_numero,
+                carcassesIntermediaire.zacharie_carcasse_id,
+              );
+            return; // Will be synced on next syncData call
+          }
+
           const existingController = intermediairesControllers.get(
             carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
           );
           if (existingController && !existingController.signal.aborted) {
-            console.log(
-              'aborting',
-              carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
-            );
+            if (debug)
+              console.log(
+                'aborting',
+                carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
+              );
             existingController.abort('race condition in intermediairesControllers');
           } else {
             intermediairesControllers.set(
@@ -743,7 +786,8 @@ export async function syncCarcassesIntermediaires() {
 export async function syncLog(nextLog: Log) {
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
-    throw new Error('syncLog not online');
+    console.error('syncLog not online');
+    return;
   }
   return API.post({
     path: '/log',
@@ -762,9 +806,10 @@ export async function syncLog(nextLog: Log) {
 }
 
 export async function syncLogs() {
-  const isOnline = useZustandStore.getState().logs;
+  const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
-    throw new Error('syncLogs not online');
+    console.error('syncLogs not online');
+    return;
   }
   const logs = useZustandStore.getState().logs;
   for (const log of Object.values(logs)) {
@@ -782,7 +827,7 @@ export async function syncData(calledFrom: string) {
     return;
   }
 
-  console.log('syncing data from', calledFrom);
+  if (debug) console.log('syncing data from', calledFrom);
 
   queue.add(async () => {
     await syncProchainBraceletAUtiliser();
@@ -791,7 +836,8 @@ export async function syncData(calledFrom: string) {
   syncCarcasses();
   syncCarcassesIntermediaires();
   syncLogs();
-  queue.on('empty', () => {
+  // Use once instead of on to prevent listener accumulation on repeated calls
+  queue.once('empty', () => {
     useZustandStore.setState({ dataIsSynced: true });
   });
 }
