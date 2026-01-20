@@ -600,7 +600,7 @@ export default function DestinataireSelect({
               user_id: user.id,
               user_role: intermediaire.intermediaire_role! as UserRoles,
               fei_numero: fei.numero,
-              action: 'carcasse-intermediaire-accept',
+              action: 'carcasse-intermediaire-accept-automatically',
               history: createHistoryInput(carcasseIntermediaire, nextPartialCarcasseIntermediaire),
               entity_id: intermediaire.intermediaire_entity_id,
               zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
