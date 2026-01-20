@@ -1,7 +1,7 @@
-import type { FeisResponse, FeisDoneResponse } from '@api/src/types/responses';
+import type { FeisResponse, FeisDoneResponse, FeiRefreshResponse } from '@api/src/types/responses';
 import type { FeiDone, FeiWithIntermediaires } from '@api/src/types/fei';
 import useZustandStore from '@app/zustand/store';
-import { loadFei } from '@app/utils/load-fei';
+import { setFeiInStore } from '@app/utils/load-fei';
 import dayjs from 'dayjs';
 import API from '@app/services/api';
 
@@ -78,8 +78,12 @@ export async function loadFeis() {
 
     useZustandStore.setState({ feis: allFeis });
 
-    for (const fei_numero of feisNumerosToLoadAgain) {
-      await loadFei(fei_numero);
+    const feisRefreshed = await API.post({ path: 'fei/refresh', body: { numeros: feisNumerosToLoadAgain } }).then((res) => res as FeiRefreshResponse);
+    if (!feisRefreshed.ok) {
+      return;
+    }
+    for (const fei of feisRefreshed.data.feis) {
+      setFeiInStore(fei);
     }
     if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
       // if it goes too fast, we have a race condition with the sync with the backend and PG doesn'tlike it

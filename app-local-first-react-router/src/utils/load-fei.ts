@@ -12,6 +12,7 @@ import type {
   FeiIntermediaire,
 } from '@app/types/fei-intermediaire';
 import API from '@app/services/api';
+import { FeiPopulated } from '@api/src/types/fei';
 
 export async function loadFei(fei_numero: string) {
   const isOnline = useZustandStore.getState().isOnline;
@@ -19,16 +20,15 @@ export async function loadFei(fei_numero: string) {
     console.log('not loading fei because not online');
     return;
   }
-  const feiData = await API.get({ path: `fei/${fei_numero}` }).then((res) => res as FeiResponse);
-  if (!feiData.ok) {
+  const feiResponse = await API.get({ path: `fei/${fei_numero}` }).then((res) => res as FeiResponse);
+  if (!feiResponse.ok) {
     return null;
   }
-  setFeiInStore(feiData!);
-  return feiData.data.fei!;
+  setFeiInStore(feiResponse.data.fei!);
+  return feiResponse.data.fei!;
 }
 
-export function setFeiInStore(feiResponse: FeiResponse) {
-  const fei = feiResponse.data.fei!;
+export function setFeiInStore(fei: FeiPopulated) {
   const prevState = useZustandStore.getState();
   // if (!fei?.numero) {
   //   useZustandStore.setState((state) => {
