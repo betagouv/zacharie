@@ -1,21 +1,17 @@
 import type { InputProps } from '@codegouvfr/react-dsfr/Input';
 import SelectCustom from './SelectCustom';
 import { type SingleValue, type MultiValue } from 'react-select';
+import { useMemo } from 'react';
 
 interface InputMultiSelectProps<T> {
   label: InputProps['label'];
   data: Array<T>;
   onChange: (selected: Array<T>) => void;
-  onRemove?: (selected: T) => void;
   hintText?: InputProps['hintText'];
   name?: string;
   placeholder?: string;
   required?: boolean;
   values?: Array<T>;
-  defaultValue?: T;
-  hideDataWhenNoSearch?: boolean;
-  addSearchToClickableLabel?: boolean;
-  clearInputOnClick?: boolean;
   canEdit?: boolean;
   isMulti?: boolean;
   disabled?: boolean;
@@ -36,6 +32,16 @@ export default function InputMultiSelect<T extends string>({
   isMulti = true,
   creatable = false,
 }: InputMultiSelectProps<T>) {
+  const options = useMemo(() => {
+    let _options = [];
+    for (const value of values) {
+      if (!data.includes(value)) {
+        _options.push(value);
+      }
+    }
+    return [..._options, ...data]
+  }, [values, data])
+  
   return (
     <div className={['fr-input-group', disabled ? 'fr-input-group--disabled' : ''].join(' ')}>
       <label className="fr-label" htmlFor="input-«re»">
@@ -43,7 +49,7 @@ export default function InputMultiSelect<T extends string>({
         {hintText && <span className="fr-hint-text">{hintText}</span>}
       </label>
       <SelectCustom
-        options={data.map((_value: string) => ({
+        options={options.map((_value: string) => ({
           label: _value,
           value: _value,
         }))}
@@ -68,9 +74,12 @@ export default function InputMultiSelect<T extends string>({
         classNamePrefix={`${name}`}
         creatable={creatable}
         // @ts-expect-error - onCreateOption is not typed
-        onCreateOption={(newOption) => {
-          console.log({ newOption });
-          onChange([...values, newOption as T]);
+        onCreateOption={(newOption) => {;
+          if (isMulti) {
+            onChange([...values, newOption as T].filter(Boolean) as Array<T>);
+          } else {
+            onChange([newOption as T]);
+          }
         }}
         className="mt-2"
         // components={{
