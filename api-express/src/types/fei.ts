@@ -29,9 +29,7 @@ export const feiPopulatedInclude = {
       CarcasseIntermediaireEntity: true,
       CarcasseIntermediaireUser: true,
     },
-    orderBy: {
-      created_at: Prisma.SortOrder.desc,
-    },
+    orderBy: [{ prise_en_charge_at: Prisma.SortOrder.desc }, { created_at: Prisma.SortOrder.desc }],
   },
 };
 
