@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import {
   UserRoles,
   Prisma,
@@ -174,6 +174,58 @@ export default function DestinataireSelect({
   const prochainDetenteur = prochainDetenteurEntityId ? entities[prochainDetenteurEntityId] : null;
 
   const prochainDetenteurType = prochainDetenteur?.type;
+
+  // Ref to track if this is the initial mount (to avoid saving on first render)
+  const isInitialMount = useRef(true);
+
+  // Auto-save prochain détenteur selection when it changes
+  useEffect(() => {
+    // Skip saving on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Don't save if sousTraite mode (different logic)
+    if (sousTraite) return;
+
+    // Save the selection to cache fields (without transmitting)
+    if (premierDetenteurEntity || premierDetenteurUser) {
+      // For premier détenteur
+      if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
+        const nextFei: Partial<typeof fei> = {
+          premier_detenteur_prochain_detenteur_id_cache: prochainDetenteurEntityId,
+          premier_detenteur_prochain_detenteur_role_cache: prochainDetenteurEntityId
+            ? (entities[prochainDetenteurEntityId]?.type as FeiOwnerRole)
+            : null,
+        };
+        updateFei(fei.numero, nextFei);
+        // Also update carcasses with the cache
+        for (const carcasse of carcasses) {
+          updateCarcasse(
+            carcasse.zacharie_carcasse_id,
+            {
+              premier_detenteur_prochain_detenteur_id_cache: prochainDetenteurEntityId,
+              premier_detenteur_prochain_detenteur_role_cache: prochainDetenteurEntityId
+                ? (entities[prochainDetenteurEntityId]?.type as FeiOwnerRole)
+                : null,
+            },
+            false,
+          );
+        }
+      }
+    } else if (intermediaire && feiAndIntermediaireIds) {
+      // For intermédiaire
+      const nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
+        intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
+        intermediaire_prochain_detenteur_role_cache: prochainDetenteurEntityId
+          ? (entities[prochainDetenteurEntityId]?.type as FeiOwnerRole)
+          : null,
+      };
+      updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds, nextCarcasseIntermediaire);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prochainDetenteurEntityId]);
 
   // Check if recipient is circuit court
   const isRecipientCircuitCourt = useMemo(() => {
