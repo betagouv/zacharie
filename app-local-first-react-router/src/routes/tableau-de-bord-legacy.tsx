@@ -2,28 +2,28 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
-import { EntityRelationType, UserRoles } from '@prisma/client';
+import { CarcasseType, EntityRelationType, UserRoles } from '@prisma/client';
+import { abbreviations } from '@app/utils/count-carcasses';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { getCarcassesSorted, CarcasseWithFei } from '@app/utils/get-carcasses-sorted';
+import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
-
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
 import useUser from '@app/zustand/user';
-import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import API from '@app/services/api';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { useFeiSteps } from '@app/utils/fei-steps';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
+import { useIsCircuitCourt } from '@app/utils/circuit-court';
+import type { FeiDone } from '@api/src/types/fei';
 
 async function loadData() {
   // FIXME: await syncData is useless, as syncData queues stuff - so there will be bugs
@@ -55,58 +55,12 @@ export default function TableauDeBordIndex() {
   const feisDoneNumeros = useZustandStore((state) => state.feisDoneNumeros);
   const feisDone = useZustandStore((state) => state.feisDone);
   const entities = useZustandStore((state) => state.entities);
-  const carcasses = useZustandStore((state) => state.carcasses);
-  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
   const allEtgIds = useZustandStore((state) => state.etgsIds);
-  const { carcassesOngoing, carcassesToTake, carcassesUnderMyResponsability, carcassesDone } =
-    getCarcassesSorted();
+  const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();
   const { onExportToXlsx, onExportSimplifiedToXlsx, isExporting } = useExportFeis();
-
-  const carcassesAssigned = [...carcassesUnderMyResponsability, ...carcassesToTake].sort((a, b) => {
+  const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
-
-  // Group carcasses by FEI to show CardFiche
-  const uniqueFeis = (carcassesList: CarcasseWithFei[]) => {
-    const seen = new Set<string>();
-    return carcassesList.reduce((acc, c) => {
-      if (!seen.has(c.Fei.numero)) {
-        seen.add(c.Fei.numero);
-        acc.push(c.Fei);
-      }
-      return acc;
-    }, [] as FeiWithIntermediaires[]);
-  };
-
-  const feisAssigned = uniqueFeis(carcassesAssigned);
-  const feisOngoing = uniqueFeis(carcassesOngoing);
-  const feisDoneFromCarcasses = uniqueFeis(carcassesDone);
-
-  // Include FEIs from feisDone that weren't found via carcasses
-  // (e.g., FEIs without carcasses or with all carcasses deleted)
-  // Also exclude FEIs that are already in feisAssigned or feisOngoing to avoid duplicates
-  const allFeisDone = useMemo(() => {
-    const alreadyShownNumeros = new Set([
-      ...feisAssigned.map((f) => f.numero),
-      ...feisOngoing.map((f) => f.numero),
-      ...feisDoneFromCarcasses.map((f) => f.numero),
-    ]);
-
-    const additionalFeis = feisDoneNumeros
-      .filter((numero) => !alreadyShownNumeros.has(numero))
-      .map((numero) => feisDone[numero])
-      .filter(Boolean) as FeiWithIntermediaires[];
-
-    // Filter feisDoneFromCarcasses to exclude those already in assigned/ongoing
-    const filteredDoneFromCarcasses = feisDoneFromCarcasses.filter(
-      (f) =>
-        !feisAssigned.some((a) => a.numero === f.numero) && !feisOngoing.some((o) => o.numero === f.numero),
-    );
-
-    console.log('✌️ ~ additionalFeis:', additionalFeis);
-    return [...filteredDoneFromCarcasses, ...additionalFeis];
-  }, [feisDoneFromCarcasses, feisDoneNumeros, feisDone, feisAssigned, feisOngoing]);
-
   const [loading, setLoading] = useState(false);
   const isOnline = useIsOnline();
 
@@ -178,57 +132,35 @@ export default function TableauDeBordIndex() {
 
   useSaveScroll('tableau-de-bord-scrollY');
 
-  const [selectedCarcasseIds, setSelectedCarcasseIds] = useState<string[]>([]);
-
-  // Logic to select all carcasses in a FEI when FEI is selected
-  const handleFeiClick = (feiNumero: string, selected: boolean) => {
-    const feiCarcasseIds = carcassesIdsByFei[feiNumero] || [];
-    // We should only select carcasses that are relevant (e.g. visible or owned)
-    // `getCarcassesSorted` returns relevant carcasses. we can filter by that set.
-    // Or simply select ALL carcasses in that FEI, user usually handles the whole envelope.
-    // Let's select all non-deleted carcasses of that FEI that are in our "universe" (Assigned or Ongoing).
-
-    const relevantCarcasseIds = feiCarcasseIds.filter((id) => {
-      const c = carcasses[id];
-      if (!c || c.deleted_at) return false;
-      // Check if this carcasse is in our assigned or ongoing lists?
-      // Actually, if I see the FEI, I can act on it.
-      return true;
-    });
-
-    setSelectedCarcasseIds((prev) => {
-      if (!selected) {
-        return prev.filter((id) => !relevantCarcasseIds.includes(id));
+  const [selectedFeis, setSelectedFeis] = useState<string[]>([]);
+  const handleCheckboxClick = (id: string) => {
+    setSelectedFeis((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((fei) => fei !== id);
       }
-      return [...new Set([...prev, ...relevantCarcasseIds])];
+      return [...prev, id];
     });
   };
 
-  const handleSelectAll = (visibleFeiNumeros?: string[]) => {
-    // Need to map visible FEIs to their carcasses
-    const idsToToggle = (visibleFeiNumeros || [])
-      .flatMap((num) => carcassesIdsByFei[num] || [])
-      .filter((id) => !!carcasses[id] && !carcasses[id].deleted_at);
-
-    const allSelected = idsToToggle.every((id) => selectedCarcasseIds.includes(id));
+  const handleSelectAll = (visibleFeis?: string[]) => {
+    const feisToToggle = visibleFeis || [];
+    const allSelected = feisToToggle.every((numero) => selectedFeis.includes(numero));
     if (allSelected) {
-      setSelectedCarcasseIds((prev) => prev.filter((id) => !idsToToggle.includes(id)));
+      // Désélectionner toutes les fiches visibles
+      setSelectedFeis((prev) => prev.filter((numero) => !feisToToggle.includes(numero)));
     } else {
-      setSelectedCarcasseIds((prev) => {
+      // Sélectionner toutes les fiches visibles
+      setSelectedFeis((prev) => {
         const newSelection = [...prev];
-        idsToToggle.forEach((id) => {
-          if (!newSelection.includes(id)) {
-            newSelection.push(id);
+        feisToToggle.forEach((numero) => {
+          if (!newSelection.includes(numero)) {
+            newSelection.push(numero);
           }
         });
         return newSelection;
       });
     }
   };
-
-  const selectedFeiNumeros = useMemo(() => {
-    return Array.from(new Set(selectedCarcasseIds.map((id) => carcasses[id]?.fei_numero).filter(Boolean)));
-  }, [selectedCarcasseIds, carcasses]);
 
   const [filter, setFilter] = useState<FeiStepSimpleStatus | 'Toutes les fiches'>(() => {
     const savedFilter = localStorage.getItem('tableau-de-bord-filter');
@@ -265,17 +197,17 @@ export default function TableauDeBordIndex() {
       default:
         return 'Filtrer';
       case 'À compléter':
-        return 'Carcasses à compléter';
+        return 'Fiches à compléter';
       case 'En cours':
-        return 'Carcasses en cours';
+        return 'Fiches en cours';
       case 'Clôturée':
-        return 'Carcasses clôturées';
+        return 'Fiches clôturées';
     }
   }, [filter]);
   const [filterETG, setFilterETG] = useState<string>('');
   const dropDownMenuFilterTextSvi = useMemo(() => {
     if (sviWorkingForEtgIds.includes(filterETG)) {
-      return `Carcasses de ${entities[filterETG]?.nom_d_usage}`;
+      return `Fiches de ${entities[filterETG]?.nom_d_usage}`;
     }
     return 'Filtrer par ETG';
   }, [filterETG, sviWorkingForEtgIds, entities]);
@@ -376,45 +308,43 @@ export default function TableauDeBordIndex() {
             <DropDownMenu
               text="Actions"
               className="max-w-[321px]"
-              isActive={selectedCarcasseIds.length > 0}
+              isActive={selectedFeis.length > 0}
               menuLinks={[
                 {
                   linkProps: {
                     href: '#',
-                    'aria-disabled': selectedCarcasseIds.length === 0,
-                    className:
-                      isExporting || !selectedCarcasseIds.length ? 'cursor-not-allowed opacity-50' : '',
+                    'aria-disabled': selectedFeis.length === 0,
+                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
                     title:
-                      selectedCarcasseIds.length === 0
-                        ? 'Sélectionnez des carcasses avec la case à cocher en haut à droite de chaque carte'
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
                         : '',
                     onClick: (e) => {
                       e.preventDefault();
-                      if (selectedCarcasseIds.length === 0) return;
+                      if (selectedFeis.length === 0) return;
                       if (isExporting) return;
-                      onExportToXlsx(selectedFeiNumeros, selectedCarcasseIds);
+                      onExportToXlsx(selectedFeis);
                     },
                   },
-                  text: 'Télécharger un fichier Excel avec les carcasses sélectionnées (fiches complètes)',
+                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (complètes)',
                 },
                 {
                   linkProps: {
                     href: '#',
-                    'aria-disabled': selectedCarcasseIds.length === 0,
-                    className:
-                      isExporting || !selectedCarcasseIds.length ? 'cursor-not-allowed opacity-50' : '',
+                    'aria-disabled': selectedFeis.length === 0,
+                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
                     title:
-                      selectedCarcasseIds.length === 0
-                        ? 'Sélectionnez des carcasses avec la case à cocher en haut à droite de chaque carte'
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
                         : '',
                     onClick: (e) => {
                       e.preventDefault();
-                      if (selectedCarcasseIds.length === 0) return;
+                      if (selectedFeis.length === 0) return;
                       if (isExporting) return;
-                      onExportSimplifiedToXlsx(selectedFeiNumeros, selectedCarcasseIds);
+                      onExportSimplifiedToXlsx(selectedFeis);
                     },
                   },
-                  text: 'Télécharger un fichier Excel avec les carcasses sélectionnées (simplifiées)',
+                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (simplifiées)',
                 },
               ]}
             />
@@ -499,45 +429,44 @@ export default function TableauDeBordIndex() {
               <FeisWrapper
                 viewType={viewType}
                 handleSelectAll={handleSelectAll}
-                selectedCarcasseIds={selectedCarcasseIds}
-                visibleFeis={[...feisAssigned, ...feisOngoing, ...allFeisDone]}
+                selectedFeis={selectedFeis}
+                filter={filter}
               >
                 {feisAssigned.map((fei) => {
+                  if (!fei) return null;
                   return (
                     <CardFiche
                       key={fei.numero}
                       fei={fei}
                       filter={filter}
-                      isPrintSelected={(carcassesIdsByFei[fei.numero] || []).some((id) =>
-                        selectedCarcasseIds.includes(id),
-                      )}
-                      onPrintSelect={(feiNum, selected) => handleFeiClick(feiNum, selected)}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
                     />
                   );
                 })}
                 {feisOngoing.map((fei) => {
+                  if (!fei) return null;
                   return (
                     <CardFiche
                       key={fei.numero}
                       fei={fei}
                       filter={filter}
-                      isPrintSelected={(carcassesIdsByFei[fei.numero] || []).some((id) =>
-                        selectedCarcasseIds.includes(id),
-                      )}
-                      onPrintSelect={(feiNum, selected) => handleFeiClick(feiNum, selected)}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
                     />
                   );
                 })}
-                {allFeisDone.map((fei) => {
+                {feisDoneNumeros.map((feiNumero) => {
+                  const fei = feisDone[feiNumero]!;
+                  if (!fei) return null;
                   return (
                     <CardFiche
                       key={fei.numero}
                       fei={fei}
                       filter={filter}
-                      isPrintSelected={(carcassesIdsByFei[fei.numero] || []).some((id) =>
-                        selectedCarcasseIds.includes(id),
-                      )}
-                      onPrintSelect={(feiNum, selected) => handleFeiClick(feiNum, selected)}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -547,34 +476,34 @@ export default function TableauDeBordIndex() {
               <FeisWrapper
                 viewType={viewType}
                 handleSelectAll={handleSelectAll}
-                selectedCarcasseIds={selectedCarcasseIds}
-                visibleFeis={[...feiActivesForSvi, ...feisDoneForSvi]}
+                selectedFeis={selectedFeis}
+                filter={filter}
               >
                 {feiActivesForSvi.map((fei) => {
+                  if (!fei) return null;
                   if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
                   return (
                     <CardFiche
                       key={fei.numero}
                       fei={fei}
                       filter={filter}
-                      isPrintSelected={(carcassesIdsByFei[fei.numero] || []).some((id) =>
-                        selectedCarcasseIds.includes(id),
-                      )}
-                      onPrintSelect={(feiNum, selected) => handleFeiClick(feiNum, selected)}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
                 {feisDoneForSvi.map((fei) => {
+                  if (!fei) return null;
                   if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
                   return (
                     <CardFiche
                       key={fei.numero}
                       fei={fei}
                       filter={filter}
-                      isPrintSelected={(carcassesIdsByFei[fei.numero] || []).some((id) =>
-                        selectedCarcasseIds.includes(id),
-                      )}
-                      onPrintSelect={(feiNum, selected) => handleFeiClick(feiNum, selected)}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -596,19 +525,19 @@ function FeisWrapper({
   children,
   viewType,
   handleSelectAll,
-  selectedCarcasseIds,
-  visibleFeis,
+  selectedFeis,
+  filter,
 }: {
   children: React.ReactNode;
   viewType: 'grid' | 'table';
   handleSelectAll?: (visibleFeis?: string[]) => void;
-  selectedCarcasseIds?: string[];
-  visibleFeis: FeiWithIntermediaires[];
+  selectedFeis?: string[];
+  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
 }) {
   const user = useMostFreshUser('tableau de bord index')!;
   const navigate = useNavigate();
   const nothingToShow =
-    !children || (Array.isArray(children) && children.filter((child) => !!child).length === 0);
+    !children || (Array.isArray(children) && children.filter((child) => child.length > 0).length === 0);
 
   if (nothingToShow) {
     return (
@@ -623,6 +552,7 @@ function FeisWrapper({
                 </p>
                 <Button
                   priority="primary"
+                  // on a déjà le bouton de base en mobile, on ne veut pas le dupliquer
                   className="hidden shrink-0 lg:block"
                   onClick={async () => {
                     const newFei = await createNewFei();
@@ -645,8 +575,8 @@ function FeisWrapper({
     return (
       <FeisTable
         handleSelectAll={handleSelectAll}
-        selectedCarcasseIds={selectedCarcasseIds}
-        visibleFeis={visibleFeis}
+        selectedFeis={selectedFeis}
+        filter={filter as FeiStepSimpleStatus | 'Toutes les fiches'}
       >
         {children}
       </FeisTable>
@@ -660,148 +590,256 @@ function FeisWrapper({
   );
 }
 
+function FeisTableRow({
+  fei,
+  isSelected,
+  onPrintSelect,
+  navigate,
+  filter,
+  onVisibilityChange,
+}: {
+  fei: FeiDone;
+  isSelected: boolean;
+  onPrintSelect?: (feiNumber: string, selected: boolean) => void;
+  navigate: ReturnType<typeof useNavigate>;
+  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
+  onVisibilityChange?: (feiNumero: string, isVisible: boolean) => void;
+}) {
+  const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
+  const isCircuitCourt = useIsCircuitCourt();
+  const carcasses = useZustandStore((state) => state.carcasses);
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const getCarcassesIntermediairesForCarcasse = useZustandStore(
+    (state) => state.getCarcassesIntermediairesForCarcasse,
+  );
+
+  // Notifier le parent de la visibilité de cette ligne
+  useEffect(() => {
+    const isVisible = !filter || filter === 'Toutes les fiches' || filter === simpleStatus;
+    onVisibilityChange?.(fei.numero, isVisible);
+  }, [filter, simpleStatus, fei.numero, onVisibilityChange]);
+
+  const [carcassesAcceptées, , _carcassesOuLotsRefusés] = useMemo(() => {
+    if (!fei.resume_nombre_de_carcasses) {
+      return [[], 0, ''];
+    }
+    const _carcassesAcceptées: string[] = [];
+    let _carcassesRefusées = 0;
+    let _carcassesOuLotsRefusés = '';
+    for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
+      if (carcasse.includes('refusé')) {
+        const nombreDAnimaux =
+          carcasse
+            .split(' ')
+            .map((w: string) => parseInt(w, 10))
+            .filter(Boolean)
+            .at(-1) || 0;
+        _carcassesRefusées += nombreDAnimaux;
+        _carcassesOuLotsRefusés = carcasse.split(' (')[0];
+      } else if (carcasse) {
+        _carcassesAcceptées.push(carcasse);
+      }
+    }
+    return [_carcassesAcceptées, _carcassesRefusées, _carcassesOuLotsRefusés];
+  }, [fei.resume_nombre_de_carcasses]);
+
+  // Enrichir les carcasses acceptées pour afficher le nombre accepté pour le petit gibier
+  // Même logique que dans CardCarcasse.tsx : format "(X sur Y)"
+  const formattedCarcassesAcceptées = useMemo(() => {
+    if (!carcassesAcceptées.length) {
+      return [];
+    }
+    const feiCarcasses = (carcassesIdsByFei[fei.numero] || []).map((id) => carcasses[id]);
+    const lines = [];
+    for (const line of carcassesAcceptées) {
+      let enrichedLine = line;
+
+      // Chercher l'espèce et le nombre accepté pour le petit gibier
+      for (const [espece, abbreviation] of Object.entries(abbreviations)) {
+        if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
+          const carcasse = feiCarcasses.find(
+            (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece,
+          );
+          if (carcasse) {
+            const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
+            const intermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id!);
+            const latestIntermediaire = intermediaires[0];
+            const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
+
+            // Même logique que CardCarcasse.tsx
+            if (nombreDAnimaux > 1 && nombreDAnimauxAcceptes > 0) {
+              enrichedLine = `${nombreDAnimauxAcceptes} sur ${nombreDAnimaux} ${abbreviation}`;
+            }
+          }
+          break;
+        }
+      }
+
+      lines.push(enrichedLine);
+    }
+    return lines;
+  }, [carcassesAcceptées, carcasses, carcassesIdsByFei, fei.numero, getCarcassesIntermediairesForCarcasse]);
+
+  // Filtrer selon le statut si un filtre est défini - APRÈS tous les hooks
+  if (filter && filter !== 'Toutes les fiches' && filter !== simpleStatus) {
+    return null;
+  }
+
+  return (
+    <tr
+      key={fei.numero}
+      className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
+      onClick={() => navigate(`/app/tableau-de-bord/fei/${fei.numero}`)}
+    >
+      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex h-full items-center justify-center">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            className="checked:accent-action-high-blue-france h-4 w-4 border-2"
+            onChange={() => onPrintSelect?.(fei.numero, !isSelected)}
+          />
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col gap-1">
+          <span className="text-action-high-blue-france text-lg font-semibold">
+            {dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}
+          </span>
+          <span className="text-sm">{fei.numero}</span>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap gap-2">
+          {!isCircuitCourt && (
+            <Tag
+              small
+              className={`items-center rounded-[4px] font-semibold uppercase ${statusColors[simpleStatus].bg} ${statusColors[simpleStatus].text}`}
+            >
+              {simpleStatus}
+            </Tag>
+          )}
+          {currentStepLabelShort && (
+            <Tag small className="items-center rounded-[4px] font-semibold uppercase">
+              {currentStepLabelShort}
+            </Tag>
+          )}
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col gap-1 text-sm">
+          <span className="capitalize">
+            {fei.commune_mise_a_mort
+              ?.split(' ')
+              .slice(1)
+              .map((w: string) => w.toLocaleLowerCase())
+              .join(' ') || 'À renseigner'}
+          </span>
+          <span className="text-gray-600">{fei.premier_detenteur_name_cache || 'À renseigner'}</span>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col gap-1 text-sm">
+          {formattedCarcassesAcceptées.length > 0 ? (
+            <div>
+              {formattedCarcassesAcceptées.map((carcasse, index) => (
+                <p className="m-0 text-sm" key={carcasse + index}>
+                  {carcasse}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <span className="text-gray-400">À renseigner</span>
+          )}
+          {_carcassesOuLotsRefusés && (
+            <span className="text-warning-main-525 font-semibold">{_carcassesOuLotsRefusés}</span>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 function FeisTable({
   children,
   handleSelectAll,
-  selectedCarcasseIds,
-  visibleFeis,
+  selectedFeis,
+  filter,
 }: {
   children: React.ReactNode;
-  handleSelectAll?: (visibleFeiNumeros?: string[]) => void;
-  selectedCarcasseIds?: string[];
-  visibleFeis: FeiWithIntermediaires[];
+  handleSelectAll?: (visibleFeis?: string[]) => void;
+  selectedFeis?: string[];
+  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
 }) {
   const navigate = useNavigate();
-  const carcasses = useZustandStore((state) => state.carcasses);
-  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const [visibleFeisNumbers, setVisibleFeisNumbers] = useState<string[]>([]);
 
-  const feiElements = React.Children.toArray(children).filter(
+  // Extract CardFiche components from children to get fei data
+  const feis = React.Children.toArray(children).filter(
     (child): child is React.ReactElement => React.isValidElement(child) && child.type === CardFiche,
   );
 
-  // We need to determine if all *visible* feis are selected.
-  // A FEI is selected if *some* of its carcasse IDs are in selectedCarcasseIds
-  // But handleSelectAll logic in Table usually implies "Select All rows".
-  // Here rows are FEIs.
-  // So if I click "Select All", I select all the FEIs (so all their carcasses).
+  if (feis.length === 0) {
+    return null;
+  }
 
-  const visibleFeiNumeros = visibleFeis.map((f) => f.numero);
+  const allSelected =
+    visibleFeisNumbers.length > 0
+      ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero))
+      : false;
 
-  // A FEI is considered "selected" in table check if ALL its relevant carcasses are selected? Or at least one?
-  // Use `some` for indeterminate, `every` for checked.
-  // But typically "Select All" checkbox checks if every visible row is selected.
-
-  const isFeiSelected = (feiNumero: string) => {
-    const ids = carcassesIdsByFei[feiNumero] || [];
-    const relevantIds = ids.filter((id) => !!carcasses[id] && !carcasses[id].deleted_at);
-    if (relevantIds.length === 0) return false;
-    return relevantIds.every((id) => selectedCarcasseIds?.includes(id));
+  const handleSelectAllInTable = () => {
+    if (handleSelectAll) {
+      handleSelectAll(visibleFeisNumbers);
+    }
   };
 
-  const allVisibleSelected = visibleFeiNumeros.length > 0 && visibleFeiNumeros.every(isFeiSelected);
-  const someVisibleSelected = visibleFeiNumeros.some(isFeiSelected);
-
   return (
-    <div className="overflow-auto bg-white shadow-md sm:rounded-lg">
-      <table className="fr-table fr-table--layout-fixed w-full">
-        <thead className="">
-          <tr>
-            <th scope="col" className="w-[50px] !pl-4">
-              <Checkbox
-                small
-                options={[
-                  {
-                    label: '',
-                    nativeInputProps: {
-                      checked: allVisibleSelected,
-                      onChange: () => handleSelectAll?.(visibleFeiNumeros),
-                    },
-                  },
-                ]}
-              />
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse bg-white">
+        <thead>
+          <tr className="border-b-2 border-gray-300">
+            <th className="text-center text-sm font-semibold">
+              <div className="flex h-full items-center justify-center">
+                {handleSelectAll && (
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    className="checked:accent-action-high-blue-france h-4 w-4 border-2"
+                    onChange={handleSelectAllInTable}
+                    aria-label={allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+                  />
+                )}
+              </div>
             </th>
-            <th scope="col" className="w-[120px]">
-              Date mise à mort
-            </th>
-            <th scope="col" className="w-[120px]">
-              Numéro
-            </th>
-            <th scope="col" className="w-[150px]">
-              Commune
-            </th>
-            <th scope="col" className="w-[150px]">
-              Dernier détenteur
-            </th>
-            <th scope="col" className="w-[120px]">
-              Statut
-            </th>
-            <th scope="col" className="w-[200px]">
-              Résumé Carcasses
-            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">Fiche</th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">Statut</th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">Localisation</th>
+            <th className="px-4 py-3 text-left text-sm font-semibold">Carcasses</th>
           </tr>
         </thead>
         <tbody>
-          {feiElements.map((element) => {
-            const { fei, filter, isPrintSelected, onPrintSelect } = element.props;
-
-            if (filter && filter !== 'Toutes les fiches' && filter !== useFeiSteps(fei).simpleStatus) {
-              return null;
-            }
-
-            const simpleStatus = useFeiSteps(fei).simpleStatus;
-
+          {feis.map((feiElement) => {
+            const fei = feiElement.props.fei;
+            const isSelected = feiElement.props.isPrintSelected;
+            const onPrintSelect = feiElement.props.onPrintSelect;
             return (
-              <tr
+              <FeisTableRow
                 key={fei.numero}
-                className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isPrintSelected ? 'bg-blue-50' : ''}`}
-                onClick={() => navigate(`/app/tableau-de-bord/fei/${fei.numero}`)}
-              >
-                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    small
-                    options={[
-                      {
-                        label: '',
-                        nativeInputProps: {
-                          checked: isPrintSelected,
-                          onChange: () => onPrintSelect?.(fei.numero, !isPrintSelected),
-                        },
-                      },
-                    ]}
-                  />
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900">
-                  {dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900">{fei.numero}</td>
-                <td className="px-4 py-3 text-sm text-gray-900 capitalize">
-                  {fei.commune_mise_a_mort
-                    ?.split(' ')
-                    .slice(1)
-                    .map((w: string) => w.toLocaleLowerCase())
-                    .join(' ') || 'À renseigner'}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900">
-                  {fei.premier_detenteur_name_cache || 'À renseigner'}
-                </td>
-                <td className="px-4 py-3 text-sm">
-                  <Tag
-                    small
-                    className={[
-                      'items-center rounded-[4px] font-semibold uppercase',
-                      statusColors[simpleStatus]?.bg,
-                      statusColors[simpleStatus]?.text,
-                    ].join(' ')}
-                  >
-                    {simpleStatus}
-                  </Tag>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-500">
-                  {/* Simplified summary */}
-                  {/* We could reuse logic from CardFiche or just show raw string */}
-                  <span className="text-xs whitespace-pre-line">{fei.resume_nombre_de_carcasses}</span>
-                </td>
-              </tr>
+                fei={fei}
+                isSelected={isSelected}
+                onPrintSelect={onPrintSelect}
+                navigate={navigate}
+                filter={filter}
+                onVisibilityChange={(feiNumero, isVisible) => {
+                  setVisibleFeisNumbers((prev) => {
+                    if (isVisible) {
+                      return prev.includes(feiNumero) ? prev : [...prev, feiNumero];
+                    }
+                    return prev.filter((n) => n !== feiNumero);
+                  });
+                }}
+              />
             );
           })}
         </tbody>

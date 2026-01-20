@@ -21,9 +21,12 @@ import { useParams } from 'react-router';
 import ItemNotEditable from './ItemNotEditable';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
+import type { FeiWithIntermediaires } from '@api/src/types/fei';
+import { Fei } from '@prisma/client';
 
 interface CardCarcasseProps {
   carcasse: Carcasse;
+  fei?: FeiWithIntermediaires | Fei; // Optional: provided when used in dashboard
   className?: string;
   hideDateMiseAMort?: boolean;
   onEdit?: () => void;
@@ -36,6 +39,7 @@ interface CardCarcasseProps {
 
 export default function CardCarcasse({
   carcasse,
+  fei: feiProp,
   className,
   hideDateMiseAMort,
   onEdit,
@@ -56,7 +60,8 @@ export default function CardCarcasse({
 
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
-  const fei = feis[params.fei_numero!];
+  const fei = feiProp || feis[params.fei_numero!] || feis[carcasse.fei_numero]; // Fallback to prop, then params, then store by carcasse
+
   const getCarcassesIntermediairesForCarcasse = useZustandStore(
     (state) => state.getCarcassesIntermediairesForCarcasse,
   );

@@ -8,6 +8,7 @@ import ResetMotDePasse from './routes/connexion/reset-mot-de-passe';
 import { useEffect, type ReactElement } from 'react';
 import Chargement from './components/Chargement';
 import TableauDeBordIndex from './routes/tableau-de-bord';
+import TableauDeBordLegacyIndex from './routes/tableau-de-bord-legacy';
 import TableauDeBordLayout from './routes/tableau-de-bord-layout';
 import { useMostFreshUser } from './utils-offline/get-most-fresh-user';
 import Fei from './routes/fei/fei';
@@ -174,6 +175,14 @@ function App() {
               element={
                 <RestrictedRoute id="tableau-de-bord-path">
                   <TableauDeBordIndex />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="legacy"
+              element={
+                <RestrictedRoute id="tableau-de-bord-legacy-path">
+                  <TableauDeBordLegacyIndex />
                 </RestrictedRoute>
               }
             />

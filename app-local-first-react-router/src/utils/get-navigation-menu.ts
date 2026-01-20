@@ -6,6 +6,7 @@ import { createNewFei } from './create-new-fei';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from './circuit-court';
 import { capture } from '@app/services/sentry';
+const environment = import.meta.env.VITE_ENV || 'development';
 
 export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
@@ -89,6 +90,16 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       linkProps: { to: '/app/tableau-de-bord', href: '#' },
     },
   ];
+
+  // ******** DEBUG ********
+  if (environment === 'development') {
+    mainMenu.push({
+      text: 'Fiches (legacy)',
+      isActive: location.pathname === '/app/tableau-de-bord/legacy',
+      linkProps: { to: '/app/tableau-de-bord/legacy', href: '#' },
+    });
+  }
+  // ******** DEBUG ********
 
   if (isChasseur) {
     mainMenu.unshift({
