@@ -554,8 +554,6 @@ function EntitiesRelatedTo({
     }
   }, [entityType, potentialEtgsRelatedWithSvi, potentialSvisRelatedToETG]);
 
-  console.log({potentialSvisRelatedToETG})
-
   const showTable = useMemo(() => {
     if (entityType !== EntityTypes.ETG) {
       return entitiesRelated.length === 0;
@@ -662,7 +660,7 @@ function EntitiesRelatedTo({
                   }}
                 >
                   <Link
-                    to={`/app/tableau-de-bord/admin/entity/${svi.id}`}
+                    to={`/app/tableau-de-bord/admin/entity/${potentialEntityRelated.id}`}
                     className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                   >
                     {potentialEntityRelated.type}
