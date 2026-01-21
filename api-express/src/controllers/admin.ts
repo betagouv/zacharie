@@ -142,9 +142,6 @@ router.get(
         orderBy: {
           updated_at: 'desc',
         },
-        include: {
-          AsEtgRelationsWithOtherEntities: true,
-        },
       });
       const userEntitiesRelations = await prisma.entity.findMany({
         where: {

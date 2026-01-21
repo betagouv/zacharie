@@ -42,13 +42,6 @@ export type EntityForAdmin = Prisma.EntityGetPayload<{
   include: typeof entityAdminInclude;
 }>;
 
-export const etgAdminInclude = {
-  AsEtgRelationsWithOtherEntities: true,
-} as const;
-
-export type EtgForAdmin = Prisma.EntityGetPayload<{
-  include: typeof etgAdminInclude;
-}>;
 
 export type EntityWithUserRelations = Prisma.EntityGetPayload<{
   include: typeof entityAdminInclude;

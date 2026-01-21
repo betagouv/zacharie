@@ -15,7 +15,6 @@ import type {
   EntityForAdmin,
   EntityWithUserRelation,
   EntitiesByTypeAndId,
-  EtgForAdmin,
   EntitiesById,
 } from './entity';
 import { CarcasseForResponseForRegistry } from './carcasse';
@@ -203,7 +202,7 @@ export interface AdminUserDataResponse {
     user: User;
     identityDone: boolean;
     examinateurDone: boolean;
-    allEntities: Array<EtgForAdmin>;
+    allEntities: Array<Entity>;
     userEntitiesRelations: Array<EntityForAdmin>;
   };
   error: string;
