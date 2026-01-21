@@ -31,7 +31,6 @@ import {
   EntityTypes,
   Prisma,
   Entity,
-  ETGAndEntityRelations,
   User,
   UserNotifications,
   UserRelationType,
@@ -1548,43 +1547,35 @@ router.get(
 
       const etgsRelatedWithMySvis = !user.roles.includes(UserRoles.SVI)
         ? []
-        : await prisma.eTGAndEntityRelations.findMany({
+        : await prisma.entity.findMany({
             where: {
-              entity_id: {
+              etg_linked_to_svi_id: {
                 in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
               },
-              entity_type: EntityTypes.SVI,
               deleted_at: null,
-            },
-            include: {
-              ETGRelatedWithEntity: true,
             },
           });
 
       const svisRelatedWithMyETGs = !user.roles.includes(UserRoles.ETG)
         ? []
-        : await prisma.eTGAndEntityRelations.findMany({
+        : await prisma.entity.findMany({
             where: {
-              etg_id: {
-                in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
+              id: {
+                in: entitiesWorkingDirectlyFor.map((entity) => entity.etg_linked_to_svi_id),
               },
-              entity_type: EntityTypes.SVI,
               deleted_at: null,
-            },
-            include: {
-              EntityRelatedWithETG: true,
             },
           });
 
       const entitiesWorkingForObject: Record<string, EntityWithUserRelation> = {};
-      for (const svi of svisRelatedWithMyETGs.map((r) => r.EntityRelatedWithETG)) {
+      for (const svi of svisRelatedWithMyETGs) {
         entitiesWorkingForObject[svi.id] = {
           ...svi,
           relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
           relationStatus: undefined,
         };
       }
-      for (const etg of etgsRelatedWithMySvis.map((r) => r.ETGRelatedWithEntity)) {
+      for (const etg of etgsRelatedWithMySvis) {
         entitiesWorkingForObject[etg.id] = {
           ...etg,
           relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,

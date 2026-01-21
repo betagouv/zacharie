@@ -1,7 +1,6 @@
 import {
   type Fei,
   type EntityAndUserRelations,
-  type ETGAndEntityRelations,
   type Carcasse,
   type CarcasseIntermediaire,
   type Log,
@@ -74,8 +73,6 @@ export interface State {
   circuitCourtIds: Array<EntityWithUserRelation['id']>;
   detenteursInitiaux: Record<UserForFei['id'], UserForFei>;
   entityAndUserRelations: Record<EntityAndUserRelations['entity_id'], EntityAndUserRelations>;
-  etgAndEntityRelations: Record<ETGAndEntityRelations['etg_id'], ETGAndEntityRelations>;
-  entityAndETGRelations: Record<ETGAndEntityRelations['entity_id'], ETGAndEntityRelations>;
   carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
   carcassesIdsByFei: Record<Fei['numero'], Array<Carcasse['zacharie_carcasse_id']>>;
   // single intermediaire for a single carcasse
@@ -161,8 +158,6 @@ const initialState: State = {
   apiKeyApprovals: [],
   detenteursInitiaux: {},
   entityAndUserRelations: {},
-  etgAndEntityRelations: {},
-  entityAndETGRelations: {},
   carcasses: {},
   carcassesIdsByFei: {},
   carcassesIntermediaireById: {},

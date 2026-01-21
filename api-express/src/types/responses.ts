@@ -157,7 +157,7 @@ export interface AdminGetEntityResponse {
     dedicatedApiKey: ApiKey | null;
     canTakeFichesForEntity: Array<UserForAdmin>;
     canSendFichesToEntity: Array<UserForAdmin>;
-    svisRelatedToETG: Array<Entity>;
+    sviRelatedToETG: Entity | null;
     potentialSvisRelatedToETG: Array<Entity>;
     etgsRelatedWithSvi: Array<Entity>;
     potentialEtgsRelatedWithSvi: Array<Entity>;

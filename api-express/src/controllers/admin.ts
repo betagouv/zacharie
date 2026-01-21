@@ -324,30 +324,23 @@ router.get(
               select: userAdminSelect,
             });
 
-      const svisRelatedToETG =
+      const sviRelatedToETG =
         entity.type !== EntityTypes.ETG
-          ? []
-          : await prisma.eTGAndEntityRelations
-              .findMany({
-                where: {
-                  etg_id: entity.id,
-                  entity_type: EntityTypes.SVI,
-                  deleted_at: null,
-                },
-                orderBy: {
-                  updated_at: 'desc',
-                },
-                include: {
-                  EntityRelatedWithETG: true,
-                },
-              })
-              .then((data) => data.map((rel) => rel.EntityRelatedWithETG));
+          ? null 
+          : !entity.etg_linked_to_svi_id 
+            ? null
+            : await prisma.entity
+                .findUnique({
+                  where: {
+                    id: entity.etg_linked_to_svi_id,
+                  }})
+          
 
       const potentialSvisRelatedToETG = await prisma.entity.findMany({
         where: {
           type: EntityTypes.SVI,
           id: {
-            notIn: svisRelatedToETG.map((entity) => entity.id),
+            not: sviRelatedToETG?.id,
           },
           deleted_at: null,
         },
@@ -359,20 +352,16 @@ router.get(
       const etgsRelatedWithSvi =
         entity.type !== EntityTypes.SVI
           ? []
-          : await prisma.eTGAndEntityRelations
+          : await prisma.entity
               .findMany({
                 where: {
-                  entity_id: entity.id,
+                  etg_linked_to_svi_id: entity.id,
                   deleted_at: null,
                 },
                 orderBy: {
                   updated_at: 'desc',
                 },
-                include: {
-                  ETGRelatedWithEntity: true,
-                },
               })
-              .then((data) => data.map((rel) => rel.ETGRelatedWithEntity));
 
       const potentialEtgsRelatedWithSvi =
         entity.type !== EntityTypes.SVI
@@ -403,7 +392,7 @@ router.get(
           dedicatedApiKey,
           canTakeFichesForEntity,
           canSendFichesToEntity,
-          svisRelatedToETG,
+          sviRelatedToETG,
           potentialSvisRelatedToETG,
           etgsRelatedWithSvi,
           potentialEtgsRelatedWithSvi,
@@ -524,58 +513,12 @@ router.post(
     ) => {
       const body = req.body;
 
-      if (body._action === 'remove-etg-relation') {
-        await prisma.eTGAndEntityRelations.delete({
-          where: {
-            etg_id_entity_id: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id_entity_id],
-          },
-        });
-        const entity = await prisma.entity.findUnique({
-          where: {
-            id: req.params.entity_id,
-            deleted_at: null,
-          },
-          include: entityAdminInclude,
-        });
-
-        res.status(200).send({ ok: true, data: { entity: entity! }, error: '' });
-        return;
-      }
-      if (body._action === 'add-etg-relation') {
-        const data: Prisma.ETGAndEntityRelationsUncheckedCreateInput = {
-          etg_id_entity_id: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id_entity_id],
-          entity_id: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.entity_id],
-          etg_id: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id],
-          entity_type: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.entity_type] as EntityTypes,
-        };
-        await prisma.eTGAndEntityRelations.upsert({
-          where: {
-            etg_id_entity_id: body[Prisma.ETGAndEntityRelationsScalarFieldEnum.etg_id_entity_id],
-          },
-          create: data,
-          update: data,
-        });
-        const entity = await prisma.entity.findUnique({
-          where: {
-            id: req.params.entity_id,
-            deleted_at: null,
-          },
-          include: entityAdminInclude,
-        });
-
-        res.status(200).send({ ok: true, data: { entity: entity! }, error: '' });
-        return;
-      }
-
-      console.log(body[Prisma.EntityScalarFieldEnum.zacharie_compatible]);
-      console.log(body[Prisma.EntityScalarFieldEnum.zacharie_compatible] === true);
-      console.log(body[Prisma.EntityScalarFieldEnum.zacharie_compatible] === 'true');
-
       const data: Prisma.EntityUncheckedUpdateInput = {
         raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
         nom_d_usage: body[Prisma.EntityScalarFieldEnum.nom_d_usage],
         address_ligne_1: body[Prisma.EntityScalarFieldEnum.address_ligne_1],
         address_ligne_2: body[Prisma.EntityScalarFieldEnum.address_ligne_2],
+        etg_linked_to_svi_id: body[Prisma.EntityScalarFieldEnum.etg_linked_to_svi_id] || null,
         code_postal: body[Prisma.EntityScalarFieldEnum.code_postal],
         prefecture_svi: body[Prisma.EntityScalarFieldEnum.prefecture_svi],
         nom_prenom_responsable: body[Prisma.EntityScalarFieldEnum.nom_prenom_responsable],

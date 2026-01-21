@@ -1,4 +1,4 @@
-type PossibleIdKeys = 'zacharie_carcasse_id' | 'numero' | 'etg_id_entity_id';
+type PossibleIdKeys = 'zacharie_carcasse_id' | 'numero';
 
 interface ItemBase {
   deleted_at: Date | null;

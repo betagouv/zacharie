@@ -34,6 +34,7 @@ const initialData: State = {
     ville: '',
     prefilled: false,
     ccg_status: null,
+    etg_linked_to_svi_id: null,
     at_least_one_fei_treated: null,
     zacharie_compatible: false,
     for_testing: false,
@@ -52,7 +53,7 @@ const initialData: State = {
   dedicatedApiKey: null,
   canTakeFichesForEntity: [],
   canSendFichesToEntity: [],
-  svisRelatedToETG: [],
+  sviRelatedToETG: null,
   etgsRelatedWithSvi: [],
   potentialSvisRelatedToETG: [],
   potentialEtgsRelatedWithSvi: [],
@@ -66,7 +67,7 @@ export default function AdminEntity() {
     dedicatedApiKey,
     canTakeFichesForEntity,
     canSendFichesToEntity,
-    svisRelatedToETG,
+    sviRelatedToETG,
     etgsRelatedWithSvi,
   } = adminEntityResponse ?? initialData;
   const entity = adminEntityResponse.entity as EntityForAdmin;
@@ -100,7 +101,7 @@ export default function AdminEntity() {
   if (entity.type === EntityTypes.ETG) {
     tabs.push({
       tabId: 'SVI associé',
-      label: `SVI associé (${svisRelatedToETG.length})`,
+      label: `SVI associé`,
     });
   }
   if (entity.type === EntityTypes.SVI) {
@@ -375,7 +376,7 @@ export default function AdminEntity() {
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
                   entityType={EntityTypes.SVI}
-                  description="Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous"
+                  description={!sviRelatedToETG ? "Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous" : ""}
                   setIsSaving={setIsSaving}
                 />
               )}
@@ -526,7 +527,7 @@ function EntitiesRelatedTo({
   const {
     entity,
     etgsRelatedWithSvi,
-    svisRelatedToETG,
+    sviRelatedToETG,
     potentialEtgsRelatedWithSvi,
     potentialSvisRelatedToETG,
   } = adminEntityResponse;
@@ -536,11 +537,11 @@ function EntitiesRelatedTo({
       case EntityTypes.ETG:
         return etgsRelatedWithSvi;
       case EntityTypes.SVI:
-        return svisRelatedToETG;
+        return sviRelatedToETG ? [sviRelatedToETG] : [];
       default:
         return [];
     }
-  }, [entityType, etgsRelatedWithSvi, svisRelatedToETG]);
+  }, [entityType, etgsRelatedWithSvi, sviRelatedToETG]);
 
   const potentialEntitiesRelated = useMemo(() => {
     switch (entityType) {
@@ -552,6 +553,8 @@ function EntitiesRelatedTo({
         return [];
     }
   }, [entityType, potentialEtgsRelatedWithSvi, potentialSvisRelatedToETG]);
+
+  console.log({potentialSvisRelatedToETG})
 
   const showTable = useMemo(() => {
     if (entityType !== EntityTypes.ETG) {
@@ -572,7 +575,7 @@ function EntitiesRelatedTo({
       </Highlight>
       {entitiesRelated.map((coupledEntity) => {
         const etg = entity.type === EntityTypes.ETG ? entity : coupledEntity;
-        const otherEntity = entity.type === EntityTypes.ETG ? coupledEntity : entity;
+        // const svi = entity.type === EntityTypes.ETG ? coupledEntity : entity;
         return (
           <Notice
             key={coupledEntity.id}
@@ -584,10 +587,9 @@ function EntitiesRelatedTo({
             onClose={() => {
               setIsSaving(true);
               API.post({
-                path: `admin/entity/${entity.id}`,
+                path: `admin/entity/${etg.id}`,
                 body: {
-                  _action: 'remove-etg-relation',
-                  etg_id_entity_id: `${etg.id}_${otherEntity.id}`,
+                  etg_linked_to_svi_id: null,
                 },
               })
                 .then((res) => res as AdminActionEntityResponse)
@@ -632,7 +634,7 @@ function EntitiesRelatedTo({
             className="[&_td]:align-middle"
             data={potentialEntitiesRelated.map((potentialEntityRelated) => {
               const etg = entity.type === EntityTypes.ETG ? entity : potentialEntityRelated;
-              const otherEntity = entity.type === EntityTypes.ETG ? potentialEntityRelated : entity;
+              const svi = entity.type === EntityTypes.ETG ? potentialEntityRelated : entity;
               return [
                 <form
                   key={potentialEntityRelated.id}
@@ -643,13 +645,9 @@ function EntitiesRelatedTo({
                     event.preventDefault();
                     setIsSaving(true);
                     API.post({
-                      path: `admin/entity/${entity.id}`,
+                      path: `admin/entity/${etg.id}`,
                       body: {
-                        _action: 'add-etg-relation',
-                        etg_id_entity_id: `${etg.id}_${otherEntity.id}`,
-                        etg_id: etg.id,
-                        entity_id: otherEntity.id,
-                        entity_type: otherEntity.type,
+                        etg_linked_to_svi_id: svi.id,
                       },
                     })
                       .then((res) => res as AdminActionEntityResponse)
@@ -664,7 +662,7 @@ function EntitiesRelatedTo({
                   }}
                 >
                   <Link
-                    to={`/app/tableau-de-bord/admin/entity/${otherEntity.id}`}
+                    to={`/app/tableau-de-bord/admin/entity/${svi.id}`}
                     className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                   >
                     {potentialEntityRelated.type}
