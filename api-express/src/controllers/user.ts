@@ -1542,6 +1542,24 @@ router.get(
           ),
         );
 
+      const svisICanTransmitCarcassesTo = !user.roles.includes(UserRoles.ETG) ? [] : await prisma.entity.findMany({
+        where: {
+          type: EntityTypes.SVI,
+          id: {
+            in: entitiesICanHandleCarcassOnBehalf.map((entity) => entity.etg_linked_to_svi_id).filter(Boolean),
+          },
+          deleted_at: null,
+        }
+      }).then((entities) =>
+        entities.map(
+          (entity): EntityWithUserRelation => ({
+            ...entity,
+            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            relationStatus: EntityRelationStatus.MEMBER,
+          }),
+        ),
+      );
+
       const entitiesICanTransmitCarcasseTo = await prisma.entityAndUserRelations
         .findMany({
           where: {
@@ -1583,6 +1601,7 @@ router.get(
               notIn: [
                 ...entitiesICanHandleCarcassOnBehalf.map((entity) => entity.id),
                 ...entitiesICanTransmitCarcasseTo.map((entity) => entity.id),
+                ...svisICanTransmitCarcassesTo.map((entity) => entity.id),
               ],
             },
           },
@@ -1620,6 +1639,7 @@ router.get(
       const allEntities = [
         ...entitiesICanHandleCarcassOnBehalf,
         ...entitiesICanTransmitCarcasseTo,
+        ...svisICanTransmitCarcassesTo,
         ...allOtherEntities.map((entity) => ({ ...entity, relation: EntityRelationType.NONE })),
       ].filter((entity, index, array) => array.findIndex((e) => e.id === entity.id) === index); // remove duplicates
 
