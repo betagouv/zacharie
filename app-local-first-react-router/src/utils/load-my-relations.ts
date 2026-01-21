@@ -30,7 +30,7 @@ export async function loadMyRelations() {
       ...(myRelationsData.data?.etgs || []),
       ...(myRelationsData.data?.svis || []),
       ...(myRelationsData.data?.circuitCourt || []),
-      ...(myRelationsData.data?.entitiesWorkingFor || []),
+      ...(myRelationsData.data?.entitiesICanHandleCarcassOnBehalf || []),
     ]) {
       if (entity.deleted_at) {
         entitiesDeleted[entity.id] = entity;

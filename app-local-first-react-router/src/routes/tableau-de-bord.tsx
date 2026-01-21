@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
-import { CarcasseType, EntityRelationType, UserRoles } from '@prisma/client';
+import { CarcasseType,  UserRoles } from '@prisma/client';
 import { abbreviations } from '@app/utils/count-carcasses';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
@@ -56,6 +56,7 @@ export default function TableauDeBordIndex() {
   const feisDone = useZustandStore((state) => state.feisDone);
   const entities = useZustandStore((state) => state.entities);
   const allEtgIds = useZustandStore((state) => state.etgsIds);
+  const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
   const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();
   const { onExportToXlsx, onExportSimplifiedToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
@@ -98,9 +99,7 @@ export default function TableauDeBordIndex() {
 
   const isOnlySvi =
     user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
-  const sviWorkingForEtgIds = allEtgIds.filter(
-    (id) => entities[id]?.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
-  );
+  
   const { feiActivesForSvi, feisDoneForSvi } = feisDoneNumeros.reduce(
     (acc, feiNumero) => {
       const fei = feisDone[feiNumero]!;
@@ -193,24 +192,31 @@ export default function TableauDeBordIndex() {
 
   const dropDownMenuFilterText = useMemo(() => {
     switch (filter) {
-      case 'Toutes les fiches':
-      default:
-        return 'Filtrer';
       case 'À compléter':
         return 'Fiches à compléter';
       case 'En cours':
         return 'Fiches en cours';
       case 'Clôturée':
         return 'Fiches clôturées';
+      case 'Toutes les fiches':
+      default:
+        return 'Filtrer';
     }
   }, [filter]);
   const [filterETG, setFilterETG] = useState<string>('');
-  const dropDownMenuFilterTextSvi = useMemo(() => {
-    if (sviWorkingForEtgIds.includes(filterETG)) {
-      return `Fiches de ${entities[filterETG]?.nom_d_usage}`;
+  const [sviWorkingForEtgIds, dropDownMenuFilterTextSvi] = useMemo(() => {
+    const _sviWorkingForEtgIds = !isOnlySvi ? [] : allEtgIds.filter(
+      (id) => {
+        const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
+        if (!etgLinkedToSviId) return false;
+        return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
+      }
+    );
+    if (_sviWorkingForEtgIds.includes(filterETG)) {
+      return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
     }
-    return 'Filtrer par ETG';
-  }, [filterETG, sviWorkingForEtgIds, entities]);
+    return [_sviWorkingForEtgIds, 'Filtrer par ETG'];
+  }, [filterETG, entities, entitiesIdsWorkingDirectlyFor, allEtgIds, isOnlySvi]);
 
   function Actions() {
     return (
