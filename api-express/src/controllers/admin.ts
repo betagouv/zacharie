@@ -323,15 +323,14 @@ router.get(
 
       const sviRelatedToETG =
         entity.type !== EntityTypes.ETG
-          ? null 
-          : !entity.etg_linked_to_svi_id 
-            ? null
-            : await prisma.entity
-                .findUnique({
-                  where: {
-                    id: entity.etg_linked_to_svi_id,
-                  }})
-          
+          ? null
+          : !entity.etg_linked_to_svi_id
+          ? null
+          : await prisma.entity.findUnique({
+              where: {
+                id: entity.etg_linked_to_svi_id,
+              },
+            });
 
       const potentialSvisRelatedToETG = await prisma.entity.findMany({
         where: {
@@ -349,16 +348,15 @@ router.get(
       const etgsRelatedWithSvi =
         entity.type !== EntityTypes.SVI
           ? []
-          : await prisma.entity
-              .findMany({
-                where: {
-                  etg_linked_to_svi_id: entity.id,
-                  deleted_at: null,
-                },
-                orderBy: {
-                  updated_at: 'desc',
-                },
-              })
+          : await prisma.entity.findMany({
+              where: {
+                etg_linked_to_svi_id: entity.id,
+                deleted_at: null,
+              },
+              orderBy: {
+                updated_at: 'desc',
+              },
+            });
 
       const potentialEtgsRelatedWithSvi =
         entity.type !== EntityTypes.SVI

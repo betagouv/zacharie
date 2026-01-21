@@ -1542,23 +1542,29 @@ router.get(
           ),
         );
 
-      const svisICanTransmitCarcassesTo = !user.roles.includes(UserRoles.ETG) ? [] : await prisma.entity.findMany({
-        where: {
-          type: EntityTypes.SVI,
-          id: {
-            in: entitiesICanHandleCarcassOnBehalf.map((entity) => entity.etg_linked_to_svi_id).filter(Boolean),
-          },
-          deleted_at: null,
-        }
-      }).then((entities) =>
-        entities.map(
-          (entity): EntityWithUserRelation => ({
-            ...entity,
-            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-            relationStatus: EntityRelationStatus.MEMBER,
-          }),
-        ),
-      );
+      const svisICanTransmitCarcassesTo = !user.roles.includes(UserRoles.ETG)
+        ? []
+        : await prisma.entity
+            .findMany({
+              where: {
+                type: EntityTypes.SVI,
+                id: {
+                  in: entitiesICanHandleCarcassOnBehalf
+                    .map((entity) => entity.etg_linked_to_svi_id)
+                    .filter(Boolean),
+                },
+                deleted_at: null,
+              },
+            })
+            .then((entities) =>
+              entities.map(
+                (entity): EntityWithUserRelation => ({
+                  ...entity,
+                  relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+                  relationStatus: EntityRelationStatus.MEMBER,
+                }),
+              ),
+            );
 
       const entitiesICanTransmitCarcasseTo = await prisma.entityAndUserRelations
         .findMany({
@@ -1679,7 +1685,8 @@ router.get(
           collecteursPro: collecteursPro satisfies Array<EntityWithUserRelation>,
           etgs: etgs satisfies Array<EntityWithUserRelation>,
           svis: svis satisfies Array<EntityWithUserRelation>,
-          entitiesICanHandleCarcassOnBehalf: entitiesICanHandleCarcassOnBehalf satisfies Array<EntityWithUserRelation>,
+          entitiesICanHandleCarcassOnBehalf:
+            entitiesICanHandleCarcassOnBehalf satisfies Array<EntityWithUserRelation>,
           circuitCourt: circuitCourt satisfies Array<EntityWithUserRelation>,
         },
         error: '',

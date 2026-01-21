@@ -42,7 +42,6 @@ export type EntityForAdmin = Prisma.EntityGetPayload<{
   include: typeof entityAdminInclude;
 }>;
 
-
 export type EntityWithUserRelations = Prisma.EntityGetPayload<{
   include: typeof entityAdminInclude;
 }>;

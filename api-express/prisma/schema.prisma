@@ -107,51 +107,49 @@ enum EntityTypes {
 }
 
 model Entity {
-  id                              String                         @id @default(uuid())
+  id                         String                         @id @default(uuid())
   // NO EMAIL: an entity needs AT LEAST one user
-  raison_sociale                  String?
-  nom_d_usage                     String?
-  address_ligne_1                 String?
-  address_ligne_2                 String?
-  code_postal                     String?
-  ville                           String?
-  siret                           String?
-  nom_prenom_responsable          String?
-  prefecture_svi                  String?
-  ccg_status                      String?
-  etg_linked_to_svi_id            String? // the SVI id that is linked to this entity
-  zacharie_compatible             Boolean                        @default(false)
-  numero_ddecpp                   String?                        @unique
-  inc_certificat                  Int?                           @default(0)
-  inc_decision                    Int?                           @default(0)
-  code_etbt_certificat            String?                        @unique // Il pourrait s'agir d'un code court unique qui identifie l’établissement (exemple : 01 pour Villette viandes, 02 pour Nemrod et 03 pour Guellier).
-  type                            EntityTypes
-  created_at                      DateTime                       @default(now())
-  updated_at                      DateTime                       @default(now()) @updatedAt
-  deleted_at                      DateTime?
-  onboarded_at                    DateTime?
-  prefilled                       Boolean                        @default(false)
-  is_synced                       Boolean                        @default(true) // just for typing purppose with zustand frontend
-  for_testing                     Boolean                        @default(false)
+  raison_sociale             String?
+  nom_d_usage                String?
+  address_ligne_1            String?
+  address_ligne_2            String?
+  code_postal                String?
+  ville                      String?
+  siret                      String?
+  nom_prenom_responsable     String?
+  prefecture_svi             String?
+  ccg_status                 String?
+  etg_linked_to_svi_id       String? // the SVI id that is linked to this entity
+  zacharie_compatible        Boolean                        @default(false)
+  numero_ddecpp              String?                        @unique
+  inc_certificat             Int?                           @default(0)
+  inc_decision               Int?                           @default(0)
+  code_etbt_certificat       String?                        @unique // Il pourrait s'agir d'un code court unique qui identifie l’établissement (exemple : 01 pour Villette viandes, 02 pour Nemrod et 03 pour Guellier).
+  type                       EntityTypes
+  created_at                 DateTime                       @default(now())
+  updated_at                 DateTime                       @default(now()) @updatedAt
+  deleted_at                 DateTime?
+  onboarded_at               DateTime?
+  prefilled                  Boolean                        @default(false)
+  is_synced                  Boolean                        @default(true) // just for typing purppose with zustand frontend
+  for_testing                Boolean                        @default(false)
   // for brevo
-  brevo_id                        String?
-  at_least_one_fei_treated        DateTime?
+  brevo_id                   String?
+  at_least_one_fei_treated   DateTime?
   // relations
-  EntityRelationsWithUsers        EntityAndUserRelations[]       @relation("EntityRelatedWithUser")
-  FeisCurrentEntity               Fei[]                          @relation("FeiCurrentEntity")
-  FeisNextEntity                  Fei[]                          @relation("FeiNextEntity")
-  FeisSoustraiteByEntity          Fei[]                          @relation("FeiSoustraiteByEntity")
-  FeisDepotEntity                 Fei[]                          @relation("FeiDepotEntity")
-  FeisPremierDetenteurEntity      Fei[]                          @relation("FeiPremierDetenteurEntity")
-  FeisSviEntity                   Fei[]                          @relation("FeiSviEntity")
-  CarcasseIntermediaires          CarcasseIntermediaire[]        @relation("CarcasseIntermediaireEntity")
-  AsEtgRelationsWithOtherEntities ETGAndEntityRelations[]        @relation("ETGRelatedWithEntity")
-  RelationsWithEtgs               ETGAndEntityRelations[]        @relation("EntityRelatedWithETG")
-  ApiKeyApprovals                 ApiKeyApprovalByUserOrEntity[]
-  ApiKeyLogs                      ApiKeyLog[]
-  ApiKeys                         ApiKey[]                       @relation("EntityRelatedWithApiKey")
-  SviOfETG                        Entity?                        @relation("etg_linked_to_svi_id", fields: [etg_linked_to_svi_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  EtgsLinkedToMySVI               Entity[]                       @relation("etg_linked_to_svi_id")
+  EntityRelationsWithUsers   EntityAndUserRelations[]       @relation("EntityRelatedWithUser")
+  FeisCurrentEntity          Fei[]                          @relation("FeiCurrentEntity")
+  FeisNextEntity             Fei[]                          @relation("FeiNextEntity")
+  FeisSoustraiteByEntity     Fei[]                          @relation("FeiSoustraiteByEntity")
+  FeisDepotEntity            Fei[]                          @relation("FeiDepotEntity")
+  FeisPremierDetenteurEntity Fei[]                          @relation("FeiPremierDetenteurEntity")
+  FeisSviEntity              Fei[]                          @relation("FeiSviEntity")
+  CarcasseIntermediaires     CarcasseIntermediaire[]        @relation("CarcasseIntermediaireEntity")
+  ApiKeyApprovals            ApiKeyApprovalByUserOrEntity[]
+  ApiKeyLogs                 ApiKeyLog[]
+  ApiKeys                    ApiKey[]                       @relation("EntityRelatedWithApiKey")
+  SviOfETG                   Entity?                        @relation("etg_linked_to_svi_id", fields: [etg_linked_to_svi_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  EtgsLinkedToMySVI          Entity[]                       @relation("etg_linked_to_svi_id")
 
   @@index([updated_at]) // Time-based ordering
   @@index([nom_d_usage]) // Name-based ordering
@@ -228,25 +226,6 @@ model EntityAndUserRelations {
   @@index([entity_id, relation])
   @@index([owner_id, entity_id]) // Add: Used in nested queries for FeiNextEntity
   @@index([owner_id, updated_at])
-}
-
-model ETGAndEntityRelations {
-  etg_id_entity_id     String      @id @default(uuid())
-  etg_id               String
-  entity_id            String
-  entity_type          EntityTypes // now only SVI - before we had also COLLECTEUR_PRO
-  created_at           DateTime    @default(now())
-  updated_at           DateTime    @default(now()) @updatedAt
-  deleted_at           DateTime?
-  brevo_id             String?
-  is_synced            Boolean     @default(true) // just for typing purppose with zustand frontend
-  ETGRelatedWithEntity Entity      @relation("ETGRelatedWithEntity", fields: [etg_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  EntityRelatedWithETG Entity      @relation("EntityRelatedWithETG", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  @@index([etg_id, entity_type])
-  @@index([entity_id, entity_type])
-  @@index([etg_id, updated_at])
-  @@index([entity_id, updated_at])
 }
 
 model Log {
