@@ -136,7 +136,7 @@ export default function MonEntreprise() {
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-            <Stepper currentStep={3} nextTitle={nextTitle} stepCount={5} title={title} />
+            <Stepper currentStep={3} nextTitle={nextTitle} stepCount={4} title={title} />
             <h1 className="fr-h2 fr-mb-2w">
               {'Renseignez ' + (user.roles.includes(UserRoles.SVI) ? 'votre service' : 'votre entreprise')}
             </h1>
@@ -470,13 +470,13 @@ function ListAndSelectEntities({
                 value={
                   entityId
                     ? {
-                        label: remainingEntities
-                          .filter((entity) => entity.id === entityId)
-                          .map(
-                            (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
-                          )?.[0],
-                        value: entityId,
-                      }
+                      label: remainingEntities
+                        .filter((entity) => entity.id === entityId)
+                        .map(
+                          (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
+                        )?.[0],
+                      value: entityId,
+                    }
                     : null
                 }
                 getOptionLabel={(f) => f.label!}
