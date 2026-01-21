@@ -854,29 +854,6 @@ router.get(
                   },
                 },
                 {
-                  CarcasseIntermediaire: {
-                    some: {
-                      CarcasseIntermediaireEntity: {
-                        RelationsWithEtgs: {
-                          some: {
-                            ETGRelatedWithEntity: {
-                              EntityRelationsWithUsers: {
-                                some: {
-                                  owner_id: user.id,
-                                  relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                                  status: {
-                                    in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                                  },
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-                {
                   FeiSviEntity: {
                     EntityRelationsWithUsers: {
                       some: {
@@ -1050,33 +1027,6 @@ router.get(
                 },
               },
             },
-            // Case 3: The FEI is assigned to a COLLECTEUR_PRO working for my ETG
-            {
-              AND: [
-                {
-                  fei_current_owner_role: UserRoles.COLLECTEUR_PRO,
-                },
-                {
-                  FeiNextEntity: {
-                    RelationsWithEtgs: {
-                      some: {
-                        ETGRelatedWithEntity: {
-                          EntityRelationsWithUsers: {
-                            some: {
-                              owner_id: user.id,
-                              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                              status: {
-                                in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              ],
-            },
           ],
         },
         include: {
@@ -1238,29 +1188,6 @@ router.get(
                             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                             status: {
                               in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-                {
-                  CarcasseIntermediaire: {
-                    some: {
-                      CarcasseIntermediaireEntity: {
-                        RelationsWithEtgs: {
-                          some: {
-                            ETGRelatedWithEntity: {
-                              EntityRelationsWithUsers: {
-                                some: {
-                                  owner_id: user.id,
-                                  relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                                  status: {
-                                    in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                                  },
-                                },
-                              },
                             },
                           },
                         },
