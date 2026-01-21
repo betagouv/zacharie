@@ -1,4 +1,4 @@
-import { useEffect,useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import { useNavigate, useSearchParams } from 'react-router';
 import { UserRoles, Prisma } from '@prisma/client';
@@ -24,7 +24,7 @@ export default function OnboardingExaminateurInitial() {
     window.scrollTo(0, 0);
   }, []);
 
-  const nextPage = '/app/tableau-de-bord/onboarding/mes-informations-de-chasse';
+  const nextPage = '/app/tableau-de-bord';
 
   // If user is not a hunter, skip this step
   useEffect(() => {
@@ -82,7 +82,7 @@ export default function OnboardingExaminateurInitial() {
   );
 }
 
- function ExaminateurInitial() {
+function ExaminateurInitial() {
   const user = useUser((state) => state.user)!;
 
   const [isExaminateurInitial, setIsExaminateurInitial] = useState(user.est_forme_a_l_examen_initial);

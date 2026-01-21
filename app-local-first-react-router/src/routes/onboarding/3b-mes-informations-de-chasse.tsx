@@ -12,7 +12,7 @@ import API from '@app/services/api';
 import MesCCGs from './3-mes-ccgs';
 import MesAssociationsDeChasse from './3-mes-associations-de-chasse';
 import MesPartenaires from './3-mes-partenaires';
-import { Button } from '@codegouvfr/react-dsfr/Button';
+import { toast } from 'react-toastify';
 
 export default function OnboardingMesInformationsDeChasse() {
   const [searchParams] = useSearchParams();
@@ -43,6 +43,24 @@ export default function OnboardingMesInformationsDeChasse() {
 
   const nextPage = '/app/tableau-de-bord/onboarding/mes-notifications';
 
+
+  const handleSubmit = async () => {
+    try {
+      const response = await API.post({
+        path: `/user/${user.id}`,
+        body: { onboarding_chasse_info_done_at: new Date().toISOString() },
+      }).then((data) => data as UserConnexionResponse);
+      if (response.ok && response.data?.user?.id) {
+        useUser.setState({ user: response.data.user });
+        navigate(redirect ?? nextPage);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Erreur lors de l\'enregistrement des informations de chasse');
+    }
+  }
+
+
   const showEntrpriseVisibilityCheckbox =
     !!user.checked_has_asso_de_chasse ||
     user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
@@ -62,7 +80,6 @@ export default function OnboardingMesInformationsDeChasse() {
             title="Mes informations de chasse"
           />
           <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations de chasse</h1>
-          <Button priority="secondary" onClick={() => navigate(redirect ?? nextPage)}>Passer cette étape</Button>
           <CallOut title="⚠️ Informations essentielles pour faire des fiches" className="bg-white">
             Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer.
           </CallOut>
@@ -116,15 +133,7 @@ export default function OnboardingMesInformationsDeChasse() {
                     disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
                     type: 'button',
                     nativeButtonProps: {
-                      onClick: () => navigate(redirect ?? nextPage),
-                    },
-                  },
-                  {
-                    children: 'Passer cette étape',
-                    type: 'button',
-                    priority: 'secondary',
-                    nativeButtonProps: {
-                      onClick: () => navigate(redirect ?? nextPage),
+                      onClick: () => handleSubmit(),
                     },
                   },
                   {

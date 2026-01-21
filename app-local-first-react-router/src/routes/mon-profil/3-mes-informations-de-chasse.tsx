@@ -44,8 +44,20 @@ export default function MesInformationsDeChasse({
     window.scrollTo(0, 0);
   }, []);
 
-  const handleSubmit = () => {
-    toast.success('Informations de chasse enregistrées');
+  const handleSubmit = async () => {
+    try {
+      const response = await API.post({
+        path: `/user/${user.id}`,
+        body: { onboarding_chasse_info_done_at: new Date().toISOString() },
+      }).then((data) => data as UserConnexionResponse);
+      if (response.ok && response.data?.user?.id) {
+        useUser.setState({ user: response.data.user });
+      }
+      toast.success('Informations de chasse enregistrées');
+    } catch (error) {
+      console.error(error);
+      toast.error('Erreur lors de l\'enregistrement des informations de chasse');
+    }
   };
 
   const handleUserSubmit = useCallback(
@@ -271,15 +283,15 @@ export default function MesInformationsDeChasse({
                   },
                   ...(redirect
                     ? [
-                        {
-                          children: 'Retour',
-                          linkProps: {
-                            to: redirect,
-                            href: '#',
-                          },
-                          priority: 'secondary' as const,
+                      {
+                        children: 'Retour',
+                        linkProps: {
+                          to: redirect,
+                          href: '#',
                         },
-                      ]
+                        priority: 'secondary' as const,
+                      },
+                    ]
                     : []),
                 ]}
               />
