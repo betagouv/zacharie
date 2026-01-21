@@ -34,7 +34,7 @@ export default function MesCoordonnees() {
 
   const nextTitle = useMemo(() => {
     if (user.roles.includes(UserRoles.CHASSEUR)) {
-      return 'Mes informations de chasse';
+      return 'Formation examen initial';
     }
     if (user.roles.includes(UserRoles.SVI)) {
       return 'Mon service';
@@ -43,7 +43,7 @@ export default function MesCoordonnees() {
   }, [user.roles]);
   const nextPage = useMemo(() => {
     if (user.roles.includes(UserRoles.CHASSEUR)) {
-      return '/app/tableau-de-bord/onboarding/mes-informations-de-chasse';
+      return '/app/tableau-de-bord/onboarding/formation-examen-initial';
     }
     return '/app/tableau-de-bord/onboarding/mon-entreprise';
   }, [user.roles]);
@@ -59,7 +59,7 @@ export default function MesCoordonnees() {
       <title>Mes coordonnées | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper currentStep={2} nextTitle={nextTitle} stepCount={4} title="Mes coordonnées" />
+          <Stepper currentStep={2} nextTitle={nextTitle} stepCount={5} title="Mes coordonnées" />
           <h1 className="fr-h2 fr-mb-2w">Renseignez vos coordonnées</h1>
           <CallOut title="✍️ Pour pouvoir remplir les fiches qui vont sont attribuées" className="bg-white">
             Qui êtes-vous ?<br />

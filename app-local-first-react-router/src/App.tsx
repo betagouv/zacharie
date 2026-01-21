@@ -55,7 +55,8 @@ import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
 // onboarding routes
 import OnboardingMesRoles from './routes/onboarding/1-mon-activite';
 import OnboardingMesCoordonnees from './routes/onboarding/2-mes-coordonnees';
-import OnboardingMesInformationsDeChasse from './routes/onboarding/3-mes-informations-de-chasse';
+import OnboardingExaminateurInitial from './routes/onboarding/3a-examinateur-initial';
+import OnboardingMesInformationsDeChasse from './routes/onboarding/3b-mes-informations-de-chasse';
 import OnboardingMonEntreprise from './routes/onboarding/3-mon-entreprise';
 import OnboardingMesNotifications from './routes/onboarding/4-mes-notifications';
 
@@ -154,17 +155,8 @@ function App() {
             >
               <Route path="mon-activite" element={<OnboardingMesRoles />} />
               <Route path="mes-coordonnees" element={<OnboardingMesCoordonnees />} />
-              <Route
-                path="mes-informations-de-chasse"
-                element={
-                  <OnboardingMesInformationsDeChasse
-                    withExaminateurInitial
-                    withAssociationsDeChasse
-                    withCCGs
-                    withPartenaires
-                  />
-                }
-              />
+              <Route path="formation-examen-initial" element={<OnboardingExaminateurInitial />} />
+              <Route path="mes-informations-de-chasse" element={<OnboardingMesInformationsDeChasse />} />
               <Route path="mon-entreprise" element={<OnboardingMonEntreprise />} />
               <Route path="mes-notifications" element={<OnboardingMesNotifications />} />
             </Route>

@@ -56,8 +56,13 @@ export default function MesPartenaires() {
   }, [userHasPartenaires, searchParams]);
 
   return (
-    <Fragment key={refreshKey}>
-      {!userHasPartenaires && (
+    <div className="mb-6 bg-white md:shadow-sm">
+      <div className="p-4 md:p-8">
+        <h3 className="mb-8 text-lg font-semibold text-gray-900" id="onboarding-etape-2-partenaires-data-title">
+          Mes partenaires
+        </h3>
+        <Fragment key={refreshKey}>
+          {!userHasPartenaires && (
         <RadioButtons
           legend="Avez-vous des partenaires dans le circuit court de transport des carcasses ? *"
           hintText="On parle ici de boucheries, charcuteries, restaurants, ou encore repas de chasse ou associatifs, ou encore des consommateurs finaux."
@@ -88,59 +93,61 @@ export default function MesPartenaires() {
           ]}
         />
       )}
-      {userEntities.map((entity) => {
-        const relation = entity.EntityRelationsWithUsers.find(
-          (relation) =>
-            relation.owner_id === user.id &&
-            relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        );
-        if (!relation) return null;
-        return (
-          <RelationEntityUser
-            key={relation.id}
-            relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-            entity={entity}
-            user={user}
-            enableUsersView={relation.status === EntityRelationStatus.ADMIN}
-            displayEntity={true}
-            displayUser={false}
-            onChange={() => {
-              setRefreshKey((k) => k + 1);
-            }}
-            refreshKey={refreshKey}
-            canDelete
-          />
-        );
-      })}
-
-      {(userHasPartenaires || user.checked_has_partenaires) && (
-        <>
-          {!showForm ? (
-            <>
-              <Button
-                priority="secondary"
-                className="mt-4"
-                nativeButtonProps={{
-                  onClick: () => setShowForm(true),
+          {userEntities.map((entity) => {
+            const relation = entity.EntityRelationsWithUsers.find(
+              (relation) =>
+                relation.owner_id === user.id &&
+                relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            );
+            if (!relation) return null;
+            return (
+              <RelationEntityUser
+                key={relation.id}
+                relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+                entity={entity}
+                user={user}
+                enableUsersView={relation.status === EntityRelationStatus.ADMIN}
+                displayEntity={true}
+                displayUser={false}
+                onChange={() => {
+                  setRefreshKey((k) => k + 1);
                 }}
-              >
-                Me rattacher à un autre partenaire
-              </Button>
+                refreshKey={refreshKey}
+                canDelete
+              />
+            );
+          })}
+
+            {(userHasPartenaires || user.checked_has_partenaires) && (
+            <>
+              {!showForm ? (
+                <>
+                  <Button
+                    priority="secondary"
+                    className="mt-4"
+                    nativeButtonProps={{
+                      onClick: () => setShowForm(true),
+                    }}
+                  >
+                    Me rattacher à un autre partenaire
+                  </Button>
+                </>
+              ) : (
+                <div className="mt-8">
+                  <div className="rounded-lg border border-gray-300 px-8 py-6">
+                    <PartenaireNouveau
+                      onFinish={() => {
+                        setRefreshKey((k) => k + 1);
+                        setShowForm(false);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </>
-          ) : (
-            <div className="mt-8">
-              <div className="rounded-lg border border-gray-300 px-8 py-6">
-                <PartenaireNouveau
-                  onFinish={() => {
-                    setRefreshKey((k) => k + 1);
-                    setShowForm(false);
-                  }}
-                />
-              </div>
-            </div>
           )}
-        </>
-      )}
-    </Fragment>
+        </Fragment>
+      </div>
+    </div>
   );
 }

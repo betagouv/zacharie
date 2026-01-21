@@ -51,13 +51,10 @@ export default function MesNotifications() {
     );
   }, [nativePushTokenRegistered, canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
 
-  const skipCCG = useMemo(() => {
-    if (!user.roles.includes(UserRoles.CHASSEUR)) {
-      return true;
-    }
-    return false;
-  }, [user.roles]);
-  const stepCount = skipCCG ? 3 : 4;
+  const isChasseur = user.roles.includes(UserRoles.CHASSEUR);
+  // chasseurs have 5 steps (includes formation-examen-initial + mes-informations-de-chasse)
+  // non-chasseurs have 4 steps (mon-activite, coordonnees, mon-entreprise, notifications)
+  const stepCount = isChasseur ? 5 : 4;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
