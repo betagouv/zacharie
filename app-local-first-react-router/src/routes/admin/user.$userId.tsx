@@ -460,7 +460,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
     if (!etgId) return null;
     const sviId = allEntities
       .find((entity) => entity.id === etgId)
-      ?.AsEtgRelationsWithOtherEntities.find((entity) => entity.entity_type === EntityTypes.SVI)?.entity_id;
+      ?.etg_linked_to_svi_id;
     if (!sviId) return null;
     const svi = allEntities.find((entity) => entity.id === sviId);
     if (!svi) return null;
@@ -486,7 +486,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
         if (relationType === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
           // cette relation est définie dans l'ETG:
           // si un user a un rôle ETG, alors il peut envoyer une fiche
-          // au SVI auquel est rattaché l'ETG via AsEtgRelationsWithOtherEntities
+          // au SVI auquel est rattaché l'ETG via etg_linked_to_svi_id
           // donc on ne doit pas afficher cette relation dans la liste des entités potentielles
           // en revanche elle doit être affichée dans la liste des entités, et disabled
           continue;

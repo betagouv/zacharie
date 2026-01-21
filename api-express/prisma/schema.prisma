@@ -119,6 +119,7 @@ model Entity {
   nom_prenom_responsable          String?
   prefecture_svi                  String?
   ccg_status                      String?
+  etg_linked_to_svi_id            String? // the SVI id that is linked to this entity
   zacharie_compatible             Boolean                        @default(false)
   numero_ddecpp                   String?                        @unique
   inc_certificat                  Int?                           @default(0)
@@ -149,6 +150,8 @@ model Entity {
   ApiKeyApprovals                 ApiKeyApprovalByUserOrEntity[]
   ApiKeyLogs                      ApiKeyLog[]
   ApiKeys                         ApiKey[]                       @relation("EntityRelatedWithApiKey")
+  SviOfETG                        Entity?                        @relation("etg_linked_to_svi_id", fields: [etg_linked_to_svi_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  EtgsLinkedToMySVI               Entity[]                       @relation("etg_linked_to_svi_id")
 
   @@index([updated_at]) // Time-based ordering
   @@index([nom_d_usage]) // Name-based ordering

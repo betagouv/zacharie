@@ -15,7 +15,6 @@ import type {
   EntityForAdmin,
   EntityWithUserRelation,
   EntitiesByTypeAndId,
-  EtgForAdmin,
   EntitiesById,
 } from './entity';
 import { CarcasseForResponseForRegistry } from './carcasse';
@@ -157,7 +156,7 @@ export interface AdminGetEntityResponse {
     dedicatedApiKey: ApiKey | null;
     canTakeFichesForEntity: Array<UserForAdmin>;
     canSendFichesToEntity: Array<UserForAdmin>;
-    svisRelatedToETG: Array<Entity>;
+    sviRelatedToETG: Entity | null;
     potentialSvisRelatedToETG: Array<Entity>;
     etgsRelatedWithSvi: Array<Entity>;
     potentialEtgsRelatedWithSvi: Array<Entity>;
@@ -203,7 +202,7 @@ export interface AdminUserDataResponse {
     user: User;
     identityDone: boolean;
     examinateurDone: boolean;
-    allEntities: Array<EtgForAdmin>;
+    allEntities: Array<Entity>;
     userEntitiesRelations: Array<EntityForAdmin>;
   };
   error: string;

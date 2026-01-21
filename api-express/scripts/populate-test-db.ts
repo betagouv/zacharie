@@ -235,6 +235,33 @@ Christine
   await prisma.entity.createMany({
     data: [
       {
+        id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
+        raison_sociale: 'SVI 1',
+        nom_d_usage: 'SVI 1',
+        siret: '12345678901234',
+        type: EntityTypes.SVI,
+        zacharie_compatible: true,
+        address_ligne_1: '8 avenue du général de gaulle',
+        code_postal: '75000',
+        ville: 'Paris',
+      },
+      {
+        id: '04881d2b-9b27-42a1-8092-7080c67e90fe',
+        raison_sociale: 'SVI 2',
+        nom_d_usage: 'SVI 2',
+        siret: '12345678901234',
+        type: EntityTypes.SVI,
+        zacharie_compatible: true,
+        address_ligne_1: '9 avenue du général de gaulle',
+        code_postal: '75000',
+        ville: 'Paris',
+      },
+    ],
+  });
+
+  await prisma.entity.createMany({
+    data: [
+      {
         id: '5b916331-632e-4c29-be2e-12a834e92688',
         raison_sociale: 'Association de chasseurs',
         nom_d_usage: 'Association de chasseurs',
@@ -300,6 +327,7 @@ Christine
         address_ligne_1: '6 avenue du général de gaulle',
         code_postal: '75000',
         ville: 'Paris',
+        etg_linked_to_svi_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
       },
       {
         id: '8cb0e705-6bbe-43b1-af4a-2daa90db92e0',
@@ -312,28 +340,7 @@ Christine
         address_ligne_1: '7 avenue du général de gaulle',
         code_postal: '75000',
         ville: 'Paris',
-      },
-      {
-        id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
-        raison_sociale: 'SVI 1',
-        nom_d_usage: 'SVI 1',
-        siret: '12345678901234',
-        type: EntityTypes.SVI,
-        zacharie_compatible: true,
-        address_ligne_1: '8 avenue du général de gaulle',
-        code_postal: '75000',
-        ville: 'Paris',
-      },
-      {
-        id: '04881d2b-9b27-42a1-8092-7080c67e90fe',
-        raison_sociale: 'SVI 2',
-        nom_d_usage: 'SVI 2',
-        siret: '12345678901234',
-        type: EntityTypes.SVI,
-        zacharie_compatible: true,
-        address_ligne_1: '9 avenue du général de gaulle',
-        code_postal: '75000',
-        ville: 'Paris',
+        etg_linked_to_svi_id: '04881d2b-9b27-42a1-8092-7080c67e90fe',
       },
     ],
   });
@@ -417,22 +424,6 @@ Christine
     ],
   });
   console.log('Entity and user relations created for test', entityAndUserRelations.count);
-
-  const etgAndEntityRelations = await prisma.eTGAndEntityRelations.createMany({
-    data: [
-      {
-        etg_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
-        entity_type: EntityTypes.SVI,
-        entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 1')?.id,
-      },
-      {
-        etg_id: entities.find((entity) => entity.raison_sociale === 'ETG 2')?.id,
-        entity_type: EntityTypes.SVI,
-        entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 2')?.id,
-      },
-    ],
-  });
-  console.log('ETG and entity relations created for test', etgAndEntityRelations.count);
 
   console.log('role', role);
 

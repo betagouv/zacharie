@@ -1060,32 +1060,6 @@ router.get(
                 },
               },
             },
-            // Or if the next owner is an ETG and the current user works for a collecteur
-            // linked to that ETG (via the ETG relations), then include the FEI.
-            {
-              AND: [
-                { fei_next_owner_role: UserRoles.ETG },
-                {
-                  FeiNextEntity: {
-                    AsEtgRelationsWithOtherEntities: {
-                      some: {
-                        EntityRelatedWithETG: {
-                          EntityRelationsWithUsers: {
-                            some: {
-                              owner_id: user.id,
-                              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                              status: {
-                                in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              ],
-            },
           ],
         },
         include: {
