@@ -89,7 +89,7 @@ export interface UserMyRelationsResponse {
     collecteursPro: Array<EntityWithUserRelation>;
     etgs: Array<EntityWithUserRelation>;
     svis: Array<EntityWithUserRelation>;
-    entitiesWorkingFor: Array<EntityWithUserRelation>;
+    entitiesICanHandleCarcassOnBehalf: Array<EntityWithUserRelation>;
     circuitCourt: Array<EntityWithUserRelation>;
   };
   error: '';

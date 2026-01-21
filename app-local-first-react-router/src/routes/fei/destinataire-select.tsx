@@ -127,8 +127,7 @@ export default function DestinataireSelect({
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
       (entity) =>
-        entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY ||
-        entity.relation === EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
+        entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
     );
   }, [prochainsDetenteurs]);
 

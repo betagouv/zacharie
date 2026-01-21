@@ -1508,20 +1508,17 @@ router.get(
       const user = req.user!;
       /*
       I need to fetch
-      - the entities the user is working for (salarié, dirigeant, etc.)
-      - teh entities working with the entities the user is working for (ETG, SVI, etc.)
-      - the entities the user is working with (partnership)
+      - the entities the user can handle carcasses on behalf of (salarié, dirigeant, etc.)
+      - the SVI linked to the ETGs the user can handle carcasses on behalf of
+      - the entities the user can transmit carcasses to (ETG, SVI, etc.)
 
       I need to return
-      - the entities I work for, including the entities working with them (because it's LIKE I'm also working with them)
-      - the entities I work with  (partnership confirmed)
+      - the entities I can handle carcasses on behalf of
+      - the entities I can transmit carcasses to
       - the other entities I could work with (partnership not confirmed), which are all the rest
-
       */
 
-      /* ENTITIES WORKING FOR */
-
-      const entitiesWorkingDirectlyFor = await prisma.entityAndUserRelations
+      const entitiesICanHandleCarcassOnBehalf = await prisma.entityAndUserRelations
         .findMany({
           where: {
             owner_id: user.id,
@@ -1545,49 +1542,7 @@ router.get(
           ),
         );
 
-      const etgsRelatedWithMySvis = !user.roles.includes(UserRoles.SVI)
-        ? []
-        : await prisma.entity.findMany({
-            where: {
-              etg_linked_to_svi_id: {
-                in: entitiesWorkingDirectlyFor.map((entity) => entity.id),
-              },
-              deleted_at: null,
-            },
-          });
-
-      const svisRelatedWithMyETGs = !user.roles.includes(UserRoles.ETG)
-        ? []
-        : await prisma.entity.findMany({
-            where: {
-              id: {
-                in: entitiesWorkingDirectlyFor.map((entity) => entity.etg_linked_to_svi_id),
-              },
-              deleted_at: null,
-            },
-          });
-
-      const entitiesWorkingForObject: Record<string, EntityWithUserRelation> = {};
-      for (const svi of svisRelatedWithMyETGs) {
-        entitiesWorkingForObject[svi.id] = {
-          ...svi,
-          relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
-          relationStatus: undefined,
-        };
-      }
-      for (const etg of etgsRelatedWithMySvis) {
-        entitiesWorkingForObject[etg.id] = {
-          ...etg,
-          relation: EntityRelationType.WORKING_FOR_ENTITY_RELATED_WITH,
-          relationStatus: undefined,
-        };
-      }
-      for (const entity of entitiesWorkingDirectlyFor) {
-        entitiesWorkingForObject[entity.id] = entity;
-      }
-      const entitiesWorkingFor = Object.values(entitiesWorkingForObject);
-
-      const entitiesWorkingWith = await prisma.entityAndUserRelations
+      const entitiesICanTransmitCarcasseTo = await prisma.entityAndUserRelations
         .findMany({
           where: {
             owner_id: user.id,
@@ -1626,8 +1581,8 @@ router.get(
             },
             id: {
               notIn: [
-                ...entitiesWorkingFor.map((entity) => entity.id),
-                ...entitiesWorkingWith.map((entity) => entity.id),
+                ...entitiesICanHandleCarcassOnBehalf.map((entity) => entity.id),
+                ...entitiesICanTransmitCarcasseTo.map((entity) => entity.id),
               ],
             },
           },
@@ -1663,23 +1618,14 @@ router.get(
       }
 
       const allEntities = [
-        ...entitiesWorkingFor.filter(
-          (entity) =>
-            entity.type !== EntityTypes.CCG &&
-            ['CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(
-              entity.relation,
-            ),
-        ),
-        ...entitiesWorkingWith.map((entity) => ({
-          ...entity,
-          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        })),
+        ...entitiesICanHandleCarcassOnBehalf,
+        ...entitiesICanTransmitCarcasseTo,
         ...allOtherEntities.map((entity) => ({ ...entity, relation: EntityRelationType.NONE })),
       ].filter((entity, index, array) => array.findIndex((e) => e.id === entity.id) === index); // remove duplicates
 
-      const ccgs = entitiesWorkingWith.filter((entity) => entity.type === EntityTypes.CCG);
+      const ccgs = entitiesICanTransmitCarcasseTo.filter((entity) => entity.type === EntityTypes.CCG);
 
-      const associationsDeChasse = entitiesWorkingDirectlyFor.filter(
+      const associationsDeChasse = entitiesICanHandleCarcassOnBehalf.filter(
         (entity) => entity.type === EntityTypes.PREMIER_DETENTEUR,
       );
 
@@ -1690,7 +1636,7 @@ router.get(
       const svis = allEntities.filter(
         (entity) =>
           entity.type === EntityTypes.SVI &&
-          ['CAN_TRANSMIT_CARCASSES_TO_ENTITY', 'WORKING_FOR_ENTITY_RELATED_WITH'].includes(entity.relation),
+          entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
       );
 
       const circuitCourt = allEntities.filter(
@@ -1713,7 +1659,7 @@ router.get(
           collecteursPro: collecteursPro satisfies Array<EntityWithUserRelation>,
           etgs: etgs satisfies Array<EntityWithUserRelation>,
           svis: svis satisfies Array<EntityWithUserRelation>,
-          entitiesWorkingFor: entitiesWorkingFor satisfies Array<EntityWithUserRelation>,
+          entitiesICanHandleCarcassOnBehalf: entitiesICanHandleCarcassOnBehalf satisfies Array<EntityWithUserRelation>,
           circuitCourt: circuitCourt satisfies Array<EntityWithUserRelation>,
         },
         error: '',
