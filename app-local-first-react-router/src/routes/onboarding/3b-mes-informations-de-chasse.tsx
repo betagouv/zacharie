@@ -122,7 +122,7 @@ export default function OnboardingMesInformationsDeChasse() {
                   {
                     children: 'Passer cette étape',
                     type: 'button',
-                    priority: 'tertiary',
+                    priority: 'secondary',
                     nativeButtonProps: {
                       onClick: () => navigate(redirect ?? nextPage),
                     },
