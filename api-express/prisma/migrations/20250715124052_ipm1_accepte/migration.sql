@@ -1,2 +1,0 @@
--- AlterEnum
-ALTER TYPE "IPM1Decision" ADD VALUE 'ACCEPTE';
