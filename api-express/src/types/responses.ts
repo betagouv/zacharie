@@ -98,6 +98,14 @@ export interface FeiResponse {
   error: string;
 }
 
+export interface FeiRefreshResponse {
+  ok: boolean;
+  data: {
+    feis: Array<FeiPopulated>;
+  };
+  error: string;
+}
+
 export interface FeisResponse {
   ok: boolean;
   data: {
