@@ -1142,7 +1142,9 @@ router.post(
         nextUser.prefilled = body[Prisma.UserScalarFieldEnum.prefilled] === 'true' ? true : false;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.onboarding_chasse_info_done_at)) {
-        nextUser.onboarding_chasse_info_done_at = new Date(body[Prisma.UserScalarFieldEnum.onboarding_chasse_info_done_at] as string);
+        nextUser.onboarding_chasse_info_done_at = new Date(
+          body[Prisma.UserScalarFieldEnum.onboarding_chasse_info_done_at] as string,
+        );
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse)) {
         nextUser.checked_has_asso_de_chasse =
