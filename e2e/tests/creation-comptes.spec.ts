@@ -304,21 +304,21 @@ test("Premier détenteur ajoute association et CCG depuis son profil", async ({ 
   await page.getByRole("link", { name: "Mes informations de chasse" }).click();
 
   // Add an existing association - use input name selector for the "Oui" radio
-  await page.locator('input[name="checked_has_asso_de_chasse"]').click();
+  await page.getByText("Oui").nth(1).click();
   // React Select: click to focus, type to filter, then select existing option
   await page.locator(".raison_sociale__input-container").click();
   await page.locator(".raison_sociale__input").fill("Association de chasseurs");
-  await page.getByRole("option", { name: /Association de chasseurs/i }).click();
+  await page.getByRole("option", { name: /Association de chasseurs -/i }).click();
   await page.getByRole("button", { name: "Me rattacher à cette entité", exact: true }).click();
   // Verify association was added - button "Me rattacher à une autre entité" appears
   await expect(page.getByRole("button", { name: "Me rattacher à une autre entité" })).toBeVisible();
 
   // Add a CCG - use radio button selector
-  await page.getByRole("radio", { name: "Oui mais la chambre froide n'a pas de numéro d'identification" }).click();
+  await page.getByText("Oui mais").nth(0).click();
   await page.getByRole("textbox", { name: "Nom usuel *" }).fill("CCG du Détenteur");
-  await page.getByRole("textbox", { name: "SIRET Si vous n'en n'avez pas" }).fill("11122233344455");
-  await page.locator("#ccg_data_form #address_ligne_1").fill("50 route du froid");
-  await page.locator("#ccg_data_form #code_postal").fill("75020");
+  await page.getByRole("textbox", { name: "SIRET Si vous n'en n'avez pas" }).fill("122345");
+  await page.getByRole("textbox", { name: "Adresse * Indication : numéro" }).fill("123 rue de la paix");
+  await page.getByRole("textbox", { name: "Code postal * 5 chiffres" }).fill("75020");
   await page.getByRole("button", { name: "PARIS 20" }).click();
   await page.getByRole("button", { name: "Enregistrer ma chambre froide (CCG)", exact: true }).click();
   // Verify CCG was added - check for at least 2 Retirer buttons (one for association, one for CCG)
