@@ -413,8 +413,8 @@ router.post(
         text: `Un nouveau partenaire a été pré-enregistré dans Zacharie\u00A0: ${createdEntity.nom_d_usage}`,
       });
 
-      // FIXME: doit-on lier le partenaire au contact dans Brevo ?
-      // await linkBrevoCompanyToContact(createdEntity, user);
+      ownerUser = await createBrevoContact(ownerUser, 'ADMIN');
+      await linkBrevoCompanyToContact(createdEntity, ownerUser);
 
       res
         .status(200)
