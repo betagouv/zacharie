@@ -12,6 +12,7 @@ test.use({
 });
 
 test("Création de compte examinateur initial", async ({ page }) => {
+  // hello
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur-nouveau@example.fr");
@@ -35,11 +36,11 @@ test("Création de compte examinateur initial", async ({ page }) => {
   await page.getByRole("button", { name: "PARIS 12" }).click();
   await page.getByRole("button", { name: "Me rattacher à cette entité", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Chambres froides (Centres de Collecte du Gibier sauvage)" })
+    page.getByRole("heading", { name: "Chambres froides (Centres de Collecte du Gibier sauvage)" }),
   ).toBeVisible();
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens."
+      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
@@ -83,7 +84,7 @@ test("Création de compte premier détenteur", async ({ page }) => {
   await page.getByText("Le CCG identifié dans").click();
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens."
+      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
@@ -119,7 +120,7 @@ test("Création de compte collecteur pro", async ({ page }) => {
     `);
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens."
+      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
@@ -160,7 +161,7 @@ test("Création de compte établissement de traitement du gibier", async ({ page
     `);
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens."
+      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
