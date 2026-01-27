@@ -101,17 +101,13 @@ router.get(
         const motif = carcasse.intermediaire_carcasse_refus_motif;
         refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
       }
-      // SVI IPM1 lesions/motifs
-      if (carcasse.svi_ipm1_lesions_ou_motifs?.length) {
-        for (const motif of carcasse.svi_ipm1_lesions_ou_motifs) {
-          refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
-        }
-      }
-      // SVI IPM2 lesions/motifs
-      if (carcasse.svi_ipm2_lesions_ou_motifs?.length) {
-        for (const motif of carcasse.svi_ipm2_lesions_ou_motifs) {
-          refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
-        }
+      // SVI IPM1 and IPM2 lesions/motifs (deduplicated to avoid counting same motif twice)
+      const sviMotifs = new Set([
+        ...(carcasse.svi_ipm1_lesions_ou_motifs ?? []),
+        ...(carcasse.svi_ipm2_lesions_ou_motifs ?? []),
+      ]);
+      for (const motif of sviMotifs) {
+        refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
       }
     }
     const refusalCauses = Array.from(refusalCausesMap.entries())
