@@ -164,7 +164,7 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Pro
     const result = await apiInstance.createContact(createContact);
 
     // console.log(result);
-    await prisma.user.update({
+    props = await prisma.user.update({
       where: { id: props.id },
       data: { brevo_contact_id: result.body.id },
     });
