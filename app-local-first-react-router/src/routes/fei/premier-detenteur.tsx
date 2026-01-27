@@ -122,12 +122,20 @@ export default function FeiPremierDetenteur() {
       <Section title={`Action du Premier détenteur | ${premierDetenteurInput}`}>
         <Alert
           severity="warning"
-          title="Compte non activé"
+          title="Votre compte est en attente d'activation"
           description={
             <>
-              Vous devez être activé pour transmettre une fiche. Veuillez contacter un administrateur via{' '}
-              <Link to="/app/tableau-de-bord/contact">le formulaire de contact</Link> pour activer votre
-              compte.
+              <p className="mb-2">
+                Votre compte est actuellement en cours de vérification par l'équipe Zacharie, ou certaines informations
+                sont manquantes.
+              </p>
+              <p className="mb-2">Une fois activé, vous pourrez transmettre vos fiches.</p>
+              <p>
+                <strong>Besoin d'aide&nbsp;?</strong>{' '}
+                <Link to="/app/tableau-de-bord/contact" className="fr-link">
+                  Contactez-nous
+                </Link>
+              </p>
             </>
           }
         />
