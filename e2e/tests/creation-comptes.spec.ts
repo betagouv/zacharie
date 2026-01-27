@@ -77,7 +77,7 @@ test("Création de compte collecteur pro", async ({ page }) => {
     `);
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens."
+      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
@@ -118,7 +118,7 @@ test("Création de compte établissement de traitement du gibier", async ({ page
     `);
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens."
+      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
@@ -183,8 +183,6 @@ test("Examinateur initial ajoute une association de chasse depuis son profil", a
   await page.getByRole("link", { name: "Mes informations de chasse" }).click();
   await expect(page.getByRole("heading", { name: "Renseignez vos informations de chasse" })).toBeVisible();
 
-
-
   await page.getByText("Oui").nth(1).click();
   await page.getByRole("combobox", { name: "Raison Sociale *" }).fill("Association de lapins chasseurs");
   await page.getByRole("textbox", { name: "SIRET" }).fill("1234");
@@ -195,11 +193,11 @@ test("Examinateur initial ajoute une association de chasse depuis son profil", a
   // Verify the association was added - check for button "Retirer" which appears next to added associations
   await expect(page.getByRole("button", { name: "Retirer" })).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Chambres froides (Centres de Collecte du Gibier sauvage)" })
+    page.getByRole("heading", { name: "Chambres froides (Centres de Collecte du Gibier sauvage)" }),
   ).toBeVisible();
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens."
+      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -246,7 +244,9 @@ test("Premier détenteur devient examinateur initial depuis son profil", async (
   // First complete basic onboarding as non-examinateur
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).first().click();
-  await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("detenteur-devient-examinateur@example.fr");
+  await page
+    .getByRole("textbox", { name: "Mon email Renseignez votre" })
+    .fill("detenteur-devient-examinateur@example.fr");
   await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Créer mon compte" }).click();
   await page.getByRole("textbox", { name: "Nom *", exact: true }).fill("Paul");
@@ -281,7 +281,6 @@ test("Premier détenteur devient examinateur initial depuis son profil", async (
 });
 
 test("Premier détenteur ajoute association et CCG depuis son profil", async ({ page }) => {
-  // First complete basic onboarding as non-examinateur
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).first().click();
   await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("detenteur-complet@example.fr");
@@ -327,7 +326,7 @@ test("Premier détenteur ajoute association et CCG depuis son profil", async ({ 
   // Check visibility and save
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens."
+      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer" }).click();
