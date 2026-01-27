@@ -413,7 +413,7 @@ router.post(
         text: `Un nouveau partenaire a été pré-enregistré dans Zacharie\u00A0: ${createdEntity.nom_d_usage}`,
       });
 
-      ownerUser = await createBrevoContact(ownerUser, 'ADMIN');
+      ownerUser = await createBrevoContact(ownerUser, 'USER');
       await linkBrevoCompanyToContact(createdEntity, ownerUser);
 
       res
