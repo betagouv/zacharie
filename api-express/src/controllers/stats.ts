@@ -93,12 +93,25 @@ router.get(
     const bigGame = bigGameCarcasses.length;
     const smallGame = carcasses.filter((c) => c.type === CarcasseType.PETIT_GIBIER).length;
 
-    // Get refusal causes from intermediaire refusals
+    // Get refusal causes from intermediaire refusals and SVI lesions/motifs
     const refusalCausesMap = new Map<string, number>();
     for (const carcasse of bigGameCarcasses) {
+      // Intermediaire refusal motif
       if (carcasse.intermediaire_carcasse_refus_motif) {
         const motif = carcasse.intermediaire_carcasse_refus_motif;
         refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
+      }
+      // SVI IPM1 lesions/motifs
+      if (carcasse.svi_ipm1_lesions_ou_motifs?.length) {
+        for (const motif of carcasse.svi_ipm1_lesions_ou_motifs) {
+          refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
+        }
+      }
+      // SVI IPM2 lesions/motifs
+      if (carcasse.svi_ipm2_lesions_ou_motifs?.length) {
+        for (const motif of carcasse.svi_ipm2_lesions_ou_motifs) {
+          refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
+        }
       }
     }
     const refusalCauses = Array.from(refusalCausesMap.entries())
