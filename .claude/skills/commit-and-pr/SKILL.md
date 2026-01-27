@@ -1,5 +1,5 @@
 ---
-name: pr
+name: commit-and-pr
 description: Creates a branch, commits changes, pushes, and opens a PR. Use when the user wants to submit their changes as a pull request.
 ---
 
