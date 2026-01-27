@@ -9,6 +9,7 @@ import {
   CarcasseIntermediaire,
   EntityRelationType,
   FeiOwnerRole,
+  CarcasseType,
 } from '@prisma/client';
 import dayjs from 'dayjs';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -70,6 +71,11 @@ export default function DestinataireSelect({
   const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
+  const updateCarcasseIntermediaire = useZustandStore((state) => state.updateCarcasseIntermediaire);
+  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+  const carcassesIntermediaireIdsByIntermediaire = useZustandStore(
+    (state) => state.carcassesIntermediaireIdsByIntermediaire,
+  );
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
@@ -436,6 +442,53 @@ export default function DestinataireSelect({
 
   const [tryToSubmitAtLeastOnce, setTryTOSubmitAtLeastOnce] = useState(false);
 
+  // Function to auto-accept undecided carcasses in a batch
+  const autoAcceptUndecidedCarcasses = (intermediaireIds: FeiAndIntermediaireIds) => {
+    const carcasseIntermediaireIds = carcassesIntermediaireIdsByIntermediaire[intermediaireIds] || [];
+    const now = dayjs().toDate();
+
+    for (const carcasseIntermediaireId of carcasseIntermediaireIds) {
+      const ci = carcassesIntermediaireById[carcasseIntermediaireId];
+      if (!ci) continue;
+
+      // Skip if already has a decision (refus, manquante)
+      if (ci.decision_at) continue;
+      if (ci.refus) continue;
+      if (ci.manquante) continue;
+      if (ci.ecarte_pour_inspection) continue;
+
+      // Find the carcasse to get type and nombre_d_animaux for petit gibier
+      const carcasse = carcasses.find((c) => c.zacharie_carcasse_id === ci.zacharie_carcasse_id);
+      const nombreAnimauxTotal = carcasse?.nombre_d_animaux ?? 0;
+      const nombreAcceptes = carcasse?.type === CarcasseType.PETIT_GIBIER ? nombreAnimauxTotal : null;
+
+      // Auto-accept this carcasse
+      updateCarcasseIntermediaire(carcasseIntermediaireId, {
+        manquante: false,
+        refus: null,
+        prise_en_charge: true,
+        ecarte_pour_inspection: false,
+        check_manuel: true,
+        decision_at: now,
+        nombre_d_animaux_acceptes: nombreAcceptes,
+      });
+
+      // Also update the carcasse to clear any refus/manquante flags
+      if (carcasse) {
+        updateCarcasse(
+          carcasse.zacharie_carcasse_id,
+          {
+            intermediaire_carcasse_manquante: false,
+            intermediaire_carcasse_refus_motif: null,
+            intermediaire_carcasse_refus_intermediaire_id: null,
+            latest_intermediaire_signed_at: now,
+          },
+          false,
+        );
+      }
+    }
+  };
+
   // Function to handle the actual submission
   const handleSubmit = () => {
     // for typescript only
@@ -455,6 +508,9 @@ export default function DestinataireSelect({
         svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
       };
       if (feiAndIntermediaireIds && intermediaire) {
+        // Auto-accept undecided carcasses before transmitting
+        autoAcceptUndecidedCarcasses(feiAndIntermediaireIds);
+
         let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
           intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
           intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
@@ -469,7 +525,7 @@ export default function DestinataireSelect({
         user_id: user.id,
         user_role:
           fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
-          fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
+            fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
             ? UserRoles.CHASSEUR
             : fei.fei_current_owner_role!,
         action: `${calledFrom}-select-destinataire-sous-traite`,
@@ -562,6 +618,10 @@ export default function DestinataireSelect({
           );
         }
       }
+
+      // Auto-accept undecided carcasses before transmitting
+      autoAcceptUndecidedCarcasses(feiAndIntermediaireIds);
+
       let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
         intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
         intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
