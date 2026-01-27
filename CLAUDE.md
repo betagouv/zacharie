@@ -111,3 +111,20 @@ API requires:
 E2E tests require:
 - `PGBASEURL`: PostgreSQL base URL for test DB setup
 - `PGDATABASE`: Test database name (default: `zacharietest`)
+
+## Local-First Sync (`app-local-first-react-router/src/zustand/store.ts`)
+
+The frontend stores data in IndexedDB via Zustand. Changes apply locally first (`is_synced = false`), then sync to server via PQueue:
+
+- **Queue**: `concurrency: 1`, 30ms throttle to prevent race conditions
+- **Order**: FEIs → Carcasses → CarcassesIntermediaires → Logs (each waits for dependencies)
+- **Conflict resolution**: Compares `updated_at`, keeps newest
+- **AbortController per record**: Cancels in-flight requests if same record changes again
+
+Key helpers in `@app/utils/get-carcasse-intermediaire-id.ts` for composite IDs (CarcasseIntermediaire uses `fei_numero + zacharie_carcasse_id + intermediaire_id`).
+
+## Key Files
+
+- `api-express/prisma/schema.prisma` — Database models
+- `app-local-first-react-router/src/zustand/store.ts` — State & sync logic
+- `app-local-first-react-router/src/utils/load-feis.ts` — Data loading with local/remote merge
