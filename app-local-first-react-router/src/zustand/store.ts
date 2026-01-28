@@ -8,14 +8,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import type { UserForFei } from '~/src/types/user';
 import type { EntityWithUserRelation } from '~/src/types/entity';
-import type {
-  FeiResponse,
-  CarcasseResponse,
-  CarcasseIntermediaireResponse,
-  LogResponse,
-  UserConnexionResponse,
-  SyncResponse,
-} from '~/src/types/responses';
+import type { UserConnexionResponse, SyncResponse } from '~/src/types/responses';
 import type { FeiDone, FeiWithIntermediaires } from '~/src/types/fei';
 import { create } from 'zustand';
 import { devtools, persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
@@ -560,7 +553,9 @@ async function performSync(signal: AbortSignal) {
   // Collect all unsynced data
   const unsyncedFeis = Object.values(state.feis).filter((f) => !f.is_synced);
   const unsyncedCarcasses = Object.values(state.carcasses).filter((c) => !c.is_synced);
-  const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter((ci) => !ci.is_synced);
+  const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
+    (ci) => !ci.is_synced,
+  );
   const unsyncedLogs = state.logs.filter((l) => !l.is_synced);
 
   // Nothing to sync
@@ -585,7 +580,7 @@ async function performSync(signal: AbortSignal) {
   }
 
   try {
-    const response = (await API.post({
+    const response = await API.post({
       path: '/sync',
       body: {
         feis: unsyncedFeis,
@@ -594,7 +589,7 @@ async function performSync(signal: AbortSignal) {
         logs: unsyncedLogs,
       },
       signal,
-    })) as SyncResponse;
+    }).then((res) => res as SyncResponse);
 
     if (signal.aborted) return;
 
@@ -668,48 +663,9 @@ async function performSync(signal: AbortSignal) {
       if (debug) console.log('sync aborted');
       return;
     }
-    capture(error);
+    capture(error as Error, {
+      extra: { error: error as Error },
+    });
     console.error('sync error:', error);
   }
-}
-
-// Keep individual sync functions for backward compatibility
-// They now just trigger a full sync
-
-export async function syncFei(nextFei: FeiWithIntermediaires, signal: AbortSignal) {
-  // Individual sync now triggers bulk sync
-  await syncData(`syncFei-${nextFei.numero}`);
-}
-
-export async function syncFeis() {
-  await syncData('syncFeis');
-}
-
-export async function syncCarcasse(nextCarcasse: Carcasse, signal: AbortSignal) {
-  await syncData(`syncCarcasse-${nextCarcasse.zacharie_carcasse_id}`);
-}
-
-export async function syncCarcasses() {
-  await syncData('syncCarcasses');
-}
-
-export async function syncCarcasseIntermediaire(
-  nextCarcasseIntermediaire: CarcasseIntermediaire,
-  signal: AbortSignal,
-) {
-  await syncData(
-    `syncCarcasseIntermediaire-${nextCarcasseIntermediaire.intermediaire_id}-${nextCarcasseIntermediaire.zacharie_carcasse_id}`,
-  );
-}
-
-export async function syncCarcassesIntermediaires() {
-  await syncData('syncCarcassesIntermediaires');
-}
-
-export async function syncLog(nextLog: Log) {
-  await syncData(`syncLog-${nextLog.id}`);
-}
-
-export async function syncLogs() {
-  await syncData('syncLogs');
 }
