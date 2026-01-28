@@ -13,23 +13,25 @@ export default function FEIDonneesDeChasse({
 }) {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
+  const feisUpcomingForSvi = useZustandStore((state) => state.feisUpcomingForSvi);
   const carcassesState = useZustandStore((state) => state.carcasses);
   const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
-  const fei = feis[params.fei_numero!];
+  const fei = feis[params.fei_numero!] || feisUpcomingForSvi[params.fei_numero!];
   const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
-  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+  const intermediaires = getFeiIntermediairesForFeiNumero(fei?.numero ?? params.fei_numero!);
   const latestIntermediaire = intermediaires[0];
   // console.log('fei', fei);
   const carcasses = (carcasseId ? [carcasseId] : carcassesIdsByFei[params.fei_numero!] || [])
     .map((cId) => carcassesState[cId])
-    .filter((c) => !c.deleted_at);
-  const examinateurInitialUser = fei.examinateur_initial_user_id
+    .filter((c) => c && !c.deleted_at);
+
+  const examinateurInitialUser = fei?.examinateur_initial_user_id
     ? users[fei.examinateur_initial_user_id!]
     : null;
-  const premierDetenteurUser = fei.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id!] : null;
-  const premierDetenteurEntity = fei.premier_detenteur_entity_id
+  const premierDetenteurUser = fei?.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id!] : null;
+  const premierDetenteurEntity = fei?.premier_detenteur_entity_id
     ? entities[fei.premier_detenteur_entity_id!]
     : null;
 
@@ -88,6 +90,7 @@ export default function FEIDonneesDeChasse({
   }, [intermediaires, entities]);
 
   const sviInput = useMemo(() => {
+    if (!fei) return [];
     const lines = [];
     const sviEntity = entities[fei.svi_entity_id!];
     if (sviEntity) {
@@ -110,27 +113,28 @@ export default function FEIDonneesDeChasse({
       );
     }
     return lines;
-  }, [fei.svi_entity_id, entities, fei.svi_assigned_at, fei.svi_closed_at, fei.automatic_closed_at]);
+  }, [fei, entities]);
 
-  const ccgDate = fei.premier_detenteur_depot_ccg_at
+  const ccgDate = fei?.premier_detenteur_depot_ccg_at
     ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
   const etgDate = latestIntermediaire?.prise_en_charge_at
     ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
-  const sviAssignedToFeiAt = fei.svi_assigned_at
+  const sviAssignedToFeiAt = fei?.svi_assigned_at
     ? dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
 
   const milestones = useMemo(() => {
+    if (!fei) return [];
     const _milestones = [
       `Commune de mise à mort\u00A0: ${fei?.commune_mise_a_mort ?? ''}`,
       `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY')}`,
-      `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
+      `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${fei.heure_mise_a_mort_premiere_carcasse ?? ''}`,
     ];
     if (!onlyPetitGibier) {
       _milestones.push(
-        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${fei.heure_evisceration_derniere_carcasse!}`,
+        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${fei.heure_evisceration_derniere_carcasse ?? ''}`,
       );
     }
     if (ccgDate) {
@@ -144,16 +148,17 @@ export default function FEIDonneesDeChasse({
       _milestones.push(`Date et heure d'assignation au SVI\u00A0: ${sviAssignedToFeiAt}`);
     return _milestones;
   }, [
-    fei.commune_mise_a_mort,
-    fei.premier_detenteur_depot_entity_name_cache,
+    fei,
     ccgDate,
     etgDate,
     onlyPetitGibier,
-    fei.date_mise_a_mort,
-    fei.heure_mise_a_mort_premiere_carcasse,
-    fei.heure_evisceration_derniere_carcasse,
     sviAssignedToFeiAt,
   ]);
+
+  // Guard against missing FEI data - after all hooks
+  if (!fei) {
+    return <p className="text-gray-500">Chargement des données...</p>;
+  }
 
   return (
     <>
