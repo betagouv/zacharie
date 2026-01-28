@@ -124,8 +124,10 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.locator(".select-prochain-detenteur__input-container").click();
   await page.getByRole("option", { name: "SVI 1 - 75000 Paris (Service" }).click();
   await page.getByRole("button", { name: "Transmettre la fiche" }).click();
-  // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
-  await expect(page.getByText("SVI 1 a été notifié")).toBeVisible({ timeout: 5000 });
+  // First, verify the submission was processed locally
+  await expect(page.getByRole("heading", { name: "Attribution effectuée" })).toBeVisible();
+  // Then wait for sync to complete (can take time due to queued sync operations)
+  await expect(page.getByText("SVI 1 a été notifié")).toBeVisible({ timeout: 15000 });
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
       - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie accepté/':
         - paragraph: Daim
