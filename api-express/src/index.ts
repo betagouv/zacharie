@@ -34,6 +34,7 @@ import utilsRouter from './controllers/utils.ts';
 import statsRouter from './controllers/stats.ts';
 import v1Router from './controllers/v1/index.ts';
 import apiKeyApprovalRouter from './controllers/api-key-approval.ts';
+import syncRouter from './controllers/sync.ts';
 import './cronjobs/index.ts';
 import './scripts/migrations.ts';
 
@@ -161,6 +162,7 @@ app.use('/search', passport.initialize(), searchRouter);
 app.use('/webhooks', passport.initialize(), webhooksRouter);
 app.use('/stats', passport.initialize(), statsRouter);
 app.use('/api-key-approval', passport.initialize(), apiKeyApprovalRouter);
+app.use('/sync', passport.initialize(), syncRouter);
 app.use('/', passport.initialize(), utilsRouter);
 
 app.use(Sentry.Handlers.errorHandler());

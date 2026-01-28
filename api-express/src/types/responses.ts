@@ -8,11 +8,36 @@ import type {
   CarcasseCertificat,
   ApiKey,
   ApiKeyApprovalByUserOrEntity,
+  Fei,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
 import type { FeiDone, FeiWithIntermediaires, FeiPopulated } from './fei';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
 import { CarcasseForResponseForRegistry } from './carcasse';
+
+export interface SyncRequest {
+  feis: Array<Partial<Fei> & { numero: string }>;
+  carcasses: Array<Partial<Carcasse> & { fei_numero: string; zacharie_carcasse_id: string }>;
+  carcassesIntermediaires: Array<
+    Partial<CarcasseIntermediaire> & {
+      fei_numero: string;
+      intermediaire_id: string;
+      zacharie_carcasse_id: string;
+    }
+  >;
+  logs: Array<Partial<Log> & { id: string }>;
+}
+
+export interface SyncResponse {
+  ok: boolean;
+  data: {
+    feis: Array<FeiPopulated>;
+    carcasses: Array<Carcasse>;
+    carcassesIntermediaires: Array<CarcasseIntermediaire>;
+    syncedLogIds: Array<string>;
+  } | null;
+  error: string;
+}
 
 export interface SearchResponse {
   ok: boolean;
