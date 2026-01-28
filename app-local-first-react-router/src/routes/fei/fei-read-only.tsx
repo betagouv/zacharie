@@ -19,8 +19,8 @@ export default function FeiReadOnlyLoader() {
   const params = useParams();
   const feisUpcomingForSvi = useZustandStore((state) => state.feisUpcomingForSvi);
   const feis = useZustandStore((state) => state.feis);
-  // Check if FEI is in upcoming or regular feis
-  const fei = feisUpcomingForSvi[params.fei_numero!] || feis[params.fei_numero!];
+  // Check if FEI is in feis first (where loadFei stores it), then fall back to feisUpcomingForSvi
+  const fei = feis[params.fei_numero!] || feisUpcomingForSvi[params.fei_numero!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ function FeiReadOnly() {
   const params = useParams();
   const feisUpcomingForSvi = useZustandStore((state) => state.feisUpcomingForSvi);
   const feis = useZustandStore((state) => state.feis);
-  const fei = feisUpcomingForSvi[params.fei_numero!] || feis[params.fei_numero!];
+  const fei = feis[params.fei_numero!] || feisUpcomingForSvi[params.fei_numero!];
 
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
@@ -76,7 +76,12 @@ function FeiReadOnly() {
   const [showRefusedCarcasses, setShowRefusedCarcasses] = useState(false);
 
   // Get the ETG entity name
-  const etgEntity = fei.fei_current_owner_entity_id ? entities[fei.fei_current_owner_entity_id] : null;
+  const etgEntity = fei?.fei_current_owner_entity_id ? entities[fei.fei_current_owner_entity_id] : null;
+
+  // Guard against missing FEI data
+  if (!fei) {
+    return <Chargement />;
+  }
 
   return (
     <>
