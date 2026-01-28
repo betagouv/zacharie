@@ -5,7 +5,7 @@ import { getVulgarisationSaisie } from '@app/utils/get-vulgarisation-saisie';
 import { getSimplifiedCarcasseStatus } from '@app/utils/get-carcasse-status';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
 
-export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
+export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei | undefined) {
   const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaires = useZustandStore((state) => state.carcassesIntermediaireById);
 
@@ -16,15 +16,15 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
     | 'accepté'
     | 'saisie partielle' = useMemo(() => {
     if (
-      fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
-      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
+      fei?.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
+      fei?.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
     ) {
-      if (!fei.fei_next_owner_role) {
+      if (!fei?.fei_next_owner_role) {
         return 'en cours de création';
       }
     }
     return getSimplifiedCarcasseStatus(carcasse);
-  }, [carcasse, fei.fei_current_owner_role, fei.fei_next_owner_role]);
+  }, [carcasse, fei?.fei_current_owner_role, fei?.fei_next_owner_role]);
 
   const motifRefus: string = useMemo(() => {
     switch (carcasse.svi_carcasse_status) {
