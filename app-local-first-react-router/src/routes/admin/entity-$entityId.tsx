@@ -14,6 +14,7 @@ import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import InputNotEditable from '@app/components/InputNotEditable';
 import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
+import { toast } from 'react-toastify';
 const loadData = (entityId: string): Promise<AdminGetEntityResponse> =>
   API.get({ path: `admin/entity/${entityId}` }).then((res) => res as AdminGetEntityResponse);
 
@@ -111,6 +112,32 @@ export default function AdminEntity() {
     });
   }
 
+  async function handleSave(name: string, value: string | boolean) {
+    setIsSaving(true);
+    API.post({
+      path: `admin/entity/${params.entityId}`,
+      body: { [name]: value },
+    })
+      .then((res) => res as AdminActionEntityResponse)
+      .then((response) => {
+        if (!response.ok) {
+          return toast.error(response.error);
+        }
+        toast.success("L'entité a été mise à jour avec succès");
+      })
+      .then(() => {
+        loadData(params.entityId!).then((response) => {
+          if (response.data) setAdminEntityResponse(response.data!);
+          if (!response.ok) {
+            return toast.error(response.error);
+          }
+        });
+      })
+      .finally(() => {
+        setIsSaving(false);
+      });
+  }
+
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v relative">
       <title>
@@ -140,11 +167,21 @@ export default function AdminEntity() {
                 onClick={() => {
                   API.post({
                     path: `admin/entity-dedicated-api-key/${params.entityId}`,
-                  }).then(() => {
-                    loadData(params.entityId!).then((response) => {
-                      if (response.data) setAdminEntityResponse(response.data!);
+                  })
+                    .then((response) => {
+                      if (!response.ok) {
+                        return toast.error(response.error);
+                      }
+                      toast.success("L'entité a été mise à jour avec succès");
+                    })
+                    .then(() => {
+                      loadData(params.entityId!).then((response) => {
+                        if (response.data) setAdminEntityResponse(response.data!);
+                        if (!response.ok) {
+                          return toast.error(response.error);
+                        }
+                      });
                     });
-                  });
                 }}
                 className="shrink-0"
               >
@@ -160,30 +197,7 @@ export default function AdminEntity() {
               className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
             >
               {selectedTabId === 'Raison Sociale' && (
-                <form
-                  id="entity_data_form"
-                  method="POST"
-                  ref={formRef}
-                  onBlur={async (event) => {
-                    event.preventDefault();
-                    await new Promise((resolve) => setTimeout(resolve, 300));
-                    const formData = new FormData(formRef.current!);
-                    setIsSaving(true);
-                    API.post({
-                      path: `admin/entity/${params.entityId}`,
-                      body: Object.fromEntries(formData),
-                    })
-                      .then((res) => res as AdminActionEntityResponse)
-                      .then(() => {
-                        loadData(params.entityId!).then((response) => {
-                          if (response.data) setAdminEntityResponse(response.data!);
-                        });
-                      })
-                      .finally(() => {
-                        setIsSaving(false);
-                      });
-                  }}
-                >
+                <form id="entity_data_form" method="POST" ref={formRef}>
                   <div className="flex items-center gap-12">
                     <Checkbox
                       className="mb-4"
@@ -196,7 +210,14 @@ export default function AdminEntity() {
                             required: true,
                             name: Prisma.EntityScalarFieldEnum.zacharie_compatible,
                             value: 'true',
-                            defaultChecked: entity.zacharie_compatible === true,
+                            checked: entity.zacharie_compatible === true,
+                            onChange: async (event) => {
+                              event.preventDefault();
+                              handleSave(
+                                Prisma.EntityScalarFieldEnum.zacharie_compatible,
+                                !entity.zacharie_compatible,
+                              );
+                            },
                           },
                         },
                       ]}
@@ -211,6 +232,7 @@ export default function AdminEntity() {
                       autoComplete: 'off',
                       required: true,
                       defaultValue: entity.nom_d_usage ?? '',
+                      onBlur: (e) => handleSave(e.target.name, e.target.value),
                     }}
                   />
                   <Input
@@ -221,6 +243,7 @@ export default function AdminEntity() {
                       autoComplete: 'off',
                       required: true,
                       defaultValue: entity.raison_sociale ?? '',
+                      onBlur: (e) => handleSave(e.target.name, e.target.value),
                     }}
                   />
                   <Input
@@ -230,6 +253,7 @@ export default function AdminEntity() {
                       name: Prisma.EntityScalarFieldEnum.siret,
                       autoComplete: 'off',
                       defaultValue: entity.siret ?? '',
+                      onBlur: (e) => handleSave(e.target.name, e.target.value),
                     }}
                   />
                   <Input
@@ -239,6 +263,7 @@ export default function AdminEntity() {
                       name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
                       autoComplete: 'off',
                       defaultValue: entity.numero_ddecpp ?? '',
+                      onBlur: (e) => handleSave(e.target.name, e.target.value),
                     }}
                   />
 
@@ -261,6 +286,7 @@ export default function AdminEntity() {
                       autoComplete: 'off',
                       required: true,
                       defaultValue: entity.address_ligne_1 ?? '',
+                      onBlur: (e) => handleSave(e.target.name, e.target.value),
                     }}
                   />
                   <Input
@@ -271,6 +297,7 @@ export default function AdminEntity() {
                       name: Prisma.EntityScalarFieldEnum.address_ligne_2,
                       autoComplete: 'off',
                       defaultValue: entity.address_ligne_2 ?? '',
+                      onBlur: (e) => handleSave(e.target.name, e.target.value),
                     }}
                   />
 
@@ -285,6 +312,7 @@ export default function AdminEntity() {
                         autoComplete: 'off',
                         required: true,
                         defaultValue: entity.code_postal ?? '',
+                        onBlur: (e) => handleSave(e.target.name, e.target.value),
                       }}
                     />
                     <div className="basis-4/5">
@@ -300,6 +328,7 @@ export default function AdminEntity() {
                           autoComplete: 'off',
                           required: true,
                           defaultValue: entity.ville ?? '',
+                          onBlur: (e) => handleSave(e.target.name, e.target.value),
                         }}
                       />
                     </div>
@@ -315,6 +344,7 @@ export default function AdminEntity() {
                           autoComplete: 'off',
                           placeholder: "Préfecture d'Eure-et-Loire",
                           defaultValue: entity.prefecture_svi ?? '',
+                          onBlur: (e) => handleSave(e.target.name, e.target.value),
                         }}
                       />
                       <Input
@@ -326,6 +356,7 @@ export default function AdminEntity() {
                           autoComplete: 'off',
                           placeholder: 'M. Jean Dupont',
                           defaultValue: entity.nom_prenom_responsable ?? '',
+                          onBlur: (e) => handleSave(e.target.name, e.target.value),
                         }}
                       />
                       <InputNotEditable
@@ -336,6 +367,7 @@ export default function AdminEntity() {
                           name: Prisma.EntityScalarFieldEnum.code_etbt_certificat,
                           autoComplete: 'off',
                           defaultValue: entity.code_etbt_certificat ?? '',
+                          onBlur: (e) => handleSave(e.target.name, e.target.value),
                         }}
                       />
                     </>
@@ -376,7 +408,11 @@ export default function AdminEntity() {
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
                   entityType={EntityTypes.SVI}
-                  description={!sviRelatedToETG ? "Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous" : ""}
+                  description={
+                    !sviRelatedToETG
+                      ? "Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous"
+                      : ''
+                  }
                   setIsSaving={setIsSaving}
                 />
               )}
@@ -469,9 +505,18 @@ function UserWorkingWithOrFor({
                   },
                 })
                   .then((res) => res as AdminActionEntityResponse)
+                  .then((response) => {
+                    if (!response.ok) {
+                      return toast.error(response.error);
+                    }
+                    toast.success("L'entité a été mise à jour avec succès");
+                  })
                   .then(() => {
                     loadData(entity.id).then((response) => {
                       if (response.data) setAdminEntityResponse(response.data!);
+                      if (!response.ok) {
+                        return toast.error(response.error);
+                      }
                     });
                   })
                   .finally(() => {
@@ -591,9 +636,18 @@ function EntitiesRelatedTo({
                 },
               })
                 .then((res) => res as AdminActionEntityResponse)
+                .then((response) => {
+                  if (!response.ok) {
+                    return toast.error(response.error);
+                  }
+                  toast.success("L'entité a été mise à jour avec succès");
+                })
                 .then(() => {
                   loadData(entity.id).then((response) => {
                     if (response.data) setAdminEntityResponse(response.data!);
+                    if (!response.ok) {
+                      return toast.error(response.error);
+                    }
                   });
                 })
                 .finally(() => {

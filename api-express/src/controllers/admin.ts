@@ -508,20 +508,43 @@ router.post(
     ) => {
       const body = req.body;
 
-      const data: Prisma.EntityUncheckedUpdateInput = {
-        raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
-        nom_d_usage: body[Prisma.EntityScalarFieldEnum.nom_d_usage],
-        address_ligne_1: body[Prisma.EntityScalarFieldEnum.address_ligne_1],
-        address_ligne_2: body[Prisma.EntityScalarFieldEnum.address_ligne_2],
-        etg_linked_to_svi_id: body[Prisma.EntityScalarFieldEnum.etg_linked_to_svi_id] || null,
-        code_postal: body[Prisma.EntityScalarFieldEnum.code_postal],
-        prefecture_svi: body[Prisma.EntityScalarFieldEnum.prefecture_svi],
-        nom_prenom_responsable: body[Prisma.EntityScalarFieldEnum.nom_prenom_responsable],
-        ville: body[Prisma.EntityScalarFieldEnum.ville],
-        siret: body[Prisma.EntityScalarFieldEnum.siret] || null,
-        numero_ddecpp: body[Prisma.EntityScalarFieldEnum.numero_ddecpp] || null,
-        zacharie_compatible: body[Prisma.EntityScalarFieldEnum.zacharie_compatible] === 'true',
-      };
+      const data: Prisma.EntityUncheckedUpdateInput = {};
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.raison_sociale)) {
+        data.raison_sociale = body[Prisma.EntityScalarFieldEnum.raison_sociale];
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.nom_d_usage)) {
+        data.nom_d_usage = body[Prisma.EntityScalarFieldEnum.nom_d_usage];
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.address_ligne_1)) {
+        data.address_ligne_1 = body[Prisma.EntityScalarFieldEnum.address_ligne_1];
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.address_ligne_2)) {
+        data.address_ligne_2 = body[Prisma.EntityScalarFieldEnum.address_ligne_2];
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.etg_linked_to_svi_id)) {
+        data.etg_linked_to_svi_id = body[Prisma.EntityScalarFieldEnum.etg_linked_to_svi_id] || null;
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.code_postal)) {
+        data.code_postal = body[Prisma.EntityScalarFieldEnum.code_postal];
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.prefecture_svi)) {
+        data.prefecture_svi = body[Prisma.EntityScalarFieldEnum.prefecture_svi];
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.nom_prenom_responsable)) {
+        data.nom_prenom_responsable = body[Prisma.EntityScalarFieldEnum.nom_prenom_responsable];
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.ville)) {
+        data.ville = body[Prisma.EntityScalarFieldEnum.ville];
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.siret)) {
+        data.siret = body[Prisma.EntityScalarFieldEnum.siret] || null;
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.numero_ddecpp)) {
+        data.numero_ddecpp = body[Prisma.EntityScalarFieldEnum.numero_ddecpp] || null;
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.zacharie_compatible)) {
+        data.zacharie_compatible = body[Prisma.EntityScalarFieldEnum.zacharie_compatible];
+      }
 
       const updatedEntity = await prisma.entity.update({
         where: {
