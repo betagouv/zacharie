@@ -549,6 +549,20 @@ export default function TableauDeBordIndex() {
                 selectedFeis={selectedFeis}
                 filter={filter}
               >
+                {feiActivesForSvi.map((fei) => {
+                  if (!fei) return null;
+                  if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
+                  return (
+                    <CardFiche
+                      key={fei.numero}
+                      fei={fei}
+                      filter={filter}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                    // disabledBecauseOffline={!isOnline}
+                    />
+                  );
+                })}
                 {feisUpcomingForSviNumeros.map((feiNumero) => {
                   const fei = feisUpcomingForSvi[feiNumero]!;
                   if (!fei) return null;
@@ -561,20 +575,6 @@ export default function TableauDeBordIndex() {
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
                       isUpcoming
-                    />
-                  );
-                })}
-                {feiActivesForSvi.map((fei) => {
-                  if (!fei) return null;
-                  if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
-                  return (
-                    <CardFiche
-                      key={fei.numero}
-                      fei={fei}
-                      filter={filter}
-                      onPrintSelect={handleCheckboxClick}
-                      isPrintSelected={selectedFeis.includes(fei.numero)}
-                    // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
