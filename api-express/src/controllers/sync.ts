@@ -53,7 +53,7 @@ router.post(
             savedFeis.push({ ...result, body: feiData as Prisma.FeiUncheckedCreateInput });
           } catch (error) {
             // Log but continue - don't fail the entire sync for one FEI
-            capture(error, {
+            capture(error as Error, {
               extra: { feiNumero: feiData.numero, userId: user.id },
               user,
             });
@@ -73,7 +73,7 @@ router.post(
             savedCarcasses.push(result);
           } catch (error) {
             // Log but continue
-            capture(error, {
+            capture(error as Error, {
               extra: {
                 feiNumero: carcasseData.fei_numero,
                 zacharieCarcasseId: carcasseData.zacharie_carcasse_id,
@@ -97,7 +97,7 @@ router.post(
             savedIntermediaires.push(saved);
           } catch (error) {
             // Log but continue
-            capture(error, {
+            capture(error as Error, {
               extra: {
                 feiNumero: ciData.fei_numero,
                 intermediaireId: ciData.intermediaire_id,
@@ -145,7 +145,7 @@ router.post(
             syncedLogIds.push(logData.id);
           } catch (error) {
             // Log but continue
-            capture(error, {
+            capture(error as Error, {
               extra: { logId: logData.id, userId: user.id },
               user,
             });
@@ -182,8 +182,8 @@ router.post(
           if (!feiResult.isDeleted) {
             await runFeiSideEffects(feiResult.savedFei, feiResult.existingFei, feiResult.body, user);
           }
-        } catch (error) {
-          capture(error, {
+        } catch (error: unknown) {
+          capture(error as Error, {
             extra: { feiNumero: feiResult.savedFei.numero, context: 'fei_side_effects' },
             user,
           });
@@ -196,7 +196,7 @@ router.post(
             await runCarcasseSideEffects(carcasseResult.savedCarcasse, carcasseResult.existingCarcasse);
           }
         } catch (error) {
-          capture(error, {
+          capture(error as Error, {
             extra: {
               zacharieCarcasseId: carcasseResult.savedCarcasse.zacharie_carcasse_id,
               context: 'carcasse_side_effects',
@@ -217,7 +217,7 @@ router.post(
         error: '',
       });
     } catch (error) {
-      capture(error, {
+      capture(error as Error, {
         extra: { context: 'sync_transaction', userId: user.id },
         user,
       });

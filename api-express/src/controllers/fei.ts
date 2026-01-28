@@ -58,7 +58,8 @@ export async function saveFei(
 
   // Validation: Only examinateur initial can create new FEI
   if (!existingFei) {
-    const isExaminateurInitial = user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && !!user.activated;
+    const isExaminateurInitial =
+      user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && !!user.activated;
     if (!isExaminateurInitial) {
       throw new Error('Seul un examinateur initial peut créer une fiche');
     }
@@ -195,7 +196,9 @@ function buildFeiUpdateData(
     nextFei.examinateur_initial_approbation_mise_sur_le_marche =
       body.examinateur_initial_approbation_mise_sur_le_marche || null;
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)) {
+  if (
+    body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)
+  ) {
     nextFei.examinateur_initial_date_approbation_mise_sur_le_marche =
       body.examinateur_initial_date_approbation_mise_sur_le_marche || null;
   }
@@ -217,7 +220,8 @@ function buildFeiUpdateData(
     nextFei.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_name_cache)) {
-    nextFei.premier_detenteur_depot_entity_name_cache = body.premier_detenteur_depot_entity_name_cache || null;
+    nextFei.premier_detenteur_depot_entity_name_cache =
+      body.premier_detenteur_depot_entity_name_cache || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type)) {
     nextFei.premier_detenteur_depot_type = body.premier_detenteur_depot_type || null;
@@ -386,7 +390,10 @@ export async function runFeiSideEffects(
   }
 
   // CRM: Update ETG deal on transition
-  if (existingFei.fei_current_owner_role === UserRoles.ETG && savedFei.fei_current_owner_role !== UserRoles.ETG) {
+  if (
+    existingFei.fei_current_owner_role === UserRoles.ETG &&
+    savedFei.fei_current_owner_role !== UserRoles.ETG
+  ) {
     const etg = await prisma.entity.findUnique({
       where: {
         id: savedFei.fei_current_owner_entity_id!,
@@ -408,7 +415,10 @@ export async function runFeiSideEffects(
   }
 
   // Handle SVI assignment
-  if (existingFei.fei_next_owner_role !== FeiOwnerRole.SVI && savedFei.fei_next_owner_role === FeiOwnerRole.SVI) {
+  if (
+    existingFei.fei_next_owner_role !== FeiOwnerRole.SVI &&
+    savedFei.fei_next_owner_role === FeiOwnerRole.SVI
+  ) {
     await handleSviAssignment(savedFei, user);
     return; // Don't process other notifications
   }
@@ -435,7 +445,10 @@ export async function runFeiSideEffects(
   }
 
   // Handle next owner entity change
-  if (body.fei_next_owner_entity_id && body.fei_next_owner_entity_id !== existingFei.fei_next_owner_entity_id) {
+  if (
+    body.fei_next_owner_entity_id &&
+    body.fei_next_owner_entity_id !== existingFei.fei_next_owner_entity_id
+  ) {
     await handleNextOwnerEntityChange(savedFei, body, user);
   }
 
@@ -596,7 +609,7 @@ async function handleNextOwnerUserChange(
     const email = [
       `Bonjour,`,
       `${user.prenom} ${user.nom_de_famille} vous avait attribué par erreur la fiche d'examen initial n° ${savedFei?.numero}.`,
-      'Cette erreur vient d'être corrigée : vous n'êtes plus destinataire de cette fiche.',
+      "Cette erreur vient d'être corrigée : vous n'êtes plus destinataire de cette fiche.",
       `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
       `Ce message a été généré automatiquement par l'application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
     ].join('\n\n');
@@ -689,7 +702,10 @@ async function handleSviClosure(savedFei: FeiPopulated): Promise<void> {
       await sendWebhook(examinateur.id, 'FEI_CLOTUREE', { feiNumero: savedFei.numero });
     }
   }
-  if (savedFei.FeiPremierDetenteurUser && savedFei.FeiPremierDetenteurUser.id !== savedFei.FeiExaminateurInitialUser?.id) {
+  if (
+    savedFei.FeiPremierDetenteurUser &&
+    savedFei.FeiPremierDetenteurUser.id !== savedFei.FeiExaminateurInitialUser?.id
+  ) {
     const premierDetenteur = savedFei.FeiPremierDetenteurUser;
     if (premierDetenteur) {
       await sendNotificationToUser({
@@ -708,14 +724,16 @@ async function handleIntermediaireClosure(savedFei: FeiPopulated): Promise<void>
       await sendWebhook(examinateur.id, 'FEI_CLOTUREE', { feiNumero: savedFei.numero });
     }
   }
-  if (savedFei.FeiPremierDetenteurUser && savedFei.FeiPremierDetenteurUser.id !== savedFei.FeiExaminateurInitialUser?.id) {
+  if (
+    savedFei.FeiPremierDetenteurUser &&
+    savedFei.FeiPremierDetenteurUser.id !== savedFei.FeiExaminateurInitialUser?.id
+  ) {
     const premierDetenteur = savedFei.FeiPremierDetenteurUser;
     if (premierDetenteur) {
       await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', { feiNumero: savedFei.numero });
     }
   }
 }
-
 
 router.post(
   '/refresh',
@@ -781,7 +799,6 @@ router.post(
     },
   ),
 );
-
 
 router.post(
   '/:fei_numero',
