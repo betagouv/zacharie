@@ -62,6 +62,8 @@ export interface State {
   dataIsSynced: boolean;
   feisDoneNumeros: Array<FeiDone['numero']>;
   feisDone: Record<FeiDone['numero'], FeiDone>;
+  feisUpcomingForSviNumeros: Array<FeiDone['numero']>;
+  feisUpcomingForSvi: Record<FeiDone['numero'], FeiDone>;
   feis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires>;
   users: Record<UserForFei['id'], UserForFei>;
   entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
@@ -145,6 +147,8 @@ const initialState: State = {
   lastUpdateCarcassesRegistry: 0,
   feisDoneNumeros: [],
   feisDone: {},
+  feisUpcomingForSviNumeros: [],
+  feisUpcomingForSvi: {},
   logs: [],
   feis: {},
   users: {},
