@@ -470,13 +470,13 @@ function ListAndSelectEntities({
                 value={
                   entityId
                     ? {
-                        label: remainingEntities
-                          .filter((entity) => entity.id === entityId)
-                          .map(
-                            (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
-                          )?.[0],
-                        value: entityId,
-                      }
+                      label: remainingEntities
+                        .filter((entity) => entity.id === entityId)
+                        .map(
+                          (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
+                        )?.[0],
+                      value: entityId,
+                    }
                     : null
                 }
                 getOptionLabel={(f) => f.label!}

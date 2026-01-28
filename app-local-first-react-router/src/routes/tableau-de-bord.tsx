@@ -10,7 +10,7 @@ import useZustandStore, { syncData } from '@app/zustand/store';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { createNewFei } from '@app/utils/create-new-fei';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
@@ -48,6 +48,45 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
     text: 'text-[#01008B]',
   },
 };
+
+function OnboardingChasseInfoBanner() {
+  const user = useUser((state) => state.user)!;
+  const isChasseur = user.roles.includes(UserRoles.CHASSEUR);
+
+  // Ne pas afficher si l'utilisateur n'est pas chasseur ou a déjà répondu
+  if (!isChasseur || user.onboarding_chasse_info_done_at !== null) {
+    return null;
+  }
+
+  const handleSkip = async () => {
+    const response = await API.post({
+      path: `/user/${user.id}`,
+      body: { onboarding_chasse_info_done_at: new Date().toISOString() },
+    }).then((data) => data as UserConnexionResponse);
+    if (response.ok && response.data?.user?.id) {
+      useUser.setState({ user: response.data.user });
+    }
+  };
+
+  return (
+    <div className="fr-mb-4w flex flex-col gap-4 rounded border border-[var(--border-default-grey)] bg-white p-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <p className="m-0 text-lg font-medium">Complétez vos informations de chasse</p>
+        <p className="m-0 mt-1 text-sm text-[var(--text-mention-grey)]">
+          Ces informations seront reportées automatiquement sur vos fiches.
+        </p>
+      </div>
+      <div className="flex shrink-0 flex-col gap-2 md:flex-row">
+        <Link to="/app/tableau-de-bord/onboarding/mes-informations-de-chasse" className="fr-btn fr-btn--primary">
+          Compléter mon profil
+        </Link>
+        <Button priority="secondary" onClick={handleSkip}>
+          Ne plus afficher
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default function TableauDeBordIndex() {
   const navigate = useNavigate();
@@ -431,6 +470,7 @@ export default function TableauDeBordIndex() {
         <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
           <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
+            <OnboardingChasseInfoBanner />
             {!isOnlySvi && (
               <FeisWrapper
                 viewType={viewType}
@@ -472,7 +512,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                      // disabledBecauseOffline={!isOnline}
+                    // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -495,7 +535,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                      // disabledBecauseOffline={!isOnline}
+                    // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -509,7 +549,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                      // disabledBecauseOffline={!isOnline}
+                    // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}

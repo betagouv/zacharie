@@ -34,7 +34,7 @@ export default function MesCoordonnees() {
 
   const nextTitle = useMemo(() => {
     if (user.roles.includes(UserRoles.CHASSEUR)) {
-      return 'Mes informations de chasse';
+      return 'Formation examen initial';
     }
     if (user.roles.includes(UserRoles.SVI)) {
       return 'Mon service';
@@ -43,7 +43,7 @@ export default function MesCoordonnees() {
   }, [user.roles]);
   const nextPage = useMemo(() => {
     if (user.roles.includes(UserRoles.CHASSEUR)) {
-      return '/app/tableau-de-bord/onboarding/mes-informations-de-chasse';
+      return '/app/tableau-de-bord/onboarding/formation-examen-initial';
     }
     return '/app/tableau-de-bord/onboarding/mon-entreprise';
   }, [user.roles]);

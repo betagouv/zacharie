@@ -36,12 +36,12 @@ export default function DeactivatedAccount() {
               {!isProfileCompleted && (
                 <p className="fr-text--lead fr-mb-3w">
                   Afin de valider votre compte, vous devez{' '}
-                  <Link to="/app/tableau-de-bord/mon-profil/mes-coordonnees">renseigner vos coordonnées</Link>
+                  <Link to="/app/tableau-de-bord/onboarding/mes-coordonnees">renseigner vos coordonnées</Link>
                   {needToCompleteExaminateurInitial && (
                     <>
                       {' '}
                       et/ou{' '}
-                      <Link to="/app/tableau-de-bord/mon-profil/mes-informations-de-chasse">
+                      <Link to="/app/tableau-de-bord/onboarding/mes-informations-de-chasse">
                         indiquer votre numéro de personne formée à l’examen initial
                       </Link>
                     </>
@@ -59,7 +59,7 @@ export default function DeactivatedAccount() {
               ) : (
                 <ul className="fr-btns-group fr-btns-group--inline-md">
                   <li>
-                    <a className="fr-btn" href="/app/tableau-de-bord/mon-profil/mes-coordonnees">
+                    <a className="fr-btn" href="/app/tableau-de-bord/onboarding/mes-coordonnees">
                       Renseignez vos coordonnées
                     </a>
                   </li>
@@ -67,7 +67,7 @@ export default function DeactivatedAccount() {
                     <li>
                       <a
                         className="fr-btn fr-btn--secondary"
-                        href="/app/tableau-de-bord/mon-profil/mes-informations-de-chasse"
+                        href="/app/tableau-de-bord/onboarding/formation-examen-initial"
                       >
                         Indiquer votre numéro de personne formée à l’examen initial
                       </a>

@@ -66,6 +66,7 @@ model User {
   checked_has_asso_de_chasse     DateTime?
   checked_has_ccg                DateTime?
   checked_has_partenaires        DateTime?
+  onboarding_chasse_info_done_at DateTime?
   Password                       Password?
   UserRelationsAsOwner           UserRelations[]                @relation("UserOwnerOfUserRelation")
   UserRelationsAsRelated         UserRelations[]                @relation("UserRelatedOfUserRelation")

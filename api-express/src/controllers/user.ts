@@ -1065,6 +1065,7 @@ const userUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse]: z.enum(['true', 'false']).optional(),
   [Prisma.UserScalarFieldEnum.checked_has_ccg]: z.enum(['true', 'false']).optional(),
   [Prisma.UserScalarFieldEnum.checked_has_partenaires]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.onboarding_chasse_info_done_at]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.nom_de_famille]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.prenom]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser]: z.number().optional(),
@@ -1139,6 +1140,11 @@ router.post(
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prefilled)) {
         nextUser.prefilled = body[Prisma.UserScalarFieldEnum.prefilled] === 'true' ? true : false;
+      }
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.onboarding_chasse_info_done_at)) {
+        nextUser.onboarding_chasse_info_done_at = new Date(
+          body[Prisma.UserScalarFieldEnum.onboarding_chasse_info_done_at] as string,
+        );
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse)) {
         nextUser.checked_has_asso_de_chasse =
