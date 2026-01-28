@@ -103,7 +103,7 @@ function FeiReadOnly() {
 
             <Alert
               severity="info"
-              className="mx-4 mb-4 md:mx-8"
+              className="mb-4 bg-white"
               title="Fiche en prévisualisation"
               description={
                 <>
