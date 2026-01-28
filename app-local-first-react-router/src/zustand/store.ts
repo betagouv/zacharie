@@ -520,6 +520,7 @@ const SYNC_THROTTLE_MS = 100;
  */
 export async function syncData(calledFrom: string) {
   const state = useZustandStore.getState();
+  console.log('syncData called from', calledFrom, 'isOnline', state.isOnline);
   if (!state.isOnline) {
     console.log('not syncing data because not online');
     return;
