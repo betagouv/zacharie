@@ -11,6 +11,7 @@ import TableauDeBordIndex from './routes/tableau-de-bord';
 import TableauDeBordLayout from './routes/tableau-de-bord-layout';
 import { useMostFreshUser } from './utils-offline/get-most-fresh-user';
 import Fei from './routes/fei/fei';
+import FeiReadOnly from './routes/fei/fei-read-only';
 import OfflineMode from './components/OfflineMode';
 import CarcasseExaminateur from './routes/carcasse-examinateur';
 import SviInspectionCarcasse from './routes/svi-inspection-carcasse/svi-inspection-carcasse';
@@ -182,6 +183,14 @@ function App() {
               element={
                 <RestrictedRoute id="fei_numero">
                   <Fei />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="fei/:fei_numero/a-venir"
+              element={
+                <RestrictedRoute id="fei_numero_a_venir">
+                  <FeiReadOnly />
                 </RestrictedRoute>
               }
             />

@@ -1,4 +1,4 @@
-import type { FeisResponse, FeisDoneResponse, FeiRefreshResponse } from '@api/src/types/responses';
+import type { FeisResponse, FeisDoneResponse, FeiRefreshResponse, FeisUpcomingForSviResponse } from '@api/src/types/responses';
 import type { FeiDone, FeiWithIntermediaires } from '@api/src/types/fei';
 import useZustandStore from '@app/zustand/store';
 import { setFeiInStore } from '@app/utils/load-fei';
@@ -33,6 +33,26 @@ export async function loadFeis() {
       feisDone,
       feisDoneNumeros: Object.keys(feisDone),
     });
+
+    // Fetch upcoming FEIs for SVI users
+    const responseUpcoming = await API.get({ path: 'fei/upcoming-for-svi' }).then(
+      (res) => res as FeisUpcomingForSviResponse,
+    );
+
+    if (responseUpcoming.ok) {
+      const feisUpcomingForSvi = responseUpcoming.data.feisUpcomingForSvi.reduce(
+        (acc, fei) => {
+          acc[fei.numero] = fei;
+          return acc;
+        },
+        {} as Record<FeiDone['numero'], FeiDone>,
+      );
+
+      useZustandStore.setState({
+        feisUpcomingForSvi,
+        feisUpcomingForSviNumeros: Object.keys(feisUpcomingForSvi),
+      });
+    }
 
     const response = await API.get({ path: 'fei' }).then((res) => res as FeisResponse);
 

@@ -47,6 +47,10 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
     bg: 'bg-[#E8EDFF]',
     text: 'text-[#01008B]',
   },
+  'À venir': {
+    bg: 'bg-[#C3FAD5]',
+    text: 'text-[#18753C]',
+  },
 };
 
 function OnboardingChasseInfoBanner() {
@@ -93,6 +97,8 @@ export default function TableauDeBordIndex() {
   const user = useMostFreshUser('tableau de bord index')!;
   const feisDoneNumeros = useZustandStore((state) => state.feisDoneNumeros);
   const feisDone = useZustandStore((state) => state.feisDone);
+  const feisUpcomingForSviNumeros = useZustandStore((state) => state.feisUpcomingForSviNumeros);
+  const feisUpcomingForSvi = useZustandStore((state) => state.feisUpcomingForSvi);
   const entities = useZustandStore((state) => state.entities);
   const allEtgIds = useZustandStore((state) => state.etgsIds);
   const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
@@ -204,7 +210,7 @@ export default function TableauDeBordIndex() {
     const savedFilter = localStorage.getItem('tableau-de-bord-filter');
     if (
       savedFilter &&
-      ['Toutes les fiches', 'À compléter', 'En cours', 'Clôturée'].includes(
+      ['Toutes les fiches', 'À compléter', 'En cours', 'Clôturée', 'À venir'].includes(
         savedFilter as FeiStepSimpleStatus | 'Toutes les fiches',
       )
     ) {
@@ -237,6 +243,8 @@ export default function TableauDeBordIndex() {
         return 'Fiches en cours';
       case 'Clôturée':
         return 'Fiches clôturées';
+      case 'À venir':
+        return 'Fiches à venir';
       case 'Toutes les fiches':
       default:
         return 'Filtrer';
@@ -306,7 +314,7 @@ export default function TableauDeBordIndex() {
                 {
                   linkProps: {
                     href: '#',
-                    title: 'Fiches à compléter',
+                    title: 'Fiches clôturées',
                     onClick: (e) => {
                       e.preventDefault();
                       setFilter('Clôturée');
@@ -315,6 +323,22 @@ export default function TableauDeBordIndex() {
                   text: 'Fiches clôturées',
                   isActive: filter === 'Clôturée',
                 },
+                ...(isOnlySvi && feisUpcomingForSviNumeros.length > 0
+                  ? [
+                      {
+                        linkProps: {
+                          href: '#',
+                          title: 'Fiches à venir',
+                          onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+                            e.preventDefault();
+                            setFilter('À venir');
+                          },
+                        },
+                        text: 'Fiches à venir',
+                        isActive: filter === 'À venir',
+                      },
+                    ]
+                  : []),
               ]}
             />
             {isOnlySvi && sviWorkingForEtgIds.length > 1 && (
@@ -539,6 +563,21 @@ export default function TableauDeBordIndex() {
                     />
                   );
                 })}
+                {feisUpcomingForSviNumeros.map((feiNumero) => {
+                  const fei = feisUpcomingForSvi[feiNumero]!;
+                  if (!fei) return null;
+                  if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
+                  return (
+                    <CardFiche
+                      key={fei.numero}
+                      fei={fei}
+                      filter={filter}
+                      onPrintSelect={handleCheckboxClick}
+                      isPrintSelected={selectedFeis.includes(fei.numero)}
+                      isUpcoming
+                    />
+                  );
+                })}
                 {feisDoneForSvi.map((fei) => {
                   if (!fei) return null;
                   if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
@@ -643,6 +682,7 @@ function FeisTableRow({
   navigate,
   filter,
   onVisibilityChange,
+  isUpcoming = false,
 }: {
   fei: FeiDone;
   isSelected: boolean;
@@ -650,6 +690,7 @@ function FeisTableRow({
   navigate: ReturnType<typeof useNavigate>;
   filter?: FeiStepSimpleStatus | 'Toutes les fiches';
   onVisibilityChange?: (feiNumero: string, isVisible: boolean) => void;
+  isUpcoming?: boolean;
 }) {
   const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
   const isCircuitCourt = useIsCircuitCourt();
@@ -735,7 +776,7 @@ function FeisTableRow({
     <tr
       key={fei.numero}
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
-      onClick={() => navigate(`/app/tableau-de-bord/fei/${fei.numero}`)}
+      onClick={() => navigate(isUpcoming ? `/app/tableau-de-bord/fei/${fei.numero}/a-venir` : `/app/tableau-de-bord/fei/${fei.numero}`)}
     >
       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex h-full items-center justify-center">
@@ -869,6 +910,7 @@ function FeisTable({
             const fei = feiElement.props.fei;
             const isSelected = feiElement.props.isPrintSelected;
             const onPrintSelect = feiElement.props.onPrintSelect;
+            const isUpcoming = feiElement.props.isUpcoming;
             return (
               <FeisTableRow
                 key={fei.numero}
@@ -877,6 +919,7 @@ function FeisTable({
                 onPrintSelect={onPrintSelect}
                 navigate={navigate}
                 filter={filter}
+                isUpcoming={isUpcoming}
                 onVisibilityChange={(feiNumero, isVisible) => {
                   setVisibleFeisNumbers((prev) => {
                     if (isVisible) {

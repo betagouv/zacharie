@@ -1,7 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
-import type { FeiResponse, FeisResponse, FeisDoneResponse, FeiRefreshResponse } from '~/types/responses';
+import type { FeiResponse, FeisResponse, FeisDoneResponse, FeiRefreshResponse, FeisUpcomingForSviResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import {
@@ -973,6 +973,98 @@ router.get(
       });
 
       return;
+    },
+  ),
+);
+
+router.get(
+  '/upcoming-for-svi',
+  passport.authenticate('user', { session: false }),
+  catchErrors(
+    async (req: express.Request, res: express.Response<FeisUpcomingForSviResponse>, next: express.NextFunction) => {
+      const user = req.user!;
+      if (!user.activated) {
+        res.status(400).send({
+          ok: false,
+          data: { feisUpcomingForSvi: [] },
+          error: "Le compte n'est pas activé",
+        });
+        return;
+      }
+
+      // Only SVI users can access this endpoint
+      if (!user.roles.includes(UserRoles.SVI)) {
+        res.status(200).send({
+          ok: true,
+          data: { feisUpcomingForSvi: [] },
+          error: '',
+        });
+        return;
+      }
+
+      // Get all SVI entities the user works for
+      const userSviEntityIds = (
+        await prisma.entityAndUserRelations.findMany({
+          where: {
+            owner_id: user.id,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            status: {
+              in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+            },
+            deleted_at: null,
+            EntityRelatedWithUser: {
+              type: EntityTypes.SVI,
+            },
+          },
+          select: { entity_id: true },
+        })
+      ).map((r) => r.entity_id);
+
+      if (userSviEntityIds.length === 0) {
+        res.status(200).send({
+          ok: true,
+          data: { feisUpcomingForSvi: [] },
+          error: '',
+        });
+        return;
+      }
+
+      // Find FEIs where:
+      // 1. Current owner is ETG
+      // 2. ETG is linked to user's SVI via etg_linked_to_svi_id
+      // 3. Has at least one carcasse with prise_en_charge = true
+      // 4. svi_assigned_at is null (not yet assigned to SVI)
+      const feisUpcomingForSvi = await prisma.fei.findMany({
+        where: {
+          deleted_at: null,
+          svi_assigned_at: null,
+          fei_current_owner_role: FeiOwnerRole.ETG,
+          FeiCurrentEntity: {
+            type: EntityTypes.ETG,
+            etg_linked_to_svi_id: { in: userSviEntityIds },
+          },
+          CarcasseIntermediaire: {
+            some: {
+              prise_en_charge: true,
+              deleted_at: null,
+            },
+          },
+        },
+        include: {
+          CarcasseIntermediaire: true,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+      });
+
+      res.status(200).send({
+        ok: true,
+        data: {
+          feisUpcomingForSvi,
+        },
+        error: '',
+      });
     },
   ),
 );

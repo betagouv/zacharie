@@ -126,6 +126,14 @@ export interface FeisDoneResponse {
   error: string;
 }
 
+export interface FeisUpcomingForSviResponse {
+  ok: boolean;
+  data: {
+    feisUpcomingForSvi: Array<FeiDone>;
+  };
+  error: string;
+}
+
 export interface EntitiesWorkingForResponse {
   ok: true;
   data: {
