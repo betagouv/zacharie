@@ -1,9 +1,7 @@
 {
   "especes_categories": {
     "Petit gibier à plumes": [
-      "Cailles",
       "Canards",
-      "Oies",
       "Faisans de chasse",
       "Perdrix",
       "Pigeons",
@@ -12,9 +10,7 @@
     "Petit gibier à poils": ["Lapins", "Lièvres", "Autres petits gibiers à poils"]
   },
   "especes": [
-    "Cailles",
     "Canards",
-    "Oies",
     "Faisans de chasse",
     "Perdrix",
     "Pigeons",
