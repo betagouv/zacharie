@@ -26,7 +26,6 @@ import { capture } from '~/third-parties/sentry';
 import { getFichePdf } from '~/templates/get-fiche-pdf';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
-
 router.post(
   '/refresh',
   passport.authenticate('user', { session: false }),
@@ -91,7 +90,6 @@ router.post(
     },
   ),
 );
-
 
 router.post(
   '/:fei_numero',
