@@ -56,7 +56,8 @@ export default function CardCarcasse({
 
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
-  const fei = feis[params.fei_numero!];
+  const feisUpcomingForSvi = useZustandStore((state) => state.feisUpcomingForSvi);
+  const fei = feis[params.fei_numero!] || feisUpcomingForSvi[params.fei_numero!];
   const getCarcassesIntermediairesForCarcasse = useZustandStore(
     (state) => state.getCarcassesIntermediairesForCarcasse,
   );
@@ -80,7 +81,7 @@ export default function CardCarcasse({
   let { statusNewCard, motifRefus } = useCarcasseStatusAndRefus(carcasse, fei);
 
   let miseAMort = '';
-  if (!hideDateMiseAMort) {
+  if (!hideDateMiseAMort && fei?.date_mise_a_mort) {
     miseAMort += `Mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
     if (carcasse.heure_mise_a_mort) {
       miseAMort += ` à ${carcasse.heure_mise_a_mort}`;
@@ -115,7 +116,7 @@ export default function CardCarcasse({
   if (statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle')) {
     const hasSviStatus =
       !!carcasse.svi_carcasse_status && carcasse.svi_carcasse_status !== CarcasseStatus.SANS_DECISION;
-    const sviEntity = hasSviStatus && fei.svi_entity_id ? entities[fei.svi_entity_id] : null;
+    const sviEntity = hasSviStatus && fei?.svi_entity_id ? entities[fei.svi_entity_id] : null;
 
     const isEtgAccepted =
       latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG;
@@ -271,10 +272,11 @@ function CarcasseDetails({
   const isCircuitCourt = useIsCircuitCourt();
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
+  const feisUpcomingForSvi = useZustandStore((state) => state.feisUpcomingForSvi);
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
   const carcasses = useZustandStore((state) => state.carcasses);
-  const fei = feis[params.fei_numero!];
+  const fei = feis[params.fei_numero!] || feisUpcomingForSvi[params.fei_numero!];
   const getCarcassesIntermediairesForCarcasse = useZustandStore(
     (state) => state.getCarcassesIntermediairesForCarcasse,
   );
@@ -294,11 +296,11 @@ function CarcasseDetails({
     return commentaires;
   }, [carcassesIntermediaires, entities]);
 
-  const examinateurInitialUser = fei.examinateur_initial_user_id
+  const examinateurInitialUser = fei?.examinateur_initial_user_id
     ? users[fei.examinateur_initial_user_id!]
     : null;
-  const premierDetenteurUser = fei.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id!] : null;
-  const premierDetenteurEntity = fei.premier_detenteur_entity_id
+  const premierDetenteurUser = fei?.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id!] : null;
+  const premierDetenteurEntity = fei?.premier_detenteur_entity_id
     ? entities[fei.premier_detenteur_entity_id!]
     : null;
 
@@ -354,7 +356,7 @@ function CarcasseDetails({
   }, [carcassesIntermediaires, entities]);
 
   const ccgDate =
-    fei.premier_detenteur_depot_type === DepotType.CCG
+    fei?.premier_detenteur_depot_type === DepotType.CCG
       ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
       : null;
   const etgDate = latestIntermediaire
@@ -368,14 +370,15 @@ function CarcasseDetails({
     : null;
 
   const milestones = useMemo(() => {
+    if (!fei) return [];
     const _milestones = [
       `Commune de mise à mort\u00A0: ${fei?.commune_mise_a_mort ?? ''}`,
       `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY')}`,
-      `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
+      `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${fei.heure_mise_a_mort_premiere_carcasse ?? ''}`,
     ];
     if (onlyPetitGibier) {
       _milestones.push(
-        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${fei.heure_evisceration_derniere_carcasse!}`,
+        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${fei.heure_evisceration_derniere_carcasse ?? ''}`,
       );
     }
     if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
@@ -392,10 +395,7 @@ function CarcasseDetails({
       );
     return _milestones;
   }, [
-    fei?.commune_mise_a_mort,
-    fei.date_mise_a_mort,
-    fei.heure_mise_a_mort_premiere_carcasse,
-    fei.heure_evisceration_derniere_carcasse,
+    fei,
     onlyPetitGibier,
     ccgDate,
     etgDate,

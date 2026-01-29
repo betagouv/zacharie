@@ -17,6 +17,7 @@ interface CardProps {
   isPrintSelected?: boolean;
   disabledBecauseOffline?: boolean;
   filter: FeiStepSimpleStatus | 'Toutes les fiches';
+  isUpcoming?: boolean;
 }
 
 const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
@@ -32,6 +33,10 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
     bg: 'bg-[#E8EDFF]',
     text: 'text-[#01008B]',
   },
+  'À venir': {
+    bg: 'bg-[#C3FAD5]',
+    text: 'text-[#18753C]',
+  },
 };
 
 const maxDetailedLines = 2;
@@ -41,8 +46,10 @@ export default function CardFiche({
   isPrintSelected = false,
   disabledBecauseOffline = false,
   filter,
+  isUpcoming = false,
 }: CardProps) {
-  const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
+  const { simpleStatus: computedStatus, currentStepLabelShort } = useFeiSteps(fei);
+  const simpleStatus: FeiStepSimpleStatus = isUpcoming ? 'À venir' : computedStatus;
   const isCircuitCourt = useIsCircuitCourt();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -183,7 +190,7 @@ export default function CardFiche({
       </div>
 
       <Link
-        to={`/app/tableau-de-bord/fei/${fei.numero}`}
+        to={isUpcoming ? `/app/tableau-de-bord/fei/${fei.numero}/a-venir` : `/app/tableau-de-bord/fei/${fei.numero}`}
         className={[
           'hover:bg-active-tint! flex size-full shrink-0 flex-col gap-y-2.5 bg-none p-5 no-underline! hover:no-underline!',
           carcassesRefusées > 0
