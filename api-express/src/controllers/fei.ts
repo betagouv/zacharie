@@ -9,6 +9,9 @@ import { feiPopulatedInclude } from '~/types/fei';
 import type { FeiPopulated } from '~/types/fei';
 import { capture } from '~/third-parties/sentry';
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
+import { getFichePdf } from '~/templates/get-fiche-pdf';
+import { extractFeiOwnershipForCarcasse } from '~/utils/fei-ownership-to-carcasse';
+// import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 router.post(
   '/refresh',

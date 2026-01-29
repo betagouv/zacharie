@@ -22,6 +22,7 @@ import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import dayjs from 'dayjs';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
+import { extractFeiOwnershipForCarcasse } from '@app/utils/fei-ownership-to-carcasse';
 // import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 
 export default function CurrentOwnerConfirm() {
@@ -36,6 +37,9 @@ export default function CurrentOwnerConfirm() {
   const entities = useZustandStore((state) => state.entities);
   const users = useZustandStore((state) => state.users);
   const intermediaires = useFeiIntermediaires(fei.numero);
+  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const carcassesState = useZustandStore((state) => state.carcasses);
+  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
   const latestIntermediaire = intermediaires[0];
 
   const currentOwnerEntity = entities[fei.fei_current_owner_entity_id!];
@@ -362,6 +366,16 @@ export default function CurrentOwnerConfirm() {
     }
 
     updateFei(fei.numero, nextFei);
+
+    // Sync ownership fields to all carcasses
+    const ownershipForCarcasses = extractFeiOwnershipForCarcasse({ ...fei, ...nextFei });
+    const carcassesForFei = (carcassesIdsByFei[fei.numero] || [])
+      .map((cId) => carcassesState[cId])
+      .filter((c) => c && !c.deleted_at);
+    for (const carcasse of carcassesForFei) {
+      updateCarcasse(carcasse.zacharie_carcasse_id, ownershipForCarcasses, false);
+    }
+
     addLog({
       user_id: user.id,
       user_role: nextFei.fei_current_owner_role! as UserRoles,

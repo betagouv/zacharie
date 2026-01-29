@@ -15,6 +15,7 @@ import sendNotificationToUser from '~/service/notifications';
 import { formatAutomaticClosingEmail, formatCarcasseChasseurEmail } from '~/utils/formatCarcasseEmail';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { sendWebhook } from '~/utils/api';
+import { extractFeiOwnershipForCarcasse } from '~/utils/fei-ownership-to-carcasse';
 
 // /*
 // *
@@ -75,13 +76,18 @@ async function automaticClosingOfFeis() {
   }
   for (const fei of feisUnderSvi) {
     const automaticClosedAt = dayjs().toDate();
-    await prisma.fei.update({
+    const updatedFei = await prisma.fei.update({
       where: {
         id: fei.id,
       },
       data: {
         automatic_closed_at: automaticClosedAt,
       },
+    });
+    // Sync ownership fields to all carcasses
+    await prisma.carcasse.updateMany({
+      where: { fei_numero: fei.numero },
+      data: extractFeiOwnershipForCarcasse(updatedFei),
     });
     const carcasses = [];
     for (let carcasse of fei.Carcasses) {

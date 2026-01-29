@@ -34,6 +34,7 @@ import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import CCGNouveau from '@app/components/CCGNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
+import { extractFeiOwnershipForCarcasse } from '@app/utils/fei-ownership-to-carcasse';
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
@@ -515,6 +516,7 @@ export default function DestinataireSelect({
         premier_detenteur_transport_type: nextTransportType,
         premier_detenteur_transport_date: nextTransportDate,
       };
+      const ownershipForCarcasses = extractFeiOwnershipForCarcasse({ ...fei, ...nextFei });
       for (const carcasse of carcasses) {
         updateCarcasse(
           carcasse.zacharie_carcasse_id,
@@ -531,6 +533,7 @@ export default function DestinataireSelect({
             premier_detenteur_depot_ccg_at: nextFei.premier_detenteur_depot_ccg_at,
             premier_detenteur_transport_type: nextFei.premier_detenteur_transport_type,
             premier_detenteur_transport_date: nextFei.premier_detenteur_transport_date,
+            ...ownershipForCarcasses,
           },
           false,
         );
@@ -557,11 +560,13 @@ export default function DestinataireSelect({
         svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
       };
       if (prochainDetenteurType === EntityTypes.SVI) {
+        const ownershipForCarcasses = extractFeiOwnershipForCarcasse({ ...fei, ...nextFei });
         for (const carcasse of carcasses) {
           updateCarcasse(
             carcasse.zacharie_carcasse_id,
             {
               svi_assigned_to_fei_at: nextFei.svi_assigned_at,
+              ...ownershipForCarcasses,
             },
             false,
           );
