@@ -95,7 +95,7 @@ export default function FEICurrentIntermediaire(props: Props) {
                   }
 
                   return (
-                    <li key={_intermediaire.id}>
+                    <li key={_intermediaire.id + index}>
                       <button
                         onClick={() => setIntermediaireIndex(index)}
                         className="fr-breadcrumb__link"
@@ -602,7 +602,7 @@ function FEICurrentIntermediaireContent({
       </Section> */}
       {children}
       {intermediaire ? (
-        <Section title={`Carcasses (${intermediaireCarcasses.length})`}>
+        <Section title={`Carcasses (${intermediaireCarcasses.length})`} id="intermediaire-carcasses">
           {effectiveCanEdit && (
             <>
               {intermediaireCarcasses.length > 0 ? (

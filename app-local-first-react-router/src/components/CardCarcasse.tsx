@@ -129,6 +129,13 @@ export default function CardCarcasse({
     } else if (isEtgAccepted) {
       acceptInfo = { type: 'ETG', entity: etgEntity };
     }
+  } else {
+    if (carcasse.numero_bracelet === 'MM-001-001') {
+      console.log('NOOOOOOOOOOOOOOOOOO');
+    }
+  }
+  if (carcasse.numero_bracelet === 'MM-001-001') {
+    console.log('statusNewCard', forceAccept, statusNewCard, carcasse, latestIntermediaire, fei, acceptInfo);
   }
 
   const isEcarteePourInspection =
@@ -425,7 +432,7 @@ function CarcasseDetails({
           <p className="with-marker">Pièces observées&nbsp;:</p>
           <ul className="ml-4 list-inside list-decimal">
             {carcasse.svi_ipm1_pieces.map((piece, index) => {
-              return <li key={index}>{piece}</li>;
+              return <li key={index + piece}>{piece}</li>;
             })}
           </ul>
         </>,
@@ -437,7 +444,7 @@ function CarcasseDetails({
           <p className="with-marker">Lésions ou motifs de consigne&nbsp;:</p>
           <ul className="ml-4 list-inside list-decimal">
             {carcasse.svi_ipm1_lesions_ou_motifs.map((type, index) => {
-              return <li key={index}>{type}</li>;
+              return <li key={index + type}>{type}</li>;
             })}
           </ul>
         </>,
@@ -487,7 +494,7 @@ function CarcasseDetails({
           <p className="with-marker">Pièces observées&nbsp;:</p>
           <ul className="ml-4 list-inside list-decimal">
             {carcasse.svi_ipm2_pieces.map((piece, index) => {
-              return <li key={index}>{piece}</li>;
+              return <li key={index + piece}>{piece}</li>;
             })}
           </ul>
         </>,
@@ -499,7 +506,7 @@ function CarcasseDetails({
           <p className="with-marker">Lésions ou motifs de consigne&nbsp;:</p>
           <ul className="ml-4 list-inside list-decimal">
             {carcasse.svi_ipm2_lesions_ou_motifs.map((type, index) => {
-              return <li key={index}>{type}</li>;
+              return <li key={index + type}>{type}</li>;
             })}
           </ul>
         </>,
@@ -619,7 +626,11 @@ function CarcasseDetails({
       <ItemNotEditable label="Premier Détenteur" value={premierDetenteurInput} />
       {intermediairesInputs.map((intermediaireInput, index) => {
         return (
-          <ItemNotEditable key={index} label={intermediaireInput.label} value={intermediaireInput.value} />
+          <ItemNotEditable
+            key={index + intermediaireInput.label}
+            label={intermediaireInput.label}
+            value={intermediaireInput.value}
+          />
         );
       })}
     </>

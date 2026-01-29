@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
-import { CarcasseType,  UserRoles } from '@prisma/client';
+import { CarcasseType, UserRoles } from '@prisma/client';
 import { abbreviations } from '@app/utils/count-carcasses';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
@@ -77,7 +77,10 @@ function OnboardingChasseInfoBanner() {
         </p>
       </div>
       <div className="flex shrink-0 flex-col gap-2 md:flex-row">
-        <Link to="/app/tableau-de-bord/onboarding/mes-informations-de-chasse" className="fr-btn fr-btn--primary">
+        <Link
+          to="/app/tableau-de-bord/onboarding/mes-informations-de-chasse"
+          className="fr-btn fr-btn--primary"
+        >
           Compléter mon profil
         </Link>
         <Button priority="secondary" onClick={handleSkip}>
@@ -138,7 +141,7 @@ export default function TableauDeBordIndex() {
 
   const isOnlySvi =
     user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
-  
+
   const { feiActivesForSvi, feisDoneForSvi } = feisDoneNumeros.reduce(
     (acc, feiNumero) => {
       const fei = feisDone[feiNumero]!;
@@ -244,13 +247,13 @@ export default function TableauDeBordIndex() {
   }, [filter]);
   const [filterETG, setFilterETG] = useState<string>('');
   const [sviWorkingForEtgIds, dropDownMenuFilterTextSvi] = useMemo(() => {
-    const _sviWorkingForEtgIds = !isOnlySvi ? [] : allEtgIds.filter(
-      (id) => {
-        const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
-        if (!etgLinkedToSviId) return false;
-        return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
-      }
-    );
+    const _sviWorkingForEtgIds = !isOnlySvi
+      ? []
+      : allEtgIds.filter((id) => {
+          const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
+          if (!etgLinkedToSviId) return false;
+          return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
+        });
     if (_sviWorkingForEtgIds.includes(filterETG)) {
       return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
     }
@@ -512,7 +515,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                    // disabledBecauseOffline={!isOnline}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -535,7 +538,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                    // disabledBecauseOffline={!isOnline}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -549,7 +552,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                    // disabledBecauseOffline={!isOnline}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -587,7 +590,7 @@ function FeisWrapper({
 
   if (nothingToShow) {
     return (
-      <div className="fr-container">
+      <div className="fr-container" id="feis-wrapper">
         <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center bg-white p-4 md:p-8">
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <h1 className="fr-h4">Vous n'avez pas encore de fiche</h1>
@@ -630,7 +633,10 @@ function FeisWrapper({
   }
 
   return (
-    <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">
+    <div
+      className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3"
+      id="feis-wrapper"
+    >
       {children}
     </div>
   );

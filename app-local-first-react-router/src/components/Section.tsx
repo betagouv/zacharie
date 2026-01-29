@@ -6,6 +6,7 @@ interface SectionProps {
   className?: string;
   titleAs?: 'h2' | 'h3' | 'h4';
   open?: boolean;
+  id?: string;
 }
 
 export default function Section({
@@ -14,11 +15,12 @@ export default function Section({
   className = '',
   titleAs = 'h3',
   open = true,
+  id = undefined,
 }: SectionProps) {
   const Component = titleAs;
 
   return (
-    <details open={open} className={['bg-white p-4 md:p-8 [&_+details]:mt-8', className].join(' ')}>
+    <details open={open} className={['bg-white p-4 md:p-8 [&_+details]:mt-8', className].join(' ')} id={id}>
       <summary>
         <Component className="ml-2 inline text-lg font-semibold text-gray-900">{title}</Component>
       </summary>
