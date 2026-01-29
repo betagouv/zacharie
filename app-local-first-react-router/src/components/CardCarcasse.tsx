@@ -129,13 +129,6 @@ export default function CardCarcasse({
     } else if (isEtgAccepted) {
       acceptInfo = { type: 'ETG', entity: etgEntity };
     }
-  } else {
-    if (carcasse.numero_bracelet === 'MM-001-001') {
-      console.log('NOOOOOOOOOOOOOOOOOO');
-    }
-  }
-  if (carcasse.numero_bracelet === 'MM-001-001') {
-    console.log('statusNewCard', forceAccept, statusNewCard, carcasse, latestIntermediaire, fei, acceptInfo);
   }
 
   const isEcarteePourInspection =
