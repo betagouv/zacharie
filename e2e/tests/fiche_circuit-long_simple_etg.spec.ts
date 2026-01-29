@@ -88,7 +88,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
   await expect(
-    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez")
+    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
@@ -110,8 +110,8 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
     page.getByText(
-      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim)."
-    )
+      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
+    ),
   ).toBeVisible();
   await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
@@ -126,40 +126,37 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.getByRole("button", { name: "Transmettre la fiche" }).click();
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await expect(page.getByText("SVI 1 a été notifié")).toBeVisible({ timeout: 5000 });
-  await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie accepté/':
+  await expect(page.locator("#intermediaire-carcasses")).toMatchAriaSnapshot(`
+    - group:
+      - heading "Carcasses (4)" [level=3]
+      - paragraph: Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
+      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie accepté par ETG 1 ETG/':
         - paragraph: Daim
         - paragraph: /N° MM-\\d+-\\d+/
         - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
         - paragraph: 1 anomalie
         - paragraph: accepté par ETG 1 ETG
-      `);
-  await expect(page.locator("#content")).toMatchAriaSnapshot(`
-        - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':
-          - paragraph: Daim
-          - paragraph: /N° MM-\\d+-\\d+/
-          - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-          - paragraph: 1 anomalie, 1 commentaire
-          - paragraph: refusé par ETG 1
-        `);
-  await expect(page.locator("#content")).toMatchAriaSnapshot(`
+      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':
+        - paragraph: Daim
+        - paragraph: /N° MM-\\d+-\\d+/
+        - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
+        - paragraph: 1 anomalie, 1 commentaire
+        - paragraph: refusé par ETG 1
       - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie manquant pour ETG 1/':
         - paragraph: Daim
         - paragraph: /N° MM-\\d+-\\d+/
         - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
         - paragraph: Aucune anomalie
         - paragraph: manquant pour ETG 1
-      `);
-  await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - 'button /Pigeons \\(\\d+\\) N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie en cours de traitement/':
-        - paragraph: /Pigeons \\(\\d+\\)/
+      - 'button /Pigeons \\(\\d+ sur \\d+\\) N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie accepté par ETG 1 ETG/':
+        - paragraph: /Pigeons \\(\\d+ sur \\d+\\)/
         - paragraph: /N° MM-\\d+-\\d+/
         - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
         - paragraph: Aucune anomalie
-        - paragraph: en cours de traitement
-      `);
+        - paragraph: accepté par ETG 1 ETG
+    `);
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
-  await expect(page.locator("#content")).toMatchAriaSnapshot(`
+  await expect(page.locator("#feis-wrapper")).toMatchAriaSnapshot(`
       - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
         - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
         - paragraph: En cours
@@ -252,7 +249,7 @@ test("Pas de stockage - Je transfert à un autre collecteur", async ({ page }) =
   await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
   await expect(
-    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez")
+    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
   await page.getByText("Anomalies abats:Abcès ou").click();
@@ -274,8 +271,8 @@ test("Pas de stockage - Je transfert à un autre collecteur", async ({ page }) =
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
     page.getByText(
-      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim)."
-    )
+      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
+    ),
   ).toBeVisible();
   await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
@@ -387,7 +384,7 @@ test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context })
   await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
   await expect(
-    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez")
+    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
   await page.getByText("Anomalies abats:Abcès ou").click();
@@ -407,8 +404,8 @@ test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context })
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
     page.getByText(
-      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim)."
-    )
+      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
+    ),
   ).toBeVisible();
   await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
@@ -422,6 +419,11 @@ test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context })
       - heading "Attribution effectuée" [level=3]
       - paragraph: ETG 2 a été notifié.
       `);
+  await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
+  await page.getByRole("link", { name: feiId }).click();
+  await expect(page.locator("h2")).toMatchAriaSnapshot(
+    `- heading "Réception par mon établissement de traitement Étape 4 sur 5" [level=2]`,
+  );
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
       - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
@@ -442,7 +444,9 @@ test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context })
   await page.getByRole("button", { name: "Déconnexion" }).click();
   await expect(page).toHaveURL("http://localhost:3290/app/connexion");
   await connectWith(page, "etg-2@example.fr");
-  await expect(page.locator("#content")).toMatchAriaSnapshot(`
+
+  await expect(page.locator("#feis-wrapper")).toMatchAriaSnapshot(`
+    - checkbox
     - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
       - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
       - paragraph: À compléter
@@ -596,7 +600,7 @@ test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context })
   await expect(
     page.locator("p").filter({
       hasText: "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
-    })
+    }),
   ).toBeVisible();
   await page.locator(".select-prochain-detenteur__input-container").click();
   await page.getByRole("option", { name: "SVI 2 - 75000 Paris (Service" }).click();
