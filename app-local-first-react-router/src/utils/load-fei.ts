@@ -62,25 +62,25 @@ export function setFeiInStore(fei: FeiPopulated) {
   }
 
   if (fei.premier_detenteur_entity_id) {
-    if (!prevState.entities[fei.premier_detenteur_entity_id]) {
-      const premierDetenteurEntity = fei.FeiPremierDetenteurEntity!;
-      prevState.entities[fei.premier_detenteur_entity_id!] = {
-        ...premierDetenteurEntity,
-        relation: 'NONE',
-        relationStatus: undefined,
-      } satisfies EntityWithUserRelation;
-    }
+    const existingEntity = prevState.entities[fei.premier_detenteur_entity_id];
+    const premierDetenteurEntity = fei.FeiPremierDetenteurEntity!;
+    prevState.entities[fei.premier_detenteur_entity_id!] = {
+      ...existingEntity,
+      ...premierDetenteurEntity,
+      relation: existingEntity?.relation ?? 'NONE',
+      relationStatus: existingEntity?.relationStatus ?? undefined,
+    } satisfies EntityWithUserRelation;
   }
 
   if (fei.premier_detenteur_depot_entity_id) {
-    if (!prevState.entities[fei.premier_detenteur_depot_entity_id]) {
-      const depotEntity = fei.FeiDepotEntity!;
-      prevState.entities[fei.premier_detenteur_depot_entity_id!] = {
-        ...depotEntity,
-        relation: 'NONE',
-        relationStatus: undefined,
-      } satisfies EntityWithUserRelation;
-    }
+    const existingEntity = prevState.entities[fei.premier_detenteur_depot_entity_id];
+    const depotEntity = fei.FeiDepotEntity!;
+    prevState.entities[fei.premier_detenteur_depot_entity_id!] = {
+      ...existingEntity,
+      ...depotEntity,
+      relation: existingEntity?.relation ?? 'NONE',
+      relationStatus: existingEntity?.relationStatus ?? undefined,
+    } satisfies EntityWithUserRelation;
   }
 
   const currentOwnerUser = fei.FeiCurrentUser;
@@ -89,14 +89,14 @@ export function setFeiInStore(fei: FeiPopulated) {
   }
 
   if (fei.fei_current_owner_entity_id) {
-    if (!prevState.entities[fei.fei_current_owner_entity_id]) {
-      const currentOwnerEntity = fei.FeiCurrentEntity!;
-      prevState.entities[fei.fei_current_owner_entity_id!] = {
-        ...currentOwnerEntity,
-        relation: 'NONE',
-        relationStatus: undefined,
-      } satisfies EntityWithUserRelation;
-    }
+    const existingEntity = prevState.entities[fei.fei_current_owner_entity_id];
+    const currentOwnerEntity = fei.FeiCurrentEntity!;
+    prevState.entities[fei.fei_current_owner_entity_id!] = {
+      ...existingEntity,
+      ...currentOwnerEntity,
+      relation: existingEntity?.relation ?? 'NONE',
+      relationStatus: existingEntity?.relationStatus ?? undefined,
+    } satisfies EntityWithUserRelation;
   }
 
   const nextOwnerUser = fei.FeiNextUser;
@@ -105,25 +105,25 @@ export function setFeiInStore(fei: FeiPopulated) {
   }
 
   if (fei.fei_next_owner_entity_id) {
-    if (!prevState.entities[fei.fei_next_owner_entity_id]) {
-      const nextOwnerEntity = fei.FeiNextEntity!;
-      prevState.entities[fei.fei_next_owner_entity_id!] = {
-        ...nextOwnerEntity,
-        relation: 'NONE',
-        relationStatus: undefined,
-      } satisfies EntityWithUserRelation;
-    }
+    const existingEntity = prevState.entities[fei.fei_next_owner_entity_id];
+    const nextOwnerEntity = fei.FeiNextEntity!;
+    prevState.entities[fei.fei_next_owner_entity_id!] = {
+      ...existingEntity,
+      ...nextOwnerEntity,
+      relation: existingEntity?.relation ?? 'NONE',
+      relationStatus: existingEntity?.relationStatus ?? undefined,
+    } satisfies EntityWithUserRelation;
   }
 
   if (fei.fei_next_owner_sous_traite_by_entity_id) {
-    if (!prevState.entities[fei.fei_next_owner_sous_traite_by_entity_id]) {
-      const nextOwnerEntity = fei.FeiSoustraiteByEntity!;
-      prevState.entities[fei.fei_next_owner_sous_traite_by_entity_id!] = {
-        ...nextOwnerEntity,
-        relation: 'NONE',
-        relationStatus: undefined,
-      } satisfies EntityWithUserRelation;
-    }
+    const existingEntity = prevState.entities[fei.fei_next_owner_sous_traite_by_entity_id];
+    const soustraiteByEntity = fei.FeiSoustraiteByEntity!;
+    prevState.entities[fei.fei_next_owner_sous_traite_by_entity_id!] = {
+      ...existingEntity,
+      ...soustraiteByEntity,
+      relation: existingEntity?.relation ?? 'NONE',
+      relationStatus: existingEntity?.relationStatus ?? undefined,
+    } satisfies EntityWithUserRelation;
   }
 
   const sviUser = fei.FeiSviUser;
@@ -132,14 +132,14 @@ export function setFeiInStore(fei: FeiPopulated) {
   }
 
   if (fei.svi_entity_id) {
-    if (!prevState.entities[fei.svi_entity_id]) {
-      const svi = fei.FeiSviEntity!;
-      prevState.entities[fei.svi_entity_id!] = {
-        ...svi,
-        relation: 'NONE',
-        relationStatus: undefined,
-      } satisfies EntityWithUserRelation;
-    }
+    const existingEntity = prevState.entities[fei.svi_entity_id];
+    const sviEntity = fei.FeiSviEntity!;
+    prevState.entities[fei.svi_entity_id!] = {
+      ...existingEntity,
+      ...sviEntity,
+      relation: existingEntity?.relation ?? 'NONE',
+      relationStatus: existingEntity?.relationStatus ?? undefined,
+    } satisfies EntityWithUserRelation;
   }
 
   const carcasses = fei.Carcasses;
@@ -179,14 +179,14 @@ export function setFeiInStore(fei: FeiPopulated) {
       prevState.users[intermediaireUser.id] = intermediaireUser;
     }
 
-    if (!entities[carcasseIntermediaire.intermediaire_entity_id]) {
-      const intermediaireEntity = carcasseIntermediaire.CarcasseIntermediaireEntity;
-      prevState.entities[carcasseIntermediaire.intermediaire_entity_id!] = {
-        ...intermediaireEntity,
-        relation: 'NONE',
-        relationStatus: undefined,
-      } satisfies EntityWithUserRelation;
-    }
+    const existingEntity = entities[carcasseIntermediaire.intermediaire_entity_id];
+    const intermediaireEntity = carcasseIntermediaire.CarcasseIntermediaireEntity;
+    prevState.entities[carcasseIntermediaire.intermediaire_entity_id!] = {
+      ...existingEntity,
+      ...intermediaireEntity,
+      relation: existingEntity?.relation ?? 'NONE',
+      relationStatus: existingEntity?.relationStatus ?? undefined,
+    } satisfies EntityWithUserRelation;
 
     if (!intermediairesByFei[carcasseIntermediaire.intermediaire_id]) {
       const intermediaire = {
