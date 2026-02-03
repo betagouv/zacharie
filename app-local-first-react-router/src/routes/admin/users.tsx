@@ -17,6 +17,8 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<NonNullable<AdminUsersResponse['data']['users']>>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('');
+  const [selectedCfeiStatus, setSelectedCfeiStatus] = useState<string>('');
+  const [selectedOnboardingStatus, setSelectedOnboardingStatus] = useState<string>('');
 
   // Extract unique roles from all users
   const uniqueRoles = useMemo(() => {
@@ -40,6 +42,7 @@ export default function AdminUsers() {
         user.addresse_ligne_2,
         user.code_postal,
         user.ville,
+        user.numero_cfei,
         ...user.roles,
       ]
         .filter(Boolean)
@@ -57,13 +60,44 @@ export default function AdminUsers() {
       }
     }
 
+    // CFEI status filter
+    if (selectedCfeiStatus) {
+      if (selectedCfeiStatus === 'with_cfei' && !user.numero_cfei) {
+        return false;
+      }
+      if (selectedCfeiStatus === 'without_cfei' && user.numero_cfei) {
+        return false;
+      }
+      if (selectedCfeiStatus === 'trained' && !user.est_forme_a_l_examen_initial) {
+        return false;
+      }
+    }
+
+    // Onboarding status filter
+    if (selectedOnboardingStatus) {
+      if (selectedOnboardingStatus === 'completed' && !user.onboarded_at) {
+        return false;
+      }
+      if (selectedOnboardingStatus === 'incomplete' && user.onboarded_at) {
+        return false;
+      }
+    }
+
     return true;
   });
+
+  const chasseursToActivate = filteredUsers.filter(
+    (user) => !user.activated && user.roles?.includes(UserRoles.CHASSEUR),
+  );
 
   const tabs: TabsProps['tabs'] = [
     {
       tabId: 'all',
       label: `Tous (${filteredUsers.length})`,
+    },
+    {
+      tabId: 'chasseurs-a-activer',
+      label: `Chasseurs à activer (${chasseursToActivate.length})`,
     },
     {
       tabId: 'activated',
@@ -109,14 +143,14 @@ export default function AdminUsers() {
           </div>
           <section className="mb-6 bg-white md:shadow-sm">
             <div className="space-y-4 p-4 md:p-8 md:pb-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Input
                   label="Rechercher un utilisateur"
                   nativeInputProps={{
                     type: 'search',
                     value: searchQuery,
                     onChange: (e) => setSearchQuery(e.target.value),
-                    placeholder: 'Rechercher par nom, email, téléphone, adresse, rôle...',
+                    placeholder: 'Nom, email, téléphone, CFEI...',
                   }}
                 />
                 <Select
@@ -133,6 +167,29 @@ export default function AdminUsers() {
                     </option>
                   ))}
                 </Select>
+                <Select
+                  label="Statut CFEI"
+                  nativeSelectProps={{
+                    value: selectedCfeiStatus,
+                    onChange: (e) => setSelectedCfeiStatus(e.target.value),
+                  }}
+                >
+                  <option value="">Tous</option>
+                  <option value="with_cfei">Avec numéro CFEI</option>
+                  <option value="without_cfei">Sans numéro CFEI</option>
+                  <option value="trained">Formé à l'examen initial</option>
+                </Select>
+                <Select
+                  label="Statut onboarding"
+                  nativeSelectProps={{
+                    value: selectedOnboardingStatus,
+                    onChange: (e) => setSelectedOnboardingStatus(e.target.value),
+                  }}
+                >
+                  <option value="">Tous</option>
+                  <option value="completed">Onboarding terminé</option>
+                  <option value="incomplete">Onboarding incomplet</option>
+                </Select>
               </div>
             </div>
             <Tabs
@@ -146,9 +203,16 @@ export default function AdminUsers() {
                   fixed
                   noCaption
                   className="[&_td]:align-top"
-                  headers={['Dates', 'Identité', 'Roles', 'Actions']}
+                  headers={
+                    selectedTabId === 'chasseurs-a-activer'
+                      ? ['Dates', 'Identité', 'CFEI / Formation', 'Actions']
+                      : ['Dates', 'Identité', 'Roles', 'Actions']
+                  }
                   data={filteredUsers
                     .filter((user) => {
+                      if (selectedTabId === 'chasseurs-a-activer') {
+                        return !user.activated && user.roles?.includes(UserRoles.CHASSEUR);
+                      }
                       if (selectedTabId === 'activated') {
                         return user.activated;
                       }
@@ -210,50 +274,89 @@ export default function AdminUsers() {
                         )}
                         {user.code_postal} {user.ville}
                       </Link>,
-                      <Link
-                        key={user.id}
-                        to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                        className="no-scrollbar inline-flex! size-full items-center justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
-                      >
-                        {user.roles.map((role) => (
-                          <Fragment key={role}>
-                            {role}
-                            <br />
-                          </Fragment>
-                        ))}
-                      </Link>,
-                      <form
-                        key={user.email}
-                        method="POST"
-                        className="no-scrollbar inline-flex! size-full items-center justify-start overflow-x-auto! border-r border-r-gray-200"
-                        onSubmit={(event) => {
-                          event.preventDefault();
-
-                          API.post({
-                            path: 'admin/user/connect-as',
-                            body: {
-                              email: user.email!,
-                            },
-                          })
-                            .then(async () => {
-                              await clearCache();
-                              await refreshUser('admin/user/connect-as');
-                            })
-                            .then(() => {
-                              window.location.href = '/app/tableau-de-bord';
-                            });
-                        }}
-                      >
-                        <button
-                          type="submit"
-                          className="text-action-high-blue-france h-full w-full text-center"
+                      selectedTabId === 'chasseurs-a-activer' ? (
+                        <Link
+                          key={user.id}
+                          to={`/app/tableau-de-bord/admin/user/${user.id}`}
+                          className="no-scrollbar inline-flex! size-full flex-col items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
                         >
-                          Se connecter en tant que
+                          <span className="font-medium">CFEI: {user.numero_cfei || 'Non renseigné'}</span>
                           <br />
-                          {user.email}
-                        </button>
-                        ,
-                      </form>,
+                          <span>
+                            Formation: {user.est_forme_a_l_examen_initial ? '✅ Formé' : '❌ Non formé'}
+                          </span>
+                          <br />
+                          <span className="text-sm text-gray-500">
+                            Onboarding: {user.onboarded_at ? '✅ Terminé' : '❌ Incomplet'}
+                          </span>
+                        </Link>
+                      ) : (
+                        <Link
+                          key={user.id}
+                          to={`/app/tableau-de-bord/admin/user/${user.id}`}
+                          className="no-scrollbar inline-flex! size-full items-center justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
+                        >
+                          {user.roles.map((role) => (
+                            <Fragment key={role}>
+                              {role}
+                              <br />
+                            </Fragment>
+                          ))}
+                        </Link>
+                      ),
+                      <div
+                        key={user.email}
+                        className="no-scrollbar inline-flex! size-full flex-col items-center justify-center gap-2 overflow-x-auto! border-r border-r-gray-200 p-2"
+                      >
+                        {selectedTabId === 'chasseurs-a-activer' && (
+                          <Button
+                            size="small"
+                            priority="primary"
+                            onClick={() => {
+                              API.post({
+                                path: `admin/user/${user.id}`,
+                                body: {
+                                  activated: 'true',
+                                },
+                              }).then((res) => {
+                                if (res.ok) {
+                                  setUsers((prev) =>
+                                    prev.map((u) => (u.id === user.id ? { ...u, activated: true } : u)),
+                                  );
+                                }
+                              });
+                            }}
+                          >
+                            Activer
+                          </Button>
+                        )}
+                        <form
+                          method="POST"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+
+                            API.post({
+                              path: 'admin/user/connect-as',
+                              body: {
+                                email: user.email!,
+                              },
+                            })
+                              .then(async () => {
+                                await clearCache();
+                                await refreshUser('admin/user/connect-as');
+                              })
+                              .then(() => {
+                                window.location.href = '/app/tableau-de-bord';
+                              });
+                          }}
+                        >
+                          <button type="submit" className="text-action-high-blue-france text-center text-sm">
+                            Se connecter en tant que
+                            <br />
+                            {user.email}
+                          </button>
+                        </form>
+                      </div>,
                     ])}
                 />
               </div>
