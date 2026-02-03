@@ -280,3 +280,18 @@ export interface AdminApiKeyAndApprovalsResponse {
   };
   error: string;
 }
+
+export interface OfficialCfei {
+  numero_cfei: string;
+  nom: string | null;
+  prenom: string | null;
+  departement: string | null;
+}
+
+export interface AdminOfficialCfeisResponse {
+  ok: boolean;
+  data: {
+    officialCfeis: Array<OfficialCfei>;
+  };
+  error: string;
+}

@@ -4,21 +4,47 @@ import { Table } from '@codegouvfr/react-dsfr/Table';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
-import type { AdminUsersResponse } from '@api/src/types/responses';
+import type { AdminUsersResponse, AdminOfficialCfeisResponse, OfficialCfei } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import API from '@app/services/api';
 import { clearCache } from '@app/services/indexed-db';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 
+type CfeiValidationStatus = 'valid' | 'invalid' | 'missing';
+
 export default function AdminUsers() {
   const [users, setUsers] = useState<NonNullable<AdminUsersResponse['data']['users']>>([]);
+  const [officialCfeis, setOfficialCfeis] = useState<Array<OfficialCfei>>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [selectedCfeiStatus, setSelectedCfeiStatus] = useState<string>('');
+  const [selectedCfeiValidation, setSelectedCfeiValidation] = useState<string>('');
   const [selectedOnboardingStatus, setSelectedOnboardingStatus] = useState<string>('');
+
+  // Create a map of official CFEIs for quick lookup
+  const officialCfeiMap = useMemo(() => {
+    const map = new Map<string, OfficialCfei>();
+    officialCfeis.forEach((cfei) => {
+      map.set(cfei.numero_cfei.toUpperCase(), cfei);
+    });
+    return map;
+  }, [officialCfeis]);
+
+  // Get CFEI validation status for a user
+  const getCfeiValidationStatus = (user: { numero_cfei: string | null }): CfeiValidationStatus => {
+    if (!user.numero_cfei) return 'missing';
+    return officialCfeiMap.has(user.numero_cfei.toUpperCase()) ? 'valid' : 'invalid';
+  };
+
+  // Get official CFEI details for a user
+  const getOfficialCfeiDetails = (user: { numero_cfei: string | null }): OfficialCfei | null => {
+    if (!user.numero_cfei) return null;
+    return officialCfeiMap.get(user.numero_cfei.toUpperCase()) || null;
+  };
 
   // Extract unique roles from all users
   const uniqueRoles = useMemo(() => {
@@ -83,6 +109,20 @@ export default function AdminUsers() {
       }
     }
 
+    // CFEI validation filter (only applies when official list is loaded)
+    if (selectedCfeiValidation && officialCfeis.length > 0) {
+      const validationStatus = getCfeiValidationStatus(user);
+      if (selectedCfeiValidation === 'valid' && validationStatus !== 'valid') {
+        return false;
+      }
+      if (selectedCfeiValidation === 'invalid' && validationStatus !== 'invalid') {
+        return false;
+      }
+      if (selectedCfeiValidation === 'missing' && validationStatus !== 'missing') {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -111,13 +151,18 @@ export default function AdminUsers() {
   const [selectedTabId, setSelectedTabId] = useState(tabs[0].tabId);
 
   useEffect(() => {
-    API.get({ path: 'admin/users' })
-      .then((res) => res as AdminUsersResponse)
-      .then((res) => {
-        if (res.ok) {
-          setUsers(res.data.users);
-        }
-      });
+    // Fetch users and official CFEI list in parallel
+    Promise.all([
+      API.get({ path: 'admin/users' }).then((res) => res as AdminUsersResponse),
+      API.get({ path: 'admin/official-cfeis' }).then((res) => res as AdminOfficialCfeisResponse),
+    ]).then(([usersRes, cfeisRes]) => {
+      if (usersRes.ok) {
+        setUsers(usersRes.data.users);
+      }
+      if (cfeisRes.ok) {
+        setOfficialCfeis(cfeisRes.data.officialCfeis);
+      }
+    });
   }, []);
 
   if (!users?.length) {
@@ -190,6 +235,20 @@ export default function AdminUsers() {
                   <option value="completed">Onboarding terminé</option>
                   <option value="incomplete">Onboarding incomplet</option>
                 </Select>
+                {officialCfeis.length > 0 && (
+                  <Select
+                    label="Validation CFEI officiel"
+                    nativeSelectProps={{
+                      value: selectedCfeiValidation,
+                      onChange: (e) => setSelectedCfeiValidation(e.target.value),
+                    }}
+                  >
+                    <option value="">Tous</option>
+                    <option value="valid">CFEI validé</option>
+                    <option value="invalid">CFEI non trouvé</option>
+                    <option value="missing">CFEI non renseigné</option>
+                  </Select>
+                )}
               </div>
             </div>
             <Tabs
@@ -278,9 +337,49 @@ export default function AdminUsers() {
                         <Link
                           key={user.id}
                           to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                          className="no-scrollbar inline-flex! size-full flex-col items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
+                          className={`no-scrollbar inline-flex! size-full flex-col items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline! ${
+                            officialCfeis.length > 0 && getCfeiValidationStatus(user) === 'valid'
+                              ? 'bg-green-50!'
+                              : ''
+                          }`}
                         >
                           <span className="font-medium">CFEI: {user.numero_cfei || 'Non renseigné'}</span>
+                          {officialCfeis.length > 0 && (
+                            <>
+                              <br />
+                              {(() => {
+                                const status = getCfeiValidationStatus(user);
+                                const officialDetails = getOfficialCfeiDetails(user);
+                                if (status === 'valid') {
+                                  return (
+                                    <span className="flex flex-col gap-1">
+                                      <Badge severity="success" small>
+                                        CFEI validé
+                                      </Badge>
+                                      {officialDetails && (
+                                        <span className="text-xs text-gray-600">
+                                          Liste officielle: {officialDetails.prenom} {officialDetails.nom}
+                                          {officialDetails.departement && ` (${officialDetails.departement})`}
+                                        </span>
+                                      )}
+                                    </span>
+                                  );
+                                }
+                                if (status === 'invalid') {
+                                  return (
+                                    <Badge severity="error" small>
+                                      CFEI non trouvé
+                                    </Badge>
+                                  );
+                                }
+                                return (
+                                  <Badge severity="warning" small>
+                                    CFEI non renseigné
+                                  </Badge>
+                                );
+                              })()}
+                            </>
+                          )}
                           <br />
                           <span>
                             Formation: {user.est_forme_a_l_examen_initial ? '✅ Formé' : '❌ Non formé'}

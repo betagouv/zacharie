@@ -29,6 +29,7 @@ import type {
   AdminApiKeysResponse,
   AdminApiKeyResponse,
   AdminApiKeyAndApprovalsResponse,
+  AdminOfficialCfeisResponse,
   UserConnexionResponse,
 } from '~/types/responses';
 import passport from 'passport';
@@ -791,6 +792,29 @@ router.get(
           return allEntitiesRecord;
         });
       res.status(200).send({ ok: true, data: { apiKey: apiKey, allUsers, allEntities }, error: '' });
+    },
+  ),
+);
+
+router.get(
+  '/official-cfeis',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminOfficialCfeisResponse>,
+      next: express.NextFunction,
+    ) => {
+      const officialCfeis = await prisma.officialCfei.findMany({
+        select: {
+          numero_cfei: true,
+          nom: true,
+          prenom: true,
+          departement: true,
+        },
+      });
+      res.status(200).send({ ok: true, data: { officialCfeis }, error: '' });
     },
   ),
 );
