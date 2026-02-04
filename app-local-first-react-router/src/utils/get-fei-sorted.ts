@@ -8,20 +8,25 @@ type FeiSorted = {
   feisOngoing: Array<FeiWithIntermediaires>;
 };
 
-export function getFeisSorted(): FeiSorted {
-  const state = useZustandStore.getState();
-  const user = useUser.getState().user;
-  const intermediairesByFei = useZustandStore.getState().intermediairesByFei;
+export function useFeisSorted(
+  feis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires>,
+): FeiSorted {
+  const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
+  const intermediairesByFei = useZustandStore((state) => state.intermediairesByFei);
+  const user = useUser((state) => state.user);
 
-  const feisSorted: FeiSorted = {
-    feisUnderMyResponsability: [],
-    feisToTake: [],
-    feisOngoing: [],
-  };
+  const feisUnderMyResponsability: Array<FeiWithIntermediaires> = [];
+  const feisToTake: Array<FeiWithIntermediaires> = [];
+  const feisOngoing: Array<FeiWithIntermediaires> = [];
   if (!user) {
-    return feisSorted;
+    return {
+      feisUnderMyResponsability,
+      feisToTake,
+      feisOngoing,
+    };
   }
-  for (const fei of Object.values(state.feis)) {
+  for (const feiNumero of Object.keys(feis)) {
+    const fei = feis[feiNumero];
     if (fei.deleted_at) {
       continue;
     }
@@ -35,12 +40,12 @@ export function getFeisSorted(): FeiSorted {
       !fei.fei_next_owner_entity_id
     ) {
       if (fei.fei_current_owner_user_id === user.id) {
-        feisSorted.feisUnderMyResponsability.push(fei);
+        feisUnderMyResponsability.push(fei);
         // if (debug) console.log('1');
         continue;
       }
-      if (state.entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id!)) {
-        feisSorted.feisUnderMyResponsability.push(fei);
+      if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id!)) {
+        feisUnderMyResponsability.push(fei);
         // if (debug) console.log('2');
         continue;
       }
@@ -48,12 +53,12 @@ export function getFeisSorted(): FeiSorted {
     // FEI TO TAKE
     if (!fei.svi_assigned_at && !fei.intermediaire_closed_at) {
       if (fei.fei_next_owner_user_id === user.id) {
-        feisSorted.feisToTake.push(fei);
+        feisToTake.push(fei);
         // if (debug) console.log('5');
         continue;
       }
-      if (state.entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id!)) {
-        feisSorted.feisToTake.push(fei);
+      if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id!)) {
+        feisToTake.push(fei);
         // if (debug) console.log('6');
         continue;
       }
@@ -61,39 +66,39 @@ export function getFeisSorted(): FeiSorted {
     // FEI ONGOING
     if (!fei.svi_assigned_at && !fei.intermediaire_closed_at) {
       if (fei.examinateur_initial_user_id === user.id) {
-        feisSorted.feisOngoing.push(fei);
+        feisOngoing.push(fei);
         // if (debug) console.log('9');
         continue;
       }
       if (fei.premier_detenteur_user_id === user.id) {
-        feisSorted.feisOngoing.push(fei);
+        feisOngoing.push(fei);
         // if (debug) console.log('10');
         continue;
       }
       if (fei.premier_detenteur_entity_id) {
-        if (state.entitiesIdsWorkingDirectlyFor.includes(fei.premier_detenteur_entity_id)) {
-          feisSorted.feisOngoing.push(fei);
+        if (entitiesIdsWorkingDirectlyFor.includes(fei.premier_detenteur_entity_id)) {
+          feisOngoing.push(fei);
           // if (debug) console.log('11');
           continue;
         }
       }
       if (fei.fei_next_owner_sous_traite_by_entity_id) {
-        if (state.entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_sous_traite_by_entity_id)) {
-          feisSorted.feisOngoing.push(fei);
+        if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_sous_traite_by_entity_id)) {
+          feisOngoing.push(fei);
           continue;
         }
       }
       let isIntermediaire = false;
       for (const intermediaire of intermediairesByFei[fei.numero] || []) {
         if (intermediaire.intermediaire_user_id === user.id) {
-          feisSorted.feisOngoing.push(fei);
+          feisOngoing.push(fei);
           isIntermediaire = true;
           // if (debug) console.log('12');
           break;
         }
         if (intermediaire.intermediaire_entity_id) {
-          if (state.entitiesIdsWorkingDirectlyFor.includes(intermediaire.intermediaire_entity_id)) {
-            feisSorted.feisOngoing.push(fei);
+          if (entitiesIdsWorkingDirectlyFor.includes(intermediaire.intermediaire_entity_id)) {
+            feisOngoing.push(fei);
             isIntermediaire = true;
             // if (debug) console.log('13');
             break;
@@ -107,9 +112,9 @@ export function getFeisSorted(): FeiSorted {
     }
   }
   return {
-    feisUnderMyResponsability: [...feisSorted.feisUnderMyResponsability].sort(sortFeis),
-    feisToTake: [...feisSorted.feisToTake].sort(sortFeis),
-    feisOngoing: [...feisSorted.feisOngoing].sort(sortFeis),
+    feisUnderMyResponsability: [...feisUnderMyResponsability].sort(sortFeis),
+    feisToTake: [...feisToTake].sort(sortFeis),
+    feisOngoing: [...feisOngoing].sort(sortFeis),
   };
 }
 

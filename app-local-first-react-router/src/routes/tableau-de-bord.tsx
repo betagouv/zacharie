@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { getFeisSorted } from '@app/utils/get-fei-sorted';
+import { useFeisSorted } from '@app/utils/get-fei-sorted';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate, Link } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
@@ -93,13 +93,16 @@ function OnboardingChasseInfoBanner() {
 
 export default function TableauDeBordIndex() {
   const navigate = useNavigate();
+  const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
   const user = useMostFreshUser('tableau de bord index')!;
   const feisDoneNumeros = useZustandStore((state) => state.feisDoneNumeros);
   const feisDone = useZustandStore((state) => state.feisDone);
   const entities = useZustandStore((state) => state.entities);
   const allEtgIds = useZustandStore((state) => state.etgsIds);
   const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
-  const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();
+  const feis = useZustandStore((state) => state.feis);
+  const feiSorted = useFeisSorted(feis);
+  const { feisOngoing, feisToTake, feisUnderMyResponsability } = feiSorted;
   const { onExportToXlsx, onExportSimplifiedToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
@@ -459,7 +462,7 @@ export default function TableauDeBordIndex() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" key={dataIsSynced ? 'synced' : 'not-synced'}>
       <div className="fr-background-alt--blue-france top-0 z-30 block w-full md:sticky">
         <div className="fr-container mx-auto">
           <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -485,7 +488,7 @@ export default function TableauDeBordIndex() {
                   if (!fei) return null;
                   return (
                     <CardFiche
-                      key={fei.numero}
+                      key={JSON.stringify(fei)}
                       fei={fei}
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
@@ -497,7 +500,7 @@ export default function TableauDeBordIndex() {
                   if (!fei) return null;
                   return (
                     <CardFiche
-                      key={fei.numero}
+                      key={JSON.stringify(fei)}
                       fei={fei}
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
@@ -510,7 +513,7 @@ export default function TableauDeBordIndex() {
                   if (!fei) return null;
                   return (
                     <CardFiche
-                      key={fei.numero}
+                      key={JSON.stringify(fei)}
                       fei={fei}
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
@@ -533,7 +536,7 @@ export default function TableauDeBordIndex() {
                   if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
                   return (
                     <CardFiche
-                      key={fei.numero}
+                      key={JSON.stringify(fei)}
                       fei={fei}
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
@@ -547,7 +550,7 @@ export default function TableauDeBordIndex() {
                   if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
                   return (
                     <CardFiche
-                      key={fei.numero}
+                      key={JSON.stringify(fei)}
                       fei={fei}
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
@@ -739,7 +742,7 @@ function FeisTableRow({
 
   return (
     <tr
-      key={fei.numero}
+      key={JSON.stringify(fei)}
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
       onClick={() => navigate(`/app/tableau-de-bord/fei/${fei.numero}`)}
     >
@@ -877,7 +880,7 @@ function FeisTable({
             const onPrintSelect = feiElement.props.onPrintSelect;
             return (
               <FeisTableRow
-                key={fei.numero}
+                key={JSON.stringify(fei)}
                 fei={fei}
                 isSelected={isSelected}
                 onPrintSelect={onPrintSelect}

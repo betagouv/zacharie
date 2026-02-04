@@ -79,9 +79,14 @@ export async function loadFeis() {
     useZustandStore.setState({ feis: allFeis });
 
     if (feisNumerosToLoadAgain.length > 0) {
-      const feisRefreshed = await API.post({ path: 'fei/refresh', body: { numeros: feisNumerosToLoadAgain } }).then((res) => res as FeiRefreshResponse);
+      const feisRefreshed = await API.post({
+        path: 'fei/refresh',
+        body: { numeros: feisNumerosToLoadAgain },
+      }).then((res) => res as FeiRefreshResponse);
       if (!feisRefreshed.ok) {
-        alert(`Un problème est survenu lors du chargement de l'application: ${feisRefreshed.error}. Veuillez recharger la page. Si le problème persiste, veuillez contacter l'équipe technique.`)
+        alert(
+          `Un problème est survenu lors du chargement de l'application: ${feisRefreshed.error}. Veuillez recharger la page. Si le problème persiste, veuillez contacter l'équipe technique.`,
+        );
         return;
       }
       for (const fei of feisRefreshed.data.feis) {
@@ -94,7 +99,21 @@ export async function loadFeis() {
       }
     }
 
-    useZustandStore.setState({ dataIsSynced: true });
+    const refreshedShallowState = useZustandStore.getState();
+    const refreshedDeepState = {
+      feis: { ...refreshedShallowState.feis },
+      users: { ...refreshedShallowState.users },
+      entities: { ...refreshedShallowState.entities },
+      carcasses: { ...refreshedShallowState.carcasses },
+      carcassesIntermediaireById: { ...refreshedShallowState.carcassesIntermediaireById },
+      carcassesIntermediairesIdsByCarcasse: { ...refreshedShallowState.carcassesIntermediairesIdsByCarcasse },
+      carcassesIntermediaireIdsByIntermediaire: {
+        ...refreshedShallowState.carcassesIntermediaireIdsByIntermediaire,
+      },
+      intermediairesByFei: { ...refreshedShallowState.intermediairesByFei },
+      dataIsSynced: true,
+    };
+    useZustandStore.setState({ ...refreshedDeepState });
 
     console.log('chargement feis fini');
   } catch (error) {
