@@ -177,7 +177,9 @@ const useZustandStore = create<State & Actions>()(
             const carcassesIntermediaire = get().carcassesIntermediaireById[carcassesIntermediaireId];
             carcassesIntermediaires.push(carcassesIntermediaire);
           }
-          return carcassesIntermediaires;
+          return carcassesIntermediaires.sort((a, b) =>
+            dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1,
+          );
         },
         // carcassesIntermediaires: {},
         // carcassesIntermediairesByIntermediaire: {},
@@ -281,7 +283,6 @@ const useZustandStore = create<State & Actions>()(
             const intermediairesByFei = useZustandStore.getState().intermediairesByFei;
             const nextIntermediairesForFei = intermediairesByFei[newIntermediaire.fei_numero] || [];
             nextIntermediairesForFei.push(newIntermediaire);
-            intermediairesByFei[newIntermediaire.fei_numero] = nextIntermediairesForFei;
             const feiCarcassesIds =
               useZustandStore.getState().carcassesIdsByFei[newIntermediaire.fei_numero] || [];
             const carcasses = feiCarcassesIds.map((id) => useZustandStore.getState().carcasses[id]);
@@ -327,11 +328,11 @@ const useZustandStore = create<State & Actions>()(
               byId[feiAndCarcasseAndIntermediaireId] = ci;
               if (!byCarcasseId[ci.zacharie_carcasse_id]) byCarcasseId[ci.zacharie_carcasse_id] = [];
               if (!byCarcasseId[ci.zacharie_carcasse_id].includes(feiAndCarcasseAndIntermediaireId)) {
-                byCarcasseId[ci.zacharie_carcasse_id].push(feiAndCarcasseAndIntermediaireId);
+                byCarcasseId[ci.zacharie_carcasse_id].unshift(feiAndCarcasseAndIntermediaireId);
               }
               if (!byIntermediaireId[feiAndIntermediaireId]) byIntermediaireId[feiAndIntermediaireId] = [];
               if (!byIntermediaireId[feiAndIntermediaireId].includes(feiAndCarcasseAndIntermediaireId)) {
-                byIntermediaireId[feiAndIntermediaireId].push(feiAndCarcasseAndIntermediaireId);
+                byIntermediaireId[feiAndIntermediaireId].unshift(feiAndCarcasseAndIntermediaireId);
               }
             }
 

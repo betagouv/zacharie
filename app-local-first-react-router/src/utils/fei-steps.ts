@@ -255,6 +255,15 @@ export function computeFeiSteps({
     }
   })();
 
+  console.log({
+    currentStep: currentStepIndex + 1,
+    currentStepLabel,
+    currentStepLabelShort,
+    nextStepLabel,
+    simpleStatus,
+    steps,
+    intermediaires,
+  });
   return {
     currentStep: currentStepIndex + 1,
     currentStepLabel,

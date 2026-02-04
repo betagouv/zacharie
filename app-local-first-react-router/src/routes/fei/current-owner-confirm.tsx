@@ -364,7 +364,7 @@ export default function CurrentOwnerConfirm() {
                         action: 'current-owner-confirm-etg-transport-not-by-me',
                         etgEmployeeTransportingToETG: true,
                       });
-                      await new Promise((resolve) => setTimeout(resolve, 300));
+                      await new Promise((resolve) => setTimeout(resolve, 1000));
                     }
                     handlePriseEnCharge({
                       sousTraite: false,
