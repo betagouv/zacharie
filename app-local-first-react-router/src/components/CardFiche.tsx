@@ -42,10 +42,7 @@ export default function CardFiche({
   disabledBecauseOffline = false,
   filter,
 }: CardProps) {
-  console.log('fei', fei);
   const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
-  console.log('simpleStatus', simpleStatus);
-  console.log('currentStepLabelShort', currentStepLabelShort);
   const isCircuitCourt = useIsCircuitCourt();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
