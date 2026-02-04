@@ -69,7 +69,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
           - listitem:
             - paragraph: /\\d+ Paris/
       `);
-  await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
+  await expect(page.getByRole("heading", { name: "🫵 Cette fiche vous a été" })).toBeVisible();
   await expect(page.getByText("Étape 2 sur")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Fiche envoyée, pas encore" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
@@ -127,33 +127,31 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await expect(page.getByText("SVI 1 a été notifié")).toBeVisible({ timeout: 5000 });
   await expect(page.locator("#intermediaire-carcasses")).toMatchAriaSnapshot(`
-    - group:
-      - heading "Carcasses (4)" [level=3]
-      - paragraph: Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
-      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie accepté par ETG 1 ETG/':
-        - paragraph: Daim
-        - paragraph: /N° MM-\\d+-\\d+/
-        - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-        - paragraph: 1 anomalie
-        - paragraph: accepté par ETG 1 ETG
-      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':
-        - paragraph: Daim
-        - paragraph: /N° MM-\\d+-\\d+/
-        - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-        - paragraph: 1 anomalie, 1 commentaire
-        - paragraph: refusé par ETG 1
-      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie manquant pour ETG 1/':
-        - paragraph: Daim
-        - paragraph: /N° MM-\\d+-\\d+/
-        - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-        - paragraph: Aucune anomalie
-        - paragraph: manquant pour ETG 1
-      - 'button /Pigeons \\(\\d+ sur \\d+\\) N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie accepté par ETG 1 ETG/':
-        - paragraph: /Pigeons \\(\\d+ sur \\d+\\)/
-        - paragraph: /N° MM-\\d+-\\d+/
-        - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-        - paragraph: Aucune anomalie
-        - paragraph: accepté par ETG 1 ETG
+    - paragraph: Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
+    - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie accepté par ETG 1 ETG/':
+      - paragraph: Daim
+      - paragraph: /N° MM-\\d+-\\d+/
+      - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
+      - paragraph: 1 anomalie
+      - paragraph: accepté par ETG 1 ETG
+    - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':
+      - paragraph: Daim
+      - paragraph: /N° MM-\\d+-\\d+/
+      - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
+      - paragraph: 1 anomalie, 1 commentaire
+      - paragraph: refusé par ETG 1
+    - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie manquant pour ETG 1/':
+      - paragraph: Daim
+      - paragraph: /N° MM-\\d+-\\d+/
+      - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
+      - paragraph: Aucune anomalie
+      - paragraph: manquant pour ETG 1
+    - 'button /Pigeons \\(\\d+\\) N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie en cours de traitement/':
+      - paragraph: /Pigeons \\(\\d+\\)/
+      - paragraph: /N° MM-\\d+-\\d+/
+      - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
+      - paragraph: Aucune anomalie
+      - paragraph: en cours de traitement
     `);
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
   await expect(page.locator("#feis-wrapper")).toMatchAriaSnapshot(`
@@ -365,7 +363,7 @@ test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context })
           - listitem:
             - paragraph: /\\d+ Paris/
       `);
-  await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
+  await expect(page.getByRole("heading", { name: "🫵 Cette fiche vous a été" })).toBeVisible();
   await expect(page.getByText("Étape 2 sur")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Fiche envoyée, pas encore" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
@@ -443,6 +441,7 @@ test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context })
   await page.getByRole("button", { name: "Mon profil" }).click();
   await page.getByRole("button", { name: "Déconnexion" }).click();
   await expect(page).toHaveURL("http://localhost:3290/app/connexion");
+  await new Promise((resolve) => setTimeout(resolve, 1000)); // to clear cache properly
   await connectWith(page, "etg-2@example.fr");
 
   await expect(page.locator("#feis-wrapper")).toMatchAriaSnapshot(`
@@ -469,116 +468,130 @@ test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context })
         - button "Je renvoie la fiche à l'expéditeur"
       `);
   await page.getByRole("button", { name: "Je prends en charge les carcasses" }).click();
-  // FIXME: work in local not in ci
-  // await expect(page.locator("#content")).toMatchAriaSnapshot(`
-  //   - heading "Réception par mon établissement de traitement Étape 4 sur 5" [level=2]
-  //   - paragraph: "Étape suivante : Inspection par le SVI"
-  //   - navigation "vous êtes ici :":
-  //     - list:
-  //       - listitem
-  //       - listitem:
-  //         - button "ETG 1"
-  //       - listitem:
-  //         - button "ETG 2"
-  //   - group:
-  //     - heading "Données de traçabilité" [level=3]
-  //     - paragraph: Espèces
-  //     - paragraph: Pigeons, Daim
-  //     - paragraph: Informations clés
-  //     - list:
-  //       - listitem:
-  //         - paragraph: "/Commune de mise à mort : \\\\d+ CHASSENARD/"
-  //       - listitem:
-  //         - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
-  //       - listitem:
-  //         - paragraph: "/Heure de mise à mort de la première carcasse de la fiche : \\\\d+:\\\\d+/"
-  //       - listitem:
-  //         - paragraph: "/Heure d'éviscération de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
-  //       - listitem:
-  //         - paragraph: "Nom du Centre de Collecte (CCG) : CCG Chasseurs"
-  //       - listitem:
-  //         - paragraph: "/Date et heure de dépôt dans le CCG : lundi 7 juillet \\\\d+ à \\\\d+:\\\\d+/"
-  //       - listitem:
-  //         - paragraph: "/Date et heure de prise en charge par l'ETG : vendredi \\\\d+ novembre \\\\d+ à \\\\d+:\\\\d+/"
-  //     - paragraph: Acteurs
-  //     - paragraph: Examinateur Initial
-  //     - list:
-  //       - listitem:
-  //         - paragraph: Marie Martin
-  //       - listitem:
-  //         - paragraph: /\\d+/
-  //       - listitem:
-  //         - paragraph: examinateur@example.fr
-  //       - listitem:
-  //         - paragraph: /CFEI-\\d+-\\d+-\\d+/
-  //       - listitem:
-  //         - paragraph: /\\d+ Paris/
-  //     - paragraph: Premier Détenteur
-  //     - list:
-  //       - listitem:
-  //         - paragraph: Pierre Petit
-  //       - listitem:
-  //         - paragraph: /\\d+/
-  //       - listitem:
-  //         - paragraph: premier-detenteur@example.fr
-  //       - listitem:
-  //         - paragraph: /\\d+ Paris/
-  //     - paragraph: ETG 1
-  //     - list:
-  //       - listitem:
-  //         - paragraph: Réception des carcasses
-  //       - listitem:
-  //         - paragraph: /\\d+/
-  //       - listitem:
-  //         - paragraph: /\\d+ Paris/
-  //       - listitem:
-  //         - paragraph: "/Prise en charge : vendredi \\\\d+ novembre à \\\\d+:\\\\d+/"
-  //     - paragraph: ETG 2
-  //     - list:
-  //       - listitem:
-  //         - paragraph: Réception des carcasses
-  //       - listitem:
-  //         - paragraph: /\\d+/
-  //       - listitem:
-  //         - paragraph: /\\d+ Paris/
-  //       - listitem:
-  //         - paragraph: "/Prise en charge : vendredi \\\\d+ novembre à \\\\d+:\\\\d+/"
-  //   - group:
-  //     - heading "Carcasses (2)" [level=3]
-  //     - paragraph: Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
-  //     - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie en cours de traitement/':
-  //       - paragraph: Daim
-  //       - paragraph: /N° MM-\\d+-\\d+/
-  //       - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-  //       - paragraph: 1 anomalie
-  //       - paragraph: en cours de traitement
-  //     - 'button /Pigeons \\(\\d+\\) N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie en cours de traitement/':
-  //       - paragraph: /Pigeons \\(\\d+\\)/
-  //       - paragraph: /N° MM-\\d+-\\d+/
-  //       - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-  //       - paragraph: Aucune anomalie
-  //       - paragraph: en cours de traitement
-  //     - button "Afficher les carcasses déjà refusées (2)"
-  //   - group:
-  //     - heading "Prise en charge des carcasses acceptées" [level=3]
-  //     - paragraph /Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées \\(\\d+ pigeons, 1 daim\\)\\./ [checked] [disabled]
-  //     - text: /Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées \\(\\d+ pigeons, 1 daim\\)\\. Date de prise en charge/
-  //     - button "Cliquez ici pour définir cette date comme étant aujourd'hui et maintenant"
-  //     - textbox "Date de prise en charge Cliquez ici pour définir cette date comme étant aujourd'hui et maintenant"
-  //     - button "Enregistrer" [disabled]
-  //   - group:
-  //     - heading "Sélection du prochain destinataire" [level=3]
-  //     - text: Prochain détenteur des carcasses * Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
-  //     - button "SVI 2"
-  //     - log
-  //     - text: Sélectionnez le prochain détenteur des carcasses
-  //     - combobox "Prochain détenteur des carcasses * Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier. SVI 2"
-  //     - button "Transmettre la fiche"
-  //     - heading "Attention" [level=3]
-  //     - paragraph: Il manque le prochain détenteur des carcasses
-  //   - link "Voir toutes mes fiches":
-  //     - /url: /app/tableau-de-bord/
-  //   `);
+
+  await expect(page.locator("#content")).toMatchAriaSnapshot(`
+    - heading "Réception par mon établissement de traitement Étape 5 sur 6" [level=2]
+    - paragraph: "Étape suivante : Inspection par le SVI"
+    - navigation "vous êtes ici :":
+      - list:
+        - listitem
+        - listitem:
+          - button "ETG 1 (transport des carcasses)"
+        - listitem:
+          - button "ETG 1"
+        - listitem:
+          - button "ETG 2"
+    - group:
+      - heading "Données de traçabilité" [level=3]
+      - paragraph: Fiche d'Examen Initial n°
+      - paragraph: /ZACH-\\d+-QZ6E0-\\d+/
+      - paragraph: Espèces
+      - paragraph: Pigeons, Daim
+      - paragraph: Informations clés
+      - list:
+        - listitem:
+          - paragraph: "/Commune de mise à mort : \\\\d+ CHASSENARD/"
+        - listitem:
+          - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
+        - listitem:
+          - paragraph: "/Heure de mise à mort de la première carcasse de la fiche : \\\\d+:\\\\d+/"
+        - listitem:
+          - paragraph: "/Heure d'éviscération de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
+        - listitem:
+          - paragraph: "Nom du Centre de Collecte (CCG) : CCG Chasseurs"
+        - listitem:
+          - paragraph: "/Date et heure de dépôt dans le CCG : lundi 7 juillet \\\\d+ à \\\\d+:\\\\d+/"
+        - listitem:
+          - paragraph: "/Date et heure de prise en charge par l'ETG : mercredi 4 février \\\\d+ à \\\\d+:\\\\d+/"
+      - paragraph: Acteurs
+      - paragraph: Examinateur Initial
+      - list:
+        - listitem:
+          - paragraph: Marie Martin
+        - listitem:
+          - paragraph: /\\d+/
+        - listitem:
+          - paragraph: examinateur@example.fr
+        - listitem:
+          - paragraph: /CFEI-\\d+-\\d+-\\d+/
+        - listitem:
+          - paragraph: /\\d+ Paris/
+      - paragraph: Premier Détenteur
+      - list:
+        - listitem:
+          - paragraph: Pierre Petit
+        - listitem:
+          - paragraph: /\\d+/
+        - listitem:
+          - paragraph: premier-detenteur@example.fr
+        - listitem:
+          - paragraph: /\\d+ Paris/
+      - paragraph: ETG 1
+      - list:
+        - listitem:
+          - paragraph: Transport des carcasses
+        - listitem:
+          - paragraph: /\\d+/
+        - listitem:
+          - paragraph: /\\d+ Paris/
+        - listitem:
+          - paragraph: "/Prise en charge : mercredi 4 février à \\\\d+:\\\\d+/"
+      - paragraph: ETG 1
+      - list:
+        - listitem:
+          - paragraph: Réception des carcasses
+        - listitem:
+          - paragraph: /\\d+/
+        - listitem:
+          - paragraph: /\\d+ Paris/
+        - listitem:
+          - paragraph: "/Prise en charge : mercredi 4 février à \\\\d+:\\\\d+/"
+      - paragraph: ETG 2
+      - list:
+        - listitem:
+          - paragraph: Réception des carcasses
+        - listitem:
+          - paragraph: /\\d+/
+        - listitem:
+          - paragraph: /\\d+ Paris/
+        - listitem:
+          - paragraph: "/Prise en charge : mercredi 4 février à \\\\d+:\\\\d+/"
+    - group:
+      - heading "Carcasses (2)" [level=3]
+      - paragraph: Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
+      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie en cours de traitement/':
+        - paragraph: Daim
+        - paragraph: /N° MM-\\d+-\\d+/
+        - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
+        - paragraph: 1 anomalie
+        - paragraph: en cours de traitement
+      - 'button /Pigeons \\(\\d+\\) N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie en cours de traitement/':
+        - paragraph: /Pigeons \\(\\d+\\)/
+        - paragraph: /N° MM-\\d+-\\d+/
+        - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
+        - paragraph: Aucune anomalie
+        - paragraph: en cours de traitement
+      - button "Afficher les carcasses déjà refusées (2)"
+    - group:
+      - heading "Prise en charge des carcasses acceptées" [level=3]
+      - paragraph: /Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées \\(\\d+ pigeons, 1 daim\\)\\./
+      - text: Date de prise en charge
+      - button "Cliquez ici pour définir cette date comme étant aujourd'hui et maintenant"
+      - textbox "Date de prise en charge Cliquez ici pour définir cette date comme étant aujourd'hui et maintenant"
+      - button "Enregistrer" [disabled]
+    - group:
+      - heading "Sélection du prochain destinataire" [level=3]
+      - text: Prochain détenteur des carcasses * Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
+      - button "SVI 2"
+      - log
+      - text: Sélectionnez le prochain détenteur des carcasses
+      - combobox "Prochain détenteur des carcasses * Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier. SVI 2"
+      - button "Transmettre la fiche"
+      - heading "Attention" [level=3]
+      - paragraph: Il manque le prochain détenteur des carcasses
+    - link "Voir toutes mes fiches":
+      - /url: /app/tableau-de-bord/
+    `);
 
   await page.getByRole("button", { name: "Afficher les carcasses déjà" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
