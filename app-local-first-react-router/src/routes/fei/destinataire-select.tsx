@@ -29,12 +29,18 @@ import { EntityWithUserRelation } from '@api/src/types/entity';
 import { UserForFei } from '@api/src/types/user';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
+import CCGNouveau from '@app/components/CCGNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
   id: 'partenaire-modal',
+});
+
+const ccgModal = createModal({
+  isOpenedByDefault: false,
+  id: 'ccg-modal',
 });
 
 const trichineModal = createModal({
@@ -80,6 +86,7 @@ export default function DestinataireSelect({
   const circuitCourtIds = useZustandStore((state) => state.circuitCourtIds);
 
   const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
+  const isCCGModalOpen = useIsModalOpen(ccgModal);
   const isTrichineModalOpen = useIsModalOpen(trichineModal);
   const [dontShowTrichineAgain, setDontShowTrichineAgain] = useState(false);
 
@@ -795,9 +802,8 @@ export default function DestinataireSelect({
                     getOptionValue={(f) => f.value}
                     onChange={(f) => {
                       if (f?.value === 'add_new') {
-                        navigate(
-                          `/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`,
-                        );
+                        ccgModal.open();
+                        return;
                       }
                       setDepotEntityId(f?.value ?? null);
                     }}
@@ -846,8 +852,9 @@ export default function DestinataireSelect({
                 <div className="flex flex-col items-start gap-2">
                   <label>Chambre froide (centre de collecte du gibier sauvage) *</label>
                   <Button
-                    linkProps={{
-                      to: `/app/tableau-de-bord/mon-profil/mes-ccgs?redirect=/app/tableau-de-bord/fei/${fei.numero}`,
+                    type="button"
+                    nativeButtonProps={{
+                      onClick: () => ccgModal.open(),
                     }}
                   >
                     Renseigner ma chambre froide (CCG)
@@ -995,6 +1002,16 @@ export default function DestinataireSelect({
           />
         )}
       </partenaireModal.Component>
+      <ccgModal.Component title="Ajouter une chambre froide (CCG)">
+        {isCCGModalOpen && (
+          <CCGNouveau
+            onFinish={(newEntity) => {
+              ccgModal.close();
+              if (newEntity) setDepotEntityId(newEntity.id);
+            }}
+          />
+        )}
+      </ccgModal.Component>
       <trichineModal.Component
         title={trichineMessage?.title || 'Rappel trichine'}
         buttons={[

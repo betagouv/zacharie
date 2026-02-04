@@ -72,16 +72,13 @@ test("Stockage - Je transporte les carcasses moi-même", async ({ page }) => {
   await page.locator(".select-prochain-detenteur__input-container").click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
   await page.getByText("J'ai déposé mes carcasses").click();
-  await page.getByRole("link", { name: "Renseigner ma chambre froide" }).click();
-  await page.getByText("Oui et la chambre froide a un").click();
+  await page.getByRole("button", { name: "Renseigner ma chambre froide" }).click();
+  await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole("textbox", { name: "Numéro d'identification" }).fill("CCG-01");
   await page.getByRole("button", { name: "Ajouter cette chambre froide" }).click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
-  await page.locator(".select-prochain-detenteur__input-container").click();
-  await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
-  await page.getByText("J'ai déposé mes carcasses").click();
-  await page.getByRole("button", { name: "CCG Chasseurs" }).click();
-  await page.getByRole("button", { name: "Cliquez ici pour définir la" }).click();
+  // Modal closes and CCG is auto-selected
+  await expect(page.getByText("CCG Chasseurs - CCG-01")).toBeVisible();
+  await page.getByRole("button", { name: "Cliquez ici pour définir la" }).first().click();
   await page.getByText("Je transporte les carcasses moi-mêmeN'oubliez pas de notifier le prochain dé").click();
   await expect(page.getByText("Il manque la date de transport")).toBeVisible();
   await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour et maintenant." }).click();
@@ -99,16 +96,13 @@ test("Stockage - Le transport est réalisé par un collecteur professionnel", as
   await page.locator(".select-prochain-detenteur__input-container").click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
   await page.getByText("J'ai déposé mes carcasses").click();
-  await page.getByRole("link", { name: "Renseigner ma chambre froide" }).click();
-  await page.getByText("Oui et la chambre froide a un").click();
+  await page.getByRole("button", { name: "Renseigner ma chambre froide" }).click();
+  await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole("textbox", { name: "Numéro d'identification" }).fill("CCG-01");
   await page.getByRole("button", { name: "Ajouter cette chambre froide" }).click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
-  await page.locator(".select-prochain-detenteur__input-container").click();
-  await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
-  await page.getByText("J'ai déposé mes carcasses").click();
-  await page.getByRole("button", { name: "CCG Chasseurs" }).click();
-  await page.getByRole("button", { name: "Cliquez ici pour définir la" }).click();
+  // Modal closes and CCG is auto-selected
+  await expect(page.getByText("CCG Chasseurs - CCG-01")).toBeVisible();
+  await page.getByRole("button", { name: "Cliquez ici pour définir la" }).first().click();
   await page.getByText("Le transport est réalisé par un collecteur professionnel").click();
   await page.getByRole("button", { name: "Transmettre la fiche" }).click();
   await expect(page.getByText("ETG 1 a été notifié")).toBeVisible();
