@@ -7,7 +7,7 @@ import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import DestinataireSelectSousTraite from './destinataire-select-sous-traite';
+import DestinataireSelect from './destinataire-select';
 import { getFeiAndIntermediaireIdsFromFeiIntermediaire } from '@app/utils/get-carcasse-intermediaire-id';
 
 export default function FeiSousTraite() {
@@ -38,7 +38,10 @@ export default function FeiSousTraite() {
           {fei.fei_prev_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ? (
             <SelectNextForExaminateur />
           ) : (
-            <DestinataireSelectSousTraite
+            <DestinataireSelect
+              canEdit
+              sousTraite
+              calledFrom="current-owner-sous-traite"
               feiAndIntermediaireIds={feiAndIntermediaireIds}
               intermediaire={latestIntermediaire}
             />
