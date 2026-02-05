@@ -113,6 +113,7 @@ export interface FeisResponse {
     feisUnderMyResponsability: Array<FeiWithIntermediaires>;
     feisToTake: Array<FeiWithIntermediaires>;
     feisOngoing: Array<FeiWithIntermediaires>;
+    feisDone: Array<FeiWithIntermediaires>;
   };
   error: string;
 }

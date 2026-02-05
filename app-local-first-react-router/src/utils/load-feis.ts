@@ -1,5 +1,10 @@
+<<<<<<< Updated upstream
 import type { FeisResponse, FeisDoneResponse, FeiRefreshResponse } from '@api/src/types/responses';
 import type { FeiDone, FeiWithIntermediaires } from '@api/src/types/fei';
+=======
+import type { FeisResponse, FeiRefreshResponse } from '@api/src/types/responses';
+import type { FeiWithIntermediaires } from '@api/src/types/fei';
+>>>>>>> Stashed changes
 import useZustandStore from '@app/zustand/store';
 import { setFeiInStore } from '@app/utils/load-fei';
 import dayjs from 'dayjs';
@@ -15,6 +20,7 @@ export async function loadFeis() {
   useZustandStore.setState({ dataIsSynced: false });
 
   try {
+<<<<<<< Updated upstream
     const responseDone = await API.get({ path: 'fei/done' }).then((res) => res as FeisDoneResponse);
 
     if (!responseDone.ok) {
@@ -34,6 +40,8 @@ export async function loadFeis() {
       feisDoneNumeros: Object.keys(feisDone),
     });
 
+=======
+>>>>>>> Stashed changes
     const response = await API.get({ path: 'fei' }).then((res) => res as FeisResponse);
 
     if (!response.ok) {
@@ -49,7 +57,7 @@ export async function loadFeis() {
       ...response.data.feisOngoing,
       ...response.data.feisToTake,
       ...response.data.feisUnderMyResponsability,
-      ...responseDone.data.feisDone,
+      ...response.data.feisDone,
     ]) {
       const localFei = useZustandStore.getState().feis[fei.numero];
       if (!localFei && !fei.deleted_at) {
