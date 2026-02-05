@@ -1,8 +1,8 @@
-import { FeiDone, FeiWithIntermediaires } from '@api/src/types/fei';
+import { FeiWithIntermediaires } from '@api/src/types/fei';
 import { Fei } from '@prisma/client';
 import dayjs from 'dayjs';
 
-export function getFeiKeyDates(fei: FeiWithIntermediaires | FeiDone | Fei) {
+export function getFeiKeyDates(fei: FeiWithIntermediaires | Fei) {
   return (
     <>
       Mise à mort&nbsp;:

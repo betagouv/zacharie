@@ -1,4 +1,4 @@
-import type { FeiDone } from '@api/src/types/fei';
+import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { FeiStep, FeiStepSimpleStatus } from '@app/types/fei-steps';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
@@ -21,7 +21,7 @@ type UseFeiStepsReturn = {
   steps: Array<IntermediaireStep>;
 };
 
-export function useFeiSteps(fei: FeiDone): UseFeiStepsReturn {
+export function useFeiSteps(fei: FeiWithIntermediaires): UseFeiStepsReturn {
   const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
   const user = useUser((state) => state.user);
@@ -39,7 +39,7 @@ export function useFeiSteps(fei: FeiDone): UseFeiStepsReturn {
 }
 
 interface ComputeFeiStepsParams {
-  fei: FeiDone;
+  fei: FeiWithIntermediaires;
   intermediaires: Array<FeiIntermediaire>;
   entitiesIdsWorkingDirectlyFor: Array<Entity['id']>;
   user: User | null;

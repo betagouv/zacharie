@@ -6,7 +6,12 @@ type FeiSorted = {
   feisUnderMyResponsability: Array<FeiWithIntermediaires>;
   feisToTake: Array<FeiWithIntermediaires>;
   feisOngoing: Array<FeiWithIntermediaires>;
+  feisDone: Array<FeiWithIntermediaires>;
 };
+
+export function isFeiDone(fei: FeiWithIntermediaires): boolean {
+  return !!(fei.svi_assigned_at || fei.intermediaire_closed_at);
+}
 
 export function getFeisSorted(): FeiSorted {
   const state = useZustandStore.getState();
@@ -17,12 +22,17 @@ export function getFeisSorted(): FeiSorted {
     feisUnderMyResponsability: [],
     feisToTake: [],
     feisOngoing: [],
+    feisDone: [],
   };
   if (!user) {
     return feisSorted;
   }
   for (const fei of Object.values(state.feis)) {
     if (fei.deleted_at) {
+      continue;
+    }
+    if (isFeiDone(fei)) {
+      feisSorted.feisDone.push(fei);
       continue;
     }
     // FEI UNDER MY RESPONSABILITY
@@ -110,6 +120,7 @@ export function getFeisSorted(): FeiSorted {
     feisUnderMyResponsability: [...feisSorted.feisUnderMyResponsability].sort(sortFeis),
     feisToTake: [...feisSorted.feisToTake].sort(sortFeis),
     feisOngoing: [...feisSorted.feisOngoing].sort(sortFeis),
+    feisDone: [...feisSorted.feisDone].sort(sortFeis),
   };
 }
 

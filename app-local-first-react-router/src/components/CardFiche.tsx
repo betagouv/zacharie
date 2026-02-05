@@ -1,4 +1,4 @@
-import type { FeiDone } from '@api/src/types/fei';
+import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { useFeiSteps } from '@app/utils/fei-steps';
 import dayjs from 'dayjs';
@@ -12,7 +12,7 @@ import { CarcasseType } from '@prisma/client';
 import { abbreviations } from '@app/utils/count-carcasses';
 
 interface CardProps {
-  fei: FeiDone;
+  fei: FeiWithIntermediaires;
   onPrintSelect?: (feiNumber: string, selected: boolean) => void;
   isPrintSelected?: boolean;
   disabledBecauseOffline?: boolean;
