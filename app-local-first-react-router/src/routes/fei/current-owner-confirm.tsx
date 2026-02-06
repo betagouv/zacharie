@@ -1,6 +1,7 @@
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
+import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { useMemo, useState } from 'react';
 // import { getCurrentOwnerRoleLabel } from '@app/utils/get-user-roles-label';
 import {
@@ -22,6 +23,7 @@ import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import dayjs from 'dayjs';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
+import { useFeiSteps } from '@app/utils/fei-steps';
 // import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 
 export default function CurrentOwnerConfirm() {
@@ -37,6 +39,7 @@ export default function CurrentOwnerConfirm() {
   const users = useZustandStore((state) => state.users);
   const intermediaires = useFeiIntermediaires(fei.numero);
   const latestIntermediaire = intermediaires[0];
+  const { currentStepLabel, currentStepLabelShort, simpleStatus } = useFeiSteps(fei);
 
   const currentOwnerEntity = entities[fei.fei_current_owner_entity_id!];
   const nextOwnerEntity = entities[fei.fei_next_owner_entity_id!];
@@ -403,11 +406,15 @@ export default function CurrentOwnerConfirm() {
     <div className="bg-alt-blue-france pb-8">
       <CallOut
         title={
-          fei.fei_next_owner_user_id
-            ? '🫵  Cette fiche vous a été attribuée'
-            : fei.fei_next_owner_role === FeiOwnerRole.SVI
-              ? '🫵  Cette fiche a été attribuée à votre service'
-              : '🫵  Cette fiche a été attribuée à votre société'
+          <>
+            <Tag className="mr-2">{simpleStatus}</Tag>
+            🫵{' '}
+            {fei.fei_next_owner_user_id
+              ? 'Cette fiche vous a été attribuée'
+              : fei.fei_next_owner_role === FeiOwnerRole.SVI
+                ? 'Cette fiche a été attribuée à votre service'
+                : 'Cette fiche a été attribuée à votre société'}
+          </>
         }
         className="m-0 bg-white"
       >
@@ -516,9 +523,107 @@ export default function CurrentOwnerConfirm() {
           <div className="flex items-center gap-2">
             {/* <p className="m-0 text-sm">Il y a une erreur ?</p> */}
             <Button
-              // priority="tertiary no outline"
-              className="mt-0]"
-              // type="submit"
+              type="submit"
+              onClick={() =>
+                handlePriseEnCharge({
+                  sousTraite: false,
+                  action: 'current-owner-confirm-premier-detenteur',
+                })
+              }
+            >
+              Je prends en charge cette fiche et les carcasses associées
+            </Button>
+
+            {fei.fei_next_owner_role === FeiOwnerRole.SVI && (
+              <Button
+                type="submit"
+                onClick={() => {
+                  handlePriseEnCharge({
+                    sousTraite: false,
+                    action: 'current-owner-confirm-svi',
+                  });
+                }}
+              >
+                Je prends en charge cette fiche
+              </Button>
+            )}
+            {fei.fei_next_owner_role === FeiOwnerRole.ETG && user.roles.includes(UserRoles.ETG) && (
+              <>
+                {user.etg_role === UserEtgRoles.RECEPTION && (
+                  <>
+                    <Button
+                      type="submit"
+                      onClick={async () => {
+                        if (checkedTransportFromETG) {
+                          // FIXME: this is no good, those two actions should be one only
+                          // what is done here is 1. register the fact that the ETG has transported the carcasses
+                          // THEN 2. update the current owner to the ETG reception
+                          // what to do better: handle this process properly, all at once
+                          // why a timeout ? because I don't want to overwrite the first setState in zustand state
+                          // so I wait for the first setState to be "done" (I have no listener so timeout will be enough)
+                          // this is a hack, but it works
+                          await handlePriseEnCharge({
+                            sousTraite: false,
+                            action: 'current-owner-confirm-etg-transport-not-by-me',
+                            etgEmployeeTransportingToETG: true,
+                          });
+                          await new Promise((resolve) => setTimeout(resolve, 300));
+                        }
+                        handlePriseEnCharge({
+                          sousTraite: false,
+                          action: 'current-owner-confirm-etg-reception',
+                        });
+                      }}
+                    >
+                      Prendre en charge les carcasses
+                    </Button>
+                    {/* je ne peux pas sous-traiter une fiche si une autre entreprise a déjà décide de sous-traiter la fiche */}
+                    {needTransportFromETG && !notMyEntitySoutraite && (
+                      <Button
+                        priority="tertiary"
+                        type="button"
+                        onClick={() =>
+                          handlePriseEnCharge({
+                            sousTraite: true,
+                            action: 'current-owner-sous-traite-request',
+                          })
+                        }
+                      >
+                        Sous-traiter le transport
+                      </Button>
+                    )}
+                  </>
+                )}
+                {user.etg_role === UserEtgRoles.TRANSPORT && (
+                  <Button
+                    type="submit"
+                    onClick={() => {
+                      handlePriseEnCharge({
+                        sousTraite: false,
+                        action: 'current-owner-confirm-etg-transport-by-me',
+                        etgEmployeeTransportingToETG: true,
+                      });
+                    }}
+                  >
+                    Prendre en charge les carcasses
+                  </Button>
+                )}
+              </>
+            )}
+            {fei.fei_next_owner_role === FeiOwnerRole.COLLECTEUR_PRO && (
+              <Button
+                type="submit"
+                onClick={() => {
+                  handlePriseEnCharge({
+                    sousTraite: false,
+                    action: 'current-owner-confirm-collecteur-pro',
+                  });
+                }}
+              >
+                Je contrôle et transporte les carcasses
+              </Button>
+            )}
+            <Button
               priority="tertiary"
               type="button"
               onClick={() => {
@@ -543,7 +648,7 @@ export default function CurrentOwnerConfirm() {
                 });
               }}
             >
-              Je renvoie la fiche à l'expéditeur
+              Renvoyer la fiche à l'expéditeur
             </Button>
           </div>
         </>
