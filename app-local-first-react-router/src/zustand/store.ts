@@ -15,7 +15,7 @@ import type {
   LogResponse,
   UserConnexionResponse,
 } from '~/src/types/responses';
-import type { FeiDone, FeiWithIntermediaires } from '~/src/types/fei';
+import type { FeiWithIntermediaires } from '~/src/types/fei';
 import { create } from 'zustand';
 import { devtools, persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import dayjs from 'dayjs';
@@ -60,8 +60,6 @@ export const indexDBStorage: StateStorage = {
 export interface State {
   isOnline: boolean;
   dataIsSynced: boolean;
-  feisDoneNumeros: Array<FeiDone['numero']>;
-  feisDone: Record<FeiDone['numero'], FeiDone>;
   feis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires>;
   users: Record<UserForFei['id'], UserForFei>;
   entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
@@ -143,8 +141,6 @@ const initialState: State = {
   dataIsSynced: true,
   carcassesRegistry: [],
   lastUpdateCarcassesRegistry: 0,
-  feisDoneNumeros: [],
-  feisDone: {},
   logs: [],
   feis: {},
   users: {},
@@ -498,7 +494,6 @@ const useZustandStore = create<State & Actions>()(
               ([key]) =>
                 ![
                   'isOnline',
-                  // 'feiDone',
                   // fix the carcasses registry
                   // 'carcassesRegistry',
                   // 'lastUpdateCarcassesRegistry',

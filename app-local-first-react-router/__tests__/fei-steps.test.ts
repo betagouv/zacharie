@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { computeFeiSteps } from '../src/utils/fei-steps';
-import { FeiDone } from '../../api-express/src/types/fei';
+import { FeiWithIntermediaires } from '../../api-express/src/types/fei';
 import { FeiIntermediaire } from '../src/types/fei-intermediaire';
 import { User, UserRoles, FeiOwnerRole, UserEtgRoles } from '@prisma/client';
 
@@ -49,7 +49,7 @@ const createMockUser = (roles: UserRoles[], numero_cfei: string | null = null): 
   at_least_one_fei_treated: null,
 });
 
-const createMockFei = (overrides: Partial<FeiDone> = {}): FeiDone => ({
+const createMockFei = (overrides: Partial<FeiWithIntermediaires> = {}): FeiWithIntermediaires => ({
   id: 1,
   numero: 'FEI-2024-001',
   creation_context: 'test-context',
