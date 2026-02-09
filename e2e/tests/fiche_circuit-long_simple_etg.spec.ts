@@ -461,7 +461,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
     `);
   await page.getByRole("link", { name: "ZACH-20250707-QZ6E0-165242 À" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - heading "🫵 Cette fiche a été attribuée à votre société" [level=3]
+      - heading "À compléter 🫵 Cette fiche a été attribuée à votre société" [level=3]
       - paragraph:
         - button "Prendre en charge les carcasses"
         - button "Renvoyer la fiche à l'expéditeur"
