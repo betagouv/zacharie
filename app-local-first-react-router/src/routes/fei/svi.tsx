@@ -8,6 +8,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { createHistoryInput } from '@app/utils/create-history-entry';
@@ -21,20 +22,15 @@ export default function FEI_SVI() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);
-  const carcasses = useZustandStore((state) => state.carcasses);
-  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
   const fei = feis[params.fei_numero!];
+  const feiCarcasses = useCarcassesForFei(params.fei_numero);
   const entities = useZustandStore((state) => state.entities);
   const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
   const allCarcassesForFei = useMemo(
-    () =>
-      (carcassesIdsByFei[params.fei_numero!] || [])
-        .map((cId) => carcasses[cId])
-        .sort(sortCarcassesApproved)
-        .filter((carcasse) => !carcasse.deleted_at),
-    [carcassesIdsByFei, params.fei_numero, carcasses],
+    () => feiCarcasses.sort(sortCarcassesApproved),
+    [feiCarcasses],
   );
 
   const carcassesDejaRefusees = useMemo(

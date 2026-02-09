@@ -25,6 +25,7 @@ import type { FeiAndCarcasseAndIntermediaireIds, FeiIntermediaire } from '@app/t
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import FEIDonneesDeChasse from './donnees-de-chasse';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import Section from '@app/components/Section';
@@ -140,7 +141,6 @@ function FEICurrentIntermediaireContent({
   const addLog = useZustandStore((state) => state.addLog);
   const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
   const feis = useZustandStore((state) => state.feis);
-  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
   const carcasses = useZustandStore((state) => state.carcasses);
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useZustandStore((state) => state.etgsIds);
@@ -150,12 +150,12 @@ function FEICurrentIntermediaireContent({
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const fei = feis[params.fei_numero!];
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+  const allFeiCarcasses = useCarcassesForFei(fei.numero);
 
   console.log({ intermediaires });
   console.log('intermediaire created_at', intermediaire?.created_at);
 
-  const originalCarcasses = (carcassesIdsByFei[params.fei_numero!] || [])
-    .map((cId) => carcasses[cId])
+  const originalCarcasses = allFeiCarcasses
     .sort((a, b) => {
       if (a.svi_carcasse_status === CarcasseStatus.SANS_DECISION) {
         return -1;
@@ -164,8 +164,7 @@ function FEICurrentIntermediaireContent({
         return 1;
       }
       return a.numero_bracelet.localeCompare(b.numero_bracelet);
-    })
-    .filter((c) => !c.deleted_at);
+    });
 
   const [showRefusedCarcasses, setShowRefusedCarcasses] = useState(false);
 

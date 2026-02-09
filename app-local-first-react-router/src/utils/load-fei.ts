@@ -143,7 +143,6 @@ export function setFeiInStore(fei: FeiPopulated) {
   }
 
   const carcasses = fei.Carcasses;
-  prevState.carcassesIdsByFei[fei.numero] = carcasses.map((c) => c.zacharie_carcasse_id);
 
   for (const carcasse of carcasses) {
     const localCarcasse = prevState.carcasses[carcasse.zacharie_carcasse_id];
