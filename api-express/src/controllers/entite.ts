@@ -360,16 +360,27 @@ router.post(
         return next(error);
       }
 
-      let createdEntity = await prisma.entity.create({ data });
-
-      createdEntity = await updateOrCreateBrevoCompany(createdEntity);
-
-      let ownerUser = await prisma.user.findUnique({
+      // Vérifier si l'email est déjà utilisé par un compte existant AVANT de créer l'entité
+      const existingUser = await prisma.user.findUnique({
         where: {
           email: body[Prisma.UserScalarFieldEnum.email],
         },
       });
-      if (!ownerUser) {
+
+      if (existingUser && existingUser.roles.length > 0) {
+        const error = new Error(
+          "Cette adresse email est déjà associée à un compte Zacharie existant. Veuillez utiliser une autre adresse email ou contacter l'utilisateur pour qu'il ajoute lui-même cette entité à son compte.",
+        );
+        res.status(409);
+        return next(error);
+      }
+
+      let createdEntity = await prisma.entity.create({ data });
+
+      createdEntity = await updateOrCreateBrevoCompany(createdEntity);
+
+      let ownerUser: User;
+      if (!existingUser) {
         ownerUser = await prisma.user.create({
           data: {
             id: await createUserId(),
@@ -380,13 +391,15 @@ router.post(
           },
         });
       } else {
-        if (!ownerUser.roles.includes(body[Prisma.EntityScalarFieldEnum.type] as UserRoles)) {
-          ownerUser.roles.push(body[Prisma.EntityScalarFieldEnum.type] as UserRoles);
-          await prisma.user.update({
-            where: { id: ownerUser.id },
-            data: { roles: ownerUser.roles },
-          });
-        }
+        // L'utilisateur existe mais n'a pas de rôles (compte vide)
+        ownerUser = await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            roles: [body[Prisma.EntityScalarFieldEnum.type] as UserRoles],
+            nom_de_famille: body[Prisma.UserScalarFieldEnum.nom_de_famille],
+            prenom: body[Prisma.UserScalarFieldEnum.prenom],
+          },
+        });
       }
 
       await prisma.entityAndUserRelations.create({

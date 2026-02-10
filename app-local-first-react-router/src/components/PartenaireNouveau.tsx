@@ -12,6 +12,7 @@ import API from '@app/services/api';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import InputNotEditable from '@app/components/InputNotEditable';
 import useZustandStore from '@app/zustand/store';
+import { toast } from 'react-toastify';
 
 const empytEntitiesByTypeAndId: EntitiesById = {};
 
@@ -51,9 +52,9 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
 
   const newEntity = newEntityNomDUsage
     ? ({
-        nom_d_usage: newEntityNomDUsage,
-        id: 'nouvelle',
-      } as (typeof remainingEntities)[number])
+      nom_d_usage: newEntityNomDUsage,
+      id: 'nouvelle',
+    } as (typeof remainingEntities)[number])
     : undefined;
   const selectOptions = newEntity ? [newEntity, ...remainingEntities] : remainingEntities;
   const selectValue = newEntityNomDUsage
@@ -111,6 +112,8 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
               },
             },
           });
+        } else {
+          toast.error(response.error || 'Une erreur est survenue lors de la création du partenaire');
         }
       } else {
         API.post({
@@ -140,6 +143,8 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
                   },
                 },
               });
+            } else {
+              toast.error(res.error || 'Une erreur est survenue lors du rattachement au partenaire');
             }
           });
       }
