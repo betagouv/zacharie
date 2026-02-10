@@ -362,7 +362,7 @@ export default function MonEntreprise() {
                   // @ts-expect-error priority is not typed
                   buttons={[
                     {
-                      children: isFromProfil ? 'Enregistrer et Continuer' : 'Enregistrer',
+                      children: isFromProfil ? 'Enregistrer et continuer' : 'Enregistrer',
                       disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
                       type: 'button',
                       nativeButtonProps: {
@@ -375,15 +375,15 @@ export default function MonEntreprise() {
                     },
                     ...(isFromProfil
                       ? [
-                          {
-                            children: 'Modifier mes coordonnées',
-                            linkProps: {
-                              to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
-                              href: '#',
-                            },
-                            priority: 'secondary',
+                        {
+                          children: 'Modifier mes coordonnées',
+                          linkProps: {
+                            to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
+                            href: '#',
                           },
-                        ]
+                          priority: 'secondary',
+                        },
+                      ]
                       : []),
                   ]}
                 />
@@ -484,13 +484,13 @@ function ListAndSelectEntities({
                 value={
                   entityId
                     ? {
-                        label: remainingEntities
-                          .filter((entity) => entity.id === entityId)
-                          .map(
-                            (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
-                          )?.[0],
-                        value: entityId,
-                      }
+                      label: remainingEntities
+                        .filter((entity) => entity.id === entityId)
+                        .map(
+                          (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
+                        )?.[0],
+                      value: entityId,
+                    }
                     : null
                 }
                 getOptionLabel={(f) => f.label!}

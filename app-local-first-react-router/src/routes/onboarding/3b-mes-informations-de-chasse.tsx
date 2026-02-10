@@ -129,7 +129,7 @@ export default function OnboardingMesInformationsDeChasse() {
               <ButtonsGroup
                 buttons={[
                   {
-                    children: 'Enregistrer et Continuer',
+                    children: 'Enregistrer et continuer',
                     disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
                     type: 'button',
                     nativeButtonProps: {

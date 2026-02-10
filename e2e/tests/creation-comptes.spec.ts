@@ -24,7 +24,7 @@ test("Création de compte examinateur initial", async ({ page }) => {
   await page.getByRole("textbox", { name: "Code postal * 5 chiffres" }).fill("75000");
   await page.getByRole("textbox", { name: "Ville ou commune * Exemple :" }).fill("Paris");
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Oui").first().click();
   await page.getByRole("textbox", { name: "Numéro d'attestation de" }).fill("CFEI-075-00-111");
   await page.getByRole("button", { name: "Continuer" }).click();
@@ -44,7 +44,7 @@ test("Création de compte premier détenteur", async ({ page }) => {
   await page.getByRole("textbox", { name: "Code postal * 5 chiffres" }).fill("75000");
   await page.getByRole("textbox", { name: "Ville ou commune * Exemple :" }).fill("Paris");
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Non").click();
   await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
@@ -69,7 +69,7 @@ test("Création de compte collecteur pro", async ({ page }) => {
   await page.getByRole("textbox", { name: "Code postal 5 chiffres" }).fill("75000");
   await page.getByRole("textbox", { name: "Ville ou commune Exemple :" }).fill("Paris");
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
     - heading "Mon Collecteur Professionnel Indépendant" [level=3]
     - text: /Collecteur Pro 1 Collecteur Professionnel Indépendant \\d+ \\d+ Paris/
@@ -80,7 +80,7 @@ test("Création de compte collecteur pro", async ({ page }) => {
       "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
     )
     .click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await expect(page.locator("#user_roles_form")).toMatchAriaSnapshot(`- heading "Activez les notifications" [level=1]`);
   await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
@@ -105,7 +105,7 @@ test("Création de compte établissement de traitement du gibier", async ({ page
   await page.getByRole("textbox", { name: "Code postal 5 chiffres" }).fill("75000");
   await page.getByRole("textbox", { name: "Ville ou commune Exemple :" }).fill("Paris");
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
     - heading "Mon Établissement de Traitement du Gibier sauvage (ETG)" [level=3]
     - text: /ETG 1 Etablissement de Traitement du Gibier sauvage \\d+ \\d+ Paris/
@@ -121,7 +121,7 @@ test("Création de compte établissement de traitement du gibier", async ({ page
       "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
     )
     .click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await expect(page.locator("#user_roles_form")).toMatchAriaSnapshot(`- heading "Activez les notifications" [level=1]`);
   await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
@@ -146,13 +146,13 @@ test("Création de compte SVI", async ({ page }) => {
   await page.getByRole("textbox", { name: "Code postal 5 chiffres" }).fill("75000");
   await page.getByRole("textbox", { name: "Ville ou commune Exemple :" }).fill("Paris");
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
     - heading "Mon Service Vétérinaire d'Inspection (SVI)" [level=3]
     - text: /SVI 1 Service Vétérinaire d'Inspection \\d+ \\d+ Paris/
     - button "Retirer"
     `);
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await expect(page.locator("#user_roles_form")).toMatchAriaSnapshot(`- heading "Activez les notifications" [level=1]`);
   await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
@@ -172,7 +172,7 @@ test("Examinateur initial ajoute une association de chasse depuis son profil", a
   await page.getByRole("textbox", { name: "Code postal * 5 chiffres" }).fill("75000");
   await page.getByRole("textbox", { name: "Ville ou commune * Exemple :" }).fill("Paris");
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Oui").first().click();
   await page.getByRole("textbox", { name: "Numéro d'attestation de" }).fill("CFEI-075-00-222");
   await page.getByRole("button", { name: "Continuer" }).click();
@@ -218,7 +218,7 @@ test("Examinateur initial ajoute une chambre froide (CCG) depuis son profil", as
   await page.getByRole("textbox", { name: "Code postal * 5 chiffres" }).fill("75000");
   await page.getByRole("textbox", { name: "Ville ou commune * Exemple :" }).fill("Paris");
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Oui").first().click();
   await page.getByRole("textbox", { name: "Numéro d'attestation de" }).fill("CFEI-075-00-333");
   await page.getByRole("button", { name: "Continuer" }).click();
@@ -256,7 +256,7 @@ test("Premier détenteur devient examinateur initial depuis son profil", async (
   await page.getByRole("textbox", { name: "Code postal * 5 chiffres" }).fill("75000");
   await page.getByRole("textbox", { name: "Ville ou commune * Exemple :" }).fill("Paris");
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Non").click(); // Not trained initially
   await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
@@ -293,7 +293,7 @@ test("Premier détenteur ajoute association et CCG depuis son profil", async ({ 
   await page.getByRole("textbox", { name: "Code postal * 5 chiffres" }).fill("75000");
   await page.getByRole("textbox", { name: "Ville ou commune * Exemple :" }).fill("Paris");
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
-  await page.getByRole("button", { name: "Enregistrer et Continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Non").click();
   await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
