@@ -231,7 +231,7 @@ export default function CardFiche({
               <CommuneIcon />
               <p
                 className={[
-                  'line-clamp-2 text-sm capitalize',
+                  'line-clamp-2 text-sm',
                   fei.commune_mise_a_mort ? 'text-black' : 'text-neutral-400',
                 ].join(' ')}
               >
