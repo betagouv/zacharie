@@ -1,4 +1,4 @@
-import type { FeisResponse, FeisDoneResponse, FeiRefreshResponse } from '@api/src/types/responses';
+import type { FeisResponse, FeiRefreshResponse } from '@api/src/types/responses';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import useZustandStore from '@app/zustand/store';
 import { setFeiInStore } from '@app/utils/load-fei';
@@ -15,12 +15,6 @@ export async function loadFeis() {
   useZustandStore.setState({ dataIsSynced: false });
 
   try {
-    const responseDone = await API.get({ path: 'fei/done' }).then((res) => res as FeisDoneResponse);
-
-    if (!responseDone.ok) {
-      return;
-    }
-
     const response = await API.get({ path: 'fei' }).then((res) => res as FeisResponse);
 
     if (!response.ok) {
@@ -36,7 +30,7 @@ export async function loadFeis() {
       ...response.data.feisOngoing,
       ...response.data.feisToTake,
       ...response.data.feisUnderMyResponsability,
-      ...responseDone.data.feisDone,
+      ...response.data.feisDone,
     ]) {
       const localFei = useZustandStore.getState().feis[fei.numero];
       if (!localFei && !fei.deleted_at) {
@@ -66,9 +60,14 @@ export async function loadFeis() {
     useZustandStore.setState({ feis: allFeis });
 
     if (feisNumerosToLoadAgain.length > 0) {
-      const feisRefreshed = await API.post({ path: 'fei/refresh', body: { numeros: feisNumerosToLoadAgain } }).then((res) => res as FeiRefreshResponse);
+      const feisRefreshed = await API.post({
+        path: 'fei/refresh',
+        body: { numeros: feisNumerosToLoadAgain },
+      }).then((res) => res as FeiRefreshResponse);
       if (!feisRefreshed.ok) {
-        alert(`Un problème est survenu lors du chargement de l'application: ${feisRefreshed.error}. Veuillez recharger la page. Si le problème persiste, veuillez contacter l'équipe technique.`)
+        alert(
+          `Un problème est survenu lors du chargement de l'application: ${feisRefreshed.error}. Veuillez recharger la page. Si le problème persiste, veuillez contacter l'équipe technique.`,
+        );
         return;
       }
       for (const fei of feisRefreshed.data.feis) {

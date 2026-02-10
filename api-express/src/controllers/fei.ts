@@ -1045,7 +1045,7 @@ router.get(
       if (!req.user.activated) {
         res.status(400).send({
           ok: false,
-          data: { user: req.user, feisUnderMyResponsability: [], feisToTake: [], feisOngoing: [] },
+          data: { user: req.user, feisUnderMyResponsability: [], feisToTake: [], feisOngoing: [], feisDone: [] },
           error: "Le compte n'est pas activé",
         });
         return;
@@ -1246,6 +1246,95 @@ router.get(
         },
       });
 
+      const feisDone = await prisma.fei.findMany({
+        where: {
+          deleted_at: null,
+          AND: [
+            {
+              OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
+            },
+            {
+              OR: [
+                { examinateur_initial_user_id: user.id },
+                {
+                  premier_detenteur_user_id: user.id,
+                },
+                {
+                  FeiPremierDetenteurEntity: {
+                    EntityRelationsWithUsers: {
+                      some: {
+                        owner_id: user.id,
+                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                        status: {
+                          in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                        },
+                      },
+                    },
+                  },
+                },
+                {
+                  FeiSoustraiteByEntity: {
+                    EntityRelationsWithUsers: {
+                      some: {
+                        owner_id: user.id,
+                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                        status: {
+                          in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                        },
+                      },
+                    },
+                  },
+                },
+                { svi_user_id: user.id },
+                {
+                  CarcasseIntermediaire: {
+                    some: {
+                      intermediaire_user_id: user.id,
+                    },
+                  },
+                },
+                {
+                  CarcasseIntermediaire: {
+                    some: {
+                      CarcasseIntermediaireEntity: {
+                        EntityRelationsWithUsers: {
+                          some: {
+                            owner_id: user.id,
+                            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                            status: {
+                              in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                {
+                  FeiSviEntity: {
+                    EntityRelationsWithUsers: {
+                      some: {
+                        owner_id: user.id,
+                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                        status: {
+                          in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                        },
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        include: {
+          CarcasseIntermediaire: true,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+      });
+
       res.status(200).send({
         ok: true,
         data: {
@@ -1253,6 +1342,19 @@ router.get(
           feisUnderMyResponsability,
           feisToTake,
           feisOngoing,
+          feisDone: feisDone.sort((a, b) => {
+            const aDate =
+              a.automatic_closed_at ||
+              a.intermediaire_closed_at ||
+              a.svi_closed_at ||
+              a.examinateur_initial_date_approbation_mise_sur_le_marche;
+            const bDate =
+              b.automatic_closed_at ||
+              b.intermediaire_closed_at ||
+              b.svi_closed_at ||
+              b.examinateur_initial_date_approbation_mise_sur_le_marche;
+            return bDate < aDate ? -1 : 1;
+          }),
         },
         error: '',
       });
