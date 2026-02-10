@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
-import { CarcasseType,  UserRoles } from '@prisma/client';
+import { CarcasseType, UserRoles } from '@prisma/client';
 import { abbreviations } from '@app/utils/count-carcasses';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
@@ -136,7 +136,7 @@ export default function TableauDeBordIndex() {
 
   const isOnlySvi =
     user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
-  
+
   const { feiActivesForSvi, feisDoneForSvi } = feisDone.reduce(
     (acc, fei) => {
       if (fei.automatic_closed_at) {
@@ -770,7 +770,7 @@ function FeisTableRow({
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1 text-sm">
-          <span className="capitalize">
+          <span className="">
             {fei.commune_mise_a_mort
               ?.split(' ')
               .slice(1)
