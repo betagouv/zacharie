@@ -22,6 +22,10 @@ import {
   getFeiAndCarcasseAndIntermediaireIds,
 } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiAndCarcasseAndIntermediaireIds, FeiIntermediaire } from '@app/types/fei-intermediaire';
+import {
+  useCarcassesIntermediairesForIntermediaire,
+  useFeiIntermediaires,
+} from '@app/utils/get-carcasses-intermediaires';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -41,11 +45,10 @@ interface Props {
 export default function FEICurrentIntermediaire(props: Props) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
   const fei = feis[params.fei_numero!];
-  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+  const intermediaires = useFeiIntermediaires(fei.numero);
 
   const [intermediaireIndex, setIntermediaireIndex] = useState(() => {
     const userWasIntermediaire = intermediaires.find((intermediaire) =>
@@ -138,18 +141,13 @@ function FEICurrentIntermediaireContent({
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
   const updateFei = useZustandStore((state) => state.updateFei);
   const addLog = useZustandStore((state) => state.addLog);
-  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
   const feis = useZustandStore((state) => state.feis);
   const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
   const carcasses = useZustandStore((state) => state.carcasses);
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useZustandStore((state) => state.etgsIds);
-  const carcassesIntermediaireIdsByIntermediaire = useZustandStore(
-    (state) => state.carcassesIntermediaireIdsByIntermediaire,
-  );
-  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const fei = feis[params.fei_numero!];
-  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+  const intermediaires = useFeiIntermediaires(fei.numero);
 
   console.log({ intermediaires });
   console.log('intermediaire created_at', intermediaire?.created_at);
@@ -183,11 +181,9 @@ function FEICurrentIntermediaireContent({
     }
   }, [intermediaire, priseEnChargeAt]);
 
+  const allIntermediaireCarcasses = useCarcassesIntermediairesForIntermediaire(feiAndIntermediaireIds);
   const intermediaireCarcasses = useMemo(() => {
-    const carcassesIntermediaireIds =
-      (!!feiAndIntermediaireIds && carcassesIntermediaireIdsByIntermediaire[feiAndIntermediaireIds]) || [];
-    return carcassesIntermediaireIds
-      .map((id) => carcassesIntermediaireById[id])
+    return allIntermediaireCarcasses
       .sort((carcasseIntermediaireA, carcasseIntermediaireB) => {
         // sort by espece then by numero_bracelet
         const carcasseA = carcasses[carcasseIntermediaireA.zacharie_carcasse_id]!;
@@ -200,13 +196,8 @@ function FEICurrentIntermediaireContent({
         }
         return carcasseA.type!.localeCompare(carcasseB.type!);
       })
-      .filter((c) => c != null && !c.deleted_at && !carcasses[c.zacharie_carcasse_id]?.deleted_at);
-  }, [
-    feiAndIntermediaireIds,
-    carcassesIntermediaireIdsByIntermediaire,
-    carcassesIntermediaireById,
-    carcasses,
-  ]);
+      .filter((c) => c != null && !carcasses[c.zacharie_carcasse_id]?.deleted_at);
+  }, [allIntermediaireCarcasses, carcasses]);
 
   const warnedForIncoherentNumberOfCarcasses = useRef(false);
 
@@ -222,17 +213,15 @@ function FEICurrentIntermediaireContent({
 
   useEffect(() => {
     if (intermediaire?.id) {
-      const carcassesIntermediaireIds =
-        (!!feiAndIntermediaireIds && carcassesIntermediaireIdsByIntermediaire[feiAndIntermediaireIds]) || [];
       const theoreticalNumberOfCarcassesToCheck = originalCarcasses.length - carcassesDejaRefusees.length;
       if (
-        carcassesIntermediaireIds.length !== theoreticalNumberOfCarcassesToCheck &&
+        allIntermediaireCarcasses.length !== theoreticalNumberOfCarcassesToCheck &&
         !warnedForIncoherentNumberOfCarcasses.current
       ) {
         warnedForIncoherentNumberOfCarcasses.current = true;
         capture(new Error('Incoherent number of carcasses'), {
           extra: {
-            carcassesIntermediaireIds,
+            allIntermediaireCarcassesLength: allIntermediaireCarcasses.length,
             originalCarcassesLength: originalCarcasses.length,
             theoreticalNumberOfCarcassesToCheck,
             intermediaireCarcassesLength: intermediaireCarcasses.length,
@@ -248,8 +237,7 @@ function FEICurrentIntermediaireContent({
   }, [
     carcassesDejaRefusees,
     carcassesDejaRefusees.length,
-    carcassesIntermediaireIdsByIntermediaire,
-    feiAndIntermediaireIds,
+    allIntermediaireCarcasses,
     intermediaireCarcasses,
     originalCarcasses,
     fei.numero,

@@ -19,13 +19,13 @@ import Chargement from '@app/components/Chargement';
 import Button from '@codegouvfr/react-dsfr/Button';
 import useExportCarcasses from '@app/utils/export-carcasses';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
+import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function RegistreCarcasses() {
   const user = useMostFreshUser('registre-carcasses')!;
   const isSvi = user.roles.includes(UserRoles.SVI);
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
-  const intermediairesByFei = useZustandStore((state) => state.intermediairesByFei);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const entities = useZustandStore((state) => state.entities);
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
@@ -130,7 +130,7 @@ export default function RegistreCarcasses() {
   useSaveScroll('registre-carcasses-scrollY');
 
   const getCollecteurName = (carcasse: (typeof carcassesRegistry)[number]): string | null => {
-    const intermediaires = intermediairesByFei[carcasse.fei_numero] || [];
+    const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, carcasse.fei_numero);
     const collecteursPro: string[] = [];
 
     for (const intermediaire of intermediaires) {

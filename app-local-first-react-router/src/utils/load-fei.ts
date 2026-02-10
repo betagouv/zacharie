@@ -2,15 +2,8 @@ import dayjs from 'dayjs';
 import type { FeiResponse } from '@api/src/types/responses';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import useZustandStore from '@app/zustand/store';
-import {
-  getFeiAndCarcasseAndIntermediaireIds,
-  getFeiAndIntermediaireIds,
-} from '@app/utils/get-carcasse-intermediaire-id';
-import type {
-  FeiAndCarcasseAndIntermediaireIds,
-  FeiAndIntermediaireIds,
-  FeiIntermediaire,
-} from '@app/types/fei-intermediaire';
+import { getFeiAndCarcasseAndIntermediaireIds } from '@app/utils/get-carcasse-intermediaire-id';
+import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/fei-intermediaire';
 import API from '@app/services/api';
 import { FeiPopulated } from '@api/src/types/fei';
 
@@ -168,12 +161,7 @@ export function setFeiInStore(fei: FeiPopulated) {
   const users = prevState.users;
   const entities = prevState.entities;
 
-  const intermediairesByFei: Record<FeiIntermediaire['id'], FeiIntermediaire> = {};
-
   for (const carcasseIntermediaire of carcassesIntermediaires || []) {
-    const carcassesIntermediairesIdsByCarcasse = prevState.carcassesIntermediairesIdsByCarcasse;
-    const carcassesIntermediaireIdsByIntermediaire = prevState.carcassesIntermediaireIdsByIntermediaire;
-
     if (!users[carcasseIntermediaire.intermediaire_user_id]) {
       const intermediaireUser = carcasseIntermediaire.CarcasseIntermediaireUser;
       prevState.users[intermediaireUser.id] = intermediaireUser;
@@ -188,50 +176,14 @@ export function setFeiInStore(fei: FeiPopulated) {
       relationStatus: existingEntity?.relationStatus ?? undefined,
     } satisfies EntityWithUserRelation;
 
-    if (!intermediairesByFei[carcasseIntermediaire.intermediaire_id]) {
-      const intermediaire = {
-        id: carcasseIntermediaire.intermediaire_id,
-        fei_numero: fei.numero,
-        intermediaire_user_id: carcasseIntermediaire.intermediaire_user_id,
-        intermediaire_role: carcasseIntermediaire.intermediaire_role,
-        intermediaire_entity_id: carcasseIntermediaire.intermediaire_entity_id,
-        created_at: carcasseIntermediaire.created_at,
-        prise_en_charge_at: carcasseIntermediaire.prise_en_charge_at,
-        intermediaire_depot_type: carcasseIntermediaire.intermediaire_depot_type,
-        intermediaire_depot_entity_id: carcasseIntermediaire.intermediaire_depot_entity_id,
-        intermediaire_prochain_detenteur_role_cache:
-          carcasseIntermediaire.intermediaire_prochain_detenteur_role_cache,
-        intermediaire_prochain_detenteur_id_cache:
-          carcasseIntermediaire.intermediaire_prochain_detenteur_id_cache,
-      };
-      intermediairesByFei[carcasseIntermediaire.intermediaire_id] = intermediaire;
-    }
-
-    const carcasseId = carcasseIntermediaire.zacharie_carcasse_id;
-    const feiAndIntermediaireId = getFeiAndIntermediaireIds(carcasseIntermediaire) as FeiAndIntermediaireIds;
     const feiAndCarcasseAndIntermediaireId = getFeiAndCarcasseAndIntermediaireIds(
       carcasseIntermediaire,
     ) as FeiAndCarcasseAndIntermediaireIds;
-
-    const existingIdsByCarcasse =
-      carcassesIntermediairesIdsByCarcasse[carcasseId] || ([] as Array<FeiAndCarcasseAndIntermediaireIds>);
-    const idsByCarcasse = new Set(existingIdsByCarcasse);
-    const existingIdsByFeiAndIntermediaire =
-      carcassesIntermediaireIdsByIntermediaire[feiAndIntermediaireId] ||
-      ([] as Array<FeiAndCarcasseAndIntermediaireIds>);
-    const idsByFeiAndIntermediaire = new Set(existingIdsByFeiAndIntermediaire);
-
-    idsByCarcasse.add(feiAndCarcasseAndIntermediaireId);
-    idsByFeiAndIntermediaire.add(feiAndCarcasseAndIntermediaireId);
 
     const localCarcasseIntermediaire = prevState.carcassesIntermediaireById[feiAndCarcasseAndIntermediaireId];
 
     if (!localCarcasseIntermediaire) {
       prevState.carcassesIntermediaireById[feiAndCarcasseAndIntermediaireId] = carcasseIntermediaire;
-      prevState.carcassesIntermediaireIdsByIntermediaire[feiAndIntermediaireId] = [
-        ...idsByFeiAndIntermediaire,
-      ];
-      prevState.carcassesIntermediairesIdsByCarcasse[carcasseId] = [...idsByCarcasse];
     } else {
       const newestCarcasseIntermediaire =
         dayjs(localCarcasseIntermediaire.updated_at).diff(carcasseIntermediaire.updated_at) > 0
@@ -246,16 +198,8 @@ export function setFeiInStore(fei: FeiPopulated) {
         ...newestCarcasseIntermediaire,
         is_synced: true,
       };
-      prevState.carcassesIntermediaireIdsByIntermediaire[feiAndIntermediaireId] = [
-        ...idsByFeiAndIntermediaire,
-      ];
-      prevState.carcassesIntermediairesIdsByCarcasse[carcasseId] = [...idsByCarcasse];
     }
   }
-
-  prevState.intermediairesByFei[fei.numero] = Object.values(intermediairesByFei).sort((a, b) =>
-    dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1,
-  );
 
   useZustandStore.setState(prevState, true);
 }

@@ -19,6 +19,7 @@ import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
+import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import dayjs from 'dayjs';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 // import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
@@ -34,8 +35,7 @@ export default function CurrentOwnerConfirm() {
   const fei = feis[params.fei_numero!];
   const entities = useZustandStore((state) => state.entities);
   const users = useZustandStore((state) => state.users);
-  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
-  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+  const intermediaires = useFeiIntermediaires(fei.numero);
   const latestIntermediaire = intermediaires[0];
 
   const currentOwnerEntity = entities[fei.fei_current_owner_entity_id!];

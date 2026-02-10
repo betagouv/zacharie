@@ -18,6 +18,7 @@ import DeleteFei from './delete-fei';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import CircuitCourt from './circuirt-court';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
+import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 
 export default function FeiLoader() {
   const params = useParams();
@@ -52,8 +53,7 @@ function Fei() {
   const isCircuitCourt = useIsCircuitCourt();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
-  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
-  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+  const intermediaires = useFeiIntermediaires(fei.numero);
 
   const entities = useZustandStore((state) => state.entities);
 

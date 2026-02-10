@@ -6,6 +6,7 @@ import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { loadFei } from '@app/utils/load-fei';
@@ -52,12 +53,9 @@ export function SviInspectionCarcasse() {
   const navigate = useNavigate();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
-  const getCarcassesIntermediairesForCarcasse = useZustandStore(
-    (state) => state.getCarcassesIntermediairesForCarcasse,
-  );
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id!];
-  const carcassesIntermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
+  const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
   const entities = useZustandStore((state) => state.entities);
 
   const commentairesIntermediaires = useMemo(() => {

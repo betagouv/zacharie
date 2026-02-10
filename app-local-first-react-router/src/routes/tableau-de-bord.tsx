@@ -14,6 +14,7 @@ import { useNavigate, Link } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
+import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
@@ -650,9 +651,7 @@ function FeisTableRow({
   const isCircuitCourt = useIsCircuitCourt();
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
-  const getCarcassesIntermediairesForCarcasse = useZustandStore(
-    (state) => state.getCarcassesIntermediairesForCarcasse,
-  );
+  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
   // Notifier le parent de la visibilité de cette ligne
   useEffect(() => {
@@ -703,7 +702,7 @@ function FeisTableRow({
           );
           if (carcasse) {
             const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
-            const intermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id!);
+            const intermediaires = filterCarcassesIntermediairesForCarcasse(carcassesIntermediaireById, carcasse.zacharie_carcasse_id!);
             const latestIntermediaire = intermediaires[0];
             const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
 
@@ -719,7 +718,7 @@ function FeisTableRow({
       lines.push(enrichedLine);
     }
     return lines;
-  }, [carcassesAcceptées, carcasses, carcassesIdsByFei, fei.numero, getCarcassesIntermediairesForCarcasse]);
+  }, [carcassesAcceptées, carcasses, carcassesIdsByFei, fei.numero, carcassesIntermediaireById]);
 
   // Filtrer selon le statut si un filtre est défini - APRÈS tous les hooks
   if (filter && filter !== 'Toutes les fiches' && filter !== simpleStatus) {
