@@ -23,7 +23,7 @@ import API from '@app/services/api';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { useFeiSteps } from '@app/utils/fei-steps';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
-import type { FeiDone } from '@api/src/types/fei';
+import type { FeiWithIntermediaires } from '@api/src/types/fei';
 
 async function loadData() {
   // FIXME: await syncData is useless, as syncData queues stuff - so there will be bugs
@@ -91,12 +91,10 @@ function OnboardingChasseInfoBanner() {
 export default function TableauDeBordIndex() {
   const navigate = useNavigate();
   const user = useMostFreshUser('tableau de bord index')!;
-  const feisDoneNumeros = useZustandStore((state) => state.feisDoneNumeros);
-  const feisDone = useZustandStore((state) => state.feisDone);
   const entities = useZustandStore((state) => state.entities);
   const allEtgIds = useZustandStore((state) => state.etgsIds);
   const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
-  const { feisOngoing, feisToTake, feisUnderMyResponsability } = getFeisSorted();
+  const { feisOngoing, feisToTake, feisUnderMyResponsability, feisDone } = getFeisSorted();
   const { onExportToXlsx, onExportSimplifiedToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
@@ -139,14 +137,13 @@ export default function TableauDeBordIndex() {
   const isOnlySvi =
     user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
   
-  const { feiActivesForSvi, feisDoneForSvi } = feisDoneNumeros.reduce(
-    (acc, feiNumero) => {
-      const fei = feisDone[feiNumero]!;
+  const { feiActivesForSvi, feisDoneForSvi } = feisDone.reduce(
+    (acc, fei) => {
       if (fei.automatic_closed_at) {
         acc.feisDoneForSvi.push(fei);
       } else if (fei.svi_closed_at) {
         acc.feisDoneForSvi.push(fei);
-      } else if (dayjs(fei!.svi_assigned_at).isBefore(dayjs().subtract(10, 'days'))) {
+      } else if (dayjs(fei.svi_assigned_at).isBefore(dayjs().subtract(10, 'days'))) {
         acc.feisDoneForSvi.push(fei);
       } else {
         acc.feiActivesForSvi.push(fei);
@@ -154,8 +151,8 @@ export default function TableauDeBordIndex() {
       return acc;
     },
     {
-      feiActivesForSvi: [] as Array<(typeof feisDone)[string]>,
-      feisDoneForSvi: [] as Array<(typeof feisDone)[string]>,
+      feiActivesForSvi: [] as Array<FeiWithIntermediaires>,
+      feisDoneForSvi: [] as Array<FeiWithIntermediaires>,
     },
   );
 
@@ -502,8 +499,7 @@ export default function TableauDeBordIndex() {
                     />
                   );
                 })}
-                {feisDoneNumeros.map((feiNumero) => {
-                  const fei = feisDone[feiNumero]!;
+                {feisDone.map((fei) => {
                   if (!fei) return null;
                   return (
                     <CardFiche
@@ -644,7 +640,7 @@ function FeisTableRow({
   filter,
   onVisibilityChange,
 }: {
-  fei: FeiDone;
+  fei: FeiWithIntermediaires;
   isSelected: boolean;
   onPrintSelect?: (feiNumber: string, selected: boolean) => void;
   navigate: ReturnType<typeof useNavigate>;

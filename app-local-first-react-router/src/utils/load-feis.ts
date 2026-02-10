@@ -1,5 +1,5 @@
 import type { FeisResponse, FeisDoneResponse, FeiRefreshResponse } from '@api/src/types/responses';
-import type { FeiDone, FeiWithIntermediaires } from '@api/src/types/fei';
+import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import useZustandStore from '@app/zustand/store';
 import { setFeiInStore } from '@app/utils/load-fei';
 import dayjs from 'dayjs';
@@ -20,19 +20,6 @@ export async function loadFeis() {
     if (!responseDone.ok) {
       return;
     }
-
-    const feisDone = responseDone.data.feisDone.reduce(
-      (acc, fei) => {
-        acc[fei.numero] = fei;
-        return acc;
-      },
-      {} as Record<FeiDone['numero'], FeiDone>,
-    );
-
-    useZustandStore.setState({
-      feisDone,
-      feisDoneNumeros: Object.keys(feisDone),
-    });
 
     const response = await API.get({ path: 'fei' }).then((res) => res as FeisResponse);
 
