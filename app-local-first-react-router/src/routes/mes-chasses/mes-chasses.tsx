@@ -81,14 +81,14 @@ export default function MesChasses() {
 
   if (dashboardData.totalCarcasses === 0) {
     return (
-      <div className="fr-container fr-container--fluid min-h-screen">
-        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
-          <div className="fr-col-12 p-2 md:p-0">
-            <div className="flex min-h-[60vh] flex-col items-center justify-center">
-              <h2 className="mb-3 text-center text-4xl font-bold text-gray-800">
+      <div className="fr-container">
+        <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center bg-white p-4 md:p-8">
+          <div className="fr-py-0 fr-col-12 fr-col-md-6">
+            <div className="flex flex-col bg-white">
+              <h2 className="mb-3  fr-h4 font-bold text-gray-800">
                 Pas encore de carcasses cette saison
               </h2>
-              <p className="mb-6 max-w-md text-center text-gray-600">
+              <p className="mb-6 max-w-md  fr-text--regular">
                 Vos statistiques apparaîtront ici dès que vous aurez enregistré votre première fiche d'examen
                 initial.
               </p>

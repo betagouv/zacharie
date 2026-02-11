@@ -589,19 +589,18 @@ function FeisWrapper({
             <h1 className="fr-h4">Vous n'avez pas encore de fiche</h1>
             {user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei ? (
               <>
-                <p className="fr-text--lead fr-mb-3w lg:hidden">
+                <p className="fr-text--regular fr-mb-3w">
                   Vous pouvez créer une nouvelle fiche en cliquant sur le bouton ci-dessous.
                 </p>
                 <Button
                   priority="primary"
-                  // on a déjà le bouton de base en mobile, on ne veut pas le dupliquer
-                  className="hidden shrink-0 lg:block"
+                  iconId="fr-icon-add-circle-line"
                   onClick={async () => {
                     const newFei = await createNewFei();
                     navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
                   }}
                 >
-                  Nouvelle fiche
+                  Créer une fiche
                 </Button>
               </>
             ) : (
