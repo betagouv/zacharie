@@ -138,6 +138,106 @@ export default function CurrentOwnerConfirm() {
     return null;
   }
 
+  // Handles the case where an ETG reception employee takes charge of carcasses
+  // that also need a transport step recorded. This creates both intermediaires
+  // (transport + reception) and updates the FEI once, avoiding the previous
+  // race condition from two separate handlePriseEnCharge calls with a setTimeout.
+  async function handleETGReceptionWithTransport() {
+    const now = dayjs();
+    const entityName =
+      fei.fei_next_owner_entity_name_cache || entities[fei.fei_next_owner_entity_id!]?.nom_d_usage || '';
+
+    // 1. Create the transport intermediaire (COLLECTEUR_PRO role)
+    const transportIntermediaireId = `${user.id}_${fei.numero}_${now.format('HHmmss')}_transport`;
+    const transportIntermediaire: FeiIntermediaire = {
+      id: transportIntermediaireId,
+      fei_numero: fei.numero,
+      intermediaire_user_id: user.id,
+      intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
+      intermediaire_entity_id: fei.fei_next_owner_entity_id || '',
+      created_at: now.toDate(),
+      prise_en_charge_at: now.toDate(),
+      intermediaire_depot_type: DepotType.AUCUN,
+      intermediaire_depot_entity_id: null,
+      intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
+      intermediaire_prochain_detenteur_id_cache: fei.fei_next_owner_entity_id!,
+    };
+    await createFeiIntermediaire(transportIntermediaire);
+    addLog({
+      user_id: user.id,
+      user_role: UserRoles.COLLECTEUR_PRO,
+      fei_numero: fei.numero,
+      action: 'intermediaire-create',
+      history: createHistoryInput(null, transportIntermediaire),
+      entity_id: fei.fei_current_owner_entity_id,
+      zacharie_carcasse_id: null,
+      intermediaire_id: transportIntermediaireId,
+      carcasse_intermediaire_id: null,
+    });
+
+    // 2. Create the reception intermediaire (ETG role)
+    const receptionIntermediaireId = `${user.id}_${fei.numero}_${now.format('HHmmss')}_reception`;
+    const receptionIntermediaire: FeiIntermediaire = {
+      id: receptionIntermediaireId,
+      fei_numero: fei.numero,
+      intermediaire_user_id: user.id,
+      intermediaire_role: FeiOwnerRole.ETG,
+      intermediaire_entity_id: fei.fei_next_owner_entity_id || '',
+      created_at: now.toDate(),
+      prise_en_charge_at: now.toDate(),
+      intermediaire_depot_type: null,
+      intermediaire_depot_entity_id: null,
+      intermediaire_prochain_detenteur_role_cache: null,
+      intermediaire_prochain_detenteur_id_cache: null,
+    };
+    await createFeiIntermediaire(receptionIntermediaire);
+    addLog({
+      user_id: user.id,
+      user_role: UserRoles.ETG,
+      fei_numero: fei.numero,
+      action: 'intermediaire-create',
+      history: createHistoryInput(null, receptionIntermediaire),
+      entity_id: fei.fei_current_owner_entity_id,
+      zacharie_carcasse_id: null,
+      intermediaire_id: receptionIntermediaireId,
+      carcasse_intermediaire_id: null,
+    });
+
+    // 3. Update the FEI once with the final state (current owner = ETG reception)
+    const nextFei: Partial<FeiWithIntermediaires> = {
+      fei_current_owner_role: FeiOwnerRole.ETG,
+      fei_current_owner_entity_id: fei.fei_next_owner_entity_id,
+      fei_current_owner_entity_name_cache: entityName,
+      fei_current_owner_user_id: user.id,
+      fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+      fei_next_owner_role: null,
+      fei_next_owner_user_id: null,
+      fei_next_owner_user_name_cache: null,
+      fei_next_owner_entity_id: null,
+      fei_next_owner_entity_name_cache: null,
+      fei_next_owner_wants_to_sous_traite: null,
+      fei_prev_owner_role: fei.fei_current_owner_role || null,
+      fei_prev_owner_user_id: fei.fei_current_owner_user_id || null,
+      fei_prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
+      latest_intermediaire_user_id: user.id,
+      latest_intermediaire_entity_id: fei.fei_next_owner_entity_id,
+      latest_intermediaire_name_cache: entityName,
+    };
+
+    updateFei(fei.numero, nextFei);
+    addLog({
+      user_id: user.id,
+      user_role: UserRoles.ETG,
+      fei_numero: fei.numero,
+      action: 'current-owner-confirm-etg-reception-with-transport',
+      history: createHistoryInput(fei, nextFei),
+      entity_id: fei.fei_current_owner_entity_id,
+      zacharie_carcasse_id: null,
+      intermediaire_id: null,
+      carcasse_intermediaire_id: null,
+    });
+  }
+
   async function handlePriseEnCharge({
     sousTraite,
     action,
@@ -352,24 +452,13 @@ export default function CurrentOwnerConfirm() {
                   className="my-4 block"
                   onClick={async () => {
                     if (checkedTransportFromETG) {
-                      // FIXME: this is no good, those two actions should be one only
-                      // what is done here is 1. register the fact that the ETG has transported the carcasses
-                      // THEN 2. update the current owner to the ETG reception
-                      // what to do better: handle this process properly, all at once
-                      // why a timeout ? because I don't want to overwrite the first setState in zustand state
-                      // so I wait for the first setState to be "done" (I have no listener so timeout will be enough)
-                      // this is a hack, but it works
+                      await handleETGReceptionWithTransport();
+                    } else {
                       await handlePriseEnCharge({
                         sousTraite: false,
-                        action: 'current-owner-confirm-etg-transport-not-by-me',
-                        etgEmployeeTransportingToETG: true,
+                        action: 'current-owner-confirm-etg-reception',
                       });
-                      await new Promise((resolve) => setTimeout(resolve, 300));
                     }
-                    handlePriseEnCharge({
-                      sousTraite: false,
-                      action: 'current-owner-confirm-etg-reception',
-                    });
                   }}
                 >
                   Je prends en charge les carcasses
