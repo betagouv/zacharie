@@ -354,7 +354,7 @@ export default function MonEntreprise() {
                 <ButtonsGroup
                   buttons={[
                     {
-                      children: 'Enregistrer et Continuer',
+                      children: 'Enregistrer et continuer',
                       disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
                       type: 'button',
                       nativeButtonProps: {

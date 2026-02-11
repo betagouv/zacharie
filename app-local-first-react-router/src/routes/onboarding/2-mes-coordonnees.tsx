@@ -185,7 +185,7 @@ export default function MesCoordonnees() {
               <ButtonsGroup
                 buttons={[
                   {
-                    children: 'Enregistrer et Continuer',
+                    children: 'Enregistrer et continuer',
                     type: 'button',
                     nativeButtonProps: {
                       onClick: () => navigate(nextPage),
