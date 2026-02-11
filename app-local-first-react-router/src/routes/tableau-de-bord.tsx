@@ -455,9 +455,9 @@ export default function TableauDeBordIndex() {
   return (
     <div className="relative">
       <div className="fr-background-alt--blue-france top-0 z-30 block w-full md:sticky">
-        <div className="fr-container mx-auto">
-          <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-            <div className="fr-col-12 fr-col-md-10 px-3 py-2 md:p-0">
+        <div className="fr-container">
+          <div className="fr-grid-row fr-grid-row-gutters">
+            <div className="fr-col-12  px-3 py-2 md:p-0">
               <Actions />
             </div>
           </div>
@@ -465,8 +465,8 @@ export default function TableauDeBordIndex() {
       </div>
       <div className="fr-container fr-container--fluid">
         <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-        <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
-          <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
+        <div className="fr-grid-row fr-grid-row-gutters pt-4">
+          <div className="fr-col-12  min-h-96 p-4 md:p-0">
             <OnboardingChasseInfoBanner />
             {!isOnlySvi && (
               <FeisWrapper
