@@ -181,7 +181,9 @@ const useZustandStore = create<State & Actions>()(
             const carcassesIntermediaire = get().carcassesIntermediaireById[carcassesIntermediaireId];
             carcassesIntermediaires.push(carcassesIntermediaire);
           }
-          return carcassesIntermediaires;
+          return carcassesIntermediaires.sort((a, b) =>
+            dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1,
+          );
         },
         // carcassesIntermediaires: {},
         // carcassesIntermediairesByIntermediaire: {},
