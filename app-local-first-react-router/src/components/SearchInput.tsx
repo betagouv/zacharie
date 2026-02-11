@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import type { SearchResponse } from '@api/src/types/responses';
-import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { CarcasseType } from '@prisma/client';
 import API from '@app/services/api';
 
@@ -21,6 +20,22 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
   const searchDebounce = useRef<ReturnType<typeof setTimeout>>();
 
   const searchRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const isDropdownOpen = !!error || isLoading || successData.length > 0;
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setError('');
+        setSuccessData([]);
+        setIsLoading(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isDropdownOpen]);
 
   useEffect(() => {
     clearTimeout(searchDebounce.current);
@@ -48,7 +63,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
   }, [cachedValue, value]);
 
   return (
-    <div className="relative flex w-full flex-col">
+    <div ref={containerRef} className="relative flex w-full flex-col">
       <input
         ref={searchRef}
         className={className}
@@ -58,74 +73,41 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
         value={cachedValue}
         onChange={(event) => setCachedValue(event.target.value)}
       />
-      {(!!error || isLoading || successData.length > 0) && (
-        <div className="absolute top-full right-0 left-0 z-50 mt-1 flex w-full flex-col">
+      {isDropdownOpen && (
+        <div className="absolute top-full right-0 left-0 z-50 mt-1 flex w-full flex-col rounded border border-gray-200 bg-white shadow-lg">
           {!!error && (
-            <div className="flex w-full flex-row justify-start">
-              <Alert
-                onClose={() => setError('')}
-                description="La recherche s'effectue sur les fiches des 2 derniers mois."
-                closable
-                id="search-error"
-                severity="warning"
-                title={error}
-                className="w-full text-left"
-              />
-            </div>
+            <p className="px-3 py-2 text-sm text-orange-700">{error}</p>
           )}
           {isLoading && (
-            <div className="flex w-full flex-row justify-start">
-              <Alert
-                onClose={() => setError('')}
-                description="La recherche s'effectue sur les fiches des 2 derniers mois."
-                closable
-                id="search-loading"
-                severity="info"
-                title="Recherche en cours..."
-                className="w-full text-left"
-              />
-            </div>
+            <p className="px-3 py-2 text-sm text-gray-500">Recherche en cours...</p>
           )}
-          {successData.map((data) => {
-            return (
-              <div
-                key={`${data.fei_numero || data.carcasse_numero_bracelet}`}
-                className="flex w-full flex-row justify-start bg-white"
-              >
-                <Alert
-                  onClose={() => setError('')}
-                  description={error}
-                  closable
-                  id="search-success"
-                  severity="success"
-                  title={
-                    <a href={data.redirectUrl} className="flex flex-col">
-                      {data.carcasse_numero_bracelet && (
-                        <span className="text-base font-bold">
-                          {data.carcasse_type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'}{' '}
-                          {data.carcasse_numero_bracelet}: {data.carcasse_espece}
-                        </span>
-                      )}
-                      {data.fei_numero && (
-                        <span className="text-base font-normal">Fiche {data.fei_numero}</span>
-                      )}
-                      {data.fei_svi_assigned_at && (
-                        <span className="font-sm text-base font-normal italic opacity-50">
-                          Fiche transmise le {data.fei_svi_assigned_at}
-                        </span>
-                      )}
-                      {data.fei_date_mise_a_mort && (
-                        <span className="font-sm text-base font-normal italic opacity-50">
-                          Chasse du {data.fei_date_mise_a_mort}
-                        </span>
-                      )}
-                    </a>
-                  }
-                  className="w-full text-left"
-                />
-              </div>
-            );
-          })}
+          {successData.map((data) => (
+            <a
+              key={`${data.fei_numero || data.carcasse_numero_bracelet}`}
+              href={data.redirectUrl}
+              className="flex flex-col gap-0.5 border-t border-gray-100 px-3 py-2 first:border-t-0 hover:bg-gray-50"
+            >
+              {data.carcasse_numero_bracelet && (
+                <span className="text-sm font-bold">
+                  {data.carcasse_type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'}{' '}
+                  {data.carcasse_numero_bracelet}: {data.carcasse_espece}
+                </span>
+              )}
+              {data.fei_numero && (
+                <span className="text-sm">Fiche {data.fei_numero}</span>
+              )}
+              {data.fei_svi_assigned_at && (
+                <span className="text-xs italic text-gray-500">
+                  Transmise le {data.fei_svi_assigned_at}
+                </span>
+              )}
+              {data.fei_date_mise_a_mort && (
+                <span className="text-xs italic text-gray-500">
+                  Chasse du {data.fei_date_mise_a_mort}
+                </span>
+              )}
+            </a>
+          ))}
         </div>
       )}
     </div>
