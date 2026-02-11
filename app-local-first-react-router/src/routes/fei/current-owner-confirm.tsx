@@ -28,7 +28,7 @@ export default function CurrentOwnerConfirm() {
   const user = useUser((state) => state.user)!;
   const isCircuitCourt = useIsCircuitCourt();
   const updateFei = useZustandStore((state) => state.updateFei);
-  const createFeiIntermediaire = useZustandStore((state) => state.createFeiIntermediaire);
+  const createFeiIntermediaires = useZustandStore((state) => state.createFeiIntermediaires);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
@@ -162,19 +162,6 @@ export default function CurrentOwnerConfirm() {
       intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
       intermediaire_prochain_detenteur_id_cache: fei.fei_next_owner_entity_id!,
     };
-    await createFeiIntermediaire(transportIntermediaire);
-    addLog({
-      user_id: user.id,
-      user_role: UserRoles.COLLECTEUR_PRO,
-      fei_numero: fei.numero,
-      action: 'intermediaire-create',
-      history: createHistoryInput(null, transportIntermediaire),
-      entity_id: fei.fei_current_owner_entity_id,
-      zacharie_carcasse_id: null,
-      intermediaire_id: transportIntermediaireId,
-      carcasse_intermediaire_id: null,
-    });
-
     // 2. Create the reception intermediaire (ETG role)
     const receptionIntermediaireId = `${user.id}_${fei.numero}_${now.format('HHmmss')}_reception`;
     const receptionIntermediaire: FeiIntermediaire = {
@@ -190,7 +177,20 @@ export default function CurrentOwnerConfirm() {
       intermediaire_prochain_detenteur_role_cache: null,
       intermediaire_prochain_detenteur_id_cache: null,
     };
-    await createFeiIntermediaire(receptionIntermediaire);
+
+    // Create both intermediaires in a single store update
+    await createFeiIntermediaires([transportIntermediaire, receptionIntermediaire]);
+    addLog({
+      user_id: user.id,
+      user_role: UserRoles.COLLECTEUR_PRO,
+      fei_numero: fei.numero,
+      action: 'intermediaire-create',
+      history: createHistoryInput(null, transportIntermediaire),
+      entity_id: fei.fei_current_owner_entity_id,
+      zacharie_carcasse_id: null,
+      intermediaire_id: transportIntermediaireId,
+      carcasse_intermediaire_id: null,
+    });
     addLog({
       user_id: user.id,
       user_role: UserRoles.ETG,
@@ -335,7 +335,7 @@ export default function CurrentOwnerConfirm() {
         newIntermediaire.intermediaire_depot_type = DepotType.AUCUN;
         newIntermediaire.intermediaire_depot_entity_id = null;
       }
-      await createFeiIntermediaire(newIntermediaire);
+      await createFeiIntermediaires([newIntermediaire]);
       addLog({
         user_id: user.id,
         user_role: newIntermediaire.intermediaire_role! as UserRoles,
