@@ -169,7 +169,9 @@ const useZustandStore = create<State & Actions>()(
       (set, get): State & Actions => ({
         ...initialState,
         getFeiIntermediairesForFeiNumero: (fei_numero: Fei['numero']) => {
-          return get().intermediairesByFei[fei_numero] || [];
+          return get().intermediairesByFei[fei_numero].sort((a, b) =>
+            dayjs(a.prise_en_charge_at).diff(b.prise_en_charge_at) < 0 ? 1 : -1,
+          );
         },
         getCarcassesIntermediairesForCarcasse: (zacharie_carcasse_id: Carcasse['zacharie_carcasse_id']) => {
           const carcassesIntermediairesIdsByCarcasse = get().carcassesIntermediairesIdsByCarcasse;

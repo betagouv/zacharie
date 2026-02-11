@@ -143,20 +143,19 @@ export default function CurrentOwnerConfirm() {
   // (transport + reception) and updates the FEI once, avoiding the previous
   // race condition from two separate handlePriseEnCharge calls with a setTimeout.
   async function handleETGReceptionWithTransport() {
-    const now = dayjs();
     const entityName =
       fei.fei_next_owner_entity_name_cache || entities[fei.fei_next_owner_entity_id!]?.nom_d_usage || '';
 
     // 1. Create the transport intermediaire (COLLECTEUR_PRO role)
-    const transportIntermediaireId = `${user.id}_${fei.numero}_${now.format('HHmmss')}_transport`;
+    const transportIntermediaireId = `${user.id}_${fei.numero}_${dayjs().format('HHmmss')}_transport`;
     const transportIntermediaire: FeiIntermediaire = {
       id: transportIntermediaireId,
       fei_numero: fei.numero,
       intermediaire_user_id: user.id,
       intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
       intermediaire_entity_id: fei.fei_next_owner_entity_id || '',
-      created_at: now.toDate(),
-      prise_en_charge_at: now.toDate(),
+      created_at: dayjs().toDate(),
+      prise_en_charge_at: dayjs().toDate(),
       intermediaire_depot_type: DepotType.AUCUN,
       intermediaire_depot_entity_id: null,
       intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
@@ -164,15 +163,15 @@ export default function CurrentOwnerConfirm() {
     };
     await new Promise((res) => setTimeout(res, 150)); // so that the create_at differ between the two intermediaires
     // 2. Create the reception intermediaire (ETG role)
-    const receptionIntermediaireId = `${user.id}_${fei.numero}_${now.format('HHmmss')}_reception`;
+    const receptionIntermediaireId = `${user.id}_${fei.numero}_${dayjs().format('HHmmss')}_reception`;
     const receptionIntermediaire: FeiIntermediaire = {
       id: receptionIntermediaireId,
       fei_numero: fei.numero,
       intermediaire_user_id: user.id,
       intermediaire_role: FeiOwnerRole.ETG,
       intermediaire_entity_id: fei.fei_next_owner_entity_id || '',
-      created_at: now.toDate(),
-      prise_en_charge_at: now.toDate(),
+      created_at: dayjs().toDate(),
+      prise_en_charge_at: dayjs().toDate(),
       intermediaire_depot_type: null,
       intermediaire_depot_entity_id: null,
       intermediaire_prochain_detenteur_role_cache: null,
