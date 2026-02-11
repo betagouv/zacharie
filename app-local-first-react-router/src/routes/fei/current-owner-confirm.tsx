@@ -162,6 +162,7 @@ export default function CurrentOwnerConfirm() {
       intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
       intermediaire_prochain_detenteur_id_cache: fei.fei_next_owner_entity_id!,
     };
+    await new Promise((res) => setTimeout(res, 150)); // so that the create_at differ between the two intermediaires
     // 2. Create the reception intermediaire (ETG role)
     const receptionIntermediaireId = `${user.id}_${fei.numero}_${now.format('HHmmss')}_reception`;
     const receptionIntermediaire: FeiIntermediaire = {
