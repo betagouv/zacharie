@@ -201,12 +201,12 @@ export default function RegistreCarcasses() {
                 <span>
                   {carcasse.fei_svi_assigned_at
                     ? new Date(carcasse.fei_svi_assigned_at).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
                     : '-'}
                 </span>
               </div>
@@ -215,12 +215,12 @@ export default function RegistreCarcasses() {
                 <span>
                   {carcasse.svi_carcasse_status_set_at
                     ? new Date(carcasse.svi_carcasse_status_set_at).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
                     : '-'}
                 </span>
               </div>
@@ -255,15 +255,13 @@ export default function RegistreCarcasses() {
   }
 
   return (
-    <div className="fr-container--fluid fr-my-4 sm:fr-my-md-14v">
+    <div className="fr-container fr-my-4 sm:fr-my-md-14v">
       <title>
         Registre de carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
-
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 p-2 sm:p-4">
-          <h1 className="fr-h2 fr-container mx-auto mb-4 flex flex-col sm:mb-8">Registre des carcasses</h1>
-          <section className="fr-container mb-4 overflow-x-auto bg-white p-2 sm:mb-6 sm:p-4">
+        <div className="fr-col-12 sm:py-4">
+          <section className="fr-container mb-4 overflow-x-auto bg-white">
             <Filters
               onChange={setFilters}
               base={filterableFields}
@@ -424,8 +422,8 @@ export default function RegistreCarcasses() {
                   render: (carcasse) => getCollecteurName(carcasse) || '-',
                 },
               ]}
-              // onSort={() => {}}
-              // onCheck={() => {}}
+            // onSort={() => {}}
+            // onCheck={() => {}}
             />
             <div className="flex justify-center overflow-x-auto py-4 sm:justify-start sm:py-6">
               <Pagination
