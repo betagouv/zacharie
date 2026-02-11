@@ -130,7 +130,6 @@ export default function CardCarcasse({
       acceptInfo = { type: 'ETG', entity: etgEntity };
     }
   }
-  console.log({ latestIntermediaire, intermediaires: carcassesIntermediaires });
 
   const isEcarteePourInspection =
     !!latestIntermediaire?.ecarte_pour_inspection && statusNewCard.includes('cours');
