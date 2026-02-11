@@ -426,21 +426,20 @@ function FEICurrentIntermediaireContent({
     ) {
       return false;
     }
-    if (intermediaireIndex !== 0) {
-      return false;
-    }
     if (isEtgWorkingFor) {
       return true;
     }
     if (fei.fei_current_owner_user_id !== user.id) {
       return false;
     }
-    const latestIntermediaire = intermediaires[0];
-    if (latestIntermediaire.id !== intermediaire?.id) {
+    const latestIntermediaire = [...intermediaires].sort((a, b) =>
+      new Date(b.prise_en_charge_at ?? 0).getTime() - new Date(a.prise_en_charge_at ?? 0).getTime(),
+    )[0];
+    if (latestIntermediaire?.id !== intermediaire?.id) {
       return false;
     }
     return true;
-  }, [fei, user, intermediaire, intermediaires, isEtgWorkingFor, intermediaireIndex]);
+  }, [fei, user, intermediaire, intermediaires, isEtgWorkingFor]);
 
   const needSelectNextUser = useMemo(() => {
     if (!couldSelectNextUser) {
@@ -663,7 +662,7 @@ function FEICurrentIntermediaireContent({
               <Button onClick={handleCloseFei} priority="primary">
                 Clôturer la fiche (
                 {carcassesSorted.carcassesManquantes.length > 0 &&
-                carcassesSorted.carcassesRejetees.length > 0
+                  carcassesSorted.carcassesRejetees.length > 0
                   ? 'toutes les carcasses sont manquantes ou refusées'
                   : carcassesSorted.carcassesManquantes.length > 0
                     ? 'toutes les carcasses sont manquantes'
@@ -733,7 +732,7 @@ function FEICurrentIntermediaireContent({
                 }
                 label={
                   carcassesSorted.carcassesApproved.length > 0 ||
-                  carcassesSorted.carcassesEcarteesPourInspection.length > 0
+                    carcassesSorted.carcassesEcarteesPourInspection.length > 0
                     ? 'Date de prise en charge'
                     : 'Date de décision'
                 }
