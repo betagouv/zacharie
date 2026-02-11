@@ -13,18 +13,18 @@ export function filterCarcassesIntermediairesForCarcasse(
   byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
   zacharie_carcasse_id: string,
 ): Array<CarcasseIntermediaire> {
-  return Object.values(byId).filter(
-    (ci) => ci.zacharie_carcasse_id === zacharie_carcasse_id && !ci.deleted_at,
-  );
+  return Object.values(byId)
+    .filter((ci) => ci.zacharie_carcasse_id === zacharie_carcasse_id && !ci.deleted_at)
+    .sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
 }
 
 export function filterCarcassesIntermediairesForIntermediaire(
   byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
   feiAndIntermediaireIds: FeiAndIntermediaireIds,
 ): Array<CarcasseIntermediaire> {
-  return Object.values(byId).filter(
-    (ci) => getFeiAndIntermediaireIds(ci) === feiAndIntermediaireIds && !ci.deleted_at,
-  );
+  return Object.values(byId)
+    .filter((ci) => getFeiAndIntermediaireIds(ci) === feiAndIntermediaireIds && !ci.deleted_at)
+    .sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
 }
 
 export function useCarcassesIntermediairesForCarcasse(
@@ -70,14 +70,10 @@ export function filterFeiIntermediaires(
       };
     }
   }
-  return Object.values(seen).sort((a, b) =>
-    dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1,
-  );
+  return Object.values(seen).sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
 }
 
-export function useFeiIntermediaires(
-  fei_numero: string | undefined,
-): Array<FeiIntermediaire> {
+export function useFeiIntermediaires(fei_numero: string | undefined): Array<FeiIntermediaire> {
   const byId = useZustandStore((state) => state.carcassesIntermediaireById);
   return useMemo(() => {
     if (!fei_numero) return [];
