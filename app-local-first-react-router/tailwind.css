@@ -4,6 +4,7 @@
 @import url(./node_modules/@codegouvfr/react-dsfr/dsfr/utility/colors/colors.min.css) layer(dsfr);
 @import 'tailwindcss';
 
+
 @theme {
   --breakpoint-xs: 450px;
   --breakpoint-3xl: 120rem;
@@ -66,9 +67,7 @@
     border-style: solid;
     border-color: #000;
   }
-  ol,
-  ul,
-  menu {
+  ol, ul, menu {
     @apply list-none;
     padding-inline-start: 0;
   }
@@ -84,6 +83,7 @@
   }
 }
 
+
 @media (max-width: 767px) {
   /* .fr-header__service {
     display: none;
@@ -98,6 +98,7 @@
 .fr-callout h3 {
   margin: var(--title-spacing);
 }
+
 
 /* table selego */
 
@@ -179,7 +180,7 @@ table.table-custom {
 div.tailwindui,
 input.tailwindui,
 textarea.tailwindui {
-  @apply focus:border-action-high-blue-france focus:ring-action-high-blue-france focus:outline-action-high-blue-france relative block w-full appearance-none rounded-[4px] border border-solid border-gray-300 px-2 py-2 text-base shadow-xs -outline-offset-1! sm:text-sm;
+  @apply relative block w-full appearance-none rounded-[4px] border border-gray-300 border-solid px-2 py-2 text-base shadow-xs focus:border-action-high-blue-france focus:ring-action-high-blue-france focus:outline-action-high-blue-france sm:text-sm -outline-offset-1! ;
 }
 label.tailwindui {
   @apply mb-2 block text-gray-700;
@@ -202,27 +203,26 @@ label.tailwindui {
     margin-bottom: 1rem;
 } */
 
-.checkbox-black .fr-checkbox-group input[type='checkbox']:checked + label::before {
-  @apply bg-gray-900! text-gray-900!;
+.checkbox-black .fr-checkbox-group input[type=checkbox]:checked + label::before {
+  @apply text-gray-900! bg-gray-900!;
 }
 
-.checkbox-black * {
-  @apply cursor-not-allowed! text-gray-900! opacity-100!;
+.checkbox-black *  {
+  @apply cursor-not-allowed! opacity-100! text-gray-900!;
 }
 
-.radio-black .fr-radio-group input[type='radio'] + label {
+.radio-black .fr-radio-group input[type=radio] + label {
   /* @apply !text-gray-900 !opacity-100; */
   /* @apply !cursor-not-allowed !border-red-500; */
-  background-image: radial-gradient(transparent 10px, #000 11px, transparent 12px);
+      background-image: radial-gradient(transparent 10px, #000 11px, transparent 12px);
 }
 
-.radio-black .fr-radio-group input[type='radio']:checked + label {
-  background-image:
-    radial-gradient(transparent 10px, #000 11px, transparent 12px), radial-gradient(#000 5px, transparent 6px);
+.radio-black .fr-radio-group input[type=radio]:checked + label {
+  background-image: radial-gradient(transparent 10px, #000 11px, transparent 12px), radial-gradient(#000 5px, transparent 6px);
 }
 
 .radio-black * {
-  @apply pointer-events-none cursor-not-allowed!;
+  @apply cursor-not-allowed! pointer-events-none;
 }
 
 .card-checkbox {
@@ -260,8 +260,9 @@ details {
 }
 
 .drop-down .fr-nav__btn {
-  @apply text-action-high-blue-france! min-h-10! py-0! text-base! font-medium!;
+  @apply py-0! min-h-10! text-action-high-blue-france! font-medium! text-base!;
 }
+
 
 /* Hide scrollbar for Chrome, Safari and Opera */
 .no-scrollbar::-webkit-scrollbar {
@@ -269,6 +270,6 @@ details {
 }
 /* Hide scrollbar for IE, Edge and Firefox */
 .no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
