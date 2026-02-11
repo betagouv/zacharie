@@ -120,7 +120,7 @@ interface Actions {
   getCarcassesIntermediairesForCarcasse: (
     zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
   ) => Array<CarcasseIntermediaire>;
-  createFeiIntermediaire: (newFeiIntermediaire: FeiIntermediaire) => Promise<void>;
+  createFeiIntermediaires: (newFeiIntermediaires: FeiIntermediaire[]) => Promise<void>;
   updateAllCarcasseIntermediaire: (
     fei_numero: Fei['numero'],
     feiAndIntermediaireIds: FeiAndIntermediaireIds,
@@ -169,7 +169,9 @@ const useZustandStore = create<State & Actions>()(
       (set, get): State & Actions => ({
         ...initialState,
         getFeiIntermediairesForFeiNumero: (fei_numero: Fei['numero']) => {
-          return get().intermediairesByFei[fei_numero] || [];
+          return (get().intermediairesByFei[fei_numero] || []).sort((a, b) =>
+            dayjs(a.prise_en_charge_at).diff(b.prise_en_charge_at) < 0 ? 1 : -1,
+          );
         },
         getCarcassesIntermediairesForCarcasse: (zacharie_carcasse_id: Carcasse['zacharie_carcasse_id']) => {
           const carcassesIntermediairesIdsByCarcasse = get().carcassesIntermediairesIdsByCarcasse;
@@ -179,7 +181,9 @@ const useZustandStore = create<State & Actions>()(
             const carcassesIntermediaire = get().carcassesIntermediaireById[carcassesIntermediaireId];
             carcassesIntermediaires.push(carcassesIntermediaire);
           }
-          return carcassesIntermediaires;
+          return carcassesIntermediaires.sort((a, b) =>
+            dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1,
+          );
         },
         // carcassesIntermediaires: {},
         // carcassesIntermediairesByIntermediaire: {},
@@ -278,18 +282,31 @@ const useZustandStore = create<State & Actions>()(
             get().updateFei(nextCarcasse.fei_numero, { updated_at: dayjs().toDate() });
           }
         },
-        createFeiIntermediaire: async (newIntermediaire: FeiIntermediaire) => {
+        createFeiIntermediaires: async (newIntermediaires: FeiIntermediaire[]) => {
+          if (newIntermediaires.length === 0) return;
           return new Promise((resolve) => {
+            const feiNumero = newIntermediaires[0].fei_numero;
             const intermediairesByFei = useZustandStore.getState().intermediairesByFei;
-            const nextIntermediairesForFei = intermediairesByFei[newIntermediaire.fei_numero] || [];
-            nextIntermediairesForFei.push(newIntermediaire);
-            intermediairesByFei[newIntermediaire.fei_numero] = nextIntermediairesForFei;
-            const feiCarcassesIds =
-              useZustandStore.getState().carcassesIdsByFei[newIntermediaire.fei_numero] || [];
+            const nextIntermediairesForFei = [...(intermediairesByFei[feiNumero] || [])];
+            for (const newIntermediaire of newIntermediaires) {
+              nextIntermediairesForFei.push(newIntermediaire);
+            }
+
+            const feiCarcassesIds = useZustandStore.getState().carcassesIdsByFei[feiNumero] || [];
             const carcasses = feiCarcassesIds.map((id) => useZustandStore.getState().carcasses[id]);
-            const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses
-              .filter((c) => !c.intermediaire_carcasse_refus_intermediaire_id && !c.deleted_at)
-              .map((c) => ({
+            const activeCarcasses = carcasses.filter(
+              (c) => !c.intermediaire_carcasse_refus_intermediaire_id && !c.deleted_at,
+            );
+
+            const byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
+            const byCarcasseId = { ...useZustandStore.getState().carcassesIntermediairesIdsByCarcasse };
+            const byIntermediaireId: Record<
+              FeiAndIntermediaireIds,
+              Array<FeiAndCarcasseAndIntermediaireIds>
+            > = {};
+
+            for (const newIntermediaire of newIntermediaires) {
+              const carcassesIntermediaires: Array<CarcasseIntermediaire> = activeCarcasses.map((c) => ({
                 fei_numero: c.fei_numero,
                 numero_bracelet: c.numero_bracelet,
                 zacharie_carcasse_id: c.zacharie_carcasse_id,
@@ -316,24 +333,20 @@ const useZustandStore = create<State & Actions>()(
                 deleted_at: null,
                 is_synced: false,
               }));
-            const byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
-            const byCarcasseId = useZustandStore.getState().carcassesIntermediairesIdsByCarcasse;
-            const byIntermediaireId: Record<
-              FeiAndIntermediaireIds,
-              Array<FeiAndCarcasseAndIntermediaireIds>
-            > = {};
-            for (const ci of carcassesIntermediaires) {
-              const feiAndIntermediaireId = getFeiAndIntermediaireIds(ci);
-              const feiAndCarcasseAndIntermediaireId = getFeiAndCarcasseAndIntermediaireIds(ci);
 
-              byId[feiAndCarcasseAndIntermediaireId] = ci;
-              if (!byCarcasseId[ci.zacharie_carcasse_id]) byCarcasseId[ci.zacharie_carcasse_id] = [];
-              if (!byCarcasseId[ci.zacharie_carcasse_id].includes(feiAndCarcasseAndIntermediaireId)) {
-                byCarcasseId[ci.zacharie_carcasse_id].push(feiAndCarcasseAndIntermediaireId);
-              }
-              if (!byIntermediaireId[feiAndIntermediaireId]) byIntermediaireId[feiAndIntermediaireId] = [];
-              if (!byIntermediaireId[feiAndIntermediaireId].includes(feiAndCarcasseAndIntermediaireId)) {
-                byIntermediaireId[feiAndIntermediaireId].push(feiAndCarcasseAndIntermediaireId);
+              for (const ci of carcassesIntermediaires) {
+                const feiAndIntermediaireId = getFeiAndIntermediaireIds(ci);
+                const feiAndCarcasseAndIntermediaireId = getFeiAndCarcasseAndIntermediaireIds(ci);
+
+                byId[feiAndCarcasseAndIntermediaireId] = ci;
+                if (!byCarcasseId[ci.zacharie_carcasse_id]) byCarcasseId[ci.zacharie_carcasse_id] = [];
+                if (!byCarcasseId[ci.zacharie_carcasse_id].includes(feiAndCarcasseAndIntermediaireId)) {
+                  byCarcasseId[ci.zacharie_carcasse_id].push(feiAndCarcasseAndIntermediaireId);
+                }
+                if (!byIntermediaireId[feiAndIntermediaireId]) byIntermediaireId[feiAndIntermediaireId] = [];
+                if (!byIntermediaireId[feiAndIntermediaireId].includes(feiAndCarcasseAndIntermediaireId)) {
+                  byIntermediaireId[feiAndIntermediaireId].push(feiAndCarcasseAndIntermediaireId);
+                }
               }
             }
 
@@ -342,7 +355,7 @@ const useZustandStore = create<State & Actions>()(
                 ...state,
                 intermediairesByFei: {
                   ...state.intermediairesByFei,
-                  [newIntermediaire.fei_numero]: nextIntermediairesForFei.sort((a, b) =>
+                  [feiNumero]: nextIntermediairesForFei.sort((a, b) =>
                     dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1,
                   ),
                 },
@@ -695,17 +708,14 @@ export async function syncCarcasseIntermediaire(
           },
         }));
       } else if (!res.ok) {
-        capture(
-          new Error('syncCarcasseIntermediaire failed'),
-          {
-            extra: {
-              fei_numero: feiNumero,
-              intermedaire_id: intermedaireId,
-              zacharie_carcasse_id: zacharieCarcasseId,
-              error: res.error,
-            }
-          }
-        );
+        capture(new Error('syncCarcasseIntermediaire failed'), {
+          extra: {
+            fei_numero: feiNumero,
+            intermedaire_id: intermedaireId,
+            zacharie_carcasse_id: zacharieCarcasseId,
+            error: res.error,
+          },
+        });
       }
     });
 }

@@ -1045,7 +1045,13 @@ router.get(
       if (!req.user.activated) {
         res.status(400).send({
           ok: false,
-          data: { user: req.user, feisUnderMyResponsability: [], feisToTake: [], feisOngoing: [], feisDone: [] },
+          data: {
+            user: req.user,
+            feisUnderMyResponsability: [],
+            feisToTake: [],
+            feisOngoing: [],
+            feisDone: [],
+          },
           error: "Le compte n'est pas activé",
         });
         return;
