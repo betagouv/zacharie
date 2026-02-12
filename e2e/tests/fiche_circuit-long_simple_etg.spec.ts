@@ -88,7 +88,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
   await expect(
-    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez")
+    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
@@ -110,8 +110,8 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
     page.getByText(
-      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim)."
-    )
+      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
+    ),
   ).toBeVisible();
   await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
@@ -176,7 +176,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
       `);
 });
 
-test("Pas de stockage - Je transfert à un autre collecteur", async ({ page }) => {
+test("Pas de stockage - Je transfers à un autre collecteur", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-165242";
   await connectWith(page, "etg-1@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
@@ -252,7 +252,7 @@ test("Pas de stockage - Je transfert à un autre collecteur", async ({ page }) =
   await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
   await expect(
-    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez")
+    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
   await page.getByText("Anomalies abats:Abcès ou").click();
@@ -274,8 +274,8 @@ test("Pas de stockage - Je transfert à un autre collecteur", async ({ page }) =
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
     page.getByText(
-      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim)."
-    )
+      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
+    ),
   ).toBeVisible();
   await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
@@ -307,7 +307,7 @@ test("Pas de stockage - Je transfert à un autre collecteur", async ({ page }) =
     `);
 });
 
-test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context }) => {
+test("Pas de stockage - Je transfers à un autre ETG", async ({ page, context }) => {
   // const cdpSession = await context.newCDPSession(page);
   // // @ts-ignore
   // await cdpSession.send("Network.emulateNetworkConditions", NETWORK_PRESETS.PrettyGood);
@@ -387,7 +387,7 @@ test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context })
   await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
   await expect(
-    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez")
+    page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
   await page.getByText("Anomalies abats:Abcès ou").click();
@@ -407,8 +407,8 @@ test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context })
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
     page.getByText(
-      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim)."
-    )
+      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
+    ),
   ).toBeVisible();
   await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
@@ -596,7 +596,7 @@ test("Pas de stockage - Je transfert à un autre ETG", async ({ page, context })
   await expect(
     page.locator("p").filter({
       hasText: "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
-    })
+    }),
   ).toBeVisible();
   await page.locator(".select-prochain-detenteur__input-container").click();
   await page.getByRole("option", { name: "SVI 2 - 75000 Paris (Service" }).click();

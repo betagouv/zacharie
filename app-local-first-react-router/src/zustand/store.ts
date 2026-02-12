@@ -289,7 +289,7 @@ const useZustandStore = create<State & Actions>()(
               const carcasses = filterCarcassesForFei(
                 useZustandStore.getState().carcasses,
                 newIntermediaire.fei_numero,
-              );
+              ).filter((c) => !c.intermediaire_carcasse_refus_intermediaire_id);
               const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses.map((c) => ({
                 fei_numero: c.fei_numero,
                 numero_bracelet: c.numero_bracelet,
