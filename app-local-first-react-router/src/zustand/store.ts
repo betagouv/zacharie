@@ -1,6 +1,5 @@
 import {
   type Fei,
-  type EntityAndUserRelations,
   type Carcasse,
   type CarcasseIntermediaire,
   type Log,
@@ -63,14 +62,7 @@ export interface State {
   feis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires>;
   users: Record<UserForFei['id'], UserForFei>;
   entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
-  entitiesIdsWorkingDirectlyFor: Array<EntityWithUserRelation['id']>;
-  ccgsIds: Array<EntityWithUserRelation['id']>;
-  collecteursProIds: Array<EntityWithUserRelation['id']>;
-  etgsIds: Array<EntityWithUserRelation['id']>;
-  svisIds: Array<EntityWithUserRelation['id']>;
-  circuitCourtIds: Array<EntityWithUserRelation['id']>;
-  detenteursInitiaux: Record<UserForFei['id'], UserForFei>;
-  entityAndUserRelations: Record<EntityAndUserRelations['entity_id'], EntityAndUserRelations>;
+  detenteursInitiauxIds: Array<UserForFei['id']>;
   carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
   // single intermediaire for a single carcasse
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>;
@@ -78,7 +70,6 @@ export interface State {
   lastUpdateCarcassesRegistry: number;
   carcassesRegistry: Array<CarcasseForResponseForRegistry>;
   logs: Array<Log>;
-  // inetermediairesPopulated: Array<PopulatedIntermediaire>; // Note: fixed typo from 'inetermediaires'
   _hasHydrated: boolean;
 }
 
@@ -129,15 +120,8 @@ const initialState: State = {
   feis: {},
   users: {},
   entities: {},
-  entitiesIdsWorkingDirectlyFor: [],
-  ccgsIds: [],
-  collecteursProIds: [],
-  etgsIds: [],
-  circuitCourtIds: [],
-  svisIds: [],
+  detenteursInitiauxIds: [],
   apiKeyApprovals: [],
-  detenteursInitiaux: {},
-  entityAndUserRelations: {},
   carcasses: {},
   carcassesIntermediaireById: {},
   _hasHydrated: false,

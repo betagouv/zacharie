@@ -2,6 +2,7 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import { filterEntitiesWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 
 type FeiSorted = {
   feisUnderMyResponsability: Array<FeiWithIntermediaires>;
@@ -18,6 +19,7 @@ export function getFeisSorted(): FeiSorted {
   const state = useZustandStore.getState();
   const user = useUser.getState().user;
   const carcassesIntermediaireById = state.carcassesIntermediaireById;
+  const entitiesIdsWorkingDirectlyFor = filterEntitiesWorkingDirectlyFor(state.entities);
 
   const feisSorted: FeiSorted = {
     feisUnderMyResponsability: [],
@@ -50,7 +52,7 @@ export function getFeisSorted(): FeiSorted {
         // if (debug) console.log('1');
         continue;
       }
-      if (state.entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id!)) {
+      if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id!)) {
         feisSorted.feisUnderMyResponsability.push(fei);
         // if (debug) console.log('2');
         continue;
@@ -63,7 +65,7 @@ export function getFeisSorted(): FeiSorted {
         // if (debug) console.log('5');
         continue;
       }
-      if (state.entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id!)) {
+      if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id!)) {
         feisSorted.feisToTake.push(fei);
         // if (debug) console.log('6');
         continue;
@@ -82,14 +84,14 @@ export function getFeisSorted(): FeiSorted {
         continue;
       }
       if (fei.premier_detenteur_entity_id) {
-        if (state.entitiesIdsWorkingDirectlyFor.includes(fei.premier_detenteur_entity_id)) {
+        if (entitiesIdsWorkingDirectlyFor.includes(fei.premier_detenteur_entity_id)) {
           feisSorted.feisOngoing.push(fei);
           // if (debug) console.log('11');
           continue;
         }
       }
       if (fei.fei_next_owner_sous_traite_by_entity_id) {
-        if (state.entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_sous_traite_by_entity_id)) {
+        if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_sous_traite_by_entity_id)) {
           feisSorted.feisOngoing.push(fei);
           continue;
         }
@@ -103,7 +105,7 @@ export function getFeisSorted(): FeiSorted {
           break;
         }
         if (intermediaire.intermediaire_entity_id) {
-          if (state.entitiesIdsWorkingDirectlyFor.includes(intermediaire.intermediaire_entity_id)) {
+          if (entitiesIdsWorkingDirectlyFor.includes(intermediaire.intermediaire_entity_id)) {
             feisSorted.feisOngoing.push(fei);
             isIntermediaire = true;
             // if (debug) console.log('13');

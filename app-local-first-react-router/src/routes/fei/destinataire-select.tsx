@@ -18,6 +18,7 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { useCcgIds, useEtgIds, useSviIds, useCollecteursProIds, useCircuitCourtIds } from '@app/utils/get-entity-relations';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -80,11 +81,11 @@ export default function DestinataireSelect({
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
-  const ccgsIds = useZustandStore((state) => state.ccgsIds);
-  const etgsIds = useZustandStore((state) => state.etgsIds);
-  const svisIds = useZustandStore((state) => state.svisIds);
-  const collecteursProIds = useZustandStore((state) => state.collecteursProIds);
-  const circuitCourtIds = useZustandStore((state) => state.circuitCourtIds);
+  const ccgsIds = useCcgIds();
+  const etgsIds = useEtgIds();
+  const svisIds = useSviIds();
+  const collecteursProIds = useCollecteursProIds();
+  const circuitCourtIds = useCircuitCourtIds();
 
   const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
   const isCCGModalOpen = useIsModalOpen(ccgModal);

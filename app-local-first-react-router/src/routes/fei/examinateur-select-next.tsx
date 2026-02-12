@@ -14,6 +14,7 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
+import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
 
 export default function SelectNextForExaminateur({ disabled }: { disabled?: boolean }) {
   const params = useParams();
@@ -21,9 +22,9 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
-  const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
+  const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const fei = feis[params.fei_numero!];
-  const detenteursInitiaux = useZustandStore((state) => state.detenteursInitiaux);
+  const detenteursInitiaux = useDetenteursInitiaux();
   const [showSearchUserByEmail, setShowSearchUserByEmail] = useState(false);
   const prefilledInfos = usePrefillPremierDétenteurInfos();
   const associationsDeChasse = useMemo(() => {
@@ -304,11 +305,12 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
                   return;
                 }
                 useZustandStore.setState((state) => ({
-                  detenteursInitiaux: {
-                    ...state.detenteursInitiaux,
-                    [nextPremierDetenteur.id]: {
-                      ...nextPremierDetenteur,
-                    },
+                  detenteursInitiauxIds: state.detenteursInitiauxIds.includes(nextPremierDetenteur.id)
+                    ? state.detenteursInitiauxIds
+                    : [...state.detenteursInitiauxIds, nextPremierDetenteur.id],
+                  users: {
+                    ...state.users,
+                    [nextPremierDetenteur.id]: nextPremierDetenteur,
                   },
                 }));
                 setShowSearchUserByEmail(false);
