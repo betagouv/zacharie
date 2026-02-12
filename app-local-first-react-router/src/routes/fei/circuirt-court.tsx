@@ -1,22 +1,17 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import useZustandStore from '@app/zustand/store';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import FEIDonneesDeChasse from './donnees-de-chasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
 export default function CircuitCourt() {
   const params = useParams();
-  const carcasses = useZustandStore((state) => state.carcasses);
-  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const feiCarcasses = useCarcassesForFei(params.fei_numero);
   const allCarcassesForFei = useMemo(
-    () =>
-      (carcassesIdsByFei[params.fei_numero!] || [])
-        .map((cId) => carcasses[cId])
-        .sort(sortCarcassesApproved)
-        .filter((carcasse) => !carcasse.deleted_at),
-    [carcassesIdsByFei, params.fei_numero, carcasses],
+    () => feiCarcasses.sort(sortCarcassesApproved),
+    [feiCarcasses],
   );
 
   return (

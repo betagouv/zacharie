@@ -13,6 +13,7 @@ import FeiPremierDetenteur from './premier-detenteur';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import Alert from '@codegouvfr/react-dsfr/Alert';
 import useGetCommunesDeChasseFavorites from '@app/utils/useGetCommunesDeChasseFavorites';
@@ -27,11 +28,7 @@ export default function FEIExaminateurInitial() {
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
 
-  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
-  const carcassesState = useZustandStore((state) => state.carcasses);
-  const carcasses = (carcassesIdsByFei[params.fei_numero!] || [])
-    .map((cId) => carcassesState[cId])
-    .filter((c) => !c.deleted_at);
+  const carcasses = useCarcassesForFei(params.fei_numero);
 
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);

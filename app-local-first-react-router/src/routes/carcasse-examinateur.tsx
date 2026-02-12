@@ -24,6 +24,7 @@ import useZustandStore from '@app/zustand/store';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import { loadFei } from '@app/utils/load-fei';
 import useUser from '@app/zustand/user';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import InputMultiSelect from '@app/components/InputMultiSelect';
@@ -98,10 +99,8 @@ function CarcasseExaminateur() {
     });
   };
 
-  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
-  const existingsNumeroBracelet = (carcassesIdsByFei[fei.numero] || []).map(
-    (zacharie_carcasse_id) => carcasses[zacharie_carcasse_id]?.numero_bracelet,
-  );
+  const feiCarcasses = useCarcassesForFei(fei.numero);
+  const existingsNumeroBracelet = feiCarcasses.map((c) => c.numero_bracelet);
   const [numeroError, setNumeroError] = useState<string | null>(null);
 
   const navigate = useNavigate();
