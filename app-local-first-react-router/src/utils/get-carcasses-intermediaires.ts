@@ -75,8 +75,12 @@ export function filterFeiIntermediaires(
 
 export function useFeiIntermediaires(fei_numero: string | undefined): Array<FeiIntermediaire> {
   const byId = useZustandStore((state) => state.carcassesIntermediaireById);
+  const numberOfIntermediaires = Object.values(byId).length;
+  // FIXME: if I dont put the numberOfIntermediaires, the useMemo is not triggered when the intermediaires are updated
+  //  I think it's a matter of objects and references
   return useMemo(() => {
     if (!fei_numero) return [];
+    if (numberOfIntermediaires === 0) return [];
     return filterFeiIntermediaires(byId, fei_numero);
-  }, [byId, fei_numero]);
+  }, [byId, fei_numero, numberOfIntermediaires]);
 }

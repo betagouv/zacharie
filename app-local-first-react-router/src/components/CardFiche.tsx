@@ -52,7 +52,6 @@ export default function CardFiche({
   const feiCarcasses = useCarcassesForFei(fei.numero);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
-
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -121,7 +120,10 @@ export default function CardFiche({
       const abbreviation = abbreviations[carcasse.espece as keyof typeof abbreviations];
       if (!abbreviation) continue;
 
-      const intermediaires = filterCarcassesIntermediairesForCarcasse(carcassesIntermediaireById, carcasse.zacharie_carcasse_id!);
+      const intermediaires = filterCarcassesIntermediairesForCarcasse(
+        carcassesIntermediaireById,
+        carcasse.zacharie_carcasse_id!,
+      );
       const dernierAccepte = intermediaires
         .filter((ci) => !!ci.prise_en_charge_at)
         .sort(
@@ -140,7 +142,6 @@ export default function CardFiche({
 
     return refusals;
   }, [feiCarcasses, carcassesIntermediaireById]);
-
 
   /* 
   {!isOnline && (
