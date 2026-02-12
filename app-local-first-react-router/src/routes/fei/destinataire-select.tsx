@@ -17,6 +17,7 @@ import InputNotEditable from '@app/components/InputNotEditable';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -93,11 +94,7 @@ export default function DestinataireSelect({
   const fei = feis[params.fei_numero!];
   const prefilledInfos = usePrefillPremierDétenteurInfos();
 
-  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
-  const carcassesState = useZustandStore((state) => state.carcasses);
-  const carcasses = (carcassesIdsByFei[params.fei_numero!] || [])
-    .map((cId) => carcassesState[cId])
-    .filter((c) => !c.deleted_at);
+  const carcasses = useCarcassesForFei(params.fei_numero);
 
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);

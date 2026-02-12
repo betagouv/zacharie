@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
 import { loadFei } from './load-fei';
 import { capture } from '@app/services/sentry';
+import { filterCarcassesForFei } from './get-carcasses-for-fei';
 import { IPM1Decision, IPM2Decision, FeiOwnerRole } from '@prisma/client';
 
 type FeiExcelData = {
@@ -233,9 +234,7 @@ export default function useExportFeis() {
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
   const users = useZustandStore((state) => state.users);
-  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
-  const carcasses = useZustandStore((state) => state.carcasses);
 
   async function onExportToXlsx(feiNumbers: Array<string>) {
     setIsExporting(true);
@@ -319,22 +318,20 @@ export default function useExportFeis() {
 
         feiSheets[fei.numero] = feiSheetData;
 
-        for (const carcasseId of carcassesIdsByFei[fei.numero] || []) {
-          const carcasse = carcasses[carcasseId];
+        for (const carcasse of filterCarcassesForFei(useZustandStore.getState().carcasses, fei.numero)) {
           if (!carcasse) {
-            console.error('carcasse not found', carcasseId);
             continue;
           }
           if (carcasse.deleted_at) {
-            console.error('carcasse deleted', carcasseId);
+            console.error('carcasse deleted', carcasse.zacharie_carcasse_id);
             continue;
           }
           if (carcasse.intermediaire_carcasse_manquante) {
-            console.error('carcasse manquante', carcasseId);
+            console.error('carcasse manquante', carcasse.zacharie_carcasse_id);
             continue;
           }
           if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
-            console.error('carcasse refusée', carcasseId);
+            console.error('carcasse refusée', carcasse.zacharie_carcasse_id);
             continue;
           }
           const commentaires = [];
@@ -472,22 +469,20 @@ export default function useExportFeis() {
             ? `${premierDetenteur?.prenom} ${premierDetenteur?.nom_de_famille}`
             : '');
 
-        for (const carcasseId of carcassesIdsByFei[fei.numero] || []) {
-          const carcasse = carcasses[carcasseId];
+        for (const carcasse of filterCarcassesForFei(useZustandStore.getState().carcasses, fei.numero)) {
           if (!carcasse) {
-            console.error('carcasse not found', carcasseId);
             continue;
           }
           if (carcasse.deleted_at) {
-            console.error('carcasse deleted', carcasseId);
+            console.error('carcasse deleted', carcasse.zacharie_carcasse_id);
             continue;
           }
           if (carcasse.intermediaire_carcasse_manquante) {
-            console.error('carcasse manquante', carcasseId);
+            console.error('carcasse manquante', carcasse.zacharie_carcasse_id);
             continue;
           }
           if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
-            console.error('carcasse refusée', carcasseId);
+            console.error('carcasse refusée', carcasse.zacharie_carcasse_id);
             continue;
           }
 

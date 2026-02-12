@@ -9,6 +9,7 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { CarcasseType } from '@prisma/client';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { abbreviations } from '@app/utils/count-carcasses';
 
 interface CardProps {
@@ -47,8 +48,7 @@ export default function CardFiche({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
-  const carcasses = useZustandStore((state) => state.carcasses);
-  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const feiCarcasses = useCarcassesForFei(fei.numero);
   const getCarcassesIntermediairesForCarcasse = useZustandStore(
     (state) => state.getCarcassesIntermediairesForCarcasse,
   );
@@ -113,7 +113,6 @@ export default function CardFiche({
 
   // Calcul des refus partiels (lots dont une partie a été refusée)
   const partialRefusals = useMemo(() => {
-    const feiCarcasses = (carcassesIdsByFei[fei.numero] || []).map((id) => carcasses[id]);
     const refusals: string[] = [];
 
     for (const carcasse of feiCarcasses) {
@@ -140,7 +139,7 @@ export default function CardFiche({
     }
 
     return refusals;
-  }, [carcasses, carcassesIdsByFei, fei.numero, getCarcassesIntermediairesForCarcasse]);
+  }, [feiCarcasses, fei.numero, getCarcassesIntermediairesForCarcasse]);
 
   /* 
   {!isOnline && (

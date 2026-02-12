@@ -22,6 +22,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
+import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import type { HistoryInput } from '@app/utils/create-history-entry';
 import { syncProchainBraceletAUtiliser } from './user';
 import updateCarcasseStatus from '@app/utils/get-carcasse-status';
@@ -72,7 +73,6 @@ export interface State {
   detenteursInitiaux: Record<UserForFei['id'], UserForFei>;
   entityAndUserRelations: Record<EntityAndUserRelations['entity_id'], EntityAndUserRelations>;
   carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
-  carcassesIdsByFei: Record<Fei['numero'], Array<Carcasse['zacharie_carcasse_id']>>;
   // single intermediaire for a single carcasse
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>;
   // list of intermediaires for a carcasse
@@ -155,7 +155,6 @@ const initialState: State = {
   detenteursInitiaux: {},
   entityAndUserRelations: {},
   carcasses: {},
-  carcassesIdsByFei: {},
   carcassesIntermediaireById: {},
   carcassesIntermediairesIdsByCarcasse: {},
   carcassesIntermediaireIdsByIntermediaire: {},
@@ -194,7 +193,6 @@ const useZustandStore = create<State & Actions>()(
           useZustandStore.setState((state) => ({
             ...state,
             feis: { ...state.feis, [newFei.numero]: newFei },
-            carcassesIdsByFei: { ...state.carcassesIdsByFei, [newFei.numero]: [] },
             dataIsSynced: false,
           }));
           syncData(`create-fei-${newFei.numero}`);
@@ -206,9 +204,7 @@ const useZustandStore = create<State & Actions>()(
           console.log('updateFei', fei_numero, JSON.stringify(partialFei, null, 2));
           const state = useZustandStore.getState();
           const feis = state.feis;
-          const carcassefeiCarcasses = (state.carcassesIdsByFei[fei_numero] || []).map(
-            (id) => state.carcasses[id],
-          );
+          const carcassefeiCarcasses = filterCarcassesForFei(state.carcasses, fei_numero);
           const countCarcassesByEspece = formatCountCarcasseByEspece(carcassefeiCarcasses);
           const nextFei: FeiWithIntermediaires = {
             ...feis[fei_numero],
@@ -230,11 +226,6 @@ const useZustandStore = create<State & Actions>()(
         createCarcasse: (newCarcasse: Carcasse) => {
           newCarcasse.is_synced = false;
           newCarcasse.updated_at = dayjs().toDate();
-          const nextCarcassesIdsByFei =
-            useZustandStore.getState().carcassesIdsByFei[newCarcasse.fei_numero] || [];
-          if (!nextCarcassesIdsByFei.includes(newCarcasse.zacharie_carcasse_id)) {
-            nextCarcassesIdsByFei.unshift(newCarcasse.zacharie_carcasse_id);
-          }
 
           useZustandStore.setState((state) => {
             return {
@@ -242,10 +233,6 @@ const useZustandStore = create<State & Actions>()(
               carcasses: {
                 [newCarcasse.zacharie_carcasse_id]: newCarcasse,
                 ...state.carcasses,
-              },
-              carcassesIdsByFei: {
-                ...state.carcassesIdsByFei,
-                [newCarcasse.fei_numero]: nextCarcassesIdsByFei,
               },
               dataIsSynced: false,
             };
@@ -292,21 +279,18 @@ const useZustandStore = create<State & Actions>()(
               nextIntermediairesForFei.push(newIntermediaire);
             }
 
-            const feiCarcassesIds = useZustandStore.getState().carcassesIdsByFei[feiNumero] || [];
-            const carcasses = feiCarcassesIds.map((id) => useZustandStore.getState().carcasses[id]);
-            const activeCarcasses = carcasses.filter(
-              (c) => !c.intermediaire_carcasse_refus_intermediaire_id && !c.deleted_at,
-            );
-
             const byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
             const byCarcasseId = { ...useZustandStore.getState().carcassesIntermediairesIdsByCarcasse };
             const byIntermediaireId: Record<
               FeiAndIntermediaireIds,
               Array<FeiAndCarcasseAndIntermediaireIds>
             > = {};
-
             for (const newIntermediaire of newIntermediaires) {
-              const carcassesIntermediaires: Array<CarcasseIntermediaire> = activeCarcasses.map((c) => ({
+              const carcasses = filterCarcassesForFei(
+                useZustandStore.getState().carcasses,
+                newIntermediaire.fei_numero,
+              ).filter((c) => !c.intermediaire_carcasse_refus_intermediaire_id);
+              const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses.map((c) => ({
                 fei_numero: c.fei_numero,
                 numero_bracelet: c.numero_bracelet,
                 zacharie_carcasse_id: c.zacharie_carcasse_id,
@@ -618,20 +602,11 @@ export async function syncCarcasse(nextCarcasse: Carcasse, signal: AbortSignal) 
     .then((res) => {
       if (signal?.aborted) return;
       if (res.ok && res.data.carcasse) {
-        const nextCarcassesIdsByFei =
-          useZustandStore.getState().carcassesIdsByFei[nextCarcasse.fei_numero] || [];
-        if (!nextCarcassesIdsByFei.includes(nextCarcasse.zacharie_carcasse_id)) {
-          nextCarcassesIdsByFei.push(nextCarcasse.zacharie_carcasse_id);
-        }
         useZustandStore.setState((state) => ({
           ...state,
           carcasses: {
             ...useZustandStore.getState().carcasses,
             [nextCarcasse.zacharie_carcasse_id]: res.data.carcasse!,
-          },
-          carcassesIdsByFei: {
-            ...useZustandStore.getState().carcassesIdsByFei,
-            [nextCarcasse.fei_numero]: [...new Set(nextCarcassesIdsByFei)],
           },
         }));
       }

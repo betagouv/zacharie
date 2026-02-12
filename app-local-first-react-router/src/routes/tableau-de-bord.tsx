@@ -17,6 +17,7 @@ import useExportFeis from '@app/utils/export-feis';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import useUser from '@app/zustand/user';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import API from '@app/services/api';
@@ -77,7 +78,10 @@ function OnboardingChasseInfoBanner() {
         </p>
       </div>
       <div className="flex shrink-0 flex-col gap-2 md:flex-row">
-        <Link to="/app/tableau-de-bord/onboarding/mes-informations-de-chasse" className="fr-btn fr-btn--primary">
+        <Link
+          to="/app/tableau-de-bord/onboarding/mes-informations-de-chasse"
+          className="fr-btn fr-btn--primary"
+        >
           Compléter mon profil
         </Link>
         <Button priority="secondary" onClick={handleSkip}>
@@ -241,13 +245,13 @@ export default function TableauDeBordIndex() {
   }, [filter]);
   const [filterETG, setFilterETG] = useState<string>('');
   const [sviWorkingForEtgIds, dropDownMenuFilterTextSvi] = useMemo(() => {
-    const _sviWorkingForEtgIds = !isOnlySvi ? [] : allEtgIds.filter(
-      (id) => {
-        const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
-        if (!etgLinkedToSviId) return false;
-        return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
-      }
-    );
+    const _sviWorkingForEtgIds = !isOnlySvi
+      ? []
+      : allEtgIds.filter((id) => {
+          const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
+          if (!etgLinkedToSviId) return false;
+          return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
+        });
     if (_sviWorkingForEtgIds.includes(filterETG)) {
       return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
     }
@@ -508,7 +512,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                    // disabledBecauseOffline={!isOnline}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -531,7 +535,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                    // disabledBecauseOffline={!isOnline}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -545,7 +549,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                    // disabledBecauseOffline={!isOnline}
+                      // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -648,8 +652,7 @@ function FeisTableRow({
 }) {
   const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
   const isCircuitCourt = useIsCircuitCourt();
-  const carcasses = useZustandStore((state) => state.carcasses);
-  const carcassesIdsByFei = useZustandStore((state) => state.carcassesIdsByFei);
+  const feiCarcasses = useCarcassesForFei(fei.numero);
   const getCarcassesIntermediairesForCarcasse = useZustandStore(
     (state) => state.getCarcassesIntermediairesForCarcasse,
   );
@@ -690,7 +693,6 @@ function FeisTableRow({
     if (!carcassesAcceptées.length) {
       return [];
     }
-    const feiCarcasses = (carcassesIdsByFei[fei.numero] || []).map((id) => carcasses[id]);
     const lines = [];
     for (const line of carcassesAcceptées) {
       let enrichedLine = line;
@@ -719,7 +721,7 @@ function FeisTableRow({
       lines.push(enrichedLine);
     }
     return lines;
-  }, [carcassesAcceptées, carcasses, carcassesIdsByFei, fei.numero, getCarcassesIntermediairesForCarcasse]);
+  }, [carcassesAcceptées, feiCarcasses, getCarcassesIntermediairesForCarcasse]);
 
   // Filtrer selon le statut si un filtre est défini - APRÈS tous les hooks
   if (filter && filter !== 'Toutes les fiches' && filter !== simpleStatus) {
