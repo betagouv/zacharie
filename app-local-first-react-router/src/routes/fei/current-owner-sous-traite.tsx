@@ -9,6 +9,7 @@ import useZustandStore from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import DestinataireSelect from './destinataire-select';
 import { getFeiAndIntermediaireIdsFromFeiIntermediaire } from '@app/utils/get-carcasse-intermediaire-id';
+import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 
 export default function FeiSousTraite() {
   const params = useParams();
@@ -17,8 +18,7 @@ export default function FeiSousTraite() {
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
-  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
-  const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+  const intermediaires = useFeiIntermediaires(fei.numero);
   const latestIntermediaire = intermediaires[0];
   const feiAndIntermediaireIds = latestIntermediaire
     ? getFeiAndIntermediaireIdsFromFeiIntermediaire(latestIntermediaire)

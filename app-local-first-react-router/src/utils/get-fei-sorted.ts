@@ -1,6 +1,7 @@
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
+import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 
 type FeiSorted = {
   feisUnderMyResponsability: Array<FeiWithIntermediaires>;
@@ -16,7 +17,7 @@ export function isFeiDone(fei: FeiWithIntermediaires): boolean {
 export function getFeisSorted(): FeiSorted {
   const state = useZustandStore.getState();
   const user = useUser.getState().user;
-  const intermediairesByFei = useZustandStore.getState().intermediairesByFei;
+  const carcassesIntermediaireById = state.carcassesIntermediaireById;
 
   const feisSorted: FeiSorted = {
     feisUnderMyResponsability: [],
@@ -94,7 +95,7 @@ export function getFeisSorted(): FeiSorted {
         }
       }
       let isIntermediaire = false;
-      for (const intermediaire of intermediairesByFei[fei.numero] || []) {
+      for (const intermediaire of filterFeiIntermediaires(carcassesIntermediaireById, fei.numero)) {
         if (intermediaire.intermediaire_user_id === user.id) {
           feisSorted.feisOngoing.push(fei);
           isIntermediaire = true;

@@ -6,6 +6,7 @@ import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import useZustandStore from '@app/zustand/store';
+import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { createHistoryInput } from '@app/utils/create-history-entry';
@@ -39,10 +40,7 @@ export default function CarcasseIntermediaireComp({
     intermediaire.id,
   );
   const carcasseIntermediaire = carcassesIntermediaireById[carcasseIntermediaireId];
-  const getCarcassesIntermediairesForCarcasse = useZustandStore(
-    (state) => state.getCarcassesIntermediairesForCarcasse,
-  );
-  const carcassesIntermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id!);
+  const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
 
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];

@@ -7,6 +7,7 @@ import { IPM1Decision, IPM2Decision } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
 import { loadFei } from './load-fei';
+import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
 
 type FeiExcelData = {
   Donnée: string;
@@ -193,7 +194,6 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
 
 export default function useExportCarcasses() {
   let [isExporting, setIsExporting] = useState(false);
-  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
   const users = useZustandStore((state) => state.users);
@@ -213,7 +213,7 @@ export default function useExportCarcasses() {
           console.error('carcasse deleted', carcasse.zacharie_carcasse_id);
           continue;
         }
-        const intermediaires = getFeiIntermediairesForFeiNumero(carcasse.fei_numero);
+        const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, carcasse.fei_numero);
         let fei = feis[carcasse.fei_numero];
         if (!fei) {
           await loadFei(carcasse.fei_numero);

@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { useParams, useNavigate } from 'react-router';
 import useZustandStore from '@app/zustand/store';
 import { getSimplifiedCarcasseStatus } from '@app/utils/get-carcasse-status';
+import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 
 interface CarcasseAVerifierProps {
   carcasse: Carcasse;
@@ -18,10 +19,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
   const state = useZustandStore((state) => state);
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
-  const getCarcassesIntermediairesForCarcasse = useZustandStore(
-    (state) => state.getCarcassesIntermediairesForCarcasse,
-  );
-  const carcasseIntermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
+  const carcasseIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
   const latestIntermediaire = carcasseIntermediaires[0];
 
   const commentairesIntermediaires = useMemo(() => {

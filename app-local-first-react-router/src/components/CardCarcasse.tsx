@@ -1,5 +1,6 @@
 import { useCarcasseStatusAndRefus } from '@app/utils/useCarcasseStatusAndRefus';
 import useZustandStore from '@app/zustand/store';
+import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
@@ -57,10 +58,7 @@ export default function CardCarcasse({
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
-  const getCarcassesIntermediairesForCarcasse = useZustandStore(
-    (state) => state.getCarcassesIntermediairesForCarcasse,
-  );
-  const carcassesIntermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
+  const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
   const latestIntermediaire = carcassesIntermediaires[0];
   const entities = useZustandStore((state) => state.entities);
 
@@ -275,10 +273,7 @@ function CarcasseDetails({
   const entities = useZustandStore((state) => state.entities);
   const carcasses = useZustandStore((state) => state.carcasses);
   const fei = feis[params.fei_numero!];
-  const getCarcassesIntermediairesForCarcasse = useZustandStore(
-    (state) => state.getCarcassesIntermediairesForCarcasse,
-  );
-  const carcassesIntermediaires = getCarcassesIntermediairesForCarcasse(carcasseId!);
+  const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasseId);
   const latestIntermediaire = carcassesIntermediaires[0];
 
   const carcasse = carcasses[carcasseId!];

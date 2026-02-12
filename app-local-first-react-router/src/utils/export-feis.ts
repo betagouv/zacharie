@@ -7,6 +7,7 @@ import { getIntermediaireRoleLabel } from './get-user-roles-label';
 import dayjs from 'dayjs';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
 import { loadFei } from './load-fei';
+import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
 import { capture } from '@app/services/sentry';
 import { filterCarcassesForFei } from './get-carcasses-for-fei';
 import { IPM1Decision, IPM2Decision, FeiOwnerRole } from '@prisma/client';
@@ -230,7 +231,6 @@ function sortSimplifiedCarcasses(
 
 export default function useExportFeis() {
   let [isExporting, setIsExporting] = useState(false);
-  const getFeiIntermediairesForFeiNumero = useZustandStore((state) => state.getFeiIntermediairesForFeiNumero);
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
   const users = useZustandStore((state) => state.users);
@@ -293,7 +293,7 @@ export default function useExportFeis() {
           });
         }
 
-        const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
+        const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
         if (intermediaires.length > 0) {
           for (const [index, intermediaire] of Object.entries(intermediaires)) {
             const intermediaireEntity = entities[intermediaire.intermediaire_entity_id];

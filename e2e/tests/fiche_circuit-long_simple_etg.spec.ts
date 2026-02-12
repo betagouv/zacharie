@@ -90,7 +90,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await expect(
     page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
-  // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
+  await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
   await page.getByText("Anomalies abats:Abcès ou").click();
   await page.getByLabel("Daim - N° MM-001-001").getByText("Carcasse acceptée").click();
@@ -254,6 +254,7 @@ test("Pas de stockage - Je transfers à un autre collecteur", async ({ page }) =
   await expect(
     page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
+  await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
   await page.getByText("Anomalies abats:Abcès ou").click();
   await page.getByLabel("Daim - N° MM-001-001").getByText("Carcasse acceptée").click();
@@ -389,6 +390,7 @@ test("Pas de stockage - Je transfers à un autre ETG", async ({ page, context })
   await expect(
     page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
+  await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
   await page.getByText("Anomalies abats:Abcès ou").click();
   await page.getByLabel("Daim - N° MM-001-001").getByText("Carcasse acceptée").click();

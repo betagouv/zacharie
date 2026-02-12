@@ -11,6 +11,7 @@ import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { CarcasseType } from '@prisma/client';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { abbreviations } from '@app/utils/count-carcasses';
+import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 
 interface CardProps {
   fei: FeiWithIntermediaires;
@@ -49,9 +50,7 @@ export default function CardFiche({
   const menuRef = useRef<HTMLDivElement>(null);
   const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
   const feiCarcasses = useCarcassesForFei(fei.numero);
-  const getCarcassesIntermediairesForCarcasse = useZustandStore(
-    (state) => state.getCarcassesIntermediairesForCarcasse,
-  );
+  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -121,7 +120,10 @@ export default function CardFiche({
       const abbreviation = abbreviations[carcasse.espece as keyof typeof abbreviations];
       if (!abbreviation) continue;
 
-      const intermediaires = getCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id!);
+      const intermediaires = filterCarcassesIntermediairesForCarcasse(
+        carcassesIntermediaireById,
+        carcasse.zacharie_carcasse_id!,
+      );
       const dernierAccepte = intermediaires
         .filter((ci) => !!ci.prise_en_charge_at)
         .sort(
@@ -139,7 +141,7 @@ export default function CardFiche({
     }
 
     return refusals;
-  }, [feiCarcasses, fei.numero, getCarcassesIntermediairesForCarcasse]);
+  }, [feiCarcasses, carcassesIntermediaireById]);
 
   /* 
   {!isOnline && (

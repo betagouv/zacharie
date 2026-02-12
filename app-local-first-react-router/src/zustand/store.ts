@@ -31,7 +31,6 @@ import PQueue from 'p-queue';
 import {
   getFeiAndCarcasseAndIntermediaireIds,
   getFeiAndIntermediaireIds,
-  getFeiAndIntermediaireIdsFromFeiIntermediaire,
 } from '@app/utils/get-carcasse-intermediaire-id';
 import type {
   FeiAndCarcasseAndIntermediaireIds,
@@ -75,17 +74,6 @@ export interface State {
   carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
   // single intermediaire for a single carcasse
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>;
-  // list of intermediaires for a carcasse
-  carcassesIntermediairesIdsByCarcasse: Record<
-    Carcasse['zacharie_carcasse_id'],
-    Array<FeiAndCarcasseAndIntermediaireIds>
-  >;
-  // list of carcasses for an intermediaire
-  carcassesIntermediaireIdsByIntermediaire: Record<
-    FeiAndIntermediaireIds,
-    Array<FeiAndCarcasseAndIntermediaireIds>
-  >;
-  intermediairesByFei: Record<Fei['numero'], Array<FeiIntermediaire>>;
   apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
   lastUpdateCarcassesRegistry: number;
   carcassesRegistry: Array<CarcasseForResponseForRegistry>;
@@ -116,10 +104,6 @@ interface Actions {
     carcasse: Partial<Carcasse>,
     updateFei: boolean,
   ) => void;
-  getFeiIntermediairesForFeiNumero: (fei_numero: Fei['numero']) => Array<FeiIntermediaire>;
-  getCarcassesIntermediairesForCarcasse: (
-    zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
-  ) => Array<CarcasseIntermediaire>;
   createFeiIntermediaires: (newFeiIntermediaires: FeiIntermediaire[]) => Promise<void>;
   updateAllCarcasseIntermediaire: (
     fei_numero: Fei['numero'],
@@ -156,9 +140,6 @@ const initialState: State = {
   entityAndUserRelations: {},
   carcasses: {},
   carcassesIntermediaireById: {},
-  carcassesIntermediairesIdsByCarcasse: {},
-  carcassesIntermediaireIdsByIntermediaire: {},
-  intermediairesByFei: {},
   _hasHydrated: false,
 };
 
@@ -167,26 +148,6 @@ const useZustandStore = create<State & Actions>()(
     persist(
       (set, get): State & Actions => ({
         ...initialState,
-        getFeiIntermediairesForFeiNumero: (fei_numero: Fei['numero']) => {
-          return (get().intermediairesByFei[fei_numero] || []).sort((a, b) =>
-            dayjs(a.prise_en_charge_at).diff(b.prise_en_charge_at) < 0 ? 1 : -1,
-          );
-        },
-        getCarcassesIntermediairesForCarcasse: (zacharie_carcasse_id: Carcasse['zacharie_carcasse_id']) => {
-          const carcassesIntermediairesIdsByCarcasse = get().carcassesIntermediairesIdsByCarcasse;
-          const carcassesIntermediairesIds = carcassesIntermediairesIdsByCarcasse[zacharie_carcasse_id] || [];
-          const carcassesIntermediaires = [];
-          for (const carcassesIntermediaireId of carcassesIntermediairesIds) {
-            const carcassesIntermediaire = get().carcassesIntermediaireById[carcassesIntermediaireId];
-            carcassesIntermediaires.push(carcassesIntermediaire);
-          }
-          return carcassesIntermediaires.sort((a, b) =>
-            dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1,
-          );
-        },
-        // carcassesIntermediaires: {},
-        // carcassesIntermediairesByIntermediaire: {},
-        // carcassesIntermediairesIdsByCarcasse: {},
         createFei: (newFei: FeiWithIntermediaires) => {
           newFei.is_synced = false;
           newFei.updated_at = dayjs().toDate();
@@ -273,85 +234,51 @@ const useZustandStore = create<State & Actions>()(
           if (newIntermediaires.length === 0) return;
           return new Promise((resolve) => {
             const feiNumero = newIntermediaires[0].fei_numero;
-            const intermediairesByFei = useZustandStore.getState().intermediairesByFei;
-            const nextIntermediairesForFei = [...(intermediairesByFei[feiNumero] || [])];
-            for (const newIntermediaire of newIntermediaires) {
-              nextIntermediairesForFei.push(newIntermediaire);
-            }
-
+            const carcasses = filterCarcassesForFei(useZustandStore.getState().carcasses, feiNumero);
             const byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
-            const byCarcasseId = { ...useZustandStore.getState().carcassesIntermediairesIdsByCarcasse };
-            const byIntermediaireId: Record<
-              FeiAndIntermediaireIds,
-              Array<FeiAndCarcasseAndIntermediaireIds>
-            > = {};
             for (const newIntermediaire of newIntermediaires) {
-              const carcasses = filterCarcassesForFei(
-                useZustandStore.getState().carcasses,
-                newIntermediaire.fei_numero,
-              ).filter((c) => !c.intermediaire_carcasse_refus_intermediaire_id);
-              const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses.map((c) => ({
-                fei_numero: c.fei_numero,
-                numero_bracelet: c.numero_bracelet,
-                zacharie_carcasse_id: c.zacharie_carcasse_id,
-                intermediaire_id: newIntermediaire.id,
-                intermediaire_entity_id: newIntermediaire.intermediaire_entity_id,
-                intermediaire_role: newIntermediaire.intermediaire_role,
-                intermediaire_user_id: newIntermediaire.intermediaire_user_id,
-                check_manuel: null,
-                manquante: null,
-                refus: null,
-                nombre_d_animaux_acceptes: null,
-                commentaire: null,
-                decision_at: null,
-                ecarte_pour_inspection: false,
-                prise_en_charge: true, // always true by default, confirmed by the intermediaire globally
-                prise_en_charge_at: newIntermediaire.prise_en_charge_at, // will be set by the intermediaire when he confirms all the carcasse
-                intermediaire_depot_type: null,
-                intermediaire_depot_entity_id: null,
-                intermediaire_prochain_detenteur_role_cache: null,
-                intermediaire_prochain_detenteur_id_cache: null,
-                intermediaire_poids: null,
-                created_at: newIntermediaire.created_at,
-                updated_at: newIntermediaire.created_at,
-                deleted_at: null,
-                is_synced: false,
-              }));
+              const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses
+                .filter((c) => !c.intermediaire_carcasse_refus_intermediaire_id)
+                .map((c) => ({
+                  fei_numero: c.fei_numero,
+                  numero_bracelet: c.numero_bracelet,
+                  zacharie_carcasse_id: c.zacharie_carcasse_id,
+                  intermediaire_id: newIntermediaire.id,
+                  intermediaire_entity_id: newIntermediaire.intermediaire_entity_id,
+                  intermediaire_role: newIntermediaire.intermediaire_role,
+                  intermediaire_user_id: newIntermediaire.intermediaire_user_id,
+                  check_manuel: null,
+                  manquante: null,
+                  refus: null,
+                  nombre_d_animaux_acceptes: null,
+                  commentaire: null,
+                  decision_at: null,
+                  ecarte_pour_inspection: false,
+                  prise_en_charge: true, // always true by default, confirmed by the intermediaire globally
+                  prise_en_charge_at: newIntermediaire.prise_en_charge_at, // will be set by the intermediaire when he confirms all the carcasse
+                  intermediaire_depot_type: null,
+                  intermediaire_depot_entity_id: null,
+                  intermediaire_prochain_detenteur_role_cache: null,
+                  intermediaire_prochain_detenteur_id_cache: null,
+                  intermediaire_poids: null,
+                  created_at: newIntermediaire.created_at,
+                  updated_at: newIntermediaire.created_at,
+                  deleted_at: null,
+                  is_synced: false,
+                }));
 
               for (const ci of carcassesIntermediaires) {
-                const feiAndIntermediaireId = getFeiAndIntermediaireIds(ci);
                 const feiAndCarcasseAndIntermediaireId = getFeiAndCarcasseAndIntermediaireIds(ci);
-
                 byId[feiAndCarcasseAndIntermediaireId] = ci;
-                if (!byCarcasseId[ci.zacharie_carcasse_id]) byCarcasseId[ci.zacharie_carcasse_id] = [];
-                if (!byCarcasseId[ci.zacharie_carcasse_id].includes(feiAndCarcasseAndIntermediaireId)) {
-                  byCarcasseId[ci.zacharie_carcasse_id].push(feiAndCarcasseAndIntermediaireId);
-                }
-                if (!byIntermediaireId[feiAndIntermediaireId]) byIntermediaireId[feiAndIntermediaireId] = [];
-                if (!byIntermediaireId[feiAndIntermediaireId].includes(feiAndCarcasseAndIntermediaireId)) {
-                  byIntermediaireId[feiAndIntermediaireId].push(feiAndCarcasseAndIntermediaireId);
-                }
               }
             }
 
             useZustandStore.setState((state) => {
               return {
                 ...state,
-                intermediairesByFei: {
-                  ...state.intermediairesByFei,
-                  [feiNumero]: nextIntermediairesForFei.sort((a, b) =>
-                    dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1,
-                  ),
-                },
                 carcassesIntermediaireById: {
                   ...state.carcassesIntermediaireById,
                   ...byId,
-                },
-                carcassesIntermediairesIdsByCarcasse: {
-                  ...byCarcasseId,
-                },
-                carcassesIntermediaireIdsByIntermediaire: {
-                  ...byIntermediaireId,
                 },
                 dataIsSynced: false,
               };
@@ -360,7 +287,7 @@ const useZustandStore = create<State & Actions>()(
           });
         },
         updateAllCarcasseIntermediaire: (
-          fei_numero: Fei['numero'],
+          _fei_numero: Fei['numero'],
           feiAndIntermediaireIds: FeiAndIntermediaireIds,
           nextCarcasseIntermediaire: Partial<CarcasseIntermediaire>,
         ) => {
@@ -369,12 +296,13 @@ const useZustandStore = create<State & Actions>()(
             FeiAndCarcasseAndIntermediaireIds,
             CarcasseIntermediaire
           > = {};
-          const carcassesIntermediaireIds =
-            useZustandStore.getState().carcassesIntermediaireIdsByIntermediaire[feiAndIntermediaireIds];
-          for (const carcassesIntermediaireId of carcassesIntermediaireIds) {
-            const carcassesIntermediaire = carcassesIntermediaireById[carcassesIntermediaireId];
+          const matchingEntries = Object.entries(carcassesIntermediaireById).filter(
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            ([_id, ci]) => getFeiAndIntermediaireIds(ci) === feiAndIntermediaireIds,
+          );
+          for (const [carcassesIntermediaireId, carcassesIntermediaire] of matchingEntries) {
             if (!carcassesIntermediaire.prise_en_charge) continue;
-            nextCarcassesIntermediaireById[carcassesIntermediaireId] = {
+            nextCarcassesIntermediaireById[carcassesIntermediaireId as FeiAndCarcasseAndIntermediaireIds] = {
               ...carcassesIntermediaire,
               ...nextCarcasseIntermediaire,
               updated_at: dayjs().toDate(),
@@ -385,22 +313,6 @@ const useZustandStore = create<State & Actions>()(
           useZustandStore.setState((state) => {
             return {
               ...state,
-              intermediairesByFei: {
-                ...state.intermediairesByFei,
-                [fei_numero]: state.intermediairesByFei[fei_numero].map((intermediaire) => {
-                  if (
-                    feiAndIntermediaireIds === getFeiAndIntermediaireIdsFromFeiIntermediaire(intermediaire)
-                  ) {
-                    return {
-                      ...intermediaire,
-                      ...nextCarcasseIntermediaire,
-                      updated_at: dayjs().toDate(),
-                      is_synced: false,
-                    };
-                  }
-                  return intermediaire;
-                }),
-              },
               carcassesIntermediaireById: {
                 ...state.carcassesIntermediaireById,
                 ...nextCarcassesIntermediaireById,
