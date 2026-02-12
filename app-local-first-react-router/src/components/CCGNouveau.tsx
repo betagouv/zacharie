@@ -25,7 +25,6 @@ interface CCGNouveauProps {
 
 export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
   const user = useUser((state) => state.user)!;
-  const ccgsIds = useZustandStore((state) => state.ccgsIds);
   const entities = useZustandStore((state) => state.entities);
 
   const [mode, setMode] = useState<'select' | 'quick' | 'full'>('select');
@@ -56,9 +55,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
 
       setIsSubmitting(false);
       if (response.ok && response.data.entity) {
-        // Update Zustand store
         useZustandStore.setState({
-          ccgsIds: [...ccgsIds, response.data.entity.id],
           entities: {
             ...entities,
             [response.data.entity.id]: {
@@ -74,7 +71,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
         setError(response.error);
       }
     },
-    [user.id, ccgsIds, entities, onFinish],
+    [user.id, entities, onFinish],
   );
 
   // Full pre-registration form
@@ -95,9 +92,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
       setIsSubmitting(false);
       if (response.ok && response.data?.createdEntity) {
         const newCCG = response.data.createdEntity;
-        // Update Zustand store
         useZustandStore.setState({
-          ccgsIds: [...ccgsIds, newCCG.id],
           entities: {
             ...entities,
             [newCCG.id]: {
@@ -112,7 +107,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
         setError(response.error || 'Erreur lors de la création du CCG');
       }
     },
-    [ccgsIds, entities, onFinish],
+    [entities, onFinish],
   );
 
   return (

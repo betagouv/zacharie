@@ -44,94 +44,35 @@ export function setFeiInStore(fei: FeiPopulated) {
     };
   }
 
-  const examinateurInitial = fei.FeiExaminateurInitialUser;
-  if (examinateurInitial) {
-    prevState.users[examinateurInitial.id] = examinateurInitial;
+  // Extract users
+  for (const u of [
+    fei.FeiExaminateurInitialUser,
+    fei.FeiPremierDetenteurUser,
+    fei.FeiCurrentUser,
+    fei.FeiNextUser,
+    fei.FeiSviUser,
+  ]) {
+    if (u && !prevState.users[u.id]) {
+      prevState.users[u.id] = u;
+    }
   }
 
-  const premierDetenteur = fei.FeiPremierDetenteurUser;
-  if (premierDetenteur) {
-    prevState.users[premierDetenteur.id] = premierDetenteur;
-  }
-
-  if (fei.premier_detenteur_entity_id) {
-    const existingEntity = prevState.entities[fei.premier_detenteur_entity_id];
-    const premierDetenteurEntity = fei.FeiPremierDetenteurEntity!;
-    prevState.entities[fei.premier_detenteur_entity_id!] = {
-      ...existingEntity,
-      ...premierDetenteurEntity,
-      relation: existingEntity?.relation ?? 'NONE',
-      relationStatus: existingEntity?.relationStatus ?? undefined,
-    } satisfies EntityWithUserRelation;
-  }
-
-  if (fei.premier_detenteur_depot_entity_id) {
-    const existingEntity = prevState.entities[fei.premier_detenteur_depot_entity_id];
-    const depotEntity = fei.FeiDepotEntity!;
-    prevState.entities[fei.premier_detenteur_depot_entity_id!] = {
-      ...existingEntity,
-      ...depotEntity,
-      relation: existingEntity?.relation ?? 'NONE',
-      relationStatus: existingEntity?.relationStatus ?? undefined,
-    } satisfies EntityWithUserRelation;
-  }
-
-  const currentOwnerUser = fei.FeiCurrentUser;
-  if (currentOwnerUser) {
-    prevState.users[currentOwnerUser.id] = currentOwnerUser;
-  }
-
-  if (fei.fei_current_owner_entity_id) {
-    const existingEntity = prevState.entities[fei.fei_current_owner_entity_id];
-    const currentOwnerEntity = fei.FeiCurrentEntity!;
-    prevState.entities[fei.fei_current_owner_entity_id!] = {
-      ...existingEntity,
-      ...currentOwnerEntity,
-      relation: existingEntity?.relation ?? 'NONE',
-      relationStatus: existingEntity?.relationStatus ?? undefined,
-    } satisfies EntityWithUserRelation;
-  }
-
-  const nextOwnerUser = fei.FeiNextUser;
-  if (nextOwnerUser) {
-    prevState.users[nextOwnerUser.id] = nextOwnerUser;
-  }
-
-  if (fei.fei_next_owner_entity_id) {
-    const existingEntity = prevState.entities[fei.fei_next_owner_entity_id];
-    const nextOwnerEntity = fei.FeiNextEntity!;
-    prevState.entities[fei.fei_next_owner_entity_id!] = {
-      ...existingEntity,
-      ...nextOwnerEntity,
-      relation: existingEntity?.relation ?? 'NONE',
-      relationStatus: existingEntity?.relationStatus ?? undefined,
-    } satisfies EntityWithUserRelation;
-  }
-
-  if (fei.fei_next_owner_sous_traite_by_entity_id) {
-    const existingEntity = prevState.entities[fei.fei_next_owner_sous_traite_by_entity_id];
-    const soustraiteByEntity = fei.FeiSoustraiteByEntity!;
-    prevState.entities[fei.fei_next_owner_sous_traite_by_entity_id!] = {
-      ...existingEntity,
-      ...soustraiteByEntity,
-      relation: existingEntity?.relation ?? 'NONE',
-      relationStatus: existingEntity?.relationStatus ?? undefined,
-    } satisfies EntityWithUserRelation;
-  }
-
-  const sviUser = fei.FeiSviUser;
-  if (sviUser) {
-    prevState.users[sviUser.id] = sviUser;
-  }
-
-  if (fei.svi_entity_id) {
-    const existingEntity = prevState.entities[fei.svi_entity_id];
-    const sviEntity = fei.FeiSviEntity!;
-    prevState.entities[fei.svi_entity_id!] = {
-      ...existingEntity,
-      ...sviEntity,
-      relation: existingEntity?.relation ?? 'NONE',
-      relationStatus: existingEntity?.relationStatus ?? undefined,
+  // Extract entities
+  for (const entity of [
+    fei.FeiPremierDetenteurEntity,
+    fei.FeiDepotEntity,
+    fei.FeiCurrentEntity,
+    fei.FeiNextEntity,
+    fei.FeiSoustraiteByEntity,
+    fei.FeiSviEntity,
+  ]) {
+    if (!entity) continue;
+    const existing = prevState.entities[entity.id];
+    prevState.entities[entity.id] = {
+      ...existing,
+      ...entity,
+      relation: existing?.relation ?? 'NONE',
+      relationStatus: existing?.relationStatus ?? undefined,
     } satisfies EntityWithUserRelation;
   }
 

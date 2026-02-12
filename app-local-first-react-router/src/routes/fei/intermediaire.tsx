@@ -38,6 +38,7 @@ import DestinataireSelect from './destinataire-select';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { capture } from '@app/services/sentry';
 import { toast } from 'react-toastify';
+import { useEtgIds } from '@app/utils/get-entity-relations';
 
 interface Props {
   readOnly?: boolean;
@@ -145,7 +146,7 @@ function FEICurrentIntermediaireContent({
   const feis = useZustandStore((state) => state.feis);
   const carcasses = useZustandStore((state) => state.carcasses);
   const entities = useZustandStore((state) => state.entities);
-  const etgsIds = useZustandStore((state) => state.etgsIds);
+  const etgsIds = useEtgIds();
   const fei = feis[params.fei_numero!];
   const intermediaires = useFeiIntermediaires(fei.numero);
   const allFeiCarcasses = useCarcassesForFei(fei.numero);

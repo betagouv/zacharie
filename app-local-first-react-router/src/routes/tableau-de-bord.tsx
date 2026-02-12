@@ -26,6 +26,7 @@ import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { useFeiSteps } from '@app/utils/fei-steps';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
+import { useEtgIds, useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 
 async function loadData() {
   // FIXME: await syncData is useless, as syncData queues stuff - so there will be bugs
@@ -97,8 +98,8 @@ export default function TableauDeBordIndex() {
   const navigate = useNavigate();
   const user = useMostFreshUser('tableau de bord index')!;
   const entities = useZustandStore((state) => state.entities);
-  const allEtgIds = useZustandStore((state) => state.etgsIds);
-  const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
+  const allEtgIds = useEtgIds();
+  const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const { feisOngoing, feisToTake, feisUnderMyResponsability, feisDone } = getFeisSorted();
   const { onExportToXlsx, onExportSimplifiedToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {

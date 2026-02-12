@@ -22,7 +22,6 @@ interface PartenaireNouveauProps {
 }
 export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }: PartenaireNouveauProps) {
   const user = useUser((state) => state.user)!;
-  const circuitCourtIds = useZustandStore((state) => state.circuitCourtIds);
   const entities = useZustandStore((state) => state.entities);
   const [allEntitiesById, setAllEntitiesById] = useState<EntitiesById>(empytEntitiesByTypeAndId);
   const [userEntitiesById, setUserEntitiesById] = useState<EntitiesById>(empytEntitiesByTypeAndId);
@@ -102,7 +101,6 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
           setEntityType(undefined);
           onFinish(response.data.entity!);
           useZustandStore.setState({
-            circuitCourtIds: [...circuitCourtIds, response.data.entity!.id],
             entities: {
               ...entities,
               [response.data.entity!.id]: {
@@ -133,7 +131,6 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
               setCurrentEntityId(null);
               onFinish(res.data.entity);
               useZustandStore.setState({
-                circuitCourtIds: [...circuitCourtIds, res.data.entity!.id],
                 entities: {
                   ...entities,
                   [res.data.entity!.id]: {

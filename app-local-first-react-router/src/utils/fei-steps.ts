@@ -1,8 +1,8 @@
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { FeiStep, FeiStepSimpleStatus } from '@app/types/fei-steps';
 import useUser from '@app/zustand/user';
-import useZustandStore from '@app/zustand/store';
 import { Entity, EntityTypes, FeiOwnerRole, User, UserRoles } from '@prisma/client';
+import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { useMemo } from 'react';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
@@ -25,7 +25,7 @@ type UseFeiStepsReturn = {
 export function useFeiSteps(fei: FeiWithIntermediaires): UseFeiStepsReturn {
   const intermediaires = useFeiIntermediaires(fei.numero);
   const user = useUser((state) => state.user);
-  const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
+  const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
 
   const memoizedComputeFeiSteps = useMemo(() => {
     return computeFeiSteps({
