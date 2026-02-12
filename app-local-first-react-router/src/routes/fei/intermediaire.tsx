@@ -152,9 +152,6 @@ function FEICurrentIntermediaireContent({
   const intermediaires = getFeiIntermediairesForFeiNumero(fei.numero);
   const allFeiCarcasses = useCarcassesForFei(fei.numero);
 
-  console.log({ intermediaires });
-  console.log('intermediaire created_at', intermediaire?.created_at);
-
   const originalCarcasses = allFeiCarcasses.sort((a, b) => {
     if (a.svi_carcasse_status === CarcasseStatus.SANS_DECISION) {
       return -1;
@@ -210,7 +207,6 @@ function FEICurrentIntermediaireContent({
 
   const carcassesDejaRefusees = useMemo(() => {
     const intermediaireCarcassesIds = intermediaireCarcasses.map((c) => c.zacharie_carcasse_id);
-    console.log({ intermediaireCarcasses, intermediaireCarcassesIds });
     return originalCarcasses.filter(
       (c) =>
         !intermediaireCarcassesIds.includes(c.zacharie_carcasse_id) &&
@@ -218,8 +214,6 @@ function FEICurrentIntermediaireContent({
         c.svi_carcasse_status !== CarcasseStatus.ACCEPTE,
     );
   }, [originalCarcasses, intermediaireCarcasses]);
-
-  console.log({ intermediaireCarcasses, originalCarcasses, carcassesDejaRefusees });
 
   useEffect(() => {
     if (intermediaire?.id) {
