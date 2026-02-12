@@ -442,7 +442,6 @@ test("Pas de stockage - Je transfers à un autre ETG", async ({ page, context })
       `);
   await page.getByRole("button", { name: "Mon profil" }).click();
   await page.getByRole("button", { name: "Déconnexion" }).click();
-  await new Promise((resolve) => setTimeout(resolve, 1500)); // just because fuck it
   await expect(page).toHaveURL("http://localhost:3290/app/connexion");
   await connectWith(page, "etg-2@example.fr");
   await expect(page.locator("#content")).toMatchAriaSnapshot(`

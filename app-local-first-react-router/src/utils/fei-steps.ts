@@ -27,8 +27,6 @@ export function useFeiSteps(fei: FeiWithIntermediaires): UseFeiStepsReturn {
   const user = useUser((state) => state.user);
   const entitiesIdsWorkingDirectlyFor = useZustandStore((state) => state.entitiesIdsWorkingDirectlyFor);
 
-  console.log({ fei, intermediaires, entitiesIdsWorkingDirectlyFor, user });
-
   const memoizedComputeFeiSteps = useMemo(() => {
     return computeFeiSteps({
       fei,
