@@ -14,61 +14,34 @@ const circuitCourtTypes: EntityTypes[] = [
 
 // Plain filter functions (for non-hook contexts like get-fei-sorted.ts)
 
-export function filterEntitiesWorkingDirectlyFor(
-  entities: Record<string, EntityWithUserRelation>,
-): string[] {
+export function filterEntitiesWorkingDirectlyFor(entities: Record<string, EntityWithUserRelation>): string[] {
   return Object.values(entities)
-    .filter(
-      (e) =>
-        !e.deleted_at && e.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-    )
+    .filter((e) => !e.deleted_at && e.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)
     .map((e) => e.id);
 }
 
-export function filterCcgs(
-  entities: Record<string, EntityWithUserRelation>,
-): EntityWithUserRelation[] {
-  return Object.values(entities).filter(
-    (e) => !e.deleted_at && e.type === EntityTypes.CCG && e.relation !== EntityRelationType.NONE,
-  );
+export function filterCcgs(entities: Record<string, EntityWithUserRelation>): EntityWithUserRelation[] {
+  return Object.values(entities).filter((e) => !e.deleted_at && e.type === EntityTypes.CCG);
 }
 
-export function filterEtgs(
-  entities: Record<string, EntityWithUserRelation>,
-): EntityWithUserRelation[] {
-  return Object.values(entities).filter(
-    (e) => !e.deleted_at && e.type === EntityTypes.ETG && e.relation !== EntityRelationType.NONE,
-  );
+export function filterEtgs(entities: Record<string, EntityWithUserRelation>): EntityWithUserRelation[] {
+  return Object.values(entities).filter((e) => !e.deleted_at && e.type === EntityTypes.ETG);
 }
 
-export function filterSvis(
-  entities: Record<string, EntityWithUserRelation>,
-): EntityWithUserRelation[] {
-  return Object.values(entities).filter(
-    (e) => !e.deleted_at && e.type === EntityTypes.SVI && e.relation !== EntityRelationType.NONE,
-  );
+export function filterSvis(entities: Record<string, EntityWithUserRelation>): EntityWithUserRelation[] {
+  return Object.values(entities).filter((e) => !e.deleted_at && e.type === EntityTypes.SVI);
 }
 
 export function filterCollecteursPro(
   entities: Record<string, EntityWithUserRelation>,
 ): EntityWithUserRelation[] {
-  return Object.values(entities).filter(
-    (e) =>
-      !e.deleted_at &&
-      e.type === EntityTypes.COLLECTEUR_PRO &&
-      e.relation !== EntityRelationType.NONE,
-  );
+  return Object.values(entities).filter((e) => !e.deleted_at && e.type === EntityTypes.COLLECTEUR_PRO);
 }
 
 export function filterCircuitCourt(
   entities: Record<string, EntityWithUserRelation>,
 ): EntityWithUserRelation[] {
-  return Object.values(entities).filter(
-    (e) =>
-      !e.deleted_at &&
-      circuitCourtTypes.includes(e.type!) &&
-      e.relation !== EntityRelationType.NONE,
-  );
+  return Object.values(entities).filter((e) => !e.deleted_at && circuitCourtTypes.includes(e.type!));
 }
 
 // Hooks (for components)
