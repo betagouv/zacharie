@@ -249,10 +249,10 @@ export default function TableauDeBordIndex() {
     const _sviWorkingForEtgIds = !isOnlySvi
       ? []
       : allEtgIds.filter((id) => {
-          const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
-          if (!etgLinkedToSviId) return false;
-          return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
-        });
+        const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
+        if (!etgLinkedToSviId) return false;
+        return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
+      });
     if (_sviWorkingForEtgIds.includes(filterETG)) {
       return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
     }
@@ -461,8 +461,8 @@ export default function TableauDeBordIndex() {
     <div className="relative">
       <div className="fr-background-alt--blue-france top-0 z-30 block w-full md:sticky">
         <div className="fr-container">
-          <div className="fr-grid-row fr-grid-row-gutters">
-            <div className="fr-col-12  px-3 py-2 md:p-0">
+          <div className="fr-grid-row fr-grid-row--center fr-grid-row-gutters">
+            <div className="fr-col-12 fr-col-md-10 px-3 py-2 md:p-0">
               <Actions />
             </div>
           </div>
@@ -470,8 +470,8 @@ export default function TableauDeBordIndex() {
       </div>
       <div className="fr-container fr-container--fluid">
         <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-        <div className="fr-grid-row fr-grid-row-gutters pt-4">
-          <div className="fr-col-12  min-h-96 p-4 md:p-0">
+        <div className="fr-grid-row fr-grid-row--center fr-grid-row-gutters pt-4">
+          <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
             <OnboardingChasseInfoBanner />
             {!isOnlySvi && (
               <FeisWrapper
@@ -513,7 +513,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                      // disabledBecauseOffline={!isOnline}
+                    // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -536,7 +536,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                      // disabledBecauseOffline={!isOnline}
+                    // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
@@ -550,7 +550,7 @@ export default function TableauDeBordIndex() {
                       filter={filter}
                       onPrintSelect={handleCheckboxClick}
                       isPrintSelected={selectedFeis.includes(fei.numero)}
-                      // disabledBecauseOffline={!isOnline}
+                    // disabledBecauseOffline={!isOnline}
                     />
                   );
                 })}
