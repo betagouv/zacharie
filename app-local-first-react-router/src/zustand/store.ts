@@ -279,21 +279,18 @@ const useZustandStore = create<State & Actions>()(
               nextIntermediairesForFei.push(newIntermediaire);
             }
 
-            const carcasses = filterCarcassesForFei(useZustandStore.getState().carcasses, newIntermediaire.fei_numero);
-            const activeCarcasses = carcasses.filter(
-              (c) => !c.intermediaire_carcasse_refus_intermediaire_id && !c.deleted_at,
-            );
-
             const byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
             const byCarcasseId = { ...useZustandStore.getState().carcassesIntermediairesIdsByCarcasse };
             const byIntermediaireId: Record<
               FeiAndIntermediaireIds,
               Array<FeiAndCarcasseAndIntermediaireIds>
             > = {};
-
             for (const newIntermediaire of newIntermediaires) {
-              const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses
-              .map((c) => ({
+              const carcasses = filterCarcassesForFei(
+                useZustandStore.getState().carcasses,
+                newIntermediaire.fei_numero,
+              );
+              const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses.map((c) => ({
                 fei_numero: c.fei_numero,
                 numero_bracelet: c.numero_bracelet,
                 zacharie_carcasse_id: c.zacharie_carcasse_id,
