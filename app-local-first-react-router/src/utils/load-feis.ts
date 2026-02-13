@@ -80,7 +80,15 @@ export async function loadFeis() {
       }
     }
 
-    useZustandStore.setState({ dataIsSynced: true });
+    const state = useZustandStore.getState();
+    useZustandStore.setState({
+      feis: { ...state.feis },
+      users: { ...state.users },
+      entities: { ...state.entities },
+      carcasses: { ...state.carcasses },
+      carcassesIntermediaireById: { ...state.carcassesIntermediaireById },
+      dataIsSynced: true,
+    });
 
     console.log('chargement feis fini');
   } catch (error) {
