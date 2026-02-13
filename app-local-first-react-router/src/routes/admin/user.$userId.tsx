@@ -20,6 +20,7 @@ import type { AdminUserDataResponse } from '@api/src/types/responses';
 import { Link, useParams } from 'react-router';
 import Chargement from '@app/components/Chargement';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 import { EntityWithUserRelations } from '@api/src/types/entity';
@@ -70,12 +71,13 @@ const initialState: State = {
   examinateurDone: false,
   allEntities: [],
   userEntitiesRelations: [],
+  officialCfei: null,
 };
 
 export default function AdminUser() {
   const params = useParams();
   const [userResponseData, setUserResponseData] = useState<State>(initialState);
-  const { user, identityDone, examinateurDone, userEntitiesRelations } = userResponseData;
+  const { user, identityDone, examinateurDone, userEntitiesRelations, officialCfei } = userResponseData;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -359,17 +361,43 @@ export default function AdminUser() {
                     </div>
                   </div>
                   {user.roles.includes(UserRoles.CHASSEUR) && (
-                    <Input
-                      label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                      hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
-                      nativeInputProps={{
-                        id: Prisma.UserScalarFieldEnum.numero_cfei,
-                        name: Prisma.UserScalarFieldEnum.numero_cfei,
-                        autoComplete: 'off',
-                        // required: true,
-                        defaultValue: user.numero_cfei ?? '',
-                      }}
-                    />
+                    <>
+                      <Input
+                        label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
+                        hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
+                        nativeInputProps={{
+                          id: Prisma.UserScalarFieldEnum.numero_cfei,
+                          name: Prisma.UserScalarFieldEnum.numero_cfei,
+                          autoComplete: 'off',
+                          // required: true,
+                          defaultValue: user.numero_cfei ?? '',
+                        }}
+                      />
+                      {user.numero_cfei ? (
+                        officialCfei ? (
+                          <Alert
+                            severity="success"
+                            small
+                            className="mb-4"
+                            description={`CFEI trouvé dans la liste officielle : ${officialCfei.nom ?? ''} ${officialCfei.prenom ?? ''}${officialCfei.departement ? ` — Département ${officialCfei.departement}` : ''}`}
+                          />
+                        ) : (
+                          <Alert
+                            severity="error"
+                            small
+                            className="mb-4"
+                            description="CFEI non trouvé dans la liste officielle"
+                          />
+                        )
+                      ) : (
+                        <Alert
+                          severity="warning"
+                          small
+                          className="mb-4"
+                          description="Numéro CFEI non renseigné"
+                        />
+                      )}
+                    </>
                   )}
                   <div className="fixed bottom-0 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
                     <ButtonsGroup

@@ -208,6 +208,7 @@ export interface AdminUserDataResponse {
     examinateurDone: boolean;
     allEntities: Array<Entity>;
     userEntitiesRelations: Array<EntityForAdmin>;
+    officialCfei: OfficialCfei | null;
   };
   error: string;
 }

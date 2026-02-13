@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -262,11 +262,7 @@ export default function AdminUsers() {
                   fixed
                   noCaption
                   className="[&_td]:align-top"
-                  headers={
-                    selectedTabId === 'chasseurs-a-activer'
-                      ? ['Dates', 'Identité', 'CFEI / Formation', 'Actions']
-                      : ['Dates', 'Identité', 'Roles', 'Actions']
-                  }
+                  headers={['Identité', 'Rôles & CFEI', 'Statut', 'Actions']}
                   data={filteredUsers
                     .filter((user) => {
                       if (selectedTabId === 'chasseurs-a-activer') {
@@ -280,183 +276,166 @@ export default function AdminUsers() {
                       }
                       return true;
                     })
-                    .map((user, index) => [
-                      <div
-                        key={user.id}
-                        className="flex size-full flex-row items-start border-r border-r-gray-200"
-                      >
-                        <span className="p-4">{index + 1}</span>
-                        <Link
-                          to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                          className="inline-flex! size-full flex-col items-start justify-start bg-none! no-underline!"
-                          suppressHydrationWarning
-                        >
-                          Compte activé: {user.activated ? '✅' : '❌'}
-                          <br />
-                          Créé le&nbsp;:
-                          <br />
-                          <span className="ml-8 text-sm text-gray-500">
-                            {dayjs(user.created_at).format('DD/MM/YYYY à HH:mm')}
-                          </span>
-                          {user.activated_at ? (
-                            <>
-                              {user.activated ? 'Activé' : 'Désactivé'} le&nbsp;:
-                              <span className="ml-8 text-sm text-gray-500">
-                                {dayjs(user.activated_at).format('DD/MM/YYYY à HH:mm')}`
-                              </span>
-                            </>
-                          ) : user.activated ? (
-                            'Activé avant août 2025'
-                          ) : (
-                            ''
-                          )}
-                        </Link>
-                      </div>,
-                      <Link
-                        key={user.id}
-                        to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                        className="no-scrollbar inline-flex! size-full items-start justify-start self-stretch overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
-                      >
-                        {user.prenom} {user.nom_de_famille}
-                        <br />
-                        ＠&nbsp;{user.email}
-                        <br />
-                        ☎️ {user.telephone}
-                        <br />
-                        🏡 {user.addresse_ligne_1}
-                        <br />
-                        {user.addresse_ligne_2 && (
-                          <>
-                            <br />
-                            {user.addresse_ligne_2}
-                          </>
-                        )}
-                        {user.code_postal} {user.ville}
-                      </Link>,
-                      selectedTabId === 'chasseurs-a-activer' ? (
+                    .map((user, index) => {
+                      const isChasseur = user.roles?.includes(UserRoles.CHASSEUR);
+                      const cfeiStatus = isChasseur ? getCfeiValidationStatus(user) : null;
+                      const officialDetails = isChasseur ? getOfficialCfeiDetails(user) : null;
+
+                      return [
                         <Link
                           key={user.id}
                           to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                          className={`no-scrollbar inline-flex! size-full flex-col items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline! ${
-                            officialCfeis.length > 0 && getCfeiValidationStatus(user) === 'valid'
-                              ? 'bg-green-50!'
-                              : ''
-                          }`}
+                          className="inline-flex! size-full flex-col items-start justify-start gap-1 border-r border-r-gray-200 bg-none! no-underline!"
                         >
-                          <span className="font-medium">CFEI: {user.numero_cfei || 'Non renseigné'}</span>
-                          {officialCfeis.length > 0 && (
-                            <>
-                              <br />
-                              {(() => {
-                                const status = getCfeiValidationStatus(user);
-                                const officialDetails = getOfficialCfeiDetails(user);
-                                if (status === 'valid') {
-                                  return (
-                                    <span className="flex flex-col gap-1">
-                                      <Badge severity="success" small>
-                                        CFEI validé
+                          <span className="font-bold">
+                            {index + 1}. {user.nom_de_famille} {user.prenom}
+                          </span>
+                          <span className="text-sm">{user.email}</span>
+                          {user.telephone && <span className="text-sm text-gray-500">{user.telephone}</span>}
+                          <span className="text-sm text-gray-500">
+                            {user.code_postal} {user.ville}
+                          </span>
+                        </Link>,
+                        <Link
+                          key={user.id}
+                          to={`/app/tableau-de-bord/admin/user/${user.id}`}
+                          className="no-scrollbar inline-flex! size-full flex-col items-start justify-start gap-1 overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
+                        >
+                          <span className="flex flex-wrap gap-1">
+                            {user.roles.map((role) => (
+                              <Badge key={role} severity="info" small>
+                                {role}
+                              </Badge>
+                            ))}
+                          </span>
+                          {isChasseur && (
+                            <span className="mt-1 flex flex-col gap-1">
+                              <span className="text-sm">
+                                {user.numero_cfei || (
+                                  <span className="italic text-gray-400">CFEI non renseigné</span>
+                                )}
+                              </span>
+                              {officialCfeis.length > 0 &&
+                                (() => {
+                                  if (cfeiStatus === 'valid') {
+                                    return (
+                                      <>
+                                        <Badge severity="success" small>
+                                          CFEI validé
+                                        </Badge>
+                                        {officialDetails && (
+                                          <span className="text-xs text-gray-600">
+                                            {officialDetails.prenom} {officialDetails.nom}
+                                            {officialDetails.departement &&
+                                              ` — Dép. ${officialDetails.departement}`}
+                                          </span>
+                                        )}
+                                      </>
+                                    );
+                                  }
+                                  if (cfeiStatus === 'invalid') {
+                                    return (
+                                      <Badge severity="error" small>
+                                        CFEI non trouvé
                                       </Badge>
-                                      {officialDetails && (
-                                        <span className="text-xs text-gray-600">
-                                          Liste officielle: {officialDetails.prenom} {officialDetails.nom}
-                                          {officialDetails.departement && ` (${officialDetails.departement})`}
-                                        </span>
-                                      )}
-                                    </span>
-                                  );
-                                }
-                                if (status === 'invalid') {
+                                    );
+                                  }
                                   return (
-                                    <Badge severity="error" small>
-                                      CFEI non trouvé
+                                    <Badge severity="warning" small>
+                                      CFEI non renseigné
                                     </Badge>
                                   );
-                                }
-                                return (
-                                  <Badge severity="warning" small>
-                                    CFEI non renseigné
-                                  </Badge>
-                                );
-                              })()}
-                            </>
+                                })()}
+                            </span>
                           )}
-                          <br />
-                          <span>
-                            Formation: {user.est_forme_a_l_examen_initial ? '✅ Formé' : '❌ Non formé'}
-                          </span>
-                          <br />
-                          <span className="text-sm text-gray-500">
-                            Onboarding: {user.onboarded_at ? '✅ Terminé' : '❌ Incomplet'}
-                          </span>
-                        </Link>
-                      ) : (
+                        </Link>,
                         <Link
                           key={user.id}
                           to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                          className="no-scrollbar inline-flex! size-full items-center justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
+                          className="inline-flex! size-full flex-col items-start justify-start gap-1 border-r border-r-gray-200 bg-none! no-underline!"
+                          suppressHydrationWarning
                         >
-                          {user.roles.map((role) => (
-                            <Fragment key={role}>
-                              {role}
-                              <br />
-                            </Fragment>
-                          ))}
-                        </Link>
-                      ),
-                      <div
-                        key={user.email}
-                        className="no-scrollbar inline-flex! size-full flex-col items-center justify-center gap-2 overflow-x-auto! border-r border-r-gray-200 p-2"
-                      >
-                        {selectedTabId === 'chasseurs-a-activer' && (
-                          <Button
-                            size="small"
-                            priority="primary"
-                            onClick={() => {
+                          <Badge severity={user.activated ? 'success' : 'error'} small>
+                            {user.activated ? 'Activé' : 'Inactif'}
+                          </Badge>
+                          <Badge severity={user.onboarded_at ? 'success' : 'warning'} small>
+                            {user.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
+                          </Badge>
+                          {isChasseur && (
+                            <Badge
+                              severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'}
+                              small
+                            >
+                              {user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
+                            </Badge>
+                          )}
+                          <span className="mt-1 text-xs text-gray-500" suppressHydrationWarning>
+                            Créé le {dayjs(user.created_at).format('DD/MM/YYYY')}
+                          </span>
+                          {user.last_seen_at && (
+                            <span className="text-xs text-gray-500" suppressHydrationWarning>
+                              Vu le {dayjs(user.last_seen_at).format('DD/MM/YYYY')}
+                            </span>
+                          )}
+                        </Link>,
+                        <div
+                          key={user.email}
+                          className="no-scrollbar inline-flex! size-full flex-col items-center justify-center gap-2 overflow-x-auto! p-2"
+                        >
+                          {selectedTabId === 'chasseurs-a-activer' && (
+                            <Button
+                              size="small"
+                              priority="primary"
+                              onClick={() => {
+                                API.post({
+                                  path: `admin/user/${user.id}`,
+                                  body: {
+                                    activated: 'true',
+                                  },
+                                }).then((res) => {
+                                  if (res.ok) {
+                                    setUsers((prev) =>
+                                      prev.map((u) => (u.id === user.id ? { ...u, activated: true } : u)),
+                                    );
+                                  }
+                                });
+                              }}
+                            >
+                              Activer
+                            </Button>
+                          )}
+                          <form
+                            method="POST"
+                            onSubmit={(event) => {
+                              event.preventDefault();
+
                               API.post({
-                                path: `admin/user/${user.id}`,
+                                path: 'admin/user/connect-as',
                                 body: {
-                                  activated: 'true',
+                                  email: user.email!,
                                 },
-                              }).then((res) => {
-                                if (res.ok) {
-                                  setUsers((prev) =>
-                                    prev.map((u) => (u.id === user.id ? { ...u, activated: true } : u)),
-                                  );
-                                }
-                              });
+                              })
+                                .then(async () => {
+                                  await clearCache();
+                                  await refreshUser('admin/user/connect-as');
+                                })
+                                .then(() => {
+                                  window.location.href = '/app/tableau-de-bord';
+                                });
                             }}
                           >
-                            Activer
-                          </Button>
-                        )}
-                        <form
-                          method="POST"
-                          onSubmit={(event) => {
-                            event.preventDefault();
-
-                            API.post({
-                              path: 'admin/user/connect-as',
-                              body: {
-                                email: user.email!,
-                              },
-                            })
-                              .then(async () => {
-                                await clearCache();
-                                await refreshUser('admin/user/connect-as');
-                              })
-                              .then(() => {
-                                window.location.href = '/app/tableau-de-bord';
-                              });
-                          }}
-                        >
-                          <button type="submit" className="text-action-high-blue-france text-center text-sm">
-                            Se connecter en tant que
-                            <br />
-                            {user.email}
-                          </button>
-                        </form>
-                      </div>,
-                    ])}
+                            <button
+                              type="submit"
+                              className="text-action-high-blue-france text-center text-sm"
+                            >
+                              Se connecter en tant que
+                              <br />
+                              {user.email}
+                            </button>
+                          </form>
+                        </div>,
+                      ];
+                    })}
                 />
               </div>
               <div className="flex flex-col items-start bg-white px-8 md:[&_ul]:min-w-96">
