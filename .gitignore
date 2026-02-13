@@ -10,6 +10,8 @@ test-local.js
 /playwright/.cache/
 .vscode/launch.json
 .secrets
+**/scripts/*.csv
+**/20260121_import-cfei-from-liste-personnes-formees.ts
 
 # Yarn Berry
 .yarn/*
@@ -18,3 +20,4 @@ test-local.js
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
