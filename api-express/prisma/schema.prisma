@@ -814,3 +814,12 @@ model ApiKeyLog {
   @@index([api_key_id, created_at])
   @@index([user_id, created_at])
 }
+
+model OfficialCfei {
+  numero_cfei String   @id
+  nom         String?
+  prenom      String?
+  departement String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
