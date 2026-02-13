@@ -160,6 +160,19 @@ router.get(
         include: entityAdminInclude,
       });
 
+      let officialCfei = null;
+      if (user.numero_cfei) {
+        officialCfei = await prisma.officialCfei.findUnique({
+          where: { numero_cfei: user.numero_cfei.toUpperCase() },
+          select: {
+            numero_cfei: true,
+            nom: true,
+            prenom: true,
+            departement: true,
+          },
+        });
+      }
+
       res.status(200).send({
         ok: true,
         data: {
@@ -176,6 +189,7 @@ router.get(
             : !!user.est_forme_a_l_examen_initial && !!user.numero_cfei,
           allEntities,
           userEntitiesRelations,
+          officialCfei,
         },
         error: '',
       });
