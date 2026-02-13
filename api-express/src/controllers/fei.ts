@@ -12,8 +12,334 @@ import {
   UserRoles,
 } from '@prisma/client';
 import { feiPopulatedInclude } from '~/types/fei';
+import type { FeiPopulated } from '~/types/fei';
 import { capture } from '~/third-parties/sentry';
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
+
+export interface SaveFeiResult {
+  savedFei: FeiPopulated;
+  existingFei: FeiPopulated | null;
+  isDeleted: boolean;
+}
+
+export async function saveFei(
+  numero: string,
+  body: Prisma.FeiUncheckedCreateInput,
+  user: User,
+): Promise<SaveFeiResult> {
+  let existingFei = await prisma.fei.findUnique({
+    where: { numero },
+    include: feiPopulatedInclude,
+  });
+
+  if (!existingFei) {
+    const isExaminateurInitial =
+      user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && !!user.activated;
+    if (!isExaminateurInitial) {
+      capture(new Error('Tentative de hack: seul un examinateur initial peut créer une fiche'), {
+        extra: {
+          body: body,
+          feiNumero: numero,
+        },
+        user,
+      });
+      throw new Error('Seul un examinateur initial peut créer une fiche');
+    }
+  }
+
+  if (existingFei?.deleted_at) {
+    return { savedFei: existingFei, existingFei, isDeleted: true };
+  }
+
+  if (body.deleted_at) {
+    if (!existingFei) {
+      throw new Error('Fei not found');
+    }
+    const canDelete =
+      user.roles.includes(UserRoles.ADMIN) ||
+      (user.roles.includes(UserRoles.CHASSEUR) && existingFei.examinateur_initial_user_id === user.id) ||
+      (user.roles.includes(UserRoles.CHASSEUR) && existingFei.fei_current_owner_user_id === user.id);
+    if (!canDelete) {
+      throw new Error('Unauthorized');
+    }
+    const deletedFei = await prisma.fei.update({
+      where: { numero },
+      data: { deleted_at: body.deleted_at },
+      include: feiPopulatedInclude,
+    });
+    await prisma.carcasse.updateMany({
+      where: { fei_numero: numero },
+      data: { deleted_at: body.deleted_at },
+    });
+    await prisma.carcasseIntermediaire.updateMany({
+      where: { fei_numero: numero },
+      data: { deleted_at: body.deleted_at },
+    });
+    return { savedFei: deletedFei, existingFei, isDeleted: true };
+  }
+
+  const nextFei: Prisma.FeiUncheckedUpdateInput = {
+    is_synced: true,
+  };
+
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
+    nextFei.date_mise_a_mort = body.date_mise_a_mort || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.creation_context)) {
+    const contextSlug = body.creation_context;
+    if (contextSlug) {
+      if (contextSlug !== 'zacharie') {
+        const apiKey = await prisma.apiKey.findFirst({
+          where: { slug_for_context: contextSlug },
+        });
+        if (!apiKey) {
+          throw new Error('Invalid context slug');
+        }
+      }
+      nextFei.creation_context = contextSlug;
+    }
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
+    nextFei.commune_mise_a_mort = body.commune_mise_a_mort || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse)) {
+    nextFei.heure_mise_a_mort_premiere_carcasse = body.heure_mise_a_mort_premiere_carcasse || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse)) {
+    nextFei.heure_evisceration_derniere_carcasse = body.heure_evisceration_derniere_carcasse || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
+    nextFei.created_by_user_id = body.created_by_user_id;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses)) {
+    nextFei.resume_nombre_de_carcasses = body.resume_nombre_de_carcasses || null;
+  }
+
+  /*
+  *
+  *
+  * *
+
+  Examinateur initial
+
+  */
+
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
+    nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
+    nextFei.examinateur_initial_offline = body.examinateur_initial_offline || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)) {
+    nextFei.examinateur_initial_approbation_mise_sur_le_marche =
+      body.examinateur_initial_approbation_mise_sur_le_marche || null;
+  }
+  if (
+    body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)
+  ) {
+    nextFei.examinateur_initial_date_approbation_mise_sur_le_marche =
+      body.examinateur_initial_date_approbation_mise_sur_le_marche || null;
+  }
+
+  /*
+  *
+  *
+  * *
+
+  Premier détenteur
+
+  */
+
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
+    nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
+    nextFei.premier_detenteur_offline = body.premier_detenteur_offline || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
+    nextFei.premier_detenteur_entity_id = body.premier_detenteur_entity_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache)) {
+    nextFei.premier_detenteur_name_cache = body.premier_detenteur_name_cache || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id)) {
+    nextFei.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_name_cache)) {
+    nextFei.premier_detenteur_depot_entity_name_cache =
+      body.premier_detenteur_depot_entity_name_cache || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type)) {
+    nextFei.premier_detenteur_depot_type = body.premier_detenteur_depot_type || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at)) {
+    nextFei.premier_detenteur_depot_ccg_at = body.premier_detenteur_depot_ccg_at || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_transport_type)) {
+    nextFei.premier_detenteur_transport_type = body.premier_detenteur_transport_type || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_transport_date)) {
+    nextFei.premier_detenteur_transport_date = body.premier_detenteur_transport_date || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_role_cache)) {
+    nextFei.premier_detenteur_prochain_detenteur_role_cache =
+      body.premier_detenteur_prochain_detenteur_role_cache || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
+    nextFei.premier_detenteur_prochain_detenteur_id_cache =
+      body.premier_detenteur_prochain_detenteur_id_cache || null;
+  }
+
+  /*
+*
+*
+* *
+
+Responsabilités
+
+*/
+  /*  Current Owner */
+
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id)) {
+    nextFei.fei_current_owner_user_id = body.fei_current_owner_user_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache)) {
+    nextFei.fei_current_owner_user_name_cache = body.fei_current_owner_user_name_cache || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
+    nextFei.fei_current_owner_entity_id = body.fei_current_owner_entity_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_name_cache)) {
+    nextFei.fei_current_owner_entity_name_cache = body.fei_current_owner_entity_name_cache || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_role)) {
+    nextFei.fei_current_owner_role = body.fei_current_owner_role || null;
+  }
+  /* Sous-traitance */
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_wants_to_sous_traite)) {
+    nextFei.fei_next_owner_wants_to_sous_traite = body.fei_next_owner_wants_to_sous_traite || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_at)) {
+    nextFei.fei_next_owner_sous_traite_at = body.fei_next_owner_sous_traite_at || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_by_user_id)) {
+    nextFei.fei_next_owner_sous_traite_by_user_id = body.fei_next_owner_sous_traite_by_user_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_by_entity_id)) {
+    nextFei.fei_next_owner_sous_traite_by_entity_id =
+      body.fei_next_owner_sous_traite_by_entity_id || null;
+  }
+  /*  Next Owner */
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
+    nextFei.fei_next_owner_user_id = body.fei_next_owner_user_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_name_cache)) {
+    nextFei.fei_next_owner_user_name_cache = body.fei_next_owner_user_name_cache || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
+    nextFei.fei_next_owner_entity_id = body.fei_next_owner_entity_id || null;
+    if (body.fei_next_owner_entity_id) {
+      const nextRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
+        entity_id: body.fei_next_owner_entity_id,
+        owner_id: user.id,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        deleted_at: null,
+      };
+      const existingRelation = await prisma.entityAndUserRelations.findFirst({
+        where: nextRelation,
+      });
+      if (!existingRelation) {
+        await prisma.entityAndUserRelations.create({ data: nextRelation });
+      }
+    }
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_name_cache)) {
+    nextFei.fei_next_owner_entity_name_cache = body.fei_next_owner_entity_name_cache || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_role)) {
+    nextFei.fei_next_owner_role = body.fei_next_owner_role || null;
+  }
+  /*  Prev Owner */
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_user_id)) {
+    nextFei.fei_prev_owner_user_id = body.fei_prev_owner_user_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id)) {
+    nextFei.fei_prev_owner_entity_id = body.fei_prev_owner_entity_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_role)) {
+    nextFei.fei_prev_owner_role = body.fei_prev_owner_role || null;
+  }
+
+  /*
+*
+*
+* *
+
+Intermédiaire
+
+*/
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_at)) {
+    nextFei.intermediaire_closed_at = body.intermediaire_closed_at || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_user_id)) {
+    nextFei.intermediaire_closed_by_user_id = body.intermediaire_closed_by_user_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_entity_id)) {
+    nextFei.intermediaire_closed_by_entity_id = body.intermediaire_closed_by_entity_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_user_id)) {
+    nextFei.latest_intermediaire_user_id = body.latest_intermediaire_user_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_entity_id)) {
+    nextFei.latest_intermediaire_entity_id = body.latest_intermediaire_entity_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_name_cache)) {
+    nextFei.latest_intermediaire_name_cache = body.latest_intermediaire_name_cache || null;
+  }
+
+  /*
+*
+*
+* *
+
+SVI
+
+*/
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_closed_at)) {
+    nextFei.svi_closed_at = body.svi_closed_at || null;
+    if (body.svi_closed_at) nextFei.svi_closed_by_user_id = user.id;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_assigned_at)) {
+    nextFei.svi_assigned_at = body.svi_assigned_at || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_entity_id)) {
+    nextFei.svi_entity_id = body.svi_entity_id || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_user_id)) {
+    nextFei.svi_user_id = body.svi_user_id || null;
+  }
+
+  const savedFei = existingFei
+    ? await prisma.fei.update({
+        where: { numero },
+        data: nextFei,
+        include: feiPopulatedInclude,
+      })
+    : await prisma.fei.create({
+        data: {
+          ...(nextFei as Prisma.FeiUncheckedCreateInput),
+          numero,
+          created_by_user_id: user.id,
+        },
+        include: feiPopulatedInclude,
+      });
+
+  if (!existingFei) {
+    existingFei = savedFei;
+  }
+
+  return { savedFei, existingFei, isDeleted: false };
+}
 
 router.post(
   '/refresh',
@@ -104,342 +430,30 @@ router.post(
         });
         return;
       }
-      let existingFei = await prisma.fei.findUnique({
-        where: { numero: feiNumero },
-        include: feiPopulatedInclude,
-      });
-      if (!existingFei) {
-        const isExaminateurInitial =
-          user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && !!user.activated;
-        if (!isExaminateurInitial) {
-          res.status(400).send({
-            ok: false,
-            data: { fei: null },
-            error: 'Seul un examinateur initial peut créer une fiche',
-          });
-          capture(new Error('Tentative de hack: seul un examinateur initial peut créer une fiche'), {
-            extra: {
-              body: body,
-              feiNumero,
-            },
-            user,
-          });
-          return;
+
+      try {
+        const { savedFei, existingFei, isDeleted } = await saveFei(feiNumero, body, user);
+
+        if (!isDeleted) {
+          await runFeiUpdateSideEffects(existingFei, savedFei, user);
         }
-      }
-      if (existingFei?.deleted_at) {
+
         res.status(200).send({
           ok: true,
-          data: { fei: existingFei },
+          data: {
+            fei: savedFei,
+          },
           error: '',
         });
-        return;
-      }
-
-      if (body.deleted_at) {
-        if (!existingFei) {
-          res.status(404).send({ ok: false, data: { fei: null }, error: 'Fei not found' });
-          return;
-        }
-        const canDelete =
-          user.roles.includes(UserRoles.ADMIN) ||
-          (user.roles.includes(UserRoles.CHASSEUR) && existingFei.examinateur_initial_user_id === user.id) ||
-          (user.roles.includes(UserRoles.CHASSEUR) && existingFei.fei_current_owner_user_id === user.id);
-        if (!canDelete) {
-          res.status(400).send({ ok: false, data: { fei: null }, error: 'Unauthorized' });
-          return;
-        }
-        const deletedFei = await prisma.fei.update({
-          where: { numero: feiNumero },
-          data: { deleted_at: body.deleted_at },
-          include: feiPopulatedInclude,
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        const status = message === 'Fei not found' ? 404 : 400;
+        res.status(status).send({
+          ok: false,
+          data: { fei: null },
+          error: message,
         });
-        await prisma.carcasse.updateMany({
-          where: { fei_numero: feiNumero },
-          data: { deleted_at: body.deleted_at },
-        });
-        await prisma.carcasseIntermediaire.updateMany({
-          where: { fei_numero: feiNumero },
-          data: { deleted_at: body.deleted_at },
-        });
-        res.status(200).send({
-          ok: true,
-          data: { fei: deletedFei },
-          error: '',
-        });
-        return;
       }
-
-      const nextFei: Prisma.FeiUncheckedUpdateInput = {
-        is_synced: true,
-      };
-
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
-        nextFei.date_mise_a_mort = body.date_mise_a_mort || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.creation_context)) {
-        const contextSlug = body.creation_context;
-        if (contextSlug) {
-          if (contextSlug !== 'zacharie') {
-            const apiKey = await prisma.apiKey.findFirst({
-              where: { slug_for_context: contextSlug },
-            });
-            if (!apiKey) {
-              res.status(400).send({ ok: false, data: { fei: null }, error: 'Invalid context slug' });
-              return;
-            }
-          }
-          nextFei.creation_context = contextSlug;
-        }
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
-        nextFei.commune_mise_a_mort = body.commune_mise_a_mort || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse)) {
-        nextFei.heure_mise_a_mort_premiere_carcasse = body.heure_mise_a_mort_premiere_carcasse || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse)) {
-        nextFei.heure_evisceration_derniere_carcasse = body.heure_evisceration_derniere_carcasse || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
-        nextFei.created_by_user_id = body.created_by_user_id;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses)) {
-        nextFei.resume_nombre_de_carcasses = body.resume_nombre_de_carcasses || null;
-      }
-
-      /*
-      *
-      *
-      * *
-
-      Examinateur initial
-
-      */
-
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
-        nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
-        nextFei.examinateur_initial_offline = body.examinateur_initial_offline || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)) {
-        nextFei.examinateur_initial_approbation_mise_sur_le_marche =
-          body.examinateur_initial_approbation_mise_sur_le_marche || null;
-      }
-      if (
-        body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)
-      ) {
-        nextFei.examinateur_initial_date_approbation_mise_sur_le_marche =
-          body.examinateur_initial_date_approbation_mise_sur_le_marche || null;
-      }
-
-      /*
-      *
-      *
-      * *
-
-      Premier détenteur
-
-      */
-
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
-        nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
-        nextFei.premier_detenteur_offline = body.premier_detenteur_offline || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
-        nextFei.premier_detenteur_entity_id = body.premier_detenteur_entity_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache)) {
-        nextFei.premier_detenteur_name_cache = body.premier_detenteur_name_cache || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id)) {
-        nextFei.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_name_cache)) {
-        nextFei.premier_detenteur_depot_entity_name_cache =
-          body.premier_detenteur_depot_entity_name_cache || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type)) {
-        nextFei.premier_detenteur_depot_type = body.premier_detenteur_depot_type || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at)) {
-        nextFei.premier_detenteur_depot_ccg_at = body.premier_detenteur_depot_ccg_at || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_transport_type)) {
-        nextFei.premier_detenteur_transport_type = body.premier_detenteur_transport_type || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_transport_date)) {
-        nextFei.premier_detenteur_transport_date = body.premier_detenteur_transport_date || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_role_cache)) {
-        nextFei.premier_detenteur_prochain_detenteur_role_cache =
-          body.premier_detenteur_prochain_detenteur_role_cache || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
-        nextFei.premier_detenteur_prochain_detenteur_id_cache =
-          body.premier_detenteur_prochain_detenteur_id_cache || null;
-      }
-
-      /*
-  *
-  *
-  * *
-
-  Responsabilités
-
-  */
-      /*  Current Owner */
-
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id)) {
-        nextFei.fei_current_owner_user_id = body.fei_current_owner_user_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache)) {
-        nextFei.fei_current_owner_user_name_cache = body.fei_current_owner_user_name_cache || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
-        nextFei.fei_current_owner_entity_id = body.fei_current_owner_entity_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_name_cache)) {
-        nextFei.fei_current_owner_entity_name_cache = body.fei_current_owner_entity_name_cache || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_role)) {
-        nextFei.fei_current_owner_role = body.fei_current_owner_role || null;
-      }
-      /* Sous-traitance */
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_wants_to_sous_traite)) {
-        nextFei.fei_next_owner_wants_to_sous_traite = body.fei_next_owner_wants_to_sous_traite || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_at)) {
-        nextFei.fei_next_owner_sous_traite_at = body.fei_next_owner_sous_traite_at || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_by_user_id)) {
-        nextFei.fei_next_owner_sous_traite_by_user_id = body.fei_next_owner_sous_traite_by_user_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_by_entity_id)) {
-        nextFei.fei_next_owner_sous_traite_by_entity_id =
-          body.fei_next_owner_sous_traite_by_entity_id || null;
-      }
-      /*  Next Owner */
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
-        nextFei.fei_next_owner_user_id = body.fei_next_owner_user_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_name_cache)) {
-        nextFei.fei_next_owner_user_name_cache = body.fei_next_owner_user_name_cache || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
-        nextFei.fei_next_owner_entity_id = body.fei_next_owner_entity_id || null;
-        if (body.fei_next_owner_entity_id) {
-          const nextRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
-            entity_id: body.fei_next_owner_entity_id,
-            owner_id: user.id,
-            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-            deleted_at: null,
-          };
-          const existingRelation = await prisma.entityAndUserRelations.findFirst({
-            where: nextRelation,
-          });
-          if (!existingRelation) {
-            await prisma.entityAndUserRelations.create({ data: nextRelation });
-          }
-        }
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_name_cache)) {
-        nextFei.fei_next_owner_entity_name_cache = body.fei_next_owner_entity_name_cache || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_role)) {
-        nextFei.fei_next_owner_role = body.fei_next_owner_role || null;
-      }
-      /*  Prev Owner */
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_user_id)) {
-        nextFei.fei_prev_owner_user_id = body.fei_prev_owner_user_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id)) {
-        nextFei.fei_prev_owner_entity_id = body.fei_prev_owner_entity_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_role)) {
-        nextFei.fei_prev_owner_role = body.fei_prev_owner_role || null;
-      }
-
-      /*
-  *
-  *
-  * *
-
-  Intermédiaire
-
-  */
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_at)) {
-        nextFei.intermediaire_closed_at = body.intermediaire_closed_at || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_user_id)) {
-        nextFei.intermediaire_closed_by_user_id = body.intermediaire_closed_by_user_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_entity_id)) {
-        nextFei.intermediaire_closed_by_entity_id = body.intermediaire_closed_by_entity_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_user_id)) {
-        nextFei.latest_intermediaire_user_id = body.latest_intermediaire_user_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_entity_id)) {
-        nextFei.latest_intermediaire_entity_id = body.latest_intermediaire_entity_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_name_cache)) {
-        nextFei.latest_intermediaire_name_cache = body.latest_intermediaire_name_cache || null;
-      }
-
-      /*
-  *
-  *
-  * *
-
-  SVI
-
-  */
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_closed_at)) {
-        nextFei.svi_closed_at = body.svi_closed_at || null;
-        if (body.svi_closed_at) nextFei.svi_closed_by_user_id = user.id;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_assigned_at)) {
-        nextFei.svi_assigned_at = body.svi_assigned_at || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_entity_id)) {
-        nextFei.svi_entity_id = body.svi_entity_id || null;
-      }
-      if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_user_id)) {
-        nextFei.svi_user_id = body.svi_user_id || null;
-      }
-
-      const savedFei = existingFei
-        ? await prisma.fei.update({
-            where: { numero: feiNumero },
-            data: nextFei,
-            include: feiPopulatedInclude,
-          })
-        : await prisma.fei.create({
-            data: {
-              ...(nextFei as Prisma.FeiUncheckedCreateInput),
-              numero: feiNumero,
-              created_by_user_id: user.id,
-            },
-            include: feiPopulatedInclude,
-          });
-
-      if (!existingFei) {
-        existingFei = savedFei;
-      }
-
-      await runFeiUpdateSideEffects(existingFei, savedFei, user);
-
-      res.status(200).send({
-        ok: true,
-        data: {
-          fei: savedFei,
-        },
-        error: '',
-      });
     },
   ),
 );
