@@ -2,6 +2,7 @@ import type {
   User,
   Entity,
   EntityAndUserRelations,
+  Fei,
   Carcasse,
   CarcasseIntermediaire,
   Log,
@@ -280,6 +281,30 @@ export interface AdminApiKeyAndApprovalsResponse {
     allUsers: Record<string, User>;
     allEntities: Record<string, Entity>;
   };
+  error: string;
+}
+
+export interface SyncRequest {
+  feis: Array<Partial<Fei> & { numero: string }>;
+  carcasses: Array<Partial<Carcasse> & { fei_numero: string; zacharie_carcasse_id: string }>;
+  carcassesIntermediaires: Array<
+    Partial<CarcasseIntermediaire> & {
+      fei_numero: string;
+      intermediaire_id: string;
+      zacharie_carcasse_id: string;
+    }
+  >;
+  logs: Array<Partial<Log> & { id: string }>;
+}
+
+export interface SyncResponse {
+  ok: boolean;
+  data: {
+    feis: Array<FeiPopulated>;
+    carcasses: Array<Carcasse>;
+    carcassesIntermediaires: Array<CarcasseIntermediaire>;
+    syncedLogIds: Array<string>;
+  } | null;
   error: string;
 }
 
