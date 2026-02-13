@@ -4,26 +4,18 @@ import { catchErrors } from '~/middlewares/errors';
 import type { CarcasseResponse, CarcassesGetForRegistryResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import dayjs from 'dayjs';
 import {
   EntityRelationStatus,
   EntityRelationType,
   FeiOwnerRole,
-  IPM2Decision,
   Prisma,
   UserRoles,
 } from '@prisma/client';
-import sendNotificationToUser from '~/service/notifications';
-import {
-  formatCarcasseChasseurEmail,
-  formatCarcasseManquanteOrRefusEmail,
-  formatSaisieEmail,
-} from '~/utils/formatCarcasseEmail';
 import { RequestWithUser } from '~/types/request';
 import { carcasseForRegistrySelect, CarcasseForResponseForRegistry } from '~/types/carcasse';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
-import { checkGenerateCertificat } from '~/utils/generate-certificats';
 import { mapCarcasseForRegistry } from '~/utils/carcasse-for-registry';
+import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
 
 // prisma.carcasse
 //   .findMany({
@@ -386,127 +378,7 @@ router.post(
         data: nextCarcasse,
       });
 
-      if (
-        existingCarcasse.svi_ipm2_decision !== updatedCarcasse.svi_ipm2_decision &&
-        (updatedCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE ||
-          updatedCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE)
-      ) {
-        const [examinateurInitial, premierDetenteur] = await prisma.fei
-          .findUnique({
-            where: {
-              numero: existingCarcasse.fei_numero,
-            },
-            include: {
-              FeiExaminateurInitialUser: true,
-              FeiPremierDetenteurUser: true,
-            },
-          })
-          .then((fei) => {
-            return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
-          });
-
-        const [object, email] = formatSaisieEmail(updatedCarcasse);
-
-        await sendNotificationToUser({
-          user: examinateurInitial!,
-          title: object,
-          body: email,
-          email: email,
-          notificationLogAction: `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`,
-        });
-
-        if (premierDetenteur?.id !== examinateurInitial?.id) {
-          await sendNotificationToUser({
-            user: premierDetenteur!,
-            title: object,
-            body: email,
-            email: email,
-            notificationLogAction: `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`,
-          });
-        }
-      }
-
-      if (
-        !existingCarcasse.intermediaire_carcasse_manquante &&
-        updatedCarcasse.intermediaire_carcasse_manquante
-      ) {
-        const [examinateurInitial, premierDetenteur] = await prisma.fei
-          .findUnique({
-            where: {
-              numero: existingCarcasse.fei_numero,
-            },
-            include: {
-              FeiExaminateurInitialUser: true,
-              FeiPremierDetenteurUser: true,
-            },
-          })
-          .then((fei) => {
-            return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
-          });
-
-        const [object, email] = await formatCarcasseManquanteOrRefusEmail(updatedCarcasse);
-
-        await sendNotificationToUser({
-          user: examinateurInitial!,
-          title: object,
-          body: email,
-          email: email,
-          notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
-        });
-
-        if (premierDetenteur?.id !== examinateurInitial?.id) {
-          await sendNotificationToUser({
-            user: premierDetenteur!,
-            title: object,
-            body: email,
-            email: email,
-            notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
-          });
-        }
-      }
-
-      if (
-        !existingCarcasse.intermediaire_carcasse_refus_intermediaire_id &&
-        updatedCarcasse.intermediaire_carcasse_refus_intermediaire_id &&
-        updatedCarcasse.intermediaire_carcasse_refus_motif
-      ) {
-        const [examinateurInitial, premierDetenteur] = await prisma.fei
-          .findUnique({
-            where: {
-              numero: existingCarcasse.fei_numero,
-            },
-            include: {
-              FeiExaminateurInitialUser: true,
-              FeiPremierDetenteurUser: true,
-            },
-          })
-          .then((fei) => {
-            return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
-          });
-
-        const [object, email] = await formatCarcasseManquanteOrRefusEmail(updatedCarcasse);
-        await sendNotificationToUser({
-          user: examinateurInitial!,
-          title: object,
-          body: email,
-          email: email,
-          notificationLogAction: `CARCASSE_REFUS_${updatedCarcasse.zacharie_carcasse_id}`,
-        });
-
-        if (premierDetenteur?.id !== examinateurInitial?.id) {
-          await sendNotificationToUser({
-            user: premierDetenteur!,
-            title: object,
-            body: email,
-            email: email,
-            notificationLogAction: `CARCASSE_REFUS_${updatedCarcasse.zacharie_carcasse_id}`,
-          });
-        }
-      }
-
-      if (updatedCarcasse.svi_ipm1_date || updatedCarcasse.svi_ipm2_date) {
-        await checkGenerateCertificat(existingCarcasse, updatedCarcasse);
-      }
+      await runCarcasseUpdateSideEffects(existingCarcasse, updatedCarcasse);
 
       res.status(200).send({
         ok: true,
