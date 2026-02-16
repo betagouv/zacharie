@@ -10,11 +10,11 @@ import useZustandStore, { syncData } from '@app/zustand/store';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { createNewFei } from '@app/utils/create-new-fei';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, useSearchParams, Link } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
-import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
+import { filterCarcassesIntermediairesForCarcasse, filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
@@ -22,9 +22,11 @@ import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import useUser from '@app/zustand/user';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import API from '@app/services/api';
+import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import { useFeiSteps } from '@app/utils/fei-steps';
+import { useFeiSteps, computeFeiSteps } from '@app/utils/fei-steps';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
+import { useLocalStorage } from '@uidotdev/usehooks';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { useEtgIds, useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 
@@ -107,6 +109,11 @@ export default function TableauDeBordIndex() {
   });
   const [loading, setLoading] = useState(false);
   const isOnline = useIsOnline();
+  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = parseInt(searchParams.get('page') || '1');
+  const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('tableau-de-bord-items-per-page', 20);
 
   useEffect(() => {
     window.onNativePushToken = async function handleNativePushToken(token) {
@@ -259,6 +266,38 @@ export default function TableauDeBordIndex() {
     }
     return [_sviWorkingForEtgIds, 'Filtrer par ETG'];
   }, [filterETG, entities, entitiesIdsWorkingDirectlyFor, allEtgIds, isOnlySvi]);
+
+  const allFeis = useMemo(() => {
+    if (isOnlySvi) {
+      let feis = [...feiActivesForSvi, ...feisDoneForSvi];
+      if (filterETG) {
+        feis = feis.filter((fei) => fei.latest_intermediaire_entity_id === filterETG);
+      }
+      return feis;
+    }
+    return [...feisAssigned, ...feisOngoing, ...feisDone];
+  }, [isOnlySvi, feisAssigned, feisOngoing, feisDone, feiActivesForSvi, feisDoneForSvi, filterETG]);
+
+  const filteredFeis = useMemo(() => {
+    if (filter === 'Toutes les fiches') return allFeis;
+    return allFeis.filter((fei) => {
+      const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
+      const { simpleStatus } = computeFeiSteps({
+        fei,
+        intermediaires,
+        entitiesIdsWorkingDirectlyFor,
+        user,
+      });
+      return simpleStatus === filter;
+    });
+  }, [allFeis, filter, carcassesIntermediaireById, entitiesIdsWorkingDirectlyFor, user]);
+
+  const totalPages = Math.ceil(filteredFeis.length / (itemsPerPage ?? 20));
+  const paginatedFeis = useMemo(() => {
+    const perPage = itemsPerPage ?? 20;
+    const start = (page - 1) * perPage;
+    return filteredFeis.slice(start, start + perPage);
+  }, [filteredFeis, page, itemsPerPage]);
 
   function Actions() {
     return (
@@ -454,6 +493,31 @@ export default function TableauDeBordIndex() {
             )}
           </div>
         </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <span className="text-sm opacity-50">Fiches par page:</span>
+            {[20, 50, 100].map((option) => (
+              <button
+                key={option}
+                className={[
+                  'px-2 py-1 text-sm',
+                  (itemsPerPage ?? 20) === option ? 'font-semibold underline' : '',
+                ].join(' ')}
+                onClick={() => {
+                  const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
+                  const newPage = Math.floor(firstItemIndex / option) + 1;
+                  setItemsPerPage(option);
+                  setSearchParams(newPage > 1 ? { page: String(newPage) } : {});
+                }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          <span className="text-sm opacity-50">
+            {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
+          </span>
+        </div>
       </div>
     );
   }
@@ -474,88 +538,35 @@ export default function TableauDeBordIndex() {
         <div className="fr-grid-row fr-grid-row--center fr-grid-row-gutters pt-4">
           <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
             <OnboardingChasseInfoBanner />
-            {!isOnlySvi && (
-              <FeisWrapper
-                viewType={viewType}
-                handleSelectAll={handleSelectAll}
-                selectedFeis={selectedFeis}
-                filter={filter}
-              >
-                {feisAssigned.map((fei) => {
-                  if (!fei) return null;
-                  return (
-                    <CardFiche
-                      key={fei.numero}
-                      fei={fei}
-                      filter={filter}
-                      onPrintSelect={handleCheckboxClick}
-                      isPrintSelected={selectedFeis.includes(fei.numero)}
-                    />
-                  );
-                })}
-                {feisOngoing.map((fei) => {
-                  if (!fei) return null;
-                  return (
-                    <CardFiche
-                      key={fei.numero}
-                      fei={fei}
-                      filter={filter}
-                      onPrintSelect={handleCheckboxClick}
-                      isPrintSelected={selectedFeis.includes(fei.numero)}
-                    />
-                  );
-                })}
-                {feisDone.map((fei) => {
-                  if (!fei) return null;
-                  return (
-                    <CardFiche
-                      key={fei.numero}
-                      fei={fei}
-                      filter={filter}
-                      onPrintSelect={handleCheckboxClick}
-                      isPrintSelected={selectedFeis.includes(fei.numero)}
-                    // disabledBecauseOffline={!isOnline}
-                    />
-                  );
-                })}
-              </FeisWrapper>
-            )}
-            {isOnlySvi && (
-              <FeisWrapper
-                viewType={viewType}
-                handleSelectAll={handleSelectAll}
-                selectedFeis={selectedFeis}
-                filter={filter}
-              >
-                {feiActivesForSvi.map((fei) => {
-                  if (!fei) return null;
-                  if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
-                  return (
-                    <CardFiche
-                      key={fei.numero}
-                      fei={fei}
-                      filter={filter}
-                      onPrintSelect={handleCheckboxClick}
-                      isPrintSelected={selectedFeis.includes(fei.numero)}
-                    // disabledBecauseOffline={!isOnline}
-                    />
-                  );
-                })}
-                {feisDoneForSvi.map((fei) => {
-                  if (!fei) return null;
-                  if (filterETG && fei.latest_intermediaire_entity_id !== filterETG) return null;
-                  return (
-                    <CardFiche
-                      key={fei.numero}
-                      fei={fei}
-                      filter={filter}
-                      onPrintSelect={handleCheckboxClick}
-                      isPrintSelected={selectedFeis.includes(fei.numero)}
-                    // disabledBecauseOffline={!isOnline}
-                    />
-                  );
-                })}
-              </FeisWrapper>
+            <FeisWrapper
+              viewType={viewType}
+              handleSelectAll={handleSelectAll}
+              selectedFeis={selectedFeis}
+              filter={'Toutes les fiches'}
+            >
+              {paginatedFeis.map((fei) => {
+                if (!fei) return null;
+                return (
+                  <CardFiche
+                    key={fei.numero}
+                    fei={fei}
+                    filter={'Toutes les fiches'}
+                    onPrintSelect={handleCheckboxClick}
+                    isPrintSelected={selectedFeis.includes(fei.numero)}
+                  />
+                );
+              })}
+            </FeisWrapper>
+            {totalPages > 1 && (
+              <div className="flex justify-center py-6">
+                <Pagination
+                  count={totalPages}
+                  defaultPage={page}
+                  getPageLinkProps={(pageNumber) => ({
+                    to: `/app/tableau-de-bord?page=${pageNumber}`,
+                  })}
+                />
+              </div>
             )}
             <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
               <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
@@ -584,8 +595,7 @@ function FeisWrapper({
 }) {
   const user = useMostFreshUser('tableau de bord index')!;
   const navigate = useNavigate();
-  const nothingToShow =
-    !children || (Array.isArray(children) && children.filter((child) => child.length > 0).length === 0);
+  const nothingToShow = !children || React.Children.toArray(children).length === 0;
 
   if (nothingToShow) {
     return (

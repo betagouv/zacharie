@@ -60,22 +60,26 @@ export async function loadFeis() {
     useZustandStore.setState({ feis: allFeis });
 
     if (feisNumerosToLoadAgain.length > 0) {
-      const feisRefreshed = await API.post({
-        path: 'fei/refresh',
-        body: { numeros: feisNumerosToLoadAgain },
-      }).then((res) => res as FeiRefreshResponse);
-      if (!feisRefreshed.ok) {
-        alert(
-          `Un problème est survenu lors du chargement de l'application: ${feisRefreshed.error}. Veuillez recharger la page. Si le problème persiste, veuillez contacter l'équipe technique.`,
-        );
-        return;
-      }
-      for (const fei of feisRefreshed.data.feis) {
-        setFeiInStore(fei);
-        if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-          // if it goes too fast, we have a race condition with the sync with the backend and PG doesn'tlike it
-          // again, "cache lookup failed for type" problem
-          await new Promise((resolve) => setTimeout(resolve, 100));
+      const BATCH_SIZE = 100;
+      for (let i = 0; i < feisNumerosToLoadAgain.length; i += BATCH_SIZE) {
+        const batch = feisNumerosToLoadAgain.slice(i, i + BATCH_SIZE);
+        const feisRefreshed = await API.post({
+          path: 'fei/refresh',
+          body: { numeros: batch },
+        }).then((res) => res as FeiRefreshResponse);
+        if (!feisRefreshed.ok) {
+          alert(
+            `Un problème est survenu lors du chargement de l'application: ${feisRefreshed.error}. Veuillez recharger la page. Si le problème persiste, veuillez contacter l'équipe technique.`,
+          );
+          return;
+        }
+        for (const fei of feisRefreshed.data.feis) {
+          setFeiInStore(fei);
+          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+            // if it goes too fast, we have a race condition with the sync with the backend and PG doesn'tlike it
+            // again, "cache lookup failed for type" problem
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
         }
       }
     }
