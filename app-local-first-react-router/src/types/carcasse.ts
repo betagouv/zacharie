@@ -4,6 +4,8 @@ export interface CarcasseFieldsTakenFromFei {
   date_mise_a_mort: Carcasse['date_mise_a_mort'];
   heure_mise_a_mort: Carcasse['heure_mise_a_mort'];
   heure_evisceration: Carcasse['heure_evisceration'];
+  heure_mise_a_mort_premiere_carcasse_fei: Carcasse['heure_mise_a_mort_premiere_carcasse_fei'];
+  heure_evisceration_derniere_carcasse_fei: Carcasse['heure_evisceration_derniere_carcasse_fei'];
   premier_detenteur_depot_type: Carcasse['premier_detenteur_depot_type'];
   premier_detenteur_depot_entity_id: Carcasse['premier_detenteur_depot_entity_id'];
   premier_detenteur_depot_entity_name_cache: Carcasse['premier_detenteur_depot_entity_name_cache'];
