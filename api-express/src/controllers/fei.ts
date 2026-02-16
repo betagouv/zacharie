@@ -4,17 +4,76 @@ import { catchErrors } from '~/middlewares/errors';
 import type { FeiResponse, FeisResponse, FeisDoneResponse, FeiRefreshResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import {
-  EntityRelationStatus,
-  EntityRelationType,
-  Prisma,
-  User,
-  UserRoles,
-} from '@prisma/client';
+import { EntityRelationStatus, EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
 import { feiPopulatedInclude } from '~/types/fei';
 import type { FeiPopulated } from '~/types/fei';
 import { capture } from '~/third-parties/sentry';
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
+
+router.post(
+  '/refresh',
+  passport.authenticate('user', { session: false }),
+  catchErrors(
+    async (req: express.Request, res: express.Response<FeiRefreshResponse>, next: express.NextFunction) => {
+      if (!req.user.activated) {
+        res.status(400).send({
+          ok: false,
+          data: { feis: [] },
+          error: "Le compte n'est pas activé",
+        });
+        return;
+      }
+      let numeros = req.body.numeros;
+      if (!numeros.length) {
+        res.status(400).send({
+          ok: false,
+          data: { feis: [] },
+          error: 'Le paramètre numeros est obligatoire',
+        });
+        return;
+      }
+      const feis = await prisma.fei.findMany({
+        where: {
+          numero: { in: numeros },
+        },
+        include: {
+          Carcasses: {
+            include: {
+              CarcasseIntermediaire: true,
+            },
+          },
+          FeiExaminateurInitialUser: true,
+          FeiPremierDetenteurUser: true,
+          FeiPremierDetenteurEntity: true,
+          FeiDepotEntity: true,
+          FeiCurrentUser: true,
+          FeiCurrentEntity: true,
+          FeiNextUser: true,
+          FeiNextEntity: true,
+          FeiSoustraiteByEntity: true,
+          FeiSoustraiteByUser: true,
+          FeiSviUser: true,
+          FeiSviEntity: true,
+          CarcasseIntermediaire: {
+            include: {
+              CarcasseIntermediaireEntity: true,
+              CarcasseIntermediaireUser: true,
+            },
+            orderBy: [{ prise_en_charge_at: Prisma.SortOrder.desc }, { created_at: Prisma.SortOrder.desc }],
+          },
+        },
+      });
+
+      res.status(200).send({
+        ok: true,
+        data: {
+          feis,
+        },
+        error: '',
+      });
+    },
+  ),
+);
 
 export interface SaveFeiResult {
   savedFei: FeiPopulated;
@@ -226,8 +285,7 @@ Responsabilités
     nextFei.fei_next_owner_sous_traite_by_user_id = body.fei_next_owner_sous_traite_by_user_id || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_by_entity_id)) {
-    nextFei.fei_next_owner_sous_traite_by_entity_id =
-      body.fei_next_owner_sous_traite_by_entity_id || null;
+    nextFei.fei_next_owner_sous_traite_by_entity_id = body.fei_next_owner_sous_traite_by_entity_id || null;
   }
   /*  Next Owner */
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
@@ -340,71 +398,6 @@ SVI
 
   return { savedFei, existingFei, isDeleted: false };
 }
-
-router.post(
-  '/refresh',
-  passport.authenticate('user', { session: false }),
-  catchErrors(
-    async (req: express.Request, res: express.Response<FeiRefreshResponse>, next: express.NextFunction) => {
-      if (!req.user.activated) {
-        res.status(400).send({
-          ok: false,
-          data: { feis: [] },
-          error: "Le compte n'est pas activé",
-        });
-        return;
-      }
-      let numeros = req.body.numeros;
-      if (!numeros.length) {
-        res.status(400).send({
-          ok: false,
-          data: { feis: [] },
-          error: 'Le paramètre numeros est obligatoire',
-        });
-        return;
-      }
-      const feis = await prisma.fei.findMany({
-        where: {
-          numero: { in: numeros },
-        },
-        include: {
-          Carcasses: {
-            include: {
-              CarcasseIntermediaire: true,
-            },
-          },
-          FeiExaminateurInitialUser: true,
-          FeiPremierDetenteurUser: true,
-          FeiPremierDetenteurEntity: true,
-          FeiDepotEntity: true,
-          FeiCurrentUser: true,
-          FeiCurrentEntity: true,
-          FeiNextUser: true,
-          FeiNextEntity: true,
-          FeiSoustraiteByEntity: true,
-          FeiSoustraiteByUser: true,
-          FeiSviUser: true,
-          FeiSviEntity: true,
-          CarcasseIntermediaire: {
-            include: {
-              CarcasseIntermediaireEntity: true,
-              CarcasseIntermediaireUser: true,
-            },
-            orderBy: [{ prise_en_charge_at: Prisma.SortOrder.desc }, { created_at: Prisma.SortOrder.desc }],
-          },
-        },
-      });
-
-      res.status(200).send({
-        ok: true,
-        data: {
-          feis,
-        },
-        error: '',
-      });
-    },
-  ),
-);
 
 router.post(
   '/:fei_numero',
