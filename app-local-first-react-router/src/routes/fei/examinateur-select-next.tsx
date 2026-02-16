@@ -6,11 +6,12 @@ import type { UserForFei } from '~/src/types/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useNavigate, useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { updateCarcassesTransmission } from '@app/utils/update-carcasses-transmission';
 import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -95,6 +96,18 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
         premier_detenteur_offline: navigator.onLine ? false : true,
         premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
       };
+      updateCarcassesTransmission(fei.numero, {
+        next_owner_user_id: null,
+        next_owner_user_name_cache: null,
+        next_owner_role: null,
+        next_owner_entity_id: null,
+        next_owner_entity_name_cache: null,
+        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        current_owner_user_id: user.id,
+        current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        current_owner_entity_id: null,
+        current_owner_entity_name_cache: null,
+      });
     } else if (nextIsMyAssociation) {
       nextFei = {
         fei_next_owner_user_id: null,
@@ -110,6 +123,18 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
         premier_detenteur_entity_id: nextOwnerEntity.id,
         premier_detenteur_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
       };
+      updateCarcassesTransmission(fei.numero, {
+        next_owner_user_id: null,
+        next_owner_user_name_cache: null,
+        next_owner_role: null,
+        next_owner_entity_id: null,
+        next_owner_entity_name_cache: null,
+        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        current_owner_entity_id: nextOwnerEntity.id,
+        current_owner_entity_name_cache: nextOwnerEntity.nom_d_usage ?? null,
+        current_owner_user_id: user.id,
+        current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+      });
     } else {
       console.log('nextIsSomeoneElse');
       nextFei = {
@@ -118,6 +143,12 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
         fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         fei_next_owner_entity_id: nextOwnerEntity?.id,
       };
+      updateCarcassesTransmission(fei.numero, {
+        next_owner_user_id: nextOwnerUser?.id ?? null,
+        next_owner_user_name_cache: nextOwnerName || null,
+        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        next_owner_entity_id: nextOwnerEntity?.id ?? null,
+      });
     }
     updateFei(fei.numero, nextFei);
     addLog({
@@ -131,6 +162,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
       intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
+    syncData('examinateur-select-next');
   }
 
   const isFirstFei =

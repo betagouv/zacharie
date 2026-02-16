@@ -4,7 +4,7 @@ import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import Button from '@codegouvfr/react-dsfr/Button';
 import dayjs from 'dayjs';
@@ -146,6 +146,7 @@ export default function NouvelleFiche() {
             }
           }
 
+          syncData('nouvelle-fiche');
           navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
         } else {
           useUser.setState({ user: null });

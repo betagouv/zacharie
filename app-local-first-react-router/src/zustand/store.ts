@@ -130,7 +130,6 @@ const useZustandStore = create<State & Actions>()(
             feis: { ...state.feis, [newFei.numero]: newFei },
             dataIsSynced: false,
           }));
-          syncData(`create-fei-${newFei.numero}`);
         },
         updateFei: (
           fei_numero: FeiWithIntermediaires['numero'],
@@ -171,7 +170,6 @@ const useZustandStore = create<State & Actions>()(
             },
             dataIsSynced: false,
           }));
-          syncData(`update-fei-${fei_numero}`);
         },
         createCarcasse: (newCarcasse: Carcasse) => {
           newCarcasse.is_synced = false;

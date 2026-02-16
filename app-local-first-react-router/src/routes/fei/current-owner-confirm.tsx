@@ -15,8 +15,9 @@ import {
 import type { FeiWithIntermediaires } from '~/src/types/fei';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { updateCarcassesTransmission } from '@app/utils/update-carcasses-transmission';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
@@ -203,7 +204,25 @@ export default function CurrentOwnerConfirm() {
       carcasse_intermediaire_id: null,
     });
 
-    // 3. Update the FEI once with the final state (current owner = ETG reception)
+    // 3. Update carcasses transmission (source of truth)
+    updateCarcassesTransmission(fei.numero, {
+      current_owner_role: FeiOwnerRole.ETG,
+      current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
+      current_owner_entity_name_cache: entityName || null,
+      current_owner_user_id: user.id,
+      current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+      next_owner_role: null,
+      next_owner_user_id: null,
+      next_owner_user_name_cache: null,
+      next_owner_entity_id: null,
+      next_owner_entity_name_cache: null,
+      next_owner_wants_to_sous_traite: null,
+      prev_owner_role: fei.fei_current_owner_role || null,
+      prev_owner_user_id: fei.fei_current_owner_user_id || null,
+      prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
+    });
+
+    // 4. Update the FEI for retrocompat
     const nextFei: Partial<FeiWithIntermediaires> = {
       fei_current_owner_role: FeiOwnerRole.ETG,
       fei_current_owner_entity_id: fei.fei_next_owner_entity_id,
@@ -236,6 +255,7 @@ export default function CurrentOwnerConfirm() {
       intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
+    syncData('current-owner-confirm-etg-reception-with-transport');
   }
 
   async function handlePriseEnCharge({
@@ -248,6 +268,10 @@ export default function CurrentOwnerConfirm() {
     etgEmployeeTransportingToETG?: boolean;
   }) {
     if (sousTraite) {
+      updateCarcassesTransmission(fei.numero, {
+        next_owner_wants_to_sous_traite: true,
+        next_owner_sous_traite_by_user_id: user.id,
+      });
       const nextFei: Partial<FeiWithIntermediaires> = {
         fei_next_owner_wants_to_sous_traite: true,
         fei_next_owner_sous_traite_by_user_id: user.id,
@@ -265,6 +289,7 @@ export default function CurrentOwnerConfirm() {
         intermediaire_id: null,
         carcasse_intermediaire_id: null,
       });
+      syncData('current-owner-sous-traite-request');
       return;
     }
 
@@ -361,6 +386,25 @@ export default function CurrentOwnerConfirm() {
       }
     }
 
+    // Update carcasses transmission (source of truth)
+    updateCarcassesTransmission(fei.numero, {
+      current_owner_role: nextFei.fei_current_owner_role ?? null,
+      current_owner_entity_id: nextFei.fei_current_owner_entity_id ?? null,
+      current_owner_entity_name_cache: nextFei.fei_current_owner_entity_name_cache ?? null,
+      current_owner_user_id: nextFei.fei_current_owner_user_id ?? null,
+      current_owner_user_name_cache: nextFei.fei_current_owner_user_name_cache ?? null,
+      next_owner_wants_to_sous_traite: nextFei.fei_next_owner_wants_to_sous_traite ?? null,
+      next_owner_role: nextFei.fei_next_owner_role ?? null,
+      next_owner_user_id: nextFei.fei_next_owner_user_id ?? null,
+      next_owner_user_name_cache: nextFei.fei_next_owner_user_name_cache ?? null,
+      next_owner_entity_id: nextFei.fei_next_owner_entity_id ?? null,
+      next_owner_entity_name_cache: nextFei.fei_next_owner_entity_name_cache ?? null,
+      prev_owner_role: nextFei.fei_prev_owner_role ?? null,
+      prev_owner_user_id: nextFei.fei_prev_owner_user_id ?? null,
+      prev_owner_entity_id: nextFei.fei_prev_owner_entity_id ?? null,
+    });
+
+    // Update FEI for retrocompat
     updateFei(fei.numero, nextFei);
     addLog({
       user_id: user.id,
@@ -373,6 +417,7 @@ export default function CurrentOwnerConfirm() {
       intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
+    syncData(action || 'current-owner-confirm');
   }
 
   if (isETGEmployeeAndTransportingToETG) {
@@ -529,6 +574,13 @@ export default function CurrentOwnerConfirm() {
                   fei_next_owner_user_name_cache: null,
                   fei_next_owner_role: null,
                 };
+                updateCarcassesTransmission(fei.numero, {
+                  next_owner_entity_id: null,
+                  next_owner_entity_name_cache: null,
+                  next_owner_user_id: null,
+                  next_owner_user_name_cache: null,
+                  next_owner_role: null,
+                });
                 updateFei(fei.numero, nextFei);
                 addLog({
                   user_id: user.id,
@@ -541,6 +593,7 @@ export default function CurrentOwnerConfirm() {
                   carcasse_intermediaire_id: null,
                   history: createHistoryInput(fei, nextFei),
                 });
+                syncData('current-owner-renvoi');
               }}
             >
               Je renvoie la fiche à l'expéditeur

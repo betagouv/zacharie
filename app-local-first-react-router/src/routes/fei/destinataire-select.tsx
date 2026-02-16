@@ -16,8 +16,9 @@ import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { updateCarcassesTransmission } from '@app/utils/update-carcasses-transmission';
 import { useCcgIds, useEtgIds, useSviIds, useCollecteursProIds, useCircuitCourtIds } from '@app/utils/get-entity-relations';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import SelectCustom from '@app/components/SelectCustom';
@@ -446,6 +447,17 @@ export default function DestinataireSelect({
     // for typescript only
     if (!prochainDetenteurEntityId) return;
     if (sousTraite) {
+      updateCarcassesTransmission(fei.numero, {
+        next_owner_entity_id: prochainDetenteurEntityId,
+        next_owner_role: prochainDetenteurType as FeiOwnerRole,
+        next_owner_wants_to_sous_traite: false,
+        next_owner_sous_traite_at: dayjs().toDate(),
+        next_owner_sous_traite_by_user_id: user.id,
+        next_owner_sous_traite_by_entity_id: fei.fei_next_owner_entity_id ?? null,
+        current_owner_entity_id: fei.fei_prev_owner_entity_id ?? null,
+        current_owner_role: fei.fei_prev_owner_role ?? null,
+        current_owner_user_id: fei.fei_prev_owner_user_id ?? null,
+      });
       let nextFei: Partial<typeof fei> = {
         fei_next_owner_entity_id: prochainDetenteurEntityId,
         fei_next_owner_role: prochainDetenteurType as FeiOwnerRole,
@@ -485,6 +497,7 @@ export default function DestinataireSelect({
         carcasse_intermediaire_id: null,
         intermediaire_id: null,
       });
+      syncData(`${calledFrom}-select-destinataire-sous-traite`);
       return;
     }
     if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
@@ -515,6 +528,10 @@ export default function DestinataireSelect({
         premier_detenteur_transport_type: nextTransportType,
         premier_detenteur_transport_date: nextTransportDate,
       };
+      updateCarcassesTransmission(fei.numero, {
+        next_owner_entity_id: prochainDetenteurEntityId,
+        next_owner_role: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
+      });
       for (const carcasse of carcasses) {
         updateCarcasse(
           carcasse.zacharie_carcasse_id,
@@ -547,6 +564,7 @@ export default function DestinataireSelect({
         carcasse_intermediaire_id: null,
         intermediaire_id: null,
       });
+      syncData(`${calledFrom}-select-destinataire`);
       navigate(`/app/tableau-de-bord/fei/${fei.numero}/envoyée`);
     } else {
       if (!feiAndIntermediaireIds) return;
@@ -556,6 +574,10 @@ export default function DestinataireSelect({
         svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
         svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
       };
+      updateCarcassesTransmission(fei.numero, {
+        next_owner_entity_id: prochainDetenteurEntityId,
+        next_owner_role: prochainDetenteurType as FeiOwnerRole,
+      });
       if (prochainDetenteurType === EntityTypes.SVI) {
         for (const carcasse of carcasses) {
           updateCarcasse(
@@ -590,6 +612,7 @@ export default function DestinataireSelect({
         carcasse_intermediaire_id: null,
         intermediaire_id: feiAndIntermediaireIds.split('_')[1],
       });
+      syncData(`${calledFrom}-select-destinataire`);
     }
   };
 

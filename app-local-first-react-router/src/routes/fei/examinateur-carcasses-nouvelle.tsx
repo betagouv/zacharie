@@ -6,7 +6,7 @@ import { Select } from '@codegouvfr/react-dsfr/Select';
 import grandGibier from '@app/data/grand-gibier.json';
 import petitGibier from '@app/data/petit-gibier.json';
 import { useParams } from 'react-router';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
@@ -152,6 +152,7 @@ export default function NouvelleCarcasse() {
               intermediaire_id: null,
               carcasse_intermediaire_id: null,
             });
+            syncData('examinateur-carcasse-create');
             setNumeroBracelet('');
 
             setError(null);

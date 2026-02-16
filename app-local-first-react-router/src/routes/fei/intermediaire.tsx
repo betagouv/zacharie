@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 import CarcasseIntermediaireComp from './intermediaire-carcasse';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import {
   getFeiAndIntermediaireIdsFromFeiIntermediaire,
   getFeiAndCarcasseAndIntermediaireIds,
@@ -504,6 +504,7 @@ function FEICurrentIntermediaireContent({
       zacharie_carcasse_id: null,
       carcasse_intermediaire_id: null,
     });
+    syncData('intermediaire-close-fei');
     toast.success('La fiche a été clôturée avec succès');
   }
 
@@ -544,6 +545,7 @@ function FEICurrentIntermediaireContent({
         intermediaire_closed_by_user_id: null,
       });
     }
+    syncData('intermediaire-check-finished-at');
   }
 
   function handleSubmitCheckFinishedAt(e: React.FormEvent<HTMLFormElement>) {

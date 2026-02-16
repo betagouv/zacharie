@@ -33,21 +33,4 @@ export interface CarcasseFieldsTakenFromFei {
   svi_user_id: Carcasse['svi_user_id'];
   svi_closed_at: Carcasse['svi_closed_at'];
   svi_closed_by_user_id: Carcasse['svi_closed_by_user_id'];
-  current_owner_user_id: Carcasse['current_owner_user_id'];
-  current_owner_user_name_cache: Carcasse['current_owner_user_name_cache'];
-  current_owner_entity_id: Carcasse['current_owner_entity_id'];
-  current_owner_entity_name_cache: Carcasse['current_owner_entity_name_cache'];
-  current_owner_role: Carcasse['current_owner_role'];
-  next_owner_wants_to_sous_traite: Carcasse['next_owner_wants_to_sous_traite'];
-  next_owner_sous_traite_at: Carcasse['next_owner_sous_traite_at'];
-  next_owner_sous_traite_by_user_id: Carcasse['next_owner_sous_traite_by_user_id'];
-  next_owner_sous_traite_by_entity_id: Carcasse['next_owner_sous_traite_by_entity_id'];
-  next_owner_user_id: Carcasse['next_owner_user_id'];
-  next_owner_user_name_cache: Carcasse['next_owner_user_name_cache'];
-  next_owner_entity_id: Carcasse['next_owner_entity_id'];
-  next_owner_entity_name_cache: Carcasse['next_owner_entity_name_cache'];
-  next_owner_role: Carcasse['next_owner_role'];
-  prev_owner_user_id: Carcasse['prev_owner_user_id'];
-  prev_owner_entity_id: Carcasse['prev_owner_entity_id'];
-  prev_owner_role: Carcasse['prev_owner_role'];
 }
