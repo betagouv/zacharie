@@ -1,11 +1,7 @@
-import { FeiWithIntermediaires } from '@api/src/types/fei';
 import { CarcasseFieldsTakenFromFei } from '@app/types/carcasse';
-import { Carcasse } from '@prisma/client';
+import { Fei, Carcasse } from '@prisma/client';
 
-export function mapFeiFieldsToCarcasse(
-  fei: FeiWithIntermediaires,
-  carcasse: Carcasse,
-): CarcasseFieldsTakenFromFei {
+export function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Carcasse): CarcasseFieldsTakenFromFei {
   return {
     date_mise_a_mort: fei.date_mise_a_mort,
     heure_mise_a_mort: carcasse.heure_mise_a_mort || fei.heure_mise_a_mort_premiere_carcasse,
