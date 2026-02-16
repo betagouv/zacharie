@@ -4,8 +4,8 @@ import { Fei, Carcasse } from '@prisma/client';
 export function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Carcasse): CarcasseFieldsTakenFromFei {
   return {
     date_mise_a_mort: fei.date_mise_a_mort,
-    heure_mise_a_mort: carcasse.heure_mise_a_mort || fei.heure_mise_a_mort_premiere_carcasse,
-    heure_evisceration: carcasse.heure_evisceration || fei.heure_evisceration_derniere_carcasse,
+    heure_mise_a_mort: carcasse.heure_mise_a_mort,
+    heure_evisceration: carcasse.heure_evisceration,
     premier_detenteur_depot_type: fei.premier_detenteur_depot_type,
     premier_detenteur_depot_entity_id: fei.premier_detenteur_depot_entity_id,
     premier_detenteur_depot_entity_name_cache: fei.premier_detenteur_depot_entity_name_cache,
