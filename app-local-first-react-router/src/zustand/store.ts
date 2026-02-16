@@ -7,13 +7,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import type { UserForFei } from '~/src/types/user';
 import type { EntityWithUserRelation } from '~/src/types/entity';
-import type {
-  FeiResponse,
-  CarcasseResponse,
-  CarcasseIntermediaireResponse,
-  LogResponse,
-  UserConnexionResponse,
-} from '~/src/types/responses';
+import type { SyncResponse, UserConnexionResponse } from '~/src/types/responses';
 import type { FeiWithIntermediaires } from '~/src/types/fei';
 import { create } from 'zustand';
 import { devtools, persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
@@ -26,7 +20,7 @@ import type { HistoryInput } from '@app/utils/create-history-entry';
 import { syncProchainBraceletAUtiliser } from './user';
 import updateCarcasseStatus from '@app/utils/get-carcasse-status';
 import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
-import PQueue from 'p-queue';
+// PQueue removed - using bulk sync via POST /sync
 import {
   getFeiAndCarcasseAndIntermediaireIds,
   getFeiAndIntermediaireIds,
@@ -404,311 +398,103 @@ export default useZustandStore;
 
 let debug = false;
 
-// we suffer from a SQL related bug while testing which is "cache lookup failed for type", not easy to debug
-// it might be a problem with race condition:
-// playwright is going so fast, and coupled with our local-first and submit-on-blur policies,
-// too many requests are sent to the server,
-// and too many SQL queries are made for the same data
-// so we need to
-// 1. throttle and cancel the sync if it's called too soon, thanks to intervalCap and interval
-// 2. cancel the sync if it's called too soon, thanks to AbortController
-
-const queue = new PQueue({ concurrency: 1, intervalCap: 1, interval: 30 });
-let count = 0;
-
-queue.on('active', () => {
-  if (debug) console.log(`Working on item #${++count}.  Size: ${queue.size}  Pending: ${queue.pending}`);
-});
-
-queue.on('add', () => {
-  if (debug) console.log(`Task is added.  Size: ${queue.size}  Pending: ${queue.pending}`);
-});
-
-queue.on('next', () => {
-  if (debug) console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
-});
-
-export async function syncFei(nextFei: FeiWithIntermediaires, signal: AbortSignal) {
-  const isOnline = useZustandStore.getState().isOnline;
-  if (!isOnline) {
-    console.error('syncFei not online');
-    return;
-  }
-  return API.post({
-    path: `/fei/${nextFei.numero}/`,
-    body: nextFei,
-    signal,
-  })
-    .then((res) => res as FeiResponse)
-    .then((res) => {
-      if (signal?.aborted) return;
-      if (res.ok && res.data?.fei) {
-        if (debug) console.log('synced fei', res.data.fei);
-        useZustandStore.setState({
-          feis: {
-            ...useZustandStore.getState().feis,
-            [nextFei.numero]: res.data.fei,
-          },
-        });
-      }
-    });
-}
-
-const feisControllers = new Map<string, AbortController>();
-
-export async function syncFeis() {
-  const isOnline = useZustandStore.getState().isOnline;
-  if (!isOnline) {
-    console.error('syncFeis not online');
-    return;
-  }
-  const feis = useZustandStore.getState().feis;
-  for (const fei of Object.values(feis)) {
-    if (!fei.is_synced) {
-      if (debug) console.log('syncing fei', fei);
-      const controller = new AbortController();
-      queue.add(
-        async ({ signal }) => {
-          const existingController = feisControllers.get(fei.numero);
-          if (existingController && !existingController.signal.aborted) {
-            existingController.abort('race condition in feisControllers');
-          } else {
-            feisControllers.set(fei.numero, controller);
-          }
-          await syncFei(fei, signal!);
-        },
-        { signal: controller.signal },
-      );
-    }
-  }
-}
-
-export async function syncCarcasse(nextCarcasse: Carcasse, signal: AbortSignal) {
-  const isOnline = useZustandStore.getState().isOnline;
-  if (!isOnline) {
-    console.error('syncCarcasse not online');
-    return;
-  }
-  return API.post({
-    path: `/fei-carcasse/${nextCarcasse.fei_numero}/${nextCarcasse.zacharie_carcasse_id}`,
-    body: nextCarcasse,
-    signal,
-  })
-    .then((res) => res as CarcasseResponse)
-    .then((res) => {
-      if (signal?.aborted) return;
-      if (res.ok && res.data.carcasse) {
-        useZustandStore.setState((state) => ({
-          ...state,
-          carcasses: {
-            ...useZustandStore.getState().carcasses,
-            [nextCarcasse.zacharie_carcasse_id]: res.data.carcasse!,
-          },
-        }));
-      }
-    });
-}
-
-const carcassesControllers = new Map<string, AbortController>();
-
-export async function syncCarcasses() {
-  const isOnline = useZustandStore.getState().isOnline;
-  if (!isOnline) {
-    console.error('syncCarcasses not online');
-    return;
-  }
-  const carcasses = useZustandStore.getState().carcasses;
-  for (const carcasse of Object.values(carcasses)) {
-    if (!carcasse.is_synced) {
-      if (debug) console.log('syncing carcasse', carcasse);
-      const controller = new AbortController();
-      queue.add(
-        async ({ signal }) => {
-          // Check dependencies at execution time (not queue-add time)
-          // so the FEI sync task has already completed
-          const fei = useZustandStore.getState().feis[carcasse.fei_numero];
-          if (!fei?.is_synced) {
-            if (debug) console.log('skipping carcasse sync - FEI not synced yet', carcasse.fei_numero);
-            return; // Will be synced on next syncData call
-          }
-          const existingController = carcassesControllers.get(carcasse.zacharie_carcasse_id);
-          if (existingController && !existingController.signal.aborted) {
-            existingController.abort('race condition in carcassesControllers');
-          } else {
-            carcassesControllers.set(carcasse.zacharie_carcasse_id, controller);
-          }
-          await syncCarcasse(carcasse, signal!);
-        },
-        { signal: controller.signal },
-      );
-    }
-  }
-}
-
-export async function syncCarcasseIntermediaire(
-  nextCarcasseIntermediaire: CarcasseIntermediaire,
-  signal: AbortSignal,
-) {
-  const isOnline = useZustandStore.getState().isOnline;
-  if (!isOnline) {
-    console.error('syncCarcasseIntermediaire not online');
-    return;
-  }
-  const feiNumero = nextCarcasseIntermediaire.fei_numero;
-  const intermedaireId = nextCarcasseIntermediaire.intermediaire_id;
-  const zacharieCarcasseId = nextCarcasseIntermediaire.zacharie_carcasse_id;
-  return API.post({
-    path: `/fei-carcasse-intermediaire/${feiNumero}/${intermedaireId}/${zacharieCarcasseId}`,
-    body: nextCarcasseIntermediaire,
-    signal,
-  })
-    .then((res) => res as CarcasseIntermediaireResponse)
-    .then((res) => {
-      if (signal?.aborted) return;
-      if (res.ok && res.data.carcasseIntermediaire) {
-        nextCarcasseIntermediaire = res.data.carcasseIntermediaire!;
-        const feiAndCarcasseAndIntermediaireId =
-          getFeiAndCarcasseAndIntermediaireIds(nextCarcasseIntermediaire);
-        useZustandStore.setState((state) => ({
-          carcassesIntermediaireById: {
-            ...state.carcassesIntermediaireById,
-            [feiAndCarcasseAndIntermediaireId]: {
-              ...state.carcassesIntermediaireById[feiAndCarcasseAndIntermediaireId],
-              ...nextCarcasseIntermediaire,
-            },
-          },
-        }));
-      } else if (!res.ok) {
-        capture(new Error('syncCarcasseIntermediaire failed'), {
-          extra: {
-            fei_numero: feiNumero,
-            intermedaire_id: intermedaireId,
-            zacharie_carcasse_id: zacharieCarcasseId,
-            error: res.error,
-          },
-        });
-      }
-    });
-}
-
-const intermediairesControllers = new Map<string, AbortController>();
-
-export async function syncCarcassesIntermediaires() {
-  const isOnline = useZustandStore.getState().isOnline;
-  if (!isOnline) {
-    console.error('syncCarcassesIntermediaires not online');
-    return;
-  }
-  const carcassesIntermediaires = useZustandStore.getState().carcassesIntermediaireById;
-
-  for (const carcassesIntermediaire of Object.values(carcassesIntermediaires)) {
-    if (!carcassesIntermediaire.is_synced) {
-      if (debug) console.log('syncing carcasse intermediaire', carcassesIntermediaire);
-      const controller = new AbortController();
-      if (debug)
-        console.log(
-          'adding to queue',
-          carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
-        );
-      queue.add(
-        async ({ signal }) => {
-          // Check dependencies at execution time (not queue-add time)
-          // so the FEI and Carcasse sync tasks have already completed
-          const state = useZustandStore.getState();
-          const fei = state.feis[carcassesIntermediaire.fei_numero];
-          const carcasse = state.carcasses[carcassesIntermediaire.zacharie_carcasse_id];
-          if (!fei?.is_synced || !carcasse?.is_synced) {
-            if (debug)
-              console.log(
-                'skipping carcasseIntermediaire sync - FEI or Carcasse not synced yet',
-                carcassesIntermediaire.fei_numero,
-                carcassesIntermediaire.zacharie_carcasse_id,
-              );
-            return; // Will be synced on next syncData call
-          }
-
-          const existingController = intermediairesControllers.get(
-            carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
-          );
-          if (existingController && !existingController.signal.aborted) {
-            if (debug)
-              console.log(
-                'aborting',
-                carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
-              );
-            existingController.abort('race condition in intermediairesControllers');
-          } else {
-            intermediairesControllers.set(
-              carcassesIntermediaire.intermediaire_id + carcassesIntermediaire.zacharie_carcasse_id,
-              controller,
-            );
-          }
-          // prevent race condition
-          await syncCarcasseIntermediaire(carcassesIntermediaire, signal!);
-        },
-        {
-          signal: controller.signal,
-        },
-      );
-    }
-  }
-}
-
-export async function syncLog(nextLog: Log) {
-  const isOnline = useZustandStore.getState().isOnline;
-  if (!isOnline) {
-    console.error('syncLog not online');
-    return;
-  }
-  return API.post({
-    path: '/log',
-    body: nextLog,
-  })
-    .then((res) => res as LogResponse)
-    .then((res) => {
-      if (res.ok) {
-        useZustandStore.setState((state) => ({
-          ...state,
-          // we don't need to store locally the logs
-          logs: state.logs.filter((log) => log.id !== nextLog.id),
-        }));
-      }
-    });
-}
-
-export async function syncLogs() {
-  const isOnline = useZustandStore.getState().isOnline;
-  if (!isOnline) {
-    console.error('syncLogs not online');
-    return;
-  }
-  const logs = useZustandStore.getState().logs;
-  for (const log of Object.values(logs)) {
-    if (!log.is_synced) {
-      if (debug) console.log('syncing log', log);
-      await syncLog(log);
-    }
-  }
-}
+// Single AbortController for the current sync request
+let syncAbortController: AbortController | null = null;
 
 export async function syncData(calledFrom: string) {
-  const isOnline = useZustandStore.getState().isOnline;
-  if (!isOnline) {
+  const state = useZustandStore.getState();
+  if (!state.isOnline) {
     console.log('not syncing data because not online');
     return;
   }
 
   if (debug) console.log('syncing data from', calledFrom);
 
-  queue.add(async () => {
-    await syncProchainBraceletAUtiliser();
-  });
-  syncFeis();
-  syncCarcasses();
-  syncCarcassesIntermediaires();
-  syncLogs();
-  // Use once instead of on to prevent listener accumulation on repeated calls
-  queue.once('empty', () => {
+  // Cancel any in-flight sync
+  if (syncAbortController && !syncAbortController.signal.aborted) {
+    syncAbortController.abort('new sync requested');
+  }
+  syncAbortController = new AbortController();
+  const signal = syncAbortController.signal;
+
+  // Sync bracelet first (independent)
+  await syncProchainBraceletAUtiliser();
+
+  // Collect all unsynced items
+  const unsyncedFeis = Object.values(state.feis).filter((f) => !f.is_synced);
+  const unsyncedCarcasses = Object.values(state.carcasses).filter((c) => !c.is_synced);
+  const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
+    (ci) => !ci.is_synced,
+  );
+  const unsyncedLogs = state.logs.filter((l) => !l.is_synced);
+
+  // Nothing to sync
+  if (
+    unsyncedFeis.length === 0 &&
+    unsyncedCarcasses.length === 0 &&
+    unsyncedIntermediaires.length === 0 &&
+    unsyncedLogs.length === 0
+  ) {
     useZustandStore.setState({ dataIsSynced: true });
-  });
+    return;
+  }
+
+  if (debug) {
+    console.log(
+      `syncing: ${unsyncedFeis.length} feis, ${unsyncedCarcasses.length} carcasses, ${unsyncedIntermediaires.length} intermediaires, ${unsyncedLogs.length} logs`,
+    );
+  }
+
+  try {
+    const response = await API.post({
+      path: '/sync',
+      body: {
+        feis: unsyncedFeis,
+        carcasses: unsyncedCarcasses,
+        carcassesIntermediaires: unsyncedIntermediaires,
+        logs: unsyncedLogs,
+      },
+      signal,
+    });
+
+    if (signal.aborted) return;
+
+    const res = response as SyncResponse;
+    if (!res.ok || !res.data) {
+      console.error('sync failed', res.error);
+      return;
+    }
+
+    // Merge response back into store
+    const nextFeis = { ...useZustandStore.getState().feis };
+    for (const fei of res.data.feis) {
+      nextFeis[fei.numero] = fei;
+    }
+
+    const nextCarcasses = { ...useZustandStore.getState().carcasses };
+    for (const carcasse of res.data.carcasses) {
+      nextCarcasses[carcasse.zacharie_carcasse_id] = carcasse;
+    }
+
+    const nextIntermediaires = { ...useZustandStore.getState().carcassesIntermediaireById };
+    for (const ci of res.data.carcassesIntermediaires) {
+      const id = getFeiAndCarcasseAndIntermediaireIds(ci);
+      nextIntermediaires[id] = ci;
+    }
+
+    const syncedLogIdsSet = new Set(res.data.syncedLogIds);
+    const nextLogs = useZustandStore.getState().logs.filter((log) => !syncedLogIdsSet.has(log.id));
+
+    useZustandStore.setState({
+      feis: nextFeis,
+      carcasses: nextCarcasses,
+      carcassesIntermediaireById: nextIntermediaires,
+      logs: nextLogs,
+      dataIsSynced: true,
+    });
+  } catch (error) {
+    if (signal.aborted) return;
+    console.error('sync error', error);
+    capture(error as Error, { extra: { calledFrom } });
+  }
 }
