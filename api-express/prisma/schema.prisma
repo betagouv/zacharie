@@ -456,6 +456,8 @@ model Carcasse {
   nombre_d_animaux                                        Int?
   heure_mise_a_mort                                       String?
   heure_evisceration                                      String?
+  heure_mise_a_mort_premiere_carcasse_fei                 String?
+  heure_evisceration_derniere_carcasse_fei                String?
   /**
   * EXAMINATEUR
   */

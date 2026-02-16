@@ -6,6 +6,8 @@ export function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Carcasse): CarcasseFi
     date_mise_a_mort: fei.date_mise_a_mort,
     heure_mise_a_mort: carcasse.heure_mise_a_mort,
     heure_evisceration: carcasse.heure_evisceration,
+    heure_mise_a_mort_premiere_carcasse_fei: fei.heure_mise_a_mort_premiere_carcasse,
+    heure_evisceration_derniere_carcasse_fei: fei.heure_evisceration_derniere_carcasse,
     premier_detenteur_depot_type: fei.premier_detenteur_depot_type,
     premier_detenteur_depot_entity_id: fei.premier_detenteur_depot_entity_id,
     premier_detenteur_depot_entity_name_cache: fei.premier_detenteur_depot_entity_name_cache,

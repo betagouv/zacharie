@@ -127,6 +127,14 @@ export async function saveCarcasse(
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort)) {
     nextCarcasse.heure_mise_a_mort = body[Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort];
   }
+  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei)) {
+    nextCarcasse.heure_mise_a_mort_premiere_carcasse_fei =
+      body[Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei];
+  }
+  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei)) {
+    nextCarcasse.heure_evisceration_derniere_carcasse_fei =
+      body[Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei];
+  }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.espece)) {
     nextCarcasse.espece = body[Prisma.CarcasseScalarFieldEnum.espece];
   }

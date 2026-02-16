@@ -46,6 +46,8 @@ export async function createNewCarcasse({
     date_mise_a_mort: fei.date_mise_a_mort,
     type: isPetitGibier ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER,
     nombre_d_animaux: isPetitGibier ? Number(nombreDAnimaux) : 1,
+    heure_mise_a_mort_premiere_carcasse_fei: fei.heure_mise_a_mort_premiere_carcasse,
+    heure_evisceration_derniere_carcasse_fei: fei.heure_evisceration_derniere_carcasse,
     heure_mise_a_mort: null,
     heure_evisceration: null,
     espece: espece,
