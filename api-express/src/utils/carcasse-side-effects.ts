@@ -58,7 +58,10 @@ export async function notifySaisie(existingCarcasse: Carcasse, updatedCarcasse: 
 }
 
 export async function notifyManquante(existingCarcasse: Carcasse, updatedCarcasse: Carcasse) {
-  if (!existingCarcasse.intermediaire_carcasse_manquante && updatedCarcasse.intermediaire_carcasse_manquante) {
+  if (
+    !existingCarcasse.intermediaire_carcasse_manquante &&
+    updatedCarcasse.intermediaire_carcasse_manquante
+  ) {
     const [object, email] = await formatCarcasseManquanteOrRefusEmail(updatedCarcasse);
     await notifyExaminateurAndPremierDetenteur(
       existingCarcasse.fei_numero,

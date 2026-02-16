@@ -95,7 +95,10 @@ export async function webhookOwnerChange(existingFei: FeiPopulated, savedFei: Fe
  * Notifies SVI users when a FEI is assigned to them.
  * Returns true if this side effect fired (to skip generic next-owner notifications).
  */
-export async function notifySviAssignment(existingFei: FeiPopulated, savedFei: FeiPopulated): Promise<boolean> {
+export async function notifySviAssignment(
+  existingFei: FeiPopulated,
+  savedFei: FeiPopulated,
+): Promise<boolean> {
   if (
     existingFei.fei_next_owner_role === FeiOwnerRole.SVI ||
     savedFei.fei_next_owner_role !== FeiOwnerRole.SVI

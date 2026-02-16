@@ -561,26 +561,27 @@ model Carcasse {
   svi_user_id                                             String?
   svi_closed_at                                           DateTime?
   svi_closed_by_user_id                                   String?
+  // Ownership (copied from FEI for carcasse-level ownership tracking)
   // Current Owner
-  fei_current_owner_user_id                               String?
-  fei_current_owner_user_name_cache                       String?
-  fei_current_owner_entity_id                             String?
-  fei_current_owner_entity_name_cache                     String?
-  fei_current_owner_role                                  FeiOwnerRole?
+  current_owner_user_id                                   String?
+  current_owner_user_name_cache                           String?
+  current_owner_entity_id                                 String?
+  current_owner_entity_name_cache                         String?
+  current_owner_role                                      FeiOwnerRole?
   // Next Owner
-  fei_next_owner_wants_to_sous_traite                     Boolean?
-  fei_next_owner_sous_traite_at                           DateTime?
-  fei_next_owner_sous_traite_by_user_id                   String?
-  fei_next_owner_sous_traite_by_entity_id                 String?
-  fei_next_owner_user_id                                  String?
-  fei_next_owner_user_name_cache                          String?
-  fei_next_owner_entity_id                                String?
-  fei_next_owner_entity_name_cache                        String?
-  fei_next_owner_role                                     FeiOwnerRole?
+  next_owner_wants_to_sous_traite                         Boolean?
+  next_owner_sous_traite_at                               DateTime?
+  next_owner_sous_traite_by_user_id                       String?
+  next_owner_sous_traite_by_entity_id                     String?
+  next_owner_user_id                                      String?
+  next_owner_user_name_cache                              String?
+  next_owner_entity_id                                    String?
+  next_owner_entity_name_cache                            String?
+  next_owner_role                                         FeiOwnerRole?
   // Previous Owner
-  fei_prev_owner_user_id                                  String?
-  fei_prev_owner_entity_id                                String?
-  fei_prev_owner_role                                     FeiOwnerRole?
+  prev_owner_user_id                                      String?
+  prev_owner_entity_id                                    String?
+  prev_owner_role                                         FeiOwnerRole?
   // technical fields
   created_at                                              DateTime                @default(now())
   updated_at                                              DateTime                @default(now()) @updatedAt

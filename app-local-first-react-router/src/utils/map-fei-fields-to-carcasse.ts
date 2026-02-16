@@ -1,0 +1,60 @@
+import { FeiWithIntermediaires } from '@api/src/types/fei';
+import { CarcasseFieldsTakenFromFei } from '@app/types/carcasse';
+import { Carcasse } from '@prisma/client';
+
+export function mapFeiFieldsToCarcasse(
+  fei: FeiWithIntermediaires,
+  carcasse: Carcasse,
+): CarcasseFieldsTakenFromFei {
+  return {
+    date_mise_a_mort: fei.date_mise_a_mort,
+    heure_mise_a_mort: carcasse.heure_mise_a_mort || fei.heure_mise_a_mort_premiere_carcasse,
+    heure_evisceration: carcasse.heure_evisceration || fei.heure_evisceration_derniere_carcasse,
+    premier_detenteur_depot_type: fei.premier_detenteur_depot_type,
+    premier_detenteur_depot_entity_id: fei.premier_detenteur_depot_entity_id,
+    premier_detenteur_depot_entity_name_cache: fei.premier_detenteur_depot_entity_name_cache,
+    premier_detenteur_depot_ccg_at: fei.premier_detenteur_depot_ccg_at,
+    premier_detenteur_transport_type: fei.premier_detenteur_transport_type,
+    premier_detenteur_transport_date: fei.premier_detenteur_transport_date,
+    premier_detenteur_prochain_detenteur_role_cache: fei.premier_detenteur_prochain_detenteur_role_cache,
+    premier_detenteur_prochain_detenteur_id_cache: fei.premier_detenteur_prochain_detenteur_id_cache,
+    examinateur_initial_offline: fei.examinateur_initial_offline,
+    examinateur_initial_user_id: fei.examinateur_initial_user_id,
+    examinateur_initial_approbation_mise_sur_le_marche:
+      fei.examinateur_initial_approbation_mise_sur_le_marche,
+    examinateur_initial_date_approbation_mise_sur_le_marche:
+      fei.examinateur_initial_date_approbation_mise_sur_le_marche,
+    premier_detenteur_offline: fei.premier_detenteur_offline,
+    premier_detenteur_user_id: fei.premier_detenteur_user_id,
+    premier_detenteur_entity_id: fei.premier_detenteur_entity_id,
+    premier_detenteur_name_cache: fei.premier_detenteur_name_cache,
+    intermediaire_closed_at: fei.intermediaire_closed_at,
+    intermediaire_closed_by_user_id: fei.intermediaire_closed_by_user_id,
+    intermediaire_closed_by_entity_id: fei.intermediaire_closed_by_entity_id,
+    latest_intermediaire_user_id: fei.latest_intermediaire_user_id,
+    latest_intermediaire_entity_id: fei.latest_intermediaire_entity_id,
+    latest_intermediaire_name_cache: fei.latest_intermediaire_name_cache,
+    svi_assigned_at: fei.svi_assigned_at,
+    svi_entity_id: fei.svi_entity_id,
+    svi_user_id: fei.svi_user_id,
+    svi_closed_at: fei.svi_closed_at,
+    svi_closed_by_user_id: fei.svi_closed_by_user_id,
+    current_owner_user_id: fei.fei_current_owner_user_id,
+    current_owner_user_name_cache: fei.fei_current_owner_user_name_cache,
+    current_owner_entity_id: fei.fei_current_owner_entity_id,
+    current_owner_entity_name_cache: fei.fei_current_owner_entity_name_cache,
+    current_owner_role: fei.fei_current_owner_role,
+    next_owner_wants_to_sous_traite: fei.fei_next_owner_wants_to_sous_traite,
+    next_owner_sous_traite_at: fei.fei_next_owner_sous_traite_at,
+    next_owner_sous_traite_by_user_id: fei.fei_next_owner_sous_traite_by_user_id,
+    next_owner_sous_traite_by_entity_id: fei.fei_next_owner_sous_traite_by_entity_id,
+    next_owner_user_id: fei.fei_next_owner_user_id,
+    next_owner_user_name_cache: fei.fei_next_owner_user_name_cache,
+    next_owner_entity_id: fei.fei_next_owner_entity_id,
+    next_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache,
+    next_owner_role: fei.fei_next_owner_role,
+    prev_owner_user_id: fei.fei_prev_owner_user_id,
+    prev_owner_entity_id: fei.fei_prev_owner_entity_id,
+    prev_owner_role: fei.fei_prev_owner_role,
+  };
+}
