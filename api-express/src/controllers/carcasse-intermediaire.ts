@@ -59,8 +59,7 @@ export async function saveCarcasseIntermediaire(
     data.prise_en_charge = body[Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge];
   }
   if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.ecarte_pour_inspection)) {
-    data.ecarte_pour_inspection =
-      body[Prisma.CarcasseIntermediaireScalarFieldEnum.ecarte_pour_inspection];
+    data.ecarte_pour_inspection = body[Prisma.CarcasseIntermediaireScalarFieldEnum.ecarte_pour_inspection];
   }
   if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.check_manuel)) {
     data.check_manuel = body[Prisma.CarcasseIntermediaireScalarFieldEnum.check_manuel];
@@ -78,9 +77,7 @@ export async function saveCarcasseIntermediaire(
     data.prise_en_charge_at = body[Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge_at];
   }
   if (
-    body.hasOwnProperty(
-      Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_id_cache,
-    )
+    body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_id_cache)
   ) {
     data.intermediaire_prochain_detenteur_id_cache =
       body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_id_cache];

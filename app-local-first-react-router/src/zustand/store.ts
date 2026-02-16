@@ -1,9 +1,4 @@
-import {
-  type Fei,
-  type Carcasse,
-  type CarcasseIntermediaire,
-  type Log,
-} from '@prisma/client';
+import { type Fei, type Carcasse, type CarcasseIntermediaire, type Log } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import type { UserForFei } from '~/src/types/user';
 import type { EntityWithUserRelation } from '~/src/types/entity';
@@ -33,6 +28,7 @@ import type {
 import { get, set, del } from 'idb-keyval'; // can use anything: IndexedDB, Ionic Storage, etc.
 import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
+import { mapFeiFieldsToCarcasse } from '@app/utils/map-fei-fields-to-carcasse';
 
 // Custom storage object
 export const indexDBStorage: StateStorage = {
@@ -141,25 +137,40 @@ const useZustandStore = create<State & Actions>()(
           partialFei: Partial<FeiWithIntermediaires>,
         ) => {
           console.log('updateFei', fei_numero, JSON.stringify(partialFei, null, 2));
-          const state = useZustandStore.getState();
-          const feis = state.feis;
-          const carcassefeiCarcasses = filterCarcassesForFei(state.carcasses, fei_numero);
+          const carcassefeiCarcasses = filterCarcassesForFei(
+            useZustandStore.getState().carcasses,
+            fei_numero,
+          );
           const countCarcassesByEspece = formatCountCarcasseByEspece(carcassefeiCarcasses);
           const nextFei: FeiWithIntermediaires = {
-            ...feis[fei_numero],
+            ...useZustandStore.getState().feis[fei_numero],
             ...partialFei,
             resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
             updated_at: dayjs().toDate(),
             is_synced: false,
           };
 
-          useZustandStore.setState({
+          const nextCarcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse> = {};
+          for (const carcasse of carcassefeiCarcasses) {
+            nextCarcasses[carcasse.zacharie_carcasse_id] = {
+              ...carcasse,
+              ...mapFeiFieldsToCarcasse(nextFei, carcasse),
+              updated_at: dayjs().toDate(),
+              is_synced: false,
+            };
+          }
+
+          useZustandStore.setState((state) => ({
             feis: {
-              ...feis,
+              ...state.feis,
               [fei_numero]: nextFei,
             },
+            carcasses: {
+              ...state.carcasses,
+              ...nextCarcasses,
+            },
             dataIsSynced: false,
-          });
+          }));
           syncData(`update-fei-${fei_numero}`);
         },
         createCarcasse: (newCarcasse: Carcasse) => {
@@ -170,8 +181,8 @@ const useZustandStore = create<State & Actions>()(
             return {
               ...state,
               carcasses: {
-                [newCarcasse.zacharie_carcasse_id]: newCarcasse,
                 ...state.carcasses,
+                [newCarcasse.zacharie_carcasse_id]: newCarcasse,
               },
               dataIsSynced: false,
             };
