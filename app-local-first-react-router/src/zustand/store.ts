@@ -5,7 +5,7 @@ import type { EntityWithUserRelation } from '~/src/types/entity';
 import type { SyncResponse, UserConnexionResponse } from '~/src/types/responses';
 import type { FeiWithIntermediaires } from '~/src/types/fei';
 import { create } from 'zustand';
-import { devtools, persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
@@ -25,26 +25,25 @@ import type {
   FeiAndIntermediaireIds,
   FeiIntermediaire,
 } from '@app/types/fei-intermediaire';
-import { get, set, del } from 'idb-keyval'; // can use anything: IndexedDB, Ionic Storage, etc.
 import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import { mapFeiFieldsToCarcasse } from '@app/utils/map-fei-fields-to-carcasse';
+import { createSlicedIDBStorage } from './idb-sliced-storage';
 
-// Custom storage object
-export const indexDBStorage: StateStorage = {
-  getItem: async (name: string): Promise<string | null> => {
-    // console.log(name, 'has been retrieved');
-    return (await get(name)) || null;
-  },
-  setItem: async (name: string, value: string): Promise<void> => {
-    // console.log(name, 'with value', value, 'has been saved');
-    await set(name, value);
-  },
-  removeItem: async (name: string): Promise<void> => {
-    // console.log(name, 'has been deleted');
-    await del(name);
-  },
-};
+// State keys to persist in IndexedDB (each stored as its own entry)
+const PERSISTED_KEYS: (keyof State)[] = [
+  'dataIsSynced',
+  'feis',
+  'users',
+  'entities',
+  'detenteursInitiauxIds',
+  'carcasses',
+  'carcassesIntermediaireById',
+  'apiKeyApprovals',
+  'lastUpdateCarcassesRegistry',
+  'carcassesRegistry',
+  'logs',
+];
 
 export interface State {
   isOnline: boolean;
@@ -380,24 +379,12 @@ const useZustandStore = create<State & Actions>()(
       {
         name: 'zacharie-zustand-store',
         version: 5,
-        // storage: createJSONStorage(() => storage),
-        storage: createJSONStorage(() => indexDBStorage), // (optional) by default, 'localStorage' is used
-        // storage: createJSONStorage(() => window.localStorage),
+        storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS),
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);
         },
         partialize: (state) =>
-          Object.fromEntries(
-            Object.entries(state).filter(
-              ([key]) =>
-                ![
-                  'isOnline',
-                  // fix the carcasses registry
-                  // 'carcassesRegistry',
-                  // 'lastUpdateCarcassesRegistry',
-                ].includes(key),
-            ),
-          ),
+          Object.fromEntries(PERSISTED_KEYS.map((key) => [key, state[key]])) as Partial<State>,
       },
     ),
   ),
