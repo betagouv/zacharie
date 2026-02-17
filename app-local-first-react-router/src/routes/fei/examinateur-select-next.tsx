@@ -11,7 +11,6 @@ import useUser from '@app/zustand/user';
 import { useNavigate, useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import { updateCarcassesTransmission } from '@app/utils/update-carcasses-transmission';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
@@ -43,6 +42,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
   }, [entities, entitiesIdsWorkingDirectlyFor]);
 
   const updateFei = useZustandStore((state) => state.updateFei);
+  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
 
   const isOnline = useIsOnline();

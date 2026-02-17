@@ -17,7 +17,6 @@ import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import { updateCarcassesTransmission } from '@app/utils/update-carcasses-transmission';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
@@ -31,6 +30,7 @@ export default function CurrentOwnerConfirm() {
   const user = useUser((state) => state.user)!;
   const isCircuitCourt = useIsCircuitCourt();
   const updateFei = useZustandStore((state) => state.updateFei);
+  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const createFeiIntermediaires = useZustandStore((state) => state.createFeiIntermediaires);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
