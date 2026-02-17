@@ -37,6 +37,21 @@ export type FeiPopulated = Prisma.FeiGetPayload<{
   include: typeof feiPopulatedInclude;
 }>;
 
+export const feiRefreshInclude = {
+  Carcasses: {
+    include: {
+      CarcasseIntermediaire: true,
+    },
+  },
+  CarcasseIntermediaire: {
+    orderBy: [{ prise_en_charge_at: Prisma.SortOrder.desc }, { created_at: Prisma.SortOrder.desc }],
+  },
+};
+
+export type FeiForRefresh = Prisma.FeiGetPayload<{
+  include: typeof feiRefreshInclude;
+}>;
+
 export const feiDoneSelect = {
   numero: true,
   created_at: true,

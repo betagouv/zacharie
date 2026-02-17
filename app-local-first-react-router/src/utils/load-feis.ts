@@ -1,5 +1,6 @@
 import type { FeisResponse, FeiRefreshResponse } from '@api/src/types/responses';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
+import type { EntityWithUserRelation } from '@api/src/types/entity';
 import useZustandStore from '@app/zustand/store';
 import { setFeiInStore } from '@app/utils/load-fei';
 import dayjs from 'dayjs';
@@ -73,11 +74,30 @@ export async function loadFeis() {
           );
           return;
         }
+
+        // Store users and entities from flat arrays
+        const prevState = useZustandStore.getState();
+        for (const user of feisRefreshed.data.users) {
+          if (!prevState.users[user.id]) {
+            prevState.users[user.id] = user;
+          }
+        }
+        for (const entity of feisRefreshed.data.entities) {
+          const existing = prevState.entities[entity.id];
+          prevState.entities[entity.id] = {
+            ...existing,
+            ...entity,
+            relation: existing?.relation ?? 'NONE',
+            relationStatus: existing?.relationStatus ?? undefined,
+          } satisfies EntityWithUserRelation;
+        }
+        useZustandStore.setState(prevState, true);
+
+        // Process FEIs, carcasses, and intermediaires
         for (const fei of feisRefreshed.data.feis) {
           setFeiInStore(fei);
           if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-            // if it goes too fast, we have a race condition with the sync with the backend and PG doesn'tlike it
-            // again, "cache lookup failed for type" problem
+            // if it goes too fast, we have a race condition with the sync with the backend and PG doesn't like it
             await new Promise((resolve) => setTimeout(resolve, 100));
           }
         }

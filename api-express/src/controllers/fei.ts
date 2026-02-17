@@ -18,7 +18,7 @@ router.post(
       if (!req.user.activated) {
         res.status(400).send({
           ok: false,
-          data: { feis: [] },
+          data: { feis: [], users: [], entities: [] },
           error: "Le compte n'est pas activé",
         });
         return;
@@ -27,11 +27,12 @@ router.post(
       if (!numeros.length) {
         res.status(400).send({
           ok: false,
-          data: { feis: [] },
+          data: { feis: [], users: [], entities: [] },
           error: 'Le paramètre numeros est obligatoire',
         });
         return;
       }
+      // 1. Fetch FEIs with Carcasses and CarcasseIntermediaire (no nested User/Entity)
       const feis = await prisma.fei.findMany({
         where: {
           numero: { in: numeros },
@@ -42,32 +43,51 @@ router.post(
               CarcasseIntermediaire: true,
             },
           },
-          FeiExaminateurInitialUser: true,
-          FeiPremierDetenteurUser: true,
-          FeiPremierDetenteurEntity: true,
-          FeiDepotEntity: true,
-          FeiCurrentUser: true,
-          FeiCurrentEntity: true,
-          FeiNextUser: true,
-          FeiNextEntity: true,
-          FeiSoustraiteByEntity: true,
-          FeiSoustraiteByUser: true,
-          FeiSviUser: true,
-          FeiSviEntity: true,
           CarcasseIntermediaire: {
-            include: {
-              CarcasseIntermediaireEntity: true,
-              CarcasseIntermediaireUser: true,
-            },
             orderBy: [{ prise_en_charge_at: Prisma.SortOrder.desc }, { created_at: Prisma.SortOrder.desc }],
           },
         },
       });
 
+      // 2. Collect all unique user/entity IDs from FEIs + CarcasseIntermediaire
+      const userIds = new Set<string>();
+      const entityIds = new Set<string>();
+
+      for (const fei of feis) {
+        if (fei.examinateur_initial_user_id) userIds.add(fei.examinateur_initial_user_id);
+        if (fei.premier_detenteur_user_id) userIds.add(fei.premier_detenteur_user_id);
+        if (fei.fei_current_owner_user_id) userIds.add(fei.fei_current_owner_user_id);
+        if (fei.fei_next_owner_user_id) userIds.add(fei.fei_next_owner_user_id);
+        if (fei.fei_next_owner_sous_traite_by_user_id)
+          userIds.add(fei.fei_next_owner_sous_traite_by_user_id);
+        if (fei.svi_user_id) userIds.add(fei.svi_user_id);
+
+        if (fei.premier_detenteur_entity_id) entityIds.add(fei.premier_detenteur_entity_id);
+        if (fei.premier_detenteur_depot_entity_id) entityIds.add(fei.premier_detenteur_depot_entity_id);
+        if (fei.fei_current_owner_entity_id) entityIds.add(fei.fei_current_owner_entity_id);
+        if (fei.fei_next_owner_entity_id) entityIds.add(fei.fei_next_owner_entity_id);
+        if (fei.fei_next_owner_sous_traite_by_entity_id)
+          entityIds.add(fei.fei_next_owner_sous_traite_by_entity_id);
+        if (fei.svi_entity_id) entityIds.add(fei.svi_entity_id);
+
+        for (const ci of fei.CarcasseIntermediaire) {
+          if (ci.intermediaire_user_id) userIds.add(ci.intermediaire_user_id);
+          if (ci.intermediaire_entity_id) entityIds.add(ci.intermediaire_entity_id);
+        }
+      }
+
+      // 3. Batch-fetch all referenced users and entities
+      const [users, entities] = await Promise.all([
+        userIds.size > 0 ? prisma.user.findMany({ where: { id: { in: [...userIds] } } }) : [],
+        entityIds.size > 0 ? prisma.entity.findMany({ where: { id: { in: [...entityIds] } } }) : [],
+      ]);
+
       res.status(200).send({
         ok: true,
         data: {
           feis,
+          users,
+          entities,
         },
         error: '',
       });
