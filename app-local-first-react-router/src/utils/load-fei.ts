@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import type { FeiResponse } from '@api/src/types/responses';
+import type { EntityWithUserRelation } from '@api/src/types/entity';
 import useZustandStore from '@app/zustand/store';
 import { getFeiAndCarcasseAndIntermediaireIds } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/fei-intermediaire';
@@ -16,6 +17,24 @@ export async function loadFei(fei_numero: string) {
   if (!feiResponse.ok) {
     return null;
   }
+
+  const prevState = useZustandStore.getState();
+  for (const user of feiResponse.data.users) {
+    if (!prevState.users[user.id]) {
+      prevState.users[user.id] = user;
+    }
+  }
+  for (const entity of feiResponse.data.entities) {
+    const existing = prevState.entities[entity.id];
+    prevState.entities[entity.id] = {
+      ...existing,
+      ...entity,
+      relation: existing?.relation ?? 'NONE',
+      relationStatus: existing?.relationStatus ?? undefined,
+    } satisfies EntityWithUserRelation;
+  }
+  useZustandStore.setState(prevState, true);
+
   setFeiInStore(feiResponse.data.fei!);
   return feiResponse.data.fei!;
 }

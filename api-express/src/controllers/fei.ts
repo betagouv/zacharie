@@ -430,7 +430,7 @@ router.post(
       if (!user.activated) {
         res.status(400).send({
           ok: false,
-          data: { fei: null },
+          data: { fei: null, users: [], entities: [] },
           error: "Le compte n'est pas activé",
         });
         return;
@@ -438,7 +438,7 @@ router.post(
       if (!feiNumero) {
         res.status(400).send({
           ok: false,
-          data: { fei: null },
+          data: { fei: null, users: [], entities: [] },
           error: 'Le numéro de fiche est obligatoire',
         });
         return;
@@ -455,6 +455,8 @@ router.post(
           ok: true,
           data: {
             fei: savedFei,
+            users: [],
+            entities: [],
           },
           error: '',
         });
@@ -463,7 +465,7 @@ router.post(
         const status = message === 'Fei not found' ? 404 : 400;
         res.status(status).send({
           ok: false,
-          data: { fei: null },
+          data: { fei: null, users: [], entities: [] },
           error: message,
         });
       }
@@ -627,7 +629,7 @@ router.get(
       if (!req.user.activated) {
         res.status(400).send({
           ok: false,
-          data: { fei: null },
+          data: { fei: null, users: [], entities: [] },
           error: "Le compte n'est pas activé",
         });
         return;
@@ -642,37 +644,52 @@ router.get(
               CarcasseIntermediaire: true,
             },
           },
-          FeiExaminateurInitialUser: true,
-          FeiPremierDetenteurUser: true,
-          FeiPremierDetenteurEntity: true,
-          FeiDepotEntity: true,
-          FeiCurrentUser: true,
-          FeiCurrentEntity: true,
-          FeiNextUser: true,
-          FeiNextEntity: true,
-          FeiSoustraiteByEntity: true,
-          FeiSoustraiteByUser: true,
-          FeiSviUser: true,
-          FeiSviEntity: true,
           CarcasseIntermediaire: {
-            include: {
-              CarcasseIntermediaireEntity: true,
-              CarcasseIntermediaireUser: true,
-            },
             orderBy: [{ prise_en_charge_at: Prisma.SortOrder.desc }, { created_at: Prisma.SortOrder.desc }],
           },
         },
       });
 
       if (!fei) {
-        res.status(404).send({ ok: false, data: null, error: 'Unauthorized' });
+        res.status(404).send({ ok: false, data: { fei: null, users: [], entities: [] }, error: 'Unauthorized' });
         return;
       }
+
+      const userIds = new Set<string>();
+      const entityIds = new Set<string>();
+
+      if (fei.examinateur_initial_user_id) userIds.add(fei.examinateur_initial_user_id);
+      if (fei.premier_detenteur_user_id) userIds.add(fei.premier_detenteur_user_id);
+      if (fei.fei_current_owner_user_id) userIds.add(fei.fei_current_owner_user_id);
+      if (fei.fei_next_owner_user_id) userIds.add(fei.fei_next_owner_user_id);
+      if (fei.fei_next_owner_sous_traite_by_user_id)
+        userIds.add(fei.fei_next_owner_sous_traite_by_user_id);
+      if (fei.svi_user_id) userIds.add(fei.svi_user_id);
+
+      if (fei.premier_detenteur_entity_id) entityIds.add(fei.premier_detenteur_entity_id);
+      if (fei.premier_detenteur_depot_entity_id) entityIds.add(fei.premier_detenteur_depot_entity_id);
+      if (fei.fei_current_owner_entity_id) entityIds.add(fei.fei_current_owner_entity_id);
+      if (fei.fei_next_owner_entity_id) entityIds.add(fei.fei_next_owner_entity_id);
+      if (fei.fei_next_owner_sous_traite_by_entity_id)
+        entityIds.add(fei.fei_next_owner_sous_traite_by_entity_id);
+      if (fei.svi_entity_id) entityIds.add(fei.svi_entity_id);
+
+      for (const ci of fei.CarcasseIntermediaire) {
+        if (ci.intermediaire_user_id) userIds.add(ci.intermediaire_user_id);
+        if (ci.intermediaire_entity_id) entityIds.add(ci.intermediaire_entity_id);
+      }
+
+      const [users, entities] = await Promise.all([
+        userIds.size > 0 ? prisma.user.findMany({ where: { id: { in: [...userIds] } } }) : [],
+        entityIds.size > 0 ? prisma.entity.findMany({ where: { id: { in: [...entityIds] } } }) : [],
+      ]);
 
       res.status(200).send({
         ok: true,
         data: {
           fei,
+          users,
+          entities,
         },
         error: '',
       });

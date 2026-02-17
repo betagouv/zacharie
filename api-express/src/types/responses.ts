@@ -94,7 +94,9 @@ export interface UserMyRelationsResponse {
 export interface FeiResponse {
   ok: boolean;
   data: {
-    fei: FeiPopulated | null;
+    fei: FeiForRefresh | null;
+    users: Array<User>;
+    entities: Array<Entity>;
   };
   error: string;
 }
