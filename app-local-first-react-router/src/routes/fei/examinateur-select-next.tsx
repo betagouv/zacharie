@@ -12,6 +12,7 @@ import { useNavigate, useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { updateCarcassesTransmission } from '@app/utils/update-carcasses-transmission';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -25,6 +26,8 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
   const entities = useZustandStore((state) => state.entities);
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const fei = feis[params.fei_numero!];
+  const feiCarcasses = useCarcassesForFei(params.fei_numero);
+  const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
   const detenteursInitiaux = useDetenteursInitiaux();
   const [showSearchUserByEmail, setShowSearchUserByEmail] = useState(false);
   const prefilledInfos = usePrefillPremierDétenteurInfos();
@@ -96,7 +99,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
         premier_detenteur_offline: navigator.onLine ? false : true,
         premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
       };
-      updateCarcassesTransmission(fei.numero, {
+      updateCarcassesTransmission(carcasseIds, {
         next_owner_user_id: null,
         next_owner_user_name_cache: null,
         next_owner_role: null,
@@ -123,7 +126,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
         premier_detenteur_entity_id: nextOwnerEntity.id,
         premier_detenteur_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
       };
-      updateCarcassesTransmission(fei.numero, {
+      updateCarcassesTransmission(carcasseIds, {
         next_owner_user_id: null,
         next_owner_user_name_cache: null,
         next_owner_role: null,
@@ -143,7 +146,7 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
         fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         fei_next_owner_entity_id: nextOwnerEntity?.id,
       };
-      updateCarcassesTransmission(fei.numero, {
+      updateCarcassesTransmission(carcasseIds, {
         next_owner_user_id: nextOwnerUser?.id ?? null,
         next_owner_user_name_cache: nextOwnerName || null,
         next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,

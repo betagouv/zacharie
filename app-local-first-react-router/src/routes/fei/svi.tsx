@@ -25,6 +25,7 @@ export default function FEI_SVI() {
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const feiCarcasses = useCarcassesForFei(params.fei_numero);
+  const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
   const entities = useZustandStore((state) => state.entities);
   const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
@@ -184,7 +185,7 @@ export default function FEI_SVI() {
               }
             }
             if (fei.fei_current_owner_role !== UserRoles.SVI) {
-              updateCarcassesTransmission(fei.numero, {
+              updateCarcassesTransmission(carcasseIds, {
                 current_owner_role: UserRoles.SVI as unknown as Fei['fei_current_owner_role'],
                 current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
                 current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,
@@ -284,7 +285,7 @@ export default function FEI_SVI() {
                     }
                   }
                   if (fei.fei_current_owner_role !== UserRoles.SVI) {
-                    updateCarcassesTransmission(fei.numero, {
+                    updateCarcassesTransmission(carcasseIds, {
                       current_owner_role: UserRoles.SVI as unknown as Fei['fei_current_owner_role'],
                       current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
                       current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,

@@ -97,6 +97,7 @@ export default function DestinataireSelect({
   const prefilledInfos = usePrefillPremierDétenteurInfos();
 
   const carcasses = useCarcassesForFei(params.fei_numero);
+  const carcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);
 
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
@@ -447,7 +448,7 @@ export default function DestinataireSelect({
     // for typescript only
     if (!prochainDetenteurEntityId) return;
     if (sousTraite) {
-      updateCarcassesTransmission(fei.numero, {
+      updateCarcassesTransmission(carcasseIds, {
         next_owner_entity_id: prochainDetenteurEntityId,
         next_owner_role: prochainDetenteurType as FeiOwnerRole,
         next_owner_wants_to_sous_traite: false,
@@ -528,7 +529,7 @@ export default function DestinataireSelect({
         premier_detenteur_transport_type: nextTransportType,
         premier_detenteur_transport_date: nextTransportDate,
       };
-      updateCarcassesTransmission(fei.numero, {
+      updateCarcassesTransmission(carcasseIds, {
         next_owner_entity_id: prochainDetenteurEntityId,
         next_owner_role: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
       });
@@ -574,7 +575,7 @@ export default function DestinataireSelect({
         svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
         svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
       };
-      updateCarcassesTransmission(fei.numero, {
+      updateCarcassesTransmission(carcasseIds, {
         next_owner_entity_id: prochainDetenteurEntityId,
         next_owner_role: prochainDetenteurType as FeiOwnerRole,
       });

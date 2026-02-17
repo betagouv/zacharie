@@ -18,6 +18,7 @@ import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { updateCarcassesTransmission } from '@app/utils/update-carcasses-transmission';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
@@ -36,6 +37,8 @@ export default function CurrentOwnerConfirm() {
   const fei = feis[params.fei_numero!];
   const entities = useZustandStore((state) => state.entities);
   const users = useZustandStore((state) => state.users);
+  const feiCarcasses = useCarcassesForFei(params.fei_numero);
+  const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
   const intermediaires = useFeiIntermediaires(fei.numero);
   const latestIntermediaire = intermediaires[0];
 
@@ -205,7 +208,7 @@ export default function CurrentOwnerConfirm() {
     });
 
     // 3. Update carcasses transmission (source of truth)
-    updateCarcassesTransmission(fei.numero, {
+    updateCarcassesTransmission(carcasseIds, {
       current_owner_role: FeiOwnerRole.ETG,
       current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
       current_owner_entity_name_cache: entityName || null,
@@ -268,7 +271,7 @@ export default function CurrentOwnerConfirm() {
     etgEmployeeTransportingToETG?: boolean;
   }) {
     if (sousTraite) {
-      updateCarcassesTransmission(fei.numero, {
+      updateCarcassesTransmission(carcasseIds, {
         next_owner_wants_to_sous_traite: true,
         next_owner_sous_traite_by_user_id: user.id,
       });
@@ -387,7 +390,7 @@ export default function CurrentOwnerConfirm() {
     }
 
     // Update carcasses transmission (source of truth)
-    updateCarcassesTransmission(fei.numero, {
+    updateCarcassesTransmission(carcasseIds, {
       current_owner_role: nextFei.fei_current_owner_role ?? null,
       current_owner_entity_id: nextFei.fei_current_owner_entity_id ?? null,
       current_owner_entity_name_cache: nextFei.fei_current_owner_entity_name_cache ?? null,
@@ -574,7 +577,7 @@ export default function CurrentOwnerConfirm() {
                   fei_next_owner_user_name_cache: null,
                   fei_next_owner_role: null,
                 };
-                updateCarcassesTransmission(fei.numero, {
+                updateCarcassesTransmission(carcasseIds, {
                   next_owner_entity_id: null,
                   next_owner_entity_name_cache: null,
                   next_owner_user_id: null,

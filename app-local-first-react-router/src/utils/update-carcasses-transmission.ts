@@ -1,5 +1,4 @@
 import useZustandStore from '@app/zustand/store';
-import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import type { Carcasse } from '@prisma/client';
 
 type TransmissionFields = Partial<
@@ -25,11 +24,12 @@ type TransmissionFields = Partial<
   >
 >;
 
-export function updateCarcassesTransmission(fei_numero: string, transmissionFields: TransmissionFields) {
-  const state = useZustandStore.getState();
-  const carcasses = filterCarcassesForFei(state.carcasses, fei_numero);
-  const updateCarcasse = state.updateCarcasse;
-  for (const carcasse of carcasses) {
-    updateCarcasse(carcasse.zacharie_carcasse_id, transmissionFields, false);
+export function updateCarcassesTransmission(
+  zacharie_carcasse_ids: string[],
+  transmissionFields: TransmissionFields,
+) {
+  const updateCarcasse = useZustandStore.getState().updateCarcasse;
+  for (const id of zacharie_carcasse_ids) {
+    updateCarcasse(id, transmissionFields, false);
   }
 }

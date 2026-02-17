@@ -22,6 +22,7 @@ import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { updateCarcassesTransmission } from '@app/utils/update-carcasses-transmission';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -47,6 +48,8 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   const addLog = useZustandStore((state) => state.addLog);
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id!];
+  const feiCarcasses = useCarcassesForFei(params.fei_numero);
+  const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
 
   const [sviIpm1PresenteeInspection, setSviIpm1PresenteeInspection] = useState(
     carcasse.svi_ipm1_presentee_inspection ?? true,
@@ -144,7 +147,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse, true);
     if (fei.fei_current_owner_role !== UserRoles.SVI) {
-      updateCarcassesTransmission(fei.numero, {
+      updateCarcassesTransmission(carcasseIds, {
         current_owner_role: UserRoles.SVI as unknown as Fei['fei_current_owner_role'],
         current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
         current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,
