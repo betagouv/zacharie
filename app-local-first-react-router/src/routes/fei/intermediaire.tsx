@@ -125,7 +125,7 @@ export default function FEICurrentIntermediaire(props: Props) {
         intermediaire={intermediaire}
         intermediaireIndex={intermediaireIndex}
       >
-        <Section open={!!intermediaires.length} title="Données de traçabilités">
+        <Section open={!!intermediaires.length} title="Données de traçabilité">
           <FEIDonneesDeChasse />
         </Section>
       </FEICurrentIntermediaireContent>
