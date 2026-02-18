@@ -10,7 +10,7 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import Section from '@app/components/Section';
-import DestinataireSelect from './destinataire-select';
+import DestinatairePremierDetenteur from './destinataire-premier-detenteur';
 
 export default function FeiPremierDetenteur() {
   const params = useParams();
@@ -156,12 +156,9 @@ export default function FeiPremierDetenteur() {
           className="mb-5"
         />
       )}
-      <DestinataireSelect
+      <DestinatairePremierDetenteur
         canEdit={canEdit}
         disabled={showAsDisabled}
-        calledFrom="premier-detenteur-need-select-next"
-        premierDetenteurEntity={premierDetenteurEntity}
-        premierDetenteurUser={premierDetenteurUser}
       />
     </Section>
   );
