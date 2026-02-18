@@ -84,6 +84,31 @@ interface Actions {
     carcasse: Partial<Carcasse>,
     updateFei: boolean,
   ) => void;
+  updateCarcassesTransmission: (
+    zacharie_carcasse_ids: string[],
+    transmissionFields: Partial<
+      Pick<
+        Carcasse,
+        | 'current_owner_user_id'
+        | 'current_owner_user_name_cache'
+        | 'current_owner_entity_id'
+        | 'current_owner_entity_name_cache'
+        | 'current_owner_role'
+        | 'next_owner_user_id'
+        | 'next_owner_user_name_cache'
+        | 'next_owner_entity_id'
+        | 'next_owner_entity_name_cache'
+        | 'next_owner_role'
+        | 'next_owner_wants_to_sous_traite'
+        | 'next_owner_sous_traite_at'
+        | 'next_owner_sous_traite_by_user_id'
+        | 'next_owner_sous_traite_by_entity_id'
+        | 'prev_owner_user_id'
+        | 'prev_owner_entity_id'
+        | 'prev_owner_role'
+      >
+    >,
+  ) => void;
   createFeiIntermediaires: (newFeiIntermediaires: FeiIntermediaire[]) => Promise<void>;
   updateAllCarcasseIntermediaire: (
     fei_numero: Fei['numero'],
@@ -129,7 +154,6 @@ const useZustandStore = create<State & Actions>()(
             feis: { ...state.feis, [newFei.numero]: newFei },
             dataIsSynced: false,
           }));
-          syncData(`create-fei-${newFei.numero}`);
         },
         updateFei: (
           fei_numero: FeiWithIntermediaires['numero'],
@@ -170,7 +194,6 @@ const useZustandStore = create<State & Actions>()(
             },
             dataIsSynced: false,
           }));
-          syncData(`update-fei-${fei_numero}`);
         },
         createCarcasse: (newCarcasse: Carcasse) => {
           newCarcasse.is_synced = false;
@@ -216,6 +239,11 @@ const useZustandStore = create<State & Actions>()(
           });
           if (updateFei) {
             get().updateFei(nextCarcasse.fei_numero, { updated_at: dayjs().toDate() });
+          }
+        },
+        updateCarcassesTransmission: (zacharie_carcasse_ids, transmissionFields) => {
+          for (const id of zacharie_carcasse_ids) {
+            get().updateCarcasse(id, transmissionFields, false);
           }
         },
         createFeiIntermediaires: async (newIntermediaires: FeiIntermediaire[]) => {

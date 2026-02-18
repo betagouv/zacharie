@@ -304,6 +304,21 @@ export async function saveCarcasse(
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_entity_id)) {
     nextCarcasse.next_owner_entity_id = body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_id];
+    // Create CAN_TRANSMIT_CARCASSES_TO_ENTITY relation (mirrors fei.ts pattern)
+    if (body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_id]) {
+      const nextRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
+        entity_id: body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_id] as string,
+        owner_id: user.id,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        deleted_at: null,
+      };
+      const existingRelation = await prisma.entityAndUserRelations.findFirst({
+        where: nextRelation,
+      });
+      if (!existingRelation) {
+        await prisma.entityAndUserRelations.create({ data: nextRelation });
+      }
+    }
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_entity_name_cache)) {
     nextCarcasse.next_owner_entity_name_cache =

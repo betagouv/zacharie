@@ -5,8 +5,9 @@ import SelectNextForExaminateur from './examinateur-select-next';
 // import { mergeFei } from '@app/db/fei.client';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import DestinataireSelect from './destinataire-select';
 import { getFeiAndIntermediaireIdsFromFeiIntermediaire } from '@app/utils/get-carcasse-intermediaire-id';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
@@ -15,9 +16,12 @@ export default function FeiSousTraite() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateFei = useZustandStore((state) => state.updateFei);
+  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
+  const feiCarcasses = useCarcassesForFei(fei.numero);
+  const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
   const intermediaires = useFeiIntermediaires(fei.numero);
   const latestIntermediaire = intermediaires[0];
   const feiAndIntermediaireIds = latestIntermediaire
@@ -57,6 +61,10 @@ export default function FeiSousTraite() {
               fei_next_owner_wants_to_sous_traite: false,
               fei_next_owner_sous_traite_by_user_id: null,
             };
+            updateCarcassesTransmission(carcasseIds, {
+              next_owner_wants_to_sous_traite: false,
+              next_owner_sous_traite_by_user_id: null,
+            });
             updateFei(fei.numero, nextFei);
             addLog({
               user_id: user.id,
@@ -69,6 +77,7 @@ export default function FeiSousTraite() {
               carcasse_intermediaire_id: null,
               history: createHistoryInput(fei, nextFei),
             });
+            syncData('current-owner-sous-traite-change-mind');
           }}
         >
           Annuler

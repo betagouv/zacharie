@@ -7,7 +7,7 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -24,9 +24,11 @@ export default function FEI_SVI() {
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const feiCarcasses = useCarcassesForFei(params.fei_numero);
+  const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
   const entities = useZustandStore((state) => state.entities);
   const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
+  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
   const allCarcassesForFei = useMemo(
     () => feiCarcasses.sort(sortCarcassesApproved),
@@ -182,6 +184,24 @@ export default function FEI_SVI() {
                 );
               }
             }
+            if (fei.fei_current_owner_role !== UserRoles.SVI) {
+              updateCarcassesTransmission(carcasseIds, {
+                current_owner_role: UserRoles.SVI as unknown as Fei['fei_current_owner_role'],
+                current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
+                current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,
+                current_owner_user_id: user.id,
+                current_owner_user_name_cache:
+                  fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+                next_owner_role: null,
+                next_owner_user_id: null,
+                next_owner_user_name_cache: null,
+                next_owner_entity_id: null,
+                next_owner_entity_name_cache: null,
+                prev_owner_role: fei.fei_current_owner_role || null,
+                prev_owner_user_id: fei.fei_current_owner_user_id || null,
+                prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
+              });
+            }
             updateFei(fei.numero, nextFei);
             addLog({
               user_id: user.id,
@@ -194,6 +214,7 @@ export default function FEI_SVI() {
               carcasse_intermediaire_id: null,
               intermediaire_id: null,
             });
+            syncData('svi-check-finished-at');
           }}
         >
           {!fei.automatic_closed_at && (
@@ -263,6 +284,24 @@ export default function FEI_SVI() {
                       );
                     }
                   }
+                  if (fei.fei_current_owner_role !== UserRoles.SVI) {
+                    updateCarcassesTransmission(carcasseIds, {
+                      current_owner_role: UserRoles.SVI as unknown as Fei['fei_current_owner_role'],
+                      current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
+                      current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,
+                      current_owner_user_id: user.id,
+                      current_owner_user_name_cache:
+                        fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+                      next_owner_role: null,
+                      next_owner_user_id: null,
+                      next_owner_user_name_cache: null,
+                      next_owner_entity_id: null,
+                      next_owner_entity_name_cache: null,
+                      prev_owner_role: fei.fei_current_owner_role || null,
+                      prev_owner_user_id: fei.fei_current_owner_user_id || null,
+                      prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
+                    });
+                  }
                   updateFei(fei.numero, nextFei);
                   addLog({
                     user_id: user.id,
@@ -275,6 +314,7 @@ export default function FEI_SVI() {
                     carcasse_intermediaire_id: null,
                     intermediaire_id: null,
                   });
+                  syncData('svi-check-finished-at-update');
                 },
                 suppressHydrationWarning: true,
                 defaultValue: dayjs(fei.svi_closed_at).format('YYYY-MM-DDTHH:mm'),
