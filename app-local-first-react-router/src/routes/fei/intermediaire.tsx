@@ -151,9 +151,7 @@ function FEICurrentIntermediaireContent({
   const fei = feis[params.fei_numero!];
   const intermediaires = useFeiIntermediaires(fei.numero);
   const allFeiCarcasses = useCarcassesForFei(fei.numero);
-  console.log("✌️ ~ allFeiCarcasses:", allFeiCarcasses);
   const myFeiCarcasses = useMyCarcassesForFei(fei.numero);
-  console.log("✌️ ~ myFeiCarcasses:", myFeiCarcasses);
   const hiddenCount = allFeiCarcasses.length - myFeiCarcasses.length;
 
   const originalCarcasses = myFeiCarcasses.sort((a, b) => {
