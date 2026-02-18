@@ -322,3 +322,25 @@ export interface AdminOfficialCfeisResponse {
   };
   error: string;
 }
+
+export interface AdminCarcassesResponse {
+  ok: boolean;
+  data: {
+    carcasses: Array<Carcasse>;
+    total: number;
+    page: number;
+    limit: number;
+  };
+  error: string;
+}
+
+export interface AdminCarcasseResponse {
+  ok: boolean;
+  data: null | {
+    carcasse: Carcasse & {
+      Fei: Fei;
+      CarcasseIntermediaire: Array<CarcasseIntermediaire>;
+    };
+  };
+  error: string;
+}

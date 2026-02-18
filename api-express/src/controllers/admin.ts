@@ -30,6 +30,8 @@ import type {
   AdminApiKeyResponse,
   AdminApiKeyAndApprovalsResponse,
   AdminOfficialCfeisResponse,
+  AdminCarcassesResponse,
+  AdminCarcasseResponse,
   UserConnexionResponse,
 } from '~/types/responses';
 import passport from 'passport';
@@ -921,6 +923,117 @@ router.post(
         return allEntitiesRecord;
       });
       res.status(200).send({ ok: true, data: { apiKey: apiKey, allUsers, allEntities }, error: '' });
+    },
+  ),
+);
+
+router.get(
+  '/carcasses',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminCarcassesResponse>,
+      next: express.NextFunction,
+    ) => {
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+      const search = (req.query.search as string) || '';
+
+      const where: Prisma.CarcasseWhereInput = { deleted_at: null };
+      if (search.trim()) {
+        where.OR = [
+          { numero_bracelet: { contains: search, mode: 'insensitive' } },
+          { espece: { contains: search, mode: 'insensitive' } },
+          { fei_numero: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+
+      const [carcasses, total] = await Promise.all([
+        prisma.carcasse.findMany({
+          where,
+          orderBy: { created_at: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        prisma.carcasse.count({ where }),
+      ]);
+
+      res.status(200).send({
+        ok: true,
+        data: { carcasses, total, page, limit },
+        error: '',
+      });
+    },
+  ),
+);
+
+router.get(
+  '/carcasse/:zacharie_carcasse_id',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminCarcasseResponse>,
+      next: express.NextFunction,
+    ) => {
+      const carcasse = await prisma.carcasse.findUnique({
+        where: { zacharie_carcasse_id: req.params.zacharie_carcasse_id },
+        include: {
+          Fei: true,
+          CarcasseIntermediaire: true,
+        },
+      });
+      if (!carcasse) {
+        res.status(404).send({ ok: false, data: null, error: 'Carcasse not found' });
+        return;
+      }
+      res.status(200).send({ ok: true, data: { carcasse }, error: '' });
+    },
+  ),
+);
+
+router.put(
+  '/carcasse/:zacharie_carcasse_id',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminCarcasseResponse>,
+      next: express.NextFunction,
+    ) => {
+      const existing = await prisma.carcasse.findUnique({
+        where: { zacharie_carcasse_id: req.params.zacharie_carcasse_id },
+      });
+      if (!existing) {
+        res.status(404).send({ ok: false, data: null, error: 'Carcasse not found' });
+        return;
+      }
+
+      const body = req.body;
+      const data: Prisma.CarcasseUncheckedUpdateInput = {};
+
+      for (const key of Object.keys(body)) {
+        if (key in Prisma.CarcasseScalarFieldEnum) {
+          // Don't allow changing the primary key
+          if (key === 'zacharie_carcasse_id') continue;
+          (data as Record<string, unknown>)[key] = body[key];
+        }
+      }
+
+      const carcasse = await prisma.carcasse.update({
+        where: { zacharie_carcasse_id: req.params.zacharie_carcasse_id },
+        data,
+        include: {
+          Fei: true,
+          CarcasseIntermediaire: true,
+        },
+      });
+
+      res.status(200).send({ ok: true, data: { carcasse }, error: '' });
     },
   ),
 );

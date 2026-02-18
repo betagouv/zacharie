@@ -32,6 +32,8 @@ import Contact from './routes/contact';
 import { useLandingPageNavigationMenu } from './utils/get-navigation-menu';
 import LandingProsPage from './routes/landing-pros';
 import LandingDemarchesPage from './routes/landing-demarches';
+import AdminCarcasses from './routes/admin/carcasses';
+import AdminCarcasse from './routes/admin/carcasse.$carcasseId';
 import AdminApiKeys from './routes/admin/api-keys';
 import AdminNewApiKey from './routes/admin/api-key-add';
 import AdminApiKey from './routes/admin/api-key.$apiKeyId';
@@ -356,6 +358,22 @@ function App() {
                 element={
                   <RestrictedRoute id="entity/:entityId" roles={[UserRoles.ADMIN]}>
                     <AdminEntity />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="carcasses"
+                element={
+                  <RestrictedRoute id="carcasses" roles={[UserRoles.ADMIN]}>
+                    <AdminCarcasses />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="carcasse/:carcasseId"
+                element={
+                  <RestrictedRoute id="carcasse/:carcasseId" roles={[UserRoles.ADMIN]}>
+                    <AdminCarcasse />
                   </RestrictedRoute>
                 }
               />

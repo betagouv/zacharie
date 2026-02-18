@@ -183,6 +183,14 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
           },
         },
         {
+          text: 'Liste des carcasses',
+          isActive: location.pathname.startsWith('/app/tableau-de-bord/admin/carcasse'),
+          linkProps: {
+            href: '#',
+            to: '/app/tableau-de-bord/admin/carcasses',
+          },
+        },
+        {
           text: 'Liste des fiches',
           isActive: location.pathname === '/app/tableau-de-bord/admin/feis',
           linkProps: {
