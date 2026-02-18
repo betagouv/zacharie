@@ -64,7 +64,6 @@ export const carcasseForRegistrySelect: Prisma.CarcasseSelect = {
       heure_mise_a_mort_premiere_carcasse: true,
       heure_evisceration_derniere_carcasse: true,
       // created_by_user_id: false,
-      // resume_nombre_de_carcasses: true,
       // examinateur_initial_offline: false,
       // examinateur_initial_user_id: false,
       // examinateur_initial_approbation_mise_sur_le_marche: false,

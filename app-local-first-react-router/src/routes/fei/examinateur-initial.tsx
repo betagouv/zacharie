@@ -10,7 +10,6 @@ import InputVille from '@app/components/InputVille';
 import CarcassesExaminateur from './examinateur-carcasses';
 import SelectNextForExaminateur from './examinateur-select-next';
 import FeiPremierDetenteur from './premier-detenteur';
-import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
@@ -63,8 +62,6 @@ export default function FEIExaminateurInitial() {
   );
   // const entities = useZustandStore((state) => state.entities);
   // const nextOwnerEntity = fei.fei_next_owner_entity_id ? entities[fei.fei_next_owner_entity_id] : null;
-
-  const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
 
   const needSelectNextUser = useMemo(() => {
     if (fei.examinateur_initial_user_id !== user.id) {
@@ -405,7 +402,6 @@ export default function FEIExaminateurInitial() {
                     onClick={() => {
                       updateFei(fei.numero, {
                         examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
-                        resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
                       });
                     }}
                   >
@@ -424,7 +420,6 @@ export default function FEIExaminateurInitial() {
                 onBlur: (e) => {
                   updateFei(fei.numero, {
                     examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(e.target.value).toDate(),
-                    resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
                   });
                 },
                 defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche

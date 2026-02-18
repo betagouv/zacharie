@@ -205,11 +205,6 @@
             "nullable": true,
             "description": "Heure d'éviscération de la dernière carcasse"
           },
-          "resume_nombre_de_carcasses": {
-            "type": "string",
-            "nullable": true,
-            "description": "Résumé du nombre de carcasses"
-          },
           "examinateur_initial_name": {
             "type": "string",
             "description": "Nom complet de l'examinateur initial"
@@ -703,11 +698,6 @@
             "type": "string",
             "nullable": true,
             "description": "Heure d'éviscération de la dernière carcasse de la FEI"
-          },
-          "fei_resume_nombre_de_carcasses": {
-            "type": "string",
-            "nullable": true,
-            "description": "Résumé du nombre de carcasses de la FEI"
           },
           "fei_examinateur_initial_approbation_mise_sur_le_marche": {
             "type": "boolean",

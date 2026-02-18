@@ -121,7 +121,7 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
         .map((e) => addAnSToWord(e, nombre_d_animaux))
         .join(' ')}`;
     })
-    .filter(Boolean);
+    .filter((line): line is string => Boolean(line));
   return formatted;
 }
 

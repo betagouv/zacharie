@@ -34,7 +34,6 @@ export async function createNewFei(props?: InitialParamsProps): Promise<FeiWithI
     heure_evisceration_derniere_carcasse: props?.heure_evisceration_derniere_carcasse ?? null,
     created_by_user_id: user.id,
     automatic_closed_at: null,
-    resume_nombre_de_carcasses: null,
     examinateur_initial_offline: navigator.onLine ? false : true,
     examinateur_initial_user_id: user.id,
     examinateur_initial_approbation_mise_sur_le_marche: null,

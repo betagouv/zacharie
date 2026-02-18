@@ -58,7 +58,6 @@ const createMockFei = (overrides: Partial<FeiWithIntermediaires> = {}): FeiWithI
   heure_mise_a_mort_premiere_carcasse: '10:00',
   heure_evisceration_derniere_carcasse: '10:00',
   created_by_user_id: 'user-1',
-  resume_nombre_de_carcasses: '5',
   automatic_closed_at: null,
   examinateur_initial_offline: false,
   examinateur_initial_user_id: 'user-1',

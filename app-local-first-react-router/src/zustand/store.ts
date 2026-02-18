@@ -9,7 +9,6 @@ import { devtools, persist } from 'zustand/middleware';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
-import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import type { HistoryInput } from '@app/utils/create-history-entry';
 import { syncProchainBraceletAUtiliser } from './user';
@@ -164,11 +163,9 @@ const useZustandStore = create<State & Actions>()(
             useZustandStore.getState().carcasses,
             fei_numero,
           );
-          const countCarcassesByEspece = formatCountCarcasseByEspece(carcassefeiCarcasses);
           const nextFei: FeiWithIntermediaires = {
             ...useZustandStore.getState().feis[fei_numero],
             ...partialFei,
-            resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
             updated_at: dayjs().toDate(),
             is_synced: false,
           };

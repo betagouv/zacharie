@@ -3,7 +3,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { CarcasseType, UserRoles } from '@prisma/client';
-import { abbreviations } from '@app/utils/count-carcasses';
+import { abbreviations, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import useZustandStore, { syncData } from '@app/zustand/store';
@@ -673,29 +673,31 @@ function FeisTableRow({
     onVisibilityChange?.(fei.numero, isVisible);
   }, [filter, simpleStatus, fei.numero, onVisibilityChange]);
 
+  const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(feiCarcasses), [feiCarcasses]);
+
   const [carcassesAcceptées, , _carcassesOuLotsRefusés] = useMemo(() => {
-    if (!fei.resume_nombre_de_carcasses) {
+    if (!countCarcassesByEspece.length) {
       return [[], 0, ''];
     }
     const _carcassesAcceptées: string[] = [];
     let _carcassesRefusées = 0;
     let _carcassesOuLotsRefusés = '';
-    for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
-      if (carcasse.includes('refusé')) {
+    for (const line of countCarcassesByEspece) {
+      if (line.includes('refusé')) {
         const nombreDAnimaux =
-          carcasse
+          line
             .split(' ')
             .map((w: string) => parseInt(w, 10))
             .filter(Boolean)
             .at(-1) || 0;
         _carcassesRefusées += nombreDAnimaux;
-        _carcassesOuLotsRefusés = carcasse.split(' (')[0];
-      } else if (carcasse) {
-        _carcassesAcceptées.push(carcasse);
+        _carcassesOuLotsRefusés = line.split(' (')[0];
+      } else if (line) {
+        _carcassesAcceptées.push(line);
       }
     }
     return [_carcassesAcceptées, _carcassesRefusées, _carcassesOuLotsRefusés];
-  }, [fei.resume_nombre_de_carcasses]);
+  }, [countCarcassesByEspece]);
 
   // Enrichir les carcasses acceptées pour afficher le nombre accepté pour le petit gibier
   // Même logique que dans CardCarcasse.tsx : format "(X sur Y)"

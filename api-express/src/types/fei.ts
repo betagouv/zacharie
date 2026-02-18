@@ -65,7 +65,6 @@ export const feiDoneSelect = {
   svi_closed_at: true,
   automatic_closed_at: true,
   premier_detenteur_name_cache: true,
-  resume_nombre_de_carcasses: true,
   intermediaire_closed_at: true,
   is_synced: true,
 } as const;
@@ -83,7 +82,6 @@ export const feiForApiSelect: Prisma.FeiSelect = {
   commune_mise_a_mort: true,
   heure_mise_a_mort_premiere_carcasse: true,
   heure_evisceration_derniere_carcasse: true,
-  resume_nombre_de_carcasses: true,
   // examinateur_initial_name: true,
   examinateur_initial_user_id: true,
   examinateur_initial_approbation_mise_sur_le_marche: true,
