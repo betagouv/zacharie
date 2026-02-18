@@ -19,6 +19,8 @@ import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
+import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import useUser from '@app/zustand/user';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import API from '@app/services/api';
@@ -664,6 +666,7 @@ function FeisTableRow({
 }) {
   const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
   const isCircuitCourt = useIsCircuitCourt();
+  const myCarcasses = useMyCarcassesForFei(fei.numero);
   const feiCarcasses = useCarcassesForFei(fei.numero);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
@@ -673,65 +676,38 @@ function FeisTableRow({
     onVisibilityChange?.(fei.numero, isVisible);
   }, [filter, simpleStatus, fei.numero, onVisibilityChange]);
 
-  const [carcassesAcceptées, , _carcassesOuLotsRefusés] = useMemo(() => {
-    if (!fei.resume_nombre_de_carcasses) {
-      return [[], 0, ''];
-    }
+  const [formattedCarcassesAcceptées, _carcassesOuLotsRefusés] = useMemo(() => {
+    const formatted = formatCountCarcasseByEspece(myCarcasses) as string[];
     const _carcassesAcceptées: string[] = [];
-    let _carcassesRefusées = 0;
     let _carcassesOuLotsRefusés = '';
-    for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
-      if (carcasse.includes('refusé')) {
-        const nombreDAnimaux =
-          carcasse
-            .split(' ')
-            .map((w: string) => parseInt(w, 10))
-            .filter(Boolean)
-            .at(-1) || 0;
-        _carcassesRefusées += nombreDAnimaux;
-        _carcassesOuLotsRefusés = carcasse.split(' (')[0];
-      } else if (carcasse) {
-        _carcassesAcceptées.push(carcasse);
-      }
-    }
-    return [_carcassesAcceptées, _carcassesRefusées, _carcassesOuLotsRefusés];
-  }, [fei.resume_nombre_de_carcasses]);
-
-  // Enrichir les carcasses acceptées pour afficher le nombre accepté pour le petit gibier
-  // Même logique que dans CardCarcasse.tsx : format "(X sur Y)"
-  const formattedCarcassesAcceptées = useMemo(() => {
-    if (!carcassesAcceptées.length) {
-      return [];
-    }
-    const lines = [];
-    for (const line of carcassesAcceptées) {
-      let enrichedLine = line;
-
-      // Chercher l'espèce et le nombre accepté pour le petit gibier
-      for (const [espece, abbreviation] of Object.entries(abbreviations)) {
-        if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
-          const carcasse = feiCarcasses.find(
-            (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece,
-          );
-          if (carcasse) {
-            const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
-            const intermediaires = filterCarcassesIntermediairesForCarcasse(carcassesIntermediaireById, carcasse.zacharie_carcasse_id!);
-            const latestIntermediaire = intermediaires[0];
-            const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
-
-            // Même logique que CardCarcasse.tsx
-            if (nombreDAnimaux > 1 && nombreDAnimauxAcceptes > 0) {
-              enrichedLine = `${nombreDAnimauxAcceptes} sur ${nombreDAnimaux} ${abbreviation}`;
+    for (const line of formatted) {
+      if (line.includes('refusé')) {
+        _carcassesOuLotsRefusés = line.split(' (')[0];
+      } else {
+        // Enrichir les carcasses acceptées pour afficher le nombre accepté pour le petit gibier
+        let enrichedLine = line;
+        for (const [espece, abbreviation] of Object.entries(abbreviations)) {
+          if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
+            const carcasse = feiCarcasses.find(
+              (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece,
+            );
+            if (carcasse) {
+              const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
+              const intermediaires = filterCarcassesIntermediairesForCarcasse(carcassesIntermediaireById, carcasse.zacharie_carcasse_id!);
+              const latestIntermediaire = intermediaires[0];
+              const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
+              if (nombreDAnimaux > 1 && nombreDAnimauxAcceptes > 0) {
+                enrichedLine = `${nombreDAnimauxAcceptes} sur ${nombreDAnimaux} ${abbreviation}`;
+              }
             }
+            break;
           }
-          break;
         }
+        _carcassesAcceptées.push(enrichedLine);
       }
-
-      lines.push(enrichedLine);
     }
-    return lines;
-  }, [carcassesAcceptées, feiCarcasses, carcassesIntermediaireById]);
+    return [_carcassesAcceptées, _carcassesOuLotsRefusés];
+  }, [myCarcasses, feiCarcasses, carcassesIntermediaireById]);
 
   // Filtrer selon le statut si un filtre est défini - APRÈS tous les hooks
   if (filter && filter !== 'Toutes les fiches' && filter !== simpleStatus) {
