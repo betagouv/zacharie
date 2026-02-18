@@ -116,7 +116,9 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
         const withS = lots <= 1 ? '' : 's';
         return `${lots}\u00A0lot${withS} refusé${withS} (${nombre_d_animaux} carcasses)`;
       }
-      return `${nombre_d_animaux} ${abbreviations[espece]
+      const abbr = abbreviations[espece] ?? espece;
+      if (!abbr) return null;
+      return `${nombre_d_animaux} ${abbr
         .split(' ')
         .map((e) => addAnSToWord(e, nombre_d_animaux))
         .join(' ')}`;
