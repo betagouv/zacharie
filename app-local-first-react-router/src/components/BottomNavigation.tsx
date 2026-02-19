@@ -9,13 +9,22 @@ type NavItem = MainNavigationProps.Item;
 function getIcon(text: string): string {
   const lowerText = text.toLowerCase();
   if (lowerText === 'nouvelle fiche') return 'ri-add-circle-line';
-  if (lowerText === 'tableau de bord') return 'ri-dashboard-line';
+  if (lowerText === 'tableau de bord') return 'ri-dashboard-3-line';
   if (lowerText === 'fiches') return 'ri-file-list-line';
   if (lowerText === 'carcasses') return 'ri-archive-line';
   if (lowerText === 'mon profil') return 'ri-user-line';
+  if (lowerText === 'mon activité') return 'ri-bar-chart-line';
+  if (lowerText === 'mes coordonnées') return 'ri-map-pin-line';
+  if (lowerText === 'mes informations de chasse') return 'ri-user-line';
+  if (lowerText === 'mes centres de collecte') return 'ri-map-pin-line';
+  if (lowerText === 'mes notifications') return 'ri-notification-line';
+  if (lowerText === 'partage de mes données') return 'ri-share-line';
+  if (lowerText === 'informations') return 'ri-information-line';
+  if (lowerText === 'ajouter un utilisateur') return 'ri-user-add-line';
   if (lowerText.startsWith('mon entreprise') || lowerText.startsWith('mon service'))
     return 'ri-building-line';
   if (lowerText === 'admin') return 'ri-admin-line';
+  if (lowerText.startsWith('liste des')) return 'ri-list-check';
   if (lowerText === 'contact') return 'ri-mail-line';
   return 'ri-menu-line';
 }
@@ -25,6 +34,7 @@ function getShortLabel(text: string): string {
   if (lowerText === 'nouvelle fiche') return 'Nouvelle';
   if (lowerText === 'tableau de bord') return 'Tableau';
   if (lowerText === 'mon profil') return 'Profil';
+  if (lowerText === 'mes informations de chasse') return 'Mes infos';
   if (lowerText.startsWith('mon entreprise')) return 'Entreprise';
   if (lowerText.startsWith('mon service')) return 'Service';
   return text;
@@ -131,6 +141,20 @@ function NavButton({
   return null;
 }
 
+function flattenItems(items: NavItem[]): NavItem[] {
+  const result: NavItem[] = [];
+  for (const item of items) {
+    if ('menuLinks' in item && item.menuLinks) {
+      for (const subItem of item.menuLinks as NavItem[]) {
+        result.push(subItem);
+      }
+    } else {
+      result.push(item);
+    }
+  }
+  return result;
+}
+
 export default function BottomNavigation({ items }: { items: MainNavigationProps.Item[] }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -149,9 +173,10 @@ export default function BottomNavigation({ items }: { items: MainNavigationProps
 
   if (items.length === 0) return null;
 
-  const needsOverflow = items.length > MAX_VISIBLE_ITEMS;
-  const visibleItems = needsOverflow ? items.slice(0, MAX_VISIBLE_ITEMS - 1) : items;
-  const overflowItems = needsOverflow ? items.slice(MAX_VISIBLE_ITEMS - 1) : [];
+  const flatItems = flattenItems(items);
+  const needsOverflow = flatItems.length > MAX_VISIBLE_ITEMS;
+  const visibleItems = needsOverflow ? flatItems.slice(0, MAX_VISIBLE_ITEMS - 1) : flatItems;
+  const overflowItems = needsOverflow ? flatItems.slice(MAX_VISIBLE_ITEMS - 1) : [];
   const overflowHasActive = overflowItems.some((item) => 'isActive' in item && item.isActive);
 
   return (
