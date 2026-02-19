@@ -113,16 +113,11 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     });
   }
 
-  if (isChasseur && !isExaminateurInitial && !isNotActivated) {
-    mainMenu.unshift({
-      text: 'Nouvelle fiche',
-      linkProps: {
-        href: '#',
-        onClick: async () => {
-          const newFei = await createNewFei();
-          navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
-        },
-      },
+  if (isSvi || isEtg || isCollecteurPro) {
+    mainMenu.push({
+      text: 'Carcasses',
+      isActive: location.pathname === '/app/tableau-de-bord/registre-carcasses',
+      linkProps: { to: '/app/tableau-de-bord/registre-carcasses', href: '#' },
     });
   }
 
