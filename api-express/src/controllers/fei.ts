@@ -694,34 +694,66 @@ router.get(
       //   });
       //   return;
       // }
+      // Pre-fetch entity IDs the user works for (used in carcasse-level queries)
+      const userEntityRelations = await prisma.entityAndUserRelations.findMany({
+        where: {
+          owner_id: user.id,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+        },
+        select: { entity_id: true },
+      });
+      const userEntityIds = userEntityRelations.map((r) => r.entity_id);
+
       const feisUnderMyResponsability = await prisma.fei.findMany({
         where: {
           // deleted_at: null,
           automatic_closed_at: null,
           svi_closed_at: null,
-          fei_next_owner_user_id: null,
-          fei_next_owner_entity_id: null,
           svi_assigned_at: null,
           intermediaire_closed_at: null,
           OR: [
-            // Case 1: I am the current owner of the FEI
+            // Case 1: A carcasse where current owner is me and no next owner
             {
-              fei_current_owner_user_id: user.id,
-            },
-            // Case 2: I work for the current owner entity.
-            {
-              FeiCurrentEntity: {
-                EntityRelationsWithUsers: {
-                  some: {
-                    owner_id: user.id,
-                    relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                    status: {
-                      in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                    },
-                  },
+              Carcasses: {
+                some: {
+                  current_owner_user_id: user.id,
+                  next_owner_user_id: null,
+                  next_owner_entity_id: null,
                 },
               },
             },
+            // Case 2: A carcasse where current owner entity is one I work for and no next owner
+            ...(userEntityIds.length > 0
+              ? [
+                  {
+                    Carcasses: {
+                      some: {
+                        current_owner_entity_id: { in: userEntityIds },
+                        next_owner_user_id: null,
+                        next_owner_entity_id: null,
+                      },
+                    },
+                  },
+                ]
+              : []),
+            // Case 3: Fallback to FEI-level for FEIs with no carcasses yet (e.g. just created)
+            {
+              Carcasses: { none: {} },
+              fei_current_owner_user_id: user.id,
+              fei_next_owner_user_id: null,
+              fei_next_owner_entity_id: null,
+            },
+            ...(userEntityIds.length > 0
+              ? [
+                  {
+                    Carcasses: { none: {} },
+                    fei_current_owner_entity_id: { in: userEntityIds },
+                    fei_next_owner_user_id: null,
+                    fei_next_owner_entity_id: null,
+                  },
+                ]
+              : []),
           ],
         },
         include: {
@@ -739,22 +771,26 @@ router.get(
           svi_assigned_at: null,
           intermediaire_closed_at: null,
           OR: [
-            // If the user is directly set as the next owner
-            { fei_next_owner_user_id: user.id },
-            // Or if the user works for the next owner entity directly (for non-ETG next owners)
+            // Case 1: A carcasse where next owner is me
             {
-              FeiNextEntity: {
-                EntityRelationsWithUsers: {
-                  some: {
-                    owner_id: user.id,
-                    relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                    status: {
-                      in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                    },
-                  },
+              Carcasses: {
+                some: {
+                  next_owner_user_id: user.id,
                 },
               },
             },
+            // Case 2: A carcasse where next owner entity is one I work for
+            ...(userEntityIds.length > 0
+              ? [
+                  {
+                    Carcasses: {
+                      some: {
+                        next_owner_entity_id: { in: userEntityIds },
+                      },
+                    },
+                  },
+                ]
+              : []),
           ],
         },
         include: {
@@ -776,46 +812,49 @@ router.get(
               ...feisToTake.map((fei) => fei.numero),
             ],
           },
-          // fei_current_owner_user_id: { not: user.id },
-          AND: [
-            // {
-            //   AND: [
-            //     {
-            //       fei_next_owner_user_id: { not: user.id },
-            //     },
-            //     // {
-            //     //   fei_next_owner_user_id: { not: null },
-            //     // },
-            //   ],
-            // },
-            // {
-            //   OR: [
-            //     { fei_next_owner_entity_id: null },
-            //     {
-            //       FeiNextEntity: {
-            //         EntityRelationsWithUsers: {
-            //           none: {
-            //             owner_id: user.id,
-            //             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-            //             status: {
-            //               in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-            //             },
-            //           },
-            //         },
-            //       },
-            //     },
-            //   ],
-            // },
+          OR: [
             {
-              OR: [
-                {
-                  examinateur_initial_user_id: user.id,
+              examinateur_initial_user_id: user.id,
+            },
+            {
+              premier_detenteur_user_id: user.id,
+            },
+            {
+              FeiPremierDetenteurEntity: {
+                EntityRelationsWithUsers: {
+                  some: {
+                    owner_id: user.id,
+                    relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                    status: {
+                      in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                    },
+                  },
                 },
-                {
-                  premier_detenteur_user_id: user.id,
+              },
+            },
+            // Sous-traite at carcasse level
+            ...(userEntityIds.length > 0
+              ? [
+                  {
+                    Carcasses: {
+                      some: {
+                        next_owner_sous_traite_by_entity_id: { in: userEntityIds },
+                      },
+                    },
+                  },
+                ]
+              : []),
+            {
+              CarcasseIntermediaire: {
+                some: {
+                  intermediaire_user_id: user.id,
                 },
-                {
-                  FeiPremierDetenteurEntity: {
+              },
+            },
+            {
+              CarcasseIntermediaire: {
+                some: {
+                  CarcasseIntermediaireEntity: {
                     EntityRelationsWithUsers: {
                       some: {
                         owner_id: user.id,
@@ -827,44 +866,7 @@ router.get(
                     },
                   },
                 },
-                {
-                  FeiSoustraiteByEntity: {
-                    EntityRelationsWithUsers: {
-                      some: {
-                        owner_id: user.id,
-                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                        status: {
-                          in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                        },
-                      },
-                    },
-                  },
-                },
-                {
-                  CarcasseIntermediaire: {
-                    some: {
-                      intermediaire_user_id: user.id,
-                    },
-                  },
-                },
-                {
-                  CarcasseIntermediaire: {
-                    some: {
-                      CarcasseIntermediaireEntity: {
-                        EntityRelationsWithUsers: {
-                          some: {
-                            owner_id: user.id,
-                            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                            status: {
-                              in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              ],
+              },
             },
           ],
         },

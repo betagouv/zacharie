@@ -1,5 +1,5 @@
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { FeiOwnerRole, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -97,6 +97,7 @@ export async function createNewFei(props?: InitialParamsProps): Promise<FeiWithI
     intermediaire_id: null,
     carcasse_intermediaire_id: null,
   });
+  syncData('create-new-fei');
   if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
     // if it goes too fast, we have a race condition with the sync with the backend and PG doesn'tlike it
     // again, "cache lookup failed for type" problem

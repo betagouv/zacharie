@@ -336,26 +336,40 @@ model Fei {
   svi_closed_by_user_id                                   String?
   /**
   * owners
+  * @deprecated — transmission now lives on Carcasse. These fields are dual-written for retrocompat.
   */
   fei_current_owner_user_id                               String?
   fei_current_owner_user_name_cache                       String?
   fei_current_owner_entity_id                             String?
   fei_current_owner_entity_name_cache                     String?
   fei_current_owner_role                                  FeiOwnerRole?
+  /// @deprecated — transmission now lives on Carcasse
   fei_next_owner_wants_to_sous_traite                     Boolean?
+  /// @deprecated — transmission now lives on Carcasse
   fei_next_owner_sous_traite_at                           DateTime?
+  /// @deprecated — transmission now lives on Carcasse
   fei_next_owner_sous_traite_by_user_id                   String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_next_owner_sous_traite_by_entity_id                 String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_next_owner_user_id                                  String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_next_owner_user_name_cache                          String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_next_owner_entity_id                                String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_next_owner_entity_name_cache                        String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_next_owner_role                                     FeiOwnerRole?
+  /// @deprecated — transmission now lives on Carcasse
   fei_prev_owner_user_id                                  String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_prev_owner_entity_id                                String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_prev_owner_role                                     FeiOwnerRole?
   /**
   * owners
+  * timestamps
   */
   created_at                                              DateTime                @default(now())
   updated_at                                              DateTime                @default(now()) @updatedAt

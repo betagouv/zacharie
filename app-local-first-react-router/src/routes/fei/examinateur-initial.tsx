@@ -11,7 +11,7 @@ import CarcassesExaminateur from './examinateur-carcasses';
 import SelectNextForExaminateur from './examinateur-select-next';
 import FeiPremierDetenteur from './premier-detenteur';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { createHistoryInput } from '@app/utils/create-history-entry';
@@ -55,6 +55,7 @@ export default function FEIExaminateurInitial() {
       intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
+    syncData('examinateur-initial-update-fei');
   };
 
   const [approbation, setApprobation] = useState(

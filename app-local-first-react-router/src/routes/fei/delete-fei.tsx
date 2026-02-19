@@ -3,7 +3,7 @@ import { UserRoles } from '@prisma/client';
 import ConfirmModal from '@app/components/ConfirmModal';
 import { useNavigate, useParams } from 'react-router';
 import useUser from '@app/zustand/user';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 
@@ -64,6 +64,7 @@ export default function DeleteFei() {
           carcasse_intermediaire_id: null,
           history: createHistoryInput(fei, nextFei),
         });
+        syncData('delete-fei');
         setTimeout(() => {
           navigate(-1);
         }, 1000);

@@ -26,7 +26,8 @@ import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import ModalTreeDisplay from '@app/components/ModalTreeDisplay';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import useUser from '@app/zustand/user';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -53,10 +54,13 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const fei = feis[params.fei_numero!];
 
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
+  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const updateFei = useZustandStore((state) => state.updateFei);
   const addLog = useZustandStore((state) => state.addLog);
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id!];
+  const feiCarcasses = useCarcassesForFei(params.fei_numero);
+  const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
 
   const [sviIpm2PresenteeInspection, setSviIpm2PresenteeInspection] = useState(
     carcasse.svi_ipm2_presentee_inspection ?? true,
@@ -227,6 +231,22 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse, true);
     if (fei.fei_current_owner_role !== UserRoles.SVI) {
+      updateCarcassesTransmission(carcasseIds, {
+        current_owner_role: UserRoles.SVI as unknown as Fei['fei_current_owner_role'],
+        current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
+        current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,
+        current_owner_user_id: user.id,
+        current_owner_user_name_cache:
+          fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+        next_owner_role: null,
+        next_owner_user_id: null,
+        next_owner_user_name_cache: null,
+        next_owner_entity_id: null,
+        next_owner_entity_name_cache: null,
+        prev_owner_role: fei.fei_current_owner_role || null,
+        prev_owner_user_id: fei.fei_current_owner_user_id || null,
+        prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
+      });
       const nextFei: Partial<Fei> = {
         fei_current_owner_role: UserRoles.SVI,
         fei_current_owner_entity_id: fei.fei_next_owner_entity_id,
@@ -257,6 +277,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
+    syncData('svi-ipm2-edit');
     // TODO: vérifier qu'elles sont réellement bien enregistrées
     alert('IPM2 enregistrée');
   }

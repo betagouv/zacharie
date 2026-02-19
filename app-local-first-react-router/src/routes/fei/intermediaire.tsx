@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 import CarcasseIntermediaireComp from './intermediaire-carcasse';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import {
   getFeiAndIntermediaireIdsFromFeiIntermediaire,
   getFeiAndCarcasseAndIntermediaireIds,
@@ -34,7 +34,7 @@ import FEIDonneesDeChasse from './donnees-de-chasse';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
-import DestinataireSelect from './destinataire-select';
+import DestinataireSelectIntermediaire from './destinataire-select-intermediaire';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { capture } from '@app/services/sentry';
 import { toast } from 'react-toastify';
@@ -504,6 +504,7 @@ function FEICurrentIntermediaireContent({
       zacharie_carcasse_id: null,
       carcasse_intermediaire_id: null,
     });
+    syncData('intermediaire-close-fei');
     toast.success('La fiche a été clôturée avec succès');
   }
 
@@ -544,6 +545,7 @@ function FEICurrentIntermediaireContent({
         intermediaire_closed_by_user_id: null,
       });
     }
+    syncData('intermediaire-check-finished-at');
   }
 
   function handleSubmitCheckFinishedAt(e: React.FormEvent<HTMLFormElement>) {
@@ -647,7 +649,7 @@ function FEICurrentIntermediaireContent({
               <Button onClick={handleCloseFei} priority="primary">
                 Clôturer la fiche (
                 {carcassesSorted.carcassesManquantes.length > 0 &&
-                carcassesSorted.carcassesRejetees.length > 0
+                  carcassesSorted.carcassesRejetees.length > 0
                   ? 'toutes les carcasses sont manquantes ou refusées'
                   : carcassesSorted.carcassesManquantes.length > 0
                     ? 'toutes les carcasses sont manquantes'
@@ -717,7 +719,7 @@ function FEICurrentIntermediaireContent({
                 }
                 label={
                   carcassesSorted.carcassesApproved.length > 0 ||
-                  carcassesSorted.carcassesEcarteesPourInspection.length > 0
+                    carcassesSorted.carcassesEcarteesPourInspection.length > 0
                     ? 'Date de prise en charge'
                     : 'Date de décision'
                 }
@@ -763,8 +765,7 @@ function FEICurrentIntermediaireContent({
           </Section>
           {couldSelectNextUser && (
             <Section title="Sélection du prochain destinataire" key={intermediaire?.id + needSelectNextUser}>
-              <DestinataireSelect
-                calledFrom="intermediaire-next-owner"
+              <DestinataireSelectIntermediaire
                 disabled={!needSelectNextUser || props.readOnly}
                 canEdit={effectiveCanEdit}
                 feiAndIntermediaireIds={feiAndIntermediaireIds}
