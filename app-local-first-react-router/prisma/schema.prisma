@@ -368,7 +368,6 @@ model Fei {
   /// @deprecated — transmission now lives on Carcasse
   fei_prev_owner_role                                     FeiOwnerRole?
   /**
-  * owners
   * timestamps
   */
   created_at                                              DateTime                @default(now())
