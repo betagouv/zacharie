@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router';
 import type { MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 
-const MAX_VISIBLE_ITEMS = 5;
+const MAX_VISIBLE_ITEMS = 4;
 
 type NavItem = MainNavigationProps.Item;
 
@@ -13,7 +13,7 @@ function getIcon(text: string): string {
   if (lowerText === 'fiches') return 'ri-file-list-line';
   if (lowerText === 'carcasses') return 'ri-archive-line';
   if (lowerText === 'mon profil') return 'ri-user-line';
-  if (lowerText === 'mon activité') return 'ri-bar-chart-line';
+  if (lowerText === 'mon activité') return 'ri-user-line';
   if (lowerText === 'mes coordonnées') return 'ri-map-pin-line';
   if (lowerText === 'mes informations de chasse') return 'ri-user-line';
   if (lowerText === 'mes centres de collecte') return 'ri-map-pin-line';
@@ -31,8 +31,8 @@ function getIcon(text: string): string {
 
 function getShortLabel(text: string): string {
   const lowerText = text.toLowerCase();
-  if (lowerText === 'nouvelle fiche') return 'Nouvelle';
-  if (lowerText === 'tableau de bord') return 'Tableau';
+  if (lowerText === 'nouvelle fiche') return 'Nouvelle fiche';
+  if (lowerText === 'tableau de bord') return 'Tableau de bord';
   if (lowerText === 'mon profil') return 'Profil';
   if (lowerText === 'mes informations de chasse') return 'Mes infos';
   if (lowerText.startsWith('mon entreprise')) return 'Entreprise';
@@ -87,9 +87,8 @@ function NavButton({
         <button
           type="button"
           onClick={onClick}
-          className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-gray-100 ${
-            isActive ? 'text-action-high-blue-france font-bold' : 'text-mention-grey'
-          }`}
+          className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-gray-100 ${isActive ? 'text-action-high-blue-france font-bold' : 'text-mention-grey'
+            }`}
         >
           <i className={`${icon} text-lg`} />
           <span>{text}</span>
@@ -100,9 +99,8 @@ function NavButton({
       return (
         <Link
           to={to}
-          className={`flex w-full items-center gap-3 px-4 py-3 text-sm no-underline hover:bg-gray-100 ${
-            isActive ? 'text-action-high-blue-france font-bold' : 'text-mention-grey'
-          }`}
+          className={`flex w-full items-center gap-3 px-4 py-3 text-sm no-underline hover:bg-gray-100 ${isActive ? 'text-action-high-blue-france font-bold' : 'text-mention-grey'
+            }`}
         >
           <i className={`${icon} text-lg`} />
           <span>{text}</span>
@@ -192,9 +190,8 @@ export default function BottomNavigation({ items }: { items: MainNavigationProps
           <button
             type="button"
             onClick={() => setMoreOpen((prev) => !prev)}
-            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 ${
-              overflowHasActive ? 'text-action-high-blue-france' : 'text-mention-grey'
-            }`}
+            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 ${overflowHasActive ? 'text-action-high-blue-france' : 'text-mention-grey'
+              }`}
             aria-expanded={moreOpen}
             aria-haspopup="true"
           >
