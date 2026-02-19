@@ -426,40 +426,16 @@ Christine
   });
   console.log('Entity and user relations created for test', entityAndUserRelations.count);
 
-  console.log('role', role);
-
   if (role) {
-    if (role === FeiOwnerRole.EXAMINATEUR_INITIAL) {
-      await prisma.fei.createMany({
-        data: [],
-      });
-      console.log('Fei created for test for examinateur initial', feiValidatedByExaminateur.numero);
-    }
     if (role === FeiOwnerRole.PREMIER_DETENTEUR) {
-      const _feiValidatedByExaminateur = await prisma.fei.create({
-        data: feiValidatedByExaminateur,
-      });
-      console.log('Fei created for test for premier detenteur', feiValidatedByPremierDetenteur.numero);
-      const carcasses = await prisma.carcasse.createMany({
-        data: [
-          ...getCarcasses(_feiValidatedByExaminateur),
-          // ...getCarcasses(feiValidatedByPremierDetenteur),
-        ],
-      });
-      console.log('Carcasses created for test for examinateur initial', carcasses.count);
+      const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for premier détenteur)`);
     }
     if (role === FeiOwnerRole.ETG) {
-      const _feiValidatedByPremierDetenteur = await prisma.fei.create({
-        data: feiValidatedByPremierDetenteur,
-      });
-      console.log('Fei created for test for etg', feiValidatedByExaminateur.numero);
-      const carcasses = await prisma.carcasse.createMany({
-        data: [
-          // ...getCarcasses(feiValidatedByExaminateur),
-          ...getCarcasses(_feiValidatedByPremierDetenteur),
-        ],
-      });
-      console.log('Carcasses created for test for etg', carcasses.count);
+      const fei = await prisma.fei.create({ data: feiValidatedByPremierDetenteur });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for etg)`);
     }
   }
 
