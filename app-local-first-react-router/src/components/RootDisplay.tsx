@@ -105,13 +105,13 @@ export default function RootDisplay({
 
   return (
     <>
-      {/* {environment === 'prod' && (
+      {environment === 'test' && (
         <div className="sticky top-0 z-[999]">
           <div className="fixed bottom-0 z-[999] rounded-tr-md border border-red-200 bg-red-50/75 px-4 py-2 text-center backdrop-blur-xs">
             <span className="text-xs text-red-700">Environnement {environment.toUpperCase()}</span>
           </div>
         </div>
-      )} */}
+      )}
       <Header
         brandTop={
           <span className={hideMinistereName ? 'hidden md:inline' : ''}>
