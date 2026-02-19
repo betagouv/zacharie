@@ -21,24 +21,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   const isSvi = user?.roles.includes(UserRoles.SVI);
   const isEtg = user?.roles.includes(UserRoles.ETG);
   const isCollecteurPro = user?.roles.includes(UserRoles.COLLECTEUR_PRO);
-  const profileMenu: MainNavigationProps.Item[] = [
-    {
-      text: 'Mon activité',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mon-activite',
-      linkProps: {
-        to: '/app/tableau-de-bord/mon-profil/mon-activite',
-        href: '#',
-      },
-    },
-    {
-      text: 'Mes coordonnées',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-coordonnees',
-      linkProps: {
-        href: '#',
-        to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
-      },
-    },
-  ];
+  const profileMenu: MainNavigationProps.Item[] = [];
 
   if (user?.roles.includes(UserRoles.CHASSEUR)) {
     profileMenu.push({
@@ -53,6 +36,25 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       },
     });
   }
+
+  profileMenu.push(
+    {
+      text: 'Mes coordonnées',
+      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-coordonnees',
+      linkProps: {
+        href: '#',
+        to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
+      },
+    },
+    {
+      text: 'Mon activité',
+      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mon-activite',
+      linkProps: {
+        to: '/app/tableau-de-bord/mon-profil/mon-activite',
+        href: '#',
+      },
+    },
+  );
   if (user?.roles.includes(UserRoles.COLLECTEUR_PRO)) {
     profileMenu.push({
       text: 'Mes centres de collecte',

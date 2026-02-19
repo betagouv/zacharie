@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router';
 import RootDisplay from '@app/components/RootDisplay';
+import BottomNavigation from '@app/components/BottomNavigation';
 import useLoggedInNavigationMenu from '@app/utils/get-navigation-menu';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import Chargement from '@app/components/Chargement';
@@ -31,13 +32,14 @@ export default function TableauDeBordLayout() {
         <main
           role="main"
           id="content"
-          className="fr-background-alt--blue-france relative min-h-full overflow-auto"
+          className="fr-background-alt--blue-france relative min-h-full overflow-auto pb-16 md:pb-0"
         >
           <Outlet />
         </main>
       </RootDisplay>
+      <BottomNavigation items={navigation} />
       {import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' && (
-        <p className="text-action-high-blue-france text-opacity-25 fixed right-0 bottom-0 left-0 z-50 bg-white px-4 py-1 text-sm">
+        <p className="text-action-high-blue-france text-opacity-25 fixed right-0 bottom-16 left-0 z-50 bg-white px-4 py-1 text-sm md:bottom-0">
           {!dataIsSynced ? 'Synchronisation en cours' : isOnline ? 'En ligne' : 'Hors ligne'}
         </p>
       )}

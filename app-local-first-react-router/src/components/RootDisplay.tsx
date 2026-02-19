@@ -105,7 +105,7 @@ export default function RootDisplay({
 
   return (
     <>
-      {environment !== 'prod' && (
+      {environment === 'test' && (
         <div className="sticky top-0 z-[999]">
           <div className="fixed bottom-0 z-[999] rounded-tr-md border border-red-200 bg-red-50/75 px-4 py-2 text-center backdrop-blur-xs">
             <span className="text-xs text-red-700">Environnement {environment.toUpperCase()}</span>
@@ -131,7 +131,7 @@ export default function RootDisplay({
           title: "Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire",
         }}
         id="fr-header-header-with-quick-access-items"
-        className="[&_.fr-header\\_\\_service-title]:flex [&_.fr-header\\_\\_service-title]:items-end"
+        className="[&_.fr-header\\_\\_service-title]:flex [&_.fr-header\\_\\_service-title]:items-end max-md:[&_#fr-header-header-with-quick-access-items-menu-button]:!hidden"
         navigation={embedded ? undefined : navigation}
         allowEmptySearch={false}
         renderSearchInput={RenderedSearchInput}
@@ -164,79 +164,79 @@ export default function RootDisplay({
           embedded
             ? undefined
             : [
-                {
-                  categoryName: 'Connexion',
-                  links: [
-                    {
-                      linkProps: {
-                        to: '/app/connexion',
-                        href: '#',
-                      },
-                      text: 'Se connecter',
+              {
+                categoryName: 'Connexion',
+                links: [
+                  {
+                    linkProps: {
+                      to: '/app/connexion',
+                      href: '#',
                     },
-                    {
-                      linkProps: {
-                        to: '/app/tableau-de-bord',
-                        href: '#',
-                      },
-                      text: 'Accéder à mon compte',
+                    text: 'Se connecter',
+                  },
+                  {
+                    linkProps: {
+                      to: '/app/tableau-de-bord',
+                      href: '#',
                     },
-                    {
-                      linkProps: {
-                        to: '/modalites-d-utilisation',
-                        href: '#',
-                      },
-                      text: "Modalités d'utilisation",
+                    text: 'Accéder à mon compte',
+                  },
+                  {
+                    linkProps: {
+                      to: '/modalites-d-utilisation',
+                      href: '#',
                     },
-                    {
-                      linkProps: {
-                        to: '/politique-de-confidentialite',
-                        href: '#',
-                      },
-                      text: 'Politique de confidentialité',
+                    text: "Modalités d'utilisation",
+                  },
+                  {
+                    linkProps: {
+                      to: '/politique-de-confidentialite',
+                      href: '#',
                     },
-                    {
-                      linkProps: {
-                        to: '/mentions-legales',
-                        href: '#',
-                      },
-                      text: 'Mentions légales',
+                    text: 'Politique de confidentialité',
+                  },
+                  {
+                    linkProps: {
+                      to: '/mentions-legales',
+                      href: '#',
                     },
-                    {
-                      linkProps: {
-                        to: '/stats',
-                        href: '#',
-                      },
-                      text: 'Statistiques',
+                    text: 'Mentions légales',
+                  },
+                  {
+                    linkProps: {
+                      to: '/stats',
+                      href: '#',
                     },
-                  ],
-                },
-                {
-                  categoryName: 'Assistance',
-                  links: [
-                    {
-                      linkProps: {
-                        href: '#',
-                        onClick: () => {
-                          if (isOnline) {
-                            clearCache().then(() => window.location.reload());
-                          } else {
-                            alert('Vous devez être connecté à internet pour effectuer cette action');
-                          }
-                        },
+                    text: 'Statistiques',
+                  },
+                ],
+              },
+              {
+                categoryName: 'Assistance',
+                links: [
+                  {
+                    linkProps: {
+                      href: '#',
+                      onClick: () => {
+                        if (isOnline) {
+                          clearCache().then(() => window.location.reload());
+                        } else {
+                          alert('Vous devez être connecté à internet pour effectuer cette action');
+                        }
                       },
-                      text: "Obtenir la dernière version de l'app",
                     },
-                    {
-                      linkProps: {
-                        to: contactLink ?? '/contact',
-                        href: '#',
-                      },
-                      text: 'Contactez-nous',
+                    text: "Obtenir la dernière version de l'app",
+                  },
+                  {
+                    linkProps: {
+                      to: contactLink ?? '/contact',
+                      href: '#',
                     },
-                  ],
-                },
-              ]
+                    text: 'Contactez-nous',
+                  },
+                ],
+              },
+            ]
         }
       />
     </>

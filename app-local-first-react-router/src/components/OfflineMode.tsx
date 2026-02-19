@@ -7,7 +7,7 @@ export default function OfflineMode() {
     return null;
   }
   return (
-    <p className="fixed bottom-0 left-0 right-0 z-50 bg-action-high-blue-france px-4 py-2 text-sm text-white">
+    <p className="fixed bottom-16 left-0 right-0 z-50 bg-action-high-blue-france px-4 py-2 text-sm text-white md:bottom-0">
       Vous n'avez pas internet, ou votre connexion est très mauvaise. Les fiches que vous créez/modifiez
       actuellement seront synchronisées automatiquement lorsque vous aurez retrouvé une connexion.
     </p>
