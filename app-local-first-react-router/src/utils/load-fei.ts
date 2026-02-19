@@ -20,9 +20,7 @@ export async function loadFei(fei_numero: string) {
 
   const prevState = useZustandStore.getState();
   for (const user of feiResponse.data.users) {
-    if (!prevState.users[user.id]) {
-      prevState.users[user.id] = user;
-    }
+    prevState.users[user.id] = user;
   }
   for (const entity of feiResponse.data.entities) {
     const existing = prevState.entities[entity.id];
