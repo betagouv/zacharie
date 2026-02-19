@@ -8,7 +8,7 @@ import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import DestinataireSelect from './destinataire-select';
+import DestinataireSelectSousTraite from './destinataire-select-sous-traite';
 import { getFeiAndIntermediaireIdsFromFeiIntermediaire } from '@app/utils/get-carcasse-intermediaire-id';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 
@@ -42,10 +42,7 @@ export default function FeiSousTraite() {
           {fei.fei_prev_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ? (
             <SelectNextForExaminateur />
           ) : (
-            <DestinataireSelect
-              canEdit
-              sousTraite
-              calledFrom="current-owner-sous-traite"
+            <DestinataireSelectSousTraite
               feiAndIntermediaireIds={feiAndIntermediaireIds}
               intermediaire={latestIntermediaire}
             />
