@@ -19,7 +19,8 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
   await expect(page.getByRole("link", { name: feiId })).toBeVisible();
   await expect(page.getByRole("link", { name: feiId })).toContainText("À compléter");
   await expect(page.getByRole("link", { name: feiId })).toContainText("chassenard");
-  await expect(page.getByRole("link", { name: feiId })).toContainText("4 daims");
+  await expect(page.getByRole("link", { name: feiId })).toContainText("10 pigeons");
+  await expect(page.getByRole("link", { name: feiId })).toContainText("3 daims");
   await expect(page.getByRole("link", { name: feiId })).toContainText("À renseigner");
   await page.getByRole("link", { name: feiId }).click();
   await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
