@@ -24,12 +24,13 @@ export async function loadFei(fei_numero: string) {
   }
   for (const entity of feiResponse.data.entities) {
     const existing = prevState.entities[entity.id];
-    prevState.entities[entity.id] = {
-      ...existing,
-      ...entity,
-      relation: existing?.relation ?? 'NONE',
-      relationStatus: existing?.relationStatus ?? undefined,
-    } satisfies EntityWithUserRelation;
+    if (!existing) {
+      prevState.entities[entity.id] = {
+        ...entity,
+        relation: 'NONE',
+        relationStatus: undefined,
+      } satisfies EntityWithUserRelation;
+    }
   }
   useZustandStore.setState(prevState, true);
 
