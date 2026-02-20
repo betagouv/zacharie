@@ -11,7 +11,7 @@ import type {
   ApiKeyApprovalByUserOrEntity,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
-import type { FeiDone, FeiWithIntermediaires, FeiPopulated } from './fei';
+import type { FeiDone, FeiWithIntermediaires, FeiPopulated, FeiForRefresh } from './fei';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
 import { CarcasseForResponseForRegistry } from './carcasse';
 
@@ -94,7 +94,9 @@ export interface UserMyRelationsResponse {
 export interface FeiResponse {
   ok: boolean;
   data: {
-    fei: FeiPopulated | null;
+    fei: FeiForRefresh | null;
+    users: Array<User>;
+    entities: Array<Entity>;
   };
   error: string;
 }
@@ -102,7 +104,9 @@ export interface FeiResponse {
 export interface FeiRefreshResponse {
   ok: boolean;
   data: {
-    feis: Array<FeiPopulated>;
+    feis: Array<FeiForRefresh>;
+    users: Array<User>;
+    entities: Array<Entity>;
   };
   error: string;
 }

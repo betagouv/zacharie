@@ -5,7 +5,7 @@ import useZustandStore from '@app/zustand/store';
 import { getFeiAndCarcasseAndIntermediaireIds } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/fei-intermediaire';
 import API from '@app/services/api';
-import { FeiPopulated } from '@api/src/types/fei';
+import type { FeiForRefresh } from '@api/src/types/fei';
 
 export async function loadFei(fei_numero: string) {
   const isOnline = useZustandStore.getState().isOnline;
@@ -17,19 +17,30 @@ export async function loadFei(fei_numero: string) {
   if (!feiResponse.ok) {
     return null;
   }
+
+  const prevState = useZustandStore.getState();
+  for (const user of feiResponse.data.users) {
+    prevState.users[user.id] = user;
+  }
+  for (const entity of feiResponse.data.entities) {
+    const existing = prevState.entities[entity.id];
+    if (!existing) {
+      prevState.entities[entity.id] = {
+        ...entity,
+        relation: 'NONE',
+        relationStatus: undefined,
+      } satisfies EntityWithUserRelation;
+    }
+  }
+  useZustandStore.setState(prevState, true);
+
   setFeiInStore(feiResponse.data.fei!);
   return feiResponse.data.fei!;
 }
 
-export function setFeiInStore(fei: FeiPopulated) {
+export function setFeiInStore(fei: FeiForRefresh) {
   const prevState = useZustandStore.getState();
-  // if (!fei?.numero) {
-  //   useZustandStore.setState((state) => {
-  //     delete state.feis[fei_numero];
-  //     return state;
-  //   });
-  //   return;
-  // }
+
   const localFei = prevState.feis[fei.numero];
   if (!localFei) {
     prevState.feis[fei.numero] = fei;
@@ -44,41 +55,7 @@ export function setFeiInStore(fei: FeiPopulated) {
     };
   }
 
-  // Extract users
-  for (const u of [
-    fei.FeiExaminateurInitialUser,
-    fei.FeiPremierDetenteurUser,
-    fei.FeiCurrentUser,
-    fei.FeiNextUser,
-    fei.FeiSviUser,
-  ]) {
-    if (u && !prevState.users[u.id]) {
-      prevState.users[u.id] = u;
-    }
-  }
-
-  // Extract entities
-  for (const entity of [
-    fei.FeiPremierDetenteurEntity,
-    fei.FeiDepotEntity,
-    fei.FeiCurrentEntity,
-    fei.FeiNextEntity,
-    fei.FeiSoustraiteByEntity,
-    fei.FeiSviEntity,
-  ]) {
-    if (!entity) continue;
-    const existing = prevState.entities[entity.id];
-    prevState.entities[entity.id] = {
-      ...existing,
-      ...entity,
-      relation: existing?.relation ?? 'NONE',
-      relationStatus: existing?.relationStatus ?? undefined,
-    } satisfies EntityWithUserRelation;
-  }
-
-  const carcasses = fei.Carcasses;
-
-  for (const carcasse of carcasses) {
+  for (const carcasse of fei.Carcasses) {
     const localCarcasse = prevState.carcasses[carcasse.zacharie_carcasse_id];
     if (!localCarcasse) {
       prevState.carcasses[carcasse.zacharie_carcasse_id] = carcasse;
@@ -96,26 +73,7 @@ export function setFeiInStore(fei: FeiPopulated) {
     }
   }
 
-  const carcassesIntermediaires = fei.CarcasseIntermediaire; // already sorted by prise_en_charge_at desc then created_at desc
-
-  const users = prevState.users;
-  const entities = prevState.entities;
-
-  for (const carcasseIntermediaire of carcassesIntermediaires || []) {
-    if (!users[carcasseIntermediaire.intermediaire_user_id]) {
-      const intermediaireUser = carcasseIntermediaire.CarcasseIntermediaireUser;
-      prevState.users[intermediaireUser.id] = intermediaireUser;
-    }
-
-    const existingEntity = entities[carcasseIntermediaire.intermediaire_entity_id];
-    const intermediaireEntity = carcasseIntermediaire.CarcasseIntermediaireEntity;
-    prevState.entities[carcasseIntermediaire.intermediaire_entity_id!] = {
-      ...existingEntity,
-      ...intermediaireEntity,
-      relation: existingEntity?.relation ?? 'NONE',
-      relationStatus: existingEntity?.relationStatus ?? undefined,
-    } satisfies EntityWithUserRelation;
-
+  for (const carcasseIntermediaire of fei.CarcasseIntermediaire || []) {
     const feiAndCarcasseAndIntermediaireId = getFeiAndCarcasseAndIntermediaireIds(
       carcasseIntermediaire,
     ) as FeiAndCarcasseAndIntermediaireIds;
