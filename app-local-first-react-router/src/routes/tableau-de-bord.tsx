@@ -14,7 +14,10 @@ import { useNavigate, useSearchParams, Link } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
-import { filterCarcassesIntermediairesForCarcasse, filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import {
+  filterCarcassesIntermediairesForCarcasse,
+  filterFeiIntermediaires,
+} from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
@@ -257,10 +260,10 @@ export default function TableauDeBordIndex() {
     const _sviWorkingForEtgIds = !isOnlySvi
       ? []
       : allEtgIds.filter((id) => {
-        const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
-        if (!etgLinkedToSviId) return false;
-        return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
-      });
+          const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
+          if (!etgLinkedToSviId) return false;
+          return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
+        });
     if (_sviWorkingForEtgIds.includes(filterETG)) {
       return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
     }
@@ -298,6 +301,19 @@ export default function TableauDeBordIndex() {
     const start = (page - 1) * perPage;
     return filteredFeis.slice(start, start + perPage);
   }, [filteredFeis, page, itemsPerPage]);
+
+  console.log('allFeis', allFeis);
+  console.log('feisAssigned', feisAssigned);
+  console.log('feisOngoing', feisOngoing);
+  console.log('feisDone', feisDone);
+  console.log(
+    'ZACH-20260124-JHZWC-205735',
+    `allFeis: ${allFeis.findIndex((fei) => fei.numero === 'ZACH-20260124-JHZWC-205735')}`,
+    `paginatedFeis: ${paginatedFeis.findIndex((fei) => fei.numero === 'ZACH-20260124-JHZWC-205735')}`,
+    `feisAssigned: ${feisAssigned.findIndex((fei) => fei.numero === 'ZACH-20260124-JHZWC-205735')}`,
+    `feisOngoing: ${feisOngoing.findIndex((fei) => fei.numero === 'ZACH-20260124-JHZWC-205735')}`,
+    `feisDone: ${feisDone.findIndex((fei) => fei.numero === 'ZACH-20260124-JHZWC-205735')}`,
+  );
 
   function Actions() {
     return (
@@ -715,7 +731,10 @@ function FeisTableRow({
           );
           if (carcasse) {
             const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
-            const intermediaires = filterCarcassesIntermediairesForCarcasse(carcassesIntermediaireById, carcasse.zacharie_carcasse_id!);
+            const intermediaires = filterCarcassesIntermediairesForCarcasse(
+              carcassesIntermediaireById,
+              carcasse.zacharie_carcasse_id!,
+            );
             const latestIntermediaire = intermediaires[0];
             const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
 
