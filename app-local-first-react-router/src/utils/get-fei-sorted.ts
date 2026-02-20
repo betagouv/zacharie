@@ -4,6 +4,7 @@ import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { filterEntitiesWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { UserRoles } from '@prisma/client';
 
 type FeiSorted = {
   feisUnderMyResponsability: Array<FeiWithIntermediaires>;
@@ -13,7 +14,7 @@ type FeiSorted = {
 };
 
 export function isFeiDone(fei: FeiWithIntermediaires): boolean {
-  return !!(fei.svi_assigned_at || fei.intermediaire_closed_at);
+  return !!(fei.svi_closed_at || fei.automatic_closed_at || fei.intermediaire_closed_at);
 }
 
 export function getFeisSorted(): FeiSorted {
@@ -32,7 +33,12 @@ export function getFeisSorted(): FeiSorted {
   if (!user) {
     return feisSorted;
   }
+  console.log('state.feis', state.feis);
   for (const fei of Object.values(state.feis)) {
+    const debug = fei.numero === 'ZACH-20260216-IKO5X-063936';
+    if (debug) {
+      console.log('fei', fei);
+    }
     if (fei.deleted_at) {
       continue;
     }
@@ -42,6 +48,9 @@ export function getFeisSorted(): FeiSorted {
     if (isFeiDone(fei)) {
       feisSorted.feisDone.push(fei);
       continue;
+    }
+    if (debug) {
+      console.log('fei is not done');
     }
 
     // FEI UNDER MY RESPONSABILITY
@@ -54,6 +63,9 @@ export function getFeisSorted(): FeiSorted {
       }
       return false;
     });
+    if (debug) {
+      console.log('isUnderMyResponsability', isUnderMyResponsability);
+    }
     // Fallback to FEI-level for FEIs with no carcasses yet (e.g. just created)
     const isUnderMyResponsabilityFallback =
       carcasses.length === 0 &&
@@ -66,6 +78,9 @@ export function getFeisSorted(): FeiSorted {
       (fei.fei_current_owner_user_id === user.id ||
         entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id!));
 
+    if (debug) {
+      console.log('isUnderMyResponsabilityFallback', isUnderMyResponsabilityFallback);
+    }
     if (isUnderMyResponsability || isUnderMyResponsabilityFallback) {
       feisSorted.feisUnderMyResponsability.push(fei);
       continue;
@@ -80,6 +95,9 @@ export function getFeisSorted(): FeiSorted {
       }
       return false;
     });
+    if (debug) {
+      console.log('isToTake', isToTake);
+    }
     if (isToTake && !fei.svi_assigned_at && !fei.intermediaire_closed_at) {
       feisSorted.feisToTake.push(fei);
       continue;
@@ -129,6 +147,14 @@ export function getFeisSorted(): FeiSorted {
       if (isIntermediaire) {
         continue;
       }
+    }
+    if (fei.svi_assigned_at) {
+      if (user.roles.includes(UserRoles.SVI)) {
+        feisSorted.feisUnderMyResponsability.push(fei);
+        continue;
+      }
+      feisSorted.feisOngoing.push(fei);
+      continue;
     }
   }
   return {
