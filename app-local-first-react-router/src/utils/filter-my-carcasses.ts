@@ -3,6 +3,7 @@ import type { Carcasse, CarcasseIntermediaire } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { filterEntitiesWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/fei-intermediaire';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 
@@ -48,10 +49,7 @@ export function filterMyCarcasses(
 
     // Check CarcasseIntermediaire entries for this carcasse
     for (const ci of Object.values(carcassesIntermediaireById)) {
-      console.log('✌️ ~ ci.zacharie_carcasse_id:', ci.zacharie_carcasse_id);
       if (ci.zacharie_carcasse_id !== carcasse.zacharie_carcasse_id || ci.deleted_at) continue;
-      console.log('✌️ ~ ci.intermediaire_user_id:', ci.intermediaire_user_id);
-      console.log('✌️ ~ userId:', userId);
       if (ci.intermediaire_user_id === userId) return true;
       if (entityIdSet.has(ci.intermediaire_entity_id)) return true;
     }
@@ -67,7 +65,6 @@ export function useMyCarcassesForFei(fei_numero: string | undefined): Array<Carc
 
   const entityIds = useEntitiesIdsWorkingDirectlyFor();
 
-  console.log('✌️ ~ carcassesIntermediaireById:', carcassesIntermediaireById);
   return useMemo(() => {
     if (!user?.id || !fei_numero) return [];
     return filterMyCarcasses(feiCarcasses, user.id, entityIds, carcassesIntermediaireById);

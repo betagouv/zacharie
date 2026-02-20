@@ -121,7 +121,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   // await page.getByRole("button", { name: "Enregistrer" }).click();
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
-  await page.locator(".select-prochain-detenteur__input-container").click();
+  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "SVI 1 - 75000 Paris (Service" }).click();
   await page.getByRole("button", { name: "Transmettre la fiche" }).click();
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
@@ -283,7 +283,7 @@ test("Pas de stockage - Je transfère à un autre collecteur", async ({ page }) 
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
   // await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
-  await page.locator(".select-prochain-detenteur__input-container").click();
+  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "Collecteur Pro 2 - 75000" }).click();
   await page.getByRole("button", { name: "Transmettre la fiche" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
@@ -417,7 +417,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
   // await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
-  await page.locator(".select-prochain-detenteur__input-container").click();
+  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "ETG 2 - 75000 Paris (" }).click();
   await page.getByRole("button", { name: "Transmettre la fiche" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
@@ -600,7 +600,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
       hasText: "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
     }),
   ).toBeVisible();
-  await page.locator(".select-prochain-detenteur__input-container").click();
+  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "SVI 2 - 75000 Paris (Service" }).click();
   await page.getByRole("button", { name: "Transmettre la fiche" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
