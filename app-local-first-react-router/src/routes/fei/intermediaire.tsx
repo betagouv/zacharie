@@ -53,16 +53,26 @@ export default function FEICurrentIntermediaire(props: Props) {
   const fei = feis[params.fei_numero!];
   const intermediaires = useFeiIntermediaires(fei.numero);
 
-  const [intermediaireIndex, setIntermediaireIndex] = useState(() => {
-    const userWasIntermediaire = intermediaires.find((intermediaire) =>
-      intermediaire.intermediaire_user_id.startsWith(user.id),
-    );
-    if (userWasIntermediaire) {
-      return intermediaires.indexOf(userWasIntermediaire);
+  const findMyIntermediaireIndex = (list: typeof intermediaires) => {
+    const found = list.find((i) => i.intermediaire_user_id.startsWith(user.id));
+    if (found) return list.indexOf(found);
+    // Don't default to another user's intermediaire (multi-recipient dispatch)
+    return -1;
+  };
+
+  const [intermediaireIndex, setIntermediaireIndex] = useState(() => findMyIntermediaireIndex(intermediaires));
+
+  // Update index when intermediaires change (e.g., after take-charge creates new intermediaire)
+  useEffect(() => {
+    if (intermediaireIndex < 0 && intermediaires.length > 0) {
+      const newIndex = findMyIntermediaireIndex(intermediaires);
+      if (newIndex >= 0) {
+        setIntermediaireIndex(newIndex);
+      }
     }
-    return 0;
-  });
-  const intermediaire = intermediaires[intermediaireIndex];
+  }, [intermediaires, intermediaireIndex]);
+
+  const intermediaire = intermediaireIndex >= 0 ? intermediaires[intermediaireIndex] : undefined;
 
   return (
     <Fragment key={intermediaire?.id}>

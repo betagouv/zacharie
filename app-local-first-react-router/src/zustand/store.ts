@@ -220,7 +220,6 @@ const useZustandStore = create<State & Actions>()(
           updateFei: boolean,
         ) => {
           const carcasses = useZustandStore.getState().carcasses;
-          console.log('NOT SYNCED 1');
           const nextCarcasse = {
             ...carcasses[zacharie_carcasse_id],
             ...partialCarcasse,

@@ -62,6 +62,17 @@ export default function CurrentOwnerConfirm() {
 
   const myCarcasseIds = useMemo(() => myCarcasses.map((c) => c.zacharie_carcasse_id), [myCarcasses]);
 
+  // For multi-recipient dispatch: derive the actual entity ID from per-carcasse assignment
+  // (fei.fei_next_owner_entity_id is always the FIRST group's entity due to retrocompat)
+  const myEntityId = useMemo(() => {
+    if (myCarcasses.length > 0) {
+      const perCarcasseEntityId = myCarcasses[0].next_owner_entity_id;
+      if (perCarcasseEntityId) return perCarcasseEntityId;
+    }
+    return fei.fei_next_owner_entity_id;
+  }, [myCarcasses, fei.fei_next_owner_entity_id]);
+  const myEntityName = myEntityId ? (entities[myEntityId]?.nom_d_usage ?? '') : '';
+
   // Detect if user already took charge of their assigned carcasses
   const myAlreadyHandledCarcasses = useMemo(() => {
     return feiCarcasses.filter(
@@ -203,8 +214,7 @@ export default function CurrentOwnerConfirm() {
   // (transport + reception) and updates the FEI once, avoiding the previous
   // race condition from two separate handlePriseEnCharge calls with a setTimeout.
   async function handleETGReceptionWithTransport() {
-    const entityName =
-      fei.fei_next_owner_entity_name_cache || entities[fei.fei_next_owner_entity_id!]?.nom_d_usage || '';
+    const entityName = myEntityName;
 
     // 1. Create the transport intermediaire (COLLECTEUR_PRO role)
     const transportIntermediaireId = `${user.id}_${fei.numero}_${dayjs().format('HHmmss')}_transport`;
@@ -213,13 +223,13 @@ export default function CurrentOwnerConfirm() {
       fei_numero: fei.numero,
       intermediaire_user_id: user.id,
       intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
-      intermediaire_entity_id: fei.fei_next_owner_entity_id || '',
+      intermediaire_entity_id: myEntityId || '',
       created_at: dayjs().toDate(),
       prise_en_charge_at: dayjs().toDate(),
       intermediaire_depot_type: DepotType.AUCUN,
       intermediaire_depot_entity_id: null,
       intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
-      intermediaire_prochain_detenteur_id_cache: fei.fei_next_owner_entity_id!,
+      intermediaire_prochain_detenteur_id_cache: myEntityId!,
     };
     await new Promise((res) => setTimeout(res, 150)); // so that the create_at differ between the two intermediaires
     // 2. Create the reception intermediaire (ETG role)
@@ -229,7 +239,7 @@ export default function CurrentOwnerConfirm() {
       fei_numero: fei.numero,
       intermediaire_user_id: user.id,
       intermediaire_role: FeiOwnerRole.ETG,
-      intermediaire_entity_id: fei.fei_next_owner_entity_id || '',
+      intermediaire_entity_id: myEntityId || '',
       created_at: dayjs().toDate(),
       prise_en_charge_at: dayjs().toDate(),
       intermediaire_depot_type: null,
@@ -266,7 +276,7 @@ export default function CurrentOwnerConfirm() {
     // 3. Update carcasses transmission (source of truth) - only my carcasses
     updateCarcassesTransmission(carcasseIds, {
       current_owner_role: FeiOwnerRole.ETG,
-      current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
+      current_owner_entity_id: myEntityId ?? null,
       current_owner_entity_name_cache: entityName || null,
       current_owner_user_id: user.id,
       current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
@@ -292,12 +302,12 @@ export default function CurrentOwnerConfirm() {
           fei_prev_owner_user_id: fei.fei_current_owner_user_id || null,
           fei_prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
           latest_intermediaire_user_id: user.id,
-          latest_intermediaire_entity_id: fei.fei_next_owner_entity_id,
+          latest_intermediaire_entity_id: myEntityId,
           latest_intermediaire_name_cache: entityName,
         }
       : {
           fei_current_owner_role: FeiOwnerRole.ETG,
-          fei_current_owner_entity_id: fei.fei_next_owner_entity_id,
+          fei_current_owner_entity_id: myEntityId,
           fei_current_owner_entity_name_cache: entityName,
           fei_current_owner_user_id: user.id,
           fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
@@ -311,7 +321,7 @@ export default function CurrentOwnerConfirm() {
           fei_prev_owner_user_id: fei.fei_current_owner_user_id || null,
           fei_prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
           latest_intermediaire_user_id: user.id,
-          latest_intermediaire_entity_id: fei.fei_next_owner_entity_id,
+          latest_intermediaire_entity_id: myEntityId,
           latest_intermediaire_name_cache: entityName,
         };
 
@@ -370,9 +380,8 @@ export default function CurrentOwnerConfirm() {
       : fei.fei_next_owner_role;
     const nextFei: Partial<FeiWithIntermediaires> = {
       fei_current_owner_role: currentOwnerRole,
-      fei_current_owner_entity_id: fei.fei_next_owner_entity_id,
-      fei_current_owner_entity_name_cache:
-        fei.fei_next_owner_entity_name_cache || entities[fei.fei_next_owner_entity_id!]?.nom_d_usage || '',
+      fei_current_owner_entity_id: myEntityId,
+      fei_current_owner_entity_name_cache: myEntityName,
       fei_current_owner_user_id: fei.fei_next_owner_user_id || user.id,
       fei_current_owner_user_name_cache:
         fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
@@ -388,8 +397,8 @@ export default function CurrentOwnerConfirm() {
     };
 
     if (etgEmployeeTransportingToETG) {
-      nextFei.fei_next_owner_entity_id = fei.fei_next_owner_entity_id;
-      nextFei.fei_next_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
+      nextFei.fei_next_owner_entity_id = myEntityId;
+      nextFei.fei_next_owner_entity_name_cache = myEntityName;
       nextFei.fei_next_owner_role = FeiOwnerRole.ETG;
       nextFei.fei_next_owner_user_id = null;
       nextFei.fei_next_owner_user_name_cache = null;
@@ -418,7 +427,7 @@ export default function CurrentOwnerConfirm() {
         fei_numero: fei.numero,
         intermediaire_user_id: user.id,
         intermediaire_role: currentOwnerRole,
-        intermediaire_entity_id: fei.fei_next_owner_entity_id || '',
+        intermediaire_entity_id: myEntityId || '',
         created_at: dayjs().toDate(),
         prise_en_charge_at: dayjs().toDate(),
         intermediaire_depot_type: null,
@@ -427,7 +436,7 @@ export default function CurrentOwnerConfirm() {
         intermediaire_prochain_detenteur_id_cache: null,
       };
       if (etgEmployeeTransportingToETG) {
-        newIntermediaire.intermediaire_prochain_detenteur_id_cache = nextFei.fei_next_owner_entity_id!;
+        newIntermediaire.intermediaire_prochain_detenteur_id_cache = myEntityId!;
         newIntermediaire.intermediaire_prochain_detenteur_role_cache = FeiOwnerRole.ETG;
         newIntermediaire.intermediaire_depot_type = DepotType.AUCUN;
         newIntermediaire.intermediaire_depot_entity_id = null;
@@ -450,8 +459,8 @@ export default function CurrentOwnerConfirm() {
         // donc on met directement les infos de l'ETG
         if (fei.fei_next_owner_role === FeiOwnerRole.ETG) {
           nextFei.fei_next_owner_role = FeiOwnerRole.ETG;
-          nextFei.fei_next_owner_entity_id = fei.fei_next_owner_entity_id;
-          nextFei.fei_next_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
+          nextFei.fei_next_owner_entity_id = myEntityId;
+          nextFei.fei_next_owner_entity_name_cache = myEntityName;
           nextFei.fei_next_owner_user_id = null;
           nextFei.fei_next_owner_user_name_cache = null;
         }
