@@ -15,6 +15,7 @@ import sendNotificationToUser from '~/service/notifications';
 import { formatAutomaticClosingEmail, formatCarcasseChasseurEmail } from '~/utils/formatCarcasseEmail';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { sendWebhook } from '~/utils/api';
+import { FeiOwnerRole } from '@prisma/client';
 
 // /*
 // *
@@ -81,6 +82,11 @@ async function automaticClosingOfFeis() {
       },
       data: {
         automatic_closed_at: automaticClosedAt,
+        fei_current_owner_role: FeiOwnerRole.SVI,
+        fei_current_owner_entity_id: fei.svi_entity_id,
+        fei_prev_owner_entity_id: fei.fei_current_owner_entity_id,
+        fei_prev_owner_role: fei.fei_current_owner_role,
+        fei_prev_owner_user_id: fei.fei_current_owner_user_id,
       },
     });
     const carcasses = [];
