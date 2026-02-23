@@ -79,16 +79,15 @@ export default function OnboardingMesInformationsDeChasse() {
             stepCount={3}
             title="Informations de chasse"
           />
-          <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations de chasse</h1>
-          <CallOut title="⚠️ Informations essentielles pour faire des fiches" className="bg-white">
+          <CallOut title="⚠️ Dites-le nous une fois" className="bg-white">
             Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer.
           </CallOut>
           {isChasseur && <MesAssociationsDeChasse />}
           <MesCCGs />
           {isChasseur && <MesPartenaires />}
-          <div className="mb-6 bg-white md:shadow-sm">
-            <div className="p-4 md:p-8">
-              {showEntrpriseVisibilityCheckbox && (
+          {showEntrpriseVisibilityCheckbox && (
+            <div className="mb-6 bg-white md:shadow-sm">
+              <div className="p-4 md:p-8">
                 <>
                   <form
                     id="user_data_form"
@@ -118,14 +117,9 @@ export default function OnboardingMesInformationsDeChasse() {
                     />
                   </form>
                 </>
-              )}
-              <div className="mt-6 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                  Haut de page
-                </a>
               </div>
             </div>
-          </div>
+          )}
           <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
             <ButtonsGroup
               inlineLayoutWhen="always"

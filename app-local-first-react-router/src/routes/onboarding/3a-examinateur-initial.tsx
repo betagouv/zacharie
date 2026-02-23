@@ -24,7 +24,7 @@ export default function OnboardingExaminateurInitial() {
     window.scrollTo(0, 0);
   }, []);
 
-  const nextPage = '/app/tableau-de-bord';
+  const nextPage = '/app/tableau-de-bord/onboarding/mes-informations-de-chasse';
 
   // If user is not a hunter, skip this step
   useEffect(() => {
@@ -48,10 +48,10 @@ export default function OnboardingExaminateurInitial() {
             stepCount={3}
             title="Formation à l'examen initial"
           />
-          <ExaminateurInitial />
           <CallOut title="⚠️ Information importante" className="bg-white">
             Cette information déterminera si vous pouvez créer des fiches d'examen initial.
           </CallOut>
+          <ExaminateurInitial />
           <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
             <ButtonsGroup
               inlineLayoutWhen="always"
