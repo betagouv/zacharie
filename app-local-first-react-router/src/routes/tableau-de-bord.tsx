@@ -272,7 +272,7 @@ export default function TableauDeBordIndex() {
 
   const allFeis = useMemo(() => {
     if (isOnlySvi) {
-      let feis = [...feiActivesForSvi, ...feisDoneForSvi];
+      let feis = [...feisAssigned, ...feiActivesForSvi, ...feisDoneForSvi];
       if (filterETG) {
         feis = feis.filter((fei) => fei.latest_intermediaire_entity_id === filterETG);
       }
