@@ -183,7 +183,12 @@ export default function MesCoordonnees() {
                   iconPosition: 'right',
                   type: 'button',
                   nativeButtonProps: {
-                    onClick: () => navigate(nextPage),
+                    onClick: () => {
+                      const form = document.getElementById('user_data_form') as HTMLFormElement;
+                      if (form.reportValidity()) {
+                        navigate(nextPage);
+                      }
+                    },
                   },
                 },
               ]}
