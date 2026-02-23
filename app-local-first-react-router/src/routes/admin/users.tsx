@@ -417,6 +417,7 @@ export default function AdminUsers() {
                               }).then(async () => {
                                 await clearCache();
                                 window.location.href = '/app/tableau-de-bord';
+                                await refreshUser('admin/user/connect-as');
                               });
                             }}
                           >
