@@ -65,11 +65,6 @@ export default function MesCoordonnees() {
             title='Coordonnées'
             nextTitle={user.roles.includes(UserRoles.CHASSEUR) ? 'Formation à l\'examen initial' : nextTitle}
           />
-          <h1 className="fr-h2 fr-mb-2w">Renseignez vos coordonnées</h1>
-          <CallOut title="✍️ Pour pouvoir remplir les fiches qui vont sont attribuées" className="bg-white">
-            Qui êtes-vous ?<br />
-            Lorsqu'une fiche sera attribuée à laquelle vous êtes rattachée, vous pourrez la prendre en charge.
-          </CallOut>
           <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
               <form
@@ -79,7 +74,7 @@ export default function MesCoordonnees() {
                 onSubmit={(e) => e.preventDefault()}
               >
                 <h3 className="text-lg font-semibold text-gray-900">
-                  <span>Votre identité</span>
+                  <span>Renseignez vos coordonnées</span>
                 </h3>
                 <p className="mb-5 text-sm text-gray-500">
                   * Les champs marqués d'un astérisque (*) sont obligatoires.
@@ -178,27 +173,19 @@ export default function MesCoordonnees() {
             </div>
           </div>
 
-          <div className="mb-6 bg-white md:shadow-sm">
-            <div className="p-4 md:p-8">
-              <div className="mt-6 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                  Haut de page
-                </a>
-              </div>
-            </div>
-            <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: 'Enregistrer et continuer',
-                    type: 'button',
-                    nativeButtonProps: {
-                      onClick: () => navigate(nextPage),
-                    },
+          <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none">
+            <ButtonsGroup
+              inlineLayoutWhen="always"
+              buttons={[
+                {
+                  children: 'Enregistrer et continuer',
+                  type: 'button',
+                  nativeButtonProps: {
+                    onClick: () => navigate(nextPage),
                   },
-                ]}
-              />
-            </div>
+                },
+              ]}
+            />
           </div>
         </div>
       </div>

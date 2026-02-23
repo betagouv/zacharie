@@ -48,33 +48,31 @@ export default function OnboardingExaminateurInitial() {
             stepCount={3}
             title="Formation à l'examen initial"
           />
-          <h1 className="fr-h2 fr-mb-2w">Êtes-vous formé à l'examen initial ?</h1>
+          <ExaminateurInitial />
           <CallOut title="⚠️ Information importante" className="bg-white">
             Cette information déterminera si vous pouvez créer des fiches d'examen initial.
           </CallOut>
-          <ExaminateurInitial />
-          <div className="mb-6 bg-white md:shadow-sm">
-            <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: 'Continuer',
-                    type: 'button',
-                    nativeButtonProps: {
-                      onClick: () => navigate(redirect ?? nextPage),
-                    },
+          <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
+            <ButtonsGroup
+              inlineLayoutWhen="always"
+              buttons={[
+                {
+                  children: redirect ? 'Retour' : 'Étape précédente',
+                  linkProps: {
+                    to: redirect ?? '/app/tableau-de-bord/onboarding/mes-coordonnees',
+                    href: '#',
                   },
-                  {
-                    children: redirect ? 'Retour' : 'Modifier mes coordonnées',
-                    linkProps: {
-                      to: redirect ?? '/app/tableau-de-bord/onboarding/mes-coordonnees',
-                      href: '#',
-                    },
-                    priority: 'secondary',
+                  priority: 'secondary',
+                },
+                {
+                  children: 'Enregistrer et continuer',
+                  type: 'button',
+                  nativeButtonProps: {
+                    onClick: () => navigate(redirect ?? nextPage),
                   },
-                ]}
-              />
-            </div>
+                },
+              ]}
+            />
           </div>
         </div>
       </div>

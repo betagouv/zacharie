@@ -125,32 +125,33 @@ export default function OnboardingMesInformationsDeChasse() {
                 </a>
               </div>
             </div>
-            <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: 'Enregistrer et continuer',
-                    disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
-                    type: 'button',
-                    nativeButtonProps: {
-                      onClick: () => handleSubmit(),
-                    },
+          </div>
+          <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
+            <ButtonsGroup
+              inlineLayoutWhen="always"
+              buttons={[
+                {
+                  children: redirect ? 'Retour' : 'Étape précédente',
+                  linkProps: {
+                    to:
+                      redirect ??
+                      (isChasseur
+                        ? '/app/tableau-de-bord/onboarding/formation-examen-initial'
+                        : '/app/tableau-de-bord/onboarding/mes-coordonnees'),
+                    href: '#',
                   },
-                  {
-                    children: redirect ? 'Retour' : 'Étape précédente',
-                    linkProps: {
-                      to:
-                        redirect ??
-                        (isChasseur
-                          ? '/app/tableau-de-bord/onboarding/formation-examen-initial'
-                          : '/app/tableau-de-bord/onboarding/mes-coordonnees'),
-                      href: '#',
-                    },
-                    priority: 'secondary',
+                  priority: 'secondary',
+                },
+                {
+                  children: 'Enregistrer et continuer',
+                  disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
+                  type: 'button',
+                  nativeButtonProps: {
+                    onClick: () => handleSubmit(),
                   },
-                ]}
-              />
-            </div>
+                },
+              ]}
+            />
           </div>
         </div>
       </div>
