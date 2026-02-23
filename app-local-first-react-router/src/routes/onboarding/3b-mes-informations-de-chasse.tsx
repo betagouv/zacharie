@@ -74,10 +74,10 @@ export default function OnboardingMesInformationsDeChasse() {
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <Stepper
-            currentStep={4}
-            nextTitle="Mes notifications"
-            stepCount={5}
-            title="Mes informations de chasse"
+            currentStep={3}
+            nextTitle={undefined}
+            stepCount={3}
+            title="Informations de chasse"
           />
           <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations de chasse</h1>
           <CallOut title="⚠️ Informations essentielles pour faire des fiches" className="bg-white">
