@@ -414,14 +414,10 @@ export default function AdminUsers() {
                                 body: {
                                   email: user.email!,
                                 },
-                              })
-                                .then(async () => {
-                                  await clearCache();
-                                  await refreshUser('admin/user/connect-as');
-                                })
-                                .then(() => {
-                                  window.location.href = '/app/tableau-de-bord';
-                                });
+                              }).then(async () => {
+                                await clearCache();
+                                window.location.href = '/app/tableau-de-bord';
+                              });
                             }}
                           >
                             <button
