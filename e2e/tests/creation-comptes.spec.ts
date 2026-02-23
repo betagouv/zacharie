@@ -237,7 +237,7 @@ test("Examinateur initial ajoute une chambre froide (CCG) depuis son profil", as
   await page.getByRole("textbox", { name: "Code postal * 5 chiffres" }).fill("75018");
   await page.getByRole("button", { name: "PARIS 18" }).click();
   await page.getByRole("button", { name: "Enregistrer ma chambre froide (CCG)", exact: true }).click();
-  await page.getByText("Le CCG identifié dans").click();
+  await page.getByText("Ma Chambre Froide").click();
 });
 
 test("Premier détenteur devient examinateur initial depuis son profil", async ({ page }) => {
