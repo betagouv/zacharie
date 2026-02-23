@@ -73,11 +73,11 @@ export default function CarcasseIntermediaireComp({
   );
   const [carcasseAcceptPartielCheckbox, setCarcasseAcceptPartielCheckbox] = useState(
     !!carcasseIntermediaire.check_manuel &&
-      !carcasseIntermediaire.refus &&
-      !carcasse.intermediaire_carcasse_manquante &&
-      carcasse.type === CarcasseType.PETIT_GIBIER &&
-      carcasseIntermediaire.nombre_d_animaux_acceptes !== null &&
-      carcasseIntermediaire.nombre_d_animaux_acceptes !== (carcasse.nombre_d_animaux ?? 0),
+    !carcasseIntermediaire.refus &&
+    !carcasse.intermediaire_carcasse_manquante &&
+    carcasse.type === CarcasseType.PETIT_GIBIER &&
+    carcasseIntermediaire.nombre_d_animaux_acceptes !== null &&
+    carcasseIntermediaire.nombre_d_animaux_acceptes !== (carcasse.nombre_d_animaux ?? 0),
   );
   const [refus, setRefus] = useState(
     carcasse.intermediaire_carcasse_refus_motif ?? carcasseIntermediaire.refus ?? '',
@@ -553,58 +553,58 @@ export default function CarcasseIntermediaireComp({
                     )}
 
                     {/* Radio: Lot refusé / Carcasse refusée */}
-                      <div className="fr-radio-group">
-                        <input
-                          type="radio"
-                          id="carcasse-status-refus"
-                          name="carcasse-status"
-                          required
-                          checked={
-                            (!!carcasseRefusCheckbox || !!carcasseIntermediaire.refus) &&
-                            !carcasseManquante &&
-                            !carcasseAcceptPartielCheckbox &&
-                            !carcasseEcarteePourInspectionCheckbox
+                    <div className="fr-radio-group">
+                      <input
+                        type="radio"
+                        id="carcasse-status-refus"
+                        name="carcasse-status"
+                        required
+                        checked={
+                          (!!carcasseRefusCheckbox || !!carcasseIntermediaire.refus) &&
+                          !carcasseManquante &&
+                          !carcasseAcceptPartielCheckbox &&
+                          !carcasseEcarteePourInspectionCheckbox
+                        }
+                        onChange={() => {
+                          setCarcasseManquante(false);
+                          setCarcasseRefusCheckbox(true);
+                          setCarcasseEcarteePourInspectionCheckbox(false);
+                          setCarcasseAcceptPartielCheckbox(false);
+                          // Mettre automatiquement 0 animaux acceptés pour un refus de petit gibier
+                          if (carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0) {
+                            setNombreAnimauxAcceptes(0);
+                            updateNombreAnimauxAcceptes(0);
                           }
-                          onChange={() => {
-                            setCarcasseManquante(false);
-                            setCarcasseRefusCheckbox(true);
-                            setCarcasseEcarteePourInspectionCheckbox(false);
-                            setCarcasseAcceptPartielCheckbox(false);
-                            // Mettre automatiquement 0 animaux acceptés pour un refus de petit gibier
-                            if (carcasse.type === CarcasseType.PETIT_GIBIER && nombreAnimauxTotal > 0) {
-                              setNombreAnimauxAcceptes(0);
-                              updateNombreAnimauxAcceptes(0);
-                            }
-                          }}
-                          disabled={!canEdit}
-                        />
-                        <label className="fr-label" htmlFor="carcasse-status-refus">
-                          {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé'}
-                        </label>
-                        {carcasse.type === CarcasseType.PETIT_GIBIER && (
-                          <p className="fr-hint-text">
-                            Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot
-                            partiellement accepté"
-                          </p>
-                        )}
-                      </div>
-                      {!!carcasseRefusCheckbox && (
-                        <div className="mb-4">
-                          <InputMultiSelect
-                            label="Motif de refus *"
-                            isMulti={false}
-                            canEdit
-                            data={refusIntermedaire[carcasse.type || CarcasseType.GROS_GIBIER]}
-                            placeholder="Tapez un motif de refus"
-                            onChange={([refus]) => {
-                              setRefus(refus);
-                              submitCarcasseRefus(refus);
-                            }}
-                            values={[refus]}
-                            creatable
-                          />
-                        </div>
+                        }}
+                        disabled={!canEdit}
+                      />
+                      <label className="fr-label" htmlFor="carcasse-status-refus">
+                        {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé'}
+                      </label>
+                      {carcasse.type === CarcasseType.PETIT_GIBIER && (
+                        <p className="fr-hint-text">
+                          Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot
+                          partiellement accepté"
+                        </p>
                       )}
+                    </div>
+                    {!!carcasseRefusCheckbox && (
+                      <div className="mb-4">
+                        <InputMultiSelect
+                          label="Motif de refus *"
+                          isMulti={false}
+                          canEdit
+                          data={refusIntermedaire[carcasse.type || CarcasseType.GROS_GIBIER]}
+                          placeholder="Tapez un motif de refus"
+                          onChange={([refus]) => {
+                            setRefus(refus);
+                            submitCarcasseRefus(refus);
+                          }}
+                          values={[refus]}
+                          creatable
+                        />
+                      </div>
+                    )}
 
                     {/* Radio: Lot écarté pour inspection (uniquement pour ETG) */}
                     {user.roles.includes(UserRoles.ETG) && (
@@ -628,8 +628,8 @@ export default function CarcasseIntermediaireComp({
                         </label>
                         {carcasse.type === CarcasseType.PETIT_GIBIER && (
                           <p className="fr-hint-text">
-                            Si vous écartez seulement quelques animaux, ne cochez pas cette case, précisez le
-                            nombre d'animaux écartés pour inspection dans le commentaire
+                            Si vous écartez seulement quelques animaux, utilisez plutôt l'option "Lot
+                            partiellement accepté"
                           </p>
                         )}
                       </div>
@@ -704,15 +704,47 @@ export default function CarcasseIntermediaireComp({
                   buttons={
                     carcasseIntermediaire.refus
                       ? [
+                        {
+                          children: 'Enregistrer',
+                          type: 'submit',
+                          disabled: !canEdit,
+                          nativeButtonProps: {
+                            onClick: (e) => {
+                              e.preventDefault();
+                              refusIntermediaireModal.close();
+                              submitCarcasseRefus();
+                            },
+                          },
+                        },
+                        {
+                          children: 'Annuler',
+                          priority: 'secondary',
+                          type: 'button',
+                          disabled: !canEdit,
+                          nativeButtonProps: {
+                            onClick: (e) => {
+                              e.preventDefault();
+                              refusIntermediaireModal.close();
+                              submitCarcasseAccept();
+                            },
+                          },
+                        },
+                      ]
+                      : carcasseAcceptPartielCheckbox
+                        ? [
                           {
                             children: 'Enregistrer',
                             type: 'submit',
-                            disabled: !canEdit,
+                            disabled:
+                              !canEdit ||
+                              nombreAnimauxAcceptes === null ||
+                              nombreAnimauxAcceptes < 0 ||
+                              nombreAnimauxAcceptes > nombreAnimauxTotal,
                             nativeButtonProps: {
                               onClick: (e) => {
                                 e.preventDefault();
+                                submitCarcasseAcceptPartiel();
                                 refusIntermediaireModal.close();
-                                submitCarcasseRefus();
                               },
                             },
                           },
@@ -725,68 +757,36 @@ export default function CarcasseIntermediaireComp({
                               onClick: (e) => {
                                 e.preventDefault();
                                 refusIntermediaireModal.close();
-                                submitCarcasseAccept();
                               },
                             },
                           },
                         ]
-                      : carcasseAcceptPartielCheckbox
-                        ? [
-                            {
-                              children: 'Enregistrer',
-                              type: 'submit',
-                              disabled:
-                                !canEdit ||
-                                nombreAnimauxAcceptes === null ||
-                                nombreAnimauxAcceptes < 0 ||
-                                nombreAnimauxAcceptes > nombreAnimauxTotal,
-                              nativeButtonProps: {
-                                onClick: (e) => {
-                                  e.preventDefault();
-                                  submitCarcasseAcceptPartiel();
-                                  refusIntermediaireModal.close();
-                                },
-                              },
-                            },
-                            {
-                              children: 'Annuler',
-                              priority: 'secondary',
-                              type: 'button',
-                              disabled: !canEdit,
-                              nativeButtonProps: {
-                                onClick: (e) => {
-                                  e.preventDefault();
-                                  refusIntermediaireModal.close();
-                                },
-                              },
-                            },
-                          ]
                         : [
-                            {
-                              children: carcasseRefusCheckbox ? 'Refuser' : 'Enregistrer',
-                              type: 'submit',
-                              disabled: !canEdit,
-                              nativeButtonProps: {
-                                form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
-                                disabled: carcasseRefusCheckbox && !refus,
-                                onClick: (e) => {
-                                  e.preventDefault();
-                                  if (carcasseRefusCheckbox) {
-                                    submitCarcasseRefus();
-                                  } else if (carcasseAcceptPartielCheckbox) {
-                                    submitCarcasseAcceptPartiel();
-                                  } else if (carcasseEcarteePourInspectionCheckbox) {
-                                    submitCarcasseEcarteePourInspection();
-                                  } else if (carcasseManquante) {
-                                    submitCarcasseManquante();
-                                  } else {
-                                    submitCarcasseAccept();
-                                  }
-                                  refusIntermediaireModal.close();
-                                },
+                          {
+                            children: carcasseRefusCheckbox ? 'Refuser' : 'Enregistrer',
+                            type: 'submit',
+                            disabled: !canEdit,
+                            nativeButtonProps: {
+                              form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
+                              disabled: carcasseRefusCheckbox && !refus,
+                              onClick: (e) => {
+                                e.preventDefault();
+                                if (carcasseRefusCheckbox) {
+                                  submitCarcasseRefus();
+                                } else if (carcasseAcceptPartielCheckbox) {
+                                  submitCarcasseAcceptPartiel();
+                                } else if (carcasseEcarteePourInspectionCheckbox) {
+                                  submitCarcasseEcarteePourInspection();
+                                } else if (carcasseManquante) {
+                                  submitCarcasseManquante();
+                                } else {
+                                  submitCarcasseAccept();
+                                }
+                                refusIntermediaireModal.close();
                               },
                             },
-                          ]
+                          },
+                        ]
                   }
                 />
               </div>
