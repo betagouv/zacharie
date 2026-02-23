@@ -429,8 +429,8 @@ export default function FEIExaminateurInitial() {
                 },
                 defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
                   ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                      'YYYY-MM-DDTHH:mm',
-                    )
+                    'YYYY-MM-DDTHH:mm',
+                  )
                   : undefined,
               }}
             />
@@ -440,7 +440,6 @@ export default function FEIExaminateurInitial() {
               options={[
                 {
                   label: checkboxLabel,
-                  hintText: jobIsMissing,
                   nativeInputProps: {
                     required: true,
                     name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
