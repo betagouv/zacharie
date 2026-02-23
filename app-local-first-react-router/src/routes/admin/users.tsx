@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Table } from '@codegouvfr/react-dsfr/Table';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -26,7 +25,6 @@ export default function AdminUsers() {
   const [selectedOnboardingStatus, setSelectedOnboardingStatus] = useState<string>('');
   const navigate = useNavigate();
 
-  // Create a map of official CFEIs for quick lookup
   const officialCfeiMap = useMemo(() => {
     const map = new Map<string, OfficialCfei>();
     officialCfeis.forEach((cfei) => {
@@ -35,19 +33,16 @@ export default function AdminUsers() {
     return map;
   }, [officialCfeis]);
 
-  // Get CFEI validation status for a user
   const getCfeiValidationStatus = (user: { numero_cfei: string | null }): CfeiValidationStatus => {
     if (!user.numero_cfei) return 'missing';
     return officialCfeiMap.has(user.numero_cfei.toUpperCase()) ? 'valid' : 'invalid';
   };
 
-  // Get official CFEI details for a user
   const getOfficialCfeiDetails = (user: { numero_cfei: string | null }): OfficialCfei | null => {
     if (!user.numero_cfei) return null;
     return officialCfeiMap.get(user.numero_cfei.toUpperCase()) || null;
   };
 
-  // Extract unique roles from all users
   const uniqueRoles = useMemo(() => {
     const rolesSet = new Set<UserRoles>();
     users.forEach((user) => {
@@ -57,7 +52,6 @@ export default function AdminUsers() {
   }, [users]);
 
   const filteredUsers = users.filter((user) => {
-    // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       const searchableText = [
@@ -79,51 +73,26 @@ export default function AdminUsers() {
         return false;
       }
     }
-
-    // Role filter
     if (selectedRole) {
       if (!user.roles?.includes(selectedRole as UserRoles)) {
         return false;
       }
     }
-
-    // CFEI status filter
     if (selectedCfeiStatus) {
-      if (selectedCfeiStatus === 'with_cfei' && !user.numero_cfei) {
-        return false;
-      }
-      if (selectedCfeiStatus === 'without_cfei' && user.numero_cfei) {
-        return false;
-      }
-      if (selectedCfeiStatus === 'trained' && !user.est_forme_a_l_examen_initial) {
-        return false;
-      }
+      if (selectedCfeiStatus === 'with_cfei' && !user.numero_cfei) return false;
+      if (selectedCfeiStatus === 'without_cfei' && user.numero_cfei) return false;
+      if (selectedCfeiStatus === 'trained' && !user.est_forme_a_l_examen_initial) return false;
     }
-
-    // Onboarding status filter
     if (selectedOnboardingStatus) {
-      if (selectedOnboardingStatus === 'completed' && !user.onboarded_at) {
-        return false;
-      }
-      if (selectedOnboardingStatus === 'incomplete' && user.onboarded_at) {
-        return false;
-      }
+      if (selectedOnboardingStatus === 'completed' && !user.onboarded_at) return false;
+      if (selectedOnboardingStatus === 'incomplete' && user.onboarded_at) return false;
     }
-
-    // CFEI validation filter (only applies when official list is loaded)
     if (selectedCfeiValidation && officialCfeis.length > 0) {
       const validationStatus = getCfeiValidationStatus(user);
-      if (selectedCfeiValidation === 'valid' && validationStatus !== 'valid') {
-        return false;
-      }
-      if (selectedCfeiValidation === 'invalid' && validationStatus !== 'invalid') {
-        return false;
-      }
-      if (selectedCfeiValidation === 'missing' && validationStatus !== 'missing') {
-        return false;
-      }
+      if (selectedCfeiValidation === 'valid' && validationStatus !== 'valid') return false;
+      if (selectedCfeiValidation === 'invalid' && validationStatus !== 'invalid') return false;
+      if (selectedCfeiValidation === 'missing' && validationStatus !== 'missing') return false;
     }
-
     return true;
   });
 
@@ -132,37 +101,20 @@ export default function AdminUsers() {
   );
 
   const tabs: TabsProps['tabs'] = [
-    {
-      tabId: 'all',
-      label: `Tous (${filteredUsers.length})`,
-    },
-    {
-      tabId: 'chasseurs-a-activer',
-      label: `Chasseurs à activer (${chasseursToActivate.length})`,
-    },
-    {
-      tabId: 'activated',
-      label: `Activés (${filteredUsers.filter((user) => user.activated).length})`,
-    },
-    {
-      tabId: 'deactivated',
-      label: `Désactivés (${filteredUsers.filter((user) => !user.activated).length})`,
-    },
+    { tabId: 'all', label: `Tous (${filteredUsers.length})` },
+    { tabId: 'chasseurs-a-activer', label: `Chasseurs à activer (${chasseursToActivate.length})` },
+    { tabId: 'activated', label: `Activés (${filteredUsers.filter((user) => user.activated).length})` },
+    { tabId: 'deactivated', label: `Désactivés (${filteredUsers.filter((user) => !user.activated).length})` },
   ];
   const [selectedTabId, setSelectedTabId] = useState(tabs[0].tabId);
 
   useEffect(() => {
-    // Fetch users and official CFEI list in parallel
     Promise.all([
       API.get({ path: 'admin/users' }).then((res) => res as AdminUsersResponse),
       API.get({ path: 'admin/official-cfeis' }).then((res) => res as AdminOfficialCfeisResponse),
     ]).then(([usersRes, cfeisRes]) => {
-      if (usersRes.ok) {
-        setUsers(usersRes.data.users);
-      }
-      if (cfeisRes.ok) {
-        setOfficialCfeis(cfeisRes.data.officialCfeis);
-      }
+      if (usersRes.ok) setUsers(usersRes.data.users);
+      if (cfeisRes.ok) setOfficialCfeis(cfeisRes.data.officialCfeis);
     });
   }, []);
 
@@ -171,136 +123,142 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="p-2 md:p-4">
+    <div className="py-2">
       <title>
         Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
       <div className="mb-2 flex items-center justify-end">
+
+      </div>
+      <div className="flex flex-wrap items-end gap-2 pb-2 [&_.fr-label]:text-xs [&_.fr-input-group]:mb-0 [&_.fr-select-group]:mb-0">
+        <Input
+          className="w-56"
+          label="Recherche"
+          nativeInputProps={{
+            type: 'search',
+            value: searchQuery,
+            onChange: (e) => setSearchQuery(e.target.value),
+            placeholder: 'Nom, email, tél, CFEI...',
+          }}
+        />
+        <Select
+          className="w-40"
+          label="Rôle"
+          nativeSelectProps={{
+            value: selectedRole,
+            onChange: (e) => setSelectedRole(e.target.value),
+          }}
+        >
+          <option value="">Tous</option>
+          {uniqueRoles.map((role) => (
+            <option key={role} value={role}>
+              {role}
+            </option>
+          ))}
+        </Select>
+        <Select
+          className="w-44"
+          label="CFEI"
+          nativeSelectProps={{
+            value: selectedCfeiStatus,
+            onChange: (e) => setSelectedCfeiStatus(e.target.value),
+          }}
+        >
+          <option value="">Tous</option>
+          <option value="with_cfei">Avec CFEI</option>
+          <option value="without_cfei">Sans CFEI</option>
+          <option value="trained">Formé EI</option>
+        </Select>
+        <Select
+          className="w-44"
+          label="Onboarding"
+          nativeSelectProps={{
+            value: selectedOnboardingStatus,
+            onChange: (e) => setSelectedOnboardingStatus(e.target.value),
+          }}
+        >
+          <option value="">Tous</option>
+          <option value="completed">Terminé</option>
+          <option value="incomplete">Incomplet</option>
+        </Select>
+        {officialCfeis.length > 0 && (
+          <Select
+            className="w-44"
+            label="Validation CFEI"
+            nativeSelectProps={{
+              value: selectedCfeiValidation,
+              onChange: (e) => setSelectedCfeiValidation(e.target.value),
+            }}
+          >
+            <option value="">Tous</option>
+            <option value="valid">Validé</option>
+            <option value="invalid">Non trouvé</option>
+            <option value="missing">Non renseigné</option>
+          </Select>
+        )}
         <Button
           size="small"
-          linkProps={{
-            to: '/app/tableau-de-bord/admin/add-user',
-          }}
+          linkProps={{ to: '/app/tableau-de-bord/admin/add-user' }}
         >
           + Ajouter des utilisateurs
         </Button>
       </div>
-      <section className="mb-4 bg-white md:shadow-sm">
-        <div className="space-y-2 p-2 md:p-4 md:pb-2">
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-5">
-                <Input
-                  label="Rechercher un utilisateur"
-                  nativeInputProps={{
-                    type: 'search',
-                    value: searchQuery,
-                    onChange: (e) => setSearchQuery(e.target.value),
-                    placeholder: 'Nom, email, téléphone, CFEI...',
-                  }}
-                />
-                <Select
-                  label="Filtrer par rôle"
-                  nativeSelectProps={{
-                    value: selectedRole,
-                    onChange: (e) => setSelectedRole(e.target.value),
-                  }}
-                >
-                  <option value="">Tous les rôles</option>
-                  {uniqueRoles.map((role) => (
-                    <option key={role} value={role}>
-                      {role}
-                    </option>
-                  ))}
-                </Select>
-                <Select
-                  label="Statut CFEI"
-                  nativeSelectProps={{
-                    value: selectedCfeiStatus,
-                    onChange: (e) => setSelectedCfeiStatus(e.target.value),
-                  }}
-                >
-                  <option value="">Tous</option>
-                  <option value="with_cfei">Avec numéro CFEI</option>
-                  <option value="without_cfei">Sans numéro CFEI</option>
-                  <option value="trained">Formé à l'examen initial</option>
-                </Select>
-                <Select
-                  label="Statut onboarding"
-                  nativeSelectProps={{
-                    value: selectedOnboardingStatus,
-                    onChange: (e) => setSelectedOnboardingStatus(e.target.value),
-                  }}
-                >
-                  <option value="">Tous</option>
-                  <option value="completed">Onboarding terminé</option>
-                  <option value="incomplete">Onboarding incomplet</option>
-                </Select>
-                {officialCfeis.length > 0 && (
-                  <Select
-                    label="Validation CFEI officiel"
-                    nativeSelectProps={{
-                      value: selectedCfeiValidation,
-                      onChange: (e) => setSelectedCfeiValidation(e.target.value),
-                    }}
-                  >
-                    <option value="">Tous</option>
-                    <option value="valid">CFEI validé</option>
-                    <option value="invalid">CFEI non trouvé</option>
-                    <option value="missing">CFEI non renseigné</option>
-                  </Select>
-                )}
-          </div>
-        </div>
-        <Tabs
-              selectedTabId={selectedTabId}
-              tabs={tabs}
-              onTabChange={setSelectedTabId}
-              className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
-            >
-              <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
-                <Table
-                  fixed
-                  noCaption
-                  className="[&_td]:align-top"
-                  headers={['Identité', 'Rôles & CFEI', 'Statut', 'Actions']}
-                  data={filteredUsers
-                    .filter((user) => {
-                      if (selectedTabId === 'chasseurs-a-activer') {
-                        return !user.activated && user.roles?.includes(UserRoles.CHASSEUR);
-                      }
-                      if (selectedTabId === 'activated') {
-                        return user.activated;
-                      }
-                      if (selectedTabId === 'deactivated') {
-                        return !user.activated;
-                      }
-                      return true;
-                    })
-                    .map((user, index) => {
-                      const isChasseur = user.roles?.includes(UserRoles.CHASSEUR);
-                      const cfeiStatus = isChasseur ? getCfeiValidationStatus(user) : null;
-                      const officialDetails = isChasseur ? getOfficialCfeiDetails(user) : null;
+      <Tabs
+        selectedTabId={selectedTabId}
+        tabs={tabs}
+        onTabChange={setSelectedTabId}
+        className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! bg-white [&_.fr-tabs\_\_list]:shadow-none!"
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-gray-300 text-xs text-gray-600 uppercase">
+                <th className="px-2 py-1">Identité</th>
+                <th className="px-2 py-1">Rôles & CFEI</th>
+                <th className="px-2 py-1">Statut</th>
+                <th className="px-2 py-1">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers
+                .filter((user) => {
+                  if (selectedTabId === 'chasseurs-a-activer')
+                    return !user.activated && user.roles?.includes(UserRoles.CHASSEUR);
+                  if (selectedTabId === 'activated') return user.activated;
+                  if (selectedTabId === 'deactivated') return !user.activated;
+                  return true;
+                })
+                .map((user, index) => {
+                  const isChasseur = user.roles?.includes(UserRoles.CHASSEUR);
+                  const cfeiStatus = isChasseur ? getCfeiValidationStatus(user) : null;
+                  const officialDetails = isChasseur ? getOfficialCfeiDetails(user) : null;
 
-                      return [
-                        <Link
-                          key={user.id}
-                          to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                          className="inline-flex! size-full flex-col items-start justify-start gap-1 border-r border-r-gray-200 bg-none! no-underline!"
-                        >
-                          <span className="font-bold">
-                            {index + 1}. {user.nom_de_famille} {user.prenom}
+                  return (
+                    <tr key={user.id} className="border-b border-gray-200 align-top hover:bg-gray-50">
+                      <td className="px-2 py-1">
+                        <span className="flex flex-col">
+                          <span className="font-medium">
+                            <span className="text-xs text-gray-400">{index + 1}. </span>
+                            <Link
+                              to={`/app/tableau-de-bord/admin/user/${user.id}`}
+                              className="no-underline"
+                            >
+                              {user.nom_de_famille} {user.prenom}
+                            </Link>
                           </span>
-                          <span className="text-sm">{user.email}</span>
-                          {user.telephone && <span className="text-sm text-gray-500">{user.telephone}</span>}
-                          <span className="text-sm text-gray-500">
-                            {user.code_postal} {user.ville}
-                          </span>
-                        </Link>,
-                        <Link
-                          key={user.id}
-                          to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                          className="no-scrollbar inline-flex! size-full flex-col items-start justify-start gap-1 overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
-                        >
-                          <span className="flex flex-wrap gap-1">
+                          <span className="text-xs">{user.email}</span>
+                          {(user.telephone || user.code_postal || user.ville) && (
+                            <span className="text-xs text-gray-500">
+                              {[user.telephone, [user.code_postal, user.ville].filter(Boolean).join(' ')]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1">
+                        <span className="flex flex-col gap-1">
+                          <span className="flex flex-wrap gap-0.5">
                             {user.roles.map((role) => (
                               <Badge key={role} severity="info" small>
                                 {role}
@@ -308,79 +266,57 @@ export default function AdminUsers() {
                             ))}
                           </span>
                           {isChasseur && (
-                            <span className="mt-1 flex flex-col gap-1">
-                              <span className="text-sm">
+                            <span className="flex flex-col gap-0.5 text-xs">
+                              <span>
                                 {user.numero_cfei || (
-                                  <span className="italic text-gray-400">CFEI non renseigné</span>
+                                  <span className="italic text-gray-400">—</span>
+                                )}
+                                {officialCfeis.length > 0 && cfeiStatus === 'valid' && (
+                                  <Badge severity="success" small className="ml-1">Validé</Badge>
+                                )}
+                                {officialCfeis.length > 0 && cfeiStatus === 'invalid' && (
+                                  <Badge severity="error" small className="ml-1">Non trouvé</Badge>
+                                )}
+                                {officialCfeis.length > 0 && cfeiStatus === 'missing' && (
+                                  <Badge severity="warning" small className="ml-1">Non renseigné</Badge>
                                 )}
                               </span>
-                              {officialCfeis.length > 0 &&
-                                (() => {
-                                  if (cfeiStatus === 'valid') {
-                                    return (
-                                      <>
-                                        <Badge severity="success" small>
-                                          CFEI validé
-                                        </Badge>
-                                        {officialDetails && (
-                                          <span className="text-xs text-gray-600">
-                                            {officialDetails.prenom} {officialDetails.nom}
-                                            {officialDetails.departement &&
-                                              ` — Dép. ${officialDetails.departement}`}
-                                          </span>
-                                        )}
-                                      </>
-                                    );
-                                  }
-                                  if (cfeiStatus === 'invalid') {
-                                    return (
-                                      <Badge severity="error" small>
-                                        CFEI non trouvé
-                                      </Badge>
-                                    );
-                                  }
-                                  return (
-                                    <Badge severity="warning" small>
-                                      CFEI non renseigné
-                                    </Badge>
-                                  );
-                                })()}
+                              {officialDetails && (
+                                <span className="text-gray-500">
+                                  {officialDetails.prenom} {officialDetails.nom}
+                                  {officialDetails.departement && ` — ${officialDetails.departement}`}
+                                </span>
+                              )}
                             </span>
                           )}
-                        </Link>,
-                        <Link
-                          key={user.id}
-                          to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                          className="inline-flex! size-full flex-col items-start justify-start gap-1 border-r border-r-gray-200 bg-none! no-underline!"
-                          suppressHydrationWarning
-                        >
-                          <Badge severity={user.activated ? 'success' : 'error'} small>
-                            {user.activated ? 'Activé' : 'Inactif'}
-                          </Badge>
-                          <Badge severity={user.onboarded_at ? 'success' : 'warning'} small>
-                            {user.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
-                          </Badge>
-                          {isChasseur && (
-                            <Badge
-                              severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'}
-                              small
-                            >
-                              {user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1">
+                        <span className="flex flex-col gap-0.5">
+                          <span className="flex flex-wrap gap-0.5">
+                            <Badge severity={user.activated ? 'success' : 'error'} small>
+                              {user.activated ? 'Activé' : 'Inactif'}
                             </Badge>
-                          )}
-                          <span className="mt-1 text-xs text-gray-500" suppressHydrationWarning>
-                            Créé le {dayjs(user.created_at).format('DD/MM/YYYY')}
+                            <Badge severity={user.onboarded_at ? 'success' : 'warning'} small>
+                              {user.onboarded_at ? 'Onboardé' : 'Onb. incomplet'}
+                            </Badge>
+                            {isChasseur && (
+                              <Badge
+                                severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'}
+                                small
+                              >
+                                {user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
+                              </Badge>
+                            )}
                           </span>
-                          {user.last_seen_at && (
-                            <span className="text-xs text-gray-500" suppressHydrationWarning>
-                              Vu le {dayjs(user.last_seen_at).format('DD/MM/YYYY')}
-                            </span>
-                          )}
-                        </Link>,
-                        <div
-                          key={user.email}
-                          className="no-scrollbar inline-flex! size-full flex-col items-center justify-center gap-2 overflow-x-auto! p-2"
-                        >
+                          <span className="text-xs text-gray-500" suppressHydrationWarning>
+                            Créé {dayjs(user.created_at).format('DD/MM/YY')}
+                            {user.last_seen_at && ` · Vu ${dayjs(user.last_seen_at).format('DD/MM/YY')}`}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="px-2 py-1">
+                        <span className="flex flex-col items-center gap-1">
                           {selectedTabId === 'chasseurs-a-activer' && (
                             <Button
                               size="small"
@@ -388,9 +324,7 @@ export default function AdminUsers() {
                               onClick={() => {
                                 API.post({
                                   path: `admin/user/${user.id}`,
-                                  body: {
-                                    activated: 'true',
-                                  },
+                                  body: { activated: 'true' },
                                 }).then((res) => {
                                   if (res.ok) {
                                     setUsers((prev) =>
@@ -409,10 +343,8 @@ export default function AdminUsers() {
                               event.preventDefault();
                               await API.post({
                                 path: 'admin/user/connect-as',
-                                body: {
-                                  email: user.email!,
-                                },
-                              })
+                                body: { email: user.email! },
+                              });
                               navigate('/app/tableau-de-bord', { replace: true });
                               await clearCache();
                               await refreshUser('admin/user/connect-as');
@@ -420,25 +352,25 @@ export default function AdminUsers() {
                           >
                             <button
                               type="submit"
-                              className="text-action-high-blue-france text-center text-sm"
+                              className="text-action-high-blue-france text-center text-xs"
                             >
-                              Se connecter en tant que
-                              <br />
-                              {user.email}
+                              Connexion
                             </button>
                           </form>
-                        </div>,
-                      ];
-                    })}
-                />
-              </div>
-              <div className="flex flex-col items-start bg-white px-8 md:[&_ul]:min-w-96">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                  Haut de page
-                </a>
-              </div>
-        </Tabs>
-      </section>
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-start bg-white px-4 py-2">
+          <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left text-sm" href="#top">
+            Haut de page
+          </a>
+        </div>
+      </Tabs>
     </div>
   );
 }
