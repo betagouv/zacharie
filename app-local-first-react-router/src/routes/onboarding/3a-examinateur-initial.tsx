@@ -58,6 +58,7 @@ export default function OnboardingExaminateurInitial() {
               buttons={[
                 {
                   children: redirect ? 'Retour' : 'Étape précédente',
+                  iconId: 'fr-icon-arrow-left-line',
                   linkProps: {
                     to: redirect ?? '/app/tableau-de-bord/onboarding/mes-coordonnees',
                     href: '#',
@@ -66,6 +67,8 @@ export default function OnboardingExaminateurInitial() {
                 },
                 {
                   children: 'Enregistrer et continuer',
+                  iconId: 'fr-icon-arrow-right-line',
+                  iconPosition: 'right',
                   type: 'button',
                   nativeButtonProps: {
                     onClick: () => navigate(redirect ?? nextPage),

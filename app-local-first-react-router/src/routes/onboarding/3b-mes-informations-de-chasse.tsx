@@ -41,7 +41,7 @@ export default function OnboardingMesInformationsDeChasse() {
     [user.id],
   );
 
-  const nextPage = '/app/tableau-de-bord/onboarding/mes-notifications';
+  const nextPage = '/app/tableau-de-bord';
 
 
   const handleSubmit = async () => {
@@ -126,6 +126,7 @@ export default function OnboardingMesInformationsDeChasse() {
               buttons={[
                 {
                   children: redirect ? 'Retour' : 'Étape précédente',
+                  iconId: 'fr-icon-arrow-left-line',
                   linkProps: {
                     to:
                       redirect ??
@@ -138,6 +139,8 @@ export default function OnboardingMesInformationsDeChasse() {
                 },
                 {
                   children: 'Enregistrer et continuer',
+                  iconId: 'fr-icon-arrow-right-line',
+                  iconPosition: 'right',
                   disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
                   type: 'button',
                   nativeButtonProps: {

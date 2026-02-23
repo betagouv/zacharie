@@ -179,6 +179,8 @@ export default function MesCoordonnees() {
               buttons={[
                 {
                   children: 'Enregistrer et continuer',
+                  iconId: 'fr-icon-arrow-right-line',
+                  iconPosition: 'right',
                   type: 'button',
                   nativeButtonProps: {
                     onClick: () => navigate(nextPage),
