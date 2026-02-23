@@ -58,8 +58,7 @@ router.post(
         if (fei.premier_detenteur_user_id) userIds.add(fei.premier_detenteur_user_id);
         if (fei.fei_current_owner_user_id) userIds.add(fei.fei_current_owner_user_id);
         if (fei.fei_next_owner_user_id) userIds.add(fei.fei_next_owner_user_id);
-        if (fei.fei_next_owner_sous_traite_by_user_id)
-          userIds.add(fei.fei_next_owner_sous_traite_by_user_id);
+        if (fei.fei_next_owner_sous_traite_by_user_id) userIds.add(fei.fei_next_owner_sous_traite_by_user_id);
         if (fei.svi_user_id) userIds.add(fei.svi_user_id);
 
         if (fei.premier_detenteur_entity_id) entityIds.add(fei.premier_detenteur_entity_id);
@@ -651,7 +650,9 @@ router.get(
       });
 
       if (!fei) {
-        res.status(404).send({ ok: false, data: { fei: null, users: [], entities: [] }, error: 'Unauthorized' });
+        res
+          .status(404)
+          .send({ ok: false, data: { fei: null, users: [], entities: [] }, error: 'Unauthorized' });
         return;
       }
 
@@ -662,8 +663,7 @@ router.get(
       if (fei.premier_detenteur_user_id) userIds.add(fei.premier_detenteur_user_id);
       if (fei.fei_current_owner_user_id) userIds.add(fei.fei_current_owner_user_id);
       if (fei.fei_next_owner_user_id) userIds.add(fei.fei_next_owner_user_id);
-      if (fei.fei_next_owner_sous_traite_by_user_id)
-        userIds.add(fei.fei_next_owner_sous_traite_by_user_id);
+      if (fei.fei_next_owner_sous_traite_by_user_id) userIds.add(fei.fei_next_owner_sous_traite_by_user_id);
       if (fei.svi_user_id) userIds.add(fei.svi_user_id);
 
       if (fei.premier_detenteur_entity_id) entityIds.add(fei.premier_detenteur_entity_id);

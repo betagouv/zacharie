@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
@@ -24,6 +24,7 @@ export default function AdminUsers() {
   const [selectedCfeiStatus, setSelectedCfeiStatus] = useState<string>('');
   const [selectedCfeiValidation, setSelectedCfeiValidation] = useState<string>('');
   const [selectedOnboardingStatus, setSelectedOnboardingStatus] = useState<string>('');
+  const navigate = useNavigate();
 
   // Create a map of official CFEIs for quick lookup
   const officialCfeiMap = useMemo(() => {
@@ -406,19 +407,17 @@ export default function AdminUsers() {
                           )}
                           <form
                             method="POST"
-                            onSubmit={(event) => {
+                            onSubmit={async (event) => {
                               event.preventDefault();
-
-                              API.post({
+                              await API.post({
                                 path: 'admin/user/connect-as',
                                 body: {
                                   email: user.email!,
                                 },
-                              }).then(async () => {
-                                await clearCache();
-                                await refreshUser('admin/user/connect-as');
-                                window.location.href = '/app/tableau-de-bord';
-                              });
+                              })
+                              navigate('/app/tableau-de-bord', { replace: true });
+                              await clearCache();
+                              await refreshUser('admin/user/connect-as');
                             }}
                           >
                             <button
