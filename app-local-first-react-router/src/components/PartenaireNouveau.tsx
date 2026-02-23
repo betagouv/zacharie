@@ -10,6 +10,7 @@ import useUser from '@app/zustand/user';
 import SelectCustom from '@app/components/SelectCustom';
 import API from '@app/services/api';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import InputNotEditable from '@app/components/InputNotEditable';
 import useZustandStore from '@app/zustand/store';
 import { toast } from 'react-toastify';
@@ -156,6 +157,12 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
         * Les champs marqués d'un astérisque (*) sont obligatoires.
       </p>
       <form id="partenaire_data_form" method="POST" onSubmit={handleEntitySubmit}>
+        <Alert
+          severity="warning"
+          small
+          description="Attention : ce formulaire est réservé aux commerces de détail, cantines, associations et consommateurs. Pour envoyer vos carcasses à un ETG, celui-ci doit être inscrit sur Zacharie."
+          className="mb-4"
+        />
         <RadioButtons
           legend="Qualité du partenaire *"
           hintText="Est-ce un commerce de détail, repas de chasse ou associatif, ou encore un consommateur final ?"
