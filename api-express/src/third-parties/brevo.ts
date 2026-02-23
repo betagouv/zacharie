@@ -32,31 +32,19 @@ async function sendEmail(props: SendEmailProps) {
     if (!props.html && !props.text) {
       throw new Error('html or text is required');
     }
-    const apiInstance = new brevo.TransactionalEmailsApi();
-    // Set the API key for transactional emails
-    apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, API_KEY);
-
-    const sendSmtpEmail = new brevo.SendSmtpEmail();
-    sendSmtpEmail.subject = props.subject;
-    if (props.html) {
-      sendSmtpEmail.htmlContent = props.html;
-    } else if (props.text) {
-      sendSmtpEmail.textContent = props.text;
-    }
-    if (props.from) {
-      sendSmtpEmail.sender = props.from;
-    } else {
-      sendSmtpEmail.sender = {
+    const client = getBrevoClient();
+    const result = await client.transactionalEmails.sendTransacEmail({
+      subject: props.subject,
+      htmlContent: props.html,
+      textContent: props.text,
+      sender: props.from ?? {
         name: 'Zacharie',
         email: 'contact@zacharie.beta.gouv.fr',
-      };
-    }
-    if (props.attachments) {
-      sendSmtpEmail.attachment = props.attachments;
-    }
-    sendSmtpEmail.to = props.emails.map((email) => ({ email }));
-    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    // console.log('Email sent successfully:', result);
+      },
+      attachment: props.attachments,
+      to: props.emails.map((email) => ({ email })),
+    });
+    void result;
   } catch (error) {
     capture(error as Error, {
       extra: {
@@ -97,19 +85,19 @@ function formatRoles(user: User) {
   return roles;
 }
 
-interface BrevoContact extends brevo.GetExtendedContactDetails {
-  attributes: {
-    PRENOM: string;
-    NOM: string;
-    ROLE: Array<string>;
-    LANDLINE_NUMBER: string;
-    SMS: string;
-    WHATSAPP: string;
-    TELEPHONE_PORTABLE: string;
-    TELEPHONE_FIXE: string;
-    ADRESSE: string;
-    NUM_EXAMINATEUR: string;
-    EXT_ID: string;
+interface BrevoContact extends Brevo.GetContactInfoResponse {
+  attributes: Brevo.GetContactInfoResponse['attributes'] & {
+    PRENOM?: string;
+    NOM?: string;
+    ROLE?: Array<string>;
+    LANDLINE_NUMBER?: string;
+    SMS?: string;
+    WHATSAPP?: string;
+    TELEPHONE_PORTABLE?: string;
+    TELEPHONE_FIXE?: string;
+    ADRESSE?: string;
+    NUM_EXAMINATEUR?: string;
+    EXT_ID?: string;
   };
 }
 
@@ -117,13 +105,11 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Pro
   try {
     if (DISABLED) return props;
     if (props.roles.includes(UserRoles.ADMIN)) return props;
-    const apiInstance = new brevo.ContactsApi();
-    apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
+    const client = getBrevoClient();
 
     try {
-      // wrap in try catch for 404
-      const getContact = await apiInstance.getContactInfo(props.email);
-      const brevoContact = getContact.body as BrevoContact;
+      const getContactRes = await client.contacts.getContactInfo({ identifier: props.email });
+      const brevoContact = getContactRes.data as BrevoContact;
       if (brevoContact?.id) {
         if (!props.brevo_contact_id) {
           props = await prisma.user.update({
@@ -132,12 +118,11 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Pro
           });
         }
 
-        if (brevoContact.attributes.EXT_ID !== props.id) {
-          const updateContact = new brevo.UpdateContact();
-          updateContact.attributes = {
-            EXT_ID: props.id,
-          };
-          await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
+        if (brevoContact.attributes?.EXT_ID !== props.id) {
+          await client.contacts.updateContact({
+            identifier: props.brevo_contact_id.toString(),
+            attributes: { EXT_ID: props.id },
+          });
         }
         if (createdBy === 'USER') {
           await sendEmail({
@@ -148,26 +133,27 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Pro
         }
         return props;
       }
-    } catch (error) {
-      // console.log(error);
+    } catch {
+      // contact not found, create below
     }
 
-    const createContact = new brevo.CreateContact();
-    createContact.email = props.email;
-    createContact.extId = props.id;
-    createContact.attributes = {
-      CREATED_BY: [createdBy],
-      'CREATION DATE': props.created_at.toISOString(),
-      ROLE: formatRoles(props),
-    };
-
-    const result = await apiInstance.createContact(createContact);
-
-    // console.log(result);
-    props = await prisma.user.update({
-      where: { id: props.id },
-      data: { brevo_contact_id: result.body.id },
+    const createRes = await client.contacts.createContact({
+      email: props.email,
+      ext_id: props.id,
+      attributes: {
+        CREATED_BY: [createdBy],
+        'CREATION DATE': props.created_at.toISOString(),
+        ROLE: formatRoles(props),
+      },
     });
+
+    const id = (createRes.data as { id?: number })?.id;
+    if (id) {
+      props = await prisma.user.update({
+        where: { id: props.id },
+        data: { brevo_contact_id: id },
+      });
+    }
     if (createdBy === 'USER') {
       await sendEmail({
         emails: ['contact@zacharie.beta.gouv.fr'],
@@ -196,21 +182,16 @@ type ContactForm = {
 async function createBrevoContactFromContactForm(props: ContactForm) {
   try {
     if (DISABLED) return;
-    const apiInstance = new brevo.ContactsApi();
-    apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
+    const client = getBrevoClient();
 
     try {
-      // wrap in try catch for 404
-      const getContact = await apiInstance.getContactInfo(props.email);
-      const brevoContact = getContact.body as BrevoContact;
-      if (brevoContact?.id) {
-        return;
-      }
-    } catch (error) {
-      // console.log(error);
+      const getContactRes = await client.contacts.getContactInfo({ identifier: props.email });
+      const brevoContact = getContactRes.data as BrevoContact;
+      if (brevoContact?.id) return;
+    } catch {
+      // contact not found
     }
 
-    // let LANDLINE_NUMBER = '';
     let SMS = '';
     let WHATSAPP = '';
     let TELEPHONE_PORTABLE = '';
@@ -228,27 +209,24 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
           }
           TELEPHONE_PORTABLE = phoneNumber.number;
         } else {
-          // LANDLINE_NUMBER = phoneNumber.number;
           TELEPHONE_FIXE = phoneNumber.number;
         }
       }
     }
 
-    const createContact = new brevo.CreateContact();
-    createContact.email = props.email;
-    createContact.attributes = {
-      CREATED_BY: ['CONTACT FORM'],
-      'CREATION DATE': new Date().toISOString(),
-      PRENOM: props.prenom,
-      NOM: props.nom_de_famille,
-      // LANDLINE_NUMBER: LANDLINE_NUMBER,
-      SMS: SMS,
-      WHATSAPP: WHATSAPP,
-      TELEPHONE_PORTABLE: TELEPHONE_PORTABLE,
-      TELEPHONE_FIXE: TELEPHONE_FIXE,
-    };
-
-    const result = await apiInstance.createContact(createContact);
+    await client.contacts.createContact({
+      email: props.email,
+      attributes: {
+        CREATED_BY: ['CONTACT FORM'],
+        'CREATION DATE': new Date().toISOString(),
+        PRENOM: props.prenom,
+        NOM: props.nom_de_famille,
+        SMS,
+        WHATSAPP,
+        TELEPHONE_PORTABLE,
+        TELEPHONE_FIXE,
+      },
+    });
   } catch (error) {
     capture(error as Error, {
       extra: {
@@ -262,22 +240,18 @@ async function updateBrevoContact(props: User): Promise<User> {
   try {
     if (DISABLED) return props;
     if (props.roles.includes(UserRoles.ADMIN)) return props;
-    const apiInstance = new brevo.ContactsApi();
-    apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
+    const client = getBrevoClient();
 
     if (!props.brevo_contact_id) {
-      const getContact = await apiInstance.getContactInfo(props.email);
-      const brevoContact = getContact.body as BrevoContact;
-      if (!brevoContact?.id) {
-        return props;
-      }
+      const getContactRes = await client.contacts.getContactInfo({ identifier: props.email });
+      const brevoContact = getContactRes.data as BrevoContact;
+      if (!brevoContact?.id) return props;
       props = await prisma.user.update({
         where: { id: props.id },
         data: { brevo_contact_id: brevoContact.id },
       });
     }
 
-    // let LANDLINE_NUMBER = '';
     let SMS = '';
     let WHATSAPP = '';
     let TELEPHONE_PORTABLE = '';
@@ -295,7 +269,6 @@ async function updateBrevoContact(props: User): Promise<User> {
           }
           TELEPHONE_PORTABLE = phoneNumber.number;
         } else {
-          // LANDLINE_NUMBER = phoneNumber.number;
           TELEPHONE_FIXE = phoneNumber.number;
         }
       }
@@ -304,28 +277,25 @@ async function updateBrevoContact(props: User): Promise<User> {
     let ADRESSE = '';
     if (props.addresse_ligne_1) {
       ADRESSE += props.addresse_ligne_1;
-      if (props.addresse_ligne_2) {
-        ADRESSE += `\n${props.addresse_ligne_2}`;
-      }
+      if (props.addresse_ligne_2) ADRESSE += `\n${props.addresse_ligne_2}`;
       ADRESSE += `\n${props.code_postal} ${props.ville}`;
     }
 
-    const updateContact = new brevo.UpdateContact();
-    updateContact.attributes = {
-      PRENOM: props.prenom,
-      NOM: props.nom_de_famille,
-      ROLE: formatRoles(props),
-      // LANDLINE_NUMBER: LANDLINE_NUMBER,
-      SMS: SMS,
-      WHATSAPP: WHATSAPP,
-      TELEPHONE_PORTABLE: TELEPHONE_PORTABLE,
-      TELEPHONE_FIXE: TELEPHONE_FIXE,
-      ADRESSE: ADRESSE ? ADRESSE : '',
-      NUM_EXAMINATEUR: props.numero_cfei,
-      EXT_ID: props.id,
-    };
-    console.log(updateContact.attributes);
-    const result = await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
+    await client.contacts.updateContact({
+      identifier: props.brevo_contact_id.toString(),
+      attributes: {
+        PRENOM: props.prenom,
+        NOM: props.nom_de_famille,
+        ROLE: formatRoles(props),
+        SMS,
+        WHATSAPP,
+        TELEPHONE_PORTABLE,
+        TELEPHONE_FIXE,
+        ADRESSE: ADRESSE || '',
+        NUM_EXAMINATEUR: props.numero_cfei,
+        EXT_ID: props.id,
+      },
+    });
     return props;
   } catch (error) {
     capture(error as Error, {
@@ -337,7 +307,7 @@ async function updateBrevoContact(props: User): Promise<User> {
   }
 }
 
-interface BrevoCompany extends brevo.Company {
+interface BrevoCompany extends Brevo.Company {
   attributes: {
     cat_gorie?: Array<
       'premier_d_tenteur__chasseur' | 'collecteur' | 'etg' | 'svi' | 'partenaire' | 'examinateur_initial'
@@ -422,35 +392,33 @@ function getBrevoCategory(type: EntityTypes) {
 async function updateOrCreateBrevoCompany(props: Entity): Promise<Entity> {
   try {
     if (DISABLED) return props;
-    const apiInstance = new brevo.CompaniesApi();
-    apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
-
-    const brevoCompany: BrevoCompany = {
-      attributes: {
-        name: props.raison_sociale,
-        cat_gorie: [getBrevoCategory(props.type)],
-        code_postal: props.code_postal || undefined,
-        d_partement: props.code_postal?.slice(0, 2) || undefined,
-        num_ro_ccg: props.numero_ddecpp || undefined,
-      },
+    const client = getBrevoClient();
+    const attributes = {
+      name: props.raison_sociale,
+      cat_gorie: [getBrevoCategory(props.type)],
+      code_postal: props.code_postal || undefined,
+      d_partement: props.code_postal?.slice(0, 2) || undefined,
+      num_ro_ccg: props.numero_ddecpp || undefined,
     };
 
     if (!props.brevo_id) {
-      console.log('Creating Brevo company');
-      const result = await apiInstance.companiesPost({
+      const createRes = await client.companies.createACompany({
         name: props.raison_sociale,
-        attributes: brevoCompany.attributes,
+        attributes,
       });
-      const updatedEntity = await prisma.entity.update({
-        where: { id: props.id },
-        data: { brevo_id: result.body.id },
-      });
-      return updatedEntity;
+      const id = (createRes.data as { id?: string })?.id;
+      if (id) {
+        return prisma.entity.update({
+          where: { id: props.id },
+          data: { brevo_id: id },
+        });
+      }
+      return props;
     }
 
-    console.log('Updating Brevo company');
-    await apiInstance.companiesIdPatch(props.brevo_id, {
-      attributes: brevoCompany.attributes,
+    await client.companies.updateACompany({
+      id: props.brevo_id,
+      attributes,
     });
     return props;
   } catch (error) {
@@ -466,11 +434,10 @@ async function updateOrCreateBrevoCompany(props: Entity): Promise<Entity> {
 async function linkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
     if (DISABLED) return;
-    const apiInstance = new brevo.CompaniesApi();
-    apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
-    console.log('Linking Brevo company to contact', entity.brevo_id, user.brevo_contact_id);
-    await apiInstance.companiesLinkUnlinkIdPatch(entity.brevo_id, {
-      linkContactIds: [user.brevo_contact_id],
+    const client = getBrevoClient();
+    await client.companies.linkAndUnlinkCompanyWithContactAndDeal({
+      id: entity.brevo_id,
+      linkContactIds: [user.brevo_contact_id!],
     });
   } catch (error) {
     capture(error as Error, {
@@ -500,7 +467,7 @@ async function unlinkBrevoCompanyToContact(entity: Entity, user: User) {
   }
 }
 
-interface BrevoDeal extends brevo.Deal {
+interface BrevoDeal extends Brevo.Deal {
   attributes: {
     created_at: string;
     d_patement: number;
@@ -517,7 +484,7 @@ interface BrevoDeal extends brevo.Deal {
   };
 }
 
-interface BrevoChasseurPipeline extends brevo.Pipeline {
+interface BrevoChasseurPipeline extends Brevo.Pipeline {
   pipelineName: 'Chasseurs';
   stages: Array<{
     id: string;
@@ -532,7 +499,7 @@ interface BrevoChasseurPipeline extends brevo.Pipeline {
   }>;
 }
 
-interface BrevoSviPipeline extends brevo.Pipeline {
+interface BrevoSviPipeline extends Brevo.Pipeline {
   pipelineName: 'SVI';
   stages: Array<{
     id: string;
@@ -546,7 +513,7 @@ interface BrevoSviPipeline extends brevo.Pipeline {
   }>;
 }
 
-interface BrevoETGPipeline extends brevo.Pipeline {
+interface BrevoETGPipeline extends Brevo.Pipeline {
   pipelineName: 'ETG';
   stages: Array<{
     id: string;
@@ -561,7 +528,7 @@ interface BrevoETGPipeline extends brevo.Pipeline {
   }>;
 }
 
-interface BrevoCollecteursPipeline extends brevo.Pipeline {
+interface BrevoCollecteursPipeline extends Brevo.Pipeline {
   pipelineName: 'Collecteurs';
   stages: Array<{
     id: string;

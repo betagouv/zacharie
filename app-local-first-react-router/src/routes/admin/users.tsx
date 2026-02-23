@@ -171,25 +171,23 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="fr-container--fluid fr-my-md-14v">
+    <div className="p-2 md:p-4">
       <title>
         Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <div className="fr-mb-2w flex items-center justify-between gap-4">
-            <h1 className="fr-h2">Utilisateurs</h1>
-            <Button
-              linkProps={{
-                to: '/app/tableau-de-bord/admin/add-user',
-              }}
-            >
-              + Ajouter des utilisateurs
-            </Button>
-          </div>
-          <section className="mb-6 bg-white md:shadow-sm">
-            <div className="space-y-4 p-4 md:p-8 md:pb-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-2 flex items-center justify-end">
+        <Button
+          size="small"
+          linkProps={{
+            to: '/app/tableau-de-bord/admin/add-user',
+          }}
+        >
+          + Ajouter des utilisateurs
+        </Button>
+      </div>
+      <section className="mb-4 bg-white md:shadow-sm">
+        <div className="space-y-2 p-2 md:p-4 md:pb-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-5">
                 <Input
                   label="Rechercher un utilisateur"
                   nativeInputProps={{
@@ -250,9 +248,9 @@ export default function AdminUsers() {
                     <option value="missing">CFEI non renseigné</option>
                   </Select>
                 )}
-              </div>
-            </div>
-            <Tabs
+          </div>
+        </div>
+        <Tabs
               selectedTabId={selectedTabId}
               tabs={tabs}
               onTabChange={setSelectedTabId}
@@ -439,10 +437,8 @@ export default function AdminUsers() {
                   Haut de page
                 </a>
               </div>
-            </Tabs>
-          </section>
-        </div>
-      </div>
+        </Tabs>
+      </section>
     </div>
   );
 }

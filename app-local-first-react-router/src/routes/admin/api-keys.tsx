@@ -8,7 +8,7 @@ import Chargement from '@app/components/Chargement';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import API from '@app/services/api';
 import { ApiKeyApprovalStatus } from '@prisma/client';
-import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
+
 
 export default function AdminApiKeys() {
   const [apiKeys, setApiKeys] = useState<NonNullable<AdminApiKeysResponse['data']['apiKeys']>>([]);
@@ -51,37 +51,32 @@ export default function AdminApiKeys() {
   }
 
   return (
-    <div className="fr-container--fluid fr-my-md-14v">
+    <div className="p-2 md:p-4">
       <title>
         Clés API | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
-      <div className="fr-container fr-mb-md-14v">
-        <CallOut>
-          Accès à la documentation :<br />
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-sm text-gray-600">
+          Doc :{' '}
           <a href={`${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`} target="_blank">
-            Pour les tierces parties
+            Tierces parties
           </a>
-          <br />
+          {' · '}
           <a href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
-            Pour les entités
+            Entités
           </a>
-          .
-        </CallOut>
+        </span>
+        <Button
+          size="small"
+          linkProps={{
+            to: '/app/tableau-de-bord/admin/api-key-add',
+          }}
+        >
+          + Ajouter une clé API
+        </Button>
       </div>
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <div className="fr-mb-2w flex items-center justify-between gap-4">
-            <h1 className="fr-h2">Clés API</h1>
-            <Button
-              linkProps={{
-                to: '/app/tableau-de-bord/admin/api-key-add',
-              }}
-            >
-              + Ajouter une clé API
-            </Button>
-          </div>
-          <section className="mb-6 bg-white md:shadow-sm">
-            <Tabs
+      <section className="mb-4 bg-white md:shadow-sm">
+        <Tabs
               selectedTabId={selectedTabId}
               tabs={tabs}
               onTabChange={setSelectedTabId}
@@ -167,10 +162,8 @@ export default function AdminApiKeys() {
                   Haut de page
                 </a>
               </div>
-            </Tabs>
-          </section>
-        </div>
-      </div>
+        </Tabs>
+      </section>
     </div>
   );
 }

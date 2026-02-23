@@ -35,6 +35,7 @@ import LandingDemarchesPage from './routes/landing-demarches';
 import AdminApiKeys from './routes/admin/api-keys';
 import AdminNewApiKey from './routes/admin/api-key-add';
 import AdminApiKey from './routes/admin/api-key.$apiKeyId';
+import AdminLayout from './routes/admin/layout';
 import NouvelleFiche from './routes/nouvelle-fiche';
 import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
 import MesChasses from './routes/mes-chasses/mes-chasses';
@@ -310,7 +311,7 @@ function App() {
                 </RestrictedRoute>
               }
             />
-            <Route path="admin" element={<Outlet />}>
+            <Route path="admin" element={<AdminLayout />}>
               <Route
                 path="users"
                 element={
