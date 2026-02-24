@@ -52,6 +52,7 @@ import MonEntreprise from './routes/mon-profil/3-mon-entreprise';
 import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-mon-entreprise';
 import MesNotifications from './routes/mon-profil/4-mes-notifications';
 import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
+import CCGEdit from './routes/mon-profil/ccg-edit';
 
 // onboarding routes
 import OnboardingMesRoles from './routes/onboarding/1-mon-activite';
@@ -268,6 +269,14 @@ function App() {
               element={
                 <RestrictedRoute id="zacharie_carcasse_id">
                   <MesInformationsDeChasse withCCGs />
+                </RestrictedRoute>
+              }
+            />
+            <Route
+              path="mon-profil/mes-ccgs/:entityId"
+              element={
+                <RestrictedRoute id="ccg-edit">
+                  <CCGEdit />
                 </RestrictedRoute>
               }
             />

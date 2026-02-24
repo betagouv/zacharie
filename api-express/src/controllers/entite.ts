@@ -498,4 +498,95 @@ router.post(
   }),
 );
 
+router.get(
+  '/ccg/:entityId',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user!;
+    const { entityId } = req.params;
+
+    const relation = await prisma.entityAndUserRelations.findFirst({
+      where: {
+        owner_id: user.id,
+        entity_id: entityId,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        deleted_at: null,
+        EntityRelatedWithUser: {
+          type: EntityTypes.CCG,
+        },
+      },
+      include: {
+        EntityRelatedWithUser: true,
+      },
+    });
+
+    if (!relation) {
+      res.status(403).send({ ok: false, data: null, error: 'Accès non autorisé' });
+      return;
+    }
+
+    res.status(200).send({
+      ok: true,
+      data: { entity: relation.EntityRelatedWithUser },
+      error: '',
+    });
+  }),
+);
+
+router.put(
+  '/ccg/:entityId',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user!;
+    const { entityId } = req.params;
+
+    const relation = await prisma.entityAndUserRelations.findFirst({
+      where: {
+        owner_id: user.id,
+        entity_id: entityId,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        deleted_at: null,
+        EntityRelatedWithUser: {
+          type: EntityTypes.CCG,
+          ccg_status: 'Pré-enregistré dans Zacharie',
+        },
+      },
+      include: {
+        EntityRelatedWithUser: true,
+      },
+    });
+
+    if (!relation) {
+      res
+        .status(403)
+        .send({ ok: false, data: null, error: 'Accès non autorisé ou CCG déjà déclaré' });
+      return;
+    }
+
+    const result = ccgSchema.safeParse(req.body);
+    if (!result.success) {
+      const error = new Error(result.error.message);
+      res.status(406);
+      return next(error);
+    }
+    const body = result.data;
+
+    const updatedEntity = await prisma.entity.update({
+      where: { id: entityId },
+      data: {
+        raison_sociale: sanitize(body[Prisma.EntityScalarFieldEnum.nom_d_usage]),
+        nom_d_usage: sanitize(body[Prisma.EntityScalarFieldEnum.nom_d_usage]),
+        address_ligne_1: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_1]),
+        address_ligne_2: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_2]),
+        code_postal: sanitize(body[Prisma.EntityScalarFieldEnum.code_postal]),
+        ville: sanitize(body[Prisma.EntityScalarFieldEnum.ville]),
+        siret: sanitize(body[Prisma.EntityScalarFieldEnum.siret]) || null,
+        numero_ddecpp: sanitize(body[Prisma.EntityScalarFieldEnum.numero_ddecpp]) || null,
+      },
+    });
+
+    res.status(200).send({ ok: true, error: '', data: { entity: updatedEntity } });
+  }),
+);
+
 export default router;
