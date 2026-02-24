@@ -27,8 +27,9 @@ test("Création de compte examinateur initial", async ({ page }) => {
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Oui").first().click();
   await page.getByRole("textbox", { name: "Numéro d'attestation de" }).fill("CFEI-075-00-111");
-  await page.getByRole("button", { name: "Continuer" }).click();
-  await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 });
 
 test("Création de compte premier détenteur", async ({ page }) => {
@@ -46,8 +47,9 @@ test("Création de compte premier détenteur", async ({ page }) => {
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Non").click();
-  await page.getByRole("button", { name: "Continuer" }).click();
-  await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 });
 
 test("Création de compte collecteur pro", async ({ page }) => {
@@ -83,7 +85,7 @@ test("Création de compte collecteur pro", async ({ page }) => {
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await expect(page.locator("#user_roles_form")).toMatchAriaSnapshot(`- heading "Activez les notifications" [level=1]`);
   await page.getByRole("button", { name: "Continuer" }).click();
-  await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
+  await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 });
 
 test("Création de compte établissement de traitement du gibier", async ({ page }) => {
@@ -124,7 +126,7 @@ test("Création de compte établissement de traitement du gibier", async ({ page
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await expect(page.locator("#user_roles_form")).toMatchAriaSnapshot(`- heading "Activez les notifications" [level=1]`);
   await page.getByRole("button", { name: "Continuer" }).click();
-  await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
+  await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 });
 
 test("Création de compte SVI", async ({ page }) => {
@@ -155,7 +157,7 @@ test("Création de compte SVI", async ({ page }) => {
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await expect(page.locator("#user_roles_form")).toMatchAriaSnapshot(`- heading "Activez les notifications" [level=1]`);
   await page.getByRole("button", { name: "Continuer" }).click();
-  await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
+  await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 });
 
 test("Examinateur initial ajoute une association de chasse depuis son profil", async ({ page }) => {
@@ -175,13 +177,14 @@ test("Examinateur initial ajoute une association de chasse depuis son profil", a
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Oui").first().click();
   await page.getByRole("textbox", { name: "Numéro d'attestation de" }).fill("CFEI-075-00-222");
-  await page.getByRole("button", { name: "Continuer" }).click();
-  await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 
   // Navigate to profile to add hunting associations
   await page.getByRole("button", { name: "Mon profil" }).click();
   await page.getByRole("link", { name: "Mes informations de chasse" }).click();
-  await expect(page.getByRole("heading", { name: "Renseignez vos informations de chasse" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Informations de chasse" })).toBeVisible();
 
   await page.getByText("Oui").nth(1).click();
   await page.getByRole("combobox", { name: "Raison Sociale *" }).fill("Association de lapins chasseurs");
@@ -221,13 +224,14 @@ test("Examinateur initial ajoute une chambre froide (CCG) depuis son profil", as
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Oui").first().click();
   await page.getByRole("textbox", { name: "Numéro d'attestation de" }).fill("CFEI-075-00-333");
-  await page.getByRole("button", { name: "Continuer" }).click();
-  await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 
   // Navigate to profile to add CCG
   await page.getByRole("button", { name: "Mon profil" }).click();
   await page.getByRole("link", { name: "Mes informations de chasse" }).click();
-  await expect(page.getByRole("heading", { name: "Renseignez vos informations de chasse" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Informations de chasse" })).toBeVisible();
 
   // Add a CCG without official number - use radio button selector
   await page.getByText("Oui mais").nth(0).click();
@@ -258,13 +262,14 @@ test("Premier détenteur devient examinateur initial depuis son profil", async (
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Non").click(); // Not trained initially
-  await page.getByRole("button", { name: "Continuer" }).click();
-  await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 
   // Navigate to profile to become examinateur initial
   await page.getByRole("button", { name: "Mon profil" }).click();
   await page.getByRole("link", { name: "Mes informations de chasse" }).click();
-  await expect(page.getByRole("heading", { name: "Renseignez vos informations de chasse" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Informations de chasse" })).toBeVisible();
 
   // Change to examinateur initial
   await page.getByText("Oui").first().click(); // Now trained
@@ -295,8 +300,9 @@ test("Premier détenteur ajoute association et CCG depuis son profil", async ({ 
   await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
   await page.getByText("Non").click();
-  await page.getByRole("button", { name: "Continuer" }).click();
-  await expect(page.getByText("Vous n'avez pas encore de fiche")).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 
   // Navigate to profile
   await page.getByRole("button", { name: "Mon profil" }).click();

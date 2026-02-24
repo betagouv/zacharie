@@ -7,7 +7,7 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { UserRoles, Prisma } from '@prisma/client';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
-import { useNavigate, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import API from '@app/services/api';
 import MesCCGs from './3-mes-ccgs';
 import MesAssociationsDeChasse from './3-mes-associations-de-chasse';
@@ -82,6 +82,12 @@ export default function OnboardingMesInformationsDeChasse() {
           <CallOut title="⚠️ Dites-le nous une fois" className="bg-white">
             Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer.
           </CallOut>
+          <p className="mb-8 text-sm text-gray-500">
+            <Link to={redirect ?? nextPage} className="text-gray-500">
+              Passer cette étape
+            </Link>
+            {' '}— vous pourrez compléter ces informations plus tard.
+          </p>
           {isChasseur && <MesAssociationsDeChasse />}
           <MesCCGs />
           {isChasseur && <MesPartenaires />}
@@ -120,7 +126,7 @@ export default function OnboardingMesInformationsDeChasse() {
               </div>
             </div>
           )}
-          <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
+          <div className="left-0 z-50 flex flex-col p-4 pb-2 relative bottom-0 w-auto items-center justify-center shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
             <ButtonsGroup
               inlineLayoutWhen="always"
               buttons={[
