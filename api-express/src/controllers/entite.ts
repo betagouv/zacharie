@@ -88,7 +88,20 @@ router.get(
     ) => {
       const user = req.user!;
 
-      const include = user.activated ? entityAdminInclude : undefined;
+      const entityOnboardingInclude = {
+        EntityRelationsWithUsers: {
+          where: { owner_id: user.id },
+          select: {
+            id: true,
+            relation: true,
+            status: true,
+            owner_id: true,
+            entity_id: true,
+          },
+        },
+      } as unknown as typeof entityAdminInclude;
+
+      const include = user.activated ? entityAdminInclude : entityOnboardingInclude;
 
       const allEntities = await prisma.entity.findMany({
         where: {
@@ -144,7 +157,20 @@ router.get(
     async (req: RequestWithUser, res: express.Response<PartenairesResponse>, next: express.NextFunction) => {
       const user = req.user!;
 
-      const include = user.activated ? entityAdminInclude : undefined;
+      const entityOnboardingInclude = {
+        EntityRelationsWithUsers: {
+          where: { owner_id: user.id },
+          select: {
+            id: true,
+            relation: true,
+            status: true,
+            owner_id: true,
+            entity_id: true,
+          },
+        },
+      } as unknown as typeof entityAdminInclude;
+
+      const include = user.activated ? entityAdminInclude : entityOnboardingInclude;
 
       const allEntities = await prisma.entity.findMany({
         where: {
