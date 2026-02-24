@@ -7,7 +7,7 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { UserRoles, Prisma } from '@prisma/client';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
-import { useNavigate, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import API from '@app/services/api';
 import MesCCGs from './3-mes-ccgs';
 import MesAssociationsDeChasse from './3-mes-associations-de-chasse';
@@ -41,7 +41,7 @@ export default function OnboardingMesInformationsDeChasse() {
     [user.id],
   );
 
-  const nextPage = '/app/tableau-de-bord/onboarding/mes-notifications';
+  const nextPage = '/app/tableau-de-bord';
 
 
   const handleSubmit = async () => {
@@ -74,21 +74,26 @@ export default function OnboardingMesInformationsDeChasse() {
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <Stepper
-            currentStep={4}
-            nextTitle="Mes notifications"
-            stepCount={5}
-            title="Mes informations de chasse"
+            currentStep={3}
+            nextTitle={undefined}
+            stepCount={3}
+            title="Informations de chasse"
           />
-          <h1 className="fr-h2 fr-mb-2w">Renseignez vos informations de chasse</h1>
-          <CallOut title="⚠️ Informations essentielles pour faire des fiches" className="bg-white">
+          <CallOut title="⚠️ Dites-le nous une fois" className="bg-white">
             Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer.
           </CallOut>
+          <p className="mb-8 text-sm text-gray-500">
+            <Link to={redirect ?? nextPage} className="text-gray-500">
+              Passer cette étape
+            </Link>
+            {' '}— vous pourrez compléter ces informations plus tard.
+          </p>
           {isChasseur && <MesAssociationsDeChasse />}
           <MesCCGs />
           {isChasseur && <MesPartenaires />}
-          <div className="mb-6 bg-white md:shadow-sm">
-            <div className="p-4 md:p-8">
-              {showEntrpriseVisibilityCheckbox && (
+          {showEntrpriseVisibilityCheckbox && (
+            <div className="mb-6 bg-white md:shadow-sm">
+              <div className="p-4 md:p-8">
                 <>
                   <form
                     id="user_data_form"
@@ -118,39 +123,38 @@ export default function OnboardingMesInformationsDeChasse() {
                     />
                   </form>
                 </>
-              )}
-              <div className="mt-6 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                  Haut de page
-                </a>
               </div>
             </div>
-            <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: 'Enregistrer et continuer',
-                    disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
-                    type: 'button',
-                    nativeButtonProps: {
-                      onClick: () => handleSubmit(),
-                    },
+          )}
+          <div className="left-0 z-50 flex flex-col p-4 pb-2 relative bottom-0 w-auto items-center justify-center shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
+            <ButtonsGroup
+              inlineLayoutWhen="always"
+              buttons={[
+                {
+                  children: redirect ? 'Retour' : 'Étape précédente',
+                  iconId: 'fr-icon-arrow-left-line',
+                  linkProps: {
+                    to:
+                      redirect ??
+                      (isChasseur
+                        ? '/app/tableau-de-bord/onboarding/formation-examen-initial'
+                        : '/app/tableau-de-bord/onboarding/mes-coordonnees'),
+                    href: '#',
                   },
-                  {
-                    children: redirect ? 'Retour' : 'Étape précédente',
-                    linkProps: {
-                      to:
-                        redirect ??
-                        (isChasseur
-                          ? '/app/tableau-de-bord/onboarding/formation-examen-initial'
-                          : '/app/tableau-de-bord/onboarding/mes-coordonnees'),
-                      href: '#',
-                    },
-                    priority: 'secondary',
+                  priority: 'secondary',
+                },
+                {
+                  children: 'Enregistrer et continuer',
+                  iconId: 'fr-icon-arrow-right-line',
+                  iconPosition: 'right',
+                  disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
+                  type: 'button',
+                  nativeButtonProps: {
+                    onClick: () => handleSubmit(),
                   },
-                ]}
-              />
-            </div>
+                },
+              ]}
+            />
           </div>
         </div>
       </div>

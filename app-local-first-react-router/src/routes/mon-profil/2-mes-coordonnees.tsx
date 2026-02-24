@@ -30,6 +30,8 @@ export default function MesCoordonnees() {
   );
 
   const handleSubmit = () => {
+    const form = document.getElementById('user_data_form') as HTMLFormElement;
+    if (!form.reportValidity()) return;
     toast.success('Coordonnées enregistrées');
   };
 
@@ -44,11 +46,7 @@ export default function MesCoordonnees() {
       <title>Mes coordonnées | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <h1 className="fr-h2 fr-mb-2w">Mes coordonnées</h1>
-          <CallOut title="✍️ Pour pouvoir remplir les fiches qui vont sont attribuées" className="bg-white">
-            Qui êtes-vous ?<br />
-            Lorsqu'une fiche sera attribuée à laquelle vous êtes rattachée, vous pourrez la prendre en charge.
-          </CallOut>
+          <h1 className="fr-h2 fr-mb-2w">Coordonnées</h1>
           <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
               <form
@@ -157,28 +155,20 @@ export default function MesCoordonnees() {
             </div>
           </div>
 
-          <div className="mb-6 bg-white md:shadow-sm">
-            <div className="p-4 md:p-8">
-              <div className="mt-6 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                  Haut de page
-                </a>
-              </div>
-            </div>
-            <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: 'Enregistrer',
-                    type: 'button',
-                    nativeButtonProps: {
-                      onClick: handleSubmit,
-                    },
+          <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
+            <ButtonsGroup
+              buttons={[
+                {
+                  children: 'Enregistrer',
+                  type: 'button',
+                  nativeButtonProps: {
+                    onClick: handleSubmit,
                   },
-                ]}
-              />
-            </div>
+                },
+              ]}
+            />
           </div>
+
         </div>
       </div>
     </div>

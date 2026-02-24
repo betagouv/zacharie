@@ -80,13 +80,9 @@ export default function MesNotifications() {
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-            <h1 className="fr-h2 fr-mb-2w">Activez les notifications</h1>
-            <CallOut title="🔔 Soyez notifié d'une fiche qui vous est attribuée" className="bg-white">
-              Vous pouvez être notifié par mail ou par une notification sur votre smartphone dès qu'une Fiche
-              d'Examen Initial vous est attribuée.
-            </CallOut>
+            <h1 className="fr-h2 fr-mb-2w">Notifications</h1>
             <div className="mb-6 bg-white md:shadow-sm">
-              <div className="p-4 pb-32 md:p-8 md:pb-0">
+              <div className="p-4 pb-32 md:p-8">
                 <Checkbox
                   key={checkBoxChecked ? 'checked' : 'unchecked'}
                   legend="Sélectionnez tous les types de notifications que vous souhaitez recevoir"
@@ -139,25 +135,20 @@ export default function MesNotifications() {
                     },
                   ]}
                 />
-                <div className="mt-6 mb-16 ml-6">
-                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                    Haut de page
-                  </a>
-                </div>
               </div>
-              <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-                <ButtonsGroup
-                  buttons={[
-                    {
-                      children: 'Enregistrer',
-                      nativeButtonProps: {
-                        type: 'submit',
-                        onClick: handleSubmit,
-                      },
+            </div>
+            <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
+              <ButtonsGroup
+                buttons={[
+                  {
+                    children: 'Enregistrer',
+                    nativeButtonProps: {
+                      type: 'submit',
+                      onClick: handleSubmit,
                     },
-                  ]}
-                />
-              </div>
+                  },
+                ]}
+              />
             </div>
           </div>
         </div>

@@ -24,7 +24,7 @@ export default function OnboardingExaminateurInitial() {
     window.scrollTo(0, 0);
   }, []);
 
-  const nextPage = '/app/tableau-de-bord';
+  const nextPage = '/app/tableau-de-bord/onboarding/mes-informations-de-chasse';
 
   // If user is not a hunter, skip this step
   useEffect(() => {
@@ -43,38 +43,39 @@ export default function OnboardingExaminateurInitial() {
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <Stepper
-            currentStep={3}
-            nextTitle="Mes informations de chasse"
-            stepCount={5}
+            currentStep={2}
+            nextTitle="Informations de chasse"
+            stepCount={3}
             title="Formation à l'examen initial"
           />
-          <h1 className="fr-h2 fr-mb-2w">Êtes-vous formé à l'examen initial ?</h1>
           <CallOut title="⚠️ Information importante" className="bg-white">
             Cette information déterminera si vous pouvez créer des fiches d'examen initial.
           </CallOut>
           <ExaminateurInitial />
-          <div className="mb-6 bg-white md:shadow-sm">
-            <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: 'Continuer',
-                    type: 'button',
-                    nativeButtonProps: {
-                      onClick: () => navigate(redirect ?? nextPage),
-                    },
+          <div className="left-0 z-50 flex flex-col p-4 pb-2 relative bottom-0 w-auto items-center justify-center shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
+            <ButtonsGroup
+              inlineLayoutWhen="always"
+              buttons={[
+                {
+                  children: redirect ? 'Retour' : 'Étape précédente',
+                  iconId: 'fr-icon-arrow-left-line',
+                  linkProps: {
+                    to: redirect ?? '/app/tableau-de-bord/onboarding/mes-coordonnees',
+                    href: '#',
                   },
-                  {
-                    children: redirect ? 'Retour' : 'Modifier mes coordonnées',
-                    linkProps: {
-                      to: redirect ?? '/app/tableau-de-bord/onboarding/mes-coordonnees',
-                      href: '#',
-                    },
-                    priority: 'secondary',
+                  priority: 'secondary',
+                },
+                {
+                  children: 'Enregistrer et continuer',
+                  iconId: 'fr-icon-arrow-right-line',
+                  iconPosition: 'right',
+                  type: 'button',
+                  nativeButtonProps: {
+                    onClick: () => navigate(redirect ?? nextPage),
                   },
-                ]}
-              />
-            </div>
+                },
+              ]}
+            />
           </div>
         </div>
       </div>

@@ -620,26 +620,30 @@ function FeisWrapper({
       <div className="fr-container">
         <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center bg-white p-4 md:p-8">
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
-            <h1 className="fr-h4">Vous n'avez pas encore de fiche</h1>
-            {user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei ? (
-              <>
-                <p className="fr-text--regular fr-mb-3w">
-                  Vous pouvez créer une nouvelle fiche en cliquant sur le bouton ci-dessous.
+            <div className="flex flex-col bg-white">
+              <h2 className="mb-3 fr-h4 font-bold text-gray-800">Pas encore de fiches cette saison</h2>
+              {user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei ? (
+                <>
+                  <p className="mb-6 max-w-md fr-text--regular">
+                    Vos fiches apparaîtront ici dès que vous aurez créé votre première fiche d'examen initial.
+                  </p>
+                  <Button
+                    priority="primary"
+                    iconId="fr-icon-add-circle-line"
+                    onClick={async () => {
+                      const newFei = await createNewFei();
+                      navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+                    }}
+                  >
+                    Créer une fiche
+                  </Button>
+                </>
+              ) : (
+                <p className="mb-6 max-w-md fr-text--regular">
+                  Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée.
                 </p>
-                <Button
-                  priority="primary"
-                  iconId="fr-icon-add-circle-line"
-                  onClick={async () => {
-                    const newFei = await createNewFei();
-                    navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
-                  }}
-                >
-                  Créer une fiche
-                </Button>
-              </>
-            ) : (
-              <p className="fr-text--lead fr-mb-3w">Veuillez patienter, Zach'arrive&nbsp;!</p>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -108,13 +108,13 @@ export default function MesInformationsDeChasse({
 
   let calloutTitle = '';
   if (withEverything) {
-    calloutTitle = 'Renseignez vos informations de chasse';
+    calloutTitle = 'Informations de chasse';
   } else if (withAssociationsDeChasse) {
-    calloutTitle = 'Renseignez vos associations de chasse';
+    calloutTitle = 'Associations de chasse';
   } else if (withPartenaires) {
-    calloutTitle = 'Renseignez vos partenaires';
+    calloutTitle = 'Partenaires';
   } else if (withCCGs) {
-    calloutTitle = 'Renseignez vos chambres froides (CCGs)';
+    calloutTitle = 'Chambres froides (CCGs)';
   }
 
   return (
@@ -227,75 +227,69 @@ export default function MesInformationsDeChasse({
               </div>
             </div>
           )}
-          <div className="mb-6 bg-white md:shadow-sm">
-            <div className="p-4 md:p-8">
-              {showEntrpriseVisibilityCheckbox && (
-                <>
-                  <form
-                    id="user_data_form"
-                    method="POST"
-                    onSubmit={(e) => e.preventDefault()}
-                    className="px-8"
-                  >
-                    <Checkbox
-                      options={[
-                        {
-                          label:
-                            "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
-                          hintText:
-                            'Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les fiches ne pourront pas être attribuées à votre entreprise',
-                          nativeInputProps: {
-                            required: true,
-                            name: Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox,
-                            value: 'true',
-                            onChange: () => {
-                              setVisibilityChecked(!visibilityChecked);
-                              handleUserSubmit({
-                                isExaminateurInitial,
-                                numeroCfei,
-                                visibilityChecked: !visibilityChecked,
-                              });
-                            },
-                            checked: visibilityChecked,
+          {showEntrpriseVisibilityCheckbox && (
+            <div className="mb-6 bg-white md:shadow-sm">
+              <div className="p-4 md:p-8">
+                <form
+                  id="user_data_form"
+                  method="POST"
+                  onSubmit={(e) => e.preventDefault()}
+                  className="px-8"
+                >
+                  <Checkbox
+                    options={[
+                      {
+                        label:
+                          "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+                        hintText:
+                          'Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les fiches ne pourront pas être attribuées à votre entreprise',
+                        nativeInputProps: {
+                          required: true,
+                          name: Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox,
+                          value: 'true',
+                          onChange: () => {
+                            setVisibilityChecked(!visibilityChecked);
+                            handleUserSubmit({
+                              isExaminateurInitial,
+                              numeroCfei,
+                              visibilityChecked: !visibilityChecked,
+                            });
                           },
+                          checked: visibilityChecked,
                         },
-                      ]}
-                    />
-                  </form>
-                </>
-              )}
-              <div className="mt-6 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                  Haut de page
-                </a>
+                      },
+                    ]}
+                  />
+                </form>
               </div>
             </div>
-            <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-              <ButtonsGroup
-                buttons={[
-                  {
-                    children: redirect ? 'Enregistrer et continuer' : 'Enregistrer',
-                    disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
-                    type: 'button',
-                    nativeButtonProps: {
-                      onClick: () => (redirect ? navigate(redirect) : handleSubmit()),
-                    },
+          )}
+
+          <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
+            <ButtonsGroup
+              buttons={[
+                {
+                  children: redirect ? 'Enregistrer et continuer' : 'Enregistrer',
+                  disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
+                  type: 'button',
+                  nativeButtonProps: {
+                    onClick: () => (redirect ? navigate(redirect) : handleSubmit()),
                   },
-                  ...(redirect
-                    ? [
-                      {
-                        children: 'Retour',
-                        linkProps: {
-                          to: redirect,
-                          href: '#',
-                        },
-                        priority: 'secondary' as const,
+                },
+                ...(redirect
+                  ? [
+                    {
+                      children: 'Retour',
+                      linkProps: {
+                        to: redirect,
+                        href: '#',
                       },
-                    ]
-                    : []),
-                ]}
-              />
-            </div>
+                      priority: 'secondary' as const,
+                    },
+                  ]
+                  : []),
+              ]}
+            />
           </div>
         </div>
       </div>
