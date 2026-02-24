@@ -85,7 +85,7 @@ export default function CCGEdit() {
   }
 
   return (
-    <div className="mb-6 bg-white md:shadow-sm">
+    <div className="mb-6 bg-white md:shadow-sm fr-container">
       <div className="p-4 md:p-8">
         <Button
           type="button"
