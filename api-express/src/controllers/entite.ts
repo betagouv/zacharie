@@ -32,7 +32,12 @@ import createUserId from '~/utils/createUserId';
 router.get(
   '/fei/:entity_id/:fei_numero',
   passport.authenticate('user', { session: false }),
-  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user!;
+    if (!user.activated) {
+      res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
+      return;
+    }
     if (!req.params.fei_numero) {
       res.status(400).send({ ok: false, data: null, error: 'Missing fei_numero' });
       return;
@@ -83,13 +88,15 @@ router.get(
     ) => {
       const user = req.user!;
 
+      const include = user.activated ? entityAdminInclude : undefined;
+
       const allEntities = await prisma.entity.findMany({
         where: {
           deleted_at: null,
           type: { not: EntityTypes.CCG },
           ...(user.roles.includes(UserRoles.ADMIN) ? {} : { for_testing: false }),
         },
-        include: entityAdminInclude,
+        include,
         orderBy: {
           nom_d_usage: 'asc',
         },
@@ -106,7 +113,7 @@ router.get(
             },
           },
         },
-        include: entityAdminInclude,
+        include,
         orderBy: {
           nom_d_usage: 'asc',
         },
@@ -137,6 +144,8 @@ router.get(
     async (req: RequestWithUser, res: express.Response<PartenairesResponse>, next: express.NextFunction) => {
       const user = req.user!;
 
+      const include = user.activated ? entityAdminInclude : undefined;
+
       const allEntities = await prisma.entity.findMany({
         where: {
           deleted_at: null,
@@ -151,7 +160,7 @@ router.get(
           },
           ...(user.roles.includes(UserRoles.ADMIN) ? {} : { for_testing: false }),
         },
-        include: entityAdminInclude,
+        include,
         orderBy: {
           nom_d_usage: 'asc',
         },
@@ -177,7 +186,7 @@ router.get(
             },
           },
         },
-        include: entityAdminInclude,
+        include,
         orderBy: {
           nom_d_usage: 'asc',
         },
