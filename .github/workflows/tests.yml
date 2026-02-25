@@ -7,7 +7,7 @@ on:
 jobs:
   test:
     if: ${{ !startsWith(github.event.head_commit.message, 'chore:') }}
-    timeout-minutes: 30
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
     services:
@@ -28,6 +28,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          # cache: yarn
+          # cache-dependency-path: "**/yarn.lock"
 
       - name: Install app dependencies
         run: |
@@ -44,29 +46,11 @@ jobs:
           cd api-express
           npm i
 
-      - name: Install e2e dependencies
+      - name: Install Playwright Browsers
         run: |
           cd e2e
           npm i
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('e2e/package-lock.json') }}
-
-      - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: |
-          cd e2e
           npx playwright install --with-deps
-
-      - name: Install Playwright system deps only
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: |
-          cd e2e
-          npx playwright install-deps
 
       - name: Init DB
         run: |
