@@ -29,7 +29,7 @@ export default function DeactivatedAccount() {
                     {isProfileCompleted ? (
                       <>Merci pour votre inscription à Zacharie&nbsp;!</>
                     ) : (
-                      <>Votre profil doit être complété pour valider votre compte</>
+                      <>Pour créer une fiche, compléter votre profil.</>
                     )}
                   </h1>
                   {isProfileCompleted ? (
@@ -42,7 +42,7 @@ export default function DeactivatedAccount() {
                   ) : (
                     <>
                       <p className="fr-text--sm fr-mb-3w">
-                        Afin de valider votre compte, complétez les informations manquantes.
+                        Il semble que certaines informations soient manquantes sur votre profil.
                       </p>
                       <ul className="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
                         <li>
