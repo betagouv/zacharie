@@ -229,6 +229,13 @@ export default function RootDisplay({
                   },
                   {
                     linkProps: {
+                      to: '/faq',
+                      href: '#',
+                    },
+                    text: 'FAQ',
+                  },
+                  {
+                    linkProps: {
                       to: contactLink ?? '/contact',
                       href: '#',
                     },
