@@ -110,6 +110,11 @@ Two API types:
 1. **Internal API** (used by app): JWT auth, full CRUD on user data
 2. **Public API v1** (`/v1/`): API key auth for third parties, read-only access
 
+## Data Migration Rules
+
+- **NEVER write backward-compatibility or data-retroactivity code.** When the data model changes (schema, enums, field names, formats), update the code to work with the new model only. Do NOT add runtime transformations, fallbacks, or migration logic in application code to handle old data formats. Old data must be migrated at the database level (Prisma migrations, SQL scripts), not patched at read-time in the app.
+- Concretely: no `if (oldField) { newField = oldField }`, no `value ?? legacyValue`, no `// backward compat` shims. Just write code for the current schema.
+
 ## Key Conventions
 
 - Node.js >= 20 required
