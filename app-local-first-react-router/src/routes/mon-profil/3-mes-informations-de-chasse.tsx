@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { UserRoles, Prisma } from '@prisma/client';
 import type { UserConnexionResponse } from '@api/src/types/responses';
@@ -123,9 +123,7 @@ export default function MesInformationsDeChasse({
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">{calloutTitle}</h1>
-          <CallOut title="⚠️ Informations essentielles pour faire des fiches" className="bg-white">
-            Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer.
-          </CallOut>
+          <Alert className="bg-white mb-8" small severity="info" description="Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer." />
           {withExaminateurInitial && user.roles.includes(UserRoles.CHASSEUR) && (
             <>
               <div className="mb-6 bg-white md:shadow-sm">
