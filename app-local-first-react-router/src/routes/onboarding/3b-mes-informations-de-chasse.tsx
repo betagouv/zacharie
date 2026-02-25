@@ -14,6 +14,7 @@ import MesAssociationsDeChasse from './3-mes-associations-de-chasse';
 import MesPartenaires from './3-mes-partenaires';
 import { toast } from 'react-toastify';
 import { Highlight } from "@codegouvfr/react-dsfr/Highlight";
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
 
 export default function OnboardingMesInformationsDeChasse() {
   const [searchParams] = useSearchParams();
@@ -80,10 +81,8 @@ export default function OnboardingMesInformationsDeChasse() {
             stepCount={3}
             title="Informations de chasse"
           />
+          <Alert className="bg-white mb-8" small severity="info" description="Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer." />
           <p className="mb-8 text-sm text-gray-500">
-          </p>
-          <p className="mb-8 text-sm text-gray-500">
-            Ces informations seront <b>reportées automatiquement</b> sur chacune des fiches que vous allez créer.<br />
             <Link to={redirect ?? nextPage} className="text-gray-500">
               Passer cette étape
             </Link>
@@ -159,6 +158,6 @@ export default function OnboardingMesInformationsDeChasse() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
