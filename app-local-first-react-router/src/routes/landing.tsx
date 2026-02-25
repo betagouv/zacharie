@@ -86,10 +86,10 @@ export default function LandingPage() {
 
         {/* Features Section */}
         <section className="relative grid items-center bg-white lg:flex">
-          <div className="relative z-10 -mt-16 flex justify-start lg:-mt-24 lg:basis-1/2 2xl:basis-1/3">
+          <div className="relative z-10 -mt-16 flex justify-start lg:-mt-20 lg:basis-1/2 2xl:basis-1/3">
             {/* Phone mockup */}
             <img
-              src="/landing/main-app-mockup.png"
+              src="/landing/MAIN APPLI_TBD.png"
               alt="Mockup de l'application Zacharie sur smartphone"
               className="h-1/4 w-full max-w-lg 2xl:max-w-3xl"
             />
