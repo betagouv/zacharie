@@ -205,7 +205,7 @@ export default function MesInformationsDeChasse({
                   className="mb-8 text-lg font-semibold text-gray-900"
                   id={`onboarding-etape-2-associations-data-title`}
                 >
-                  Mon association / société / domaine de chasse
+                  Association, société et domaine de chasse
                 </h3>
                 <MesAssociationsDeChasse />
               </div>
@@ -221,7 +221,7 @@ export default function MesInformationsDeChasse({
                   className="mb-8 text-lg font-semibold text-gray-900"
                   id={`onboarding-etape-2-associations-data-title`}
                 >
-                  Mes partenaires
+                  Partenaires
                 </h3>
                 <MesPartenaires />
               </div>
