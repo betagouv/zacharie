@@ -74,7 +74,7 @@
     "@types/fs-extra": "^11",
     "@types/jsonwebtoken": "^9",
     "@types/morgan": "^1.9.9",
-    "@types/node": "^20.19.0",
+    "@types/node": "20.10.3",
     "@types/passport": "^0",
     "@types/passport-jwt": "^4",
     "@types/react": "^19.2.7",
