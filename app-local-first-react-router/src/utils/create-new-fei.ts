@@ -1,5 +1,7 @@
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import { syncData } from '@app/zustand/store';
+import { createFei } from '@app/zustand/actions/create-fei';
+import { addLog } from '@app/zustand/actions/add-log';
 import useUser from '@app/zustand/user';
 import { FeiOwnerRole, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -85,8 +87,8 @@ export async function createNewFei(props?: InitialParamsProps): Promise<FeiWithI
     is_synced: false,
     CarcasseIntermediaire: [],
   };
-  useZustandStore.getState().createFei(newFei);
-  useZustandStore.getState().addLog({
+  createFei(newFei);
+  addLog({
     user_id: user.id,
     user_role: UserRoles.CHASSEUR,
     fei_numero: newFei.numero,

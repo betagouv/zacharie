@@ -21,6 +21,10 @@ import ModalTreeDisplay from '@app/components/ModalTreeDisplay';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
+import { updateCarcasse } from '@app/zustand/actions/update-carcasse';
+import { updateCarcassesTransmission } from '@app/zustand/actions/update-carcasses-transmission';
+import { updateFei } from '@app/zustand/actions/update-fei';
+import { addLog } from '@app/zustand/actions/add-log';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
@@ -42,10 +46,6 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
 
-  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
-  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
-  const updateFei = useZustandStore((state) => state.updateFei);
-  const addLog = useZustandStore((state) => state.addLog);
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id!];
   const feiCarcasses = useCarcassesForFei(params.fei_numero);

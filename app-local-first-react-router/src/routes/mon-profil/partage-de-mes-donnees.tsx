@@ -3,6 +3,7 @@ import type { UserConnexionResponse } from '@api/src/types/responses';
 import { useEffect, useState } from 'react';
 import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
+import { setApiKeyApprovals } from '@app/zustand/actions/set-api-key-approvals';
 import useUser from '@app/zustand/user';
 import SelectCustom from '@app/components/SelectCustom';
 import { ApiKeyApprovalStatus, ApiKeyScope, Entity, User } from '@prisma/client';
@@ -11,7 +12,6 @@ import { Link } from 'react-router';
 
 export default function PartageDeMesDonnees() {
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
-  const setApiKeyApprovals = useZustandStore((state) => state.setApiKeyApprovals);
   const entities = useZustandStore((state) => state.entities);
   const user = useUser((state) => state.user)!;
 

@@ -12,6 +12,8 @@ import SelectNextForExaminateur from './examinateur-select-next';
 import FeiPremierDetenteur from './premier-detenteur';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import useZustandStore, { syncData } from '@app/zustand/store';
+import { updateFei as updateFeiAction } from '@app/zustand/actions/update-fei';
+import { addLog } from '@app/zustand/actions/add-log';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { createHistoryInput } from '@app/utils/create-history-entry';
@@ -40,10 +42,8 @@ export default function FEIExaminateurInitial() {
   const premierDetenteurEntity = fei.premier_detenteur_entity_id
     ? entities[fei.premier_detenteur_entity_id!]
     : null;
-  const updateFeiState = useZustandStore((state) => state.updateFei);
-  const addLog = useZustandStore((state) => state.addLog);
-  const updateFei: typeof updateFeiState = (fei_numero, nextFei) => {
-    updateFeiState(fei_numero, nextFei);
+  const updateFei: typeof updateFeiAction = (fei_numero, nextFei) => {
+    updateFeiAction(fei_numero, nextFei);
     addLog({
       user_id: user.id,
       user_role: UserRoles.CHASSEUR,

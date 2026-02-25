@@ -7,6 +7,9 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useZustandStore, { syncData } from '@app/zustand/store';
+import { updateFei } from '@app/zustand/actions/update-fei';
+import { updateCarcassesTransmission } from '@app/zustand/actions/update-carcasses-transmission';
+import { addLog } from '@app/zustand/actions/add-log';
 import useUser from '@app/zustand/user';
 import { useNavigate, useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
@@ -40,10 +43,6 @@ export default function SelectNextForExaminateur({ disabled }: { disabled?: bool
     }
     return associationsDeChasse;
   }, [entities, entitiesIdsWorkingDirectlyFor]);
-
-  const updateFei = useZustandStore((state) => state.updateFei);
-  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
-  const addLog = useZustandStore((state) => state.addLog);
 
   const isOnline = useIsOnline();
 

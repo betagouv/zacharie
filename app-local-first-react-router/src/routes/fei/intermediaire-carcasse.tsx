@@ -6,6 +6,9 @@ import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import useZustandStore from '@app/zustand/store';
+import { updateCarcasseIntermediaire } from '@app/zustand/actions/update-carcasse-intermediaire';
+import { updateCarcasse } from '@app/zustand/actions/update-carcasse';
+import { addLog } from '@app/zustand/actions/add-log';
 import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
@@ -29,9 +32,6 @@ export default function CarcasseIntermediaireComp({
 }: CarcasseIntermediaireProps) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const updateCarcasseIntermediaire = useZustandStore((state) => state.updateCarcasseIntermediaire);
-  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
-  const addLog = useZustandStore((state) => state.addLog);
   const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
   const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
