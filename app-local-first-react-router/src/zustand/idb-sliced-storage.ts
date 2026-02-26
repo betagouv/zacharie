@@ -34,6 +34,9 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
 ): SlicedStorage<S> {
   // Track previous value references so we only write changed slices
   const prevRefs = new Map<string, unknown>();
+  // Block writes until the first getItem completes, so early setState calls
+  // (e.g. refreshUser before hydration) don't overwrite IDB with empty state.
+  let hydrated = false;
 
   return {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -52,6 +55,7 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
         }
         // Clean up legacy key if still around
         del(OLD_KEY).catch(() => {});
+        hydrated = true;
         return { state: state as S, version: meta.version };
       }
 
@@ -73,18 +77,22 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
           await setMany(entries);
           await del(OLD_KEY);
 
+          hydrated = true;
           return { state, version };
         } catch (e) {
           console.error('[idb-sliced] migration from old format failed:', e);
           await del(OLD_KEY);
+          hydrated = true;
           return null;
         }
       }
 
+      hydrated = true;
       return null;
     },
 
     setItem: async (_name, value): Promise<void> => {
+      if (!hydrated) return;
       const state = value.state as Record<string, unknown>;
       const entries: [IDBValidKey, unknown][] = [];
 

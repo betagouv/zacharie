@@ -1,12 +1,13 @@
 import type { FeisResponse, FeiRefreshResponse } from '@api/src/types/responses';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { hydrationPromise } from '@app/zustand/store';
 import { setFeiInStore } from '@app/utils/load-fei';
 import dayjs from 'dayjs';
 import API from '@app/services/api';
 
 export async function loadFeis() {
+  await hydrationPromise;
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
     console.log('not loading feis because not online');
@@ -105,13 +106,19 @@ export async function loadFeis() {
     }
 
     const state = useZustandStore.getState();
+    const hasUnsyncedData =
+      Object.values(state.feis).some((f) => !f.is_synced) ||
+      Object.values(state.carcasses).some((c) => !c.is_synced) ||
+      Object.values(state.carcassesIntermediaireById).some((ci) => !ci.is_synced) ||
+      state.logs.some((l) => !l.is_synced);
+
     useZustandStore.setState({
       feis: { ...state.feis },
       users: { ...state.users },
       entities: { ...state.entities },
       carcasses: { ...state.carcasses },
       carcassesIntermediaireById: { ...state.carcassesIntermediaireById },
-      dataIsSynced: true,
+      dataIsSynced: !hasUnsyncedData,
     });
 
     console.log('chargement feis fini');
