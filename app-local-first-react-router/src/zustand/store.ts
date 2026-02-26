@@ -141,6 +141,11 @@ const initialState: State = {
   _hasHydrated: false,
 };
 
+let resolveHydration: () => void;
+export const hydrationPromise = new Promise<void>((resolve) => {
+  resolveHydration = resolve;
+});
+
 const useZustandStore = create<State & Actions>()(
   devtools(
     persist(
@@ -399,6 +404,7 @@ const useZustandStore = create<State & Actions>()(
           set({
             _hasHydrated: state,
           });
+          if (state) resolveHydration();
         },
         reset: () => {
           set(initialState);
@@ -428,6 +434,7 @@ let debug = false;
 let syncAbortController: AbortController | null = null;
 
 export async function syncData(calledFrom: string) {
+  await hydrationPromise;
   const state = useZustandStore.getState();
   if (!state.isOnline) {
     console.log('not syncing data because not online');

@@ -1,13 +1,14 @@
 import dayjs from 'dayjs';
 import type { FeiResponse } from '@api/src/types/responses';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { hydrationPromise } from '@app/zustand/store';
 import { getFeiAndCarcasseAndIntermediaireIds } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/fei-intermediaire';
 import API from '@app/services/api';
 import type { FeiForRefresh } from '@api/src/types/fei';
 
 export async function loadFei(fei_numero: string) {
+  await hydrationPromise;
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
     console.log('not loading fei because not online');
@@ -51,7 +52,7 @@ export function setFeiInStore(fei: FeiForRefresh) {
     prevState.feis[fei.numero] = {
       ...oldestFei,
       ...newestFei,
-      is_synced: true,
+      is_synced: newestFei.is_synced,
     };
   }
 
@@ -68,7 +69,7 @@ export function setFeiInStore(fei: FeiForRefresh) {
       prevState.carcasses[carcasse.zacharie_carcasse_id] = {
         ...oldestCarcasse,
         ...newestCarcasse,
-        is_synced: true,
+        is_synced: newestCarcasse.is_synced,
       };
     }
   }
@@ -94,7 +95,7 @@ export function setFeiInStore(fei: FeiForRefresh) {
       prevState.carcassesIntermediaireById[feiAndCarcasseAndIntermediaireId] = {
         ...oldestCarcasseIntermediaire,
         ...newestCarcasseIntermediaire,
-        is_synced: true,
+        is_synced: newestCarcasseIntermediaire.is_synced,
       };
     }
   }
