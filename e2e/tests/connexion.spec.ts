@@ -54,10 +54,10 @@ test.describe("Connexion avec email incorrect", () => {
       .fill("examinateur-pas-encore-existe@example.fr");
     await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-mauvais-secret");
     await expect(page.getByRole("textbox", { name: "Mon email Renseignez votre" })).toHaveValue(
-      "examinateur-pas-encore-existe@example.fr"
+      "examinateur-pas-encore-existe@example.fr",
     );
     await expect(page.getByRole("textbox", { name: "Mon mot de passe Veuillez" })).toHaveValue("secret-mauvais-secret");
     await page.getByRole("button", { name: "Créer mon compte" }).click();
-    await expect(page.getByRole("heading", { name: "Renseignez vos coordonnées" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Coordonnées" })).toBeVisible();
   });
 });

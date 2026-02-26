@@ -8,7 +8,9 @@ import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
-import { Notice } from '@codegouvfr/react-dsfr/Notice';
+import { Badge } from '@codegouvfr/react-dsfr/Badge';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
+import { useNavigate } from 'react-router';
 import type { UserCCGsResponse, UserEntityResponse } from '@api/src/types/responses';
 
 export default function MesCCGs() {
@@ -67,27 +69,10 @@ export default function MesCCGs() {
     }
   }, []);
 
-  function RegisterCCG() {
-    return (
-      <p className="mt-4 text-sm">
-        <br />
-        Le CCG identifié dans Zacharie peut être utilisé pour entreposer du gibier. Toutefois, il est
-        important de reconnaître officiellement le CCG en procédant à son enregistrement auprès de la
-        direction départementale en charge de la protection des populations (DDPP/DDETSPP) du département
-        d’implantation du CCG.
-        <br />
-        Pour déclarer l’activité du CCG, il vous suffit de cliquer{' '}
-        <a
-          href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          ici
-        </a>{' '}
-        pour accéder à notre tutoriel.
-      </p>
-    );
-  }
+  const navigate = useNavigate();
+  const hasPreregisteredCCG = userCCGs.some(
+    (ccg) => ccg.ccg_status === 'Pré-enregistré dans Zacharie',
+  );
 
   return (
     <div className="mb-6 bg-white md:shadow-sm" id="onboarding-etape-2-ccgs-data">
@@ -95,6 +80,12 @@ export default function MesCCGs() {
         <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
           <span>Chambres froides (Centres de Collecte du Gibier sauvage)</span>
         </h3>
+        {hasPreregisteredCCG && (
+          <p className="mb-4 text-sm text-gray-600">
+            Une chambre froide en cours de déclaration peut apparaître à déclarer. Dans ce cas, ignorer le
+            message.
+          </p>
+        )}
         {!userCCGs.length && (
           <RadioButtons
             legend="Utilisez-vous une ou plusieurs chambres froides pour entreposer votre gibier avant son transport ?"
@@ -113,7 +104,7 @@ export default function MesCCGs() {
                     setExplicitelySaidNoCCG(false);
                   },
                 },
-                label: 'Oui et la chambre froide a un numéro d’identification',
+                label: 'Oui et la chambre froide a un numéro d\u2019identification',
               },
               {
                 nativeInputProps: {
@@ -127,7 +118,7 @@ export default function MesCCGs() {
                     setExplicitelySaidNoCCG(false);
                   },
                 },
-                label: 'Oui mais la chambre froide n’a pas de numéro d’identification',
+                label: 'Oui mais la chambre froide n\u2019a pas de numéro d\u2019identification',
               },
               {
                 nativeInputProps: {
@@ -141,7 +132,7 @@ export default function MesCCGs() {
                     setExplicitelySaidNoCCG(true);
                   },
                 },
-                label: 'Non, je n’utilise pas de chambre froide',
+                label: 'Non, je n\u2019utilise pas de chambre froide',
               },
             ]}
           />
@@ -151,53 +142,93 @@ export default function MesCCGs() {
         {(userCCGs.length > 0 || user.checked_has_ccg) && (
           <>
             {userCCGs.map((entity) => {
+              const isPreregistered = entity.ccg_status === 'Pré-enregistré dans Zacharie';
               return (
-                <Notice
+                <div
                   key={entity.id}
-                  className="fr-text-default--grey fr-background-contrast--grey mb-4 [&_p.fr-notice__title]:before:hidden"
-                  style={{
-                    boxShadow: 'inset 0 -2px 0 0 var(--border-plain-grey)',
-                  }}
-                  isClosable
-                  onClose={() => {
-                    API.post({
-                      path: `/user/user-entity/${user.id}`,
-                      body: {
-                        _action: 'delete',
-                        [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                        [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-                      },
-                    }).then((res) => {
-                      if (res.ok) {
-                        const nextCCGs = userCCGs.filter((ccg) => ccg.id !== entity.id);
-                        if (nextCCGs.length === 0) {
-                          handleUserSubmit(false);
-                          setNewCCGExpanded(false);
-                          setRegisterOneMoreCCG(false);
-                        }
-                        setUserCCGs(nextCCGs);
-                      }
-                    });
-                  }}
-                  title={
-                    <>
-                      {entity.numero_ddecpp}
-                      <br />
-                      {entity.nom_d_usage}
-                      <br />
-                      {entity.code_postal} {entity.ville}
-                      {entity.ccg_status === 'Pré-enregistré dans Zacharie' && (
-                        <>
-                          <RegisterCCG />
-                          <p className="mt-4 text-sm">
-                            Si vous avez déjà fait la démarche, vous pouvez ignorer ce message.
-                          </p>
-                        </>
+                  className="fr-text-default--grey fr-background-contrast--grey mb-4 rounded p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      {isPreregistered ? (
+                        <Badge severity="warning" small>
+                          À DÉCLARER
+                        </Badge>
+                      ) : (
+                        <Badge severity="success" small>
+                          DÉCLARÉ
+                        </Badge>
                       )}
-                    </>
-                  }
-                />
+                      {entity.numero_ddecpp && (
+                        <p className="mt-2 text-sm font-bold">{entity.numero_ddecpp}</p>
+                      )}
+                      <p className="mt-1 text-sm">{entity.nom_d_usage}</p>
+                      <p className="text-sm">
+                        {entity.code_postal} {entity.ville}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isPreregistered && (
+                        <a
+                          href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w"
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="text-sm text-action-high-blue-france-light"
+                        >
+                          Démarrer la déclaration
+                        </a>
+                      )}
+                      {isPreregistered && (
+                        <Button
+                          type="button"
+                          priority="tertiary no outline"
+                          size="small"
+                          iconId="fr-icon-pencil-line"
+                          title="Éditer"
+                          nativeButtonProps={{
+                            onClick: () =>
+                              navigate(
+                                `/app/tableau-de-bord/mon-profil/mes-ccgs/${entity.id}`,
+                              ),
+                          }}
+                        />
+                      )}
+                      <Button
+                        type="button"
+                        priority="tertiary no outline"
+                        size="small"
+                        iconId="fr-icon-delete-bin-line"
+                        title="Supprimer"
+                        nativeButtonProps={{
+                          onClick: () => {
+                            if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette chambre froide ?')) {
+                              return;
+                            }
+                            API.post({
+                              path: `/user/user-entity/${user.id}`,
+                              body: {
+                                _action: 'delete',
+                                [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
+                                [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+                                relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+                              },
+                            }).then((res) => {
+                              if (res.ok) {
+                                const nextCCGs = userCCGs.filter((ccg) => ccg.id !== entity.id);
+                                if (nextCCGs.length === 0) {
+                                  handleUserSubmit(false);
+                                  setNewCCGExpanded(false);
+                                  setRegisterOneMoreCCG(false);
+                                }
+                                setUserCCGs(nextCCGs);
+                              }
+                            });
+                          },
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
               );
             })}
             <div className="mt-8">
@@ -228,7 +259,7 @@ export default function MesCCGs() {
                           setNewCCGExpanded(false);
                         },
                       },
-                      label: 'Ma chambre froide a un numéro d’identification',
+                      label: 'Ma chambre froide a un numéro d\u2019identification',
                     },
                     {
                       nativeInputProps: {
@@ -239,7 +270,7 @@ export default function MesCCGs() {
                           setNewCCGExpanded(true);
                         },
                       },
-                      label: 'Ma chambre froide n’a pas de numéro d’identification',
+                      label: 'Ma chambre froide n\u2019a pas de numéro d\u2019identification',
                     },
                   ]}
                 />
@@ -344,14 +375,28 @@ export default function MesCCGs() {
                         />
                       </div>
                     </div>
-                    <p className="my-4">
-                      Ceci ne remplace pas la déclaration officielle du CCG. Cela permet simplement de pouvoir
-                      en faire référence dans Zacharie, en attendant son enregistrement (voir ci-dessous).
-                    </p>
+                    <Alert
+                      severity="warning"
+                      small
+                      className="my-4"
+                      description={
+                        <>
+                          Cette étape ne remplace pas l'enregistrement officiel du CCG : elle sert seulement à
+                          le renseigner dans Zacharie. Pour être reconnu, le CCG doit être enregistré auprès de
+                          la DDPP/DDETSPP de votre département. Pour déclarer votre CCG,{' '}
+                          <a
+                            href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w"
+                            target="_blank"
+                            rel="noreferrer noopener"
+                          >
+                            consultez notre tutoriel.
+                          </a>
+                        </>
+                      }
+                    />
                     <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
                       Enregistrer ma chambre froide (CCG)
                     </Button>
-                    <RegisterCCG />
                   </form>
                   <Button
                     type="button"

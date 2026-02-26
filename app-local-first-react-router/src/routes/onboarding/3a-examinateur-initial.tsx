@@ -48,9 +48,6 @@ export default function OnboardingExaminateurInitial() {
             stepCount={3}
             title="Formation à l'examen initial"
           />
-          <CallOut title="⚠️ Information importante" className="bg-white">
-            Cette information déterminera si vous pouvez créer des fiches d'examen initial.
-          </CallOut>
           <ExaminateurInitial />
           <div className="left-0 z-50 flex flex-col p-4 pb-2 relative bottom-0 w-auto items-center justify-center shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
             <ButtonsGroup
@@ -125,7 +122,10 @@ function ExaminateurInitial() {
       <div className="p-4 md:p-8">
         <form id="examinateur_initial_form" method="POST" onSubmit={(e) => e.preventDefault()}>
           <RadioButtons
-            legend="Êtes-vous formé à l'examen initial ? *"
+            legend={<div>
+              Êtes-vous formé à l'examen initial ? <span className="text-red-500">*</span>
+              <p className="text-sm text-gray-500">Cette information déterminera si vous pouvez créer des fiches d'examen initial</p>
+            </div>}
             orientation="horizontal"
             options={[
               {
@@ -164,7 +164,7 @@ function ExaminateurInitial() {
           />
           {user.roles.includes(UserRoles.CHASSEUR) && isExaminateurInitial && (
             <Input
-              label="Numéro d'attestation de Chasseur Formé à l'Examen Initial *"
+              label={<span>Numéro d'attestation de Chasseur Formé à l'Examen Initial <span className="text-red-500">*</span></span>}
               hintText="De la forme CFEI-DEP-AA-123"
               key={isExaminateurInitial ? 'true' : 'false'}
               nativeInputProps={{

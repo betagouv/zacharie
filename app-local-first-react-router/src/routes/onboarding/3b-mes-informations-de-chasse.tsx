@@ -13,6 +13,8 @@ import MesCCGs from './3-mes-ccgs';
 import MesAssociationsDeChasse from './3-mes-associations-de-chasse';
 import MesPartenaires from './3-mes-partenaires';
 import { toast } from 'react-toastify';
+import { Highlight } from "@codegouvfr/react-dsfr/Highlight";
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
 
 export default function OnboardingMesInformationsDeChasse() {
   const [searchParams] = useSearchParams();
@@ -79,9 +81,7 @@ export default function OnboardingMesInformationsDeChasse() {
             stepCount={3}
             title="Informations de chasse"
           />
-          <CallOut title="⚠️ Dites-le nous une fois" className="bg-white">
-            Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer.
-          </CallOut>
+          <Alert className="bg-white mb-8" small severity="info" description="Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer." />
           <p className="mb-8 text-sm text-gray-500">
             <Link to={redirect ?? nextPage} className="text-gray-500">
               Passer cette étape
@@ -144,7 +144,7 @@ export default function OnboardingMesInformationsDeChasse() {
                   priority: 'secondary',
                 },
                 {
-                  children: 'Enregistrer et continuer',
+                  children: redirect ? 'Enregistrer et continuer' : 'Enregistrer et terminer',
                   iconId: 'fr-icon-arrow-right-line',
                   iconPosition: 'right',
                   disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
@@ -158,6 +158,6 @@ export default function OnboardingMesInformationsDeChasse() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

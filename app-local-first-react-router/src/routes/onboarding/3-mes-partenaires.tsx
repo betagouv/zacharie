@@ -59,40 +59,40 @@ export default function MesPartenaires() {
     <div className="mb-6 bg-white md:shadow-sm">
       <div className="p-4 md:p-8">
         <h3 className="mb-8 text-lg font-semibold text-gray-900" id="onboarding-etape-2-partenaires-data-title">
-          Mes partenaires
+          Partenaires
         </h3>
         <Fragment key={refreshKey}>
           {!userHasPartenaires && (
-        <RadioButtons
-          legend="Avez-vous des partenaires dans le circuit court de transport des carcasses ? *"
-          hintText="On parle ici de boucheries, charcuteries, restaurants, ou encore repas de chasse ou associatifs, ou encore des consommateurs finaux."
-          orientation="horizontal"
-          options={[
-            {
-              nativeInputProps: {
-                required: true,
-                checked: !!user.checked_has_partenaires,
-                name: Prisma.UserScalarFieldEnum.checked_has_partenaires,
-                onChange: () => {
-                  handleUserSubmit(true);
+            <RadioButtons
+              legend="Avez-vous des partenaires dans le circuit court de transport des carcasses ? *"
+              hintText="On parle ici de boucheries, charcuteries, restaurants, ou encore repas de chasse ou associatifs, ou encore des consommateurs finaux."
+              orientation="horizontal"
+              options={[
+                {
+                  nativeInputProps: {
+                    required: true,
+                    checked: !!user.checked_has_partenaires,
+                    name: Prisma.UserScalarFieldEnum.checked_has_partenaires,
+                    onChange: () => {
+                      handleUserSubmit(true);
+                    },
+                  },
+                  label: 'Oui',
                 },
-              },
-              label: 'Oui',
-            },
-            {
-              nativeInputProps: {
-                required: true,
-                checked: !user.checked_has_partenaires,
-                name: 'not_checked_has_partenaires',
-                onChange: () => {
-                  handleUserSubmit(false);
+                {
+                  nativeInputProps: {
+                    required: true,
+                    checked: !user.checked_has_partenaires,
+                    name: 'not_checked_has_partenaires',
+                    onChange: () => {
+                      handleUserSubmit(false);
+                    },
+                  },
+                  label: 'Non',
                 },
-              },
-              label: 'Non',
-            },
-          ]}
-        />
-      )}
+              ]}
+            />
+          )}
           {userEntities.map((entity) => {
             const relation = entity.EntityRelationsWithUsers.find(
               (relation) =>
@@ -118,7 +118,7 @@ export default function MesPartenaires() {
             );
           })}
 
-            {(userHasPartenaires || user.checked_has_partenaires) && (
+          {(userHasPartenaires || user.checked_has_partenaires) && (
             <>
               {!showForm ? (
                 <>
