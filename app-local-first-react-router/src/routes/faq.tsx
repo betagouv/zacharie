@@ -89,18 +89,21 @@ export default function Faq() {
                 </Accordion>
                 <Accordion label="Comment installer l'application sur mon téléphone ?" titleAs="h3">
                   <p>
-                    Zacharie est une application web (PWA) qui s'installe directement depuis votre navigateur. Ouvrez{' '}
-                    <a href="https://zacharie.beta.gouv.fr" className="fr-link">
-                      zacharie.beta.gouv.fr
-                    </a>{' '}
-                    sur votre téléphone, puis suivez la notification d'installation ou utilisez le menu de votre
-                    navigateur pour « Ajouter à l'écran d'accueil ».
+                    Zacharie est disponible gratuitement sur les stores. Téléchargez l'application directement depuis
+                    votre téléphone :
                   </p>
-                  <p className="fr-mt-1w">
-                    <GuideLink href="https://scribehow.com/shared/Installer_lapplication_Zacharie_et_se_connecter_a_son_compte_sur_mobile__MUuKtgMUSDG9DgJ9UBDWgg">
-                      Voir le guide d'installation (téléphone)
-                    </GuideLink>
-                  </p>
+                  <ul className="fr-mt-1w">
+                    <li className="fr-mb-1w">
+                      <GuideLink href="https://apps.apple.com/fr/app/id6753714911">
+                        Télécharger sur l'App Store (iPhone)
+                      </GuideLink>
+                    </li>
+                    <li className="fr-mb-1w">
+                      <GuideLink href="https://play.google.com/store/apps/details?id=fr.gouv.zacharie.v1">
+                        Télécharger sur Google Play (Android)
+                      </GuideLink>
+                    </li>
+                  </ul>
                 </Accordion>
                 <Accordion label="Comment fonctionne Zacharie hors connexion ?" titleAs="h3">
                   <p>
@@ -178,8 +181,12 @@ function TabChasseurs() {
               label: 'Créer son compte (sur ordinateur)',
             },
             {
-              href: 'https://scribehow.com/shared/Installer_lapplication_Zacharie_et_se_connecter_a_son_compte_sur_mobile__MUuKtgMUSDG9DgJ9UBDWgg',
-              label: "Installer l'application et se connecter (sur téléphone)",
+              href: 'https://apps.apple.com/fr/app/id6753714911',
+              label: "Télécharger l'application sur l'App Store (iPhone)",
+            },
+            {
+              href: 'https://play.google.com/store/apps/details?id=fr.gouv.zacharie.v1',
+              label: "Télécharger l'application sur Google Play (Android)",
             },
             {
               href: 'https://scribehow.com/page/Configurer_son_compte_Zacharie__sur_ordinateur__yRPiN_xnRqOZbjxRdwSNQQ',
@@ -272,8 +279,12 @@ function TabSVI() {
               label: 'Se connecter (sur ordinateur)',
             },
             {
-              href: 'https://scribehow.com/shared/Installer_lapplication_Zacharie_et_se_connecter_a_son_compte_sur_mobile__MUuKtgMUSDG9DgJ9UBDWgg',
-              label: "Installer l'application (sur téléphone)",
+              href: 'https://apps.apple.com/fr/app/id6753714911',
+              label: "Télécharger l'application sur l'App Store (iPhone)",
+            },
+            {
+              href: 'https://play.google.com/store/apps/details?id=fr.gouv.zacharie.v1',
+              label: "Télécharger l'application sur Google Play (Android)",
             },
             {
               href: 'https://scribehow.com/viewer/Gerer_les_comptes_rattaches_a_votre_service____gI40DjRhuY7FXyqP-Eug',
