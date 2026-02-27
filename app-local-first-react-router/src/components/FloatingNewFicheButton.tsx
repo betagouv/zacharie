@@ -6,14 +6,24 @@ import { UserRoles } from '@prisma/client';
 
 const SCROLL_THRESHOLD = 200;
 
+const HIDDEN_PATH_PREFIXES = [
+  '/app/tableau-de-bord/fei/',
+  '/app/tableau-de-bord/carcasse/',
+  '/app/tableau-de-bord/carcasse-svi/',
+  '/app/tableau-de-bord/onboarding',
+  '/app/tableau-de-bord/admin',
+];
+
 export default function FloatingNewFicheButton() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useMostFreshUser('FloatingNewFicheButton');
   const [hasScrolled, setHasScrolled] = useState(false);
 
-  const isFichesPage = location.pathname === '/app/tableau-de-bord';
-  const shouldAnimate = isFichesPage;
+  const isHiddenPage = HIDDEN_PATH_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
+  if (isHiddenPage) return null;
+
+  const shouldAnimate = location.pathname === '/app/tableau-de-bord';
 
   useEffect(() => {
     if (!shouldAnimate) {
