@@ -1,8 +1,7 @@
 import { UserRoles } from '@prisma/client';
-import { useLocation, useNavigate } from 'react-router';
+import { useLocation } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { createNewFei } from './create-new-fei';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from './circuit-court';
 import { capture } from '@app/services/sentry';
@@ -11,11 +10,8 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   const location = useLocation();
   const user = useMostFreshUser('useLoggedInNavigationMenu');
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
-  const isNotActivated = !user?.activated;
   const isCircuitCourt = useIsCircuitCourt();
-  const navigate = useNavigate();
 
-  const isExaminateurInitial = user?.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
   const isAdmin = user?.roles.includes(UserRoles.ADMIN);
   const isChasseur = user?.roles.includes(UserRoles.CHASSEUR);
   const isSvi = user?.roles.includes(UserRoles.SVI);
@@ -99,19 +95,6 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
       text: 'Tableau de bord',
       isActive: location.pathname === '/app/tableau-de-bord/mes-chasses',
       linkProps: { to: '/app/tableau-de-bord/mes-chasses', href: '#' },
-    });
-  }
-
-  if (isExaminateurInitial && !isNotActivated) {
-    mainMenu.unshift({
-      text: 'Nouvelle fiche',
-      linkProps: {
-        href: '#',
-        onClick: async () => {
-          const newFei = await createNewFei();
-          navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
-        },
-      },
     });
   }
 
