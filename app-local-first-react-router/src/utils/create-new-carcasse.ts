@@ -1,5 +1,6 @@
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import useZustandStore from '@app/zustand/store';
+import { createCarcasse } from '@app/zustand/actions/create-carcasse';
 import useUser from '@app/zustand/user';
 import { Carcasse, CarcasseStatus, CarcasseType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -152,6 +153,6 @@ export async function createNewCarcasse({
     deleted_at: null,
     is_synced: false,
   };
-  useZustandStore.getState().createCarcasse(newCarcasse);
+  createCarcasse(newCarcasse);
   return newCarcasse;
 }

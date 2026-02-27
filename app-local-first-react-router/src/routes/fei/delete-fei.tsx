@@ -4,18 +4,18 @@ import ConfirmModal from '@app/components/ConfirmModal';
 import { useNavigate, useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
+import { updateFei } from '@app/zustand/actions/update-fei';
+import { addLog } from '@app/zustand/actions/add-log';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 
 export default function DeleteFei() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const state = useZustandStore((state) => state);
-  const updateFei = state.updateFei;
-  const addLog = state.addLog;
-  const fei = state.feis[params.fei_numero!];
+  const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
+  const entities = useZustandStore((state) => state.entities);
   const currentOwnerEntity = fei.fei_current_owner_entity_id
-    ? state.entities[fei.fei_current_owner_entity_id]
+    ? entities[fei.fei_current_owner_entity_id]
     : null;
 
   const navigate = useNavigate();

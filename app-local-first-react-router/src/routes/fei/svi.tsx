@@ -8,6 +8,10 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
+import { updateFei } from '@app/zustand/actions/update-fei';
+import { updateCarcasse } from '@app/zustand/actions/update-carcasse';
+import { updateCarcassesTransmission } from '@app/zustand/actions/update-carcasses-transmission';
+import { addLog } from '@app/zustand/actions/add-log';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -26,10 +30,6 @@ export default function FEI_SVI() {
   const feiCarcasses = useCarcassesForFei(params.fei_numero);
   const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
   const entities = useZustandStore((state) => state.entities);
-  const updateFei = useZustandStore((state) => state.updateFei);
-  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
-  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
-  const addLog = useZustandStore((state) => state.addLog);
   const allCarcassesForFei = useMemo(
     () => feiCarcasses.sort(sortCarcassesApproved),
     [feiCarcasses],

@@ -21,6 +21,8 @@ import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
 import { useNavigate, useParams } from 'react-router';
 import useZustandStore from '@app/zustand/store';
+import { updateCarcasse as updateStateCarcasseAction } from '@app/zustand/actions/update-carcasse';
+import { addLog } from '@app/zustand/actions/add-log';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import { loadFei } from '@app/utils/load-fei';
 import useUser from '@app/zustand/user';
@@ -46,9 +48,8 @@ const anomaliesCarcasseModal = createModal({
 
 export default function CarcasseExaminateurLoader() {
   const params = useParams();
-  const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
-  const carcasse = state.carcasses[params.zacharie_carcasse_id!];
+  const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
+  const carcasse = useZustandStore((state) => state.carcasses[params.zacharie_carcasse_id!]);
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
 
   useEffect(() => {
@@ -79,13 +80,11 @@ function CarcasseExaminateur() {
   const fei = feis[params.fei_numero!];
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id!];
-  const updateStateCarcasse = useZustandStore((state) => state.updateCarcasse);
-  const addLog = useZustandStore((state) => state.addLog);
   const updateCarcasse = (
-    zacharie_carcasse_id: Parameters<typeof updateStateCarcasse>[0],
-    partialCarcasse: Parameters<typeof updateStateCarcasse>[1],
+    zacharie_carcasse_id: Parameters<typeof updateStateCarcasseAction>[0],
+    partialCarcasse: Parameters<typeof updateStateCarcasseAction>[1],
   ) => {
-    updateStateCarcasse(zacharie_carcasse_id, partialCarcasse, true);
+    updateStateCarcasseAction(zacharie_carcasse_id, partialCarcasse, true);
     addLog({
       user_id: user.id,
       user_role: UserRoles.CHASSEUR,

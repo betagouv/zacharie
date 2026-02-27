@@ -5,6 +5,8 @@ import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useParams, useNavigate } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import { updateCarcasse } from '@app/zustand/actions/update-carcasse';
+import { addLog } from '@app/zustand/actions/add-log';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
@@ -75,8 +77,6 @@ export function CarcasseExaminateur({
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
-  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
-  const addLog = useZustandStore((state) => state.addLog);
   const navigate = useNavigate();
 
   if (!canEditAsExaminateurInitial && !canEditAsPremierDetenteur) {

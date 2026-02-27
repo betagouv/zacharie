@@ -17,6 +17,9 @@ import CarcasseIntermediaireComp from './intermediaire-carcasse';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
+import { updateAllCarcasseIntermediaire } from '@app/zustand/actions/update-all-carcasse-intermediaire';
+import { updateFei } from '@app/zustand/actions/update-fei';
+import { addLog } from '@app/zustand/actions/add-log';
 import {
   getFeiAndIntermediaireIdsFromFeiIntermediaire,
   getFeiAndCarcasseAndIntermediaireIds,
@@ -140,9 +143,6 @@ function FEICurrentIntermediaireContent({
 }: Props & { intermediaire: FeiIntermediaire; intermediaireIndex: number; children: React.ReactNode }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
-  const updateFei = useZustandStore((state) => state.updateFei);
-  const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const carcasses = useZustandStore((state) => state.carcasses);
   const entities = useZustandStore((state) => state.entities);

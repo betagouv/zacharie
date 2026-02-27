@@ -7,6 +7,7 @@ import grandGibier from '@app/data/grand-gibier.json';
 import petitGibier from '@app/data/petit-gibier.json';
 import { useParams } from 'react-router';
 import useZustandStore, { syncData } from '@app/zustand/store';
+import { addLog } from '@app/zustand/actions/add-log';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
@@ -34,7 +35,6 @@ export default function NouvelleCarcasse() {
   const user = userState.user!;
   const incProchainBraceletAUtiliser = userState.incProchainBraceletAUtiliser;
 
-  const addLog = useZustandStore((state) => state.addLog);
   const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
   const defaultNumeroBracelet = getNewDefaultNumeroBracelet(user);
   const [numeroBracelet, setNumeroBracelet] = useState<string>('');
