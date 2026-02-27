@@ -21,8 +21,6 @@ export default function FloatingNewFicheButton() {
   const [hasScrolled, setHasScrolled] = useState(false);
 
   const isHiddenPage = HIDDEN_PATH_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
-  if (isHiddenPage) return null;
-
   const shouldAnimate = location.pathname === '/app/tableau-de-bord';
 
   useEffect(() => {
@@ -38,7 +36,7 @@ export default function FloatingNewFicheButton() {
   }, [shouldAnimate]);
 
   const isExaminateurInitial = user?.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
-  if (!isExaminateurInitial || !user?.activated) return null;
+  if (isHiddenPage || !isExaminateurInitial || !user?.activated) return null;
 
   const visible = shouldAnimate ? hasScrolled : true;
 
