@@ -13,6 +13,7 @@ import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import InputNotEditable from '@app/components/InputNotEditable';
 import useZustandStore from '@app/zustand/store';
 import { toast } from 'react-toastify';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
 
 const empytEntitiesByTypeAndId: EntitiesById = {};
 
@@ -152,10 +153,8 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
 
   return (
     <>
-      <p className="mb-5 text-sm text-gray-500">
-        * Les champs marqués d'un astérisque (*) sont obligatoires.
-      </p>
       <form id="partenaire_data_form" method="POST" onSubmit={handleEntitySubmit}>
+        <Alert closable className="bg-white mb-8" small severity="info" description="Attention : ce formulaire est réservé aux commerces de détail, cantines, associations et consommateurs. Pour envoyer vos carcasses à un Etablissement de Traitement de Gibier Sauvage (ETG), celui-ci doit être inscrit sur Zacharie." />
         <RadioButtons
           legend="Qualité du partenaire *"
           hintText="Est-ce un commerce de détail, repas de chasse ou associatif, ou encore un consommateur final ?"
