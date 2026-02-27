@@ -29,6 +29,7 @@ import RegistreCarcasses from './routes/registre-carcasses';
 import Accessibility from './routes/accessibility';
 import Stats from './routes/stats';
 import Contact from './routes/contact';
+import Faq from './routes/faq';
 import { useLandingPageNavigationMenu } from './utils/get-navigation-menu';
 import LandingProsPage from './routes/landing-pros';
 import LandingDemarchesPage from './routes/landing-demarches';
@@ -101,6 +102,7 @@ function App() {
           <Route path="modalites-d-utilisation" element={<ModalitesDutilisation />} />
           <Route path="stats" element={<Stats />} />
           <Route path="contact" element={<Contact />} />
+          <Route path="faq" element={<Faq />} />
         </Route>
         <Route path="app" element={<Outlet />}>
           <Route path="connexion" element={<Outlet />}>

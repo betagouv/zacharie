@@ -209,6 +209,13 @@ export default function RootDisplay({
                     },
                     text: 'Statistiques',
                   },
+                  {
+                    linkProps: {
+                      to: '/faq',
+                      href: '#',
+                    },
+                    text: 'FAQ',
+                  },
                 ],
               },
               {
@@ -226,6 +233,13 @@ export default function RootDisplay({
                       },
                     },
                     text: "Obtenir la dernière version de l'app",
+                  },
+                  {
+                    linkProps: {
+                      to: '/faq',
+                      href: '#',
+                    },
+                    text: 'FAQ',
                   },
                   {
                     linkProps: {

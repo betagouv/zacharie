@@ -261,13 +261,13 @@ export function useLandingPageNavigationMenu(): MainNavigationProps.Item[] {
         href: '#',
       },
     },
-    // {
-    //   text: 'Aide',
-    //   isActive: location.pathname === '/aide',
-    //   linkProps: {
-    //     to: '/aide',
-    //     href: '#',
-    //   },
-    // },
+    {
+      text: 'Aide',
+      isActive: location.pathname === '/faq',
+      linkProps: {
+        to: '/faq',
+        href: '#',
+      },
+    },
   ];
 }
