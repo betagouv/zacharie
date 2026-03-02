@@ -1,7 +1,9 @@
 import { Accordion } from '@codegouvfr/react-dsfr/Accordion';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
-import { useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
+import useUser from '@app/zustand/user';
+import { UserRoles } from '@prisma/client';
 
 function GuideLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -25,7 +27,15 @@ function GuideList({ guides }: { guides: { href: string; label: string; descript
 }
 
 export default function Faq() {
-  const [selectedTabId, setSelectedTabId] = useState('chasseurs');
+  const user = useUser((state) => state.user);
+  const isSVI = user?.roles.includes(UserRoles.SVI);
+  const defaultTab = useMemo(() => {
+    if (!user) return 'chasseurs';
+    if (user.roles.includes(UserRoles.SVI)) return 'svi';
+    if (user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.COLLECTEUR_PRO)) return 'collecteurs-etg';
+    return 'chasseurs';
+  }, [user]);
+  const [selectedTabId, setSelectedTabId] = useState(defaultTab);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -40,10 +50,14 @@ export default function Faq() {
       tabId: 'collecteurs-etg',
       label: 'Collecteurs pro / ETG',
     },
-    {
-      tabId: 'svi',
-      label: 'Services vétérinaires (SVI)',
-    },
+    ...(isSVI
+      ? [
+          {
+            tabId: 'svi',
+            label: 'Services vétérinaires (SVI)',
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -65,7 +79,7 @@ export default function Faq() {
             >
               {selectedTabId === 'chasseurs' && <TabChasseurs />}
               {selectedTabId === 'collecteurs-etg' && <TabCollecteurs />}
-              {selectedTabId === 'svi' && <TabSVI />}
+              {selectedTabId === 'svi' && isSVI && <TabSVI />}
             </Tabs>
 
             {/* Section 2 : FAQ Q&A */}
