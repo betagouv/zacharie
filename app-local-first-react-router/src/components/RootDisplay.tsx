@@ -209,13 +209,6 @@ export default function RootDisplay({
                     },
                     text: 'Statistiques',
                   },
-                  {
-                    linkProps: {
-                      to: '/faq',
-                      href: '#',
-                    },
-                    text: 'FAQ',
-                  },
                 ],
               },
               {
