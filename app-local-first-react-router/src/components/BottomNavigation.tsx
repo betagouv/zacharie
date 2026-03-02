@@ -153,7 +153,13 @@ function flattenItems(items: NavItem[]): NavItem[] {
   return result;
 }
 
-export default function BottomNavigation({ items }: { items: MainNavigationProps.Item[] }) {
+export default function BottomNavigation({
+  items,
+  onNewFiche,
+}: {
+  items: MainNavigationProps.Item[];
+  onNewFiche?: () => void;
+}) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
@@ -169,9 +175,18 @@ export default function BottomNavigation({ items }: { items: MainNavigationProps
     }
   }, [moreOpen]);
 
-  if (items.length === 0) return null;
+  if (items.length === 0 && !onNewFiche) return null;
 
   const flatItems = flattenItems(items);
+  if (onNewFiche) {
+    flatItems.unshift({
+      text: 'Nouvelle fiche',
+      linkProps: {
+        href: '#',
+        onClick: onNewFiche,
+      },
+    });
+  }
   const needsOverflow = flatItems.length > MAX_VISIBLE_ITEMS;
   const visibleItems = needsOverflow ? flatItems.slice(0, MAX_VISIBLE_ITEMS - 1) : flatItems;
   const overflowItems = needsOverflow ? flatItems.slice(MAX_VISIBLE_ITEMS - 1) : [];
