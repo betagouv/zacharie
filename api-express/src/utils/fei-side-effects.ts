@@ -240,6 +240,11 @@ export async function notifyCircuitCourt(
     });
   }
 
+  await prisma.fei.update({
+    where: { numero: savedFei.numero },
+    data: { automatic_closed_at: new Date() },
+  });
+
   return true;
 }
 
