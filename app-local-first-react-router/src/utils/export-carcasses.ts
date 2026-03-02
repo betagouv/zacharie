@@ -25,6 +25,8 @@ type CarcasseExcelData = {
   'Archivé(e)': string | null;
   'SVI - Consigne': string | null;
   'SVI - Motif Consigne': string | null;
+  'SVI - Pièces Consigne': string | null;
+  'SVI - Motifs Consigne': string | null;
   'SVI - Commentaire': string | null;
   'SVI - Saisie partielle': string | null;
   'SVI - Saisie totale': string | null;
@@ -159,6 +161,7 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       case 'Archivé(e)':
       case "Nombre d'animaux":
       case 'SVI - Consigne':
+      case 'SVI - Motif Consigne':
       case 'Date de la chasse':
       case 'Heure de première mise à mort':
       case 'Heure de dernière éviscération':
@@ -169,7 +172,8 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       case 'Numéro de bracelet':
       case 'Éspèce':
       case 'SVI - Saisie partielle':
-      case 'SVI - Motif Consigne':
+      case 'SVI - Pièces Consigne':
+      case 'SVI - Motifs Consigne':
       case "SVI - Date d'examen":
       default:
         return { wch: 20 }; // default width
@@ -252,7 +256,9 @@ export default function useExportCarcasses() {
           // infos de SVI
           'Archivé(e)': carcasse.svi_carcasse_archived ? 'Oui' : '',
           'SVI - Consigne': carcasse.svi_ipm1_decision?.includes(IPM1Decision.MISE_EN_CONSIGNE) ? 'Oui' : '',
-          'SVI - Motif Consigne': 'BA P S OA CA pap',
+          'SVI - Motif Consigne': 'BA P S OA CA pap', // colonne pré-remplie pour entourage manuscrit à l'impression
+          'SVI - Pièces Consigne': carcasse.svi_ipm1_pieces.join('\n') || null,
+          'SVI - Motifs Consigne': carcasse.svi_ipm1_lesions_ou_motifs.join('\n') || null,
           'SVI - Commentaire': carcasse.svi_carcasse_commentaire,
           'SVI - Saisie partielle': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_PARTIELLE)
             ? carcasse.svi_ipm2_pieces.join(' - ')
