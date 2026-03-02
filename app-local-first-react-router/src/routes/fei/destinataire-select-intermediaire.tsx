@@ -550,7 +550,7 @@ export default function DestinataireIntermediaire({
           </>
         )}
       </div>
-      <partenaireModal.Component title="Ajouter un partenaire">
+      <partenaireModal.Component title="Ajouter un destinataire">
         {isPartenaireModalOpen && (
           <PartenaireNouveau
             key={newEntityNomDUsage ?? ''}
