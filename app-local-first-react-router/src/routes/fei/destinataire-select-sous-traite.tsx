@@ -166,7 +166,7 @@ export default function DestinataireSousTraite({
       user_id: user.id,
       user_role:
         fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
-        fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
+          fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
           ? UserRoles.CHASSEUR
           : fei.fei_current_owner_role!,
       action: 'current-owner-sous-traite-select-destinataire-sous-traite',
@@ -299,7 +299,7 @@ export default function DestinataireSousTraite({
           </>
         )}
       </div>
-      <partenaireModal.Component title="Ajouter un partenaire">
+      <partenaireModal.Component title="Ajouter un destinataire">
         {isPartenaireModalOpen && (
           <PartenaireNouveau
             key={newEntityNomDUsage ?? ''}

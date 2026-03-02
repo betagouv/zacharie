@@ -154,7 +154,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
   return (
     <>
       <form id="partenaire_data_form" method="POST" onSubmit={handleEntitySubmit}>
-        <Alert closable className="bg-white mb-8" small severity="info" description="Attention : ce formulaire est réservé aux commerces de détail, cantines, associations et consommateurs. Pour envoyer vos carcasses à un Etablissement de Traitement de Gibier Sauvage (ETG), celui-ci doit être inscrit sur Zacharie." />
+        <Alert closable className="bg-white mb-8" small severity="info" description="Attention : les établissements de traitement du gibier et les collecteurs professionnels sont déjà enregistrés sur Zacharie. Ce formulaire sert à enregistrer les autres catégories de destinataires (commerces de détail, associations, particuliers…)." />
         <RadioButtons
           legend="Qualité du partenaire *"
           hintText="Est-ce un commerce de détail, repas de chasse ou associatif, ou encore un consommateur final ?"
