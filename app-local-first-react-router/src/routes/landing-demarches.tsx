@@ -74,15 +74,10 @@ export default function LandingDemarchesPage() {
                 isDesktop && showContent !== 'demarches' ? 'hidden' : '',
               ].join(' ')}
             >
-              <h1 className="fr-h1 text-action-high-blue-france !text-left text-balance">Vos démarches</h1>
-              <div className="mt-8 flex flex-col gap-4 md:grid md:grid-cols-2 md:grid-rows-2 md:gap-16">
-                <div className="mx-auto h-full w-full overflow-hidden md:col-span-1 md:row-span-2">
-                  <img
-                    src="/landing/chasseur-et-telephone.png"
-                    alt="Un vétérinaire en train de faire une inspection de carcasse"
-                    className="h-full max-h-[50vh] w-full overflow-hidden object-cover md:max-h-full"
-                  />
-                </div>
+              <h2 className="fr-h2 text-action-high-blue-france !text-left text-balance">
+                Vos démarches
+              </h2>
+              <Section title="Qu'est ce que sont les démarches du gibier sauvage ?">
                 <div className="my-8 flex flex-col gap-4 md:col-start-2 md:row-span-2 md:row-start-1 md:m-0">
                   <p className="text-justify font-normal text-pretty text-gray-700 [&_b]:font-bold [&_b]:text-gray-900">
                     Pour valoriser la viande de gibier en toute sécurité et en suivant la réglementation en
@@ -100,7 +95,7 @@ export default function LandingDemarchesPage() {
                     possible.
                   </p>
                 </div>
-              </div>
+              </Section>
             </section>
             <section
               className={[
