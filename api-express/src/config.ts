@@ -6,14 +6,7 @@ const PORT = process.env.PORT ?? 3000;
 const POSTGRESQL_ADDON_URI = process.env.POSTGRESQL_ADDON_URI;
 const ENVIRONMENT = process.env.ENVIRONMENT ?? process.env.NODE_ENV ?? 'development';
 
-let SENTRY_KEY = '';
-if (ENVIRONMENT === 'production') {
-  SENTRY_KEY = 'https://169fc757825672212dc0073c4c64bff7@sentry.incubateur.net/175';
-}
-if (ENVIRONMENT === 'test') {
-  // api-test (staging)
-  SENTRY_KEY = 'https://cf28d042821d656dcebfad12b576cd46@sentry.incubateur.net/257';
-}
+const SENTRY_KEY = process.env.SENTRY_KEY ?? '';
 
 const SENTRY_SECRET = process.env.SENTRY_SECRET;
 
