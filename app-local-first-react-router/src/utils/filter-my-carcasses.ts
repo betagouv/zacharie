@@ -4,6 +4,7 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/fei-intermediaire';
+import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 
 const userFields = [
   'current_owner_user_id',
@@ -58,11 +59,10 @@ export function filterMyCarcasses(
 
 export function useMyCarcassesForFei(fei_numero: string | undefined): Array<Carcasse> {
   const user = useUser((state) => state.user);
-  const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const feiCarcasses = useCarcassesForFei(fei_numero);
 
-  const entityIds = useMemo(() => Object.keys(entities), [entities]);
+  const entityIds = useEntitiesIdsWorkingDirectlyFor();
 
   return useMemo(() => {
     if (!user?.id || !fei_numero) return [];

@@ -592,9 +592,7 @@ router.put(
     });
 
     if (!relation) {
-      res
-        .status(403)
-        .send({ ok: false, data: null, error: 'Accès non autorisé ou CCG déjà déclaré' });
+      res.status(403).send({ ok: false, data: null, error: 'Accès non autorisé ou CCG déjà déclaré' });
       return;
     }
 
