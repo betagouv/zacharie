@@ -9,9 +9,10 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { CarcasseType } from '@prisma/client';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { abbreviations } from '@app/utils/count-carcasses';
+import { abbreviations, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
+import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
 interface CardProps {
   fei: FeiWithIntermediaires;
@@ -49,6 +50,7 @@ export default function CardFiche({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
+  const myCarcasses = useMyCarcassesForFei(fei.numero);
   const feiCarcasses = useCarcassesForFei(fei.numero);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
@@ -65,31 +67,26 @@ export default function CardFiche({
   }, []);
 
   const [carcassesAcceptées, carcassesRefusées, _carcassesOuLotsRefusés] = useMemo(() => {
-    if (!fei.resume_nombre_de_carcasses) {
-      return [[], 0, ''];
-    }
-    const _carcassesAcceptées = [];
+    const formatted = formatCountCarcasseByEspece(myCarcasses) as string[];
+    const _carcassesAcceptées: string[] = [];
     let _carcassesRefusées = 0;
     let _carcassesOuLotsRefusés = '';
-    for (const carcasse of fei.resume_nombre_de_carcasses?.split('\n') || []) {
-      if (carcasse.includes('refusé')) {
-        // soit "10 carcasses refusées" soit "3 lots refusés (23 carcasses)"
-        // on veut récupérer 10 et 23, soit le dernier numéro de la phrase
-        // et faire la somme de toutes les carcasses refusées
+    for (const line of formatted) {
+      if (line.includes('refusé')) {
         const nombreDAnimaux =
-          carcasse
+          line
             .split(' ')
             .map((w) => parseInt(w, 10))
             .filter(Boolean)
             .at(-1) || 0;
         _carcassesRefusées += nombreDAnimaux;
-        _carcassesOuLotsRefusés = carcasse.split(' (')[0];
-      } else if (carcasse) {
-        _carcassesAcceptées.push(carcasse);
+        _carcassesOuLotsRefusés = line.split(' (')[0];
+      } else {
+        _carcassesAcceptées.push(line);
       }
     }
     return [_carcassesAcceptées, _carcassesRefusées, _carcassesOuLotsRefusés];
-  }, [fei.resume_nombre_de_carcasses]);
+  }, [myCarcasses]);
 
   // Formattage simple des lignes pour l'affichage
   const formattedCarcassesAcceptées = useMemo(() => {

@@ -6,6 +6,7 @@ import { useParams, useNavigate } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
@@ -21,7 +22,9 @@ export default function CarcassesExaminateur({
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
-  const carcasses = useCarcassesForFei(params.fei_numero);
+  const allCarcasses = useCarcassesForFei(params.fei_numero);
+  const carcasses = useMyCarcassesForFei(params.fei_numero);
+  const hiddenCount = allCarcasses.length - carcasses.length;
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
 
@@ -43,6 +46,11 @@ export default function CarcassesExaminateur({
               {line}
             </span>
           ))}
+        </p>
+      )}
+      {hiddenCount > 0 && (
+        <p className="my-2 ml-4 text-sm text-gray-400 italic">
+          {hiddenCount} autre{hiddenCount > 1 ? 's' : ''} carcasse{hiddenCount > 1 ? 's' : ''} sur cette fiche ne vous concern{hiddenCount > 1 ? 'ent' : 'e'} pas
         </p>
       )}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
