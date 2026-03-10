@@ -591,7 +591,7 @@ export default function CurrentOwnerConfirm() {
               })
             }
           >
-            Je prends en charge cette fiche et les carcasses associées
+            Prendre en charge cette fiche et les carcasses associées
           </Button>
         )}
         {myNextOwnerRole === FeiOwnerRole.SVI && (
@@ -605,7 +605,7 @@ export default function CurrentOwnerConfirm() {
               });
             }}
           >
-            Je prends en charge cette fiche
+            Prendre en charge cette fiche
           </Button>
         )}
         {myNextOwnerRole === FeiOwnerRole.ETG && user.roles.includes(UserRoles.ETG) && (
@@ -626,7 +626,7 @@ export default function CurrentOwnerConfirm() {
                     }
                   }}
                 >
-                  Je prends en charge les carcasses
+                  Prendre en charge les carcasses
                 </Button>
                 {/* je ne peux pas sous-traiter une fiche si une autre entreprise a déjà décide de sous-traiter la fiche */}
                 {needTransportFromETG && !notMyEntitySoutraite && (
@@ -641,7 +641,7 @@ export default function CurrentOwnerConfirm() {
                       })
                     }
                   >
-                    Je sous-traite le transport
+                    Sous-traiter le transport
                   </Button>
                 )}
               </>
@@ -658,7 +658,7 @@ export default function CurrentOwnerConfirm() {
                   });
                 }}
               >
-                Je prends en charge les carcasses
+                Prendre en charge les carcasses
               </Button>
             )}
           </>

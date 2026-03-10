@@ -460,7 +460,7 @@ export default function DestinataireIntermediaire({
                 },
                 {
                   label:
-                    "J'ai déposé mes carcasses dans un Centre de Collecte du Gibier sauvage (chambre froide)",
+                    "Carcasses déposées dans un Centre de Collecte du Gibier sauvage (chambre froide)",
                   nativeInputProps: {
                     checked: depotType === DepotType.CCG,
                     readOnly: !canEdit,

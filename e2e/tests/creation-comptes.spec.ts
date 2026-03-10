@@ -79,7 +79,7 @@ test("Création de compte collecteur pro", async ({ page }) => {
     `);
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+      "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
@@ -120,7 +120,7 @@ test("Création de compte établissement de traitement du gibier", async ({ page
     `);
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+      "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
@@ -200,7 +200,7 @@ test("Examinateur initial ajoute une association de chasse depuis son profil", a
   ).toBeVisible();
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+      "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -332,7 +332,7 @@ test("Premier détenteur ajoute association et CCG depuis son profil", async ({ 
   // Check visibility and save
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+      "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer" }).click();

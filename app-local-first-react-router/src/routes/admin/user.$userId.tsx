@@ -637,7 +637,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
           >
             Un collecteur indépendant ne peut pas gérer de fiches pour un ETG. <br />
             Si un ETG a un besoin de transport, c'est dans le profil de l'utilisateur que ça se gère : cet
-            utilisateur n'a que le rôle ETG mais peut cocher la case "Je gère le transport dans mon ETG"
+            utilisateur n'a que le rôle ETG mais peut cocher la case "Gérer le transport dans l'ETG"
           </Highlight>
         )}
       {!!potentialEntities.length && (

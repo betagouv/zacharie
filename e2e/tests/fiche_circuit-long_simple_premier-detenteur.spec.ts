@@ -54,9 +54,7 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
   await pasDeStockage1.scrollIntoViewIfNeeded();
   await pasDeStockage1.click();
   await expect(page.getByText("Il manque le type de transport")).toBeVisible();
-  const jaiDepose = page.getByText("J'ai déposé mes carcasses").first();
-  await jaiDepose.scrollIntoViewIfNeeded();
-  await jaiDepose.click();
+  await page.getByText("Carcasses déposées dans un Centre").click();
   await expect(page.getByText("Il manque le centre de")).toBeVisible();
   const pasDeStockage2 = page.getByText("Pas de stockage").first();
   await pasDeStockage2.scrollIntoViewIfNeeded();
@@ -88,9 +86,7 @@ test("Stockage - Je transporte les carcasses moi-même", async ({ page }) => {
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
-  const jaiDepose = page.getByText("J'ai déposé mes carcasses").first();
-  await jaiDepose.scrollIntoViewIfNeeded();
-  await jaiDepose.click();
+  await page.getByText("Carcasses déposées dans un Centre").click();
   await page.getByRole("button", { name: "Renseigner ma chambre froide" }).click();
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole("textbox", { name: "Numéro d'identification" }).fill("CCG-01");
@@ -123,9 +119,7 @@ test("Stockage - Le transport est réalisé par un collecteur professionnel", as
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
-  const jaiDepose = page.getByText("J'ai déposé mes carcasses").first();
-  await jaiDepose.scrollIntoViewIfNeeded();
-  await jaiDepose.click();
+  await page.getByText("Carcasses déposées dans un Centre").click();
   await page.getByRole("button", { name: "Renseigner ma chambre froide" }).click();
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole("textbox", { name: "Numéro d'identification" }).fill("CCG-01");
