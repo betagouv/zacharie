@@ -494,7 +494,7 @@ export default function DestinatairePremierDetenteur({
             </>
           }
           options={prochainsDetenteursOptions}
-          placeholder="Sélectionnez le prochain détenteur des carcasses"
+          placeholder="Rechercher ou ajouter un destinataire..."
           value={
             prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null
           }
