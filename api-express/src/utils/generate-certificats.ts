@@ -184,7 +184,7 @@ export async function generateDBCertificat(
   const examinateur = fei.FeiExaminateurInitialUser;
   const etg = fei.CarcasseIntermediaire.find(
     (intermediaire) => intermediaire.intermediaire_role === EntityTypes.ETG,
-  )?.CarcasseIntermediaireEntity!;
+  )?.CarcasseIntermediaireEntity;
   const collecteursPro = Array.from(
     new Set(
       fei.CarcasseIntermediaire.filter(

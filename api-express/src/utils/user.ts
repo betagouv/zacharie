@@ -41,11 +41,11 @@ export function hasAllRequiredFields(user: User, calledFrom: string) {
 }
 
 export function autoActivatePremierDetenteur(user: User, calledFrom: string) {
-  if (!!user.activated) {
+  if (user.activated) {
     // console.log('user.activated', user.activated, calledFrom);
     return false;
   }
-  if (!!user.activated_at) {
+  if (user.activated_at) {
     // already auto activated once, if not activated now it need to be manually activated
     // console.log('user.activated_at', user.activated_at, calledFrom);
     return false;

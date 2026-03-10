@@ -27,7 +27,7 @@ router.post(
         .send({ ok: false, data: null, error: 'You are not authorized to update this approval' });
       return;
     }
-    if (!!approval.entity_id) {
+    if (approval.entity_id) {
       const entityRelatedToUser = await prisma.entityAndUserRelations.findFirst({
         where: {
           owner_id: user.id,
