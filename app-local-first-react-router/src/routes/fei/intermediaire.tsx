@@ -54,7 +54,7 @@ export default function FEICurrentIntermediaire(props: Props) {
   const intermediaires = useFeiIntermediaires(fei.numero);
 
   const findMyIntermediaireIndex = (list: typeof intermediaires) => {
-    const found = list.find((i) => i.intermediaire_user_id.startsWith(user.id));
+    const found = list.find((i) => i.intermediaire_user_id === user.id);
     if (found) return list.indexOf(found);
     // Don't default to another user's intermediaire (multi-recipient dispatch)
     return -1;
@@ -278,8 +278,23 @@ function FEICurrentIntermediaireContent({
         }
       }
     }
+    // Multi-recipient: check if any carcasse has me as next_owner
+    if (
+      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
+      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO
+    ) {
+      if (user.roles.includes(UserRoles.ETG)) {
+        if (
+          myFeiCarcasses.some(
+            (c) => c.next_owner_entity_id && etgsIds.includes(c.next_owner_entity_id),
+          )
+        ) {
+          return true;
+        }
+      }
+    }
     return false;
-  }, [fei, user, etgsIds, entities]);
+  }, [fei, user, etgsIds, entities, myFeiCarcasses]);
 
   const canEdit = useMemo(() => {
     if (fei.intermediaire_closed_at || fei.svi_closed_at || fei.automatic_closed_at) {

@@ -1,11 +1,12 @@
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { FeiStep, FeiStepSimpleStatus } from '@app/types/fei-steps';
 import useUser from '@app/zustand/user';
-import { Entity, EntityTypes, FeiOwnerRole, User, UserRoles } from '@prisma/client';
+import { Carcasse, Entity, EntityTypes, FeiOwnerRole, User, UserRoles } from '@prisma/client';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { useMemo } from 'react';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
 type IntermediaireStep = {
   id: string | null;
@@ -26,6 +27,7 @@ export function useFeiSteps(fei: FeiWithIntermediaires): UseFeiStepsReturn {
   const intermediaires = useFeiIntermediaires(fei.numero);
   const user = useUser((state) => state.user);
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
+  const carcasses = useCarcassesForFei(fei.numero);
 
   const memoizedComputeFeiSteps = useMemo(() => {
     return computeFeiSteps({
@@ -33,8 +35,9 @@ export function useFeiSteps(fei: FeiWithIntermediaires): UseFeiStepsReturn {
       intermediaires,
       entitiesIdsWorkingDirectlyFor,
       user,
+      carcasses,
     });
-  }, [fei, intermediaires, entitiesIdsWorkingDirectlyFor, user]);
+  }, [fei, intermediaires, entitiesIdsWorkingDirectlyFor, user, carcasses]);
   return memoizedComputeFeiSteps;
 }
 
@@ -43,6 +46,7 @@ interface ComputeFeiStepsParams {
   intermediaires: Array<FeiIntermediaire>;
   entitiesIdsWorkingDirectlyFor: Array<Entity['id']>;
   user: User | null;
+  carcasses?: Array<Carcasse>;
 }
 
 export function computeFeiSteps({
@@ -50,6 +54,7 @@ export function computeFeiSteps({
   intermediaires,
   entitiesIdsWorkingDirectlyFor,
   user,
+  carcasses,
 }: ComputeFeiStepsParams): UseFeiStepsReturn {
   const steps: Array<IntermediaireStep> = (() => {
     const _steps: Array<IntermediaireStep> = [
@@ -212,6 +217,16 @@ export function computeFeiSteps({
             }
           }
         }
+        // Check per-carcasse next_owner_entity_id (multi-recipient dispatch)
+        if (
+          carcasses?.some(
+            (c) =>
+              c.next_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.next_owner_entity_id),
+          )
+        ) {
+          return 'À compléter';
+        }
+        // Fallback FEI-level
         if (fei.fei_next_owner_entity_id) {
           if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)) {
             return 'À compléter';
