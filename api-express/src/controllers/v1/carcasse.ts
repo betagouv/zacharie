@@ -213,7 +213,7 @@ router.get(
           }
           break;
         case EntityTypes.ETG:
-        case EntityTypes.COLLECTEUR_PRO:
+        case EntityTypes.COLLECTEUR_PRO: {
           const carcasseIntermediaires = fei.CarcasseIntermediaire.filter(
             (c) => c.numero_bracelet === carcasse.numero_bracelet,
           );
@@ -231,6 +231,7 @@ router.get(
             }
           }
           break;
+        }
         case EntityTypes.SVI:
           if (fei.svi_entity_id === entity.id) {
             canAccess = true;
