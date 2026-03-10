@@ -4,6 +4,7 @@ const adminLinks = [
   { to: '/app/tableau-de-bord/admin/users', label: 'Utilisateurs' },
   { to: '/app/tableau-de-bord/admin/entities', label: 'Entités' },
   { to: '/app/tableau-de-bord/admin/api-keys', label: 'Clés API' },
+  { to: '/app/tableau-de-bord/admin/carcasses-intermediaires', label: 'Carcasses Inter.' },
 ];
 
 export default function AdminLayout() {

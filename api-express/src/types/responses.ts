@@ -326,3 +326,34 @@ export interface AdminOfficialCfeisResponse {
   };
   error: string;
 }
+
+export interface AdminCarcassesIntermediairesResponse {
+  ok: boolean;
+  data: {
+    carcassesIntermediaires: Array<
+      CarcasseIntermediaire & {
+        CarcasseIntermediaireEntity: { nom_d_usage: string; type: string };
+        CarcasseIntermediaireUser: { email: string };
+        CarcasseCarcasseIntermediaire: { numero_bracelet: string; espece: string | null };
+      }
+    >;
+    total: number;
+  };
+  error: string;
+}
+
+export interface AdminCarcasseDetailResponse {
+  ok: boolean;
+  data: {
+    carcasse: Carcasse & {
+      CarcasseIntermediaire: Array<
+        CarcasseIntermediaire & {
+          CarcasseIntermediaireEntity: { nom_d_usage: string; type: string };
+          CarcasseIntermediaireUser: { email: string };
+        }
+      >;
+      Fei: Fei;
+    };
+  };
+  error: string;
+}

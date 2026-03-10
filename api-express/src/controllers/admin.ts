@@ -30,6 +30,8 @@ import type {
   AdminApiKeyResponse,
   AdminApiKeyAndApprovalsResponse,
   AdminOfficialCfeisResponse,
+  AdminCarcassesIntermediairesResponse,
+  AdminCarcasseDetailResponse,
   UserConnexionResponse,
 } from '~/types/responses';
 import passport from 'passport';
@@ -921,6 +923,72 @@ router.post(
         return allEntitiesRecord;
       });
       res.status(200).send({ ok: true, data: { apiKey: apiKey, allUsers, allEntities }, error: '' });
+    },
+  ),
+);
+
+router.get(
+  '/carcasses-intermediaires',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminCarcassesIntermediairesResponse>,
+      next: express.NextFunction,
+    ) => {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const [carcassesIntermediaires, total] = await Promise.all([
+        prisma.carcasseIntermediaire.findMany({
+          orderBy: { created_at: 'desc' },
+          take: limit,
+          skip: offset,
+          include: {
+            CarcasseIntermediaireEntity: { select: { nom_d_usage: true, type: true } },
+            CarcasseIntermediaireUser: { select: { email: true } },
+            CarcasseCarcasseIntermediaire: { select: { numero_bracelet: true, espece: true } },
+          },
+        }),
+        prisma.carcasseIntermediaire.count(),
+      ]);
+
+      res.status(200).send({ ok: true, data: { carcassesIntermediaires, total }, error: '' });
+    },
+  ),
+);
+
+router.get(
+  '/carcasse/:zacharie_carcasse_id',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminCarcasseDetailResponse>,
+      next: express.NextFunction,
+    ) => {
+      const carcasse = await prisma.carcasse.findUnique({
+        where: { zacharie_carcasse_id: req.params.zacharie_carcasse_id },
+        include: {
+          CarcasseIntermediaire: {
+            orderBy: { created_at: 'asc' },
+            include: {
+              CarcasseIntermediaireEntity: { select: { nom_d_usage: true, type: true } },
+              CarcasseIntermediaireUser: { select: { email: true } },
+            },
+          },
+          Fei: true,
+        },
+      });
+
+      if (!carcasse) {
+        res.status(404).send({ ok: false, data: null as never, error: 'Carcasse not found' });
+        return;
+      }
+
+      res.status(200).send({ ok: true, data: { carcasse }, error: '' });
     },
   ),
 );

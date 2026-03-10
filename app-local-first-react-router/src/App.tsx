@@ -37,6 +37,7 @@ import AdminApiKeys from './routes/admin/api-keys';
 import AdminNewApiKey from './routes/admin/api-key-add';
 import AdminApiKey from './routes/admin/api-key.$apiKeyId';
 import AdminLayout from './routes/admin/layout';
+import AdminCarcassesIntermediaires from './routes/admin/carcasses-intermediaires';
 import NouvelleFiche from './routes/nouvelle-fiche';
 import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
 import MesChasses from './routes/mes-chasses/mes-chasses';
@@ -392,6 +393,14 @@ function App() {
                 element={
                   <RestrictedRoute id="api-key/:apiKeyId" roles={[UserRoles.ADMIN]}>
                     <AdminApiKey />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="carcasses-intermediaires"
+                element={
+                  <RestrictedRoute id="carcasses-intermediaires" roles={[UserRoles.ADMIN]}>
+                    <AdminCarcassesIntermediaires />
                   </RestrictedRoute>
                 }
               />
