@@ -714,13 +714,13 @@ export default function DestinatairePremierDetenteur({
       const removedGroup = prev.find((g) => g.id === groupId);
       if (!removedGroup) return prev;
       const remaining = prev.filter((g) => g.id !== groupId);
+      // Don't allow removing the last group
+      if (remaining.length === 0) return prev;
       // Put freed carcasses into the first remaining group
-      if (remaining.length > 0) {
-        remaining[0] = {
-          ...remaining[0],
-          carcasseIds: [...remaining[0].carcasseIds, ...removedGroup.carcasseIds],
-        };
-      }
+      remaining[0] = {
+        ...remaining[0],
+        carcasseIds: [...remaining[0].carcasseIds, ...removedGroup.carcasseIds],
+      };
       return remaining;
     });
   }, []);
