@@ -8,7 +8,6 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -24,9 +23,7 @@ export default function FEI_SVI() {
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
-  const feiCarcasses = useCarcassesForFei(params.fei_numero);
   const myCarcasses = useMyCarcassesForFei(params.fei_numero);
-  const hiddenCount = feiCarcasses.length - myCarcasses.length;
   const carcasseIds = myCarcasses.map((c) => c.zacharie_carcasse_id);
   const entities = useZustandStore((state) => state.entities);
   const updateFei = useZustandStore((state) => state.updateFei);
@@ -120,11 +117,6 @@ export default function FEI_SVI() {
             )}
           </>
         )} */}
-        {hiddenCount > 0 && (
-          <p className="my-2 text-sm text-gray-400 italic">
-            {hiddenCount} autre{hiddenCount > 1 ? 's' : ''} carcasse{hiddenCount > 1 ? 's' : ''} sur cette fiche ne vous concern{hiddenCount > 1 ? 'ent' : 'e'} pas
-          </p>
-        )}
         <div className="flex flex-col gap-4">
           {carcassesAAfficher.map((carcasse) => {
             return <CardCarcasseSvi canClick key={carcasse.numero_bracelet} carcasse={carcasse} />;

@@ -84,7 +84,6 @@ test("Dispatch 4 carcasses vers 2 destinataires ETG", async ({ page, context }) 
   await context.clearCookies();
   await connectWith(page, "etg-1@example.fr");
   await page.getByRole("link", { name: feiId }).click();
-  await expect(page.getByText(/2 autre.*carcasse.*ne vous concern/)).toBeVisible({ timeout: 10000 });
   // Verify the section title shows "Carcasses (2)" not "Carcasses (4)"
   await expect(page.getByText("Carcasses (2)")).toBeVisible();
 
@@ -103,7 +102,6 @@ test("Dispatch 4 carcasses vers 2 destinataires ETG", async ({ page, context }) 
   await context.clearCookies();
   await connectWith(page, "etg-2@example.fr");
   await page.getByRole("link", { name: feiId }).click();
-  await expect(page.getByText(/2 autre.*carcasse.*ne vous concern/)).toBeVisible({ timeout: 10000 });
   await expect(page.getByText("Carcasses (2)")).toBeVisible();
   await page.getByRole("heading", { name: "🫵 Cette fiche a été attribuée" }).click();
   const priseEnChargeBtn2 = page.getByRole("button", { name: "Je prends en charge les carcasses" });

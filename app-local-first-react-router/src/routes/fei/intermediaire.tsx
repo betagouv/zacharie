@@ -29,7 +29,6 @@ import {
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import FEIDonneesDeChasse from './donnees-de-chasse';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
@@ -152,9 +151,7 @@ function FEICurrentIntermediaireContent({
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useEtgIds();
   const fei = feis[params.fei_numero!];
-  const allFeiCarcasses = useCarcassesForFei(fei.numero);
   const myFeiCarcasses = useMyCarcassesForFei(fei.numero);
-  const hiddenCount = allFeiCarcasses.length - myFeiCarcasses.length;
 
   const originalCarcasses = myFeiCarcasses.sort((a, b) => {
     if (a.svi_carcasse_status === CarcasseStatus.SANS_DECISION) {
@@ -616,11 +613,6 @@ function FEICurrentIntermediaireContent({
       {children}
       {intermediaire ? (
         <Section title={`Carcasses (${intermediaireCarcasses.length})`}>
-          {hiddenCount > 0 && (
-            <p className="my-2 text-sm text-gray-400 italic">
-              {hiddenCount} autre{hiddenCount > 1 ? 's' : ''} carcasse{hiddenCount > 1 ? 's' : ''} sur cette fiche ne vous concern{hiddenCount > 1 ? 'ent' : 'e'} pas
-            </p>
-          )}
           {effectiveCanEdit && (
             <>
               {intermediaireCarcasses.length > 0 ? (
@@ -692,11 +684,6 @@ function FEICurrentIntermediaireContent({
         <Section
           title={`Carcasses (${originalCarcasses.filter((c) => c.svi_carcasse_status === CarcasseStatus.SANS_DECISION).length})`}
         >
-          {hiddenCount > 0 && (
-            <p className="my-2 text-sm text-gray-400 italic">
-              {hiddenCount} autre{hiddenCount > 1 ? 's' : ''} carcasse{hiddenCount > 1 ? 's' : ''} sur cette fiche ne vous concern{hiddenCount > 1 ? 'ent' : 'e'} pas
-            </p>
-          )}
           <div className="flex flex-col gap-4">
             {originalCarcasses
               .filter((c) => c.svi_carcasse_status === CarcasseStatus.SANS_DECISION)
