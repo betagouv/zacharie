@@ -116,7 +116,6 @@ function DispatchGroupForm({
     <div className="rounded border border-gray-300 bg-white p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h4 className="m-0 text-lg font-bold">
-          {totalGroups > 1 ? `Destinataire ${groupIndex + 1}` : 'Destinataire'}
           {totalGroups > 1 && (
             <Badge severity={group.carcasseIds.length > 0 ? 'info' : 'warning'} small noIcon as="span" className="ml-2">
               {group.carcasseIds.length} carcasse{group.carcasseIds.length !== 1 ? 's' : ''}
@@ -817,9 +816,9 @@ export default function DestinatairePremierDetenteur({
           : error;
       }
     }
-    if (unassignedCarcasses.length > 0) {
-      return `${unassignedCarcasses.length} carcasse(s) ne sont attribuees a aucun destinataire`;
-    }
+    // if (unassignedCarcasses.length > 0) {
+    //   return `${unassignedCarcasses.length} carcasse(s) ne sont attribuees a aucun destinataire`;
+    // }
     return null;
   }, [dispatchGroups, entities, unassignedCarcasses]);
 
@@ -1097,42 +1096,46 @@ export default function DestinatairePremierDetenteur({
               />
             )}
 
-            {/* Add another recipient button */}
-            {canEdit && carcassesRestantes.length > 1 && (
-              <Button
-                priority="secondary"
-                type="button"
-                iconId="fr-icon-add-line"
-                nativeButtonProps={{ onClick: addGroup }}
-              >
-                Ajouter un autre destinataire
-              </Button>
-            )}
 
-            {/* Submit button */}
-            {canEdit && (
-              <Button
-                className="mt-4"
-                type="submit"
-                disabled={disabled}
-                nativeButtonProps={{
-                  onClick: async (event) => {
-                    event.preventDefault();
-                    if (globalValidationError) {
-                      alert(globalValidationError);
-                      return;
-                    }
-                    if (shouldShowTrichineModal) {
-                      trichineModal.open();
-                      return;
-                    }
-                    handleSubmit();
-                  },
-                }}
-              >
-                {submitLabel}
-              </Button>
-            )}
+            <div className="flex items-center justify-between mt-4">
+
+              {/* Submit button */}
+              {canEdit && (
+                <Button
+                  className=""
+                  type="submit"
+                  iconId="fr-icon-send-plane-line"
+                  disabled={disabled}
+                  nativeButtonProps={{
+                    onClick: async (event) => {
+                      event.preventDefault();
+                      if (globalValidationError) {
+                        alert(globalValidationError);
+                        return;
+                      }
+                      if (shouldShowTrichineModal) {
+                        trichineModal.open();
+                        return;
+                      }
+                      handleSubmit();
+                    },
+                  }}
+                >
+                  {submitLabel}
+                </Button>
+              )}
+              {/* Add another recipient button */}
+              {canEdit && carcassesRestantes.length > 1 && (
+                <Button
+                  priority="secondary"
+                  type="button"
+                  iconId="fr-icon-add-line"
+                  nativeButtonProps={{ onClick: addGroup }}
+                >
+                  Ajouter un autre destinataire
+                </Button>
+              )}
+            </div>
             {!disabled && globalValidationError && (
               <Alert title="Attention" className="mt-4" severity="error" description={globalValidationError} />
             )}
