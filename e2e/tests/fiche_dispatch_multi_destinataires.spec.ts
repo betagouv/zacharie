@@ -44,8 +44,8 @@ test("Dispatch 4 carcasses vers 2 destinataires ETG", async ({ page, context }) 
   await ajouterBtn.click();
 
   // 4. Vérifier que les 2 groupes sont visibles
-  await expect(page.getByRole("heading", { name: /Destinataire 1/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /Destinataire 2/ })).toBeVisible();
+  await expect(page.getByText("Cliquez pour ajouter ou").nth(0)).toBeVisible();
+  await expect(page.getByText("Cliquez pour ajouter ou").nth(1)).toBeVisible();
 
   // 5. Dans le groupe 2, cliquer sur 2 carcasses pour les déplacer
   const group2 = page.locator("div.rounded.border").nth(1);
