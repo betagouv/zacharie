@@ -285,9 +285,11 @@ function FEICurrentIntermediaireContent({
     ) {
       if (user.roles.includes(UserRoles.ETG)) {
         if (
-          myFeiCarcasses.some(
-            (c) => c.next_owner_entity_id && etgsIds.includes(c.next_owner_entity_id),
-          )
+          myFeiCarcasses.some((c) => {
+            if (!c.next_owner_entity_id || !etgsIds.includes(c.next_owner_entity_id)) return false;
+            const etg = entities[c.next_owner_entity_id];
+            return etg?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
+          })
         ) {
           return true;
         }

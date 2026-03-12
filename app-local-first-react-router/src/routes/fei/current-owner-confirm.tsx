@@ -73,6 +73,13 @@ export default function CurrentOwnerConfirm() {
   }, [myCarcasses, fei.fei_next_owner_entity_id]);
   const myEntityName = myEntityId ? (entities[myEntityId]?.nom_d_usage ?? '') : '';
 
+  const myNextOwnerRole = useMemo(() => {
+    if (myCarcasses.length > 0) {
+      return myCarcasses[0].next_owner_role;
+    }
+    return fei.fei_next_owner_role;
+  }, [myCarcasses, fei.fei_next_owner_role]);
+
   // Detect if user already took charge of their assigned carcasses
   const myAlreadyHandledCarcasses = useMemo(() => {
     return feiCarcasses.filter(
@@ -101,7 +108,7 @@ export default function CurrentOwnerConfirm() {
   }, [feiCarcasses]);
 
   const needTransportFromETG = useMemo(() => {
-    if (fei.fei_next_owner_role === FeiOwnerRole.ETG) {
+    if (myNextOwnerRole === FeiOwnerRole.ETG) {
       if (latestIntermediaire) {
         if (latestIntermediaire?.intermediaire_depot_type === DepotType.CCG) {
           return true;
@@ -113,18 +120,17 @@ export default function CurrentOwnerConfirm() {
     } else {
       return false;
     }
-  }, [latestIntermediaire, fei]);
+  }, [latestIntermediaire, fei, myNextOwnerRole]);
 
   const [checkedTransportFromETG /* setCheckedTransportFromETG */] = useState(needTransportFromETG);
   const notMyEntitySoutraite = useMemo(() => {
-    if (!fei.fei_next_owner_sous_traite_by_entity_id) {
-      return false;
-    }
-    if (fei.fei_next_owner_sous_traite_by_entity_id === fei.fei_next_owner_entity_id) {
-      return false;
-    }
+    const sousTraiteEntityId = myCarcasses.length > 0
+      ? myCarcasses[0].next_owner_sous_traite_by_entity_id
+      : fei.fei_next_owner_sous_traite_by_entity_id;
+    if (!sousTraiteEntityId) return false;
+    if (sousTraiteEntityId === myEntityId) return false;
     return true;
-  }, [fei.fei_next_owner_sous_traite_by_entity_id, fei.fei_next_owner_entity_id]);
+  }, [myCarcasses, fei.fei_next_owner_sous_traite_by_entity_id, myEntityId]);
 
   const isETGEmployeeAndTransportingToETG = useMemo(() => {
     if (
@@ -146,9 +152,9 @@ export default function CurrentOwnerConfirm() {
     // Multi-recipient: check if user has carcasses assigned to them per-carcasse
     if (myCarcasses.length > 0) {
       // User has carcasses assigned — check role compatibility
-      if (user.roles.includes(UserRoles.ETG) && fei.fei_next_owner_role === FeiOwnerRole.ETG) return true;
-      if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && fei.fei_next_owner_role === FeiOwnerRole.COLLECTEUR_PRO) return true;
-      if (user.roles.includes(UserRoles.SVI) && fei.fei_next_owner_role === FeiOwnerRole.SVI) return true;
+      if (user.roles.includes(UserRoles.ETG) && myNextOwnerRole === FeiOwnerRole.ETG) return true;
+      if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && myNextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO) return true;
+      if (user.roles.includes(UserRoles.SVI) && myNextOwnerRole === FeiOwnerRole.SVI) return true;
     }
 
     if (fei.fei_next_owner_user_id === user.id) {
@@ -193,6 +199,7 @@ export default function CurrentOwnerConfirm() {
     user.etg_role,
     nextOwnerEntity,
     myCarcasses.length,
+    myNextOwnerRole,
   ]);
 
   if (isCircuitCourt) {
