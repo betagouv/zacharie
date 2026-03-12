@@ -43,7 +43,6 @@ export function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Carcasse): CarcasseFi
     latest_intermediaire_entity_id: fei.latest_intermediaire_entity_id,
     latest_intermediaire_name_cache: fei.latest_intermediaire_name_cache,
     svi_assigned_at: fei.svi_assigned_at,
-    svi_entity_id: fei.svi_entity_id,
     svi_user_id: fei.svi_user_id,
     svi_closed_at: fei.svi_closed_at,
     svi_closed_by_user_id: fei.svi_closed_by_user_id,

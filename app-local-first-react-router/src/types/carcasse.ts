@@ -29,7 +29,6 @@ export interface CarcasseFieldsTakenFromFei {
   latest_intermediaire_entity_id: Carcasse['latest_intermediaire_entity_id'];
   latest_intermediaire_name_cache: Carcasse['latest_intermediaire_name_cache'];
   svi_assigned_at: Carcasse['svi_assigned_at'];
-  svi_entity_id: Carcasse['svi_entity_id'];
   svi_user_id: Carcasse['svi_user_id'];
   svi_closed_at: Carcasse['svi_closed_at'];
   svi_closed_by_user_id: Carcasse['svi_closed_by_user_id'];

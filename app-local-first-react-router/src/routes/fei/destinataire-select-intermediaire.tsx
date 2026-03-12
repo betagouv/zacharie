@@ -67,7 +67,10 @@ export default function DestinataireIntermediaire({
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
-  const entities = useZustandStore((state) => state.entities);
+  const entities = useZustandStore((state) => {
+    return state.entities;
+  });
+  console.log("✌️ ~ entities:", entities);
   const ccgsIds = useCcgIds();
   const etgsIds = useEtgIds();
   const svisIds = useSviIds();
@@ -84,21 +87,36 @@ export default function DestinataireIntermediaire({
   const myCurrentRole = intermediaire?.intermediaire_role ?? fei.fei_current_owner_role;
 
   const carcassesStore = useZustandStore((state) => state.carcasses);
-
-  const carcasses = useMyCarcassesForFei(params.fei_numero);
-  const carcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);
+  const carcassesIntermediaires = useCarcassesIntermediairesForIntermediaire(feiAndIntermediaireIds);
+  const carcasseIds = useMemo(
+    () =>
+      carcassesIntermediaires
+        .filter((ci) => {
+          const carcasse = carcassesStore[ci.zacharie_carcasse_id];
+          if (!carcasse || carcasse.deleted_at) return false;
+          // Multi-recipient: only include carcasses actually owned by this intermediaire's entity
+          if (intermediaire?.intermediaire_entity_id && carcasse.current_owner_entity_id) {
+            return carcasse.current_owner_entity_id === intermediaire.intermediaire_entity_id;
+          }
+          return true;
+        })
+        .map((ci) => ci.zacharie_carcasse_id),
+    [carcassesIntermediaires, carcassesStore, intermediaire?.intermediaire_entity_id],
+  );
 
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
   const collecteursPros = collecteursProIds.map((id) => entities[id]);
   const circuitCourt = circuitCourtIds.map((id) => entities[id]);
   const svis = svisIds.map((id) => entities[id]);
+  console.log("✌️ ~ svis:", svis);
 
   const intermediaireEntity = intermediaire?.intermediaire_entity_id
     ? entities[intermediaire.intermediaire_entity_id]
     : null;
   const intermediaireEntityType = intermediaireEntity?.type;
 
+  console.log("✌️ ~ myCurrentRole:", myCurrentRole);
   const prochainsDetenteurs = useMemo(() => {
     if (myCurrentRole === FeiOwnerRole.ETG) {
       return [
@@ -297,6 +315,7 @@ export default function DestinataireIntermediaire({
           carcasseId,
           {
             svi_assigned_to_fei_at: nextFei.svi_assigned_at,
+            svi_entity_id: prochainDetenteurEntityId,
           },
           false,
         );

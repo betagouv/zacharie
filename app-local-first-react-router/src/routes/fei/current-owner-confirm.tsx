@@ -135,7 +135,7 @@ export default function CurrentOwnerConfirm() {
   const isETGEmployeeAndTransportingToETG = useMemo(() => {
     if (
       fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
-      fei.fei_next_owner_role === FeiOwnerRole.ETG &&
+      myNextOwnerRole === FeiOwnerRole.ETG &&
       currentOwnerEntity?.type === EntityTypes.ETG &&
       currentOwnerEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY &&
       fei.fei_current_owner_entity_id === fei.fei_next_owner_entity_id &&
@@ -146,7 +146,7 @@ export default function CurrentOwnerConfirm() {
       return true;
     }
     return false;
-  }, [fei, user, currentOwnerEntity]);
+  }, [fei, user, currentOwnerEntity, myNextOwnerRole]);
 
   const canConfirmCurrentOwner = useMemo(() => {
     // Multi-recipient: check if user has carcasses assigned to them per-carcasse
@@ -166,12 +166,12 @@ export default function CurrentOwnerConfirm() {
     if (nextOwnerEntity.relation !== EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
       return false;
     }
-    if (user.roles.includes(UserRoles.SVI) || fei.fei_next_owner_role === FeiOwnerRole.SVI) {
-      if (fei.fei_next_owner_role !== FeiOwnerRole.SVI) return false;
+    if (user.roles.includes(UserRoles.SVI) || myNextOwnerRole === FeiOwnerRole.SVI) {
+      if (myNextOwnerRole !== FeiOwnerRole.SVI) return false;
       if (!user.roles.includes(UserRoles.SVI)) return false;
     }
-    if (user.roles.includes(UserRoles.ETG) || fei.fei_next_owner_role === FeiOwnerRole.ETG) {
-      if (fei.fei_next_owner_role !== FeiOwnerRole.ETG) return false;
+    if (user.roles.includes(UserRoles.ETG) || myNextOwnerRole === FeiOwnerRole.ETG) {
+      if (myNextOwnerRole !== FeiOwnerRole.ETG) return false;
       if (!user.roles.includes(UserRoles.ETG)) return false;
       if (fei.fei_current_owner_user_id === user.id) {
         if (fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO) {
@@ -183,15 +183,14 @@ export default function CurrentOwnerConfirm() {
     }
     if (
       user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
-      fei.fei_next_owner_role === FeiOwnerRole.COLLECTEUR_PRO
+      myNextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO
     ) {
-      if (fei.fei_next_owner_role !== FeiOwnerRole.COLLECTEUR_PRO) return false;
+      if (myNextOwnerRole !== FeiOwnerRole.COLLECTEUR_PRO) return false;
       if (!user.roles.includes(UserRoles.COLLECTEUR_PRO)) return false;
     }
     return true;
   }, [
     fei.fei_next_owner_user_id,
-    fei.fei_next_owner_role,
     fei.fei_current_owner_user_id,
     fei.fei_current_owner_role,
     user.id,
@@ -205,7 +204,7 @@ export default function CurrentOwnerConfirm() {
   if (isCircuitCourt) {
     return null;
   }
-  if (!fei.fei_next_owner_role) {
+  if (!myNextOwnerRole) {
     return null;
   }
   if (fei.automatic_closed_at || fei.svi_closed_at || fei.intermediaire_closed_at) {
@@ -572,7 +571,7 @@ export default function CurrentOwnerConfirm() {
         title={
           fei.fei_next_owner_user_id
             ? '🫵  Cette fiche vous a été attribuée'
-            : fei.fei_next_owner_role === FeiOwnerRole.SVI
+            : myNextOwnerRole === FeiOwnerRole.SVI
               ? '🫵  Cette fiche a été attribuée à votre service'
               : '🫵  Cette fiche a été attribuée à votre société'
         }
@@ -582,7 +581,7 @@ export default function CurrentOwnerConfirm() {
         {nextOwnerEntity?.nom_d_usage ? ` (${nextOwnerEntity?.nom_d_usage})` : ''}, vous pouvez prendre en
         charge cette fiche et les carcasses associées. */}
         {/* <br /> */}
-        {fei.fei_next_owner_role === FeiOwnerRole.PREMIER_DETENTEUR && (
+        {myNextOwnerRole === FeiOwnerRole.PREMIER_DETENTEUR && (
           <Button
             type="submit"
             className="my-4 block"
@@ -596,7 +595,7 @@ export default function CurrentOwnerConfirm() {
             Je prends en charge cette fiche et les carcasses associées
           </Button>
         )}
-        {fei.fei_next_owner_role === FeiOwnerRole.SVI && (
+        {myNextOwnerRole === FeiOwnerRole.SVI && (
           <Button
             type="submit"
             className="my-4 block"
@@ -610,7 +609,7 @@ export default function CurrentOwnerConfirm() {
             Je prends en charge cette fiche
           </Button>
         )}
-        {fei.fei_next_owner_role === FeiOwnerRole.ETG && user.roles.includes(UserRoles.ETG) && (
+        {myNextOwnerRole === FeiOwnerRole.ETG && user.roles.includes(UserRoles.ETG) && (
           <>
             {user.etg_role === UserEtgRoles.RECEPTION && (
               <>
@@ -665,7 +664,7 @@ export default function CurrentOwnerConfirm() {
             )}
           </>
         )}
-        {fei.fei_next_owner_role === FeiOwnerRole.COLLECTEUR_PRO && (
+        {myNextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO && (
           <Button
             type="submit"
             className="my-4 block"

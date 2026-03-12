@@ -53,26 +53,21 @@ export default function FEICurrentIntermediaire(props: Props) {
   const fei = feis[params.fei_numero!];
   const intermediaires = useFeiIntermediaires(fei.numero);
 
-  const findMyIntermediaireIndex = (list: typeof intermediaires) => {
-    const found = list.find((i) => i.intermediaire_user_id === user.id);
-    if (found) return list.indexOf(found);
-    // Don't default to another user's intermediaire (multi-recipient dispatch)
-    return -1;
-  };
+  const [selectedIntermediaireId, setSelectedIntermediaireId] = useState<string | null>(
+    () => intermediaires.find((i) => i.intermediaire_user_id === user.id)?.id ?? null,
+  );
 
-  const [intermediaireIndex, setIntermediaireIndex] = useState(() => findMyIntermediaireIndex(intermediaires));
-
-  // Update index when intermediaires change (e.g., after take-charge creates new intermediaire)
+  // Update when intermediaires change (e.g., after take-charge creates new intermediaire)
   useEffect(() => {
-    if (intermediaireIndex < 0 && intermediaires.length > 0) {
-      const newIndex = findMyIntermediaireIndex(intermediaires);
-      if (newIndex >= 0) {
-        setIntermediaireIndex(newIndex);
+    if (!selectedIntermediaireId && intermediaires.length > 0) {
+      const found = intermediaires.find((i) => i.intermediaire_user_id === user.id);
+      if (found) {
+        setSelectedIntermediaireId(found.id);
       }
     }
-  }, [intermediaires, intermediaireIndex]);
+  }, [intermediaires, selectedIntermediaireId]);
 
-  const intermediaire = intermediaireIndex >= 0 ? intermediaires[intermediaireIndex] : undefined;
+  const intermediaire = intermediaires.find((i) => i.id === selectedIntermediaireId);
 
   return (
     <Fragment key={intermediaire?.id}>
@@ -100,7 +95,7 @@ export default function FEICurrentIntermediaire(props: Props) {
                 </span>
               </li>
               {intermediaires
-                .map((_intermediaire, index) => {
+                .map((_intermediaire) => {
                   const entity = entities[_intermediaire.intermediaire_entity_id!];
                   let label = entity?.nom_d_usage;
                   if (
@@ -113,7 +108,7 @@ export default function FEICurrentIntermediaire(props: Props) {
                   return (
                     <li key={_intermediaire.id}>
                       <button
-                        onClick={() => setIntermediaireIndex(index)}
+                        onClick={() => setSelectedIntermediaireId(_intermediaire.id)}
                         className="fr-breadcrumb__link"
                         aria-current={_intermediaire.id === intermediaire?.id ? 'step' : false}
                         disabled={props.readOnly}
@@ -132,8 +127,7 @@ export default function FEICurrentIntermediaire(props: Props) {
       <FEICurrentIntermediaireContent
         key={intermediaire?.id}
         {...props}
-        intermediaire={intermediaire}
-        intermediaireIndex={intermediaireIndex}
+        intermediaire={intermediaire!}
       >
         <Section open={!!intermediaires.length} title="Données de traçabilité">
           <FEIDonneesDeChasse />
@@ -145,10 +139,9 @@ export default function FEICurrentIntermediaire(props: Props) {
 
 function FEICurrentIntermediaireContent({
   intermediaire,
-  intermediaireIndex,
   children,
   ...props
-}: Props & { intermediaire: FeiIntermediaire; intermediaireIndex: number; children: React.ReactNode }) {
+}: Props & { intermediaire: FeiIntermediaire; children: React.ReactNode }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
@@ -298,6 +291,13 @@ function FEICurrentIntermediaireContent({
     return false;
   }, [fei, user, etgsIds, entities, myFeiCarcasses]);
 
+  // Multi-recipient: user may be current_owner of their carcasses even if FEI-level says otherwise
+  const isCurrentOwnerOfMyCarcasses = useMemo(() => {
+    return myFeiCarcasses.some(
+      (c) => c.current_owner_user_id === user.id,
+    );
+  }, [myFeiCarcasses, user.id]);
+
   const canEdit = useMemo(() => {
     if (fei.intermediaire_closed_at || fei.svi_closed_at || fei.automatic_closed_at) {
       return false;
@@ -305,7 +305,7 @@ function FEICurrentIntermediaireContent({
     if (isEtgWorkingFor) {
       return true;
     }
-    if (fei.fei_current_owner_user_id !== user.id) {
+    if (fei.fei_current_owner_user_id !== user.id && !isCurrentOwnerOfMyCarcasses) {
       return false;
     }
     if (!intermediaire) {
@@ -315,7 +315,7 @@ function FEICurrentIntermediaireContent({
       return false;
     }
     return true;
-  }, [fei, user, intermediaire, isEtgWorkingFor]);
+  }, [fei, user, intermediaire, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses]);
 
   const effectiveCanEdit = canEdit && !props.readOnly;
   const formattedPriseEnChargeAt = priseEnChargeAt
@@ -429,7 +429,6 @@ function FEICurrentIntermediaireContent({
     carcassesSorted.carcassesRejetees,
   ]);
 
-  // console.log({ carcassesSorted, carcassesApprovedSorted, labelCheckDone });
 
   const couldSelectNextUser = useMemo(() => {
     if (
@@ -438,23 +437,25 @@ function FEICurrentIntermediaireContent({
       fei.automatic_closed_at ||
       fei.intermediaire_closed_at
     ) {
-      return false;
-    }
-    if (intermediaireIndex !== 0) {
+      console.log(1)
       return false;
     }
     if (isEtgWorkingFor) {
+      console.log(2)
       return true;
     }
-    if (fei.fei_current_owner_user_id !== user.id) {
+    if (fei.fei_current_owner_user_id !== user.id && !isCurrentOwnerOfMyCarcasses) {
+      console.log(3)
       return false;
     }
     const latestIntermediaire = intermediaires[0];
     if (latestIntermediaire.id !== intermediaire?.id) {
+      console.log(4)
       return false;
     }
+    console.log(5)
     return true;
-  }, [fei, user, intermediaire, intermediaires, isEtgWorkingFor, intermediaireIndex]);
+  }, [fei, user, intermediaire, intermediaires, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses]);
 
   const needSelectNextUser = useMemo(() => {
     if (!couldSelectNextUser) {
@@ -583,6 +584,7 @@ function FEICurrentIntermediaireContent({
     handleCheckFinishedAt(priseEnChargeAt || dayjs().toDate());
   }
 
+  console.log("✌️ ~ couldSelectNextUser:", couldSelectNextUser);
   return (
     <Fragment key={intermediaire?.id}>
       {/* <Section title="Transport" key={intermediaire?.id}>
