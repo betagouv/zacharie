@@ -27,7 +27,7 @@ export default function FEI_SVI() {
   const feiCarcasses = useCarcassesForFei(params.fei_numero);
   const myCarcasses = useMyCarcassesForFei(params.fei_numero);
   const hiddenCount = feiCarcasses.length - myCarcasses.length;
-  const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
+  const carcasseIds = myCarcasses.map((c) => c.zacharie_carcasse_id);
   const entities = useZustandStore((state) => state.entities);
   const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);

@@ -15,6 +15,7 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useCarcassesIntermediairesForIntermediaire } from '@app/utils/get-carcasses-intermediaires';
+import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { useCcgIds, useEtgIds, useSviIds, useCollecteursProIds, useCircuitCourtIds } from '@app/utils/get-entity-relations';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -83,14 +84,9 @@ export default function DestinataireIntermediaire({
   const myCurrentRole = intermediaire?.intermediaire_role ?? fei.fei_current_owner_role;
 
   const carcassesStore = useZustandStore((state) => state.carcasses);
-  const carcassesIntermediaires = useCarcassesIntermediairesForIntermediaire(feiAndIntermediaireIds);
-  const carcasseIds = useMemo(
-    () =>
-      carcassesIntermediaires
-        .filter((ci) => !carcassesStore[ci.zacharie_carcasse_id]?.deleted_at)
-        .map((ci) => ci.zacharie_carcasse_id),
-    [carcassesIntermediaires, carcassesStore],
-  );
+
+  const carcasses = useMyCarcassesForFei(params.fei_numero);
+  const carcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);
 
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
