@@ -70,7 +70,7 @@ export default function DestinataireIntermediaire({
   const entities = useZustandStore((state) => {
     return state.entities;
   });
-  console.log("✌️ ~ entities:", entities);
+
   const ccgsIds = useCcgIds();
   const etgsIds = useEtgIds();
   const svisIds = useSviIds();
@@ -109,14 +109,14 @@ export default function DestinataireIntermediaire({
   const collecteursPros = collecteursProIds.map((id) => entities[id]);
   const circuitCourt = circuitCourtIds.map((id) => entities[id]);
   const svis = svisIds.map((id) => entities[id]);
-  console.log("✌️ ~ svis:", svis);
+
 
   const intermediaireEntity = intermediaire?.intermediaire_entity_id
     ? entities[intermediaire.intermediaire_entity_id]
     : null;
   const intermediaireEntityType = intermediaireEntity?.type;
 
-  console.log("✌️ ~ myCurrentRole:", myCurrentRole);
+
   const prochainsDetenteurs = useMemo(() => {
     if (myCurrentRole === FeiOwnerRole.ETG) {
       return [

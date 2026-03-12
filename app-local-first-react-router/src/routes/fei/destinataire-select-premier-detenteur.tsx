@@ -116,6 +116,7 @@ function DispatchGroupForm({
     <div className="rounded border border-gray-300 bg-white p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h4 className="m-0 text-lg font-bold">
+          {totalGroups > 1 && <>Destinataire {groupIndex + 1} </>}
           {totalGroups > 1 && (
             <Badge severity={group.carcasseIds.length > 0 ? 'info' : 'warning'} small noIcon as="span" className="ml-2">
               {group.carcasseIds.length} carcasse{group.carcasseIds.length !== 1 ? 's' : ''}
