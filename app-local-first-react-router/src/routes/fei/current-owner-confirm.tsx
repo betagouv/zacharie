@@ -96,16 +96,15 @@ export default function CurrentOwnerConfirm() {
   // Check if there are remaining carcasses not yet taken in charge by anyone
   const hasRemainingUntakenCarcasses = useMemo(() => {
     return feiCarcasses.some(
-      (c) =>
-        c.next_owner_entity_id != null &&
-        !myCarcasseIds.includes(c.zacharie_carcasse_id) &&
-        !c.current_owner_entity_id,
+      (c) => c.next_owner_entity_id != null && !myCarcasseIds.includes(c.zacharie_carcasse_id),
     );
   }, [feiCarcasses, myCarcasseIds]);
 
   const hasUnsendCarcasses = useMemo(() => {
-    return feiCarcasses.some((c) => c.next_owner_entity_id == null);
-  }, [feiCarcasses]);
+    return feiCarcasses.some(
+      (c) => c.next_owner_entity_id == null && !myCarcasseIds.includes(c.zacharie_carcasse_id),
+    );
+  }, [feiCarcasses, myCarcasseIds]);
 
   const needTransportFromETG = useMemo(() => {
     if (myNextOwnerRole === FeiOwnerRole.ETG) {

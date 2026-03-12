@@ -152,7 +152,6 @@ function FEICurrentIntermediaireContent({
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useEtgIds();
   const fei = feis[params.fei_numero!];
-  const intermediaires = useFeiIntermediaires(fei.numero);
   const allFeiCarcasses = useCarcassesForFei(fei.numero);
   const myFeiCarcasses = useMyCarcassesForFei(fei.numero);
   const hiddenCount = allFeiCarcasses.length - myFeiCarcasses.length;
@@ -437,25 +436,19 @@ function FEICurrentIntermediaireContent({
       fei.automatic_closed_at ||
       fei.intermediaire_closed_at
     ) {
-      console.log(1)
       return false;
     }
     if (isEtgWorkingFor) {
-      console.log(2)
       return true;
     }
     if (fei.fei_current_owner_user_id !== user.id && !isCurrentOwnerOfMyCarcasses) {
-      console.log(3)
       return false;
     }
-    const latestIntermediaire = intermediaires[0];
-    if (latestIntermediaire.id !== intermediaire?.id) {
-      console.log(4)
+    if (intermediaire?.intermediaire_user_id !== user.id) {
       return false;
     }
-    console.log(5)
     return true;
-  }, [fei, user, intermediaire, intermediaires, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses]);
+  }, [fei, user, intermediaire, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses]);
 
   const needSelectNextUser = useMemo(() => {
     if (!couldSelectNextUser) {
@@ -584,7 +577,6 @@ function FEICurrentIntermediaireContent({
     handleCheckFinishedAt(priseEnChargeAt || dayjs().toDate());
   }
 
-  console.log("✌️ ~ couldSelectNextUser:", couldSelectNextUser);
   return (
     <Fragment key={intermediaire?.id}>
       {/* <Section title="Transport" key={intermediaire?.id}>
