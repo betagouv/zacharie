@@ -124,7 +124,7 @@ export default function FeiEnvoyée() {
                       to: `/app/tableau-de-bord/fei/${params.fei_numero}`,
                     }}
                   >
-                    Retour a la fiche
+                    Retour à la fiche
                   </Button>
                 </div>
               </div>
