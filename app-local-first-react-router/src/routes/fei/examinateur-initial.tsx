@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { CarcasseType, EntityRelationType, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
@@ -9,7 +9,10 @@ import dayjs from 'dayjs';
 import InputVille from '@app/components/InputVille';
 import CarcassesExaminateur from './examinateur-carcasses';
 import SelectNextForExaminateur from './examinateur-select-next';
-import FeiPremierDetenteur from './premier-detenteur';
+import DestinataireSelectPremierDetenteur, {
+  type DestinatairePremierDetenteurHandle,
+} from './destinataire-select-premier-detenteur';
+import DeleteFei from './delete-fei';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import useUser from '@app/zustand/user';
@@ -18,7 +21,6 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import Alert from '@codegouvfr/react-dsfr/Alert';
 import useGetCommunesDeChasseFavorites from '@app/utils/useGetCommunesDeChasseFavorites';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import Section from '@app/components/Section';
 import DateHeureValidationAlerts from './date-heure-validation-alerts';
 
 export default function FEIExaminateurInitial() {
@@ -61,42 +63,9 @@ export default function FEIExaminateurInitial() {
   const [approbation, setApprobation] = useState(
     fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false,
   );
-  // const entities = useZustandStore((state) => state.entities);
-  // const nextOwnerEntity = fei.fei_next_owner_entity_id ? entities[fei.fei_next_owner_entity_id] : null;
+  const destinataireRef = useRef<DestinatairePremierDetenteurHandle | null>(null);
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
-
-  const needSelectNextUser = useMemo(() => {
-    if (fei.consommateur_final_usage_domestique) {
-      return false;
-    }
-    if (fei.examinateur_initial_user_id !== user.id) {
-      return false;
-    }
-    if (fei.fei_current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL) {
-      return false;
-    }
-    if (fei.fei_current_owner_user_id !== user.id) {
-      return false;
-    }
-    if (!fei.examinateur_initial_approbation_mise_sur_le_marche) {
-      return false;
-    }
-    return true;
-  }, [fei, user]);
-
-  const showPremierDetenteur = useMemo(() => {
-    if (fei.consommateur_final_usage_domestique) {
-      return false;
-    }
-    if (premierDetenteurEntity) {
-      return true;
-    }
-    if (premierDetenteurUser) {
-      return true;
-    }
-    return false;
-  }, [premierDetenteurEntity, premierDetenteurUser, fei.consommateur_final_usage_domestique]);
 
   const [carcassesNotReady, atLeastOneCarcasseWithAnomalie] = useMemo(() => {
     const notReady = [];
@@ -132,38 +101,12 @@ export default function FEIExaminateurInitial() {
       return false;
     }
     if (fei.examinateur_initial_user_id !== user.id) {
-      // seul l'examinateur initial peut modifier
       return false;
     }
     if (user.isZacharieAdmin) {
       // les admins peuvent modifier
       return true;
     }
-    // if (!carcasses.length) {
-    // il faut au moins une carcasse
-    // return true;
-    // }
-    // if (!onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse) {
-    // il faut l'heure d'éviscération de la dernière carcasse le cas échéant
-    // return true;
-    // }
-    // if (!fei.commune_mise_a_mort) {
-    //   return true;
-    // }
-    // if (!fei.date_mise_a_mort) {
-    //   return true;
-    // }
-    // if (!fei.heure_mise_a_mort_premiere_carcasse) {
-    //   return true;
-    // }
-    // if (needSelectNextUser) {
-    // on garde la possibilité de modifier tout jusqu'à ce que le prochain utilisateur de la fiche soit en sa possession
-    // pour palier à un oubli potentiel de l'examinatuer initial mêms après avoir validé la mise sur le marché
-    // return true;
-    // }
-    // if (fei.examinateur_initial_approbation_mise_sur_le_marche) {
-    //   return false;
-    // }
     return true;
   }, [fei, user]);
 
@@ -211,7 +154,7 @@ export default function FEIExaminateurInitial() {
       return 'Il manque des informations sur certaines carcasses';
     }
     if (!fei.examinateur_initial_date_approbation_mise_sur_le_marche) {
-      return 'Il manque la date de validation de l’examen initial';
+      return 'Il manque la date de validation de l\u2019examen initial';
     }
     return null;
   }, [fei, carcassesNotReady, carcasses, onlyPetitGibier]);
@@ -228,7 +171,6 @@ export default function FEIExaminateurInitial() {
       if (fei.examinateur_initial_user_id === user.id) {
         label = `Je, ${examinateurInitialUser?.nom_de_famille} ${examinateurInitialUser?.prenom}, certifie`;
       } else {
-        // impossible case
         return '';
       }
     }
@@ -257,12 +199,23 @@ export default function FEIExaminateurInitial() {
 
   const communesDeChasseFavorites = useGetCommunesDeChasseFavorites(!fei?.commune_mise_a_mort);
 
+  // Progressive display conditions
+  const hasPremierDetenteur = !!(premierDetenteurUser || premierDetenteurEntity);
+  const showBloc2 = !canEdit || !!(fei.date_mise_a_mort && fei.commune_mise_a_mort && hasPremierDetenteur);
+  const showBloc3 =
+    !canEdit ||
+    !!(
+      showBloc2 &&
+      carcasses.length >= 1 &&
+      fei.heure_mise_a_mort_premiere_carcasse &&
+      (onlyPetitGibier || fei.heure_evisceration_derniere_carcasse)
+    );
+  const showBloc4 = showBloc3;
+
   return (
-    <>
-      <Section
-        title={`Action de l'Examinateur Initial | ${examinateurInitialUser?.prenom} ${examinateurInitialUser?.nom_de_famille}`}
-      >
-        <p className="mb-5 text-red-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
+    <div className="flex flex-col gap-6">
+      {/* Bloc 1 — Informations de chasse */}
+      <div className="bg-white p-4 md:p-8">
         <h4 className="fr-h5">Informations de chasse</h4>
         <Component
           label="Date de mise à mort (et d'éviscération)&nbsp;*"
@@ -340,205 +293,194 @@ export default function FEIExaminateurInitial() {
             defaultValue: fei?.commune_mise_a_mort ?? '',
           }}
         />
-        <Component
-          label="Heure de mise à mort de la première carcasse&nbsp;*"
-          nativeInputProps={{
-            id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-            name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-            type: 'time',
-            required: true,
-            onBlur: (e) => {
-              const heure_mise_a_mort_premiere_carcasse = e.target.value;
-              if (!fei.heure_evisceration_derniere_carcasse) {
-                updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse });
-              } else if (fei.heure_evisceration_derniere_carcasse <= heure_mise_a_mort_premiere_carcasse) {
-                alert(
-                  "L'heure de mise à mort de la première carcasse doit être inférieure à l'heure d'éviscération de la dernière carcasse",
-                );
-                // reset input
-                e.target.value = '';
-                updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: '' });
-              } else {
-                updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse });
-              }
-            },
-            autoComplete: 'off',
-            defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
-          }}
-        />
-        <DateHeureValidationAlerts fei={fei} showDateAlert={false} showHeureEviscerationAlert={false} />
-        <hr className="mt-8" />
-        <h4 className="fr-h5">Mes carcasses</h4>
+        <SelectNextForExaminateur />
+      </div>
 
-        <CarcassesExaminateur canEdit={canEdit} canEditAsPremierDetenteur={canEditAsPremierDetenteur} />
-
-        {examinateurInitialUser && (
-          <>
-            <hr className="mt-8" />
-            <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
-            {!onlyPetitGibier && (
-              <>
-                <Component
-                  label="Heure d'éviscération de la dernière carcasse&nbsp;*"
-                  nativeInputProps={{
-                    id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                    name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                    type: 'time',
-                    required: true,
-                    autoComplete: 'off',
-                    onBlur: (e) => {
-                      const heure_evisceration_derniere_carcasse = e.target.value;
-                      if (!fei.heure_mise_a_mort_premiere_carcasse) {
-                        updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
-                      } else if (
-                        fei.heure_mise_a_mort_premiere_carcasse >= heure_evisceration_derniere_carcasse
-                      ) {
-                        alert(
-                          "L'heure d'éviscération de la dernière carcasse doit être supérieure à l'heure de mise à mort de la première carcasse",
-                        );
-                        // reset input
-                        e.target.value = '';
-                        updateFei(fei.numero, { heure_evisceration_derniere_carcasse: '' });
-                      } else {
-                        updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
-                      }
-                    },
-                    defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
-                  }}
-                />
-                <DateHeureValidationAlerts fei={fei} showDateAlert={false} showHeureMiseAMortAlert={false} />
-              </>
-            )}
-
-            <Component
-              label={
-                fei.consommateur_final_usage_domestique
-                  ? 'Date de validation de l’examen initial'
-                  : 'Date de validation de l’examen initial et de mise sur le marché *'
-              }
-              hintText={
-                canEdit ? (
-                  <>
-                    <button
-                      className="mr-2 inline-block text-left"
-                      type="button"
-                      onClick={() => {
-                        updateFei(fei.numero, {
-                          examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
-                          resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
-                        });
-                      }}
-                    >
-                      <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant.
-                    </button>
-                    <button
-                      className="inline-block text-left"
-                      type="button"
-                      onClick={() => {
-                        let nextConsoPrivee = fei.consommateur_final_usage_domestique
-                          ? null
-                          : dayjs().toDate();
-                        updateFei(fei.numero, {
-                          consommateur_final_usage_domestique: nextConsoPrivee,
-                          premier_detenteur_user_id: nextConsoPrivee ? user.id : null,
-                          premier_detenteur_name_cache: nextConsoPrivee
-                            ? `${user.prenom} ${user.nom_de_famille}`
-                            : null,
-                        });
-                      }}
-                    >
-                      {fei.consommateur_final_usage_domestique ? (
-                        <>
-                          <u className="inline">Cliquez là</u> si les carcasses sont destinées à une mise sur
-                          le marché.
-                        </>
-                      ) : (
-                        <>
-                          <u className="inline">Cliquez là</u> si vous êtes le consommateur final, ou si vous
-                          en faites un usage domestique privé.
-                        </>
-                      )}
-                    </button>
-                  </>
-                ) : (
-                  "Cette date vaut date d'approbation de mise sur le marché"
-                )
-              }
-              nativeInputProps={{
-                id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
-                name: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
-                type: 'datetime-local',
-                autoComplete: 'off',
-                suppressHydrationWarning: true,
-                onBlur: (e) => {
-                  updateFei(fei.numero, {
-                    examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(e.target.value).toDate(),
-                    resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
-                  });
-                },
-                defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
-                  ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                      'YYYY-MM-DDTHH:mm',
-                    )
-                  : undefined,
-              }}
-            />
-            <Checkbox
-              // check css file for styling
-              className={canEdit ? '' : 'checkbox-black'}
-              options={[
-                {
-                  label: checkboxLabel,
-                  nativeInputProps: {
-                    required: true,
-                    name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
-                    value: 'true',
-                    disabled: !canEdit,
-                    onChange: () => setApprobation(!approbation),
-                    readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
-                    checked: approbation,
+      {/* Bloc 2 — Carcasses */}
+      {showBloc2 && (
+        <div className="bg-white p-4 md:p-8">
+          <h4 className="fr-h5">Carcasses</h4>
+          <CarcassesExaminateur canEdit={canEdit} canEditAsPremierDetenteur={canEditAsPremierDetenteur} />
+          <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
+          <Component
+            className="mt-4"
+            label="Heure de mise à mort de la première carcasse&nbsp;*"
+            nativeInputProps={{
+              id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+              name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+              type: 'time',
+              required: true,
+              onBlur: (e) => {
+                const heure_mise_a_mort_premiere_carcasse = e.target.value;
+                if (!fei.heure_evisceration_derniere_carcasse) {
+                  updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse });
+                } else if (fei.heure_evisceration_derniere_carcasse <= heure_mise_a_mort_premiere_carcasse) {
+                  alert(
+                    "L'heure de mise à mort de la première carcasse doit être inférieure à l'heure d'éviscération de la dernière carcasse",
+                  );
+                  e.target.value = '';
+                  updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: '' });
+                } else {
+                  updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse });
+                }
+              },
+              autoComplete: 'off',
+              defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
+            }}
+          />
+          <DateHeureValidationAlerts fei={fei} showDateAlert={false} showHeureEviscerationAlert={false} />
+          {!onlyPetitGibier && (
+            <>
+              <Component
+                label="Heure d'éviscération de la dernière carcasse&nbsp;*"
+                nativeInputProps={{
+                  id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                  name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                  type: 'time',
+                  required: true,
+                  autoComplete: 'off',
+                  onBlur: (e) => {
+                    const heure_evisceration_derniere_carcasse = e.target.value;
+                    if (!fei.heure_mise_a_mort_premiere_carcasse) {
+                      updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
+                    } else if (
+                      fei.heure_mise_a_mort_premiere_carcasse >= heure_evisceration_derniere_carcasse
+                    ) {
+                      alert(
+                        "L'heure d'éviscération de la dernière carcasse doit être supérieure à l'heure de mise à mort de la première carcasse",
+                      );
+                      e.target.value = '';
+                      updateFei(fei.numero, { heure_evisceration_derniere_carcasse: '' });
+                    } else {
+                      updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
+                    }
                   },
+                  defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
+                }}
+              />
+              <DateHeureValidationAlerts fei={fei} showDateAlert={false} showHeureMiseAMortAlert={false} />
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Bloc 3 — Destinataire */}
+      {showBloc3 && (
+        <div className="bg-white p-4 md:p-8">
+          <h4 className="fr-h5">Destinataire</h4>
+          <DestinataireSelectPremierDetenteur
+            canEdit={canEditAsPremierDetenteur}
+            submitRef={destinataireRef}
+            hideSubmitButton
+          />
+        </div>
+      )}
+
+      {/* Bloc 4 — Validation de l'examen initial */}
+      {showBloc4 && examinateurInitialUser && (
+        <div className="bg-white p-4 md:p-8">
+          <h4 className="fr-h5">Validation de l'examen initial</h4>
+          <Component
+            label="Date de validation de l'examen initial et de mise sur le marché *"
+            hintText={
+              canEdit ? (
+                <button
+                  className="inline-block text-left"
+                  type="button"
+                  onClick={() => {
+                    updateFei(fei.numero, {
+                      examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
+                      resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
+                    });
+                  }}
+                >
+                  <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
+                </button>
+              ) : (
+                "Cette date vaut date d'approbation de mise sur le marché"
+              )
+            }
+            nativeInputProps={{
+              id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
+              name: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
+              type: 'datetime-local',
+              autoComplete: 'off',
+              suppressHydrationWarning: true,
+              onBlur: (e) => {
+                updateFei(fei.numero, {
+                  examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(e.target.value).toDate(),
+                  resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
+                });
+              },
+              defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
+                ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
+                  'YYYY-MM-DDTHH:mm',
+                )
+                : undefined,
+            }}
+          />
+          <Checkbox
+            className={canEdit ? '' : 'checkbox-black'}
+            options={[
+              {
+                label: checkboxLabel,
+                nativeInputProps: {
+                  required: true,
+                  name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
+                  value: 'true',
+                  disabled: !canEdit,
+                  onChange: () => setApprobation(!approbation),
+                  readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
+                  checked: approbation,
                 },
-              ]}
-            />
-            {canEdit && !needSelectNextUser && (
+              },
+            ]}
+          />
+          {!!jobIsMissing?.length && (
+            <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
+          )}
+          {canEdit && (
+            <div className="mt-6 flex flex-col gap-4">
+              <Button
+                priority="secondary"
+                type="button"
+                onClick={() => {
+                  syncData('brouillon');
+                }}
+              >
+                Enregistrer comme brouillon
+              </Button>
               <Button
                 type="submit"
-                className="mt-4"
                 disabled={!carcasses.length}
                 onClick={(e) => {
                   e.preventDefault();
                   if (jobIsMissing) {
-                    e.preventDefault();
                     alert(jobIsMissing);
-                  } else if (!approbation) {
-                    alert('Vous devez cocher la case pour valider la mise sur le marché');
-                  } else {
-                    updateFei(fei.numero, {
-                      examinateur_initial_approbation_mise_sur_le_marche: approbation,
-                      // examinateur_initial_date_approbation_mise_sur_le_marche: approbation
-                      //   ? dayjs().toDate()
-                      //   : null,
-                    });
+                    return;
                   }
+                  if (!approbation) {
+                    alert('Vous devez cocher la case pour valider la mise sur le marché');
+                    return;
+                  }
+                  const destinataireError = destinataireRef.current?.validate();
+                  if (destinataireError) {
+                    alert(destinataireError);
+                    return;
+                  }
+                  updateFei(fei.numero, {
+                    examinateur_initial_approbation_mise_sur_le_marche: approbation,
+                  });
+                  destinataireRef.current?.submit();
                 }}
               >
-                Enregistrer la fiche
+                Enregistrer et transmettre la fiche
               </Button>
-            )}
-            {!!jobIsMissing?.length && (
-              <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
-            )}
-          </>
-        )}
-        {!showPremierDetenteur && !fei.consommateur_final_usage_domestique && (
-          <>
-            <hr className="mt-8" />
-            <SelectNextForExaminateur disabled={!needSelectNextUser} />
-          </>
-        )}
-      </Section>
-      {showPremierDetenteur && !fei.consommateur_final_usage_domestique && <FeiPremierDetenteur />}
-    </>
+              <DeleteFei />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
