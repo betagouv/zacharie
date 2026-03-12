@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type MutableRefObject } from 'react';
 import {
   UserRoles,
   Prisma,
@@ -32,6 +32,11 @@ import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import type { EntityWithUserRelation } from '~/src/types/entity';
+
+export interface DestinatairePremierDetenteurHandle {
+  validate: () => string | null;
+  submit: () => void;
+}
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
@@ -141,7 +146,7 @@ function DispatchGroupForm({
       {totalGroups > 1 && (
         <div>
           <p className="mb-2 text-sm font-bold">
-            Cliquez pour ajouter ou retirer
+            Sélectionnez les carcasses pour ce destinataire
           </p>
           <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-4">
             {allCarcassesRestantes.map((carcasse) => {
@@ -156,25 +161,38 @@ function DispatchGroupForm({
                   disabled={!canEdit}
                   onClick={() => onToggleCarcasse(carcasse.zacharie_carcasse_id)}
                   className={[
-                    'flex flex-col border-0 border-l-3 border-solid px-2 py-1.5 text-left',
-                    'bg-contrast-grey cursor-pointer',
+                    'flex items-start gap-1.5 border-0 border-l-3 border-solid px-2 py-1.5 text-left transition-all duration-150',
                     isInGroup
-                      ? 'border-action-high-blue-france'
+                      ? 'bg-blue-100 border-action-high-blue-france opacity-100 cursor-pointer'
                       : otherGroupLabel
-                        ? 'border-transparent opacity-40'
-                        : 'border-transparent opacity-60',
+                        ? 'bg-contrast-grey border-transparent opacity-80'
+                        : 'bg-contrast-grey border-transparent opacity-80 cursor-pointer hover:bg-blue-50 hover:shadow-sm',
                   ].join(' ')}
                 >
-                  <span className="text-sm font-bold">
-                    {carcasse.espece}
-                    {carcasse.nombre_d_animaux && carcasse.nombre_d_animaux > 1
-                      ? ` (${carcasse.nombre_d_animaux})`
-                      : ''}
+                  <span
+                    className={[
+                      'mt-0.5 shrink-0',
+                      isInGroup
+                        ? 'fr-icon-checkbox-fill text-action-high-blue-france'
+                        : otherGroupLabel
+                          ? 'fr-icon-checkbox-line text-gray-400'
+                          : 'fr-icon-checkbox-line',
+                    ].join(' ')}
+                    aria-hidden="true"
+                    style={{ fontSize: '1rem' }}
+                  />
+                  <span className="flex flex-col">
+                    <span className="text-sm font-bold">
+                      {carcasse.espece}
+                      {carcasse.nombre_d_animaux && carcasse.nombre_d_animaux > 1
+                        ? ` (${carcasse.nombre_d_animaux})`
+                        : ''}
+                    </span>
+                    <span className="text-xs">N° {carcasse.numero_bracelet}</span>
+                    {otherGroupLabel && (
+                      <span className="mt-0.5 text-xs text-gray-500">→ {otherGroupLabel}</span>
+                    )}
                   </span>
-                  <span className="text-xs">N° {carcasse.numero_bracelet}</span>
-                  {otherGroupLabel && (
-                    <span className="mt-0.5 text-xs text-gray-500">→ {otherGroupLabel}</span>
-                  )}
                 </button>
               );
             })}
@@ -522,10 +540,14 @@ export default function DestinatairePremierDetenteur({
   className = '',
   canEdit,
   disabled,
+  submitRef,
+  hideSubmitButton,
 }: {
   className?: string;
   canEdit: boolean;
   disabled?: boolean;
+  submitRef?: MutableRefObject<DestinatairePremierDetenteurHandle | null>;
+  hideSubmitButton?: boolean;
 }) {
   const params = useParams();
   const navigate = useNavigate();
@@ -942,6 +964,19 @@ export default function DestinatairePremierDetenteur({
     navigate(`/app/tableau-de-bord/fei/${fei.numero}/envoyée`);
   };
 
+  if (submitRef) {
+    submitRef.current = {
+      validate: () => globalValidationError,
+      submit: () => {
+        if (shouldShowTrichineModal) {
+          trichineModal.open();
+          return;
+        }
+        handleSubmit();
+      },
+    };
+  }
+
   if (!fei.premier_detenteur_user_id) {
     return "Il n'y a pas encore de premier detenteur pour cette fiche";
   }
@@ -1101,7 +1136,7 @@ export default function DestinatairePremierDetenteur({
             <div className="flex items-center justify-between mt-4">
 
               {/* Submit button */}
-              {canEdit && (
+              {canEdit && !hideSubmitButton && (
                 <Button
                   className=""
                   type="submit"

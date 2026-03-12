@@ -163,7 +163,10 @@ function Fei() {
             )}
             <FeiSousTraite />
             {showInterface !== FeiOwnerRole.SVI && <CurrentOwnerConfirm />}
-            {showInterface !== FeiOwnerRole.SVI && !isCircuitCourt && <FeiStepper />}
+            {showInterface !== FeiOwnerRole.SVI &&
+              showInterface !== FeiOwnerRole.EXAMINATEUR_INITIAL &&
+              showInterface !== FeiOwnerRole.PREMIER_DETENTEUR &&
+              !isCircuitCourt && <FeiStepper />}
             {showInterface === FeiOwnerRole.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
             {showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
@@ -172,13 +175,13 @@ function Fei() {
             {isCircuitCourt && <CircuitCourt />}
             <div className="m-8 flex flex-col justify-start gap-4">
               <Button
+                priority="secondary"
                 linkProps={{
                   to: `/app/tableau-de-bord/`,
                 }}
               >
                 Voir toutes mes fiches
               </Button>
-              <DeleteFei />
             </div>
           </div>
         </div>
