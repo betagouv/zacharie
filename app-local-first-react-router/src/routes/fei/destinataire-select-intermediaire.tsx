@@ -14,7 +14,7 @@ import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { useCarcassesIntermediairesForIntermediaire } from '@app/utils/get-carcasses-intermediaires';
 import { useCcgIds, useEtgIds, useSviIds, useCollecteursProIds, useCircuitCourtIds } from '@app/utils/get-entity-relations';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -80,8 +80,17 @@ export default function DestinataireIntermediaire({
 
   const fei = feis[params.fei_numero!];
 
-  const carcasses = useCarcassesForFei(params.fei_numero);
-  const carcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);
+  const myCurrentRole = intermediaire?.intermediaire_role ?? fei.fei_current_owner_role;
+
+  const carcassesStore = useZustandStore((state) => state.carcasses);
+  const carcassesIntermediaires = useCarcassesIntermediairesForIntermediaire(feiAndIntermediaireIds);
+  const carcasseIds = useMemo(
+    () =>
+      carcassesIntermediaires
+        .filter((ci) => !carcassesStore[ci.zacharie_carcasse_id]?.deleted_at)
+        .map((ci) => ci.zacharie_carcasse_id),
+    [carcassesIntermediaires, carcassesStore],
+  );
 
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
@@ -95,7 +104,7 @@ export default function DestinataireIntermediaire({
   const intermediaireEntityType = intermediaireEntity?.type;
 
   const prochainsDetenteurs = useMemo(() => {
-    if (fei.fei_current_owner_role === FeiOwnerRole.ETG) {
+    if (myCurrentRole === FeiOwnerRole.ETG) {
       return [
         ...svis.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
         ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
@@ -108,7 +117,7 @@ export default function DestinataireIntermediaire({
       ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
       ...collecteursPros.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
     ];
-  }, [etgs, collecteursPros, svis, fei.fei_current_owner_role, circuitCourt]);
+  }, [etgs, collecteursPros, svis, myCurrentRole, circuitCourt]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
@@ -165,8 +174,8 @@ export default function DestinataireIntermediaire({
   }, [prochainDetenteurType]);
 
   const hasSanglier = useMemo(() => {
-    return carcasses.some((carcasse) => carcasse.espece === 'Sanglier');
-  }, [carcasses]);
+    return carcasseIds.some((id) => carcassesStore[id]?.espece === 'Sanglier');
+  }, [carcasseIds, carcassesStore]);
 
   const trichineMessage = useMemo(() => {
     if (!prochainDetenteurType) return null;
@@ -250,13 +259,13 @@ export default function DestinataireIntermediaire({
     if (prochainDetenteurType === EntityTypes.SVI) {
       return false;
     }
-    if (fei.fei_current_owner_role === EntityTypes.COLLECTEUR_PRO) {
+    if (myCurrentRole === EntityTypes.COLLECTEUR_PRO) {
       if (!depotType) return true;
       if (depotType === EntityTypes.CCG && !depotEntityId) return true;
       if (depotType !== intermediaire?.intermediaire_depot_type) return true;
       if (depotEntityId !== intermediaire?.intermediaire_depot_entity_id) return true;
     }
-    if (fei.fei_current_owner_role === EntityTypes.ETG) {
+    if (myCurrentRole === EntityTypes.ETG) {
       // no additional checks for ETG
     }
     return false;
@@ -266,7 +275,7 @@ export default function DestinataireIntermediaire({
     depotType,
     depotEntityId,
     fei.fei_next_owner_entity_id,
-    fei.fei_current_owner_role,
+    myCurrentRole,
     intermediaire?.intermediaire_depot_type,
     intermediaire?.intermediaire_depot_entity_id,
   ]);
@@ -287,9 +296,9 @@ export default function DestinataireIntermediaire({
       next_owner_role: prochainDetenteurType as FeiOwnerRole,
     });
     if (prochainDetenteurType === EntityTypes.SVI) {
-      for (const carcasse of carcasses) {
+      for (const carcasseId of carcasseIds) {
         updateCarcasse(
-          carcasse.zacharie_carcasse_id,
+          carcasseId,
           {
             svi_assigned_to_fei_at: nextFei.svi_assigned_at,
           },
@@ -309,9 +318,9 @@ export default function DestinataireIntermediaire({
     addLog({
       user_id: user.id,
       user_role:
-        fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
+        myCurrentRole === FeiOwnerRole.EXAMINATEUR_INITIAL
           ? UserRoles.CHASSEUR
-          : fei.fei_current_owner_role!,
+          : myCurrentRole!,
       action: 'intermediaire-next-owner-select-destinataire',
       fei_numero: fei.numero,
       history: createHistoryInput(fei, nextFei),
