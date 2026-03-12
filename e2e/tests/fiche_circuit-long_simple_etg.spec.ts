@@ -121,7 +121,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   // await page.getByRole("button", { name: "Enregistrer" }).click();
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
-  await page.locator(".select-prochain-detenteur__input-container").click();
+  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "SVI 1 - 75000 Paris (Service" }).click();
   await page.getByRole("button", { name: "Transmettre la fiche" }).click();
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
@@ -160,7 +160,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
       `);
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
+      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 1 daim fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
         - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
         - paragraph: En cours
         - img
@@ -169,7 +169,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
         - paragraph: À renseigner
         - img
         - paragraph: /\\d+ pigeons/
-        - paragraph: 3 daims
+        - paragraph: 1 daim
         - paragraph: fin de liste
         - img
         - paragraph: 2 carcasses refusées
@@ -283,7 +283,7 @@ test("Pas de stockage - Je transfère à un autre collecteur", async ({ page }) 
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
   // await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
-  await page.locator(".select-prochain-detenteur__input-container").click();
+  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "Collecteur Pro 2 - 75000" }).click();
   await page.getByRole("button", { name: "Transmettre la fiche" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
@@ -292,7 +292,7 @@ test("Pas de stockage - Je transfère à un autre collecteur", async ({ page }) 
     `);
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
+    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 1 daim fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
       - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
       - paragraph: En cours
       - img
@@ -301,7 +301,7 @@ test("Pas de stockage - Je transfère à un autre collecteur", async ({ page }) 
       - paragraph: À renseigner
       - img
       - paragraph: /\\d+ pigeons/
-      - paragraph: 3 daims
+      - paragraph: 1 daim
       - paragraph: fin de liste
       - img
       - paragraph: 2 carcasses refusées
@@ -417,7 +417,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
   // await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText("Il manque le prochain dé")).toBeVisible();
-  await page.locator(".select-prochain-detenteur__input-container").click();
+  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "ETG 2 - 75000 Paris (" }).click();
   await page.getByRole("button", { name: "Transmettre la fiche" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
@@ -426,7 +426,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
       `);
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
+      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 1 daim fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
         - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
         - paragraph: En cours
         - img
@@ -435,7 +435,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
         - paragraph: À renseigner
         - img
         - paragraph: /\\d+ pigeons/
-        - paragraph: 3 daims
+        - paragraph: 1 daim
         - paragraph: fin de liste
         - img
         - paragraph: 2 carcasses refusées
@@ -445,7 +445,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
   await expect(page).toHaveURL("http://localhost:3290/app/connexion");
   await connectWith(page, "etg-2@example.fr");
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-    - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
+    - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 1 daim fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
       - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
       - paragraph: À compléter
       - img
@@ -454,7 +454,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
       - paragraph: À renseigner
       - img
       - paragraph: /\\d+ pigeons/
-      - paragraph: 3 daims
+      - paragraph: 1 daim
       - paragraph: fin de liste
       - img
       - paragraph: 2 carcasses refusées
@@ -600,7 +600,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
       hasText: "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
     }),
   ).toBeVisible();
-  await page.locator(".select-prochain-detenteur__input-container").click();
+  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "SVI 2 - 75000 Paris (Service" }).click();
   await page.getByRole("button", { name: "Transmettre la fiche" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
@@ -610,7 +610,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
 
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
+    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 1 daim fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
       - /url: /app/tableau-de-bord/fei/ZACH-20250707-QZ6E0-165242
       - paragraph: En cours
       - img
@@ -619,7 +619,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
       - paragraph: À renseigner
       - img
       - paragraph: /\\d+ pigeons/
-      - paragraph: 3 daims
+      - paragraph: 1 daim
       - paragraph: fin de liste
       - img
       - paragraph: 2 carcasses refusées

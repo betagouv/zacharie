@@ -21,7 +21,7 @@ import {
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import useUser from '@app/zustand/user';
@@ -115,6 +115,7 @@ export default function TableauDeBordIndex() {
   const [loading, setLoading] = useState(false);
   const isOnline = useIsOnline();
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+  const carcasses = useZustandStore((state) => state.carcasses);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
@@ -287,15 +288,17 @@ export default function TableauDeBordIndex() {
     if (filter === 'Toutes les fiches') return allFeis;
     return allFeis.filter((fei) => {
       const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
+      const feiCarcasses = filterCarcassesForFei(carcasses, fei.numero);
       const { simpleStatus } = computeFeiSteps({
         fei,
         intermediaires,
         entitiesIdsWorkingDirectlyFor,
         user,
+        carcasses: feiCarcasses,
       });
       return simpleStatus === filter;
     });
-  }, [allFeis, filter, carcassesIntermediaireById, entitiesIdsWorkingDirectlyFor, user]);
+  }, [allFeis, filter, carcassesIntermediaireById, carcasses, entitiesIdsWorkingDirectlyFor, user]);
 
   const totalPages = Math.ceil(filteredFeis.length / (itemsPerPage ?? 20));
   const paginatedFeis = useMemo(() => {

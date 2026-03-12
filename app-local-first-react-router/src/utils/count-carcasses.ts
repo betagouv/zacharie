@@ -58,6 +58,7 @@ export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarc
         } else {
           acc.refus_carcasses.carcasses++;
         }
+        return acc;
       }
       acc[carcasse.espece!] = {
         carcasses:

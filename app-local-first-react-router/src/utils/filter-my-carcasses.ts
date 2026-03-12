@@ -3,6 +3,7 @@ import type { Carcasse, CarcasseIntermediaire } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { filterEntitiesWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/fei-intermediaire';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 
@@ -13,7 +14,6 @@ const userFields = [
   'premier_detenteur_user_id',
   'examinateur_initial_user_id',
   'svi_user_id',
-  'latest_intermediaire_user_id',
   'created_by_user_id',
 ] as const;
 
@@ -23,7 +23,6 @@ const entityFields = [
   'prev_owner_entity_id',
   'premier_detenteur_entity_id',
   'svi_entity_id',
-  'latest_intermediaire_entity_id',
   'premier_detenteur_depot_entity_id',
   'next_owner_sous_traite_by_entity_id',
 ] as const;

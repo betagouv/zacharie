@@ -19,6 +19,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import CircuitCourt from './circuirt-court';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
 export default function FeiLoader() {
   const params = useParams();
@@ -56,11 +57,31 @@ function Fei() {
   const intermediaires = useFeiIntermediaires(fei.numero);
 
   const entities = useZustandStore((state) => state.entities);
+  const feiCarcasses = useCarcassesForFei(params.fei_numero);
 
   const nextOwnerEntity = fei.fei_next_owner_entity_id ? entities[fei.fei_next_owner_entity_id] : null;
 
-  // const refCurrentRole = useRef(fei.fei_current_owner_role);
-  // const refCurrentUserId = useRef(fei.fei_current_owner_user_id);
+  // For multi-recipient dispatch: derive next_owner_role from per-carcasse data
+  const userEntityIds = useMemo(() => {
+    return Object.values(entities)
+      .filter((e) => e.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)
+      .map((e) => e.id);
+  }, [entities]);
+
+  const myCarcasses = useMemo(() => {
+    return feiCarcasses.filter(
+      (c) =>
+        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) ||
+        c.next_owner_user_id === user.id,
+    );
+  }, [feiCarcasses, userEntityIds, user.id]);
+
+  const myNextOwnerRole = useMemo(() => {
+    if (myCarcasses.length > 0) {
+      return myCarcasses[0].next_owner_role;
+    }
+    return fei.fei_next_owner_role;
+  }, [myCarcasses, fei.fei_next_owner_role]);
 
   const showInterface: FeiOwnerRole | null = useMemo(() => {
     if (user.roles.includes(UserRoles.CHASSEUR)) {
@@ -70,7 +91,7 @@ function Fei() {
       return FeiOwnerRole.PREMIER_DETENTEUR;
     }
 
-    if (fei.fei_current_owner_role === FeiOwnerRole.SVI || fei.fei_next_owner_role === FeiOwnerRole.SVI) {
+    if (fei.fei_current_owner_role === FeiOwnerRole.SVI || myNextOwnerRole === FeiOwnerRole.SVI) {
       if (user.roles.includes(UserRoles.SVI)) return FeiOwnerRole.SVI;
       if (user.roles.includes(UserRoles.ETG)) return FeiOwnerRole.ETG;
       if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) return FeiOwnerRole.COLLECTEUR_PRO;
@@ -83,21 +104,21 @@ function Fei() {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (
-      fei.fei_next_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
+      myNextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO &&
       nextOwnerEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
     ) {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (
       fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
-      fei.fei_next_owner_role === FeiOwnerRole.ETG &&
+      myNextOwnerRole === FeiOwnerRole.ETG &&
       (user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.COLLECTEUR_PRO))
     ) {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (
       user.roles.includes(UserRoles.ETG) &&
-      (fei.fei_current_owner_role === FeiOwnerRole.ETG || fei.fei_next_owner_role === FeiOwnerRole.ETG)
+      (fei.fei_current_owner_role === FeiOwnerRole.ETG || myNextOwnerRole === FeiOwnerRole.ETG)
     ) {
       return FeiOwnerRole.ETG;
     }
@@ -114,11 +135,11 @@ function Fei() {
     user.roles,
     user.id,
     fei.fei_current_owner_role,
-    fei.fei_next_owner_role,
     fei.fei_current_owner_user_id,
     fei.examinateur_initial_user_id,
     nextOwnerEntity?.relation,
     intermediaires,
+    myNextOwnerRole,
   ]);
 
   return (

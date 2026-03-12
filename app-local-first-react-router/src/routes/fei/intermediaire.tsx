@@ -53,16 +53,21 @@ export default function FEICurrentIntermediaire(props: Props) {
   const fei = feis[params.fei_numero!];
   const intermediaires = useFeiIntermediaires(fei.numero);
 
-  const [intermediaireIndex, setIntermediaireIndex] = useState(() => {
-    const userWasIntermediaire = intermediaires.find((intermediaire) =>
-      intermediaire.intermediaire_user_id.startsWith(user.id),
-    );
-    if (userWasIntermediaire) {
-      return intermediaires.indexOf(userWasIntermediaire);
+  const [selectedIntermediaireId, setSelectedIntermediaireId] = useState<string | null>(
+    () => intermediaires.find((i) => i.intermediaire_user_id === user.id)?.id ?? null,
+  );
+
+  // Update when intermediaires change (e.g., after take-charge creates new intermediaire)
+  useEffect(() => {
+    if (!selectedIntermediaireId && intermediaires.length > 0) {
+      const found = intermediaires.find((i) => i.intermediaire_user_id === user.id);
+      if (found) {
+        setSelectedIntermediaireId(found.id);
+      }
     }
-    return 0;
-  });
-  const intermediaire = intermediaires[intermediaireIndex];
+  }, [intermediaires, selectedIntermediaireId]);
+
+  const intermediaire = intermediaires.find((i) => i.id === selectedIntermediaireId);
 
   return (
     <Fragment key={intermediaire?.id}>
@@ -90,7 +95,7 @@ export default function FEICurrentIntermediaire(props: Props) {
                 </span>
               </li>
               {intermediaires
-                .map((_intermediaire, index) => {
+                .map((_intermediaire) => {
                   const entity = entities[_intermediaire.intermediaire_entity_id!];
                   let label = entity?.nom_d_usage;
                   if (
@@ -103,7 +108,7 @@ export default function FEICurrentIntermediaire(props: Props) {
                   return (
                     <li key={_intermediaire.id}>
                       <button
-                        onClick={() => setIntermediaireIndex(index)}
+                        onClick={() => setSelectedIntermediaireId(_intermediaire.id)}
                         className="fr-breadcrumb__link"
                         aria-current={_intermediaire.id === intermediaire?.id ? 'step' : false}
                         disabled={props.readOnly}
@@ -122,8 +127,7 @@ export default function FEICurrentIntermediaire(props: Props) {
       <FEICurrentIntermediaireContent
         key={intermediaire?.id}
         {...props}
-        intermediaire={intermediaire}
-        intermediaireIndex={intermediaireIndex}
+        intermediaire={intermediaire!}
       >
         <Section open={!!intermediaires.length} title="Données de traçabilité">
           <FEIDonneesDeChasse />
@@ -135,10 +139,9 @@ export default function FEICurrentIntermediaire(props: Props) {
 
 function FEICurrentIntermediaireContent({
   intermediaire,
-  intermediaireIndex,
   children,
   ...props
-}: Props & { intermediaire: FeiIntermediaire; intermediaireIndex: number; children: React.ReactNode }) {
+}: Props & { intermediaire: FeiIntermediaire; children: React.ReactNode }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
@@ -149,7 +152,6 @@ function FEICurrentIntermediaireContent({
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useEtgIds();
   const fei = feis[params.fei_numero!];
-  const intermediaires = useFeiIntermediaires(fei.numero);
   const allFeiCarcasses = useCarcassesForFei(fei.numero);
   const myFeiCarcasses = useMyCarcassesForFei(fei.numero);
   const hiddenCount = allFeiCarcasses.length - myFeiCarcasses.length;
@@ -268,8 +270,32 @@ function FEICurrentIntermediaireContent({
         }
       }
     }
+    // Multi-recipient: check if any carcasse has me as next_owner
+    if (
+      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
+      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO
+    ) {
+      if (user.roles.includes(UserRoles.ETG)) {
+        if (
+          myFeiCarcasses.some((c) => {
+            if (!c.next_owner_entity_id || !etgsIds.includes(c.next_owner_entity_id)) return false;
+            const etg = entities[c.next_owner_entity_id];
+            return etg?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
+          })
+        ) {
+          return true;
+        }
+      }
+    }
     return false;
-  }, [fei, user, etgsIds, entities]);
+  }, [fei, user, etgsIds, entities, myFeiCarcasses]);
+
+  // Multi-recipient: user may be current_owner of their carcasses even if FEI-level says otherwise
+  const isCurrentOwnerOfMyCarcasses = useMemo(() => {
+    return myFeiCarcasses.some(
+      (c) => c.current_owner_user_id === user.id,
+    );
+  }, [myFeiCarcasses, user.id]);
 
   const canEdit = useMemo(() => {
     if (fei.intermediaire_closed_at || fei.svi_closed_at || fei.automatic_closed_at) {
@@ -278,7 +304,7 @@ function FEICurrentIntermediaireContent({
     if (isEtgWorkingFor) {
       return true;
     }
-    if (fei.fei_current_owner_user_id !== user.id) {
+    if (fei.fei_current_owner_user_id !== user.id && !isCurrentOwnerOfMyCarcasses) {
       return false;
     }
     if (!intermediaire) {
@@ -288,7 +314,7 @@ function FEICurrentIntermediaireContent({
       return false;
     }
     return true;
-  }, [fei, user, intermediaire, isEtgWorkingFor]);
+  }, [fei, user, intermediaire, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses]);
 
   const effectiveCanEdit = canEdit && !props.readOnly;
   const formattedPriseEnChargeAt = priseEnChargeAt
@@ -402,7 +428,6 @@ function FEICurrentIntermediaireContent({
     carcassesSorted.carcassesRejetees,
   ]);
 
-  // console.log({ carcassesSorted, carcassesApprovedSorted, labelCheckDone });
 
   const couldSelectNextUser = useMemo(() => {
     if (
@@ -413,21 +438,17 @@ function FEICurrentIntermediaireContent({
     ) {
       return false;
     }
-    if (intermediaireIndex !== 0) {
-      return false;
-    }
     if (isEtgWorkingFor) {
       return true;
     }
-    if (fei.fei_current_owner_user_id !== user.id) {
+    if (fei.fei_current_owner_user_id !== user.id && !isCurrentOwnerOfMyCarcasses) {
       return false;
     }
-    const latestIntermediaire = intermediaires[0];
-    if (latestIntermediaire.id !== intermediaire?.id) {
+    if (intermediaire?.intermediaire_user_id !== user.id) {
       return false;
     }
     return true;
-  }, [fei, user, intermediaire, intermediaires, isEtgWorkingFor, intermediaireIndex]);
+  }, [fei, user, intermediaire, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses]);
 
   const needSelectNextUser = useMemo(() => {
     if (!couldSelectNextUser) {

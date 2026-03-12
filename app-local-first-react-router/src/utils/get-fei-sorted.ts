@@ -98,7 +98,18 @@ export function getFeisSorted(): FeiSorted {
     if (debug) {
       console.log('isToTake', isToTake);
     }
-    if (isToTake && !fei.svi_assigned_at && !fei.intermediaire_closed_at) {
+    // Fallback: FEI-level check when carcasses not loaded yet
+    const isToTakeFallback =
+      carcasses.length === 0 &&
+      !fei.automatic_closed_at &&
+      !fei.intermediaire_closed_at &&
+      !fei.svi_assigned_at &&
+      !fei.svi_closed_at &&
+      (fei.fei_next_owner_user_id === user.id ||
+        (fei.fei_next_owner_entity_id != null &&
+          entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)));
+
+    if ((isToTake || isToTakeFallback) && !fei.svi_assigned_at && !fei.intermediaire_closed_at) {
       feisSorted.feisToTake.push(fei);
       continue;
     }

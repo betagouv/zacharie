@@ -109,7 +109,10 @@ interface Actions {
       >
     >,
   ) => void;
-  createFeiIntermediaires: (newFeiIntermediaires: FeiIntermediaire[]) => Promise<void>;
+  createFeiIntermediaires: (
+    newFeiIntermediaires: FeiIntermediaire[],
+    specificCarcasseIds?: string[],
+  ) => Promise<void>;
   updateAllCarcasseIntermediaire: (
     fei_numero: Fei['numero'],
     feiAndIntermediaireIds: FeiAndIntermediaireIds,
@@ -222,7 +225,6 @@ const useZustandStore = create<State & Actions>()(
           updateFei: boolean,
         ) => {
           const carcasses = useZustandStore.getState().carcasses;
-          console.log('NOT SYNCED 1');
           const nextCarcasse = {
             ...carcasses[zacharie_carcasse_id],
             ...partialCarcasse,
@@ -251,11 +253,17 @@ const useZustandStore = create<State & Actions>()(
             get().updateCarcasse(id, transmissionFields, false);
           }
         },
-        createFeiIntermediaires: async (newIntermediaires: FeiIntermediaire[]) => {
+        createFeiIntermediaires: async (
+          newIntermediaires: FeiIntermediaire[],
+          specificCarcasseIds?: string[],
+        ) => {
           if (newIntermediaires.length === 0) return;
           return new Promise((resolve) => {
             const feiNumero = newIntermediaires[0].fei_numero;
-            const carcasses = filterCarcassesForFei(useZustandStore.getState().carcasses, feiNumero);
+            const allCarcasses = filterCarcassesForFei(useZustandStore.getState().carcasses, feiNumero);
+            const carcasses = specificCarcasseIds
+              ? allCarcasses.filter((c) => specificCarcasseIds.includes(c.zacharie_carcasse_id))
+              : allCarcasses;
             const byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
             for (const newIntermediaire of newIntermediaires) {
               const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses
