@@ -366,11 +366,15 @@ function CarcasseDetails({
     const _milestones = [
       `Commune de mise à mort\u00A0: ${fei?.commune_mise_a_mort ?? ''}`,
       `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY')}`,
-      `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${fei.heure_mise_a_mort_premiere_carcasse!}`,
     ];
-    if (onlyPetitGibier) {
+    if (carcasse.heure_mise_a_mort_premiere_carcasse_fei) {
       _milestones.push(
-        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${fei.heure_evisceration_derniere_carcasse!}`,
+        `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasse.heure_mise_a_mort_premiere_carcasse_fei}`,
+      );
+    }
+    if (onlyPetitGibier && carcasse.heure_evisceration_derniere_carcasse_fei) {
+      _milestones.push(
+        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasse.heure_evisceration_derniere_carcasse_fei}`,
       );
     }
     if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
@@ -389,8 +393,8 @@ function CarcasseDetails({
   }, [
     fei?.commune_mise_a_mort,
     fei.date_mise_a_mort,
-    fei.heure_mise_a_mort_premiere_carcasse,
-    fei.heure_evisceration_derniere_carcasse,
+    carcasse.heure_mise_a_mort_premiere_carcasse_fei,
+    carcasse.heure_evisceration_derniere_carcasse_fei,
     onlyPetitGibier,
     ccgDate,
     etgDate,

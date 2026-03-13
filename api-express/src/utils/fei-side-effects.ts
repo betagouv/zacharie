@@ -36,6 +36,22 @@ export async function syncCarcasseDates(existingFei: FeiPopulated, savedFei: Fei
       data: { date_mise_a_mort: savedFei.date_mise_a_mort },
     });
   }
+  if (
+    existingFei.heure_mise_a_mort_premiere_carcasse !== savedFei.heure_mise_a_mort_premiere_carcasse
+  ) {
+    await prisma.carcasse.updateMany({
+      where: { fei_numero: savedFei.numero },
+      data: { heure_mise_a_mort_premiere_carcasse_fei: savedFei.heure_mise_a_mort_premiere_carcasse },
+    });
+  }
+  if (
+    existingFei.heure_evisceration_derniere_carcasse !== savedFei.heure_evisceration_derniere_carcasse
+  ) {
+    await prisma.carcasse.updateMany({
+      where: { fei_numero: savedFei.numero },
+      data: { heure_evisceration_derniere_carcasse_fei: savedFei.heure_evisceration_derniere_carcasse },
+    });
+  }
 }
 
 export async function trackFirstFeiTreated(existingFei: FeiPopulated, savedFei: FeiPopulated, user: User) {
