@@ -299,6 +299,7 @@ model Fei {
   examinateur_initial_user_id                             String?
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
+  consommateur_final_usage_domestique                     DateTime?
   /**
   * premier detenteur
   */
@@ -471,6 +472,7 @@ model Carcasse {
   heure_evisceration                                      String?
   heure_mise_a_mort_premiere_carcasse_fei                 String?
   heure_evisceration_derniere_carcasse_fei                String?
+  consommateur_final_usage_domestique                     DateTime?
   /**
   * EXAMINATEUR
   */

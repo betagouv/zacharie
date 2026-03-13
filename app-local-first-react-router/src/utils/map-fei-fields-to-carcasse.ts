@@ -32,6 +32,7 @@ export function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Carcasse): CarcasseFi
       fei.examinateur_initial_approbation_mise_sur_le_marche,
     examinateur_initial_date_approbation_mise_sur_le_marche:
       fei.examinateur_initial_date_approbation_mise_sur_le_marche,
+    consommateur_final_usage_domestique: fei.consommateur_final_usage_domestique,
     premier_detenteur_offline: fei.premier_detenteur_offline,
     premier_detenteur_user_id: fei.premier_detenteur_user_id,
     premier_detenteur_entity_id: fei.premier_detenteur_entity_id,
