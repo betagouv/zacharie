@@ -187,7 +187,7 @@ export default function DestinataireSousTraite({
     if (fei.fei_next_owner_wants_to_sous_traite) {
       if (prochainDetenteurType === EntityTypes.SVI) {
         if (intermediaire?.intermediaire_role !== FeiOwnerRole.ETG) {
-          return 'Attention, devez cliquer sur "Je prends en charge cette fiche" avant de transmettre la fiche au Service Vétérinaire';
+          return 'Attention, vous devez cliquer sur "Je prends en charge cette fiche" avant de transmettre la fiche au Service Vétérinaire';
         }
       }
     }

@@ -204,11 +204,11 @@ export default function DestinataireIntermediaire({
         content: (
           <>
             <p className="mb-3">
-              <strong>Les carcasses de sanglier transmises necessitent un test trichine obligatoire.</strong>
+              <strong>Les carcasses de sanglier transmises nécessitent un test trichine obligatoire.</strong>
             </p>
             <p>
-              Conformement a la reglementation, vous devez vous assurer que le test trichine a ete realise
-              avant toute mise sur le marche ou consommation de ces carcasses.
+              Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé
+              avant toute mise sur le marché ou consommation de ces carcasses.
             </p>
           </>
         ),
@@ -220,15 +220,15 @@ export default function DestinataireIntermediaire({
         content: (
           <>
             <p className="mb-3">
-              <strong>Les carcasses de sanglier transmises necessitent un test trichine recommande.</strong>
+              <strong>Les carcasses de sanglier transmises nécessitent un test trichine recommandé.</strong>
             </p>
             <p className="mb-3">
-              Si le test trichine n'a pas ete realise, vous devez imperativement informer le consommateur du
-              risque trichine et de l'obligation de cuisson complete de la viande avant consommation.
+              Si le test trichine n'a pas été réalisé, vous devez impérativement informer le consommateur du
+              risque trichine et de l'obligation de cuisson complète de la viande avant consommation.
             </p>
             <p className="text-sm text-gray-600">
-              <strong>Important :</strong> La cuisson doit etre complete (coeur de la viande a 70°C minimum)
-              pour eliminer tout risque de contamination.
+              <strong>Important :</strong> La cuisson doit être complète (cœur de la viande à 70°C minimum)
+              pour éliminer tout risque de contamination.
             </p>
           </>
         ),

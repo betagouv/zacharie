@@ -49,11 +49,11 @@ export default function FeiEnvoyée() {
   return (
     <>
       <title>
-        {`${params.fei_numero} | Zacharie | Ministere de l'Agriculture et de la Souverainete Alimentaire`}
+        {`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
       </title>
       {fei?.deleted_at && (
         <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
-          <p>Fiche supprimee</p>
+          <p>Fiche supprimée</p>
         </div>
       )}
       <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -67,23 +67,23 @@ export default function FeiEnvoyée() {
                     key={recipient.entityName}
                     severity="success"
                     className="mb-4 bg-white"
-                    description={`${recipient.entityName} (${recipient.count} carcasse${recipient.count > 1 ? 's' : ''}) ${fei?.is_synced ? 'a ete notifie' : !isOnline ? 'sera notifie des que vous aurez retrouve du reseau' : 'va etre notifie'}.`}
-                    title="Attribution effectuee"
+                    description={`${recipient.entityName} (${recipient.count} carcasse${recipient.count > 1 ? 's' : ''}) ${fei?.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié'}.`}
+                    title="Attribution effectuée"
                   />
                 ))}
                 {sentByRecipient.length === 0 && fei?.fei_next_owner_entity_id && (
                   <Alert
                     severity="success"
                     className="bg-white"
-                    description={`${entities[fei.fei_next_owner_entity_id]?.nom_d_usage ?? ''} ${fei?.is_synced ? 'a ete notifie' : !isOnline ? 'sera notifie des que vous aurez retrouve du reseau' : 'va etre notifie'}.`}
-                    title="Attribution effectuee"
+                    description={`${entities[fei.fei_next_owner_entity_id]?.nom_d_usage ?? ''} ${fei?.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié'}.`}
+                    title="Attribution effectuée"
                   />
                 )}
                 {unsendCarcasses.length > 0 && (
                   <Alert
                     severity="warning"
                     className="mb-4 bg-white"
-                    title={`${unsendCarcasses.length} carcasse${unsendCarcasses.length > 1 ? 's' : ''} non attribuee${unsendCarcasses.length > 1 ? 's' : ''}`}
+                    title={`${unsendCarcasses.length} carcasse${unsendCarcasses.length > 1 ? 's' : ''} non attribuée${unsendCarcasses.length > 1 ? 's' : ''}`}
                     description={
                       <Button
                         priority="secondary"
