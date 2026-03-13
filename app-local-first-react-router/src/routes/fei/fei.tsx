@@ -163,7 +163,9 @@ function Fei() {
             )}
             <FeiSousTraite />
             {showInterface !== FeiOwnerRole.SVI && <CurrentOwnerConfirm />}
-            {showInterface !== FeiOwnerRole.SVI && !isCircuitCourt && <FeiStepper />}
+            {showInterface !== FeiOwnerRole.SVI &&
+              !isCircuitCourt &&
+              !fei.consommateur_final_usage_domestique && <FeiStepper />}
             {showInterface === FeiOwnerRole.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
             {showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
