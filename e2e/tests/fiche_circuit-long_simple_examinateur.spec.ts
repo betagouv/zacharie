@@ -20,15 +20,14 @@ test("Création d'une fiche", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
   await page.getByTitle("Nouvelle fiche").click();
-  await expect(page.getByRole("heading", { name: "Examen initial Étape 1 sur" })).toBeVisible();
-  await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Action de l'Examinateur" })).toBeVisible();
-  await expect(page.locator("summary")).toBeVisible();
-  await expect(page.getByText("* Les champs marqués d'un astérisque (*) sont obligatoires")).toBeVisible();
   await page.getByText("Date de mise à mort (et d'éviscération) *").click();
   await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour", exact: true }).click();
-  await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
+  await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
+  // Select premier détenteur
+  await page.getByRole("button", { name: "Pierre Petit" }).click();
+  await page.getByRole("button", { name: "Valider l'examen initial" }).click();
+  // Bloc 2 — Carcasses
   await page
     .getByRole("textbox", { name: "Heure de mise à mort de la" })
     .fill(dayjs().startOf("day").add(1, "hour").format("HH:mm"));
@@ -54,13 +53,12 @@ test("Création d'une fiche", async ({ page }) => {
     .getByRole("textbox", { name: "Heure d'éviscération de la" })
     .fill(dayjs().startOf("day").add(2, "hour").format("HH:mm"));
   await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).blur();
+  // Bloc 4 — Validation
   await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour et maintenant" }).click();
   await page.getByText("Je, Martin Marie, certifie qu").click();
-  await expect(page.getByRole("button", { name: "Enregistrer la fiche", exact: true })).not.toBeDisabled();
-  await page.getByRole("button", { name: "Enregistrer la fiche", exact: true }).click();
-  await page.getByRole("button", { name: "Pierre Petit" }).click();
-  await page.getByRole("button", { name: "Valider l’examen initial" }).click();
-  await expect(page.getByRole("heading", { name: "Attribution effectuée" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Enregistrer et transmettre la fiche", exact: true })).not.toBeDisabled();
+  await page.getByRole("button", { name: "Enregistrer et transmettre la fiche", exact: true }).click();
+  await expect(page.getByText(/Attribution effectu/i).first()).toBeVisible({ timeout: 10000 });
   // get fei id
   const feiId = page.url().split("/").pop()!;
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();

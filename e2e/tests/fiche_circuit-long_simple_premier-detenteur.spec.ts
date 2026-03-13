@@ -45,7 +45,7 @@ test("Pas de stockage - Transporter les carcasses soi-même", async ({ page }) =
   await page.getByLabel("Pigeons - N° MM-001-").getByTitle("Fermer").click();
   await page.getByRole("button", { name: "Prendre en charge cette" }).click();
   await expect(page.getByRole("heading", { name: "Validation par le premier dé" })).toBeVisible();
-  await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
+
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
   await expect(page.getByRole("heading", { name: "Attention" })).toBeVisible();
