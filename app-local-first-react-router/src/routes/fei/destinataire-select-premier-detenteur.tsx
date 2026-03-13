@@ -183,12 +183,12 @@ function DispatchGroupForm({
       )}
 
       <SelectCustom
-        label="Prochain detenteur des carcasses *"
+        label="Prochain détenteur des carcasses *"
         isDisabled={disabled}
         hint={
           <>
             <span>
-              Indiquez ici la personne ou la structure avec qui vous etes en contact pour prendre en charge
+              Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge
               le gibier.
             </span>
             {!group.recipientEntityId && !disabled && (
@@ -212,7 +212,7 @@ function DispatchGroupForm({
           </>
         }
         options={prochainsDetenteursOptions}
-        placeholder="Selectionnez le prochain detenteur des carcasses"
+        placeholder="Sélectionnez le prochain détenteur des carcasses"
         value={
           prochainsDetenteursOptions.find((option) => option.value === group.recipientEntityId) ?? null
         }
@@ -237,7 +237,7 @@ function DispatchGroupForm({
         <Alert
           severity="warning"
           title="Attention"
-          description={`${prochainDetenteur?.nom_d_usage} n'est pas pret pour Zacharie. Vous pouvez contacter un representant avant de leur envoyer leur premiere fiche.`}
+          description={`${prochainDetenteur?.nom_d_usage} n'est pas prêt pour Zacharie. Vous pouvez contacter un représentant avant de leur envoyer leur première fiche.`}
         />
       )}
       <RadioButtons
@@ -249,8 +249,8 @@ function DispatchGroupForm({
             label: <span className="inline-block">Pas de stockage</span>,
             hintText: (
               <span>
-                Sans stockage en chambre froide, les carcasses doivent etre transportees{' '}
-                <b>le jour-meme du tir</b>
+                Sans stockage en chambre froide, les carcasses doivent être transportées{' '}
+                <b>le jour-même du tir</b>
               </span>
             ),
             nativeInputProps: {
@@ -267,7 +267,7 @@ function DispatchGroupForm({
           },
           {
             label:
-              "J'ai depose mes carcasses dans un Centre de Collecte du Gibier sauvage (chambre froide)",
+              "J'ai déposé mes carcasses dans un Centre de Collecte du Gibier sauvage (chambre froide)",
             nativeInputProps: {
               checked: group.depotType === DepotType.CCG,
               readOnly: !canEdit,
@@ -310,7 +310,7 @@ function DispatchGroupForm({
                 </>
               }
               options={ccgsOptions}
-              placeholder="Selectionnez le Centre de Collecte du Gibier sauvage"
+              placeholder="Sélectionnez le Centre de Collecte du Gibier sauvage"
               value={ccgsOptions.find((option) => option.value === group.depotEntityId) ?? null}
               getOptionLabel={(f) => f.label!}
               getOptionValue={(f) => f.value}
@@ -328,7 +328,7 @@ function DispatchGroupForm({
               name={`${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
             />
             <Component
-              label="Date de depot dans le Centre de Collecte du Gibier sauvage *"
+              label="Date de dépôt dans le Centre de Collecte du Gibier sauvage *"
               disabled={group.depotType !== DepotType.CCG}
               hintText={
                 canEdit ? (
@@ -342,7 +342,7 @@ function DispatchGroupForm({
                       });
                     }}
                   >
-                    <u className="inline">Cliquez ici</u> pour definir la date du jour et maintenant
+                    <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
                   </button>
                 ) : null
               }
@@ -384,14 +384,14 @@ function DispatchGroupForm({
             disabled={!group.recipientEntityId}
             options={[
               {
-                label: <span className="inline-block">Je transporte les carcasses moi-meme</span>,
+                label: <span className="inline-block">Je transporte les carcasses moi-même</span>,
                 hintText: (
                   <span>
-                    N'oubliez pas de notifier le prochain detenteur des carcasses de votre depot.{' '}
+                    N'oubliez pas de notifier le prochain détenteur des carcasses de votre dépôt.{' '}
                     {group.depotType === DepotType.AUCUN ? (
                       <>
-                        Sans stockage en chambre froide, les carcasses doivent etre transportees{' '}
-                        <b>le jour-meme du tir</b>
+                        Sans stockage en chambre froide, les carcasses doivent être transportées{' '}
+                        <b>le jour-même du tir</b>
                       </>
                     ) : (
                       ''
@@ -407,8 +407,8 @@ function DispatchGroupForm({
                 },
               },
               {
-                label: 'Le transport est realise par un collecteur professionnel',
-                hintText: 'La gestion du transport est sous la responsabilite du prochain detenteur.',
+                label: 'Le transport est réalisé par un collecteur professionnel',
+                hintText: 'La gestion du transport est sous la responsabilité du prochain détenteur.',
                 nativeInputProps: {
                   checked: group.transportType === TransportType.COLLECTEUR_PRO,
                   readOnly: !canEdit,
@@ -424,7 +424,7 @@ function DispatchGroupForm({
           />
           {group.transportType === TransportType.PREMIER_DETENTEUR && group.depotType === DepotType.CCG && (
             <Component
-              label="Date a laquelle je transporte les carcasses"
+              label="Date à laquelle je transporte les carcasses"
               disabled={
                 group.transportType !== TransportType.PREMIER_DETENTEUR || group.depotType !== DepotType.CCG
               }
@@ -444,10 +444,10 @@ function DispatchGroupForm({
                         });
                       }}
                     >
-                      <u className="inline">Cliquez ici</u> pour definir la date du jour et maintenant.
+                      <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant.
                     </button>
-                    A ne remplir que si vous etes le transporteur et que vous stockez les carcasses dans un
-                    CCG. Indiquer une date permettra au prochain detenteur de s'organiser.
+                    À ne remplir que si vous êtes le transporteur et que vous stockez les carcasses dans un
+                    CCG. Indiquer une date permettra au prochain détenteur de s'organiser.
                   </>
                 ) : null
               }
@@ -478,7 +478,7 @@ function getGroupValidationError(
   entities: Record<string, EntityWithUserRelation>,
 ): string | null {
   if (!group.recipientEntityId) {
-    return 'Il manque le prochain detenteur des carcasses';
+    return 'Il manque le prochain détenteur des carcasses';
   }
   if (group.carcasseIds.length === 0) {
     return 'Il faut au moins une carcasse dans ce groupe';
@@ -490,7 +490,7 @@ function getGroupValidationError(
     return 'Il manque le centre de collecte du gibier sauvage';
   }
   if (group.depotType === DepotType.CCG && !group.depotDate) {
-    return 'Il manque la date de depot dans le centre de collecte du gibier sauvage';
+    return 'Il manque la date de dépôt dans le centre de collecte du gibier sauvage';
   }
   const prochainDetenteurType = entities[group.recipientEntityId]?.type;
   const needTransport = (() => {
@@ -762,11 +762,11 @@ export default function DestinatairePremierDetenteur({
           content: (
             <>
               <p className="mb-3">
-                <strong>Les carcasses de sanglier transmises necessitent un test trichine obligatoire.</strong>
+                <strong>Les carcasses de sanglier transmises nécessitent un test trichine obligatoire.</strong>
               </p>
               <p>
-                Conformement a la reglementation, vous devez vous assurer que le test trichine a ete realise
-                avant toute mise sur le marche ou consommation de ces carcasses.
+                Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé
+                avant toute mise sur le marché ou consommation de ces carcasses.
               </p>
             </>
           ),
@@ -778,15 +778,15 @@ export default function DestinatairePremierDetenteur({
           content: (
             <>
               <p className="mb-3">
-                <strong>Les carcasses de sanglier transmises necessitent un test trichine recommande.</strong>
+                <strong>Les carcasses de sanglier transmises nécessitent un test trichine recommandé.</strong>
               </p>
               <p className="mb-3">
-                Si le test trichine n'a pas ete realise, vous devez imperativement informer le consommateur du
-                risque trichine et de l'obligation de cuisson complete de la viande avant consommation.
+                Si le test trichine n'a pas été réalisé, vous devez impérativement informer le consommateur du
+                risque trichine et de l'obligation de cuisson complète de la viande avant consommation.
               </p>
               <p className="text-sm text-gray-600">
-                <strong>Important :</strong> La cuisson doit etre complete (coeur de la viande a 70C minimum)
-                pour eliminer tout risque de contamination.
+                <strong>Important :</strong> La cuisson doit être complète (cœur de la viande à 70°C minimum)
+                pour éliminer tout risque de contamination.
               </p>
             </>
           ),
@@ -943,7 +943,7 @@ export default function DestinatairePremierDetenteur({
   };
 
   if (!fei.premier_detenteur_user_id) {
-    return "Il n'y a pas encore de premier detenteur pour cette fiche";
+    return "Il n'y a pas encore de premier détenteur pour cette fiche";
   }
 
   // Group already-sent carcasses by recipient for display
@@ -996,7 +996,7 @@ export default function DestinatairePremierDetenteur({
         {carcassesDejaEnvoyees.length > 0 && (
           <Alert
             severity="success"
-            title="Carcasses deja attribuees"
+            title="Carcasses déjà attribuées"
             description={
               <div className="mt-2 space-y-3">
                 {Object.entries(dejaEnvoyeesParDestinataire).map(([entityId, carcasses]) => {
@@ -1027,8 +1027,8 @@ export default function DestinatairePremierDetenteur({
         {carcassesRestantes.length === 0 && carcassesDejaEnvoyees.length > 0 && (
           <Alert
             severity="info"
-            title="Toutes les carcasses ont ete attribuees"
-            description="Il n'y a plus de carcasses a envoyer."
+            title="Toutes les carcasses ont été attribuées"
+            description="Il n'y a plus de carcasses à envoyer."
           />
         )}
 
@@ -1084,7 +1084,7 @@ export default function DestinatairePremierDetenteur({
             {unassignedCarcasses.length > 0 && dispatchGroups.length > 1 && (
               <Alert
                 severity="warning"
-                title={`${unassignedCarcasses.length} carcasse${unassignedCarcasses.length > 1 ? 's' : ''} non attribuee${unassignedCarcasses.length > 1 ? 's' : ''}`}
+                title={`${unassignedCarcasses.length} carcasse${unassignedCarcasses.length > 1 ? 's' : ''} non attribuée${unassignedCarcasses.length > 1 ? 's' : ''}`}
                 description={
                   <div className="mt-1 flex flex-wrap gap-1">
                     {unassignedCarcasses.map((c) => (
@@ -1098,7 +1098,7 @@ export default function DestinatairePremierDetenteur({
             )}
 
 
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mt-4 gap-2">
 
               {/* Submit button */}
               {canEdit && (
@@ -1106,7 +1106,7 @@ export default function DestinatairePremierDetenteur({
                   className=""
                   type="submit"
                   iconId="fr-icon-send-plane-line"
-                  disabled={disabled}
+                  disabled={disabled || totalCarcassesToSend === 0}
                   nativeButtonProps={{
                     onClick: async (event) => {
                       event.preventDefault();
