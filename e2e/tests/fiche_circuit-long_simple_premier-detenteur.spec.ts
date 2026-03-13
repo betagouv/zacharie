@@ -74,7 +74,7 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/Attribution effectu/i).first()).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText(/ETG 1.*a ete notifi/i)).toBeVisible();
+  await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible();
 });
 
 test("Stockage - Je transporte les carcasses moi-même", async ({ page }) => {
@@ -109,7 +109,7 @@ test("Stockage - Je transporte les carcasses moi-même", async ({ page }) => {
   const transmettreBtn = page.getByRole("button", { name: "Transmettre la fiche" });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/ETG 1.*a ete notifi/i)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible({ timeout: 10000 });
 });
 
 test("Stockage - Le transport est réalisé par un collecteur professionnel", async ({ page }) => {
@@ -141,5 +141,5 @@ test("Stockage - Le transport est réalisé par un collecteur professionnel", as
   const transmettreBtn = page.getByRole("button", { name: "Transmettre la fiche" });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/ETG 1.*a ete notifi/i)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible({ timeout: 10000 });
 });
