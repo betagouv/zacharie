@@ -54,7 +54,7 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
   await pasDeStockage1.scrollIntoViewIfNeeded();
   await pasDeStockage1.click();
   await expect(page.getByText("Il manque le type de transport")).toBeVisible();
-  const jaiDepose = page.getByText("J'ai depose mes carcasses").first();
+  const jaiDepose = page.getByText("J'ai déposé mes carcasses").first();
   await jaiDepose.scrollIntoViewIfNeeded();
   await jaiDepose.click();
   await expect(page.getByText("Il manque le centre de")).toBeVisible();
@@ -64,7 +64,7 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
   const jeTransporte = page.getByText("Je transporte les carcasses moi").first();
   await jeTransporte.scrollIntoViewIfNeeded();
   await jeTransporte.click();
-  const leTransport = page.getByText("Le transport est realise par").first();
+  const leTransport = page.getByText("Le transport est réalisé par").first();
   await leTransport.scrollIntoViewIfNeeded();
   await leTransport.click();
   const jeTransporte2 = page.getByText("Je transporte les carcasses").first();
@@ -88,7 +88,7 @@ test("Stockage - Je transporte les carcasses moi-même", async ({ page }) => {
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
-  const jaiDepose = page.getByText("J'ai depose mes carcasses").first();
+  const jaiDepose = page.getByText("J'ai déposé mes carcasses").first();
   await jaiDepose.scrollIntoViewIfNeeded();
   await jaiDepose.click();
   await page.getByRole("button", { name: "Renseigner ma chambre froide" }).click();
@@ -97,13 +97,13 @@ test("Stockage - Je transporte les carcasses moi-même", async ({ page }) => {
   await page.getByRole("button", { name: "Ajouter cette chambre froide" }).click();
   // Modal closes and CCG is auto-selected
   await expect(page.getByText("CCG Chasseurs - CCG-01")).toBeVisible();
-  const cliquezIci = page.getByRole("button", { name: /Cliquez ici pour definir la/ }).first();
+  const cliquezIci = page.getByRole("button", { name: /Cliquez ici pour définir la/ }).first();
   await cliquezIci.scrollIntoViewIfNeeded();
   await cliquezIci.click();
   const jeTransporte = page.getByText("Je transporte les carcasses moi").first();
   await jeTransporte.scrollIntoViewIfNeeded();
   await jeTransporte.click();
-  const cliquezIci2 = page.getByRole("button", { name: /Cliquez ici pour definir la date du jour/ }).last();
+  const cliquezIci2 = page.getByRole("button", { name: /Cliquez ici pour définir la date du jour/ }).last();
   await cliquezIci2.scrollIntoViewIfNeeded();
   await cliquezIci2.click();
   const transmettreBtn = page.getByRole("button", { name: "Transmettre la fiche" });
@@ -123,7 +123,7 @@ test("Stockage - Le transport est réalisé par un collecteur professionnel", as
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
-  const jaiDepose = page.getByText("J'ai depose mes carcasses").first();
+  const jaiDepose = page.getByText("J'ai déposé mes carcasses").first();
   await jaiDepose.scrollIntoViewIfNeeded();
   await jaiDepose.click();
   await page.getByRole("button", { name: "Renseigner ma chambre froide" }).click();
@@ -132,10 +132,10 @@ test("Stockage - Le transport est réalisé par un collecteur professionnel", as
   await page.getByRole("button", { name: "Ajouter cette chambre froide" }).click();
   // Modal closes and CCG is auto-selected
   await expect(page.getByText("CCG Chasseurs - CCG-01")).toBeVisible();
-  const cliquezIci = page.getByRole("button", { name: /Cliquez ici pour definir la/ }).first();
+  const cliquezIci = page.getByRole("button", { name: /Cliquez ici pour définir la/ }).first();
   await cliquezIci.scrollIntoViewIfNeeded();
   await cliquezIci.click();
-  const leTransport = page.getByText("Le transport est realise par un collecteur professionnel");
+  const leTransport = page.getByText("Le transport est réalisé par un collecteur professionnel");
   await leTransport.scrollIntoViewIfNeeded();
   await leTransport.click();
   const transmettreBtn = page.getByRole("button", { name: "Transmettre la fiche" });
