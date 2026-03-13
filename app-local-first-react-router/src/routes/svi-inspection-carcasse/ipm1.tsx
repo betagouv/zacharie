@@ -68,6 +68,9 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   const [sviIpm1DureeConsigne, setSviIpm1DureeConsigne] = useState(carcasse.svi_ipm1_duree_consigne);
   const [sviIpm1PoidsConsigne, setSviIpm1PoidsConsigne] = useState(carcasse.svi_ipm1_poids_consigne);
   const [sviIpm1PoidsType, setSviIpm1PoidsType] = useState(carcasse.svi_ipm1_poids_type);
+  const [sviIpm1UserName, setSviIpm1UserName] = useState(
+    carcasse.svi_ipm1_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,
+  );
   const [triedToSave, setTriedToSave] = useState(false);
 
   const missingFields = useMemo(() => {
@@ -137,8 +140,8 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
       svi_ipm1_commentaire: sviIpm1Commentaire,
       svi_carcasse_commentaire: newCarcasseCommentaire,
       svi_ipm1_decision: sviIpm1Decision,
-      svi_ipm1_user_id: carcasse.svi_ipm1_user_id ?? user.id,
-      svi_ipm1_user_name_cache: carcasse.svi_ipm1_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,
+      svi_ipm1_user_id: user.id,
+      svi_ipm1_user_name_cache: sviIpm1UserName,
       svi_ipm1_duree_consigne: sviIpm1DureeConsigne,
       svi_ipm1_poids_consigne: sviIpm1PoidsConsigne,
       svi_ipm1_poids_type: sviIpm1PoidsType,
@@ -279,7 +282,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
           value: sviIpm1Date ? dayjs(sviIpm1Date).format('YYYY-MM-DD') : '',
         }}
       />
-      <InputNotEditable
+      <Input
         label="Inspection faite par *"
         nativeInputProps={{
           id: Prisma.CarcasseScalarFieldEnum.svi_ipm1_user_id,
@@ -288,10 +291,10 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
           autoComplete: 'off',
           required: true,
           suppressHydrationWarning: true,
-          defaultValue:
-            carcasse.svi_ipm1_user_name_cache || sviIpm1Date
-              ? `${user.prenom} ${user.nom_de_famille} (vous)`
-              : '',
+          value: sviIpm1UserName,
+          onChange: (e) => {
+            setSviIpm1UserName(e.target.value);
+          },
         }}
       />
       {sviIpm1PresenteeInspection && (

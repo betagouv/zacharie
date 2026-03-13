@@ -111,6 +111,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     carcasse.svi_ipm2_traitement_assainissant_poids,
   );
 
+  const [sviIpm2UserName, setSviIpm2UserName] = useState(
+    carcasse.svi_ipm2_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,
+  );
   const [triedToSave, setTriedToSave] = useState(false);
 
   const missingFields = useMemo(() => {
@@ -224,8 +227,8 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       svi_ipm2_traitement_assainissant_poids: sviIpm2TraitementAssainissantPoids,
       svi_ipm2_poids_saisie: sviIpm2PoidsSaisie,
       svi_ipm2_poids_type: sviIpm2PoidsType,
-      svi_ipm2_user_id: carcasse.svi_ipm2_user_id ?? user.id,
-      svi_ipm2_user_name_cache: carcasse.svi_ipm2_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,
+      svi_ipm2_user_id: user.id,
+      svi_ipm2_user_name_cache: sviIpm2UserName,
       svi_ipm2_signed_at: dayjs.utc().toDate(),
       svi_assigned_to_fei_at: carcasse.svi_assigned_to_fei_at ?? dayjs.utc().toDate(),
     };
@@ -376,7 +379,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           value: sviIpm2Date ? dayjs(sviIpm2Date).format('YYYY-MM-DD') : '',
         }}
       />
-      <InputNotEditable
+      <Input
         label="Inspection faite par *"
         disabled={!canDoIPM2}
         nativeInputProps={{
@@ -386,10 +389,10 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           autoComplete: 'off',
           required: true,
           suppressHydrationWarning: true,
-          defaultValue:
-            carcasse.svi_ipm2_user_name_cache || sviIpm2Date
-              ? `${user.prenom} ${user.nom_de_famille} (vous)`
-              : '',
+          value: sviIpm2UserName,
+          onChange: (e) => {
+            setSviIpm2UserName(e.target.value);
+          },
         }}
       />
       {sviIpm2PresenteeInspection && (
