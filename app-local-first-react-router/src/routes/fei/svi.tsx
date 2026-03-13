@@ -223,7 +223,7 @@ export default function FEI_SVI() {
                 className={!canEdit ? 'checkbox-black' : ''}
                 options={[
                   {
-                    label: "J'ai fini l'inspection de toutes les carcasses et je clôture la fiche.",
+                    label: "Inspection de toutes les carcasses terminée. Clôturer la fiche.",
                     nativeInputProps: {
                       required: true,
                       name: 'svi_finito',

@@ -79,7 +79,7 @@ test("Création de compte collecteur pro", async ({ page }) => {
     `);
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+      "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
@@ -113,14 +113,14 @@ test("Création de compte établissement de traitement du gibier", async ({ page
     - text: /ETG 1 Etablissement de Traitement du Gibier sauvage \\d+ \\d+ Paris/
     - button "Retirer"
     - group "Que faites-vous au sein de votre ETG ?":
-      - radio "Je peux seulement transporter les carcasses Si vous cochez cette case, les futures fiches seront automatiquement réassignées à votre entreprise pour la réception ultérieure"
-      - text: Je peux seulement transporter les carcasses Si vous cochez cette case, les futures fiches seront automatiquement réassignées à votre entreprise pour la réception ultérieure
-      - radio "Je peux réceptionner les carcasses et gérer la logistique En cochant cette case, vous pourrez réceptionner les carcasses, et vous pourrez aussi préciser le cas échéant que votre entreprise a également transporté les carcasses vers votre entreprise." [checked]
-      - text: Je peux réceptionner les carcasses et gérer la logistique En cochant cette case, vous pourrez réceptionner les carcasses, et vous pourrez aussi préciser le cas échéant que votre entreprise a également transporté les carcasses vers votre entreprise.
+      - radio "Transport des carcasses uniquement Si vous cochez cette case, les futures fiches seront automatiquement réassignées à votre entreprise pour la réception ultérieure"
+      - text: Transport des carcasses uniquement Si vous cochez cette case, les futures fiches seront automatiquement réassignées à votre entreprise pour la réception ultérieure
+      - radio "Réception des carcasses et gestion de la logistique En cochant cette case, vous pourrez réceptionner les carcasses, et vous pourrez aussi préciser le cas échéant que votre entreprise a également transporté les carcasses vers votre entreprise." [checked]
+      - text: Réception des carcasses et gestion de la logistique En cochant cette case, vous pourrez réceptionner les carcasses, et vous pourrez aussi préciser le cas échéant que votre entreprise a également transporté les carcasses vers votre entreprise.
     `);
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+      "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
@@ -200,7 +200,7 @@ test("Examinateur initial ajoute une association de chasse depuis son profil", a
   ).toBeVisible();
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+      "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -332,7 +332,7 @@ test("Premier détenteur ajoute association et CCG depuis son profil", async ({ 
   // Check visibility and save
   await page
     .getByText(
-      "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+      "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient.",
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer" }).click();

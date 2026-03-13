@@ -138,7 +138,7 @@ export default function RolesCheckBoxes({
     },
     {
       label: 'Consommateur final',
-      hintText: 'Je suis consommateur final et je chasse pour ma consommation personnelle',
+      hintText: 'Consommateur final chassant pour sa consommation personnelle',
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.CONSOMMATEUR_FINAL,

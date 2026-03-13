@@ -385,7 +385,7 @@ function FEICurrentIntermediaireContent({
     let label = [];
     if (carcassesApprovedSorted.length > 0) {
       label.push(
-        `Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (${formatCountCarcasseByEspece(
+        `Prise en charge des carcasses acceptées ou non refusées (${formatCountCarcasseByEspece(
           carcassesApprovedSorted,
         )
           .filter((c) => !c?.includes('refus'))
@@ -394,7 +394,7 @@ function FEICurrentIntermediaireContent({
     }
     if (carcassesSorted.carcassesRejetees.length > 0) {
       label.push(
-        `Je refuse ${formatCountCarcasseByEspece(carcassesSorted.carcassesRejetees)
+        `Refus de ${formatCountCarcasseByEspece(carcassesSorted.carcassesRejetees)
           .filter((c) => c?.includes('refus'))
           .filter((c) => c != null)
           .map((c) =>
