@@ -529,7 +529,8 @@ export default function FEIExaminateurInitial() {
         )}
         {!showPremierDetenteur && !fei.consommateur_final_usage_domestique && (
           <>
-            <Button type="submit">Valider l’examen initial</Button>
+            <hr className="mt-8" />
+            <SelectNextForExaminateur disabled={!needSelectNextUser} />
           </>
         )}
       </Section>
