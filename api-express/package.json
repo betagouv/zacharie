@@ -82,7 +82,7 @@
     "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/web-push": "^3.6.3",
-    "eslint": "~9.18.0",
+    "eslint": "~9.26.0",
     "fs-extra": "^11.2.0",
     "globals": "~15.14.0",
     "prettier": "2",
