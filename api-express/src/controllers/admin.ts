@@ -31,7 +31,11 @@ import type {
   AdminApiKeyAndApprovalsResponse,
   AdminOfficialCfeisResponse,
   AdminCarcassesIntermediairesResponse,
+  AdminCarcassesResponse,
   AdminCarcasseDetailResponse,
+  AdminCcgCheckDuplicatesResponse,
+  AdminCcgImportResponse,
+  AdminDashboardResponse,
   UserConnexionResponse,
 } from '~/types/responses';
 import passport from 'passport';
@@ -928,6 +932,48 @@ router.post(
 );
 
 router.get(
+  '/carcasses',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminCarcassesResponse>,
+      next: express.NextFunction,
+    ) => {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const search = (req.query.search as string) || '';
+
+      const where = search
+        ? {
+            OR: [
+              { numero_bracelet: { contains: search, mode: 'insensitive' as const } },
+              { fei_numero: { contains: search, mode: 'insensitive' as const } },
+              { espece: { contains: search, mode: 'insensitive' as const } },
+            ],
+          }
+        : {};
+
+      const [carcasses, total] = await Promise.all([
+        prisma.carcasse.findMany({
+          where,
+          orderBy: { created_at: 'desc' },
+          take: limit,
+          skip: offset,
+          include: {
+            _count: { select: { CarcasseIntermediaire: true } },
+          },
+        }),
+        prisma.carcasse.count({ where }),
+      ]);
+
+      res.status(200).send({ ok: true, data: { carcasses, total }, error: '' });
+    },
+  ),
+);
+
+router.get(
   '/carcasses-intermediaires',
   passport.authenticate('user', { session: false }),
   validateUser([UserRoles.ADMIN]),
@@ -989,6 +1035,206 @@ router.get(
       }
 
       res.status(200).send({ ok: true, data: { carcasse }, error: '' });
+    },
+  ),
+);
+
+router.get(
+  '/dashboard',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminDashboardResponse>,
+      next: express.NextFunction,
+    ) => {
+      const dateFrom = (req.query.date_from as string) || null;
+      const dateTo = (req.query.date_to as string) || null;
+
+      const now = new Date();
+      const defaultFrom = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const defaultTo = now.toISOString().slice(0, 10);
+      const from = dateFrom || defaultFrom;
+      const to = dateTo || defaultTo;
+
+      const [
+        chasseursInscrits,
+        compteValide,
+        ficheOuverteRows,
+        envoye1FicheRows,
+      ] = await Promise.all([
+        // Stage 1: Chasseurs inscrits
+        prisma.user.count({
+          where: { roles: { has: UserRoles.CHASSEUR }, deleted_at: null },
+        }),
+        // Stage 2: Compte validé (numero_cfei renseigné)
+        prisma.user.count({
+          where: { roles: { has: UserRoles.CHASSEUR }, deleted_at: null, numero_cfei: { not: null } },
+        }),
+        // Stage 3: Chasseurs avec >= 1 FEI créée non envoyée
+        prisma.$queryRaw<Array<{ count: bigint }>>`
+          SELECT COUNT(DISTINCT u.id) as count
+          FROM "User" u
+          INNER JOIN "Fei" f ON (f.created_by_user_id = u.id OR f.examinateur_initial_user_id = u.id)
+          WHERE 'CHASSEUR' = ANY(u.roles)
+            AND u.deleted_at IS NULL
+            AND f.deleted_at IS NULL
+            AND f.fei_next_owner_role IS NULL
+        `,
+        // Stage 4+: Chasseurs avec >= 1 FEI envoyée (+ count pour stages 5, 6)
+        prisma.$queryRaw<Array<{ user_id: string; fei_count: bigint }>>`
+          SELECT u.id as user_id, COUNT(DISTINCT f.numero) as fei_count
+          FROM "User" u
+          INNER JOIN "Fei" f ON (f.created_by_user_id = u.id OR f.premier_detenteur_user_id = u.id)
+          WHERE 'CHASSEUR' = ANY(u.roles)
+            AND u.deleted_at IS NULL
+            AND f.deleted_at IS NULL
+            AND f.fei_next_owner_role IS NOT NULL
+          GROUP BY u.id
+        `,
+      ]);
+
+      const envoye1 = envoye1FicheRows.length;
+      const envoye2 = envoye1FicheRows.filter((r) => Number(r.fei_count) >= 2).length;
+      const envoye3 = envoye1FicheRows.filter((r) => Number(r.fei_count) >= 3).length;
+
+      // Cumulative funnel (each stage >= next)
+      const ficheOuverte = Number(ficheOuverteRows[0]?.count ?? 0);
+      const funnel = {
+        chasseurs_inscrits: chasseursInscrits,
+        compte_valide: compteValide,
+        fiche_ouverte: Math.max(ficheOuverte, envoye1),
+        envoye_1_fiche: envoye1,
+        envoye_2_fiches: envoye2,
+        envoye_3_fiches: envoye3,
+      };
+
+      // Inscriptions par jour
+      const inscriptionsParJour = await prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
+        SELECT DATE(created_at) as date, COUNT(*) as count
+        FROM "User"
+        WHERE 'CHASSEUR' = ANY(roles)
+          AND deleted_at IS NULL
+          AND created_at >= ${new Date(from)}::date
+          AND created_at < (${new Date(to)}::date + interval '1 day')
+        GROUP BY DATE(created_at)
+        ORDER BY date ASC
+      `;
+
+      res.status(200).send({
+        ok: true,
+        data: {
+          funnel,
+          inscriptions_par_jour: inscriptionsParJour.map((r) => ({
+            date: new Date(r.date).toISOString().slice(0, 10),
+            count: Number(r.count),
+          })),
+        },
+        error: '',
+      });
+    },
+  ),
+);
+
+router.post(
+  '/ccg/check-duplicates',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminCcgCheckDuplicatesResponse>,
+      next: express.NextFunction,
+    ) => {
+      const { numero_ddecpps } = req.body as { numero_ddecpps: string[] };
+      if (!Array.isArray(numero_ddecpps) || numero_ddecpps.length === 0) {
+        res.status(400).send({ ok: false, data: { duplicates: [] }, error: 'numero_ddecpps requis' });
+        return;
+      }
+      const existing = await prisma.entity.findMany({
+        where: {
+          numero_ddecpp: { in: numero_ddecpps },
+          type: EntityTypes.CCG,
+          deleted_at: null,
+        },
+        select: { numero_ddecpp: true },
+      });
+      const duplicates = existing.map((e) => e.numero_ddecpp).filter(Boolean) as string[];
+      res.status(200).send({ ok: true, data: { duplicates }, error: '' });
+    },
+  ),
+);
+
+router.post(
+  '/ccg/import',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminCcgImportResponse>,
+      next: express.NextFunction,
+    ) => {
+      const { ccgs } = req.body as {
+        ccgs: Array<{
+          numero_ddecpp: string;
+          nom_d_usage: string;
+          address_ligne_1: string;
+          address_ligne_2: string;
+          code_postal: string;
+          ville: string;
+          siret: string;
+          action: 'create' | 'update' | 'skip';
+        }>;
+      };
+      if (!Array.isArray(ccgs) || ccgs.length === 0) {
+        res.status(400).send({ ok: false, data: { created: 0, updated: 0, skipped: 0 }, error: 'ccgs requis' });
+        return;
+      }
+
+      let created = 0;
+      let updated = 0;
+      let skipped = 0;
+
+      for (const ccg of ccgs) {
+        if (ccg.action === 'skip') {
+          skipped++;
+          continue;
+        }
+        const entityData = {
+          nom_d_usage: ccg.nom_d_usage || '',
+          raison_sociale: ccg.nom_d_usage || '',
+          address_ligne_1: ccg.address_ligne_1 || '',
+          address_ligne_2: ccg.address_ligne_2 || '',
+          code_postal: ccg.code_postal || '',
+          ville: ccg.ville || '',
+          siret: ccg.siret || null,
+          numero_ddecpp: ccg.numero_ddecpp,
+        };
+        if (ccg.action === 'create') {
+          await prisma.entity.create({
+            data: {
+              ...entityData,
+              type: EntityTypes.CCG,
+              zacharie_compatible: true,
+            },
+          });
+          created++;
+        } else if (ccg.action === 'update') {
+          await prisma.entity.updateMany({
+            where: {
+              numero_ddecpp: ccg.numero_ddecpp,
+              type: EntityTypes.CCG,
+              deleted_at: null,
+            },
+            data: entityData,
+          });
+          updated++;
+        }
+      }
+
+      res.status(200).send({ ok: true, data: { created, updated, skipped }, error: '' });
     },
   ),
 );

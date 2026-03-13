@@ -144,64 +144,10 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     navigationBase.push({
       text: 'Admin',
       isActive: location.pathname.startsWith('/app/tableau-de-bord/admin'),
-      menuLinks: [
-        {
-          text: 'Liste des utilisateurs',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/users',
-          linkProps: {
-            href: '#',
-            to: '/app/tableau-de-bord/admin/users',
-          },
-        },
-        {
-          text: 'Liste des entités',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/entities',
-          linkProps: {
-            href: '#',
-            to: '/app/tableau-de-bord/admin/entities',
-          },
-        },
-        {
-          text: 'Liste des clés API',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/api-keys',
-          linkProps: {
-            href: '#',
-            to: '/app/tableau-de-bord/admin/api-keys',
-          },
-        },
-        {
-          text: 'Liste des fiches',
-          isActive: location.pathname === '/app/tableau-de-bord/admin/feis',
-          linkProps: {
-            // href: '#',
-            href: 'https://metabase.zacharie.beta.gouv.fr/question/27-fiches-creees',
-          },
-        },
-        ...(user?.prenom?.includes('Arnaud') || user?.prenom?.includes('Tangi')
-          ? [
-              {
-                text: 'Test Sentry',
-                linkProps: {
-                  href: '#',
-                  onClick: () => {
-                    console.log('Test Sentry');
-                    capture('Test Sentry works ok');
-                  },
-                },
-              },
-              {
-                text: 'Test Crash for Sentry',
-                linkProps: {
-                  href: '#',
-                  onClick: () => {
-                    // @ts-expect-error I need a real crash
-                    user.error.includes('test');
-                  },
-                },
-              },
-            ]
-          : []),
-      ],
+      linkProps: {
+        to: '/app/tableau-de-bord/admin/users',
+        href: '#',
+      },
     });
   }
 

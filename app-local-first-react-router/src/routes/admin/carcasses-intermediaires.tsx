@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
-import type {
-  AdminCarcassesIntermediairesResponse,
-  AdminCarcasseDetailResponse,
-} from '@api/src/types/responses';
-import type { CarcasseIntermediaire, Carcasse, Fei } from '@prisma/client';
+import type { AdminCarcassesResponse, AdminCarcasseDetailResponse } from '@api/src/types/responses';
+import type { Carcasse, CarcasseIntermediaire, Fei } from '@prisma/client';
 import dayjs from 'dayjs';
 
-type CarcasseInterRow = AdminCarcassesIntermediairesResponse['data']['carcassesIntermediaires'][number];
+type CarcasseRow = AdminCarcassesResponse['data']['carcasses'][number];
 
 type CarcasseDetail = Carcasse & {
   CarcasseIntermediaire: Array<
@@ -178,27 +175,39 @@ function formatDate(d: Date | string | null): string {
 }
 
 export default function AdminCarcassesIntermediaires() {
-  const [rows, setRows] = useState<CarcasseInterRow[]>([]);
+  const [rows, setRows] = useState<CarcasseRow[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedCarcasseId, setSelectedCarcasseId] = useState<string | null>(null);
   const [carcasseDetail, setCarcasseDetail] = useState<CarcasseDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const limit = 100;
 
   useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(search);
+      setOffset(0);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  useEffect(() => {
     setLoading(true);
-    API.get({ path: 'admin/carcasses-intermediaires', query: { limit: String(limit), offset: String(offset) } })
-      .then((res) => res as AdminCarcassesIntermediairesResponse)
+    const query: Record<string, string> = { limit: String(limit), offset: String(offset) };
+    if (debouncedSearch) query.search = debouncedSearch;
+    API.get({ path: 'admin/carcasses', query })
+      .then((res) => res as AdminCarcassesResponse)
       .then((res) => {
         if (res.ok) {
-          setRows(res.data.carcassesIntermediaires);
+          setRows(res.data.carcasses);
           setTotal(res.data.total);
         }
       })
       .finally(() => setLoading(false));
-  }, [offset]);
+  }, [offset, debouncedSearch]);
 
   useEffect(() => {
     if (!selectedCarcasseId) {
@@ -225,73 +234,64 @@ export default function AdminCarcassesIntermediaires() {
   return (
     <div className="flex gap-4 py-4">
       <div className={`${selectedCarcasseId ? 'w-3/5' : 'w-full'} overflow-x-auto`}>
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-lg font-bold">CarcassesIntermediaires ({total})</h3>
-          <div className="flex gap-2">
-            <button
-              className="fr-btn fr-btn--sm fr-btn--secondary"
-              disabled={offset === 0}
-              onClick={() => setOffset(Math.max(0, offset - limit))}
-            >
-              Précédent
-            </button>
-            <span className="self-center text-sm">
-              {offset + 1}–{Math.min(offset + limit, total)} / {total}
-            </span>
-            <button
-              className="fr-btn fr-btn--sm fr-btn--secondary"
-              disabled={offset + limit >= total}
-              onClick={() => setOffset(offset + limit)}
-            >
-              Suivant
-            </button>
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold">Carcasses ({total})</h3>
+            <div className="flex items-center gap-2">
+              <button
+                className="fr-btn fr-btn--sm fr-btn--secondary"
+                disabled={offset === 0}
+                onClick={() => setOffset(Math.max(0, offset - limit))}
+              >
+                Précédent
+              </button>
+              <span className="text-sm tabular-nums">
+                {offset + 1}–{Math.min(offset + limit, total)} / {total}
+              </span>
+              <button
+                className="fr-btn fr-btn--sm fr-btn--secondary"
+                disabled={offset + limit >= total}
+                onClick={() => setOffset(offset + limit)}
+              >
+                Suivant
+              </button>
+            </div>
           </div>
+          <input
+            type="search"
+            className="fr-input"
+            placeholder="Rechercher par numéro de bracelet, numéro de FEI ou espèce…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr className="border-b bg-gray-100 text-left">
-              <th className="p-1">fei_numero</th>
               <th className="p-1">bracelet</th>
-              <th className="p-1">entité</th>
-              <th className="p-1">role</th>
-              <th className="p-1">prise_en_charge</th>
-              <th className="p-1">decision_at</th>
-              <th className="p-1">manquante</th>
-              <th className="p-1">refus</th>
-              <th className="p-1">commentaire</th>
-              <th className="p-1">poids</th>
-              <th className="p-1">depot_type</th>
+              <th className="p-1">espèce</th>
+              <th className="p-1">type</th>
+              <th className="p-1">fei_numero</th>
+              <th className="p-1">nb intermédiaires</th>
               <th className="p-1">created_at</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
               <tr
-                key={`${row.fei_numero}_${row.zacharie_carcasse_id}_${row.intermediaire_id}`}
+                key={row.zacharie_carcasse_id}
                 className={`cursor-pointer border-b hover:bg-blue-50 ${
                   selectedCarcasseId === row.zacharie_carcasse_id ? 'bg-blue-100' : ''
                 }`}
                 onClick={() => setSelectedCarcasseId(row.zacharie_carcasse_id)}
               >
+                <td className="p-1">{row.numero_bracelet}</td>
+                <td className="p-1">{row.espece}</td>
+                <td className="p-1">{row.type}</td>
                 <td className="max-w-[120px] truncate p-1" title={row.fei_numero}>
                   {row.fei_numero}
                 </td>
-                <td className="p-1">{row.CarcasseCarcasseIntermediaire.numero_bracelet}</td>
-                <td className="max-w-[120px] truncate p-1" title={row.CarcasseIntermediaireEntity.nom_d_usage}>
-                  {row.CarcasseIntermediaireEntity.nom_d_usage}
-                </td>
-                <td className="p-1">{row.intermediaire_role}</td>
-                <td className="p-1">{row.prise_en_charge == null ? '—' : row.prise_en_charge ? 'oui' : 'non'}</td>
-                <td className="p-1">{formatDate(row.decision_at)}</td>
-                <td className="p-1">{row.manquante ? 'oui' : '—'}</td>
-                <td className="max-w-[80px] truncate p-1" title={row.refus ?? ''}>
-                  {row.refus ?? '—'}
-                </td>
-                <td className="max-w-[100px] truncate p-1" title={row.commentaire ?? ''}>
-                  {row.commentaire ?? '—'}
-                </td>
-                <td className="p-1">{row.intermediaire_poids ?? '—'}</td>
-                <td className="p-1">{row.intermediaire_depot_type ?? '—'}</td>
+                <td className="p-1">{row._count.CarcasseIntermediaire}</td>
                 <td className="p-1">{formatDate(row.created_at)}</td>
               </tr>
             ))}
@@ -300,7 +300,7 @@ export default function AdminCarcassesIntermediaires() {
       </div>
 
       {selectedCarcasseId && (
-        <div className="w-2/5 border-l pl-4">
+        <div className="w-2/5 overflow-y-auto border-l pl-4">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-lg font-bold">Fil de vie</h3>
             <button
@@ -313,11 +313,13 @@ export default function AdminCarcassesIntermediaires() {
           {loadingDetail ? (
             <Chargement />
           ) : carcasseDetail ? (
-            <div className="space-y-0">
-              <div className="mb-2 text-sm">
+            <div className="space-y-4">
+              <div className="text-sm">
                 <strong>{carcasseDetail.numero_bracelet}</strong> — {carcasseDetail.espece} —{' '}
                 {carcasseDetail.type}
               </div>
+
+              {/* Timeline */}
               <div className="relative border-l-2 border-gray-300 pl-4">
                 {timeline.map((event, i) => (
                   <div key={i} className="relative mb-4">
@@ -332,6 +334,54 @@ export default function AdminCarcassesIntermediaires() {
                   </div>
                 ))}
               </div>
+
+              {/* CarcasseIntermediaire table */}
+              {carcasseDetail.CarcasseIntermediaire.length > 0 && (
+                <div>
+                  <h4 className="mb-1 text-sm font-bold">
+                    Intermédiaires ({carcasseDetail.CarcasseIntermediaire.length})
+                  </h4>
+                  <table className="w-full border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b bg-gray-100 text-left">
+                        <th className="p-1">entité</th>
+                        <th className="p-1">rôle</th>
+                        <th className="p-1">prise en charge</th>
+                        <th className="p-1">décision</th>
+                        <th className="p-1">poids</th>
+                        <th className="p-1">refus</th>
+                        <th className="p-1">commentaire</th>
+                        <th className="p-1">created_at</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {carcasseDetail.CarcasseIntermediaire.map((ci) => (
+                        <tr
+                          key={`${ci.fei_numero}_${ci.zacharie_carcasse_id}_${ci.intermediaire_id}`}
+                          className="border-b"
+                        >
+                          <td className="max-w-[100px] truncate p-1" title={ci.CarcasseIntermediaireEntity.nom_d_usage}>
+                            {ci.CarcasseIntermediaireEntity.nom_d_usage}
+                          </td>
+                          <td className="p-1">{ci.intermediaire_role}</td>
+                          <td className="p-1">
+                            {ci.prise_en_charge == null ? '—' : ci.prise_en_charge ? 'oui' : 'non'}
+                          </td>
+                          <td className="p-1">{formatDate(ci.decision_at)}</td>
+                          <td className="p-1">{ci.intermediaire_poids ?? '—'}</td>
+                          <td className="max-w-[80px] truncate p-1" title={ci.refus ?? ''}>
+                            {ci.refus ?? '—'}
+                          </td>
+                          <td className="max-w-[80px] truncate p-1" title={ci.commentaire ?? ''}>
+                            {ci.commentaire ?? '—'}
+                          </td>
+                          <td className="p-1">{formatDate(ci.created_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-sm text-gray-500">Aucune donnée</p>

@@ -55,6 +55,8 @@ import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-m
 import MesNotifications from './routes/mon-profil/4-mes-notifications';
 import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
 import CCGEdit from './routes/mon-profil/ccg-edit';
+import CcgImport from './routes/admin/ccg-import';
+import AdminDashboard from './routes/admin/dashboard';
 
 // onboarding routes
 import OnboardingMesRoles from './routes/onboarding/1-mon-activite';
@@ -325,6 +327,14 @@ function App() {
             />
             <Route path="admin" element={<AdminLayout />}>
               <Route
+                path="dashboard"
+                element={
+                  <RestrictedRoute id="dashboard" roles={[UserRoles.ADMIN]}>
+                    <AdminDashboard />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
                 path="users"
                 element={
                   <RestrictedRoute id="users" roles={[UserRoles.ADMIN]}>
@@ -393,6 +403,14 @@ function App() {
                 element={
                   <RestrictedRoute id="api-key/:apiKeyId" roles={[UserRoles.ADMIN]}>
                     <AdminApiKey />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="import-ccg"
+                element={
+                  <RestrictedRoute id="import-ccg" roles={[UserRoles.ADMIN]}>
+                    <CcgImport />
                   </RestrictedRoute>
                 }
               />
