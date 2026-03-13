@@ -59,7 +59,16 @@ export default function AdminEntites() {
   return (
     <div className="p-2 md:p-4">
       <title>Entités | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-      <div className="mb-2 flex items-center justify-end">
+      <div className="mb-2 flex items-center justify-end gap-2">
+        <Button
+          size="small"
+          priority="secondary"
+          linkProps={{
+            to: '/app/tableau-de-bord/admin/import-ccg',
+          }}
+        >
+          Importer des CCG (CSV/XLS)
+        </Button>
         <Button
           size="small"
           linkProps={{

@@ -342,6 +342,53 @@ export interface AdminCarcassesIntermediairesResponse {
   error: string;
 }
 
+export interface AdminCcgCheckDuplicatesResponse {
+  ok: boolean;
+  data: {
+    duplicates: string[];
+  };
+  error: string;
+}
+
+export interface AdminCcgImportResponse {
+  ok: boolean;
+  data: {
+    created: number;
+    updated: number;
+    skipped: number;
+  };
+  error: string;
+}
+
+export interface AdminDashboardResponse {
+  ok: boolean;
+  data: {
+    funnel: {
+      chasseurs_inscrits: number;
+      compte_valide: number;
+      fiche_ouverte: number;
+      envoye_1_fiche: number;
+      envoye_2_fiches: number;
+      envoye_3_fiches: number;
+    };
+    inscriptions_par_jour: Array<{ date: string; count: number }>;
+  };
+  error: string;
+}
+
+export interface AdminCarcassesResponse {
+  ok: boolean;
+  data: {
+    carcasses: Array<
+      Carcasse & {
+        _count: { CarcasseIntermediaire: number };
+      }
+    >;
+    total: number;
+  };
+  error: string;
+}
+
 export interface AdminCarcasseDetailResponse {
   ok: boolean;
   data: {
