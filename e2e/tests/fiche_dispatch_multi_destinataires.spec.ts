@@ -20,8 +20,8 @@ test("Dispatch 4 carcasses vers 2 destinataires ETG", async ({ page, context }) 
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
   await page.getByRole("link", { name: feiId }).click();
   await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
-  await expect(page.getByRole("button", { name: "Je prends en charge cette" })).toBeVisible();
-  await page.getByRole("button", { name: "Je prends en charge cette" }).click();
+  await expect(page.getByRole("button", { name: "Prendre en charge cette" })).toBeVisible();
+  await page.getByRole("button", { name: "Prendre en charge cette" }).click();
   await expect(page.getByText("Étape suivante : Transport")).toBeVisible({ timeout: 10000 });
 
   // 2. Sélectionner ETG 1 pour le groupe 1

@@ -109,11 +109,9 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.getByLabel("Daim - N° MM-001-004").getByText("Carcasse manquante").click();
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
-    page.getByText(
-      "Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim).",
-    ),
+    page.getByText("Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim)."),
   ).toBeVisible();
-  await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
+  await expect(page.getByText("Refus de 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
@@ -274,11 +272,9 @@ test("Pas de stockage - Je transfère à un autre collecteur", async ({ page }) 
   await page.getByLabel("Daim - N° MM-001-004").getByText("Carcasse manquante").click();
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
-    page.getByText(
-      "Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim).",
-    ),
+    page.getByText("Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim)."),
   ).toBeVisible();
-  await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
+  await expect(page.getByText("Refus de 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
   // await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -408,11 +404,9 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
   await page.getByLabel("Daim - N° MM-001-004").getByText("Carcasse manquante").click();
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
-    page.getByText(
-      "Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim).",
-    ),
+    page.getByText("Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim)."),
   ).toBeVisible();
-  await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
+  await expect(page.getByText("Refus de 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
   // await page.getByRole("button", { name: "Enregistrer" }).click();
