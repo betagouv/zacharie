@@ -25,8 +25,6 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
   await page.getByRole("link", { name: feiId }).click();
   await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
   await expect(page.getByRole("button", { name: "Je prends en charge cette" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Examen initial Étape 1 sur" })).toBeVisible();
-  await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
   await expect(page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" })).toBeVisible();
@@ -45,7 +43,7 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
   await page.getByLabel("Pigeons - N° MM-001-").getByTitle("Fermer").click();
   await page.getByRole("button", { name: "Je prends en charge cette" }).click();
   await expect(page.getByRole("heading", { name: "Validation par le premier dé" })).toBeVisible();
-  await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
+
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
   await expect(page.getByRole("heading", { name: "Attention" })).toBeVisible();

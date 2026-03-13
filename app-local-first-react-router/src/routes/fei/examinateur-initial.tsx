@@ -122,6 +122,12 @@ export default function FEIExaminateurInitial() {
     if (fei.examinateur_initial_user_id === user.id) {
       return true;
     }
+    if (
+      fei.fei_current_owner_user_id === user.id &&
+      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
+    ) {
+      return true;
+    }
     if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
       return true;
     }
@@ -361,7 +367,7 @@ export default function FEIExaminateurInitial() {
           <DestinataireSelectPremierDetenteur
             canEdit={canEditAsPremierDetenteur}
             submitRef={destinataireRef}
-            hideSubmitButton
+            hideSubmitButton={canEdit}
           />
         </div>
       )}
