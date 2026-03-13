@@ -53,6 +53,7 @@ export default function InputVille(props: InputVilleProps) {
       .split('-')
       .filter((word) => word.length > 2);
 
+    const itemsNameIsWord = [];
     const itemsNameStartWithWord = [];
     const itemsNameStartWithWordWithNoAccent = [];
     const itemsNameStartsWithOneOfTheWords = [];
@@ -63,6 +64,14 @@ export default function InputVille(props: InputVilleProps) {
 
     for (const item of villes as Array<{ code_postal: string; ville: string; code_postal_ville: string }>) {
       const { code_postal, ville, code_postal_ville } = item;
+      if (code_postal_ville === debouncedVilleSearched) {
+        itemsNameIsWord.push(code_postal_ville);
+        continue;
+      }
+      if (ville === debouncedVilleSearched) {
+        itemsNameIsWord.push(code_postal_ville);
+        continue;
+      }
       if (code_postal_ville.startsWith(debouncedVilleSearched)) {
         itemsNameStartWithWord.push(code_postal_ville);
         continue;
@@ -112,8 +121,13 @@ export default function InputVille(props: InputVilleProps) {
         }
       }
     }
+    let slice = 5;
+    if (itemsNameIsWord.length > 5) {
+      slice = itemsNameIsWord.length;
+    }
     const results = [
       ...new Set([
+        ...itemsNameIsWord,
         ...itemsNameStartWithWord,
         ...itemsNameStartWithWordWithNoAccent,
         ...itemsNameStartsWithOneOfTheWords,
@@ -122,7 +136,7 @@ export default function InputVille(props: InputVilleProps) {
         ...itemsNameContainsOneOfTheWords,
         ...itemsNameContainsOneOfTheWordsWithNoAccent,
       ]),
-    ].slice(0, 5);
+    ].slice(0, slice);
     setVillesResults(results);
   }, [debouncedVilleSearched, postCode]);
 
@@ -177,11 +191,9 @@ export default function InputVille(props: InputVilleProps) {
                 if (trimPostCode) {
                   const codePostal = ville.split(' ')[0];
                   const trimedVille = ville.replace(codePostal, '').trim();
-                  console.log('BIM', { trimedVille });
                   setVilleSearched(trimedVille);
                   if (onSelect) onSelect(trimedVille);
                 } else {
-                  console.log('BAM', { ville });
                   setVilleSearched(ville);
                   if (onSelect) onSelect(ville);
                 }
