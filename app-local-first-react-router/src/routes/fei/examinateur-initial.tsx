@@ -280,9 +280,13 @@ export default function FEIExaminateurInitial() {
             suppressHydrationWarning: true,
             placeholder: 'Date de mise à mort *',
             onBlur: (e) => {
-              const date = dayjs.utc(e.target.value).startOf('day').toDate();
+              const date = dayjs.utc(e.target.value).startOf('day');
+              if (date.isBefore(dayjs().add(-6, 'months'))) {
+                alert(`Il est impossible de définir une date de mise à mort antérieure à 6 mois.`);
+                return;
+              }
               updateFei(fei.numero, {
-                date_mise_a_mort: date,
+                date_mise_a_mort: date.toDate(),
               });
             },
             defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('YYYY-MM-DD') : '',
@@ -429,8 +433,8 @@ export default function FEIExaminateurInitial() {
                 },
                 defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
                   ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                    'YYYY-MM-DDTHH:mm',
-                  )
+                      'YYYY-MM-DDTHH:mm',
+                    )
                   : undefined,
               }}
             />
