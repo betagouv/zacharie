@@ -550,6 +550,7 @@ function getCarcasses(fei: Fei): Array<Prisma.CarcasseUncheckedCreateInput> {
 function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Prisma.CarcasseUncheckedCreateInput) {
   return {
     date_mise_a_mort: fei.date_mise_a_mort,
+    consommateur_final_usage_domestique: fei.consommateur_final_usage_domestique,
     heure_mise_a_mort_premiere_carcasse_fei: fei.heure_mise_a_mort_premiere_carcasse,
     heure_evisceration_derniere_carcasse_fei: fei.heure_evisceration_derniere_carcasse,
     heure_mise_a_mort: carcasse.heure_mise_a_mort,

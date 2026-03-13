@@ -67,6 +67,9 @@ export default function FEIExaminateurInitial() {
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
 
   const needSelectNextUser = useMemo(() => {
+    if (fei.consommateur_final_usage_domestique) {
+      return false;
+    }
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;
     }
@@ -83,6 +86,9 @@ export default function FEIExaminateurInitial() {
   }, [fei, user]);
 
   const showPremierDetenteur = useMemo(() => {
+    if (fei.consommateur_final_usage_domestique) {
+      return false;
+    }
     if (premierDetenteurEntity) {
       return true;
     }
@@ -90,7 +96,7 @@ export default function FEIExaminateurInitial() {
       return true;
     }
     return false;
-  }, [premierDetenteurEntity, premierDetenteurUser]);
+  }, [premierDetenteurEntity, premierDetenteurUser, fei.consommateur_final_usage_domestique]);
 
   const [carcassesNotReady, atLeastOneCarcasseWithAnomalie] = useMemo(() => {
     const notReady = [];
@@ -227,8 +233,12 @@ export default function FEIExaminateurInitial() {
       }
     }
     if (!atLeastOneCarcasseWithAnomalie) {
-      label += " qu'aucune anomalie n'a été observée lors de l'examen initial et";
-      label += ' que les carcasses en peau examinées ce jour peuvent être mises sur le marché.';
+      label += " qu'aucune anomalie n'a été observée lors de l'examen initial";
+      if (!fei.consommateur_final_usage_domestique) {
+        label += ' et que les carcasses en peau examinées ce jour peuvent être mises sur le marché.';
+      } else {
+        label += '.';
+      }
       return label;
     } else {
       label +=
@@ -240,6 +250,7 @@ export default function FEIExaminateurInitial() {
     examinateurInitialUser?.nom_de_famille,
     examinateurInitialUser?.prenom,
     atLeastOneCarcasseWithAnomalie,
+    fei.consommateur_final_usage_domestique,
     user.id,
     fei.examinateur_initial_user_id,
   ]);
@@ -400,21 +411,55 @@ export default function FEIExaminateurInitial() {
             )}
 
             <Component
-              label="Date de validation de l’examen initial et de mise sur le marché *"
+              label={
+                fei.consommateur_final_usage_domestique
+                  ? 'Date de validation de l’examen initial'
+                  : 'Date de validation de l’examen initial et de mise sur le marché *'
+              }
               hintText={
                 canEdit ? (
-                  <button
-                    className="inline-block text-left"
-                    type="button"
-                    onClick={() => {
-                      updateFei(fei.numero, {
-                        examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
-                        resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
-                      });
-                    }}
-                  >
-                    <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
-                  </button>
+                  <>
+                    <button
+                      className="mr-2 inline-block text-left"
+                      type="button"
+                      onClick={() => {
+                        updateFei(fei.numero, {
+                          examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
+                          resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
+                        });
+                      }}
+                    >
+                      <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant.
+                    </button>
+                    <button
+                      className="inline-block text-left"
+                      type="button"
+                      onClick={() => {
+                        let nextConsoPrivee = fei.consommateur_final_usage_domestique
+                          ? null
+                          : dayjs().toDate();
+                        updateFei(fei.numero, {
+                          consommateur_final_usage_domestique: nextConsoPrivee,
+                          premier_detenteur_user_id: nextConsoPrivee ? user.id : null,
+                          premier_detenteur_name_cache: nextConsoPrivee
+                            ? `${user.prenom} ${user.nom_de_famille}`
+                            : null,
+                        });
+                      }}
+                    >
+                      {fei.consommateur_final_usage_domestique ? (
+                        <>
+                          <u className="inline">Cliquez là</u> si les carcasses sont destinées à une mise sur
+                          le marché.
+                        </>
+                      ) : (
+                        <>
+                          <u className="inline">Cliquez là</u> si vous êtes le consommateur final, ou si vous
+                          en faites un usage domestique privé.
+                        </>
+                      )}
+                    </button>
+                  </>
                 ) : (
                   "Cette date vaut date d'approbation de mise sur le marché"
                 )
@@ -486,14 +531,13 @@ export default function FEIExaminateurInitial() {
             )}
           </>
         )}
-        {!showPremierDetenteur && (
+        {!showPremierDetenteur && !fei.consommateur_final_usage_domestique && (
           <>
-            <hr className="mt-8" />
-            <SelectNextForExaminateur disabled={!needSelectNextUser} />
+            <Button type="submit">Valider l’examen initial</Button>
           </>
         )}
       </Section>
-      {showPremierDetenteur && <FeiPremierDetenteur />}
+      {showPremierDetenteur && !fei.consommateur_final_usage_domestique && <FeiPremierDetenteur />}
     </>
   );
 }

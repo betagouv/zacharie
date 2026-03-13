@@ -131,6 +131,10 @@ export async function saveCarcasse(
     nextCarcasse.heure_mise_a_mort_premiere_carcasse_fei =
       body[Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei];
   }
+  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.consommateur_final_usage_domestique)) {
+    nextCarcasse.consommateur_final_usage_domestique =
+      body[Prisma.CarcasseScalarFieldEnum.consommateur_final_usage_domestique];
+  }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei)) {
     nextCarcasse.heure_evisceration_derniere_carcasse_fei =
       body[Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei];

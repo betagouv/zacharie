@@ -112,6 +112,7 @@ export function computeFeiSteps({
     if (fei.automatic_closed_at || fei.svi_closed_at || fei.intermediaire_closed_at) {
       return 'Clôturée';
     }
+    if (fei.consommateur_final_usage_domestique && fei.premier_detenteur_user_id) return 'Clôturée';
     if (fei.svi_assigned_at) return 'Inspection par le SVI';
     if (fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) return 'Examen initial';
     if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
@@ -220,8 +221,7 @@ export function computeFeiSteps({
         // Check per-carcasse next_owner_entity_id (multi-recipient dispatch)
         if (
           carcasses?.some(
-            (c) =>
-              c.next_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.next_owner_entity_id),
+            (c) => c.next_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.next_owner_entity_id),
           )
         ) {
           return 'À compléter';
