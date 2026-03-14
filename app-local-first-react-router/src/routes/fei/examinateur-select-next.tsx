@@ -17,7 +17,7 @@ import { usePrefillPremierDÃ©tenteurInfos } from '@app/utils/usePrefillPremierDÃ
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
 
-export default function SelectNextForExaminateur({ disabled }: { disabled?: boolean }) {
+export default function SelectNextForExaminateur({ disabled = false }: { disabled?: boolean }) {
   const params = useParams();
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
