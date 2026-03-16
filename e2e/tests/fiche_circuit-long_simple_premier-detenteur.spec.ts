@@ -80,7 +80,7 @@ test("Stockage - Transporter les carcasses soi-même", async ({ page }) => {
   await connectWith(page, "premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
   await page.getByRole("link", { name: feiId }).click();
-  await page.getByRole("button", { name: "Je prends en charge cette" }).click();
+  await page.getByRole("button", { name: "Prendre en charge cette" }).click();
   await expect(page.getByText("Étape suivante : Transport")).toBeVisible({ timeout: 10000 });
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await selectContainer.scrollIntoViewIfNeeded();
@@ -113,7 +113,7 @@ test("Stockage - Le transport est réalisé par un collecteur professionnel", as
   await connectWith(page, "premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
   await page.getByRole("link", { name: feiId }).click();
-  await page.getByRole("button", { name: "Je prends en charge cette" }).click();
+  await page.getByRole("button", { name: "Prendre en charge cette" }).click();
   await expect(page.getByText("Étape suivante : Transport")).toBeVisible({ timeout: 10000 });
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await selectContainer.scrollIntoViewIfNeeded();
