@@ -84,7 +84,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
   await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
   await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-  await page.getByRole("button", { name: "Je prends en charge les carcasses" }).click();
+  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
   await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
   await expect(
@@ -109,11 +109,9 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.getByLabel("Daim - N° MM-001-004").getByText("Carcasse manquante").click();
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
-    page.getByText(
-      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
-    ),
+    page.getByText("Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim)."),
   ).toBeVisible();
-  await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
+  await expect(page.getByText("Refus de 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
@@ -248,7 +246,7 @@ test("Pas de stockage - Je transfère à un autre collecteur", async ({ page }) 
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
   await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
   await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-  await page.getByRole("button", { name: "Je prends en charge les carcasses" }).click();
+  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
   await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
   await expect(
@@ -274,11 +272,9 @@ test("Pas de stockage - Je transfère à un autre collecteur", async ({ page }) 
   await page.getByLabel("Daim - N° MM-001-004").getByText("Carcasse manquante").click();
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
-    page.getByText(
-      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
-    ),
+    page.getByText("Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim)."),
   ).toBeVisible();
-  await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
+  await expect(page.getByText("Refus de 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
   // await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -384,7 +380,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
   await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
   await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
   await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-  await page.getByRole("button", { name: "Je prends en charge les carcasses" }).click();
+  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
   await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
   await expect(
@@ -408,11 +404,9 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
   await page.getByLabel("Daim - N° MM-001-004").getByText("Carcasse manquante").click();
   await expect(page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" })).toBeVisible();
   await expect(
-    page.getByText(
-      "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
-    ),
+    page.getByText("Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim)."),
   ).toBeVisible();
-  await expect(page.getByText("Je refuse 1 carcasse.")).toBeVisible();
+  await expect(page.getByText("Refus de 1 carcasse.")).toBeVisible();
   await expect(page.getByText("Je signale 1 carcasse manquante.")).toBeVisible();
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
   // await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -463,10 +457,10 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
       - heading "🫵 Cette fiche a été attribuée à votre société" [level=3]
       - paragraph:
-        - button "Je prends en charge les carcasses"
+        - button "Prendre en charge les carcasses"
         - button "Je renvoie la fiche à l'expéditeur"
       `);
-  await page.getByRole("button", { name: "Je prends en charge les carcasses" }).click();
+  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
   // FIXME: work in local not in ci
   // await expect(page.locator("#content")).toMatchAriaSnapshot(`
   //   - heading "Réception par mon établissement de traitement Étape 4 sur 5" [level=2]
@@ -559,8 +553,8 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
   //     - button "Afficher les carcasses déjà refusées (2)"
   //   - group:
   //     - heading "Prise en charge des carcasses acceptées" [level=3]
-  //     - paragraph /Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées \\(\\d+ pigeons, 1 daim\\)\\./ [checked] [disabled]
-  //     - text: /Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées \\(\\d+ pigeons, 1 daim\\)\\. Date de prise en charge/
+  //     - paragraph /Prise en charge des carcasses acceptées ou non refusées \\(\\d+ pigeons, 1 daim\\)\\./ [checked] [disabled]
+  //     - text: /Prise en charge des carcasses acceptées ou non refusées \\(\\d+ pigeons, 1 daim\\)\\. Date de prise en charge/
   //     - button "Cliquez ici pour définir cette date comme étant aujourd'hui et maintenant"
   //     - textbox "Date de prise en charge Cliquez ici pour définir cette date comme étant aujourd'hui et maintenant"
   //     - button "Enregistrer" [disabled]
@@ -597,7 +591,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
     `);
   await expect(
     page.locator("p").filter({
-      hasText: "Je prends en charge les carcasses que j'ai acceptées ou que je n'ai pas refusées (10 pigeons, 1 daim).",
+      hasText: "Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim).",
     }),
   ).toBeVisible();
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();

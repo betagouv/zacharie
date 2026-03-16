@@ -278,7 +278,7 @@ export default function MonEntreprise() {
                       key={user.etg_role}
                       options={[
                         {
-                          label: 'Je peux seulement transporter les carcasses',
+                          label: 'Transport des carcasses uniquement',
                           hintText:
                             'Si vous cochez cette case, les futures fiches seront automatiquement réassignées à votre entreprise pour la réception ultérieure',
                           nativeInputProps: {
@@ -289,7 +289,7 @@ export default function MonEntreprise() {
                           },
                         },
                         {
-                          label: 'Je peux réceptionner les carcasses et gérer la logistique',
+                          label: 'Réception des carcasses et gestion de la logistique',
                           hintText:
                             'En cochant cette case, vous pourrez réceptionner les carcasses, et vous pourrez aussi préciser le cas échéant que votre entreprise a également transporté les carcasses vers votre entreprise.',
                           nativeInputProps: {
@@ -335,7 +335,7 @@ export default function MonEntreprise() {
                         options={[
                           {
                             label:
-                              "J'autorise Zacharie à faire apparaître dans les champs de transmission des fiches, les sociétés ou associations pour lesquelles je travaille ou auxquelles j'appartiens.",
+                              "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient.",
                             hintText:
                               'Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les fiches ne pourront pas être attribuées à votre entreprise',
                             nativeInputProps: {

@@ -12,7 +12,7 @@ test.beforeEach(async () => {
   await resetDb("PREMIER_DETENTEUR");
 });
 
-test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page }) => {
+test("Pas de stockage - Transporter les carcasses soi-même", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-155242";
   await connectWith(page, "premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
@@ -24,7 +24,7 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
   await expect(page.getByRole("link", { name: feiId })).toContainText("À renseigner");
   await page.getByRole("link", { name: feiId }).click();
   await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
-  await expect(page.getByRole("button", { name: "Je prends en charge cette" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Prendre en charge cette" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Examen initial Étape 1 sur" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
   await expect(page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" })).toBeVisible();
@@ -43,7 +43,7 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
   await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
   await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
   await page.getByLabel("Pigeons - N° MM-001-").getByTitle("Fermer").click();
-  await page.getByRole("button", { name: "Je prends en charge cette" }).click();
+  await page.getByRole("button", { name: "Prendre en charge cette" }).click();
   await expect(page.getByRole("heading", { name: "Validation par le premier dé" })).toBeVisible();
   await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
@@ -54,9 +54,7 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
   await pasDeStockage1.scrollIntoViewIfNeeded();
   await pasDeStockage1.click();
   await expect(page.getByText("Il manque le type de transport")).toBeVisible();
-  const jaiDepose = page.getByText("J'ai déposé mes carcasses").first();
-  await jaiDepose.scrollIntoViewIfNeeded();
-  await jaiDepose.click();
+  await page.getByText("Carcasses déposées dans un Centre").click();
   await expect(page.getByText("Il manque le centre de")).toBeVisible();
   const pasDeStockage2 = page.getByText("Pas de stockage").first();
   await pasDeStockage2.scrollIntoViewIfNeeded();
@@ -77,20 +75,18 @@ test("Pas de stockage - Je transporte les carcasses moi-même", async ({ page })
   await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible();
 });
 
-test("Stockage - Je transporte les carcasses moi-même", async ({ page }) => {
+test("Stockage - Transporter les carcasses soi-même", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-155242";
   await connectWith(page, "premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
   await page.getByRole("link", { name: feiId }).click();
-  await page.getByRole("button", { name: "Je prends en charge cette" }).click();
+  await page.getByRole("button", { name: "Prendre en charge cette" }).click();
   await expect(page.getByText("Étape suivante : Transport")).toBeVisible({ timeout: 10000 });
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
-  const jaiDepose = page.getByText("J'ai déposé mes carcasses").first();
-  await jaiDepose.scrollIntoViewIfNeeded();
-  await jaiDepose.click();
+  await page.getByText("Carcasses déposées dans un Centre").click();
   await page.getByRole("button", { name: "Renseigner ma chambre froide" }).click();
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole("textbox", { name: "Numéro d'identification" }).fill("CCG-01");
@@ -117,15 +113,13 @@ test("Stockage - Le transport est réalisé par un collecteur professionnel", as
   await connectWith(page, "premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
   await page.getByRole("link", { name: feiId }).click();
-  await page.getByRole("button", { name: "Je prends en charge cette" }).click();
+  await page.getByRole("button", { name: "Prendre en charge cette" }).click();
   await expect(page.getByText("Étape suivante : Transport")).toBeVisible({ timeout: 10000 });
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
-  const jaiDepose = page.getByText("J'ai déposé mes carcasses").first();
-  await jaiDepose.scrollIntoViewIfNeeded();
-  await jaiDepose.click();
+  await page.getByText("Carcasses déposées dans un Centre").click();
   await page.getByRole("button", { name: "Renseigner ma chambre froide" }).click();
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole("textbox", { name: "Numéro d'identification" }).fill("CCG-01");

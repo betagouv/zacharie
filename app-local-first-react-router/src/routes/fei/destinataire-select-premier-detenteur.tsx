@@ -267,7 +267,7 @@ function DispatchGroupForm({
           },
           {
             label:
-              "J'ai déposé mes carcasses dans un Centre de Collecte du Gibier sauvage (chambre froide)",
+              "Carcasses déposées dans un Centre de Collecte du Gibier sauvage (chambre froide)",
             nativeInputProps: {
               checked: group.depotType === DepotType.CCG,
               readOnly: !canEdit,

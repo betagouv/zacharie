@@ -132,7 +132,7 @@ export default function MesCCGs() {
                     setExplicitelySaidNoCCG(true);
                   },
                 },
-                label: 'Non, je n\u2019utilise pas de chambre froide',
+                label: 'Non, pas d\u2019utilisation de chambre froide',
               },
             ]}
           />
