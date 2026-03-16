@@ -563,9 +563,20 @@ router.post(
         res.status(406);
         return next(error);
       }
+      let isAdmin = req.user.roles.includes(UserRoles.ADMIN);
       let body = result.data;
       const userId = req.params.user_id;
-      let isAdmin = req.user.roles.includes(UserRoles.ADMIN);
+
+      if (userId !== req.user.id) {
+        if (!isAdmin) {
+          res.status(403).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error: 'Unauthorized',
+          });
+          return;
+        }
+      }
 
       if (!body.owner_id) {
         res
