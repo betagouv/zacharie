@@ -175,8 +175,8 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
     <>
       <label className="mb-4 block">Qui est le premier détenteur&nbsp;?&nbsp;*</label>
       {isFirstFei &&
-      !Object.values(associationsDeChasse).length &&
-      !Object.values(detenteursInitiaux).length ? (
+        !Object.values(associationsDeChasse).length &&
+        !Object.values(detenteursInitiaux).length ? (
         <>
           {!showSearchUserByEmail && (
             <div>
@@ -303,7 +303,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
           </Select>
           {(!nextOwnerUserOrEntityId || nextOwnerUserOrEntityId !== fei.fei_next_owner_user_id) && (
             <Button type="submit" disabled={!nextOwnerUserOrEntityId || disabled}>
-              Valider l’examen initial
+              Continuer
             </Button>
           )}
         </form>

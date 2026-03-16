@@ -206,7 +206,12 @@ export default function FEIExaminateurInitial() {
   const communesDeChasseFavorites = useGetCommunesDeChasseFavorites(!fei?.commune_mise_a_mort);
 
   // Progressive display conditions
-  const hasPremierDetenteur = !!(premierDetenteurUser || premierDetenteurEntity);
+  const hasPremierDetenteur = !!(
+    premierDetenteurUser ||
+    premierDetenteurEntity ||
+    fei.fei_next_owner_user_id ||
+    fei.fei_next_owner_entity_id
+  );
   const showBloc2 = !canEdit || !!(fei.date_mise_a_mort && fei.commune_mise_a_mort && hasPremierDetenteur);
   const showBloc3 =
     !canEdit ||
@@ -250,6 +255,7 @@ export default function FEIExaminateurInitial() {
             suppressHydrationWarning: true,
             placeholder: 'Date de mise à mort *',
             onBlur: (e) => {
+              if (!e.target.value) return;
               const date = dayjs.utc(e.target.value).startOf('day');
               if (date.isBefore(dayjs().add(-6, 'months'))) {
                 alert(`Il est impossible de définir une date de mise à mort antérieure à 6 mois.`);

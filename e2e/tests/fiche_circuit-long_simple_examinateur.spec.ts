@@ -26,7 +26,7 @@ test("Création d'une fiche", async ({ page }) => {
   await page.getByRole("button", { name: "CHASSENARD" }).click();
   // Select premier détenteur
   await page.getByRole("button", { name: "Pierre Petit" }).click();
-  await page.getByRole("button", { name: "Valider l'examen initial" }).click();
+  await page.getByRole("button", { name: "Continuer" }).click();
   // Bloc 2 — Carcasses
   await page
     .getByRole("textbox", { name: "Heure de mise à mort de la" })
@@ -56,7 +56,9 @@ test("Création d'une fiche", async ({ page }) => {
   // Bloc 4 — Validation
   await page.getByRole("button", { name: "Cliquez ici pour définir la date du jour et maintenant" }).click();
   await page.getByText("Je, Martin Marie, certifie qu").click();
-  await expect(page.getByRole("button", { name: "Enregistrer et transmettre la fiche", exact: true })).not.toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Enregistrer et transmettre la fiche", exact: true }),
+  ).not.toBeDisabled();
   await page.getByRole("button", { name: "Enregistrer et transmettre la fiche", exact: true }).click();
   await expect(page.getByText(/Attribution effectu/i).first()).toBeVisible({ timeout: 10000 });
   // get fei id
