@@ -44,8 +44,9 @@ export default function HeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
           >
             {simpleStatus}
           </Tag>
+          <span className="text-sm">{stepIcon}</span>
           <span className="text-sm">
-            {stepIcon} {currentStepLabel}
+            {currentStepLabel}
           </span>
         </div>
       )}
