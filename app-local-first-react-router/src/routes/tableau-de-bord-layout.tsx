@@ -45,7 +45,7 @@ export default function TableauDeBordLayout() {
         <main
           role="main"
           id="content"
-          className="fr-background-alt--blue-france relative min-h-full overflow-auto pb-16 md:pb-0"
+          className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0"
         >
           <Outlet />
         </main>

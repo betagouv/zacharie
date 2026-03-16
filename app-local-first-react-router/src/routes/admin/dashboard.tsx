@@ -8,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 const funnelLabels: Array<{ key: keyof AdminDashboardResponse['data']['funnel']; label: string }> = [
   { key: 'chasseurs_inscrits', label: 'Chasseurs inscrits' },
   { key: 'compte_valide', label: 'Compte validé (n° examinateur)' },
-  { key: 'fiche_ouverte', label: 'Fiche ouverte (non finalisée)' },
+  { key: 'fiche_ouverte', label: 'A ouvert >= 1 fiche' },
   { key: 'envoye_1_fiche', label: 'Envoyé >= 1 fiche' },
   { key: 'envoye_2_fiches', label: 'Envoyé >= 2 fiches' },
   { key: 'envoye_3_fiches', label: 'Envoyé >= 3 fiches' },
@@ -67,20 +67,7 @@ export default function AdminDashboard() {
   }
 
   const maxFunnel = data.funnel.chasseurs_inscrits || 1;
-  const totalInscriptions = data.inscriptions_par_jour.reduce((sum, r) => sum + r.count, 0);
-
-  const inscriptionsParJourCompletes = (() => {
-    const countByDate = new Map(data.inscriptions_par_jour.map((r) => [r.date, r.count]));
-    const result: Array<{ date: string; count: number }> = [];
-    let current = dayjs(dateFrom);
-    const end = dayjs(dateTo);
-    while (current.isBefore(end) || current.isSame(end, 'day')) {
-      const key = current.format('YYYY-MM-DD');
-      result.push({ date: key, count: countByDate.get(key) ?? 0 });
-      current = current.add(1, 'day');
-    }
-    return result;
-  })();
+  const totalInscriptions = data.inscriptions_par_semaine.reduce((sum, r) => sum + r.count, 0);
 
   return (
     <div className="py-6 space-y-6">
@@ -145,10 +132,10 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Inscriptions par jour */}
+      {/* Inscriptions par semaine */}
       <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold">Inscriptions chasseurs par jour</h3>
+          <h3 className="text-lg font-semibold">Inscriptions chasseurs par semaine</h3>
           <div className="flex items-end gap-3">
             <button
               type="button"
@@ -202,15 +189,15 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-        {inscriptionsParJourCompletes.length === 0 ? (
+        {data.inscriptions_par_semaine.length === 0 ? (
           <p className="text-sm text-gray-500">Aucune inscription sur cette période.</p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={inscriptionsParJourCompletes}>
+            <BarChart data={data.inscriptions_par_semaine}>
               <XAxis dataKey="date" tickFormatter={(d: string) => dayjs(d).format('DD/MM')} />
               <YAxis allowDecimals={false} />
               <Tooltip
-                labelFormatter={(d) => dayjs(String(d)).format('DD/MM/YYYY')}
+                labelFormatter={(d) => `Semaine du ${dayjs(String(d)).format('DD/MM/YYYY')}`}
                 formatter={(value) => [value, 'Inscriptions']}
               />
               <Bar dataKey="count" fill="var(--background-action-high-blue-france)" />

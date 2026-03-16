@@ -345,7 +345,17 @@ export interface AdminCarcassesIntermediairesResponse {
 export interface AdminCcgCheckDuplicatesResponse {
   ok: boolean;
   data: {
-    duplicates: string[];
+    duplicates: Record<
+      string,
+      {
+        nom_d_usage: string;
+        address_ligne_1: string;
+        address_ligne_2: string;
+        code_postal: string;
+        ville: string;
+        siret: string;
+      }
+    >;
   };
   error: string;
 }
@@ -371,7 +381,7 @@ export interface AdminDashboardResponse {
       envoye_2_fiches: number;
       envoye_3_fiches: number;
     };
-    inscriptions_par_jour: Array<{ date: string; count: number }>;
+    inscriptions_par_semaine: Array<{ date: string; count: number }>;
   };
   error: string;
 }

@@ -33,7 +33,9 @@ router.post(
     });
     await sendEmail({
       emails: ['contact@zacharie.beta.gouv.fr', email],
-      subject: `Contact\u00A0: ${sanitize(prenom)} ${sanitize(nom_de_famille)} - ${sanitize(email)} - ${sanitize(object)}`,
+      subject: `Contact\u00A0: ${sanitize(prenom)} ${sanitize(nom_de_famille)} - ${sanitize(
+        email,
+      )} - ${sanitize(object)}`,
       html: `<p>Nous avons bien reçu votre message. Nous vous répondrons dans les plus brefs délais.</p>
       <p>Voici les informations que vous avez fournies\u00A0:</p>
       <p>Nom\u00A0: ${sanitize(nom_de_famille)}</p>
