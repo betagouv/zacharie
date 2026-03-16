@@ -23,7 +23,7 @@ type Step = 'upload' | 'preview' | 'result';
 export default function CcgImport() {
   const [step, setStep] = useState<Step>('upload');
   const [rows, setRows] = useState<CcgRow[]>([]);
-  const [duplicates, setDuplicates] = useState<Set<string>>(new Set());
+  const [duplicates, setDuplicates] = useState<Record<string, { nom_d_usage: string; address_ligne_1: string; address_ligne_2: string; code_postal: string; ville: string; siret: string }>>({});
   const [selectedForUpdate, setSelectedForUpdate] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -48,53 +48,63 @@ export default function CcgImport() {
         return;
       }
 
-      // Find the first matching key from a list of candidates
-      const col = (row: Record<string, string>, ...keys: string[]) => {
-        for (const k of keys) {
-          if (k in row) return String(row[k]).trim();
+      // Normalize a key: collapse all whitespace (spaces, \r, \n) into a single space, then trim
+      const normalize = (s: string) => s.replace(/[\s]+/g, ' ').trim();
+
+      // Build a normalized lookup from a row, then find the first matching normalized target
+      const col = (normalizedRow: Map<string, string>, ...targets: string[]) => {
+        for (const t of targets) {
+          const v = normalizedRow.get(normalize(t));
+          if (v !== undefined) return v;
         }
         return '';
       };
 
-      const mapped: CcgRow[] = jsonRows.map((row) => ({
-        numero_ddecpp: col(
-          row,
-          'Unité Activité (UA) : Identifier métier (Type : Valorisation)',
-          'numero_ddecpp',
-          'Numéro DDECPP',
-        ),
-        nom_d_usage: col(
-          row,
-          'Établissement : Enseigne usuelle\n(RESYTAL)',
-          'Établissement : Enseigne usuelle (RESYTAL)',
-          'nom_d_usage',
-          'raison_sociale',
-          'Raison sociale',
-        ),
-        address_ligne_1: col(
-          row,
-          'Établissement : Adresse postale :\nConcaténations des lignes adresses 1, 2 & 3',
-          'Établissement : Adresse postale : Concaténations des lignes adresses 1, 2 & 3',
-          'address_ligne_1',
-          'Adresse',
-        ),
-        address_ligne_2: '',
-        code_postal: col(
-          row,
-          'Établissement : Adresse postale:\nCode postal',
-          'Établissement : Adresse postale: Code postal',
-          'code_postal',
-          'Code postal',
-        ),
-        ville: col(
-          row,
-          'Établissement : Adresse postale:\nBureau distributeur',
-          'Établissement : Adresse postale: Bureau distributeur',
-          'ville',
-          'Ville',
-        ),
-        siret: col(row, 'Établissement : SIRET/NUMAGRIT', 'siret', 'SIRET'),
-      }));
+      const mapped: CcgRow[] = jsonRows.map((row) => {
+        const normalizedRow = new Map<string, string>();
+        for (const [k, v] of Object.entries(row)) {
+          normalizedRow.set(normalize(k), String(v).trim());
+        }
+        return {
+          numero_ddecpp: (() => {
+            const raw = col(
+              normalizedRow,
+              'Unité Activité (UA) : Identifier métier (Type : Valorisation)',
+              'numero_ddecpp',
+              'Numéro DDECPP',
+            );
+            const match = raw.match(/\d{2,3}-CCG-\d+/);
+            return match ? match[0] : raw;
+          })(),
+          nom_d_usage: col(
+            normalizedRow,
+            'Établissement : Enseigne usuelle (RESYTAL)',
+            'nom_d_usage',
+            'raison_sociale',
+            'Raison sociale',
+          ),
+          address_ligne_1: col(
+            normalizedRow,
+            'Établissement : Adresse postale : Concaténations des lignes adresses 1, 2 & 3',
+            'address_ligne_1',
+            'Adresse',
+          ),
+          address_ligne_2: '',
+          code_postal: col(
+            normalizedRow,
+            'Établissement : Adresse postale: Code postal',
+            'code_postal',
+            'Code postal',
+          ),
+          ville: col(
+            normalizedRow,
+            'Établissement : Adresse postale: Bureau distributeur',
+            'ville',
+            'Ville',
+          ),
+          siret: col(normalizedRow, 'Établissement : SIRET/NUMAGRIT', 'siret', 'SIRET'),
+        };
+      });
 
       const validRows = mapped.filter((r) => r.numero_ddecpp);
       if (validRows.length === 0) {
@@ -115,10 +125,10 @@ export default function CcgImport() {
         return;
       }
 
-      const dupes = new Set(response.data.duplicates);
+      const dupes = response.data.duplicates;
       setRows(validRows);
       setDuplicates(dupes);
-      setSelectedForUpdate(new Set(dupes));
+      setSelectedForUpdate(new Set(Object.keys(dupes)));
       setStep('preview');
     } catch {
       setError("Erreur lors de la lecture du fichier. Vérifiez qu'il s'agit d'un fichier CSV ou Excel valide.");
@@ -142,7 +152,7 @@ export default function CcgImport() {
   const toggleAllExisting = useCallback(
     (checked: boolean) => {
       if (checked) {
-        setSelectedForUpdate(new Set(duplicates));
+        setSelectedForUpdate(new Set(Object.keys(duplicates)));
       } else {
         setSelectedForUpdate(new Set());
       }
@@ -155,7 +165,7 @@ export default function CcgImport() {
     setError('');
 
     const ccgs = rows.map((row) => {
-      const isDuplicate = duplicates.has(row.numero_ddecpp);
+      const isDuplicate = row.numero_ddecpp in duplicates;
       let action: 'create' | 'update' | 'skip';
       if (!isDuplicate) {
         action = 'create';
@@ -186,13 +196,13 @@ export default function CcgImport() {
   const reset = useCallback(() => {
     setStep('upload');
     setRows([]);
-    setDuplicates(new Set());
+    setDuplicates({});
     setSelectedForUpdate(new Set());
     setResult(null);
     setError('');
   }, []);
 
-  const existingCount = rows.filter((r) => duplicates.has(r.numero_ddecpp)).length;
+  const existingCount = Object.keys(duplicates).length;
 
   return (
     <div className="fr-container p-4 md:p-8">
@@ -234,7 +244,7 @@ export default function CcgImport() {
                   {
                     label: `Mettre à jour tous les existants (${existingCount})`,
                     nativeInputProps: {
-                      checked: selectedForUpdate.size === duplicates.size,
+                      checked: selectedForUpdate.size === Object.keys(duplicates).length,
                       onChange: (e) => toggleAllExisting(e.target.checked),
                     },
                   },
@@ -250,7 +260,17 @@ export default function CcgImport() {
               className="[&_td]:align-middle"
               headers={['Statut', 'N° DDECPP', 'Nom', 'Adresse', 'CP', 'Ville', 'SIRET', 'Action']}
               data={rows.map((row) => {
-                const isDuplicate = duplicates.has(row.numero_ddecpp);
+                const isDuplicate = row.numero_ddecpp in duplicates;
+                const existing = isDuplicate ? duplicates[row.numero_ddecpp] : null;
+                const diffCell = (newVal: string, oldVal: string | undefined) => {
+                  if (!existing || oldVal === undefined || oldVal === newVal) return newVal;
+                  return (
+                    <span>
+                      <span className="line-through text-red-500">{oldVal}</span>{' '}
+                      <span className="font-bold text-green-600">{newVal}</span>
+                    </span>
+                  );
+                };
                 return [
                   isDuplicate ? (
                     <Badge key="badge" severity="warning">
@@ -262,11 +282,11 @@ export default function CcgImport() {
                     </Badge>
                   ),
                   row.numero_ddecpp,
-                  row.nom_d_usage,
-                  row.address_ligne_1,
-                  row.code_postal,
-                  row.ville,
-                  row.siret,
+                  diffCell(row.nom_d_usage, existing?.nom_d_usage),
+                  diffCell(row.address_ligne_1, existing?.address_ligne_1),
+                  diffCell(row.code_postal, existing?.code_postal),
+                  diffCell(row.ville, existing?.ville),
+                  diffCell(row.siret, existing?.siret),
                   isDuplicate ? (
                     <Checkbox
                       key="check"

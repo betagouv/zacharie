@@ -1067,7 +1067,7 @@ router.get(
         prisma.user.count({
           where: { roles: { has: UserRoles.CHASSEUR }, deleted_at: null, numero_cfei: { not: null } },
         }),
-        // Stage 3: Chasseurs avec >= 1 FEI créée non envoyée
+        // Stage 3: Chasseurs avec >= 1 FEI créée (envoyée ou non)
         prisma.$queryRaw<Array<{ count: bigint }>>`
           SELECT COUNT(DISTINCT u.id) as count
           FROM "User" u
@@ -1075,7 +1075,6 @@ router.get(
           WHERE 'CHASSEUR' = ANY(u.roles)
             AND u.deleted_at IS NULL
             AND f.deleted_at IS NULL
-            AND f.fei_next_owner_role IS NULL
         `,
         // Stage 4+: Chasseurs avec >= 1 FEI envoyée (+ count pour stages 5, 6)
         prisma.$queryRaw<Array<{ user_id: string; fei_count: bigint }>>`
@@ -1099,7 +1098,7 @@ router.get(
       const funnel = {
         chasseurs_inscrits: chasseursInscrits,
         compte_valide: compteValide,
-        fiche_ouverte: Math.max(ficheOuverte, envoye1),
+        fiche_ouverte: ficheOuverte,
         envoye_1_fiche: envoye1,
         envoye_2_fiches: envoye2,
         envoye_3_fiches: envoye3,
@@ -1144,7 +1143,7 @@ router.post(
     ) => {
       const { numero_ddecpps } = req.body as { numero_ddecpps: string[] };
       if (!Array.isArray(numero_ddecpps) || numero_ddecpps.length === 0) {
-        res.status(400).send({ ok: false, data: { duplicates: [] }, error: 'numero_ddecpps requis' });
+        res.status(400).send({ ok: false, data: { duplicates: {} }, error: 'numero_ddecpps requis' });
         return;
       }
       const existing = await prisma.entity.findMany({
@@ -1153,9 +1152,29 @@ router.post(
           type: EntityTypes.CCG,
           deleted_at: null,
         },
-        select: { numero_ddecpp: true },
+        select: {
+          numero_ddecpp: true,
+          nom_d_usage: true,
+          address_ligne_1: true,
+          address_ligne_2: true,
+          code_postal: true,
+          ville: true,
+          siret: true,
+        },
       });
-      const duplicates = existing.map((e) => e.numero_ddecpp).filter(Boolean) as string[];
+      const duplicates: Record<string, { nom_d_usage: string; address_ligne_1: string; address_ligne_2: string; code_postal: string; ville: string; siret: string }> = {};
+      for (const e of existing) {
+        if (e.numero_ddecpp) {
+          duplicates[e.numero_ddecpp] = {
+            nom_d_usage: e.nom_d_usage ?? '',
+            address_ligne_1: e.address_ligne_1 ?? '',
+            address_ligne_2: e.address_ligne_2 ?? '',
+            code_postal: e.code_postal ?? '',
+            ville: e.ville ?? '',
+            siret: e.siret ?? '',
+          };
+        }
+      }
       res.status(200).send({ ok: true, data: { duplicates }, error: '' });
     },
   ),

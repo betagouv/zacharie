@@ -8,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 const funnelLabels: Array<{ key: keyof AdminDashboardResponse['data']['funnel']; label: string }> = [
   { key: 'chasseurs_inscrits', label: 'Chasseurs inscrits' },
   { key: 'compte_valide', label: 'Compte validé (n° examinateur)' },
-  { key: 'fiche_ouverte', label: 'Fiche ouverte (non finalisée)' },
+  { key: 'fiche_ouverte', label: 'A ouvert >= 1 fiche' },
   { key: 'envoye_1_fiche', label: 'Envoyé >= 1 fiche' },
   { key: 'envoye_2_fiches', label: 'Envoyé >= 2 fiches' },
   { key: 'envoye_3_fiches', label: 'Envoyé >= 3 fiches' },

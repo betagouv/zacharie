@@ -345,7 +345,17 @@ export interface AdminCarcassesIntermediairesResponse {
 export interface AdminCcgCheckDuplicatesResponse {
   ok: boolean;
   data: {
-    duplicates: string[];
+    duplicates: Record<
+      string,
+      {
+        nom_d_usage: string;
+        address_ligne_1: string;
+        address_ligne_2: string;
+        code_postal: string;
+        ville: string;
+        siret: string;
+      }
+    >;
   };
   error: string;
 }
