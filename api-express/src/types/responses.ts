@@ -371,7 +371,7 @@ export interface AdminDashboardResponse {
       envoye_2_fiches: number;
       envoye_3_fiches: number;
     };
-    inscriptions_par_jour: Array<{ date: string; count: number }>;
+    inscriptions_par_semaine: Array<{ date: string; count: number }>;
   };
   error: string;
 }

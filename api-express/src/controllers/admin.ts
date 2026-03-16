@@ -1058,12 +1058,7 @@ router.get(
       const from = dateFrom || defaultFrom;
       const to = dateTo || defaultTo;
 
-      const [
-        chasseursInscrits,
-        compteValide,
-        ficheOuverteRows,
-        envoye1FicheRows,
-      ] = await Promise.all([
+      const [chasseursInscrits, compteValide, ficheOuverteRows, envoye1FicheRows] = await Promise.all([
         // Stage 1: Chasseurs inscrits
         prisma.user.count({
           where: { roles: { has: UserRoles.CHASSEUR }, deleted_at: null },
@@ -1110,15 +1105,15 @@ router.get(
         envoye_3_fiches: envoye3,
       };
 
-      // Inscriptions par jour
-      const inscriptionsParJour = await prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
-        SELECT DATE(created_at) as date, COUNT(*) as count
+      // Inscriptions par semaine
+      const inscriptionsParSemaine = await prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
+        SELECT DATE_TRUNC('week', created_at) as date, COUNT(*) as count
         FROM "User"
         WHERE 'CHASSEUR' = ANY(roles)
           AND deleted_at IS NULL
           AND created_at >= ${new Date(from)}::date
           AND created_at < (${new Date(to)}::date + interval '1 day')
-        GROUP BY DATE(created_at)
+        GROUP BY DATE_TRUNC('week', created_at)
         ORDER BY date ASC
       `;
 
@@ -1126,7 +1121,7 @@ router.get(
         ok: true,
         data: {
           funnel,
-          inscriptions_par_jour: inscriptionsParJour.map((r) => ({
+          inscriptions_par_semaine: inscriptionsParSemaine.map((r) => ({
             date: new Date(r.date).toISOString().slice(0, 10),
             count: Number(r.count),
           })),
@@ -1189,7 +1184,9 @@ router.post(
         }>;
       };
       if (!Array.isArray(ccgs) || ccgs.length === 0) {
-        res.status(400).send({ ok: false, data: { created: 0, updated: 0, skipped: 0 }, error: 'ccgs requis' });
+        res
+          .status(400)
+          .send({ ok: false, data: { created: 0, updated: 0, skipped: 0 }, error: 'ccgs requis' });
         return;
       }
 
