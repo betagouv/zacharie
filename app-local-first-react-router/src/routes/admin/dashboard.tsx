@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
-import type { AdminDashboardResponse } from '@api/src/types/responses';
+import type { AdminDashboardResponse, AdminPartsDeMarcheResponse } from '@api/src/types/responses';
 import dayjs from 'dayjs';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const funnelLabels: Array<{ key: keyof AdminDashboardResponse['data']['funnel']; label: string }> = [
   { key: 'chasseurs_inscrits', label: 'Chasseurs inscrits' },
@@ -43,6 +43,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState(() => dayjs().subtract(90, 'day').format('YYYY-MM-DD'));
   const [dateTo, setDateTo] = useState(() => dayjs().format('YYYY-MM-DD'));
+  const [partsDeMarche, setPartsDeMarche] = useState<AdminPartsDeMarcheResponse['data'] | null>(null);
 
   const seasons = getSeasons();
 
@@ -57,6 +58,16 @@ export default function AdminDashboard() {
       })
       .finally(() => setLoading(false));
   }, [dateFrom, dateTo]);
+
+  useEffect(() => {
+    API.get({ path: 'admin/parts-de-marche' })
+      .then((res) => res as AdminPartsDeMarcheResponse)
+      .then((res) => {
+        if (res.ok) {
+          setPartsDeMarche(res.data);
+        }
+      });
+  }, []);
 
   if (loading && !data) {
     return <Chargement />;
@@ -205,6 +216,35 @@ export default function AdminDashboard() {
           </ResponsiveContainer>
         )}
       </div>
+
+      {/* Parts de marché par circuit */}
+      {partsDeMarche && partsDeMarche.circuit_long.length > 0 && (
+        <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold mb-1">Parts de marché par circuit</h3>
+          <p className="text-sm text-gray-500 mb-5">
+            Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par saison de chasse
+          </p>
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={partsDeMarche.circuit_long}>
+              <XAxis dataKey="saison" xAxisId="absolu" />
+              <XAxis dataKey="saison" xAxisId="potentiel" hide />
+              <XAxis dataKey="saison" xAxisId="reel" hide />
+              <YAxis label={{ value: 'Tonnes de viande de gibier', angle: -90, position: 'insideLeft', offset: 10 }} />
+              <Tooltip formatter={(value, name) => [`${value} t`, name]} />
+              <Legend />
+              <Bar dataKey="volume_absolu" name="Volume absolu" xAxisId="absolu" fill="#cacafb" barSize={60} />
+              <Bar
+                dataKey="volume_potentiel"
+                name="Volume potentiel"
+                xAxisId="potentiel"
+                fill="#6a6af4"
+                barSize={40}
+              />
+              <Bar dataKey="volume_reel" name="Volume réel" xAxisId="reel" fill="#000091" barSize={24} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }

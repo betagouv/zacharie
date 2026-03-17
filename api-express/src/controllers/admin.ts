@@ -33,9 +33,12 @@ import type {
   AdminCarcassesIntermediairesResponse,
   AdminCarcassesResponse,
   AdminCarcasseDetailResponse,
-  AdminCcgCheckDuplicatesResponse,
+  AdminCcgPreviewResponse,
+  CcgPreviewRow,
+  CcgPreviewModifiedRow,
   AdminCcgImportResponse,
   AdminDashboardResponse,
+  AdminPartsDeMarcheResponse,
   UserConnexionResponse,
 } from '~/types/responses';
 import passport from 'passport';
@@ -43,6 +46,7 @@ import validateUser from '~/middlewares/validateUser';
 import { entityAdminInclude } from '~/types/entity';
 import { createBrevoContact, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
 import slugify from 'slugify';
+import dayjs from 'dayjs';
 
 router.post(
   '/user/connect-as',
@@ -1136,24 +1140,146 @@ router.get(
   ),
 );
 
-router.post(
-  '/ccg/check-duplicates',
+const POIDS_MOYEN_KG: Record<string, number> = {
+  'Cerf élaphe': 80,
+  'Cerf sika': 80,
+  Chevreuil: 15,
+  Daim: 40,
+  Sanglier: 50,
+  Chamois: 25,
+  Isard: 25,
+  'Mouflon méditerranéen': 30,
+};
+const POIDS_MOYEN_DEFAULT_KG = 1;
+
+router.get(
+  '/parts-de-marche',
   passport.authenticate('user', { session: false }),
   validateUser([UserRoles.ADMIN]),
   catchErrors(
     async (
       req: express.Request,
-      res: express.Response<AdminCcgCheckDuplicatesResponse>,
+      res: express.Response<AdminPartsDeMarcheResponse>,
       next: express.NextFunction,
     ) => {
-      const { numero_ddecpps } = req.body as { numero_ddecpps: string[] };
-      if (!Array.isArray(numero_ddecpps) || numero_ddecpps.length === 0) {
-        res.status(400).send({ ok: false, data: { duplicates: {} }, error: 'numero_ddecpps requis' });
+      const now = dayjs();
+      const currentYear = now.year();
+      const currentSeasonStart = now.month() < 6 ? currentYear - 1 : currentYear;
+
+      // Day offset within current season (days since July 1)
+      const seasonStartDate = dayjs(`${currentSeasonStart}-07-01`);
+      const dayOffsetInSeason = now.diff(seasonStartDate, 'day');
+
+      // Fetch all circuit-long carcasses grouped by season and species
+      const rows = await prisma.$queryRaw<
+        Array<{ season_start: number; espece: string; carcasse_count: bigint; nombre_total: bigint }>
+      >`
+        SELECT
+          CASE
+            WHEN EXTRACT(MONTH FROM c.date_mise_a_mort) >= 7
+            THEN EXTRACT(YEAR FROM c.date_mise_a_mort)::int
+            ELSE EXTRACT(YEAR FROM c.date_mise_a_mort)::int - 1
+          END AS season_start,
+          c.espece,
+          COUNT(*) AS carcasse_count,
+          COALESCE(SUM(c.nombre_d_animaux), COUNT(*)) AS nombre_total
+        FROM "Carcasse" c
+        INNER JOIN "CarcasseIntermediaire" ci ON ci.zacharie_carcasse_id = c.zacharie_carcasse_id
+        INNER JOIN "Entity" e ON e.id = ci.intermediaire_entity_id
+        WHERE c.deleted_at IS NULL
+          AND c.date_mise_a_mort IS NOT NULL
+          AND e.type IN ('ETG', 'COLLECTEUR_PRO')
+        GROUP BY season_start, c.espece
+      `;
+
+      // Also fetch with date cutoff for potentiel calculation
+      const rowsWithCutoff = await prisma.$queryRaw<
+        Array<{ season_start: number; espece: string; carcasse_count: bigint; nombre_total: bigint }>
+      >`
+        SELECT
+          CASE
+            WHEN EXTRACT(MONTH FROM c.date_mise_a_mort) >= 7
+            THEN EXTRACT(YEAR FROM c.date_mise_a_mort)::int
+            ELSE EXTRACT(YEAR FROM c.date_mise_a_mort)::int - 1
+          END AS season_start,
+          c.espece,
+          COUNT(*) AS carcasse_count,
+          COALESCE(SUM(c.nombre_d_animaux), COUNT(*)) AS nombre_total
+        FROM "Carcasse" c
+        INNER JOIN "CarcasseIntermediaire" ci ON ci.zacharie_carcasse_id = c.zacharie_carcasse_id
+        INNER JOIN "Entity" e ON e.id = ci.intermediaire_entity_id
+        WHERE c.deleted_at IS NULL
+          AND c.date_mise_a_mort IS NOT NULL
+          AND e.type IN ('ETG', 'COLLECTEUR_PRO')
+          AND c.date_mise_a_mort <= (
+            MAKE_DATE(
+              CASE
+                WHEN EXTRACT(MONTH FROM c.date_mise_a_mort) >= 7
+                THEN EXTRACT(YEAR FROM c.date_mise_a_mort)::int
+                ELSE EXTRACT(YEAR FROM c.date_mise_a_mort)::int - 1
+              END, 7, 1
+            ) + ${dayOffsetInSeason} * INTERVAL '1 day'
+          )
+        GROUP BY season_start, c.espece
+      `;
+
+      // Calculate tonnage per season (full season = reel, with cutoff = for potentiel)
+      function computeTonnage(data: typeof rows): Record<number, number> {
+        const result: Record<number, number> = {};
+        for (const row of data) {
+          const poids = POIDS_MOYEN_KG[row.espece ?? ''] ?? POIDS_MOYEN_DEFAULT_KG;
+          const tonnes = (Number(row.nombre_total) * poids) / 1000;
+          result[row.season_start] = (result[row.season_start] ?? 0) + tonnes;
+        }
+        return result;
+      }
+
+      const tonnageFull = computeTonnage(rows);
+      const tonnageCutoff = computeTonnage(rowsWithCutoff);
+
+      // Build response: for each season, reel = cutoff tonnage, potentiel = previous season's cutoff tonnage
+      const allSeasons = [...new Set([...Object.keys(tonnageFull).map(Number)])].sort();
+
+      const circuit_long = allSeasons.map((seasonStart) => {
+        const label = `${String(seasonStart).slice(2)}-${String(seasonStart + 1).slice(2)}`;
+        return {
+          saison: label,
+          volume_reel: Math.round((tonnageCutoff[seasonStart] ?? 0) * 100) / 100,
+          volume_potentiel: Math.round((tonnageCutoff[seasonStart - 1] ?? 0) * 100) / 100,
+          volume_absolu: Math.round((tonnageFull[seasonStart] ?? 0) * 100) / 100,
+        };
+      });
+
+      res.status(200).send({
+        ok: true,
+        data: { circuit_long },
+        error: '',
+      });
+    },
+  ),
+);
+
+router.post(
+  '/ccg/preview',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminCcgPreviewResponse>,
+      next: express.NextFunction,
+    ) => {
+      const { ccgs } = req.body as { ccgs: CcgPreviewRow[] };
+      if (!Array.isArray(ccgs) || ccgs.length === 0) {
+        res
+          .status(400)
+          .send({ ok: false, data: { nouveaux: [], modifies: [], unchanged_count: 0 }, error: 'ccgs requis' });
         return;
       }
-      const existing = await prisma.entity.findMany({
+      const numeroDdecpps = ccgs.map((c) => c.numero_ddecpp);
+      const existingEntities = await prisma.entity.findMany({
         where: {
-          numero_ddecpp: { in: numero_ddecpps },
+          numero_ddecpp: { in: numeroDdecpps },
           type: EntityTypes.CCG,
           deleted_at: null,
         },
@@ -1161,36 +1287,49 @@ router.post(
           numero_ddecpp: true,
           nom_d_usage: true,
           address_ligne_1: true,
-          address_ligne_2: true,
           code_postal: true,
           ville: true,
           siret: true,
         },
       });
-      const duplicates: Record<
+      const existingByNumero: Record<
         string,
-        {
-          nom_d_usage: string;
-          address_ligne_1: string;
-          address_ligne_2: string;
-          code_postal: string;
-          ville: string;
-          siret: string;
-        }
+        { nom_d_usage: string; address_ligne_1: string; code_postal: string; ville: string; siret: string }
       > = {};
-      for (const e of existing) {
+      for (const e of existingEntities) {
         if (e.numero_ddecpp) {
-          duplicates[e.numero_ddecpp] = {
+          existingByNumero[e.numero_ddecpp] = {
             nom_d_usage: e.nom_d_usage ?? '',
             address_ligne_1: e.address_ligne_1 ?? '',
-            address_ligne_2: e.address_ligne_2 ?? '',
             code_postal: e.code_postal ?? '',
             ville: e.ville ?? '',
             siret: e.siret ?? '',
           };
         }
       }
-      res.status(200).send({ ok: true, data: { duplicates }, error: '' });
+
+      const nouveaux: CcgPreviewRow[] = [];
+      const modifies: CcgPreviewModifiedRow[] = [];
+      let unchanged_count = 0;
+
+      for (const row of ccgs) {
+        const ex = existingByNumero[row.numero_ddecpp];
+        if (!ex) {
+          nouveaux.push(row);
+        } else if (
+          row.nom_d_usage !== ex.nom_d_usage ||
+          row.address_ligne_1 !== ex.address_ligne_1 ||
+          row.code_postal !== ex.code_postal ||
+          row.ville !== ex.ville ||
+          row.siret !== ex.siret
+        ) {
+          modifies.push({ ...row, existing: ex });
+        } else {
+          unchanged_count++;
+        }
+      }
+
+      res.status(200).send({ ok: true, data: { nouveaux, modifies, unchanged_count }, error: '' });
     },
   ),
 );

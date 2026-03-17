@@ -342,20 +342,32 @@ export interface AdminCarcassesIntermediairesResponse {
   error: string;
 }
 
-export interface AdminCcgCheckDuplicatesResponse {
+export interface CcgPreviewRow {
+  numero_ddecpp: string;
+  nom_d_usage: string;
+  address_ligne_1: string;
+  address_ligne_2: string;
+  code_postal: string;
+  ville: string;
+  siret: string;
+}
+
+export interface CcgPreviewModifiedRow extends CcgPreviewRow {
+  existing: {
+    nom_d_usage: string;
+    address_ligne_1: string;
+    code_postal: string;
+    ville: string;
+    siret: string;
+  };
+}
+
+export interface AdminCcgPreviewResponse {
   ok: boolean;
   data: {
-    duplicates: Record<
-      string,
-      {
-        nom_d_usage: string;
-        address_ligne_1: string;
-        address_ligne_2: string;
-        code_postal: string;
-        ville: string;
-        siret: string;
-      }
-    >;
+    nouveaux: CcgPreviewRow[];
+    modifies: CcgPreviewModifiedRow[];
+    unchanged_count: number;
   };
   error: string;
 }
@@ -382,6 +394,19 @@ export interface AdminDashboardResponse {
       envoye_3_fiches: number;
     };
     inscriptions_par_semaine: Array<{ date: string; count: number }>;
+  };
+  error: string;
+}
+
+export interface AdminPartsDeMarcheResponse {
+  ok: boolean;
+  data: {
+    circuit_long: Array<{
+      saison: string;
+      volume_reel: number;
+      volume_potentiel: number;
+      volume_absolu: number;
+    }>;
   };
   error: string;
 }
