@@ -6,24 +6,20 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import API from '@app/services/api';
-import type { AdminCcgCheckDuplicatesResponse, AdminCcgImportResponse } from '@api/src/types/responses';
-
-interface CcgRow {
-  numero_ddecpp: string;
-  nom_d_usage: string;
-  address_ligne_1: string;
-  address_ligne_2: string;
-  code_postal: string;
-  ville: string;
-  siret: string;
-}
+import type {
+  AdminCcgPreviewResponse,
+  AdminCcgImportResponse,
+  CcgPreviewRow,
+  CcgPreviewModifiedRow,
+} from '@api/src/types/responses';
 
 type Step = 'upload' | 'preview' | 'result';
 
 export default function CcgImport() {
   const [step, setStep] = useState<Step>('upload');
-  const [rows, setRows] = useState<CcgRow[]>([]);
-  const [duplicates, setDuplicates] = useState<Record<string, { nom_d_usage: string; address_ligne_1: string; address_ligne_2: string; code_postal: string; ville: string; siret: string }>>({});
+  const [nouveaux, setNouveaux] = useState<CcgPreviewRow[]>([]);
+  const [modifies, setModifies] = useState<CcgPreviewModifiedRow[]>([]);
+  const [unchangedCount, setUnchangedCount] = useState(0);
   const [selectedForUpdate, setSelectedForUpdate] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -60,7 +56,7 @@ export default function CcgImport() {
         return '';
       };
 
-      const mapped: CcgRow[] = jsonRows.map((row) => {
+      const mapped: CcgPreviewRow[] = jsonRows.map((row) => {
         const normalizedRow = new Map<string, string>();
         for (const [k, v] of Object.entries(row)) {
           normalizedRow.set(normalize(k), String(v).trim());
@@ -85,6 +81,7 @@ export default function CcgImport() {
           ),
           address_ligne_1: col(
             normalizedRow,
+            'Unité Activité (UA) : Adresse de localisation : Concaténations des lignes adresses 1, 2 & 3',
             'Établissement : Adresse postale : Concaténations des lignes adresses 1, 2 & 3',
             'address_ligne_1',
             'Adresse',
@@ -92,12 +89,14 @@ export default function CcgImport() {
           address_ligne_2: '',
           code_postal: col(
             normalizedRow,
+            "Unité d'Activité (UA) : Code postal (Adresse de localisation)",
             'Établissement : Adresse postale: Code postal',
             'code_postal',
             'Code postal',
           ),
           ville: col(
             normalizedRow,
+            'Unité Activité (UA) : Adresse de localisation : Commune Nom',
             'Établissement : Adresse postale: Bureau distributeur',
             'ville',
             'Ville',
@@ -106,29 +105,28 @@ export default function CcgImport() {
         };
       });
 
-      const validRows = mapped.filter((r) => r.numero_ddecpp);
+      const validRows = mapped.filter((r) => /^\d{2,3}-CCG-\d+$/.test(r.numero_ddecpp));
       if (validRows.length === 0) {
         setError("Aucune ligne avec un numero_ddecpp n'a été trouvée. Vérifiez les colonnes du fichier.");
         setLoading(false);
         return;
       }
 
-      const numeroDdecpps = validRows.map((r) => r.numero_ddecpp);
       const response = (await API.post({
-        path: 'admin/ccg/check-duplicates',
-        body: { numero_ddecpps: numeroDdecpps },
-      })) as AdminCcgCheckDuplicatesResponse;
+        path: 'admin/ccg/preview',
+        body: { ccgs: validRows },
+      })) as AdminCcgPreviewResponse;
 
       if (!response.ok) {
-        setError(response.error || 'Erreur lors de la vérification des doublons.');
+        setError(response.error || 'Erreur lors de la vérification.');
         setLoading(false);
         return;
       }
 
-      const dupes = response.data.duplicates;
-      setRows(validRows);
-      setDuplicates(dupes);
-      setSelectedForUpdate(new Set(Object.keys(dupes)));
+      setNouveaux(response.data.nouveaux);
+      setModifies(response.data.modifies);
+      setUnchangedCount(response.data.unchanged_count);
+      setSelectedForUpdate(new Set(response.data.modifies.map((r) => r.numero_ddecpp)));
       setStep('preview');
     } catch {
       setError("Erreur lors de la lecture du fichier. Vérifiez qu'il s'agit d'un fichier CSV ou Excel valide.");
@@ -136,6 +134,8 @@ export default function CcgImport() {
       setLoading(false);
     }
   }, []);
+
+  const displayedRows: Array<CcgPreviewRow | CcgPreviewModifiedRow> = [...nouveaux, ...modifies];
 
   const toggleUpdate = useCallback((numeroDdecpp: string) => {
     setSelectedForUpdate((prev) => {
@@ -152,30 +152,26 @@ export default function CcgImport() {
   const toggleAllExisting = useCallback(
     (checked: boolean) => {
       if (checked) {
-        setSelectedForUpdate(new Set(Object.keys(duplicates)));
+        setSelectedForUpdate(new Set(modifies.map((r) => r.numero_ddecpp)));
       } else {
         setSelectedForUpdate(new Set());
       }
     },
-    [duplicates],
+    [modifies],
   );
 
   const handleImport = useCallback(async () => {
     setLoading(true);
     setError('');
 
-    const ccgs = rows.map((row) => {
-      const isDuplicate = row.numero_ddecpp in duplicates;
-      let action: 'create' | 'update' | 'skip';
-      if (!isDuplicate) {
-        action = 'create';
-      } else if (selectedForUpdate.has(row.numero_ddecpp)) {
-        action = 'update';
-      } else {
-        action = 'skip';
-      }
-      return { ...row, action };
-    });
+    const ccgs = [
+      ...nouveaux.map((row) => ({ ...row, action: 'create' as const })),
+      ...modifies.map((row) => {
+        const { existing: _, ...rest } = row;
+        const action = selectedForUpdate.has(row.numero_ddecpp) ? ('update' as const) : ('skip' as const);
+        return { ...rest, action };
+      }),
+    ];
 
     const response = (await API.post({
       path: 'admin/ccg/import',
@@ -191,18 +187,17 @@ export default function CcgImport() {
     setResult(response.data);
     setStep('result');
     setLoading(false);
-  }, [rows, duplicates, selectedForUpdate]);
+  }, [nouveaux, modifies, selectedForUpdate]);
 
   const reset = useCallback(() => {
     setStep('upload');
-    setRows([]);
-    setDuplicates({});
+    setNouveaux([]);
+    setModifies([]);
+    setUnchangedCount(0);
     setSelectedForUpdate(new Set());
     setResult(null);
     setError('');
   }, []);
-
-  const existingCount = Object.keys(duplicates).length;
 
   return (
     <div className="fr-container p-4 md:p-8">
@@ -225,6 +220,7 @@ export default function CcgImport() {
             onChange={handleFileChange}
             disabled={loading}
             className="fr-input"
+            placeholder="Sélectionnez un fichier Excel CCG (format RESYTAL, en-têtes en ligne 5)"
           />
           {loading && <p className="mt-2">Chargement...</p>}
         </div>
@@ -233,18 +229,21 @@ export default function CcgImport() {
       {step === 'preview' && (
         <>
           <div className="mb-4 flex items-center gap-4">
-            <Badge severity="success">{rows.length - existingCount} nouveau(x)</Badge>
-            <Badge severity="warning">{existingCount} existant(s)</Badge>
+            <Badge severity="success">{nouveaux.length} nouveau(x)</Badge>
+            <Badge severity="warning">{modifies.length} existant(s) avec modifications</Badge>
+            {unchangedCount > 0 && (
+              <Badge severity="info">{unchangedCount} existant(s) sans modification (masqués)</Badge>
+            )}
           </div>
 
-          {existingCount > 0 && (
+          {modifies.length > 0 && (
             <div className="mb-4">
               <Checkbox
                 options={[
                   {
-                    label: `Mettre à jour tous les existants (${existingCount})`,
+                    label: `Mettre à jour tous les existants (${modifies.length})`,
                     nativeInputProps: {
-                      checked: selectedForUpdate.size === Object.keys(duplicates).length,
+                      checked: selectedForUpdate.size === modifies.length && modifies.length > 0,
                       onChange: (e) => toggleAllExisting(e.target.checked),
                     },
                   },
@@ -259,9 +258,9 @@ export default function CcgImport() {
               noCaption
               className="[&_td]:align-middle"
               headers={['Statut', 'N° DDECPP', 'Nom', 'Adresse', 'CP', 'Ville', 'SIRET', 'Action']}
-              data={rows.map((row) => {
-                const isDuplicate = row.numero_ddecpp in duplicates;
-                const existing = isDuplicate ? duplicates[row.numero_ddecpp] : null;
+              data={displayedRows.map((row) => {
+                const isModified = 'existing' in row;
+                const existing = isModified ? (row as CcgPreviewModifiedRow).existing : null;
                 const diffCell = (newVal: string, oldVal: string | undefined) => {
                   if (!existing || oldVal === undefined || oldVal === newVal) return newVal;
                   return (
@@ -272,7 +271,7 @@ export default function CcgImport() {
                   );
                 };
                 return [
-                  isDuplicate ? (
+                  isModified ? (
                     <Badge key="badge" severity="warning">
                       Existant
                     </Badge>
@@ -287,7 +286,7 @@ export default function CcgImport() {
                   diffCell(row.code_postal, existing?.code_postal),
                   diffCell(row.ville, existing?.ville),
                   diffCell(row.siret, existing?.siret),
-                  isDuplicate ? (
+                  isModified ? (
                     <Checkbox
                       key="check"
                       className="mb-0! [&_.fr-fieldset\_\_element]:mb-0!"
@@ -311,7 +310,7 @@ export default function CcgImport() {
 
           <div className="flex gap-4">
             <Button onClick={handleImport} disabled={loading}>
-              {loading ? 'Import en cours...' : `Importer (${rows.length} CCG)`}
+              {loading ? 'Import en cours...' : `Importer (${displayedRows.length} CCG)`}
             </Button>
             <Button priority="secondary" onClick={reset} disabled={loading}>
               Annuler
