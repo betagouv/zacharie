@@ -182,6 +182,8 @@ export async function notifyCircuitCourt(
 
   const circuitCourtRoles: Array<FeiOwnerRole> = [
     FeiOwnerRole.COMMERCE_DE_DETAIL,
+    FeiOwnerRole.CANTINE_OU_RESTAURATION_COLLECTIVE,
+    FeiOwnerRole.ASSOCIATION_CARITATIVE,
     FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF,
     FeiOwnerRole.CONSOMMATEUR_FINAL,
   ];
