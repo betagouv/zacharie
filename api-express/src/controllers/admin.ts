@@ -1065,7 +1065,12 @@ router.get(
         }),
         // Stage 2: Compte validé (numero_cfei renseigné)
         prisma.user.count({
-          where: { roles: { has: UserRoles.CHASSEUR }, deleted_at: null, numero_cfei: { not: null } },
+          where: {
+            roles: { has: UserRoles.CHASSEUR },
+            deleted_at: null,
+            numero_cfei: { not: null },
+            activated: true,
+          },
         }),
         // Stage 3: Chasseurs avec >= 1 FEI créée (envoyée ou non)
         prisma.$queryRaw<Array<{ count: bigint }>>`
@@ -1084,7 +1089,7 @@ router.get(
           WHERE 'CHASSEUR' = ANY(u.roles)
             AND u.deleted_at IS NULL
             AND f.deleted_at IS NULL
-            AND f.fei_next_owner_role IS NOT NULL
+            AND f.fei_prev_owner_user_id IS NOT NULL
           GROUP BY u.id
         `,
       ]);
@@ -1162,7 +1167,17 @@ router.post(
           siret: true,
         },
       });
-      const duplicates: Record<string, { nom_d_usage: string; address_ligne_1: string; address_ligne_2: string; code_postal: string; ville: string; siret: string }> = {};
+      const duplicates: Record<
+        string,
+        {
+          nom_d_usage: string;
+          address_ligne_1: string;
+          address_ligne_2: string;
+          code_postal: string;
+          ville: string;
+          siret: string;
+        }
+      > = {};
       for (const e of existing) {
         if (e.numero_ddecpp) {
           duplicates[e.numero_ddecpp] = {
