@@ -1409,4 +1409,146 @@ router.post(
   ),
 );
 
+const POIDS_MOYEN_KG: Record<string, number> = {
+  'Cerf élaphe': 80,
+  'Cerf sika': 80,
+  Chevreuil: 15,
+  Daim: 40,
+  Sanglier: 50,
+  Chamois: 25,
+  Isard: 25,
+  'Mouflon méditerranéen': 30,
+};
+const POIDS_MOYEN_PETIT_GIBIER = 1;
+
+router.get(
+  '/parts-de-marche',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ADMIN]),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminPartsDeMarcheResponse>,
+      next: express.NextFunction,
+    ) => {
+      const rows = await prisma.$queryRaw<
+        Array<{ season_start: number; espece: string | null; carcasse_count: bigint; max_created_at: Date }>
+      >`
+        SELECT
+          CASE
+            WHEN EXTRACT(MONTH FROM c.created_at) >= 7
+            THEN EXTRACT(YEAR FROM c.created_at)::int
+            ELSE EXTRACT(YEAR FROM c.created_at)::int - 1
+          END AS season_start,
+          c.espece,
+          COUNT(*) AS carcasse_count,
+          MAX(c.created_at) AS max_created_at
+        FROM "Carcasse" c
+        INNER JOIN "CarcasseIntermediaire" ci ON ci.zacharie_carcasse_id = c.zacharie_carcasse_id
+        INNER JOIN "Entity" e ON e.id = ci.intermediaire_entity_id
+        WHERE c.deleted_at IS NULL
+          AND e.type IN ('ETG', 'COLLECTEUR_PRO')
+        GROUP BY season_start, c.espece
+      `;
+
+      // Group by season
+      const seasonMap = new Map<number, Map<string, number>>();
+      for (const row of rows) {
+        const espece = row.espece ?? 'Autre';
+        if (!seasonMap.has(row.season_start)) {
+          seasonMap.set(row.season_start, new Map());
+        }
+        const especeMap = seasonMap.get(row.season_start)!;
+        especeMap.set(espece, (especeMap.get(espece) ?? 0) + Number(row.carcasse_count));
+      }
+
+      // Calculate tonnage per season
+      function tonnageForEspeceMap(especeMap: Map<string, number>): number {
+        let totalKg = 0;
+        for (const [espece, count] of especeMap) {
+          const poids = POIDS_MOYEN_KG[espece] ?? POIDS_MOYEN_PETIT_GIBIER;
+          totalKg += count * poids;
+        }
+        return Math.round((totalKg / 1000) * 100) / 100;
+      }
+
+      // For volume_potentiel: get data filtered by relative day in season
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1; // 1-indexed
+      const currentDay = now.getDate();
+      // Day offset from July 1st
+      const seasonStartDate = new Date(now.getFullYear(), 6, 1); // July 1 of current year
+      let dayInSeason: number;
+      if (currentMonth >= 7) {
+        dayInSeason = Math.floor((now.getTime() - seasonStartDate.getTime()) / (1000 * 60 * 60 * 24));
+      } else {
+        const prevSeasonStart = new Date(now.getFullYear() - 1, 6, 1);
+        dayInSeason = Math.floor((now.getTime() - prevSeasonStart.getTime()) / (1000 * 60 * 60 * 24));
+      }
+
+      // Get data for each season filtered up to the same relative day
+      const rowsFiltered = await prisma.$queryRaw<
+        Array<{ season_start: number; espece: string | null; carcasse_count: bigint }>
+      >`
+        SELECT
+          CASE
+            WHEN EXTRACT(MONTH FROM c.created_at) >= 7
+            THEN EXTRACT(YEAR FROM c.created_at)::int
+            ELSE EXTRACT(YEAR FROM c.created_at)::int - 1
+          END AS season_start,
+          c.espece,
+          COUNT(*) AS carcasse_count
+        FROM "Carcasse" c
+        INNER JOIN "CarcasseIntermediaire" ci ON ci.zacharie_carcasse_id = c.zacharie_carcasse_id
+        INNER JOIN "Entity" e ON e.id = ci.intermediaire_entity_id
+        WHERE c.deleted_at IS NULL
+          AND e.type IN ('ETG', 'COLLECTEUR_PRO')
+          AND c.created_at < (
+            make_date(
+              CASE
+                WHEN EXTRACT(MONTH FROM c.created_at) >= 7
+                THEN EXTRACT(YEAR FROM c.created_at)::int
+                ELSE EXTRACT(YEAR FROM c.created_at)::int - 1
+              END, 7, 1
+            ) + ${dayInSeason}::int * interval '1 day'
+          )
+        GROUP BY season_start, c.espece
+      `;
+
+      const seasonFilteredMap = new Map<number, Map<string, number>>();
+      for (const row of rowsFiltered) {
+        const espece = row.espece ?? 'Autre';
+        if (!seasonFilteredMap.has(row.season_start)) {
+          seasonFilteredMap.set(row.season_start, new Map());
+        }
+        const especeMap = seasonFilteredMap.get(row.season_start)!;
+        especeMap.set(espece, (especeMap.get(espece) ?? 0) + Number(row.carcasse_count));
+      }
+
+      // Build response
+      const seasonStarts = Array.from(seasonMap.keys()).sort();
+      const circuit_long = seasonStarts.map((startYear) => {
+        const shortStart = String(startYear).slice(-2);
+        const shortEnd = String(startYear + 1).slice(-2);
+        const saison = `${shortStart}-${shortEnd}`;
+
+        const volume_reel = tonnageForEspeceMap(seasonMap.get(startYear)!);
+
+        // volume_potentiel = S-1 filtered up to same relative day
+        const prevFiltered = seasonFilteredMap.get(startYear - 1);
+        const volume_potentiel = prevFiltered ? tonnageForEspeceMap(prevFiltered) : 0;
+
+        return {
+          saison,
+          volume_reel,
+          volume_potentiel,
+          volume_absolu: 0,
+        };
+      });
+
+      res.status(200).send({ ok: true, data: { circuit_long }, error: '' });
+    },
+  ),
+);
+
 export default router;

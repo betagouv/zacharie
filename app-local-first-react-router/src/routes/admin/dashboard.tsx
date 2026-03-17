@@ -40,6 +40,7 @@ function getSeasons(): Array<{ label: string; from: string; to: string }> {
 
 export default function AdminDashboard() {
   const [data, setData] = useState<AdminDashboardResponse['data'] | null>(null);
+  const [partsDeMarche, setPartsDeMarche] = useState<AdminPartsDeMarcheResponse['data'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState(() => dayjs().subtract(90, 'day').format('YYYY-MM-DD'));
   const [dateTo, setDateTo] = useState(() => dayjs().format('YYYY-MM-DD'));
