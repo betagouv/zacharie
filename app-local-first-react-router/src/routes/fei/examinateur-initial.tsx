@@ -206,12 +206,7 @@ export default function FEIExaminateurInitial() {
   const communesDeChasseFavorites = useGetCommunesDeChasseFavorites(!fei?.commune_mise_a_mort);
 
   // Progressive display conditions
-  const hasPremierDetenteur = !!(
-    premierDetenteurUser ||
-    premierDetenteurEntity ||
-    fei.fei_next_owner_user_id ||
-    fei.fei_next_owner_entity_id
-  );
+  const hasPremierDetenteur = !!(premierDetenteurUser || premierDetenteurEntity);
   const showBloc2 = !canEdit || !!(fei.date_mise_a_mort && fei.commune_mise_a_mort && hasPremierDetenteur);
   const showBloc3 =
     !canEdit ||
@@ -372,6 +367,17 @@ export default function FEIExaminateurInitial() {
               />
               <DateHeureValidationAlerts fei={fei} showDateAlert={false} showHeureMiseAMortAlert={false} />
             </>
+          )}
+          {canEdit && !showBloc3 && (
+            <Button className="mt-4" disabled>
+              {carcasses.length === 0
+                ? 'Ajoutez au moins une carcasse pour continuer'
+                : !fei.heure_mise_a_mort_premiere_carcasse
+                  ? "Remplissez l'heure de mise à mort pour continuer"
+                  : !onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse
+                    ? "Remplissez l'heure d'éviscération pour continuer"
+                    : 'Continuer'}
+            </Button>
           )}
         </div>
       )}

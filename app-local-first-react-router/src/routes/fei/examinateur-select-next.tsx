@@ -49,7 +49,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
 
   const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche *';
   const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(
-    fei.fei_next_owner_user_id ?? fei.fei_next_owner_entity_id ?? '',
+    fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? '',
   );
 
   const [isSearchingUser, setIsSearchingUser] = useState(false);
@@ -98,6 +98,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
         premier_detenteur_user_id: user.id,
         premier_detenteur_offline: navigator.onLine ? false : true,
         premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        premier_detenteur_entity_id: null,
       };
       updateCarcassesTransmission(carcasseIds, {
         next_owner_user_id: null,
@@ -139,18 +140,23 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
         current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
       });
     } else {
-      console.log('nextIsSomeoneElse');
       nextFei = {
-        fei_next_owner_user_id: nextOwnerUser?.id,
-        fei_next_owner_user_name_cache: nextOwnerName,
-        fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        fei_next_owner_entity_id: nextOwnerEntity?.id,
+        fei_next_owner_user_id: null,
+        fei_next_owner_user_name_cache: null,
+        fei_next_owner_role: null,
+        fei_next_owner_entity_id: null,
+        fei_next_owner_entity_name_cache: null,
+        premier_detenteur_user_id: nextOwnerUser?.id,
+        premier_detenteur_name_cache: nextOwnerName,
+        premier_detenteur_entity_id: nextOwnerEntity?.id ?? null,
+        premier_detenteur_offline: navigator.onLine ? false : true,
       };
       updateCarcassesTransmission(carcasseIds, {
-        next_owner_user_id: nextOwnerUser?.id ?? null,
-        next_owner_user_name_cache: nextOwnerName || null,
-        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        next_owner_entity_id: nextOwnerEntity?.id ?? null,
+        next_owner_user_id: null,
+        next_owner_user_name_cache: null,
+        next_owner_role: null,
+        next_owner_entity_id: null,
+        next_owner_entity_name_cache: null,
       });
     }
     updateFei(fei.numero, nextFei);
@@ -216,7 +222,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
         >
           <Select
             label=""
-            key={fei.fei_next_owner_user_id ?? 'no-choice-yet'}
+            key={fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? 'no-choice-yet'}
             disabled={disabled}
             hint={
               <>
@@ -301,7 +307,9 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
               + Chercher par email un autre Premier Détenteur inscrit dans Zacharie
             </option>
           </Select>
-          {(!nextOwnerUserOrEntityId || nextOwnerUserOrEntityId !== fei.fei_next_owner_user_id) && (
+          {(!nextOwnerUserOrEntityId ||
+            (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
+              nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
             <Button type="submit" disabled={!nextOwnerUserOrEntityId || disabled}>
               Continuer
             </Button>
@@ -429,13 +437,13 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
       )}
 
       {nextOwnerName &&
-        (fei.fei_next_owner_user_id === nextOwnerUser?.id ||
-          fei.fei_next_owner_entity_id === nextOwnerEntity?.id) && (
+        (fei.premier_detenteur_user_id === nextOwnerUser?.id ||
+          fei.premier_detenteur_entity_id === nextOwnerEntity?.id) && (
           <>
             <Alert
               severity="success"
               className="mt-6"
-              description={`${nextOwnerName} ${fei.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié'}.`}
+              description={`${nextOwnerName} a été enregistré comme premier détenteur.`}
               title="Attribution effectuée"
             />
           </>

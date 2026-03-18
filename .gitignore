@@ -21,3 +21,4 @@ test-local.js
 !.yarn/sdks
 !.yarn/versions
 
+.worktrees
