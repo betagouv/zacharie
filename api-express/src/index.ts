@@ -159,6 +159,13 @@ app.post('/sentry-check', async (req, res) => {
 // v1 - REST API used with external clients and api keys
 app.use('/v1', v1Router);
 
+// Auth rate limiting
+import { authRateLimit } from './middlewares/auth-rate-limit.ts';
+app.use('/user/login', authRateLimit);
+app.use('/user/sign-up', authRateLimit);
+app.use('/user/forget-password', authRateLimit);
+app.use('/user/reset-password', authRateLimit);
+
 // Routes used by zacharie.beta.gouv.fr
 app.use('/user', passport.initialize(), userRouter);
 app.use('/user-entity', passport.initialize(), userEntityRouter);
