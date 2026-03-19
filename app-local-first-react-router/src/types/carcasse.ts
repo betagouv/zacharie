@@ -18,6 +18,7 @@ export interface CarcasseFieldsTakenFromFei {
   examinateur_initial_user_id: Carcasse['examinateur_initial_user_id'];
   examinateur_initial_approbation_mise_sur_le_marche: Carcasse['examinateur_initial_approbation_mise_sur_le_marche'];
   examinateur_initial_date_approbation_mise_sur_le_marche: Carcasse['examinateur_initial_date_approbation_mise_sur_le_marche'];
+  consommateur_final_usage_domestique: Carcasse['consommateur_final_usage_domestique'];
   premier_detenteur_offline: Carcasse['premier_detenteur_offline'];
   premier_detenteur_user_id: Carcasse['premier_detenteur_user_id'];
   premier_detenteur_entity_id: Carcasse['premier_detenteur_entity_id'];

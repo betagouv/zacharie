@@ -39,6 +39,7 @@ export async function createNewFei(props?: InitialParamsProps): Promise<FeiWithI
     examinateur_initial_user_id: user.id,
     examinateur_initial_approbation_mise_sur_le_marche: null,
     examinateur_initial_date_approbation_mise_sur_le_marche: null,
+    consommateur_final_usage_domestique: null,
     premier_detenteur_offline: null,
     premier_detenteur_user_id: null,
     premier_detenteur_entity_id: null,

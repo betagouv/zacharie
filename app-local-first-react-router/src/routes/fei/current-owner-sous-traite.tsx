@@ -1,8 +1,6 @@
-import { FeiOwnerRole, UserRoles } from '@prisma/client';
+import { UserRoles } from '@prisma/client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import SelectNextForExaminateur from './examinateur-select-next';
-// import { mergeFei } from '@app/db/fei.client';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
@@ -39,14 +37,10 @@ export default function FeiSousTraite() {
     <div className="bg-alt-blue-france pb-4">
       <CallOut title="Vous souhaitez sous-traiter le transport des carcasses" className="bg-white">
         <div className="flex w-full flex-col bg-white md:items-start md:[&_ul]:min-w-96">
-          {fei.fei_prev_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ? (
-            <SelectNextForExaminateur />
-          ) : (
-            <DestinataireSelectSousTraite
-              feiAndIntermediaireIds={feiAndIntermediaireIds}
-              intermediaire={latestIntermediaire}
-            />
-          )}
+          <DestinataireSelectSousTraite
+            feiAndIntermediaireIds={feiAndIntermediaireIds}
+            intermediaire={latestIntermediaire}
+          />
         </div>
         <span className="text-sm">Vous avez changé d'avis&nbsp;?</span>
         <Button
