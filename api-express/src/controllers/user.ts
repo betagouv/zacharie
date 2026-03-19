@@ -1102,6 +1102,8 @@ const userUpdateSchema = z.object({
   onboarding_finished: z.boolean().optional(),
 });
 
+console.log('sanitize(null)', sanitize(null));
+
 router.post(
   '/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
@@ -1200,9 +1202,13 @@ router.post(
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
         if (req.isAdmin) {
-          nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort(
+          const nextRoles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort(
             (a, b) => b.localeCompare(a),
           );
+          if (nextRoles.filter((role) => role !== UserRoles.ADMIN).length > 1) {
+            throw new Error('Only one role can be set for a user');
+          }
+          nextUser.roles = nextRoles;
         } else {
           throw new Error('User tried to update roles without being admin');
         }
