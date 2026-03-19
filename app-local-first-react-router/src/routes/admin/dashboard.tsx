@@ -44,7 +44,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState(() => dayjs().subtract(90, 'day').format('YYYY-MM-DD'));
   const [dateTo, setDateTo] = useState(() => dayjs().format('YYYY-MM-DD'));
-  const [partsDeMarche, setPartsDeMarche] = useState<AdminPartsDeMarcheResponse['data'] | null>(null);
 
   const seasons = getSeasons();
 

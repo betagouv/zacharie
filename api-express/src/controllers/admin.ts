@@ -1140,125 +1140,6 @@ router.get(
   ),
 );
 
-const POIDS_MOYEN_KG: Record<string, number> = {
-  'Cerf élaphe': 80,
-  'Cerf sika': 80,
-  Chevreuil: 15,
-  Daim: 40,
-  Sanglier: 50,
-  Chamois: 25,
-  Isard: 25,
-  'Mouflon méditerranéen': 30,
-};
-const POIDS_MOYEN_DEFAULT_KG = 1;
-
-router.get(
-  '/parts-de-marche',
-  passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
-  catchErrors(
-    async (
-      req: express.Request,
-      res: express.Response<AdminPartsDeMarcheResponse>,
-      next: express.NextFunction,
-    ) => {
-      const now = dayjs();
-      const currentYear = now.year();
-      const currentSeasonStart = now.month() < 6 ? currentYear - 1 : currentYear;
-
-      // Day offset within current season (days since July 1)
-      const seasonStartDate = dayjs(`${currentSeasonStart}-07-01`);
-      const dayOffsetInSeason = now.diff(seasonStartDate, 'day');
-
-      // Fetch all circuit-long carcasses grouped by season and species
-      const rows = await prisma.$queryRaw<
-        Array<{ season_start: number; espece: string; carcasse_count: bigint; nombre_total: bigint }>
-      >`
-        SELECT
-          CASE
-            WHEN EXTRACT(MONTH FROM c.date_mise_a_mort) >= 7
-            THEN EXTRACT(YEAR FROM c.date_mise_a_mort)::int
-            ELSE EXTRACT(YEAR FROM c.date_mise_a_mort)::int - 1
-          END AS season_start,
-          c.espece,
-          COUNT(*) AS carcasse_count,
-          COALESCE(SUM(c.nombre_d_animaux), COUNT(*)) AS nombre_total
-        FROM "Carcasse" c
-        INNER JOIN "CarcasseIntermediaire" ci ON ci.zacharie_carcasse_id = c.zacharie_carcasse_id
-        INNER JOIN "Entity" e ON e.id = ci.intermediaire_entity_id
-        WHERE c.deleted_at IS NULL
-          AND c.date_mise_a_mort IS NOT NULL
-          AND e.type IN ('ETG', 'COLLECTEUR_PRO')
-        GROUP BY season_start, c.espece
-      `;
-
-      // Also fetch with date cutoff for potentiel calculation
-      const rowsWithCutoff = await prisma.$queryRaw<
-        Array<{ season_start: number; espece: string; carcasse_count: bigint; nombre_total: bigint }>
-      >`
-        SELECT
-          CASE
-            WHEN EXTRACT(MONTH FROM c.date_mise_a_mort) >= 7
-            THEN EXTRACT(YEAR FROM c.date_mise_a_mort)::int
-            ELSE EXTRACT(YEAR FROM c.date_mise_a_mort)::int - 1
-          END AS season_start,
-          c.espece,
-          COUNT(*) AS carcasse_count,
-          COALESCE(SUM(c.nombre_d_animaux), COUNT(*)) AS nombre_total
-        FROM "Carcasse" c
-        INNER JOIN "CarcasseIntermediaire" ci ON ci.zacharie_carcasse_id = c.zacharie_carcasse_id
-        INNER JOIN "Entity" e ON e.id = ci.intermediaire_entity_id
-        WHERE c.deleted_at IS NULL
-          AND c.date_mise_a_mort IS NOT NULL
-          AND e.type IN ('ETG', 'COLLECTEUR_PRO')
-          AND c.date_mise_a_mort <= (
-            MAKE_DATE(
-              CASE
-                WHEN EXTRACT(MONTH FROM c.date_mise_a_mort) >= 7
-                THEN EXTRACT(YEAR FROM c.date_mise_a_mort)::int
-                ELSE EXTRACT(YEAR FROM c.date_mise_a_mort)::int - 1
-              END, 7, 1
-            ) + ${dayOffsetInSeason} * INTERVAL '1 day'
-          )
-        GROUP BY season_start, c.espece
-      `;
-
-      // Calculate tonnage per season (full season = reel, with cutoff = for potentiel)
-      function computeTonnage(data: typeof rows): Record<number, number> {
-        const result: Record<number, number> = {};
-        for (const row of data) {
-          const poids = POIDS_MOYEN_KG[row.espece ?? ''] ?? POIDS_MOYEN_DEFAULT_KG;
-          const tonnes = (Number(row.nombre_total) * poids) / 1000;
-          result[row.season_start] = (result[row.season_start] ?? 0) + tonnes;
-        }
-        return result;
-      }
-
-      const tonnageFull = computeTonnage(rows);
-      const tonnageCutoff = computeTonnage(rowsWithCutoff);
-
-      // Build response: for each season, reel = cutoff tonnage, potentiel = previous season's cutoff tonnage
-      const allSeasons = [...new Set([...Object.keys(tonnageFull).map(Number)])].sort();
-
-      const circuit_long = allSeasons.map((seasonStart) => {
-        const label = `${String(seasonStart).slice(2)}-${String(seasonStart + 1).slice(2)}`;
-        return {
-          saison: label,
-          volume_reel: Math.round((tonnageCutoff[seasonStart] ?? 0) * 100) / 100,
-          volume_potentiel: Math.round((tonnageCutoff[seasonStart - 1] ?? 0) * 100) / 100,
-          volume_absolu: Math.round((tonnageFull[seasonStart] ?? 0) * 100) / 100,
-        };
-      });
-
-      res.status(200).send({
-        ok: true,
-        data: { circuit_long },
-        error: '',
-      });
-    },
-  ),
-);
-
 router.post(
   '/ccg/preview',
   passport.authenticate('user', { session: false }),
@@ -1271,9 +1152,11 @@ router.post(
     ) => {
       const { ccgs } = req.body as { ccgs: CcgPreviewRow[] };
       if (!Array.isArray(ccgs) || ccgs.length === 0) {
-        res
-          .status(400)
-          .send({ ok: false, data: { nouveaux: [], modifies: [], unchanged_count: 0 }, error: 'ccgs requis' });
+        res.status(400).send({
+          ok: false,
+          data: { nouveaux: [], modifies: [], unchanged_count: 0 },
+          error: 'ccgs requis',
+        });
         return;
       }
       const numeroDdecpps = ccgs.map((c) => c.numero_ddecpp);
