@@ -325,7 +325,7 @@ router.post(
         },
       });
       const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : ${process.env.VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`;
-      sendEmail({
+      await sendEmail({
         emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
         subject: '[Zacharie] Réinitialisation de votre mot de passe',
         text,
@@ -401,6 +401,10 @@ router.post(
         return;
       }
       if (dayjs().diff(password.reset_password_last_email_sent_at, 'minutes') > 60) {
+        await prisma.password.update({
+          where: { id: password.id },
+          data: { reset_password_token: null, reset_password_last_email_sent_at: null },
+        });
         res.status(400).send({
           ok: false,
           data: { user: null },
