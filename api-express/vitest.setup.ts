@@ -24,6 +24,19 @@ vi.mock('./src/prisma', () => ({
     },
     user: {
       findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+    entity: {
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+    },
+    entityAndUserRelations: {
+      findFirst: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
   },
 }));
@@ -32,11 +45,24 @@ vi.mock('./src/prisma', () => ({
 vi.mock('passport', () => ({
   default: {
     authenticate: vi.fn((strategy: string, options: any) => (req: any, res: any, next: any) => {
-      // Check if we're in a test that should fail authentication
+      // 'user' strategy: set req.user from x-test-user header (JSON-encoded user object)
+      if (strategy === 'user') {
+        const testUser = req.headers['x-test-user'];
+        if (!testUser) {
+          return res.status(401).json({ ok: false, error: 'Unauthorized', message: 'Unauthenticated' });
+        }
+        try {
+          req.user = JSON.parse(testUser);
+        } catch {
+          return res.status(401).json({ ok: false, error: 'Unauthorized', message: 'Invalid test user' });
+        }
+        return next();
+      }
+
+      // API key strategy (used by v1 routes)
       const authHeader = req.headers.authorization;
 
       if (!authHeader || authHeader === 'Bearer invalid-key') {
-        // Simulate authentication failure
         return res.status(401).json({
           ok: false,
           error: 'Unauthorized',
@@ -45,7 +71,6 @@ vi.mock('passport', () => ({
       }
 
       if (authHeader === 'Bearer test-api-key') {
-        // Simulate successful authentication with a mock API key
         req.apiKey = {
           id: 'test-key-id',
           active: true,
@@ -56,7 +81,6 @@ vi.mock('passport', () => ({
         return next();
       }
 
-      // Default to authentication failure for unknown keys
       return res.status(401).json({
         ok: false,
         error: 'Unauthorized',
