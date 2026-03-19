@@ -381,6 +381,7 @@ describe('POST /user/user-entity', () => {
         .mockResolvedValueOnce(null) // isEntityAdmin check → not admin
         .mockResolvedValueOnce(existingRelation); // find existing relation
       vi.mocked(prisma.entityAndUserRelations.update).mockResolvedValue(existingRelation);
+      vi.mocked(prisma.entity.findUniqueOrThrow).mockResolvedValue(testEntity as any);
 
       const res = await authed(
         request(app).post(BASE).send({
