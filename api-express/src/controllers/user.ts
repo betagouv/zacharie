@@ -641,7 +641,6 @@ router.post(
         }
       }
 
-      // Handle create action
       if (body._action === 'create') {
         if (!body.relation) {
           res.status(400).send({
@@ -728,7 +727,6 @@ router.post(
         return;
       }
 
-      // Handle create action
       if (body._action === 'update') {
         if (!body.relation) {
           res.status(400).send({
@@ -794,6 +792,15 @@ router.post(
 
       // Handle delete action
       if (body._action === 'delete') {
+        if (!body.relation) {
+          res.status(400).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error: 'Missing relation',
+          });
+          return;
+        }
+
         const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
           where: {
             deleted_at: null,
