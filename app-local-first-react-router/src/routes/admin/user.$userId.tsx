@@ -47,6 +47,8 @@ const initialState: State = {
     ville: '',
     activated: true,
     roles: [],
+    role: null,
+    isZacharieAdmin: false,
     etg_role: UserEtgRoles.RECEPTION,
     est_forme_a_l_examen_initial: false,
     numero_cfei: '',
@@ -237,8 +239,8 @@ export default function AdminUser() {
                   onBlur={handleUserFormBlur(rolesFormRef)}
                   onSubmit={(event) => event.preventDefault()}
                 >
-                  {user.roles.includes(UserRoles.ADMIN) && (
-                    <input type="hidden" name={Prisma.UserScalarFieldEnum.roles} value={UserRoles.ADMIN} />
+                  {user.isZacharieAdmin && (
+                    <input type="hidden" name={Prisma.UserScalarFieldEnum.isZacharieAdmin} value="true" />
                   )}
                   <RolesCheckBoxes
                     withAdmin

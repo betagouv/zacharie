@@ -4,7 +4,6 @@ import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation'
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from './circuit-court';
-import { capture } from '@app/services/sentry';
 
 export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
@@ -12,7 +11,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
   const isCircuitCourt = useIsCircuitCourt();
 
-  const isAdmin = user?.roles.includes(UserRoles.ADMIN);
+  const isAdmin = user?.isZacharieAdmin;
   const isChasseur = user?.roles.includes(UserRoles.CHASSEUR);
   const isSvi = user?.roles.includes(UserRoles.SVI);
   const isEtg = user?.roles.includes(UserRoles.ETG);

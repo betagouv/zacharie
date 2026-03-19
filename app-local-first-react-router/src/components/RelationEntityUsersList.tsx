@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { EntityRelationType, EntityRelationStatus, User, UserRoles } from '@prisma/client';
+import { EntityRelationType, EntityRelationStatus, User } from '@prisma/client';
 import type { EntityWithUserRelations } from '@api/src/types/entity';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
@@ -30,7 +30,7 @@ export default function RelationEntityUsersList({
   ).current;
   const isOpen = useIsModalOpen(entityUsersModal);
 
-  const iAmAdmin = useUser((state) => state.user?.roles.includes(UserRoles.ADMIN));
+  const iAmAdmin = useUser((state) => state.user?.isZacharieAdmin);
 
   // const canTransmitCarcassesForEntity = entity.EntityRelationsWithUsers.find(
   //   (relation) =>

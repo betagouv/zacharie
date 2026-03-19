@@ -135,7 +135,7 @@ export default function FEIExaminateurInitial() {
       // seul l'examinateur initial peut modifier
       return false;
     }
-    if (user.roles.includes(UserRoles.ADMIN)) {
+    if (user.isZacharieAdmin) {
       // les admins peuvent modifier
       return true;
     }

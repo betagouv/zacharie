@@ -329,7 +329,7 @@ function App() {
               <Route
                 path="dashboard"
                 element={
-                  <RestrictedRoute id="dashboard" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="dashboard" zacharieAdmin>
                     <AdminDashboard />
                   </RestrictedRoute>
                 }
@@ -337,7 +337,7 @@ function App() {
               <Route
                 path="users"
                 element={
-                  <RestrictedRoute id="users" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="users" zacharieAdmin>
                     <AdminUsers />
                   </RestrictedRoute>
                 }
@@ -345,7 +345,7 @@ function App() {
               <Route
                 path="add-user"
                 element={
-                  <RestrictedRoute id="add-user" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="add-user" zacharieAdmin>
                     <AdminNewUser />
                   </RestrictedRoute>
                 }
@@ -353,7 +353,7 @@ function App() {
               <Route
                 path="user/:userId"
                 element={
-                  <RestrictedRoute id="user/:userId" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="user/:userId" zacharieAdmin>
                     <AdminUser />
                   </RestrictedRoute>
                 }
@@ -361,7 +361,7 @@ function App() {
               <Route
                 path="entities"
                 element={
-                  <RestrictedRoute id="entities" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="entities" zacharieAdmin>
                     <AdminEntites />
                   </RestrictedRoute>
                 }
@@ -369,7 +369,7 @@ function App() {
               <Route
                 path="add-entity"
                 element={
-                  <RestrictedRoute id="add-entity" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="add-entity" zacharieAdmin>
                     <AdminNouvelleEntite />
                   </RestrictedRoute>
                 }
@@ -377,7 +377,7 @@ function App() {
               <Route
                 path="entity/:entityId"
                 element={
-                  <RestrictedRoute id="entity/:entityId" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="entity/:entityId" zacharieAdmin>
                     <AdminEntity />
                   </RestrictedRoute>
                 }
@@ -385,7 +385,7 @@ function App() {
               <Route
                 path="api-keys"
                 element={
-                  <RestrictedRoute id="api-keys" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="api-keys" zacharieAdmin>
                     <AdminApiKeys />
                   </RestrictedRoute>
                 }
@@ -393,7 +393,7 @@ function App() {
               <Route
                 path="api-key-add"
                 element={
-                  <RestrictedRoute id="api-key-add" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="api-key-add" zacharieAdmin>
                     <AdminNewApiKey />
                   </RestrictedRoute>
                 }
@@ -401,7 +401,7 @@ function App() {
               <Route
                 path="api-key/:apiKeyId"
                 element={
-                  <RestrictedRoute id="api-key/:apiKeyId" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="api-key/:apiKeyId" zacharieAdmin>
                     <AdminApiKey />
                   </RestrictedRoute>
                 }
@@ -409,7 +409,7 @@ function App() {
               <Route
                 path="import-ccg"
                 element={
-                  <RestrictedRoute id="import-ccg" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="import-ccg" zacharieAdmin>
                     <CcgImport />
                   </RestrictedRoute>
                 }
@@ -417,7 +417,7 @@ function App() {
               <Route
                 path="carcasses-intermediaires"
                 element={
-                  <RestrictedRoute id="carcasses-intermediaires" roles={[UserRoles.ADMIN]}>
+                  <RestrictedRoute id="carcasses-intermediaires" zacharieAdmin>
                     <AdminCarcassesIntermediaires />
                   </RestrictedRoute>
                 }
@@ -435,11 +435,11 @@ function App() {
 function RestrictedRoute({
   children,
   id,
-  roles = [],
+  zacharieAdmin = false,
 }: {
   children: ReactElement;
   id: string;
-  roles?: UserRoles[];
+  zacharieAdmin?: boolean;
 }) {
   const user = useMostFreshUser('RestrictedRoute ' + id);
   const navigate = useNavigate();
@@ -453,12 +453,12 @@ function RestrictedRoute({
       console.log('CONNEXION REQUIRED because no user');
       navigate(`/app/connexion?redirect=${encodeURIComponent(currentPath)}`);
     }
-    if (roles.length > 0 && !roles.some((role) => user?.roles.includes(role))) {
+    if (zacharieAdmin && !user?.isZacharieAdmin) {
       const currentPath = location.pathname + location.search;
-      console.log('CONNEXION REQUIRED because no role', roles);
+      console.log('CONNEXION REQUIRED because no zacharieAdmin');
       navigate(`/app/connexion?redirect=${encodeURIComponent(currentPath)}`);
     }
-  }, [user, navigate, roles, location]);
+  }, [user, navigate, zacharieAdmin, location]);
 
   if (!user?.id) {
     return <Chargement />;
