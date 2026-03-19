@@ -775,7 +775,7 @@ router.post(
           data: nextEntityRelation,
         });
 
-        const entity = await prisma.entity.findUnique({
+        const entity = await prisma.entity.findUniqueOrThrow({
           where: {
             id: entityId,
             deleted_at: null,
