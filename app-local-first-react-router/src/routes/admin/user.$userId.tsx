@@ -99,7 +99,10 @@ export default function AdminUser() {
 
     let body =
       formRef.current!.id === 'user_roles_form'
-        ? { roles: formData.getAll('roles') }
+        ? {
+            roles: formData.getAll('roles'),
+            isZacharieAdmin: formData.get(Prisma.UserScalarFieldEnum.isZacharieAdmin) === 'true',
+          }
         : Object.fromEntries(formData);
 
     API.post({
@@ -137,8 +140,6 @@ export default function AdminUser() {
       label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => rel.EntityRelationsWithUsers.find((r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && r.owner_id === user.id)).length})`,
     },
   ];
-
-  console.log(userEntitiesRelations);
 
   if (user.roles.includes(UserRoles.CHASSEUR)) {
     tabs.push({
@@ -239,9 +240,6 @@ export default function AdminUser() {
                   onBlur={handleUserFormBlur(rolesFormRef)}
                   onSubmit={(event) => event.preventDefault()}
                 >
-                  {user.isZacharieAdmin && (
-                    <input type="hidden" name={Prisma.UserScalarFieldEnum.isZacharieAdmin} value="true" />
-                  )}
                   <RolesCheckBoxes
                     withAdmin
                     user={user}

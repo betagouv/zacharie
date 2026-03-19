@@ -116,6 +116,7 @@ router.post(
           id: await createUserId(),
           email: body[Prisma.UserScalarFieldEnum.email],
           roles: body[Prisma.UserScalarFieldEnum.roles] as UserRoles[],
+          isZacharieAdmin: body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false,
         },
       });
 

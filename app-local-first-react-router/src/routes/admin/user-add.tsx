@@ -19,12 +19,14 @@ export default function AdminNewUser() {
         setIsLoading(true);
         const formData = new FormData(event.target as HTMLFormElement);
         const roles = formData.getAll('roles');
+        const isZacharieAdmin = formData.get(Prisma.UserScalarFieldEnum.isZacharieAdmin) === 'true';
         const email = formData.get(Prisma.UserScalarFieldEnum.email);
         API.post({
           path: 'admin/user/nouveau',
           body: {
             email,
             roles,
+            isZacharieAdmin,
           },
         })
           .then((res) => res as AdminUserDataResponse)

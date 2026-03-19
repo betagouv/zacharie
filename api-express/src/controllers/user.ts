@@ -773,6 +773,7 @@ router.post(
           email,
           // un nouvel utilisateur invité ne peut l'être qu'avec un rôle identique à celui de l'utilisateur qui l'invite
           roles: req.user.roles,
+          isZacharieAdmin: false,
           activated: true,
           prefilled: false,
         },
@@ -831,6 +832,7 @@ const userUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.roles]: z
     .array(z.enum(Object.values(UserRoles) as [UserRoles, ...UserRoles[]]))
     .optional(),
+  [Prisma.UserScalarFieldEnum.isZacharieAdmin]: z.boolean().optional(),
   [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.etg_role]: z
     .enum(Object.values(UserEtgRoles) as [UserEtgRoles, ...UserEtgRoles[]])
@@ -946,6 +948,13 @@ router.post(
           nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort(
             (a, b) => b.localeCompare(a),
           );
+        } else {
+          throw new Error('User tried to update roles without being admin');
+        }
+      }
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.isZacharieAdmin)) {
+        if (req.isAdmin) {
+          nextUser.isZacharieAdmin = body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false;
         } else {
           throw new Error('User tried to update roles without being admin');
         }
