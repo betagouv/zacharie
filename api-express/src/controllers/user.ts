@@ -1078,32 +1078,43 @@ router.post(
         data: {
           id: await createUserId(),
           email,
+          // un nouvel utilisateur invité ne peut l'être qu'avec un rôle identique à celui de l'utilisateur qui l'invite
           roles: req.user.roles.filter((role) => role !== UserRoles.ADMIN),
           activated: true,
           prefilled: false,
         },
       });
     }
-    await prisma.entityAndUserRelations.create({
-      data: {
+    const existingRelation = await prisma.entityAndUserRelations.findFirst({
+      where: {
         owner_id: newUser.id,
         entity_id: entity_id,
-        status: EntityRelationStatus.MEMBER,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        deleted_at: null,
       },
     });
-    const invitationEmail = [
-      `Bonjour,`,
-      `Votre compte Zacharie a été créé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant.`,
-      `N’hésitez pas à nous contacter si besoin,`,
-      `L’équipe Zacharie`,
-      `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,
-    ].join('\n\n');
-    await sendEmail({
-      emails: [newUser.email],
-      subject: `${user.prenom} ${user.nom_de_famille} vous a invité à rejoindre Zacharie`,
-      text: invitationEmail,
-    });
+    if (!existingRelation) {
+      await prisma.entityAndUserRelations.create({
+        data: {
+          owner_id: newUser.id,
+          entity_id: entity_id,
+          status: EntityRelationStatus.MEMBER,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        },
+      });
+      const invitationEmail = [
+        `Bonjour,`,
+        `Votre compte Zacharie a été créé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant.`,
+        `N’hésitez pas à nous contacter si besoin,`,
+        `L’équipe Zacharie`,
+        `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,
+      ].join('\n\n');
+      await sendEmail({
+        emails: [newUser.email],
+        subject: `${user.prenom} ${user.nom_de_famille} vous a invité à rejoindre Zacharie`,
+        text: invitationEmail,
+      });
+    }
     res.status(200).send({ ok: true, error: '', data: { newUser } });
   }),
 );
