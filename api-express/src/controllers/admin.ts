@@ -1273,7 +1273,11 @@ router.post(
       if (!Array.isArray(ccgs) || ccgs.length === 0) {
         res
           .status(400)
-          .send({ ok: false, data: { nouveaux: [], modifies: [], unchanged_count: 0 }, error: 'ccgs requis' });
+          .send({
+            ok: false,
+            data: { nouveaux: [], modifies: [], unchanged_count: 0 },
+            error: 'ccgs requis',
+          });
         return;
       }
       const numeroDdecpps = ccgs.map((c) => c.numero_ddecpp);

@@ -538,7 +538,7 @@ router.post(
 );
 
 const userEntitySchema = z.object({
-  owner_id: z.string().optional(),
+  owner_id: z.string(),
   entity_id: z.string().optional(),
   numero_ddecpp: z.string().optional(),
   type: z.enum(Object.values(EntityTypes) as [EntityTypes, ...EntityTypes[]]).optional(),
@@ -552,9 +552,8 @@ const userEntitySchema = z.object({
 });
 
 router.post(
-  '/user-entity/:user_id',
+  '/user-entity',
   passport.authenticate('user', { session: false, failWithError: true }),
-  // authorizeUserOrAdmin,
   catchErrors(
     async (req: RequestWithUser, res: express.Response<UserEntityResponse>, next: express.NextFunction) => {
       let result = userEntitySchema.safeParse(req.body);
@@ -565,18 +564,6 @@ router.post(
       }
       let isAdmin = req.user.roles.includes(UserRoles.ADMIN);
       let body = result.data;
-      const userId = req.params.user_id;
-
-      if (userId !== req.user.id) {
-        if (!isAdmin) {
-          res.status(403).send({
-            ok: false,
-            data: { relation: null, entity: null },
-            error: 'Unauthorized',
-          });
-          return;
-        }
-      }
 
       if (!body.owner_id) {
         res
@@ -631,7 +618,7 @@ router.post(
       if (!isAdmin) {
         const isCurrentUserAdminOfEntity = await prisma.entityAndUserRelations.findFirst({
           where: {
-            owner_id: userId,
+            owner_id: req.user.id,
             entity_id: entityId,
             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             status: EntityRelationStatus.ADMIN,
@@ -643,13 +630,15 @@ router.post(
         }
       }
 
-      if (!isAdmin && userId !== body.owner_id) {
-        res.status(400).send({
-          ok: false,
-          data: { relation: null, entity: null },
-          error: 'Unauthorized',
-        });
-        return;
+      if (body.owner_id !== req.user.id) {
+        if (!isAdmin) {
+          res.status(403).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error: 'Unauthorized',
+          });
+          return;
+        }
       }
 
       // Handle create action
@@ -669,11 +658,6 @@ router.post(
           relation: body.relation,
           deleted_at: null,
         };
-        if (body.hasOwnProperty(Prisma.EntityAndUserRelationsScalarFieldEnum.status)) {
-          if (isAdmin) {
-            nextEntityRelation.status = body.status;
-          }
-        }
 
         const existingEntityRelation = await prisma.entityAndUserRelations.findFirst({
           where: nextEntityRelation,
@@ -686,6 +670,12 @@ router.post(
             error: 'Vous avez déjà ajouté cette entité',
           });
           return;
+        }
+
+        if (body.hasOwnProperty(Prisma.EntityAndUserRelationsScalarFieldEnum.status)) {
+          if (isAdmin) {
+            nextEntityRelation.status = body.status;
+          }
         }
 
         const relation = await prisma.entityAndUserRelations.create({
@@ -702,9 +692,8 @@ router.post(
         if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           await linkBrevoCompanyToContact(entity, req.user);
           if (relation.status === EntityRelationStatus.REQUESTED) {
-            const isAdminSettingRolesToOtherUser =
-              req.user.roles.includes(UserRoles.ADMIN) && req.user.id !== body.owner_id;
-            if (!isAdminSettingRolesToOtherUser) {
+            const isZacharieAdminSettingRolesToOtherUser = req.user.roles.includes(UserRoles.ADMIN);
+            if (!isZacharieAdminSettingRolesToOtherUser) {
               const entityAdmins = await prisma.entityAndUserRelations.findMany({
                 where: {
                   entity_id: entityId,
@@ -774,6 +763,7 @@ router.post(
           relation: body.relation,
           deleted_at: null,
         };
+
         if (body.hasOwnProperty(Prisma.EntityAndUserRelationsScalarFieldEnum.status)) {
           if (isAdmin) {
             nextEntityRelation.status = body.status;

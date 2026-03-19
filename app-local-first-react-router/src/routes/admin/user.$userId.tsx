@@ -66,6 +66,7 @@ const initialState: State = {
     brevo_contact_id: null,
     prefilled: false,
     is_synced: true,
+    onboarding_chasse_info_done_at: null,
   },
   identityDone: false,
   examinateurDone: false,
@@ -486,9 +487,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       );
     })?.id;
     if (!etgId) return null;
-    const sviId = allEntities
-      .find((entity) => entity.id === etgId)
-      ?.etg_linked_to_svi_id;
+    const sviId = allEntities.find((entity) => entity.id === etgId)?.etg_linked_to_svi_id;
     if (!sviId) return null;
     const svi = allEntities.find((entity) => entity.id === sviId);
     if (!svi) return null;
@@ -655,7 +654,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 onSubmit={(event) => {
                   event.preventDefault();
                   API.post({
-                    path: `/user/user-entity/${user.id}`,
+                    path: '/user/user-entity',
                     body: {
                       _action: 'create',
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,

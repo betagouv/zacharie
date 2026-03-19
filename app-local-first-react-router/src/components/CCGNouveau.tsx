@@ -41,7 +41,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
 
       const formData = new FormData(event.currentTarget);
       const response = await API.post({
-        path: `/user/user-entity/${user.id}`,
+        path: '/user/user-entity',
         body: {
           _action: 'create',
           [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,

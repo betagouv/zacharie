@@ -375,15 +375,15 @@ export default function MonEntreprise() {
                     },
                     ...(isFromProfil
                       ? [
-                        {
-                          children: 'Modifier mes coordonnées',
-                          linkProps: {
-                            to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
-                            href: '#',
+                          {
+                            children: 'Modifier mes coordonnées',
+                            linkProps: {
+                              to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
+                              href: '#',
+                            },
+                            priority: 'secondary',
                           },
-                          priority: 'secondary',
-                        },
-                      ]
+                        ]
                       : []),
                   ]}
                 />
@@ -484,13 +484,13 @@ function ListAndSelectEntities({
                 value={
                   entityId
                     ? {
-                      label: remainingEntities
-                        .filter((entity) => entity.id === entityId)
-                        .map(
-                          (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
-                        )?.[0],
-                      value: entityId,
-                    }
+                        label: remainingEntities
+                          .filter((entity) => entity.id === entityId)
+                          .map(
+                            (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
+                          )?.[0],
+                        value: entityId,
+                      }
                     : null
                 }
                 getOptionLabel={(f) => f.label!}
@@ -508,7 +508,7 @@ function ListAndSelectEntities({
                 onClick={(e) => {
                   e.preventDefault();
                   API.post({
-                    path: `/user/user-entity/${user.id}`,
+                    path: '/user/user-entity',
                     body: {
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                       _action: 'create',
