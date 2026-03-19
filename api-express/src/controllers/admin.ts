@@ -42,7 +42,7 @@ import type {
   UserConnexionResponse,
 } from '~/types/responses';
 import passport from 'passport';
-import validateUser from '~/middlewares/validateUser';
+import { validateAdmin } from '~/middlewares/validateUser';
 import { entityAdminInclude } from '~/types/entity';
 import { createBrevoContact, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
 import slugify from 'slugify';
@@ -51,7 +51,7 @@ import dayjs from 'dayjs';
 router.post(
   '/user/connect-as',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -102,7 +102,7 @@ router.post(
 router.post(
   '/user/nouveau',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -129,7 +129,7 @@ router.post(
 router.get(
   '/user/:user_id',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -210,7 +210,7 @@ router.get(
 router.get(
   '/users',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (req: express.Request, res: express.Response<AdminUsersResponse>, next: express.NextFunction) => {
       const users = await prisma.user.findMany({
@@ -230,7 +230,7 @@ router.get(
 router.get(
   '/entities',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -265,7 +265,7 @@ router.get(
 router.get(
   '/entity/:entity_id',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -334,10 +334,10 @@ router.get(
                     entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
                       ? [UserRoles.CHASSEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
                       : entity.type === EntityTypes.PREMIER_DETENTEUR
-                        ? [UserRoles.CHASSEUR]
-                        : entity.type === EntityTypes.SVI
-                          ? [UserRoles.ETG]
-                          : [],
+                      ? [UserRoles.CHASSEUR]
+                      : entity.type === EntityTypes.SVI
+                      ? [UserRoles.ETG]
+                      : [],
                 },
               },
               orderBy: {
@@ -350,12 +350,12 @@ router.get(
         entity.type !== EntityTypes.ETG
           ? null
           : !entity.etg_linked_to_svi_id
-            ? null
-            : await prisma.entity.findUnique({
-                where: {
-                  id: entity.etg_linked_to_svi_id,
-                },
-              });
+          ? null
+          : await prisma.entity.findUnique({
+              where: {
+                id: entity.etg_linked_to_svi_id,
+              },
+            });
 
       const potentialSvisRelatedToETG = await prisma.entity.findMany({
         where: {
@@ -426,7 +426,7 @@ router.get(
 router.post(
   '/entity-dedicated-api-key/:entity_id',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
       const entity = await prisma.entity.findUnique({
@@ -476,7 +476,7 @@ router.post(
 router.post(
   '/entity/nouvelle',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -524,7 +524,7 @@ router.post(
 router.post(
   '/entity/:entity_id',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -593,7 +593,7 @@ router.post(
 router.get(
   '/feis',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // Fetch the fiche data along with the required intervenants
     const feis = await prisma.fei.findMany({
@@ -652,20 +652,17 @@ router.get(
               nom_d_usage: '',
             },
             ...Object.values(
-              fei.CarcasseIntermediaire.reduce(
-                (acc, intermediaire) => {
-                  if (acc[intermediaire.intermediaire_entity_id]) return acc;
-                  return {
-                    ...acc,
-                    [intermediaire.intermediaire_entity_id]: {
-                      type: intermediaire.intermediaire_role,
-                      email: '',
-                      nom_d_usage: intermediaire.CarcasseIntermediaireEntity.nom_d_usage,
-                    },
-                  };
-                },
-                {} as Record<string, { type: string; email: string; nom_d_usage: string }>,
-              ),
+              fei.CarcasseIntermediaire.reduce((acc, intermediaire) => {
+                if (acc[intermediaire.intermediaire_entity_id]) return acc;
+                return {
+                  ...acc,
+                  [intermediaire.intermediaire_entity_id]: {
+                    type: intermediaire.intermediaire_role,
+                    email: '',
+                    nom_d_usage: intermediaire.CarcasseIntermediaireEntity.nom_d_usage,
+                  },
+                };
+              }, {} as Record<string, { type: string; email: string; nom_d_usage: string }>),
             ),
             {
               type: 'SVI',
@@ -683,7 +680,7 @@ router.get(
 router.get(
   '/api-keys',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (req: express.Request, res: express.Response<AdminApiKeysResponse>, next: express.NextFunction) => {
       const apiKeys = await prisma.apiKey.findMany({
@@ -708,7 +705,7 @@ router.get(
 router.post(
   '/api-key/nouvelle',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
       const body = req.body;
@@ -739,7 +736,7 @@ router.post(
 router.post(
   '/api-key/new-access-token/:api_key_id',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
       const apiKey = await prisma.apiKey.findUnique({
@@ -765,7 +762,7 @@ router.post(
 router.get(
   '/api-key/:api_key_id',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -826,7 +823,7 @@ router.get(
 router.get(
   '/official-cfeis',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -849,7 +846,7 @@ router.get(
 router.post(
   '/api-key-approval',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -871,13 +868,13 @@ router.post(
             },
           }
         : body.entity_id
-          ? {
-              api_key_id_entity_id: {
-                api_key_id: body.api_key_id,
-                entity_id: body.entity_id,
-              },
-            }
-          : undefined;
+        ? {
+            api_key_id_entity_id: {
+              api_key_id: body.api_key_id,
+              entity_id: body.entity_id,
+            },
+          }
+        : undefined;
       if (action === 'delete') {
         await prisma.apiKeyApprovalByUserOrEntity.delete({
           where,
@@ -941,7 +938,7 @@ router.post(
 router.get(
   '/carcasses',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -983,7 +980,7 @@ router.get(
 router.get(
   '/carcasses-intermediaires',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -1015,7 +1012,7 @@ router.get(
 router.get(
   '/carcasse/:zacharie_carcasse_id',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -1049,7 +1046,7 @@ router.get(
 router.get(
   '/dashboard',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -1158,7 +1155,7 @@ const POIDS_MOYEN_DEFAULT_KG = 1;
 router.get(
   '/parts-de-marche',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -1265,7 +1262,7 @@ router.get(
 router.post(
   '/ccg/preview',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,
@@ -1274,13 +1271,11 @@ router.post(
     ) => {
       const { ccgs } = req.body as { ccgs: CcgPreviewRow[] };
       if (!Array.isArray(ccgs) || ccgs.length === 0) {
-        res
-          .status(400)
-          .send({
-            ok: false,
-            data: { nouveaux: [], modifies: [], unchanged_count: 0 },
-            error: 'ccgs requis',
-          });
+        res.status(400).send({
+          ok: false,
+          data: { nouveaux: [], modifies: [], unchanged_count: 0 },
+          error: 'ccgs requis',
+        });
         return;
       }
       const numeroDdecpps = ccgs.map((c) => c.numero_ddecpp);
@@ -1344,7 +1339,7 @@ router.post(
 router.post(
   '/ccg/import',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.ADMIN]),
+  validateAdmin,
   catchErrors(
     async (
       req: express.Request,

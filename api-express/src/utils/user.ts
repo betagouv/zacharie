@@ -50,8 +50,8 @@ export function autoActivatePremierDetenteur(user: User, calledFrom: string) {
     // console.log('user.activated_at', user.activated_at, calledFrom);
     return false;
   }
-  if (user.roles.includes(UserRoles.ADMIN)) {
-    // console.log('user.roles.includes(UserRoles.ADMIN)', user.roles.includes(UserRoles.ADMIN), calledFrom);
+  if (user.isZacharieAdmin) {
+    // console.log('user.isZacharieAdmin', user.isZacharieAdmin, calledFrom);
     return false;
   }
   if (!hasAllRequiredFields(user, calledFrom)) {

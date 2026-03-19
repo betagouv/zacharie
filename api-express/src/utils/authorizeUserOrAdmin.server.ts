@@ -14,7 +14,7 @@ export async function authorizeUserOrAdmin(
     return next(error);
   }
 
-  const isAdmin = user.roles.includes(UserRoles.ADMIN);
+  const isAdmin = user.isZacharieAdmin;
   req.isAdmin = isAdmin;
   const userId = req.params.user_id;
 

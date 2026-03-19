@@ -76,7 +76,7 @@ async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: 
     return false;
   }
 
-  if (user.roles.includes(UserRoles.ADMIN)) {
+  if (user.isZacharieAdmin) {
     return true;
   }
 
@@ -191,7 +191,7 @@ router.post(
       if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await linkBrevoCompanyToContact(entity, req.user);
         if (relation.status === EntityRelationStatus.REQUESTED) {
-          const isZacharieAdminSettingRolesToOtherUser = req.user.roles.includes(UserRoles.ADMIN);
+          const isZacharieAdminSettingRolesToOtherUser = req.user.isZacharieAdmin;
           if (!isZacharieAdminSettingRolesToOtherUser) {
             const entityAdmins = await prisma.entityAndUserRelations.findMany({
               where: {

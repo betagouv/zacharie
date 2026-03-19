@@ -772,7 +772,7 @@ router.post(
           id: await createUserId(),
           email,
           // un nouvel utilisateur invité ne peut l'être qu'avec un rôle identique à celui de l'utilisateur qui l'invite
-          roles: req.user.roles.filter((role) => role !== UserRoles.ADMIN),
+          roles: req.user.roles,
           activated: true,
           prefilled: false,
         },
@@ -1354,7 +1354,7 @@ router.get(
         .findMany({
           where: {
             // for_testing: ETG test, CCG test, SVI test, etc.
-            ...(user.roles.includes(UserRoles.ADMIN) ? {} : { for_testing: false }),
+            ...(user.isZacharieAdmin ? {} : { for_testing: false }),
             type: {
               notIn: [
                 EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI

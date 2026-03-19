@@ -68,7 +68,7 @@ async function sendEmail(props: SendEmailProps) {
 
 function formatRoles(user: User) {
   const roles = [];
-  switch (user.roles.find((role) => role !== UserRoles.ADMIN)) {
+  switch (user.roles[0]) {
     case UserRoles.CHASSEUR:
       if (user.est_forme_a_l_examen_initial) {
         roles.push('Examinateur initial');
@@ -116,7 +116,7 @@ interface BrevoContact extends brevo.GetExtendedContactDetails {
 async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Promise<User> {
   try {
     if (DISABLED) return props;
-    if (props.roles.includes(UserRoles.ADMIN)) return props;
+    if (props.isZacharieAdmin) return props;
     const apiInstance = new brevo.ContactsApi();
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
@@ -261,7 +261,7 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
 async function updateBrevoContact(props: User): Promise<User> {
   try {
     if (DISABLED) return props;
-    if (props.roles.includes(UserRoles.ADMIN)) return props;
+    if (props.isZacharieAdmin) return props;
     const apiInstance = new brevo.ContactsApi();
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 

@@ -134,7 +134,7 @@ export async function saveFei(
       throw new Error('Fei not found');
     }
     const canDelete =
-      user.roles.includes(UserRoles.ADMIN) ||
+      user.isZacharieAdmin ||
       (user.roles.includes(UserRoles.CHASSEUR) && existingFei.examinateur_initial_user_id === user.id) ||
       (user.roles.includes(UserRoles.CHASSEUR) && existingFei.fei_current_owner_user_id === user.id);
     if (!canDelete) {

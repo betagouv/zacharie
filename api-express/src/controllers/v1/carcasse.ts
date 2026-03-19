@@ -109,7 +109,7 @@ router.get(
 
       let canAccess = false;
 
-      const role = user.roles.find((role) => role !== UserRoles.ADMIN);
+      const role = user.roles[0];
       switch (role) {
         case UserRoles.CHASSEUR:
           if (fei.examinateur_initial_user_id === user.id) {
@@ -307,7 +307,7 @@ router.get(
         },
       };
 
-      const role = user.roles.find((role) => role !== UserRoles.ADMIN);
+      const role = user.roles[0];
       if (role === UserRoles.CHASSEUR) {
         feiQuery.where.OR = [
           {

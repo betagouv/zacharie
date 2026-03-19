@@ -68,7 +68,7 @@ const platformAdmin = {
   email: 'admin@example.com',
   prenom: 'Admin',
   nom_de_famille: 'User',
-  roles: [UserRoles.ADMIN],
+  isZacharieAdmin: true,
 };
 
 const otherUser = {
