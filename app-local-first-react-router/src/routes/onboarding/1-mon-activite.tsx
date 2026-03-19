@@ -24,10 +24,8 @@ export default function MesRoles() {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const roles = formData.getAll(Prisma.UserScalarFieldEnum.roles);
-        const isZacharieAdmin = formData.get(Prisma.UserScalarFieldEnum.isZacharieAdmin) === 'true';
         const body: Partial<User> = {
           roles: roles.length === 0 ? user.roles : (roles as UserRoles[]),
-          isZacharieAdmin,
         };
         if (body.roles?.length === 0) {
           return;
@@ -50,11 +48,7 @@ export default function MesRoles() {
             <h1 className="fr-h2 fr-mb-2w">Renseignez votre activité</h1>
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 pb-32 md:p-8 md:pb-0">
-                <RolesCheckBoxes
-                  user={user}
-                  legend="Sélectionnez l’activité qui vous correspond"
-                  withAdmin={user.isZacharieAdmin}
-                />
+                <RolesCheckBoxes user={user} legend="Sélectionnez l’activité qui vous correspond" />
                 <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                   Haut de page
                 </a>
