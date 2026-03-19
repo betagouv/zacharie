@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { Carcasse, CarcasseType } from '@prisma/client';
+import { Carcasse, CarcasseType, EntityTypes, FeiOwnerRole } from '@prisma/client';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import ItemNotEditable from '@app/components/ItemNotEditable';
@@ -72,8 +72,11 @@ export default function FEIDonneesDeChasse({
     const lines = [];
     for (let i = intermediaires.length - 1; i >= 0; i--) {
       const intermediaire = intermediaires[i];
-      const intermediaireLines = [];
       const entity = entities[intermediaire.intermediaire_entity_id!];
+      if (entity?.type === EntityTypes.ETG && intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
+        continue;
+      }
+      const intermediaireLines = [];
       intermediaireLines.push(getIntermediaireRoleLabel(intermediaire.intermediaire_role!));
       intermediaireLines.push(entity?.siret);
       intermediaireLines.push(`${entity?.code_postal} ${entity?.ville}`);
