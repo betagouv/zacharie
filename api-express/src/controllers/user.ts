@@ -126,7 +126,7 @@ router.post(
           ok: false,
           data: { user: null },
           message: '',
-          error: "L'email est incorrect, ou vous n'avez pas encore de compte",
+          error: 'Email ou mot de passe incorrect',
         });
         return;
       }
@@ -139,7 +139,7 @@ router.post(
           ok: false,
           data: { user: null },
           message: '',
-          error: "L'email est incorrect, ou vous n'avez pas encore de compte",
+          error: 'Email ou mot de passe incorrect',
         });
         return;
       }
@@ -150,7 +150,7 @@ router.post(
           ok: false,
           data: { user: null },
           message: '',
-          error: 'Le mot de passe est incorrect',
+          error: 'Email ou mot de passe incorrect',
         });
         return;
       }
