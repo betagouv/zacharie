@@ -496,9 +496,8 @@ function UserWorkingWithOrFor({
                 event.preventDefault();
                 setIsSaving(true);
                 API.post({
-                  path: '/user/user-entity',
+                  path: '/user-entity',
                   body: {
-                    _action: 'create',
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     relation: relationType,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,

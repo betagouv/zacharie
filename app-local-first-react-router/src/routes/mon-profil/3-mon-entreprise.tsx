@@ -508,7 +508,7 @@ function ListAndSelectEntities({
                 onClick={(e) => {
                   e.preventDefault();
                   API.post({
-                    path: '/user/user-entity',
+                    path: '/user-entity',
                     body: {
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                       _action: 'create',

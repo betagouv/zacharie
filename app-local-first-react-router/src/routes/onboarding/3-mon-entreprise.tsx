@@ -494,10 +494,9 @@ function ListAndSelectEntities({
                 onClick={(e) => {
                   e.preventDefault();
                   API.post({
-                    path: '/user/user-entity',
+                    path: '/user-entity',
                     body: {
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                      _action: 'create',
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
                         EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entityId,

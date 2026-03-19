@@ -21,6 +21,7 @@ import { sendError } from './middlewares/errors.ts';
 import { capture } from './third-parties/sentry.ts';
 
 import userRouter from './controllers/user.ts';
+import userEntityRouter from './controllers/user-entity.ts';
 import adminRouter from './controllers/admin.ts';
 import entiteRouter from './controllers/entite.ts';
 import feiRouter from './controllers/fei.ts';
@@ -151,6 +152,7 @@ app.use('/v1', v1Router);
 
 // Routes used by zacharie.beta.gouv.fr
 app.use('/user', passport.initialize(), userRouter);
+app.use('/user-entity', passport.initialize(), userEntityRouter);
 app.use('/admin', passport.initialize(), adminRouter);
 app.use('/entite', passport.initialize(), entiteRouter);
 app.use('/fei', passport.initialize(), feiRouter);

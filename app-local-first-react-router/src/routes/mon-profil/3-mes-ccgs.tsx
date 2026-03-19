@@ -201,10 +201,9 @@ export default function MesCCGs() {
                             ) {
                               return;
                             }
-                            API.post({
-                              path: '/user/user-entity',
+                            API.delete({
+                              path: '/user-entity',
                               body: {
-                                _action: 'delete',
                                 [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                                 [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
                                 relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
@@ -438,9 +437,8 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
         setIsSubmitting(true);
         const formData = new FormData(e.currentTarget);
         API.post({
-          path: '/user/user-entity',
+          path: '/user-entity',
           body: {
-            _action: 'create',
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
             relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
             [Prisma.EntityScalarFieldEnum.numero_ddecpp]: formData.get(

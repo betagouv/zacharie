@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import userRouter from '~/controllers/user';
+import userEntityRouter from '~/controllers/user-entity';
 import prisma from '~/prisma';
 import {
   Entity,
@@ -63,15 +63,15 @@ const testEntity: Partial<Entity> = {
 
 const app = express();
 app.use(express.json());
-app.use('/user', userRouter);
+app.use('/user-entity/', userEntityRouter);
 
 function authed(req: request.Test, user = regularUser) {
   return req.set('x-test-user', JSON.stringify(user));
 }
 
-const BASE = '/user/user-entity';
+const BASE = '/user-entity/';
 
-describe('POST /user/user-entity', () => {
+describe('POST /user-entity/', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default: entity exists
@@ -218,7 +218,7 @@ describe('POST /user/user-entity', () => {
     });
   });
 
-  describe('create action', () => {
+  describe('create', () => {
     test('missing owner_id → 406 (schema validation)', async () => {
       const res = await authed(
         request(app).post(BASE).send({
@@ -345,14 +345,198 @@ describe('POST /user/user-entity', () => {
     });
   });
 
-  describe('update action', () => {
+  describe('IDOR / cross-boundary', () => {
+    test('user cannot modify relations outside their entity', async () => {
+      // User-1 tries to create relation for otherUser at entity-2 (where user-1 is not admin)
+      const createdRelation: EntityAndUserRelations = {
+        id: 'rel-new',
+        owner_id: otherUser.id,
+        entity_id: 'entity-2',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.REQUESTED,
+        deleted_at: null,
+        created_at: new Date().toISOString() as unknown as Date,
+        updated_at: new Date().toISOString() as unknown as Date,
+        is_synced: true,
+        brevo_id: null,
+      };
+
+      vi.mocked(prisma.entityAndUserRelations.findFirst)
+        .mockResolvedValueOnce(null) // isEntityAdmin check for entity-2 → not admin
+        .mockResolvedValueOnce(null); // no duplicate
+      vi.mocked(prisma.entity.findUnique).mockResolvedValue({ ...testEntity, id: 'entity-2' } as any);
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
+
+      const res = await authed(
+        request(app).post(BASE).send({
+          owner_id: otherUser.id,
+          entity_id: 'entity-2',
+          _action: 'create',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(403); // blocked: not admin of entity-2
+    });
+  });
+});
+
+describe('PUT /user-entity/', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: entity exists
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+    vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
+    // Default: not an entity admin
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
+  });
+
+  describe('authentication', () => {
+    test('unauthenticated → 401', async () => {
+      await request(app)
+        .put(BASE)
+        .send({
+          owner_id: 'user-1',
+          entity_id: 'entity-1',
+          _action: 'create',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        })
+        .expect(401);
+    });
+  });
+
+  describe('authorization', () => {
+    test('regular user managing their own entity → allowed', async () => {
+      vi.mocked(prisma.entityAndUserRelations.findFirst)
+        .mockResolvedValueOnce(null) // isEntityAdmin check
+        .mockResolvedValueOnce(null); // no duplicate
+      const createdRelation: EntityAndUserRelations = {
+        id: 'rel-1',
+        owner_id: regularUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.REQUESTED,
+        deleted_at: null,
+        created_at: new Date().toISOString() as unknown as Date,
+        updated_at: new Date().toISOString() as unknown as Date,
+        is_synced: true,
+        brevo_id: null,
+      };
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
+
+      const res = await authed(
+        request(app).put(BASE).send({
+          owner_id: regularUser.id,
+          entity_id: 'entity-1',
+          _action: 'create',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        ok: true,
+        error: '',
+        data: {
+          relation: createdRelation,
+          entity: testEntity,
+        },
+      });
+    });
+
+    test('regular user trying to manage another user → 403', async () => {
+      const res = await authed(
+        request(app).put(BASE).send({
+          owner_id: otherUser.id,
+          entity_id: 'entity-1',
+          _action: 'create',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(403);
+    });
+
+    test('entity admin can manage another user in their entity', async () => {
+      // First findFirst call: check entity admin status → return admin relation
+      vi.mocked(prisma.entityAndUserRelations.findFirst)
+        .mockResolvedValueOnce({ id: 'rel-admin', status: EntityRelationStatus.ADMIN } as any) // isEntityAdmin check
+        .mockResolvedValueOnce(null); // duplicate check
+
+      const createdRelation: EntityAndUserRelations = {
+        id: 'rel-new',
+        owner_id: otherUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
+        deleted_at: null,
+        created_at: new Date().toISOString() as unknown as Date,
+        updated_at: new Date().toISOString() as unknown as Date,
+        is_synced: true,
+        brevo_id: null,
+      };
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
+
+      const res = await authed(
+        request(app).put(BASE).send({
+          owner_id: otherUser.id,
+          entity_id: 'entity-1',
+          _action: 'create',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          status: EntityRelationStatus.MEMBER,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        ok: true,
+        error: '',
+        data: {
+          relation: createdRelation,
+          entity: testEntity,
+        },
+      });
+    });
+
+    test('platform admin can manage any user', async () => {
+      vi.mocked(prisma.entityAndUserRelations.findFirst)
+        .mockResolvedValueOnce(null) // isEntityAdmin check (admin doesn't need this, but route still checks)
+        .mockResolvedValueOnce(null); // no duplicate
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({
+        id: 'rel-1',
+        owner_id: otherUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
+        deleted_at: null,
+      } as any);
+
+      const res = await authed(
+        request(app).put(BASE).send({
+          owner_id: otherUser.id,
+          entity_id: 'entity-1',
+          _action: 'create',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        platformAdmin as any,
+      );
+
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe('update', () => {
     test('relation not found → 404', async () => {
       vi.mocked(prisma.entityAndUserRelations.findFirst)
         .mockResolvedValueOnce(null) // isEntityAdmin check
         .mockResolvedValueOnce(null); // find existing relation
 
       const res = await authed(
-        request(app).post(BASE).send({
+        request(app).put(BASE).send({
           owner_id: regularUser.id,
           entity_id: 'entity-1',
           _action: 'update',
@@ -384,7 +568,7 @@ describe('POST /user/user-entity', () => {
       vi.mocked(prisma.entity.findUniqueOrThrow).mockResolvedValue(testEntity as any);
 
       const res = await authed(
-        request(app).post(BASE).send({
+        request(app).put(BASE).send({
           owner_id: regularUser.id,
           entity_id: 'entity-1',
           _action: 'update',
@@ -428,7 +612,7 @@ describe('POST /user/user-entity', () => {
       vi.mocked(prisma.entityAndUserRelations.update).mockResolvedValue(adminRelation);
 
       const res = await authed(
-        request(app).post(BASE).send({
+        request(app).put(BASE).send({
           owner_id: regularUser.id,
           entity_id: 'entity-1',
           _action: 'update',
@@ -453,7 +637,7 @@ describe('POST /user/user-entity', () => {
 
     test('missing relation → 400', async () => {
       const res = await authed(
-        request(app).post(BASE).send({ owner_id: regularUser.id, entity_id: 'entity-1', _action: 'update' }),
+        request(app).put(BASE).send({ owner_id: regularUser.id, entity_id: 'entity-1', _action: 'update' }),
         regularUser,
       );
 
@@ -461,100 +645,7 @@ describe('POST /user/user-entity', () => {
     });
   });
 
-  describe('delete action', () => {
-    test('existing relation deleted → 200', async () => {
-      const existingRelation: Partial<EntityAndUserRelations> = {
-        id: 'rel-1',
-        owner_id: regularUser.id,
-        entity_id: 'entity-1',
-        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        deleted_at: null,
-      };
-      vi.mocked(prisma.entityAndUserRelations.findFirst)
-        .mockResolvedValueOnce(null) // isEntityAdmin check
-        .mockResolvedValueOnce(existingRelation as any); // find relation to delete
-      vi.mocked(prisma.entityAndUserRelations.delete).mockResolvedValue(existingRelation as any);
-
-      const res = await authed(
-        request(app).post(BASE).send({
-          owner_id: regularUser.id,
-          entity_id: 'entity-1',
-          _action: 'delete',
-          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        }),
-        regularUser,
-      );
-
-      expect(res.status).toBe(200);
-      expect(vi.mocked(prisma.entityAndUserRelations.delete)).toHaveBeenCalledOnce();
-    });
-
-    test('relation not found → still 200', async () => {
-      vi.mocked(prisma.entityAndUserRelations.findFirst)
-        .mockResolvedValueOnce(null) // isEntityAdmin check
-        .mockResolvedValueOnce(null); // find relation to delete
-
-      const res = await authed(
-        request(app).post(BASE).send({
-          owner_id: regularUser.id,
-          entity_id: 'entity-1',
-          _action: 'delete',
-          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        }),
-        regularUser,
-      );
-
-      expect(res.status).toBe(200);
-      expect(vi.mocked(prisma.entityAndUserRelations.delete)).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('invalid action', () => {
-    test('unknown action → 406 (schema validation)', async () => {
-      const res = await authed(
-        request(app).post(BASE).send({ owner_id: regularUser.id, entity_id: 'entity-1', _action: 'invalid' }),
-        regularUser,
-      );
-
-      expect(res.status).toBe(406);
-    });
-  });
-
   describe('IDOR / cross-boundary', () => {
-    test('user cannot modify relations outside their entity', async () => {
-      // User-1 tries to create relation for otherUser at entity-2 (where user-1 is not admin)
-      const createdRelation: EntityAndUserRelations = {
-        id: 'rel-new',
-        owner_id: otherUser.id,
-        entity_id: 'entity-2',
-        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        status: EntityRelationStatus.REQUESTED,
-        deleted_at: null,
-        created_at: new Date().toISOString() as unknown as Date,
-        updated_at: new Date().toISOString() as unknown as Date,
-        is_synced: true,
-        brevo_id: null,
-      };
-
-      vi.mocked(prisma.entityAndUserRelations.findFirst)
-        .mockResolvedValueOnce(null) // isEntityAdmin check for entity-2 → not admin
-        .mockResolvedValueOnce(null); // no duplicate
-      vi.mocked(prisma.entity.findUnique).mockResolvedValue({ ...testEntity, id: 'entity-2' } as any);
-      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
-
-      const res = await authed(
-        request(app).post(BASE).send({
-          owner_id: otherUser.id,
-          entity_id: 'entity-2',
-          _action: 'create',
-          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        }),
-        regularUser,
-      );
-
-      expect(res.status).toBe(403); // blocked: not admin of entity-2
-    });
-
     test('entity admin for entity-1 cannot modify entity-2 relations', async () => {
       // EntityAdmin of entity-1 tries to manage another user at entity-2 where not admin
       const createdRelation: EntityAndUserRelations = {
@@ -589,6 +680,202 @@ describe('POST /user/user-entity', () => {
       );
 
       expect(res.status).toBe(403); // blocked: not admin of entity-2, can't manage others
+    });
+  });
+});
+
+describe('DELETE /user-entity/', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: entity exists
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+    vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
+    // Default: not an entity admin
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
+  });
+
+  describe('authentication', () => {
+    test('unauthenticated → 401', async () => {
+      await request(app)
+        .delete(BASE)
+        .send({
+          owner_id: 'user-1',
+          entity_id: 'entity-1',
+          _action: 'create',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        })
+        .expect(401);
+    });
+  });
+
+  describe('authorization', () => {
+    test('regular user managing their own entity → allowed', async () => {
+      vi.mocked(prisma.entityAndUserRelations.findFirst)
+        .mockResolvedValueOnce(null) // isEntityAdmin check
+        .mockResolvedValueOnce(null); // no duplicate
+      const createdRelation: EntityAndUserRelations = {
+        id: 'rel-1',
+        owner_id: regularUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.REQUESTED,
+        deleted_at: null,
+        created_at: new Date().toISOString() as unknown as Date,
+        updated_at: new Date().toISOString() as unknown as Date,
+        is_synced: true,
+        brevo_id: null,
+      };
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
+
+      const res = await authed(
+        request(app).delete(BASE).send({
+          owner_id: regularUser.id,
+          entity_id: 'entity-1',
+          _action: 'create',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        ok: true,
+        error: '',
+        data: {
+          relation: createdRelation,
+          entity: testEntity,
+        },
+      });
+    });
+
+    test('regular user trying to manage another user → 403', async () => {
+      const res = await authed(
+        request(app).delete(BASE).send({
+          owner_id: otherUser.id,
+          entity_id: 'entity-1',
+          _action: 'create',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(403);
+    });
+
+    test('entity admin can manage another user in their entity', async () => {
+      // First findFirst call: check entity admin status → return admin relation
+      vi.mocked(prisma.entityAndUserRelations.findFirst)
+        .mockResolvedValueOnce({ id: 'rel-admin', status: EntityRelationStatus.ADMIN } as any) // isEntityAdmin check
+        .mockResolvedValueOnce(null); // duplicate check
+
+      const createdRelation: EntityAndUserRelations = {
+        id: 'rel-new',
+        owner_id: otherUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
+        deleted_at: null,
+        created_at: new Date().toISOString() as unknown as Date,
+        updated_at: new Date().toISOString() as unknown as Date,
+        is_synced: true,
+        brevo_id: null,
+      };
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
+
+      const res = await authed(
+        request(app).delete(BASE).send({
+          owner_id: otherUser.id,
+          entity_id: 'entity-1',
+          _action: 'create',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          status: EntityRelationStatus.MEMBER,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        ok: true,
+        error: '',
+        data: {
+          relation: createdRelation,
+          entity: testEntity,
+        },
+      });
+    });
+
+    test('platform admin can manage any user', async () => {
+      vi.mocked(prisma.entityAndUserRelations.findFirst)
+        .mockResolvedValueOnce(null) // isEntityAdmin check (admin doesn't need this, but route still checks)
+        .mockResolvedValueOnce(null); // no duplicate
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({
+        id: 'rel-1',
+        owner_id: otherUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
+        deleted_at: null,
+      } as any);
+
+      const res = await authed(
+        request(app).delete(BASE).send({
+          owner_id: otherUser.id,
+          entity_id: 'entity-1',
+          _action: 'create',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        platformAdmin as any,
+      );
+
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe('delete action', () => {
+    test('existing relation deleted → 200', async () => {
+      const existingRelation: Partial<EntityAndUserRelations> = {
+        id: 'rel-1',
+        owner_id: regularUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        deleted_at: null,
+      };
+      vi.mocked(prisma.entityAndUserRelations.findFirst)
+        .mockResolvedValueOnce(null) // isEntityAdmin check
+        .mockResolvedValueOnce(existingRelation as any); // find relation to delete
+      vi.mocked(prisma.entityAndUserRelations.delete).mockResolvedValue(existingRelation as any);
+
+      const res = await authed(
+        request(app).delete(BASE).send({
+          owner_id: regularUser.id,
+          entity_id: 'entity-1',
+          _action: 'delete',
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(vi.mocked(prisma.entityAndUserRelations.delete)).toHaveBeenCalledOnce();
+    });
+
+    test('relation not found → still 200', async () => {
+      vi.mocked(prisma.entityAndUserRelations.findFirst)
+        .mockResolvedValueOnce(null) // isEntityAdmin check
+        .mockResolvedValueOnce(null); // find relation to delete
+
+      const res = await authed(
+        request(app).delete(BASE).send({
+          owner_id: regularUser.id,
+          entity_id: 'entity-1',
+          _action: 'delete',
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(vi.mocked(prisma.entityAndUserRelations.delete)).not.toHaveBeenCalled();
     });
   });
 });

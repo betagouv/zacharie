@@ -116,10 +116,9 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
         }
       } else {
         API.post({
-          path: '/user/user-entity',
+          path: '/user-entity',
           body: {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-            _action: 'create',
             [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
               EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
