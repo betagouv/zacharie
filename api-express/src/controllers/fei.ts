@@ -4,12 +4,14 @@ import { catchErrors } from '~/middlewares/errors';
 import type { FeiResponse, FeisResponse, FeisDoneResponse, FeiRefreshResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
+import { sanitize } from '~/utils/sanitize';
 import { EntityRelationStatus, EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
 import { feiPopulatedInclude } from '~/types/fei';
 import type { FeiPopulated } from '~/types/fei';
 import { capture } from '~/third-parties/sentry';
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { userFeiSelect } from '~/types/user';
+import { RequestWithUser } from '~/types/request';
 import { z } from 'zod';
 
 const refreshFeiSchema = z.object({
@@ -115,11 +117,70 @@ export interface SaveFeiResult {
   isDeleted: boolean;
 }
 
+const feiBodyZodSchema = z.object({
+  date_mise_a_mort: z.string().optional(),
+  commune_mise_a_mort: z.string().optional(),
+  heure_mise_a_mort_premiere_carcasse: z.string().optional(),
+  heure_evisceration_derniere_carcasse: z.string().optional(),
+  created_by_user_id: z.string().optional(),
+  creation_context: z.string().optional(),
+  resume_nombre_de_carcasses: z.string().optional(),
+  automatic_closed_at: z.string().optional(),
+  examinateur_initial_offline: z.boolean().optional(),
+  examinateur_initial_user_id: z.string().optional(),
+  examinateur_initial_approbation_mise_sur_le_marche: z.boolean().optional(),
+  examinateur_initial_date_approbation_mise_sur_le_marche: z.string().optional(),
+  consommateur_final_usage_domestique: z.string().optional(),
+  premier_detenteur_offline: z.boolean().optional(),
+  premier_detenteur_user_id: z.string().optional(),
+  premier_detenteur_entity_id: z.string().optional(),
+  premier_detenteur_name_cache: z.string().optional(),
+  premier_detenteur_depot_type: z.string().optional(),
+  premier_detenteur_depot_entity_id: z.string().optional(),
+  premier_detenteur_depot_entity_name_cache: z.string().optional(),
+  premier_detenteur_depot_ccg_at: z.string().optional(),
+  premier_detenteur_transport_type: z.string().optional(),
+  premier_detenteur_transport_date: z.string().optional(),
+  premier_detenteur_prochain_detenteur_role_cache: z.string().optional(),
+  premier_detenteur_prochain_detenteur_id_cache: z.string().optional(),
+  intermediaire_closed_at: z.string().optional(),
+  intermediaire_closed_by_user_id: z.string().optional(),
+  intermediaire_closed_by_entity_id: z.string().optional(),
+  latest_intermediaire_user_id: z.string().optional(),
+  latest_intermediaire_entity_id: z.string().optional(),
+  latest_intermediaire_name_cache: z.string().optional(),
+  svi_assigned_at: z.string().optional(),
+  svi_entity_id: z.string().optional(),
+  svi_user_id: z.string().optional(),
+  svi_closed_at: z.string().optional(),
+  svi_closed_by_user_id: z.string().optional(),
+  fei_current_owner_user_id: z.string().optional(),
+  fei_current_owner_user_name_cache: z.string().optional(),
+  fei_current_owner_entity_id: z.string().optional(),
+  fei_current_owner_entity_name_cache: z.string().optional(),
+  fei_current_owner_role: z.string().optional(),
+  fei_next_owner_wants_to_sous_traite: z.boolean().optional(),
+  fei_next_owner_sous_traite_at: z.string().optional(),
+  fei_next_owner_sous_traite_by_user_id: z.string().optional(),
+  fei_next_owner_sous_traite_by_entity_id: z.string().optional(),
+  fei_next_owner_user_id: z.string().optional(),
+  fei_next_owner_user_name_cache: z.string().optional(),
+  fei_next_owner_entity_id: z.string().optional(),
+  fei_next_owner_entity_name_cache: z.string().optional(),
+  fei_next_owner_role: z.string().optional(),
+  fei_prev_owner_user_id: z.string().optional(),
+  fei_prev_owner_entity_id: z.string().optional(),
+  fei_prev_owner_role: z.string().optional(),
+});
 export async function saveFei(
   numero: string,
   body: Prisma.FeiUncheckedCreateInput,
   user: User,
 ): Promise<SaveFeiResult> {
+  let result = feiBodyZodSchema.safeParse(body);
+  if (!result.success) {
+    throw new Error(result.error.message);
+  }
   let existingFei = await prisma.fei.findUnique({
     where: { numero },
     include: feiPopulatedInclude,
@@ -179,7 +240,9 @@ export async function saveFei(
     nextFei.date_mise_a_mort = body.date_mise_a_mort || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.consommateur_final_usage_domestique)) {
-    nextFei.consommateur_final_usage_domestique = body.consommateur_final_usage_domestique || null;
+    nextFei.consommateur_final_usage_domestique = body.consommateur_final_usage_domestique
+      ? sanitize(body.consommateur_final_usage_domestique as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.creation_context)) {
     const contextSlug = body.creation_context;
@@ -192,20 +255,26 @@ export async function saveFei(
           throw new Error('Invalid context slug');
         }
       }
-      nextFei.creation_context = contextSlug;
+      nextFei.creation_context = sanitize(contextSlug as string);
     }
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
-    nextFei.commune_mise_a_mort = body.commune_mise_a_mort || null;
+    nextFei.commune_mise_a_mort = body.commune_mise_a_mort
+      ? sanitize(body.commune_mise_a_mort as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse)) {
-    nextFei.heure_mise_a_mort_premiere_carcasse = body.heure_mise_a_mort_premiere_carcasse || null;
+    nextFei.heure_mise_a_mort_premiere_carcasse = body.heure_mise_a_mort_premiere_carcasse
+      ? sanitize(body.heure_mise_a_mort_premiere_carcasse as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse)) {
-    nextFei.heure_evisceration_derniere_carcasse = body.heure_evisceration_derniere_carcasse || null;
+    nextFei.heure_evisceration_derniere_carcasse = body.heure_evisceration_derniere_carcasse
+      ? sanitize(body.heure_evisceration_derniere_carcasse as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
-    nextFei.created_by_user_id = body.created_by_user_id;
+    nextFei.created_by_user_id = body.created_by_user_id ? sanitize(body.created_by_user_id as string) : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses)) {
     nextFei.resume_nombre_de_carcasses = body.resume_nombre_de_carcasses || null;
@@ -221,7 +290,9 @@ export async function saveFei(
   */
 
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
-    nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id || null;
+    nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id
+      ? sanitize(body.examinateur_initial_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
     nextFei.examinateur_initial_offline = body.examinateur_initial_offline || null;
@@ -247,23 +318,32 @@ export async function saveFei(
   */
 
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
-    nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id || null;
+    nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id
+      ? sanitize(body.premier_detenteur_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
     nextFei.premier_detenteur_offline = body.premier_detenteur_offline || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
-    nextFei.premier_detenteur_entity_id = body.premier_detenteur_entity_id || null;
+    nextFei.premier_detenteur_entity_id = body.premier_detenteur_entity_id
+      ? sanitize(body.premier_detenteur_entity_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache)) {
-    nextFei.premier_detenteur_name_cache = body.premier_detenteur_name_cache || null;
+    nextFei.premier_detenteur_name_cache = body.premier_detenteur_name_cache
+      ? sanitize(body.premier_detenteur_name_cache as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id)) {
-    nextFei.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id || null;
+    nextFei.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id
+      ? sanitize(body.premier_detenteur_depot_entity_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_name_cache)) {
-    nextFei.premier_detenteur_depot_entity_name_cache =
-      body.premier_detenteur_depot_entity_name_cache || null;
+    nextFei.premier_detenteur_depot_entity_name_cache = body.premier_detenteur_depot_entity_name_cache
+      ? sanitize(body.premier_detenteur_depot_entity_name_cache as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type)) {
     nextFei.premier_detenteur_depot_type = body.premier_detenteur_depot_type || null;
@@ -282,8 +362,9 @@ export async function saveFei(
       body.premier_detenteur_prochain_detenteur_role_cache || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
-    nextFei.premier_detenteur_prochain_detenteur_id_cache =
-      body.premier_detenteur_prochain_detenteur_id_cache || null;
+    nextFei.premier_detenteur_prochain_detenteur_id_cache = body.premier_detenteur_prochain_detenteur_id_cache
+      ? sanitize(body.premier_detenteur_prochain_detenteur_id_cache as string)
+      : null;
   }
 
   /*
@@ -297,16 +378,24 @@ Responsabilités
   /*  Current Owner */
 
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id)) {
-    nextFei.fei_current_owner_user_id = body.fei_current_owner_user_id || null;
+    nextFei.fei_current_owner_user_id = body.fei_current_owner_user_id
+      ? sanitize(body.fei_current_owner_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache)) {
-    nextFei.fei_current_owner_user_name_cache = body.fei_current_owner_user_name_cache || null;
+    nextFei.fei_current_owner_user_name_cache = body.fei_current_owner_user_name_cache
+      ? sanitize(body.fei_current_owner_user_name_cache as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
-    nextFei.fei_current_owner_entity_id = body.fei_current_owner_entity_id || null;
+    nextFei.fei_current_owner_entity_id = body.fei_current_owner_entity_id
+      ? sanitize(body.fei_current_owner_entity_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_name_cache)) {
-    nextFei.fei_current_owner_entity_name_cache = body.fei_current_owner_entity_name_cache || null;
+    nextFei.fei_current_owner_entity_name_cache = body.fei_current_owner_entity_name_cache
+      ? sanitize(body.fei_current_owner_entity_name_cache as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_role)) {
     nextFei.fei_current_owner_role = body.fei_current_owner_role || null;
@@ -319,20 +408,30 @@ Responsabilités
     nextFei.fei_next_owner_sous_traite_at = body.fei_next_owner_sous_traite_at || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_by_user_id)) {
-    nextFei.fei_next_owner_sous_traite_by_user_id = body.fei_next_owner_sous_traite_by_user_id || null;
+    nextFei.fei_next_owner_sous_traite_by_user_id = body.fei_next_owner_sous_traite_by_user_id
+      ? sanitize(body.fei_next_owner_sous_traite_by_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_by_entity_id)) {
-    nextFei.fei_next_owner_sous_traite_by_entity_id = body.fei_next_owner_sous_traite_by_entity_id || null;
+    nextFei.fei_next_owner_sous_traite_by_entity_id = body.fei_next_owner_sous_traite_by_entity_id
+      ? sanitize(body.fei_next_owner_sous_traite_by_entity_id as string)
+      : null;
   }
   /*  Next Owner */
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
-    nextFei.fei_next_owner_user_id = body.fei_next_owner_user_id || null;
+    nextFei.fei_next_owner_user_id = body.fei_next_owner_user_id
+      ? sanitize(body.fei_next_owner_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_name_cache)) {
-    nextFei.fei_next_owner_user_name_cache = body.fei_next_owner_user_name_cache || null;
+    nextFei.fei_next_owner_user_name_cache = body.fei_next_owner_user_name_cache
+      ? sanitize(body.fei_next_owner_user_name_cache as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
-    nextFei.fei_next_owner_entity_id = body.fei_next_owner_entity_id || null;
+    nextFei.fei_next_owner_entity_id = body.fei_next_owner_entity_id
+      ? sanitize(body.fei_next_owner_entity_id as string)
+      : null;
     if (body.fei_next_owner_entity_id) {
       const nextRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
         entity_id: body.fei_next_owner_entity_id,
@@ -349,17 +448,23 @@ Responsabilités
     }
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_name_cache)) {
-    nextFei.fei_next_owner_entity_name_cache = body.fei_next_owner_entity_name_cache || null;
+    nextFei.fei_next_owner_entity_name_cache = body.fei_next_owner_entity_name_cache
+      ? sanitize(body.fei_next_owner_entity_name_cache as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_role)) {
     nextFei.fei_next_owner_role = body.fei_next_owner_role || null;
   }
   /*  Prev Owner */
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_user_id)) {
-    nextFei.fei_prev_owner_user_id = body.fei_prev_owner_user_id || null;
+    nextFei.fei_prev_owner_user_id = body.fei_prev_owner_user_id
+      ? sanitize(body.fei_prev_owner_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id)) {
-    nextFei.fei_prev_owner_entity_id = body.fei_prev_owner_entity_id || null;
+    nextFei.fei_prev_owner_entity_id = body.fei_prev_owner_entity_id
+      ? sanitize(body.fei_prev_owner_entity_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_role)) {
     nextFei.fei_prev_owner_role = body.fei_prev_owner_role || null;
@@ -377,19 +482,29 @@ Intermédiaire
     nextFei.intermediaire_closed_at = body.intermediaire_closed_at || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_user_id)) {
-    nextFei.intermediaire_closed_by_user_id = body.intermediaire_closed_by_user_id || null;
+    nextFei.intermediaire_closed_by_user_id = body.intermediaire_closed_by_user_id
+      ? sanitize(body.intermediaire_closed_by_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_entity_id)) {
-    nextFei.intermediaire_closed_by_entity_id = body.intermediaire_closed_by_entity_id || null;
+    nextFei.intermediaire_closed_by_entity_id = body.intermediaire_closed_by_entity_id
+      ? sanitize(body.intermediaire_closed_by_entity_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_user_id)) {
-    nextFei.latest_intermediaire_user_id = body.latest_intermediaire_user_id || null;
+    nextFei.latest_intermediaire_user_id = body.latest_intermediaire_user_id
+      ? sanitize(body.latest_intermediaire_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_entity_id)) {
-    nextFei.latest_intermediaire_entity_id = body.latest_intermediaire_entity_id || null;
+    nextFei.latest_intermediaire_entity_id = body.latest_intermediaire_entity_id
+      ? sanitize(body.latest_intermediaire_entity_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_name_cache)) {
-    nextFei.latest_intermediaire_name_cache = body.latest_intermediaire_name_cache || null;
+    nextFei.latest_intermediaire_name_cache = body.latest_intermediaire_name_cache
+      ? sanitize(body.latest_intermediaire_name_cache as string)
+      : null;
   }
 
   /*
@@ -408,10 +523,10 @@ SVI
     nextFei.svi_assigned_at = body.svi_assigned_at || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_entity_id)) {
-    nextFei.svi_entity_id = body.svi_entity_id || null;
+    nextFei.svi_entity_id = body.svi_entity_id ? sanitize(body.svi_entity_id as string) : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_user_id)) {
-    nextFei.svi_user_id = body.svi_user_id || null;
+    nextFei.svi_user_id = body.svi_user_id ? sanitize(body.svi_user_id as string) : null;
   }
 
   const savedFei = existingFei
@@ -438,11 +553,11 @@ SVI
 
 router.post(
   '/:fei_numero',
-  passport.authenticate('user', { session: false }),
+  passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(
-    async (req: express.Request, res: express.Response<FeiResponse>, next: express.NextFunction) => {
+    async (req: RequestWithUser, res: express.Response<FeiResponse>, next: express.NextFunction) => {
       const body: Prisma.FeiUncheckedCreateInput = req.body;
-      const user = req.user as User;
+      const user = req.user;
       const feiNumero = req.params.fei_numero;
       if (!user.activated) {
         res.status(400).send({
