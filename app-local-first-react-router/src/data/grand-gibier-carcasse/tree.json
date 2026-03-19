@@ -50,7 +50,11 @@
     ]
   },
   "Souillures": {
-    "Souillures externes": ["Animal sale", "Souillures de l'arrière-train par diarrhée", "Autres souillures externes"],
+    "Souillures externes": [
+      "Animal sale",
+      "Souillures de l'arrière-train par diarrhée",
+      "Autres souillures externes"
+    ],
     "Souillures internes": [
       "Souillures d'origine digestive liées à une balle d'abdomen",
       "Souillures d'origine digestive liées à une mauvaise éviscération",

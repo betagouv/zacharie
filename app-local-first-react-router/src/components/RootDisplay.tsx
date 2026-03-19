@@ -164,86 +164,86 @@ export default function RootDisplay({
           embedded
             ? undefined
             : [
-              {
-                categoryName: 'Connexion',
-                links: [
-                  {
-                    linkProps: {
-                      to: '/app/connexion',
-                      href: '#',
-                    },
-                    text: 'Se connecter',
-                  },
-                  {
-                    linkProps: {
-                      to: '/app/tableau-de-bord',
-                      href: '#',
-                    },
-                    text: 'Accéder à mon compte',
-                  },
-                  {
-                    linkProps: {
-                      to: '/modalites-d-utilisation',
-                      href: '#',
-                    },
-                    text: "Modalités d'utilisation",
-                  },
-                  {
-                    linkProps: {
-                      to: '/politique-de-confidentialite',
-                      href: '#',
-                    },
-                    text: 'Politique de confidentialité',
-                  },
-                  {
-                    linkProps: {
-                      to: '/mentions-legales',
-                      href: '#',
-                    },
-                    text: 'Mentions légales',
-                  },
-                  {
-                    linkProps: {
-                      to: '/stats',
-                      href: '#',
-                    },
-                    text: 'Statistiques',
-                  },
-                ],
-              },
-              {
-                categoryName: 'Assistance',
-                links: [
-                  {
-                    linkProps: {
-                      href: '#',
-                      onClick: () => {
-                        if (isOnline) {
-                          clearCache().then(() => window.location.reload());
-                        } else {
-                          alert('Vous devez être connecté à internet pour effectuer cette action');
-                        }
+                {
+                  categoryName: 'Connexion',
+                  links: [
+                    {
+                      linkProps: {
+                        to: '/app/connexion',
+                        href: '#',
                       },
+                      text: 'Se connecter',
                     },
-                    text: "Obtenir la dernière version de l'app",
-                  },
-                  {
-                    linkProps: {
-                      to: '/faq',
-                      href: '#',
+                    {
+                      linkProps: {
+                        to: '/app/tableau-de-bord',
+                        href: '#',
+                      },
+                      text: 'Accéder à mon compte',
                     },
-                    text: 'FAQ',
-                  },
-                  {
-                    linkProps: {
-                      to: contactLink ?? '/contact',
-                      href: '#',
+                    {
+                      linkProps: {
+                        to: '/modalites-d-utilisation',
+                        href: '#',
+                      },
+                      text: "Modalités d'utilisation",
                     },
-                    text: 'Contactez-nous',
-                  },
-                ],
-              },
-            ]
+                    {
+                      linkProps: {
+                        to: '/politique-de-confidentialite',
+                        href: '#',
+                      },
+                      text: 'Politique de confidentialité',
+                    },
+                    {
+                      linkProps: {
+                        to: '/mentions-legales',
+                        href: '#',
+                      },
+                      text: 'Mentions légales',
+                    },
+                    {
+                      linkProps: {
+                        to: '/stats',
+                        href: '#',
+                      },
+                      text: 'Statistiques',
+                    },
+                  ],
+                },
+                {
+                  categoryName: 'Assistance',
+                  links: [
+                    {
+                      linkProps: {
+                        href: '#',
+                        onClick: () => {
+                          if (isOnline) {
+                            clearCache().then(() => window.location.reload());
+                          } else {
+                            alert('Vous devez être connecté à internet pour effectuer cette action');
+                          }
+                        },
+                      },
+                      text: "Obtenir la dernière version de l'app",
+                    },
+                    {
+                      linkProps: {
+                        to: '/faq',
+                        href: '#',
+                      },
+                      text: 'FAQ',
+                    },
+                    {
+                      linkProps: {
+                        to: contactLink ?? '/contact',
+                        href: '#',
+                      },
+                      text: 'Contactez-nous',
+                    },
+                  ],
+                },
+              ]
         }
       />
     </>

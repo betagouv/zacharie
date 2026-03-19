@@ -22,7 +22,9 @@ export default function FEIDonneesDeChasse({
   const intermediaires = useFeiIntermediaires(fei.numero);
   const latestIntermediaire = intermediaires[0];
   const feiCarcasses = useCarcassesForFei(params.fei_numero);
-  const carcasses = (carcasseId ? [carcassesState[carcasseId]].filter(Boolean).filter((c) => !c.deleted_at) : feiCarcasses);
+  const carcasses = carcasseId
+    ? [carcassesState[carcasseId]].filter(Boolean).filter((c) => !c.deleted_at)
+    : feiCarcasses;
   const examinateurInitialUser = fei.examinateur_initial_user_id
     ? users[fei.examinateur_initial_user_id!]
     : null;

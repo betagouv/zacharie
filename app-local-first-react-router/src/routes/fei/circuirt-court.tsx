@@ -9,10 +9,7 @@ import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 export default function CircuitCourt() {
   const params = useParams();
   const myCarcasses = useMyCarcassesForFei(params.fei_numero);
-  const allCarcassesForFei = useMemo(
-    () => myCarcasses.sort(sortCarcassesApproved),
-    [myCarcasses],
-  );
+  const allCarcassesForFei = useMemo(() => myCarcasses.sort(sortCarcassesApproved), [myCarcasses]);
 
   return (
     <>

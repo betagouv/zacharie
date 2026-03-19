@@ -127,10 +127,8 @@ export default function AdminUsers() {
       <title>
         Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
-      <div className="mb-2 flex items-center justify-end">
-
-      </div>
-      <div className="flex flex-wrap items-end gap-2 pb-2 [&_.fr-label]:text-xs [&_.fr-input-group]:mb-0 [&_.fr-select-group]:mb-0">
+      <div className="mb-2 flex items-center justify-end"></div>
+      <div className="flex flex-wrap items-end gap-2 pb-2 [&_.fr-input-group]:mb-0 [&_.fr-label]:text-xs [&_.fr-select-group]:mb-0">
         <Input
           className="w-56"
           label="Recherche"
@@ -196,10 +194,7 @@ export default function AdminUsers() {
             <option value="missing">Non renseigné</option>
           </Select>
         )}
-        <Button
-          size="small"
-          linkProps={{ to: '/app/tableau-de-bord/admin/add-user' }}
-        >
+        <Button size="small" linkProps={{ to: '/app/tableau-de-bord/admin/add-user' }}>
           + Ajouter des utilisateurs
         </Button>
       </div>
@@ -239,10 +234,7 @@ export default function AdminUsers() {
                         <span className="flex flex-col">
                           <span className="font-medium">
                             <span className="text-xs text-gray-400">{index + 1}. </span>
-                            <Link
-                              to={`/app/tableau-de-bord/admin/user/${user.id}`}
-                              className="no-underline"
-                            >
+                            <Link to={`/app/tableau-de-bord/admin/user/${user.id}`} className="no-underline">
                               {user.nom_de_famille} {user.prenom}
                             </Link>
                           </span>
@@ -268,17 +260,21 @@ export default function AdminUsers() {
                           {isChasseur && (
                             <span className="flex flex-col gap-0.5 text-xs">
                               <span>
-                                {user.numero_cfei || (
-                                  <span className="italic text-gray-400">—</span>
-                                )}
+                                {user.numero_cfei || <span className="text-gray-400 italic">—</span>}
                                 {officialCfeis.length > 0 && cfeiStatus === 'valid' && (
-                                  <Badge severity="success" small className="ml-1">Validé</Badge>
+                                  <Badge severity="success" small className="ml-1">
+                                    Validé
+                                  </Badge>
                                 )}
                                 {officialCfeis.length > 0 && cfeiStatus === 'invalid' && (
-                                  <Badge severity="error" small className="ml-1">Non trouvé</Badge>
+                                  <Badge severity="error" small className="ml-1">
+                                    Non trouvé
+                                  </Badge>
                                 )}
                                 {officialCfeis.length > 0 && cfeiStatus === 'missing' && (
-                                  <Badge severity="warning" small className="ml-1">Non renseigné</Badge>
+                                  <Badge severity="warning" small className="ml-1">
+                                    Non renseigné
+                                  </Badge>
                                 )}
                               </span>
                               {officialDetails && (

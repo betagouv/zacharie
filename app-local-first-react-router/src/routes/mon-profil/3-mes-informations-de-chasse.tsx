@@ -56,7 +56,7 @@ export default function MesInformationsDeChasse({
       toast.success('Informations de chasse enregistrées');
     } catch (error) {
       console.error(error);
-      toast.error('Erreur lors de l\'enregistrement des informations de chasse');
+      toast.error("Erreur lors de l'enregistrement des informations de chasse");
     }
   };
 
@@ -123,7 +123,12 @@ export default function MesInformationsDeChasse({
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">{calloutTitle}</h1>
-          <Alert className="bg-white mb-8" small severity="info" description="Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer." />
+          <Alert
+            className="mb-8 bg-white"
+            small
+            severity="info"
+            description="Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer."
+          />
           {withExaminateurInitial && user.roles.includes(UserRoles.CHASSEUR) && (
             <>
               <div className="mb-6 bg-white md:shadow-sm">
@@ -228,12 +233,7 @@ export default function MesInformationsDeChasse({
           {showEntrpriseVisibilityCheckbox && (
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
-                <form
-                  id="user_data_form"
-                  method="POST"
-                  onSubmit={(e) => e.preventDefault()}
-                  className="px-8"
-                >
+                <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()} className="px-8">
                   <Checkbox
                     options={[
                       {
@@ -276,15 +276,15 @@ export default function MesInformationsDeChasse({
                 },
                 ...(redirect
                   ? [
-                    {
-                      children: 'Retour',
-                      linkProps: {
-                        to: redirect,
-                        href: '#',
+                      {
+                        children: 'Retour',
+                        linkProps: {
+                          to: redirect,
+                          href: '#',
+                        },
+                        priority: 'secondary' as const,
                       },
-                      priority: 'secondary' as const,
-                    },
-                  ]
+                    ]
                   : []),
               ]}
             />

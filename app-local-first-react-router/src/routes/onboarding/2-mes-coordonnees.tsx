@@ -62,8 +62,8 @@ export default function MesCoordonnees() {
           <Stepper
             currentStep={1}
             stepCount={3}
-            title='Coordonnées'
-            nextTitle={user.roles.includes(UserRoles.CHASSEUR) ? 'Formation à l\'examen initial' : nextTitle}
+            title="Coordonnées"
+            nextTitle={user.roles.includes(UserRoles.CHASSEUR) ? "Formation à l'examen initial" : nextTitle}
           />
           <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
@@ -74,7 +74,11 @@ export default function MesCoordonnees() {
                 onSubmit={(e) => e.preventDefault()}
               >
                 <Input
-                  label={<span>Nom <span className="text-red-500">*</span></span>}
+                  label={
+                    <span>
+                      Nom <span className="text-red-500">*</span>
+                    </span>
+                  }
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.nom_de_famille,
                     name: Prisma.UserScalarFieldEnum.nom_de_famille,
@@ -84,7 +88,11 @@ export default function MesCoordonnees() {
                   }}
                 />
                 <Input
-                  label={<span>Prénom <span className="text-red-500">*</span></span>}
+                  label={
+                    <span>
+                      Prénom <span className="text-red-500">*</span>
+                    </span>
+                  }
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.prenom,
                     name: Prisma.UserScalarFieldEnum.prenom,
@@ -94,7 +102,11 @@ export default function MesCoordonnees() {
                   }}
                 />
                 <InputNotEditable
-                  label={<span>Email <span className="text-red-500">*</span></span>}
+                  label={
+                    <span>
+                      Email <span className="text-red-500">*</span>
+                    </span>
+                  }
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.email,
                     name: Prisma.UserScalarFieldEnum.email,
@@ -103,7 +115,11 @@ export default function MesCoordonnees() {
                   }}
                 />
                 <Input
-                  label={<span>Téléphone <span className="text-red-500">*</span></span>}
+                  label={
+                    <span>
+                      Téléphone <span className="text-red-500">*</span>
+                    </span>
+                  }
                   hintText="Format attendu : 01 22 33 44 55"
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.telephone,
@@ -114,7 +130,15 @@ export default function MesCoordonnees() {
                   }}
                 />
                 <Input
-                  label={needAddress ? <span>Adresse <span className="text-red-500">*</span></span> : <span>Adresse</span>}
+                  label={
+                    needAddress ? (
+                      <span>
+                        Adresse <span className="text-red-500">*</span>
+                      </span>
+                    ) : (
+                      <span>Adresse</span>
+                    )
+                  }
                   hintText="Indication : numéro et voie"
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
@@ -136,7 +160,15 @@ export default function MesCoordonnees() {
                 />
                 <div className="flex w-full flex-col gap-x-4 md:flex-row">
                   <Input
-                    label={needAddress ? <span>Code postal <span className="text-red-500">*</span></span> : <span>Code postal</span>}
+                    label={
+                      needAddress ? (
+                        <span>
+                          Code postal <span className="text-red-500">*</span>
+                        </span>
+                      ) : (
+                        <span>Code postal</span>
+                      )
+                    }
                     hintText="5 chiffres"
                     className="shrink-0 md:basis-1/5"
                     nativeInputProps={{
@@ -151,7 +183,15 @@ export default function MesCoordonnees() {
                     <InputVille
                       postCode={user.code_postal ?? ''}
                       trimPostCode
-                      label={needAddress ? <span>Ville ou commune <span className="text-red-500">*</span></span> : <span>Ville ou commune</span>}
+                      label={
+                        needAddress ? (
+                          <span>
+                            Ville ou commune <span className="text-red-500">*</span>
+                          </span>
+                        ) : (
+                          <span>Ville ou commune</span>
+                        )
+                      }
                       hintText="Exemple : Montpellier"
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.ville,
@@ -167,7 +207,7 @@ export default function MesCoordonnees() {
             </div>
           </div>
 
-          <div className="left-0 z-50 flex flex-col p-4 pb-2 relative bottom-0 w-auto items-center justify-center shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
+          <div className="relative bottom-0 left-0 z-50 flex w-auto flex-col items-center justify-center p-4 pb-2 shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
             <ButtonsGroup
               inlineLayoutWhen="always"
               buttons={[

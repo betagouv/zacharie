@@ -112,7 +112,7 @@ export default function TableFilterable<T>({
   if (isDesktop || !renderCellSmallDevices) {
     return (
       <table className={[className, 'table-custom'].join(' ')}>
-        <thead className="hidden sm:table-header-group border-b border-gray-200">
+        <thead className="hidden border-b border-gray-200 sm:table-header-group">
           {!!title && (
             <tr>
               <td tabIndex={0} aria-label={title} className="title" colSpan={columns.length}>
@@ -122,10 +122,10 @@ export default function TableFilterable<T>({
           )}
           <tr>
             {withCheckbox && (
-              <td className="whitespace-nowrap cursor-default">
+              <td className="cursor-default whitespace-nowrap">
                 <input
                   type="checkbox"
-                  className="border-2 mx-2 checked:accent-action-high-blue-france"
+                  className="checked:accent-action-high-blue-france mx-2 border-2"
                   checked={checked.length === data.length}
                   onChange={() => {
                     if (checked.length === data.length) {
@@ -207,10 +207,10 @@ export default function TableFilterable<T>({
                   ].join(' ')}
                 >
                   {withCheckbox && (
-                    <td className="whitespace-nowrap cursor-default">
+                    <td className="cursor-default whitespace-nowrap">
                       <input
                         type="checkbox"
-                        className="border-2 mx-2  checked:accent-action-high-blue-france"
+                        className="checked:accent-action-high-blue-france mx-2 border-2"
                         checked={checked.includes(item[rowKey] as string)}
                         id={item[rowKey] as string}
                         onChange={onToggleCheckbox}

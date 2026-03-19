@@ -31,7 +31,7 @@ export function getOngoingCellFeiUnderMyResponsability(fei: Fei, entities: Recor
   const userName = fei.fei_next_owner_user_name_cache ?? fei.fei_current_owner_user_name_cache;
   return (
     <span className="flex flex-col">
-      <span className="opacity-40 italic mb-2">{role}</span>
+      <span className="mb-2 italic opacity-40">{role}</span>
       {entityName ? <span>{entityName}</span> : null}
       {userName ? <span>{userName}</span> : null}
     </span>

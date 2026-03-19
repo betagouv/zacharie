@@ -123,11 +123,7 @@ export default function FEICurrentIntermediaire(props: Props) {
         </nav>
       )}
 
-      <FEICurrentIntermediaireContent
-        key={intermediaire?.id}
-        {...props}
-        intermediaire={intermediaire!}
-      >
+      <FEICurrentIntermediaireContent key={intermediaire?.id} {...props} intermediaire={intermediaire!}>
         <Section open={!!intermediaires.length} title="Données de traçabilité">
           <FEIDonneesDeChasse />
         </Section>
@@ -289,9 +285,7 @@ function FEICurrentIntermediaireContent({
 
   // Multi-recipient: user may be current_owner of their carcasses even if FEI-level says otherwise
   const isCurrentOwnerOfMyCarcasses = useMemo(() => {
-    return myFeiCarcasses.some(
-      (c) => c.current_owner_user_id === user.id,
-    );
+    return myFeiCarcasses.some((c) => c.current_owner_user_id === user.id);
   }, [myFeiCarcasses, user.id]);
 
   const canEdit = useMemo(() => {
@@ -424,7 +418,6 @@ function FEICurrentIntermediaireContent({
     carcassesSorted.carcassesEcarteesPourInspection,
     carcassesSorted.carcassesRejetees,
   ]);
-
 
   const couldSelectNextUser = useMemo(() => {
     if (
@@ -670,7 +663,7 @@ function FEICurrentIntermediaireContent({
               <Button onClick={handleCloseFei} priority="primary">
                 Clôturer la fiche (
                 {carcassesSorted.carcassesManquantes.length > 0 &&
-                  carcassesSorted.carcassesRejetees.length > 0
+                carcassesSorted.carcassesRejetees.length > 0
                   ? 'toutes les carcasses sont manquantes ou refusées'
                   : carcassesSorted.carcassesManquantes.length > 0
                     ? 'toutes les carcasses sont manquantes'
@@ -740,7 +733,7 @@ function FEICurrentIntermediaireContent({
                 }
                 label={
                   carcassesSorted.carcassesApproved.length > 0 ||
-                    carcassesSorted.carcassesEcarteesPourInspection.length > 0
+                  carcassesSorted.carcassesEcarteesPourInspection.length > 0
                     ? 'Date de prise en charge'
                     : 'Date de décision'
                 }

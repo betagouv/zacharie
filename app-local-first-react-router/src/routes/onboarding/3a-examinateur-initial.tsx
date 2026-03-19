@@ -49,7 +49,7 @@ export default function OnboardingExaminateurInitial() {
             title="Formation à l'examen initial"
           />
           <ExaminateurInitial />
-          <div className="left-0 z-50 flex flex-col p-4 pb-2 relative bottom-0 w-auto items-center justify-center shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
+          <div className="relative bottom-0 left-0 z-50 flex w-auto flex-col items-center justify-center p-4 pb-2 shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
             <ButtonsGroup
               inlineLayoutWhen="always"
               buttons={[
@@ -122,10 +122,14 @@ function ExaminateurInitial() {
       <div className="p-4 md:p-8">
         <form id="examinateur_initial_form" method="POST" onSubmit={(e) => e.preventDefault()}>
           <RadioButtons
-            legend={<div>
-              Êtes-vous formé à l'examen initial ? <span className="text-red-500">*</span>
-              <p className="text-sm text-gray-500">Cette information déterminera si vous pouvez créer des fiches d'examen initial</p>
-            </div>}
+            legend={
+              <div>
+                Êtes-vous formé à l'examen initial ? <span className="text-red-500">*</span>
+                <p className="text-sm text-gray-500">
+                  Cette information déterminera si vous pouvez créer des fiches d'examen initial
+                </p>
+              </div>
+            }
             orientation="horizontal"
             options={[
               {
@@ -164,7 +168,12 @@ function ExaminateurInitial() {
           />
           {user.roles.includes(UserRoles.CHASSEUR) && isExaminateurInitial && (
             <Input
-              label={<span>Numéro d'attestation de Chasseur Formé à l'Examen Initial <span className="text-red-500">*</span></span>}
+              label={
+                <span>
+                  Numéro d'attestation de Chasseur Formé à l'Examen Initial{' '}
+                  <span className="text-red-500">*</span>
+                </span>
+              }
               hintText="De la forme CFEI-DEP-AA-123"
               key={isExaminateurInitial ? 'true' : 'false'}
               nativeInputProps={{

@@ -81,29 +81,38 @@ export default function AdminDashboard() {
   const totalInscriptions = data.inscriptions_par_semaine.reduce((sum, r) => sum + r.count, 0);
 
   return (
-    <div className="py-6 space-y-6">
+    <div className="space-y-6 py-6">
       <h2 className="text-xl font-bold">Tableau de bord</h2>
 
       {/* KPI cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-lg bg-white p-5 shadow-sm border border-gray-100">
+        <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">Chasseurs inscrits</p>
-          <p className="mt-1 text-3xl font-bold" style={{ color: 'var(--background-action-high-blue-france)' }}>
+          <p
+            className="mt-1 text-3xl font-bold"
+            style={{ color: 'var(--background-action-high-blue-france)' }}
+          >
             {data.funnel.chasseurs_inscrits.toLocaleString('fr-FR')}
           </p>
         </div>
-        <div className="rounded-lg bg-white p-5 shadow-sm border border-gray-100">
+        <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">Comptes validés</p>
-          <p className="mt-1 text-3xl font-bold" style={{ color: 'var(--background-action-high-blue-france)' }}>
+          <p
+            className="mt-1 text-3xl font-bold"
+            style={{ color: 'var(--background-action-high-blue-france)' }}
+          >
             {data.funnel.compte_valide.toLocaleString('fr-FR')}
           </p>
           <p className="mt-1 text-xs text-gray-400">
             {maxFunnel > 0 ? ((data.funnel.compte_valide / maxFunnel) * 100).toFixed(1) : 0}% des inscrits
           </p>
         </div>
-        <div className="rounded-lg bg-white p-5 shadow-sm border border-gray-100">
+        <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">Inscriptions (période)</p>
-          <p className="mt-1 text-3xl font-bold" style={{ color: 'var(--background-action-high-blue-france)' }}>
+          <p
+            className="mt-1 text-3xl font-bold"
+            style={{ color: 'var(--background-action-high-blue-france)' }}
+          >
             {totalInscriptions.toLocaleString('fr-FR')}
           </p>
           <p className="mt-1 text-xs text-gray-400">
@@ -113,18 +122,18 @@ export default function AdminDashboard() {
       </div>
 
       {/* Funnel */}
-      <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold mb-5">Funnel chasseurs</h3>
+      <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+        <h3 className="mb-5 text-lg font-semibold">Funnel chasseurs</h3>
         <div className="space-y-3">
           {funnelLabels.map(({ key, label }, i) => {
             const count = data.funnel[key];
             const pct = maxFunnel > 0 ? (count / maxFunnel) * 100 : 0;
             return (
               <div key={key} className="flex items-center gap-4">
-                <div className="w-56 shrink-0 text-sm text-right text-gray-600">{label}</div>
-                <div className="flex-1 relative h-9 rounded bg-gray-50">
+                <div className="w-56 shrink-0 text-right text-sm text-gray-600">{label}</div>
+                <div className="relative h-9 flex-1 rounded bg-gray-50">
                   <div
-                    className="h-full rounded flex items-center px-3 text-white text-sm font-semibold transition-all duration-300"
+                    className="flex h-full items-center rounded px-3 text-sm font-semibold text-white transition-all duration-300"
                     style={{
                       width: `${Math.max(pct, 3)}%`,
                       backgroundColor: dsfrBlues[i],
@@ -133,7 +142,7 @@ export default function AdminDashboard() {
                   >
                     {count.toLocaleString('fr-FR')}
                   </div>
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 tabular-nums">
+                  <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-gray-400 tabular-nums">
                     {pct.toFixed(1)}%
                   </span>
                 </div>
@@ -144,8 +153,8 @@ export default function AdminDashboard() {
       </div>
 
       {/* Inscriptions par semaine */}
-      <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-5">
+      <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="mb-5 flex items-center justify-between">
           <h3 className="text-lg font-semibold">Inscriptions chasseurs par semaine</h3>
           <div className="flex items-end gap-3">
             <button
@@ -175,7 +184,7 @@ export default function AdminDashboard() {
               );
             })}
             <div>
-              <label className="fr-label text-xs mb-1" htmlFor="date-from">
+              <label className="fr-label mb-1 text-xs" htmlFor="date-from">
                 Début
               </label>
               <input
@@ -187,7 +196,7 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
-              <label className="fr-label text-xs mb-1" htmlFor="date-to">
+              <label className="fr-label mb-1 text-xs" htmlFor="date-to">
                 Fin
               </label>
               <input
@@ -219,20 +228,34 @@ export default function AdminDashboard() {
 
       {/* Parts de marché par circuit */}
       {partsDeMarche && partsDeMarche.circuit_long.length > 0 && (
-        <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-1">Parts de marché par circuit</h3>
-          <p className="text-sm text-gray-500 mb-5">
-            Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par saison de chasse
+        <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+          <h3 className="mb-1 text-lg font-semibold">Parts de marché par circuit</h3>
+          <p className="mb-5 text-sm text-gray-500">
+            Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par saison de
+            chasse
           </p>
           <ResponsiveContainer width="100%" height={350}>
             <BarChart data={partsDeMarche.circuit_long}>
               <XAxis dataKey="saison" xAxisId="absolu" />
               <XAxis dataKey="saison" xAxisId="potentiel" hide />
               <XAxis dataKey="saison" xAxisId="reel" hide />
-              <YAxis label={{ value: 'Tonnes de viande de gibier', angle: -90, position: 'insideLeft', offset: 10 }} />
+              <YAxis
+                label={{
+                  value: 'Tonnes de viande de gibier',
+                  angle: -90,
+                  position: 'insideLeft',
+                  offset: 10,
+                }}
+              />
               <Tooltip formatter={(value, name) => [`${value} t`, name]} />
               <Legend />
-              <Bar dataKey="volume_absolu" name="Volume absolu" xAxisId="absolu" fill="#cacafb" barSize={60} />
+              <Bar
+                dataKey="volume_absolu"
+                name="Volume absolu"
+                xAxisId="absolu"
+                fill="#cacafb"
+                barSize={60}
+              />
               <Bar
                 dataKey="volume_potentiel"
                 name="Volume potentiel"

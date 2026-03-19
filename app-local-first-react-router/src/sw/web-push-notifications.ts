@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 // https://github.com/remix-pwa/monorepo/blob/main/packages/push/client/hook/usePush.ts
 
@@ -53,11 +53,11 @@ export const usePush = (): PushObject => {
 
   const requestPermission = () => {
     if (canSendPush) {
-      return "granted";
+      return 'granted';
     }
 
     Notification.requestPermission().then((permission) => {
-      if (permission === "granted") {
+      if (permission === 'granted') {
         setCanSendPush(true);
         return permission;
       } else {
@@ -66,7 +66,7 @@ export const usePush = (): PushObject => {
       }
     });
 
-    return "default";
+    return 'default';
   };
 
   const subscribeToPush = (
@@ -124,23 +124,23 @@ export const usePush = (): PushObject => {
   };
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
       return;
     }
-    if ("Notification" in window) {
+    if ('Notification' in window) {
       setPushAvailable(true);
     }
 
     const getRegistration = async () => {
-      if ("serviceWorker" in navigator) {
+      if ('serviceWorker' in navigator) {
         try {
           const _registration = await navigator.serviceWorker.getRegistration();
           setSWRegistration(_registration ?? null);
         } catch (err) {
-          console.error("Error getting service worker registration:", err);
+          console.error('Error getting service worker registration:', err);
         }
       } else {
-        console.warn("Service Workers are not supported in this browser.");
+        console.warn('Service Workers are not supported in this browser.');
       }
     };
 
@@ -148,15 +148,15 @@ export const usePush = (): PushObject => {
       getRegistration();
     };
 
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
     }
 
     getRegistration();
 
     return () => {
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
       }
     };
   }, []);
@@ -168,7 +168,7 @@ export const usePush = (): PushObject => {
         setPushSubscription(subscription);
       });
 
-      Notification.permission === "granted" ? setCanSendPush(true) : setCanSendPush(false);
+      Notification.permission === 'granted' ? setCanSendPush(true) : setCanSendPush(false);
     }
   }, [swRegistration]);
 

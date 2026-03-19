@@ -30,10 +30,7 @@ export default function FEI_SVI() {
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
-  const allCarcassesForFei = useMemo(
-    () => myCarcasses.sort(sortCarcassesApproved),
-    [myCarcasses],
-  );
+  const allCarcassesForFei = useMemo(() => myCarcasses.sort(sortCarcassesApproved), [myCarcasses]);
 
   const carcassesDejaRefusees = useMemo(
     () => allCarcassesForFei.filter((c) => !!c.intermediaire_carcasse_refus_intermediaire_id),
@@ -223,7 +220,7 @@ export default function FEI_SVI() {
                 className={!canEdit ? 'checkbox-black' : ''}
                 options={[
                   {
-                    label: "Inspection de toutes les carcasses terminée. Clôturer la fiche.",
+                    label: 'Inspection de toutes les carcasses terminée. Clôturer la fiche.',
                     nativeInputProps: {
                       required: true,
                       name: 'svi_finito',

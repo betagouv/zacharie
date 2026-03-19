@@ -18,8 +18,8 @@ export default function AdminLayout() {
 
   return (
     <div className="flex">
-      <nav className="sticky top-0 self-start min-h-screen max-h-screen bg-white border-r border-gray-200 shrink-0 py-2 overflow-y-auto">
-        <ul className="list-none m-0 mt-2 px-2">
+      <nav className="sticky top-0 max-h-screen min-h-screen shrink-0 self-start overflow-y-auto border-r border-gray-200 bg-white py-2">
+        <ul className="m-0 mt-2 list-none px-2">
           {adminLinks.map((link) => {
             const isActive = location.pathname.startsWith(link.to);
             return (
@@ -27,12 +27,13 @@ export default function AdminLayout() {
                 <Link
                   style={{ backgroundImage: 'none' }}
                   to={link.to}
-                  className={`flex items-center gap-2 px-3 py-1.5 text-sm no-underline border-l-2 hover:bg-gray-100 ${isActive
-                    ? 'bg-open-blue-975 text-action-high-blue-france font-medium border-action-high-blue-france'
-                    : 'text-title-grey  border-transparent'
-                    }`}
+                  className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${
+                    isActive
+                      ? 'bg-open-blue-975 text-action-high-blue-france border-action-high-blue-france font-medium'
+                      : 'text-title-grey border-transparent'
+                  }`}
                 >
-                  <span className={`${link.icon} fr-icon--sm shrink-0 mr-1`} aria-hidden="true" />
+                  <span className={`${link.icon} fr-icon--sm mr-1 shrink-0`} aria-hidden="true" />
                   {link.label}
                 </Link>
               </li>
@@ -44,9 +45,9 @@ export default function AdminLayout() {
               target="_blank"
               style={{ backgroundImage: 'none' }}
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-1.5 text-sm text-title-grey no-underline hover:bg-open-blue-975 border-l-2 border-transparent hover:bg-gray-100 rounded-md"
+              className="text-title-grey hover:bg-open-blue-975 flex items-center gap-2 rounded-md border-l-2 border-transparent px-3 py-1.5 text-sm no-underline hover:bg-gray-100"
             >
-              <span className="fr-icon-line-chart-line fr-icon--sm shrink-0 mr-1" aria-hidden="true" />
+              <span className="fr-icon-line-chart-line fr-icon--sm mr-1 shrink-0" aria-hidden="true" />
               Fiches
             </a>
           </li>

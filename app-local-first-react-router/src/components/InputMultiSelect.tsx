@@ -39,9 +39,9 @@ export default function InputMultiSelect<T extends string>({
         _options.push(value);
       }
     }
-    return [..._options, ...data]
-  }, [values, data])
-  
+    return [..._options, ...data];
+  }, [values, data]);
+
   return (
     <div className={['fr-input-group', disabled ? 'fr-input-group--disabled' : ''].join(' ')}>
       <label className="fr-label" htmlFor="input-«re»">
@@ -74,7 +74,7 @@ export default function InputMultiSelect<T extends string>({
         classNamePrefix={`${name}`}
         creatable={creatable}
         // @ts-expect-error - onCreateOption is not typed
-        onCreateOption={(newOption) => {;
+        onCreateOption={(newOption) => {
           if (isMulti) {
             onChange([...values, newOption as T].filter(Boolean) as Array<T>);
           } else {

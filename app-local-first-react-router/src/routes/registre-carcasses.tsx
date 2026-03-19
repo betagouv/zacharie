@@ -201,12 +201,12 @@ export default function RegistreCarcasses() {
                 <span>
                   {carcasse.fei_svi_assigned_at
                     ? new Date(carcasse.fei_svi_assigned_at).toLocaleDateString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                     : '-'}
                 </span>
               </div>
@@ -215,12 +215,12 @@ export default function RegistreCarcasses() {
                 <span>
                   {carcasse.svi_carcasse_status_set_at
                     ? new Date(carcasse.svi_carcasse_status_set_at).toLocaleDateString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                     : '-'}
                 </span>
               </div>
@@ -422,8 +422,8 @@ export default function RegistreCarcasses() {
                   render: (carcasse) => getCollecteurName(carcasse) || '-',
                 },
               ]}
-            // onSort={() => {}}
-            // onCheck={() => {}}
+              // onSort={() => {}}
+              // onCheck={() => {}}
             />
             <div className="flex justify-center overflow-x-auto py-4 sm:justify-start sm:py-6">
               <Pagination

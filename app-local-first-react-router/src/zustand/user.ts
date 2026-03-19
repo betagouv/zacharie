@@ -65,5 +65,5 @@ export async function syncProchainBraceletAUtiliser() {
           needSyncProchainBraceletAUtiliser: false,
         }));
       }
-    })
+    });
 }

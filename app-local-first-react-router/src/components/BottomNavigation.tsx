@@ -65,13 +65,7 @@ function getTextString(item: NavItem): string {
   return typeof item.text === 'string' ? item.text : String(item.text ?? '');
 }
 
-function NavButton({
-  item,
-  isOverflow,
-}: {
-  item: NavItem;
-  isOverflow?: boolean;
-}) {
+function NavButton({ item, isOverflow }: { item: NavItem; isOverflow?: boolean }) {
   const text = getTextString(item);
   const isActive = 'isActive' in item ? item.isActive : false;
   const icon = getIcon(text);
@@ -87,8 +81,9 @@ function NavButton({
         <button
           type="button"
           onClick={onClick}
-          className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-gray-100 ${isActive ? 'text-action-high-blue-france font-bold' : 'text-mention-grey'
-            }`}
+          className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-gray-100 ${
+            isActive ? 'text-action-high-blue-france font-bold' : 'text-mention-grey'
+          }`}
         >
           <i className={`${icon} text-lg`} />
           <span>{text}</span>
@@ -99,8 +94,9 @@ function NavButton({
       return (
         <Link
           to={to}
-          className={`flex w-full items-center gap-3 px-4 py-3 text-sm no-underline hover:bg-gray-100 ${isActive ? 'text-action-high-blue-france font-bold' : 'text-mention-grey'
-            }`}
+          className={`flex w-full items-center gap-3 px-4 py-3 text-sm no-underline hover:bg-gray-100 ${
+            isActive ? 'text-action-high-blue-france font-bold' : 'text-mention-grey'
+          }`}
         >
           <i className={`${icon} text-lg`} />
           <span>{text}</span>
@@ -205,8 +201,9 @@ export default function BottomNavigation({
           <button
             type="button"
             onClick={() => setMoreOpen((prev) => !prev)}
-            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 ${overflowHasActive ? 'text-action-high-blue-france' : 'text-mention-grey'
-              }`}
+            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 ${
+              overflowHasActive ? 'text-action-high-blue-france' : 'text-mention-grey'
+            }`}
             aria-expanded={moreOpen}
             aria-haspopup="true"
           >
