@@ -594,7 +594,9 @@ describe('Documentation Completeness', () => {
         const operation = pathItem[method];
         expect(operation.tags).toBeDefined();
         expect(operation.tags.length).toBeGreaterThan(0);
-        expect(['FEI - Accès Direct', 'Carcasses - Accès Direct', 'Webhooks - Accès Direct']).toContain(operation.tags[0]);
+        expect(['FEI - Accès Direct', 'Carcasses - Accès Direct', 'Webhooks - Accès Direct']).toContain(
+          operation.tags[0],
+        );
       });
     });
   });

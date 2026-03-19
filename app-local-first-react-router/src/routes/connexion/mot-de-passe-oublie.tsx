@@ -51,7 +51,7 @@ export default function MotDePasseOublie() {
       if (!userResponse.error) {
         return '';
       }
-      return userResponse.error.includes?.(field) ? userResponse.error! : '';
+      return userResponse.error.toLocaleLowerCase().includes?.(field) ? userResponse.error! : '';
     }
     return '';
   };
