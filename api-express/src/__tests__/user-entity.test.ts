@@ -326,6 +326,43 @@ describe('POST /user-entity/', () => {
       expect(res.status).toBe(400);
     });
 
+    test('CCG entity found by numero_ddecpp → 200', async () => {
+      const ccgEntity = { ...testEntity, id: 'entity-ccg', type: EntityTypes.CCG, numero_ddecpp: 'ccg-dep-1' };
+      vi.mocked(prisma.entity.findFirst).mockResolvedValue(ccgEntity as any);
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
+        if (args.where?.status === EntityRelationStatus.ADMIN) {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(null);
+      });
+      const createdRelation: EntityAndUserRelations = {
+        id: 'rel-ccg',
+        owner_id: regularUser.id,
+        entity_id: 'entity-ccg',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        status: EntityRelationStatus.REQUESTED,
+        deleted_at: null,
+        created_at: new Date().toISOString() as unknown as Date,
+        updated_at: new Date().toISOString() as unknown as Date,
+        is_synced: true,
+        brevo_id: null,
+      };
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
+
+      const res = await authed(
+        request(app).post(BASE).send({
+          owner_id: regularUser.id,
+          numero_ddecpp: 'CCG-DEP-1',
+          type: EntityTypes.CCG,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.relation.entity_id).toBe('entity-ccg');
+    });
+
     test('non-admin cannot set status', async () => {
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
@@ -373,6 +410,125 @@ describe('POST /user-entity/', () => {
           entity: testEntity,
         },
       });
+    });
+
+    test('CAN_HANDLE relation triggers Brevo integration', async () => {
+      const { linkBrevoCompanyToContact } = await import('~/third-parties/brevo');
+      vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+      vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
+        if (args.where?.status === EntityRelationStatus.ADMIN) {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(null);
+      });
+      const createdRelation: EntityAndUserRelations = {
+        id: 'rel-1',
+        owner_id: regularUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.REQUESTED,
+        deleted_at: null,
+        created_at: new Date().toISOString() as unknown as Date,
+        updated_at: new Date().toISOString() as unknown as Date,
+        is_synced: true,
+        brevo_id: null,
+      };
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
+      vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([]); // no admin notifications
+
+      const res = await authed(
+        request(app).post(BASE).send({
+          owner_id: regularUser.id,
+          entity_id: 'entity-1',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(linkBrevoCompanyToContact).toHaveBeenCalledWith(testEntity, regularUser);
+    });
+
+    test('non-CAN_HANDLE relations do not trigger Brevo', async () => {
+      const { linkBrevoCompanyToContact } = await import('~/third-parties/brevo');
+      vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
+        if (args.where?.status === EntityRelationStatus.ADMIN) {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(null);
+      });
+      const createdRelation: EntityAndUserRelations = {
+        id: 'rel-transmit',
+        owner_id: regularUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        status: EntityRelationStatus.REQUESTED,
+        deleted_at: null,
+        created_at: new Date().toISOString() as unknown as Date,
+        updated_at: new Date().toISOString() as unknown as Date,
+        is_synced: true,
+        brevo_id: null,
+      };
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
+
+      const res = await authed(
+        request(app).post(BASE).send({
+          owner_id: regularUser.id,
+          entity_id: 'entity-1',
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(linkBrevoCompanyToContact).not.toHaveBeenCalled();
+    });
+
+    test('REQUESTED relation sends notification to entity admins', async () => {
+      const { default: sendNotification } = await import('~/service/notifications');
+      vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+      vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
+        if (args.where?.status === EntityRelationStatus.ADMIN) {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(null);
+      });
+      const createdRelation: EntityAndUserRelations = {
+        id: 'rel-1',
+        owner_id: regularUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.REQUESTED,
+        deleted_at: null,
+        created_at: new Date().toISOString() as unknown as Date,
+        updated_at: new Date().toISOString() as unknown as Date,
+        is_synced: true,
+        brevo_id: null,
+      };
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
+      const adminUser = { ...regularUser, id: 'admin-user', prenom: 'Admin', nom_de_famille: 'Entity' };
+      const adminRelation = { id: 'rel-admin', status: EntityRelationStatus.ADMIN, UserRelatedWithEntity: adminUser };
+      vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([adminRelation as any]);
+
+      const res = await authed(
+        request(app).post(BASE).send({
+          owner_id: regularUser.id,
+          entity_id: 'entity-1',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(sendNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user: adminUser,
+          notificationLogAction: `NEW_USER_IN_ENTITY_entity-1`,
+        }),
+      );
     });
   });
 
@@ -547,6 +703,84 @@ describe('PUT /user-entity/', () => {
 
       expect(res.status).toBe(400);
     });
+
+    test('missing entity_id → 400', async () => {
+      const res = await authed(
+        request(app).put(BASE).send({
+          owner_id: regularUser.id,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(400);
+    });
+
+    test('regular user cannot update another user relation → 403', async () => {
+      vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
+        // Admin check
+        if (args.where?.status === EntityRelationStatus.ADMIN) {
+          return Promise.resolve(null);
+        }
+        // Existing relation lookup
+        return Promise.resolve(null);
+      });
+
+      const res = await authed(
+        request(app).put(BASE).send({
+          owner_id: otherUser.id,
+          entity_id: 'entity-1',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(403);
+    });
+
+    test('entity admin can update status in their entity', async () => {
+      const existingRelation: EntityAndUserRelations = {
+        id: 'rel-1',
+        owner_id: otherUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.REQUESTED,
+        deleted_at: null,
+        created_at: new Date().toISOString() as unknown as Date,
+        updated_at: new Date().toISOString() as unknown as Date,
+        is_synced: true,
+        brevo_id: null,
+      };
+      const updatedRelation: EntityAndUserRelations = {
+        ...existingRelation,
+        status: EntityRelationStatus.ADMIN,
+      };
+      vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
+        // Admin check returns the entity admin relation
+        if (args.where?.status === EntityRelationStatus.ADMIN && args.where?.owner_id === regularUser.id) {
+          return Promise.resolve({ id: 'rel-admin', status: EntityRelationStatus.ADMIN } as any);
+        }
+        // Find existing relation
+        return Promise.resolve(existingRelation);
+      });
+      vi.mocked(prisma.entityAndUserRelations.update).mockResolvedValue(updatedRelation);
+
+      const res = await authed(
+        request(app).put(BASE).send({
+          owner_id: otherUser.id,
+          entity_id: 'entity-1',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          status: EntityRelationStatus.ADMIN,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      const updateCall = vi.mocked(prisma.entityAndUserRelations.update).mock.calls[0][0];
+      expect(updateCall.data).toHaveProperty('status', EntityRelationStatus.ADMIN);
+    });
   });
 
   describe('IDOR / cross-boundary', () => {
@@ -654,6 +888,145 @@ describe('DELETE /user-entity/', () => {
 
       expect(res.status).toBe(200);
       expect(vi.mocked(prisma.entityAndUserRelations.delete)).not.toHaveBeenCalled();
+    });
+
+    test('CAN_HANDLE deletion triggers Brevo unlink', async () => {
+      const { unlinkBrevoCompanyToContact } = await import('~/third-parties/brevo');
+      const existingRelation: Partial<EntityAndUserRelations> = {
+        id: 'rel-1',
+        owner_id: regularUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        deleted_at: null,
+      };
+      vi.mocked(prisma.entity.findUnique).mockReset();
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockReset();
+      vi.mocked(prisma.entityAndUserRelations.delete).mockReset();
+
+      vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
+        // Admin check
+        if (args.where?.status === EntityRelationStatus.ADMIN) {
+          return Promise.resolve(null);
+        }
+        // Find relation to delete
+        return Promise.resolve(existingRelation);
+      });
+      vi.mocked(prisma.entityAndUserRelations.delete).mockResolvedValue(existingRelation as any);
+
+      const res = await authed(
+        request(app).delete(BASE).send({
+          owner_id: regularUser.id,
+          entity_id: 'entity-1',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(unlinkBrevoCompanyToContact).toHaveBeenCalledWith(testEntity, regularUser);
+    });
+
+    test('non-CAN_HANDLE deletion does not trigger Brevo', async () => {
+      const { unlinkBrevoCompanyToContact } = await import('~/third-parties/brevo');
+      const existingRelation: Partial<EntityAndUserRelations> = {
+        id: 'rel-transmit',
+        owner_id: regularUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        deleted_at: null,
+      };
+      vi.mocked(prisma.entity.findUnique).mockReset();
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockReset();
+      vi.mocked(prisma.entityAndUserRelations.delete).mockReset();
+
+      vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.entityAndUserRelations.delete).mockResolvedValue(existingRelation as any);
+
+      const res = await authed(
+        request(app).delete(BASE).send({
+          owner_id: regularUser.id,
+          entity_id: 'entity-1',
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(200);
+      expect(unlinkBrevoCompanyToContact).not.toHaveBeenCalled();
+    });
+
+    test('unauthenticated DELETE → 401', async () => {
+      await request(app)
+        .delete(BASE)
+        .send({
+          owner_id: 'user-1',
+          entity_id: 'entity-1',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        })
+        .expect(401);
+    });
+
+    test('missing owner_id → 406 (schema validation)', async () => {
+      const res = await authed(
+        request(app).delete(BASE).send({
+          entity_id: 'entity-1',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(406);
+    });
+
+    test('missing relation → 400', async () => {
+      const res = await authed(
+        request(app).delete(BASE).send({
+          owner_id: regularUser.id,
+          entity_id: 'entity-1',
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(400);
+    });
+
+    test('missing entity_id → 400', async () => {
+      const res = await authed(
+        request(app).delete(BASE).send({
+          owner_id: regularUser.id,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(400);
+    });
+
+    test('cannot delete another user relation without admin', async () => {
+      vi.mocked(prisma.entity.findUnique).mockReset();
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockReset();
+
+      vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
+        // Admin check - regularUser is not admin of entity-1 for otherUser
+        if (args.where?.status === EntityRelationStatus.ADMIN) {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(null);
+      });
+
+      const res = await authed(
+        request(app).delete(BASE).send({
+          owner_id: otherUser.id,
+          entity_id: 'entity-1',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        regularUser,
+      );
+
+      expect(res.status).toBe(403);
     });
   });
 });
