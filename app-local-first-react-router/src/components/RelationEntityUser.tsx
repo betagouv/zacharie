@@ -197,10 +197,9 @@ export default function RelationEntityUser({
               iconId="fr-icon-delete-bin-line"
               onClick={() => {
                 if (!window.confirm('Voulez-vous vraiment supprimer cette relation ?')) return;
-                API.post({
-                  path: `/user/user-entity/${user.id}`,
+                API.delete({
+                  path: '/user-entity',
                   body: {
-                    _action: 'delete',
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
                     relation: relationType,
@@ -283,10 +282,9 @@ function RelationStatusSelector({
           if (!window.confirm("Voulez-vous vraiment retirer les droits d'administrateur à cet utilisateur ?"))
             return;
         }
-        API.post({
-          path: `/user/user-entity/${user.id}`,
+        API.put({
+          path: '/user-entity',
           body: {
-            _action: 'update',
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,

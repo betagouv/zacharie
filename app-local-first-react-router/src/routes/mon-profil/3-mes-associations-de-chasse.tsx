@@ -126,10 +126,9 @@ export default function MesAssociationsDeChasse() {
         }
       } else {
         API.post({
-          path: `/user/user-entity/${user.id}`,
+          path: '/user-entity',
           body: {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-            _action: 'create',
             [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
               EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
