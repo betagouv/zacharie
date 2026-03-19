@@ -379,6 +379,7 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('approval request endpoints should require authentication', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       // Test user approval endpoint without auth
       await request(app).post('/v1/approval-request/user').send({ email: 'test@example.com' }).expect(401);
 
@@ -387,16 +388,19 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('FEI user endpoint should require authentication', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       await request(app)
         .get('/v1/fei/user?date_from=2025-01-01&date_to=2025-01-31&email=test@example.com')
         .expect(401);
     });
 
     test('FEI user by numero endpoint should require authentication', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       await request(app).get('/v1/fei/user/2025-01-001?email=test@example.com').expect(401);
     });
 
     test('endpoints should reject invalid API keys', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       // Test with invalid API key
       await request(app)
         .get('/v1/fei?date_from=2025-01-01&date_to=2025-01-31')
@@ -407,6 +411,7 @@ describe('Swagger Documentation Validation', () => {
 
   describe('Parameter Validation', () => {
     test('should validate date format in FEI endpoint', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       await request(app)
         .get('/v1/fei?date_from=invalid-date&date_to=2025-01-31')
         .set('Authorization', 'Bearer test-api-key')
@@ -414,6 +419,7 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('should validate email format in carcasse user endpoint', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       await request(app)
         .get('/v1/carcasse/user/2025-01-01/BRACELET123?email=invalid-email')
         .set('Authorization', 'Bearer test-api-key')
@@ -421,6 +427,7 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('should validate request body in approval request endpoints', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       // Test invalid email format
       await request(app)
         .post('/v1/approval-request/user')
@@ -437,6 +444,7 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('should validate parameters in FEI user endpoint', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       await request(app)
         .get('/v1/fei/user?date_from=invalid-date&date_to=2025-01-31&email=test@example.com')
         .set('Authorization', 'Bearer test-api-key')
@@ -444,6 +452,7 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('should validate parameters in FEI user by numero endpoint', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       // Test invalid email format
       await request(app)
         .get('/v1/fei/user/2025-01-001?email=invalid-email')
@@ -460,6 +469,7 @@ describe('Swagger Documentation Validation', () => {
 
   describe('Access Token Authentication', () => {
     test('access token endpoint should require authentication', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       // Test access token endpoint without auth
       await request(app).post('/v1/access-token/user').send({ email: 'test@example.com' }).expect(401);
     });
@@ -475,6 +485,7 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('should validate request body in access token endpoint', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       // Test invalid email format
       await request(app)
         .post('/v1/access-token/user')
@@ -583,7 +594,7 @@ describe('Documentation Completeness', () => {
         const operation = pathItem[method];
         expect(operation.tags).toBeDefined();
         expect(operation.tags.length).toBeGreaterThan(0);
-        expect(['FEI - Accès Direct', 'Carcasses - Accès Direct']).toContain(operation.tags[0]);
+        expect(['FEI - Accès Direct', 'Carcasses - Accès Direct', 'Webhooks - Accès Direct']).toContain(operation.tags[0]);
       });
     });
   });
@@ -603,6 +614,7 @@ describe('Documentation Completeness', () => {
           'FEI - Accès Tiers',
           "Token d'accès - Accès Tiers",
           'Intégration Frontend - Accès Tiers',
+          'Webhooks - Accès Tiers',
         ]).toContain(operation.tags[0]);
       });
     });

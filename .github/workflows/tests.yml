@@ -46,6 +46,11 @@ jobs:
           cd api-express
           npm i
 
+      - name: Run API vitest tests
+        run: |
+          cd api-express
+          npm run test
+
       - name: Install Playwright Browsers
         run: |
           cd e2e
