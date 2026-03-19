@@ -53,26 +53,26 @@ import { captureException } from '@sentry/node';
 
 // Schemas for validation
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email('Email invalide'),
   username: z.string().optional(),
-  passwordUser: z.string(),
+  passwordUser: z.string().min(1, 'Le mot de passe est requis'),
 });
 
 const signupSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email('Email invalide'),
   username: z.string().optional(),
-  passwordUser: z.string(),
+  passwordUser: z.string().min(12, 'Le mot de passe doit contenir au moins 12 caractères'),
 });
 
 const forgetPasswordSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email('Email invalide'),
   username: z.string().optional(),
 });
 
 const resetPasswordSchema = z.object({
   username: z.string().optional(),
-  passwordUser: z.string(),
-  resetPasswordToken: z.string(),
+  passwordUser: z.string().min(12, 'Le mot de passe doit contenir au moins 12 caractères'),
+  resetPasswordToken: z.string().min(1, "L'URL de réinitialisation de mot de passe est invalide"),
 });
 
 // Route: POST /user/login - Connexion (compte existant)
@@ -86,9 +86,13 @@ router.post(
     ) => {
       let result = loginSchema.safeParse(req.body);
       if (!result.success) {
-        const error = new Error(result.error.message);
-        res.status(406);
-        return next(error);
+        res.status(406).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: result.error.errors[0].message,
+        });
+        return;
       }
       let { email, username, passwordUser } = result.data;
 
@@ -183,9 +187,13 @@ router.post(
     ) => {
       let result = signupSchema.safeParse(req.body);
       if (!result.success) {
-        const error = new Error(result.error.message);
-        res.status(406);
-        return next(error);
+        res.status(406).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: result.error.errors[0].message,
+        });
+        return;
       }
       let { email, username, passwordUser } = result.data;
 
@@ -273,9 +281,13 @@ router.post(
     ) => {
       let result = forgetPasswordSchema.safeParse(req.body);
       if (!result.success) {
-        const error = new Error(result.error.message);
-        res.status(406);
-        return next(error);
+        res.status(406).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: result.error.errors[0].message,
+        });
+        return;
       }
       let { email, username } = result.data;
 
@@ -354,9 +366,13 @@ router.post(
     ) => {
       let result = resetPasswordSchema.safeParse(req.body);
       if (!result.success) {
-        const error = new Error(result.error.message);
-        res.status(406);
-        return next(error);
+        res.status(406).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: result.error.errors[0].message,
+        });
+        return;
       }
       let { username, passwordUser, resetPasswordToken } = result.data;
 

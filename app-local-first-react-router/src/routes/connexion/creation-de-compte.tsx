@@ -48,6 +48,7 @@ export default function CreationDeCompte() {
     })
       .then((response) => response as UserConnexionResponse)
       .catch((error) => {
+        console.log('error', error);
         capture(error, { extra: { formData: Object.fromEntries(formData) } });
         return {
           ok: false,
@@ -57,6 +58,7 @@ export default function CreationDeCompte() {
         };
       });
     setIsLoading(false);
+    console.log('response', response);
     if (response.message) {
       window.scrollTo(0, 0);
     }
@@ -79,7 +81,7 @@ export default function CreationDeCompte() {
       if (!userResponse.error) {
         return '';
       }
-      return userResponse.error.includes?.(field) ? userResponse.error! : '';
+      return userResponse.error.toLocaleLowerCase().includes?.(field) ? userResponse.error! : '';
     }
     return '';
   };
