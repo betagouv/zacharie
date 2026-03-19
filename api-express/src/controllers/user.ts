@@ -868,9 +868,12 @@ router.post(
       const user = req.user!;
       let result = trouverPremierDetenteurBodySchema.safeParse(req.body);
       if (!result.success) {
-        const error = new Error(result.error.message);
-        res.status(406);
-        return next(error);
+        res.status(406).send({
+          ok: false,
+          data: { user: null },
+          error: result.error.errors[0].message,
+        });
+        return;
       }
       let body = result.data;
 
