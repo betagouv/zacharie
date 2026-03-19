@@ -1,3 +1,3 @@
 export function isStandaloneApp() {
-  return window.matchMedia("(display-mode: standalone)").matches;
+  return window.matchMedia('(display-mode: standalone)').matches;
 }

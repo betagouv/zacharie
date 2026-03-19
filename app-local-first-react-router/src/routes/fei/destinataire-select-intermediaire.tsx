@@ -16,7 +16,13 @@ import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useCarcassesIntermediairesForIntermediaire } from '@app/utils/get-carcasses-intermediaires';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
-import { useCcgIds, useEtgIds, useSviIds, useCollecteursProIds, useCircuitCourtIds } from '@app/utils/get-entity-relations';
+import {
+  useCcgIds,
+  useEtgIds,
+  useSviIds,
+  useCollecteursProIds,
+  useCircuitCourtIds,
+} from '@app/utils/get-entity-relations';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { getEntityDisplay } from '@app/utils/get-entity-display';
@@ -110,12 +116,10 @@ export default function DestinataireIntermediaire({
   const circuitCourt = circuitCourtIds.map((id) => entities[id]);
   const svis = svisIds.map((id) => entities[id]);
 
-
   const intermediaireEntity = intermediaire?.intermediaire_entity_id
     ? entities[intermediaire.intermediaire_entity_id]
     : null;
   const intermediaireEntityType = intermediaireEntity?.type;
-
 
   const prochainsDetenteurs = useMemo(() => {
     if (myCurrentRole === FeiOwnerRole.ETG) {
@@ -135,8 +139,7 @@ export default function DestinataireIntermediaire({
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
-      (entity) =>
-        entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
     );
   }, [prochainsDetenteurs]);
 
@@ -323,8 +326,7 @@ export default function DestinataireIntermediaire({
     }
     let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
       intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
-      intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
-        ?.type as FeiOwnerRole,
+      intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
       intermediaire_depot_type: depotType,
       intermediaire_depot_entity_id: depotType === DepotType.AUCUN ? null : depotEntityId,
     };
@@ -332,10 +334,7 @@ export default function DestinataireIntermediaire({
     updateFei(fei.numero, nextFei);
     addLog({
       user_id: user.id,
-      user_role:
-        myCurrentRole === FeiOwnerRole.EXAMINATEUR_INITIAL
-          ? UserRoles.CHASSEUR
-          : myCurrentRole!,
+      user_role: myCurrentRole === FeiOwnerRole.EXAMINATEUR_INITIAL ? UserRoles.CHASSEUR : myCurrentRole!,
       action: 'intermediaire-next-owner-select-destinataire',
       fei_numero: fei.numero,
       history: createHistoryInput(fei, nextFei),
@@ -360,12 +359,7 @@ export default function DestinataireIntermediaire({
       }
     }
     return null;
-  }, [
-    prochainDetenteurEntityId,
-    needDepot,
-    depotType,
-    depotEntityId,
-  ]);
+  }, [prochainDetenteurEntityId, needDepot, depotType, depotEntityId]);
 
   if (!fei.premier_detenteur_user_id) {
     return "Il n'y a pas encore de premier détenteur pour cette fiche";
@@ -459,8 +453,7 @@ export default function DestinataireIntermediaire({
                   },
                 },
                 {
-                  label:
-                    "Carcasses déposées dans un Centre de Collecte du Gibier sauvage (chambre froide)",
+                  label: 'Carcasses déposées dans un Centre de Collecte du Gibier sauvage (chambre froide)',
                   nativeInputProps: {
                     checked: depotType === DepotType.CCG,
                     readOnly: !canEdit,

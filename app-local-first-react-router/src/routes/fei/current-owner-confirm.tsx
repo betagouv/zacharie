@@ -91,7 +91,8 @@ export default function CurrentOwnerConfirm() {
   }, [feiCarcasses, userEntityIds, user.id]);
 
   // Fallback: if no per-carcasse assignment, use all carcasses (retrocompat)
-  const carcasseIds = myCarcasseIds.length > 0 ? myCarcasseIds : feiCarcasses.map((c) => c.zacharie_carcasse_id);
+  const carcasseIds =
+    myCarcasseIds.length > 0 ? myCarcasseIds : feiCarcasses.map((c) => c.zacharie_carcasse_id);
 
   // Check if there are remaining carcasses not yet taken in charge by anyone
   const hasRemainingUntakenCarcasses = useMemo(() => {
@@ -123,9 +124,10 @@ export default function CurrentOwnerConfirm() {
 
   const [checkedTransportFromETG /* setCheckedTransportFromETG */] = useState(needTransportFromETG);
   const notMyEntitySoutraite = useMemo(() => {
-    const sousTraiteEntityId = myCarcasses.length > 0
-      ? myCarcasses[0].next_owner_sous_traite_by_entity_id
-      : fei.fei_next_owner_sous_traite_by_entity_id;
+    const sousTraiteEntityId =
+      myCarcasses.length > 0
+        ? myCarcasses[0].next_owner_sous_traite_by_entity_id
+        : fei.fei_next_owner_sous_traite_by_entity_id;
     if (!sousTraiteEntityId) return false;
     if (sousTraiteEntityId === myEntityId) return false;
     return true;
@@ -152,7 +154,8 @@ export default function CurrentOwnerConfirm() {
     if (myCarcasses.length > 0) {
       // User has carcasses assigned — check role compatibility
       if (user.roles.includes(UserRoles.ETG) && myNextOwnerRole === FeiOwnerRole.ETG) return true;
-      if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && myNextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO) return true;
+      if (user.roles.includes(UserRoles.COLLECTEUR_PRO) && myNextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO)
+        return true;
       if (user.roles.includes(UserRoles.SVI) && myNextOwnerRole === FeiOwnerRole.SVI) return true;
     }
 
@@ -180,10 +183,7 @@ export default function CurrentOwnerConfirm() {
         }
       }
     }
-    if (
-      user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
-      myNextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO
-    ) {
+    if (user.roles.includes(UserRoles.COLLECTEUR_PRO) || myNextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO) {
       if (myNextOwnerRole !== FeiOwnerRole.COLLECTEUR_PRO) return false;
       if (!user.roles.includes(UserRoles.COLLECTEUR_PRO)) return false;
     }
@@ -254,7 +254,10 @@ export default function CurrentOwnerConfirm() {
     };
 
     // Create both intermediaires in a single store update (only for my carcasses)
-    await createFeiIntermediaires([transportIntermediaire, receptionIntermediaire], myCarcasseIds.length > 0 ? myCarcasseIds : undefined);
+    await createFeiIntermediaires(
+      [transportIntermediaire, receptionIntermediaire],
+      myCarcasseIds.length > 0 ? myCarcasseIds : undefined,
+    );
     addLog({
       user_id: user.id,
       user_role: UserRoles.COLLECTEUR_PRO,
@@ -699,15 +702,16 @@ export default function CurrentOwnerConfirm() {
                 const otherCarcassesWithNextOwner = feiCarcasses.filter(
                   (c) => c.next_owner_entity_id != null && !carcasseIds.includes(c.zacharie_carcasse_id),
                 );
-                const nextFei = otherCarcassesWithNextOwner.length > 0
-                  ? {} // Keep FEI-level next_owner for other recipients
-                  : {
-                      fei_next_owner_entity_id: null,
-                      fei_next_owner_entity_name_cache: null,
-                      fei_next_owner_user_id: null,
-                      fei_next_owner_user_name_cache: null,
-                      fei_next_owner_role: null,
-                    };
+                const nextFei =
+                  otherCarcassesWithNextOwner.length > 0
+                    ? {} // Keep FEI-level next_owner for other recipients
+                    : {
+                        fei_next_owner_entity_id: null,
+                        fei_next_owner_entity_name_cache: null,
+                        fei_next_owner_user_id: null,
+                        fei_next_owner_user_name_cache: null,
+                        fei_next_owner_role: null,
+                      };
                 updateFei(fei.numero, nextFei);
                 addLog({
                   user_id: user.id,

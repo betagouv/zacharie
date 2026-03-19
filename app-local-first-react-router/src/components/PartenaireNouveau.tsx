@@ -52,9 +52,9 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
 
   const newEntity = newEntityNomDUsage
     ? ({
-      nom_d_usage: newEntityNomDUsage,
-      id: 'nouvelle',
-    } as (typeof remainingEntities)[number])
+        nom_d_usage: newEntityNomDUsage,
+        id: 'nouvelle',
+      } as (typeof remainingEntities)[number])
     : undefined;
   const selectOptions = newEntity ? [newEntity, ...remainingEntities] : remainingEntities;
   const selectValue = newEntityNomDUsage
@@ -154,7 +154,13 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
   return (
     <>
       <form id="partenaire_data_form" method="POST" onSubmit={handleEntitySubmit}>
-        <Alert closable className="bg-white mb-8" small severity="info" description="Attention : les établissements de traitement du gibier et les collecteurs professionnels sont déjà enregistrés sur Zacharie. Ce formulaire sert à enregistrer les autres catégories de destinataires (commerces de détail, associations, particuliers…)." />
+        <Alert
+          closable
+          className="mb-8 bg-white"
+          small
+          severity="info"
+          description="Attention : les établissements de traitement du gibier et les collecteurs professionnels sont déjà enregistrés sur Zacharie. Ce formulaire sert à enregistrer les autres catégories de destinataires (commerces de détail, associations, particuliers…)."
+        />
         <RadioButtons
           legend="Qualité du partenaire *"
           hintText="Est-ce un commerce de détail, repas de chasse ou associatif, ou encore un consommateur final ?"

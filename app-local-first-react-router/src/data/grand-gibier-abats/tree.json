@@ -161,7 +161,11 @@
   },
   "Autres (rate)": {
     "Abcès ou nodules": ["Unique", "Multiples"],
-    "Anomalies de consistance": ["Rate friable", "Rate anormalement volumineuse", "Autres anomalies de consistance"],
+    "Anomalies de consistance": [
+      "Rate friable",
+      "Rate anormalement volumineuse",
+      "Autres anomalies de consistance"
+    ],
     "Anomalies de couleur": ["Rate sombre", "Autres anomalies de couleur"],
     "Autres anomalies": []
   }

@@ -1,6 +1,6 @@
-import { useLocation } from "react-router";
-import technicalError from "@codegouvfr/react-dsfr/dsfr/artwork/pictograms/system/technical-error.svg?url";
-import artworkDarkSvgUrl from "@codegouvfr/react-dsfr/dsfr/artwork/background/ovoid.svg?url";
+import { useLocation } from 'react-router';
+import technicalError from '@codegouvfr/react-dsfr/dsfr/artwork/pictograms/system/technical-error.svg?url';
+import artworkDarkSvgUrl from '@codegouvfr/react-dsfr/dsfr/artwork/background/ovoid.svg?url';
 
 export default function NotFound() {
   const location = useLocation();
@@ -15,11 +15,11 @@ export default function NotFound() {
               La page que vous cherchez est introuvable. Excusez-nous pour la gène occasionnée.
             </p>
             <p className="fr-text--sm fr-mb-5w">
-              Si vous avez tapé l'adresse web dans le navigateur, vérifiez qu'elle est correcte. La page n’est peut-être
-              plus disponible.
+              Si vous avez tapé l'adresse web dans le navigateur, vérifiez qu'elle est correcte. La page n’est
+              peut-être plus disponible.
               <br />
-              Dans ce cas, pour continuer votre visite vous pouvez consulter notre page d’accueil, ou effectuer une
-              recherche avec notre moteur de recherche en haut de page.
+              Dans ce cas, pour continuer votre visite vous pouvez consulter notre page d’accueil, ou
+              effectuer une recherche avec notre moteur de recherche en haut de page.
               <br />
               Sinon contactez-nous pour que l’on puisse vous rediriger vers la bonne information.
             </p>

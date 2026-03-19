@@ -74,9 +74,7 @@ export default function LandingDemarchesPage() {
                 isDesktop && showContent !== 'demarches' ? 'hidden' : '',
               ].join(' ')}
             >
-              <h2 className="fr-h2 text-action-high-blue-france !text-left text-balance">
-                Vos démarches
-              </h2>
+              <h2 className="fr-h2 text-action-high-blue-france !text-left text-balance">Vos démarches</h2>
               <Section title="Qu'est ce que sont les démarches du gibier sauvage ?">
                 <div className="my-8 flex flex-col gap-4 md:col-start-2 md:row-span-2 md:row-start-1 md:m-0">
                   <p className="text-justify font-normal text-pretty text-gray-700 [&_b]:font-bold [&_b]:text-gray-900">

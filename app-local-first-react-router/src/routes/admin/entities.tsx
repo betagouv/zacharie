@@ -80,76 +80,76 @@ export default function AdminEntites() {
       </div>
       <section className="mb-4 bg-white md:shadow-sm">
         <Tabs
-              selectedTabId={selectedTabId}
-              tabs={tabs}
-              onTabChange={setSelectedTabId}
-              className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
-            >
-              <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
-                <Table
-                  fixed
-                  noCaption
-                  className="[&_td]:align-middle"
-                  data={entities
-                    .filter((entity) => {
-                      if (selectedTabId === 'all') return true;
-                      return entity.type === selectedTabId;
-                    })
-                    .map((entity, index) => [
-                      <div
-                        key={entity.id}
-                        className="flex size-full flex-row items-start border-r border-r-gray-200"
-                      >
-                        <span className="p-4">{index + 1}</span>
-                        <div>
-                          <span className="text-sm text-gray-500">
-                            Compatible Zacharie : {entity.zacharie_compatible ? '✅' : '❌'}
-                          </span>
-                          <Link
-                            key={entity.id}
-                            to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                            className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
-                            suppressHydrationWarning
-                          >
-                            {dayjs(entity.created_at).format('DD/MM/YYYY à HH:mm')}
-                          </Link>
-                        </div>
-                      </div>,
+          selectedTabId={selectedTabId}
+          tabs={tabs}
+          onTabChange={setSelectedTabId}
+          className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
+        >
+          <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
+            <Table
+              fixed
+              noCaption
+              className="[&_td]:align-middle"
+              data={entities
+                .filter((entity) => {
+                  if (selectedTabId === 'all') return true;
+                  return entity.type === selectedTabId;
+                })
+                .map((entity, index) => [
+                  <div
+                    key={entity.id}
+                    className="flex size-full flex-row items-start border-r border-r-gray-200"
+                  >
+                    <span className="p-4">{index + 1}</span>
+                    <div>
+                      <span className="text-sm text-gray-500">
+                        Compatible Zacharie : {entity.zacharie_compatible ? '✅' : '❌'}
+                      </span>
                       <Link
                         key={entity.id}
                         to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                        className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
+                        className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
+                        suppressHydrationWarning
                       >
-                        {entity.nom_d_usage}
+                        {dayjs(entity.created_at).format('DD/MM/YYYY à HH:mm')}
+                      </Link>
+                    </div>
+                  </div>,
+                  <Link
+                    key={entity.id}
+                    to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                    className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
+                  >
+                    {entity.nom_d_usage}
+                    <br />
+                    🏭 {entity.numero_ddecpp}
+                    <br />
+                    🏡 {entity.address_ligne_1}
+                    <br />
+                    {entity.address_ligne_2 && (
+                      <>
                         <br />
-                        🏭 {entity.numero_ddecpp}
-                        <br />
-                        🏡 {entity.address_ligne_1}
-                        <br />
-                        {entity.address_ligne_2 && (
-                          <>
-                            <br />
-                            {entity.address_ligne_2}
-                          </>
-                        )}
-                        {entity.code_postal} {entity.ville}
-                      </Link>,
-                      <Link
-                        key={entity.id}
-                        to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                        className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
-                      >
-                        {entity.type}
-                      </Link>,
-                    ])}
-                  headers={['Date de création', 'Identité', 'Type']}
-                />
-              </div>
-              <div className="flex flex-col items-start bg-white px-8 md:[&_ul]:min-w-96">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                  Haut de page
-                </a>
-              </div>
+                        {entity.address_ligne_2}
+                      </>
+                    )}
+                    {entity.code_postal} {entity.ville}
+                  </Link>,
+                  <Link
+                    key={entity.id}
+                    to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                    className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
+                  >
+                    {entity.type}
+                  </Link>,
+                ])}
+              headers={['Date de création', 'Identité', 'Type']}
+            />
+          </div>
+          <div className="flex flex-col items-start bg-white px-8 md:[&_ul]:min-w-96">
+            <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+              Haut de page
+            </a>
+          </div>
         </Tabs>
       </section>
     </div>

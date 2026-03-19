@@ -323,7 +323,7 @@ export default function AdminCarcassesIntermediaires() {
               <div className="relative border-l-2 border-gray-300 pl-4">
                 {timeline.map((event, i) => (
                   <div key={i} className="relative mb-4">
-                    <div className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full border-2 border-blue-600 bg-white" />
+                    <div className="absolute top-1 -left-[21px] h-2.5 w-2.5 rounded-full border-2 border-blue-600 bg-white" />
                     <div className="text-xs text-gray-500">{event.date ? formatDate(event.date) : '—'}</div>
                     <div className="text-sm font-semibold">{event.label}</div>
                     {Object.keys(event.data).length > 0 && (
@@ -360,7 +360,10 @@ export default function AdminCarcassesIntermediaires() {
                           key={`${ci.fei_numero}_${ci.zacharie_carcasse_id}_${ci.intermediaire_id}`}
                           className="border-b"
                         >
-                          <td className="max-w-[100px] truncate p-1" title={ci.CarcasseIntermediaireEntity.nom_d_usage}>
+                          <td
+                            className="max-w-[100px] truncate p-1"
+                            title={ci.CarcasseIntermediaireEntity.nom_d_usage}
+                          >
                             {ci.CarcasseIntermediaireEntity.nom_d_usage}
                           </td>
                           <td className="p-1">{ci.intermediaire_role}</td>

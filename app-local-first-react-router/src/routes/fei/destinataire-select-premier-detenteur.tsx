@@ -18,7 +18,12 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { useCcgIds, useEtgIds, useCollecteursProIds, useCircuitCourtIds } from '@app/utils/get-entity-relations';
+import {
+  useCcgIds,
+  useEtgIds,
+  useCollecteursProIds,
+  useCircuitCourtIds,
+} from '@app/utils/get-entity-relations';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -113,12 +118,18 @@ function DispatchGroupForm({
   const Component = canEdit ? Input : InputNotEditable;
 
   return (
-    <div className="rounded border border-gray-300 bg-white p-4 space-y-4">
+    <div className="space-y-4 rounded border border-gray-300 bg-white p-4">
       <div className="flex items-center justify-between">
         <h4 className="m-0 text-lg font-bold">
           {totalGroups > 1 && <>Destinataire {groupIndex + 1} </>}
           {totalGroups > 1 && (
-            <Badge severity={group.carcasseIds.length > 0 ? 'info' : 'warning'} small noIcon as="span" className="ml-2">
+            <Badge
+              severity={group.carcasseIds.length > 0 ? 'info' : 'warning'}
+              small
+              noIcon
+              as="span"
+              className="ml-2"
+            >
               {group.carcasseIds.length} carcasse{group.carcasseIds.length !== 1 ? 's' : ''}
             </Badge>
           )}
@@ -140,15 +151,11 @@ function DispatchGroupForm({
 
       {totalGroups > 1 && (
         <div>
-          <p className="mb-2 text-sm font-bold">
-            Cliquez pour ajouter ou retirer
-          </p>
+          <p className="mb-2 text-sm font-bold">Cliquez pour ajouter ou retirer</p>
           <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-4">
             {allCarcassesRestantes.map((carcasse) => {
               const isInGroup = group.carcasseIds.includes(carcasse.zacharie_carcasse_id);
-              const otherGroupLabel = !isInGroup
-                ? carcasseToGroupLabel[carcasse.zacharie_carcasse_id]
-                : null;
+              const otherGroupLabel = !isInGroup ? carcasseToGroupLabel[carcasse.zacharie_carcasse_id] : null;
               return (
                 <button
                   key={carcasse.zacharie_carcasse_id}
@@ -188,8 +195,8 @@ function DispatchGroupForm({
         hint={
           <>
             <span>
-              Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge
-              le gibier.
+              Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le
+              gibier.
             </span>
             {!group.recipientEntityId && !disabled && (
               <div>
@@ -213,14 +220,10 @@ function DispatchGroupForm({
         }
         options={prochainsDetenteursOptions}
         placeholder="Sélectionnez le prochain détenteur des carcasses"
-        value={
-          prochainsDetenteursOptions.find((option) => option.value === group.recipientEntityId) ?? null
-        }
+        value={prochainsDetenteursOptions.find((option) => option.value === group.recipientEntityId) ?? null}
         getOptionLabel={(f) => f.label!}
         getOptionValue={(f) => f.value}
-        onChange={(f) =>
-          onUpdateGroup(group.id, { recipientEntityId: f ? f.value : null })
-        }
+        onChange={(f) => onUpdateGroup(group.id, { recipientEntityId: f ? f.value : null })}
         isClearable={!!group.recipientEntityId}
         inputId={`${Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
         classNamePrefix={`select-prochain-detenteur-${group.id}`}
@@ -266,8 +269,7 @@ function DispatchGroupForm({
             },
           },
           {
-            label:
-              "Carcasses déposées dans un Centre de Collecte du Gibier sauvage (chambre froide)",
+            label: 'Carcasses déposées dans un Centre de Collecte du Gibier sauvage (chambre froide)',
             nativeInputProps: {
               checked: group.depotType === DepotType.CCG,
               readOnly: !canEdit,
@@ -579,8 +581,7 @@ export default function DestinatairePremierDetenteur({
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
-      (entity) =>
-        entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
     );
   }, [prochainsDetenteurs]);
 
@@ -762,7 +763,9 @@ export default function DestinatairePremierDetenteur({
           content: (
             <>
               <p className="mb-3">
-                <strong>Les carcasses de sanglier transmises nécessitent un test trichine obligatoire.</strong>
+                <strong>
+                  Les carcasses de sanglier transmises nécessitent un test trichine obligatoire.
+                </strong>
               </p>
               <p>
                 Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé
@@ -812,9 +815,7 @@ export default function DestinatairePremierDetenteur({
     for (let i = 0; i < dispatchGroups.length; i++) {
       const error = getGroupValidationError(dispatchGroups[i], entities);
       if (error) {
-        return dispatchGroups.length > 1
-          ? `Destinataire ${i + 1} : ${error}`
-          : error;
+        return dispatchGroups.length > 1 ? `Destinataire ${i + 1} : ${error}` : error;
       }
     }
     // if (unassignedCarcasses.length > 0) {
@@ -1042,7 +1043,7 @@ export default function DestinatairePremierDetenteur({
                 if (g.id === group.id) continue;
                 const gIndex = dispatchGroups.indexOf(g);
                 const label = g.recipientEntityId
-                  ? entities[g.recipientEntityId]?.nom_d_usage ?? `Dest. ${gIndex + 1}`
+                  ? (entities[g.recipientEntityId]?.nom_d_usage ?? `Dest. ${gIndex + 1}`)
                   : `Dest. ${gIndex + 1}`;
                 for (const cId of g.carcasseIds) {
                   carcasseToGroupLabel[cId] = label;
@@ -1097,9 +1098,7 @@ export default function DestinatairePremierDetenteur({
               />
             )}
 
-
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mt-4 gap-2">
-
+            <div className="mt-4 flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
               {/* Submit button */}
               {canEdit && (
                 <Button
@@ -1138,7 +1137,12 @@ export default function DestinatairePremierDetenteur({
               )}
             </div>
             {!disabled && globalValidationError && (
-              <Alert title="Attention" className="mt-4" severity="error" description={globalValidationError} />
+              <Alert
+                title="Attention"
+                className="mt-4"
+                severity="error"
+                description={globalValidationError}
+              />
             )}
           </>
         )}

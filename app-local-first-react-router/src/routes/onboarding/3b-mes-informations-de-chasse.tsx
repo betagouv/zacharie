@@ -13,7 +13,7 @@ import MesCCGs from './3-mes-ccgs';
 import MesAssociationsDeChasse from './3-mes-associations-de-chasse';
 import MesPartenaires from './3-mes-partenaires';
 import { toast } from 'react-toastify';
-import { Highlight } from "@codegouvfr/react-dsfr/Highlight";
+import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 
 export default function OnboardingMesInformationsDeChasse() {
@@ -45,7 +45,6 @@ export default function OnboardingMesInformationsDeChasse() {
 
   const nextPage = '/app/tableau-de-bord';
 
-
   const handleSubmit = async () => {
     try {
       const response = await API.post({
@@ -58,10 +57,9 @@ export default function OnboardingMesInformationsDeChasse() {
       }
     } catch (error) {
       console.error(error);
-      toast.error('Erreur lors de l\'enregistrement des informations de chasse');
+      toast.error("Erreur lors de l'enregistrement des informations de chasse");
     }
-  }
-
+  };
 
   const showEntrpriseVisibilityCheckbox =
     !!user.checked_has_asso_de_chasse ||
@@ -75,18 +73,18 @@ export default function OnboardingMesInformationsDeChasse() {
       <title>{`Mes informations de chasse | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper
-            currentStep={3}
-            nextTitle={undefined}
-            stepCount={3}
-            title="Informations de chasse"
+          <Stepper currentStep={3} nextTitle={undefined} stepCount={3} title="Informations de chasse" />
+          <Alert
+            className="mb-8 bg-white"
+            small
+            severity="info"
+            description="Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer."
           />
-          <Alert className="bg-white mb-8" small severity="info" description="Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer." />
           <p className="mb-8 text-sm text-gray-500">
             <Link to={redirect ?? nextPage} className="text-gray-500">
               Passer cette étape
-            </Link>
-            {' '}— vous pourrez compléter ces informations plus tard.
+            </Link>{' '}
+            — vous pourrez compléter ces informations plus tard.
           </p>
           {isChasseur && <MesAssociationsDeChasse />}
           <MesCCGs />
@@ -126,7 +124,7 @@ export default function OnboardingMesInformationsDeChasse() {
               </div>
             </div>
           )}
-          <div className="left-0 z-50 flex flex-col p-4 pb-2 relative bottom-0 w-auto items-center justify-center shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
+          <div className="relative bottom-0 left-0 z-50 flex w-auto flex-col items-center justify-center p-4 pb-2 shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
             <ButtonsGroup
               inlineLayoutWhen="always"
               buttons={[
@@ -158,6 +156,6 @@ export default function OnboardingMesInformationsDeChasse() {
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 }

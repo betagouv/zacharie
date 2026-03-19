@@ -126,8 +126,8 @@ export default function FeiPremierDetenteur() {
           description={
             <>
               <p className="mb-2">
-                Votre compte est actuellement en cours de vérification par l'équipe Zacharie, ou certaines informations
-                sont manquantes.
+                Votre compte est actuellement en cours de vérification par l'équipe Zacharie, ou certaines
+                informations sont manquantes.
               </p>
               <p className="mb-2">Une fois activé, vous pourrez transmettre vos fiches.</p>
               <p>
@@ -156,10 +156,7 @@ export default function FeiPremierDetenteur() {
           className="mb-5"
         />
       )}
-      <DestinataireSelectPremierDetenteur
-        canEdit={canEdit}
-        disabled={showAsDisabled}
-      />
+      <DestinataireSelectPremierDetenteur canEdit={canEdit} disabled={showAsDisabled} />
     </Section>
   );
 }

@@ -129,7 +129,9 @@ export default function CcgImport() {
       setSelectedForUpdate(new Set(response.data.modifies.map((r) => r.numero_ddecpp)));
       setStep('preview');
     } catch {
-      setError("Erreur lors de la lecture du fichier. Vérifiez qu'il s'agit d'un fichier CSV ou Excel valide.");
+      setError(
+        "Erreur lors de la lecture du fichier. Vérifiez qu'il s'agit d'un fichier CSV ou Excel valide.",
+      );
     } finally {
       setLoading(false);
     }
@@ -265,7 +267,7 @@ export default function CcgImport() {
                   if (!existing || oldVal === undefined || oldVal === newVal) return newVal;
                   return (
                     <span>
-                      <span className="line-through text-red-500">{oldVal}</span>{' '}
+                      <span className="text-red-500 line-through">{oldVal}</span>{' '}
                       <span className="font-bold text-green-600">{newVal}</span>
                     </span>
                   );

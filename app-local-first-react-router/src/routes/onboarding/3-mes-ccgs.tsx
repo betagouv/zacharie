@@ -70,9 +70,7 @@ export default function MesCCGs() {
   }, []);
 
   const navigate = useNavigate();
-  const hasPreregisteredCCG = userCCGs.some(
-    (ccg) => ccg.ccg_status === 'Pré-enregistré dans Zacharie',
-  );
+  const hasPreregisteredCCG = userCCGs.some((ccg) => ccg.ccg_status === 'Pré-enregistré dans Zacharie');
 
   return (
     <div className="mb-6 bg-white md:shadow-sm" id="onboarding-etape-2-ccgs-data">
@@ -173,7 +171,7 @@ export default function MesCCGs() {
                           href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w"
                           target="_blank"
                           rel="noreferrer noopener"
-                          className="text-sm text-action-high-blue-france-light"
+                          className="text-action-high-blue-france-light text-sm"
                         >
                           Démarrer la déclaration
                         </a>
@@ -186,10 +184,7 @@ export default function MesCCGs() {
                           iconId="fr-icon-pencil-line"
                           title="Éditer"
                           nativeButtonProps={{
-                            onClick: () =>
-                              navigate(
-                                `/app/tableau-de-bord/mon-profil/mes-ccgs/${entity.id}`,
-                              ),
+                            onClick: () => navigate(`/app/tableau-de-bord/mon-profil/mes-ccgs/${entity.id}`),
                           }}
                         />
                       )}
@@ -201,7 +196,9 @@ export default function MesCCGs() {
                         title="Supprimer"
                         nativeButtonProps={{
                           onClick: () => {
-                            if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette chambre froide ?')) {
+                            if (
+                              !window.confirm('Êtes-vous sûr de vouloir supprimer cette chambre froide ?')
+                            ) {
                               return;
                             }
                             API.post({
@@ -382,8 +379,8 @@ export default function MesCCGs() {
                       description={
                         <>
                           Cette étape ne remplace pas l'enregistrement officiel du CCG : elle sert seulement à
-                          le renseigner dans Zacharie. Pour être reconnu, le CCG doit être enregistré auprès de
-                          la DDPP/DDETSPP de votre département. Pour déclarer votre CCG,{' '}
+                          le renseigner dans Zacharie. Pour être reconnu, le CCG doit être enregistré auprès
+                          de la DDPP/DDETSPP de votre département. Pour déclarer votre CCG,{' '}
                           <a
                             href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w"
                             target="_blank"

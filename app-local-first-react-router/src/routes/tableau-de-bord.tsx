@@ -263,10 +263,10 @@ export default function TableauDeBordIndex() {
     const _sviWorkingForEtgIds = !isOnlySvi
       ? []
       : allEtgIds.filter((id) => {
-        const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
-        if (!etgLinkedToSviId) return false;
-        return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
-      });
+          const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
+          if (!etgLinkedToSviId) return false;
+          return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
+        });
     if (_sviWorkingForEtgIds.includes(filterETG)) {
       return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
     }
@@ -626,10 +626,10 @@ function FeisWrapper({
         <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center bg-white p-4 md:p-8">
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <div className="flex flex-col bg-white">
-              <h2 className="mb-3 fr-h4 font-bold text-gray-800">Pas encore de fiches cette saison</h2>
+              <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de fiches cette saison</h2>
               {user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei ? (
                 <>
-                  <p className="mb-6 max-w-md fr-text--regular">
+                  <p className="fr-text--regular mb-6 max-w-md">
                     Vos fiches apparaîtront ici dès que vous aurez créé votre première fiche d'examen initial.
                   </p>
                   <Button
@@ -644,7 +644,7 @@ function FeisWrapper({
                   </Button>
                 </>
               ) : (
-                <p className="mb-6 max-w-md fr-text--regular">
+                <p className="fr-text--regular mb-6 max-w-md">
                   Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée.
                 </p>
               )}
@@ -718,7 +718,10 @@ function FeisTableRow({
             );
             if (carcasse) {
               const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
-              const intermediaires = filterCarcassesIntermediairesForCarcasse(carcassesIntermediaireById, carcasse.zacharie_carcasse_id!);
+              const intermediaires = filterCarcassesIntermediairesForCarcasse(
+                carcassesIntermediaireById,
+                carcasse.zacharie_carcasse_id!,
+              );
               const latestIntermediaire = intermediaires[0];
               const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
               if (nombreDAnimaux > 1 && nombreDAnimauxAcceptes > 0) {

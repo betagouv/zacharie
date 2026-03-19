@@ -75,12 +75,8 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
       />
       {isDropdownOpen && (
         <div className="absolute top-full right-0 left-0 z-50 mt-1 flex w-full flex-col rounded border border-gray-200 bg-white shadow-lg">
-          {!!error && (
-            <p className="px-3 py-2 text-sm text-orange-700">{error}</p>
-          )}
-          {isLoading && (
-            <p className="px-3 py-2 text-sm text-gray-500">Recherche en cours...</p>
-          )}
+          {!!error && <p className="px-3 py-2 text-sm text-orange-700">{error}</p>}
+          {isLoading && <p className="px-3 py-2 text-sm text-gray-500">Recherche en cours...</p>}
           {successData.map((data) => (
             <a
               key={`${data.fei_numero || data.carcasse_numero_bracelet}`}
@@ -93,18 +89,12 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
                   {data.carcasse_numero_bracelet}: {data.carcasse_espece}
                 </span>
               )}
-              {data.fei_numero && (
-                <span className="text-sm">Fiche {data.fei_numero}</span>
-              )}
+              {data.fei_numero && <span className="text-sm">Fiche {data.fei_numero}</span>}
               {data.fei_svi_assigned_at && (
-                <span className="text-xs italic text-gray-500">
-                  Transmise le {data.fei_svi_assigned_at}
-                </span>
+                <span className="text-xs text-gray-500 italic">Transmise le {data.fei_svi_assigned_at}</span>
               )}
               {data.fei_date_mise_a_mort && (
-                <span className="text-xs italic text-gray-500">
-                  Chasse du {data.fei_date_mise_a_mort}
-                </span>
+                <span className="text-xs text-gray-500 italic">Chasse du {data.fei_date_mise_a_mort}</span>
               )}
             </a>
           ))}

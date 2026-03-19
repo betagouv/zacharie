@@ -1,18 +1,17 @@
 import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
-import {
-  UserRoles,
-  Prisma,
-  EntityTypes,
-  EntityRelationType,
-  FeiOwnerRole,
-} from '@prisma/client';
+import { UserRoles, Prisma, EntityTypes, EntityRelationType, FeiOwnerRole } from '@prisma/client';
 import dayjs from 'dayjs';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { useEtgIds, useSviIds, useCollecteursProIds, useCircuitCourtIds } from '@app/utils/get-entity-relations';
+import {
+  useEtgIds,
+  useSviIds,
+  useCollecteursProIds,
+  useCircuitCourtIds,
+} from '@app/utils/get-entity-relations';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { getEntityDisplay } from '@app/utils/get-entity-display';
@@ -83,8 +82,7 @@ export default function DestinataireSousTraite({
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
-      (entity) =>
-        entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
     );
   }, [prochainsDetenteurs]);
 
@@ -117,11 +115,7 @@ export default function DestinataireSousTraite({
       return false;
     }
     return false;
-  }, [
-    prochainDetenteurEntityId,
-    prochainDetenteurType,
-    fei.fei_next_owner_entity_id,
-  ]);
+  }, [prochainDetenteurEntityId, prochainDetenteurType, fei.fei_next_owner_entity_id]);
 
   const [tryToSubmitAtLeastOnce, setTryTOSubmitAtLeastOnce] = useState(false);
 
@@ -166,7 +160,7 @@ export default function DestinataireSousTraite({
       user_id: user.id,
       user_role:
         fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
-          fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
+        fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
           ? UserRoles.CHASSEUR
           : fei.fei_current_owner_role!,
       action: 'current-owner-sous-traite-select-destinataire-sous-traite',
@@ -205,10 +199,7 @@ export default function DestinataireSousTraite({
 
   return (
     <>
-      <div
-        className={[className, 'space-y-6'].join(' ')}
-        key={prochainDetenteurEntityId}
-      >
+      <div className={[className, 'space-y-6'].join(' ')} key={prochainDetenteurEntityId}>
         <SelectCustom
           label="Prochain détenteur des carcasses *"
           hint={

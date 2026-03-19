@@ -85,10 +85,8 @@ export default function MesChasses() {
         <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center bg-white p-4 md:p-8">
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <div className="flex flex-col bg-white">
-              <h2 className="mb-3  fr-h4 font-bold text-gray-800">
-                Pas encore de carcasses cette saison
-              </h2>
-              <p className="mb-6 max-w-md  fr-text--regular">
+              <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de carcasses cette saison</h2>
+              <p className="fr-text--regular mb-6 max-w-md">
                 Vos statistiques apparaîtront ici dès que vous aurez enregistré votre première fiche d'examen
                 initial.
               </p>

@@ -168,7 +168,6 @@ export default function MesCoordonnees() {
               ]}
             />
           </div>
-
         </div>
       </div>
     </div>

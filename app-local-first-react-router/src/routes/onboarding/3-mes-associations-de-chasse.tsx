@@ -81,9 +81,9 @@ export default function MesAssociationsDeChasse() {
 
   const newEntity = newEntityNomDUsage
     ? ({
-      nom_d_usage: newEntityNomDUsage,
-      id: 'nouvelle',
-    } as (typeof remainingEntities)[number])
+        nom_d_usage: newEntityNomDUsage,
+        id: 'nouvelle',
+      } as (typeof remainingEntities)[number])
     : undefined;
   const selectOptions = newEntity ? [newEntity, ...remainingEntities] : remainingEntities;
   const selectValue = newEntityNomDUsage
