@@ -4,28 +4,9 @@
   "author": "Arnaud Ambroselli <arnaud@ambroselli.io>",
   "license": "MIT",
   "prettier": {
-    "singleQuote": true,
-    "trailingComma": "all",
-    "semi": true,
-    "printWidth": 110,
-    "tabWidth": 2
-  },
-  "lint-staged": {
-    "api-express/**/*.{js,ts,json}": "prettier --write --config api-express/package.json",
-    "app-local-first-react-router/**/*.{js,ts,tsx,json,css}": "prettier --write --config app-local-first-react-router/package.json",
-    "*.{js,ts,json,md}": "prettier --write"
+    "semi": true
   },
   "engines": {
     "node": ">=20.0.0"
-  },
-  "devDependencies": {
-    "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
-    "prettier": "^3.5.3",
-    "prettier-plugin-prisma": "^5.0.0",
-    "prettier-plugin-tailwindcss": "^0.7.2"
-  },
-  "scripts": {
-    "prepare": "husky"
   }
 }
