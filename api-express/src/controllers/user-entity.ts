@@ -60,6 +60,15 @@ async function getEntity(body: z.infer<typeof userEntitySchema>) {
     }
     return entity;
   }
+
+  if (entityId) {
+    const entity = await prisma.entity.findUnique({
+      where: { id: entityId, deleted_at: null },
+    });
+    return entity;
+  }
+
+  return null;
 }
 
 async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: User, entity: Entity) {
@@ -75,6 +84,7 @@ async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: 
     where: {
       owner_id: user.id,
       entity_id: entity.id,
+      status: EntityRelationStatus.ADMIN,
     },
   });
   if (isCurrentUserAdminOfEntity) {
@@ -132,14 +142,14 @@ router.post(
         res.status(400).send({
           ok: false,
           data: { relation: null, entity: null },
-          error: 'Missing entity_id',
+          error: body.numero_ddecpp ? "Ce Centre de Collecte n'existe pas" : 'Missing entity_id',
         });
         return;
       }
 
       let isAdmin = await checkIfUserIsAdmin(body, req.user, entity);
 
-      if (!checkIfUserCanCrudEntityRelation(body, req.user, isAdmin)) {
+      if (!(await checkIfUserCanCrudEntityRelation(body, req.user, isAdmin))) {
         res.status(403).send({
           ok: false,
           data: { relation: null, entity: null },
@@ -253,14 +263,14 @@ router.put(
         res.status(400).send({
           ok: false,
           data: { relation: null, entity: null },
-          error: 'Missing entity_id',
+          error: body.numero_ddecpp ? "Ce Centre de Collecte n'existe pas" : 'Missing entity_id',
         });
         return;
       }
 
       let isAdmin = await checkIfUserIsAdmin(body, req.user, entity);
 
-      if (!checkIfUserCanCrudEntityRelation(body, req.user, isAdmin)) {
+      if (!(await checkIfUserCanCrudEntityRelation(body, req.user, isAdmin))) {
         res.status(403).send({
           ok: false,
           data: { relation: null, entity: null },
@@ -351,13 +361,13 @@ router.delete(
         res.status(400).send({
           ok: false,
           data: { relation: null, entity: null },
-          error: 'Missing entity_id',
+          error: body.numero_ddecpp ? "Ce Centre de Collecte n'existe pas" : 'Missing entity_id',
         });
         return;
       }
 
       let isAdmin = await checkIfUserIsAdmin(body, req.user, entity);
-      if (!checkIfUserCanCrudEntityRelation(body, req.user, isAdmin)) {
+      if (!(await checkIfUserCanCrudEntityRelation(body, req.user, isAdmin))) {
         res.status(403).send({
           ok: false,
           data: { relation: null, entity: null },
