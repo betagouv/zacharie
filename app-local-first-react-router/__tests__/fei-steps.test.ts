@@ -47,6 +47,7 @@ const createMockUser = (roles: UserRoles[], numero_cfei: string | null = null): 
   is_synced: true,
   brevo_contact_id: null,
   at_least_one_fei_treated: null,
+  onboarding_chasse_info_done_at: null,
 });
 
 const createMockFei = (overrides: Partial<FeiWithIntermediaires> = {}): FeiWithIntermediaires => ({
@@ -108,6 +109,7 @@ const createMockFei = (overrides: Partial<FeiWithIntermediaires> = {}): FeiWithI
   updated_at: new Date(),
   deleted_at: null,
   is_synced: true,
+  consommateur_final_usage_domestique: null,
   CarcasseIntermediaire: [],
   ...overrides,
 });
