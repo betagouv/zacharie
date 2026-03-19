@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 export default function RolesCheckBoxes({
   user,
-  legend = 'Sélectionnez l\'activité qui vous correspond',
+  legend = "Sélectionnez l'activité qui vous correspond",
   withAdmin = false,
 }: {
   user?: User;
@@ -45,7 +45,7 @@ export default function RolesCheckBoxes({
     },
     {
       label: 'Collecteur Professionnel Indépendant',
-      hintText: 'Vous êtes salarié ou responsable d\'un établissement qui transporte du gibier sauvage',
+      hintText: "Vous êtes salarié ou responsable d'un établissement qui transporte du gibier sauvage",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.COLLECTEUR_PRO,
@@ -56,7 +56,7 @@ export default function RolesCheckBoxes({
     {
       label: 'Établissement de Traitement du Gibier sauvage (ETG)',
       hintText:
-        'Vous êtes salarié ou responsable d\'un établissement qui peut traiter et transporter du gibier sauvage',
+        "Vous êtes salarié ou responsable d'un établissement qui peut traiter et transporter du gibier sauvage",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.ETG,
@@ -116,8 +116,8 @@ export default function RolesCheckBoxes({
       },
     },
     {
-      label: 'Service Vétérinaire d\'Inspection (SVI)',
-      hintText: 'Vous êtes agréé par l\'État pour effectuer des inspections vétérinaires',
+      label: "Service Vétérinaire d'Inspection (SVI)",
+      hintText: "Vous êtes agréé par l'État pour effectuer des inspections vétérinaires",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.SVI,
@@ -137,10 +137,10 @@ export default function RolesCheckBoxes({
       />
       {withAdmin && (
         <Checkbox
-          legend="Administrateur"
+          className="mb-8"
           options={[
             {
-              label: 'Vous avez accès à la création d\'entités et d\'utilisateurs de Zacharie',
+              label: 'Administrateur',
               nativeInputProps: {
                 name: Prisma.UserScalarFieldEnum.isZacharieAdmin,
                 onChange: handleAdminChange,
