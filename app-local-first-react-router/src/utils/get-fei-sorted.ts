@@ -14,7 +14,12 @@ type FeiSorted = {
 };
 
 export function isFeiDone(fei: FeiWithIntermediaires): boolean {
-  return !!(fei.svi_closed_at || fei.automatic_closed_at || fei.intermediaire_closed_at);
+  return !!(
+    fei.svi_closed_at ||
+    fei.automatic_closed_at ||
+    fei.intermediaire_closed_at ||
+    fei.consommateur_final_usage_domestique
+  );
 }
 
 export function getFeisSorted(): FeiSorted {
@@ -33,12 +38,8 @@ export function getFeisSorted(): FeiSorted {
   if (!user) {
     return feisSorted;
   }
-  console.log('state.feis', state.feis);
+
   for (const fei of Object.values(state.feis)) {
-    const debug = fei.numero === 'ZACH-20260216-IKO5X-063936';
-    if (debug) {
-      console.log('fei', fei);
-    }
     if (fei.deleted_at) {
       continue;
     }
@@ -48,9 +49,6 @@ export function getFeisSorted(): FeiSorted {
     if (isFeiDone(fei)) {
       feisSorted.feisDone.push(fei);
       continue;
-    }
-    if (debug) {
-      console.log('fei is not done');
     }
 
     // FEI UNDER MY RESPONSABILITY
@@ -63,9 +61,6 @@ export function getFeisSorted(): FeiSorted {
       }
       return false;
     });
-    if (debug) {
-      console.log('isUnderMyResponsability', isUnderMyResponsability);
-    }
     // Fallback to FEI-level for FEIs with no carcasses yet (e.g. just created)
     const isUnderMyResponsabilityFallback =
       carcasses.length === 0 &&
@@ -78,9 +73,6 @@ export function getFeisSorted(): FeiSorted {
       (fei.fei_current_owner_user_id === user.id ||
         entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id!));
 
-    if (debug) {
-      console.log('isUnderMyResponsabilityFallback', isUnderMyResponsabilityFallback);
-    }
     if (isUnderMyResponsability || isUnderMyResponsabilityFallback) {
       feisSorted.feisUnderMyResponsability.push(fei);
       continue;
@@ -95,9 +87,6 @@ export function getFeisSorted(): FeiSorted {
       }
       return false;
     });
-    if (debug) {
-      console.log('isToTake', isToTake);
-    }
     // Fallback: FEI-level check when carcasses not loaded yet
     const isToTakeFallback =
       carcasses.length === 0 &&
