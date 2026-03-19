@@ -500,6 +500,10 @@ router.post(
         return;
       }
       if (dayjs().diff(approval.access_token_created_at, 'minutes') > 5) {
+        await prisma.apiKeyApprovalByUserOrEntity.update({
+          where: { access_token: accessToken },
+          data: { access_token: null, access_token_created_at: null },
+        });
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -509,6 +513,10 @@ router.post(
         return;
       }
       if (approval.status !== ApiKeyApprovalStatus.APPROVED) {
+        await prisma.apiKeyApprovalByUserOrEntity.update({
+          where: { access_token: accessToken },
+          data: { access_token: null, access_token_created_at: null },
+        });
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -521,6 +529,10 @@ router.post(
       let user = approval.User;
 
       if (!user) {
+        await prisma.apiKeyApprovalByUserOrEntity.update({
+          where: { access_token: accessToken },
+          data: { access_token: null, access_token_created_at: null },
+        });
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -543,6 +555,10 @@ router.post(
         token,
         cookieOptions(req.headers.host.includes('localhost') ? true : false),
       );
+      await prisma.apiKeyApprovalByUserOrEntity.update({
+        where: { access_token: accessToken },
+        data: { access_token: null, access_token_created_at: null },
+      });
       res.status(200).send({
         ok: true,
         data: { user, contexte: approval.ApiKey.slug_for_context },
