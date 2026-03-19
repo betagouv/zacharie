@@ -4,7 +4,8 @@
   "author": "Arnaud Ambroselli <arnaud@ambroselli.io>",
   "license": "MIT",
   "prettier": {
-    "semi": true
+    "semi": true,
+    "printWidth": 120
   },
   "engines": {
     "node": ">=20.0.0"
