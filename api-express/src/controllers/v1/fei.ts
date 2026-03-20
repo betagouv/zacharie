@@ -81,7 +81,7 @@ router.get(
         },
       };
 
-      const role = user.roles.find((role) => role !== UserRoles.ADMIN);
+      const role = user.roles[0];
       if (role === UserRoles.CHASSEUR) {
         feiQuery.where.OR = [
           {
@@ -192,7 +192,7 @@ router.get(
         },
       };
 
-      const role = user.roles.find((role) => role !== UserRoles.ADMIN);
+      const role = user.roles[0];
       if (role === UserRoles.CHASSEUR) {
         feiQuery.where.OR = [
           {

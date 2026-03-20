@@ -153,8 +153,7 @@ export default function TableauDeBordIndex() {
     }
   }, [user]);
 
-  const isOnlySvi =
-    user.roles.includes(UserRoles.SVI) && user.roles.filter((r) => r !== UserRoles.ADMIN).length === 1;
+  const isSvi = user.roles.includes(UserRoles.SVI);
 
   const { feiActivesForSvi, feisDoneForSvi } = feisDone.reduce(
     (acc, fei) => {
@@ -260,7 +259,7 @@ export default function TableauDeBordIndex() {
   }, [filter]);
   const [filterETG, setFilterETG] = useState<string>('');
   const [sviWorkingForEtgIds, dropDownMenuFilterTextSvi] = useMemo(() => {
-    const _sviWorkingForEtgIds = !isOnlySvi
+    const _sviWorkingForEtgIds = !isSvi
       ? []
       : allEtgIds.filter((id) => {
           const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
@@ -271,10 +270,10 @@ export default function TableauDeBordIndex() {
       return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
     }
     return [_sviWorkingForEtgIds, 'Filtrer par ETG'];
-  }, [filterETG, entities, entitiesIdsWorkingDirectlyFor, allEtgIds, isOnlySvi]);
+  }, [filterETG, entities, entitiesIdsWorkingDirectlyFor, allEtgIds, isSvi]);
 
   const allFeis = useMemo(() => {
-    if (isOnlySvi) {
+    if (isSvi) {
       let feis = [...feisAssigned, ...feiActivesForSvi, ...feisDoneForSvi];
       if (filterETG) {
         feis = feis.filter((fei) => fei.latest_intermediaire_entity_id === filterETG);
@@ -282,7 +281,7 @@ export default function TableauDeBordIndex() {
       return feis;
     }
     return [...feisAssigned, ...feisOngoing, ...feisDone];
-  }, [isOnlySvi, feisAssigned, feisOngoing, feisDone, feiActivesForSvi, feisDoneForSvi, filterETG]);
+  }, [isSvi, feisAssigned, feisOngoing, feisDone, feiActivesForSvi, feisDoneForSvi, filterETG]);
 
   const filteredFeis = useMemo(() => {
     if (filter === 'Toutes les fiches') return allFeis;
@@ -382,7 +381,7 @@ export default function TableauDeBordIndex() {
                 },
               ]}
             />
-            {isOnlySvi && sviWorkingForEtgIds.length > 1 && (
+            {isSvi && sviWorkingForEtgIds.length > 1 && (
               <DropDownMenu
                 text={dropDownMenuFilterTextSvi}
                 isActive={filterETG !== 'Toutes les fiches'}

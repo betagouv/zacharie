@@ -11,7 +11,7 @@ Key domains:
 - **FEI (Fiche d'Examen Initial)**: Inspection documents tracking game carcasses
 - **Carcasses**: Individual game animals with sanitary data and traceability
 - **User roles**: CHASSEUR, COLLECTEUR_PRO, ETG, SVI, COMMERCE_DE_DETAIL, etc.
-  - **Rule**: A user shall not have multiple roles except ADMIN. Frontend forbids it; backend should validate and reject.
+  - **Rule**: A user shall not have multiple roles. Frontend forbids it; backend should validate and reject.
 - **Entities**: Organizations (slaughterhouses, retail, veterinary services)
 
 ## Plan Mode

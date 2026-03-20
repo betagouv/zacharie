@@ -40,7 +40,6 @@ import {
   EntityRelationStatus,
   ApiKeyApprovalStatus,
 } from '@prisma/client';
-import { authorizeUserOrAdmin } from '~/utils/authorizeUserOrAdmin.server';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
 import sendNotificationToUser from '~/service/notifications';
 import { SECRET } from '~/config';
@@ -772,7 +771,8 @@ router.post(
           id: await createUserId(),
           email,
           // un nouvel utilisateur invité ne peut l'être qu'avec un rôle identique à celui de l'utilisateur qui l'invite
-          roles: req.user.roles.filter((role) => role !== UserRoles.ADMIN),
+          roles: req.user.roles,
+          isZacharieAdmin: false,
           activated: true,
           prefilled: false,
         },
@@ -829,8 +829,11 @@ const userUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.addresse_ligne_2]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.code_postal]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.roles]: z
-    .array(z.enum(Object.values(UserRoles) as [UserRoles, ...UserRoles[]]))
+    .array(
+      z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]]),
+    )
     .optional(),
+  [Prisma.UserScalarFieldEnum.isZacharieAdmin]: z.boolean().optional(),
   [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.etg_role]: z
     .enum(Object.values(UserEtgRoles) as [UserEtgRoles, ...UserEtgRoles[]])
@@ -848,14 +851,12 @@ const userUpdateSchema = z.object({
 router.post(
   '/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
-  authorizeUserOrAdmin,
   catchErrors(
     async (
       req: RequestWithUser,
       res: express.Response<UserConnexionResponse>,
       next: express.NextFunction,
     ) => {
-      console.log('req.body', req.body);
       let result = userUpdateSchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
@@ -881,7 +882,7 @@ router.post(
       const nextUser: Prisma.UserUpdateInput = {};
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
-        if (req.isAdmin) {
+        if (req.user.isZacharieAdmin) {
           nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
           if (nextUser.activated && !user.activated) {
             nextUser.activated_at = new Date();
@@ -942,10 +943,17 @@ router.post(
         nextUser.ville = sanitize(body[Prisma.UserScalarFieldEnum.ville] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
-        if (req.isAdmin) {
+        if (req.user.isZacharieAdmin) {
           nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort(
             (a, b) => b.localeCompare(a),
           );
+        } else {
+          throw new Error('User tried to update roles without being admin');
+        }
+      }
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.isZacharieAdmin)) {
+        if (req.user.isZacharieAdmin) {
+          nextUser.isZacharieAdmin = body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false;
         } else {
           throw new Error('User tried to update roles without being admin');
         }
@@ -974,7 +982,7 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
         nextUser.numero_cfei = sanitize(body[Prisma.UserScalarFieldEnum.numero_cfei] as string);
         if (nextUser.numero_cfei !== user.numero_cfei) {
-          if (!req.isAdmin) {
+          if (!req.user.isZacharieAdmin) {
             nextUser.activated = false;
             if (nextUser.activated_at) nextUser.activated_at = new Date();
           }
@@ -984,7 +992,7 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
         nextUser.est_forme_a_l_examen_initial =
           body[Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial] === 'true' ? true : false;
-        if (!req.isAdmin && !nextUser.est_forme_a_l_examen_initial && user.numero_cfei) {
+        if (!req.user.isZacharieAdmin && !nextUser.est_forme_a_l_examen_initial && user.numero_cfei) {
           nextUser.activated = false;
           nextUser.numero_cfei = null;
           if (nextUser.activated_at) nextUser.activated_at = new Date();
@@ -1354,7 +1362,7 @@ router.get(
         .findMany({
           where: {
             // for_testing: ETG test, CCG test, SVI test, etc.
-            ...(user.roles.includes(UserRoles.ADMIN) ? {} : { for_testing: false }),
+            ...(user.isZacharieAdmin ? {} : { for_testing: false }),
             type: {
               notIn: [
                 EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
