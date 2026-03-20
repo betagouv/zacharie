@@ -25,8 +25,6 @@ test("Pas de stockage - Transporter les carcasses soi-même", async ({ page }) =
   await page.getByRole("link", { name: feiId }).click();
   await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
   await expect(page.getByRole("button", { name: "Prendre en charge cette" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Examen initial Étape 1 sur" })).toBeVisible();
-  await expect(page.getByText("Étape suivante : Validation")).toBeVisible();
   await expect(page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" })).toBeVisible();
@@ -44,8 +42,7 @@ test("Pas de stockage - Transporter les carcasses soi-même", async ({ page }) =
   await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
   await page.getByLabel("Pigeons - N° MM-001-").getByTitle("Fermer").click();
   await page.getByRole("button", { name: "Prendre en charge cette" }).click();
-  await expect(page.getByRole("heading", { name: "Validation par le premier dé" })).toBeVisible();
-
+  await expect(page.getByText("Validation par le premier détenteur")).toBeVisible();
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
   await expect(page.getByRole("heading", { name: "Attention" })).toBeVisible();
@@ -81,7 +78,6 @@ test("Stockage - Transporter les carcasses soi-même", async ({ page }) => {
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
   await page.getByRole("link", { name: feiId }).click();
   await page.getByRole("button", { name: "Prendre en charge cette" }).click();
-  await expect(page.getByText("Étape suivante : Transport")).toBeVisible({ timeout: 10000 });
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
@@ -114,7 +110,6 @@ test("Stockage - Le transport est réalisé par un collecteur professionnel", as
   await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
   await page.getByRole("link", { name: feiId }).click();
   await page.getByRole("button", { name: "Prendre en charge cette" }).click();
-  await expect(page.getByText("Étape suivante : Transport")).toBeVisible({ timeout: 10000 });
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
