@@ -211,15 +211,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
           )}
         </>
       ) : (
-        <form
-          id="select-next-owner"
-          method="POST"
-          aria-disabled={disabled}
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmitFromSelect(nextOwnerUser?.id);
-          }}
-        >
+        <div id="select-next-owner" aria-disabled={disabled}>
           <Select
             label=""
             key={fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? 'no-choice-yet'}
@@ -235,6 +227,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
                           iconId="fr-icon-checkbox-circle-line"
                           className="mr-2"
                           nativeButtonProps={{
+                            type: 'button',
                             onClick: () => {
                               setNextOwnerUserOrEntityId(entity.id);
                             },
@@ -251,6 +244,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
                           iconId="fr-icon-checkbox-circle-line"
                           className="mr-2"
                           nativeButtonProps={{
+                            type: 'button',
                             onClick: () => {
                               setNextOwnerUserOrEntityId(user.id);
                             },
@@ -310,11 +304,15 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
           {(!nextOwnerUserOrEntityId ||
             (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
               nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
-            <Button type="submit" disabled={!nextOwnerUserOrEntityId || disabled}>
+            <Button
+              type="button"
+              disabled={!nextOwnerUserOrEntityId || disabled}
+              onClick={() => handleSubmitFromSelect(nextOwnerUser?.id)}
+            >
               Continuer
             </Button>
           )}
-        </form>
+        </div>
       )}
 
       {showSearchUserByEmail && (
