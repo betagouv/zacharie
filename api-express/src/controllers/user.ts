@@ -40,7 +40,6 @@ import {
   EntityRelationStatus,
   ApiKeyApprovalStatus,
 } from '@prisma/client';
-import { authorizeUserOrAdmin } from '~/utils/authorizeUserOrAdmin.server';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
 import sendNotificationToUser from '~/service/notifications';
 import { SECRET } from '~/config';
@@ -852,14 +851,12 @@ const userUpdateSchema = z.object({
 router.post(
   '/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
-  authorizeUserOrAdmin,
   catchErrors(
     async (
       req: RequestWithUser,
       res: express.Response<UserConnexionResponse>,
       next: express.NextFunction,
     ) => {
-      console.log('req.body', req.body);
       let result = userUpdateSchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
@@ -885,7 +882,7 @@ router.post(
       const nextUser: Prisma.UserUpdateInput = {};
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
-        if (req.isAdmin) {
+        if (req.user.isZacharieAdmin) {
           nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
           if (nextUser.activated && !user.activated) {
             nextUser.activated_at = new Date();
@@ -946,7 +943,7 @@ router.post(
         nextUser.ville = sanitize(body[Prisma.UserScalarFieldEnum.ville] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
-        if (req.isAdmin) {
+        if (req.user.isZacharieAdmin) {
           nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort(
             (a, b) => b.localeCompare(a),
           );
@@ -955,7 +952,7 @@ router.post(
         }
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.isZacharieAdmin)) {
-        if (req.isAdmin) {
+        if (req.user.isZacharieAdmin) {
           nextUser.isZacharieAdmin = body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false;
         } else {
           throw new Error('User tried to update roles without being admin');
@@ -985,7 +982,7 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
         nextUser.numero_cfei = sanitize(body[Prisma.UserScalarFieldEnum.numero_cfei] as string);
         if (nextUser.numero_cfei !== user.numero_cfei) {
-          if (!req.isAdmin) {
+          if (!req.user.isZacharieAdmin) {
             nextUser.activated = false;
             if (nextUser.activated_at) nextUser.activated_at = new Date();
           }
@@ -995,7 +992,7 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
         nextUser.est_forme_a_l_examen_initial =
           body[Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial] === 'true' ? true : false;
-        if (!req.isAdmin && !nextUser.est_forme_a_l_examen_initial && user.numero_cfei) {
+        if (!req.user.isZacharieAdmin && !nextUser.est_forme_a_l_examen_initial && user.numero_cfei) {
           nextUser.activated = false;
           nextUser.numero_cfei = null;
           if (nextUser.activated_at) nextUser.activated_at = new Date();

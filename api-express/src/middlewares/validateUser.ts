@@ -20,14 +20,3 @@ export default function validateUser(roles: Array<UserRoles> = []) {
     next();
   };
 }
-
-export function validateAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const user: User = req.user;
-  let canAccess = user.isZacharieAdmin;
-  if (!canAccess) {
-    const error = new Error('Unauthorized');
-    res.status(403);
-    return next(error);
-  }
-  return next();
-}

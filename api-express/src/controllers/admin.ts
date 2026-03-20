@@ -42,7 +42,6 @@ import type {
   UserConnexionResponse,
 } from '~/types/responses';
 import passport from 'passport';
-import { validateAdmin } from '~/middlewares/validateUser';
 import { entityAdminInclude } from '~/types/entity';
 import { createBrevoContact, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
 import slugify from 'slugify';
@@ -50,8 +49,7 @@ import dayjs from 'dayjs';
 
 router.post(
   '/user/connect-as',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -101,8 +99,7 @@ router.post(
 
 router.post(
   '/user/nouveau',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -129,8 +126,7 @@ router.post(
 
 router.get(
   '/user/:user_id',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -210,8 +206,7 @@ router.get(
 
 router.get(
   '/users',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (req: express.Request, res: express.Response<AdminUsersResponse>, next: express.NextFunction) => {
       const users = await prisma.user.findMany({
@@ -230,8 +225,7 @@ router.get(
 
 router.get(
   '/entities',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -265,8 +259,7 @@ router.get(
 
 router.get(
   '/entity/:entity_id',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -426,8 +419,7 @@ router.get(
 
 router.post(
   '/entity-dedicated-api-key/:entity_id',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
       const entity = await prisma.entity.findUnique({
@@ -476,8 +468,7 @@ router.post(
 
 router.post(
   '/entity/nouvelle',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -524,8 +515,7 @@ router.post(
 
 router.post(
   '/entity/:entity_id',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -593,8 +583,7 @@ router.post(
 
 router.get(
   '/feis',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // Fetch the fiche data along with the required intervenants
     const feis = await prisma.fei.findMany({
@@ -680,8 +669,7 @@ router.get(
 
 router.get(
   '/api-keys',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (req: express.Request, res: express.Response<AdminApiKeysResponse>, next: express.NextFunction) => {
       const apiKeys = await prisma.apiKey.findMany({
@@ -705,8 +693,7 @@ router.get(
 
 router.post(
   '/api-key/nouvelle',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
       const body = req.body;
@@ -736,8 +723,7 @@ router.post(
 
 router.post(
   '/api-key/new-access-token/:api_key_id',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
       const apiKey = await prisma.apiKey.findUnique({
@@ -762,8 +748,7 @@ router.post(
 
 router.get(
   '/api-key/:api_key_id',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -823,8 +808,7 @@ router.get(
 
 router.get(
   '/official-cfeis',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -846,8 +830,7 @@ router.get(
 
 router.post(
   '/api-key-approval',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -938,8 +921,7 @@ router.post(
 
 router.get(
   '/carcasses',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -980,8 +962,7 @@ router.get(
 
 router.get(
   '/carcasses-intermediaires',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -1012,8 +993,7 @@ router.get(
 
 router.get(
   '/carcasse/:zacharie_carcasse_id',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -1046,8 +1026,7 @@ router.get(
 
 router.get(
   '/dashboard',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -1155,8 +1134,7 @@ const POIDS_MOYEN_DEFAULT_KG = 1;
 
 router.get(
   '/parts-de-marche',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -1262,8 +1240,7 @@ router.get(
 
 router.post(
   '/ccg/preview',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
@@ -1339,8 +1316,7 @@ router.post(
 
 router.post(
   '/ccg/import',
-  passport.authenticate('user', { session: false }),
-  validateAdmin,
+  passport.authenticate('admin', { session: false }),
   catchErrors(
     async (
       req: express.Request,
