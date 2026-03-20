@@ -37,7 +37,8 @@ import AdminApiKeys from './routes/admin/api-keys';
 import AdminNewApiKey from './routes/admin/api-key-add';
 import AdminApiKey from './routes/admin/api-key.$apiKeyId';
 import AdminLayout from './routes/admin/layout';
-import AdminCarcassesIntermediaires from './routes/admin/carcasses-intermediaires';
+import AdminCarcasses from './routes/admin/carcasses';
+import AdminCarcasseDetail from './routes/admin/carcasse-detail';
 import NouvelleFiche from './routes/nouvelle-fiche';
 import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
 import MesChasses from './routes/mes-chasses/mes-chasses';
@@ -415,10 +416,18 @@ function App() {
                 }
               />
               <Route
-                path="carcasses-intermediaires"
+                path="carcasses"
                 element={
-                  <RestrictedRoute id="carcasses-intermediaires" zacharieAdmin>
-                    <AdminCarcassesIntermediaires />
+                  <RestrictedRoute id="carcasses" zacharieAdmin>
+                    <AdminCarcasses />
+                  </RestrictedRoute>
+                }
+              />
+              <Route
+                path="carcasse/:zacharie_carcasse_id"
+                element={
+                  <RestrictedRoute id="carcasse-detail" zacharieAdmin>
+                    <AdminCarcasseDetail />
                   </RestrictedRoute>
                 }
               />

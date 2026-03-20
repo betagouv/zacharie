@@ -7,8 +7,8 @@ const adminLinks = [
   { to: '/app/tableau-de-bord/admin/import-ccg', label: 'Import CCG', icon: 'fr-icon-upload-line' },
   { to: '/app/tableau-de-bord/admin/api-keys', label: 'Clés API', icon: 'fr-icon-lock-line' },
   {
-    to: '/app/tableau-de-bord/admin/carcasses-intermediaires',
-    label: 'Carcasses Inter.',
+    to: '/app/tableau-de-bord/admin/carcasses',
+    label: 'Carcasses',
     icon: 'fr-icon-file-text-line',
   },
 ];
@@ -27,11 +27,10 @@ export default function AdminLayout() {
                 <Link
                   style={{ backgroundImage: 'none' }}
                   to={link.to}
-                  className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${
-                    isActive
+                  className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${isActive
                       ? 'bg-open-blue-975 text-action-high-blue-france border-action-high-blue-france font-medium'
                       : 'text-title-grey border-transparent'
-                  }`}
+                    }`}
                 >
                   <span className={`${link.icon} fr-icon--sm mr-1 shrink-0`} aria-hidden="true" />
                   {link.label}
