@@ -122,6 +122,14 @@ export default function MesChasses() {
                   description="Les indicateurs de tableau de bord pour le petit gibier sont en cours de développement. Vous verrez bientôt votre taux de saisie et les principales raisons de refus et de saisie."
                 />
               </div>
+            ) : dashboardData.hygieneScore === null && dashboardData.personalSeizureRate === null ? (
+              <div className="col-span-2 rounded-3xl bg-white p-6 text-center shadow-sm md:p-8">
+                <span className="fr-icon-mail-close-line text-action-high-blue-france-light mb-4 inline-block text-lg" aria-hidden="true" />
+                <h3 className="fr-h6 text-action-high-blue-france-light mb-2">Absence de retour sur vos carcasses</h3>
+                <p className="fr-text--sm text-action-high-blue-france-light mb-2">
+                  Il semble que vous valorisez vos carcasses directement auprès des consommateurs et des commerces de bouche.
+                </p>
+              </div>
             ) : (
               <>
                 {dashboardData.hygieneScore !== null && (

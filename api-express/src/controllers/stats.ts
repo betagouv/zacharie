@@ -5,7 +5,7 @@ const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { getIframeUrl } from '~/service/metabase-embed';
 import prisma from '~/prisma';
-import { CarcasseType, CarcasseStatus } from '@prisma/client';
+import { CarcasseType, CarcasseStatus, FeiOwnerRole } from '@prisma/client';
 import dayjs from 'dayjs';
 
 router.get(
@@ -68,9 +68,9 @@ router.get(
           season,
           bigGame: 0,
           smallGame: 0,
-          hygieneScore: 0,
+          hygieneScore: null,
           refusalCauses: [],
-          personalSeizureRate: 0,
+          personalSeizureRate: null,
           nationalSeizureRate: 10.44, // Default national average
         },
       });
@@ -92,6 +92,17 @@ router.get(
     const bigGameCarcasses = carcasses.filter((c) => c.type === CarcasseType.GROS_GIBIER);
     const bigGame = bigGameCarcasses.length;
     const smallGame = carcasses.filter((c) => c.type === CarcasseType.PETIT_GIBIER).length;
+    const circuitCourtRoles: FeiOwnerRole[] = [
+      FeiOwnerRole.COMMERCE_DE_DETAIL,
+      FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+      FeiOwnerRole.CANTINE_OU_RESTAURATION_COLLECTIVE,
+      FeiOwnerRole.ASSOCIATION_CARITATIVE,
+      FeiOwnerRole.CONSOMMATEUR_FINAL,
+    ];
+    const sviEligibleCarcasses = bigGameCarcasses.filter(
+      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role),
+    );
+    const hasAnySviReturn = sviEligibleCarcasses.some((c) => c.svi_carcasse_status !== null);
 
     // Get refusal causes from intermediaire refusals and SVI lesions/motifs
     const refusalCausesMap = new Map<string, number>();
@@ -115,14 +126,18 @@ router.get(
       .sort((a, b) => b.count - a.count)
       .slice(0, 5); // Top 5 causes
 
-    // Calculate personal seizure rate for big game carcasses
-    const seizedBigGame = bigGameCarcasses.filter(
+    // Calculate personal seizure rate for SVI-eligible big game carcasses
+    const seizedBigGame = sviEligibleCarcasses.filter(
       (c) =>
         c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
         c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE,
     );
     const personalSeizureRate =
-      bigGameCarcasses.length > 0 ? (seizedBigGame.length / bigGameCarcasses.length) * 100 : 0;
+      sviEligibleCarcasses.length > 0 && hasAnySviReturn
+        ? (seizedBigGame.length / sviEligibleCarcasses.length) * 100
+        : sviEligibleCarcasses.length > 0
+          ? null
+          : null;
 
     // Calculate national seizure rate (all big game carcasses in 2024)
     const nationalBigGame2024 = await prisma.carcasse.count({
@@ -159,10 +174,13 @@ router.get(
     // Score = 50 means equal to national average
     // Score > 50 means better than average
     // Score < 50 means worse than average
-    let hygieneScore: number;
-    if (bigGameCarcasses.length === 0) {
-      // No big game carcasses, cannot calculate
-      hygieneScore = 0;
+    let hygieneScore: number | null;
+    if (sviEligibleCarcasses.length === 0) {
+      // No SVI-eligible big game carcasses, cannot calculate
+      hygieneScore = null;
+    } else if (!hasAnySviReturn) {
+      // SVI-eligible big game exists but no SVI return yet
+      hygieneScore = null;
     } else if (nationalSeizureRate === 0) {
       // No national seizures, perfect score if personal rate is also 0
       hygieneScore = personalSeizureRate === 0 ? 100 : 0;
@@ -182,7 +200,7 @@ router.get(
         smallGame,
         hygieneScore,
         refusalCauses,
-        personalSeizureRate: Math.round(personalSeizureRate * 10) / 10, // Round to 1 decimal
+        personalSeizureRate: personalSeizureRate !== null ? Math.round(personalSeizureRate * 10) / 10 : null, // Round to 1 decimal
         nationalSeizureRate: Math.round(nationalSeizureRate * 100) / 100, // Round to 2 decimals
         // Calculation details for debugging
         calculationDetails: {
@@ -199,9 +217,9 @@ router.get(
           // Hygiene score calculation
           formula: '100 × (1 - (personalSeizureRate / (2 × nationalSeizureRate)))',
           divisor: 2 * nationalSeizureRate,
-          ratio: nationalSeizureRate > 0 ? personalSeizureRate / (2 * nationalSeizureRate) : 0,
+          ratio: nationalSeizureRate > 0 && personalSeizureRate !== null ? personalSeizureRate / (2 * nationalSeizureRate) : 0,
           hygieneScoreBeforeClamp:
-            nationalSeizureRate > 0 ? 100 * (1 - personalSeizureRate / (2 * nationalSeizureRate)) : 0,
+            nationalSeizureRate > 0 && personalSeizureRate !== null ? 100 * (1 - personalSeizureRate / (2 * nationalSeizureRate)) : 0,
         },
       },
     });
