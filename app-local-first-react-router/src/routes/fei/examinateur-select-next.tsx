@@ -146,6 +146,9 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
         fei_next_owner_role: null,
         fei_next_owner_entity_id: null,
         fei_next_owner_entity_name_cache: null,
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        fei_current_owner_user_id: nextOwnerUser?.id ?? null,
+        fei_current_owner_user_name_cache: nextOwnerName,
         premier_detenteur_user_id: nextOwnerUser?.id,
         premier_detenteur_name_cache: nextOwnerName,
         premier_detenteur_entity_id: nextOwnerEntity?.id ?? null,
@@ -157,6 +160,11 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
         next_owner_role: null,
         next_owner_entity_id: null,
         next_owner_entity_name_cache: null,
+        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        current_owner_user_id: nextOwnerUser?.id ?? null,
+        current_owner_user_name_cache: nextOwnerName,
+        current_owner_entity_id: null,
+        current_owner_entity_name_cache: null,
       });
     }
     updateFei(fei.numero, nextFei);

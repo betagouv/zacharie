@@ -195,7 +195,10 @@ export function computeFeiSteps({
           }
           return 'À compléter';
         case 'Validation par le premier détenteur':
-          return 'À compléter';
+          if (fei.premier_detenteur_user_id === user.id || fei.fei_current_owner_user_id === user.id) {
+            return 'À compléter';
+          }
+          return 'En cours';
         case 'Clôturée':
           return 'Clôturée';
         default:

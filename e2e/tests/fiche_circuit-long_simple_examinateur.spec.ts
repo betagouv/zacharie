@@ -69,5 +69,5 @@ test("Création d'une fiche", async ({ page }) => {
   await expect(page.getByRole("link", { name: feiId })).toContainText("En cours");
   await expect(page.getByRole("link", { name: feiId })).toContainText("chassenard");
   await expect(page.getByRole("link", { name: feiId })).toContainText("4 daims");
-  await expect(page.getByRole("link", { name: feiId })).toContainText("À renseigner");
+  await expect(page.getByRole("link", { name: feiId })).toContainText("Pierre Petit");
 });
