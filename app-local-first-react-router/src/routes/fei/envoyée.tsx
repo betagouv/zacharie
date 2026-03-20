@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useZustandStore from '@app/zustand/store';
-import { useNavigate, useParams } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import FeiStepper from '@app/components/FeiStepper';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -12,6 +12,8 @@ export default function FeiEnvoyée() {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const navigate = useNavigate();
+  const location = useLocation();
+  const transferredToPremierDetenteur = location.state?.transferredToPremierDetenteur;
   const entities = useZustandStore((state) => state.entities);
   const fei = feis[params.fei_numero!];
   const carcasses = useCarcassesForFei(params.fei_numero);
@@ -62,6 +64,14 @@ export default function FeiEnvoyée() {
             <FeiStepper />
             <div className={['bg-white p-4 md:p-8'].join(' ')}>
               <div className="p-5">
+                {transferredToPremierDetenteur && (
+                  <Alert
+                    severity="success"
+                    className="mb-4 bg-white"
+                    title="Fiche transférée"
+                    description={`La fiche a été transférée à ${fei.fei_current_owner_user_name_cache ?? 'le premier détenteur'}. C'est à lui de choisir le destinataire des carcasses.`}
+                  />
+                )}
                 {sentByRecipient.map((recipient) => (
                   <Alert
                     key={recipient.entityName}
@@ -79,7 +89,7 @@ export default function FeiEnvoyée() {
                     title="Attribution effectuée"
                   />
                 )}
-                {unsendCarcasses.length > 0 && (
+                {!transferredToPremierDetenteur && unsendCarcasses.length > 0 && (
                   <Alert
                     severity="warning"
                     className="mb-4 bg-white"

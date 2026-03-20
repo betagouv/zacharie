@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { CarcasseType, EntityRelationType, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
@@ -25,6 +25,7 @@ import DateHeureValidationAlerts from './date-heure-validation-alerts';
 
 export default function FEIExaminateurInitial() {
   const params = useParams();
+  const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
 
   const feis = useZustandStore((state) => state.feis);
@@ -134,6 +135,11 @@ export default function FEIExaminateurInitial() {
     }
     return false;
   }, [fei, user, premierDetenteurEntity]);
+
+  const examinateurIsPremierDetenteur = fei.premier_detenteur_user_id === user.id;
+
+  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
+  const carcasseIds = useMemo(() => carcasses.map((c) => c.zacharie_carcasse_id), [carcasses]);
 
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
@@ -383,7 +389,7 @@ export default function FEIExaminateurInitial() {
       )}
 
       {/* Bloc 3 — Destinataire */}
-      {showBloc3 && (
+      {showBloc3 && examinateurIsPremierDetenteur && (
         <div className="bg-white p-4 md:p-8">
           <h4 className="fr-h5">Destinataire</h4>
           <DestinataireSelectPremierDetenteur
@@ -481,15 +487,39 @@ export default function FEIExaminateurInitial() {
                     alert('Vous devez cocher la case pour valider la mise sur le marché');
                     return;
                   }
-                  const destinataireError = destinataireRef.current?.validate();
-                  if (destinataireError) {
-                    alert(destinataireError);
-                    return;
+                  if (examinateurIsPremierDetenteur) {
+                    const destinataireError = destinataireRef.current?.validate();
+                    if (destinataireError) {
+                      alert(destinataireError);
+                      return;
+                    }
+                    updateFei(fei.numero, {
+                      examinateur_initial_approbation_mise_sur_le_marche: approbation,
+                    });
+                    destinataireRef.current?.submit();
+                  } else {
+                    updateFei(fei.numero, {
+                      examinateur_initial_approbation_mise_sur_le_marche: approbation,
+                      fei_current_owner_user_id: fei.premier_detenteur_user_id,
+                      fei_current_owner_user_name_cache:
+                        premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
+                      fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
+                      fei_current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
+                      fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+                    });
+                    updateCarcassesTransmission(carcasseIds, {
+                      current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+                      current_owner_user_id: fei.premier_detenteur_user_id,
+                      current_owner_user_name_cache:
+                        premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
+                      current_owner_entity_id: fei.premier_detenteur_entity_id ?? null,
+                      current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
+                    });
+                    syncData('examinateur-initial-transfer-to-premier-detenteur');
+                    navigate(`/app/tableau-de-bord/fei/${fei.numero}/envoyée`, {
+                      state: { transferredToPremierDetenteur: true },
+                    });
                   }
-                  updateFei(fei.numero, {
-                    examinateur_initial_approbation_mise_sur_le_marche: approbation,
-                  });
-                  destinataireRef.current?.submit();
                 }}
               >
                 Enregistrer et transmettre la fiche

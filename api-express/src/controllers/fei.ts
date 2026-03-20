@@ -873,8 +873,10 @@ router.get(
             },
             {
               premier_detenteur_user_id: user.id,
+              examinateur_initial_date_approbation_mise_sur_le_marche: { not: null },
             },
             {
+              examinateur_initial_date_approbation_mise_sur_le_marche: { not: null },
               FeiPremierDetenteurEntity: {
                 EntityRelationsWithUsers: {
                   some: {
