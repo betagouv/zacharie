@@ -87,24 +87,11 @@ passport.use(
           return done(null, null);
         }
 
-        // console.log('Attempting to find user with ID:', jwt_payload.userId);
         const user = await prisma.user.findUnique({
-          where: { id: jwt_payload.userId },
+          where: { id: jwt_payload.userId, isZacharieAdmin: true, deleted_at: null },
         });
 
-        if (user && user.isZacharieAdmin) {
-          // console.log('User found:', user.email);
-          // console.log('User found:', user.id);
-          if (user.deleted_at) {
-            // console.log('User has been deleted');
-            return done(null, null);
-          }
-          // console.log('Authentication successful');
-          return done(null, user);
-        } else {
-          // console.log('User not found in database');
-          return done(null, null);
-        }
+        return done(null, user);
       } catch (error) {
         // console.error('Error in Passport strategy:', error);
         return done(error as Error, null);
