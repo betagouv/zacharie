@@ -62,7 +62,8 @@ test("Création d'une fiche", async ({ page }) => {
   await page.getByRole("button", { name: "Enregistrer et transmettre la fiche", exact: true }).click();
   await expect(page.getByText(/Attribution effectu/i).first()).toBeVisible({ timeout: 10000 });
   // get fei id
-  const feiId = page.url().split("/").pop()!;
+  const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
+  expect(feiId).toBeDefined();
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
   await expect(page.getByRole("link", { name: feiId })).toBeVisible();
   await expect(page.getByRole("link", { name: feiId })).toContainText("En cours");

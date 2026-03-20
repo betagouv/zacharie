@@ -68,7 +68,7 @@ export default function FeiEnvoyée() {
                   <Alert
                     severity="success"
                     className="mb-4 bg-white"
-                    title="Fiche transférée"
+                    title="Attribution effectuée"
                     description={`La fiche a été transférée à ${fei.fei_current_owner_user_name_cache ?? 'le premier détenteur'}. C'est à lui de choisir le destinataire des carcasses.`}
                   />
                 )}
