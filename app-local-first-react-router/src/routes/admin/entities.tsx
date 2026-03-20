@@ -1,65 +1,127 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { Table } from '@codegouvfr/react-dsfr/Table';
+import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import { Badge } from '@codegouvfr/react-dsfr/Badge';
+import { EntityTypes } from '@prisma/client';
 import dayjs from 'dayjs';
 import type { AdminEntitiesResponse } from '@api/src/types/responses';
-import { useEffect, useState } from 'react';
 import Chargement from '@app/components/Chargement';
-import Tabs, { TabsProps } from '@codegouvfr/react-dsfr/Tabs';
-import { EntityTypes } from '@prisma/client';
 import API from '@app/services/api';
 
+const entityTypeLabels: Record<EntityTypes, string> = {
+  [EntityTypes.PREMIER_DETENTEUR]: 'Premier détenteur',
+  [EntityTypes.COLLECTEUR_PRO]: 'Collecteur Pro',
+  [EntityTypes.CCG]: 'CCG',
+  [EntityTypes.ETG]: 'ETG',
+  [EntityTypes.SVI]: 'SVI',
+  [EntityTypes.COMMERCE_DE_DETAIL]: 'Commerce de détail',
+  [EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE]: 'Cantine / Restauration collective',
+  [EntityTypes.ASSOCIATION_CARITATIVE]: 'Association caritative',
+  [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: 'Repas de chasse / Associatif',
+  [EntityTypes.CONSOMMATEUR_FINAL]: 'Consommateur final',
+};
+
 export default function AdminEntites() {
-  const [entities, setUsers] = useState<NonNullable<AdminEntitiesResponse['data']['entities']>>([]);
+  const [entities, setEntities] = useState<AdminEntitiesResponse['data']['entities']>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState('');
+  const [selectedCompatible, setSelectedCompatible] = useState('');
+  const [selectedTabId, setSelectedTabId] = useState('all');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const tabs: TabsProps['tabs'] = [
-    {
-      tabId: 'all',
-      label: `Tous (${entities.length})`,
-    },
-    {
-      tabId: EntityTypes.PREMIER_DETENTEUR,
-      label: `Premier détenteur (${entities.filter((entity) => entity.type === EntityTypes.PREMIER_DETENTEUR).length})`,
-    },
-    {
-      tabId: EntityTypes.COLLECTEUR_PRO,
-      label: `Collecteur Pro (${entities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO).length})`,
-    },
-    {
-      tabId: EntityTypes.ETG,
-      label: `ETG (${entities.filter((entity) => entity.type === EntityTypes.ETG).length})`,
-    },
-    {
-      tabId: EntityTypes.SVI,
-      label: `SVI (${entities.filter((entity) => entity.type === EntityTypes.SVI).length})`,
-    },
-    {
-      tabId: EntityTypes.CCG,
-      label: `CCG (${entities.filter((entity) => entity.type === EntityTypes.CCG).length})`,
-    },
-  ];
-  const [selectedTabId, setSelectedTabId] = useState(tabs[0].tabId);
+  const fetchEntities = (search: string, type: string, zacharie_compatible: string) => {
+    setLoading(true);
+    const query: Record<string, string> = {};
+    if (search) query.search = search;
+    if (type) query.type = type;
+    if (zacharie_compatible) query.zacharie_compatible = zacharie_compatible;
 
-  useEffect(() => {
-    API.get({
-      path: 'admin/entities',
-    })
+    API.get({ path: 'admin/entities', query })
       .then((res) => res as AdminEntitiesResponse)
       .then((res) => {
         if (res.ok) {
-          setUsers(res.data.entities);
+          setEntities(res.data.entities);
+          setCounts(res.data.counts);
         }
-      });
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchEntities('', '', '');
   }, []);
 
-  if (!entities?.length) {
-    return <Chargement />;
-  }
+  useEffect(() => {
+    fetchEntities(searchQuery, selectedType, selectedCompatible);
+  }, [selectedType, selectedCompatible]);
+
+  const onSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchEntities(value, selectedType, selectedCompatible);
+    }, 300);
+  };
+
+  const filteredEntities = entities.filter((entity) => {
+    if (selectedTabId === 'all') return true;
+    return entity.type === selectedTabId;
+  });
+
+  const pills = [
+    { id: 'all', label: 'Tous', count: counts.all ?? 0 },
+    ...Object.values(EntityTypes).map((t) => ({
+      id: t,
+      label: entityTypeLabels[t],
+      count: counts[t] ?? 0,
+    })),
+  ].filter((pill) => pill.id === 'all' || pill.count > 0);
 
   return (
-    <div className="p-2 md:p-4">
+    <div className="py-2">
       <title>Entités | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-      <div className="mb-2 flex items-center justify-end gap-2">
+      <div className="flex flex-wrap items-end gap-2 pb-2 [&_.fr-input-group]:mb-0 [&_.fr-label]:text-xs [&_.fr-select-group]:mb-0">
+        <Input
+          className="w-64"
+          label="Recherche"
+          nativeInputProps={{
+            type: 'search',
+            value: searchQuery,
+            onChange: (e) => onSearchChange(e.target.value),
+            placeholder: 'Nom, DDECPP, SIRET, adresse...',
+          }}
+        />
+        <Select
+          className="w-48"
+          label="Type"
+          nativeSelectProps={{
+            value: selectedType,
+            onChange: (e) => setSelectedType(e.target.value),
+          }}
+        >
+          <option value="">Tous</option>
+          {Object.values(EntityTypes).map((t) => (
+            <option key={t} value={t}>
+              {entityTypeLabels[t]}
+            </option>
+          ))}
+        </Select>
+        <Select
+          className="w-48"
+          label="Compatible Zacharie"
+          nativeSelectProps={{
+            value: selectedCompatible,
+            onChange: (e) => setSelectedCompatible(e.target.value),
+          }}
+        >
+          <option value="">Tous</option>
+          <option value="true">Oui</option>
+          <option value="false">Non</option>
+        </Select>
         <Button
           size="small"
           priority="secondary"
@@ -78,80 +140,105 @@ export default function AdminEntites() {
           + Ajouter des entités (SVI, ETG, etc.)
         </Button>
       </div>
-      <section className="mb-4 bg-white md:shadow-sm">
-        <Tabs
-          selectedTabId={selectedTabId}
-          tabs={tabs}
-          onTabChange={setSelectedTabId}
-          className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
-        >
-          <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
-            <Table
-              fixed
-              noCaption
-              className="[&_td]:align-middle"
-              data={entities
-                .filter((entity) => {
-                  if (selectedTabId === 'all') return true;
-                  return entity.type === selectedTabId;
-                })
-                .map((entity, index) => [
-                  <div
-                    key={entity.id}
-                    className="flex size-full flex-row items-start border-r border-r-gray-200"
-                  >
-                    <span className="p-4">{index + 1}</span>
-                    <div>
-                      <span className="text-sm text-gray-500">
-                        Compatible Zacharie : {entity.zacharie_compatible ? '✅' : '❌'}
+      <div className="flex flex-wrap gap-1 py-2">
+        {pills.map((pill) => (
+          <button
+            key={pill.id}
+            type="button"
+            className="rounded-full border px-2 py-0.5 text-xs"
+            style={
+              selectedTabId === pill.id
+                ? {
+                    backgroundColor: 'var(--background-active-blue-france)',
+                    color: 'var(--text-inverted-blue-france)',
+                    borderColor: 'var(--background-active-blue-france)',
+                  }
+                : {
+                    backgroundColor: 'var(--background-contrast-grey)',
+                    color: 'var(--text-default-grey)',
+                    borderColor: 'var(--border-default-grey)',
+                  }
+            }
+            onClick={() => setSelectedTabId(pill.id)}
+          >
+            {pill.label} ({pill.count})
+          </button>
+        ))}
+      </div>
+      {loading ? (
+        <Chargement />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-gray-300 text-xs text-gray-600 uppercase">
+                <th className="px-2 py-1">Nom</th>
+                <th className="px-2 py-1">N° DDECPP / SIRET</th>
+                <th className="px-2 py-1">Adresse</th>
+                <th className="px-2 py-1">Type</th>
+                <th className="px-2 py-1">Zacharie</th>
+                <th className="px-2 py-1">Création</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEntities.map((entity, index) => (
+                <tr key={entity.id} className="border-b border-gray-200 align-top hover:bg-gray-50">
+                  <td className="px-2 py-1">
+                    <span className="flex flex-col">
+                      <span className="font-medium">
+                        <span className="text-xs text-gray-400">{index + 1}. </span>
+                        <Link
+                          to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                          className="no-underline"
+                        >
+                          {entity.nom_d_usage}
+                        </Link>
                       </span>
-                      <Link
-                        key={entity.id}
-                        to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                        className="inline-flex! size-full items-start justify-start bg-none! no-underline!"
-                        suppressHydrationWarning
-                      >
-                        {dayjs(entity.created_at).format('DD/MM/YYYY à HH:mm')}
-                      </Link>
-                    </div>
-                  </div>,
-                  <Link
-                    key={entity.id}
-                    to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                    className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
-                  >
-                    {entity.nom_d_usage}
-                    <br />
-                    🏭 {entity.numero_ddecpp}
-                    <br />
-                    🏡 {entity.address_ligne_1}
-                    <br />
-                    {entity.address_ligne_2 && (
-                      <>
-                        <br />
-                        {entity.address_ligne_2}
-                      </>
-                    )}
-                    {entity.code_postal} {entity.ville}
-                  </Link>,
-                  <Link
-                    key={entity.id}
-                    to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                    className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
-                  >
-                    {entity.type}
-                  </Link>,
-                ])}
-              headers={['Date de création', 'Identité', 'Type']}
-            />
-          </div>
-          <div className="flex flex-col items-start bg-white px-8 md:[&_ul]:min-w-96">
-            <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-              Haut de page
-            </a>
-          </div>
-        </Tabs>
-      </section>
+                      {entity.raison_sociale && (
+                        <span className="text-xs text-gray-500">{entity.raison_sociale}</span>
+                      )}
+                    </span>
+                  </td>
+                  <td className="px-2 py-1">
+                    <span className="flex flex-col text-xs">
+                      {entity.numero_ddecpp && <span>{entity.numero_ddecpp}</span>}
+                      {entity.siret && <span className="text-gray-500">{entity.siret}</span>}
+                    </span>
+                  </td>
+                  <td className="px-2 py-1">
+                    <span className="flex flex-col text-xs">
+                      {entity.address_ligne_1 && <span>{entity.address_ligne_1}</span>}
+                      <span>
+                        {entity.code_postal} {entity.ville}
+                      </span>
+                    </span>
+                  </td>
+                  <td className="px-2 py-1">
+                    <Badge severity="info" small>
+                      {entityTypeLabels[entity.type] ?? entity.type}
+                    </Badge>
+                  </td>
+                  <td className="px-2 py-1">
+                    <Badge severity={entity.zacharie_compatible ? 'success' : 'warning'} small>
+                      {entity.zacharie_compatible ? 'Oui' : 'Non'}
+                    </Badge>
+                  </td>
+                  <td className="px-2 py-1">
+                    <span className="text-xs text-gray-500" suppressHydrationWarning>
+                      {dayjs(entity.created_at).format('DD/MM/YY')}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <div className="flex items-start bg-white px-4 py-2">
+        <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left text-sm" href="#top">
+          Haut de page
+        </a>
+      </div>
     </div>
   );
 }

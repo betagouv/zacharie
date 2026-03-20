@@ -193,6 +193,7 @@ export interface AdminEntitiesResponse {
   ok: boolean;
   data: {
     entities: Array<Entity>;
+    counts: Record<string, number>;
   };
   error: string;
 }
