@@ -232,25 +232,47 @@ router.get(
       res: express.Response<AdminEntitiesResponse>,
       next: express.NextFunction,
     ) => {
-      const entities = await prisma.entity.findMany({
-        where: {
-          deleted_at: null,
-        },
-        orderBy: [
-          {
-            type: 'asc',
-          },
-          {
-            zacharie_compatible: 'desc',
-          },
-          {
-            nom_d_usage: 'asc',
-          },
-        ],
+      const { search, type, zacharie_compatible } = req.query as Record<string, string | undefined>;
+      const where: Prisma.EntityWhereInput = { deleted_at: null };
+      if (type) where.type = type as EntityTypes;
+      if (zacharie_compatible) where.zacharie_compatible = zacharie_compatible === 'true';
+      if (search) {
+        where.OR = [
+          { nom_d_usage: { contains: search, mode: 'insensitive' } },
+          { raison_sociale: { contains: search, mode: 'insensitive' } },
+          { numero_ddecpp: { contains: search, mode: 'insensitive' } },
+          { siret: { contains: search, mode: 'insensitive' } },
+          { address_ligne_1: { contains: search, mode: 'insensitive' } },
+          { code_postal: { contains: search, mode: 'insensitive' } },
+          { ville: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+
+      const baseWhere: Prisma.EntityWhereInput = { deleted_at: null };
+      if (search) {
+        baseWhere.OR = where.OR;
+      }
+      if (zacharie_compatible) baseWhere.zacharie_compatible = zacharie_compatible === 'true';
+
+      const [entities, allCount, ...typeCounts] = await Promise.all([
+        prisma.entity.findMany({
+          where,
+          orderBy: [{ type: 'asc' }, { zacharie_compatible: 'desc' }, { nom_d_usage: 'asc' }],
+        }),
+        prisma.entity.count({ where: baseWhere }),
+        ...Object.values(EntityTypes).map((t) =>
+          prisma.entity.count({ where: { ...baseWhere, type: t } }),
+        ),
+      ]);
+
+      const counts: Record<string, number> = { all: allCount };
+      Object.values(EntityTypes).forEach((t, i) => {
+        counts[t] = typeCounts[i];
       });
+
       res.status(200).send({
         ok: true,
-        data: { entities },
+        data: { entities, counts },
         error: '',
       });
     },
