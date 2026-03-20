@@ -528,7 +528,7 @@ export default function CarcasseIntermediaireComp({
                               hintText={`Nombre total d'animaux dans le lot : ${nombreAnimauxTotal}`}
                               nativeInputProps={{
                                 type: 'number',
-                                min: 0,
+                                min: 1,
                                 max: nombreAnimauxTotal,
                                 name: Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes,
                                 form: `intermediaire-carcasse-${carcasse.numero_bracelet}`,
@@ -542,7 +542,7 @@ export default function CarcasseIntermediaireComp({
                                   }
                                   const numValue = Number(rawValue);
                                   // Clamp value between 0 and nombreAnimauxTotal
-                                  const clampedValue = Math.max(0, Math.min(numValue, nombreAnimauxTotal));
+                                  const clampedValue = Math.max(1, Math.min(numValue, nombreAnimauxTotal));
                                   updateNombreAnimauxAcceptes(clampedValue);
                                 },
                               }}
