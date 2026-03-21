@@ -879,6 +879,18 @@ router.post(
         return;
       }
 
+      if (!req.user.isZacharieAdmin) {
+        if (user.id !== req.user.id) {
+          res.status(400).send({
+            ok: false,
+            data: { user: null },
+            error: 'User not authorized',
+            message: '',
+          });
+          return;
+        }
+      }
+
       const nextUser: Prisma.UserUpdateInput = {};
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
