@@ -5,6 +5,7 @@ import type { LogResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { Prisma } from '@prisma/client';
+import { capture } from '~/third-parties/sentry';
 
 router.post(
   '/',
@@ -12,6 +13,18 @@ router.post(
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // Fetch the fiche data along with the required intervenants
     const body = req.body as Prisma.LogUncheckedCreateInput;
+    if (body.user_id !== req.user?.id) {
+      capture(new Error('User ID does not match'), {
+        extra: { userId: req.user?.id, body },
+        user: req.user,
+      });
+      res.status(400).send({
+        ok: false,
+        data: { log: null },
+        error: "Vous n'avez pas les permissions pour créer un log pour cet utilisateur",
+      } satisfies LogResponse);
+      return;
+    }
     if (!body.id) {
       res.status(400).send({
         ok: false,
