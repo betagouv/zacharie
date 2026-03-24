@@ -1,6 +1,6 @@
 import { IS_DEV_OR_TEST } from '~/config';
 
-export const JWT_MAX_AGE = 60 * 60 * 24 * 365 * 10; // 10 years in seconds
+export const JWT_MAX_AGE = 60 * 60 * 24 * 90; // 90 days in seconds
 export const COOKIE_MAX_AGE = JWT_MAX_AGE * 1000;
 
 export function cookieOptions(secureInDev = true) {
