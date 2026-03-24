@@ -23,7 +23,9 @@ const TIPIMAIL_EMAIL_FROM = 'contact@zacharie.beta.gouv.fr';
 
 const SECRET = (() => {
   if (process.env.VITE_SECRET) return process.env.VITE_SECRET;
-  throw new Error('VITE_SECRET environment variable is required in production');
+  if (ENVIRONMENT === 'production')
+    throw new Error('VITE_SECRET environment variable is required in production');
+  return '';
 })();
 const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
