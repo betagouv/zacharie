@@ -5,6 +5,7 @@ export const authRateLimit = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
   message: {
     ok: false,
     error: 'Trop de tentatives, veuillez réessayer dans 15 minutes.',
