@@ -100,6 +100,15 @@ app.get('/healthz', async (req, res) => {
   res.send('Hello World');
 });
 
+// security.txt
+app.get('/.well-known/security.txt', (_req, res) => {
+  res.type('text/plain').send(
+    `Contact: mailto:contact@zacharie.beta.gouv.fr
+Preferred-Languages: fr, en
+Expires: 2027-12-31T00:00:00.000Z`,
+  );
+});
+
 // hello world
 const now = new Date();
 app.get('/', async (req, res) => {
