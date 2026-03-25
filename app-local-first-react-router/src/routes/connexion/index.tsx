@@ -1,6 +1,6 @@
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Link, useSearchParams, useNavigate } from 'react-router';
-import { Button } from '@codegouvfr/react-dsfr/Button';
+import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { PasswordInput } from '@codegouvfr/react-dsfr/blocks/PasswordInput';
 import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
@@ -145,24 +145,28 @@ export default function Connexion() {
                 }}
               />
 
-              <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left block">
-                <li className="flex w-auto justify-start">
-                  <Button type="submit" disabled={isLoading}>
-                    Me connecter
-                  </Button>
-                </li>
-                <li className="flex w-auto justify-start">
-                  <Link
-                    to="/app/connexion/mot-de-passe-oublie"
-                    className="w-full py-1 text-center text-xs! text-gray-500"
-                  >
-                    <span>
-                      Mot de passe oublié ? <u className="inline">Cliquez ici</u>, vous recevrez un email avec
-                      un lien pour le réinitialiser
-                    </span>
-                  </Link>
-                </li>
-              </ul>
+              <ButtonsGroup
+                inlineLayoutWhen="always"
+                alignment="left"
+                buttons={[
+                  {
+                    children: 'Me connecter',
+                    nativeButtonProps: {
+                      type: 'submit',
+                      disabled: isLoading,
+                    },
+                  },
+                ]}
+              />
+              <Link
+                to="/app/connexion/mot-de-passe-oublie"
+                className="py-1 text-xs! text-gray-500"
+              >
+                <span>
+                  Mot de passe oublié ? <u className="inline">Cliquez ici</u>, vous recevrez un email avec
+                  un lien pour le réinitialiser
+                </span>
+              </Link>
               <hr />
               <p className="text-xs">
                 Vous n'avez pas encore de compte ?{' '}

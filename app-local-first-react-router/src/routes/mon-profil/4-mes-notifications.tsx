@@ -137,8 +137,9 @@ export default function MesNotifications() {
                 />
               </div>
             </div>
-            <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
+            <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none">
               <ButtonsGroup
+                inlineLayoutWhen="always"
                 buttons={[
                   {
                     children: 'Enregistrer',
