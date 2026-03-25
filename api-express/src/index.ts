@@ -138,7 +138,37 @@ app.use((_req, res, next) => {
 // Pre middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '5mb' }));
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", 'https://stats.beta.gouv.fr'],
+        styleSrc: ["'self'", "'unsafe-inline'"], // DSFR uses inline styles
+        imgSrc: ["'self'", 'data:', 'https://developer.apple.com', 'https://play.google.com'],
+        fontSrc: ["'self'", 'data:'],
+        connectSrc: [
+          "'self'",
+          'https://*.ingest.sentry.io',
+          'https://sentry.incubateur.net',
+          'https://metabase.zacharie.beta.gouv.fr',
+          'https://stats.beta.gouv.fr',
+        ],
+        frameSrc: ['https://metabase.zacharie.beta.gouv.fr', 'https://www.youtube.com'],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'self'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+  }),
+);
+// Permissions-Policy header — restrict browser features not used by the app
+app.use((_req, res, next) => {
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  next();
+});
 app.use(cookieParser());
 
 // sentry context/user
@@ -158,6 +188,13 @@ app.post('/sentry-check', async (req, res) => {
 
 // v1 - REST API used with external clients and api keys
 app.use('/v1', v1Router);
+
+// Auth rate limiting
+import { authRateLimit } from './middlewares/auth-rate-limit.ts';
+app.use('/user/login', authRateLimit);
+app.use('/user/sign-up', authRateLimit);
+app.use('/user/forget-password', authRateLimit);
+app.use('/user/reset-password', authRateLimit);
 
 // Routes used by zacharie.beta.gouv.fr
 app.use('/user', passport.initialize(), userRouter);
