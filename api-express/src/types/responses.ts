@@ -399,6 +399,19 @@ export interface AdminDashboardResponse {
   error: string;
 }
 
+export interface AdminSaisiesSviResponse {
+  ok: boolean;
+  data: {
+    motifs: Array<{ motif: string; count: number; is_mauvaise_pratique: boolean }>;
+    total_inspectees: number;
+    total_saisies: number;
+    taux_saisie_global: number;
+    total_mauvaises_pratiques: number;
+    taux_mauvaises_pratiques: number;
+  };
+  error: string;
+}
+
 export interface AdminPartsDeMarcheResponse {
   ok: boolean;
   data: {
@@ -409,6 +422,12 @@ export interface AdminPartsDeMarcheResponse {
       volume_absolu: number;
     }>;
   };
+  error: string;
+}
+
+export interface AdminDeltaBphResponse {
+  ok: boolean;
+  data: { deltas: number[] };
   error: string;
 }
 

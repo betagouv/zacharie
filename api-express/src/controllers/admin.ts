@@ -38,7 +38,9 @@ import type {
   CcgPreviewModifiedRow,
   AdminCcgImportResponse,
   AdminDashboardResponse,
+  AdminSaisiesSviResponse,
   AdminPartsDeMarcheResponse,
+  AdminDeltaBphResponse,
   UserConnexionResponse,
 } from '~/types/responses';
 import passport from 'passport';
@@ -260,9 +262,7 @@ router.get(
           orderBy: [{ type: 'asc' }, { zacharie_compatible: 'desc' }, { nom_d_usage: 'asc' }],
         }),
         prisma.entity.count({ where: baseWhere }),
-        ...Object.values(EntityTypes).map((t) =>
-          prisma.entity.count({ where: { ...baseWhere, type: t } }),
-        ),
+        ...Object.values(EntityTypes).map((t) => prisma.entity.count({ where: { ...baseWhere, type: t } })),
       ]);
 
       const counts: Record<string, number> = { all: allCount };
@@ -350,10 +350,10 @@ router.get(
                     entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
                       ? [UserRoles.CHASSEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
                       : entity.type === EntityTypes.PREMIER_DETENTEUR
-                      ? [UserRoles.CHASSEUR]
-                      : entity.type === EntityTypes.SVI
-                      ? [UserRoles.ETG]
-                      : [],
+                        ? [UserRoles.CHASSEUR]
+                        : entity.type === EntityTypes.SVI
+                          ? [UserRoles.ETG]
+                          : [],
                 },
               },
               orderBy: {
@@ -366,12 +366,12 @@ router.get(
         entity.type !== EntityTypes.ETG
           ? null
           : !entity.etg_linked_to_svi_id
-          ? null
-          : await prisma.entity.findUnique({
-              where: {
-                id: entity.etg_linked_to_svi_id,
-              },
-            });
+            ? null
+            : await prisma.entity.findUnique({
+                where: {
+                  id: entity.etg_linked_to_svi_id,
+                },
+              });
 
       const potentialSvisRelatedToETG = await prisma.entity.findMany({
         where: {
@@ -664,17 +664,20 @@ router.get(
               nom_d_usage: '',
             },
             ...Object.values(
-              fei.CarcasseIntermediaire.reduce((acc, intermediaire) => {
-                if (acc[intermediaire.intermediaire_entity_id]) return acc;
-                return {
-                  ...acc,
-                  [intermediaire.intermediaire_entity_id]: {
-                    type: intermediaire.intermediaire_role,
-                    email: '',
-                    nom_d_usage: intermediaire.CarcasseIntermediaireEntity.nom_d_usage,
-                  },
-                };
-              }, {} as Record<string, { type: string; email: string; nom_d_usage: string }>),
+              fei.CarcasseIntermediaire.reduce(
+                (acc, intermediaire) => {
+                  if (acc[intermediaire.intermediaire_entity_id]) return acc;
+                  return {
+                    ...acc,
+                    [intermediaire.intermediaire_entity_id]: {
+                      type: intermediaire.intermediaire_role,
+                      email: '',
+                      nom_d_usage: intermediaire.CarcasseIntermediaireEntity.nom_d_usage,
+                    },
+                  };
+                },
+                {} as Record<string, { type: string; email: string; nom_d_usage: string }>,
+              ),
             ),
             {
               type: 'SVI',
@@ -874,13 +877,13 @@ router.post(
             },
           }
         : body.entity_id
-        ? {
-            api_key_id_entity_id: {
-              api_key_id: body.api_key_id,
-              entity_id: body.entity_id,
-            },
-          }
-        : undefined;
+          ? {
+              api_key_id_entity_id: {
+                api_key_id: body.api_key_id,
+                entity_id: body.entity_id,
+              },
+            }
+          : undefined;
       if (action === 'delete') {
         await prisma.apiKeyApprovalByUserOrEntity.delete({
           where,
@@ -1142,6 +1145,99 @@ router.get(
   ),
 );
 
+router.get(
+  '/saisies-svi',
+  passport.authenticate('admin', { session: false }),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminSaisiesSviResponse>,
+      next: express.NextFunction,
+    ) => {
+      const [rows, tauxRows] = await Promise.all([
+        prisma.$queryRaw<Array<{ motif: string; count: bigint }>>`
+          SELECT motif, COUNT(*) as count
+          FROM "Carcasse" c
+          JOIN "Fei" f ON c.fei_numero = f.numero,
+          LATERAL unnest(c.svi_ipm2_lesions_ou_motifs) AS motif
+          WHERE c.deleted_at IS NULL
+            AND c.svi_carcasse_status = 'SAISIE_TOTALE'
+            AND NOT (f.created_by_user_id LIKE '%GLOP%')
+          GROUP BY motif
+          ORDER BY count DESC
+        `,
+        prisma.$queryRaw<
+          Array<{ total_inspectees: bigint; total_saisies: bigint; total_mauvaises_pratiques: bigint }>
+        >`
+          SELECT
+            COUNT(*) as total_inspectees,
+            COUNT(*) FILTER (
+              WHERE c.svi_carcasse_status = 'SAISIE_TOTALE'
+            ) as total_saisies,
+            COUNT(*) FILTER (
+              WHERE c.svi_carcasse_status = 'SAISIE_TOTALE'
+                AND EXISTS (
+                  SELECT 1 FROM unnest(c.svi_ipm2_lesions_ou_motifs) m
+                  WHERE m ILIKE ANY(ARRAY[
+                    '%Souillures d''origine digestive liées à une balle d''abdomen%',
+                    '%Souillures d''origine digestive%',
+                    '%souillures telluriques%',
+                    '%Odeur anormale%',
+                    '%Putréfaction superficielle%',
+                    '%Putréfaction profonde%',
+                    '%Moisissures%',
+                    '%Œufs ou larves de mouche%',
+                    '%orsure de chien%',
+                    '%Viande à évolution anormale%'
+                  ])
+                )
+            ) as total_mauvaises_pratiques
+          FROM "Carcasse" c
+          JOIN "Fei" f ON c.fei_numero = f.numero
+          WHERE c.deleted_at IS NULL
+            AND f.svi_assigned_at IS NOT NULL
+            AND c.svi_carcasse_status IN ('ACCEPTE', 'LEVEE_DE_CONSIGNE', 'SAISIE_TOTALE', 'SAISIE_PARTIELLE', 'TRAITEMENT_ASSAINISSANT')
+            AND NOT (f.created_by_user_id LIKE '%GLOP%')
+        `,
+      ]);
+
+      const mauvaisePratiquePatterns = [
+        /souillures d'origine digestive/i,
+        /souillures telluriques/i,
+        /odeur anormale/i,
+        /putréfaction superficielle/i,
+        /putréfaction profonde/i,
+        /moisissures/i,
+        /œufs ou larves de mouche/i,
+        /orsure de chien/i,
+        /viande à évolution anormale/i,
+      ];
+
+      const totalInspectees = Number(tauxRows[0]?.total_inspectees ?? 0);
+      const totalSaisies = Number(tauxRows[0]?.total_saisies ?? 0);
+      const totalMauvaises = Number(tauxRows[0]?.total_mauvaises_pratiques ?? 0);
+
+      res.status(200).send({
+        ok: true,
+        data: {
+          motifs: rows.map((r) => ({
+            motif: r.motif,
+            count: Number(r.count),
+            is_mauvaise_pratique: mauvaisePratiquePatterns.some((p) => p.test(r.motif)),
+          })),
+          total_inspectees: totalInspectees,
+          total_saisies: totalSaisies,
+          taux_saisie_global: totalInspectees > 0 ? Math.round((totalSaisies / totalInspectees) * 1000) / 10 : 0,
+          total_mauvaises_pratiques: totalMauvaises,
+          taux_mauvaises_pratiques:
+            totalInspectees > 0 ? Math.round((totalMauvaises / totalInspectees) * 1000) / 10 : 0,
+        },
+        error: '',
+      });
+    },
+  ),
+);
+
 const POIDS_MOYEN_KG: Record<string, number> = {
   'Cerf élaphe': 80,
   'Cerf sika': 80,
@@ -1254,6 +1350,87 @@ router.get(
       res.status(200).send({
         ok: true,
         data: { circuit_long },
+        error: '',
+      });
+    },
+  ),
+);
+
+router.get(
+  '/delta-bph',
+  passport.authenticate('admin', { session: false }),
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminDeltaBphResponse>,
+      next: express.NextFunction,
+    ) => {
+      const rows = await prisma.$queryRaw<Array<{ delta: number }>>`
+        WITH fei_scores AS (
+          SELECT
+            f.examinateur_initial_user_id,
+            f.numero,
+            100.0 - (
+              COUNT(*) FILTER (
+                WHERE c.svi_carcasse_status IN ('SAISIE_TOTALE'::"CarcasseStatus", 'SAISIE_PARTIELLE'::"CarcasseStatus")
+                  AND EXISTS (
+                    SELECT 1 FROM unnest(c.svi_ipm2_lesions_ou_motifs) m
+                    WHERE m ILIKE ANY(ARRAY[
+                      '%Souillures d''origine digestive%',
+                      '%souillures telluriques%',
+                      '%Odeur anormale%',
+                      '%Putréfaction superficielle%',
+                      '%Putréfaction profonde%',
+                      '%Moisissures%',
+                      '%Œufs ou larves de mouche%',
+                      '%orsure de chien%',
+                      '%Viande à évolution anormale%'
+                    ])
+                  )
+              )::float / NULLIF(COUNT(*)::float, 0) * 100
+            ) AS score_bph,
+            ROW_NUMBER() OVER (
+              PARTITION BY f.examinateur_initial_user_id
+              ORDER BY COALESCE(f.date_mise_a_mort, f.created_at) ASC
+            ) AS rn_asc,
+            ROW_NUMBER() OVER (
+              PARTITION BY f.examinateur_initial_user_id
+              ORDER BY COALESCE(f.date_mise_a_mort, f.created_at) DESC
+            ) AS rn_desc,
+            COUNT(*) OVER (PARTITION BY f.examinateur_initial_user_id) AS total_feis
+          FROM "Fei" f
+          JOIN "Carcasse" c ON c.fei_numero = f.numero
+          WHERE f.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND c.type = 'GROS_GIBIER'::"CarcasseType"
+            AND (c.next_owner_role IS NULL OR c.next_owner_role NOT IN (
+              'COMMERCE_DE_DETAIL'::"FeiOwnerRole",
+              'REPAS_DE_CHASSE_OU_ASSOCIATIF'::"FeiOwnerRole",
+              'CANTINE_OU_RESTAURATION_COLLECTIVE'::"FeiOwnerRole",
+              'ASSOCIATION_CARITATIVE'::"FeiOwnerRole",
+              'CONSOMMATEUR_FINAL'::"FeiOwnerRole"
+            ))
+            AND c.svi_carcasse_status IS NOT NULL
+            AND NOT (f.created_by_user_id LIKE '%GLOP%')
+          GROUP BY f.examinateur_initial_user_id, f.numero, f.date_mise_a_mort, f.created_at
+        ),
+        deltas AS (
+          SELECT
+            examinateur_initial_user_id,
+            AVG(score_bph) FILTER (WHERE rn_desc <= 5) -
+            AVG(score_bph) FILTER (WHERE rn_asc <= 5) AS delta
+          FROM fei_scores
+          WHERE total_feis >= 10
+          GROUP BY examinateur_initial_user_id
+        )
+        SELECT ROUND(delta::numeric, 1)::float AS delta
+        FROM deltas
+        ORDER BY delta
+      `;
+
+      res.status(200).send({
+        ok: true,
+        data: { deltas: rows.map((r) => r.delta) },
         error: '',
       });
     },
