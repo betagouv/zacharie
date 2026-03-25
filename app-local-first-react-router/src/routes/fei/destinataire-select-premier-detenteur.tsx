@@ -554,11 +554,25 @@ export default function DestinatairePremierDetenteur({
   const allCarcasses = useCarcassesForFei(params.fei_numero);
 
   const carcassesDejaEnvoyees = useMemo(
-    () => allCarcasses.filter((c) => c.next_owner_entity_id != null),
+    () =>
+      allCarcasses.filter(
+        (c) =>
+          c.next_owner_entity_id != null ||
+          (c.current_owner_role != null &&
+            c.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
+            c.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL),
+      ),
     [allCarcasses],
   );
   const carcassesRestantes = useMemo(
-    () => allCarcasses.filter((c) => c.next_owner_entity_id == null),
+    () =>
+      allCarcasses.filter(
+        (c) =>
+          c.next_owner_entity_id == null &&
+          (c.current_owner_role == null ||
+            c.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
+            c.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL),
+      ),
     [allCarcasses],
   );
   const carcassesRestantesIds = useMemo(
@@ -951,7 +965,7 @@ export default function DestinatairePremierDetenteur({
   const dejaEnvoyeesParDestinataire = useMemo(() => {
     const grouped: Record<string, Carcasse[]> = {};
     for (const c of carcassesDejaEnvoyees) {
-      const key = c.next_owner_entity_id || 'unknown';
+      const key = c.next_owner_entity_id || c.current_owner_entity_id || 'unknown';
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(c);
     }
