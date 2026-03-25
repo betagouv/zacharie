@@ -228,62 +228,89 @@ export default function MesAssociationsDeChasse() {
                   * Les champs marqués d'un astérisque (*) sont obligatoires.
                 </p>
                 <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
-                  <SelectCustom
-                    key={'Raison Sociale *' + currentEntityId}
-                    options={selectOptions}
-                    getOptionLabel={(entity) =>
-                      `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
-                    }
-                    getOptionValue={(entity) => entity.id}
-                    formatOptionLabel={(entity, options) => {
-                      if (options.context === 'menu') {
-                        // @ts-expect-error - __isNew__ and value are not typed
-                        if (entity.__isNew__) return entity.value;
-                        if (!entity.code_postal) return entity.nom_d_usage;
-                        return `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`;
+                  {isUnregisteredEntity ? (
+                    <div className="mb-6">
+                      <Input
+                        label="Raison Sociale *"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.raison_sociale,
+                          name: Prisma.EntityScalarFieldEnum.raison_sociale,
+                          required: true,
+                          autoComplete: 'off',
+                          value: newEntityNomDUsage,
+                          onChange: (e) => setNewEntityNomDUsage(e.currentTarget.value),
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="fr-link fr-link--sm"
+                        onClick={() => {
+                          setIsUnregisteredEntity(false);
+                          setNewEntityNomDUsage('');
+                          setCurrentEntityId(null);
+                        }}
+                      >
+                        Chercher une entité existante
+                      </button>
+                    </div>
+                  ) : (
+                    <SelectCustom
+                      key={'Raison Sociale *' + currentEntityId}
+                      options={selectOptions}
+                      getOptionLabel={(entity) =>
+                        `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
                       }
-                      return entity.nom_d_usage;
-                    }}
-                    // @ts-expect-error - onCreateOption is not typed
-                    onCreateOption={async (raison_sociale) => {
-                      setNewEntityNomDUsage(raison_sociale);
-                      setIsUnregisteredEntity(true);
-                      setAssoPostalCode('');
-                      setCurrentEntityId(null);
-                    }}
-                    label="Raison Sociale *"
-                    name={Prisma.EntityScalarFieldEnum.raison_sociale}
-                    placeholder=""
-                    creatable={true}
-                    value={selectValue}
-                    onBlur={(event) => {
-                      if (!currentEntityId) {
-                        if (event.target.value) {
-                          setNewEntityNomDUsage(event.target.value);
-                          setIsUnregisteredEntity(true);
+                      getOptionValue={(entity) => entity.id}
+                      formatOptionLabel={(entity, options) => {
+                        if (options.context === 'menu') {
+                          // @ts-expect-error - __isNew__ and value are not typed
+                          if (entity.__isNew__) return entity.value;
+                          if (!entity.code_postal) return entity.nom_d_usage;
+                          return `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`;
                         }
-                      }
-                    }}
-                    onChange={(newEntity) => {
-                      if (newEntity?.id) {
-                        setCurrentEntityId(newEntity.id);
-                        setAssoPostalCode(newEntity.code_postal || '');
-                        setNewEntityNomDUsage('');
-                        setIsUnregisteredEntity(false);
-                      }
-                      if (!newEntity) {
-                        setCurrentEntityId(null);
+                        return entity.nom_d_usage;
+                      }}
+                      // @ts-expect-error - onCreateOption is not typed
+                      onCreateOption={async (raison_sociale) => {
+                        setNewEntityNomDUsage(raison_sociale);
+                        setIsUnregisteredEntity(true);
                         setAssoPostalCode('');
-                        setNewEntityNomDUsage('');
-                        setIsUnregisteredEntity(false);
-                      }
-                    }}
-                    isClearable={!!currentEntityId}
-                    required={true}
-                    inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
-                    classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
-                    className="mb-6"
-                  />
+                        setCurrentEntityId(null);
+                      }}
+                      label="Raison Sociale *"
+                      name={Prisma.EntityScalarFieldEnum.raison_sociale}
+                      placeholder=""
+                      creatable={true}
+                      value={selectValue}
+                      onBlur={(event) => {
+                        if (!currentEntityId) {
+                          if (event.target.value) {
+                            setNewEntityNomDUsage(event.target.value);
+                            setIsUnregisteredEntity(true);
+                          }
+                        }
+                      }}
+                      onChange={(newEntity) => {
+                        if (newEntity?.id) {
+                          setCurrentEntityId(newEntity.id);
+                          setAssoPostalCode(newEntity.code_postal || '');
+                          setNewEntityNomDUsage('');
+                          setIsUnregisteredEntity(false);
+                        }
+                        if (!newEntity) {
+                          setCurrentEntityId(null);
+                          setAssoPostalCode('');
+                          setNewEntityNomDUsage('');
+                          setIsUnregisteredEntity(false);
+                        }
+                      }}
+                      isClearable={!!currentEntityId}
+                      required={true}
+                      inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
+                      classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
+                      className="mb-6"
+                    />
+                  )}
                   {/* <SelectCustom
                 key={'SIRET select' + currentEntityId}
                 options={selectOptions}
