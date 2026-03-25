@@ -1,6 +1,6 @@
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Link, useSearchParams, useNavigate } from 'react-router';
-import { Button } from '@codegouvfr/react-dsfr/Button';
+import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { PasswordInput } from '@codegouvfr/react-dsfr/blocks/PasswordInput';
 import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
@@ -155,13 +155,19 @@ export default function CreationDeCompte() {
                 }}
               />
 
-              <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left block">
-                <li className="flex w-auto justify-start">
-                  <Button type="submit" disabled={isLoading}>
-                    Créer mon compte
-                  </Button>
-                </li>
-              </ul>
+              <ButtonsGroup
+                inlineLayoutWhen="always"
+                alignment="left"
+                buttons={[
+                  {
+                    children: 'Créer mon compte',
+                    nativeButtonProps: {
+                      type: 'submit',
+                      disabled: isLoading,
+                    },
+                  },
+                ]}
+              />
               <hr />
               <p className="text-xs">
                 Vous avez déjà un compte ? <Link to="/app/connexion">Cliquez ici pour vous connecter</Link>

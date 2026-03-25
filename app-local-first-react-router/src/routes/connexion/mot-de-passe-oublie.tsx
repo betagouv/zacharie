@@ -1,6 +1,6 @@
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Link, useSearchParams } from 'react-router';
-import { Button } from '@codegouvfr/react-dsfr/Button';
+import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { type UserConnexionResponse } from '@api/src/types/responses';
 import { useState } from 'react';
@@ -100,13 +100,19 @@ export default function MotDePasseOublie() {
                 }}
               />
 
-              <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left block">
-                <li className="flex w-auto justify-start">
-                  <Button type="submit" disabled={isLoading}>
-                    Envoyer un email de réinitialisation
-                  </Button>
-                </li>
-              </ul>
+              <ButtonsGroup
+                inlineLayoutWhen="always"
+                alignment="left"
+                buttons={[
+                  {
+                    children: 'Envoyer un email de réinitialisation',
+                    nativeButtonProps: {
+                      type: 'submit',
+                      disabled: isLoading,
+                    },
+                  },
+                ]}
+              />
               <hr />
               <p className="text-xs">
                 Vous vous souvenez de votre mot de passe ?{' '}

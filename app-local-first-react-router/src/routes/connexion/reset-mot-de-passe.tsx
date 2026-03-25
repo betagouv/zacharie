@@ -1,5 +1,6 @@
 import { Link, useSearchParams, useNavigate } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { PasswordInput } from '@codegouvfr/react-dsfr/blocks/PasswordInput';
 import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
@@ -160,13 +161,19 @@ export default function ResetMotDePasse() {
                 }}
               />
 
-              <ul className="fr-btns-group fr-btns-group--left fr-btns-group--icon-left block">
-                <li className="flex w-auto justify-start">
-                  <Button type="submit" disabled={isLoading}>
-                    Réinitialiser mon mot de passe
-                  </Button>
-                </li>
-              </ul>
+              <ButtonsGroup
+                inlineLayoutWhen="always"
+                alignment="left"
+                buttons={[
+                  {
+                    children: 'Réinitialiser mon mot de passe',
+                    nativeButtonProps: {
+                      type: 'submit',
+                      disabled: isLoading,
+                    },
+                  },
+                ]}
+              />
               <hr />
               <p className="text-xs">
                 Vous vous souvenez de votre mot de passe ?{' '}

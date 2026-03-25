@@ -357,8 +357,9 @@ export default function MonEntreprise() {
                   </a>
                 </div>
               </div>
-              <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
+              <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none">
                 <ButtonsGroup
+                  inlineLayoutWhen="always"
                   // @ts-expect-error priority is not typed
                   buttons={[
                     {
@@ -499,11 +500,11 @@ function ListAndSelectEntities({
                 isClearable={!!entityId}
                 inputId={`select-${formId}`}
                 classNamePrefix={`select-${formId}`}
-                className="basis-2/3"
+                className="flex-1"
               />
               <Button
                 type="submit"
-                className="flex basis-1/3 items-center justify-center"
+                className="shrink-0"
                 nativeButtonProps={{ form: formId }}
                 onClick={(e) => {
                   e.preventDefault();
