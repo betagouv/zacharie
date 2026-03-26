@@ -9,12 +9,25 @@ import { feiPopulatedInclude } from '~/types/fei';
 import type { FeiPopulated } from '~/types/fei';
 import { capture } from '~/third-parties/sentry';
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
+import { userFeiSelect } from '~/types/user';
+import { z } from 'zod';
+
+const refreshFeiSchema = z.object({
+  numeros: z.array(z.string()),
+});
 
 router.post(
   '/refresh',
   passport.authenticate('user', { session: false }),
   catchErrors(
     async (req: express.Request, res: express.Response<FeiRefreshResponse>, next: express.NextFunction) => {
+      let result = refreshFeiSchema.safeParse(req.body);
+      if (!result.success) {
+        const error = new Error(result.error.message);
+        res.status(406);
+        return next(error);
+      }
+      let body = result.data;
       if (!req.user.activated) {
         res.status(400).send({
           ok: false,
@@ -23,7 +36,7 @@ router.post(
         });
         return;
       }
-      let numeros = req.body.numeros;
+      let numeros = body.numeros;
       if (!numeros.length) {
         res.status(400).send({
           ok: false,
@@ -77,7 +90,9 @@ router.post(
 
       // 3. Batch-fetch all referenced users and entities
       const [users, entities] = await Promise.all([
-        userIds.size > 0 ? prisma.user.findMany({ where: { id: { in: [...userIds] } } }) : [],
+        userIds.size > 0
+          ? prisma.user.findMany({ where: { id: { in: [...userIds] } }, select: userFeiSelect })
+          : [],
         entityIds.size > 0 ? prisma.entity.findMany({ where: { id: { in: [...entityIds] } } }) : [],
       ]);
 

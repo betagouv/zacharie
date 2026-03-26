@@ -105,7 +105,7 @@ export interface FeiRefreshResponse {
   ok: boolean;
   data: {
     feis: Array<FeiForRefresh>;
-    users: Array<User>;
+    users: Array<UserForFei>;
     entities: Array<Entity>;
   };
   error: string;
