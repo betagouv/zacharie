@@ -29,6 +29,7 @@ export function initMatomo(): void {
 
   window._paq.push(['setTrackerUrl', `${matomoUrl}/matomo.php`]);
   window._paq.push(['setSiteId', MATOMO_SITE_ID]);
+  window._paq.push(['setSecureCookie', true]);
   window._paq.push(['enableLinkTracking']);
 
   // Load Matomo script asynchronously

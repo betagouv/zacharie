@@ -18,6 +18,31 @@ app.use(compression());
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
 app.disable('x-powered-by');
 
+// Security headers (Mozilla Observatory recommendations)
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' https://stats.beta.gouv.fr",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https://developer.apple.com https://play.google.com",
+      "font-src 'self' data:",
+      "connect-src 'self' https://api.zacharie.beta.gouv.fr https://*.ingest.sentry.io https://sentry.incubateur.net https://metabase.zacharie.beta.gouv.fr https://stats.beta.gouv.fr",
+      "frame-src https://metabase.zacharie.beta.gouv.fr https://www.youtube.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'self'",
+      'upgrade-insecure-requests',
+    ].join('; '),
+  );
+  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  next();
+});
+
 if (viteDevServer) {
   app.use(viteDevServer.middlewares);
   app.use((req, res, next) => {
