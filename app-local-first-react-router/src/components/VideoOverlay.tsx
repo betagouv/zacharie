@@ -31,6 +31,7 @@ export default function VideoOverlay() {
         <iframe
           className="absolute inset-0 h-full w-full"
           src={videoUrl}
+          title="Vidéo"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
         />
