@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
-import { CarcasseType, UserRoles } from '@prisma/client';
+import { CarcasseType, DepotType, UserRoles } from '@prisma/client';
 import { abbreviations } from '@app/utils/count-carcasses';
 import dayjs from 'dayjs';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
@@ -257,15 +257,21 @@ export default function TableauDeBordIndex() {
         return 'Filtrer';
     }
   }, [filter]);
+  const [filterPremierDetenteur, setFilterPremierDetenteur] = useLocalStorage<string>(
+    'tableau-de-bord-filter-premier-detenteur',
+    '',
+  );
+  const [filterCCG, setFilterCCG] = useLocalStorage<string>('tableau-de-bord-filter-ccg', '');
+
   const [filterETG, setFilterETG] = useState<string>('');
   const [sviWorkingForEtgIds, dropDownMenuFilterTextSvi] = useMemo(() => {
     const _sviWorkingForEtgIds = !isSvi
       ? []
       : allEtgIds.filter((id) => {
-          const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
-          if (!etgLinkedToSviId) return false;
-          return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
-        });
+        const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
+        if (!etgLinkedToSviId) return false;
+        return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
+      });
     if (_sviWorkingForEtgIds.includes(filterETG)) {
       return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
     }
@@ -283,21 +289,89 @@ export default function TableauDeBordIndex() {
     return [...feisAssigned, ...feisOngoing, ...feisDone];
   }, [isSvi, feisAssigned, feisOngoing, feisDone, feiActivesForSvi, feisDoneForSvi, filterETG]);
 
+  const premierDetenteurOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const fei of allFeis) {
+      const id = fei.premier_detenteur_user_id || fei.premier_detenteur_entity_id;
+      const name = fei.premier_detenteur_name_cache;
+      if (id && name && !map.has(id)) {
+        map.set(id, name);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [allFeis]);
+
+  const ccgOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const fei of allFeis) {
+      if (fei.premier_detenteur_depot_type === DepotType.CCG && fei.premier_detenteur_depot_entity_id) {
+        const id = fei.premier_detenteur_depot_entity_id;
+        const name = fei.premier_detenteur_depot_entity_name_cache || id;
+        if (!map.has(id)) {
+          map.set(id, name);
+        }
+      }
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [allFeis]);
+
+  const dropDownMenuFilterTextPremierDetenteur = useMemo(() => {
+    if (filterPremierDetenteur) {
+      const option = premierDetenteurOptions.find((o) => o.id === filterPremierDetenteur);
+      if (option) return option.name;
+    }
+    return 'Filtrer par premier détenteur';
+  }, [filterPremierDetenteur, premierDetenteurOptions]);
+
+  const dropDownMenuFilterTextCCG = useMemo(() => {
+    if (filterCCG) {
+      const option = ccgOptions.find((o) => o.id === filterCCG);
+      if (option) return option.name;
+    }
+    return 'Filtrer par CCG';
+  }, [filterCCG, ccgOptions]);
+
   const filteredFeis = useMemo(() => {
-    if (filter === 'Toutes les fiches') return allFeis;
-    return allFeis.filter((fei) => {
-      const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
-      const feiCarcasses = filterCarcassesForFei(carcasses, fei.numero);
-      const { simpleStatus } = computeFeiSteps({
-        fei,
-        intermediaires,
-        entitiesIdsWorkingDirectlyFor,
-        user,
-        carcasses: feiCarcasses,
+    let feis = allFeis;
+    if (filter !== 'Toutes les fiches') {
+      feis = feis.filter((fei) => {
+        const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
+        const feiCarcasses = filterCarcassesForFei(carcasses, fei.numero);
+        const { simpleStatus } = computeFeiSteps({
+          fei,
+          intermediaires,
+          entitiesIdsWorkingDirectlyFor,
+          user,
+          carcasses: feiCarcasses,
+        });
+        return simpleStatus === filter;
       });
-      return simpleStatus === filter;
-    });
-  }, [allFeis, filter, carcassesIntermediaireById, carcasses, entitiesIdsWorkingDirectlyFor, user]);
+    }
+    if (filterPremierDetenteur) {
+      feis = feis.filter(
+        (fei) =>
+          fei.premier_detenteur_user_id === filterPremierDetenteur ||
+          fei.premier_detenteur_entity_id === filterPremierDetenteur,
+      );
+    }
+    if (filterCCG) {
+      feis = feis.filter((fei) => fei.premier_detenteur_depot_entity_id === filterCCG);
+    }
+    return feis;
+  }, [
+    allFeis,
+    filter,
+    filterPremierDetenteur,
+    filterCCG,
+    carcassesIntermediaireById,
+    carcasses,
+    entitiesIdsWorkingDirectlyFor,
+    user,
+  ]);
 
   const totalPages = Math.ceil(filteredFeis.length / (itemsPerPage ?? 20));
   const paginatedFeis = useMemo(() => {
@@ -381,6 +455,72 @@ export default function TableauDeBordIndex() {
                 },
               ]}
             />
+            {premierDetenteurOptions.length > 1 && (
+              <DropDownMenu
+                text={dropDownMenuFilterTextPremierDetenteur}
+                isActive={!!filterPremierDetenteur}
+                className="w-full md:w-auto"
+                menuLinks={[
+                  {
+                    linkProps: {
+                      href: '#',
+                      title: 'Tous les premiers détenteurs',
+                      onClick: (e) => {
+                        e.preventDefault();
+                        setFilterPremierDetenteur('');
+                      },
+                    },
+                    text: 'Tous les premiers détenteurs',
+                    isActive: !filterPremierDetenteur,
+                  },
+                  ...premierDetenteurOptions.map((option) => ({
+                    linkProps: {
+                      href: '#',
+                      title: option.name,
+                      onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+                        e.preventDefault();
+                        setFilterPremierDetenteur(option.id);
+                      },
+                    },
+                    text: option.name,
+                    isActive: filterPremierDetenteur === option.id,
+                  })),
+                ]}
+              />
+            )}
+            {ccgOptions.length > 1 && (
+              <DropDownMenu
+                text={dropDownMenuFilterTextCCG}
+                isActive={!!filterCCG}
+                className="w-full md:w-auto"
+                menuLinks={[
+                  {
+                    linkProps: {
+                      href: '#',
+                      title: 'Tous les CCG',
+                      onClick: (e) => {
+                        e.preventDefault();
+                        setFilterCCG('');
+                      },
+                    },
+                    text: 'Tous les CCG',
+                    isActive: !filterCCG,
+                  },
+                  ...ccgOptions.map((option) => ({
+                    linkProps: {
+                      href: '#',
+                      title: option.name,
+                      onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+                        e.preventDefault();
+                        setFilterCCG(option.id);
+                      },
+                    },
+                    text: option.name,
+                    isActive: filterCCG === option.id,
+                  })),
+                ]}
+              />
+            )}
             {isSvi && sviWorkingForEtgIds.length > 1 && (
               <DropDownMenu
                 text={dropDownMenuFilterTextSvi}
@@ -414,49 +554,7 @@ export default function TableauDeBordIndex() {
                 ]}
               />
             )}
-            <DropDownMenu
-              text="Actions"
-              className="max-w-[321px]"
-              isActive={selectedFeis.length > 0}
-              menuLinks={[
-                {
-                  linkProps: {
-                    href: '#',
-                    'aria-disabled': selectedFeis.length === 0,
-                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title:
-                      selectedFeis.length === 0
-                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                        : '',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      if (selectedFeis.length === 0) return;
-                      if (isExporting) return;
-                      onExportToXlsx(selectedFeis);
-                    },
-                  },
-                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (complètes)',
-                },
-                {
-                  linkProps: {
-                    href: '#',
-                    'aria-disabled': selectedFeis.length === 0,
-                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title:
-                      selectedFeis.length === 0
-                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                        : '',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      if (selectedFeis.length === 0) return;
-                      if (isExporting) return;
-                      onExportSimplifiedToXlsx(selectedFeis);
-                    },
-                  },
-                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (simplifiées)',
-                },
-              ]}
-            />
+
             <Button
               priority="tertiary"
               className="w-full shrink-0 bg-white md:w-auto"
@@ -513,6 +611,49 @@ export default function TableauDeBordIndex() {
                 <span>Nouvelle fiche</span>
               </Button>
             )}
+            <DropDownMenu
+              text="Actions"
+              className="max-w-[321px]"
+              isActive={selectedFeis.length > 0}
+              menuLinks={[
+                {
+                  linkProps: {
+                    href: '#',
+                    'aria-disabled': selectedFeis.length === 0,
+                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                    title:
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                        : '',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      if (selectedFeis.length === 0) return;
+                      if (isExporting) return;
+                      onExportToXlsx(selectedFeis);
+                    },
+                  },
+                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (complètes)',
+                },
+                {
+                  linkProps: {
+                    href: '#',
+                    'aria-disabled': selectedFeis.length === 0,
+                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                    title:
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                        : '',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      if (selectedFeis.length === 0) return;
+                      if (isExporting) return;
+                      onExportSimplifiedToXlsx(selectedFeis);
+                    },
+                  },
+                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (simplifiées)',
+                },
+              ]}
+            />
           </div>
         </div>
         <div className="flex items-center justify-between">

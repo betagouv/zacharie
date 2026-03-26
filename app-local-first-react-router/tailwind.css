@@ -257,10 +257,18 @@ details {
 
 .drop-down .fr-nav__item {
   @apply bg-white!;
+  position: relative;
 }
 
 .drop-down .fr-nav__btn {
   @apply text-action-high-blue-france! min-h-10! py-0! text-base! font-medium!;
+}
+
+.drop-down .fr-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
