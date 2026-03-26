@@ -46,6 +46,7 @@ import FeiEnvoyée from './routes/fei/envoyée';
 import DeactivatedAccount from './routes/deactivated';
 import { hasAllRequiredFields } from './utils/user';
 import { MatomoTracker } from './components/MatomoTracker';
+import ImpactMatrix from './components/ImpactMatrix';
 
 // mon profil routes
 import MesRoles from './routes/mon-profil/1-mon-activite';
@@ -105,6 +106,7 @@ function App() {
           <Route path="politique-de-confidentialite" element={<PolitiqueDeConfidentialite />} />
           <Route path="modalites-d-utilisation" element={<ModalitesDutilisation />} />
           <Route path="stats" element={<Stats />} />
+          <Route path="stats/matrice-impact" element={<ImpactMatrix />} />
           <Route path="contact" element={<Contact />} />
           <Route path="faq" element={<Faq />} />
         </Route>
