@@ -268,10 +268,10 @@ export default function TableauDeBordIndex() {
     const _sviWorkingForEtgIds = !isSvi
       ? []
       : allEtgIds.filter((id) => {
-          const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
-          if (!etgLinkedToSviId) return false;
-          return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
-        });
+        const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
+        if (!etgLinkedToSviId) return false;
+        return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
+      });
     if (_sviWorkingForEtgIds.includes(filterETG)) {
       return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
     }
@@ -554,49 +554,7 @@ export default function TableauDeBordIndex() {
                 ]}
               />
             )}
-            <DropDownMenu
-              text="Actions"
-              className="max-w-[321px]"
-              isActive={selectedFeis.length > 0}
-              menuLinks={[
-                {
-                  linkProps: {
-                    href: '#',
-                    'aria-disabled': selectedFeis.length === 0,
-                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title:
-                      selectedFeis.length === 0
-                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                        : '',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      if (selectedFeis.length === 0) return;
-                      if (isExporting) return;
-                      onExportToXlsx(selectedFeis);
-                    },
-                  },
-                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (complètes)',
-                },
-                {
-                  linkProps: {
-                    href: '#',
-                    'aria-disabled': selectedFeis.length === 0,
-                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title:
-                      selectedFeis.length === 0
-                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                        : '',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      if (selectedFeis.length === 0) return;
-                      if (isExporting) return;
-                      onExportSimplifiedToXlsx(selectedFeis);
-                    },
-                  },
-                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (simplifiées)',
-                },
-              ]}
-            />
+
             <Button
               priority="tertiary"
               className="w-full shrink-0 bg-white md:w-auto"
@@ -653,6 +611,49 @@ export default function TableauDeBordIndex() {
                 <span>Nouvelle fiche</span>
               </Button>
             )}
+            <DropDownMenu
+              text="Actions"
+              className="max-w-[321px]"
+              isActive={selectedFeis.length > 0}
+              menuLinks={[
+                {
+                  linkProps: {
+                    href: '#',
+                    'aria-disabled': selectedFeis.length === 0,
+                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                    title:
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                        : '',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      if (selectedFeis.length === 0) return;
+                      if (isExporting) return;
+                      onExportToXlsx(selectedFeis);
+                    },
+                  },
+                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (complètes)',
+                },
+                {
+                  linkProps: {
+                    href: '#',
+                    'aria-disabled': selectedFeis.length === 0,
+                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                    title:
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                        : '',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      if (selectedFeis.length === 0) return;
+                      if (isExporting) return;
+                      onExportSimplifiedToXlsx(selectedFeis);
+                    },
+                  },
+                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (simplifiées)',
+                },
+              ]}
+            />
           </div>
         </div>
         <div className="flex items-center justify-between">
