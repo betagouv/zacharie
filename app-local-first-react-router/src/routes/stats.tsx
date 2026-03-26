@@ -1,7 +1,15 @@
+import { useEffect } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 const DASHBOARD_URL = 'https://metabase.zacharie.beta.gouv.fr/public/dashboard/45c24085-9a52-4357-afe6-419bd8542f20';
 
 export default function Stats() {
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'instant',
+    });
+  }, []);
+
   return (
     <main className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <title>Statistiques | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
@@ -18,7 +26,7 @@ export default function Stats() {
         </Button>
       </div>
       <section className="space-y-4">
-        <iframe src={DASHBOARD_URL} className="w-full" height={1900} allowTransparency={true} />
+        <iframe src={DASHBOARD_URL} className="w-full" height={2200} allowTransparency={true} />
       </section>
     </main>
   );
