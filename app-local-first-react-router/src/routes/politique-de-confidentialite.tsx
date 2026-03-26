@@ -79,6 +79,17 @@ export default function PolitiqueDeConfidentialite() {
               Aux autres utilisateurs de la plateforme, uniquement pour les données nécessaires à la
               traçabilité des carcasses (dans le cadre de leurs attributions respectives)
             </li>
+            <li>
+              Aux sous-traitants intervenant pour le compte du responsable de traitement (articles 13 et 14 du
+              RGPD), strictement pour les finalités techniques suivantes :
+              <ul className="mt-1 list-disc pl-6">
+                <li>Clever Cloud : hébergement de la plateforme</li>
+                <li>OVH : gestion des noms de domaine</li>
+                <li>Brevo : envoi des emails</li>
+                <li>Notion : gestion du pipeline de développement</li>
+                <li>Github : gestion du code source</li>
+              </ul>
+            </li>
           </ul>
 
           <h2 className="mt-6 mb-2 text-xl font-semibold">7. Durée de conservation</h2>
