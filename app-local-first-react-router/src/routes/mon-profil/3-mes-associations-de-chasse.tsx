@@ -11,7 +11,7 @@ import SelectCustom from '@app/components/SelectCustom';
 import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
-import InputNotEditable from '@app/components/InputNotEditable';
+
 
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.PREMIER_DETENTEUR]: {},
@@ -81,27 +81,14 @@ export default function MesAssociationsDeChasse() {
 
   const newEntity = newEntityNomDUsage
     ? ({
-        nom_d_usage: newEntityNomDUsage,
-        id: 'nouvelle',
-      } as (typeof remainingEntities)[number])
+      nom_d_usage: newEntityNomDUsage,
+      id: 'nouvelle',
+    } as (typeof remainingEntities)[number])
     : undefined;
   const selectOptions = newEntity ? [newEntity, ...remainingEntities] : remainingEntities;
   const selectValue = newEntityNomDUsage
     ? (selectOptions.find((option) => option.id === 'nouvelle') ?? undefined)
     : (selectOptions.find((option) => option.id === currentEntityId) ?? undefined);
-
-  const isAdminOfEntity =
-    newEntityNomDUsage ||
-    !currentEntityId ||
-    userEntities
-      .find((entity) => entity.id === currentEntityId)
-      ?.EntityRelationsWithUsers.find(
-        (relation) =>
-          relation.owner_id === user.id &&
-          relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-      )?.status === EntityRelationStatus.ADMIN;
-
-  const ComponentToDisplay = isAdminOfEntity ? Input : InputNotEditable;
 
   const [assoPostalCode, setAssoPostalCode] = useState('');
   const handleEntitySubmit = useCallback(
@@ -224,36 +211,8 @@ export default function MesAssociationsDeChasse() {
           ) : (
             <div className="mt-8">
               <div className="rounded-lg border border-gray-300 px-8 py-6">
-                <p className="mb-5 text-sm text-gray-500">
-                  * Les champs marqués d'un astérisque (*) sont obligatoires.
-                </p>
-                <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
-                  {isUnregisteredEntity ? (
-                    <div className="mb-6">
-                      <Input
-                        label="Raison Sociale *"
-                        nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.raison_sociale,
-                          name: Prisma.EntityScalarFieldEnum.raison_sociale,
-                          required: true,
-                          autoComplete: 'off',
-                          value: newEntityNomDUsage,
-                          onChange: (e) => setNewEntityNomDUsage(e.currentTarget.value),
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="fr-link fr-link--sm"
-                        onClick={() => {
-                          setIsUnregisteredEntity(false);
-                          setNewEntityNomDUsage('');
-                          setCurrentEntityId(null);
-                        }}
-                      >
-                        Chercher une entité existante
-                      </button>
-                    </div>
-                  ) : (
+                {!isUnregisteredEntity && !currentEntityId && (
+                  <>
                     <SelectCustom
                       key={'Raison Sociale *' + currentEntityId}
                       options={selectOptions}
@@ -271,13 +230,13 @@ export default function MesAssociationsDeChasse() {
                         return entity.nom_d_usage;
                       }}
                       // @ts-expect-error - onCreateOption is not typed
-                      onCreateOption={async (raison_sociale) => {
+                      onCreateOption={async (raison_sociale: string) => {
                         setNewEntityNomDUsage(raison_sociale);
                         setIsUnregisteredEntity(true);
                         setAssoPostalCode('');
                         setCurrentEntityId(null);
                       }}
-                      label="Raison Sociale *"
+                      label="Rechercher une association, société ou domaine de chasse"
                       name={Prisma.EntityScalarFieldEnum.raison_sociale}
                       placeholder=""
                       creatable={true}
@@ -308,128 +267,157 @@ export default function MesAssociationsDeChasse() {
                       required={true}
                       inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
                       classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
-                      className="mb-6"
                     />
-                  )}
-                  {/* <SelectCustom
-                key={'SIRET select' + currentEntityId}
-                options={selectOptions}
-                getOptionLabel={(entity) =>
-                  `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville} - ${entity.siret}`
-                }
-                getOptionValue={(entity) => entity.id}
-                formatOptionLabel={(entity, options) => {
-                  if (options.context === 'menu') {
-                    if (!entity.code_postal) return `${entity.nom_d_usage} - ${entity.siret}`;
-                    return `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville} - ${entity.siret}`;
-                  }
-                  return entity.siret;
-                }}
-                label="SIRET"
-                name={Prisma.EntityScalarFieldEnum.siret}
-                placeholder=""
-                creatable={false}
-                value={selectValue}
-                onChange={(newEntity) => {
-                  if (newEntity?.id) {
-                    setCurrentEntityId(newEntity.id);
-                    setAssoPostalCode(newEntity.code_postal || '');
-                    setNewEntityNomDUsage('');
-                  }
-                }}
-                isClearable={!!currentEntityId}
-                required={true}
-                inputId={Prisma.EntityScalarFieldEnum.siret}
-                classNamePrefix={Prisma.EntityScalarFieldEnum.siret}
-                className="mb-6"
-              /> */}
-                  <ComponentToDisplay
-                    label="SIRET"
-                    key={'SIRET' + currentEntityId}
-                    nativeInputProps={{
-                      id: Prisma.EntityScalarFieldEnum.siret,
-                      name: Prisma.EntityScalarFieldEnum.siret,
-                      autoComplete: 'off',
-                      defaultValue: currentEntity?.siret ?? '',
-                    }}
-                  />
-                  <ComponentToDisplay
-                    label="Adresse *"
-                    key={'Adresse *' + currentEntityId}
-                    hintText="Indication : numéro et voie"
-                    nativeInputProps={{
-                      id: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                      name: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                      autoComplete: 'off',
-                      required: true,
-                      defaultValue: currentEntity?.address_ligne_1 ?? '',
-                    }}
-                  />
-                  <ComponentToDisplay
-                    label="Complément d'adresse (optionnel)"
-                    hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                    key={"Complément d'adresse (optionnel)" + currentEntityId}
-                    nativeInputProps={{
-                      id: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                      name: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                      autoComplete: 'off',
-                      defaultValue: currentEntity?.address_ligne_2 ?? '',
-                    }}
-                  />
-
-                  <div className="flex w-full flex-col gap-x-4 md:flex-row">
-                    <ComponentToDisplay
-                      label="Code postal *"
-                      hintText="5 chiffres"
-                      className="shrink-0 md:basis-1/5"
-                      key={'Code postal *' + currentEntityId}
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.code_postal,
-                        name: Prisma.EntityScalarFieldEnum.code_postal,
-                        autoComplete: 'off',
-                        required: true,
-                        value: assoPostalCode,
-                        onChange: (e) => {
-                          setAssoPostalCode(e.currentTarget.value);
-                        },
-                      }}
-                    />
-                    <div className="basis-4/5">
-                      {isAdminOfEntity ? (
-                        <InputVille
-                          postCode={assoPostalCode}
-                          trimPostCode
-                          key={'Ville ou commune *' + currentEntityId}
-                          label="Ville ou commune *"
-                          hintText="Exemple : Montpellier"
-                          nativeInputProps={{
-                            id: Prisma.EntityScalarFieldEnum.ville,
-                            name: Prisma.EntityScalarFieldEnum.ville,
-                            autoComplete: 'off',
-                            required: true,
-                            defaultValue: currentEntity?.ville ?? '',
-                          }}
-                        />
-                      ) : (
-                        <InputNotEditable
-                          label="Ville ou commune *"
-                          key={'Ville ou commune *' + currentEntityId}
-                          hintText="Exemple : Montpellier"
-                          nativeInputProps={{
-                            id: Prisma.EntityScalarFieldEnum.ville,
-                            name: Prisma.EntityScalarFieldEnum.ville,
-                            autoComplete: 'off',
-                            required: true,
-                            defaultValue: currentEntity?.ville ?? '',
-                          }}
-                        />
+                    <div className="flex items-center gap-2 my-4">
+                      <div className="border-b border-gray-200 w-full" />
+                      <span className="text-sm text-gray-500">ou</span>
+                      <div className="border-b border-gray-200 w-full" />
+                    </div>
+                    <Button type="submit" nativeButtonProps={{
+                      onClick: () => {
+                        setNewEntityNomDUsage('');
+                        setIsUnregisteredEntity(true);
+                      }
+                    }}>
+                      Créer une nouvelle association, société ou domaine de chasse
+                    </Button>
+                  </>
+                )}
+                {currentEntityId && currentEntity && !isUnregisteredEntity && (
+                  <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
+                    <div className="rounded-lg bg-contrast-grey p-4">
+                      <p className="mb-1 text-lg font-bold">{currentEntity.nom_d_usage}</p>
+                      {currentEntity.siret && (
+                        <p className="mb-1 text-sm">SIRET : {currentEntity.siret}</p>
+                      )}
+                      {currentEntity.address_ligne_1 && (
+                        <p className="mb-1 text-sm">{currentEntity.address_ligne_1}</p>
+                      )}
+                      {currentEntity.address_ligne_2 && (
+                        <p className="mb-1 text-sm">{currentEntity.address_ligne_2}</p>
+                      )}
+                      {(currentEntity.code_postal || currentEntity.ville) && (
+                        <p className="text-sm">
+                          {currentEntity.code_postal} {currentEntity.ville}
+                        </p>
                       )}
                     </div>
-                  </div>
-                  <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
-                    Me rattacher à cette entité
-                  </Button>
-                </form>
+                    <div className="mt-4 flex items-center gap-4">
+                      <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                        Me rattacher à cette entité
+                      </Button>
+                      <button
+                        type="button"
+                        className="fr-link fr-link--sm"
+                        onClick={() => {
+                          setCurrentEntityId(null);
+                          setAssoPostalCode('');
+                        }}
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </form>
+                )}
+                {isUnregisteredEntity && (
+                  <>
+                    <p className="mb-5 text-sm text-gray-500">
+                      * Les champs marqués d'un astérisque (*) sont obligatoires.
+                    </p>
+                    <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
+                      <Input
+                        label="Raison Sociale *"
+                        className="mb-6"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.raison_sociale,
+                          name: Prisma.EntityScalarFieldEnum.raison_sociale,
+                          required: true,
+                          autoComplete: 'off',
+                          value: newEntityNomDUsage,
+                          onChange: (e) => setNewEntityNomDUsage(e.currentTarget.value),
+                        }}
+                      />
+                      <Input
+                        label="SIRET"
+                        className="mb-6"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.siret,
+                          name: Prisma.EntityScalarFieldEnum.siret,
+                          autoComplete: 'off',
+                        }}
+                      />
+                      <Input
+                        label="Adresse *"
+                        hintText="Indication : numéro et voie"
+                        className="mb-6"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                          name: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                          autoComplete: 'off',
+                          required: true,
+                        }}
+                      />
+                      <Input
+                        label="Complément d'adresse (optionnel)"
+                        hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                        className="mb-6"
+                        nativeInputProps={{
+                          id: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                          name: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                          autoComplete: 'off',
+                        }}
+                      />
+                      <div className="flex w-full flex-col gap-x-4 md:flex-row">
+                        <Input
+                          label="Code postal *"
+                          hintText="5 chiffres"
+                          className="shrink-0 md:basis-1/5"
+                          nativeInputProps={{
+                            id: Prisma.EntityScalarFieldEnum.code_postal,
+                            name: Prisma.EntityScalarFieldEnum.code_postal,
+                            autoComplete: 'off',
+                            required: true,
+                            value: assoPostalCode,
+                            onChange: (e) => {
+                              setAssoPostalCode(e.currentTarget.value);
+                            },
+                          }}
+                        />
+                        <div className="basis-4/5">
+                          <InputVille
+                            postCode={assoPostalCode}
+                            trimPostCode
+                            label="Ville ou commune *"
+                            hintText="Exemple : Montpellier"
+                            nativeInputProps={{
+                              id: Prisma.EntityScalarFieldEnum.ville,
+                              name: Prisma.EntityScalarFieldEnum.ville,
+                              autoComplete: 'off',
+                              required: true,
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-4 flex items-center gap-4">
+                        <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                          Créer et me rattacher à cette entité
+                        </Button>
+                        <button
+                          type="button"
+                          className="fr-link fr-link--sm"
+                          onClick={() => {
+                            setIsUnregisteredEntity(false);
+                            setNewEntityNomDUsage('');
+                            setCurrentEntityId(null);
+                            setAssoPostalCode('');
+                          }}
+                        >
+                          Chercher une entité existante
+                        </button>
+                      </div>
+                    </form>
+                  </>
+                )}
               </div>
             </div>
           )}
