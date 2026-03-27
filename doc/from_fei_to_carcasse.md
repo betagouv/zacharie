@@ -30,13 +30,14 @@ Vues :
     - Carcasse Intermédiaire [final, ETG] (avec carcasses)
   - Carcasses
     - Carcasse, avec données de chasse et résumé de la décision SVI
+- Admin : app admin à part entière
 
 Chaque vue aura son propre endpoint API, et son propre affichage.
 
 
 ### Endpoints API
 
-On va avoir des endpoints par role :
+On va avoir des endpoints par role OU un endpoint splitté par rôle à la racine du endpoint
 
 - Examinateur initial :
   - GET /carcasse
