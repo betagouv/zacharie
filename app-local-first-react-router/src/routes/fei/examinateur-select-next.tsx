@@ -77,7 +77,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
     return '';
   }, [nextOwnerUser, nextOwnerEntity]);
 
-  if (user.id !== fei.fei_current_owner_user_id) {
+  if (user.id !== fei.examinateur_initial_user_id) {
     return null;
   }
 
@@ -312,14 +312,14 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
           {(!nextOwnerUserOrEntityId ||
             (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
               nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
-            <Button
-              type="button"
-              disabled={!nextOwnerUserOrEntityId || disabled}
-              onClick={() => handleSubmitFromSelect(nextOwnerUser?.id)}
-            >
-              Continuer
-            </Button>
-          )}
+              <Button
+                type="button"
+                disabled={!nextOwnerUserOrEntityId || disabled}
+                onClick={() => handleSubmitFromSelect(nextOwnerUser?.id)}
+              >
+                Continuer
+              </Button>
+            )}
         </div>
       )}
 
@@ -442,18 +442,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
         </>
       )}
 
-      {nextOwnerName &&
-        (fei.premier_detenteur_user_id === nextOwnerUser?.id ||
-          fei.premier_detenteur_entity_id === nextOwnerEntity?.id) && (
-          <>
-            <Alert
-              severity="success"
-              className="mt-6"
-              description={`${nextOwnerName} a été enregistré comme premier détenteur.`}
-              title="Attribution effectuée"
-            />
-          </>
-        )}
+
     </>
   );
 }
