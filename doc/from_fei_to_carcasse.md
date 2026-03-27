@@ -48,11 +48,13 @@ On va avoir des endpoints par role :
 - Premier détenteur :
   - GET /carcasse
   - GET /carcasse/{carcasse_id}
+  - POST /carcasse (pour la suppression d'une carcasse)
   - POST /carcasse-intermediaire (pour la transmission à la personne suivante)
 - Circuit court :
   - GET /carcasse (tous les carcasses)
   - GET /carcasse-intermediaire/{carcasse_intermediaire_id} (qui inclue toutes les carcasses spécifiques)
   - GET /carcasse/{carcasse_id}
+  - POST /carcasse (pour dire qu'on l'a récupérée)
 - ETG/Collecteur :
   - GET /carcasse (tous les carcasses)
   - GET /carcasse-intermediaire/{carcasse_intermediaire_id} (qui inclue toutes les carcasses spécifiques)
@@ -108,6 +110,22 @@ Use cases :
     - on filtre les carcassesIntermediaires par IntermediaireId (O(n))
     - pour chaque carcasseIntermediaire, on va récupérer la carcasse correspondante, la Fei correspondante (O(1))
 - SVI : on pioche dans les use cases précédents
+
+### Pagination front/back
+
+Itération 1: pagination seulement côté front.
+Itération 2: pagination côté back, pour les données > 1 an.
+
+Implications de l'itération 1 :
+- au chargement initial de Zacharie, on télécharge tout.
+- aux chargements ultérieurs, on télécharge les données avec un `after` paramétré à la date du dernier chargement.
+- pagination côté front : aucun call API, tout va bien.
+
+Implications de l'itération 2 :
+- au chargement initial de Zacharie, on télécharge toutes les données < 1 an.
+- aux chargements ultérieurs, on télécharge les données avec un `after` paramétré à la date du dernier chargement.
+- pagination côté front : TODO
+
 
 ### Suppression des champs depreciés de la Fei
 
