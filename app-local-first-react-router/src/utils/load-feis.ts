@@ -84,10 +84,6 @@ export async function loadFeis() {
           }
         }
         for (const entity of feisRefreshed.data.entities) {
-          if (entity.deleted_at) {
-            delete prevState.entities[entity.id];
-            continue;
-          }
           const existing = prevState.entities[entity.id];
           prevState.entities[entity.id] = {
             ...existing,

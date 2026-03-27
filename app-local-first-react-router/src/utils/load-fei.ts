@@ -24,10 +24,6 @@ export async function loadFei(fei_numero: string) {
     prevState.users[user.id] = user;
   }
   for (const entity of feiResponse.data.entities) {
-    if (entity.deleted_at) {
-      delete prevState.entities[entity.id];
-      continue;
-    }
     const existing = prevState.entities[entity.id];
     if (!existing) {
       prevState.entities[entity.id] = {

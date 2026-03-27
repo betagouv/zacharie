@@ -20,6 +20,7 @@ import CircuitCourt from './circuirt-court';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import HeaderFiche from './Headerfiche';
 
 export default function FeiLoader() {
   const params = useParams();
@@ -164,9 +165,13 @@ function Fei() {
             <FeiSousTraite />
             {showInterface !== FeiOwnerRole.SVI && <CurrentOwnerConfirm />}
             {showInterface !== FeiOwnerRole.SVI &&
+              showInterface !== FeiOwnerRole.EXAMINATEUR_INITIAL &&
+              showInterface !== FeiOwnerRole.PREMIER_DETENTEUR &&
               !isCircuitCourt &&
               !fei.consommateur_final_usage_domestique && <FeiStepper />}
             {showInterface === FeiOwnerRole.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
+            {(showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL ||
+              showInterface === FeiOwnerRole.PREMIER_DETENTEUR) && <HeaderFiche fei={fei} />}
             {showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.ETG && <FEICurrentIntermediaire />}
@@ -174,13 +179,13 @@ function Fei() {
             {isCircuitCourt && <CircuitCourt />}
             <div className="m-8 flex flex-col justify-start gap-4">
               <Button
+                priority="secondary"
                 linkProps={{
                   to: `/app/tableau-de-bord/`,
                 }}
               >
                 Voir toutes mes fiches
               </Button>
-              <DeleteFei />
             </div>
           </div>
         </div>
