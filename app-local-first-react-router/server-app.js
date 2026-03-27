@@ -28,7 +28,7 @@ app.use((req, res, next) => {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://developer.apple.com https://play.google.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://api.zacharie.beta.gouv.fr https://*.ingest.sentry.io https://sentry.incubateur.net https://metabase.zacharie.beta.gouv.fr https://stats.beta.gouv.fr",
+      "connect-src 'self' https://api.zacharie.beta.gouv.fr https://api-test.zacharie.beta.gouv.fr https://*.ingest.sentry.io https://sentry.incubateur.net https://metabase.zacharie.beta.gouv.fr https://stats.beta.gouv.fr",
       "frame-src https://metabase.zacharie.beta.gouv.fr https://www.youtube.com",
       "object-src 'none'",
       "base-uri 'self'",
