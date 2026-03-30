@@ -11,7 +11,7 @@ export default function LandingPage() {
       </title>
       <main>
         {/* Hero Section */}
-        <section className="min-h-96 bg-[#A38A6C] bg-[url('/landing/gradient-cerf.png')] bg-cover bg-center bg-no-repeat py-16 lg:min-h-auto lg:py-24 2xl:py-36">
+        <section className="min-h-96 bg-[#A38A6C] bg-[url('/landing/gradient-cerf.webp')] bg-cover bg-center bg-no-repeat py-16 lg:min-h-auto lg:py-24 2xl:py-36">
           <div className="h-full w-full px-4 lg:px-8 xl:px-32 2xl:px-[12%]">
             <div className="grid h-full items-center gap-12 lg:grid-cols-2">
               <div className="flex h-full max-w-[75vw] flex-col justify-center sm:max-w-[50vw] 2xl:max-w-[35vw]">
@@ -89,7 +89,7 @@ export default function LandingPage() {
           <div className="relative z-10 -mt-16 flex justify-start lg:-mt-20 lg:basis-1/2 2xl:basis-1/3">
             {/* Phone mockup */}
             <img
-              src="/landing/MAIN APPLI_TBD.png"
+              src="/landing/MAIN APPLI_TBD.webp"
               alt="Mockup de l'application Zacharie sur smartphone"
               className="h-1/4 w-full max-w-lg 2xl:max-w-3xl"
             />
@@ -155,7 +155,7 @@ export default function LandingPage() {
         </section>
 
         {/* Testimonials Section */}
-        <section className="bg-[url('/landing/testimonials-bg.png')] bg-cover bg-center bg-no-repeat py-16 lg:py-24 2xl:py-32">
+        <section className="bg-[url('/landing/testimonials-bg.webp')] bg-cover bg-center bg-no-repeat py-16 lg:py-24 2xl:py-32">
           <div className="h-full w-full pl-4 lg:pl-8 xl:px-[12%]">
             <div className="grid items-center gap-12 lg:flex">
               {/* Left side - 100% text */}
@@ -193,7 +193,7 @@ export default function LandingPage() {
         </section>
 
         {/* Desktop Additional Content */}
-        <section className="bg-action-high-blue-france/5 flex h-screen flex-col justify-between bg-[url('/landing/laptop-scene-2.png')] bg-cover bg-center bg-no-repeat lg:h-auto lg:min-h-0 lg:flex-row lg:bg-none">
+        <section className="bg-action-high-blue-france/5 flex h-screen flex-col justify-between bg-[url('/landing/laptop-scene-2.webp')] bg-cover bg-center bg-no-repeat lg:h-auto lg:min-h-0 lg:flex-row lg:bg-none">
           <div className="flex basis-full flex-col items-center justify-between space-y-12 p-8 lg:justify-center lg:p-16 2xl:space-y-24">
             <h3 className="lg:text-action-high-blue-france rounded text-center text-xl font-medium text-balance text-white text-shadow-2xs lg:text-2xl 2xl:text-4xl">
               Votre compte Zacharie est aussi accessible depuis votre ordinateur.
@@ -210,7 +210,7 @@ export default function LandingPage() {
           </div>
           <div className="hidden max-w-2xl justify-end lg:block 2xl:max-w-5xl">
             <img
-              src="/landing/laptop-scene-1.png"
+              src="/landing/laptop-scene-1.webp"
               alt="Interface desktop de Zacharie"
               className="hidden size-full object-fill lg:block"
             />
