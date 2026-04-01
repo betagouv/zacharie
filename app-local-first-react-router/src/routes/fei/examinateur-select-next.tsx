@@ -26,6 +26,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
   const fei = feis[params.fei_numero!];
   const detenteursInitiaux = useDetenteursInitiaux();
   const [showSearchUserByEmail, setShowSearchUserByEmail] = useState(false);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const prefilledInfos = usePrefillPremierDétenteurInfos();
   const associationsDeChasse = useMemo(() => {
     const associationsDeChasse: typeof entities = {};
@@ -72,6 +73,20 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
     }
     return '';
   }, [nextOwnerUser, nextOwnerEntity]);
+
+  const validationErrors = useMemo(() => {
+    const errors: string[] = [];
+    if (!fei.date_mise_a_mort) {
+      errors.push('Veuillez renseigner la date de mise à mort');
+    }
+    if (!fei.commune_mise_a_mort) {
+      errors.push('Veuillez renseigner la commune de mise à mort');
+    }
+    if (!nextOwnerUserOrEntityId) {
+      errors.push('Veuillez sélectionner le premier détenteur');
+    }
+    return errors;
+  }, [fei.date_mise_a_mort, fei.commune_mise_a_mort, nextOwnerUserOrEntityId]);
 
   if (user.id !== fei.examinateur_initial_user_id) {
     return null;
@@ -248,13 +263,34 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
           {(!nextOwnerUserOrEntityId ||
             (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
               nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
-              <Button
-                type="button"
-                disabled={!nextOwnerUserOrEntityId || disabled}
-                onClick={() => handleSubmitFromSelect(nextOwnerUser?.id)}
-              >
-                Continuer
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => {
+                    if (validationErrors.length > 0) {
+                      setShowValidationErrors(true);
+                      return;
+                    }
+                    setShowValidationErrors(false);
+                    handleSubmitFromSelect(nextOwnerUser?.id);
+                  }}
+                >
+                  Continuer
+                </Button>
+                {showValidationErrors && validationErrors.length > 0 && (
+                  <Alert
+                    severity="error"
+                    title="Champs manquants"
+                    description={validationErrors.map((msg, i) => (
+                      <p key={i} className="fr-mb-0">
+                        {msg}
+                      </p>
+                    ))}
+                    className="mt-4"
+                  />
+                )}
+              </>
             )}
         </div>
       )}
