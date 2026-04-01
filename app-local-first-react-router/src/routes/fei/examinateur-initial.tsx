@@ -472,15 +472,6 @@ export default function FEIExaminateurInitial() {
           {canEdit && (
             <div className="mt-6 flex flex-col gap-4">
               <Button
-                priority="secondary"
-                type="button"
-                onClick={() => {
-                  syncData('brouillon');
-                }}
-              >
-                Enregistrer comme brouillon
-              </Button>
-              <Button
                 type="submit"
                 disabled={!carcasses.length}
                 onClick={(e) => {
@@ -534,6 +525,15 @@ export default function FEIExaminateurInitial() {
                 }}
               >
                 Enregistrer et transmettre la fiche
+              </Button>
+              <Button
+                priority="secondary"
+                type="button"
+                onClick={() => {
+                  syncData('brouillon');
+                }}
+              >
+                Enregistrer comme brouillon
               </Button>
               <DeleteFei />
             </div>
