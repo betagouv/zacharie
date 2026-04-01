@@ -687,12 +687,7 @@ export default function DestinatairePremierDetenteur({
         if (type === EntityTypes.ETG) return DepotType.ETG;
         return null;
       }
-      if (fei.fei_current_owner_role === EntityTypes.PREMIER_DETENTEUR) {
-        if (prefilledInfos?.premier_detenteur_depot_type) {
-          return prefilledInfos.premier_detenteur_depot_type;
-        }
-      }
-      return null;
+      return DepotType.AUCUN;
     })();
 
     const initialTransportType = (() => {
