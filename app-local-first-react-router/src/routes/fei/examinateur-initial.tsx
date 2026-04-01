@@ -535,11 +535,11 @@ export default function FEIExaminateurInitial() {
               >
                 Enregistrer comme brouillon
               </Button>
-              <DeleteFei />
             </div>
           )}
         </div>
       )}
+      {canEdit && <DeleteFei />}
     </div>
   );
 }
