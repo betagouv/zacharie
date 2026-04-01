@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useZustandStore from '@app/zustand/store';
 import { useNavigate, useParams } from 'react-router';
+import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
@@ -15,6 +16,13 @@ export default function FeiEnvoyée() {
   const entities = useZustandStore((state) => state.entities);
   const fei = feis[params.fei_numero!];
   const carcasses = useCarcassesForFei(params.fei_numero);
+  const isOnline = useIsOnline();
+
+  const notificationStatus = fei?.is_synced
+    ? 'a été notifié'
+    : !isOnline
+      ? 'sera notifié dès que vous aurez retrouvé du réseau'
+      : 'va être notifié';
 
   const sentByRecipient = useMemo(() => {
     const grouped: Record<string, { entityName: string; count: number }> = {};
@@ -67,7 +75,7 @@ export default function FeiEnvoyée() {
                     {sentByRecipient.map((recipient) => (
                       <li key={recipient.entityName} className="fr-mb-1w text-sm">
                         <span className="fr-icon-arrow-right-s-line fr-icon--sm mr-1" aria-hidden="true" />
-                        {recipient.entityName} — {recipient.count} carcasse{recipient.count > 1 ? 's' : ''}
+                        {recipient.entityName} {notificationStatus} ({recipient.count} carcasse{recipient.count > 1 ? 's' : ''})
                       </li>
                     ))}
                   </ul>
@@ -75,7 +83,7 @@ export default function FeiEnvoyée() {
                 {sentByRecipient.length === 0 && fei?.fei_next_owner_entity_id && (
                   <p className="fr-mb-0">
                     <span className="fr-icon-arrow-right-s-line fr-icon--sm mr-1" aria-hidden="true" />
-                    {entities[fei.fei_next_owner_entity_id]?.nom_d_usage ?? ''}
+                    {entities[fei.fei_next_owner_entity_id]?.nom_d_usage ?? ''} — {notificationStatus}
                   </p>
                 )}
                 {unsendCarcasses.length > 0 && fei.premier_detenteur_user_id === user.id && (
