@@ -83,9 +83,9 @@ export default function DateHeureValidationAlerts({
       {showHeureMiseAMortAlert && isHeureMiseAMortAfterNow && (
         <Alert
           title="Attention"
-          className="mt-4"
+          className="my-4"
           severity="warning"
-          description="L'heure de mise à mort de la première carcasse ne peut pas être postérieure à l'heure actuelle."
+          description={'"Heure de mise à mort de la première carcasse" doit être avant l’heure actuelle.'}
         />
       )}
       {showHeureEviscerationAlert && isHeureEviscerationAfterNow && (

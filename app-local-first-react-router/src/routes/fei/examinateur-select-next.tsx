@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Prisma, Entity, UserRoles, EntityTypes, FeiOwnerRole } from '@prisma/client';
+import { Prisma, Entity, UserRoles, EntityTypes } from '@prisma/client';
 import type { UserForFeiResponse } from '@api/src/types/responses';
 import type { UserForFei } from '~/src/types/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -11,7 +11,6 @@ import useUser from '@app/zustand/user';
 import { useNavigate, useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -25,10 +24,9 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
   const entities = useZustandStore((state) => state.entities);
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const fei = feis[params.fei_numero!];
-  const feiCarcasses = useCarcassesForFei(params.fei_numero);
-  const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
   const detenteursInitiaux = useDetenteursInitiaux();
   const [showSearchUserByEmail, setShowSearchUserByEmail] = useState(false);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const prefilledInfos = usePrefillPremierDétenteurInfos();
   const associationsDeChasse = useMemo(() => {
     const associationsDeChasse: typeof entities = {};
@@ -42,7 +40,6 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
   }, [entities, entitiesIdsWorkingDirectlyFor]);
 
   const updateFei = useZustandStore((state) => state.updateFei);
-  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
 
   const isOnline = useIsOnline();
@@ -77,6 +74,20 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
     return '';
   }, [nextOwnerUser, nextOwnerEntity]);
 
+  const validationErrors = useMemo(() => {
+    const errors: string[] = [];
+    if (!fei.date_mise_a_mort) {
+      errors.push('Veuillez renseigner la date de mise à mort');
+    }
+    if (!fei.commune_mise_a_mort) {
+      errors.push('Veuillez renseigner la commune de mise à mort');
+    }
+    if (!nextOwnerUserOrEntityId) {
+      errors.push('Veuillez sélectionner le premier détenteur');
+    }
+    return errors;
+  }, [fei.date_mise_a_mort, fei.commune_mise_a_mort, nextOwnerUserOrEntityId]);
+
   if (user.id !== fei.examinateur_initial_user_id) {
     return null;
   }
@@ -87,85 +98,25 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
     let nextFei: Partial<typeof fei>;
     if (nextIsMe) {
       nextFei = {
-        fei_next_owner_user_id: null,
-        fei_next_owner_user_name_cache: null,
-        fei_next_owner_role: null,
-        fei_next_owner_entity_id: null,
-        fei_next_owner_entity_name_cache: null,
-        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        fei_current_owner_user_id: user.id,
-        fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         premier_detenteur_user_id: user.id,
         premier_detenteur_offline: navigator.onLine ? false : true,
         premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         premier_detenteur_entity_id: null,
       };
-      updateCarcassesTransmission(carcasseIds, {
-        next_owner_user_id: null,
-        next_owner_user_name_cache: null,
-        next_owner_role: null,
-        next_owner_entity_id: null,
-        next_owner_entity_name_cache: null,
-        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        current_owner_user_id: user.id,
-        current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-        current_owner_entity_id: null,
-        current_owner_entity_name_cache: null,
-      });
     } else if (nextIsMyAssociation) {
       nextFei = {
-        fei_next_owner_user_id: null,
-        fei_next_owner_role: null,
-        fei_next_owner_entity_id: null,
-        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        fei_current_owner_entity_id: nextOwnerEntity.id,
-        fei_current_owner_entity_name_cache: nextOwnerEntity.nom_d_usage ?? null,
-        fei_current_owner_user_id: user.id,
-        fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         premier_detenteur_user_id: user.id,
         premier_detenteur_offline: navigator.onLine ? false : true,
         premier_detenteur_entity_id: nextOwnerEntity.id,
         premier_detenteur_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
       };
-      updateCarcassesTransmission(carcasseIds, {
-        next_owner_user_id: null,
-        next_owner_user_name_cache: null,
-        next_owner_role: null,
-        next_owner_entity_id: null,
-        next_owner_entity_name_cache: null,
-        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        current_owner_entity_id: nextOwnerEntity.id,
-        current_owner_entity_name_cache: nextOwnerEntity.nom_d_usage ?? null,
-        current_owner_user_id: user.id,
-        current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-      });
     } else {
       nextFei = {
-        fei_next_owner_user_id: null,
-        fei_next_owner_user_name_cache: null,
-        fei_next_owner_role: null,
-        fei_next_owner_entity_id: null,
-        fei_next_owner_entity_name_cache: null,
-        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        fei_current_owner_user_id: nextOwnerUser?.id ?? null,
-        fei_current_owner_user_name_cache: nextOwnerName,
         premier_detenteur_user_id: nextOwnerUser?.id,
         premier_detenteur_name_cache: nextOwnerName,
         premier_detenteur_entity_id: nextOwnerEntity?.id ?? null,
         premier_detenteur_offline: navigator.onLine ? false : true,
       };
-      updateCarcassesTransmission(carcasseIds, {
-        next_owner_user_id: null,
-        next_owner_user_name_cache: null,
-        next_owner_role: null,
-        next_owner_entity_id: null,
-        next_owner_entity_name_cache: null,
-        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        current_owner_user_id: nextOwnerUser?.id ?? null,
-        current_owner_user_name_cache: nextOwnerName,
-        current_owner_entity_id: null,
-        current_owner_entity_name_cache: null,
-      });
     }
     updateFei(fei.numero, nextFei);
     addLog({
@@ -312,13 +263,34 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
           {(!nextOwnerUserOrEntityId ||
             (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
               nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
-              <Button
-                type="button"
-                disabled={!nextOwnerUserOrEntityId || disabled}
-                onClick={() => handleSubmitFromSelect(nextOwnerUser?.id)}
-              >
-                Continuer
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => {
+                    if (validationErrors.length > 0) {
+                      setShowValidationErrors(true);
+                      return;
+                    }
+                    setShowValidationErrors(false);
+                    handleSubmitFromSelect(nextOwnerUser?.id);
+                  }}
+                >
+                  Continuer
+                </Button>
+                {showValidationErrors && validationErrors.length > 0 && (
+                  <Alert
+                    severity="error"
+                    title="Champs manquants"
+                    description={validationErrors.map((msg, i) => (
+                      <p key={i} className="fr-mb-0">
+                        {msg}
+                      </p>
+                    ))}
+                    className="mt-4"
+                  />
+                )}
+              </>
             )}
         </div>
       )}

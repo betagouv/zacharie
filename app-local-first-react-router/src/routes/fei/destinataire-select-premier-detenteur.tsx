@@ -692,7 +692,7 @@ export default function DestinatairePremierDetenteur({
           return prefilledInfos.premier_detenteur_depot_type;
         }
       }
-      return null;
+      return DepotType.AUCUN;
     })();
 
     const initialTransportType = (() => {

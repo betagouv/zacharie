@@ -46,7 +46,7 @@ test("Pas de stockage - Transporter les carcasses soi-même", async ({ page }) =
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
   await expect(page.getByRole("heading", { name: "Attention" })).toBeVisible();
-  await expect(page.getByText("Il manque le lieu de stockage")).toBeVisible();
+  // await expect(page.getByText("Il manque le lieu de stockage")).toBeVisible();
   const pasDeStockage1 = page.getByText("Pas de stockage").first();
   await pasDeStockage1.scrollIntoViewIfNeeded();
   await pasDeStockage1.click();
@@ -68,7 +68,7 @@ test("Pas de stockage - Transporter les carcasses soi-même", async ({ page }) =
   const transmettreBtn = page.getByRole("button", { name: "Transmettre la fiche" });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/Attribution effectu/i).first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Votre fiche a bien été créée/i).first()).toBeVisible({ timeout: 10000 });
   await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible();
 });
 

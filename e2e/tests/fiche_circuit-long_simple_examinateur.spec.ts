@@ -60,7 +60,7 @@ test("Création d'une fiche", async ({ page }) => {
     page.getByRole("button", { name: "Enregistrer et transmettre la fiche", exact: true }),
   ).not.toBeDisabled();
   await page.getByRole("button", { name: "Enregistrer et transmettre la fiche", exact: true }).click();
-  await expect(page.getByText(/Attribution effectu/i).first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Votre fiche a bien été créée/i).first()).toBeVisible({ timeout: 10000 });
   // get fei id
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
   expect(feiId).toBeDefined();

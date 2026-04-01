@@ -323,6 +323,9 @@ export default function FEIExaminateurInitial() {
               name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
               type: 'time',
               required: true,
+              onChange: (e) => {
+                updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: e.target.value });
+              },
               onBlur: (e) => {
                 const heure_mise_a_mort_premiere_carcasse = e.target.value;
                 if (!fei.heure_evisceration_derniere_carcasse) {
@@ -352,6 +355,9 @@ export default function FEIExaminateurInitial() {
                   type: 'time',
                   required: true,
                   autoComplete: 'off',
+                  onChange: (e) => {
+                    updateFei(fei.numero, { heure_evisceration_derniere_carcasse: e.target.value });
+                  },
                   onBlur: (e) => {
                     const heure_evisceration_derniere_carcasse = e.target.value;
                     if (!fei.heure_mise_a_mort_premiere_carcasse) {
@@ -466,15 +472,6 @@ export default function FEIExaminateurInitial() {
           {canEdit && (
             <div className="mt-6 flex flex-col gap-4">
               <Button
-                priority="secondary"
-                type="button"
-                onClick={() => {
-                  syncData('brouillon');
-                }}
-              >
-                Enregistrer comme brouillon
-              </Button>
-              <Button
                 type="submit"
                 disabled={!carcasses.length}
                 onClick={(e) => {
@@ -495,6 +492,11 @@ export default function FEIExaminateurInitial() {
                     }
                     updateFei(fei.numero, {
                       examinateur_initial_approbation_mise_sur_le_marche: approbation,
+                      fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+                      fei_current_owner_user_id: user.id,
+                      fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+                      fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
+                      fei_current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
                     });
                     destinataireRef.current?.submit();
                   } else {
@@ -524,11 +526,20 @@ export default function FEIExaminateurInitial() {
               >
                 Enregistrer et transmettre la fiche
               </Button>
-              <DeleteFei />
+              <Button
+                priority="secondary"
+                type="button"
+                onClick={() => {
+                  syncData('brouillon');
+                }}
+              >
+                Enregistrer comme brouillon
+              </Button>
             </div>
           )}
         </div>
       )}
+      {canEdit && <DeleteFei />}
     </div>
   );
 }

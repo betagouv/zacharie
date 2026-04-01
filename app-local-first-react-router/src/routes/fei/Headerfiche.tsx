@@ -24,8 +24,10 @@ export default function HeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
 
   const isNewFiche = !fei.date_mise_a_mort && !fei.commune_mise_a_mort;
   const title = isNewFiche
-    ? 'Nouvelle Fiche'
-    : `Chasse du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
+    ? 'Nouvelle fiche'
+    : fei.date_mise_a_mort
+      ? `Chasse du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`
+      : 'Chasse';
 
   const stepIcon = currentStepLabel === 'Clôturée' ? '🔒' : '⏳';
 
