@@ -187,12 +187,13 @@ test("Examinateur initial ajoute une association de chasse depuis son profil", a
   await expect(page.getByRole("heading", { name: "Informations de chasse" })).toBeVisible();
 
   await page.getByText("Oui").nth(1).click();
-  await page.getByRole("combobox", { name: "Raison Sociale *" }).fill("Association de lapins chasseurs");
+  await page.getByRole("button", { name: "Créer une nouvelle association, société ou domaine de chasse" }).click();
+  await page.getByRole("textbox", { name: "Raison Sociale *" }).fill("Association de lapins chasseurs");
   await page.getByRole("textbox", { name: "SIRET" }).fill("1234");
-  await page.locator("#address_ligne_1").fill("120 rue de la paix");
+  await page.getByRole("textbox", { name: "Adresse *" }).fill("120 rue de la paix");
   await page.locator("#association_data_form #code_postal").fill("75012");
   await page.getByRole("button", { name: "PARIS 12" }).click();
-  await page.getByRole("button", { name: "Me rattacher à cette entité", exact: true }).click();
+  await page.getByRole("button", { name: "Créer et me rattacher à cette entité", exact: true }).click();
   // Verify the association was added - check for button "Retirer" which appears next to added associations
   await expect(page.getByRole("button", { name: "Retirer" })).toBeVisible();
   await expect(
@@ -205,6 +206,41 @@ test("Examinateur initial ajoute une association de chasse depuis son profil", a
     .click();
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText("Informations de chasse enregistrées")).toBeVisible();
+});
+
+test("Examinateur initial ajoute une association de chasse existante depuis son profil", async ({ page }) => {
+  // First complete basic onboarding
+  await page.goto("http://localhost:3290/");
+  await page.getByRole("link", { name: "Créer un compte" }).first().click();
+  await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur-avec-asso-existante@example.fr");
+  await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
+  await page.getByRole("button", { name: "Créer mon compte" }).click();
+  await page.getByRole("textbox", { name: "Nom *", exact: true }).fill("Jean");
+  await page.getByRole("textbox", { name: "Prénom *" }).fill("Claude");
+  await page.getByRole("textbox", { name: "Téléphone * Format attendu :" }).fill("0612345679");
+  await page.getByRole("textbox", { name: "Adresse * Indication : numéro" }).fill("20 avenue des chasseurs");
+  await page.getByRole("textbox", { name: "Code postal * 5 chiffres" }).fill("75000");
+  await page.getByRole("textbox", { name: "Ville ou commune * Exemple :" }).fill("Paris");
+  await page.getByRole("button", { name: "CORMEILLES EN PARISIS" }).click();
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await page.getByText("Oui").first().click();
+  await page.getByRole("textbox", { name: "Numéro d'attestation de" }).fill("CFEI-075-00-555");
+  await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+  await page.getByRole("button", { name: "Enregistrer et terminer" }).click();
+  await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
+
+  // Navigate to profile to add hunting associations
+  await page.getByRole("button", { name: "Mon profil" }).click();
+  await page.getByRole("link", { name: "Mes informations de chasse" }).click();
+  await expect(page.getByRole("heading", { name: "Informations de chasse" })).toBeVisible();
+
+  // Select existing association
+  await page.getByText("Oui").nth(1).click();
+  await page.locator(".raison_sociale__input-container").click();
+  await page.locator(".raison_sociale__input").fill("Association de chasseurs");
+  await page.getByRole("option", { name: "Association de chasseurs -" }).click();
+  await page.getByRole("button", { name: "Me rattacher à cette entité", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Retirer" })).toBeVisible();
 });
 
 test("Examinateur initial ajoute une chambre froide (CCG) depuis son profil", async ({ page }) => {
