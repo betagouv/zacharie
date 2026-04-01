@@ -323,6 +323,9 @@ export default function FEIExaminateurInitial() {
               name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
               type: 'time',
               required: true,
+              onChange: (e) => {
+                updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: e.target.value });
+              },
               onBlur: (e) => {
                 const heure_mise_a_mort_premiere_carcasse = e.target.value;
                 if (!fei.heure_evisceration_derniere_carcasse) {
@@ -352,6 +355,9 @@ export default function FEIExaminateurInitial() {
                   type: 'time',
                   required: true,
                   autoComplete: 'off',
+                  onChange: (e) => {
+                    updateFei(fei.numero, { heure_evisceration_derniere_carcasse: e.target.value });
+                  },
                   onBlur: (e) => {
                     const heure_evisceration_derniere_carcasse = e.target.value;
                     if (!fei.heure_mise_a_mort_premiere_carcasse) {
