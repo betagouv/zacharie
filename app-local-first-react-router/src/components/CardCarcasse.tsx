@@ -149,7 +149,7 @@ export default function CardCarcasse({
     <>
       <div
         className={[
-          'flex basis-full flex-row items-center justify-between border-solid text-left',
+          'flex basis-full flex-row items-center justify-between border-solid border-1 border-transparent hover:border-gray-300! text-left',
           'bg-contrast-grey border-0',
           isEcarteePourInspection && 'border-error-main-525 border-l-3',
           isRefus && 'border-error-main-525 border-l-3',
@@ -161,7 +161,7 @@ export default function CardCarcasse({
           .join(' ')}
       >
         <button
-          className="flex flex-1 flex-col border-none p-4 text-left"
+          className="flex flex-1 flex-col border-none p-4 text-left hover:bg-transparent"
           type="button"
           onClick={onClick ? onClick : cacasseModal.open}
         >
@@ -354,8 +354,8 @@ function CarcasseDetails({
       : null;
   const etgDate = latestIntermediaire
     ? dayjs(latestIntermediaire.prise_en_charge_at || latestIntermediaire.decision_at).format(
-        'dddd D MMMM YYYY à HH:mm',
-      )
+      'dddd D MMMM YYYY à HH:mm',
+    )
     : null;
 
   const sviAssignedToFeiAt = carcasse.svi_assigned_to_fei_at
