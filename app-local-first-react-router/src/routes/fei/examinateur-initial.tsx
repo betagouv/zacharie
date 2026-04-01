@@ -501,6 +501,11 @@ export default function FEIExaminateurInitial() {
                     }
                     updateFei(fei.numero, {
                       examinateur_initial_approbation_mise_sur_le_marche: approbation,
+                      fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+                      fei_current_owner_user_id: user.id,
+                      fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+                      fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
+                      fei_current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
                     });
                     destinataireRef.current?.submit();
                   } else {

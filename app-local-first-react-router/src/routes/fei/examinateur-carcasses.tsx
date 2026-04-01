@@ -89,38 +89,38 @@ export function CarcasseExaminateur({
         !canEditAsExaminateurInitial
           ? undefined
           : () => {
-              navigate(`/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
-            }
+            navigate(`/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
+          }
       }
       onClick={
         !canEditAsExaminateurInitial
           ? undefined
           : () => {
-              navigate(`/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
-            }
+            navigate(`/app/tableau-de-bord/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
+          }
       }
       onDelete={
         !canEditAsExaminateurInitial && !canEditAsPremierDetenteur
           ? undefined
           : () => {
-              if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
-                const nextPartialCarcasse: Partial<Carcasse> = {
-                  deleted_at: dayjs().toDate(),
-                };
-                updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
-                addLog({
-                  user_id: user.id,
-                  user_role: UserRoles.CHASSEUR,
-                  fei_numero: fei.numero,
-                  action: 'examinateur-carcasse-delete',
-                  history: createHistoryInput(carcasse, nextPartialCarcasse),
-                  entity_id: null,
-                  zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-                  intermediaire_id: null,
-                  carcasse_intermediaire_id: null,
-                });
-              }
+            if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
+              const nextPartialCarcasse: Partial<Carcasse> = {
+                deleted_at: dayjs().toDate(),
+              };
+              updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+              addLog({
+                user_id: user.id,
+                user_role: UserRoles.CHASSEUR,
+                fei_numero: fei.numero,
+                action: 'examinateur-carcasse-delete',
+                history: createHistoryInput(carcasse, nextPartialCarcasse),
+                entity_id: null,
+                zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                intermediaire_id: null,
+                carcasse_intermediaire_id: null,
+              });
             }
+          }
       }
     />
   );
