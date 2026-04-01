@@ -1,92 +1,37 @@
-import { useState, type RefObject, useRef, useMemo, useEffect } from 'react';
-import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
-import { Button } from '@codegouvfr/react-dsfr/Button';
-import { Input } from '@codegouvfr/react-dsfr/Input';
-import {
-  Entity,
-  EntityRelationType,
-  UserRoles,
-  Prisma,
-  UserNotifications,
-  EntityTypes,
-  UserEtgRoles,
-} from '@prisma/client';
-import InputVille from '@app/components/InputVille';
-import RolesCheckBoxes from '@app/components/RolesCheckboxes';
-import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
-import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
-import { Table } from '@codegouvfr/react-dsfr/Table';
-import type { AdminUserDataResponse } from '@api/src/types/responses';
-import { Link, useParams } from 'react-router';
+import { useState, type Ref, useRef, useEffect } from 'react';
+import { Prisma } from '@prisma/client';
+import { useParams } from 'react-router';
 import Chargement from '@app/components/Chargement';
-import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
-import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import API from '@app/services/api';
-import RelationEntityUser from '@app/components/RelationEntityUser';
-import { EntityWithUserRelations } from '@api/src/types/entity';
 import { toast } from 'react-toastify';
 
-const loadData = (userId: string): Promise<AdminUserDataResponse> =>
-  API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
+import AdminUserHeader from './user-detail/AdminUserHeader';
+import AdminUserTabDetails from './user-detail/AdminUserTabDetails';
+import AdminUserTabRoles from './user-detail/AdminUserTabRoles';
+import AdminUserTabIdentity from './user-detail/AdminUserTabIdentity';
+import AdminUserTabRelations from './user-detail/AdminUserTabRelations';
+import {
+  adminUserDetailInitialState,
+  loadAdminUserData,
+  type AdminUserDetailState,
+} from './user-detail/admin-user-state';
+import AdminSegmentedTabs from './user-detail/AdminSegmentedTabs';
 
-type State = NonNullable<AdminUserDataResponse['data']>;
-
-const initialState: State = {
-  user: {
-    id: '',
-    email: '',
-    nom_de_famille: '',
-    prenom: '',
-    telephone: '',
-    addresse_ligne_1: '',
-    checked_has_asso_de_chasse: null,
-    checked_has_ccg: null,
-    checked_has_partenaires: null,
-    addresse_ligne_2: '',
-    code_postal: '',
-    ville: '',
-    activated: true,
-    roles: [],
-    role: null,
-    isZacharieAdmin: false,
-    etg_role: UserEtgRoles.RECEPTION,
-    est_forme_a_l_examen_initial: false,
-    numero_cfei: '',
-    at_least_one_fei_treated: null,
-    user_entities_vivible_checkbox: false,
-    prochain_bracelet_a_utiliser: 1,
-    created_at: new Date(),
-    updated_at: new Date(),
-    activated_at: null,
-    last_login_at: null,
-    last_seen_at: null,
-    deleted_at: null,
-    onboarded_at: null,
-    notifications: [UserNotifications.EMAIL, UserNotifications.PUSH],
-    web_push_tokens: [],
-    native_push_tokens: [],
-    brevo_contact_id: null,
-    prefilled: false,
-    is_synced: true,
-    onboarding_chasse_info_done_at: null,
-  },
-  identityDone: false,
-  examinateurDone: false,
-  allEntities: [],
-  userEntitiesRelations: [],
-  officialCfei: null,
-};
+const MAIN_TAB_DETAILS = 'details';
+const MAIN_TAB_ROLES = 'roles';
+const MAIN_TAB_IDENTITY = 'identity';
+const MAIN_TAB_RELATIONS = 'relations';
 
 export default function AdminUser() {
   const params = useParams();
-  const [userResponseData, setUserResponseData] = useState<State>(initialState);
-  const { user, identityDone, examinateurDone, userEntitiesRelations, officialCfei } = userResponseData;
+  const [userResponseData, setUserResponseData] = useState<AdminUserDetailState>(adminUserDetailInitialState);
+  const { user, identityDone, examinateurDone, officialCfei } = userResponseData;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    loadData(params.userId!).then((res) => {
+    loadAdminUserData(params.userId!).then((res) => {
       if (res.ok && res.data) {
-        setUserResponseData(res.data as State);
+        setUserResponseData(res.data as AdminUserDetailState);
       }
     });
   }, [params.userId]);
@@ -94,15 +39,16 @@ export default function AdminUser() {
   const activeFormRef = useRef<HTMLFormElement>(null);
   const idFormRef = useRef<HTMLFormElement>(null);
   const rolesFormRef = useRef<HTMLFormElement>(null);
-  const handleUserFormBlur = (formRef: RefObject<HTMLFormElement>) => () => {
+
+  const handleUserFormBlur = (formRef: Ref<HTMLFormElement>) => () => {
     const formData = new FormData(formRef.current!);
 
-    let body =
+    const body =
       formRef.current!.id === 'user_roles_form'
         ? {
-            roles: formData.getAll('roles'),
-            isZacharieAdmin: formData.get(Prisma.UserScalarFieldEnum.isZacharieAdmin) === 'true',
-          }
+          roles: formData.getAll('roles'),
+          isZacharieAdmin: formData.get(Prisma.UserScalarFieldEnum.isZacharieAdmin) === 'true',
+        }
         : Object.fromEntries(formData);
 
     API.post({
@@ -113,586 +59,87 @@ export default function AdminUser() {
         return toast.error("Une erreur est survenue lors de la mise à jour de l'utilisateur");
       }
 
-      loadData(params.userId!).then((res) => {
-        if (res.ok && res.data) {
-          setUserResponseData(res.data as State);
+      loadAdminUserData(params.userId!).then((reload) => {
+        if (reload.ok && reload.data) {
+          setUserResponseData(reload.data as AdminUserDetailState);
         }
-        if (!res.ok) {
-          return toast.error(res.error);
+        if (!reload.ok) {
+          return toast.error(reload.error);
         }
         toast.success("L'utilisateur a été mis à jour avec succès");
       });
     });
   };
 
-  const [selectedTabId, setSelectedTabId] = useState('Identité');
-  const tabs: TabsProps['tabs'] = [
-    {
-      tabId: 'Roles',
-      label: (user?.roles?.length ? '✅ ' : '') + 'Roles',
-    },
-    {
-      tabId: 'Identité',
-      label: (identityDone && examinateurDone ? '✅ ' : '') + 'Identité',
-    },
-    {
-      tabId: 'Peut traiter des fiches au nom de',
-      label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => rel.EntityRelationsWithUsers.find((r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && r.owner_id === user.id)).length})`,
-    },
+  const [selectedMainTabId, setSelectedMainTabId] = useState(MAIN_TAB_DETAILS);
+
+  const mainTabs = [
+    { id: MAIN_TAB_DETAILS, label: 'Détails' },
+    { id: MAIN_TAB_ROLES, label: 'Rôles' },
+    { id: MAIN_TAB_IDENTITY, label: 'Identité et coordonnées' },
+    { id: MAIN_TAB_RELATIONS, label: 'Entités et relations' },
   ];
-
-  if (user.roles.includes(UserRoles.CHASSEUR)) {
-    tabs.push({
-      tabId: 'CCGs',
-      label: `CCGs (${userEntitiesRelations.filter((rel) => rel.type === EntityTypes.CCG).length})`,
-    });
-  }
-
-  if (!user.roles.includes(UserRoles.SVI)) {
-    let numberOfWOrkingWith = userEntitiesRelations.filter(
-      (rel) =>
-        rel.EntityRelationsWithUsers.some(
-          (r) => r.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        ) && rel.type !== EntityTypes.CCG,
-    ).length;
-    if (user.roles.includes(UserRoles.ETG)) {
-      numberOfWOrkingWith += 1;
-    }
-    tabs.push({
-      tabId: 'Peut envoyer des fiches à',
-      label: `Peut envoyer des fiches à (${numberOfWOrkingWith})`,
-    });
-  }
 
   if (!user.id) {
     return <Chargement />;
   }
 
   return (
-    <div className="fr-container fr-container--fluid fr-my-md-14v">
+    <div className="pb-24 md:pb-4">
       <title>
         {`${user.prenom ? `${user.prenom} ${user.nom_de_famille}` : user.email} | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
       </title>
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <div className="p-4 pb-32 md:p-8 md:pb-0">
-            <div className="flex flex-row items-center justify-between">
-              <h1 className="fr-h2 fr-mb-2w">
-                {user.prenom ? (
-                  <>
-                    {user.nom_de_famille} {user.prenom}
-                    <br />
-                    <small>{user.email}</small>
-                  </>
-                ) : (
-                  <>{user.email}</>
-                )}
-                <br />
-                {!user.activated ? (
-                  <small>❌ Utilisateur inactif</small>
-                ) : (
-                  <small>✅ Utilisateur activé</small>
-                )}
-              </h1>
-              <form
-                id="user_active_form"
-                method="POST"
-                ref={activeFormRef}
-                onBlur={handleUserFormBlur(activeFormRef)}
-                onSubmit={(event) => event.preventDefault()}
-              >
-                <RadioButtons
-                  key={user.activated ? 'true' : 'false'}
-                  options={[
-                    {
-                      label: 'Utilisateur activé',
-                      nativeInputProps: {
-                        name: Prisma.UserScalarFieldEnum.activated,
-                        value: 'true',
-                        onChange: !user.activated ? handleUserFormBlur(activeFormRef) : undefined,
-                        defaultChecked: user.activated,
-                      },
-                    },
-                    {
-                      label: 'Utilisateur inactif',
-                      nativeInputProps: {
-                        name: Prisma.UserScalarFieldEnum.activated,
-                        value: 'false',
-                        onChange: user.activated ? handleUserFormBlur(activeFormRef) : undefined,
-                        defaultChecked: !user.activated,
-                      },
-                    },
-                  ]}
-                />
-              </form>
-            </div>
-            <Tabs
-              selectedTabId={selectedTabId}
-              tabs={tabs}
-              onTabChange={setSelectedTabId}
-              className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
-            >
-              {selectedTabId === 'Roles' && (
-                <form
-                  id="user_roles_form"
-                  method="POST"
-                  ref={rolesFormRef}
-                  onBlur={handleUserFormBlur(rolesFormRef)}
-                  onSubmit={(event) => event.preventDefault()}
-                >
-                  <RolesCheckBoxes
-                    withAdmin
-                    user={user}
-                    legend="Sélectionnez tous les rôles de cet utilisateur"
-                  />
-                  <div className="relative flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-                    <ButtonsGroup
-                      buttons={[
-                        {
-                          children: 'Enregistrer',
-                          type: 'submit',
-                          nativeButtonProps: {
-                            form: 'user_roles_form',
-                          },
-                        },
-                      ]}
-                    />
-                  </div>
-                </form>
-              )}
-              {selectedTabId === 'Identité' && (
-                <form
-                  id="user_data_form"
-                  method="POST"
-                  ref={idFormRef}
-                  onBlur={handleUserFormBlur(idFormRef)}
-                  onSubmit={(event) => event.preventDefault()}
-                >
-                  <input type="hidden" name={Prisma.UserScalarFieldEnum.prefilled} value="true" />
-                  <Input
-                    label="Email"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.email,
-                      name: Prisma.UserScalarFieldEnum.email,
-                      autoComplete: 'off',
-                      // required: true,
-                      defaultValue: user.email ?? '',
-                    }}
-                  />
-                  <Input
-                    label="Nom"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.nom_de_famille,
-                      name: Prisma.UserScalarFieldEnum.nom_de_famille,
-                      autoComplete: 'off',
-                      // required: true,
-                      defaultValue: user.nom_de_famille ?? '',
-                    }}
-                  />
-                  <Input
-                    label="Prénom"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.prenom,
-                      name: Prisma.UserScalarFieldEnum.prenom,
-                      autoComplete: 'off',
-                      // required: true,
-                      defaultValue: user.prenom ?? '',
-                    }}
-                  />
-                  <Input
-                    label="Téléphone"
-                    hintText="Format attendu : 01 22 33 44 55"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.telephone,
-                      name: Prisma.UserScalarFieldEnum.telephone,
-                      autoComplete: 'off',
-                      defaultValue: user.telephone ?? '',
-                    }}
-                  />
-                  <Input
-                    label="Adresse"
-                    hintText="Indication : numéro et voie"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                      name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                      autoComplete: 'off',
-                      // required: true,
-                      defaultValue: user.addresse_ligne_1 ?? '',
-                    }}
-                  />
-                  <Input
-                    label="Complément d'adresse (optionnel)"
-                    hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                      name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                      autoComplete: 'off',
-                      defaultValue: user.addresse_ligne_2 ?? '',
-                    }}
-                  />
+      <div className="rounded-lg border border-gray-200/80 bg-white p-3 shadow-sm md:p-4">
+        <AdminUserHeader user={user} />
 
-                  <div className="flex w-full flex-col gap-x-4 md:flex-row">
-                    <Input
-                      label="Code postal"
-                      hintText="5 chiffres"
-                      className="shrink-0 md:basis-1/5"
-                      nativeInputProps={{
-                        id: Prisma.UserScalarFieldEnum.code_postal,
-                        name: Prisma.UserScalarFieldEnum.code_postal,
-                        autoComplete: 'off',
-                        // required: true,
-                        defaultValue: user.code_postal ?? '',
-                      }}
-                    />
-                    <div className="basis-4/5">
-                      <InputVille
-                        key={user.ville}
-                        postCode={user.code_postal ?? ''}
-                        trimPostCode
-                        label="Ville ou commune"
-                        hintText="Exemple : Montpellier"
-                        nativeInputProps={{
-                          id: Prisma.UserScalarFieldEnum.ville,
-                          name: Prisma.UserScalarFieldEnum.ville,
-                          autoComplete: 'off',
-                          // required: true,
-                          defaultValue: user.ville ?? '',
-                        }}
-                      />
-                    </div>
-                  </div>
-                  {user.roles.includes(UserRoles.CHASSEUR) && (
-                    <>
-                      <Input
-                        label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                        hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
-                        nativeInputProps={{
-                          id: Prisma.UserScalarFieldEnum.numero_cfei,
-                          name: Prisma.UserScalarFieldEnum.numero_cfei,
-                          autoComplete: 'off',
-                          // required: true,
-                          defaultValue: user.numero_cfei ?? '',
-                        }}
-                      />
-                      {user.numero_cfei ? (
-                        officialCfei ? (
-                          <Alert
-                            severity="success"
-                            small
-                            className="mb-4"
-                            description={`CFEI trouvé dans la liste officielle : ${officialCfei.nom ?? ''} ${officialCfei.prenom ?? ''}${officialCfei.departement ? ` — Département ${officialCfei.departement}` : ''}`}
-                          />
-                        ) : (
-                          <Alert
-                            severity="error"
-                            small
-                            className="mb-4"
-                            description="CFEI non trouvé dans la liste officielle"
-                          />
-                        )
-                      ) : (
-                        <Alert
-                          severity="warning"
-                          small
-                          className="mb-4"
-                          description="Numéro CFEI non renseigné"
-                        />
-                      )}
-                    </>
-                  )}
-                  <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-                    <ButtonsGroup
-                      buttons={[
-                        {
-                          children: 'Enregistrer',
-                          type: 'submit',
-                          nativeButtonProps: {
-                            form: 'user_data_form',
-                          },
-                        },
-                      ]}
-                    />
-                  </div>
-                </form>
-              )}
-              {selectedTabId === 'Peut traiter des fiches au nom de' && (
-                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
-                  id={selectedTabId}
-                  userResponseData={userResponseData}
-                  setUserResponseData={setUserResponseData}
-                />
-              )}
-              {selectedTabId === 'CCGs' && (
-                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-                  id={selectedTabId}
-                  userResponseData={userResponseData}
-                  setUserResponseData={setUserResponseData}
-                  forCCG
-                />
-              )}
-              {selectedTabId === 'Peut envoyer des fiches à' && (
-                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-                  id={selectedTabId}
-                  userResponseData={userResponseData}
-                  setUserResponseData={setUserResponseData}
-                />
-              )}
-              <div className="mt-6 mb-16 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
-                  Haut de page
-                </a>
-              </div>
-            </Tabs>
-          </div>
+        <AdminSegmentedTabs
+          className="mb-3 pt-1"
+          tabs={mainTabs}
+          value={selectedMainTabId}
+          onChange={setSelectedMainTabId}
+          ariaLabel="Sections du profil utilisateur"
+        />
+
+        <div className="border-t border-gray-100 pt-3" role="tabpanel">
+          {selectedMainTabId === MAIN_TAB_DETAILS && (
+            <AdminUserTabDetails
+              user={user}
+              activeFormRef={activeFormRef}
+              onActiveBlur={handleUserFormBlur(activeFormRef)}
+            />
+          )}
+          {selectedMainTabId === MAIN_TAB_ROLES && (
+            <AdminUserTabRoles
+              user={user}
+              rolesFormRef={rolesFormRef}
+              onRolesBlur={handleUserFormBlur(rolesFormRef)}
+            />
+          )}
+          {selectedMainTabId === MAIN_TAB_IDENTITY && (
+            <AdminUserTabIdentity
+              user={user}
+              officialCfei={officialCfei}
+              identityDone={identityDone}
+              examinateurDone={examinateurDone}
+              idFormRef={idFormRef}
+              onIdentityBlur={handleUserFormBlur(idFormRef)}
+            />
+          )}
+          {selectedMainTabId === MAIN_TAB_RELATIONS && (
+            <AdminUserTabRelations
+              key={user.id}
+              userResponseData={userResponseData}
+              setUserResponseData={setUserResponseData}
+            />
+          )}
+        </div>
+
+        <div className="mt-3 mb-2">
+          <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left fr-text--sm" href="#top">
+            Haut de page
+          </a>
         </div>
       </div>
     </div>
-  );
-}
-
-interface PeutEnvoyerDesFichesAOuTraiterAuNomDeProps {
-  relationType: EntityRelationType;
-  id: string;
-  userResponseData: State;
-  setUserResponseData: (data: State) => void;
-  forCCG?: boolean;
-}
-
-function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
-  relationType,
-  id,
-  userResponseData,
-  setUserResponseData,
-  forCCG,
-}: PeutEnvoyerDesFichesAOuTraiterAuNomDeProps) {
-  const { user, userEntitiesRelations, allEntities } = userResponseData;
-
-  const shouldHaveAssociatedSvi = useMemo(() => {
-    if (!user.roles.includes(UserRoles.ETG)) return false;
-    if (relationType !== EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) return false;
-    return true;
-  }, [user.roles, relationType]);
-
-  const associatedSvi = useMemo(() => {
-    if (!shouldHaveAssociatedSvi) return null;
-    const etgId = userEntitiesRelations.find((entity) => {
-      return (
-        entity.type === EntityTypes.ETG &&
-        entity.EntityRelationsWithUsers.some(
-          (r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        )
-      );
-    })?.id;
-    if (!etgId) return null;
-    const sviId = allEntities.find((entity) => entity.id === etgId)?.etg_linked_to_svi_id;
-    if (!sviId) return null;
-    const svi = allEntities.find((entity) => entity.id === sviId);
-    if (!svi) return null;
-    return {
-      ...svi,
-      type: EntityTypes.SVI,
-      relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-    };
-  }, [allEntities, userEntitiesRelations, shouldHaveAssociatedSvi]);
-
-  const potentialEntities = useMemo(() => {
-    const userEntityIds: Record<Entity['id'], boolean> = {};
-    for (const userEntityRelation of userEntitiesRelations) {
-      if (userEntityRelation.EntityRelationsWithUsers.some((r) => r.relation === relationType)) {
-        userEntityIds[userEntityRelation.id] = forCCG
-          ? userEntityRelation.type === EntityTypes.CCG
-          : userEntityRelation.type !== EntityTypes.CCG;
-      }
-    }
-    const entities = [];
-    for (const entity of allEntities) {
-      if (entity.type === EntityTypes.SVI) {
-        if (relationType === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
-          // cette relation est définie dans l'ETG:
-          // si un user a un rôle ETG, alors il peut envoyer une fiche
-          // au SVI auquel est rattaché l'ETG via etg_linked_to_svi_id
-          // donc on ne doit pas afficher cette relation dans la liste des entités potentielles
-          // en revanche elle doit être affichée dans la liste des entités, et disabled
-          continue;
-        }
-      }
-      if (userEntityIds[entity.id]) continue;
-      if (forCCG && entity.type !== EntityTypes.CCG) {
-        continue;
-      }
-      if (!forCCG && entity.type === EntityTypes.CCG) {
-        continue;
-      }
-      if (relationType === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
-        if (user.roles.includes(UserRoles.CHASSEUR)) {
-          if (
-            entity.type === EntityTypes.ETG ||
-            entity.type === EntityTypes.COLLECTEUR_PRO ||
-            entity.type === EntityTypes.CCG
-          ) {
-            entities.push(entity);
-          }
-        } else if (user.roles.includes(UserRoles.ETG)) {
-          if (entity.type === EntityTypes.SVI) {
-            entities.push(entity);
-          }
-        }
-      } else if (relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
-        if (user.roles.includes(UserRoles.CHASSEUR)) {
-          if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
-            entities.push(entity);
-          }
-        } else if (user.roles.includes(UserRoles.ETG)) {
-          if (entity.type === EntityTypes.ETG) {
-            entities.push(entity);
-          }
-        } else if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
-          if (entity.type === EntityTypes.COLLECTEUR_PRO) {
-            entities.push(entity);
-          }
-        } else if (user.roles.includes(UserRoles.SVI)) {
-          if (entity.type === EntityTypes.SVI) {
-            entities.push(entity);
-          }
-        }
-      }
-    }
-    return entities;
-  }, [allEntities, userEntitiesRelations, forCCG, relationType, user.roles]);
-
-  return (
-    <>
-      {shouldHaveAssociatedSvi && (
-        <Highlight
-          className="m-0 mb-8"
-          classes={{
-            root: 'fr-highlight--green-emeraude',
-          }}
-        >
-          {associatedSvi
-            ? "Un utilisateur associé à un SVI ne peut pas envoyer de fiche à un autre SVI que celui auquel est rattaché l'ETG. Conernant l'envoi à d'autres types d'entités (ETG, Collecteur Pro), à l'avenir il pourra le faire."
-            : "Veuillez associer un SVI à l'ETG, il sera automatiquement ajouté à la liste des entités auxquelles l'utilisateur peut envoyer des fiches"}
-        </Highlight>
-      )}
-      {associatedSvi && (
-        <RelationEntityUser
-          key={associatedSvi.id}
-          relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-          entity={associatedSvi as unknown as EntityWithUserRelations}
-          user={user}
-          displayEntity
-        />
-      )}
-      {userEntitiesRelations
-        .filter((entity) => {
-          if (!entity) return false;
-          // if (!entity.EntityRelationsWithUsers.some((r) => r.relation === relation)) return false;
-          if (forCCG && entity.type !== EntityTypes.CCG) return false;
-          if (!forCCG && entity.type === EntityTypes.CCG) return false;
-          return true;
-        })
-        .map((entity) => {
-          if (!entity) return null;
-          if (!entity?.EntityRelationsWithUsers) return null;
-          const relation = entity.EntityRelationsWithUsers.find(
-            (relation) => relation.owner_id === user.id && relation.relation === relationType,
-          );
-          if (!relation) return null;
-          const isSviLinkedToEtg = associatedSvi?.id === entity.id;
-
-          try {
-            return (
-              <RelationEntityUser
-                key={entity.id}
-                relationType={relationType}
-                entity={entity}
-                user={user}
-                displayEntity
-                entityLink={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                canApproveRelation={relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
-                canDelete={!isSviLinkedToEtg}
-                onChange={() => {
-                  loadData(entity.id).then((response) => {
-                    if (response.data) setUserResponseData(response.data!);
-                  });
-                }}
-              />
-            );
-          } catch (error) {
-            console.error(error);
-            return null;
-          }
-        })}
-      {relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY &&
-        user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
-          <Highlight
-            className="m-0 mt-8"
-            // classes={{
-            //   root: 'fr-highlight--green-emeraude',
-            // }}
-          >
-            Un collecteur indépendant ne peut pas gérer de fiches pour un ETG. <br />
-            Si un ETG a un besoin de transport, c'est dans le profil de l'utilisateur que ça se gère : cet
-            utilisateur n'a que le rôle ETG mais peut cocher la case "Gérer le transport dans l'ETG"
-          </Highlight>
-        )}
-      {!!potentialEntities.length && (
-        <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
-          <Table
-            fixed
-            noCaption
-            className="[&_td]:align-middle"
-            data={potentialEntities.map((entity) => [
-              <form
-                key={entity.id}
-                id={id}
-                className="flex w-full flex-col items-start gap-4"
-                method="POST"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  API.post({
-                    path: '/user-entity',
-                    body: {
-                      [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                      relation: relationType,
-                      [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
-                    },
-                  }).then(() => {
-                    loadData(user.id).then((response) => {
-                      if (response.data) setUserResponseData(response.data!);
-                    });
-                  });
-                }}
-              >
-                <Link
-                  to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-                >
-                  {entity.nom_d_usage}
-                  <br />
-                  {entity.siret}
-                  {entity.numero_ddecpp}
-                  <br />
-                  {entity.code_postal} {entity.ville}
-                </Link>
-                <Button type="submit" className="m-2">
-                  Ajouter
-                </Button>
-              </form>,
-              <p
-                key={user.id}
-                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-              >
-                {entity.type}
-              </p>,
-            ])}
-            headers={['Entité', 'Type']}
-          />
-        </div>
-      )}
-    </>
   );
 }

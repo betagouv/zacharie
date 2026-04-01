@@ -52,7 +52,7 @@ export default function AdminLayout() {
           </li>
         </ul>
       </nav>
-      <main className="fr-container min-w-0 flex-1">
+      <main className="min-w-0 flex-1 bg-[#f6f7fb] px-3 py-2 md:px-4 md:py-3">
         <Outlet />
       </main>
     </div>
