@@ -14,7 +14,7 @@ export default function DeactivatedAccount() {
   }, []);
 
   return (
-    <RootDisplay hideMinistereName navigation={navigation} id="tableau-de-bord-layout-not-activated">
+    <RootDisplay hideMinistereName navigation={navigation} id="chasseur-layout-not-activated">
       <main
         role="main"
         id="content"
@@ -50,8 +50,8 @@ export default function DeactivatedAccount() {
                       </p>
                       <ul className="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
                         <li>
-                          <Link className="fr-btn" to="/app/tableau-de-bord/onboarding/mes-coordonnees">
-                            Compléter votre profile
+                          <Link className="fr-btn" to="/app/chasseur/profil/coordonnees">
+                            Compléter votre profil
                           </Link>
                         </li>
                       </ul>

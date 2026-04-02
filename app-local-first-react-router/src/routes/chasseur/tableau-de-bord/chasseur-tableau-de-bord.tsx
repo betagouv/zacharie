@@ -95,7 +95,7 @@ export default function MesChasses() {
                 iconId="fr-icon-add-circle-line"
                 onClick={async () => {
                   const newFei = await createNewFei();
-                  navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+                  navigate(`/app/chasseur/fei/${newFei.numero}`);
                 }}
               >
                 Créer une fiche
@@ -124,10 +124,16 @@ export default function MesChasses() {
               </div>
             ) : dashboardData.hygieneScore === null && dashboardData.personalSeizureRate === null ? (
               <div className="col-span-2 rounded-3xl bg-white p-6 text-center shadow-sm md:p-8">
-                <span className="fr-icon-mail-close-line text-action-high-blue-france-light mb-4 inline-block text-lg" aria-hidden="true" />
-                <h3 className="fr-h6 text-action-high-blue-france-light mb-2">Absence de retour sur vos carcasses</h3>
+                <span
+                  className="fr-icon-mail-close-line text-action-high-blue-france-light mb-4 inline-block text-lg"
+                  aria-hidden="true"
+                />
+                <h3 className="fr-h6 text-action-high-blue-france-light mb-2">
+                  Absence de retour sur vos carcasses
+                </h3>
                 <p className="fr-text--sm text-action-high-blue-france-light mb-2">
-                  Il semble que vous valorisez vos carcasses directement auprès des consommateurs et des commerces de bouche.
+                  Il semble que vous valorisez vos carcasses directement auprès des consommateurs et des
+                  commerces de bouche.
                 </p>
               </div>
             ) : (

@@ -147,7 +147,7 @@ export default function NouvelleFiche() {
           }
 
           syncData('nouvelle-fiche');
-          navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+          navigate(`/app/chasseur/fei/${newFei.numero}`);
         } else {
           useUser.setState({ user: null });
           setError(true);

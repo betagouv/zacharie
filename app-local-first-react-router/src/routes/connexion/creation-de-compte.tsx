@@ -28,7 +28,7 @@ export default function CreationDeCompte() {
 
   const handleRedirect = (user: User) => {
     if (user) {
-      const redirectPath = redirect || getUserOnboardingRoute(user) || '/app/tableau-de-bord';
+      const redirectPath = redirect || getUserOnboardingRoute(user);
       navigate(redirectPath);
     }
   };

@@ -5,7 +5,6 @@ import { UserRoles, Prisma } from '@prisma/client';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
-import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 

@@ -20,6 +20,7 @@ interface CardProps {
   isPrintSelected?: boolean;
   disabledBecauseOffline?: boolean;
   filter: FeiStepSimpleStatus | 'Toutes les fiches';
+  linkTo: string;
 }
 
 const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
@@ -44,6 +45,7 @@ export default function CardFiche({
   isPrintSelected = false,
   disabledBecauseOffline = false,
   filter,
+  linkTo,
 }: CardProps) {
   const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
   const isCircuitCourt = useIsCircuitCourt();
@@ -181,7 +183,7 @@ export default function CardFiche({
       </div>
 
       <Link
-        to={`/app/tableau-de-bord/fei/${fei.numero}`}
+        to={linkTo}
         className={[
           'hover:bg-active-tint! flex size-full shrink-0 flex-col gap-y-2.5 bg-none p-5 no-underline! hover:no-underline!',
           carcassesRefusées > 0

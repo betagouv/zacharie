@@ -156,9 +156,7 @@ function DispatchGroupForm({
 
       {totalGroups > 1 && (
         <div>
-          <p className="mb-2 text-sm font-bold">
-            Sélectionnez les carcasses pour ce destinataire
-          </p>
+          <p className="mb-2 text-sm font-bold">Sélectionnez les carcasses pour ce destinataire</p>
           <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-4">
             {allCarcassesRestantes.map((carcasse) => {
               const isInGroup = group.carcasseIds.includes(carcasse.zacharie_carcasse_id);
@@ -172,10 +170,10 @@ function DispatchGroupForm({
                   className={[
                     'flex items-start gap-1.5 border-0 border-l-3 border-solid px-2 py-1.5 text-left transition-all duration-150',
                     isInGroup
-                      ? 'bg-blue-100 border-action-high-blue-france opacity-100 cursor-pointer'
+                      ? 'border-action-high-blue-france cursor-pointer bg-blue-100 opacity-100'
                       : otherGroupLabel
                         ? 'bg-contrast-grey border-transparent opacity-80'
-                        : 'bg-contrast-grey border-transparent opacity-80 cursor-pointer hover:bg-blue-50 hover:shadow-sm',
+                        : 'bg-contrast-grey cursor-pointer border-transparent opacity-80 hover:bg-blue-50 hover:shadow-sm',
                   ].join(' ')}
                 >
                   <span
@@ -978,7 +976,7 @@ export default function DestinatairePremierDetenteur({
     }
 
     syncData('premier-detenteur-need-select-next-select-destinataire');
-    navigate(`/app/tableau-de-bord/fei/${fei.numero}/envoyée`);
+    navigate(`/app/chasseur/fei/${fei.numero}/envoyée`);
   };
 
   if (submitRef) {
@@ -992,10 +990,6 @@ export default function DestinatairePremierDetenteur({
         handleSubmit();
       },
     };
-  }
-
-  if (!fei.premier_detenteur_user_id) {
-    return "Il n'y a pas encore de premier détenteur pour cette fiche";
   }
 
   // Group already-sent carcasses by recipient for display
@@ -1033,6 +1027,10 @@ export default function DestinatairePremierDetenteur({
       });
     });
   }, []);
+
+  if (!fei.premier_detenteur_user_id) {
+    return "Il n'y a pas encore de premier détenteur pour cette fiche";
+  }
 
   return (
     <>

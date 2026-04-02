@@ -8,7 +8,7 @@ import { createNewFei } from '@app/utils/create-new-fei';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import useUser from '@app/zustand/user';
 
-export default function FeiEnvoyée() {
+export default function ChasseurFeiEnvoyée() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);
@@ -75,7 +75,8 @@ export default function FeiEnvoyée() {
                     {sentByRecipient.map((recipient) => (
                       <li key={recipient.entityName} className="fr-mb-1w text-sm">
                         <span className="fr-icon-arrow-right-s-line fr-icon--sm mr-1" aria-hidden="true" />
-                        {recipient.entityName} {notificationStatus} ({recipient.count} carcasse{recipient.count > 1 ? 's' : ''})
+                        {recipient.entityName} {notificationStatus} ({recipient.count} carcasse
+                        {recipient.count > 1 ? 's' : ''})
                       </li>
                     ))}
                   </ul>
@@ -97,7 +98,7 @@ export default function FeiEnvoyée() {
                         size="small"
                         className="mt-2"
                         linkProps={{
-                          to: `/app/tableau-de-bord/fei/${params.fei_numero}`,
+                          to: `/app/chasseur/fei/${params.fei_numero}`,
                         }}
                       >
                         Attribuer les carcasses restantes
@@ -108,7 +109,7 @@ export default function FeiEnvoyée() {
                 <div className="mt-4 flex w-full flex-col justify-start gap-4">
                   <Button
                     linkProps={{
-                      to: `/app/tableau-de-bord/`,
+                      to: `/app/chasseur/`,
                     }}
                   >
                     Voir toutes mes fiches
@@ -119,7 +120,7 @@ export default function FeiEnvoyée() {
                     // className="bg-white"
                     onClick={async () => {
                       const newFei = await createNewFei();
-                      navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+                      navigate(`/app/chasseur/fei/${newFei.numero}`);
                     }}
                   >
                     Nouvelle fiche
@@ -128,7 +129,7 @@ export default function FeiEnvoyée() {
                     priority="tertiary"
                     // className="bg-white"
                     linkProps={{
-                      to: `/app/tableau-de-bord/fei/${params.fei_numero}`,
+                      to: `/app/chasseur/fei/${params.fei_numero}`,
                     }}
                   >
                     Retour à la fiche

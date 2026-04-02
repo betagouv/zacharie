@@ -142,9 +142,9 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   if (isAdmin) {
     navigationBase.push({
       text: 'Admin',
-      isActive: location.pathname.startsWith('/app/tableau-de-bord/admin'),
+      isActive: location.pathname.startsWith('/app/admin'),
       linkProps: {
-        to: '/app/tableau-de-bord/admin/users',
+        to: '/app/admin/users',
         href: '#',
       },
     });
@@ -152,9 +152,9 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
 
   navigationBase.push({
     text: 'Contact',
-    isActive: location.pathname === '/app/tableau-de-bord/contact',
+    isActive: location.pathname === '/app/contact',
     linkProps: {
-      to: '/app/tableau-de-bord/contact',
+      to: '/app/contact',
       href: '#',
     },
   });

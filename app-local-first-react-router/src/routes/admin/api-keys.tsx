@@ -68,7 +68,7 @@ export default function AdminApiKeys() {
         <Button
           size="small"
           linkProps={{
-            to: '/app/tableau-de-bord/admin/api-key-add',
+            to: '/app/admin/api-key-add',
           }}
         >
           + Ajouter une clé API
@@ -114,7 +114,7 @@ export default function AdminApiKeys() {
                     <div key={apiKey.id} className="flex size-full flex-row items-start">
                       <span className="p-4">{index + 1}</span>
                       <Link
-                        to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
+                        to={`/app/admin/api-key/${apiKey.id}`}
                         className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
                         suppressHydrationWarning
                       >
@@ -125,7 +125,7 @@ export default function AdminApiKeys() {
                     </div>,
                     <Link
                       key={apiKey.id}
-                      to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
+                      to={`/app/admin/api-key/${apiKey.id}`}
                       className="no-scrollbar inline-flex! size-full flex-col items-start justify-start overflow-x-auto! border-r border-r-gray-200 bg-none! no-underline!"
                     >
                       {apiKey.name}
@@ -134,14 +134,14 @@ export default function AdminApiKeys() {
                     </Link>,
                     <Link
                       key={apiKey.id}
-                      to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
+                      to={`/app/admin/api-key/${apiKey.id}`}
                       className="no-scrollbar size-full items-start justify-start overflow-x-auto! bg-none! p-2 text-xs no-underline!"
                     >
                       {apiKey.scopes.join(', ')}
                     </Link>,
                     <Link
                       key={apiKey.id}
-                      to={`/app/tableau-de-bord/admin/api-key/${apiKey.id}`}
+                      to={`/app/admin/api-key/${apiKey.id}`}
                       className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! bg-none! no-underline!"
                     >
                       <ul

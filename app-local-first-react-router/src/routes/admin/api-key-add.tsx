@@ -42,7 +42,7 @@ export default function AdminNewApiKey() {
           .then((res) => res as AdminApiKeyResponse)
           .then((res) => {
             if (res.ok && res.data) {
-              navigate(`/app/tableau-de-bord/admin/api-key/${res.data.apiKey.id}`);
+              navigate(`/app/admin/api-key/${res.data.apiKey.id}`);
             } else {
               setIsLoading(false);
             }

@@ -126,7 +126,7 @@ export default function AdminEntites() {
           size="small"
           priority="secondary"
           linkProps={{
-            to: '/app/tableau-de-bord/admin/import-ccg',
+            to: '/app/admin/import-ccg',
           }}
         >
           Importer des CCG (CSV/XLS)
@@ -134,7 +134,7 @@ export default function AdminEntites() {
         <Button
           size="small"
           linkProps={{
-            to: '/app/tableau-de-bord/admin/add-entity',
+            to: '/app/admin/add-entity',
           }}
         >
           + Ajouter des entités (SVI, ETG, etc.)
@@ -187,10 +187,7 @@ export default function AdminEntites() {
                     <span className="flex flex-col">
                       <span className="font-medium">
                         <span className="text-xs text-gray-400">{index + 1}. </span>
-                        <Link
-                          to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
-                          className="no-underline"
-                        >
+                        <Link to={`/app/admin/entity/${entity.id}`} className="no-underline">
                           {entity.nom_d_usage}
                         </Link>
                       </span>

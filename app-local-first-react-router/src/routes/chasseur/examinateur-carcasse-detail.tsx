@@ -44,7 +44,7 @@ const anomaliesCarcasseModal = createModal({
   id: 'anomalie-carcasse-modal-carcasse',
 });
 
-export default function CarcasseExaminateurLoader() {
+export default function ExaminateurCarcasseDetail() {
   const params = useParams();
   const state = useZustandStore((state) => state);
   const fei = state.feis[params.fei_numero!];
@@ -69,10 +69,10 @@ export default function CarcasseExaminateurLoader() {
   if (!fei || !carcasse) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;
   }
-  return <CarcasseExaminateur />;
+  return <ExaminateurCarcasseDetailLoaded />;
 }
 
-function CarcasseExaminateur() {
+function ExaminateurCarcasseDetailLoaded() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);
@@ -175,14 +175,14 @@ function CarcasseExaminateur() {
                 {
                   label: 'Mes fiches',
                   linkProps: {
-                    to: '/app/tableau-de-bord',
+                    to: '/app/chasseur/fiches',
                     href: '#',
                   },
                 },
                 {
                   label: fei.numero,
                   linkProps: {
-                    to: `/app/tableau-de-bord/fei/${fei.numero}`,
+                    to: `/app/chasseur/fei/${fei.numero}`,
                     href: '#',
                   },
                 },

@@ -1033,7 +1033,7 @@
         ],
         "responses": {
           "302": {
-            "description": "Redirection vers la FEI créée - L'utilisateur est redirigé vers /app/tableau-de-bord/fei/{numero_fei}"
+            "description": "Redirection vers la FEI créée - L'utilisateur est redirigé vers /app/chasseur/fei/{numero_fei}"
           },
           "200": {
             "description": "Page d'erreur affichée si les paramètres sont invalides ou si l'authentification échoue",

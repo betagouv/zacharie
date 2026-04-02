@@ -231,13 +231,13 @@ export default function AdminCarcasseDetail() {
   return (
     <>
       <Link
-        to="/app/tableau-de-bord/admin/carcasses-intermediaires"
+        to="/app/admin/carcasses-intermediaires"
         className="fr-btn fr-btn--sm fr-btn--tertiary-no-outline"
       >
         <span className="fr-icon-arrow-left-line fr-icon--sm mr-1" aria-hidden="true" />
         Retour à la liste
       </Link>
-      <div className="space-y-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 space-y-6 py-4 md:grid-cols-2">
         {/* Back button */}
 
         {/* 1. En-tête / Identité */}
@@ -435,7 +435,9 @@ export default function AdminCarcasseDetail() {
               {carcasse.svi_ipm1_duree_consigne != null && (
                 <Field label="Durée consigne">{carcasse.svi_ipm1_duree_consigne}h</Field>
               )}
-              <Field label="Inspecteur">{carcasse.svi_ipm1_user_name_cache ?? carcasse.svi_ipm1_user_id ?? '—'}</Field>
+              <Field label="Inspecteur">
+                {carcasse.svi_ipm1_user_name_cache ?? carcasse.svi_ipm1_user_id ?? '—'}
+              </Field>
               <Field label="Signé le">{formatDate(carcasse.svi_ipm1_signed_at)}</Field>
             </FieldGrid>
           </Section>
@@ -464,7 +466,9 @@ export default function AdminCarcasseDetail() {
               <Field label="Décision">{carcasse.svi_ipm2_decision ?? '—'}</Field>
               <Field label="Commentaire">{carcasse.svi_ipm2_commentaire ?? '—'}</Field>
               {carcasse.svi_ipm2_traitement_assainissant.length > 0 && (
-                <Field label="Traitement assainissant">{carcasse.svi_ipm2_traitement_assainissant.join(', ')}</Field>
+                <Field label="Traitement assainissant">
+                  {carcasse.svi_ipm2_traitement_assainissant.join(', ')}
+                </Field>
               )}
               {carcasse.svi_ipm2_traitement_assainissant_cuisson_temps && (
                 <Field label="Cuisson temps">{carcasse.svi_ipm2_traitement_assainissant_cuisson_temps}</Field>
@@ -493,7 +497,9 @@ export default function AdminCarcasseDetail() {
               {carcasse.svi_ipm2_poids_type && (
                 <Field label="Type poids">{carcasse.svi_ipm2_poids_type}</Field>
               )}
-              <Field label="Inspecteur">{carcasse.svi_ipm2_user_name_cache ?? carcasse.svi_ipm2_user_id ?? '—'}</Field>
+              <Field label="Inspecteur">
+                {carcasse.svi_ipm2_user_name_cache ?? carcasse.svi_ipm2_user_id ?? '—'}
+              </Field>
               <Field label="Signé le">{formatDate(carcasse.svi_ipm2_signed_at)}</Field>
             </FieldGrid>
           </Section>
@@ -510,16 +516,22 @@ export default function AdminCarcasseDetail() {
         {(carcasse.current_owner_user_id || carcasse.next_owner_user_id || carcasse.prev_owner_user_id) && (
           <Section title="Propriété actuelle">
             <FieldGrid>
-              <Field label="Owner actuel (user)">{carcasse.current_owner_user_name_cache ?? carcasse.current_owner_user_id ?? '—'}</Field>
-              <Field label="Owner actuel (entité)">{carcasse.current_owner_entity_name_cache ?? carcasse.current_owner_entity_id ?? '—'}</Field>
+              <Field label="Owner actuel (user)">
+                {carcasse.current_owner_user_name_cache ?? carcasse.current_owner_user_id ?? '—'}
+              </Field>
+              <Field label="Owner actuel (entité)">
+                {carcasse.current_owner_entity_name_cache ?? carcasse.current_owner_entity_id ?? '—'}
+              </Field>
               <Field label="Owner actuel (rôle)">{carcasse.current_owner_role ?? '—'}</Field>
-              <Field label="Next owner (user)">{carcasse.next_owner_user_name_cache ?? carcasse.next_owner_user_id ?? '—'}</Field>
-              <Field label="Next owner (entité)">{carcasse.next_owner_entity_name_cache ?? carcasse.next_owner_entity_id ?? '—'}</Field>
+              <Field label="Next owner (user)">
+                {carcasse.next_owner_user_name_cache ?? carcasse.next_owner_user_id ?? '—'}
+              </Field>
+              <Field label="Next owner (entité)">
+                {carcasse.next_owner_entity_name_cache ?? carcasse.next_owner_entity_id ?? '—'}
+              </Field>
               <Field label="Next owner (rôle)">{carcasse.next_owner_role ?? '—'}</Field>
               {carcasse.next_owner_wants_to_sous_traite && (
-                <Field label="Sous-traitance">
-                  Oui — {formatDate(carcasse.next_owner_sous_traite_at)}
-                </Field>
+                <Field label="Sous-traitance">Oui — {formatDate(carcasse.next_owner_sous_traite_at)}</Field>
               )}
               <Field label="Previous owner (user)">{carcasse.prev_owner_user_id ?? '—'}</Field>
               <Field label="Previous owner (entité)">{carcasse.prev_owner_entity_id ?? '—'}</Field>

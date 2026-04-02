@@ -7,9 +7,8 @@ import SearchInput from '@app/components/SearchInput';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef } from 'react';
 import API from '@app/services/api';
-import { useSearchParams, useNavigate } from 'react-router';
-import { createNewFei } from '@app/utils/create-new-fei';
-import { HeaderQuickAccessItem } from '@codegouvfr/react-dsfr/Header';
+import { useSearchParams } from 'react-router';
+import { UserRoles } from '@prisma/client';
 
 const environment = import.meta.env.VITE_ENV || 'development';
 
@@ -30,7 +29,6 @@ export default function RootDisplay({
   const embedded = searchParams.get('embedded') === 'true';
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
-  const navigate = useNavigate();
 
   const RenderedSearchInput = useRef(SearchInput).current;
 
@@ -51,7 +49,7 @@ export default function RootDisplay({
     // />,
     {
       linkProps: {
-        to: '/app/tableau-de-bord',
+        to: user?.roles.includes(UserRoles.CHASSEUR) ? '/app/chasseur' : '/app/tableau-de-bord',
         href: '#',
       },
       iconId: 'ri-account-box-line',
@@ -176,7 +174,9 @@ export default function RootDisplay({
                     },
                     {
                       linkProps: {
-                        to: '/app/tableau-de-bord',
+                        to: user?.roles.includes(UserRoles.CHASSEUR)
+                          ? '/app/chasseur'
+                          : '/app/tableau-de-bord',
                         href: '#',
                       },
                       text: 'Accéder à mon compte',

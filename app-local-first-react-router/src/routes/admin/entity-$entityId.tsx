@@ -156,7 +156,7 @@ export default function AdminEntity() {
             {dedicatedApiKey ? (
               <Button
                 linkProps={{
-                  to: `/app/tableau-de-bord/admin/api-key/${dedicatedApiKey.id}`,
+                  to: `/app/admin/api-key/${dedicatedApiKey.id}`,
                 }}
               >
                 Aller vers la clé API dédiée
@@ -471,7 +471,7 @@ function UserWorkingWithOrFor({
               displayUser={true}
               canApproveRelation
               canDelete
-              userLink={`/app/tableau-de-bord/admin/user/${owner.id}`}
+              userLink={`/app/admin/user/${owner.id}`}
               onChange={() => {
                 loadData(entity.id).then((response) => {
                   if (response.data) setAdminEntityResponse(response.data!);
@@ -524,7 +524,7 @@ function UserWorkingWithOrFor({
               }}
             >
               <Link
-                to={`/app/tableau-de-bord/admin/user/${user.id}`}
+                to={`/app/admin/user/${user.id}`}
                 className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
               >
                 {user.prenom} {user.nom_de_famille}
@@ -655,7 +655,7 @@ function EntitiesRelatedTo({
             }}
             title={
               <Link
-                to={`/app/tableau-de-bord/admin/entity/${coupledEntity.id}`}
+                to={`/app/admin/entity/${coupledEntity.id}`}
                 className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
               >
                 {coupledEntity.nom_d_usage}
@@ -713,7 +713,7 @@ function EntitiesRelatedTo({
                   }}
                 >
                   <Link
-                    to={`/app/tableau-de-bord/admin/entity/${potentialEntityRelated.id}`}
+                    to={`/app/admin/entity/${potentialEntityRelated.id}`}
                     className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                   >
                     {potentialEntityRelated.type}
@@ -732,7 +732,7 @@ function EntitiesRelatedTo({
                 </form>,
                 <Link
                   key={potentialEntityRelated.id}
-                  to={`/app/tableau-de-bord/admin/entity/${potentialEntityRelated.id}`}
+                  to={`/app/admin/entity/${potentialEntityRelated.id}`}
                   className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                 >
                   {potentialEntityRelated.nom_d_usage}
@@ -740,7 +740,7 @@ function EntitiesRelatedTo({
                 </Link>,
                 <Link
                   key={potentialEntityRelated.id}
-                  to={`/app/tableau-de-bord/admin/entity/${potentialEntityRelated.id}`}
+                  to={`/app/admin/entity/${potentialEntityRelated.id}`}
                   className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                 >
                   {potentialEntityRelated.address_ligne_1}

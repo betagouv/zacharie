@@ -1,10 +1,10 @@
-import { useEffect, useMemo, /* useRef, */ useState } from 'react';
-import { useParams } from 'react-router';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, Navigate } from 'react-router';
 import { EntityRelationType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { loadFei } from '@app/utils/load-fei';
-import FEIExaminateurInitial from './examinateur-initial';
+import FEIExaminateurInitial from '../chasseur/chasseur-fei';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import FeiSousTraite from './current-owner-sous-traite';
@@ -14,7 +14,6 @@ import NotFound from '@app/components/NotFound';
 import FEI_SVI from './svi';
 import FeiStepper from '@app/components/FeiStepper';
 import CurrentOwnerConfirm from './current-owner-confirm';
-import DeleteFei from './delete-fei';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import CircuitCourt from './circuirt-court';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
@@ -24,10 +23,11 @@ import HeaderFiche from './Headerfiche';
 
 export default function FeiLoader() {
   const params = useParams();
+  const user = useUser((state) => state.user)!;
+  const isChasseur = user.roles.includes(UserRoles.CHASSEUR);
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
-
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
     refreshUser('connexion')
@@ -42,6 +42,10 @@ export default function FeiLoader() {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (isChasseur) {
+    return <Navigate to={`/app/chasseur/fei/${params.fei_numero}`} />;
+  }
 
   if (!fei) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;

@@ -1,0 +1,297 @@
+import { useState, useCallback, useEffect } from 'react';
+
+import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
+import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
+import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
+import { UserRoles, Prisma } from '@prisma/client';
+import type { UserConnexionResponse } from '@api/src/types/responses';
+import useUser from '@app/zustand/user';
+import { useNavigate, useSearchParams } from 'react-router';
+import API from '@app/services/api';
+import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
+import MesCCGs from './chasseur-ccgs';
+import MesAssociationsDeChasse from './chasseur-associations-de-chasse';
+import MesPartenaires from './chasseur-partenaires';
+import { toast } from 'react-toastify';
+
+type InformationsDeChasseProps = {
+  withExaminateurInitial?: boolean;
+  withAssociationsDeChasse?: boolean;
+  withPartenaires?: boolean;
+  withCCGs?: boolean;
+};
+
+export default function MesInformationsDeChasse({
+  withExaminateurInitial = false,
+  withAssociationsDeChasse = false,
+  withPartenaires = false,
+  withCCGs = false,
+}: InformationsDeChasseProps) {
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect');
+  let withEverything = withExaminateurInitial && withAssociationsDeChasse && withCCGs && withPartenaires;
+
+  const user = useUser((state) => state.user)!;
+
+  const [isExaminateurInitial, setIsExaminateurInitial] = useState(user.est_forme_a_l_examen_initial);
+  const [numeroCfei, setNumeroCfei] = useState(user.numero_cfei ?? '');
+  const [visibilityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const handleSubmit = async () => {
+    try {
+      const response = await API.post({
+        path: `/user/${user.id}`,
+        body: { onboarding_chasse_info_done_at: new Date().toISOString() },
+      }).then((data) => data as UserConnexionResponse);
+      if (response.ok && response.data?.user?.id) {
+        useUser.setState({ user: response.data.user });
+      }
+      toast.success('Informations de chasse enregistrées');
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de l'enregistrement des informations de chasse");
+    }
+  };
+
+  const handleUserSubmit = useCallback(
+    async ({
+      isExaminateurInitial,
+      numeroCfei,
+      visibilityChecked,
+    }: {
+      isExaminateurInitial: boolean | null;
+      numeroCfei: string;
+      visibilityChecked: boolean;
+    }) => {
+      const body: Record<string, string | null> = {};
+      if (isExaminateurInitial) {
+        body.est_forme_a_l_examen_initial = 'true';
+        body.numero_cfei = numeroCfei || null;
+      } else {
+        body.est_forme_a_l_examen_initial = 'false';
+        body.numero_cfei = null;
+      }
+      body.user_entities_vivible_checkbox = visibilityChecked ? 'true' : 'false';
+      const response = await API.post({
+        path: `/user/${user.id}`,
+        body,
+      }).then((data) => data as UserConnexionResponse);
+      if (response.ok && response.data?.user?.id) {
+        useUser.setState({ user: response.data.user });
+      }
+    },
+    [user.id],
+  );
+
+  const showEntrpriseVisibilityCheckbox =
+    !!user.checked_has_asso_de_chasse ||
+    user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
+    user.roles.includes(UserRoles.ETG);
+
+  let title = '';
+  if (withEverything) {
+    title = 'Mes informations de chasse';
+  } else if (withAssociationsDeChasse) {
+    title = 'Mes associations de chasse';
+  } else if (withPartenaires) {
+    title = 'Mes partenaires';
+  } else if (withCCGs) {
+    title = 'Mes chambres froides (CCGs)';
+  }
+
+  let calloutTitle = '';
+  if (withEverything) {
+    calloutTitle = 'Informations de chasse';
+  } else if (withAssociationsDeChasse) {
+    calloutTitle = 'Associations de chasse';
+  } else if (withPartenaires) {
+    calloutTitle = 'Partenaires';
+  } else if (withCCGs) {
+    calloutTitle = 'Chambres froides (CCGs)';
+  }
+
+  return (
+    <div className="fr-container fr-container--fluid fr-my-md-14v">
+      <title>{`${title} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
+      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+          <h1 className="fr-h2 fr-mb-2w">{calloutTitle}</h1>
+          <Alert
+            className="mb-8 bg-white"
+            small
+            severity="info"
+            description="Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer."
+          />
+          {withExaminateurInitial && user.roles.includes(UserRoles.CHASSEUR) && (
+            <>
+              <div className="mb-6 bg-white md:shadow-sm">
+                <div className="p-4 md:p-8">
+                  <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()}>
+                    {/* <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
+                      <span>Examen initial</span>
+                    </h3> */}
+                    <RadioButtons
+                      legend="Êtes-vous formé à l'examen initial ? *"
+                      orientation="horizontal"
+                      options={[
+                        {
+                          nativeInputProps: {
+                            required: true,
+                            checked: isExaminateurInitial === true,
+                            name: Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial,
+                            onChange: () => {
+                              setIsExaminateurInitial(true);
+                              handleUserSubmit({ isExaminateurInitial: true, numeroCfei, visibilityChecked });
+                            },
+                          },
+                          label: 'Oui',
+                        },
+                        {
+                          nativeInputProps: {
+                            required: true,
+                            checked: isExaminateurInitial === false,
+                            name: 'pas_forme_a_l_examen_initial',
+                            onChange: () => {
+                              if (
+                                !user.numero_cfei ||
+                                window.confirm("N'êtes vous vraiment pas formé à l'examen initial ?")
+                              ) {
+                                setIsExaminateurInitial(false);
+                                handleUserSubmit({
+                                  isExaminateurInitial: false,
+                                  numeroCfei,
+                                  visibilityChecked,
+                                });
+                              }
+                            },
+                          },
+                          label: 'Non',
+                        },
+                      ]}
+                    />
+                    {user.roles.includes(UserRoles.CHASSEUR) && isExaminateurInitial && (
+                      <Input
+                        label="Numéro d'attestation de Chasseur Formé à l'Examen Initial *"
+                        hintText="De la forme CFEI-DEP-AA-123"
+                        key={isExaminateurInitial ? 'true' : 'false'}
+                        nativeInputProps={{
+                          id: Prisma.UserScalarFieldEnum.numero_cfei,
+                          name: Prisma.UserScalarFieldEnum.numero_cfei,
+                          onBlur: () =>
+                            handleUserSubmit({ isExaminateurInitial, numeroCfei, visibilityChecked }),
+                          autoComplete: 'off',
+                          required: true,
+                          value: numeroCfei,
+                          onChange: (e) => {
+                            setNumeroCfei(e.currentTarget.value);
+                          },
+                        }}
+                      />
+                    )}
+                  </form>
+                </div>
+              </div>
+            </>
+          )}
+
+          {withAssociationsDeChasse && (
+            <div className="mb-6 bg-white md:shadow-sm">
+              <div className="p-4 md:p-8">
+                <h3
+                  className="mb-8 text-lg font-semibold text-gray-900"
+                  id={`onboarding-etape-2-associations-data-title`}
+                >
+                  Association, société et domaine de chasse
+                </h3>
+                <MesAssociationsDeChasse />
+              </div>
+            </div>
+          )}
+
+          {withCCGs && <MesCCGs />}
+
+          {withPartenaires && (
+            <div className="mb-6 bg-white md:shadow-sm">
+              <div className="p-4 md:p-8">
+                <h3
+                  className="mb-8 text-lg font-semibold text-gray-900"
+                  id={`onboarding-etape-2-associations-data-title`}
+                >
+                  Partenaires
+                </h3>
+                <MesPartenaires />
+              </div>
+            </div>
+          )}
+          {showEntrpriseVisibilityCheckbox && (
+            <div className="mb-6 bg-white md:shadow-sm">
+              <div className="p-4 md:p-8">
+                <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()} className="px-8">
+                  <Checkbox
+                    options={[
+                      {
+                        label:
+                          "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient.",
+                        hintText:
+                          'Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les fiches ne pourront pas être attribuées à votre entreprise',
+                        nativeInputProps: {
+                          required: true,
+                          name: Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox,
+                          value: 'true',
+                          onChange: () => {
+                            setVisibilityChecked(!visibilityChecked);
+                            handleUserSubmit({
+                              isExaminateurInitial,
+                              numeroCfei,
+                              visibilityChecked: !visibilityChecked,
+                            });
+                          },
+                          checked: visibilityChecked,
+                        },
+                      },
+                    ]}
+                  />
+                </form>
+              </div>
+            </div>
+          )}
+
+          <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none">
+            <ButtonsGroup
+              inlineLayoutWhen="always"
+              buttons={[
+                {
+                  children: redirect ? 'Enregistrer et continuer' : 'Enregistrer',
+                  disabled: showEntrpriseVisibilityCheckbox ? !visibilityChecked : false,
+                  type: 'button',
+                  nativeButtonProps: {
+                    onClick: () => (redirect ? navigate(redirect) : handleSubmit()),
+                  },
+                },
+                ...(redirect
+                  ? [
+                      {
+                        children: 'Retour',
+                        linkProps: {
+                          to: redirect,
+                          href: '#',
+                        },
+                        priority: 'secondary' as const,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
