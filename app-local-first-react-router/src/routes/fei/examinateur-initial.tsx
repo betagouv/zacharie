@@ -104,10 +104,6 @@ export default function FEIExaminateurInitial() {
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;
     }
-    if (user.isZacharieAdmin) {
-      // les admins peuvent modifier
-      return true;
-    }
     return true;
   }, [fei, user]);
 
