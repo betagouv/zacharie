@@ -28,7 +28,13 @@ function getNewDefaultNumeroBracelet(user: User) {
   return `${prenom}${nom}${numeroCfei}-${prochain_bracelet_a_utiliser}`;
 }
 
-export default function NouvelleCarcasse() {
+export default function NouvelleCarcasse({
+  onCarcasseAdded,
+  defaultEspece,
+}: {
+  onCarcasseAdded?: () => void;
+  defaultEspece?: string;
+}) {
   const params = useParams();
   const userState = useUser((state) => state);
   const user = userState.user!;
@@ -39,7 +45,7 @@ export default function NouvelleCarcasse() {
   const defaultNumeroBracelet = getNewDefaultNumeroBracelet(user);
   const [numeroBracelet, setNumeroBracelet] = useState<string>('');
   const [nombreDAnimaux, setNombreDAnimaux] = useState<string>('1');
-  const [espece, setEspece] = useState<string>('');
+  const [espece, setEspece] = useState<string>(defaultEspece ?? '');
   const [error, setError] = useState<string | null>(null);
 
   const isPetitGibier = useMemo(() => {
@@ -157,8 +163,8 @@ export default function NouvelleCarcasse() {
             });
             syncData('examinateur-carcasse-create');
             setNumeroBracelet('');
-
             setError(null);
+            onCarcasseAdded?.();
           } catch (error) {
             if (error instanceof Error) {
               setError(error.message);
