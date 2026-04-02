@@ -1,6 +1,7 @@
 import NouvelleCarcasse from './examinateur-carcasses-nouvelle';
 import { Carcasse, UserRoles } from '@prisma/client';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Button } from '@codegouvfr/react-dsfr/Button';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useParams, useNavigate } from 'react-router';
 import useUser from '@app/zustand/user';
@@ -13,29 +14,39 @@ import CardCarcasse from '@app/components/CardCarcasse';
 export default function CarcassesExaminateur({
   canEdit,
   canEditAsPremierDetenteur,
+  allCarcassesConfirmed,
+  onAllCarcassesConfirmed,
+  onAddMoreCarcasses,
 }: {
   canEdit: boolean;
   canEditAsPremierDetenteur: boolean;
+  allCarcassesConfirmed: boolean;
+  onAllCarcassesConfirmed: () => void;
+  onAddMoreCarcasses: () => void;
 }) {
-  // canEdit = true;
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const carcasses = useMyCarcassesForFei(params.fei_numero);
+  const [showForm, setShowForm] = useState(!allCarcassesConfirmed);
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
 
+  const hasCarcasses = carcasses.length > 0;
+  const lastEspece = hasCarcasses ? carcasses[carcasses.length - 1].espece : null;
+
   return (
     <>
-      <div
-        className={[
-          'mb-2 transition-all duration-1000',
-          !canEdit ? 'max-h-0 overflow-hidden' : 'max-h-[300vh]',
-        ].join(' ')}
-      >
-        <NouvelleCarcasse key={fei.commune_mise_a_mort} />
-      </div>
-      {canEdit && carcasses.length > 0 && (
+      {(!hasCarcasses || (showForm && !allCarcassesConfirmed)) && canEdit && (
+        <div className="mb-2">
+          <NouvelleCarcasse
+            key={`${fei.commune_mise_a_mort}-${lastEspece}`}
+            defaultEspece={lastEspece ?? undefined}
+            onCarcasseAdded={() => setShowForm(false)}
+          />
+        </div>
+      )}
+      {canEdit && hasCarcasses && (
         <p className="my-4 ml-4 text-sm text-gray-500">
           Carcasses enregistrées sur cette fiche&nbsp;:
           {countCarcassesByEspece.map((line) => (
@@ -57,6 +68,43 @@ export default function CarcassesExaminateur({
           );
         })}
       </div>
+      {canEdit && hasCarcasses && !allCarcassesConfirmed && !showForm && (
+        <div className="mt-4 flex flex-col gap-2">
+          <Button
+            type="button"
+            priority="secondary"
+            // className="w-full"
+            iconId="fr-icon-add-line"
+            onClick={() => setShowForm(true)}
+          >
+            Ajouter une autre carcasse
+          </Button>
+          <Button
+            type="button"
+            priority="primary"
+            // className="w-full"
+            onClick={() => {
+              onAllCarcassesConfirmed();
+            }}
+          >
+            J'ai renseigné toutes mes carcasses
+          </Button>
+        </div>
+      )}
+      {canEdit && hasCarcasses && allCarcassesConfirmed && (
+        <Button
+          type="button"
+          priority="tertiary"
+          className="mt-4 w-full"
+          iconId="fr-icon-add-line"
+          onClick={() => {
+            onAddMoreCarcasses();
+            setShowForm(true);
+          }}
+        >
+          Ajouter une autre carcasse
+        </Button>
+      )}
     </>
   );
 }
