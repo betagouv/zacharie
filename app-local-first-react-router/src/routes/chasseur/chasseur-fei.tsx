@@ -28,6 +28,7 @@ import DestinataireSelectPremierDetenteur, {
 import ExaminateurInitialDeleteFei from './examinateur-initial-delete-fei';
 import DateHeureValidationAlerts from '../fei/date-heure-validation-alerts';
 import HeaderFiche from '../fei/Headerfiche';
+import CurrentOwnerConfirm from './chasseur-current-owner-confirm';
 
 export default function ChasseurFei() {
   const params = useParams();
@@ -269,6 +270,7 @@ function FEIChasseurLoaded() {
             className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0"
             key={fei.fei_current_owner_entity_id!}
           >
+            <CurrentOwnerConfirm />
             <HeaderFiche fei={fei} />
             <div className="flex flex-col gap-6">
               {/* Bloc 1 — Informations de chasse */}

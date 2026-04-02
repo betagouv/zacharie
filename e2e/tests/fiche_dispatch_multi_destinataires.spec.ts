@@ -80,7 +80,10 @@ test("Dispatch 4 carcasses vers 2 destinataires ETG", async ({ page, context }) 
   await expect(page.getByText(/ETG 2.*2 carcasse/)).toBeVisible();
 
   // 10. Connecter en tant que ETG 1 et vérifier qu'il ne voit que 2 carcasses
-  await context.clearCookies();
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("button", { name: "Déconnexion" }).click();
+
+  await page.goto("http://localhost:3290/app/connexion", { timeout: 10000 });
   await connectWith(page, "etg-1@example.fr");
   await page.getByRole("link", { name: feiId }).click();
   // Verify the section title shows "Carcasses (2)" not "Carcasses (4)"
@@ -98,7 +101,9 @@ test("Dispatch 4 carcasses vers 2 destinataires ETG", async ({ page, context }) 
   await expect(page.getByText("Carcasses (2)")).toBeVisible();
 
   // 11. Connecter en tant que ETG 2 et vérifier qu'il ne voit que 2 carcasses
-  await context.clearCookies();
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("button", { name: "Déconnexion" }).click();
+  await page.goto("http://localhost:3290/app/connexion", { timeout: 10000 });
   await connectWith(page, "etg-2@example.fr");
   await page.getByRole("link", { name: feiId }).click();
   await expect(page.getByText("Carcasses (2)")).toBeVisible();
