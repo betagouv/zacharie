@@ -254,7 +254,7 @@ export default function TableauDeBordIndex() {
         return 'Fiches clôturées';
       case 'Toutes les fiches':
       default:
-        return 'Filtrer';
+        return 'Filtrer par statut';
     }
   }, [filter]);
   const [filterPremierDetenteur, setFilterPremierDetenteur] = useLocalStorage<string>(
