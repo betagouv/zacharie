@@ -127,7 +127,7 @@ function DispatchGroupForm({
       <div className="flex items-center justify-between">
         <h4 className="m-0 text-lg font-bold">
           {totalGroups > 1 && <>Destinataire {groupIndex + 1} </>}
-          {totalGroups > 1 && (
+          {allCarcassesRestantes.length > 1 && (
             <Badge
               severity={group.carcasseIds.length > 0 ? 'info' : 'warning'}
               small
@@ -154,9 +154,13 @@ function DispatchGroupForm({
         )}
       </div>
 
-      {totalGroups > 1 && (
+      {allCarcassesRestantes.length > 1 && (
         <div>
-          <p className="mb-2 text-sm font-bold">Sélectionnez les carcasses pour ce destinataire</p>
+          <p className="mb-2 text-sm font-bold">
+            {totalGroups > 1
+              ? 'Sélectionnez les carcasses pour ce destinataire'
+              : 'Sélectionnez les carcasses à transmettre'}
+          </p>
           <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-4">
             {allCarcassesRestantes.map((carcasse) => {
               const isInGroup = group.carcasseIds.includes(carcasse.zacharie_carcasse_id);
@@ -1131,7 +1135,7 @@ export default function DestinatairePremierDetenteur({
             })}
 
             {/* Unassigned carcasses warning */}
-            {unassignedCarcasses.length > 0 && dispatchGroups.length > 1 && (
+            {unassignedCarcasses.length > 0 && (
               <Alert
                 severity="warning"
                 title={`${unassignedCarcasses.length} carcasse${unassignedCarcasses.length > 1 ? 's' : ''} non attribuée${unassignedCarcasses.length > 1 ? 's' : ''}`}
