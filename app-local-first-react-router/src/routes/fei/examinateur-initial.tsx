@@ -64,6 +64,9 @@ export default function FEIExaminateurInitial() {
   const [approbation, setApprobation] = useState(
     fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false,
   );
+  const [allCarcassesConfirmed, setAllCarcassesConfirmed] = useState(
+    !!fei.heure_mise_a_mort_premiere_carcasse,
+  );
   const destinataireRef = useRef<DestinatairePremierDetenteurHandle | null>(null);
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
@@ -313,8 +316,16 @@ export default function FEIExaminateurInitial() {
       {showBloc2 && (
         <div className="bg-white p-4 md:p-8">
           <h4 className="fr-h5">Carcasses</h4>
-          <CarcassesExaminateur canEdit={canEdit} canEditAsPremierDetenteur={canEditAsPremierDetenteur} />
+          <CarcassesExaminateur
+            canEdit={canEdit}
+            canEditAsPremierDetenteur={canEditAsPremierDetenteur}
+            allCarcassesConfirmed={allCarcassesConfirmed}
+            onAllCarcassesConfirmed={() => setAllCarcassesConfirmed(true)}
+            onAddMoreCarcasses={() => setAllCarcassesConfirmed(false)}
+          />
           <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
+          {allCarcassesConfirmed && (
+          <>
           <Component
             className="mt-4"
             label="Heure de mise à mort de la première carcasse&nbsp;*"
@@ -382,14 +393,14 @@ export default function FEIExaminateurInitial() {
           )}
           {canEdit && !showBloc3 && (
             <Button className="mt-4" disabled>
-              {carcasses.length === 0
-                ? 'Ajoutez au moins une carcasse pour continuer'
-                : !fei.heure_mise_a_mort_premiere_carcasse
-                  ? "Remplissez l'heure de mise à mort pour continuer"
-                  : !onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse
-                    ? "Remplissez l'heure d'éviscération pour continuer"
-                    : 'Continuer'}
+              {!fei.heure_mise_a_mort_premiere_carcasse
+                ? "Remplissez l'heure de mise à mort pour continuer"
+                : !onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse
+                  ? "Remplissez l'heure d'éviscération pour continuer"
+                  : 'Continuer'}
             </Button>
+          )}
+          </>
           )}
         </div>
       )}
