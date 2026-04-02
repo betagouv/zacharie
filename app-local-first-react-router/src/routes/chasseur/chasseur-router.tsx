@@ -9,10 +9,10 @@ import ChasseurFeiEnvoyée from './chasseur-fei-envoyée';
 import ChasseurFiches from './chasseur-fiches';
 import ChasseurLayout from './chasseur-layout';
 import ExaminateurCarcasseDetail from './examinateur-carcasse-detail';
-import ChasseurOnboardingMesCoordonnees from './onboarding/2-mes-coordonnees';
-import ChasseurOnboardingExaminateurInitial from './onboarding/3a-examinateur-initial';
-import ChasseurOnboardingMesAssociationsDeChasse from './onboarding/3-mes-associations-de-chasse';
+import ChasseurOnboardingMesCoordonnees from './onboarding/1-coordonnees';
+import ChasseurOnboardingExaminateurInitial from './onboarding/2-examinateur-initial';
 import ChasseurCoordonnees from './profil/chasseur-coordonnees';
+import ChasseurOnboardingMesInformationsDeChasse from './onboarding/3-informations-de-chasse';
 
 export default function RouterChasseur() {
   return (
@@ -22,7 +22,7 @@ export default function RouterChasseur() {
       <Route path="onboarding" element={<Outlet />}>
         <Route path="mes-coordonnees" element={<ChasseurOnboardingMesCoordonnees />} />
         <Route path="formation-examen-initial" element={<ChasseurOnboardingExaminateurInitial />} />
-        <Route path="mes-informations-de-chasse" element={<ChasseurOnboardingMesAssociationsDeChasse />} />
+        <Route path="mes-informations-de-chasse" element={<ChasseurOnboardingMesInformationsDeChasse />} />
       </Route>
       <Route path="profil" element={<Outlet />}>
         <Route path="coordonnees" element={<ChasseurCoordonnees />} />

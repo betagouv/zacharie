@@ -9,9 +9,9 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
-import MesCCGs from './3-mes-ccgs';
-import MesAssociationsDeChasse from './3-mes-associations-de-chasse';
-import MesPartenaires from './3-mes-partenaires';
+import MesCCGs from './3b-mes-ccgs';
+import MesAssociationsDeChasse from './3a-associations-de-chasse';
+import MesPartenaires from './3c-mes-partenaires';
 
 export default function OnboardingMesInformationsDeChasse() {
   const [searchParams] = useSearchParams();

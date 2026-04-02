@@ -182,8 +182,8 @@ test("Examinateur initial ajoute une association de chasse depuis son profil", a
   await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 
   // Navigate to profile to add hunting associations
-  await page.getByRole("button", { name: "Mon profil" }).click();
-  await page.getByRole("link", { name: "Mes informations de chasse" }).click();
+  await page.getByRole("button", { name: "Paramètres" }).click();
+  await page.getByRole("link", { name: "Informations de chasse" }).click();
   await expect(page.getByRole("heading", { name: "Informations de chasse" })).toBeVisible();
 
   await page.getByText("Oui").nth(1).click();
@@ -212,7 +212,9 @@ test("Examinateur initial ajoute une association de chasse existante depuis son 
   // First complete basic onboarding
   await page.goto("http://localhost:3290/");
   await page.getByRole("link", { name: "Créer un compte" }).first().click();
-  await page.getByRole("textbox", { name: "Mon email Renseignez votre" }).fill("examinateur-avec-asso-existante@example.fr");
+  await page
+    .getByRole("textbox", { name: "Mon email Renseignez votre" })
+    .fill("examinateur-avec-asso-existante@example.fr");
   await page.getByRole("textbox", { name: "Mon mot de passe Veuillez" }).fill("secret-secret");
   await page.getByRole("button", { name: "Créer mon compte" }).click();
   await page.getByRole("textbox", { name: "Nom *", exact: true }).fill("Jean");
@@ -230,8 +232,8 @@ test("Examinateur initial ajoute une association de chasse existante depuis son 
   await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 
   // Navigate to profile to add hunting associations
-  await page.getByRole("button", { name: "Mon profil" }).click();
-  await page.getByRole("link", { name: "Mes informations de chasse" }).click();
+  await page.getByRole("button", { name: "Paramètres" }).click();
+  await page.getByRole("link", { name: "Informations de chasse" }).click();
   await expect(page.getByRole("heading", { name: "Informations de chasse" })).toBeVisible();
 
   // Select existing association
@@ -265,8 +267,8 @@ test("Examinateur initial ajoute une chambre froide (CCG) depuis son profil", as
   await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 
   // Navigate to profile to add CCG
-  await page.getByRole("button", { name: "Mon profil" }).click();
-  await page.getByRole("link", { name: "Mes informations de chasse" }).click();
+  await page.getByRole("button", { name: "Paramètres" }).click();
+  await page.getByRole("link", { name: "Informations de chasse" }).click();
   await expect(page.getByRole("heading", { name: "Informations de chasse" })).toBeVisible();
 
   // Add a CCG without official number - use radio button selector
@@ -303,8 +305,8 @@ test("Premier détenteur devient examinateur initial depuis son profil", async (
   await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 
   // Navigate to profile to become examinateur initial
-  await page.getByRole("button", { name: "Mon profil" }).click();
-  await page.getByRole("link", { name: "Mes informations de chasse" }).click();
+  await page.getByRole("button", { name: "Paramètres" }).click();
+  await page.getByRole("link", { name: "Informations de chasse" }).click();
   await expect(page.getByRole("heading", { name: "Informations de chasse" })).toBeVisible();
 
   // Change to examinateur initial
@@ -341,8 +343,8 @@ test("Premier détenteur ajoute association et CCG depuis son profil", async ({ 
   await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 
   // Navigate to profile
-  await page.getByRole("button", { name: "Mon profil" }).click();
-  await page.getByRole("link", { name: "Mes informations de chasse" }).click();
+  await page.getByRole("button", { name: "Paramètres" }).click();
+  await page.getByRole("link", { name: "Informations de chasse" }).click();
 
   // Add an existing association - use input name selector for the "Oui" radio
   await page.getByText("Oui").nth(1).click();
