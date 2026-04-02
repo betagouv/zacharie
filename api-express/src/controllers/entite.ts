@@ -107,7 +107,7 @@ router.get(
         where: {
           deleted_at: null,
           type: { not: EntityTypes.CCG },
-          ...(user.isZacharieAdmin ? {} : { for_testing: false }),
+          for_testing: false,
         },
         include,
         orderBy: {
@@ -184,7 +184,7 @@ router.get(
               EntityTypes.CONSOMMATEUR_FINAL,
             ],
           },
-          ...(user.isZacharieAdmin ? {} : { for_testing: false }),
+          for_testing: false,
         },
         include,
         orderBy: {

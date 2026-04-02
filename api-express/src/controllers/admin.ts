@@ -48,6 +48,7 @@ import { entityAdminInclude } from '~/types/entity';
 import { createBrevoContact, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
 import slugify from 'slugify';
 import dayjs from 'dayjs';
+import { sanitize } from '~/utils/sanitize';
 
 router.post(
   '/user/connect-as',
@@ -204,6 +205,118 @@ router.get(
       });
     },
   ),
+);
+
+router.post(
+  '/user/:user_id',
+  passport.authenticate('admin', { session: false }),
+  catchErrors(async (req: express.Request, res: express.Response<AdminUserDataResponse>, next: express.NextFunction) => {
+    const userId = req.params.user_id;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      res.status(400).send({ ok: false, data: null, error: 'User not found' });
+      return;
+    }
+
+    const body = req.body;
+    const nextUser: Prisma.UserUpdateInput = {};
+
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
+      nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
+      if (nextUser.activated && !user.activated) {
+        nextUser.activated_at = new Date();
+      }
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
+      nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort((a, b) =>
+        b.localeCompare(a),
+      );
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.isZacharieAdmin)) {
+      nextUser.isZacharieAdmin = body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
+      nextUser.numero_cfei = sanitize(body[Prisma.UserScalarFieldEnum.numero_cfei] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.nom_de_famille)) {
+      nextUser.nom_de_famille = sanitize(body[Prisma.UserScalarFieldEnum.nom_de_famille] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prenom)) {
+      nextUser.prenom = sanitize(body[Prisma.UserScalarFieldEnum.prenom] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.telephone)) {
+      nextUser.telephone = sanitize(body[Prisma.UserScalarFieldEnum.telephone] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
+      nextUser.email = sanitize(body[Prisma.UserScalarFieldEnum.email].toLowerCase() as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_1)) {
+      nextUser.addresse_ligne_1 = sanitize(body[Prisma.UserScalarFieldEnum.addresse_ligne_1] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_2)) {
+      nextUser.addresse_ligne_2 = sanitize(body[Prisma.UserScalarFieldEnum.addresse_ligne_2] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.code_postal)) {
+      nextUser.code_postal = sanitize(body[Prisma.UserScalarFieldEnum.code_postal] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.ville)) {
+      nextUser.ville = sanitize(body[Prisma.UserScalarFieldEnum.ville] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prefilled)) {
+      nextUser.prefilled = body[Prisma.UserScalarFieldEnum.prefilled] === 'true' ? true : false;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
+      nextUser.est_forme_a_l_examen_initial =
+        body[Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial] === 'true' ? true : false;
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: nextUser,
+    });
+
+    const allEntities = await prisma.entity.findMany({
+      where: { deleted_at: null },
+      orderBy: { updated_at: 'desc' },
+    });
+    const userEntitiesRelations = await prisma.entity.findMany({
+      where: {
+        EntityRelationsWithUsers: { some: { owner_id: user.id, deleted_at: null } },
+        deleted_at: null,
+      },
+      orderBy: { updated_at: 'desc' },
+      include: entityAdminInclude,
+    });
+
+    let officialCfei = null;
+    if (updatedUser.numero_cfei) {
+      officialCfei = await prisma.officialCfei.findUnique({
+        where: { numero_cfei: updatedUser.numero_cfei.toUpperCase() },
+        select: { numero_cfei: true, nom: true, prenom: true, departement: true },
+      });
+    }
+
+    res.status(200).send({
+      ok: true,
+      data: {
+        user: updatedUser,
+        identityDone:
+          !!updatedUser.nom_de_famille &&
+          !!updatedUser.prenom &&
+          !!updatedUser.telephone &&
+          !!updatedUser.addresse_ligne_1 &&
+          !!updatedUser.code_postal &&
+          !!updatedUser.ville,
+        examinateurDone: !updatedUser.roles.includes(UserRoles.CHASSEUR)
+          ? true
+          : !!updatedUser.est_forme_a_l_examen_initial && !!updatedUser.numero_cfei,
+        allEntities,
+        userEntitiesRelations,
+        officialCfei,
+      },
+      error: '',
+    });
+  }),
 );
 
 router.get(
@@ -689,6 +802,33 @@ router.get(
       },
       error: '',
     });
+  }),
+);
+
+router.post(
+  '/fei/:numero/delete',
+  passport.authenticate('admin', { session: false }),
+  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const numero = req.params.numero;
+    const fei = await prisma.fei.findUnique({ where: { numero } });
+    if (!fei) {
+      res.status(404).send({ ok: false, error: 'Fei not found' });
+      return;
+    }
+    const deletedAt = new Date();
+    const deletedFei = await prisma.fei.update({
+      where: { numero },
+      data: { deleted_at: deletedAt },
+    });
+    await prisma.carcasse.updateMany({
+      where: { fei_numero: numero },
+      data: { deleted_at: deletedAt },
+    });
+    await prisma.carcasseIntermediaire.updateMany({
+      where: { fei_numero: numero },
+      data: { deleted_at: deletedAt },
+    });
+    res.status(200).send({ ok: true, data: { fei: deletedFei }, error: '' });
   }),
 );
 

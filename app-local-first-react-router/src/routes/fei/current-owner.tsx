@@ -25,25 +25,19 @@ export default function CurrentOwner() {
   const navigate = useNavigate();
 
   const canDeleteFei = useMemo(() => {
-    if (user.isZacharieAdmin) {
-      return true;
-    }
     const isExaminateurInitial = user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
     if (!isExaminateurInitial) {
       return false;
     }
     return fei.examinateur_initial_user_id === user.id;
-  }, [user.isZacharieAdmin, user.roles, user.numero_cfei, user.id, fei.examinateur_initial_user_id]);
+  }, [user.roles, user.numero_cfei, user.id, fei.examinateur_initial_user_id]);
 
   const currentOwnerRole = useMemo(() => {
-    if (user.isZacharieAdmin) {
-      return UserRoles.ADMIN;
-    }
     if (user.roles.includes(UserRoles.CHASSEUR)) {
       return UserRoles.CHASSEUR;
     }
     return fei.fei_current_owner_role;
-  }, [user.isZacharieAdmin, user.roles, fei.fei_current_owner_role]);
+  }, [user.roles, fei.fei_current_owner_role]);
 
   if (fei.svi_closed_at || fei.automatic_closed_at || fei.intermediaire_closed_at) {
     return (
