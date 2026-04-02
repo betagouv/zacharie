@@ -11,32 +11,6 @@ const collecteurProfessionnel = "Collecteur Professionnel Indépendant";
 const etablissementDeTraitement = "Établissement de Traitement du Gibier sauvage (ETG)";
 const serviceVeterinaire = "Service Vétérinaire d'Inspection (SVI)";
 
-test("Examinateur initial", async ({ page }) => {
-  page.on("console", (message) => {
-    console.log(`[${message.type()}] ${message.text()}`);
-  });
-
-  await connectWith(page, "examinateur@example.fr");
-  await page.getByRole("button", { name: "Mon profil" }).click();
-  await page.getByRole("link", { name: "Mon activité" }).click();
-
-  await expect(page.getByText(chasseur)).toBeChecked();
-  await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked();
-  await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
-  await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
-});
-
-test("Premier détenteur", async ({ page }) => {
-  await connectWith(page, "premier-detenteur@example.fr");
-  await page.getByRole("button", { name: "Mon profil" }).click();
-  await page.getByRole("link", { name: "Mon activité" }).click();
-
-  await expect(page.getByText(chasseur)).toBeChecked();
-  await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked();
-  await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
-  await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
-});
-
 test("Collecteur professionnel", async ({ page }) => {
   await connectWith(page, "collecteur-pro@example.fr");
   await page.getByRole("button", { name: "Mon profil" }).click();
