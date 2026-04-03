@@ -227,7 +227,7 @@ export default function ChasseurFiches() {
         return 'Fiches clôturées';
       case 'Toutes les fiches':
       default:
-        return 'Filtrer';
+        return 'Filtrer par statut';
     }
   }, [filter]);
   const [filterPremierDetenteur, setFilterPremierDetenteur] = useLocalStorage<string>(
@@ -473,7 +473,7 @@ export default function ChasseurFiches() {
               <span>Mettre à jour</span>
             </Button>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <div className="flex shrink-0 items-center flex-col md:flex-row gap-1.5 sm:gap-2">
             <SegmentedControl
               hideLegend
               className="hidden md:block"
@@ -516,7 +516,7 @@ export default function ChasseurFiches() {
             )}
             <DropDownMenu
               text="Actions"
-              className="max-w-[321px]"
+              className="w-full md:max-w-[321px]"
               isActive={selectedFeis.length > 0}
               menuLinks={[
                 {
