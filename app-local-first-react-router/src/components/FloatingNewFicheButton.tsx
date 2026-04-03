@@ -6,12 +6,15 @@ import { UserRoles } from '@prisma/client';
 
 const SCROLL_THRESHOLD = 200;
 
+const HIDDEN_PATH_PREFIXES = ['/app/chasseur/fei/'];
+
 export default function FloatingNewFicheButton() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useMostFreshUser('FloatingNewFicheButton');
   const [hasScrolled, setHasScrolled] = useState(false);
 
+  const isHiddenPage = HIDDEN_PATH_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
   const shouldAnimate = location.pathname === '/app/chasseur';
 
   useEffect(() => {
@@ -27,7 +30,7 @@ export default function FloatingNewFicheButton() {
   }, [shouldAnimate]);
 
   const isExaminateurInitial = user?.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
-  if (!isExaminateurInitial || !user?.activated) return null;
+  if (isHiddenPage || !isExaminateurInitial || !user?.activated) return null;
 
   const visible = shouldAnimate ? hasScrolled : true;
 
