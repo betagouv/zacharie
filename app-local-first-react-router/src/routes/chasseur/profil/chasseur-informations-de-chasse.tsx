@@ -90,10 +90,7 @@ export default function MesInformationsDeChasse({
     [user.id],
   );
 
-  const showEntrpriseVisibilityCheckbox =
-    !!user.checked_has_asso_de_chasse ||
-    user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
-    user.roles.includes(UserRoles.ETG);
+  const showEntrpriseVisibilityCheckbox = !!user.checked_has_asso_de_chasse;
 
   let title = '';
   if (withEverything) {

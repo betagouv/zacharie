@@ -343,6 +343,8 @@ export default function AdminUsers() {
                               });
                               if (user.roles.includes(UserRoles.CHASSEUR)) {
                                 navigate('/app/chasseur', { replace: true });
+                              } else if (user.roles.includes(UserRoles.ETG)) {
+                                navigate('/app/etg', { replace: true });
                               } else {
                                 navigate('/app/tableau-de-bord', { replace: true });
                               }

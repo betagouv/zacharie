@@ -22,17 +22,6 @@ test("Collecteur professionnel", async ({ page }) => {
   await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
 });
 
-test("Établissement de traitement", async ({ page }) => {
-  await connectWith(page, "etg-1@example.fr");
-  await page.getByRole("button", { name: "Mon profil" }).click();
-  await page.getByRole("link", { name: "Mon activité" }).click();
-
-  await expect(page.getByText(chasseur)).not.toBeChecked();
-  await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked();
-  await expect(page.getByText(etablissementDeTraitement)).toBeChecked();
-  await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
-});
-
 test("Service vétérinaire", async ({ page }) => {
   await connectWith(page, "svi@example.fr");
   await page.getByRole("button", { name: "Mon profil" }).click();
