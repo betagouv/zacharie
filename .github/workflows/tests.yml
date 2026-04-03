@@ -37,6 +37,7 @@ jobs:
         run: |
           cd app-local-first-react-router
           npm ci
+          npx prisma generate
 
       - name: Run app vitest tests
         run: |
@@ -47,6 +48,7 @@ jobs:
         run: |
           cd api-express
           npm ci
+          npx prisma generate
 
       - name: Run API vitest tests
         run: |
