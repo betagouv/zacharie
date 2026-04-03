@@ -9,8 +9,9 @@ const SCROLL_THRESHOLD = 200;
 const HIDDEN_PATH_PREFIXES = [
   '/app/chasseur/fei/',
   '/app/chasseur/carcasse/',
-  '/app/tableau-de-bord/carcasse-svi/',
   '/app/chasseur/onboarding/',
+  '/app/tableau-de-bord/carcasse-svi/',
+  '/app/etg/carcasse-svi/',
 ];
 
 export default function FloatingNewFicheButton() {

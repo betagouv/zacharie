@@ -1,5 +1,4 @@
 import type { UserConnexionResponse } from '@api/src/types/responses';
-// import useUser from '@app/zustand/user';
 import { useEffect, useState } from 'react';
 import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
@@ -9,7 +8,7 @@ import { ApiKeyApprovalStatus, ApiKeyScope, Entity, User } from '@prisma/client'
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import { Link } from 'react-router';
 
-export default function PartageDeMesDonnees() {
+export default function EtgProfilPartageDeMesDonnees() {
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
   const setApiKeyApprovals = useZustandStore((state) => state.setApiKeyApprovals);
   const entities = useZustandStore((state) => state.entities);
@@ -167,13 +166,13 @@ export default function PartageDeMesDonnees() {
                           {approval.ApiKey.scopes.map((scope) => {
                             switch (scope) {
                               case ApiKeyScope.FEI_READ_FOR_USER:
-                                return <li>Lire des fiches en mon nom</li>;
+                                return <li>Lire des fiches au nom d'un utilisateur</li>;
                               case ApiKeyScope.FEI_READ_FOR_ENTITY:
                                 return <li>Lire des fiches au nom d'une entité</li>;
                               case ApiKeyScope.CARCASSE_READ_FOR_USER:
-                                return <li>Lire des carcasses en mon nom</li>;
+                                return <li>Lire des carcasses au nom d'un utilisateur</li>;
                               case ApiKeyScope.CARCASSE_READ_FOR_ENTITY:
-                                return <li>Lire des carcasses au nom de mon association de chasse</li>;
+                                return <li>Lire des carcasses au nom d'une entité</li>;
                               default:
                                 return null;
                             }
@@ -199,7 +198,7 @@ export default function PartageDeMesDonnees() {
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  <span>Accès aux carcasses/fiches de vos associations de chasse</span>
+                  <span>Accès aux carcasses/fiches de votre entreprise</span>
                 </h3>
                 <Highlight
                   className="mb-8"
@@ -237,13 +236,13 @@ export default function PartageDeMesDonnees() {
                           {approval.ApiKey.scopes.map((scope) => {
                             switch (scope) {
                               case ApiKeyScope.FEI_READ_FOR_USER:
-                                return <li>Lire des fiches au nom d'un utilisateur</li>;
+                                return <li>Lire des fiches en mon nom</li>;
                               case ApiKeyScope.FEI_READ_FOR_ENTITY:
-                                return <li>Lire des fiches au nom de mon association de chasse</li>;
+                                return <li>Lire des fiches au nom de mon entreprise</li>;
                               case ApiKeyScope.CARCASSE_READ_FOR_USER:
-                                return <li>Lire des carcasses au nom d'un utilisateur</li>;
+                                return <li>Lire des carcasses en mon nom</li>;
                               case ApiKeyScope.CARCASSE_READ_FOR_ENTITY:
-                                return <li>Lire des carcasses au nom d'une entité</li>;
+                                return <li>Lire des carcasses au nom de mon entreprise</li>;
                               default:
                                 return null;
                             }

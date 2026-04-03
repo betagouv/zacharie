@@ -2,19 +2,16 @@ import { useCallback, useEffect } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
-import { Prisma, User } from '@prisma/client';
+import { UserRoles, Prisma, User } from '@prisma/client';
 import InputVille from '@app/components/InputVille';
 import InputNotEditable from '@app/components/InputNotEditable';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
-import { useNavigate } from 'react-router';
 import API from '@app/services/api';
+import { toast } from 'react-toastify';
 
-export default function ChasseurOnboardingMesCoordonnees() {
+export default function EtgProfilCoordonnees() {
   const user = useUser((state) => state.user)!;
-
-  const navigate = useNavigate();
 
   const handleUserFormBlur = useCallback(
     async (event: React.FocusEvent<HTMLFormElement>) => {
@@ -31,6 +28,14 @@ export default function ChasseurOnboardingMesCoordonnees() {
     [user.id],
   );
 
+  const handleSubmit = () => {
+    const form = document.getElementById('user_data_form') as HTMLFormElement;
+    if (!form.reportValidity()) return;
+    toast.success('Coordonnées enregistrées');
+  };
+
+  const needAddress = user.roles.includes(UserRoles.CHASSEUR);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -40,7 +45,7 @@ export default function ChasseurOnboardingMesCoordonnees() {
       <title>Coordonnées | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper currentStep={1} stepCount={3} title="Coordonnées" nextTitle="Formation examen initial" />
+          <h1 className="fr-h2 fr-mb-2w">Coordonnées</h1>
           <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
               <form
@@ -49,12 +54,14 @@ export default function ChasseurOnboardingMesCoordonnees() {
                 onBlur={handleUserFormBlur}
                 onSubmit={(e) => e.preventDefault()}
               >
+                <h3 className="text-lg font-semibold text-gray-900">
+                  <span>Votre identité</span>
+                </h3>
+                <p className="mb-5 text-sm text-gray-500">
+                  * Les champs marqués d'un astérisque (*) sont obligatoires.
+                </p>
                 <Input
-                  label={
-                    <span>
-                      Nom <span className="text-red-500">*</span>
-                    </span>
-                  }
+                  label="Nom *"
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.nom_de_famille,
                     name: Prisma.UserScalarFieldEnum.nom_de_famille,
@@ -64,11 +71,7 @@ export default function ChasseurOnboardingMesCoordonnees() {
                   }}
                 />
                 <Input
-                  label={
-                    <span>
-                      Prénom <span className="text-red-500">*</span>
-                    </span>
-                  }
+                  label="Prénom *"
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.prenom,
                     name: Prisma.UserScalarFieldEnum.prenom,
@@ -78,11 +81,7 @@ export default function ChasseurOnboardingMesCoordonnees() {
                   }}
                 />
                 <InputNotEditable
-                  label={
-                    <span>
-                      Email <span className="text-red-500">*</span>
-                    </span>
-                  }
+                  label="Email *"
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.email,
                     name: Prisma.UserScalarFieldEnum.email,
@@ -91,11 +90,7 @@ export default function ChasseurOnboardingMesCoordonnees() {
                   }}
                 />
                 <Input
-                  label={
-                    <span>
-                      Téléphone <span className="text-red-500">*</span>
-                    </span>
-                  }
+                  label="Téléphone *"
                   hintText="Format attendu : 01 22 33 44 55"
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.telephone,
@@ -106,17 +101,13 @@ export default function ChasseurOnboardingMesCoordonnees() {
                   }}
                 />
                 <Input
-                  label={
-                    <span>
-                      Adresse <span className="text-red-500">*</span>
-                    </span>
-                  }
+                  label={needAddress ? 'Adresse *' : 'Adresse'}
                   hintText="Indication : numéro et voie"
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                     name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                     autoComplete: 'address-line1',
-                    required: true,
+                    required: needAddress,
                     defaultValue: user.addresse_ligne_1 ?? '',
                   }}
                 />
@@ -132,18 +123,14 @@ export default function ChasseurOnboardingMesCoordonnees() {
                 />
                 <div className="flex w-full flex-col gap-x-4 md:flex-row">
                   <Input
-                    label={
-                      <span>
-                        Code postal <span className="text-red-500">*</span>
-                      </span>
-                    }
+                    label={needAddress ? 'Code postal *' : 'Code postal'}
                     hintText="5 chiffres"
                     className="shrink-0 md:basis-1/5"
                     nativeInputProps={{
                       id: Prisma.UserScalarFieldEnum.code_postal,
                       name: Prisma.UserScalarFieldEnum.code_postal,
                       autoComplete: 'postal-code',
-                      required: true,
+                      required: needAddress,
                       defaultValue: user.code_postal ?? '',
                     }}
                   />
@@ -151,17 +138,13 @@ export default function ChasseurOnboardingMesCoordonnees() {
                     <InputVille
                       postCode={user.code_postal ?? ''}
                       trimPostCode
-                      label={
-                        <span>
-                          Ville ou commune <span className="text-red-500">*</span>
-                        </span>
-                      }
+                      label={needAddress ? 'Ville ou commune *' : 'Ville ou commune'}
                       hintText="Exemple : Montpellier"
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.ville,
                         name: Prisma.UserScalarFieldEnum.ville,
                         autoComplete: 'address-level2',
-                        required: true,
+                        required: needAddress,
                         defaultValue: user.ville ?? '',
                       }}
                     />
@@ -171,22 +154,15 @@ export default function ChasseurOnboardingMesCoordonnees() {
             </div>
           </div>
 
-          <div className="relative bottom-0 left-0 z-50 flex w-auto flex-col items-center justify-center p-4 pb-2 shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
+          <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none">
             <ButtonsGroup
               inlineLayoutWhen="always"
               buttons={[
                 {
-                  children: 'Enregistrer et continuer',
-                  iconId: 'fr-icon-arrow-right-line',
-                  iconPosition: 'right',
+                  children: 'Enregistrer',
                   type: 'button',
                   nativeButtonProps: {
-                    onClick: () => {
-                      const form = document.getElementById('user_data_form') as HTMLFormElement;
-                      if (form.reportValidity()) {
-                        navigate('/app/chasseur/onboarding/formation-examen-initial');
-                      }
-                    },
+                    onClick: handleSubmit,
                   },
                 },
               ]}

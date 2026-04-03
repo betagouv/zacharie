@@ -13,6 +13,7 @@ import ChasseurOnboardingMesCoordonnees from './onboarding/1-coordonnees';
 import ChasseurOnboardingExaminateurInitial from './onboarding/2-examinateur-initial';
 import ChasseurCoordonnees from './profil/chasseur-coordonnees';
 import ChasseurOnboardingMesInformationsDeChasse from './onboarding/3-informations-de-chasse';
+import ChasseurCCGEdit from './profil/chasseur-ccg-edit';
 
 export default function RouterChasseur() {
   return (
@@ -40,6 +41,7 @@ export default function RouterChasseur() {
         <Route path="associations-de-chasse" element={<MesInformationsDeChasse withAssociationsDeChasse />} />
         <Route path="partenaires" element={<MesInformationsDeChasse withPartenaires />} />
         <Route path="ccgs" element={<MesInformationsDeChasse withCCGs />} />
+        <Route path="ccgs/:entityId" element={<ChasseurCCGEdit />} />
         <Route path="notifications" element={<MesNotifications />} />
         <Route path="partage-de-mes-donnees" element={<PartageDeMesDonnees />} />
       </Route>

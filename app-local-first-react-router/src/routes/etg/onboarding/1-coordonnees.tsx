@@ -11,7 +11,7 @@ import useUser from '@app/zustand/user';
 import { useNavigate } from 'react-router';
 import API from '@app/services/api';
 
-export default function ChasseurOnboardingMesCoordonnees() {
+export default function EtgOnboardingCoordonnees() {
   const user = useUser((state) => state.user)!;
 
   const navigate = useNavigate();
@@ -31,6 +31,8 @@ export default function ChasseurOnboardingMesCoordonnees() {
     [user.id],
   );
 
+  const nextPage = '/app/etg/onboarding/entreprise';
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -40,7 +42,7 @@ export default function ChasseurOnboardingMesCoordonnees() {
       <title>Coordonnées | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper currentStep={1} stepCount={3} title="Coordonnées" nextTitle="Formation examen initial" />
+          <Stepper currentStep={1} stepCount={3} title="Coordonnées" nextTitle="Entreprise" />
           <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
               <form
@@ -106,17 +108,13 @@ export default function ChasseurOnboardingMesCoordonnees() {
                   }}
                 />
                 <Input
-                  label={
-                    <span>
-                      Adresse <span className="text-red-500">*</span>
-                    </span>
-                  }
+                  label="Adresse"
                   hintText="Indication : numéro et voie"
                   nativeInputProps={{
                     id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                     name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
                     autoComplete: 'address-line1',
-                    required: true,
+                    required: false,
                     defaultValue: user.addresse_ligne_1 ?? '',
                   }}
                 />
@@ -132,18 +130,14 @@ export default function ChasseurOnboardingMesCoordonnees() {
                 />
                 <div className="flex w-full flex-col gap-x-4 md:flex-row">
                   <Input
-                    label={
-                      <span>
-                        Code postal <span className="text-red-500">*</span>
-                      </span>
-                    }
+                    label="Code postal"
                     hintText="5 chiffres"
                     className="shrink-0 md:basis-1/5"
                     nativeInputProps={{
                       id: Prisma.UserScalarFieldEnum.code_postal,
                       name: Prisma.UserScalarFieldEnum.code_postal,
                       autoComplete: 'postal-code',
-                      required: true,
+                      required: false,
                       defaultValue: user.code_postal ?? '',
                     }}
                   />
@@ -151,17 +145,13 @@ export default function ChasseurOnboardingMesCoordonnees() {
                     <InputVille
                       postCode={user.code_postal ?? ''}
                       trimPostCode
-                      label={
-                        <span>
-                          Ville ou commune <span className="text-red-500">*</span>
-                        </span>
-                      }
+                      label="Ville ou commune"
                       hintText="Exemple : Montpellier"
                       nativeInputProps={{
                         id: Prisma.UserScalarFieldEnum.ville,
                         name: Prisma.UserScalarFieldEnum.ville,
                         autoComplete: 'address-level2',
-                        required: true,
+                        required: false,
                         defaultValue: user.ville ?? '',
                       }}
                     />
@@ -184,7 +174,7 @@ export default function ChasseurOnboardingMesCoordonnees() {
                     onClick: () => {
                       const form = document.getElementById('user_data_form') as HTMLFormElement;
                       if (form.reportValidity()) {
-                        navigate('/app/chasseur/onboarding/formation-examen-initial');
+                        navigate(nextPage);
                       }
                     },
                   },
