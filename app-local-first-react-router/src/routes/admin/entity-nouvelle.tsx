@@ -26,7 +26,7 @@ export default function AdminNouvelleEntite() {
           .then((res) => res as AdminNewEntityResponse)
           .then((res) => {
             if (res.ok) {
-              navigate(`/app/tableau-de-bord/admin/entity/${res.data.entity.id}`);
+              navigate(`/app/admin/entity/${res.data.entity.id}`);
             } else {
               setIsLoading(false);
             }

@@ -12,17 +12,10 @@ import TableauDeBordLayout from './routes/tableau-de-bord-layout';
 import { useMostFreshUser } from './utils-offline/get-most-fresh-user';
 import Fei from './routes/fei/fei';
 import OfflineMode from './components/OfflineMode';
-import CarcasseExaminateur from './routes/carcasse-examinateur';
 import SviInspectionCarcasse from './routes/svi-inspection-carcasse/svi-inspection-carcasse';
 import * as Sentry from '@sentry/react';
 import { capture } from './services/sentry';
 import { UserRoles } from '@prisma/client';
-import AdminUsers from './routes/admin/users';
-import AdminNewUser from './routes/admin/user-add';
-import AdminUser from './routes/admin/user.$userId';
-import AdminNouvelleEntite from './routes/admin/entity-nouvelle';
-import AdminEntity from './routes/admin/entity-$entityId';
-import AdminEntites from './routes/admin/entities';
 import MentionsLegales from './routes/mentions-legales';
 import ModalitesDutilisation from './routes/modalites-d-utilisation';
 import RegistreCarcasses from './routes/registre-carcasses';
@@ -30,19 +23,10 @@ import Accessibility from './routes/accessibility';
 import Stats from './routes/stats';
 import Contact from './routes/contact';
 import Faq from './routes/faq';
-import { useLandingPageNavigationMenu } from './utils/get-navigation-menu';
+import useLoggedInNavigationMenu, { useLandingPageNavigationMenu } from './utils/get-navigation-menu';
 import LandingProsPage from './routes/landing-pros';
 import LandingDemarchesPage from './routes/landing-demarches';
-import AdminApiKeys from './routes/admin/api-keys';
-import AdminNewApiKey from './routes/admin/api-key-add';
-import AdminApiKey from './routes/admin/api-key.$apiKeyId';
-import AdminLayout from './routes/admin/layout';
-import AdminCarcasses from './routes/admin/carcasses';
-import AdminCarcasseDetail from './routes/admin/carcasse-detail';
-import NouvelleFiche from './routes/nouvelle-fiche';
 import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
-import MesChasses from './routes/mes-chasses/mes-chasses';
-import FeiEnvoyée from './routes/fei/envoyée';
 import DeactivatedAccount from './routes/deactivated';
 import { hasAllRequiredFields } from './utils/user';
 import { MatomoTracker } from './components/MatomoTracker';
@@ -57,8 +41,6 @@ import UtilisateursDeMonEntreprise from './routes/mon-profil/3-utilisateurs-de-m
 import MesNotifications from './routes/mon-profil/4-mes-notifications';
 import PartageDeMesDonnees from './routes/mon-profil/partage-de-mes-donnees';
 import CCGEdit from './routes/mon-profil/ccg-edit';
-import CcgImport from './routes/admin/ccg-import';
-import AdminDashboard from './routes/admin/dashboard';
 
 // onboarding routes
 import OnboardingMesRoles from './routes/onboarding/1-mon-activite';
@@ -67,6 +49,10 @@ import OnboardingExaminateurInitial from './routes/onboarding/3a-examinateur-ini
 import OnboardingMesInformationsDeChasse from './routes/onboarding/3b-mes-informations-de-chasse';
 import OnboardingMonEntreprise from './routes/onboarding/3-mon-entreprise';
 import OnboardingMesNotifications from './routes/onboarding/4-mes-notifications';
+import RouterAdmin from './routes/admin/admin-router';
+import RouterChasseur from './routes/chasseur/chasseur-router';
+import NouvelleFiche from './routes/nouvelle-fiche';
+import useZustandStore from './zustand/store';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -86,9 +72,11 @@ declare global {
 
 function App() {
   const landingPageNavigationMenu = useLandingPageNavigationMenu();
+  const generalNavigation = useLoggedInNavigationMenu();
   return (
     <>
       <SentryRoutes>
+        {/* pages de présentation, publiques */}
         <Route
           path="/"
           element={
@@ -110,67 +98,29 @@ function App() {
           <Route path="contact" element={<Contact />} />
           <Route path="faq" element={<Faq />} />
         </Route>
-        <Route path="app" element={<Outlet />}>
-          <Route path="connexion" element={<Outlet />}>
-            <Route
-              index
-              element={
-                <RootDisplay id="connexion" navigation={landingPageNavigationMenu}>
-                  <Connexion />
-                </RootDisplay>
-              }
-            />
-            <Route
-              path="creation-de-compte"
-              element={
-                <RootDisplay id="creation-de-compte" navigation={landingPageNavigationMenu}>
-                  <CreationDeCompte />
-                </RootDisplay>
-              }
-            />
-            <Route
-              path="mot-de-passe-oublie"
-              element={
-                <RootDisplay id="mot-de-passe-oublie" navigation={landingPageNavigationMenu}>
-                  <MotDePasseOublie />
-                </RootDisplay>
-              }
-            />
-
-            <Route
-              path="reset-mot-de-passe"
-              element={
-                <RootDisplay id="reset-mot-de-passe" navigation={landingPageNavigationMenu}>
-                  <ResetMotDePasse />
-                </RootDisplay>
-              }
-            />
-          </Route>
+        {/* app */}
+        <Route path="app" element={<AppLayout />}>
+          {/* pages publiques */}
+          <>{RouterConnexion()}</>
+          <>{RouterChasseur()}</>
+          <Route
+            path="contact"
+            element={
+              <RootDisplay id="contact" navigation={generalNavigation}>
+                <Contact />
+              </RootDisplay>
+            }
+          />
+          {/* nouvelle-fiche is a public route for the api access token */}
           <Route path="nouvelle-fiche" element={<NouvelleFiche />} />
           <Route
             path="tableau-de-bord"
             element={
               <RestrictedRoute id="tableau-de-bord-layout">
-                <TableauDeBordLayout />
+                <TableauDeBordLayout navigation={generalNavigation} />
               </RestrictedRoute>
             }
           >
-            <Route
-              path="onboarding"
-              element={
-                <RestrictedRoute id="onboarding">
-                  <Outlet />
-                </RestrictedRoute>
-              }
-            >
-              <Route path="mon-activite" element={<OnboardingMesRoles />} />
-              <Route path="mes-coordonnees" element={<OnboardingMesCoordonnees />} />
-              <Route path="formation-examen-initial" element={<OnboardingExaminateurInitial />} />
-              <Route path="mes-informations-de-chasse" element={<OnboardingMesInformationsDeChasse />} />
-              <Route path="mon-entreprise" element={<OnboardingMonEntreprise />} />
-              <Route path="mes-notifications" element={<OnboardingMesNotifications />} />
-            </Route>
-            <Route path="contact" element={<Contact />} />
             <Route
               path="/app/tableau-de-bord"
               element={
@@ -179,14 +129,7 @@ function App() {
                 </RestrictedRoute>
               }
             />
-            <Route
-              path="mes-chasses"
-              element={
-                <RestrictedRoute id="mes-chasses">
-                  <MesChasses />
-                </RestrictedRoute>
-              }
-            />
+            <>{RouterOnboarding()}</>
             <Route
               path="fei/:fei_numero"
               element={
@@ -196,26 +139,10 @@ function App() {
               }
             />
             <Route
-              path="fei/:fei_numero/envoyée"
-              element={
-                <RestrictedRoute id="fei_numero">
-                  <FeiEnvoyée />
-                </RestrictedRoute>
-              }
-            />
-            <Route
               path="registre-carcasses"
               element={
                 <RestrictedRoute id="registre-carcasses">
                   <RegistreCarcasses />
-                </RestrictedRoute>
-              }
-            />
-            <Route
-              path="carcasse/:fei_numero/:zacharie_carcasse_id"
-              element={
-                <RestrictedRoute id="zacharie_carcasse_id">
-                  <CarcasseExaminateur />
                 </RestrictedRoute>
               }
             />
@@ -328,119 +255,88 @@ function App() {
                 </RestrictedRoute>
               }
             />
-            <Route path="admin" element={<AdminLayout />}>
-              <Route
-                path="dashboard"
-                element={
-                  <RestrictedRoute id="dashboard" zacharieAdmin>
-                    <AdminDashboard />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="users"
-                element={
-                  <RestrictedRoute id="users" zacharieAdmin>
-                    <AdminUsers />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="add-user"
-                element={
-                  <RestrictedRoute id="add-user" zacharieAdmin>
-                    <AdminNewUser />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="user/:userId"
-                element={
-                  <RestrictedRoute id="user/:userId" zacharieAdmin>
-                    <AdminUser />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="entities"
-                element={
-                  <RestrictedRoute id="entities" zacharieAdmin>
-                    <AdminEntites />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="add-entity"
-                element={
-                  <RestrictedRoute id="add-entity" zacharieAdmin>
-                    <AdminNouvelleEntite />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="entity/:entityId"
-                element={
-                  <RestrictedRoute id="entity/:entityId" zacharieAdmin>
-                    <AdminEntity />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="api-keys"
-                element={
-                  <RestrictedRoute id="api-keys" zacharieAdmin>
-                    <AdminApiKeys />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="api-key-add"
-                element={
-                  <RestrictedRoute id="api-key-add" zacharieAdmin>
-                    <AdminNewApiKey />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="api-key/:apiKeyId"
-                element={
-                  <RestrictedRoute id="api-key/:apiKeyId" zacharieAdmin>
-                    <AdminApiKey />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="import-ccg"
-                element={
-                  <RestrictedRoute id="import-ccg" zacharieAdmin>
-                    <CcgImport />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="carcasses"
-                element={
-                  <RestrictedRoute id="carcasses" zacharieAdmin>
-                    <AdminCarcasses />
-                  </RestrictedRoute>
-                }
-              />
-              <Route
-                path="carcasse/:zacharie_carcasse_id"
-                element={
-                  <RestrictedRoute id="carcasse-detail" zacharieAdmin>
-                    <AdminCarcasseDetail />
-                  </RestrictedRoute>
-                }
-              />
-            </Route>
           </Route>
+          <>{RouterAdmin()}</>
         </Route>
       </SentryRoutes>
       <MatomoTracker />
       <OfflineMode />
     </>
   );
+}
+
+function RouterConnexion() {
+  const landingPageNavigationMenu = useLandingPageNavigationMenu();
+  return (
+    <Route path="connexion" element={<Outlet />}>
+      <Route
+        index
+        element={
+          <RootDisplay id="connexion" navigation={landingPageNavigationMenu}>
+            <Connexion />
+          </RootDisplay>
+        }
+      />
+      <Route
+        path="creation-de-compte"
+        element={
+          <RootDisplay id="creation-de-compte" navigation={landingPageNavigationMenu}>
+            <CreationDeCompte />
+          </RootDisplay>
+        }
+      />
+      <Route
+        path="mot-de-passe-oublie"
+        element={
+          <RootDisplay id="mot-de-passe-oublie" navigation={landingPageNavigationMenu}>
+            <MotDePasseOublie />
+          </RootDisplay>
+        }
+      />
+
+      <Route
+        path="reset-mot-de-passe"
+        element={
+          <RootDisplay id="reset-mot-de-passe" navigation={landingPageNavigationMenu}>
+            <ResetMotDePasse />
+          </RootDisplay>
+        }
+      />
+    </Route>
+  );
+}
+
+function RouterOnboarding() {
+  return (
+    <Route
+      path="onboarding"
+      element={
+        <RestrictedRoute id="onboarding">
+          <Outlet />
+        </RestrictedRoute>
+      }
+    >
+      <Route path="mon-activite" element={<OnboardingMesRoles />} />
+      <Route path="mes-coordonnees" element={<OnboardingMesCoordonnees />} />
+      <Route path="formation-examen-initial" element={<OnboardingExaminateurInitial />} />
+      <Route path="mes-informations-de-chasse" element={<OnboardingMesInformationsDeChasse />} />
+      <Route path="mon-entreprise" element={<OnboardingMonEntreprise />} />
+      <Route path="mes-notifications" element={<OnboardingMesNotifications />} />
+    </Route>
+  );
+}
+
+function AppLayout() {
+  const generalNavigation = useLoggedInNavigationMenu();
+  const _hasHydrated = useZustandStore((state) => state._hasHydrated);
+  if (!_hasHydrated) {
+    return (
+      <RootDisplay id="app-layout" navigation={generalNavigation}>
+        <Chargement />
+      </RootDisplay>
+    );
+  }
+  return <Outlet />;
 }
 
 function RestrictedRoute({

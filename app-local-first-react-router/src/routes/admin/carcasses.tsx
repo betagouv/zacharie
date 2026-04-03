@@ -97,7 +97,7 @@ export default function AdminCarcassesIntermediaires() {
             <tr key={row.zacharie_carcasse_id} className="border-b hover:bg-blue-50">
               <td className="p-1">
                 <Link
-                  to={`/app/tableau-de-bord/admin/carcasse/${encodeURIComponent(row.zacharie_carcasse_id)}`}
+                  to={`/app/admin/carcasse/${encodeURIComponent(row.zacharie_carcasse_id)}`}
                   className="text-blue-600 underline"
                 >
                   {row.numero_bracelet}

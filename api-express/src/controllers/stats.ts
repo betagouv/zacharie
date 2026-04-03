@@ -136,8 +136,8 @@ router.get(
       sviEligibleCarcasses.length > 0 && hasAnySviReturn
         ? (seizedBigGame.length / sviEligibleCarcasses.length) * 100
         : sviEligibleCarcasses.length > 0
-          ? null
-          : null;
+        ? null
+        : null;
 
     // Calculate national seizure rate (all big game carcasses in 2024)
     const nationalBigGame2024 = await prisma.carcasse.count({
@@ -217,9 +217,14 @@ router.get(
           // Hygiene score calculation
           formula: '100 × (1 - (personalSeizureRate / (2 × nationalSeizureRate)))',
           divisor: 2 * nationalSeizureRate,
-          ratio: nationalSeizureRate > 0 && personalSeizureRate !== null ? personalSeizureRate / (2 * nationalSeizureRate) : 0,
+          ratio:
+            nationalSeizureRate > 0 && personalSeizureRate !== null
+              ? personalSeizureRate / (2 * nationalSeizureRate)
+              : 0,
           hygieneScoreBeforeClamp:
-            nationalSeizureRate > 0 && personalSeizureRate !== null ? 100 * (1 - personalSeizureRate / (2 * nationalSeizureRate)) : 0,
+            nationalSeizureRate > 0 && personalSeizureRate !== null
+              ? 100 * (1 - personalSeizureRate / (2 * nationalSeizureRate))
+              : 0,
         },
       },
     });

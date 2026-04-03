@@ -194,7 +194,7 @@ export default function AdminUsers() {
             <option value="missing">Non renseigné</option>
           </Select>
         )}
-        <Button size="small" linkProps={{ to: '/app/tableau-de-bord/admin/add-user' }}>
+        <Button size="small" linkProps={{ to: '/app/admin/add-user' }}>
           + Ajouter des utilisateurs
         </Button>
       </div>
@@ -234,7 +234,7 @@ export default function AdminUsers() {
                         <span className="flex flex-col">
                           <span className="font-medium">
                             <span className="text-xs text-gray-400">{index + 1}. </span>
-                            <Link to={`/app/tableau-de-bord/admin/user/${user.id}`} className="no-underline">
+                            <Link to={`/app/admin/user/${user.id}`} className="no-underline">
                               {user.nom_de_famille} {user.prenom}
                             </Link>
                           </span>
@@ -341,7 +341,11 @@ export default function AdminUsers() {
                                 path: 'admin/user/connect-as',
                                 body: { email: user.email! },
                               });
-                              navigate('/app/tableau-de-bord', { replace: true });
+                              if (user.roles.includes(UserRoles.CHASSEUR)) {
+                                navigate('/app/chasseur', { replace: true });
+                              } else {
+                                navigate('/app/tableau-de-bord', { replace: true });
+                              }
                               await clearCache();
                               await refreshUser('admin/user/connect-as');
                             }}

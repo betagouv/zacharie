@@ -415,7 +415,7 @@ function EntitiesRelatedTo({
           >
             <div className="flex flex-1 flex-col border-none p-4 text-left font-bold">
               <Link
-                to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                to={`/app/admin/entity/${entity.id}`}
                 className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
               >
                 {entity.nom_d_usage}
@@ -498,7 +498,7 @@ function EntitiesRelatedTo({
                 }}
               >
                 <Link
-                  to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                  to={`/app/admin/entity/${entity.id}`}
                   className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                 >
                   {entity.type}
@@ -517,7 +517,7 @@ function EntitiesRelatedTo({
               </form>,
               <Link
                 key={entity.id}
-                to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                to={`/app/admin/entity/${entity.id}`}
                 className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
               >
                 {entity.nom_d_usage}
@@ -525,7 +525,7 @@ function EntitiesRelatedTo({
               </Link>,
               <Link
                 key={entity.id}
-                to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                to={`/app/admin/entity/${entity.id}`}
                 className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
               >
                 {entity.address_ligne_1}
@@ -579,7 +579,7 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
           >
             <div className="flex flex-1 flex-col border-none p-4 text-left font-bold">
               <Link
-                to={`/app/tableau-de-bord/admin/user/${user.id}`}
+                to={`/app/admin/user/${user.id}`}
                 className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
               >
                 {user.email}
@@ -661,7 +661,7 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
                 }}
               >
                 <Link
-                  to={`/app/tableau-de-bord/admin/user/${user.id}`}
+                  to={`/app/admin/user/${user.id}`}
                   className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                 >
                   {user.prenom} {user.nom_de_famille}

@@ -67,7 +67,7 @@ export default function ResetMotDePasse() {
       useZustandStore.setState((state) => ({
         users: { ...state.users, [user.id]: user },
       }));
-      const redirectPath = redirect || getUserOnboardingRoute(user) || '/app/tableau-de-bord';
+      const redirectPath = redirect || getUserOnboardingRoute(user);
       navigate(redirectPath);
     } else {
       useUser.setState({ user: null });

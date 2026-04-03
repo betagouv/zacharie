@@ -427,7 +427,7 @@ async function handleChasseurSearch(searchQuery: string, userId: string): Promis
       ok: true,
       data: carcasses.map((carcasse) => ({
         searchQuery,
-        redirectUrl: `/app/tableau-de-bord/fei/${carcasse.fei_numero}`,
+        redirectUrl: `/app/chasseur/fei/${carcasse.fei_numero}`,
         carcasse_numero_bracelet: carcasse.numero_bracelet,
         carcasse_espece: carcasse.espece || '',
         carcasse_type: carcasse.type,
@@ -480,7 +480,7 @@ async function handleChasseurSearch(searchQuery: string, userId: string): Promis
         ok: true,
         data: foundCarcasses.map((carcasse) => ({
           searchQuery,
-          redirectUrl: `/app/tableau-de-bord/fei/${carcasse.fei_numero}`,
+          redirectUrl: `/app/chasseur/fei/${carcasse.fei_numero}`,
           carcasse_numero_bracelet: carcasse.numero_bracelet,
           carcasse_espece: carcasse.espece || '',
           carcasse_type: carcasse.type,
@@ -511,7 +511,7 @@ async function handleChasseurSearch(searchQuery: string, userId: string): Promis
       ok: true,
       data: feis.map((fei) => ({
         searchQuery,
-        redirectUrl: `/app/tableau-de-bord/fei/${fei.numero}`,
+        redirectUrl: `/app/chasseur/fei/${fei.numero}`,
         carcasse_numero_bracelet: '',
         carcasse_espece: '',
         carcasse_type: '',

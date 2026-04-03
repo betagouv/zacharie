@@ -611,7 +611,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 entity={entity}
                 user={user}
                 displayEntity
-                entityLink={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                entityLink={`/app/admin/entity/${entity.id}`}
                 canApproveRelation={relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
                 canDelete={!isSviLinkedToEtg}
                 onChange={() => {
@@ -668,7 +668,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 }}
               >
                 <Link
-                  to={`/app/tableau-de-bord/admin/entity/${entity.id}`}
+                  to={`/app/admin/entity/${entity.id}`}
                   className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
                 >
                   {entity.nom_d_usage}

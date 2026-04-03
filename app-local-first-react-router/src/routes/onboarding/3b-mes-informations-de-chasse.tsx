@@ -1,22 +1,19 @@
 import { useState, useCallback, useEffect } from 'react';
-
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { toast } from 'react-toastify';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
-import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { UserRoles, Prisma } from '@prisma/client';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
-import { Link, useNavigate, useSearchParams } from 'react-router';
 import API from '@app/services/api';
 import MesCCGs from './3-mes-ccgs';
 import MesAssociationsDeChasse from './3-mes-associations-de-chasse';
 import MesPartenaires from './3-mes-partenaires';
-import { toast } from 'react-toastify';
-import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
-import { Alert } from '@codegouvfr/react-dsfr/Alert';
 
-export default function OnboardingMesInformationsDeChasse() {
+export default function ChasseurOnboardingMesInformationsDeChasse() {
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');
   const user = useUser((state) => state.user)!;

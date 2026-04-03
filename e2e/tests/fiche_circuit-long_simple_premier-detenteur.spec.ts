@@ -15,7 +15,7 @@ test.beforeEach(async () => {
 test("Pas de stockage - Transporter les carcasses soi-même", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-155242";
   await connectWith(page, "premier-detenteur@example.fr");
-  await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+  await expect(page).toHaveURL("http://localhost:3290/app/chasseur");
   await expect(page.getByRole("link", { name: feiId })).toBeVisible();
   await expect(page.getByRole("link", { name: feiId })).toContainText("À compléter");
   await expect(page.getByRole("link", { name: feiId })).toContainText("chassenard");
@@ -75,7 +75,7 @@ test("Pas de stockage - Transporter les carcasses soi-même", async ({ page }) =
 test("Stockage - Transporter les carcasses soi-même", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-155242";
   await connectWith(page, "premier-detenteur@example.fr");
-  await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+  await expect(page).toHaveURL("http://localhost:3290/app/chasseur");
   await page.getByRole("link", { name: feiId }).click();
   await page.getByRole("button", { name: "Prendre en charge cette" }).click();
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
@@ -107,7 +107,7 @@ test("Stockage - Transporter les carcasses soi-même", async ({ page }) => {
 test("Stockage - Le transport est réalisé par un collecteur professionnel", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-155242";
   await connectWith(page, "premier-detenteur@example.fr");
-  await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+  await expect(page).toHaveURL("http://localhost:3290/app/chasseur");
   await page.getByRole("link", { name: feiId }).click();
   await page.getByRole("button", { name: "Prendre en charge cette" }).click();
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");

@@ -458,7 +458,7 @@ function ListAndSelectEntities({
               Vous pouvez en ajouter d'autre via la liste ci-dessous.
               <br />
               Si vous ne trouvez pas votre entreprise, veuillez nous contacter via{' '}
-              <Link to="/app/tableau-de-bord/contact">le formulaire de contact</Link>.
+              <Link to="/app/contact">le formulaire de contact</Link>.
             </p>
             <div className="flex w-full flex-col gap-4 md:flex-row [&_.fr-select-group]:mb-0">
               <SelectCustom

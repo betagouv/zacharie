@@ -140,8 +140,8 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
     <>
       <label className="mb-4 block">Qui est le premier détenteur&nbsp;?&nbsp;*</label>
       {isFirstFei &&
-        !Object.values(associationsDeChasse).length &&
-        !Object.values(detenteursInitiaux).length ? (
+      !Object.values(associationsDeChasse).length &&
+      !Object.values(detenteursInitiaux).length ? (
         <>
           {!showSearchUserByEmail && (
             <div>
@@ -149,7 +149,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
                 <Button
                   priority="primary"
                   linkProps={{
-                    to: `/app/tableau-de-bord/mon-profil/mes-associations-de-chasse?redirect=/app/tableau-de-bord/fei/${fei.numero}`,
+                    to: `/app/chasseur/profil/associations-de-chasse?redirect=/app/chasseur/fei/${fei.numero}`,
                   }}
                 >
                   Ajouter une association / société / domaine de chasse
@@ -226,7 +226,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
                   setShowSearchUserByEmail(true);
                 } else if (event.target.value === 'new-entity') {
                   navigate(
-                    `/app/tableau-de-bord/mon-profil/mes-associations-de-chasse?redirect=/app/tableau-de-bord/fei/${fei.numero}`,
+                    `/app/chasseur/profil/associations-de-chasse?redirect=/app/chasseur/fei/${fei.numero}`,
                   );
                 } else {
                   setNextOwnerUserOrEntityId(event.target.value);
@@ -263,35 +263,35 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
           {(!nextOwnerUserOrEntityId ||
             (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
               nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
-              <>
-                <Button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => {
-                    if (validationErrors.length > 0) {
-                      setShowValidationErrors(true);
-                      return;
-                    }
-                    setShowValidationErrors(false);
-                    handleSubmitFromSelect(nextOwnerUser?.id);
-                  }}
-                >
-                  Continuer
-                </Button>
-                {showValidationErrors && validationErrors.length > 0 && (
-                  <Alert
-                    severity="error"
-                    title="Champs manquants"
-                    description={validationErrors.map((msg, i) => (
-                      <p key={i} className="fr-mb-0">
-                        {msg}
-                      </p>
-                    ))}
-                    className="mt-4"
-                  />
-                )}
-              </>
-            )}
+            <>
+              <Button
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  if (validationErrors.length > 0) {
+                    setShowValidationErrors(true);
+                    return;
+                  }
+                  setShowValidationErrors(false);
+                  handleSubmitFromSelect(nextOwnerUser?.id);
+                }}
+              >
+                Continuer
+              </Button>
+              {showValidationErrors && validationErrors.length > 0 && (
+                <Alert
+                  severity="error"
+                  title="Champs manquants"
+                  description={validationErrors.map((msg, i) => (
+                    <p key={i} className="fr-mb-0">
+                      {msg}
+                    </p>
+                  ))}
+                  className="mt-4"
+                />
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -398,7 +398,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
             priority="secondary"
             className="mt-4 block"
             linkProps={{
-              to: `/app/tableau-de-bord/mon-profil/mes-associations-de-chasse?redirect=/app/tableau-de-bord/fei/${fei.numero}`,
+              to: `/app/chasseur/profil/associations-de-chasse?redirect=/app/chasseur/fei/${fei.numero}`,
             }}
           >
             Ajouter une association / société / domaine de chasse
@@ -413,8 +413,6 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
           </Button>
         </>
       )}
-
-
     </>
   );
 }

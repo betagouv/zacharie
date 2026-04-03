@@ -27,7 +27,7 @@ export default function Connexion() {
 
   const handleRedirect = (u: User) => {
     if (u) {
-      const redirectPath = redirect || getUserOnboardingRoute(u) || '/app/tableau-de-bord';
+      const redirectPath = redirect || getUserOnboardingRoute(u);
       navigate(redirectPath);
     }
   };
@@ -103,7 +103,9 @@ export default function Connexion() {
           <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
             {communication && <CallOut>{decodeURIComponent(communication)}</CallOut>}
             {userResponse?.message && <CallOut>{userResponse?.message}</CallOut>}
-            {userResponse?.error && userResponse.error.includes('Trop de tentatives') && <CallOut>{userResponse.error}</CallOut>}
+            {userResponse?.error && userResponse.error.includes('Trop de tentatives') && (
+              <CallOut>{userResponse.error}</CallOut>
+            )}
             <form
               onSubmit={handleSubmit}
               id="login_form"
@@ -158,13 +160,10 @@ export default function Connexion() {
                   },
                 ]}
               />
-              <Link
-                to="/app/connexion/mot-de-passe-oublie"
-                className="py-1 text-xs! text-gray-500"
-              >
+              <Link to="/app/connexion/mot-de-passe-oublie" className="py-1 text-xs! text-gray-500">
                 <span>
-                  Mot de passe oublié ? <u className="inline">Cliquez ici</u>, vous recevrez un email avec
-                  un lien pour le réinitialiser
+                  Mot de passe oublié ? <u className="inline">Cliquez ici</u>, vous recevrez un email avec un
+                  lien pour le réinitialiser
                 </span>
               </Link>
               <hr />

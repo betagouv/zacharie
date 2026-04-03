@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
-import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { UserRoles, Prisma, User } from '@prisma/client';
 import InputVille from '@app/components/InputVille';
 import InputNotEditable from '@app/components/InputNotEditable';

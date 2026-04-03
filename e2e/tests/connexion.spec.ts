@@ -10,7 +10,7 @@ test.use({
 
 test("Connexion avec succès", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
-  await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+  await expect(page).toHaveURL("http://localhost:3290/app/chasseur");
 });
 
 test("Connexion avec mot de passe incorrect", async ({ page }) => {
@@ -35,7 +35,7 @@ test("Création de compte avec email existant", async ({ page }) => {
   await expect(page.getByRole("textbox", { name: "Mon email Renseignez votre" })).toHaveValue("examinateur@example.fr");
   await expect(page.getByRole("textbox", { name: "Mon mot de passe Veuillez" })).toHaveValue("secret-secret");
   await page.getByRole("button", { name: "Me connecter" }).click();
-  await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+  await expect(page).toHaveURL("http://localhost:3290/app/chasseur");
 });
 
 test.describe("Connexion avec email incorrect", () => {

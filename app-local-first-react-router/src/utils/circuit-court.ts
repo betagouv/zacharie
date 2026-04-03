@@ -3,6 +3,7 @@ import { UserRoles } from '@prisma/client';
 
 export function useIsCircuitCourt() {
   const user = useUser((state) => state.user)!;
+  if (!user) return false;
   return (
     user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
     user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||

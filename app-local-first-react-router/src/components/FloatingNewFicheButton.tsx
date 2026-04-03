@@ -7,11 +7,10 @@ import { UserRoles } from '@prisma/client';
 const SCROLL_THRESHOLD = 200;
 
 const HIDDEN_PATH_PREFIXES = [
-  '/app/tableau-de-bord/fei/',
-  '/app/tableau-de-bord/carcasse/',
+  '/app/chasseur/fei/',
+  '/app/chasseur/carcasse/',
   '/app/tableau-de-bord/carcasse-svi/',
-  '/app/tableau-de-bord/onboarding',
-  '/app/tableau-de-bord/admin',
+  '/app/chasseur/onboarding/',
 ];
 
 export default function FloatingNewFicheButton() {
@@ -21,7 +20,7 @@ export default function FloatingNewFicheButton() {
   const [hasScrolled, setHasScrolled] = useState(false);
 
   const isHiddenPage = HIDDEN_PATH_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
-  const shouldAnimate = location.pathname === '/app/tableau-de-bord';
+  const shouldAnimate = location.pathname === '/app/chasseur';
 
   useEffect(() => {
     if (!shouldAnimate) {
@@ -43,14 +42,18 @@ export default function FloatingNewFicheButton() {
   return (
     <button
       type="button"
-      className={`fr-btn fr-btn--icon-left ri-add-circle-line fixed right-6 bottom-6 z-50 hidden shadow-lg md:flex ${
+      className={[
+        'fr-btn fr-btn--icon-left ri-add-circle-line fixed right-6 bottom-6 z-50 hidden shadow-lg md:flex',
         shouldAnimate
-          ? `transition-all duration-300 ease-in-out ${visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`
-          : ''
-      }`}
+          ? [
+              'transition-all duration-300 ease-in-out',
+              visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0',
+            ].join(' ')
+          : '',
+      ].join(' ')}
       onClick={async () => {
         const newFei = await createNewFei();
-        navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+        navigate(`/app/chasseur/fei/${newFei.numero}`);
       }}
     >
       Nouvelle fiche

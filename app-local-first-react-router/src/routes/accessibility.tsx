@@ -157,15 +157,6 @@ export default function Accessibility() {
                 zacharie.beta.gouv.fr/app/connexion
               </a>
             </li>
-            <li>
-              pages internes de l'application et profils utilisateurs{' '}
-              <a
-                href="http://zacharie.beta.gouv.fr/app/tableau-de-bord"
-                className="text-blue-600 hover:underline"
-              >
-                zacharie.beta.gouv.fr/app/tableau-de-bord
-              </a>
-            </li>
           </ul>
         </div>
       </section>

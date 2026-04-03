@@ -32,7 +32,7 @@ export default function AdminNewUser() {
           .then((res) => res as AdminUserDataResponse)
           .then((res) => {
             if (res.ok && res.data) {
-              navigate(`/app/tableau-de-bord/admin/user/${res.data.user.id}`);
+              navigate(`/app/admin/user/${res.data.user.id}`);
             } else {
               setIsLoading(false);
             }
