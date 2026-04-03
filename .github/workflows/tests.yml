@@ -36,7 +36,8 @@ jobs:
       - name: Install app dependencies
         run: |
           cd app-local-first-react-router
-          npm i
+          npm ci
+          npx prisma generate
 
       - name: Run app vitest tests
         run: |
@@ -46,7 +47,8 @@ jobs:
       - name: Install api dependencies
         run: |
           cd api-express
-          npm i
+          npm ci
+          npx prisma generate
 
       - name: Run API vitest tests
         run: |
@@ -56,7 +58,7 @@ jobs:
       - name: Install Playwright Browsers
         run: |
           cd e2e
-          npm i
+          npm ci
           npx playwright install --with-deps
 
       - name: Init DB
