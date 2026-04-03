@@ -21,6 +21,7 @@ import {
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
+import MultiSelectDropDownMenu from '@app/components/MultiSelectDropDownMenu';
 import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
@@ -188,22 +189,19 @@ export default function ChasseurFiches() {
     }
   };
 
-  const [filter, setFilter] = useState<FeiStepSimpleStatus | 'Toutes les fiches'>(() => {
-    const savedFilter = localStorage.getItem('chasseur-fiches-filter');
-    if (
-      savedFilter &&
-      ['Toutes les fiches', 'À compléter', 'En cours', 'Clôturée'].includes(
-        savedFilter as FeiStepSimpleStatus | 'Toutes les fiches',
-      )
-    ) {
-      return savedFilter as FeiStepSimpleStatus | 'Toutes les fiches';
+  const [filterStatuses, setFilterStatuses] = useState<FeiStepSimpleStatus[]>(() => {
+    try {
+      const saved = localStorage.getItem('chasseur-fiches-filter-statuses');
+      if (saved) return JSON.parse(saved) as FeiStepSimpleStatus[];
+    } catch {
+      // ignore
     }
-    return 'Toutes les fiches';
+    return [];
   });
 
   useEffect(() => {
-    localStorage.setItem('chasseur-fiches-filter', filter);
-  }, [filter]);
+    localStorage.setItem('chasseur-fiches-filter-statuses', JSON.stringify(filterStatuses));
+  }, [filterStatuses]);
 
   const [viewType, setViewType] = useState<ViewType>(() => {
     const savedViewType = localStorage.getItem('chasseur-fiches-view-type');
@@ -218,23 +216,42 @@ export default function ChasseurFiches() {
   }, [viewType]);
 
   const dropDownMenuFilterText = useMemo(() => {
-    switch (filter) {
-      case 'À compléter':
-        return 'Fiches à compléter';
-      case 'En cours':
-        return 'Fiches en cours';
-      case 'Clôturée':
-        return 'Fiches clôturées';
-      case 'Toutes les fiches':
-      default:
-        return 'Filtrer par statut';
+    if (filterStatuses.length === 0) return 'Filtrer par statut';
+    const names: Record<FeiStepSimpleStatus, string> = {
+      'À compléter': 'Fiches à compléter',
+      'En cours': 'Fiches en cours',
+      Clôturée: 'Fiches clôturées',
+    };
+    if (filterStatuses.length === 1) return names[filterStatuses[0]];
+    return `${filterStatuses.length} statuts`;
+  }, [filterStatuses]);
+  const [filterPremierDetenteurs, setFilterPremierDetenteurs] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('chasseur-fiches-filter-premier-detenteurs');
+      if (saved) return JSON.parse(saved) as string[];
+    } catch {
+      // ignore
     }
-  }, [filter]);
-  const [filterPremierDetenteur, setFilterPremierDetenteur] = useLocalStorage<string>(
-    'chasseur-fiches-filter-premier-detenteur',
-    '',
-  );
-  const [filterCCG, setFilterCCG] = useLocalStorage<string>('chasseur-fiches-filter-ccg', '');
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('chasseur-fiches-filter-premier-detenteurs', JSON.stringify(filterPremierDetenteurs));
+  }, [filterPremierDetenteurs]);
+
+  const [filterCCGs, setFilterCCGs] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('chasseur-fiches-filter-ccgs');
+      if (saved) return JSON.parse(saved) as string[];
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('chasseur-fiches-filter-ccgs', JSON.stringify(filterCCGs));
+  }, [filterCCGs]);
 
   const allFeis = useMemo(() => {
     return [...feisAssigned, ...feisOngoing, ...feisDone];
@@ -271,24 +288,26 @@ export default function ChasseurFiches() {
   }, [allFeis]);
 
   const dropDownMenuFilterTextPremierDetenteur = useMemo(() => {
-    if (filterPremierDetenteur) {
-      const option = premierDetenteurOptions.find((o) => o.id === filterPremierDetenteur);
+    if (filterPremierDetenteurs.length === 0) return 'Filtrer par premier détenteur';
+    if (filterPremierDetenteurs.length === 1) {
+      const option = premierDetenteurOptions.find((o) => o.id === filterPremierDetenteurs[0]);
       if (option) return option.name;
     }
-    return 'Filtrer par premier détenteur';
-  }, [filterPremierDetenteur, premierDetenteurOptions]);
+    return `${filterPremierDetenteurs.length} premiers détenteurs`;
+  }, [filterPremierDetenteurs, premierDetenteurOptions]);
 
   const dropDownMenuFilterTextCCG = useMemo(() => {
-    if (filterCCG) {
-      const option = ccgOptions.find((o) => o.id === filterCCG);
+    if (filterCCGs.length === 0) return 'Filtrer par CCG';
+    if (filterCCGs.length === 1) {
+      const option = ccgOptions.find((o) => o.id === filterCCGs[0]);
       if (option) return option.name;
     }
-    return 'Filtrer par CCG';
-  }, [filterCCG, ccgOptions]);
+    return `${filterCCGs.length} CCG`;
+  }, [filterCCGs, ccgOptions]);
 
   const filteredFeis = useMemo(() => {
     let feis = allFeis;
-    if (filter !== 'Toutes les fiches') {
+    if (filterStatuses.length > 0) {
       feis = feis.filter((fei) => {
         const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
         const feiCarcasses = filterCarcassesForFei(carcasses, fei.numero);
@@ -299,25 +318,25 @@ export default function ChasseurFiches() {
           user,
           carcasses: feiCarcasses,
         });
-        return simpleStatus === filter;
+        return filterStatuses.includes(simpleStatus);
       });
     }
-    if (filterPremierDetenteur) {
+    if (filterPremierDetenteurs.length > 0) {
       feis = feis.filter(
         (fei) =>
-          fei.premier_detenteur_user_id === filterPremierDetenteur ||
-          fei.premier_detenteur_entity_id === filterPremierDetenteur,
+          filterPremierDetenteurs.includes(fei.premier_detenteur_user_id ?? '') ||
+          filterPremierDetenteurs.includes(fei.premier_detenteur_entity_id ?? ''),
       );
     }
-    if (filterCCG) {
-      feis = feis.filter((fei) => fei.premier_detenteur_depot_entity_id === filterCCG);
+    if (filterCCGs.length > 0) {
+      feis = feis.filter((fei) => filterCCGs.includes(fei.premier_detenteur_depot_entity_id ?? ''));
     }
     return feis;
   }, [
     allFeis,
-    filter,
-    filterPremierDetenteur,
-    filterCCG,
+    filterStatuses,
+    filterPremierDetenteurs,
+    filterCCGs,
     carcassesIntermediaireById,
     carcasses,
     entitiesIdsWorkingDirectlyFor,
@@ -336,125 +355,70 @@ export default function ChasseurFiches() {
       <div className="flex flex-col gap-2 py-2 md:gap-3 md:py-3">
         <div className="flex flex-col justify-between gap-1.5 md:flex-row md:gap-2">
           <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
-            <DropDownMenu
+            <MultiSelectDropDownMenu
               text={dropDownMenuFilterText}
-              isActive={filter !== 'Toutes les fiches'}
+              isActive={filterStatuses.length > 0}
               className="w-full md:w-auto"
-              menuLinks={[
+              clearLabel="Toutes les fiches"
+              onClear={() => setFilterStatuses([])}
+              options={[
                 {
-                  linkProps: {
-                    href: '#',
-                    title: 'Toutes les fiches',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      setFilter('Toutes les fiches');
-                    },
-                  },
-                  text: 'Toutes les fiches',
-                  isActive: filter === 'Toutes les fiches',
+                  value: 'À compléter',
+                  label: 'Fiches à compléter',
+                  isActive: filterStatuses.includes('À compléter'),
                 },
-                {
-                  linkProps: {
-                    href: '#',
-                    title: 'Fiches à compléter',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      setFilter('À compléter');
-                    },
-                  },
-                  text: 'Fiches à compléter',
-                  isActive: filter === 'À compléter',
-                },
-                {
-                  linkProps: {
-                    href: '#',
-                    title: 'Fiches en cours',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      setFilter('En cours');
-                    },
-                  },
-                  text: 'Fiches en cours',
-                  isActive: filter === 'En cours',
-                },
-                {
-                  linkProps: {
-                    href: '#',
-                    title: 'Fiches à compléter',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      setFilter('Clôturée');
-                    },
-                  },
-                  text: 'Fiches clôturées',
-                  isActive: filter === 'Clôturée',
-                },
+                { value: 'En cours', label: 'Fiches en cours', isActive: filterStatuses.includes('En cours') },
+                { value: 'Clôturée', label: 'Fiches clôturées', isActive: filterStatuses.includes('Clôturée') },
               ]}
+              onToggle={(value) => {
+                const v = value as FeiStepSimpleStatus;
+                if (filterStatuses.includes(v)) {
+                  setFilterStatuses(filterStatuses.filter((s) => s !== v));
+                } else {
+                  setFilterStatuses([...filterStatuses, v]);
+                }
+              }}
             />
             {premierDetenteurOptions.length > 1 && (
-              <DropDownMenu
+              <MultiSelectDropDownMenu
                 text={dropDownMenuFilterTextPremierDetenteur}
-                isActive={!!filterPremierDetenteur}
+                isActive={filterPremierDetenteurs.length > 0}
                 className="w-full md:w-auto"
-                menuLinks={[
-                  {
-                    linkProps: {
-                      href: '#',
-                      title: 'Tous les premiers détenteurs',
-                      onClick: (e) => {
-                        e.preventDefault();
-                        setFilterPremierDetenteur('');
-                      },
-                    },
-                    text: 'Tous les premiers détenteurs',
-                    isActive: !filterPremierDetenteur,
-                  },
-                  ...premierDetenteurOptions.map((option) => ({
-                    linkProps: {
-                      href: '#',
-                      title: option.name,
-                      onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-                        e.preventDefault();
-                        setFilterPremierDetenteur(option.id);
-                      },
-                    },
-                    text: option.name,
-                    isActive: filterPremierDetenteur === option.id,
-                  })),
-                ]}
+                clearLabel="Tous les premiers détenteurs"
+                onClear={() => setFilterPremierDetenteurs([])}
+                options={premierDetenteurOptions.map((option) => ({
+                  value: option.id,
+                  label: option.name,
+                  isActive: filterPremierDetenteurs.includes(option.id),
+                }))}
+                onToggle={(value) => {
+                  if (filterPremierDetenteurs.includes(value)) {
+                    setFilterPremierDetenteurs(filterPremierDetenteurs.filter((v) => v !== value));
+                  } else {
+                    setFilterPremierDetenteurs([...filterPremierDetenteurs, value]);
+                  }
+                }}
               />
             )}
             {ccgOptions.length > 1 && (
-              <DropDownMenu
+              <MultiSelectDropDownMenu
                 text={dropDownMenuFilterTextCCG}
-                isActive={!!filterCCG}
+                isActive={filterCCGs.length > 0}
                 className="w-full md:w-auto"
-                menuLinks={[
-                  {
-                    linkProps: {
-                      href: '#',
-                      title: 'Tous les CCG',
-                      onClick: (e) => {
-                        e.preventDefault();
-                        setFilterCCG('');
-                      },
-                    },
-                    text: 'Tous les CCG',
-                    isActive: !filterCCG,
-                  },
-                  ...ccgOptions.map((option) => ({
-                    linkProps: {
-                      href: '#',
-                      title: option.name,
-                      onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-                        e.preventDefault();
-                        setFilterCCG(option.id);
-                      },
-                    },
-                    text: option.name,
-                    isActive: filterCCG === option.id,
-                  })),
-                ]}
+                clearLabel="Tous les CCG"
+                onClear={() => setFilterCCGs([])}
+                options={ccgOptions.map((option) => ({
+                  value: option.id,
+                  label: option.name,
+                  isActive: filterCCGs.includes(option.id),
+                }))}
+                onToggle={(value) => {
+                  if (filterCCGs.includes(value)) {
+                    setFilterCCGs(filterCCGs.filter((v) => v !== value));
+                  } else {
+                    setFilterCCGs([...filterCCGs, value]);
+                  }
+                }}
               />
             )}
 
