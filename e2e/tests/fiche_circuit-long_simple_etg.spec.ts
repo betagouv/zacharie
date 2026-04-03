@@ -434,7 +434,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
         - img
         - paragraph: 2 carcasses refusées
       `);
-  await page.getByRole("button", { name: "Mon profil" }).click();
+  await page.getByRole("button", { name: "Paramètres" }).click();
   await page.getByRole("button", { name: "Déconnexion" }).click();
   await expect(page).toHaveURL("http://localhost:3290/app/connexion");
   await connectWith(page, "etg-2@example.fr");
