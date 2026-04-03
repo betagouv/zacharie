@@ -450,12 +450,26 @@ export interface AdminCarcasseDetailResponse {
     carcasse: Carcasse & {
       CarcasseIntermediaire: Array<
         CarcasseIntermediaire & {
-          CarcasseIntermediaireEntity: { nom_d_usage: string; type: string };
+          CarcasseIntermediaireEntity: {
+            nom_d_usage: string;
+            type: string;
+            numero_ddecpp: string | null;
+            address_ligne_1: string | null;
+            code_postal: string | null;
+            ville: string | null;
+          };
           CarcasseIntermediaireUser: { email: string };
         }
       >;
       Fei: Fei;
     };
+    depotEntity: {
+      nom_d_usage: string | null;
+      numero_ddecpp: string | null;
+      address_ligne_1: string | null;
+      code_postal: string | null;
+      ville: string | null;
+    } | null;
   };
   error: string;
 }
