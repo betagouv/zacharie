@@ -6,10 +6,25 @@ import type { AdminCarcasseDetailResponse } from '@api/src/types/responses';
 import type { Carcasse, CarcasseIntermediaire, Fei } from '@prisma/client';
 import dayjs from 'dayjs';
 
+type DepotEntityInfo = {
+  nom_d_usage: string | null;
+  numero_ddecpp: string | null;
+  address_ligne_1: string | null;
+  code_postal: string | null;
+  ville: string | null;
+};
+
 type CarcasseDetail = Carcasse & {
   CarcasseIntermediaire: Array<
     CarcasseIntermediaire & {
-      CarcasseIntermediaireEntity: { nom_d_usage: string; type: string };
+      CarcasseIntermediaireEntity: {
+        nom_d_usage: string;
+        type: string;
+        numero_ddecpp: string | null;
+        address_ligne_1: string | null;
+        code_postal: string | null;
+        ville: string | null;
+      };
       CarcasseIntermediaireUser: { email: string };
     }
   >;
@@ -68,95 +83,150 @@ function FieldGrid({ children }: { children: React.ReactNode }) {
   return <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">{children}</dl>;
 }
 
-function buildTimeline(carcasse: CarcasseDetail): TimelineEvent[] {
+function formatEntityAddress(entity: {
+  address_ligne_1: string | null;
+  code_postal: string | null;
+  ville: string | null;
+}): string | null {
+  const parts = [entity.address_ligne_1, [entity.code_postal, entity.ville].filter(Boolean).join(' ')]
+    .filter(Boolean)
+    .join(', ');
+  return parts || null;
+}
+
+function formatNumeroIdentification(numero_ddecpp: string | null): string {
+  return numero_ddecpp ?? "Absence de num\u00e9ro d'identification";
+}
+
+function buildTimeline(
+  carcasse: CarcasseDetail,
+  depotEntity: DepotEntityInfo | null,
+): TimelineEvent[] {
   const events: TimelineEvent[] = [];
 
   events.push({
     date: new Date(carcasse.created_at),
-    label: 'Création carcasse',
-    data: { zacharie_carcasse_id: carcasse.zacharie_carcasse_id, espece: carcasse.espece },
+    label: 'Cr\u00e9ation carcasse',
+    data: { 'ID Zacharie': carcasse.zacharie_carcasse_id, 'Esp\u00e8ce': carcasse.espece },
   });
 
   if (carcasse.date_mise_a_mort) {
     events.push({
       date: new Date(carcasse.date_mise_a_mort),
-      label: 'Mise à mort',
-      data: { heure: carcasse.heure_mise_a_mort },
+      label: 'Mise \u00e0 mort',
+      data: { Heure: carcasse.heure_mise_a_mort },
     });
   }
 
   if (carcasse.heure_evisceration) {
     events.push({
       date: carcasse.date_mise_a_mort ? new Date(carcasse.date_mise_a_mort) : null,
-      label: 'Éviscération',
-      data: { heure: carcasse.heure_evisceration },
+      label: '\u00c9visc\u00e9ration',
+      data: { Heure: carcasse.heure_evisceration },
     });
   }
 
   if (carcasse.examinateur_signed_at) {
+    const data: Record<string, unknown> = {};
+    if (carcasse.examinateur_carcasse_sans_anomalie != null) {
+      data['Sans anomalie'] = carcasse.examinateur_carcasse_sans_anomalie ? 'Oui' : 'Non';
+    }
+    if (carcasse.examinateur_anomalies_carcasse.length > 0) {
+      data['Anomalies carcasse'] = carcasse.examinateur_anomalies_carcasse.join(', ');
+    }
+    if (carcasse.examinateur_anomalies_abats.length > 0) {
+      data['Anomalies abats'] = carcasse.examinateur_anomalies_abats.join(', ');
+    }
+    if (carcasse.examinateur_commentaire) {
+      data['Commentaire'] = carcasse.examinateur_commentaire;
+    }
     events.push({
       date: new Date(carcasse.examinateur_signed_at),
-      label: 'Examen initial signé',
-      data: {
-        sans_anomalie: carcasse.examinateur_carcasse_sans_anomalie,
-        anomalies_carcasse: carcasse.examinateur_anomalies_carcasse,
-        anomalies_abats: carcasse.examinateur_anomalies_abats,
-        commentaire: carcasse.examinateur_commentaire,
-      },
+      label: 'Examen initial sign\u00e9',
+      data,
     });
   }
 
   if (carcasse.premier_detenteur_depot_ccg_at) {
+    const data: Record<string, unknown> = {
+      'Type de d\u00e9p\u00f4t': carcasse.premier_detenteur_depot_type,
+      'Entit\u00e9': carcasse.premier_detenteur_depot_entity_name_cache,
+    };
+    if (depotEntity) {
+      data['N\u00b0 identification'] = formatNumeroIdentification(depotEntity.numero_ddecpp);
+      const adresse = formatEntityAddress(depotEntity);
+      if (adresse) data['Adresse'] = adresse;
+    }
     events.push({
       date: new Date(carcasse.premier_detenteur_depot_ccg_at),
-      label: 'Dépôt premier détenteur (CCG)',
-      data: {
-        depot_type: carcasse.premier_detenteur_depot_type,
-        entity_name: carcasse.premier_detenteur_depot_entity_name_cache,
-      },
+      label: `D\u00e9p\u00f4t CCG \u2014 ${carcasse.premier_detenteur_depot_entity_name_cache ?? 'Entit\u00e9 inconnue'}`,
+      data,
     });
   }
 
   if (carcasse.premier_detenteur_transport_date) {
+    const transportLabels: Record<string, string> = {
+      PREMIER_DETENTEUR: 'Transport par le chasseur',
+      COLLECTEUR_PRO: 'Transport par collecteur professionnel',
+      ETG: 'Transport par ETG',
+      AUCUN: 'Transport',
+    };
     events.push({
       date: new Date(carcasse.premier_detenteur_transport_date),
-      label: 'Transport premier détenteur',
+      label: transportLabels[carcasse.premier_detenteur_transport_type ?? ''] ?? 'Transport premier d\u00e9tenteur',
       data: {
-        transport_type: carcasse.premier_detenteur_transport_type,
-        depot_type: carcasse.premier_detenteur_depot_type,
+        'Type de transport': carcasse.premier_detenteur_transport_type,
+        'Type de d\u00e9p\u00f4t': carcasse.premier_detenteur_depot_type,
       },
     });
   }
 
   for (const ci of carcasse.CarcasseIntermediaire) {
+    const entity = ci.CarcasseIntermediaireEntity;
+    const roleLabels: Record<string, string> = {
+      COLLECTEUR_PRO: 'Collecteur professionnel',
+      ETG: 'ETG',
+      CCG: 'CCG',
+    };
+    const roleLabel = roleLabels[ci.intermediaire_role ?? ''] ?? ci.intermediaire_role ?? 'Interm\u00e9diaire';
+
+    const entityData: Record<string, unknown> = {
+      'R\u00f4le': roleLabel,
+      'Entit\u00e9': entity.nom_d_usage,
+      'N\u00b0 identification': formatNumeroIdentification(entity.numero_ddecpp),
+    };
+    const adresse = formatEntityAddress(entity);
+    if (adresse) entityData['Adresse'] = adresse;
+    entityData['Utilisateur'] = ci.CarcasseIntermediaireUser.email;
+
     events.push({
       date: new Date(ci.created_at),
-      label: `Intermédiaire créé — ${ci.CarcasseIntermediaireEntity.nom_d_usage}`,
-      data: {
-        role: ci.intermediaire_role,
-        entity_type: ci.CarcasseIntermediaireEntity.type,
-        user: ci.CarcasseIntermediaireUser.email,
-      },
+      label: `Interm\u00e9diaire cr\u00e9\u00e9 \u2014 ${entity.nom_d_usage}`,
+      data: entityData,
     });
 
     if (ci.prise_en_charge_at) {
+      const priseData: Record<string, unknown> = {
+        'Prise en charge': ci.prise_en_charge ? 'Oui' : 'Non',
+      };
+      if (ci.intermediaire_poids != null) priseData['Poids'] = `${ci.intermediaire_poids} kg`;
       events.push({
         date: new Date(ci.prise_en_charge_at),
-        label: `Prise en charge — ${ci.CarcasseIntermediaireEntity.nom_d_usage}`,
-        data: { prise_en_charge: ci.prise_en_charge, poids: ci.intermediaire_poids },
+        label: `Prise en charge ${roleLabel} \u2014 ${entity.nom_d_usage}`,
+        data: priseData,
       });
     }
 
     if (ci.decision_at) {
+      const decisionData: Record<string, unknown> = {};
+      if (ci.refus) decisionData['Refus'] = ci.refus;
+      if (ci.manquante != null) decisionData['Manquante'] = ci.manquante ? 'Oui' : 'Non';
+      if (ci.commentaire) decisionData['Commentaire'] = ci.commentaire;
+      if (ci.intermediaire_depot_type) decisionData['Type de d\u00e9p\u00f4t'] = ci.intermediaire_depot_type;
       events.push({
         date: new Date(ci.decision_at),
-        label: `Décision — ${ci.CarcasseIntermediaireEntity.nom_d_usage}`,
-        data: {
-          refus: ci.refus,
-          manquante: ci.manquante,
-          commentaire: ci.commentaire,
-          depot_type: ci.intermediaire_depot_type,
-        },
+        label: `D\u00e9cision ${roleLabel} \u2014 ${entity.nom_d_usage}`,
+        data: decisionData,
       });
     }
   }
@@ -166,25 +236,25 @@ function buildTimeline(carcasse: CarcasseDetail): TimelineEvent[] {
   }
 
   if (carcasse.svi_ipm1_signed_at) {
+    const data: Record<string, unknown> = {};
+    if (carcasse.svi_ipm1_decision) data['D\u00e9cision'] = carcasse.svi_ipm1_decision;
+    if (carcasse.svi_ipm1_protocole) data['Protocole'] = carcasse.svi_ipm1_protocole;
+    if (carcasse.svi_ipm1_commentaire) data['Commentaire'] = carcasse.svi_ipm1_commentaire;
     events.push({
       date: new Date(carcasse.svi_ipm1_signed_at),
-      label: 'IPM1 signé',
-      data: {
-        decision: carcasse.svi_ipm1_decision,
-        protocole: carcasse.svi_ipm1_protocole,
-        commentaire: carcasse.svi_ipm1_commentaire,
-      },
+      label: 'IPM1 sign\u00e9',
+      data,
     });
   }
 
   if (carcasse.svi_ipm2_signed_at) {
+    const data: Record<string, unknown> = {};
+    if (carcasse.svi_ipm2_decision) data['D\u00e9cision'] = carcasse.svi_ipm2_decision;
+    if (carcasse.svi_ipm2_commentaire) data['Commentaire'] = carcasse.svi_ipm2_commentaire;
     events.push({
       date: new Date(carcasse.svi_ipm2_signed_at),
-      label: 'IPM2 signé',
-      data: {
-        decision: carcasse.svi_ipm2_decision,
-        commentaire: carcasse.svi_ipm2_commentaire,
-      },
+      label: 'IPM2 sign\u00e9',
+      data,
     });
   }
 
@@ -192,7 +262,7 @@ function buildTimeline(carcasse: CarcasseDetail): TimelineEvent[] {
     events.push({
       date: new Date(carcasse.svi_carcasse_status_set_at),
       label: 'Statut final SVI',
-      data: { status: carcasse.svi_carcasse_status },
+      data: { Statut: carcasse.svi_carcasse_status },
     });
   }
 
@@ -205,9 +275,25 @@ function buildTimeline(carcasse: CarcasseDetail): TimelineEvent[] {
   return events;
 }
 
+function TimelineEventData({ data }: { data: Record<string, unknown> }) {
+  const entries = Object.entries(data).filter(([, v]) => v != null && v !== '');
+  if (entries.length === 0) return null;
+  return (
+    <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 rounded bg-gray-50 p-2 text-xs">
+      {entries.map(([key, value]) => (
+        <div key={key} className="contents">
+          <dt className="text-gray-500">{key}</dt>
+          <dd className="text-gray-700">{String(value)}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export default function AdminCarcasseDetail() {
   const params = useParams<{ zacharie_carcasse_id: string }>();
   const [carcasse, setCarcasse] = useState<CarcasseDetail | null>(null);
+  const [depotEntity, setDepotEntity] = useState<DepotEntityInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -218,6 +304,7 @@ export default function AdminCarcasseDetail() {
       .then((res) => {
         if (res.ok) {
           setCarcasse(res.data.carcasse as CarcasseDetail);
+          setDepotEntity(res.data.depotEntity);
         }
       })
       .finally(() => setLoading(false));
@@ -226,12 +313,12 @@ export default function AdminCarcasseDetail() {
   if (loading) return <Chargement />;
   if (!carcasse) return <p className="py-8 text-center text-gray-500">Carcasse introuvable</p>;
 
-  const timeline = buildTimeline(carcasse);
+  const timeline = buildTimeline(carcasse, depotEntity);
 
   return (
     <>
       <Link
-        to="/app/admin/carcasses-intermediaires"
+        to="/app/admin/carcasses"
         className="fr-btn fr-btn--sm fr-btn--tertiary-no-outline"
       >
         <span className="fr-icon-arrow-left-line fr-icon--sm mr-1" aria-hidden="true" />
@@ -548,11 +635,7 @@ export default function AdminCarcasseDetail() {
                 <div className="absolute top-1 -left-[21px] h-2.5 w-2.5 rounded-full border-2 border-blue-600 bg-white" />
                 <div className="text-xs text-gray-500">{event.date ? formatDate(event.date) : '—'}</div>
                 <div className="text-sm font-semibold">{event.label}</div>
-                {Object.keys(event.data).length > 0 && (
-                  <pre className="mt-1 overflow-x-auto rounded bg-gray-50 p-1 text-xs text-gray-700">
-                    {JSON.stringify(event.data, null, 2)}
-                  </pre>
-                )}
+                <TimelineEventData data={event.data} />
               </div>
             ))}
           </div>

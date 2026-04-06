@@ -1028,7 +1028,16 @@ router.get(
           CarcasseIntermediaire: {
             orderBy: { created_at: 'asc' },
             include: {
-              CarcasseIntermediaireEntity: { select: { nom_d_usage: true, type: true } },
+              CarcasseIntermediaireEntity: {
+                select: {
+                  nom_d_usage: true,
+                  type: true,
+                  numero_ddecpp: true,
+                  address_ligne_1: true,
+                  code_postal: true,
+                  ville: true,
+                },
+              },
               CarcasseIntermediaireUser: { select: { email: true } },
             },
           },
@@ -1041,7 +1050,15 @@ router.get(
         return;
       }
 
-      res.status(200).send({ ok: true, data: { carcasse }, error: '' });
+      let depotEntity = null;
+      if (carcasse.premier_detenteur_depot_entity_id) {
+        depotEntity = await prisma.entity.findUnique({
+          where: { id: carcasse.premier_detenteur_depot_entity_id },
+          select: { nom_d_usage: true, numero_ddecpp: true, address_ligne_1: true, code_postal: true, ville: true },
+        });
+      }
+
+      res.status(200).send({ ok: true, data: { carcasse, depotEntity }, error: '' });
     },
   ),
 );
