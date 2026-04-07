@@ -1,0 +1,425 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
+import { UserRoles, FeiOwnerRole } from '@prisma/client';
+import useZustandStore from '@app/zustand/store';
+import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
+import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import TableFilterable from '@app/components/TableFilterable';
+import { useSaveScroll } from '@app/services/useSaveScroll';
+import { getCarcasseStatusLabel } from '@app/utils/get-carcasse-status';
+import { loadCarcasses } from '@app/utils/load-carcasses';
+import Filters from '@app/components/Filters';
+import {
+  CarcasseFilter,
+  carcasseFilterableFields,
+  filterCarcassesInRegistre,
+} from '@app/utils/filter-carcasse';
+import { useLocalStorage } from '@uidotdev/usehooks';
+import Chargement from '@app/components/Chargement';
+import Button from '@codegouvfr/react-dsfr/Button';
+import useExportCarcasses from '@app/utils/export-carcasses';
+import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
+import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+const itemsPerPageOptions = [20, 50, 100, 200, 1000];
+
+export default function SviCarcasses() {
+  const user = useMostFreshUser('svi-carcasses')!;
+  const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+  const entities = useZustandStore((state) => state.entities);
+  const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
+  const [loading, setLoading] = useState(true);
+
+  const { onExportToXlsx, isExporting } = useExportCarcasses();
+
+  const [searchParams] = useSearchParams();
+  const page = parseInt(searchParams.get('page') || '1');
+
+  const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>(
+    'svi-carcasses-sort-by',
+    'numero_bracelet',
+  );
+  const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('svi-carcasses-sort-order', 'ASC');
+
+  const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('svi-carcasses-items-per-page', 50);
+  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('svi-carcasses-filters-preset', []);
+
+  const filterableFields = useMemo(() => {
+    const motifs = new Set<string>();
+    const etgNames = new Set<string>();
+    const ccgNames = new Set<string>();
+    for (const carcasse of carcassesRegistry) {
+      for (const motif of carcasse.svi_ipm2_lesions_ou_motifs) {
+        if (motif) {
+          motifs.add(motif);
+        }
+      }
+      if (carcasse.premier_detenteur_depot_entity_name_cache) {
+        ccgNames.add(carcasse.premier_detenteur_depot_entity_name_cache);
+      }
+      if (carcasse.latest_intermediaire_name_cache) {
+        etgNames.add(carcasse.latest_intermediaire_name_cache);
+      }
+    }
+    const sortedMotifs = Array.from(motifs).sort();
+    const sortedEtgNames = Array.from(etgNames).sort();
+    const sortedCcgNames = Array.from(ccgNames).sort();
+    return carcasseFilterableFields(sortedMotifs, sortedEtgNames, sortedCcgNames);
+  }, [carcassesRegistry]);
+
+  const filteredData = useMemo(() => {
+    return carcassesRegistry
+      .filter((carcasse) => filterCarcassesInRegistre(filters)(carcasse))
+      .sort((a, b) => {
+        const aValue = a[sortBy];
+        const bValue = b[sortBy];
+        if (!aValue) {
+          if (bValue) return sortOrder === 'ASC' ? 1 : -1;
+          return 0;
+        }
+        if (!bValue) {
+          if (aValue) return sortOrder === 'ASC' ? -1 : 1;
+          return 0;
+        }
+        if (aValue === bValue) return 0;
+        if (aValue < bValue) return sortOrder === 'ASC' ? -1 : 1;
+        if (aValue > bValue) return sortOrder === 'ASC' ? 1 : -1;
+        return 0;
+      });
+  }, [carcassesRegistry, filters, sortBy, sortOrder]);
+
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return filteredData.slice(start, end);
+  }, [filteredData, page, itemsPerPage]);
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'REGISTRE_CARCASSES_OPEN' });
+    }
+  }, [user]);
+
+  const hackForCounterDoubleEffectInDevMode = useRef(false);
+  useEffect(() => {
+    if (hackForCounterDoubleEffectInDevMode.current) {
+      return;
+    }
+    hackForCounterDoubleEffectInDevMode.current = true;
+
+    refreshUser('svi-carcasses')
+      .then(() => setLoading(true))
+      .then(() => loadCarcasses(UserRoles.SVI))
+      .then(() => setLoading(false));
+  }, []);
+
+  useSaveScroll('svi-carcasses-scrollY');
+
+  const getCollecteurName = (carcasse: (typeof carcassesRegistry)[number]): string | null => {
+    const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, carcasse.fei_numero);
+    const collecteursPro: string[] = [];
+
+    for (const intermediaire of intermediaires) {
+      if (intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
+        const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
+        const carcasseIntermediaire = carcassesIntermediaireById[id];
+        if (carcasseIntermediaire) {
+          const collecteurEntity = entities[intermediaire.intermediaire_entity_id];
+          if (collecteurEntity?.nom_d_usage) {
+            collecteursPro.push(collecteurEntity.nom_d_usage);
+          }
+        }
+      }
+    }
+
+    if (collecteursPro.length === 0) return null;
+    return collecteursPro.join(', ');
+  };
+
+  const renderMobileCarcasse = (carcasse: (typeof carcassesRegistry)[number]) => {
+    const isChecked = selectedCarcassesIds.includes(carcasse.zacharie_carcasse_id);
+    return (
+      <tr
+        key={carcasse.zacharie_carcasse_id}
+        className={`border-b border-gray-200 ${isChecked ? 'bg-blue-50' : ''}`}
+      >
+        <td className="p-3">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                className="checked:accent-action-high-blue-france mt-1 border-2"
+                checked={isChecked}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedCarcassesIds([...selectedCarcassesIds, carcasse.zacharie_carcasse_id]);
+                  } else {
+                    setSelectedCarcassesIds(
+                      selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id),
+                    );
+                  }
+                }}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-col gap-1">
+                  <Link
+                    to={`/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
+                    className="font-semibold break-words text-blue-600 hover:underline"
+                  >
+                    {carcasse.numero_bracelet}
+                  </Link>
+                  <span className="text-xs text-gray-500">{carcasse.espece}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1 pl-7 text-sm">
+              <div>
+                <span className="font-semibold">Premier détenteur: </span>
+                <span>{carcasse.fei_premier_detenteur_name_cache || '-'}</span>
+              </div>
+              <div>
+                <span className="font-semibold">Statut: </span>
+                <span>{getCarcasseStatusLabel(carcasse)}</span>
+              </div>
+              <div>
+                <span className="font-semibold">Date transmission SVI: </span>
+                <span>
+                  {carcasse.fei_svi_assigned_at
+                    ? new Date(carcasse.fei_svi_assigned_at).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '-'}
+                </span>
+              </div>
+              <div>
+                <span className="font-semibold">Date décision: </span>
+                <span>
+                  {carcasse.svi_carcasse_status_set_at
+                    ? new Date(carcasse.svi_carcasse_status_set_at).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '-'}
+                </span>
+              </div>
+              <div>
+                <span className="font-semibold">Archivé: </span>
+                <span>{carcasse.svi_carcasse_archived ? 'Oui' : 'Non'}</span>
+              </div>
+              <div>
+                <span className="font-semibold">Fiche: </span>
+                <Link
+                  to={`/app/svi/fei/${carcasse.fei_numero}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  {carcasse.fei_numero}
+                </Link>
+              </div>
+              {getCollecteurName(carcasse) && (
+                <div>
+                  <span className="font-semibold">Collecteur: </span>
+                  <span>{getCollecteurName(carcasse)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
+  if (loading) {
+    return <Chargement />;
+  }
+
+  return (
+    <div className="fr-container fr-my-4 sm:fr-my-md-14v">
+      <title>
+        Registre de carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
+      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+        <div className="fr-col-12 sm:py-4">
+          <section className="fr-container mb-4 overflow-x-auto bg-white">
+            <Filters
+              onChange={setFilters}
+              base={filterableFields}
+              filters={filters}
+              saveInURLParams={false}
+            />
+          </section>
+          <section className="mb-4 flex flex-col gap-4 sm:mb-0 sm:flex-row sm:justify-between">
+            <div className="flex flex-col">
+              <p className="mb-2 text-sm opacity-50 sm:mb-6">
+                {filteredData.length !== carcassesRegistry.length ? (
+                  <>
+                    Nombre d'éléments filtrés: {filteredData.length}
+                    <br />
+                    (total: {carcassesRegistry.length})
+                  </>
+                ) : (
+                  <>Total: {carcassesRegistry.length}</>
+                )}
+              </p>
+              <div className="flex flex-wrap items-center gap-1 sm:gap-0">
+                <span className="mr-2 text-sm opacity-50">Nombre d'éléments par page:</span>
+                {itemsPerPageOptions.map((option) => {
+                  return (
+                    <button
+                      className={[
+                        'px-2 py-1 text-sm sm:px-4 sm:py-2',
+                        itemsPerPage === option ? 'font-semibold underline' : '',
+                      ].join(' ')}
+                      onClick={() => setItemsPerPage(option)}
+                      key={option}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex items-center justify-start gap-2 sm:justify-end">
+              <Button
+                onClick={() => {
+                  const selectedCarcassesObject: Record<string, boolean> = {};
+                  for (const carcasseId of selectedCarcassesIds) {
+                    selectedCarcassesObject[carcasseId] = true;
+                  }
+                  onExportToXlsx(
+                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id]),
+                  );
+                }}
+                disabled={selectedCarcassesIds.length === 0 || isExporting}
+                className="w-full sm:w-auto"
+              >
+                <span className="hidden sm:inline">
+                  Télécharger un fichier Excel avec les carcasses sélectionnées ({selectedCarcassesIds.length}
+                  )
+                </span>
+                <span className="sm:hidden">Exporter ({selectedCarcassesIds.length})</span>
+              </Button>
+            </div>
+          </section>
+          <section className="mb-4 overflow-x-auto bg-white sm:mb-6 md:shadow-sm">
+            <TableFilterable
+              data={paginatedData}
+              rowKey="zacharie_carcasse_id"
+              withCheckbox
+              onCheck={setSelectedCarcassesIds}
+              checked={selectedCarcassesIds}
+              renderCellSmallDevices={renderMobileCarcasse}
+              columns={[
+                {
+                  dataKey: 'zacharie_carcasse_id',
+                  title: '',
+                  small: true,
+                  render: (_carcasse, index) => <>{(page - 1) * itemsPerPage + index + 1}</>,
+                },
+                {
+                  dataKey: 'numero_bracelet',
+                  title: 'Identification',
+                  onSortOrder: setSortOrder,
+                  onSortBy: setSortBy,
+                  sortBy: sortBy,
+                  sortOrder: sortOrder,
+                  render: (carcasse) => {
+                    return (
+                      <div className="flex flex-col items-start">
+                        <Link
+                          to={`/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
+                          className="mr-auto block"
+                        >
+                          {carcasse.numero_bracelet}
+                        </Link>
+                        <small className="text-xs text-gray-400">{carcasse.espece}</small>
+                      </div>
+                    );
+                  },
+                },
+                {
+                  dataKey: 'fei_premier_detenteur_name_cache',
+                  title: 'Premier détenteur',
+                  onSortOrder: setSortOrder,
+                  onSortBy: setSortBy,
+                  sortBy: sortBy,
+                  sortOrder: sortOrder,
+                },
+                {
+                  dataKey: 'fei_svi_assigned_at',
+                  title: 'Date de transmission au SVI',
+                  type: 'datetime',
+                  onSortOrder: setSortOrder,
+                  onSortBy: setSortBy,
+                  sortBy: sortBy,
+                  sortOrder: sortOrder,
+                },
+                {
+                  dataKey: 'svi_carcasse_status',
+                  title: 'Statut',
+                  onSortOrder: setSortOrder,
+                  onSortBy: setSortBy,
+                  sortBy: sortBy,
+                  sortOrder: sortOrder,
+                  render: (carcasse) => getCarcasseStatusLabel(carcasse),
+                },
+                {
+                  dataKey: 'svi_carcasse_archived',
+                  title: 'Archivé(e)',
+                  onSortOrder: setSortOrder,
+                  onSortBy: setSortBy,
+                  sortBy: sortBy,
+                  sortOrder: sortOrder,
+                  render: (carcasse) => (carcasse.svi_carcasse_archived ? 'Oui' : 'Non'),
+                },
+                {
+                  dataKey: 'svi_carcasse_status_set_at',
+                  title: 'Date de décision',
+                  type: 'datetime',
+                  onSortOrder: setSortOrder,
+                  onSortBy: setSortBy,
+                  sortBy: sortBy,
+                  sortOrder: sortOrder,
+                },
+                {
+                  dataKey: 'fei_numero',
+                  title: 'Numéro de fiche',
+                  onSortOrder: setSortOrder,
+                  onSortBy: setSortBy,
+                  sortBy: sortBy,
+                  sortOrder: sortOrder,
+                  render: (carcasse) => (
+                    <Link to={`/app/svi/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>
+                  ),
+                },
+                {
+                  dataKey: 'collecteur' as keyof (typeof carcassesRegistry)[number],
+                  title: 'Collecteur',
+                  render: (carcasse) => getCollecteurName(carcasse) || '-',
+                },
+              ]}
+            />
+            <div className="flex justify-center overflow-x-auto py-4 sm:justify-start sm:py-6">
+              <Pagination
+                className="mt-4 flex justify-center sm:mt-6 sm:justify-start"
+                count={Math.ceil(filteredData.length / itemsPerPage)}
+                defaultPage={page}
+                getPageLinkProps={(pageNumber) => {
+                  return {
+                    to: `/app/svi/carcasses?page=${pageNumber}`,
+                  };
+                }}
+              />
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}

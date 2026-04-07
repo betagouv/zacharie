@@ -136,8 +136,8 @@ router.get(
       sviEligibleCarcasses.length > 0 && hasAnySviReturn
         ? (seizedBigGame.length / sviEligibleCarcasses.length) * 100
         : sviEligibleCarcasses.length > 0
-        ? null
-        : null;
+          ? null
+          : null;
 
     // Calculate national seizure rate (all big game carcasses in 2024)
     const nationalBigGame2024 = await prisma.carcasse.count({

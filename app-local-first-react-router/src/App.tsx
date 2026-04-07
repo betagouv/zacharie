@@ -22,8 +22,9 @@ import Stats from './routes/stats';
 import Contact from './routes/contact';
 import Faq from './routes/faq';
 
-// routers
+
 import RouterConnexion from './routes/connexion/connexion-router';
+import RouterSvi from './routes/svi/svi-router';
 import RouterChasseur from './routes/chasseur/chasseur-router';
 import RouterEtg from './routes/etg/etg-router';
 import RouterTableauDeBord from './routes/tableau-de-bord/tableau-de-bord-router';
@@ -78,6 +79,7 @@ function App() {
           {RouterChasseur()}
           {RouterEtg()}
           {RouterTableauDeBord({ navigation: generalNavigation })}
+          {RouterSvi()}
           {RouterAdmin()}
           <Route
             path="contact"
