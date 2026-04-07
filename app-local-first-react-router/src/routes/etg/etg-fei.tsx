@@ -136,60 +136,59 @@ export default function EtgFei(props: Props) {
 
   return (
     <Fragment key={intermediaire?.id}>
-      {intermediaires.length > 0 && (
-        <nav
-          id="fr-breadcrumb-:r54:"
-          role="navigation"
-          className="fr-breadcrumb"
-          aria-label="vous êtes ici :"
-          data-fr-js-breadcrumb="true"
-        >
-          <button
-            className="fr-breadcrumb__button"
-            aria-expanded="false"
-            aria-controls="breadcrumb-:r55:"
-            data-fr-js-collapse-button="true"
-          >
-            Voir les destinataires
-          </button>
-          <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
-            <ol className="fr-breadcrumb__list">
-              <li>
-                <span className="fr-breadcrumb__link bg-none! no-underline!">
-                  {fei.premier_detenteur_name_cache}
-                </span>
-              </li>
-              {intermediaires
-                .map((_intermediaire) => {
-                  const entity = entities[_intermediaire.intermediaire_entity_id!];
-                  let label = entity?.nom_d_usage;
-                  if (
-                    entity?.type === EntityTypes.ETG &&
-                    _intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO
-                  ) {
-                    label += ` (${getIntermediaireRoleLabel(FeiOwnerRole.COLLECTEUR_PRO).toLowerCase()})`;
-                  }
-
-                  return (
-                    <li key={_intermediaire.id}>
-                      <button
-                        onClick={() => setSelectedIntermediaireId(_intermediaire.id)}
-                        className="fr-breadcrumb__link"
-                        aria-current={_intermediaire.id === intermediaire?.id ? 'step' : false}
-                        disabled={props.readOnly}
-                      >
-                        {label}
-                      </button>
-                    </li>
-                  );
-                })
-                .reverse()}
-            </ol>
-          </div>
-        </nav>
-      )}
-
       <EtgFeiContent key={intermediaire?.id} {...props} intermediaire={intermediaire!}>
+        {intermediaires.length > 0 && (
+          <nav
+            id="fr-breadcrumb-:r54:"
+            role="navigation"
+            className="fr-breadcrumb"
+            aria-label="vous êtes ici :"
+            data-fr-js-breadcrumb="true"
+          >
+            <button
+              className="fr-breadcrumb__button"
+              aria-expanded="false"
+              aria-controls="breadcrumb-:r55:"
+              data-fr-js-collapse-button="true"
+            >
+              Voir les destinataires
+            </button>
+            <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
+              <ol className="fr-breadcrumb__list">
+                <li>
+                  <span className="fr-breadcrumb__link bg-none! no-underline!">
+                    {fei.premier_detenteur_name_cache}
+                  </span>
+                </li>
+                {intermediaires
+                  .map((_intermediaire) => {
+                    const entity = entities[_intermediaire.intermediaire_entity_id!];
+                    let label = entity?.nom_d_usage;
+                    if (
+                      entity?.type === EntityTypes.ETG &&
+                      _intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO
+                    ) {
+                      label += ` (${getIntermediaireRoleLabel(FeiOwnerRole.COLLECTEUR_PRO).toLowerCase()})`;
+                    }
+
+                    return (
+                      <li key={_intermediaire.id}>
+                        <button
+                          onClick={() => setSelectedIntermediaireId(_intermediaire.id)}
+                          className="fr-breadcrumb__link"
+                          aria-current={_intermediaire.id === intermediaire?.id ? 'step' : false}
+                          disabled={props.readOnly}
+                        >
+                          {label}
+                        </button>
+                      </li>
+                    );
+                  })
+                  .reverse()}
+              </ol>
+            </div>
+          </nav>
+        )}
         <Section open={!!intermediaires.length} title="Données de traçabilité">
           <FEIDonneesDeChasse />
         </Section>
@@ -740,7 +739,7 @@ function EtgFeiContent({
                     <Button onClick={handleCloseFei} priority="primary">
                       Clôturer la fiche (
                       {carcassesSorted.carcassesManquantes.length > 0 &&
-                      carcassesSorted.carcassesRejetees.length > 0
+                        carcassesSorted.carcassesRejetees.length > 0
                         ? 'toutes les carcasses sont manquantes ou refusées'
                         : carcassesSorted.carcassesManquantes.length > 0
                           ? 'toutes les carcasses sont manquantes'
@@ -810,7 +809,7 @@ function EtgFeiContent({
                       }
                       label={
                         carcassesSorted.carcassesApproved.length > 0 ||
-                        carcassesSorted.carcassesEcarteesPourInspection.length > 0
+                          carcassesSorted.carcassesEcarteesPourInspection.length > 0
                           ? 'Date de prise en charge'
                           : 'Date de décision'
                       }
