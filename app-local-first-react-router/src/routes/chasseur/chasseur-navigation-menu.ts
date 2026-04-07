@@ -1,10 +1,12 @@
 import { useLocation } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import useZustandStore from '@app/zustand/store';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 
 export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
+  const user = useMostFreshUser('useChasseurNavigationMenu');
 
   const navigationBase: MainNavigationProps.Item[] = [
     {
@@ -70,6 +72,14 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
       },
     },
   ];
+
+  if (user?.isZacharieAdmin) {
+    navigationBase.push({
+      text: 'Admin',
+      isActive: location.pathname.startsWith('/app/admin'),
+      linkProps: { to: '/app/admin/users', href: '#' },
+    });
+  }
 
   return navigationBase;
 }

@@ -38,7 +38,7 @@ test("Connexion avec compte collecteur pro", async ({ page }) => {
 
 test("Connexion avec compte établissement de traitement", async ({ page }) => {
   await connectWith(page, "etg-1@example.fr");
-  await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+  await expect(page).toHaveURL("http://localhost:3290/app/etg");
   await expect(page.getByRole("heading", { name: "Pas encore de fiches cette saison" })).toBeVisible();
   await expect(page.locator("#content").getByRole("button", { name: "Nouvelle fiche" })).not.toBeVisible();
   await expect(page.getByRole("button", { name: "Mettre à jour" })).toBeVisible();

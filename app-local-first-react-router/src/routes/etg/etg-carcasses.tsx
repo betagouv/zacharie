@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
+import { UserRoles, FeiOwnerRole } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import TableFilterable from '@app/components/TableFilterable';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import { getCarcasseStatusLabel } from '@app/utils/get-carcasse-status';
-import { Link, useSearchParams } from 'react-router';
 import { loadCarcasses } from '@app/utils/load-carcasses';
-import { UserRoles, FeiOwnerRole } from '@prisma/client';
 import Filters from '@app/components/Filters';
 import {
   CarcasseFilter,
@@ -22,9 +22,8 @@ import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get
 import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
-export default function RegistreCarcasses() {
-  const user = useMostFreshUser('registre-carcasses')!;
-  const isSvi = user.roles.includes(UserRoles.SVI);
+export default function EtgCarcasses() {
+  const user = useMostFreshUser('etg-carcasses')!;
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const entities = useZustandStore((state) => state.entities);
@@ -37,16 +36,13 @@ export default function RegistreCarcasses() {
   const page = parseInt(searchParams.get('page') || '1');
 
   const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>(
-    'registre-carcasses-sort-by',
+    'etg-carcasses-sort-by',
     'numero_bracelet',
   );
-  const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('registre-carcasses-sort-order', 'ASC');
+  const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('etg-carcasses-sort-order', 'ASC');
 
-  const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('registre-carcasses-items-per-page', 50);
-  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>(
-    'registre-carcasses-filters-preset',
-    [],
-  );
+  const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('etg-carcasses-items-per-page', 50);
+  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('etg-carcasses-filters-preset', []);
 
   const filterableFields = useMemo(() => {
     const motifs = new Set<string>();
@@ -61,17 +57,12 @@ export default function RegistreCarcasses() {
       if (carcasse.premier_detenteur_depot_entity_name_cache) {
         ccgNames.add(carcasse.premier_detenteur_depot_entity_name_cache);
       }
-      if (isSvi) {
-        if (carcasse.latest_intermediaire_name_cache) {
-          etgNames.add(carcasse.latest_intermediaire_name_cache);
-        }
-      }
     }
     const sortedMotifs = Array.from(motifs).sort();
     const sortedEtgNames = Array.from(etgNames).sort();
     const sortedCcgNames = Array.from(ccgNames).sort();
     return carcasseFilterableFields(sortedMotifs, sortedEtgNames, sortedCcgNames);
-  }, [carcassesRegistry, isSvi]);
+  }, [carcassesRegistry]);
 
   const filteredData = useMemo(() => {
     return carcassesRegistry
@@ -112,22 +103,14 @@ export default function RegistreCarcasses() {
       return;
     }
     hackForCounterDoubleEffectInDevMode.current = true;
-    let role = null;
-    if (user.roles.includes(UserRoles.SVI)) role = UserRoles.SVI;
-    else if (user.roles.includes(UserRoles.ETG)) role = UserRoles.ETG;
-    else if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) role = UserRoles.COLLECTEUR_PRO;
 
-    if (!role) {
-      throw new Error('User has no role');
-    }
-    refreshUser('registre-carcasses')
+    refreshUser('etg-carcasses')
       .then(() => setLoading(true))
-      .then(() => loadCarcasses(role))
+      .then(() => loadCarcasses(UserRoles.ETG))
       .then(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useSaveScroll('registre-carcasses-scrollY');
+  useSaveScroll('etg-carcasses-scrollY');
 
   const getCollecteurName = (carcasse: (typeof carcassesRegistry)[number]): string | null => {
     const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, carcasse.fei_numero);
@@ -178,7 +161,7 @@ export default function RegistreCarcasses() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-col gap-1">
                   <Link
-                    to={`/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
+                    to={`/app/etg/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
                     className="font-semibold break-words text-blue-600 hover:underline"
                   >
                     {carcasse.numero_bracelet}
@@ -230,10 +213,7 @@ export default function RegistreCarcasses() {
               </div>
               <div>
                 <span className="font-semibold">Fiche: </span>
-                <Link
-                  to={`/app/tableau-de-bord/fei/${carcasse.fei_numero}`}
-                  className="text-blue-600 hover:underline"
-                >
+                <Link to={`/app/etg/fei/${carcasse.fei_numero}`} className="text-blue-600 hover:underline">
                   {carcasse.fei_numero}
                 </Link>
               </div>
@@ -256,9 +236,7 @@ export default function RegistreCarcasses() {
 
   return (
     <div className="fr-container fr-my-4 sm:fr-my-md-14v">
-      <title>
-        Registre de carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
-      </title>
+      <title>Carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 sm:py-4">
           <section className="fr-container mb-4 overflow-x-auto bg-white">
@@ -348,7 +326,7 @@ export default function RegistreCarcasses() {
                     return (
                       <div className="flex flex-col items-start">
                         <Link
-                          to={`/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
+                          to={`/app/etg/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
                           className="mr-auto block"
                         >
                           {carcasse.numero_bracelet}
@@ -413,7 +391,7 @@ export default function RegistreCarcasses() {
                   sortBy: sortBy,
                   sortOrder: sortOrder,
                   render: (carcasse) => (
-                    <Link to={`/app/tableau-de-bord/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>
+                    <Link to={`/app/etg/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>
                   ),
                 },
                 {
@@ -432,7 +410,7 @@ export default function RegistreCarcasses() {
                 defaultPage={page}
                 getPageLinkProps={(pageNumber) => {
                   return {
-                    to: `/app/tableau-de-bord/registre-carcasses?page=${pageNumber}`,
+                    to: `/app/etg/carcasses?page=${pageNumber}`,
                   };
                 }}
               />

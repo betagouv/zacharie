@@ -53,6 +53,7 @@ import RouterAdmin from './routes/admin/admin-router';
 import RouterChasseur from './routes/chasseur/chasseur-router';
 import NouvelleFiche from './routes/nouvelle-fiche';
 import useZustandStore from './zustand/store';
+import RouterEtg from './routes/etg/etg-router';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -103,6 +104,7 @@ function App() {
           {/* pages publiques */}
           <>{RouterConnexion()}</>
           <>{RouterChasseur()}</>
+          <>{RouterEtg()}</>
           <Route
             path="contact"
             element={
@@ -326,6 +328,7 @@ function RouterOnboarding() {
   );
 }
 
+// TODO: delete this and use each role's layout component instead
 function AppLayout() {
   const generalNavigation = useLoggedInNavigationMenu();
   const _hasHydrated = useZustandStore((state) => state._hasHydrated);
