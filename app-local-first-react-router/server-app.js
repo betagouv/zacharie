@@ -29,7 +29,7 @@ app.use((req, res, next) => {
       "img-src 'self' data: https://developer.apple.com https://play.google.com",
       "font-src 'self' data:",
       "connect-src 'self' https://api.zacharie.beta.gouv.fr https://api-test.zacharie.beta.gouv.fr https://*.ingest.sentry.io https://sentry.incubateur.net https://metabase.zacharie.beta.gouv.fr https://stats.beta.gouv.fr",
-      "frame-src https://metabase.zacharie.beta.gouv.fr https://www.youtube.com",
+      'frame-src https://metabase.zacharie.beta.gouv.fr https://www.youtube.com',
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -40,14 +40,10 @@ app.use((req, res, next) => {
   res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader(
-    'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(), interest-cohort=()',
-  );
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
   next();
 });
 
