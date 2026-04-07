@@ -215,21 +215,23 @@ export default function TableauDeBordIndex() {
     }
   };
 
-  const [filter, setFilter] = useState<FeiStepSimpleStatus | 'Toutes les fiches'>(() => {
+  const [filter, setFilter] = useState<FeiStepSimpleStatus[]>(() => {
     const savedFilter = localStorage.getItem('tableau-de-bord-filter');
-    if (
-      savedFilter &&
-      ['Toutes les fiches', 'À compléter', 'En cours', 'Clôturée'].includes(
-        savedFilter as FeiStepSimpleStatus | 'Toutes les fiches',
-      )
-    ) {
-      return savedFilter as FeiStepSimpleStatus | 'Toutes les fiches';
+    if (savedFilter) {
+      try {
+        const parsed = JSON.parse(savedFilter);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
     }
-    return 'Toutes les fiches';
+    return [];
   });
 
+  const toggleFilter = (status: FeiStepSimpleStatus) => {
+    setFilter((prev) => (prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]));
+  };
+
   useEffect(() => {
-    localStorage.setItem('tableau-de-bord-filter', filter);
+    localStorage.setItem('tableau-de-bord-filter', JSON.stringify(filter));
   }, [filter]);
 
   const [viewType, setViewType] = useState<ViewType>(() => {
@@ -245,17 +247,16 @@ export default function TableauDeBordIndex() {
   }, [viewType]);
 
   const dropDownMenuFilterText = useMemo(() => {
-    switch (filter) {
-      case 'À compléter':
-        return 'Fiches à compléter';
-      case 'En cours':
-        return 'Fiches en cours';
-      case 'Clôturée':
-        return 'Fiches clôturées';
-      case 'Toutes les fiches':
-      default:
-        return 'Filtrer par statut';
+    if (filter.length === 0) return 'Filtrer par statut';
+    if (filter.length === 1) {
+      const labels: Record<FeiStepSimpleStatus, string> = {
+        'À compléter': 'Fiches à compléter',
+        'En cours': 'Fiches en cours',
+        Clôturée: 'Fiches clôturées',
+      };
+      return labels[filter[0]];
     }
+    return `${filter.length} statuts sélectionnés`;
   }, [filter]);
   const [filterPremierDetenteur, setFilterPremierDetenteur] = useLocalStorage<string>(
     'tableau-de-bord-filter-premier-detenteur',
@@ -337,7 +338,7 @@ export default function TableauDeBordIndex() {
 
   const filteredFeis = useMemo(() => {
     let feis = allFeis;
-    if (filter !== 'Toutes les fiches') {
+    if (filter.length > 0) {
       feis = feis.filter((fei) => {
         const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
         const feiCarcasses = filterCarcassesForFei(carcasses, fei.numero);
@@ -348,7 +349,7 @@ export default function TableauDeBordIndex() {
           user,
           carcasses: feiCarcasses,
         });
-        return simpleStatus === filter;
+        return filter.includes(simpleStatus);
       });
     }
     if (filterPremierDetenteur) {
@@ -402,7 +403,7 @@ export default function TableauDeBordIndex() {
           <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
             <DropDownMenu
               text={dropDownMenuFilterText}
-              isActive={filter !== 'Toutes les fiches'}
+              isActive={filter.length > 0}
               className="w-full md:w-auto"
               menuLinks={[
                 {
@@ -411,11 +412,11 @@ export default function TableauDeBordIndex() {
                     title: 'Toutes les fiches',
                     onClick: (e) => {
                       e.preventDefault();
-                      setFilter('Toutes les fiches');
+                      setFilter([]);
                     },
                   },
                   text: 'Toutes les fiches',
-                  isActive: filter === 'Toutes les fiches',
+                  isActive: filter.length === 0,
                 },
                 {
                   linkProps: {
@@ -423,11 +424,11 @@ export default function TableauDeBordIndex() {
                     title: 'Fiches à compléter',
                     onClick: (e) => {
                       e.preventDefault();
-                      setFilter('À compléter');
+                      toggleFilter('À compléter');
                     },
                   },
                   text: 'Fiches à compléter',
-                  isActive: filter === 'À compléter',
+                  isActive: filter.includes('À compléter'),
                 },
                 {
                   linkProps: {
@@ -435,23 +436,23 @@ export default function TableauDeBordIndex() {
                     title: 'Fiches en cours',
                     onClick: (e) => {
                       e.preventDefault();
-                      setFilter('En cours');
+                      toggleFilter('En cours');
                     },
                   },
                   text: 'Fiches en cours',
-                  isActive: filter === 'En cours',
+                  isActive: filter.includes('En cours'),
                 },
                 {
                   linkProps: {
                     href: '#',
-                    title: 'Fiches à compléter',
+                    title: 'Fiches clôturées',
                     onClick: (e) => {
                       e.preventDefault();
-                      setFilter('Clôturée');
+                      toggleFilter('Clôturée');
                     },
                   },
                   text: 'Fiches clôturées',
-                  isActive: filter === 'Clôturée',
+                  isActive: filter.includes('Clôturée'),
                 },
               ]}
             />
