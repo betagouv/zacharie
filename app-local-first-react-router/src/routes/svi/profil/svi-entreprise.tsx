@@ -79,31 +79,6 @@ export default function SviProfilEntreprise() {
             />
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
-                <form
-                  id="user_entities_vivible_checkbox"
-                  method="POST"
-                  onChange={handleUserFormBlur}
-                  onSubmit={(e) => e.preventDefault()}
-                  className="px-8"
-                >
-                  <Checkbox
-                    options={[
-                      {
-                        label:
-                          "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient.",
-                        hintText:
-                          'Cette autorisation est obligatoire pour le bon fonctionnement de Zacharie, sans quoi les fiches ne pourront pas être attribuées à votre service',
-                        nativeInputProps: {
-                          required: true,
-                          name: Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox,
-                          value: 'true',
-                          onChange: () => setVisibilityChecked(!visibilityChecked),
-                          checked: visibilityChecked,
-                        },
-                      },
-                    ]}
-                  />
-                </form>
                 <div className="mt-6 ml-6">
                   <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
                     Haut de page
