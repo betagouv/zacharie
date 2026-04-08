@@ -98,19 +98,22 @@ export default function NouvelleCarcasse() {
         hintText={
           <>
             {defaultNumeroBracelet ? (
-              <button
-                type="button"
-                className={['inline text-left', numeroBracelet ? 'pointer-events-none opacity-20' : ''].join(
-                  ' ',
-                )}
-                onClick={() => {
-                  incProchainBraceletAUtiliser();
-                  setNumeroBracelet(defaultNumeroBracelet);
-                }}
-              >
-                Votre chasse n'a pas de dispositif de marquage ?{' '}
-                <u className="inline">Cliquez ici pour utiliser {defaultNumeroBracelet}</u>.
-              </button>
+              <div className="flex items-center gap-2">
+                Pas de dispositif de marquage ?
+                <button
+                  type="button"
+                  className={[
+                    'rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]',
+                    numeroBracelet ? 'pointer-events-none opacity-20' : '',
+                  ].join(' ')}
+                  onClick={() => {
+                    incProchainBraceletAUtiliser();
+                    setNumeroBracelet(defaultNumeroBracelet);
+                  }}
+                >
+                  Utiliser {defaultNumeroBracelet}
+                </button>
+              </div>
             ) : (
               <>Veuillez renseigner la commune de mise à mort avant d'enregistrer une carcasse</>
             )}
@@ -165,7 +168,7 @@ export default function NouvelleCarcasse() {
           }
         }}
       >
-        {isPetitGibier ? 'Ajouter un lot de carcasses' : 'Ajouter une carcasse'}
+        {isPetitGibier ? 'Ajouter le lot de carcasses' : 'Ajouter la carcasse'}
       </Button>
     </form>
   );

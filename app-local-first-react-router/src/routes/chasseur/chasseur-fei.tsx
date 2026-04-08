@@ -6,7 +6,6 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import Alert from '@codegouvfr/react-dsfr/Alert';
-import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import InputNotEditable from '@app/components/InputNotEditable';
 import InputVille from '@app/components/InputVille';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
@@ -254,6 +253,55 @@ function FEIChasseurLoaded() {
     );
   const showBloc4 = showBloc3;
 
+  const handleTransmettre = () => {
+    if (jobIsMissing) {
+      alert(jobIsMissing);
+      return;
+    }
+    if (!approbation) {
+      alert('Vous devez cocher la case pour valider la mise sur le marché');
+      return;
+    }
+    if (examinateurIsPremierDetenteur) {
+      const destinataireError = destinataireRef.current?.validate();
+      if (destinataireError) {
+        alert(destinataireError);
+        return;
+      }
+      updateFei(fei.numero, {
+        examinateur_initial_approbation_mise_sur_le_marche: approbation,
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        fei_current_owner_user_id: user.id,
+        fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
+        fei_current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
+      });
+      destinataireRef.current?.submit();
+    } else {
+      updateFei(fei.numero, {
+        examinateur_initial_approbation_mise_sur_le_marche: approbation,
+        fei_current_owner_user_id: fei.premier_detenteur_user_id,
+        fei_current_owner_user_name_cache:
+          premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
+        fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
+        fei_current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      });
+      updateCarcassesTransmission(carcasseIds, {
+        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        current_owner_user_id: fei.premier_detenteur_user_id,
+        current_owner_user_name_cache:
+          premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
+        current_owner_entity_id: fei.premier_detenteur_entity_id ?? null,
+        current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
+      });
+      syncData('examinateur-initial-transfer-to-premier-detenteur');
+      navigate(`/app/chasseur/fei/${fei.numero}/envoyée`, {
+        state: { transferredToPremierDetenteur: true },
+      });
+    }
+  };
+
   return (
     <>
       <title>
@@ -281,7 +329,7 @@ function FEIChasseurLoaded() {
                   hintText={
                     canEdit ? (
                       <button
-                        className="inline-block"
+                        className="rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                         type="button"
                         onClick={() => {
                           const date = dayjs.utc().startOf('day').toDate();
@@ -290,7 +338,7 @@ function FEIChasseurLoaded() {
                           });
                         }}
                       >
-                        <u className="inline">Cliquez ici</u> pour définir la date du jour
+                        Définir la date du jour
                       </button>
                     ) : null
                   }
@@ -331,16 +379,14 @@ function FEIChasseurLoaded() {
                     <>
                       {communesDeChasseFavorites.map((commune) => {
                         return (
-                          <Tag
+                          <button
                             key={commune}
-                            iconId="fr-icon-checkbox-circle-line"
-                            className="mr-2"
-                            nativeButtonProps={{
-                              onClick: () => updateFei(fei.numero, { commune_mise_a_mort: commune }),
-                            }}
+                            type="button"
+                            className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                            onClick={() => updateFei(fei.numero, { commune_mise_a_mort: commune })}
                           >
                             {commune}
-                          </Tag>
+                          </button>
                         );
                       })}
                     </>
@@ -477,7 +523,7 @@ function FEIChasseurLoaded() {
                     hintText={
                       canEdit ? (
                         <button
-                          className="inline-block text-left"
+                          className="rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                           type="button"
                           onClick={() => {
                             updateFei(fei.numero, {
@@ -486,7 +532,7 @@ function FEIChasseurLoaded() {
                             });
                           }}
                         >
-                          <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
+                          Définir la date du jour et maintenant
                         </button>
                       ) : (
                         "Cette date vaut date d'approbation de mise sur le marché"
@@ -508,8 +554,8 @@ function FEIChasseurLoaded() {
                       },
                       defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
                         ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                            'YYYY-MM-DDTHH:mm',
-                          )
+                          'YYYY-MM-DDTHH:mm',
+                        )
                         : undefined,
                     }}
                   />
@@ -534,64 +580,7 @@ function FEIChasseurLoaded() {
                     <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
                   )}
                   {canEdit && (
-                    <div className="mt-6 flex flex-col gap-4">
-                      <Button
-                        type="submit"
-                        disabled={!carcasses.length}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (jobIsMissing) {
-                            alert(jobIsMissing);
-                            return;
-                          }
-                          if (!approbation) {
-                            alert('Vous devez cocher la case pour valider la mise sur le marché');
-                            return;
-                          }
-                          if (examinateurIsPremierDetenteur) {
-                            const destinataireError = destinataireRef.current?.validate();
-                            if (destinataireError) {
-                              alert(destinataireError);
-                              return;
-                            }
-                            updateFei(fei.numero, {
-                              examinateur_initial_approbation_mise_sur_le_marche: approbation,
-                              fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-                              fei_current_owner_user_id: user.id,
-                              fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-                              fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
-                              fei_current_owner_entity_name_cache:
-                                premierDetenteurEntity?.nom_d_usage ?? null,
-                            });
-                            destinataireRef.current?.submit();
-                          } else {
-                            updateFei(fei.numero, {
-                              examinateur_initial_approbation_mise_sur_le_marche: approbation,
-                              fei_current_owner_user_id: fei.premier_detenteur_user_id,
-                              fei_current_owner_user_name_cache:
-                                premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
-                              fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
-                              fei_current_owner_entity_name_cache:
-                                premierDetenteurEntity?.nom_d_usage ?? null,
-                              fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-                            });
-                            updateCarcassesTransmission(carcasseIds, {
-                              current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-                              current_owner_user_id: fei.premier_detenteur_user_id,
-                              current_owner_user_name_cache:
-                                premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
-                              current_owner_entity_id: fei.premier_detenteur_entity_id ?? null,
-                              current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
-                            });
-                            syncData('examinateur-initial-transfer-to-premier-detenteur');
-                            navigate(`/app/chasseur/fei/${fei.numero}/envoyée`, {
-                              state: { transferredToPremierDetenteur: true },
-                            });
-                          }
-                        }}
-                      >
-                        Enregistrer et transmettre la fiche
-                      </Button>
+                    <div className="mt-6">
                       <Button
                         priority="secondary"
                         type="button"
@@ -605,17 +594,30 @@ function FEIChasseurLoaded() {
                   )}
                 </div>
               )}
-              {canEdit && <ExaminateurInitialDeleteFei />}
-            </div>
-            <div className="m-8 flex flex-col justify-start gap-4">
-              <Button
-                priority="secondary"
-                linkProps={{
-                  to: `/app/chasseur/`,
-                }}
-              >
-                Voir toutes mes fiches
-              </Button>
+              <div className="bg-white flex items-center justify-between px-4 py-3">
+                <Button
+                  priority="tertiary"
+                  iconId="fr-icon-arrow-left-line"
+                  linkProps={{
+                    to: `/app/chasseur/`,
+                  }}
+                >
+                  Retour
+                </Button>
+                {canEdit && (
+                  <Button
+                    iconId="fr-icon-send-plane-line"
+                    disabled={!carcasses.length || !!jobIsMissing || !approbation}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleTransmettre();
+                    }}
+                  >
+                    Transmettre
+                  </Button>
+                )}
+                {canEdit && <ExaminateurInitialDeleteFei />}
+              </div>
             </div>
           </div>
         </div>

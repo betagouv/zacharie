@@ -13,7 +13,6 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
-import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
 
 export default function SelectNextForExaminateur({ disabled = false }: { disabled?: boolean }) {
@@ -181,36 +180,30 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
                   <div>
                     {Object.values(associationsDeChasse).map((entity) => {
                       return (
-                        <Tag
+                        <button
                           key={entity.id}
-                          iconId="fr-icon-checkbox-circle-line"
-                          className="mr-2"
-                          nativeButtonProps={{
-                            type: 'button',
-                            onClick: () => {
-                              setNextOwnerUserOrEntityId(entity.id);
-                            },
+                          type="button"
+                          className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                          onClick={() => {
+                            setNextOwnerUserOrEntityId(entity.id);
                           }}
                         >
                           {entity.nom_d_usage}
-                        </Tag>
+                        </button>
                       );
                     })}
                     {Object.values(detenteursInitiaux).map((user) => {
                       return (
-                        <Tag
+                        <button
                           key={user.id}
-                          iconId="fr-icon-checkbox-circle-line"
-                          className="mr-2"
-                          nativeButtonProps={{
-                            type: 'button',
-                            onClick: () => {
-                              setNextOwnerUserOrEntityId(user.id);
-                            },
+                          type="button"
+                          className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                          onClick={() => {
+                            setNextOwnerUserOrEntityId(user.id);
                           }}
                         >
                           {`${user.prenom} ${user.nom_de_famille}`}
-                        </Tag>
+                        </button>
                       );
                     })}
                   </div>
