@@ -1,10 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { EntityTypes, Prisma, User } from '@prisma/client';
+import { EntityTypes, User } from '@prisma/client';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
-import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
 import type { EntitiesById } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
@@ -19,7 +18,6 @@ export default function SviOnboardingEntreprise() {
 
   const svisDone = Object.keys(userEntitiesById).length > 0;
 
-  const [visibilityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
 
   const navigate = useNavigate();
 
@@ -92,7 +90,6 @@ export default function SviOnboardingEntreprise() {
                   buttons={[
                     {
                       children: 'Enregistrer et continuer',
-                      disabled: !visibilityChecked,
                       type: 'button',
                       nativeButtonProps: {
                         onClick: () => {
